@@ -129,7 +129,7 @@ motion** (regla 5a del CLAUDE.md): reduced-motion cambia propiedades, no element
 
 | Relleno | Qué ve el cliente | Cuándo |
 |---|---|---|
-| **Fondo de escritorio** (por defecto) | una reunión que no llega al borde inferior: lo más ordinario que existe en un Mac | defecto; no hay nada que explicar |
+| **Fondo de escritorio** (por defecto) | una reunión que no llega al borde inferior: lo más ordinario que existe en un Mac | **elegido por el usuario en la mirada 3-quinquies (2026-09-20)**; no hay nada que explicar |
 | **Negro** | una franja muerta, tipo letterbox | preferencia de una tecla; para fondos de escritorio con foto o nombre personal, y para quien prefiera no dar ninguna pista de estética |
 | **Sin relleno** | el escritorio y las ventanas de detrás | **descartado como defecto**; solo el fallback honesto si el relleno no se pudo dibujar, y entonces la app lo DICE antes de compartir |
 

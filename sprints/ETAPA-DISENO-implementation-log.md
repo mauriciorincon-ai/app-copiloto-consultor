@@ -390,7 +390,7 @@ muere con la banda, y **no puede tener contenido**: es un color o una imagen, no
 
 | Relleno | Qué ve el cliente | Estado |
 |---|---|---|
-| **Fondo de escritorio** | una reunión que no llega al borde inferior | **por defecto** (recomendación propia) |
+| **Fondo de escritorio** | una reunión que no llega al borde inferior | **ELEGIDO por el usuario** (2026-09-20) |
 | **Negro** | una franja muerta, tipo letterbox | preferencia de una tecla (lo que el usuario pidió) |
 | **Sin relleno** | el escritorio y las ventanas de detrás | **descartado**; solo fallback honesto, y avisado |
 
@@ -399,8 +399,10 @@ la fuga por igual — esa era la razón de fondo, y pesa más que la estética: 
 nota el hueco, se **fuga contenido ajeno a la reunión**. La diferencia está en qué historia
 cuenta la franja. El negro se lee como una banda muerta y admite pregunta; el fondo de escritorio
 se lee como una ventana que no llega al borde, que es lo más común del mundo en un Mac. Se deja
-el negro a una tecla porque tiene su caso propio: fondos con foto o nombre personal. **Decide el
-usuario en la mirada 3-quinquies.**
+el negro a una tecla porque tiene su caso propio: fondos con foto o nombre personal.
+
+**Resuelto (2026-09-20):** «sí vamos con el relleno fondo de escritorio». Queda como defecto; el
+negro, como preferencia.
 
 **Por qué la banda acoplada es más segura que el panel flotante** (respuesta que entra al
 design-system y al brochure): compartiendo **una ventana**, el flotante vive ENCIMA del
