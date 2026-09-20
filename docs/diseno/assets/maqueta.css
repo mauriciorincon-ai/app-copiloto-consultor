@@ -80,3 +80,27 @@ body.mq { min-height: 100vh; background: #0d0e10; color: #cfd3d8; font-family: "
 .mq-relleno figcaption strong { display: block; color: #e5e7eb; font-size: 13px; margin-bottom: 2px; }
 .mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
 .mq-relleno .elegido { outline: 2px solid #62d3b4; outline-offset: 3px; }
+
+/* Recorrido (index.html) — chrome de sala de diseño, jamás producto */
+.mq-hero { max-width: 1180px; margin: 22px auto 26px; padding: 0 18px; }
+.mq-hero h1 { font-family: Charter, Georgia, serif; font-size: 30px; line-height: 1.2; color: #e5e7eb; margin: 0 0 8px; }
+.mq-hero p { font-size: 14px; line-height: 1.6; color: #b6bcc5; max-width: 760px; margin: 0 0 8px; }
+.mq-hero p b { color: #e5e7eb; }
+.mq-hero .llaves { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.mq-hero .llaves span { font-family: Menlo, monospace; font-size: 11px; color: #7dd3fc; border: 1px solid #23485c; background: #0d1a22; border-radius: 4px; padding: 3px 9px; }
+.mq-grupo { max-width: 1180px; margin: 0 auto 26px; padding: 0 18px; }
+.mq-grupo > h2 { font-family: Menlo, monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #7dd3fc; margin: 0 0 4px; }
+.mq-grupo > p { font-size: 13px; color: #9aa2ad; margin: 0 0 12px; max-width: 760px; line-height: 1.55; }
+.mq-tarjetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 12px; }
+.mq-card { display: block; padding: 13px 15px; border: 1px solid #2b2f37; border-radius: 10px; background: #14171c; color: inherit; text-decoration: none; transition: border-color 140ms ease, background 140ms ease; }
+.mq-card:hover { border-color: #7dd3fc; background: #171b21; }
+.mq-card .num { font-family: Menlo, monospace; font-size: 11px; color: #7dd3fc; }
+.mq-card h3 { font-size: 15px; color: #e5e7eb; margin: 2px 0 4px; font-weight: 600; }
+.mq-card p { font-size: 12.5px; color: #9aa2ad; line-height: 1.5; margin: 0 0 9px; }
+.mq-card .ests { display: flex; flex-wrap: wrap; gap: 4px; }
+.mq-card .ests i { font-style: normal; font-family: Menlo, monospace; font-size: 10.5px; color: #8a919b; background: #1d2127; border: 1px solid #2b2f37; border-radius: 3px; padding: 1px 6px; }
+.mq-card .fx { display: block; margin-top: 8px; font-family: Menlo, monospace; font-size: 10.5px; color: #62d3b4; }
+.mq-card.estrella { border-color: #3f5a2a; background: #14180f; }
+.mq-card.estrella:hover { border-color: #9ccc65; }
+.mq-spike { max-width: 1180px; margin: 0 auto 40px; padding: 0 18px; }
+@media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }

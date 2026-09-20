@@ -107,7 +107,7 @@ Fuente: ENTREGA-brochure de Innmobiliaria (reporte por mensaje directo entre ses
 
 1. **Grep del barrido TOTAL (regla 17 + `/deploy-check`):** todos los archivos versionados
    (excluye solo lockfiles), jamás include-list — la URL de producción vivía en
-   `wrangler.jsonc` y pasó un gate con `--include`; el patrón suma `pages.dev` y el host real
+   `wrangler.jsonc` y pasó un gate con `--include`; el patrón suma `pages[.]dev` y el host real
    del stack de cada app.
 2. **`.github/dependabot.yml` estampado** (semanal, agrupado minors+patches, mayores aparte):
    4 HIGH de Next envejecieron un mes sin aviso. Recordatorio pnpm 11: overrides en

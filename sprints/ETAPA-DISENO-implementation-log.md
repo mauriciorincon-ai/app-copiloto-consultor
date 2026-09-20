@@ -643,5 +643,48 @@ NO es compatible.
 **Lo que NO cambia:** audio, transcript y lecturas de pantalla siguen muriendo en el instante de
 cerrar, sin ventana ni casilla.
 
-## Fase 5 — Cierre (recorrido, README, auditoría, PR)
-(pendiente)
+## Fase 5 — Cierre (2026-09-20)
+
+**Mirada 4-ter (2026-09-20): APROBADA** — «abrí la ventana, claramente la exploré con sus botones
+y me pareció excelente, continuamos». Le llegó primero solo la palabra de fase y se repreguntó
+(regla 10). **Observación suya, justa:** *«yo no tengo que decirte qué vi»*. Tiene razón: el
+usuario no le debe un informe a nadie. La repregunta se hizo porque esa pantalla **afloja una
+regla dura** y convenía que la firma fuera suya; queda anotado que el motivo se declare junto a
+la pregunta, no después.
+
+**Construido:** `index.html` (el recorrido: cuatro grupos, nueve pantallas con sus estados y sus
+funcionalidades, más la tabla del spike) y `docs/diseno/README.md` completo — pantalla →
+funcionalidad, spike, auto-auditoría §4 por tema, las 10 miradas y los gates con su demo.
+
+**Gate nuevo, nacido de un defecto propio: `maqueta-sin-emojis`.** El recorrido se escribió
+declarando «cero emojis» en su propia portada… y la maqueta tenía cuatro (uno en `panel.html`,
+tres en `posicion.html`). Un anti-patrón que solo vive en un documento se cuela por la puerta de
+al lado. **Alcance declarado:** solo lo que se renderiza (`html`/`css`/`js` de `docs/diseno/`);
+los `.md` quedan fuera a propósito porque el método escribe sus gates con ⭐ y la regla prohíbe
+emojis como **iconografía**, no como notación en prosa. **Excepción nominal declarada:** `✓`
+(U+2713), que el design system usa para NOMBRAR su símbolo en prosa. **Demo en rojo ×2:** 🔒 ⇒
+rojo; y `✅` ⇒ rojo, probando que la excepción **no abre su bloque Dingbats**. Verde al revertir
+(9/9).
+
+**Y el gate de vocabulario cazó al README nuevo:** la fila que NARRA el gate citaba los términos
+vetados. Se marcó con `vocabulario:cita`, el marcador que el propio test trae. Es la tercera vez
+en esta etapa que un documento que narra un gate lo rompe (enlaces, enlaces otra vez,
+vocabulario): va a las sugerencias de método del summary.
+
+**Barrido de CERO ENLACES: limpio por primera vez.** Se corrigió el hit heredado del kit
+(`CHANGELOG.md`, dominio en claro) escribiéndolo con clase de carácter. Corrido DESPUÉS del
+último `git add`, sobre todos los archivos versionados.
+
+**Auditoría de la etapa (solo lectura):**
+
+| Comprobación | Resultado |
+|---|---|
+| Cero código de producto (`src/`, `src-tauri/src/`) | **0 archivos** en el diff de la rama |
+| Cero red en `docs/diseno/` | 0 URLs |
+| Datos sintéticos | «Páramo Azul» ×39 · «Sur del Valle» ×12 · «Andrea Villalba» ×4; cero nombres reales |
+| Cobertura de la VISION | 19/19 + C14 + C15 + C16 |
+| Contraste / desbordes | 0 bajo AA · 0 desbordes |
+| Gates | 9/9 verdes, los 3 nuevos vistos en rojo |
+
+`sprints/ETAPA-DISENO-summary.md` escrito, con los **cinco cambios de producto** y las tres
+sugerencias de método.
