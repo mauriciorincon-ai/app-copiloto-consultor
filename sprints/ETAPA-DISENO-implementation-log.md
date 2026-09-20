@@ -111,5 +111,30 @@ barrido de CERO ENLACES: un hit **preexistente en `main`**, `CHANGELOG.md:110` d
 
 **Mirada 1 (2026-09-20): APROBADA** — «El panel se ve muy bien aprobado». Nota de proceso: la primera respuesta fue «Continua» (palabra de fase); se detuvo la construcción y se repreguntó «¿qué viste al abrirlo?» — la segunda respuesta sí delató la mirada. Registrado en `docs/diseno/README.md`.
 
-## Fase 2 — El sistema completo + kit
+## Fase 2 — El sistema completo + kit (2026-09-20)
+
+**Construido:** `docs/diseno/kit.html` (10 secciones: tokens · estados · ficha de evidencia ·
+contador de red · estado de permiso · bandera de jurisdicción · estado de sesión · alerta del
+radar · primitivas · prohibidos; ambos temas, ambos idiomas) · `ghost.css` ampliado con la
+ventana principal (rail, contenido, tarjeta, campo, conmutador, tabla, permiso, bandera,
+contador grande, buffer, kill, progreso, diccionario, unidad) · `design-system.md` **v1.0.0**
+(tabla de contraste por token calculada sobre los hex, vetados, contrato con el código).
+
+**Pasada de capturas:** kit × 2 temas × 2 idiomas (página completa) + 10 secciones de cerca en
+oscuro. Corregido antes de presentar:
+1. `.bandera`: los hijos caían en la columna del icono (20 px) — una palabra por renglón. Fix:
+   `.bandera > :not(.ic) { grid-column: 2 }`.
+2. Sección de fichas: marcos de 380 px desbordaban una grilla de 3 columnas → grilla
+   `minmax(380px)` y marcos `max-width: 380px`.
+3. Tema claro: `--warn` `#8a5b00` (4.49) y `--err` `#b8322a` (4.45) sobre su tinte, bajo AA
+   por centésimas → `#7a4f00` (5.45) y `#a32a22` (5.40).
+**Contraste medido:** kit 313 textos × 4 combinaciones → 0 bajo AA (peor 4.95 claro /
+5.08 oscuro). Arnés: simulación deutan corregida (filtro sobre el elemento capturado) y
+capturas de página completa; nuevo `seccion.mjs` para leer secciones de cerca.
+
+**Gates:** `pnpm test` 7/7 ✓.
+
+**Mirada 2:** pendiente — mensaje de gate emitido.
+
+## Fase 3 — Pantallas de sesión
 (pendiente)
