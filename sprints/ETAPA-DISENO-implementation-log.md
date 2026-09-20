@@ -109,7 +109,7 @@ barrido de CERO ENLACES: un hit **preexistente en `main`**, `CHANGELOG.md:110` d
   fue decisión del usuario; el ámbar se reserva para lo que él no decidió (radar, sin verificar).
 - D17 · «Confianza» de la sugerencia: símbolo ◐ (media) / ● (alta) / ○ (baja) + palabra.
 
-**Mirada 1:** pendiente — mensaje de gate emitido; registro en `docs/diseno/README.md`.
+**Mirada 1 (2026-09-20): APROBADA** — «El panel se ve muy bien aprobado». Nota de proceso: la primera respuesta fue «Continua» (palabra de fase); se detuvo la construcción y se repreguntó «¿qué viste al abrirlo?» — la segunda respuesta sí delató la mirada. Registrado en `docs/diseno/README.md`.
 
 ## Fase 2 — El sistema completo + kit
 (pendiente)
