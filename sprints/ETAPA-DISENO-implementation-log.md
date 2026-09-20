@@ -134,7 +134,9 @@ capturas de página completa; nuevo `seccion.mjs` para leer secciones de cerca.
 
 **Gates:** `pnpm test` 7/7 ✓.
 
-**Mirada 2:** pendiente — mensaje de gate emitido.
+**Mirada 2 (2026-09-20): APROBADA** — «Si apruebo el kit me gusto mucho muy oportuno el diseño
+y elementos». Registrada en `docs/diseno/README.md`. Modelo para las Fases 3–4 fijado por el
+usuario: Opus 5 (1M context).
 
 ## Fase 3 — Pantallas de sesión
 (pendiente)
