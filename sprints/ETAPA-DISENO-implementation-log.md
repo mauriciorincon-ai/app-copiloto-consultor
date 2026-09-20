@@ -310,7 +310,20 @@ Nombres de la maqueta 100 % sintéticos; el catálogo real viaja versionado con 
 
 **Contraste medido:** panel 48 capturas · sesión 16 · kit 4 · posición 24 → **0 bajo AA**.
 
-**Gates:** `pnpm test` 7/7 ✓.
+**El gate de vocabulario se puso ROJO — y tenía razón.** Nombrar la categoría «anti-cheat /
+anti-trampa» disparó el barrido de la regla dura 6 en 10 líneas. **No se aflojó el barrido: se
+declaró una excepción nominal** en `tests/unit/vocabulario-vetado.test.ts` — solo la unidad
+léxica completa (`anti-cheat`, `anti-trampa`), nunca el término suelto. Razón escrita en el
+propio test: nombrar el software invasivo que se detecta es lo **opuesto** a venderse como
+herramienta de trampa. Demostrado en rojo dos veces tras el cambio: `cheat` suelto ⇒ rojo ·
+`trampa` suelta ⇒ rojo · verde al revertir (7/7).
+
+**Fallo de proceso propio, declarado:** el commit `f6dc443` se subió con ese test EN ROJO — el
+encadenado del comando dejó pasar el fallo y no se leyó la salida antes de comitear. Se corrigió
+en el commit siguiente. Es exactamente la lección de la regla 18 aplicada a los tests: **leer la
+salida ES el gate**; un `&&` no sustituye mirar.
+
+**Gates:** `pnpm test` 7/7 ✓ (tras la corrección).
 
 **Mirada 3-ter:** pendiente — mensaje de gate emitido.
 
