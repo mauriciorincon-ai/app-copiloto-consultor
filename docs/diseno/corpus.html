@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="es" data-theme="dark" data-lang="es" data-estado="con-docs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Angel Ghost · Maqueta — 04 Corpus</title>
+<link rel="stylesheet" href="assets/ghost.css">
+<link rel="stylesheet" href="assets/maqueta.css">
+</head>
+<body class="mq">
+
+<div class="mq-bar" role="toolbar" aria-label="Sala de diseño">
+  <span class="mq-t">04 · Corpus</span>
+  <span class="mq-g"><span>estado</span>
+    <button data-estado="vacio">vacío</button>
+    <button data-estado="indexando">indexando</button>
+    <button data-estado="con-docs">con documentos</button>
+    <button data-estado="ilegible">documento ilegible</button>
+  </span>
+  <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
+  <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
+  <a href="index.html">← recorrido</a>
+</div>
+
+<div class="mq-nota">
+  <div class="n" data-para="vacio"><b>Qué mirar:</b> la primera impresión. No es un formulario vacío: dice <b>por qué</b> la app no sabe nada todavía y qué son las cinco unidades. Y la promesa que más se malinterpreta: <b>indexar no es subir</b>.</div>
+  <div class="n" data-para="indexando"><b>Qué mirar:</b> progreso real, por unidad, sin bloquear la ventana. El contador dice <b>0 B</b> también aquí: leer tus documentos es un trabajo local. Un documento ilegible no detiene a los otros 142.</div>
+  <div class="n" data-para="con-docs"><b>Qué mirar:</b> el corpus como inventario, no como carpeta. Las cinco unidades con su cuenta, el índice con su tamaño <b>y dónde vive</b>, y la última fila en ámbar: hay uno sin leer.</div>
+  <div class="n" data-para="ilegible"><b>Qué mirar:</b> el fallo dicho entero. Por qué se deja fuera en vez de adivinar, qué puedes hacer <b>en tu Mac</b>, y —a la derecha— la salida fácil que <b>no</b> existe: mandarlo a un OCR en la nube. Se nombra para poder negarla.</div>
+  <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
+</div>
+
+<div style="display:flex;justify-content:center;padding:0 18px 40px">
+<main class="ventana" data-captura>
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"/></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a href="sesion.html"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a href="permisos.html"><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a href="corpus.html" aria-current="page"><svg class="ic s"><use href="#i-doc"/></svg>Corpus</a>
+    <a href="notas.html"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a href="honestidad.html"><svg class="ic s"><use href="#i-ram"/></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a href="idioma.html"><svg class="ic s"><use href="#i-globo"/></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a href="ia.html"><svg class="ic s"><use href="#i-chispa"/></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      <span class="estado ok" data-en="con-docs"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">143 documentos</span><span lang="en">143 documents</span></span>
+      <span class="estado halo" data-en="indexando"><svg class="ic s"><use href="#i-buscar"/></svg><span lang="es">Indexando…</span><span lang="en">Indexing…</span></span>
+      <span class="estado mute" data-en="vacio"><svg class="ic s"><use href="#i-doc"/></svg><span lang="es">Sin documentos</span><span lang="en">No documents</span></span>
+      <span class="estado warn" data-en="ilegible"><svg class="ic s relleno"><use href="#i-alert"/></svg><span lang="es">1 sin leer</span><span lang="en">1 unread</span></span>
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1>Corpus</h1>
+      <p class="sub"><span lang="es">Tus documentos, indexados donde están. De aquí sale cada ficha que verás en una reunión.</span><span lang="en">Your documents, indexed where they live. Every card you will see in a meeting comes from here.</span></p>
+    </div>
+
+    <!-- ===== vacío ===== -->
+    <div data-en="vacio" style="display:flex;flex-direction:column;gap:14px">
+      <div class="tarjeta" style="text-align:center;padding:26px 20px">
+        <p class="mono" style="color:var(--ink-2);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px"><span lang="es">tu corpus está vacío</span><span lang="en">your corpus is empty</span></p>
+        <h2 style="font-family:var(--font-evidencia);font-size:19px;line-height:1.35;margin:0 auto 6px;max-width:460px"><span lang="es">Angel Ghost no sabe nada todavía. Todo lo que dirá sale de lo que tú escribiste.</span><span lang="en">Angel Ghost knows nothing yet. Everything it says comes from what you wrote.</span></h2>
+        <p style="color:var(--ink-2);font-size:13px;max-width:460px;margin:0 auto 14px;line-height:1.5"><span lang="es">Señala una carpeta con tus propuestas, marcos, casos y fichas. Los documentos <b>no se copian</b>: se leen donde están y el índice vive en tu Mac.</span><span lang="en">Point to a folder with your proposals, frameworks, cases and briefs. Documents are <b>not copied</b>: they are read where they live and the index stays on your Mac.</span></p>
+        <div class="fila" style="justify-content:center;gap:8px">
+          <button class="btn primario"><svg class="ic s"><use href="#i-subir"/></svg><span lang="es">Elegir carpeta</span><span lang="en">Choose folder</span></button>
+          <span class="tecla"><span lang="es">o arrastra una aquí</span><span lang="en">or drag one here</span></span>
+        </div>
+      </div>
+      <div class="grid-2" style="gap:12px">
+        <div class="tarjeta">
+          <h3><span lang="es">Las cinco unidades</span><span lang="en">The five units</span></h3>
+          <p style="margin-bottom:8px"><span lang="es">Cada documento entra como una de estas. Define qué ficha puede salir en la reunión.</span><span lang="en">Each document enters as one of these. It defines which card can surface in the meeting.</span></p>
+          <div class="fila" style="flex-wrap:wrap;gap:5px">
+            <span class="unidad-chip"><span lang="es">propuesta</span><span lang="en">proposal</span></span>
+            <span class="unidad-chip"><span lang="es">marco</span><span lang="en">framework</span></span>
+            <span class="unidad-chip"><span lang="es">caso</span><span lang="en">case</span></span>
+            <span class="unidad-chip"><span lang="es">cliente</span><span lang="en">client</span></span>
+            <span class="unidad-chip"><span lang="es">perfil</span><span lang="en">profile</span></span>
+          </div>
+        </div>
+        <div class="franja ok" role="status">
+          <svg class="ic"><use href="#i-nube-off"/></svg>
+          <div>
+            <strong><span lang="es">Indexar no es subir</span><span lang="en">Indexing is not uploading</span></strong>
+            <p><span lang="es">Leer, trocear e indexar ocurre entero en tu Mac. Ningún documento, ni un fragmento, viaja a ningún proveedor — tampoco con el API encendido.</span><span lang="en">Reading, chunking and indexing happen entirely on your Mac. No document, not a fragment, travels to any provider — not even with the API on.</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== indexando ===== -->
+    <div data-en="indexando" style="display:flex;flex-direction:column;gap:14px">
+      <div class="tarjeta">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Leyendo tu carpeta</span><span lang="en">Reading your folder</span></h2><span class="mono" style="color:var(--ink-2)">~/Documentos/Consultoría</span></div>
+        <div class="progreso" style="margin:10px 0 4px"><span>87 / 143</span><span class="pista"><i style="width:61%"></i></span><span>61 %</span></div>
+        <p style="font-size:12.5px;color:var(--ink-2)"><span lang="es">Puedes cerrar esta ventana: sigue donde lo dejó. El índice se escribe en tu carpeta de la app, solo para ti.</span><span lang="en">You can close this window: it resumes where it left off. The index is written in the app folder, for you alone.</span></p>
+      </div>
+      <div class="grid-2" style="gap:12px">
+        <div class="tarjeta" style="padding-bottom:6px">
+          <h3><span lang="es">Por unidad</span><span lang="en">By unit</span></h3>
+          <table class="tabla">
+            <tbody>
+              <tr><td><span class="unidad-chip"><span lang="es">propuesta</span><span lang="en">proposal</span></span></td><td class="num">31</td><td style="color:var(--ink-2)"><span lang="es">listas</span><span lang="en">done</span></td></tr>
+              <tr><td><span class="unidad-chip"><span lang="es">marco</span><span lang="en">framework</span></span></td><td class="num">12</td><td style="color:var(--ink-2)"><span lang="es">listos</span><span lang="en">done</span></td></tr>
+              <tr><td><span class="unidad-chip"><span lang="es">caso</span><span lang="en">case</span></span></td><td class="num">28</td><td style="color:var(--ink-2)"><span lang="es">listos</span><span lang="en">done</span></td></tr>
+              <tr class="apagada"><td><span class="unidad-chip"><span lang="es">cliente</span><span lang="en">client</span></span></td><td class="num">16</td><td><span lang="es">en cola</span><span lang="en">queued</span></td></tr>
+              <tr class="apagada"><td><span class="unidad-chip"><span lang="es">perfil</span><span lang="en">profile</span></span></td><td class="num">0</td><td><span lang="es">en cola</span><span lang="en">queued</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="contador cero">
+            <span class="cifra">0 <small>B</small></span>
+            <span class="etq"><span lang="es">salieron de tu equipo indexando</span><span lang="en">left your machine while indexing</span></span>
+          </div>
+          <div class="franja warn" role="status">
+            <svg class="ic relleno"><use href="#i-alert"/></svg>
+            <div>
+              <strong><span lang="es">1 documento no se pudo leer</span><span lang="en">1 document could not be read</span></strong>
+              <p><span lang="es">Se avisa al terminar; el resto no se detiene.</span><span lang="en">Reported when it finishes; the rest carries on.</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== con documentos ===== -->
+    <div data-en="con-docs" style="display:flex;flex-direction:column;gap:12px">
+      <div class="fila">
+        <label class="campo crece" style="gap:0"><input type="search" placeholder="Buscar en tu corpus…" aria-label="Buscar en tu corpus"></label>
+        <button class="btn"><svg class="ic s"><use href="#i-subir"/></svg><span lang="es">Añadir carpeta</span><span lang="en">Add folder</span></button>
+      </div>
+      <div class="grid-3" style="gap:10px">
+        <div class="tarjeta" style="padding:10px 12px"><div class="fila"><span class="unidad-chip"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span class="crece"></span><span class="mono" style="font-size:17px">31</span></div><p style="margin-top:2px"><span lang="es">alcance, precio, supuestos</span><span lang="en">scope, price, assumptions</span></p></div>
+        <div class="tarjeta" style="padding:10px 12px"><div class="fila"><span class="unidad-chip"><span lang="es">marco</span><span lang="en">framework</span></span><span class="crece"></span><span class="mono" style="font-size:17px">12</span></div><p style="margin-top:2px"><span lang="es">tu método, tus etapas</span><span lang="en">your method, your stages</span></p></div>
+        <div class="tarjeta" style="padding:10px 12px"><div class="fila"><span class="unidad-chip"><span lang="es">caso</span><span lang="en">case</span></span><span class="crece"></span><span class="mono" style="font-size:17px">28</span></div><p style="margin-top:2px"><span lang="es">qué pasó y qué costó</span><span lang="en">what happened, what it cost</span></p></div>
+        <div class="tarjeta" style="padding:10px 12px"><div class="fila"><span class="unidad-chip"><span lang="es">cliente</span><span lang="en">client</span></span><span class="crece"></span><span class="mono" style="font-size:17px">63</span></div><p style="margin-top:2px"><span lang="es">fichas y acuerdos previos</span><span lang="en">briefs and past agreements</span></p></div>
+        <div class="tarjeta" style="padding:10px 12px"><div class="fila"><span class="unidad-chip"><span lang="es">perfil</span><span lang="en">profile</span></span><span class="crece"></span><span class="mono" style="font-size:17px">9</span></div><p style="margin-top:2px"><span lang="es">tu trayectoria y cifras</span><span lang="en">your track record</span></p></div>
+        <div class="tarjeta" style="padding:10px 12px;border-style:dashed"><div class="fila"><span class="unidad-chip" style="background:transparent;border:var(--borde) dashed var(--line-2)"><span lang="es">sin unidad</span><span lang="en">no unit</span></span><span class="crece"></span><span class="mono" style="font-size:17px">0</span></div><p style="margin-top:2px"><span lang="es">todo clasificado</span><span lang="en">all classified</span></p></div>
+      </div>
+      <div class="tarjeta" style="padding-bottom:6px">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Añadidos hace poco</span><span lang="en">Recently added</span></h2><span class="mono" style="color:var(--ink-2)"><span lang="es">índice · 4,2 MB · en tu Mac</span><span lang="en">index · 4.2 MB · on your Mac</span></span></div>
+        <table class="tabla">
+          <thead><tr><th><span lang="es">documento</span><span lang="en">document</span></th><th><span lang="es">unidad</span><span lang="en">unit</span></th><th class="num"><span lang="es">secciones</span><span lang="en">sections</span></th><th><span lang="es">estado</span><span lang="en">state</span></th></tr></thead>
+          <tbody>
+            <tr><td><span lang="es">Páramo Azul · Propuesta rentabilidad por canal</span><span lang="en">Páramo Azul · Channel profitability proposal</span></td><td><span class="unidad-chip"><span lang="es">propuesta</span><span lang="en">proposal</span></span></td><td class="num">14</td><td><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">indexado</span><span lang="en">indexed</span></span></td></tr>
+            <tr><td><span lang="es">Adopción de datos en 4 etapas</span><span lang="en">Data adoption in 4 stages</span></td><td><span class="unidad-chip"><span lang="es">marco</span><span lang="en">framework</span></span></td><td class="num">9</td><td><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">indexado</span><span lang="en">indexed</span></span></td></tr>
+            <tr><td><span lang="es">Cooperativa Sur del Valle · cierre</span><span lang="en">Cooperativa Sur del Valle · closeout</span></td><td><span class="unidad-chip"><span lang="es">caso</span><span lang="en">case</span></span></td><td class="num">11</td><td><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">indexado</span><span lang="en">indexed</span></span></td></tr>
+            <tr><td><span lang="es">Páramo Azul · acta de kickoff (escaneada)</span><span lang="en">Páramo Azul · kickoff minutes (scanned)</span></td><td><span class="unidad-chip"><span lang="es">cliente</span><span lang="en">client</span></span></td><td class="num">—</td><td><span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"/></svg><span lang="es">sin leer</span><span lang="en">unread</span></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== documento ilegible ===== -->
+    <div data-en="ilegible" style="display:flex;flex-direction:column;gap:14px">
+      <div class="franja warn" role="status">
+        <svg class="ic relleno"><use href="#i-alert"/></svg>
+        <div>
+          <strong><span lang="es">«Páramo Azul · acta de kickoff» no tiene texto que leer</span><span lang="en">“Páramo Azul · kickoff minutes” has no readable text</span></strong>
+          <p><span lang="es">Es un PDF escaneado: páginas que son fotos. El índice lo deja fuera antes que adivinar — una ficha que sale de un texto mal leído es peor que no tener ficha.</span><span lang="en">It is a scanned PDF: pages that are photos. The index leaves it out rather than guess — a card built on badly read text is worse than no card at all.</span></p>
+        </div>
+      </div>
+      <div class="grid-2" style="gap:12px">
+        <div class="tarjeta">
+          <h3><span lang="es">Qué puedes hacer</span><span lang="en">What you can do</span></h3>
+          <div class="franja ok" role="status" style="margin-top:8px">
+            <svg class="ic relleno"><use href="#i-mac"/></svg>
+            <div>
+              <strong><span lang="es">Leerlo aquí, con el OCR de tu Mac</span><span lang="en">Read it here, with your Mac's OCR</span></strong>
+              <p><span lang="es">El mismo motor que ya lee tu pantalla. Tarda unos segundos por página y <b>no sale nada del equipo</b>.</span><span lang="en">The same engine that already reads your screen. A few seconds per page, and <b>nothing leaves the machine</b>.</span></p>
+            </div>
+          </div>
+          <div class="fila" style="margin-top:10px;gap:8px">
+            <button class="btn primario"><svg class="ic s"><use href="#i-ojo"/></svg><span lang="es">Leerlo con OCR local</span><span lang="en">Read it with local OCR</span></button>
+            <button class="btn"><span lang="es">Dejarlo fuera</span><span lang="en">Leave it out</span></button>
+          </div>
+        </div>
+        <div class="tarjeta">
+          <h3><span lang="es">Lo que no vamos a hacer</span><span lang="en">What we will not do</span></h3>
+          <div class="franja err" role="status" style="margin-top:8px">
+            <svg class="ic relleno"><use href="#i-x-circle"/></svg>
+            <div>
+              <strong><span lang="es">Mandarlo a un servicio para que lo lea</span><span lang="en">Send it to a service to read it</span></strong>
+              <p><span lang="es">Existen OCR en la nube mejores que el local. No están, y no van a estar: sería un documento tuyo entero viajando a un tercero. La regla no tiene interruptor.</span><span lang="en">Cloud OCR is better than local OCR. It is not here, and will not be: it would mean a whole document of yours travelling to a third party. That rule has no switch.</span></p>
+            </div>
+          </div>
+          <p style="margin-top:10px;font-size:12.5px;color:var(--ink-2)"><span lang="es">Si el documento importa y el OCR local no basta, conviértelo tú y vuelve a añadirlo.</span><span lang="en">If the document matters and local OCR is not enough, convert it yourself and add it again.</span></p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+</div>
+
+<script src="assets/iconos.js"></script>
+<script src="assets/maqueta.js"></script>
+</body>
+</html>

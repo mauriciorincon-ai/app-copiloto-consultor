@@ -1,0 +1,106 @@
+/* Chrome de la SALA DE DISEÑO — no es producto. Marco fijo oscuro independiente del tema. */
+body.mq { min-height: 100vh; background: #0d0e10; color: #cfd3d8; font-family: "Avenir Next", "Helvetica Neue", system-ui, sans-serif; }
+.mq-bar { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 8px 18px; background: #14161a; border-bottom: 1px solid #23262c; font-size: 12px; color: #aab0b8; }
+.mq-bar .mq-t { font-family: Menlo, monospace; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #7dd3fc; margin-right: 6px; }
+.mq-bar .mq-g { display: inline-flex; align-items: center; gap: 4px; }
+.mq-bar .mq-g > span:first-child { color: #6b7280; margin-right: 4px; font-size: 11px; }
+.mq-bar button { font: inherit; font-size: 12px; color: #cfd3d8; background: #1c1f25; border: 1px solid #2b2f37; border-radius: 5px; padding: 3px 9px; cursor: pointer; }
+.mq-bar button[aria-pressed="true"] { background: #7dd3fc; border-color: #7dd3fc; color: #0b1016; font-weight: 600; }
+.mq-bar a { color: #7dd3fc; text-decoration: none; margin-left: auto; font-size: 12px; }
+.mq-nota { max-width: 1180px; margin: 14px auto 0; padding: 0 18px; font-size: 13px; line-height: 1.55; color: #9aa2ad; }
+.mq-nota b { color: #e5e7eb; }
+.mq-nota .n { display: none; border-left: 3px solid #7dd3fc; padding: 8px 12px; background: #111418; }
+.mq-nota .n.activa { display: block; }
+.mq-medida { font-family: Menlo, monospace; font-size: 11px; color: #6b7280; margin-top: 8px; }
+
+/* Escritorio de referencia: un monitor a píxel real con Meet detrás (el cliente NO ve el panel) */
+.mq-escritorio { position: relative; width: 1180px; height: 720px; margin: 16px auto 40px; background: #2a2d33; border: 1px solid #3a3e46; border-radius: 12px; overflow: hidden; }
+.mq-menubar { height: 24px; background: #1d1f24; border-bottom: 1px solid #33363d; display: flex; align-items: center; gap: 16px; padding: 0 14px; font-size: 12px; color: #9aa2ad; }
+.mq-menubar b { color: #e5e7eb; }
+.mq-menubar .der { margin-left: auto; font-family: Menlo, monospace; font-size: 11px; }
+.mq-meet { position: absolute; left: 36px; top: 60px; right: 36px; bottom: 36px; background: #1f2126; border: 1px solid #3a3e46; border-radius: 10px; overflow: hidden; }
+.mq-meet .titulo { height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 12px; font-size: 12px; color: #8a919b; border-bottom: 1px solid #2c3037; }
+.mq-meet .titulo i { width: 10px; height: 10px; border-radius: 50%; background: #3e434b; display: inline-block; }
+.mq-meet .tiles { position: absolute; inset: 42px 16px 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.mq-meet .tile { background: #2a2d33; border-radius: 8px; display: flex; align-items: flex-end; padding: 10px; font-size: 12px; color: #aab0b8; }
+.mq-meet .tile span { background: rgba(0,0,0,.45); padding: 2px 8px; border-radius: 4px; }
+.mq-meet .controles { position: absolute; left: 0; right: 0; bottom: 0; height: 48px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.mq-meet .controles i { width: 36px; height: 36px; border-radius: 50%; background: #3a3e46; display: inline-block; }
+.mq-meet .controles i.rojo { background: #8b3a3a; width: 52px; border-radius: 18px; }
+.mq-meet .presentando { position: absolute; left: 50%; bottom: 56px; transform: translateX(-50%); background: #111418; color: #cfd3d8; font-size: 12px; padding: 5px 10px; border-radius: 6px; }
+.mq-panel-pos { position: absolute; top: 32px; right: 16px; }   /* D2: 16 px del borde, 8 px bajo la barra de menús */
+.mq-etiqueta { position: absolute; top: 40px; left: 60px; font-size: 12px; color: #7dd3fc; background: #111418; padding: 4px 10px; border-radius: 6px; border: 1px solid #23262c; }
+
+/* Comparador de posiciones: anclajes sobre el escritorio de referencia */
+.mq-pos { position: absolute; z-index: 3; }
+.mq-pos.arriba-der { top: 32px; right: 16px; }
+.mq-pos.abajo-der { bottom: 16px; right: 16px; }
+.mq-pos.abajo-izq { bottom: 16px; left: 16px; }
+.mq-pos.banda-inf { left: 16px; right: 16px; bottom: 16px; }
+.mq-pos.banda-borde { left: 0; right: 0; bottom: 0; }
+.mq-pos.banda-borde .banda { border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; }
+.mq-choque { position: absolute; z-index: 4; border: 2px dashed #f0b64a; border-radius: 8px; pointer-events: none; }
+.mq-choque span { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(100% + 4px); white-space: nowrap; background: #1a1400; color: #f0b64a; font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 1px solid #f0b64a; }
+.mq-dock { position: absolute; left: 50%; transform: translateX(-50%); bottom: 4px; height: 52px; width: 420px; background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16); border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; z-index: 1; }
+.mq-dock i { width: 38px; height: 38px; border-radius: 9px; background: rgba(255,255,255,.14); display: inline-block; }
+.mq-tabla-pos { max-width: 1180px; margin: 0 auto 40px; padding: 0 18px; }
+.mq-tabla-pos table { width: 100%; border-collapse: collapse; font-size: 13px; color: #cfd3d8; }
+.mq-tabla-pos th { text-align: left; font-family: Menlo, monospace; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #7dd3fc; padding: 8px 10px; border-bottom: 1px solid #2b2f37; }
+.mq-tabla-pos td { padding: 9px 10px; border-bottom: 1px solid #1c1f25; vertical-align: top; line-height: 1.5; }
+.mq-tabla-pos td b { color: #e5e7eb; }
+.mq-tabla-pos .si { color: #62d3b4; } .mq-tabla-pos .no { color: #ff8577; } .mq-tabla-pos .mas { color: #f0b64a; }
+
+/* Modo ACOPLADO: la reunión se recorta y la banda ocupa el borde inferior */
+.mq-escritorio[data-acople="88"] .mq-meet { bottom: 104px; }
+.mq-escritorio[data-acople="200"] .mq-meet { bottom: 216px; }
+.mq-escritorio[data-acople="44"] .mq-meet { bottom: 60px; }
+.mq-escritorio[data-acople] .mq-dock { display: none; }
+.mq-escritorio .mq-meet { transition: bottom 150ms cubic-bezier(.2,.6,.2,1); }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
+.mq-corte { position: absolute; left: 0; right: 0; height: 0; border-top: 2px dashed #7dd3fc; z-index: 5; pointer-events: none; }
+.mq-corte span { position: absolute; right: 14px; top: -22px; background: #0b1016; color: #7dd3fc; font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 1px solid #7dd3fc; white-space: nowrap; }
+
+/* Relleno de captura: qué ve el cliente en la franja de la banda (fase 3-quinquies) */
+.mq-h2 { font-size: 14px; color: #e5e7eb; margin: 0 0 4px; font-weight: 600; }
+.mq-h2 + .mq-sub { font-size: 12.5px; color: #9aa2ad; margin: 0 0 14px; line-height: 1.6; }
+.mq-relleno { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.mq-relleno figure { margin: 0; }
+.mq-relleno .mini { position: relative; height: 158px; border: 1px solid #3a3e46; border-radius: 8px; overflow: hidden; background: linear-gradient(150deg, #2b3550 0%, #3a3350 55%, #4a3a44 100%); }
+.mq-relleno .mini-meet { position: absolute; left: 10px; right: 10px; top: 10px; bottom: 40px; background: #1f2126; border: 1px solid #3a3e46; border-radius: 6px; }
+.mq-relleno .mini-meet::before { content: ""; position: absolute; inset: 8px 8px 18px; background: #2a2d33; border-radius: 4px; }
+.mq-relleno .mini-meet::after { content: ""; position: absolute; left: 50%; transform: translateX(-50%); bottom: 5px; width: 46px; height: 8px; border-radius: 4px; background: #8b3a3a; }
+.mq-relleno .mini-franja { position: absolute; left: 0; right: 0; bottom: 0; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-family: Menlo, monospace; letter-spacing: .02em; }
+.mq-relleno .mini-franja.esc { background: linear-gradient(150deg, #33405f 0%, #463d5e 100%); color: #cfd3d8; }
+.mq-relleno .mini-franja.esc i { position: absolute; display: block; border-radius: 3px; background: #23262c; border: 1px solid #40444c; }
+.mq-relleno .mini-franja.esc i.a { left: 12px; bottom: 6px; width: 92px; height: 20px; }
+.mq-relleno .mini-franja.esc i.b { right: 16px; bottom: 10px; width: 120px; height: 16px; }
+.mq-relleno .mini-franja.negro { background: #000; color: #4a4a4a; }
+.mq-relleno .mini-franja.fondo { background: linear-gradient(150deg, #33405f 0%, #463d5e 100%); }
+.mq-relleno figcaption { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; font-size: 12.5px; line-height: 1.55; color: #9aa2ad; }
+.mq-relleno figcaption strong { display: block; color: #e5e7eb; font-size: 13px; margin-bottom: 2px; }
+.mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
+.mq-relleno .elegido { outline: 2px solid #62d3b4; outline-offset: 3px; }
+
+/* Recorrido (index.html) — chrome de sala de diseño, jamás producto */
+.mq-hero { max-width: 1180px; margin: 22px auto 26px; padding: 0 18px; }
+.mq-hero h1 { font-family: Charter, Georgia, serif; font-size: 30px; line-height: 1.2; color: #e5e7eb; margin: 0 0 8px; }
+.mq-hero p { font-size: 14px; line-height: 1.6; color: #b6bcc5; max-width: 760px; margin: 0 0 8px; }
+.mq-hero p b { color: #e5e7eb; }
+.mq-hero .llaves { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.mq-hero .llaves span { font-family: Menlo, monospace; font-size: 11px; color: #7dd3fc; border: 1px solid #23485c; background: #0d1a22; border-radius: 4px; padding: 3px 9px; }
+.mq-grupo { max-width: 1180px; margin: 0 auto 26px; padding: 0 18px; }
+.mq-grupo > h2 { font-family: Menlo, monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #7dd3fc; margin: 0 0 4px; }
+.mq-grupo > p { font-size: 13px; color: #9aa2ad; margin: 0 0 12px; max-width: 760px; line-height: 1.55; }
+.mq-tarjetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 12px; }
+.mq-card { display: block; padding: 13px 15px; border: 1px solid #2b2f37; border-radius: 10px; background: #14171c; color: inherit; text-decoration: none; transition: border-color 140ms ease, background 140ms ease; }
+.mq-card:hover { border-color: #7dd3fc; background: #171b21; }
+.mq-card .num { font-family: Menlo, monospace; font-size: 11px; color: #7dd3fc; }
+.mq-card h3 { font-size: 15px; color: #e5e7eb; margin: 2px 0 4px; font-weight: 600; }
+.mq-card p { font-size: 12.5px; color: #9aa2ad; line-height: 1.5; margin: 0 0 9px; }
+.mq-card .ests { display: flex; flex-wrap: wrap; gap: 4px; }
+.mq-card .ests i { font-style: normal; font-family: Menlo, monospace; font-size: 10.5px; color: #8a919b; background: #1d2127; border: 1px solid #2b2f37; border-radius: 3px; padding: 1px 6px; }
+.mq-card .fx { display: block; margin-top: 8px; font-family: Menlo, monospace; font-size: 10.5px; color: #62d3b4; }
+.mq-card.estrella { border-color: #3f5a2a; background: #14180f; }
+.mq-card.estrella:hover { border-color: #9ccc65; }
+.mq-spike { max-width: 1180px; margin: 0 auto 40px; padding: 0 18px; }
+@media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }

@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="es" data-theme="dark" data-lang="es" data-estado="durante">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Angel Ghost · Maqueta — 05 Notas</title>
+<link rel="stylesheet" href="assets/ghost.css">
+<link rel="stylesheet" href="assets/maqueta.css">
+</head>
+<body class="mq">
+
+<div class="mq-bar" role="toolbar" aria-label="Sala de diseño">
+  <span class="mq-t">05 · Notas</span>
+  <span class="mq-g"><span>estado</span>
+    <button data-estado="durante">durante la reunión</button>
+    <button data-estado="bandeja">la bandeja, tras la reunión</button>
+    <button data-estado="propuestas">te propongo guardar</button>
+    <button data-estado="al-cerrar">al cerrar</button>
+    <button data-estado="archivo">el archivo cifrado</button>
+  </span>
+  <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
+  <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
+  <a href="index.html">← recorrido</a>
+</div>
+
+<div class="mq-nota">
+  <div class="n" data-para="durante"><b>Qué mirar:</b> el cuaderno mientras hablas. Escribir con <b>una tecla</b>, fijar una ficha con otra, marcar un acuerdo con otra. Los acuerdos <b>los marcas tú</b>: la app no decide qué fue un acuerdo. Abajo, dicho sin rodeos: esto es lo único que sobrevive.</div>
+  <div class="n" data-para="bandeja"><b>Qué mirar:</b> lo que pediste — decidir <b>después</b>, no durante. La reunión ya cerró y sus buffers ya murieron (columna derecha, todo en 0 B); lo único que sigue vivo son las <b>frases candidatas</b>, con una <b>cuenta atrás visible</b>. Mira las dos cosas que la hacen honesta: la ventana <b>la eliges tú</b> (y puedes dejarla en cero), y al vencer la bandeja <b>se borra sola aunque no abras la app</b>.</div>
+  <div class="n" data-para="propuestas"><b>Qué mirar:</b> la respuesta a «soy malo tomando notas». No tienes que tomarlas: la app <b>propone</b> y tú aceptas con una tecla. Fíjate en tres cosas: <b>proponer no es guardar</b> (nada entra sin tu sí), cada propuesta <b>dice de dónde salió</b>, y lo que no aceptes <b>muere con lo demás</b>. Abajo, la lista de lo que sabe reconocer: son reglas, no un modelo adivinando.</div>
+  <div class="n" data-para="al-cerrar"><b>Qué mirar:</b> el cierre como estado de cuentas, no como un «¿guardar?». Izquierda, lo que queda —incluidos <b>tus turnos</b>, la casilla que pediste, encendida por ti—. Derecha, lo que muere, y que <b>esa columna no tiene casilla</b>. Tu audio muere también: lo que queda de ti es texto.</div>
+  <div class="n" data-para="archivo"><b>Qué mirar:</b> el archivo como objeto tuyo: dónde está, con qué llave, cuánto vive. La retención <b>se cumple sola</b>, aunque no abras la app. Y la advertencia honesta: exportar a texto quita el cifrado.</div>
+  <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
+</div>
+
+<div style="display:flex;justify-content:center;padding:0 18px 40px">
+<main class="ventana" data-captura>
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"/></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a href="sesion.html"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a href="permisos.html"><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a href="corpus.html"><svg class="ic s"><use href="#i-doc"/></svg>Corpus</a>
+    <a href="notas.html" aria-current="page"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a href="honestidad.html"><svg class="ic s"><use href="#i-ram"/></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a href="idioma.html"><svg class="ic s"><use href="#i-globo"/></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a href="ia.html"><svg class="ic s"><use href="#i-chispa"/></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      <span class="estado ok" data-en="durante"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">En reunión · 0 B</span><span lang="en">In meeting · 0 B</span></span>
+      <span class="estado halo" data-en="bandeja"><svg class="ic s"><use href="#i-reloj"/></svg><span lang="es">Bandeja · 2 h 41</span><span lang="en">Tray · 2 h 41</span></span>
+      <span class="estado halo" data-en="propuestas"><svg class="ic s"><use href="#i-chispa"/></svg><span lang="es">7 propuestas</span><span lang="en">7 suggestions</span></span>
+      <span class="estado halo" data-en="al-cerrar"><svg class="ic s"><use href="#i-reloj"/></svg><span lang="es">Cerrando…</span><span lang="en">Closing…</span></span>
+      <span class="estado mute" data-en="archivo"><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Fuera de reunión</span><span lang="en">Out of meeting</span></span>
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">Notas</span><span lang="en">Notes</span></h1>
+      <p class="sub"><span lang="es">Lo que escribes tú. Es lo único de la reunión que llega al día siguiente.</span><span lang="en">What you write. It is the only part of the meeting that reaches tomorrow.</span></p>
+    </div>
+
+    <!-- ===== durante la reunión ===== -->
+    <div data-en="durante" style="display:flex;flex-direction:column;gap:12px">
+      <div class="grid-2" style="grid-template-columns:1.3fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta" style="display:flex;flex-direction:column;gap:8px;min-height:300px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Tu nota</span><span lang="en">Your note</span></h2><span class="tecla"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>N</kbd></span></div>
+          <div style="font-family:var(--font-evidencia);font-size:14.5px;line-height:1.6;color:var(--ink)">
+            <p style="margin-bottom:8px"><span lang="es">Piden la cuarta fuente (Excel de logística). Recordarles que va como adicional — está en §3.2.</span><span lang="en">They are asking for the fourth source (logistics Excel). Remind them it is an add-on — it is in §3.2.</span></p>
+            <p style="margin-bottom:8px"><span lang="es">Andrea insiste en tener el tablero para el cierre de trimestre. Fecha real: 12 semanas desde la firma.</span><span lang="en">Andrea wants the dashboard by quarter close. Real date: 12 weeks from signature.</span></p>
+            <p style="color:var(--ink-2)"><span lang="es">Sigue escribiendo…</span><span lang="en">Keep writing…</span></p>
+          </div>
+          <span class="crece"></span>
+          <div class="propuesta" style="margin-top:4px">
+            <svg class="ic"><use href="#i-chispa"/></svg>
+            <span class="que"><span lang="es">Fecha real del tablero: 12 semanas desde la firma.</span><span lang="en">Real dashboard date: 12 weeks from signature.</span></span>
+            <span class="de"><span class="origen"><span lang="es">te propongo guardarlo · lo dijiste tú</span><span lang="en">suggested · you said it</span></span></span>
+            <span class="acciones"><span class="tecla"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>↵</kbd></span></span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="tarjeta" style="padding-bottom:8px">
+            <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Fichas que fijaste</span><span lang="en">Cards you pinned</span></h2><span class="tecla"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>P</kbd></span></div>
+            <div class="mas"><svg class="ic s"><use href="#i-pin-lleno"/></svg><span class="titulos crece"><span lang="es">Limpieza de datos: hasta tres fuentes</span><span lang="en">Data cleansing: up to three sources</span></span><span class="n">§3.2</span></div>
+            <div class="mas"><svg class="ic s"><use href="#i-pin-lleno"/></svg><span class="titulos crece"><span lang="es">Sur del Valle: 11 semanas reales</span><span lang="en">Sur del Valle: 11 weeks actual</span></span><span class="n"><span lang="es">caso</span><span lang="en">case</span></span></div>
+          </div>
+          <div class="tarjeta" style="padding-bottom:8px">
+            <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Acuerdos</span><span lang="en">Agreements</span></h2><span class="tecla"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>A</kbd></span></div>
+            <div class="mas"><svg class="ic s"><use href="#i-check-circle"/></svg><span class="titulos crece"><span lang="es">Cuarta fuente: cotización aparte</span><span lang="en">Fourth source: quoted separately</span></span></div>
+            <div class="mas"><svg class="ic s"><use href="#i-check-circle"/></svg><span class="titulos crece"><span lang="es">Propuesta revisada el viernes</span><span lang="en">Revised proposal on Friday</span></span></div>
+            <p style="font-size:11.5px;color:var(--ink-2);margin-top:4px"><span lang="es">Los marcas tú. La app no decide qué fue un acuerdo.</span><span lang="en">You mark them. The app does not decide what counted as an agreement.</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="franja ok" role="status">
+        <svg class="ic relleno"><use href="#i-check-circle"/></svg>
+        <div>
+          <strong><span lang="es">Esto es lo único que va a sobrevivir a la reunión</span><span lang="en">This is the only thing that will survive the meeting</span></strong>
+          <p><span lang="es">Lo que escribes aquí, las fichas que fijas y los acuerdos que marcas. Todo lo demás —las dos voces, el transcript, lo que se leyó de la pantalla— vive en memoria y muere al cerrar.</span><span lang="en">What you write here, the cards you pin and the agreements you mark. Everything else —both voices, the transcript, what was read off the screen— lives in memory and dies on close.</span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== la bandeja, tras la reunión ===== -->
+    <div data-en="bandeja" style="display:flex;flex-direction:column;gap:10px">
+      <div class="cuenta" role="status">
+        <svg class="ic"><use href="#i-reloj"/></svg>
+        <span class="reloj">2:41:08</span>
+        <span class="txt"><span lang="es"><b>La reunión cerró.</b> Te quedan 2 h 41 min para decidir qué guardar de las 7 propuestas. Al llegar a cero, la bandeja se borra sola.</span><span lang="en"><b>The meeting is closed.</b> You have 2 h 41 min to decide what to keep of the 7 suggestions. At zero, the tray deletes itself.</span></span>
+      </div>
+      <div class="grid-2" style="grid-template-columns:1.5fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta" style="display:flex;flex-direction:column;gap:6px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Esperan tu decisión</span><span lang="en">Waiting on you</span></h2><span class="mono" style="color:var(--ink-2);font-size:11px">7 · 4 KB</span></div>
+          <div class="propuesta">
+            <svg class="ic"><use href="#i-reloj"/></svg>
+            <span class="que"><span lang="es">Fecha real del tablero: 12 semanas desde la firma.</span><span lang="en">Real dashboard date: 12 weeks from signature.</span></span>
+            <span class="de"><span class="origen"><span lang="es">lo dijiste tú · 14:16</span><span lang="en">you said it · 14:16</span></span></span>
+            <span class="acciones"><button class="btn mini primario"><span lang="es">Guardar</span><span lang="en">Save</span></button><button class="btn mini"><span lang="es">No</span><span lang="en">No</span></button></span>
+          </div>
+          <div class="propuesta">
+            <svg class="ic"><use href="#i-alert"/></svg>
+            <span class="que"><span lang="es">Piden cuatro fuentes; tu propuesta fijada dice tres.</span><span lang="en">They ask for four sources; your pinned card says three.</span></span>
+            <span class="de"><span class="origen"><span lang="es">choca con una ficha · §3.2</span><span lang="en">clashes with a card · §3.2</span></span></span>
+            <span class="acciones"><button class="btn mini primario"><span lang="es">Guardar</span><span lang="en">Save</span></button><button class="btn mini"><span lang="es">No</span><span lang="en">No</span></button></span>
+          </div>
+          <div class="propuesta aceptada">
+            <svg class="ic relleno"><use href="#i-check-circle"/></svg>
+            <span class="que"><span lang="es">La cuarta fuente se cotiza aparte.</span><span lang="en">The fourth source is quoted separately.</span></span>
+            <span class="de"><span class="origen"><span lang="es">guardada · ya está en tu archivo</span><span lang="en">saved · already in your file</span></span></span>
+            <span class="acciones"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">guardada</span><span lang="en">saved</span></span></span>
+          </div>
+          <div class="fila"><span class="mono crece" style="color:var(--ink-2);font-size:11px"><span lang="es">3 de 7</span><span lang="en">3 of 7</span></span><button class="btn mini"><span lang="es">Guardar todas</span><span lang="en">Save all</span></button><button class="btn mini"><span lang="es">Descartar todas</span><span lang="en">Discard all</span></button></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="tarjeta" style="padding-bottom:6px">
+            <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Ya murió, al cerrar</span><span lang="en">Already dead, on close</span></h2>
+            <div class="buffer muerto"><svg class="ic s"><use href="#i-mic"/></svg><span class="que"><span lang="es">Audio · las dos pistas</span><span lang="en">Audio · both tracks</span></span><span class="cuanto">0 B</span></div>
+            <div class="buffer muerto"><svg class="ic s"><use href="#i-ojo"/></svg><span class="que"><span lang="es">Transcript del cliente</span><span lang="en">Client transcript</span></span><span class="cuanto">0 B</span></div>
+            <div class="buffer muerto"><svg class="ic s"><use href="#i-pantalla"/></svg><span class="que"><span lang="es">Lecturas de pantalla</span><span lang="en">Screen reads</span></span><span class="cuanto">0 B</span></div>
+            <p style="font-size:11px;color:var(--ink-2);margin-top:6px"><span lang="es">La bandeja guarda <b>frases</b>, no la reunión. Esas tres murieron en el instante de cerrar, sin ventana ni casilla.</span><span lang="en">The tray holds <b>sentences</b>, not the meeting. Those three died the instant it closed, with no window and no checkbox.</span></p>
+          </div>
+          <div class="tarjeta" style="padding:10px 14px">
+            <h2 class="seccion" style="margin:0 0 6px"><span lang="es">Cuánto quieres esperar</span><span lang="en">How long you want</span></h2>
+            <div class="ventanas">
+              <span class="op"><span lang="es">al cerrar</span><span lang="en">on close</span></span>
+              <span class="op">1 h</span>
+              <span class="op on"><svg class="ic s relleno"><use href="#i-check-circle"/></svg>3 h</span>
+              <span class="op"><span lang="es">fin del día</span><span lang="en">end of day</span></span>
+              <span class="op">24 h</span>
+            </div>
+          </div>
+          <div class="franja warn" role="status">
+            <svg class="ic relleno"><use href="#i-alert"/></svg>
+            <div>
+              <strong><span lang="es">Es una ventana, no un archivo</span><span lang="en">It is a window, not a file</span></strong>
+              <p><span lang="es">Al llegar a cero se borra sola <b>aunque nunca vuelvas a abrir la app</b>. Vuelve cinco horas después y ya no está: es el precio de que tenga fondo.</span><span lang="en">At zero it deletes itself <b>even if you never reopen the app</b>. Come back five hours later and it is gone: the price of it having a bottom.</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== te propongo guardar ===== -->
+    <div data-en="propuestas" style="display:flex;flex-direction:column;gap:12px">
+      <div class="grid-2" style="grid-template-columns:1.45fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta" style="display:flex;flex-direction:column;gap:7px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Te propongo guardar esto</span><span lang="en">I suggest saving this</span></h2><span class="tecla"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>↵</kbd></span></div>
+          <div class="propuesta aceptada">
+            <svg class="ic relleno"><use href="#i-check-circle"/></svg>
+            <span class="que"><span lang="es">La cuarta fuente se cotiza aparte.</span><span lang="en">The fourth source is quoted separately.</span></span>
+            <span class="de"><span class="origen"><span lang="es">lo dijiste tú · 14:09</span><span lang="en">you said it · 14:09</span></span><span lang="es">· compromiso</span><span lang="en">· commitment</span></span>
+            <span class="acciones"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">aceptada</span><span lang="en">accepted</span></span></span>
+          </div>
+          <div class="propuesta">
+            <svg class="ic"><use href="#i-reloj"/></svg>
+            <span class="que"><span lang="es">Fecha real del tablero: 12 semanas desde la firma.</span><span lang="en">Real dashboard date: 12 weeks from signature.</span></span>
+            <span class="de"><span class="origen"><span lang="es">lo dijiste tú · 14:16</span><span lang="en">you said it · 14:16</span></span><span lang="es">· cifra y fecha</span><span lang="en">· figure and date</span></span>
+            <span class="acciones"><button class="btn mini primario"><span lang="es">Guardar</span><span lang="en">Save</span></button><button class="btn mini"><span lang="es">No</span><span lang="en">No</span></button></span>
+          </div>
+          <div class="propuesta">
+            <svg class="ic"><use href="#i-alert"/></svg>
+            <span class="que"><span lang="es">Piden cuatro fuentes; tu propuesta fijada dice tres.</span><span lang="en">They ask for four sources; your pinned card says three.</span></span>
+            <span class="de"><span class="origen"><span lang="es">choca con una ficha que fijaste</span><span lang="en">clashes with a card you pinned</span></span><span lang="es">· §3.2</span><span lang="en">· §3.2</span></span>
+            <span class="acciones"><button class="btn mini primario"><span lang="es">Guardar</span><span lang="en">Save</span></button><button class="btn mini"><span lang="es">No</span><span lang="en">No</span></button></span>
+          </div>
+          <div class="propuesta descartada">
+            <svg class="ic"><use href="#i-x-circle"/></svg>
+            <span class="que"><span lang="es">Mencionaron a «Andrea Villalba», que no está en tu corpus.</span><span lang="en">They mentioned “Andrea Villalba”, not in your corpus.</span></span>
+            <span class="de"><span class="origen"><span lang="es">nombre nuevo · descartada por ti</span><span lang="en">new name · discarded by you</span></span></span>
+            <span class="acciones"><span class="estado mute"><svg class="ic s"><use href="#i-x-circle"/></svg><span lang="es">muere</span><span lang="en">dies</span></span></span>
+          </div>
+          <div class="fila"><span class="mono crece" style="color:var(--ink-2);font-size:11px"><span lang="es">3 de 7</span><span lang="en">3 of 7</span></span><button class="btn mini"><span lang="es">Ver todas</span><span lang="en">See all</span></button></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="franja ok" role="status">
+            <svg class="ic relleno"><use href="#i-check-circle"/></svg>
+            <div>
+              <strong><span lang="es">Proponer no es guardar</span><span lang="en">Suggesting is not saving</span></strong>
+              <p><span lang="es">Ninguna propuesta entra al archivo sin tu sí. Las que no aceptes mueren con el resto de la reunión, como si nunca se hubieran escrito.</span><span lang="en">No suggestion reaches the file without your yes. Those you do not accept die with the rest of the meeting, as if never written.</span></p>
+            </div>
+          </div>
+          <div class="tarjeta" style="padding-bottom:6px">
+            <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Qué sabe reconocer</span><span lang="en">What it can recognise</span></h2>
+            <table class="tabla">
+              <tbody>
+                <tr><td><span lang="es">Cifras, plazos y fechas dichos en voz alta</span><span lang="en">Figures, terms and dates said out loud</span></td></tr>
+                <tr><td><span lang="es">Compromisos tuyos («te lo mando», «quedamos en»)</span><span lang="en">Your commitments (“I'll send it”, “we agreed”)</span></td></tr>
+                <tr><td><span lang="es">Lo que contradice una ficha que fijaste</span><span lang="en">Anything clashing with a card you pinned</span></td></tr>
+                <tr><td><span lang="es">Nombres propios que no están en tu corpus</span><span lang="en">Proper names missing from your corpus</span></td></tr>
+              </tbody>
+            </table>
+            <p style="font-size:11.5px;color:var(--ink-2);margin-top:6px"><span lang="es">Son <b>reglas</b>, no un modelo adivinando: la lista de arriba es la lista entera y puedes leerla. Si enciendes el modelo local, solo <b>redacta mejor</b> la propuesta — nunca decide cuál merece guardarse.</span><span lang="en">These are <b>rules</b>, not a model guessing: the list above is the whole list and you can read it. With the local model on, it only <b>phrases</b> the suggestion better — it never decides which one deserves saving.</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="franja warn" role="status">
+        <svg class="ic relleno"><use href="#i-alert"/></svg>
+        <div>
+          <strong><span lang="es">Cuando la propuesta nace de lo que dijo el cliente</span><span lang="en">When the suggestion comes from what the client said</span></strong>
+          <p><span lang="es">Se guarda como <b>un hecho en una línea</b> —«piden cuatro fuentes»—, nunca su transcripción literal, y solo si la aceptas. Su voz y sus turnos siguen muriendo al cerrar: eso no cambia.</span><span lang="en">It is saved as <b>a one-line fact</b> —“they ask for four sources”—, never their verbatim transcript, and only if you accept it. Their voice and turns still die on close: that does not change.</span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== al cerrar ===== -->
+    <div data-en="al-cerrar" style="display:flex;flex-direction:column;gap:12px">
+      <div class="grid-2" style="gap:12px;align-items:start">
+        <div class="tarjeta" style="padding-bottom:8px">
+          <h2 class="seccion" style="margin:0 0 6px"><span lang="es">Se va a guardar</span><span lang="en">Will be saved</span></h2>
+          <div class="buffer"><svg class="ic s"><use href="#i-nota"/></svg><span class="que"><span lang="es">Tus notas</span><span lang="en">Your notes</span></span><span class="donde"><span lang="es">3 párrafos</span><span lang="en">3 paragraphs</span></span><span class="cuanto">2 KB</span></div>
+          <div class="buffer"><svg class="ic s"><use href="#i-pin-lleno"/></svg><span class="que"><span lang="es">Fichas fijadas</span><span lang="en">Pinned cards</span></span><span class="donde"><span lang="es">2 · titular y fuente</span><span lang="en">2 · headline and source</span></span><span class="cuanto">1 KB</span></div>
+          <div class="buffer"><svg class="ic s"><use href="#i-check-circle"/></svg><span class="que"><span lang="es">Acuerdos</span><span lang="en">Agreements</span></span><span class="donde"><span lang="es">2 · marcados por ti</span><span lang="en">2 · marked by you</span></span><span class="cuanto">1 KB</span></div>
+          <div class="buffer"><svg class="ic s"><use href="#i-mic"/></svg><span class="que"><span lang="es">Tus turnos, en texto</span><span lang="en">Your turns, as text</span></span><span class="donde"><span lang="es">41 · lo que dijiste tú</span><span lang="en">41 · what you said</span></span><span class="cuanto">18 KB</span></div>
+          <label class="conm on" style="margin:8px 2px 2px"><span class="track"></span><span class="etq"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Conservar mis turnos</span><span lang="en">Keep my turns</span></span></label>
+          <p style="font-size:11.5px;color:var(--ink-2);margin-top:4px"><span lang="es">Lo encendiste tú; nace apagado. <b>El audio no se guarda nunca</b>, tampoco el tuyo: lo que queda de ti es texto.</span><span lang="en">You turned this on; it ships off. <b>Audio is never saved</b>, not even yours: what remains of you is text.</span></p>
+        </div>
+        <div class="tarjeta" style="padding-bottom:8px">
+          <h2 class="seccion" style="margin:0 0 6px"><span lang="es">Muere al cerrar</span><span lang="en">Dies on close</span></h2>
+          <div class="buffer muerto"><svg class="ic s"><use href="#i-sistema"/></svg><span class="que"><span lang="es">Voz del cliente</span><span lang="en">Client's voice</span></span><span class="donde"><span lang="es">sin interruptor que lo cambie</span><span lang="en">no switch can change this</span></span><span class="cuanto">0 B</span></div>
+          <div class="buffer muerto"><svg class="ic s"><use href="#i-ojo"/></svg><span class="que"><span lang="es">Sus turnos del transcript</span><span lang="en">Their turns in the transcript</span></span><span class="donde"><span lang="es">63 turnos</span><span lang="en">63 turns</span></span><span class="cuanto">0 B</span></div>
+          <div class="buffer muerto"><svg class="ic s"><use href="#i-pantalla"/></svg><span class="que"><span lang="es">Lo leído de la pantalla</span><span lang="en">What was read off the screen</span></span><span class="donde"><span lang="es">9 lecturas</span><span lang="en">9 reads</span></span><span class="cuanto">0 B</span></div>
+          <div class="buffer muerto"><svg class="ic s"><use href="#i-mic"/></svg><span class="que"><span lang="es">Tu propio audio</span><span lang="en">Your own audio</span></span><span class="donde"><span lang="es">también muere</span><span lang="en">dies too</span></span><span class="cuanto">0 B</span></div>
+          <p style="font-size:11.5px;color:var(--ink-2);margin-top:10px"><span lang="es">Esta columna no tiene casilla. Es la regla, no una preferencia.</span><span lang="en">This column has no checkbox. It is the rule, not a preference.</span></p>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <span class="mono" style="color:var(--ink-2);font-size:11.5px">2026-09-20 · Páramo Azul · 47 min → paramo-azul-2026-09-20.ghost</span>
+        <div class="fila" style="gap:8px">
+          <span class="crece"></span>
+          <button class="btn"><span lang="es">Cerrar sin guardar</span><span lang="en">Close without saving</span></button>
+          <button class="btn primario"><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Guardar cifrado y cerrar</span><span lang="en">Save encrypted and close</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== el archivo ===== -->
+    <div data-en="archivo" style="display:flex;flex-direction:column;gap:12px">
+      <div class="grid-2" style="grid-template-columns:1.25fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta" style="padding-bottom:6px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0">paramo-azul-2026-09-20.ghost</h2><span class="estado ok"><svg class="ic s relleno"><use href="#i-candado"/></svg><span lang="es">cifrado</span><span lang="en">encrypted</span></span></div>
+          <table class="tabla">
+            <tbody>
+              <tr><td><span lang="es">Dónde</span><span lang="en">Where</span></td><td class="mono">~/Documentos/Angel Ghost/</td></tr>
+              <tr><td><span lang="es">Tamaño</span><span lang="en">Size</span></td><td class="mono">22 KB</td></tr>
+              <tr><td><span lang="es">Llave</span><span lang="en">Key</span></td><td><span lang="es">en tu Llavero, ligada a este Mac</span><span lang="en">in your Keychain, tied to this Mac</span></td></tr>
+              <tr><td><span lang="es">Retención</span><span lang="en">Retention</span></td><td><span class="estado warn"><svg class="ic s relleno"><use href="#i-reloj"/></svg><span lang="es">se borra solo en 90 días</span><span lang="en">self-deletes in 90 days</span></span></td></tr>
+              <tr><td><span lang="es">Del cliente</span><span lang="en">From the client</span></td><td><span lang="es">nada. Ni su voz, ni sus turnos, ni su pantalla</span><span lang="en">nothing. Not their voice, their turns, or their screen</span></td></tr>
+            </tbody>
+          </table>
+          <div class="fila" style="gap:8px;margin-top:10px">
+            <button class="btn"><svg class="ic s"><use href="#i-doc"/></svg><span lang="es">Exportar a texto</span><span lang="en">Export to text</span></button>
+            <button class="btn"><svg class="ic s"><use href="#i-reloj"/></svg><span lang="es">Cambiar retención</span><span lang="en">Change retention</span></button>
+            <span class="crece"></span>
+            <button class="btn"><svg class="ic s"><use href="#i-basura"/></svg><span lang="es">Borrar ahora</span><span lang="en">Delete now</span></button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="franja warn" role="status">
+            <svg class="ic relleno"><use href="#i-alert"/></svg>
+            <div>
+              <strong><span lang="es">Exportar a texto quita el cifrado</span><span lang="en">Exporting to text removes the encryption</span></strong>
+              <p><span lang="es">El archivo exportado es tuyo y se lee en cualquier parte — por eso mismo ya no lo protege nadie. Se avisa antes, cada vez.</span><span lang="en">The exported file is yours and opens anywhere — which is exactly why nothing protects it any more. You are warned each time.</span></p>
+            </div>
+          </div>
+          <div class="franja ok" role="status">
+            <svg class="ic relleno"><use href="#i-check-circle"/></svg>
+            <div>
+              <strong><span lang="es">La retención se cumple sola</span><span lang="en">Retention enforces itself</span></strong>
+              <p><span lang="es">A los 90 días el archivo se borra aunque no abras la app. No hay copia en otro sitio que sobreviva a ese borrado.</span><span lang="en">After 90 days the file is deleted even if you never open the app. No copy elsewhere survives that deletion.</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tarjeta" style="padding-bottom:6px">
+        <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Reuniones guardadas</span><span lang="en">Saved meetings</span></h2>
+        <table class="tabla">
+          <thead><tr><th><span lang="es">archivo</span><span lang="en">file</span></th><th><span lang="es">fecha</span><span lang="en">date</span></th><th class="num"><span lang="es">tamaño</span><span lang="en">size</span></th><th class="num"><span lang="es">se borra en</span><span lang="en">deletes in</span></th></tr></thead>
+          <tbody>
+            <tr><td class="mono">paramo-azul-2026-09-20.ghost</td><td class="mono">20 sep</td><td class="num">22 KB</td><td class="num">90 d</td></tr>
+            <tr><td class="mono">paramo-azul-2026-09-06.ghost</td><td class="mono">06 sep</td><td class="num">17 KB</td><td class="num">76 d</td></tr>
+            <tr class="apagada"><td class="mono">sur-del-valle-2026-07-02.ghost</td><td class="mono">02 jul</td><td class="num">31 KB</td><td class="num">10 d</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+</div>
+
+<script src="assets/iconos.js"></script>
+<script src="assets/maqueta.js"></script>
+</body>
+</html>

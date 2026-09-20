@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="es" data-theme="dark" data-lang="es" data-estado="oculto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Angel Ghost · Maqueta — 07 Idioma</title>
+<link rel="stylesheet" href="assets/ghost.css">
+<link rel="stylesheet" href="assets/maqueta.css">
+</head>
+<body class="mq">
+
+<div class="mq-bar" role="toolbar" aria-label="Sala de diseño">
+  <span class="mq-t">07 · Idioma</span>
+  <span class="mq-g"><span>estado</span>
+    <button data-estado="oculto">transcript oculto</button>
+    <button data-estado="visible">transcript visible</button>
+    <button data-estado="varios">varios idiomas</button>
+    <button data-estado="diccionario">diccionario técnico</button>
+  </span>
+  <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
+  <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
+  <a href="index.html">← recorrido</a>
+</div>
+
+<div class="mq-nota">
+  <div class="n" data-para="oculto"><b>Qué mirar:</b> el valor por defecto <b>y su razón escrita</b>. La transcripción corre —es lo que dispara las fichas— pero no se ve, porque leerla es dejar de escuchar. A la derecha, las dos pistas con su idioma detectado por separado.</div>
+  <div class="n" data-para="visible"><b>Qué mirar:</b> cuando la abres, sigue siendo austera: turnos cortos, quién habló, nada de colores ni burbujas. Y el aviso que la propia pantalla se hace a sí misma. Abajo a la derecha, la regla de siempre: <b>tus turnos pueden quedarse, los del cliente no</b>.</div>
+  <div class="n" data-para="varios"><b>Qué mirar:</b> el cambio que pediste. Cada pista deja de tener <b>un</b> idioma y pasa a tener <b>los que tú marques</b>. Tres modos: automático, fijo o varios a la vez — para las reuniones donde se salta de un idioma a otro en la misma frase. Abajo, lo que cuesta dicho sin adornos, y una decisión aparte que la gente confunde: <b>en qué idioma quieres leer tus fichas</b>.</div>
+  <div class="n" data-para="diccionario"><b>Qué mirar:</b> el diccionario como herramienta tuya, no como corrector automático. Lo tachado es lo que se oyó; lo resaltado, lo que tú decidiste leer. Fíjate en «churn»: cuando el término vive en los dos idiomas, se conserva el original entre paréntesis.</div>
+  <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
+</div>
+
+<div style="display:flex;justify-content:center;padding:0 18px 40px">
+<main class="ventana" data-captura>
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"/></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a href="sesion.html"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a href="permisos.html"><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a href="corpus.html"><svg class="ic s"><use href="#i-doc"/></svg>Corpus</a>
+    <a href="notas.html"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a href="honestidad.html"><svg class="ic s"><use href="#i-ram"/></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a href="idioma.html" aria-current="page"><svg class="ic s"><use href="#i-globo"/></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a href="ia.html"><svg class="ic s"><use href="#i-chispa"/></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      <span class="estado mute" data-en="oculto"><svg class="ic s"><use href="#i-ojo-off"/></svg><span lang="es">Transcript oculto</span><span lang="en">Transcript hidden</span></span>
+      <span class="estado halo" data-en="visible"><svg class="ic s"><use href="#i-ojo"/></svg><span lang="es">Transcript visible</span><span lang="en">Transcript visible</span></span>
+      <span class="estado halo" data-en="varios"><svg class="ic s"><use href="#i-globo"/></svg><span lang="es">es · en · pt</span><span lang="en">es · en · pt</span></span>
+      <span class="estado ok" data-en="diccionario"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">312 términos</span><span lang="en">312 terms</span></span>
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">Idioma y transcripción</span><span lang="en">Language and transcript</span></h1>
+      <p class="sub"><span lang="es">Dos pistas, los idiomas que marques, y un diccionario que es tuyo. La transcripción trabaja; casi nunca la miras.</span><span lang="en">Two tracks, the languages you tick, and a dictionary that is yours. The transcript works; you hardly ever look at it.</span></p>
+    </div>
+
+    <!-- ===== transcript oculto ===== -->
+    <div data-en="oculto" style="display:flex;flex-direction:column;gap:12px">
+      <div class="grid-2" style="grid-template-columns:1.2fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Transcripción en vivo</span><span lang="en">Live transcript</span></h2><label class="conm off"><span class="track"></span><span class="etq"><svg class="ic s"><use href="#i-ojo-off"/></svg><span lang="es">oculta</span><span lang="en">hidden</span></span></label></div>
+          <p style="margin-top:8px"><span lang="es">Nace oculta a propósito. Leer lo que acaban de decir es la forma más rápida de dejar de escuchar: los ojos se van al texto y la conversación se queda sola.</span><span lang="en">It ships hidden on purpose. Reading what was just said is the fastest way to stop listening: your eyes go to the text and the conversation is left alone.</span></p>
+          <p style="margin-top:8px"><span lang="es">Sigue corriendo: es lo que dispara las fichas. Solo no la ves.</span><span lang="en">It keeps running: it is what triggers the cards. You just do not see it.</span></p>
+          <div class="fila" style="margin-top:10px;gap:10px"><span class="tecla"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>T</kbd></span><span style="font-size:12.5px;color:var(--ink-2)"><span lang="es">la muestra cuando la necesites</span><span lang="en">shows it when you need it</span></span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="tarjeta" style="padding-bottom:6px">
+            <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Idioma por pista</span><span lang="en">Language per track</span></h2>
+            <div class="buffer"><svg class="ic s"><use href="#i-mic"/></svg><span class="que"><span lang="es">Tú · micrófono</span><span lang="en">You · microphone</span></span><span class="donde"><span lang="es">detectado</span><span lang="en">detected</span></span><span class="cuanto">es-CO</span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-sistema"/></svg><span class="que"><span lang="es">Cliente · sistema</span><span lang="en">Client · system</span></span><span class="donde"><span lang="es">detectado</span><span lang="en">detected</span></span><span class="cuanto">en-US</span></div>
+            <p style="font-size:11.5px;color:var(--ink-2);margin-top:6px"><span lang="es">Cada pista se transcribe en su idioma. Las fichas salen en el tuyo.</span><span lang="en">Each track is transcribed in its own language. Cards surface in yours.</span></p>
+          </div>
+          <div class="franja ok" role="status">
+            <svg class="ic relleno"><use href="#i-mac"/></svg>
+            <div>
+              <strong><span lang="es">Transcribe tu Mac, no un servicio</span><span lang="en">Your Mac transcribes, not a service</span></strong>
+              <p><span lang="es">El motor de voz de macOS, con respaldo local si tu versión no lo trae. Ningún audio sale del equipo para convertirse en texto.</span><span lang="en">The macOS speech engine, with a local fallback if your version lacks it. No audio leaves the machine to become text.</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== transcript visible ===== -->
+    <div data-en="visible" style="display:flex;flex-direction:column;gap:12px">
+      <div class="grid-2" style="grid-template-columns:1.35fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta" style="display:flex;flex-direction:column;gap:6px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Transcripción en vivo</span><span lang="en">Live transcript</span></h2><label class="conm on"><span class="track"></span><span class="etq"><svg class="ic s"><use href="#i-ojo"/></svg><span lang="es">visible</span><span lang="en">visible</span></span></label></div>
+          <div style="display:flex;flex-direction:column;gap:7px;font-size:13px">
+            <div class="oido"><span class="quien" style="color:var(--halo)"><span lang="es">tú</span><span lang="en">you</span></span><q><span lang="es">La limpieza entra hasta tres fuentes, eso está en el alcance.</span><span lang="en">Cleansing covers up to three sources, that is in the scope.</span></q></div>
+            <div class="oido"><span class="quien"><span lang="es">cliente</span><span lang="en">client</span></span><q><span lang="es">Pero nosotros tenemos cuatro, contando el Excel de logística.</span><span lang="en">But we have four, counting the logistics Excel.</span></q></div>
+            <div class="oido"><span class="quien" style="color:var(--halo)"><span lang="es">tú</span><span lang="en">you</span></span><q><span lang="es">La cuarta la cotizamos aparte, sin problema.</span><span lang="en">We quote the fourth separately, no problem.</span></q></div>
+            <div class="oido"><span class="quien"><span lang="es">cliente</span><span lang="en">client</span></span><q><span lang="es">¿Y eso mueve la fecha de cierre de trimestre?</span><span lang="en">And does that move the quarter-close date?</span></q></div>
+          </div>
+          <div class="fila" style="margin-top:2px"><span class="tecla crece"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>T</kbd></span><span class="mono" style="color:var(--ink-2);font-size:11.5px"><span lang="es">últimos 12 turnos · en memoria</span><span lang="en">last 12 turns · in memory</span></span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="franja warn" role="status">
+            <svg class="ic relleno"><use href="#i-alert"/></svg>
+            <div>
+              <strong><span lang="es">Mirar aquí es dejar de mirar allá</span><span lang="en">Looking here means not looking there</span></strong>
+              <p><span lang="es">Úsala para recuperar una cifra que se te escapó, no para seguir la conversación. Se oculta con la misma tecla.</span><span lang="en">Use it to recover a figure you missed, not to follow the conversation. The same key hides it.</span></p>
+            </div>
+          </div>
+          <div class="tarjeta" style="padding-bottom:6px">
+            <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Qué pasa con estos turnos</span><span lang="en">What happens to these turns</span></h2>
+            <div class="buffer"><svg class="ic s"><use href="#i-mic"/></svg><span class="que"><span lang="es">Los tuyos</span><span lang="en">Yours</span></span><span class="donde"><span lang="es">se guardan si lo enciendes</span><span lang="en">saved if you turn it on</span></span><span class="cuanto"><span lang="es">texto</span><span lang="en">text</span></span></div>
+            <div class="buffer muerto"><svg class="ic s"><use href="#i-sistema"/></svg><span class="que"><span lang="es">Los del cliente</span><span lang="en">The client's</span></span><span class="donde"><span lang="es">mueren al cerrar, siempre</span><span lang="en">die on close, always</span></span><span class="cuanto">0 B</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== varios idiomas ===== -->
+    <div data-en="varios" style="display:flex;flex-direction:column;gap:12px">
+      <div class="grid-2" style="grid-template-columns:1.25fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta" style="display:flex;flex-direction:column;gap:12px">
+          <h2 class="seccion" style="margin:0"><span lang="es">Qué idiomas escucha cada pista</span><span lang="en">Which languages each track listens for</span></h2>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="fila"><svg class="ic s"><use href="#i-mic"/></svg><span class="crece" style="font-size:13px"><span lang="es">Tú · micrófono</span><span lang="en">You · microphone</span></span><span class="estado mute"><span lang="es">automático</span><span lang="en">automatic</span></span></div>
+            <div class="idiomas">
+              <span class="lg on"><svg class="ic s relleno"><use href="#i-check-circle"/></svg>es-CO</span>
+              <span class="lg on"><svg class="ic s relleno"><use href="#i-check-circle"/></svg>en-US</span>
+              <span class="lg">pt-BR</span>
+              <span class="lg">fr-FR</span>
+              <span class="lg"><span lang="es">+ añadir</span><span lang="en">+ add</span></span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="fila"><svg class="ic s"><use href="#i-sistema"/></svg><span class="crece" style="font-size:13px"><span lang="es">Cliente · audio del sistema</span><span lang="en">Client · system audio</span></span><span class="estado halo"><span lang="es">varios, fijados por ti</span><span lang="en">several, set by you</span></span></div>
+            <div class="idiomas">
+              <span class="lg on"><svg class="ic s relleno"><use href="#i-check-circle"/></svg>es-CO</span>
+              <span class="lg on"><svg class="ic s relleno"><use href="#i-check-circle"/></svg>en-US</span>
+              <span class="lg on"><svg class="ic s relleno"><use href="#i-check-circle"/></svg>pt-BR</span>
+              <span class="lg">fr-FR</span>
+              <span class="lg"><span lang="es">+ añadir</span><span lang="en">+ add</span></span>
+            </div>
+          </div>
+          <p style="font-size:12px;color:var(--ink-2);line-height:1.5"><span lang="es">Las pistas son independientes: puedes hablar en español mientras el cliente salta entre inglés y portugués. Con <b>varios marcados</b> el motor no adivina el idioma de la reunión — reconoce cualquiera de ellos, incluso mezclados en la misma frase.</span><span lang="en">The tracks are independent: you can speak Spanish while the client switches between English and Portuguese. With <b>several ticked</b> the engine does not guess the meeting's language — it recognises any of them, even mixed within one sentence.</span></p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="tarjeta" style="padding-bottom:6px">
+            <h2 class="seccion" style="margin:0 0 4px"><span lang="es">En qué idioma quieres leer</span><span lang="en">Which language you want to read in</span></h2>
+            <p style="font-size:12.5px;margin-bottom:8px"><span lang="es">Decisión aparte de la anterior, y la que más se confunde: escuchar en tres idiomas no obliga a <b>leer</b> en tres.</span><span lang="en">A separate decision from the one above, and the most confused one: listening in three languages does not force you to <b>read</b> in three.</span></p>
+            <table class="tabla">
+              <tbody>
+                <tr><td><span lang="es">Interfaz</span><span lang="en">Interface</span></td><td class="mono">es</td></tr>
+                <tr><td><span lang="es">Fichas del corpus</span><span lang="en">Corpus cards</span></td><td><span lang="es">como esté el documento</span><span lang="en">as the document has it</span></td></tr>
+                <tr><td><span lang="es">Transcripción</span><span lang="en">Transcript</span></td><td><span lang="es">cada turno en su idioma</span><span lang="en">each turn in its own language</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="franja warn" role="status">
+            <svg class="ic relleno"><use href="#i-alert"/></svg>
+            <div>
+              <strong><span lang="es">Lo que cuesta, sin adornos</span><span lang="en">What it costs, plainly</span></strong>
+              <p><span lang="es">Cada idioma extra añade unas décimas al fin de turno y acierta algo menos en frases mezcladas. Con tres marcados sigues dentro del presupuesto de 4 s; con más, la app te lo dice aquí en vez de ponerse lenta en silencio.</span><span lang="en">Each extra language adds a few tenths to turn-end detection and is slightly less accurate on mixed sentences. With three ticked you stay within the 4 s budget; beyond that the app tells you here instead of quietly getting slow.</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== diccionario ===== -->
+    <div data-en="diccionario" style="display:flex;flex-direction:column;gap:12px">
+      <div class="grid-2" style="grid-template-columns:1.3fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta diccionario" style="padding-bottom:8px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Corregido por tu diccionario</span><span lang="en">Corrected by your dictionary</span></h2><span class="mono" style="color:var(--ink-2)">312</span></div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;font-size:13.5px;font-family:var(--font-evidencia)">
+            <p><del>power be i</del><mark>Power BI</mark></p>
+            <p><del>páramo azul sas</del><mark>Comercializadora Páramo Azul S.A.S.</mark></p>
+            <p><del>churn</del><mark><span lang="es">fuga de clientes <i style="font-style:italic;color:var(--ink-2)">(churn)</i></span><span lang="en">customer churn</span></mark></p>
+          </div>
+          <p style="font-size:11.5px;color:var(--ink-2);margin-top:10px"><span lang="es">Cuando el término vive en los dos idiomas guarda el original entre paréntesis: la ficha debe poder encontrarse por cualquiera.</span><span lang="en">When a term lives in both languages it keeps the original in brackets: the card must be findable by either.</span></p>
+        </div>
+        <div class="tarjeta" style="padding-bottom:6px">
+          <h2 class="seccion" style="margin:0 0 4px"><span lang="es">De dónde salen los 312</span><span lang="en">Where the 312 come from</span></h2>
+          <table class="tabla">
+            <tbody>
+              <tr><td><span lang="es">De tu corpus — nombres, productos, títulos</span><span lang="en">From your corpus — names, products, titles</span></td><td class="num">287</td></tr>
+              <tr><td><span lang="es">Añadidos por ti</span><span lang="en">Added by you</span></td><td class="num">25</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="tarjeta">
+            <h3><span lang="es">Añadir un término</span><span lang="en">Add a term</span></h3>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+              <label class="campo"><span lang="es">Lo que se oye</span><span lang="en">What is heard</span><input value="dashbord" class="mono"></label>
+              <label class="campo"><span lang="es">Lo que quieres leer</span><span lang="en">What you want to read</span><input value="tablero (dashboard)"></label>
+              <div class="fila"><span class="crece"></span><button class="btn primario"><span lang="es">Añadir</span><span lang="en">Add</span></button></div>
+            </div>
+          </div>
+          <div class="franja ok" role="status">
+            <svg class="ic relleno"><use href="#i-check-circle"/></svg>
+            <div>
+              <strong><span lang="es">Corregir no es inventar</span><span lang="en">Correcting is not inventing</span></strong>
+              <p><span lang="es">Solo sustituye lo que tú escribiste en él. Jamás completa una frase ni adivina una palabra.</span><span lang="en">The dictionary only substitutes what you wrote in it. It never completes a sentence or guesses a word it did not hear.</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+</div>
+
+<script src="assets/iconos.js"></script>
+<script src="assets/maqueta.js"></script>
+</body>
+</html>

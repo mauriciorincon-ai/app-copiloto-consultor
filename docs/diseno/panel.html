@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="es" data-theme="dark" data-lang="es" data-estado="esperando">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Angel Ghost · Maqueta — 01 El panel</title>
+<link rel="stylesheet" href="assets/ghost.css">
+<link rel="stylesheet" href="assets/maqueta.css">
+<style>
+/* Solo lo local a esta página de maqueta */
+.panel { position: relative; }
+</style>
+</head>
+<body class="mq">
+
+<div class="mq-bar" role="toolbar" aria-label="Sala de diseño">
+  <span class="mq-t">01 · El panel</span>
+  <span class="mq-g"><span>estado</span>
+    <button data-estado="esperando">esperando</button>
+    <button data-estado="buscando">buscando</button>
+    <button data-estado="ficha">ficha nueva</button>
+    <button data-estado="sugerencia-local">sugerencia · local</button>
+    <button data-estado="sugerencia-api">sugerencia · API</button>
+    <button data-estado="sin-resultado">sin resultado</button>
+    <button data-estado="sin-verificar">cliente sin verificar</button>
+    <button data-estado="radar">radar · grabación y bot</button>
+    <button data-estado="radar-invasivo">radar · software invasivo</button>
+    <button data-estado="transcript">transcript visible</button>
+    <button data-estado="voz">solo audio · hablando</button>
+    <button data-estado="voz-sin">solo audio · sin auriculares</button>
+  </span>
+  <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
+  <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
+  <a href="index.html">← recorrido</a>
+</div>
+
+<div class="mq-nota">
+  <div class="n" data-para="esperando"><b>Qué mirar:</b> el panel en reposo, a píxel real (380 × 220) en su esquina por defecto. La barra de arriba dice qué está activo (símbolo + texto); el contador de red marca <b>0 B</b> en verde. El vacío está diseñado: una frase en Charter, no un ícono gris.</div>
+  <div class="n" data-para="buscando"><b>Qué mirar:</b> el cliente acaba de preguntar (lo que se oyó, entre comillas) y el panel dice «buscando» con texto estático — <b>sin spinner, sin pulso</b>, nada que atraiga la mirada.</div>
+  <div class="n" data-para="ficha"><b>Qué mirar:</b> la ficha de evidencia: titular ≤ 8 palabras en Charter, una línea, y la fuente exacta (unidad · documento · sección) en Menlo. ¿Se lee en 2 segundos? Debajo, las otras dos fichas esperan colapsadas.</div>
+  <div class="n" data-para="sugerencia-local"><b>Qué mirar:</b> con la síntesis encendida, la ficha se compacta y aparece la sugerencia (acento halo, borde izquierdo). Dice dónde se generó («en tu Mac») y su confianza con símbolo + texto. La red sigue en 0 B.</div>
+  <div class="n" data-para="sugerencia-api"><b>Qué mirar:</b> el API encendido por ti: el proveedor se nombra, la etiqueta dice «texto anonimizado» y el contador de red deja de ser cero — en el acento, no en rojo: fue tu decisión. «Solo texto anonimizado» vive en el tooltip de la nube y, con letra, en Ajustes de IA y Honestidad (no cabe en 380 px sin robar la ficha).</div>
+  <div class="n" data-para="sin-resultado"><b>Qué mirar:</b> el panel admite que no tiene nada. Dos salidas discretas: buscar con otras palabras (⌘⇧A) o anotar para después.</div>
+  <div class="n" data-para="sin-verificar"><b>Qué mirar:</b> resultado del spike. En Zoom la protección no está verificada: franja ámbar (tinte + borde sólido + triángulo) con el camino alterno. El pie cambia de «Meet · verificada» a «Zoom · sin verificar». Es aviso, no bloqueo.</div>
+  <div class="n" data-para="radar"><b>Qué mirar:</b> el radar (C14) solo mira tu Mac y tu pantalla: la reunión se está grabando y hay un bot de notas. El panel avisa y recuerda tu protección propia. No bloquea nada.</div>
+  <div class="n" data-para="radar-invasivo"><b>Qué mirar:</b> el radar en su nivel grave, dentro del panel. Esto no es «te están grabando la reunión»: es <b>un programa mirando tu propio equipo</b> — supervisión de exámenes, anti-trampa, monitoreo, acceso remoto. Coral en vez de ámbar, y con lo que alcanza a ver. Sigue sin bloquear nada: decides tú.</div>
+  <div class="n" data-para="transcript"><b>Qué mirar:</b> el transcript en vivo, oculto por defecto, con ⌘⇧T. El panel crece a 380 × 420; cada turno lleva su pista (sistema = cliente, mic = tú), nunca un nombre. Solo en memoria.</div>
+  <div class="n" data-para="voz"><b>Qué mirar:</b> el <b>modo solo audio</b>. El panel desaparece: queda una píldora de <b>260 × 56</b> y la ficha se <b>oye</b> en vez de leerse. La píldora no repite el texto (para eso está el oído): dice de dónde salió y cómo callarla. Toda tu pantalla queda libre.</div>
+  <div class="n" data-para="voz-sin"><b>Qué mirar:</b> la salvaguarda. Sin auriculares la app <b>no habla</b> — por los parlantes el cliente oiría la sugerencia y se rompería la promesa entera. No es un aviso que puedas ignorar: es una condición. Si los desconectas a mitad, calla.</div>
+  <div class="mq-medida">380 × 220 px · esquina superior derecha, 16 px del borde, 8 px bajo la barra de menús (D1, D2) · opaco, sin glass (D3) · Charter · Avenir Next · Menlo (D4)</div>
+</div>
+
+<div class="mq-escritorio" aria-label="Escritorio de referencia a píxel real">
+  <div class="mq-menubar"><b></b><span>Google Chrome</span><span>Archivo</span><span>Editar</span><span>Ver</span><span class="der">14:02</span></div>
+  <div class="mq-etiqueta">Google Meet — esto es lo que el cliente ve. El panel de la derecha no aparece en su pantalla (verificado 2026-09-20).</div>
+  <div class="mq-meet">
+    <div class="titulo"><i></i><i></i><i></i> meet · Páramo Azul — Propuesta tablero de rentabilidad</div>
+    <div class="tiles">
+      <div class="tile"><span>Ana Torres · Páramo Azul</span></div>
+      <div class="tile"><span>Tú (presentando)</span></div>
+    </div>
+    <div class="presentando">Estás presentando tu pantalla</div>
+    <div class="controles"><i></i><i></i><i></i><i class="rojo"></i><i></i></div>
+  </div>
+
+  <div class="mq-panel-pos">
+
+  <!-- ===== PÍLDORA DE VOZ · modo solo audio (C15) ===== -->
+  <section class="pildora hablando" data-en="voz" data-captura-alt aria-label="Angel Ghost · modo solo audio">
+    <span class="glifo"><svg class="ic"><use href="#i-voz"/></svg></span>
+    <span class="texto">
+      <span class="q"><span lang="es">Diciéndote la ficha…</span><span lang="en">Reading you the card…</span></span>
+      <span class="de"><span lang="es">propuesta · §3.2 Alcance</span><span lang="en">proposal · §3.2 Scope</span></span>
+    </span>
+    <span class="tecla"><kbd>⎋</kbd></span>
+  </section>
+
+  <section class="pildora sin-auriculares" data-en="voz-sin" data-captura-alt aria-label="Angel Ghost · modo solo audio">
+    <span class="glifo"><svg class="ic"><use href="#i-auriculares-off"/></svg></span>
+    <span class="texto">
+      <span class="q"><span lang="es">Conecta auriculares</span><span lang="en">Plug in headphones</span></span>
+      <span class="de"><span lang="es">el cliente te oiría</span><span lang="en">the client would hear you</span></span>
+    </span>
+    <span class="tecla"><kbd>⌘⇧V</kbd></span>
+  </section>
+
+  <!-- ================= EL PANEL (producto) ================= -->
+  <section class="panel" data-captura data-en="esperando buscando ficha sugerencia-local sugerencia-api sin-resultado sin-verificar radar radar-invasivo transcript" data-transcript-en="transcript" aria-label="Angel Ghost">
+
+    <header class="barra">
+      <span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando</span><span lang="en">Listening</span></span>
+      <span class="pistas">
+        <span class="pista" title="micrófono: tú"><svg class="ic s"><use href="#i-mic"/></svg><span class="sr" lang="es">micrófono activo</span><span class="sr" lang="en">microphone on</span></span>
+        <span class="pista" title="audio del sistema: el cliente"><svg class="ic s"><use href="#i-sistema"/></svg><span class="sr" lang="es">audio del sistema activo</span><span class="sr" lang="en">system audio on</span></span>
+        <span lang="es">2 pistas</span><span lang="en">2 tracks</span>
+        <span class="pista" title="lectura de pantalla: solo cuando cambia"><svg class="ic s"><use href="#i-pantalla"/></svg><span lang="es">pantalla</span><span lang="en">screen</span></span>
+      </span>
+      <span class="red cero" data-en="esperando buscando ficha sugerencia-local sin-resultado sin-verificar radar radar-invasivo transcript" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"/></svg>0 B</span>
+      <span class="red api" data-en="sugerencia-api" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"/></svg>1,2 KB</span>
+    </header>
+
+    <div class="cuerpo">
+
+      <!-- esperando -->
+      <div class="vacio" data-en="esperando">
+        <p class="voz"><span lang="es">Cuando el cliente pregunte, aquí aparece tu evidencia.</span><span lang="en">When the client asks, your evidence shows up here.</span></p>
+        <p class="meta"><svg class="ic s"><use href="#i-doc"/></svg><span lang="es">143 documentos · 5 unidades</span><span lang="en">143 documents · 5 units</span></p>
+        <p class="meta"><svg class="ic s"><use href="#i-reloj"/></svg><span lang="es">Páramo Azul · 12 min</span><span lang="en">Páramo Azul · 12 min</span></p>
+      </div>
+
+      <!-- buscando -->
+      <p class="oido" data-en="buscando sin-resultado"><span class="quien"><svg class="ic s"><use href="#i-sistema"/></svg> <span lang="es">cliente 14:02</span><span lang="en">client 14:02</span></span>
+        <q data-en="buscando"><span lang="es">Y la limpieza de datos, ¿eso está dentro del alcance?</span><span lang="en">And the data cleansing, is that within scope?</span></q>
+        <q data-en="sin-resultado"><span lang="es">¿Ustedes tienen certificación ISO 27001?</span><span lang="en">Are you ISO 27001 certified?</span></q>
+      </p>
+      <div class="vacio arriba" data-en="buscando">
+        <p class="meta"><svg class="ic s"><use href="#i-buscar"/></svg><span lang="es">Buscando en tu corpus…</span><span lang="en">Searching your corpus…</span></p>
+      </div>
+
+      <!-- ficha nueva · transcript -->
+      <article class="ficha nueva" data-en="ficha transcript">
+        <h2 class="titular"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></h2>
+        <p class="linea"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on.</span></p>
+        <p class="fuente"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span class="doc"><span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span><span class="pin"><svg class="ic s"><use href="#i-pin"/></svg>⌘⇧P</span></p>
+      </article>
+      <p class="mas" data-en="ficha transcript"><span class="n">+2</span><span class="titulos"><span lang="es">Marco · etapa 2 Preparación — Caso Sur del Valle: cuatro fuentes</span><span lang="en">Framework · stage 2 Preparation — Sur del Valle case: four sources</span></span><svg class="ic s"><use href="#i-chevron"/></svg></p>
+
+      <!-- sugerencia local / API -->
+      <article class="ficha compacta" data-en="sugerencia-local sugerencia-api">
+        <h2 class="titular"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></h2>
+        <p class="fuente"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span class="doc"><span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span><span class="pin"><svg class="ic s"><use href="#i-pin"/></svg>⌘⇧P</span></p>
+      </article>
+      <div class="sugerencia" data-en="sugerencia-local sugerencia-api">
+        <p class="cab">
+          <span data-en="sugerencia-local"><svg class="ic s"><use href="#i-mac"/></svg> <span lang="es">sugerencia · en tu Mac</span><span lang="en">suggestion · on your Mac</span></span>
+          <span data-en="sugerencia-api" title="solo texto anonimizado en tu Mac; proveedor con no-retención"><svg class="ic s"><use href="#i-nube"/></svg> <span lang="es">Claude Haiku · API</span><span lang="en">Claude Haiku · API</span></span>
+          <span class="conf"><svg class="ic s"><use href="#i-half"/></svg><span lang="es">confianza media</span><span lang="en">medium confidence</span></span>
+        </p>
+        <p class="texto"><span lang="es">Confirma que las tres fuentes están dentro; una cuarta va como adicional con costo aparte.</span><span lang="en">Confirm the three sources are in scope; a fourth goes as a priced add-on.</span></p>
+      </div>
+
+      <!-- sin resultado -->
+      <div class="vacio" data-en="sin-resultado">
+        <p class="voz"><span lang="es">Nada en tu corpus sobre esto.</span><span lang="en">Nothing in your corpus about this.</span></p>
+        <p class="acciones">
+          <button class="btn mini"><svg class="ic s"><use href="#i-buscar"/></svg><span lang="es">Buscar con otras palabras</span><span lang="en">Search with other words</span> <kbd class="tecla">⌘⇧A</kbd></button>
+          <button class="btn mini"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Anotar para después</span><span lang="en">Note it for later</span> <kbd class="tecla">⌘⇧N</kbd></button>
+        </p>
+      </div>
+
+      <!-- cliente sin verificar (spike) -->
+      <div class="franja warn" data-en="sin-verificar" role="status">
+        <svg class="ic relleno"><use href="#i-alert"/></svg>
+        <div>
+          <strong><span lang="es">Zoom: protección sin verificar</span><span lang="en">Zoom: protection not verified</span></strong>
+          <p><span lang="es">Verificada solo en Meet · macOS 26.6.2 · 2026-09-20</span><span lang="en">Verified only in Meet · macOS 26.6.2 · 2026-09-20</span></p>
+          <ul class="vertical">
+            <li><span lang="es">Comparte una ventana, no la pantalla</span><span lang="en">Share a window, not the screen</span></li>
+            <li><span lang="es">O usa un segundo monitor</span><span lang="en">Or use a second monitor</span></li>
+            <li><span lang="es">O pasa a modo solo notas</span><span lang="en">Or switch to notes-only mode</span></li>
+          </ul>
+        </div>
+      </div>
+      <p class="acciones" data-en="sin-verificar"><button class="btn mini"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Ya lo verifiqué en Zoom</span><span lang="en">I verified it in Zoom</span></button><button class="btn mini"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Modo solo notas</span><span lang="en">Notes-only mode</span></button></p>
+
+      <!-- alerta del radar (C14) -->
+      <div class="franja warn" data-en="radar" role="status">
+        <svg class="ic"><use href="#i-rec"/></svg>
+        <div>
+          <strong><span lang="es">Reunión grabada · bot de notas presente</span><span lang="en">Meeting recorded · note-taking bot present</span></strong>
+          <p><span lang="es">Meet muestra el aviso de grabación y «MinutaBot» está en la lista de participantes. Aviso, no bloqueo.</span><span lang="en">Meet shows the recording notice and “MinutaBot” is in the participant list. A notice, not a block.</span></p>
+        </div>
+      </div>
+      <div class="franja err" data-en="radar-invasivo" role="alert">
+        <svg class="ic relleno"><use href="#i-x-circle"/></svg>
+        <div>
+          <strong><span lang="es">Te está mirando un programa de tu Mac</span><span lang="en">A program on your Mac is watching you</span></strong>
+          <p><span lang="es">«ProctorLince» (supervisión de exámenes): ve tu pantalla completa y tu cámara.</span><span lang="en">“ProctorLince” (exam proctoring): sees your full screen and your camera.</span></p>
+        </div>
+      </div>
+      <p class="acciones" data-en="radar-invasivo"><button class="btn mini"><svg class="ic s"><use href="#i-radar"/></svg><span lang="es">Ver qué alcanza a ver</span><span lang="en">See what it can see</span></button><button class="btn mini"><svg class="ic s"><use href="#i-rayo"/></svg><span lang="es">Corta todo</span><span lang="en">Cut everything</span></button></p>
+      <p class="meta oido" data-en="radar radar-invasivo" style="gap:6px"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">tu panel sigue protegido · 0 B en red · nada persiste</span><span lang="en">your panel stays protected · 0 B out · nothing persists</span></span></p>
+
+    </div>
+
+    <!-- transcript en vivo (C3) — oculto por defecto -->
+    <div class="transcript" aria-label="Transcript en vivo">
+      <p class="cab"><svg class="ic s"><use href="#i-ojo"/></svg><span lang="es">en vivo · solo en memoria</span><span lang="en">live · in memory only</span><span class="tecla"><kbd>⌘⇧T</kbd> <span lang="es">ocultar</span><span lang="en">hide</span></span></p>
+      <p class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"/></svg><span lang="es">cliente</span><span lang="en">client</span> 14:01</span><q><span lang="es">Y la limpieza de datos, ¿eso está dentro del alcance?</span><span lang="en">And the data cleansing, is that within scope?</span></q></p>
+      <p class="turno tu"><span class="quien"><svg class="ic s"><use href="#i-mic"/></svg><span lang="es">tú</span><span lang="en">you</span> 14:02</span><q><span lang="es">Sí, la limpieza de las tres fuentes que acordamos está incluida.</span><span lang="en">Yes, cleansing the three sources we agreed on is included.</span></q></p>
+      <p class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"/></svg><span lang="es">cliente</span><span lang="en">client</span> 14:02</span><q><span lang="es">¿Y si sumamos el Excel de la fuerza comercial? Lo tenemos en Power BI.</span><span lang="en">What if we add the sales team’s Excel? We have it in Power BI.</span></q></p>
+    </div>
+
+    <footer class="pie">
+      <span class="cliente ok" title="protección de la ventana verificada en Google Meet · macOS 26.6.2 · 2026-09-20" data-en="esperando buscando ficha sugerencia-local sugerencia-api sin-resultado radar radar-invasivo transcript"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span></span>
+      <span class="cliente warn" data-en="sin-verificar"><svg class="ic s relleno"><use href="#i-alert"/></svg><span lang="es">Zoom · sin verificar</span><span lang="en">Zoom · not verified</span></span>
+      <span class="atajos">
+        <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
+        <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
+      </span>
+    </footer>
+  </section>
+  <!-- ================= /EL PANEL ================= -->
+  </div>
+</div>
+
+<script src="assets/iconos.js"></script>
+<script src="assets/maqueta.js"></script>
+</body>
+</html>

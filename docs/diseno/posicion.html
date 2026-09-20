@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="es" data-theme="dark" data-lang="es" data-estado="a">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Angel Ghost · Maqueta — ¿Dónde vive el panel?</title>
+<link rel="stylesheet" href="assets/ghost.css">
+<link rel="stylesheet" href="assets/maqueta.css">
+</head>
+<body class="mq">
+
+<div class="mq-bar" role="toolbar" aria-label="Sala de diseño">
+  <span class="mq-t">¿Dónde vive el panel?</span>
+  <span class="mq-g"><span>opción</span>
+    <button data-estado="a">A · tarjeta arriba der.</button>
+    <button data-estado="b">B · tarjeta abajo der.</button>
+    <button data-estado="c">C · banda separada</button>
+    <button data-estado="d">D · banda 88 · flotante</button>
+    <button data-estado="d2">D2 · banda 88 · ACOPLADA</button>
+    <button data-estado="d3">D3 · ampliada · ACOPLADA</button>
+    <button data-estado="f">F · solo audio · acoplada</button>
+    <button data-estado="e">E · solo audio: gota</button>
+  </span>
+  <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
+  <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
+  <a href="index.html">← recorrido</a>
+</div>
+
+<div class="mq-nota">
+  <div class="n" data-para="a"><b>A · tarjeta arriba a la derecha</b> (lo que hay hoy). No choca con nada: los controles de Meet y Zoom viven abajo, el aviso de grabación arriba al centro. Tapa la esquina donde algunas apps ponen su barra lateral. Tu mirada tiene que subir.</div>
+  <div class="n" data-para="b"><b>B · la misma tarjeta, abajo a la derecha.</b> Más cerca de donde miras cuando lees un dashboard compartido. Convive con el Dock si lo tienes abajo, y roza la esquina donde Zoom pone el chat.</div>
+  <div class="n" data-para="c"><b>C · banda inferior de lado a lado</b>, separada del borde. Una sola línea: titular, línea y fuente. Ocupa 44 px de alto en vez de 220. <b>Mira el recuadro ámbar:</b> tapa los controles de la videollamada — no podrías colgar sin moverla.</div>
+  <div class="n" data-para="d"><b>D · banda de 88 px pegada al borde</b>, flotando <b>encima</b> de la reunión. Caben titular, línea y fuente sin recortar. Tapa el Dock y la parte baja de la ventana de Meet.</div>
+  <div class="n" data-para="d2"><b>D2 · la misma banda, ACOPLADA.</b> La ventana de la reunión <b>se recorta</b> y las dos conviven como aplicaciones pegadas: nada queda tapado. El asa de arriba ajusta las dos a la vez. <b>Es la que elegiste.</b></div>
+  <div class="n" data-para="d3"><b>D3 · la banda ampliada a 200 px</b>, acoplada. Arrastras el asa hacia arriba y entra la ficha entera, las acumuladas y la sugerencia. La reunión se encoge en la misma proporción.</div>
+  <div class="n" data-para="e"><b>E · modo solo audio con una gota de 44 px</b> abajo a la izquierda. Lo más pequeño posible: solo el estado, sin texto. La ficha se oye. Abajo a la izquierda no hay nada de Meet, Zoom ni Teams.</div>
+  <div class="n" data-para="f"><b>F · modo solo audio, acoplada.</b> 44 px: una línea con lo que está diciendo y de dónde salió. La reunión se recorta solo eso. <b>Es la que elegiste para el modo audio.</b></div>
+  <div class="mq-medida">escritorio de referencia 1180 × 720 · tarjeta 380 × 220 · banda 88 px (ampliable a 200) · banda de voz 44 px · gota 44 × 44 · datos sintéticos</div>
+</div>
+
+<div class="mq-escritorio" data-acople-en="d2:88 d3:200 f:44" aria-label="Escritorio de referencia">
+  <div class="mq-menubar"><b></b><span>Google Chrome</span><span>Archivo</span><span>Editar</span><span>Ver</span><span class="der">14:02</span></div>
+  <div class="mq-meet">
+    <div class="titulo"><i></i><i></i><i></i> meet · Páramo Azul — Propuesta tablero de rentabilidad</div>
+    <div class="tiles">
+      <div class="tile"><span>Ana Torres · Páramo Azul</span></div>
+      <div class="tile"><span>Tú (presentando)</span></div>
+    </div>
+    <div class="presentando">Estás presentando tu pantalla</div>
+    <div class="controles"><i></i><i></i><i></i><i class="rojo"></i><i></i></div>
+  </div>
+  <div class="mq-dock"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+  <div class="mq-corte" data-en="d2" style="bottom:104px"><span>aquí se recorta la reunión</span></div>
+  <div class="mq-corte" data-en="d3" style="bottom:216px"><span>aquí se recorta la reunión</span></div>
+  <div class="mq-corte" data-en="f" style="bottom:60px"><span>aquí se recorta la reunión</span></div>
+
+  <!-- recuadro de choque: los controles de la videollamada -->
+  <div class="mq-choque" data-en="c" style="left:calc(50% - 130px);width:260px;bottom:60px;height:48px"><span>controles de la llamada: la banda los tapa</span></div>
+  <div class="mq-choque" data-en="d" style="left:calc(50% - 215px);width:430px;bottom:2px;height:56px"><span>el Dock: la banda queda encima</span></div>
+
+  <!-- A · tarjeta arriba derecha -->
+  <div class="mq-pos arriba-der" data-en="a"><section class="panel" data-captura-alt>
+    <header class="barra"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando</span><span lang="en">Listening</span></span><span class="pistas"><span class="pista"><svg class="ic s"><use href="#i-mic"/></svg></span><span class="pista"><svg class="ic s"><use href="#i-sistema"/></svg></span><span lang="es">2 pistas</span><span lang="en">2 tracks</span></span><span class="red cero"><svg class="ic s"><use href="#i-subir"/></svg>0 B</span></header>
+    <div class="cuerpo"><article class="ficha"><h2 class="titular"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></h2><p class="linea"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on.</span></p><p class="fuente"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span class="doc"><span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span><span class="pin"><svg class="ic s"><use href="#i-pin"/></svg>⌘⇧P</span></p></article></div>
+    <footer class="pie"><span class="cliente ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span></span><span class="atajos"><span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span></span></footer>
+  </section></div>
+
+  <!-- B · tarjeta abajo derecha -->
+  <div class="mq-pos abajo-der" data-en="b"><section class="panel" data-captura-alt>
+    <header class="barra"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando</span><span lang="en">Listening</span></span><span class="pistas"><span class="pista"><svg class="ic s"><use href="#i-mic"/></svg></span><span class="pista"><svg class="ic s"><use href="#i-sistema"/></svg></span><span lang="es">2 pistas</span><span lang="en">2 tracks</span></span><span class="red cero"><svg class="ic s"><use href="#i-subir"/></svg>0 B</span></header>
+    <div class="cuerpo"><article class="ficha"><h2 class="titular"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></h2><p class="linea"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on.</span></p><p class="fuente"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span class="doc"><span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span><span class="pin"><svg class="ic s"><use href="#i-pin"/></svg>⌘⇧P</span></p></article></div>
+    <footer class="pie"><span class="cliente ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span></span><span class="atajos"><span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span></span></footer>
+  </section></div>
+
+  <!-- C · banda separada (descartada) -->
+  <div class="mq-pos banda-inf" data-en="c" style="height:44px"><section class="banda voz" data-captura-alt style="border-radius:var(--r-ficha);border:var(--borde) solid var(--line)">
+      <div class="cuerpo-b">
+        <span class="marca-min halo"><svg class="ic s"><use href="#i-voz"/></svg><span lang="es">diciéndote</span><span lang="en">reading you</span></span>
+        <span class="ficha-b"><span class="linea-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes — cubre ERP, POS y Excel de canal.</span><span lang="en">Data cleansing: included, up to three sources — covers ERP, POS and channel Excel.</span></span></span>
+        <span class="lado-b"><span class="fuente-b"><span lang="es">propuesta · §3.2</span><span lang="en">proposal · §3.2</span></span></span>
+        <span class="atajos-b"><span class="tecla"><kbd>⎋</kbd> <span lang="es">calla</span><span lang="en">hush</span></span></span>
+      </div>
+    </section></div>
+
+  <!-- D · banda 88 flotante · D2 acoplada · D3 ampliada acoplada -->
+  <div class="mq-pos banda-borde" data-en="d d2"><section class="banda" data-captura-alt>
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
+      <div class="cab-b">
+        <span class="marca-min"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span></span>
+        <span class="mono" style="color:var(--ink-2)"><span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span></span>
+        <span class="red cero mono"><svg class="ic s"><use href="#i-subir"/></svg>0 B</span>
+      </div>
+      <div class="cuerpo-b">
+        <span class="ficha-b">
+          <span class="titular-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></span>
+          <span class="linea-b"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on.</span></span>
+        </span>
+        <span class="lado-b">
+          <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <span class="atajos-b"><span class="tecla"><kbd>⌘⇧P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span><span class="tecla"><kbd>⌥⎋</kbd></span></span>
+        </span>
+      </div>
+    </section></div>
+  <div class="mq-pos banda-borde" data-en="d3"><section class="banda ampliada" data-captura-alt>
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
+      <div class="cab-b">
+        <span class="marca-min"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span></span>
+        <span class="mono" style="color:var(--ink-2)"><span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span></span>
+        <span class="red cero mono"><svg class="ic s"><use href="#i-subir"/></svg>0 B</span>
+      </div>
+      <div class="cuerpo-b">
+        <span class="ficha-b">
+          <span class="titular-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></span>
+          <span class="linea-b"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional y se cotiza aparte.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on, priced separately.</span></span>
+          <p class="mas" style="margin-top:6px"><span class="n">+2</span><span class="titulos"><span lang="es">Marco · etapa 2 Preparación — Caso Sur del Valle: cuatro fuentes en 9 semanas</span><span lang="en">Framework · stage 2 Preparation — Sur del Valle case: four sources in 9 weeks</span></span><svg class="ic s"><use href="#i-chevron"/></svg></p>
+        </span>
+        <span class="lado-b" style="max-width:40%">
+          <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <span class="atajos-b"><span class="tecla"><kbd>⌘⇧P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span><span class="tecla"><kbd>⌘⇧T</kbd> transcript</span><span class="tecla"><kbd>⌥⎋</kbd></span></span>
+          <div class="sugerencia" style="margin-top:4px;max-width:340px">
+            <p class="cab"><span><svg class="ic s"><use href="#i-mac"/></svg> <span lang="es">en tu Mac</span><span lang="en">on your Mac</span></span><span class="conf"><svg class="ic s"><use href="#i-half"/></svg><span lang="es">media</span><span lang="en">medium</span></span></p>
+            <p class="texto" style="font-size:12.5px"><span lang="es">Confirma las tres fuentes; una cuarta va como adicional.</span><span lang="en">Confirm the three sources; a fourth goes as an add-on.</span></p>
+          </div>
+        </span>
+      </div>
+    </section></div>
+
+  <!-- F · solo audio acoplada -->
+  <div class="mq-pos banda-borde" data-en="f"><section class="banda voz" data-captura-alt>
+      <div class="cuerpo-b">
+        <span class="marca-min halo"><svg class="ic s"><use href="#i-voz"/></svg><span lang="es">diciéndote</span><span lang="en">reading you</span></span>
+        <span class="ficha-b"><span class="linea-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes — cubre ERP, POS y Excel de canal.</span><span lang="en">Data cleansing: included, up to three sources — covers ERP, POS and channel Excel.</span></span></span>
+        <span class="lado-b"><span class="fuente-b"><span lang="es">propuesta · §3.2</span><span lang="en">proposal · §3.2</span></span></span>
+        <span class="atajos-b"><span class="tecla"><kbd>⎋</kbd> <span lang="es">calla</span><span lang="en">hush</span></span></span>
+      </div>
+    </section></div>
+
+  <!-- E · gota abajo izquierda -->
+  <div class="mq-pos abajo-izq" data-en="e"><span class="gota hablando" data-captura-alt title="modo solo audio"><svg class="ic"><use href="#i-voz"/></svg></span></div>
+
+
+</div>
+
+<div class="mq-tabla-pos" style="margin-bottom:18px">
+  <div class="grid-2" style="gap:14px">
+    <div class="franja ok" role="status" style="background:#0f1a16;border-color:#62d3b4">
+      <svg class="ic relleno" style="color:#62d3b4"><use href="#i-check-circle"/></svg>
+      <div>
+        <strong style="color:#e5e7eb"><span lang="es">Acoplada, comparte VENTANA</span><span lang="en">Docked, share a WINDOW</span></strong>
+        <p style="color:#9aa2ad"><span lang="es">Si compartes la ventana de la reunión, el cliente ve exactamente esa ventana — más pequeña, y nada más. La banda no existe para él. Es el modo <b>más seguro de todos</b>.</span><span lang="en">If you share the meeting window, the client sees exactly that window — smaller, and nothing else. The band does not exist for them. This is the <b>safest mode of all</b>.</span></p>
+      </div>
+    </div>
+    <div class="franja warn" role="status" style="background:#1a1400;border-color:#f0b64a">
+      <svg class="ic relleno" style="color:#f0b64a"><use href="#i-alert"/></svg>
+      <div>
+        <strong style="color:#e5e7eb"><span lang="es">Acoplada, compartiendo PANTALLA completa</span><span lang="en">Docked, sharing the FULL screen</span></strong>
+        <p style="color:#9aa2ad"><span lang="es">La banda está protegida de la captura, así que en esa franja el cliente ve <b>lo que quede detrás</b>. Por eso la banda viaja con un <b>relleno</b>: una segunda ventana, sin contenido, que ocupa exactamente ese rectángulo y es lo único que la captura encuentra ahí. Abajo, las tres opciones. <b>Verificarlo en una llamada real sigue siendo parada del gate de prueba.</b></span><span lang="en">The band is protected from capture, so in that strip the client sees <b>whatever is behind it</b>. That is why the band ships with a <b>filler</b>: a second, contentless window occupying exactly that rectangle — the only thing capture finds there. The three options are below. <b>Verifying this in a real call is still a test-gate stop.</b></span></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mq-tabla-pos" style="margin-bottom:34px">
+  <h2 class="mq-h2"><span lang="es">El relleno de la franja — qué encuentra la captura donde vive la banda</span><span lang="en">The strip filler — what capture finds where the band lives</span></h2>
+  <p class="mq-sub"><span lang="es">Una ventana de relleno se dibuja justo <b>debajo</b> de la banda, con su mismo tamaño y sin nada dentro: ni texto, ni fichas, ni otras apps. Tú no la ves nunca (la banda es opaca y va encima); la captura sí. Nunca muestra contenido de ninguna aplicación.</span><span lang="en">A filler window is drawn right <b>beneath</b> the band, same size, with nothing inside: no text, no cards, no other apps. You never see it (the band is opaque and sits on top); capture does. It never shows any application's content.</span></p>
+  <div class="mq-relleno">
+
+    <figure>
+      <div class="mini">
+        <div class="mini-meet"></div>
+        <div class="mini-franja esc"><i class="a"></i><i class="b"></i></div>
+      </div>
+      <figcaption>
+        <svg class="ic" style="color:#ff8577"><use href="#i-x-circle"/></svg>
+        <div><strong><span lang="es">Sin relleno — descartado</span><span lang="en">No filler — discarded</span></strong><span lang="es">Se ve el escritorio y <b>las ventanas que haya detrás</b>. No es solo que se note el hueco: se fuga contenido ajeno a la reunión.</span><span lang="en">The desktop shows, and <b>any windows behind it</b>. It is not just a visible gap: unrelated content leaks.</span></div>
+      </figcaption>
+    </figure>
+
+    <figure>
+      <div class="mini">
+        <div class="mini-meet"></div>
+        <div class="mini-franja negro"></div>
+      </div>
+      <figcaption>
+        <svg class="ic" style="color:#62d3b4"><use href="#i-check-circle"/></svg>
+        <div><strong><span lang="es">Negro — a una tecla</span><span lang="en">Black — one key away</span></strong><span lang="es">No se fuga absolutamente nada. Se lee como una banda muerta de pantalla, igual que el letterbox de un vídeo.</span><span lang="en">Nothing whatsoever leaks. It reads as a dead strip of screen, like a video's letterbox.</span></div>
+      </figcaption>
+    </figure>
+
+    <figure>
+      <div class="mini elegido">
+        <div class="mini-meet"></div>
+        <div class="mini-franja fondo"></div>
+      </div>
+      <figcaption>
+        <svg class="ic" style="color:#62d3b4"><use href="#i-check-circle"/></svg>
+        <div><strong><span lang="es">Tu fondo de escritorio — ELEGIDO</span><span lang="en">Your wallpaper — CHOSEN</span></strong><span lang="es">Tampoco se fuga nada, y además <b>no hay nada que explicar</b>: se lee como una ventana de reunión que no llega al borde. Lo más común del mundo en un Mac.</span><span lang="en">Nothing leaks either, and there is <b>nothing to explain</b>: it reads as a meeting window that does not reach the edge. The most ordinary thing on a Mac.</span></div>
+      </figcaption>
+    </figure>
+
+  </div>
+</div>
+
+<div class="mq-tabla-pos">
+  <table>
+    <thead><tr><th>opción</th><th>choca con</th><th>a favor</th><th>en contra</th></tr></thead>
+    <tbody>
+      <tr><td><b>A · tarjeta arriba der.</b></td><td class="si">nada</td><td>cero conflictos; la frase entra sin recortar</td><td>la mirada sube; tapa barras laterales de otras apps</td></tr>
+      <tr><td><b>B · tarjeta abajo der.</b></td><td class="mas">Dock · chat de Zoom</td><td>cerca de donde miras un dashboard</td><td>220 px de alto en la zona más disputada</td></tr>
+      <tr><td><b>C · banda separada</b></td><td class="no">controles de la llamada</td><td>—</td><td><b>taparía el botón de colgar</b>: descartada</td></tr>
+      <tr><td><b>D · banda 88 flotante</b></td><td class="mas">Dock · parte baja de Meet</td><td>88 px; titular, línea y fuente sin recortar</td><td>tapa lo que haya debajo</td></tr>
+      <tr><td><b>D2 · banda 88 ACOPLADA</b></td><td class="si">nada: la reunión se recorta</td><td><b>elegida.</b> Dos apps pegadas; nada tapado; el asa ajusta las dos a la vez</td><td>necesita el permiso de Accesibilidad de macOS para mover la ventana de la reunión</td></tr>
+      <tr><td><b>D3 · ampliada ACOPLADA</b></td><td class="si">nada</td><td>entra la ficha entera, las acumuladas y la sugerencia</td><td>200 px menos de reunión: para leer, no para hablar</td></tr>
+      <tr><td><b>F · solo audio ACOPLADA</b></td><td class="si">nada</td><td><b>elegida.</b> 44 px: qué dice y de dónde, sin ocupar la pantalla</td><td>más presencia visual que la gota</td></tr>
+      <tr><td><b>E · gota (solo audio)</b></td><td class="si">nada</td><td>44 × 44: lo mínimo posible</td><td>no dice de dónde salió lo que oyes; queda como alternativa</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script src="assets/iconos.js"></script>
+<script src="assets/maqueta.js"></script>
+</body>
+</html>

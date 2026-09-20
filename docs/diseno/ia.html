@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="es" data-theme="dark" data-lang="es" data-estado="local">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Angel Ghost · Maqueta — 08 IA</title>
+<link rel="stylesheet" href="assets/ghost.css">
+<link rel="stylesheet" href="assets/maqueta.css">
+</head>
+<body class="mq">
+
+<div class="mq-bar" role="toolbar" aria-label="Sala de diseño">
+  <span class="mq-t">08 · IA</span>
+  <span class="mq-g"><span>estado</span>
+    <button data-estado="local">local (por defecto)</button>
+    <button data-estado="api-off">API apagado</button>
+    <button data-estado="api-on">API encendido</button>
+    <button data-estado="evaluacion">kit de evaluación</button>
+    <button data-estado="claude-code">Claude Code</button>
+  </span>
+  <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
+  <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
+  <a href="index.html">← recorrido</a>
+</div>
+
+<div class="mq-nota">
+  <div class="n" data-para="local"><b>Qué mirar:</b> el defecto. Quien redacta vive en tu Mac, con su latencia medida, y el contador dice <b>0 B</b>. Abajo del todo: redactar sugerencias es una casilla <b>apagada</b> — la app funciona entera sin ella.</div>
+  <div class="n" data-para="api-off"><b>Qué mirar:</b> la puerta cerrada, explicada. Tu clave, no la nuestra. A la derecha, las dos listas que importan: qué saldría (texto corto, ya anonimizado <b>aquí</b>) y qué no sale nunca — <b>ni encendiéndolo</b>, porque el camino no existe en el código.</div>
+  <div class="n" data-para="api-on"><b>Qué mirar:</b> encendido, la app no se vuelve opaca: te enseña <b>el texto exacto</b> que salió, con lo reemplazado tachado, el contador en KB reales y el costo con su tope. Al llegar al tope vuelve sola a lo local.</div>
+  <div class="n" data-para="evaluacion"><b>Qué mirar:</b> la regla «código primero» convertida en tabla medida. El modelo aporta 3 aciertos de 40 y cuesta 2,3 segundos. Y la fila incómoda está ahí: <b>1 de 40 se inventó una cifra</b>, en los dos modelos.</div>
+  <div class="n" data-para="claude-code"><b>Qué mirar:</b> lo que pediste — que Claude Code pueda operar la app desde tu propio Mac. La puerta es <b>local</b> y nace <b>cerrada</b>. Mira sobre todo las dos columnas: qué puede hacer y qué <b>no puede hacer nunca</b>. Y la regla que lo sostiene todo: <b>en reunión la puerta se cierra sola</b> — un agente no toca jamás lo que está vivo en memoria. Abajo, el registro de lo que hizo.</div>
+  <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
+</div>
+
+<div style="display:flex;justify-content:center;padding:0 18px 40px">
+<main class="ventana" data-captura>
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"/></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a href="sesion.html"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a href="permisos.html"><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a href="corpus.html"><svg class="ic s"><use href="#i-doc"/></svg>Corpus</a>
+    <a href="notas.html"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a href="honestidad.html"><svg class="ic s"><use href="#i-ram"/></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a href="idioma.html"><svg class="ic s"><use href="#i-globo"/></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a href="ia.html" aria-current="page"><svg class="ic s"><use href="#i-chispa"/></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      <span class="estado ok" data-en="local"><svg class="ic s relleno"><use href="#i-mac"/></svg><span lang="es">En tu Mac · 0 B</span><span lang="en">On your Mac · 0 B</span></span>
+      <span class="estado mute" data-en="api-off"><svg class="ic s"><use href="#i-nube-off"/></svg><span lang="es">API apagado</span><span lang="en">API off</span></span>
+      <span class="estado halo" data-en="api-on"><svg class="ic s"><use href="#i-nube"/></svg><span lang="es">API · 12,4 KB</span><span lang="en">API · 12.4 KB</span></span>
+      <span class="estado mute" data-en="claude-code"><svg class="ic s"><use href="#i-llave"/></svg><span lang="es">Puerta cerrada</span><span lang="en">Door closed</span></span>
+      <span class="estado ok" data-en="evaluacion"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Evaluado</span><span lang="en">Evaluated</span></span>
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">IA</span><span lang="en">AI</span></h1>
+      <p class="sub"><span lang="es">Local por defecto. El API es tuyo, opcional, y se ve lo que sale por él.</span><span lang="en">Local by default. The API is yours, optional, and what goes through it is visible.</span></p>
+    </div>
+
+    <!-- ===== local ===== -->
+    <div data-en="local" style="display:flex;flex-direction:column;gap:12px">
+      <div class="grid-2" style="grid-template-columns:1.25fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta" style="padding-bottom:6px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Quién redacta la sugerencia</span><span lang="en">Who writes the suggestion</span></h2><span class="estado ok"><svg class="ic s relleno"><use href="#i-mac"/></svg><span lang="es">en tu Mac</span><span lang="en">on your Mac</span></span></div>
+          <table class="tabla">
+            <thead><tr><th><span lang="es">proveedor</span><span lang="en">provider</span></th><th><span lang="es">estado</span><span lang="en">state</span></th><th class="num"><span lang="es">latencia</span><span lang="en">latency</span></th></tr></thead>
+            <tbody>
+              <tr><td><span lang="es">Modelo del sistema (macOS 26)</span><span lang="en">System model (macOS 26)</span></td><td><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">en uso</span><span lang="en">in use</span></span></td><td class="num">1,4 s</td></tr>
+              <tr class="apagada"><td>MLX · Qwen 3 4B</td><td><span lang="es">respaldo</span><span lang="en">fallback</span></td><td class="num">2,9 s</td></tr>
+              <tr class="apagada"><td><span lang="es">API externo</span><span lang="en">External API</span></td><td><span lang="es">apagado</span><span lang="en">off</span></td><td class="num">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="contador cero">
+            <span class="cifra">0 <small>B</small></span>
+            <span class="etq"><span lang="es">salieron de tu equipo en esta reunión</span><span lang="en">left your machine in this meeting</span></span>
+          </div>
+          <div class="franja ok" role="status">
+            <svg class="ic relleno"><use href="#i-doc"/></svg>
+            <div>
+              <strong><span lang="es">Si el modelo falla, quedan las fichas</span><span lang="en">If the model fails, the cards remain</span></strong>
+              <p><span lang="es">La sugerencia es un acento. Buscar en tu corpus y mostrar la ficha con su fuente es código, no modelo: funciona aunque apagues esto entero.</span><span lang="en">The suggestion is an accent. Searching your corpus and showing the card with its source is code, not a model: it works even with all of this turned off.</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <label class="conm off" style="padding:2px"><span class="track"></span><span class="etq"><svg class="ic s"><use href="#i-chispa"/></svg><span lang="es">Redactar sugerencias (además de mostrar la ficha)</span><span lang="en">Draft suggestions (on top of showing the card)</span></span></label>
+    </div>
+
+    <!-- ===== API apagado ===== -->
+    <div data-en="api-off" style="display:flex;flex-direction:column;gap:12px">
+      <div class="grid-2" style="grid-template-columns:1fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Proveedor externo</span><span lang="en">External provider</span></h2><label class="conm off"><span class="track"></span><span class="etq"><svg class="ic s"><use href="#i-nube-off"/></svg><span lang="es">apagado</span><span lang="en">off</span></span></label></div>
+          <p style="margin-top:8px"><span lang="es">Nace apagado y se queda apagado hasta que pongas tu propia clave. No hay clave nuestra, ni servidor nuestro, ni cuenta que crear.</span><span lang="en">It ships off and stays off until you add your own key. There is no key of ours, no server of ours, no account to create.</span></p>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+            <label class="campo"><span lang="es">Tu clave</span><span lang="en">Your key</span><input class="mono" placeholder="sk-…" disabled><span class="ayuda"><span lang="es">se guarda en tu Llavero, nunca en un archivo</span><span lang="en">stored in your Keychain, never in a file</span></span></label>
+          </div>
+        </div>
+        <div class="tarjeta">
+          <h3><span lang="es">Qué saldría si lo enciendes</span><span lang="en">What would leave if you turn it on</span></h3>
+          <div class="franja ok" role="status" style="margin-top:8px">
+            <svg class="ic relleno"><use href="#i-check-circle"/></svg>
+            <div>
+              <strong><span lang="es">Texto, ya minimizado y anonimizado aquí</span><span lang="en">Text, already minimised and anonymised here</span></strong>
+              <p><span lang="es">Un extracto corto de tu propio documento y la pregunta. El reemplazo de nombres ocurre en tu Mac, antes de salir.</span><span lang="en">A short extract of your own document and the question. Name replacement happens on your Mac, before anything leaves.</span></p>
+            </div>
+          </div>
+          <div class="franja err" role="status" style="margin-top:10px">
+            <svg class="ic relleno"><use href="#i-x-circle"/></svg>
+            <div>
+              <strong><span lang="es">Nunca: audio, pantalla, documentos enteros</span><span lang="en">Never: audio, screen, whole documents</span></strong>
+              <p><span lang="es">Ni encendiendo esto. No es una preferencia agresiva: no existe el camino en el código.</span><span lang="en">Not even with this on. It is not an aggressive default: the path does not exist in the code.</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== API encendido ===== -->
+    <div data-en="api-on" style="display:flex;flex-direction:column;gap:10px">
+      <div class="grid-2" style="grid-template-columns:1.2fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Lo último que salió</span><span lang="en">The last thing that left</span></h2><span class="mono" style="color:var(--ink-2)">14:22:07</span></div>
+          <div class="diccionario" style="margin-top:8px;font-family:var(--font-evidencia);font-size:13.5px;line-height:1.6">
+            <p><span lang="es">«El alcance de <del>Comercializadora Páramo Azul S.A.S.</del><mark>[CLIENTE]</mark> incluye limpieza de hasta tres fuentes. <del>Andrea Villalba</del><mark>[PERSONA]</mark> pregunta por una cuarta.»</span><span lang="en">“The scope for <del>Comercializadora Páramo Azul S.A.S.</del><mark>[CLIENT]</mark> covers cleansing of up to three sources. <del>Andrea Villalba</del><mark>[PERSON]</mark> asks about a fourth.”</span></p>
+          </div>
+          <p style="font-size:11.5px;color:var(--ink-2);margin-top:10px"><span lang="es">Esto es <b>todo</b> lo que salió: 412 caracteres. Tachado, lo que se reemplazó en tu Mac antes de enviarlo. Puedes leer cada envío aquí.</span><span lang="en">This is <b>everything</b> that left: 412 characters. Struck through, what was replaced on your Mac before sending. You can read every request here.</span></p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="contador api">
+            <span class="cifra">12,4 <small>KB</small></span>
+            <span class="etq"><span lang="es">salieron · 9 peticiones · Claude API</span><span lang="en">left · 9 requests · Claude API</span></span>
+          </div>
+          <div class="tarjeta" style="padding-bottom:6px">
+            <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Costo</span><span lang="en">Cost</span></h2>
+            <table class="tabla">
+              <tbody>
+                <tr><td><span lang="es">Esta reunión</span><span lang="en">This meeting</span></td><td class="num">USD 0,031</td></tr>
+                <tr><td><span lang="es">Este mes</span><span lang="en">This month</span></td><td class="num">USD 0,84</td></tr>
+                <tr><td><span lang="es">Tope que pusiste</span><span lang="en">Cap you set</span></td><td class="num">USD 5,00</td></tr>
+              </tbody>
+            </table>
+            <p style="font-size:11.5px;color:var(--ink-2);margin-top:6px"><span lang="es">Al llegar al tope vuelve sola al modelo local. No se detiene la reunión.</span><span lang="en">On reaching the cap it falls back to the local model on its own. The meeting is not interrupted.</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="tarjeta" style="padding-bottom:6px">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Las 9 peticiones de esta reunión</span><span lang="en">The 9 requests in this meeting</span></h2><span class="mono" style="color:var(--ink-2)"><span lang="es">se borra al cerrar</span><span lang="en">cleared on close</span></span></div>
+        <table class="tabla">
+          <thead><tr><th><span lang="es">hora</span><span lang="en">time</span></th><th><span lang="es">por qué salió</span><span lang="en">why it left</span></th><th class="num"><span lang="es">caracteres</span><span lang="en">characters</span></th><th class="num"><span lang="es">anonimizados</span><span lang="en">anonymised</span></th><th class="num">USD</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">14:22:07</td><td><span lang="es">redactar sugerencia · alcance</span><span lang="en">draft suggestion · scope</span></td><td class="num">412</td><td class="num">2</td><td class="num">0,004</td></tr>
+            <tr><td class="mono">14:16:51</td><td><span lang="es">redactar sugerencia · plazos</span><span lang="en">draft suggestion · timelines</span></td><td class="num">377</td><td class="num">3</td><td class="num">0,003</td></tr>
+            <tr class="apagada"><td class="mono">14:09:33</td><td><span lang="es">redactar sugerencia · caso previo</span><span lang="en">draft suggestion · past case</span></td><td class="num">501</td><td class="num">1</td><td class="num">0,004</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:11.5px;color:var(--ink-2);margin-top:6px"><span lang="es">Este registro vive en memoria como todo lo demás: al cerrar la reunión desaparece. Lo que persiste del costo es la cifra del mes, no el texto.</span><span lang="en">This log lives in memory like everything else: it disappears when the meeting closes. What persists of the cost is the monthly figure, not the text.</span></p>
+      </div>
+    </div>
+
+    <!-- ===== kit de evaluación ===== -->
+    <div data-en="evaluacion" style="display:flex;flex-direction:column;gap:12px">
+      <div class="tarjeta" style="padding-bottom:6px">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Kit de evaluación · 40 casos sintéticos</span><span lang="en">Evaluation kit · 40 synthetic cases</span></h2><span class="mono" style="color:var(--ink-2)">2026-09-20</span></div>
+        <table class="tabla">
+          <thead><tr><th><span lang="es">quién responde</span><span lang="en">who answers</span></th><th class="num"><span lang="es">ficha correcta</span><span lang="en">right card</span></th><th class="num"><span lang="es">fin de turno → ficha</span><span lang="en">turn end → card</span></th><th class="num"><span lang="es">costo / reunión</span><span lang="en">cost / meeting</span></th><th><span lang="es">se inventó algo</span><span lang="en">made something up</span></th></tr></thead>
+          <tbody>
+            <tr><td><span lang="es">Fichas sin modelo (solo código)</span><span lang="en">Cards with no model (code only)</span></td><td class="num">34 / 40</td><td class="num">1,1 s</td><td class="num">USD 0</td><td><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">imposible</span><span lang="en">impossible</span></span></td></tr>
+            <tr><td><span lang="es">+ modelo del sistema</span><span lang="en">+ system model</span></td><td class="num">36 / 40</td><td class="num">2,5 s</td><td class="num">USD 0</td><td><span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"/></svg>1 / 40</span></td></tr>
+            <tr><td><span lang="es">+ API externo</span><span lang="en">+ external API</span></td><td class="num">37 / 40</td><td class="num">3,4 s</td><td class="num">USD 0,03</td><td><span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"/></svg>1 / 40</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid-2" style="gap:12px">
+        <div class="franja ok" role="status">
+          <svg class="ic relleno"><use href="#i-check-circle"/></svg>
+          <div>
+            <strong><span lang="es">El modelo aporta 3 de 40, y cuesta 2,3 s</span><span lang="en">The model adds 3 in 40, and costs 2.3 s</span></strong>
+            <p><span lang="es">Por eso las fichas van primero y solas por defecto: el código ya acierta 34 de 40 en 1,1 s y no puede inventar nada. Esta tabla es la razón, no una justificación escrita después.</span><span lang="en">That is why cards go first and alone by default: code already gets 34 of 40 in 1.1 s and cannot invent anything. This table is the reason, not a justification written afterwards.</span></p>
+          </div>
+        </div>
+        <div class="franja warn" role="status">
+          <svg class="ic relleno"><use href="#i-alert"/></svg>
+          <div>
+            <strong><span lang="es">Un caso inventado también se cuenta</span><span lang="en">One invented case counts too</span></strong>
+            <p><span lang="es">1 de 40 en ambos modelos: una cifra que no estaba en tu documento. Sale aquí, en la tabla, y no en una nota al pie. Vuelve a correr cuando cambies de proveedor.</span><span lang="en">1 in 40 with both models: a figure that was not in your document. It shows here, in the table, not in a footnote. Re-run it whenever you change provider.</span></p>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <span class="mono" style="color:var(--ink-2);font-size:11.5px"><span lang="es">los 40 casos viajan con la app · datos sintéticos · puedes añadir los tuyos</span><span lang="en">the 40 cases ship with the app · synthetic data · you can add your own</span></span>
+        <div class="fila" style="gap:8px">
+          <span class="crece"></span>
+          <button class="btn"><svg class="ic s"><use href="#i-doc"/></svg><span lang="es">Ver los casos</span><span lang="en">See the cases</span></button>
+          <button class="btn primario"><svg class="ic s"><use href="#i-rayo"/></svg><span lang="es">Volver a correr</span><span lang="en">Run again</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Claude Code opera la app (C16) ===== -->
+    <div data-en="claude-code" style="display:flex;flex-direction:column;gap:10px">
+      <div class="tarjeta" style="padding:10px 14px">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Puerta local para tu agente</span><span lang="en">Local door for your agent</span></h2><label class="conm off"><span class="track"></span><span class="etq"><svg class="ic s"><use href="#i-llave"/></svg><span lang="es">cerrada</span><span lang="en">closed</span></span></label></div>
+        <p style="margin-top:4px;font-size:12.5px"><span lang="es">Un <b>comando local</b> para que Claude Code opere la app desde este mismo Mac, con una llave de tu Llavero.</span><span lang="en">A <b>local command</b> so Claude Code can operate the app from this same Mac, with a key from your Keychain.</span></p>
+      </div>
+      <div class="grid-2" style="gap:12px;align-items:start">
+        <div class="tarjeta" style="padding-bottom:4px">
+          <h2 class="seccion" style="margin:0 0 2px"><span lang="es">Lo que puede hacer</span><span lang="en">What it can do</span></h2>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span class="qué"><span lang="es">Buscar en tu corpus y devolver fichas</span><span lang="en">Search your corpus, return cards</span></span><span class="por"><span lang="es">lo mismo que hace la app, con tus documentos</span><span lang="en">the same the app does, with your documents</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span class="qué"><span lang="es">Reindexar y arreglar el corpus</span><span lang="en">Reindex and repair the corpus</span></span><span class="por"><span lang="es">añadir carpetas, reintentar documentos ilegibles</span><span lang="en">add folders, retry unreadable documents</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span class="qué"><span lang="es">Correr el kit de evaluación</span><span lang="en">Run the evaluation kit</span></span><span class="por"><span lang="es">y comparar proveedores por ti</span><span lang="en">and compare providers for you</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span class="qué"><span lang="es">Leer y cambiar preferencias</span><span lang="en">Read and change preferences</span></span><span class="por"><span lang="es">idiomas, relleno, retención, diccionario</span><span lang="en">languages, filler, retention, dictionary</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span class="qué"><span lang="es">Abrir tus notas guardadas</span><span lang="en">Open your saved notes</span></span><span class="por"><span lang="es">cifradas: te pide desbloquear una vez por sesión</span><span lang="en">encrypted: it asks you to unlock once per session</span></span></div>
+        </div>
+        <div class="tarjeta" style="padding-bottom:4px">
+          <h2 class="seccion" style="margin:0 0 2px"><span lang="es">Lo que no puede hacer nunca</span><span lang="en">What it can never do</span></h2>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span class="qué"><span lang="es">Tocar una reunión en curso</span><span lang="en">Touch a meeting in progress</span></span><span class="por"><span lang="es">viven en memoria; nadie los alcanza. <b>En reunión la puerta se cierra sola.</b></span><span lang="en">they live in memory. <b>In a meeting the door closes itself.</b></span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span class="qué"><span lang="es">Encender el API externo</span><span lang="en">Turn on the external API</span></span><span class="por"><span lang="es">gastar tu dinero y sacar texto del Mac son decisiones tuyas</span><span lang="en">spending your money is your call, not delegable</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span class="qué"><span lang="es">Sacar nada a la red</span><span lang="en">Send anything to the network</span></span><span class="por"><span lang="es">solo escucha a esta máquina; el contador sigue igual</span><span lang="en">it listens only to this machine</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span class="qué"><span lang="es">Abrirse sola</span><span lang="en">Open itself</span></span><span class="por"><span lang="es">la enciendes aquí, con la mano; se cierra al salir</span><span lang="en">you turn it on here, by hand; it closes on exit</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span class="qué"><span lang="es">Tocar una máquina que no sea la tuya</span><span lang="en">Touch a machine that is not yours</span></span><span class="por"><span lang="es">la regla de la casa, también para tu agente</span><span lang="en">the house rule, for your agent too</span></span></div>
+        </div>
+      </div>
+      <div class="tarjeta" style="padding-bottom:6px">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Qué hizo tu agente</span><span lang="en">What your agent did</span></h2><span class="mono" style="color:var(--ink-2);font-size:11px"><span lang="es">lo denegado también se registra</span><span lang="en">denials are logged too</span></span></div>
+        <div class="mas"><span class="n">11:04</span><span class="titulos crece" style="font-family:var(--font-mono);font-size:var(--t-mono)">ghost corpus reindex --unidad caso</span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg>28</span></div>
+        <div class="mas"><span class="n">11:09</span><span class="titulos crece" style="font-family:var(--font-mono);font-size:var(--t-mono)">ghost ia --encender-api</span><span class="estado err"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span lang="es">denegado</span><span lang="en">denied</span></span></div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+</div>
+
+<script src="assets/iconos.js"></script>
+<script src="assets/maqueta.js"></script>
+</body>
+</html>
