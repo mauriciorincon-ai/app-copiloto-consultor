@@ -23,6 +23,7 @@ idioma**; la nota bajo la barra dice qué mirar.
 | 3-ter | `posicion.html` (dónde vive el panel) + radar invasivo — **añadida en la mirada 3-bis** | antes de la Fase 4 |
 | 3-quater | `posicion.html` (banda acoplada D2/D3/F) + `permisos.html` (permiso de acople) — **añadida en la mirada 3-ter** | antes de la Fase 4 |
 | 3-quinquies | `posicion.html` (relleno de captura: qué ve el cliente en la franja) — **añadida en la mirada 3-quater** | antes de la Fase 4 |
+| 4-bis | `notas.html` (propuestas) · `idioma.html` (varios idiomas) · `ia.html` (Claude Code) — **añadida en la mirada 4** | antes de la Fase 5 |
 | 5 = G-Diseño | `index.html` + recorrido completo | |
 
 Cualquier cambio al plan (agrupar, reordenar, posponer) se propone y se aprueba ANTES de
@@ -39,7 +40,8 @@ construir el siguiente artefacto.
 | 2026-09-20 | `posicion.html` + radar invasivo (mirada 3-ter) | **Decidido: D acoplada + F** — «me gusta mucho la D · banda pegada al borde aunque un poco más arriba al menos el doble, con la posibilidad de ampliarla y ojalá […] recorte la pantalla de la reunión como si fueran dos aplicaciones pegadas […]. En cuanto al E y F ambas me gustan mucho pero vamos con F. Muy bien lo de anti…, estamos solo protegiéndonos de software que quiera invadir nuestra independencia» | Fase 3-quater: banda acoplada 88/200/44 + permiso de acople |
 | 2026-09-20 | `posicion.html` (banda acoplada) + `permisos.html` (acople) (mirada 3-quater) | **Aprobada con un cambio** — «me pareció genial D2, D3 y F. ¿Qué te parece a ti? ¿Por qué es más seguro que el flotante? Podemos hacer que no se vea el escritorio sino en negro, no quiero que vea que algo ocupa ese espacio» | Fase 3-quinquies: **relleno de captura** (la franja deja de mostrar el escritorio) |
 | 2026-09-20 | `posicion.html` (relleno de captura) (mirada 3-quinquies) | **Decidido: fondo de escritorio** — «sí vamos con el relleno fondo de escritorio». *(Elección entre las tres opciones presentadas. Se repreguntó si había abierto el archivo, regla 10; respondió «Listo continúa» — respuesta afirmativa, pero sin describir lo que vio. Se registra tal cual y **el relleno vuelve a la mirada 5**, dentro del recorrido completo.)* | Fase 4 |
-| — | `corpus.html` · `notas.html` · `idioma.html` · `ia.html` (mirada 4) | *(pendiente)* | — |
+| 2026-09-20 | `corpus.html` · `notas.html` · `idioma.html` · `ia.html` (mirada 4) | **Corpus aprobado; tres cambios** — «Notas: me gusta pero es que soy malo tomando notas, no sé cómo voy a lograr tomar notas; no sé si fuera posible que me propusiera si x información deba guardarse como notas. Idioma está bien pero siento que también debería la opción bilingüe para seleccionar más de un idioma. IA me gusta, está bien, aunque quiero que Claude Code también me pueda ayudar a operarla ya que estamos en local» | Fase 4-bis: notas propuestas · varios idiomas · puerta local para Claude Code |
+| — | `notas.html` · `idioma.html` · `ia.html` (mirada 4-bis) | *(pendiente)* | — |
 
 ## Decisiones de diseño declaradas antes del segundo artefacto
 

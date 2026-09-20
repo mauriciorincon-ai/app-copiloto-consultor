@@ -13,6 +13,7 @@
   <span class="mq-t">05 · Notas</span>
   <span class="mq-g"><span>estado</span>
     <button data-estado="durante">durante la reunión</button>
+    <button data-estado="propuestas">te propongo guardar</button>
     <button data-estado="al-cerrar">al cerrar</button>
     <button data-estado="archivo">el archivo cifrado</button>
   </span>
@@ -23,6 +24,7 @@
 
 <div class="mq-nota">
   <div class="n" data-para="durante"><b>Qué mirar:</b> el cuaderno mientras hablas. Escribir con <b>una tecla</b>, fijar una ficha con otra, marcar un acuerdo con otra. Los acuerdos <b>los marcas tú</b>: la app no decide qué fue un acuerdo. Abajo, dicho sin rodeos: esto es lo único que sobrevive.</div>
+  <div class="n" data-para="propuestas"><b>Qué mirar:</b> la respuesta a «soy malo tomando notas». No tienes que tomarlas: la app <b>propone</b> y tú aceptas con una tecla. Fíjate en tres cosas: <b>proponer no es guardar</b> (nada entra sin tu sí), cada propuesta <b>dice de dónde salió</b>, y lo que no aceptes <b>muere con lo demás</b>. Abajo, la lista de lo que sabe reconocer: son reglas, no un modelo adivinando.</div>
   <div class="n" data-para="al-cerrar"><b>Qué mirar:</b> el cierre como estado de cuentas, no como un «¿guardar?». Izquierda, lo que queda —incluidos <b>tus turnos</b>, la casilla que pediste, encendida por ti—. Derecha, lo que muere, y que <b>esa columna no tiene casilla</b>. Tu audio muere también: lo que queda de ti es texto.</div>
   <div class="n" data-para="archivo"><b>Qué mirar:</b> el archivo como objeto tuyo: dónde está, con qué llave, cuánto vive. La retención <b>se cumple sola</b>, aunque no abras la app. Y la advertencia honesta: exportar a texto quita el cifrado.</div>
   <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
@@ -42,6 +44,7 @@
     <a href="ia.html"><svg class="ic s"><use href="#i-chispa"/></svg><span lang="es">IA</span><span lang="en">AI</span></a>
     <div class="abajo">
       <span class="estado ok" data-en="durante"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">En reunión · 0 B</span><span lang="en">In meeting · 0 B</span></span>
+      <span class="estado halo" data-en="propuestas"><svg class="ic s"><use href="#i-chispa"/></svg><span lang="es">7 propuestas</span><span lang="en">7 suggestions</span></span>
       <span class="estado halo" data-en="al-cerrar"><svg class="ic s"><use href="#i-reloj"/></svg><span lang="es">Cerrando…</span><span lang="en">Closing…</span></span>
       <span class="estado mute" data-en="archivo"><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Fuera de reunión</span><span lang="en">Out of meeting</span></span>
     </div>
@@ -56,12 +59,19 @@
     <!-- ===== durante la reunión ===== -->
     <div data-en="durante" style="display:flex;flex-direction:column;gap:12px">
       <div class="grid-2" style="grid-template-columns:1.3fr 1fr;gap:12px;align-items:start">
-        <div class="tarjeta" style="display:flex;flex-direction:column;gap:8px;min-height:326px">
+        <div class="tarjeta" style="display:flex;flex-direction:column;gap:8px;min-height:300px">
           <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Tu nota</span><span lang="en">Your note</span></h2><span class="tecla"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>N</kbd></span></div>
           <div style="font-family:var(--font-evidencia);font-size:14.5px;line-height:1.6;color:var(--ink)">
             <p style="margin-bottom:8px"><span lang="es">Piden la cuarta fuente (Excel de logística). Recordarles que va como adicional — está en §3.2.</span><span lang="en">They are asking for the fourth source (logistics Excel). Remind them it is an add-on — it is in §3.2.</span></p>
             <p style="margin-bottom:8px"><span lang="es">Andrea insiste en tener el tablero para el cierre de trimestre. Fecha real: 12 semanas desde la firma.</span><span lang="en">Andrea wants the dashboard by quarter close. Real date: 12 weeks from signature.</span></p>
             <p style="color:var(--ink-2)"><span lang="es">Sigue escribiendo…</span><span lang="en">Keep writing…</span></p>
+          </div>
+          <span class="crece"></span>
+          <div class="propuesta" style="margin-top:4px">
+            <svg class="ic"><use href="#i-chispa"/></svg>
+            <span class="que"><span lang="es">Fecha real del tablero: 12 semanas desde la firma.</span><span lang="en">Real dashboard date: 12 weeks from signature.</span></span>
+            <span class="de"><span class="origen"><span lang="es">te propongo guardarlo · lo dijiste tú</span><span lang="en">suggested · you said it</span></span></span>
+            <span class="acciones"><span class="tecla"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>↵</kbd></span></span>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:12px">
@@ -83,6 +93,68 @@
         <div>
           <strong><span lang="es">Esto es lo único que va a sobrevivir a la reunión</span><span lang="en">This is the only thing that will survive the meeting</span></strong>
           <p><span lang="es">Lo que escribes aquí, las fichas que fijas y los acuerdos que marcas. Todo lo demás —las dos voces, el transcript, lo que se leyó de la pantalla— vive en memoria y muere al cerrar.</span><span lang="en">What you write here, the cards you pin and the agreements you mark. Everything else —both voices, the transcript, what was read off the screen— lives in memory and dies on close.</span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== te propongo guardar ===== -->
+    <div data-en="propuestas" style="display:flex;flex-direction:column;gap:12px">
+      <div class="grid-2" style="grid-template-columns:1.45fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta" style="display:flex;flex-direction:column;gap:7px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Te propongo guardar esto</span><span lang="en">I suggest saving this</span></h2><span class="tecla"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>↵</kbd></span></div>
+          <div class="propuesta aceptada">
+            <svg class="ic relleno"><use href="#i-check-circle"/></svg>
+            <span class="que"><span lang="es">La cuarta fuente se cotiza aparte.</span><span lang="en">The fourth source is quoted separately.</span></span>
+            <span class="de"><span class="origen"><span lang="es">lo dijiste tú · 14:09</span><span lang="en">you said it · 14:09</span></span><span lang="es">· compromiso</span><span lang="en">· commitment</span></span>
+            <span class="acciones"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">aceptada</span><span lang="en">accepted</span></span></span>
+          </div>
+          <div class="propuesta">
+            <svg class="ic"><use href="#i-reloj"/></svg>
+            <span class="que"><span lang="es">Fecha real del tablero: 12 semanas desde la firma.</span><span lang="en">Real dashboard date: 12 weeks from signature.</span></span>
+            <span class="de"><span class="origen"><span lang="es">lo dijiste tú · 14:16</span><span lang="en">you said it · 14:16</span></span><span lang="es">· cifra y fecha</span><span lang="en">· figure and date</span></span>
+            <span class="acciones"><button class="btn mini primario"><span lang="es">Guardar</span><span lang="en">Save</span></button><button class="btn mini"><span lang="es">No</span><span lang="en">No</span></button></span>
+          </div>
+          <div class="propuesta">
+            <svg class="ic"><use href="#i-alert"/></svg>
+            <span class="que"><span lang="es">Piden cuatro fuentes; tu propuesta fijada dice tres.</span><span lang="en">They ask for four sources; your pinned card says three.</span></span>
+            <span class="de"><span class="origen"><span lang="es">choca con una ficha que fijaste</span><span lang="en">clashes with a card you pinned</span></span><span lang="es">· §3.2</span><span lang="en">· §3.2</span></span>
+            <span class="acciones"><button class="btn mini primario"><span lang="es">Guardar</span><span lang="en">Save</span></button><button class="btn mini"><span lang="es">No</span><span lang="en">No</span></button></span>
+          </div>
+          <div class="propuesta descartada">
+            <svg class="ic"><use href="#i-x-circle"/></svg>
+            <span class="que"><span lang="es">Mencionaron a «Andrea Villalba», que no está en tu corpus.</span><span lang="en">They mentioned “Andrea Villalba”, not in your corpus.</span></span>
+            <span class="de"><span class="origen"><span lang="es">nombre nuevo · descartada por ti</span><span lang="en">new name · discarded by you</span></span></span>
+            <span class="acciones"><span class="estado mute"><svg class="ic s"><use href="#i-x-circle"/></svg><span lang="es">muere</span><span lang="en">dies</span></span></span>
+          </div>
+          <div class="fila"><span class="mono crece" style="color:var(--ink-2);font-size:11px"><span lang="es">3 de 7</span><span lang="en">3 of 7</span></span><button class="btn mini"><span lang="es">Ver todas</span><span lang="en">See all</span></button></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="franja ok" role="status">
+            <svg class="ic relleno"><use href="#i-check-circle"/></svg>
+            <div>
+              <strong><span lang="es">Proponer no es guardar</span><span lang="en">Suggesting is not saving</span></strong>
+              <p><span lang="es">Ninguna propuesta entra al archivo sin tu sí. Las que no aceptes mueren con el resto de la reunión, como si nunca se hubieran escrito.</span><span lang="en">No suggestion reaches the file without your yes. Those you do not accept die with the rest of the meeting, as if never written.</span></p>
+            </div>
+          </div>
+          <div class="tarjeta" style="padding-bottom:6px">
+            <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Qué sabe reconocer</span><span lang="en">What it can recognise</span></h2>
+            <table class="tabla">
+              <tbody>
+                <tr><td><span lang="es">Cifras, plazos y fechas dichos en voz alta</span><span lang="en">Figures, terms and dates said out loud</span></td></tr>
+                <tr><td><span lang="es">Compromisos tuyos («te lo mando», «quedamos en»)</span><span lang="en">Your commitments (“I'll send it”, “we agreed”)</span></td></tr>
+                <tr><td><span lang="es">Lo que contradice una ficha que fijaste</span><span lang="en">Anything clashing with a card you pinned</span></td></tr>
+                <tr><td><span lang="es">Nombres propios que no están en tu corpus</span><span lang="en">Proper names missing from your corpus</span></td></tr>
+              </tbody>
+            </table>
+            <p style="font-size:11.5px;color:var(--ink-2);margin-top:6px"><span lang="es">Son <b>reglas</b>, no un modelo adivinando: la lista de arriba es la lista entera y puedes leerla. Si enciendes el modelo local, solo <b>redacta mejor</b> la propuesta — nunca decide cuál merece guardarse.</span><span lang="en">These are <b>rules</b>, not a model guessing: the list above is the whole list and you can read it. With the local model on, it only <b>phrases</b> the suggestion better — it never decides which one deserves saving.</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="franja warn" role="status">
+        <svg class="ic relleno"><use href="#i-alert"/></svg>
+        <div>
+          <strong><span lang="es">Cuando la propuesta nace de lo que dijo el cliente</span><span lang="en">When the suggestion comes from what the client said</span></strong>
+          <p><span lang="es">Se guarda como <b>un hecho en una línea</b> —«piden cuatro fuentes»—, nunca su transcripción literal, y solo si la aceptas. Su voz y sus turnos siguen muriendo al cerrar: eso no cambia.</span><span lang="en">It is saved as <b>a one-line fact</b> —“they ask for four sources”—, never their verbatim transcript, and only if you accept it. Their voice and turns still die on close: that does not change.</span></p>
         </div>
       </div>
     </div>

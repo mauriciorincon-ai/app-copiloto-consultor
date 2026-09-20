@@ -179,7 +179,11 @@ que dije o escribí, adicional quisiera tener un modo solo audio que me hable de
 por si quiero ver completamente la pantalla y no me interrumpa, todo el resto lo veo muy bien».
 Ambos cambios son de PRODUCTO, no de estilo → ver «Desviación del plan» abajo.
 
-## Desviación del plan (2026-09-20) — DOS CAMBIOS DE PRODUCTO pedidos en la mirada 3
+## Desviación del plan (2026-09-20) — CUATRO CAMBIOS DE PRODUCTO (miradas 3 y 4)
+
+> **Aviso al usuario y a la planeadora:** con C15 (modo solo audio, mirada 3) y **C16 (puerta
+> local para un agente, mirada 4)**, la VISION v1.2.0 pasa de **25 a 27 funcionalidades**. Los
+> cambios C y D están al final de esta sección.
 
 > La planeadora es read-only: esto queda aquí y se avisa al usuario. **La VISION v1.2.0 y el
 > `brief.md` necesitan actualización**, y la regla dura 1 del `CLAUDE.md` de esta app también.
@@ -480,7 +484,100 @@ lleva su símbolo propio además del color.
 
 `design-system.md` sube a **v1.5.0**.
 
-**Mirada 4:** pendiente — mensaje de gate emitido.
+**Mirada 4 (2026-09-20): CORPUS APROBADO, tres cambios** — «Notas: me gusta pero es que soy
+malo tomando notas, no sé cómo voy a lograr tomar notas; no sé si fuera posible que me propusiera
+si x información deba guardarse como notas. Idioma está bien pero siento que también debería la
+opción bilingüe para seleccionar más de un idioma. IA me gusta, está bien, aunque quiero que
+Claude Code también me pueda ayudar a operarla ya que estamos en local».
+
+## Fase 4-bis — propuestas, varios idiomas y la puerta local (2026-09-20)
+
+### A · «Soy malo tomando notas» → la app propone, tú aceptas
+
+El problema real no era la pantalla de notas: era **pedirle al usuario que trabaje mientras
+habla**. La solución no es enseñarle a tomar notas mejor, es **mover el trabajo al final**, donde
+no hay flujo que romper.
+
+- Estado nuevo `propuestas` en `notas.html`: la app junta candidatas durante la reunión y al
+  cerrar se aceptan o mueren, de a una tecla. Durante la reunión aparece **una sola** candidata
+  bajo la nota, discreta, sin robar el foco.
+- **Proponer NO es guardar** — es la regla que sostiene todo lo demás. Nada entra al archivo sin
+  el sí del usuario; lo no aceptado muere con el resto.
+- Cada propuesta **dice de dónde salió** (lo dijiste tú · choca con una ficha que fijaste ·
+  nombre nuevo) y la pantalla publica **la lista entera de lo que sabe reconocer**: cifras,
+  plazos y fechas dichos en voz alta · compromisos tuyos · lo que contradice una ficha fijada ·
+  nombres propios ausentes del corpus. **Son reglas, no un modelo adivinando** (regla dura 14).
+  Con el modelo local encendido solo **redacta mejor** la propuesta; jamás decide cuál merece
+  guardarse.
+- **El borde delicado, dicho en la pantalla:** una propuesta nacida de lo que dijo el cliente se
+  guarda como **un hecho en una línea** («piden cuatro fuentes»), nunca su transcripción literal,
+  y solo si el usuario la acepta. Su voz y sus turnos siguen muriendo al cerrar.
+
+Contradice a medias una decisión de la fase 4 («los acuerdos los marcas tú; la app no decide qué
+fue un acuerdo»). Se resuelve separando los verbos: **la app propone, el usuario decide**. La
+frase del sistema pasa a ser: *la app nunca guarda por ti; puede señalarte qué mirar*.
+
+### B · Varios idiomas por pista, no uno
+
+Estado nuevo `varios` en `idioma.html`. Cada pista deja de tener **un** idioma detectado y pasa a
+tener **el conjunto que el usuario marque** (automático · fijo · varios), porque el caso real es
+saltar de idioma dentro de la misma frase. Se añade lo que cuesta, medido y dicho: cada idioma
+extra suma décimas al fin de turno y acierta algo menos en frases mezcladas; con tres se sigue
+dentro del presupuesto de 4 s, y pasado eso **la app lo dice aquí en vez de ponerse lenta en
+silencio**. Y se separa la decisión que más se confunde: **escuchar en tres idiomas no obliga a
+leer en tres**.
+
+### C · Claude Code opera la app — funcionalidad NUEVA (C16)
+
+Estado nuevo `claude-code` en `ia.html`: una **puerta local** (comando `ghost` + llave en el
+Llavero) para que Claude Code, corriendo en el mismo Mac, opere la app. **Nace cerrada.**
+
+| Puede | No puede, nunca |
+|---|---|
+| buscar en el corpus y devolver fichas | **tocar una reunión en curso** |
+| reindexar y arreglar el corpus | encender el API externo |
+| correr el kit de evaluación | sacar nada a la red |
+| leer y cambiar preferencias | abrirse sola |
+| abrir las notas guardadas (con desbloqueo) | tocar una máquina ajena |
+
+**La regla que lo hace compatible con el estándar 4-T: en reunión la puerta se cierra sola.** Un
+agente nunca alcanza lo que está vivo en memoria. Y el registro guarda **también lo denegado**:
+un agente intentando lo que no puede es exactamente lo que el usuario quiere ver.
+
+**Defecto propio, declarado:** los desbordes de `.contenido` los reportó el arnés desde el primer
+momento y **no los leí** — venían antes de la línea de cada estado y el `tail` me los tapó. Cinco
+estados salieron de la fase 4 desbordando entre 15 y 270 px. Es la misma lección de la fase 3-ter
+en otra forma: **leer la salida ES el gate**, y leerla ENTERA. Corregidos: los cuatro archivos
+caben ahora en 960 × 640 en ambos temas y ambos idiomas.
+
+**Componentes nuevos del sistema:** `.propuesta` (candidata a nota, tres estados) · `.idiomas`
+(selector de varios) · `.puerta` (lo que un agente puede y no puede). `design-system.md` v1.6.0.
+
+**Contraste medido:** corpus 16 · notas 16 · idioma 16 · IA 20 = **68 capturas, 0 bajo AA**;
+**0 desbordes**.
+
+**Mirada 4-bis:** pendiente — mensaje de gate emitido.
+
+### C · Propuestas de nota (extiende C9) — mirada 4
+
+La app pasa a **proponer** candidatas a nota. No es una funcionalidad nueva: extiende C9
+(anotar/fijar/acuerdos) con un paso previo. Lo que sí cambia en el `CLAUDE.md` y en la VISION es
+una frase: donde hoy se lee «la app no decide qué guardar», debe leerse **«la app puede proponer
+qué guardar; decidir es siempre del usuario»**. El motor es determinista (reglas publicadas en la
+pantalla), con el modelo local como acento opcional que solo redacta.
+
+### D · C16 · Puerta local para un agente (Claude Code) — mirada 4 · NUEVA
+
+Funcionalidad nueva, pedida textualmente: *«quiero que Claude Code también me pueda ayudar a
+operarla ya que estamos en local»*. Un comando local con llave en el Llavero, **cerrado por
+defecto**, que permite operar corpus, kit, preferencias y notas (con desbloqueo). **Nunca** toca
+una reunión en curso —la puerta se cierra sola al entrar en reunión—, ni enciende el API, ni
+saca nada a la red, ni toca una máquina ajena.
+
+Es compatible con las reglas duras 1, 2 y 9 **porque la puerta se cierra en reunión**: esa es la
+condición, no un detalle. Sin ella, C16 abriría un camino de lectura a los buffers efímeros y
+rompería el estándar 4-T. La planeadora debe registrarla con esa condición escrita, no como
+«integración con Claude Code» a secas.
 
 ## Fase 5 — Cierre (recorrido, README, auditoría, PR)
 (pendiente)

@@ -1,7 +1,7 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.5.0   # 1.5.0: pantallas del cuaderno (corpus, notas, idioma, IA). 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
+version: 1.6.0   # 1.6.0: propuesta de nota, selector de varios idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
 fecha: 2026-09-20
 estado: propuesto   # → aprobado con G-Diseño
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
@@ -283,6 +283,26 @@ CTAs grandes en el panel · tamaños de ventana distintos de los declarados (§3
   contra `docs/diseno/` a píxel real, ambos temas.
 - `NSMicrophoneUsageDescription` / `NSScreenCaptureUsageDescription` usan los textos «para
   qué» de `.permiso` (bilingües).
+
+## 9-ter · Tres componentes de la mirada 4 (2026-09-20)
+
+**`.propuesta` — candidata a nota (extiende C9).** Anatomía fija: símbolo · qué propone (voz de
+evidencia) · **de dónde salió** · acción. Tres estados: propuesta · aceptada (ok) · descartada
+(tachada). **Regla del componente: proponer no es guardar.** Nada entra al archivo sin el sí del
+usuario, y lo no aceptado muere con la reunión. La pantalla que lo usa **publica la lista entera
+de lo que sabe reconocer** — son reglas, no un modelo adivinando (regla dura 14); el modelo local
+solo redacta mejor la propuesta, jamás decide cuál merece guardarse. Una propuesta nacida de lo
+que dijo un tercero se guarda como **un hecho en una línea**, nunca su transcripción literal.
+
+**`.idiomas` — varios por pista, no uno.** Cada pista (micrófono · sistema) lleva un conjunto de
+idiomas marcables, no un valor. Modos: automático · fijo · varios. El coste se declara en la
+misma pantalla (décimas al fin de turno, menos acierto en frases mezcladas) y se separa de la
+decisión vecina: **escuchar en N idiomas no obliga a leer en N**.
+
+**`.puerta` — lo que un agente local puede y no puede.** Dos columnas obligatorias: **puede** y
+**no puede nunca**, cada fila con su razón. La columna de la derecha no es un descargo legal: es
+la parte que se lee primero. **Condición del componente: en reunión la puerta se cierra sola** —
+ningún agente alcanza lo que vive en memoria. El registro muestra también lo **denegado**.
 
 ## 9-bis · Qué persiste (cambio de la mirada 3, 2026-09-20)
 

@@ -392,3 +392,30 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .gota { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; background: var(--bg); color: var(--ink-2); border: var(--borde) solid var(--line); border-radius: 50%; box-shadow: var(--sombra-panel); }
 .gota.hablando { border-color: var(--halo); color: var(--halo); }
 .gota.sin-auriculares { border-color: var(--warn); color: var(--warn); }
+
+/* Propuesta de nota (C9-bis, mirada 4): candidata a nota. Proponer NO es guardar. */
+.propuesta { display: grid; grid-template-columns: 16px 1fr auto; gap: 2px 9px; padding: 6px 10px; border: var(--borde) solid var(--line-2); border-radius: var(--r-ficha); background: var(--surface); align-items: start; }
+.propuesta > .ic { margin-top: 2px; color: var(--halo); }
+.propuesta .que { font-family: var(--font-evidencia); font-size: 13.5px; line-height: 1.4; color: var(--ink); }
+.propuesta .de { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-size: 11.5px; color: var(--ink-2); }
+.propuesta .de .origen { font-family: var(--font-mono); font-size: var(--t-mono); }
+.propuesta .acciones { grid-column: 3; grid-row: 1 / span 2; display: flex; gap: 5px; align-items: center; justify-content: flex-end; }
+.propuesta.aceptada { border-color: var(--ok); background: var(--ok-tint); }
+.propuesta.aceptada > .ic { color: var(--ok); }
+.propuesta.descartada { opacity: .5; }
+.propuesta.descartada .que { text-decoration: line-through; color: var(--ink-2); }
+
+/* Selector de idiomas por pista (mirada 4): varios a la vez, no uno */
+.idiomas { display: flex; flex-wrap: wrap; gap: 5px; }
+.idiomas .lg { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: var(--r-chip); border: var(--borde) solid var(--line-2); background: var(--surface-2); color: var(--ink-2); font-family: var(--font-mono); font-size: var(--t-mono); }
+.idiomas .lg.on { border-color: var(--halo); background: var(--halo-tint); color: var(--halo); }
+.idiomas .lg .ic { flex: 0 0 auto; }
+
+/* Puerta local (C16, mirada 4): qué puede y qué no puede un agente del propio Mac */
+.puerta { display: grid; grid-template-columns: 16px 1fr; gap: 1px 9px; padding: 5px 2px; align-items: start; border-bottom: var(--borde) solid var(--line); }
+.puerta:last-child { border-bottom: 0; }
+.puerta > .ic { margin-top: 2px; }
+.puerta.si > .ic { color: var(--ok); }
+.puerta.no > .ic { color: var(--err); }
+.puerta .qué { font-size: 12.5px; color: var(--ink); line-height: 1.35; }
+.puerta .por { grid-column: 2; font-size: 11px; color: var(--ink-2); line-height: 1.35; }

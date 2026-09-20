@@ -16,6 +16,7 @@
     <button data-estado="api-off">API apagado</button>
     <button data-estado="api-on">API encendido</button>
     <button data-estado="evaluacion">kit de evaluación</button>
+    <button data-estado="claude-code">Claude Code</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -27,6 +28,7 @@
   <div class="n" data-para="api-off"><b>Qué mirar:</b> la puerta cerrada, explicada. Tu clave, no la nuestra. A la derecha, las dos listas que importan: qué saldría (texto corto, ya anonimizado <b>aquí</b>) y qué no sale nunca — <b>ni encendiéndolo</b>, porque el camino no existe en el código.</div>
   <div class="n" data-para="api-on"><b>Qué mirar:</b> encendido, la app no se vuelve opaca: te enseña <b>el texto exacto</b> que salió, con lo reemplazado tachado, el contador en KB reales y el costo con su tope. Al llegar al tope vuelve sola a lo local.</div>
   <div class="n" data-para="evaluacion"><b>Qué mirar:</b> la regla «código primero» convertida en tabla medida. El modelo aporta 3 aciertos de 40 y cuesta 2,3 segundos. Y la fila incómoda está ahí: <b>1 de 40 se inventó una cifra</b>, en los dos modelos.</div>
+  <div class="n" data-para="claude-code"><b>Qué mirar:</b> lo que pediste — que Claude Code pueda operar la app desde tu propio Mac. La puerta es <b>local</b> y nace <b>cerrada</b>. Mira sobre todo las dos columnas: qué puede hacer y qué <b>no puede hacer nunca</b>. Y la regla que lo sostiene todo: <b>en reunión la puerta se cierra sola</b> — un agente no toca jamás lo que está vivo en memoria. Abajo, el registro de lo que hizo.</div>
   <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
 </div>
 
@@ -46,6 +48,7 @@
       <span class="estado ok" data-en="local"><svg class="ic s relleno"><use href="#i-mac"/></svg><span lang="es">En tu Mac · 0 B</span><span lang="en">On your Mac · 0 B</span></span>
       <span class="estado mute" data-en="api-off"><svg class="ic s"><use href="#i-nube-off"/></svg><span lang="es">API apagado</span><span lang="en">API off</span></span>
       <span class="estado halo" data-en="api-on"><svg class="ic s"><use href="#i-nube"/></svg><span lang="es">API · 12,4 KB</span><span lang="en">API · 12.4 KB</span></span>
+      <span class="estado mute" data-en="claude-code"><svg class="ic s"><use href="#i-llave"/></svg><span lang="es">Puerta cerrada</span><span lang="en">Door closed</span></span>
       <span class="estado ok" data-en="evaluacion"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Evaluado</span><span lang="en">Evaluated</span></span>
     </div>
   </nav>
@@ -118,7 +121,7 @@
     </div>
 
     <!-- ===== API encendido ===== -->
-    <div data-en="api-on" style="display:flex;flex-direction:column;gap:12px">
+    <div data-en="api-on" style="display:flex;flex-direction:column;gap:10px">
       <div class="grid-2" style="grid-template-columns:1.2fr 1fr;gap:12px;align-items:start">
         <div class="tarjeta">
           <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Lo último que salió</span><span lang="en">The last thing that left</span></h2><span class="mono" style="color:var(--ink-2)">14:22:07</span></div>
@@ -195,6 +198,37 @@
           <button class="btn"><svg class="ic s"><use href="#i-doc"/></svg><span lang="es">Ver los casos</span><span lang="en">See the cases</span></button>
           <button class="btn primario"><svg class="ic s"><use href="#i-rayo"/></svg><span lang="es">Volver a correr</span><span lang="en">Run again</span></button>
         </div>
+      </div>
+    </div>
+
+    <!-- ===== Claude Code opera la app (C16) ===== -->
+    <div data-en="claude-code" style="display:flex;flex-direction:column;gap:10px">
+      <div class="tarjeta" style="padding:10px 14px">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Puerta local para tu agente</span><span lang="en">Local door for your agent</span></h2><label class="conm off"><span class="track"></span><span class="etq"><svg class="ic s"><use href="#i-llave"/></svg><span lang="es">cerrada</span><span lang="en">closed</span></span></label></div>
+        <p style="margin-top:4px;font-size:12.5px"><span lang="es">Un <b>comando local</b> para que Claude Code opere la app desde este mismo Mac, con una llave de tu Llavero.</span><span lang="en">A <b>local command</b> so Claude Code can operate the app from this same Mac, with a key from your Keychain.</span></p>
+      </div>
+      <div class="grid-2" style="gap:12px;align-items:start">
+        <div class="tarjeta" style="padding-bottom:4px">
+          <h2 class="seccion" style="margin:0 0 2px"><span lang="es">Lo que puede hacer</span><span lang="en">What it can do</span></h2>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span class="qué"><span lang="es">Buscar en tu corpus y devolver fichas</span><span lang="en">Search your corpus, return cards</span></span><span class="por"><span lang="es">lo mismo que hace la app, con tus documentos</span><span lang="en">the same the app does, with your documents</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span class="qué"><span lang="es">Reindexar y arreglar el corpus</span><span lang="en">Reindex and repair the corpus</span></span><span class="por"><span lang="es">añadir carpetas, reintentar documentos ilegibles</span><span lang="en">add folders, retry unreadable documents</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span class="qué"><span lang="es">Correr el kit de evaluación</span><span lang="en">Run the evaluation kit</span></span><span class="por"><span lang="es">y comparar proveedores por ti</span><span lang="en">and compare providers for you</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span class="qué"><span lang="es">Leer y cambiar preferencias</span><span lang="en">Read and change preferences</span></span><span class="por"><span lang="es">idiomas, relleno, retención, diccionario</span><span lang="en">languages, filler, retention, dictionary</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span class="qué"><span lang="es">Abrir tus notas guardadas</span><span lang="en">Open your saved notes</span></span><span class="por"><span lang="es">cifradas: te pide desbloquear una vez por sesión</span><span lang="en">encrypted: it asks you to unlock once per session</span></span></div>
+        </div>
+        <div class="tarjeta" style="padding-bottom:4px">
+          <h2 class="seccion" style="margin:0 0 2px"><span lang="es">Lo que no puede hacer nunca</span><span lang="en">What it can never do</span></h2>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span class="qué"><span lang="es">Tocar una reunión en curso</span><span lang="en">Touch a meeting in progress</span></span><span class="por"><span lang="es">viven en memoria; nadie los alcanza. <b>En reunión la puerta se cierra sola.</b></span><span lang="en">they live in memory. <b>In a meeting the door closes itself.</b></span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span class="qué"><span lang="es">Encender el API externo</span><span lang="en">Turn on the external API</span></span><span class="por"><span lang="es">gastar tu dinero y sacar texto del Mac son decisiones tuyas</span><span lang="en">spending your money is your call, not delegable</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span class="qué"><span lang="es">Sacar nada a la red</span><span lang="en">Send anything to the network</span></span><span class="por"><span lang="es">solo escucha a esta máquina; el contador sigue igual</span><span lang="en">it listens only to this machine</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span class="qué"><span lang="es">Abrirse sola</span><span lang="en">Open itself</span></span><span class="por"><span lang="es">la enciendes aquí, con la mano; se cierra al salir</span><span lang="en">you turn it on here, by hand; it closes on exit</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span class="qué"><span lang="es">Tocar una máquina que no sea la tuya</span><span lang="en">Touch a machine that is not yours</span></span><span class="por"><span lang="es">la regla de la casa, también para tu agente</span><span lang="en">the house rule, for your agent too</span></span></div>
+        </div>
+      </div>
+      <div class="tarjeta" style="padding-bottom:6px">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Qué hizo tu agente</span><span lang="en">What your agent did</span></h2><span class="mono" style="color:var(--ink-2);font-size:11px"><span lang="es">lo denegado también se registra</span><span lang="en">denials are logged too</span></span></div>
+        <div class="mas"><span class="n">11:04</span><span class="titulos crece" style="font-family:var(--font-mono);font-size:var(--t-mono)">ghost corpus reindex --unidad caso</span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg>28</span></div>
+        <div class="mas"><span class="n">11:09</span><span class="titulos crece" style="font-family:var(--font-mono);font-size:var(--t-mono)">ghost ia --encender-api</span><span class="estado err"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span lang="es">denegado</span><span lang="en">denied</span></span></div>
       </div>
     </div>
 
