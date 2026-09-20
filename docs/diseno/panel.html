@@ -23,7 +23,8 @@
     <button data-estado="sugerencia-api">sugerencia · API</button>
     <button data-estado="sin-resultado">sin resultado</button>
     <button data-estado="sin-verificar">cliente sin verificar</button>
-    <button data-estado="radar">alerta del radar</button>
+    <button data-estado="radar">radar · grabación y bot</button>
+    <button data-estado="radar-invasivo">radar · software invasivo</button>
     <button data-estado="transcript">transcript visible</button>
     <button data-estado="voz">solo audio · hablando</button>
     <button data-estado="voz-sin">solo audio · sin auriculares</button>
@@ -42,6 +43,7 @@
   <div class="n" data-para="sin-resultado"><b>Qué mirar:</b> el panel admite que no tiene nada. Dos salidas discretas: buscar con otras palabras (⌘⇧A) o anotar para después.</div>
   <div class="n" data-para="sin-verificar"><b>Qué mirar:</b> resultado del spike. En Zoom la protección no está verificada: franja ámbar (tinte + borde sólido + triángulo) con el camino alterno. El pie cambia de «Meet · verificada» a «Zoom · sin verificar». Es aviso, no bloqueo.</div>
   <div class="n" data-para="radar"><b>Qué mirar:</b> el radar (C14) solo mira tu Mac y tu pantalla: la reunión se está grabando y hay un bot de notas. El panel avisa y recuerda tu protección propia. No bloquea nada.</div>
+  <div class="n" data-para="radar-invasivo"><b>Qué mirar:</b> el radar en su nivel grave, dentro del panel. Esto no es «te están grabando la reunión»: es <b>un programa mirando tu propio equipo</b> — supervisión de exámenes, anti-trampa, monitoreo, acceso remoto. Coral en vez de ámbar, y con lo que alcanza a ver. Sigue sin bloquear nada: decides tú.</div>
   <div class="n" data-para="transcript"><b>Qué mirar:</b> el transcript en vivo, oculto por defecto, con ⌘⇧T. El panel crece a 380 × 420; cada turno lleva su pista (sistema = cliente, mic = tú), nunca un nombre. Solo en memoria.</div>
   <div class="n" data-para="voz"><b>Qué mirar:</b> el <b>modo solo audio</b>. El panel desaparece: queda una píldora de <b>260 × 56</b> y la ficha se <b>oye</b> en vez de leerse. La píldora no repite el texto (para eso está el oído): dice de dónde salió y cómo callarla. Toda tu pantalla queda libre.</div>
   <div class="n" data-para="voz-sin"><b>Qué mirar:</b> la salvaguarda. Sin auriculares la app <b>no habla</b> — por los parlantes el cliente oiría la sugerencia y se rompería la promesa entera. No es un aviso que puedas ignorar: es una condición. Si los desconectas a mitad, calla.</div>
@@ -83,7 +85,7 @@
   </section>
 
   <!-- ================= EL PANEL (producto) ================= -->
-  <section class="panel" data-captura data-en="esperando buscando ficha sugerencia-local sugerencia-api sin-resultado sin-verificar radar transcript" data-transcript-en="transcript" aria-label="Angel Ghost">
+  <section class="panel" data-captura data-en="esperando buscando ficha sugerencia-local sugerencia-api sin-resultado sin-verificar radar radar-invasivo transcript" data-transcript-en="transcript" aria-label="Angel Ghost">
 
     <header class="barra">
       <span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando</span><span lang="en">Listening</span></span>
@@ -93,7 +95,7 @@
         <span lang="es">2 pistas</span><span lang="en">2 tracks</span>
         <span class="pista" title="lectura de pantalla: solo cuando cambia"><svg class="ic s"><use href="#i-pantalla"/></svg><span lang="es">pantalla</span><span lang="en">screen</span></span>
       </span>
-      <span class="red cero" data-en="esperando buscando ficha sugerencia-local sin-resultado sin-verificar radar transcript" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"/></svg>0 B</span>
+      <span class="red cero" data-en="esperando buscando ficha sugerencia-local sin-resultado sin-verificar radar radar-invasivo transcript" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"/></svg>0 B</span>
       <span class="red api" data-en="sugerencia-api" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"/></svg>1,2 KB</span>
     </header>
 
@@ -169,7 +171,15 @@
           <p><span lang="es">Meet muestra el aviso de grabación y «MinutaBot» está en la lista de participantes. Aviso, no bloqueo.</span><span lang="en">Meet shows the recording notice and “MinutaBot” is in the participant list. A notice, not a block.</span></p>
         </div>
       </div>
-      <p class="meta oido" data-en="radar" style="gap:6px"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">tu panel sigue protegido · 0 B en red · nada persiste</span><span lang="en">your panel stays protected · 0 B out · nothing persists</span></span></p>
+      <div class="franja err" data-en="radar-invasivo" role="alert">
+        <svg class="ic relleno"><use href="#i-x-circle"/></svg>
+        <div>
+          <strong><span lang="es">Te está mirando un programa de tu Mac</span><span lang="en">A program on your Mac is watching you</span></strong>
+          <p><span lang="es">«ProctorLince» (supervisión de exámenes): ve tu pantalla completa y tu cámara.</span><span lang="en">“ProctorLince” (exam proctoring): sees your full screen and your camera.</span></p>
+        </div>
+      </div>
+      <p class="acciones" data-en="radar-invasivo"><button class="btn mini"><svg class="ic s"><use href="#i-radar"/></svg><span lang="es">Ver qué alcanza a ver</span><span lang="en">See what it can see</span></button><button class="btn mini"><svg class="ic s"><use href="#i-rayo"/></svg><span lang="es">Corta todo</span><span lang="en">Cut everything</span></button></p>
+      <p class="meta oido" data-en="radar radar-invasivo" style="gap:6px"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">tu panel sigue protegido · 0 B en red · nada persiste</span><span lang="en">your panel stays protected · 0 B out · nothing persists</span></span></p>
 
     </div>
 
@@ -182,7 +192,7 @@
     </div>
 
     <footer class="pie">
-      <span class="cliente ok" title="protección de la ventana verificada en Google Meet · macOS 26.6.2 · 2026-09-20" data-en="esperando buscando ficha sugerencia-local sugerencia-api sin-resultado radar transcript"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span></span>
+      <span class="cliente ok" title="protección de la ventana verificada en Google Meet · macOS 26.6.2 · 2026-09-20" data-en="esperando buscando ficha sugerencia-local sugerencia-api sin-resultado radar radar-invasivo transcript"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span></span>
       <span class="cliente warn" data-en="sin-verificar"><svg class="ic s relleno"><use href="#i-alert"/></svg><span lang="es">Zoom · sin verificar</span><span lang="en">Zoom · not verified</span></span>
       <span class="atajos">
         <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>

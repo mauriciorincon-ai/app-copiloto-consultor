@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="es" data-theme="dark" data-lang="es" data-estado="a">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Angel Ghost · Maqueta — ¿Dónde vive el panel?</title>
+<link rel="stylesheet" href="assets/ghost.css">
+<link rel="stylesheet" href="assets/maqueta.css">
+</head>
+<body class="mq">
+
+<div class="mq-bar" role="toolbar" aria-label="Sala de diseño">
+  <span class="mq-t">¿Dónde vive el panel?</span>
+  <span class="mq-g"><span>opción</span>
+    <button data-estado="a">A · tarjeta arriba der.</button>
+    <button data-estado="b">B · tarjeta abajo der.</button>
+    <button data-estado="c">C · banda inferior</button>
+    <button data-estado="d">D · banda al borde</button>
+    <button data-estado="e">E · solo audio: gota</button>
+    <button data-estado="f">F · solo audio: banda</button>
+  </span>
+  <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
+  <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
+  <a href="index.html">← recorrido</a>
+</div>
+
+<div class="mq-nota">
+  <div class="n" data-para="a"><b>A · tarjeta arriba a la derecha</b> (lo que hay hoy). No choca con nada: los controles de Meet y Zoom viven abajo, el aviso de grabación arriba al centro. Tapa la esquina donde algunas apps ponen su barra lateral. Tu mirada tiene que subir.</div>
+  <div class="n" data-para="b"><b>B · la misma tarjeta, abajo a la derecha.</b> Más cerca de donde miras cuando lees un dashboard compartido. Convive con el Dock si lo tienes abajo, y roza la esquina donde Zoom pone el chat.</div>
+  <div class="n" data-para="c"><b>C · banda inferior de lado a lado</b>, separada del borde. Una sola línea: titular, línea y fuente. Ocupa 44 px de alto en vez de 220. <b>Mira el recuadro ámbar:</b> tapa los controles de la videollamada — no podrías colgar sin moverla.</div>
+  <div class="n" data-para="d"><b>D · banda pegada al borde inferior</b>, de esquina a esquina. Se lee como una barra del sistema y deja los controles libres si el cliente de videollamada los flota por encima. <b>Tapa el Dock</b> si lo tienes abajo.</div>
+  <div class="n" data-para="e"><b>E · modo solo audio con una gota de 44 px</b> abajo a la izquierda. Lo más pequeño posible: solo el estado, sin texto. La ficha se oye. Abajo a la izquierda no hay nada de Meet, Zoom ni Teams.</div>
+  <div class="n" data-para="f"><b>F · modo solo audio con la banda.</b> Una línea que dice qué está diciendo y de dónde salió, sin ocupar alto. Deja libre toda la pantalla vertical.</div>
+  <div class="mq-medida">escritorio de referencia 1180 × 720 · panel 380 × 220 · banda 44 px de alto · gota 44 × 44 · datos sintéticos</div>
+</div>
+
+<div class="mq-escritorio" aria-label="Escritorio de referencia">
+  <div class="mq-menubar"><b></b><span>Google Chrome</span><span>Archivo</span><span>Editar</span><span>Ver</span><span class="der">14:02</span></div>
+  <div class="mq-meet">
+    <div class="titulo"><i></i><i></i><i></i> meet · Páramo Azul — Propuesta tablero de rentabilidad</div>
+    <div class="tiles">
+      <div class="tile"><span>Ana Torres · Páramo Azul</span></div>
+      <div class="tile"><span>Tú (presentando)</span></div>
+    </div>
+    <div class="presentando">Estás presentando tu pantalla</div>
+    <div class="controles"><i></i><i></i><i></i><i class="rojo"></i><i></i></div>
+  </div>
+  <div class="mq-dock"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+  <!-- recuadro de choque: los controles de la videollamada -->
+  <div class="mq-choque" data-en="c" style="left:calc(50% - 130px);width:260px;bottom:60px;height:48px"><span>controles de la llamada: la banda los tapa</span></div>
+  <div class="mq-choque" data-en="d" style="left:calc(50% - 215px);width:430px;bottom:2px;height:56px"><span>el Dock: la banda queda encima</span></div>
+
+  <!-- A · tarjeta arriba derecha -->
+  <div class="mq-pos arriba-der" data-en="a"><section class="panel" data-captura-alt>
+    <header class="barra"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando</span><span lang="en">Listening</span></span><span class="pistas"><span class="pista"><svg class="ic s"><use href="#i-mic"/></svg></span><span class="pista"><svg class="ic s"><use href="#i-sistema"/></svg></span><span lang="es">2 pistas</span><span lang="en">2 tracks</span></span><span class="red cero"><svg class="ic s"><use href="#i-subir"/></svg>0 B</span></header>
+    <div class="cuerpo"><article class="ficha"><h2 class="titular"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></h2><p class="linea"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on.</span></p><p class="fuente"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span class="doc"><span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span><span class="pin"><svg class="ic s"><use href="#i-pin"/></svg>⌘⇧P</span></p></article></div>
+    <footer class="pie"><span class="cliente ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span></span><span class="atajos"><span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span></span></footer>
+  </section></div>
+
+  <!-- B · tarjeta abajo derecha -->
+  <div class="mq-pos abajo-der" data-en="b"><section class="panel" data-captura-alt>
+    <header class="barra"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando</span><span lang="en">Listening</span></span><span class="pistas"><span class="pista"><svg class="ic s"><use href="#i-mic"/></svg></span><span class="pista"><svg class="ic s"><use href="#i-sistema"/></svg></span><span lang="es">2 pistas</span><span lang="en">2 tracks</span></span><span class="red cero"><svg class="ic s"><use href="#i-subir"/></svg>0 B</span></header>
+    <div class="cuerpo"><article class="ficha"><h2 class="titular"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></h2><p class="linea"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on.</span></p><p class="fuente"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span class="doc"><span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span><span class="pin"><svg class="ic s"><use href="#i-pin"/></svg>⌘⇧P</span></p></article></div>
+    <footer class="pie"><span class="cliente ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span></span><span class="atajos"><span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span></span></footer>
+  </section></div>
+
+  <!-- C · banda inferior separada · D · banda al borde -->
+  <div class="mq-pos banda-inf" data-en="c"><section class="banda" data-captura-alt>
+    <span class="marca-min"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">0 B</span><span lang="en">0 B</span></span>
+    <span class="cuerpo-b">
+      <span class="titular-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></span>
+      <span class="linea-b"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel.</span></span>
+    </span>
+    <span class="fuente-b"><span lang="es">propuesta · Páramo Azul §3.2</span><span lang="en">proposal · Páramo Azul §3.2</span></span>
+    <span class="atajos-b"><span class="tecla"><kbd>⌘⇧P</kbd></span><span class="tecla"><kbd>⌥⎋</kbd></span></span>
+  </section></div>
+
+  <div class="mq-pos banda-borde" data-en="d"><section class="banda" data-captura-alt>
+    <span class="marca-min"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">0 B</span><span lang="en">0 B</span></span>
+    <span class="cuerpo-b">
+      <span class="titular-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></span>
+      <span class="linea-b"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on.</span></span>
+    </span>
+    <span class="fuente-b"><span lang="es">propuesta · Páramo Azul §3.2</span><span lang="en">proposal · Páramo Azul §3.2</span></span>
+    <span class="atajos-b"><span class="tecla"><kbd>⌘⇧P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span><span class="tecla"><kbd>⌥⎋</kbd></span></span>
+  </section></div>
+
+  <!-- E · gota abajo izquierda -->
+  <div class="mq-pos abajo-izq" data-en="e"><span class="gota hablando" data-captura-alt title="modo solo audio"><svg class="ic"><use href="#i-voz"/></svg></span></div>
+
+  <!-- F · banda en modo solo audio -->
+  <div class="mq-pos banda-borde" data-en="f"><section class="banda voz" data-captura-alt>
+    <span class="marca-min" style="color:var(--halo)"><svg class="ic s"><use href="#i-voz"/></svg><span lang="es">diciéndote</span><span lang="en">reading you</span></span>
+    <span class="cuerpo-b"><span class="linea-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes — cubre ERP, POS y Excel de canal.</span><span lang="en">Data cleansing: included, up to three sources — covers ERP, POS and channel Excel.</span></span></span>
+    <span class="fuente-b"><span lang="es">propuesta · §3.2</span><span lang="en">proposal · §3.2</span></span>
+    <span class="atajos-b"><span class="tecla"><kbd>⎋</kbd> <span lang="es">calla</span><span lang="en">hush</span></span></span>
+  </section></div>
+
+</div>
+
+<div class="mq-tabla-pos">
+  <table>
+    <thead><tr><th>opción</th><th>choca con</th><th>a favor</th><th>en contra</th></tr></thead>
+    <tbody>
+      <tr><td><b>A · tarjeta arriba der.</b></td><td class="si">nada de Meet/Zoom/Teams</td><td>libre de conflictos; el sitio donde hoy miras el aviso de grabación</td><td>la mirada sube; tapa barras laterales de otras apps</td></tr>
+      <tr><td><b>B · tarjeta abajo der.</b></td><td class="mas">Dock (si está abajo) · chat de Zoom</td><td>cerca de donde miras un dashboard; caída natural de la vista</td><td>220 px de alto en la zona más disputada de la pantalla</td></tr>
+      <tr><td><b>C · banda inferior</b></td><td class="no">controles de la llamada</td><td>44 px en vez de 220; una línea de lectura</td><td><b>taparía el botón de colgar</b>: descartable tal cual</td></tr>
+      <tr><td><b>D · banda al borde</b></td><td class="mas">Dock (si está abajo)</td><td>44 px; se lee como barra del sistema; los controles flotan por encima</td><td>la línea es larga: obliga a recortar la frase</td></tr>
+      <tr><td><b>E · gota (solo audio)</b></td><td class="si">nada</td><td>44 × 44: lo más pequeño posible; libera la pantalla entera</td><td>no dice de dónde salió lo que oyes</td></tr>
+      <tr><td><b>F · banda (solo audio)</b></td><td class="mas">Dock (si está abajo)</td><td>dice qué dice y de dónde, sin ocupar alto</td><td>más presencia visual que la gota</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script src="assets/iconos.js"></script>
+<script src="assets/maqueta.js"></script>
+</body>
+</html>

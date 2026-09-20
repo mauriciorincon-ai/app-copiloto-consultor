@@ -347,3 +347,21 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .pildora .texto .de { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pildora.sin-auriculares .texto .q { color: var(--warn); }
 .pildora .tecla { flex: 0 0 auto; }
+
+/* ---------------------------------------------------------------------------
+   BANDA INFERIOR — variante de posición: el panel como franja de lado a lado.
+   Altura mínima, una sola línea de lectura, anclada al borde inferior.
+   --------------------------------------------------------------------------- */
+.banda { display: flex; align-items: center; gap: 14px; height: 44px; padding: 0 14px; background: var(--bg); color: var(--ink); border: var(--borde) solid var(--line); border-radius: var(--r-ficha); box-shadow: var(--sombra-panel); overflow: hidden; }
+.banda .marca-min { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-size: var(--t-meta); white-space: nowrap; }
+.banda .cuerpo-b { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 10px; }
+.banda .titular-b { font-family: var(--font-evidencia); font-size: 15px; font-weight: 700; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; }
+.banda .linea-b { font-family: var(--font-evidencia); font-size: 13px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1 1 auto; min-width: 0; }
+.banda .fuente-b { flex: 0 0 auto; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; }
+.banda .atajos-b { flex: 0 0 auto; display: inline-flex; gap: 10px; }
+.banda.voz .cuerpo-b { color: var(--ink-2); }
+
+/* Gota — la ventana más pequeña posible: solo el estado, sin texto (modo solo audio) */
+.gota { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; background: var(--bg); color: var(--ink-2); border: var(--borde) solid var(--line); border-radius: 50%; box-shadow: var(--sombra-panel); }
+.gota.hablando { border-color: var(--halo); color: var(--halo); }
+.gota.sin-auriculares { border-color: var(--warn); color: var(--warn); }

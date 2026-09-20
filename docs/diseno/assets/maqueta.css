@@ -30,3 +30,22 @@ body.mq { min-height: 100vh; background: #0d0e10; color: #cfd3d8; font-family: "
 .mq-meet .presentando { position: absolute; left: 50%; bottom: 56px; transform: translateX(-50%); background: #111418; color: #cfd3d8; font-size: 12px; padding: 5px 10px; border-radius: 6px; }
 .mq-panel-pos { position: absolute; top: 32px; right: 16px; }   /* D2: 16 px del borde, 8 px bajo la barra de menús */
 .mq-etiqueta { position: absolute; top: 40px; left: 60px; font-size: 12px; color: #7dd3fc; background: #111418; padding: 4px 10px; border-radius: 6px; border: 1px solid #23262c; }
+
+/* Comparador de posiciones: anclajes sobre el escritorio de referencia */
+.mq-pos { position: absolute; z-index: 3; }
+.mq-pos.arriba-der { top: 32px; right: 16px; }
+.mq-pos.abajo-der { bottom: 16px; right: 16px; }
+.mq-pos.abajo-izq { bottom: 16px; left: 16px; }
+.mq-pos.banda-inf { left: 16px; right: 16px; bottom: 16px; }
+.mq-pos.banda-borde { left: 0; right: 0; bottom: 0; }
+.mq-pos.banda-borde .banda { border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; }
+.mq-choque { position: absolute; z-index: 4; border: 2px dashed #f0b64a; border-radius: 8px; pointer-events: none; }
+.mq-choque span { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(100% + 4px); white-space: nowrap; background: #1a1400; color: #f0b64a; font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 1px solid #f0b64a; }
+.mq-dock { position: absolute; left: 50%; transform: translateX(-50%); bottom: 4px; height: 52px; width: 420px; background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16); border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; z-index: 1; }
+.mq-dock i { width: 38px; height: 38px; border-radius: 9px; background: rgba(255,255,255,.14); display: inline-block; }
+.mq-tabla-pos { max-width: 1180px; margin: 0 auto 40px; padding: 0 18px; }
+.mq-tabla-pos table { width: 100%; border-collapse: collapse; font-size: 13px; color: #cfd3d8; }
+.mq-tabla-pos th { text-align: left; font-family: Menlo, monospace; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #7dd3fc; padding: 8px 10px; border-bottom: 1px solid #2b2f37; }
+.mq-tabla-pos td { padding: 9px 10px; border-bottom: 1px solid #1c1f25; vertical-align: top; line-height: 1.5; }
+.mq-tabla-pos td b { color: #e5e7eb; }
+.mq-tabla-pos .si { color: #62d3b4; } .mq-tabla-pos .no { color: #ff8577; } .mq-tabla-pos .mas { color: #f0b64a; }

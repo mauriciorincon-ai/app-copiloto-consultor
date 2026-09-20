@@ -268,7 +268,51 @@ fallo que la regla 15 persigue: algo que «pasó» sin haber hecho nada.
 
 **Gates:** `pnpm test` 7/7 ✓.
 
-**Mirada 3-bis:** pendiente — mensaje de gate emitido.
+**Mirada 3-bis (2026-09-20): DOS AJUSTES MÁS** — «quiero que en modo audio solo quede un icono
+muy pequeño en la parte izquierda baja o tal vez una barra de lado a lado en la parte inferior,
+de hecho qué tal si manejamos el panel en la parte inferior todo cuando haya audio y cuando no,
+revísalo. No veo es una alerta de otro tipo de detectores que no es de grabación o de transcribir
+sino esos como proctoring, anti-cheat, esos también deben ser detectados porque son invasivos».
+
+## Fase 3-ter — posición del panel y radar invasivo (2026-09-20)
+
+**C · ¿Dónde vive el panel? — se midió, no se opinó.** Nueva página `docs/diseno/posicion.html`:
+el escritorio de referencia con **seis variantes** conmutables y los choques dibujados sobre la
+pantalla real. Resultado:
+
+| Opción | Choca con | Veredicto |
+|---|---|---|
+| A · tarjeta arriba der. (actual) | nada en Meet/Zoom/Teams | viable |
+| B · tarjeta abajo der. | Dock · chat de Zoom | viable con reservas |
+| C · banda inferior separada | **los controles de la llamada** | **descartada**: taparía el botón de colgar |
+| D · banda pegada al borde | Dock | viable; obliga a recortar la frase con elipsis |
+| E · **gota 44 × 44 abajo izq.** (solo audio) | nada | **lo que el usuario pidió, y la esquina más libre** |
+| F · banda en modo solo audio | Dock | viable; más presencia que la gota |
+
+**Decisión propuesta (D2 revisada):** la posición pasa a ser **elegible por el usuario** (cuatro
+esquinas o banda inferior), recordada entre sesiones. Por defecto: tarjeta arriba a la derecha
+con ficha · **gota abajo a la izquierda** en modo solo audio. Componentes nuevos: `.banda`
+(ancho completo × 44) y `.gota` (44 × 44).
+
+**D · El radar no cubría lo invasivo.** Tenía razón: solo había grabación de reunión y bots de
+notas, ambos en ámbar. Ahora el radar tiene **dos niveles**:
+- **ámbar «sábelo»** — legítimo y visible: la reunión se graba, hay un bot de notas, hay un MDM
+  de empresa.
+- **coral «invasivo»** — un programa del **propio** equipo que mira pantalla, cámara, teclas o
+  procesos: **supervisión de exámenes (proctoring)** · **anti-trampa con acceso al núcleo** ·
+  **monitoreo de empleados** · **acceso remoto activo**.
+
+Cada fila declara **qué alcanza a ver**, no solo su nombre — es la columna que convierte el
+aviso en una decisión. Vive en `sesion.html` (tabla de 5 categorías), `panel.html` (estado
+nuevo `radar · software invasivo`, en coral) y `kit.html` (sección 7 con los dos niveles).
+Nombres de la maqueta 100 % sintéticos; el catálogo real viaja versionado con su fuente y
+**sin consultar la red** (regla dura 9: el radar jamás sondea hacia afuera).
+
+**Contraste medido:** panel 48 capturas · sesión 16 · kit 4 · posición 24 → **0 bajo AA**.
+
+**Gates:** `pnpm test` 7/7 ✓.
+
+**Mirada 3-ter:** pendiente — mensaje de gate emitido.
 
 ## Fase 4 — Pantallas del cuaderno
 (pendiente)

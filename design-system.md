@@ -1,7 +1,7 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.1.0   # 1.1.0 (Fase 3-bis): píldora de voz C15 + lo que persiste. 1.0.0 completo (mirada 2).
+version: 1.2.0   # 1.2.0 (Fase 3-ter): banda y gota + radar de dos niveles. 1.1.0 voz. 1.0.0 completo.
 fecha: 2026-09-20
 estado: propuesto   # → aprobado con G-Diseño
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
@@ -113,6 +113,15 @@ motion** (regla 5a del CLAUDE.md): reduced-motion cambia propiedades, no element
 |---|---|---|
 | **Panel flotante** | **380 × 220**; con transcript **380 × 420**; con 3 fichas hasta 380 × 360; **nunca más ancho** | opaco, sin blur; **esquina superior derecha**, 16 px del borde, 8 px bajo la barra de menús; todos los Spaces; posición recordada (preferencia) |
 | **Píldora de voz** (C15, modo solo audio) | **260 × 56** | **reemplaza al panel**, no convive con él: la pantalla queda libre. Misma familia visual (opaca, radio 10, borde 1 px). No muestra la ficha —se oye—: solo su origen y cómo callarla |
+| **Banda inferior** (variante de forma) | **ancho completo × 44** | el mismo contenido en una línea: titular · línea · fuente. Al borde inferior. Recorta la frase con elipsis; **queda sobre el Dock** |
+| **Gota** (modo solo audio, mínima) | **44 × 44** | solo el estado, sin texto. Esquina inferior izquierda: la única zona libre en Meet, Zoom y Teams |
+
+**Posición (D2, revisada en la mirada 3):** la ventana flotante es **elegible por el usuario**
+—cuatro esquinas o banda inferior— y recuerda su elección. Por defecto: **tarjeta arriba a la
+derecha** con ficha, **gota abajo a la izquierda** en modo solo audio. Lo medido sobre el
+escritorio de referencia (`docs/diseno/posicion.html`): la banda **separada** del borde tapa los
+controles de la videollamada (descartada); la banda **al borde** queda sobre el Dock; arriba a la
+derecha y abajo a la izquierda no chocan con Meet, Zoom ni Teams.
 | **Ventana principal** | **960 × 640** (mín. 800 × 560) | rail izquierdo 200 px fijo; contenido con padding 24/32 |
 
 ## 4 · Estados — SIEMPRE símbolo + texto + color (daltonismo leve)
@@ -139,6 +148,7 @@ en luminosidad. Jamás rojo vs. verde como única distinción; jamás el color s
 | 4 | **Bandera de jurisdicción** (C11) | `.bandera` | `riesgo-bajo` · `riesgo-medio` · `riesgo-alto` · `desconocida` | dónde · regla · implicación · **fuente + fecha** en Menlo. «Nunca bloquea», «no es asesoría legal» — literal en la pantalla |
 | 5 | **Estado de sesión** (C12 · C2 · C1) | `.barra` `.estado` `.pistas` `.pista.off` `.pie .cliente` | fuera de reunión · detectada · activa · solo notas · tras kill-switch | la barra del panel y el chip del rail son el mismo componente; la pista apagada usa glifo tachado; el pie dice cliente + protección (`Meet · protegido` ✓ / `Zoom · sin verificar` ⚠, literal del spike) |
 | 6 | **Alerta del radar** (C14) | `.franja.warn` · `.franja.ok` | grabación · bot de notas · agente de monitoreo local · protección propia (verde) | aviso, no bloqueo; solo lo que se lee en **tu** pantalla o corre en **tu** Mac; catálogo con versión y fuente; jamás nombra a personas |
+| 6-bis | **Alerta del radar · nivel invasivo** (C14) | `.franja.err` | supervisión de exámenes · anti-trampa con acceso al núcleo · monitoreo de empleados · acceso remoto activo · MDM (este en ámbar) | **dos niveles con símbolo y palabra**: ámbar «sábelo» (legítimo y visible: grabación, bot de notas) · coral «invasivo» (un programa del propio equipo que mira pantalla, cámara, teclas o procesos). Cada alerta declara **qué alcanza a ver**, no solo su nombre. Catálogo versionado con fuente, sin consultar la red |
 | 7 | **Píldora de voz** (C15) | `.pildora` | en silencio · `hablando` (halo) · `sin-auriculares` (ámbar, **no habla**) | lee **la misma ficha** que el panel mostraría, nunca un guion. Tres salvaguardas de diseño, no advertencias: (a) sin auriculares no habla —el cliente la oiría—; (b) mientras habla, el disparador se silencia para que su voz no entre por el micrófono; (c) por defecto solo habla si se la pide (⌘⇧A), jamás mientras alguien habla |
 
 **Además** (exhibidos en el panel y el kit): `.sugerencia` (C7: borde izquierdo halo + tinte;
@@ -272,3 +282,4 @@ muere») y declara con letra que el usuario responde por su propia carpeta. Deta
 | 0.1.0 | 2026-09-20 | v0 borrador para la mirada 1 (el panel) — aprobado |
 | 1.0.0 | 2026-09-20 | completo: 6 componentes canon con todos sus estados, primitivas, tabla de contraste, vetados, contrato con el código |
 | 1.1.0 | 2026-09-20 | mirada 3: píldora de voz (C15, 7.º componente canon) · §9-bis qué persiste · dos prohibidos nuevos |
+| 1.2.0 | 2026-09-20 | mirada 3 (2.ª vuelta): banda inferior y gota · posición elegible (D2 revisada) · radar con dos niveles de severidad y cinco categorías |

@@ -15,7 +15,7 @@
     <button data-estado="detectada">reunión detectada</button>
     <button data-estado="sin-reunion">sin reunión</button>
     <button data-estado="nda">NDA prohíbe transcribir</button>
-    <button data-estado="vigilancia">vigilancia en tu Mac</button>
+    <button data-estado="vigilancia">software invasivo en tu Mac</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -26,7 +26,7 @@
   <div class="n" data-para="detectada"><b>Qué mirar:</b> la pantalla antes de empezar. Meet detectado con su protección <b>verificada el 2026-09-20</b>; las dos pistas listas; la bandera de Colombia con su fuente; el chequeo de NDA respondido. Un solo botón grande: iniciar. Nada arranca sin que tú lo digas.</div>
   <div class="n" data-para="sin-reunion"><b>Qué mirar:</b> sin reunión abierta la app no es inútil: abre el corpus, escribe notas o revisa la ficha del cliente. El vacío está diseñado.</div>
   <div class="n" data-para="nda"><b>Qué mirar:</b> respondiste que la NDA prohíbe registrar por cualquier medio. La app <b>no bloquea</b>: pasa a modo solo notas, apaga las dos pistas y lo dice con símbolo + texto. El panel sigue, sin transcripción.</div>
-  <div class="n" data-para="vigilancia"><b>Qué mirar:</b> el radar (C14) encontró un agente de monitoreo <b>en tu propio Mac</b> — no en el del cliente, jamás. Es un aviso con su catálogo y fuente; tú decides si inicias.</div>
+  <div class="n" data-para="vigilancia"><b>Qué mirar:</b> el radar en su nivel grave. No habla de grabación ni de transcripción: son programas que miran <b>tu propio equipo</b> — supervisión de exámenes, anti-trampa con acceso al núcleo, monitoreo de empleados, acceso remoto activo. Dos niveles con símbolo y palabra: <b>invasivo</b> (coral) y <b>sábelo</b> (ámbar). Y la columna que importa: <b>qué alcanza a ver</b>. Nunca toca la máquina de nadie más.</div>
   <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
 </div>
 
@@ -85,7 +85,7 @@
             <div class="fuente">CSJ AP1465-2018 · Ley 1581 art. 3 · 2026-09-17</div>
           </div>
           <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-check-circle"/></svg><span class="crece" style="font-size:var(--t-meta)"><span lang="es">NDA revisada: no lo prohíbe</span><span lang="en">NDA checked: not forbidden</span></span><button class="btn mini"><span lang="es">Revisar</span><span lang="en">Review</span></button></div>
-          <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-check-circle"/></svg><span class="crece" style="font-size:var(--t-meta)"><span lang="es">Radar: nada anómalo en tu Mac</span><span lang="en">Radar: nothing unusual on your Mac</span></span><span class="mono" style="color:var(--ink-2)"><span lang="es">catálogo v1</span><span lang="en">catalog v1</span></span></div>
+          <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-check-circle"/></svg><span class="crece" style="font-size:var(--t-meta)"><span lang="es">Radar: nada invasivo en tu Mac</span><span lang="en">Radar: nothing invasive on your Mac</span></span><span class="mono" style="color:var(--ink-2)"><span lang="es">catálogo v1</span><span lang="en">catalog v1</span></span></div>
         </div>
       </div>
 
@@ -147,22 +147,51 @@
 
     <!-- ===== vigilancia en tu Mac ===== -->
     <div data-en="vigilancia" style="display:flex;flex-direction:column;gap:14px">
-      <div class="franja warn" role="status" style="padding:14px 16px">
-        <svg class="ic"><use href="#i-radar"/></svg>
+      <div class="franja err" role="alert" style="padding:14px 16px">
+        <svg class="ic relleno"><use href="#i-x-circle"/></svg>
         <div>
-          <strong><span lang="es">Hay software de monitoreo corriendo en tu Mac</span><span lang="en">Monitoring software is running on your Mac</span></strong>
-          <p style="margin-top:4px"><span lang="es">El radar mira <b>solo tu equipo y tu pantalla</b> — jamás el computador de la contraparte. Es un aviso para que decidas, no un bloqueo.</span><span lang="en">The radar watches <b>only your machine and your screen</b> — never the other party’s computer. It is a notice so you can decide, not a block.</span></p>
+          <strong><span lang="es">Software invasivo corriendo en tu Mac</span><span lang="en">Invasive software running on your Mac</span></strong>
+          <p style="margin-top:4px"><span lang="es">No es una grabación de la reunión: son programas que miran <b>tu equipo</b> — tu pantalla, tu cámara, tus teclas o tus procesos. El radar mira <b>solo tu Mac</b>, jamás el computador de la contraparte. Es un aviso para que decidas, no un bloqueo.</span><span lang="en">This is not a meeting recording: these are programs watching <b>your machine</b> — your screen, camera, keystrokes or processes. The radar watches <b>only your Mac</b>, never the other party’s computer. A notice so you can decide, not a block.</span></p>
         </div>
       </div>
       <div class="tarjeta" style="padding:0">
         <table class="tabla">
-          <thead><tr><th><span lang="es">proceso</span><span lang="en">process</span></th><th><span lang="es">qué es</span><span lang="en">what it is</span></th><th><span lang="es">fuente del catálogo</span><span lang="en">catalog source</span></th></tr></thead>
+          <thead><tr><th><span lang="es">qué encontró</span><span lang="en">what it found</span></th><th><span lang="es">qué alcanza a ver</span><span lang="en">what it can see</span></th><th><span lang="es">nivel</span><span lang="en">level</span></th><th><span lang="es">catálogo</span><span lang="en">catalog</span></th></tr></thead>
           <tbody>
-            <tr><td class="mono">VigilaAgente</td><td><span lang="es">Agente de monitoreo de actividad (ejemplo sintético)</span><span lang="en">Activity monitoring agent (synthetic example)</span></td><td class="mono">catálogo v1 · 2026-09-15</td></tr>
-            <tr class="apagada"><td class="mono">MDM-Corp</td><td><span lang="es">Gestión de dispositivos de un tercero</span><span lang="en">Third-party device management</span></td><td class="mono">catálogo v1 · 2026-09-15</td></tr>
+            <tr>
+              <td><span lang="es"><b>Supervisión de exámenes</b> (proctoring)</span><span lang="en"><b>Exam proctoring</b></span><br><span class="mono" style="color:var(--ink-2)">ProctorLince (ejemplo)</span></td>
+              <td><span lang="es">Cámara, pantalla completa, apps abiertas; puede bloquear programas</span><span lang="en">Camera, full screen, open apps; can block programs</span></td>
+              <td><span class="estado err"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span lang="es">Invasivo</span><span lang="en">Invasive</span></span></td>
+              <td class="mono">v1 · 2026-09-15</td>
+            </tr>
+            <tr>
+              <td><span lang="es"><b>Anti-trampa con acceso al sistema</b></span><span lang="en"><b>Anti-cheat with system access</b></span><br><span class="mono" style="color:var(--ink-2)">GuardKernel (ejemplo)</span></td>
+              <td><span lang="es">Procesos y memoria de todo el equipo, desde el núcleo del sistema</span><span lang="en">Processes and memory of the whole machine, from the system kernel</span></td>
+              <td><span class="estado err"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span lang="es">Invasivo</span><span lang="en">Invasive</span></span></td>
+              <td class="mono">v1 · 2026-09-15</td>
+            </tr>
+            <tr>
+              <td><span lang="es"><b>Monitoreo de empleados</b></span><span lang="en"><b>Employee monitoring</b></span><br><span class="mono" style="color:var(--ink-2)">VigilaAgente (ejemplo)</span></td>
+              <td><span lang="es">Capturas cada pocos minutos, tiempo por app, a veces teclas</span><span lang="en">Screenshots every few minutes, time per app, sometimes keystrokes</span></td>
+              <td><span class="estado err"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span lang="es">Invasivo</span><span lang="en">Invasive</span></span></td>
+              <td class="mono">v1 · 2026-09-15</td>
+            </tr>
+            <tr>
+              <td><span lang="es"><b>Acceso remoto activo</b></span><span lang="en"><b>Active remote access</b></span><br><span class="mono" style="color:var(--ink-2)">RemotoYa (ejemplo)</span></td>
+              <td><span lang="es">Alguien podría estar viendo tu pantalla ahora mismo</span><span lang="en">Someone could be watching your screen right now</span></td>
+              <td><span class="estado err"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span lang="es">Invasivo</span><span lang="en">Invasive</span></span></td>
+              <td class="mono">v1 · 2026-09-15</td>
+            </tr>
+            <tr class="apagada">
+              <td><span lang="es"><b>Gestión de dispositivos</b> (MDM) de un tercero</span><span lang="en"><b>Third-party device management</b> (MDM)</span><br><span class="mono">MDM-Corp (ejemplo)</span></td>
+              <td><span lang="es">Puede instalar, borrar y leer configuración. Normal en equipos de empresa</span><span lang="en">Can install, wipe and read configuration. Normal on company machines</span></td>
+              <td><span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"/></svg><span lang="es">Sábelo</span><span lang="en">Be aware</span></span></td>
+              <td class="mono">v1 · 2026-09-15</td>
+            </tr>
           </tbody>
         </table>
       </div>
+      <p class="mono" style="color:var(--ink-2)"><span lang="es">Los nombres de esta lista son de ejemplo. El catálogo real viaja versionado y con su fuente, y se actualiza sin que la app consulte a nadie por la red.</span><span lang="en">The names in this list are examples. The real catalog ships versioned with its source, and updates without the app querying anyone over the network.</span></p>
       <div class="grid-2">
         <div class="franja ok" role="status"><svg class="ic relleno"><use href="#i-check-circle"/></svg><div><strong><span lang="es">Tu protección propia sigue en pie</span><span lang="en">Your own protection still holds</span></strong><p><span lang="es">Panel protegido de la captura · 0 B a la red · nada se escribe en disco.</span><span lang="en">Panel protected from capture · 0 B to the network · nothing written to disk.</span></p></div></div>
         <div class="fila" style="align-items:flex-start">
