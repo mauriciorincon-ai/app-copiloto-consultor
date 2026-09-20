@@ -71,7 +71,8 @@
           <div class="fila"><svg class="ic s"><use href="#i-mic"/></svg><span class="crece"><span lang="es">Micrófono — tú</span><span lang="en">Microphone — you</span></span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Listo</span><span lang="en">Ready</span></span></div>
           <div class="fila"><svg class="ic s"><use href="#i-sistema"/></svg><span class="crece"><span lang="es">Audio del sistema — el cliente</span><span lang="en">System audio — the client</span></span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Listo</span><span lang="en">Ready</span></span></div>
           <div class="fila"><svg class="ic s"><use href="#i-pantalla"/></svg><span class="crece"><span lang="es">Pantalla — solo cuando cambia</span><span lang="en">Screen — only when it changes</span></span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Listo</span><span lang="en">Ready</span></span></div>
-          <div class="franja warn" role="status"><svg class="ic"><use href="#i-auriculares"/></svg><div><strong><span lang="es">Usa auriculares</span><span lang="en">Use headphones</span></strong><p><span lang="es">Sin ellos tu micrófono capta al cliente y las dos pistas se mezclan.</span><span lang="en">Without them your mic picks up the client and the two tracks mix.</span></p></div></div>
+          <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-auriculares"/></svg><span class="crece"><span lang="es">Auriculares conectados</span><span lang="en">Headphones connected</span></span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Listo</span><span lang="en">Ready</span></span></div>
+          <div class="franja warn" role="status"><svg class="ic"><use href="#i-auriculares"/></svg><div><strong><span lang="es">Los auriculares no son opcionales</span><span lang="en">Headphones are not optional</span></strong><p><span lang="es">Sin ellos tu micrófono capta al cliente y las pistas se mezclan — y en <b>modo solo audio</b> el cliente te oiría: por eso ahí la app no habla sin ellos.</span><span lang="en">Without them your mic picks up the client and the tracks mix — and in <b>audio-only mode</b> the client would hear you: that is why the app will not speak without them.</span></p></div></div>
         </div>
 
         <div class="tarjeta">
@@ -90,9 +91,10 @@
 
       <div class="fila">
         <button class="btn primario" style="padding:9px 16px;font-size:var(--t-ui)"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Iniciar sesión</span><span lang="en">Start session</span></button>
+        <button class="btn"><svg class="ic s"><use href="#i-voz"/></svg><span lang="es">Solo audio</span><span lang="en">Audio only</span></button>
         <button class="btn"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Solo notas</span><span lang="en">Notes only</span></button>
         <span class="crece"></span>
-        <span class="mono" style="color:var(--ink-2)"><span lang="es">nada se graba · nada sale de tu equipo</span><span lang="en">nothing is recorded · nothing leaves your machine</span></span>
+        <span class="mono" style="color:var(--ink-2)"><span lang="es">el sonido nunca se guarda · nada sale de tu equipo</span><span lang="en">sound is never stored · nothing leaves your machine</span></span>
       </div>
     </div>
 

@@ -39,6 +39,8 @@
   <symbol id="i-reloj" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5V8l2.5 1.5"/></symbol>
   <symbol id="i-basura" viewBox="0 0 16 16"><path d="M3 4.5h10M6 4.5V3h4v1.5M4.5 4.5l.7 9h5.6l.7-9"/></symbol>
   <symbol id="i-llave" viewBox="0 0 16 16"><circle cx="5.5" cy="10.5" r="3"/><path d="M7.7 8.3 14 2M11.5 4.5l2 2M9.5 6.5l2 2"/></symbol>
+  <symbol id="i-voz" viewBox="0 0 16 16"><path d="M2 7v2M5 4.5v7M8 2.5v11M11 5.5v5M14 7v2"/></symbol>
+  <symbol id="i-auriculares-off" viewBox="0 0 16 16"><path d="M2.5 10V8a5.5 5.5 0 0 1 11 0v2"/><rect x="1.5" y="9" width="3" height="4.5" rx="1"/><rect x="11.5" y="9" width="3" height="4.5" rx="1"/><path d="M1.5 1.5l13 13"/></symbol>
   <symbol id="i-flecha" viewBox="0 0 16 16"><path d="M2.5 8h11M9.5 4l4 4-4 4"/></symbol>
 </svg>`;
   function inyectar() { if (!document.getElementById("ghost-iconos")) { const d = document.createElement("div"); d.id = "ghost-iconos"; d.innerHTML = S; document.body.prepend(d); } }

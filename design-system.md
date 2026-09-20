@@ -1,7 +1,7 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.0.0   # completo (Fase 2, mirada 2). 0.1.0 fue el borrador de la mirada 1 (el panel).
+version: 1.1.0   # 1.1.0 (Fase 3-bis): píldora de voz C15 + lo que persiste. 1.0.0 completo (mirada 2).
 fecha: 2026-09-20
 estado: propuesto   # → aprobado con G-Diseño
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
@@ -112,6 +112,7 @@ motion** (regla 5a del CLAUDE.md): reduced-motion cambia propiedades, no element
 | Ventana | Tamaño | Notas |
 |---|---|---|
 | **Panel flotante** | **380 × 220**; con transcript **380 × 420**; con 3 fichas hasta 380 × 360; **nunca más ancho** | opaco, sin blur; **esquina superior derecha**, 16 px del borde, 8 px bajo la barra de menús; todos los Spaces; posición recordada (preferencia) |
+| **Píldora de voz** (C15, modo solo audio) | **260 × 56** | **reemplaza al panel**, no convive con él: la pantalla queda libre. Misma familia visual (opaca, radio 10, borde 1 px). No muestra la ficha —se oye—: solo su origen y cómo callarla |
 | **Ventana principal** | **960 × 640** (mín. 800 × 560) | rail izquierdo 200 px fijo; contenido con padding 24/32 |
 
 ## 4 · Estados — SIEMPRE símbolo + texto + color (daltonismo leve)
@@ -138,6 +139,7 @@ en luminosidad. Jamás rojo vs. verde como única distinción; jamás el color s
 | 4 | **Bandera de jurisdicción** (C11) | `.bandera` | `riesgo-bajo` · `riesgo-medio` · `riesgo-alto` · `desconocida` | dónde · regla · implicación · **fuente + fecha** en Menlo. «Nunca bloquea», «no es asesoría legal» — literal en la pantalla |
 | 5 | **Estado de sesión** (C12 · C2 · C1) | `.barra` `.estado` `.pistas` `.pista.off` `.pie .cliente` | fuera de reunión · detectada · activa · solo notas · tras kill-switch | la barra del panel y el chip del rail son el mismo componente; la pista apagada usa glifo tachado; el pie dice cliente + protección (`Meet · protegido` ✓ / `Zoom · sin verificar` ⚠, literal del spike) |
 | 6 | **Alerta del radar** (C14) | `.franja.warn` · `.franja.ok` | grabación · bot de notas · agente de monitoreo local · protección propia (verde) | aviso, no bloqueo; solo lo que se lee en **tu** pantalla o corre en **tu** Mac; catálogo con versión y fuente; jamás nombra a personas |
+| 7 | **Píldora de voz** (C15) | `.pildora` | en silencio · `hablando` (halo) · `sin-auriculares` (ámbar, **no habla**) | lee **la misma ficha** que el panel mostraría, nunca un guion. Tres salvaguardas de diseño, no advertencias: (a) sin auriculares no habla —el cliente la oiría—; (b) mientras habla, el disparador se silencia para que su voz no entre por el micrófono; (c) por defecto solo habla si se la pide (⌘⇧A), jamás mientras alguien habla |
 
 **Además** (exhibidos en el panel y el kit): `.sugerencia` (C7: borde izquierdo halo + tinte;
 cabecera origen + confianza; fallback = la ficha) · `.franja` (`warn`/`err`/`ok`; lista `→`
@@ -214,7 +216,8 @@ span) · reduced-motion global · teclado: todo atajo tiene su acción visible c
 
 ## 8 · Anti-patrones prohibidos
 
-Modales, sonidos y robo de foco en el panel · spinners, pulsos, animaciones que desplazan ·
+Un guion para leer en voz alta (la voz lee la ficha, no libretos) · hablar por los parlantes
+(sin auriculares la voz calla) · modales, sonidos y robo de foco en el panel · spinners, pulsos, animaciones que desplazan ·
 color como único portador · emojis como iconografía · blur/«glass»/transparencias · gradientes
 decorativos, sombras pesadas · texto en `--ink-3` · vocabulario de ocultamiento
 (vocabulario:cita; barrido en `pnpm test`) · nombres de personas en el transcript (solo pistas;
@@ -237,6 +240,22 @@ CTAs grandes en el panel · tamaños de ventana distintos de los declarados (§3
 - `NSMicrophoneUsageDescription` / `NSScreenCaptureUsageDescription` usan los textos «para
   qué» de `.permiso` (bilingües).
 
+## 9-bis · Qué persiste (cambio de la mirada 3, 2026-09-20)
+
+El diseño distingue **lo del usuario** de **lo de terceros**, no «texto» de «audio»:
+
+| | Persiste | Cómo |
+|---|---|---|
+| Notas y acuerdos escritos | **sí** | cifrado, en la carpeta del usuario, con retención y borrado |
+| Turnos del propio consultor (pista de micrófono), **en texto** | **sí, opt-in** | conmutador en Honestidad; por defecto apagado; retención 90 días |
+| Fichas mostradas y fijadas | **sí** | son de su propio corpus, no datos del cliente |
+| **Audio de cualquier pista** (la suya incluida) | **nunca** | el sonido no se guarda; lo que queda de él es texto |
+| Transcript del cliente, su voz, lo leído de la pantalla | **nunca** | no hay conmutador que lo encienda; ni exportación ni cita textual |
+
+La pantalla lo muestra como **dos columnas enfrentadas** («lo tuyo queda» / «lo del cliente
+muere») y declara con letra que el usuario responde por su propia carpeta. Detalle y base legal:
+`sprints/ETAPA-DISENO-implementation-log.md` § Desviación del plan.
+
 ## 10 · Deuda de diseño declarada
 
 | Qué | Por qué | Cuándo se paga |
@@ -244,6 +263,7 @@ CTAs grandes en el panel · tamaños de ventana distintos de los declarados (§3
 | «Solo texto anonimizado» no cabe en la cabecera de la sugerencia con API dentro de 380 px | robaba la ficha | vive en tooltip + Honestidad + Ajustes de IA; se revisa si el usuario lo pide en G-Diseño |
 | El pie del panel abrevia «corta» (kill-switch) | 380 px | el `kbd` ⌥⎋ y el tooltip completan; en Sesión y Honestidad va el texto entero |
 | Simulación deutan del arnés (capturas `--cvd`) | herramienta de la etapa, no gate | corregida en la Fase 2; se vuelve gate visual del S1 |
+| La píldora de voz no muestra el texto de la ficha | ocuparía la pantalla que el modo existe para liberar | si el usuario lo pide, un estado «píldora expandida» en el S2 |
 
 ## Registro de cambios
 
@@ -251,3 +271,4 @@ CTAs grandes en el panel · tamaños de ventana distintos de los declarados (§3
 |---|---|---|
 | 0.1.0 | 2026-09-20 | v0 borrador para la mirada 1 (el panel) — aprobado |
 | 1.0.0 | 2026-09-20 | completo: 6 componentes canon con todos sus estados, primitivas, tabla de contraste, vetados, contrato con el código |
+| 1.1.0 | 2026-09-20 | mirada 3: píldora de voz (C15, 7.º componente canon) · §9-bis qué persiste · dos prohibidos nuevos |

@@ -172,7 +172,103 @@ Panel y kit re-medidos tras compactar el sistema: 0 bajo AA.
 
 **Gates:** `pnpm test` 7/7 ✓.
 
-**Mirada 3:** pendiente — mensaje de gate emitido.
+**Mirada 3 (2026-09-20): APROBADA CON DOS CAMBIOS** — «en honestidad está bien que lo del
+cliente se elimine no le veo problema pero lo que sí quiero es que me quede lo que es mío o lo
+que dije o escribí, adicional quisiera tener un modo solo audio que me hable de forma paralela
+por si quiero ver completamente la pantalla y no me interrumpa, todo el resto lo veo muy bien».
+Ambos cambios son de PRODUCTO, no de estilo → ver «Desviación del plan» abajo.
+
+## Desviación del plan (2026-09-20) — DOS CAMBIOS DE PRODUCTO pedidos en la mirada 3
+
+> La planeadora es read-only: esto queda aquí y se avisa al usuario. **La VISION v1.2.0 y el
+> `brief.md` necesitan actualización**, y la regla dura 1 del `CLAUDE.md` de esta app también.
+
+### A · «Que me quede lo que es mío o lo que dije o escribí»
+
+**Qué pidió:** que el transcript del cliente muera (lo aprueba), pero que **lo suyo** —lo que él
+dijo y lo que escribió— se conserve.
+
+**Qué cambia:** la regla dura 1 del `CLAUDE.md` dice hoy «Lo único que persiste: notas de texto
+escritas por el consultor». Pasa a ser: **notas + los turnos transcritos del propio consultor
+(pista de micrófono) + las fichas que se le mostraron**, todo cifrado y con retención.
+
+**Por qué es compatible con el estándar 4-T** (`estandares.md`, apartado 4-T): su regla es
+«audio, transcript y capturas **de terceros** viven en memoria y mueren al cerrar; nada **de
+terceros** se persiste sin autorización previa». Lo que el consultor dijo con su propia voz no
+es dato de un tercero: es suyo, igual que sus notas. La app era **más estricta que el estándar**
+por decisión de diseño, no por obligación.
+
+**Qué NO cambia (las líneas que se mantienen duras):**
+- El **audio** de ambas pistas sigue muriendo siempre. Se conserva **texto**, jamás sonido.
+- El transcript del **cliente** muere: no se guarda, no se exporta, no se cita textualmente.
+- Cero huellas de voz, cero biometría, cero emociones.
+- Lo conservado nace **cifrado**, con retención y borrado, en la carpeta del usuario.
+- Es **opt-in**: se enciende en Honestidad; por defecto sigue siendo solo las notas.
+
+**Riesgo residual declarado:** en un turno propio el consultor puede repetir datos del cliente
+(«entonces su margen de canal es del 12 %»). Queda bajo su responsabilidad, igual que sus notas
+— es exactamente el estatuto legal de A10 del informe legal-ético (el consultor es Responsable
+de esa base de datos). La pantalla lo dice con letra, no en letra pequeña.
+
+### B · «Un modo solo audio que me hable de forma paralela»
+
+**Qué pidió:** poder ver la pantalla completa sin que el panel le quite espacio ni lo
+interrumpa, y que la app le **hable**.
+
+**Qué es y qué NO es:** lee **la misma ficha** (titular ≤ 8 palabras · línea · fuente) por el
+oído en vez de por el ojo. **No es X5** (guion completo para leer en voz alta), que sigue
+descartado: no dicta libretos, no redacta lo que él debe decir. El contenido no cambia de
+tamaño ni de tono: cambia de canal.
+
+**Funcionalidad nueva → la VISION pasa de 25 a 26.** Propuesta de ficha: **C15 · Modo solo
+audio (voz al oído)**. `[MVP · personal]`. Código primero: `AVSpeechSynthesizer` de macOS, voz
+on-device, cero red, cero costo, sin LLM — el texto que lee es el mismo que ya produce C6.
+
+**Tres riesgos duros que el diseño resuelve, no advierte:**
+
+| # | Riesgo | Salvaguarda de diseño |
+|---|---|---|
+| 1 | **Sin auriculares, el cliente oye la sugerencia** por los parlantes: rompe la promesa central de la app | El modo **exige auriculares**: la app comprueba la ruta de salida y **no habla** si no los detecta. No es un aviso, es una condición de arranque; si se desconectan a mitad, **calla** y lo muestra |
+| 2 | **Bucle parlante → micrófono** (precedente citado en el `CLAUDE.md`: habla S3): su voz entra al mic y se transcribe como si él hablara, disparando fichas falsas | Mientras la app habla, el disparador se silencia y esa porción de la pista se descarta. Visible como estado |
+| 3 | **La voz es intrínsecamente activa** — se puede no mirar un panel, no se puede no oír una voz ([S12][S14]: lo activo rompe el flujo) | Por defecto **solo habla cuando él lo pide** (⌘⇧A). El modo automático es opt-in y solo dispara en fin de turno del cliente; **jamás habla mientras alguien está hablando** |
+
+**Dónde vive en la maqueta:** modo de arranque en `sesion.html` · estado nuevo del panel
+(píldora mínima de 260 × 56, sin texto de ficha) en `panel.html` · componente «píldora de voz»
+y «estado de auriculares» en `kit.html` · ajuste de voz en `ia.html` (Fase 4) · qué se conserva
+en `honestidad.html`.
+
+**Plan de miradas — cambio propuesto:** se añade una **Fase 3-bis** con su propia mirada (los
+dos cambios, sobre `honestidad.html` y `panel.html`), ANTES de la Fase 4. Las miradas 4 y 5 no
+se mueven. Total: 6 miradas en vez de 5.
+
+## Fase 3-bis — los dos cambios de la mirada 3 (2026-09-20)
+
+**A · Lo que es mío queda.** `honestidad.html` gana el estado **«al cerrar: qué queda»**: dos
+columnas enfrentadas — *lo tuyo queda* (notas · tus turnos en texto · las fichas que fijaste,
+cifrado, con el conmutador «Conservar lo que dije» que enciendes tú) frente a *lo del cliente
+muere* (su voz · sus turnos · lo leído de la pantalla · **el audio de las dos pistas, el tuyo
+incluido**). Franja con letra: lo que él repita de un dato del cliente queda en su archivo y es
+su responsabilidad. El resumen del estado «sesión activa» se reescribió en la misma clave.
+
+**B · Modo solo audio (C15).** Componente nuevo **píldora de voz** (`.pildora`, 260 × 56) que
+**reemplaza** al panel. Tres estados: en silencio · hablando (halo) · sin auriculares (ámbar,
+**no habla**). Vive en `panel.html` (2 estados nuevos), `kit.html` (sección 8-bis con las tres
+variantes y las dos franjas de salvaguarda), `sesion.html` (tercer modo de arranque + la tarjeta
+de pistas ahora comprueba auriculares) y `design-system.md` v1.1.0 (7.º componente canon, §9-bis
+«qué persiste», dos prohibidos nuevos: guion para leer en voz alta · hablar por los parlantes).
+
+**Bug de proceso encontrado y corregido:** un `str.replace` de Python sobre el CSS **falló en
+silencio** (el ancla tenía otro salto de línea) y la píldora salió sin estilos; la pasada de
+capturas lo vio, no el test. Desde entonces todo reemplazo va con `assert a in s` antes de
+escribir — un reemplazo que no encuentra su ancla debe romper, no seguir. Es la misma clase de
+fallo que la regla 15 persigue: algo que «pasó» sin haber hecho nada.
+
+**Contraste medido:** panel 44 capturas (11 estados × 2 × 2) · kit 4 · sesión 16 · honestidad
+16 · permisos 16 → **0 textos bajo AA**.
+
+**Gates:** `pnpm test` 7/7 ✓.
+
+**Mirada 3-bis:** pendiente — mensaje de gate emitido.
 
 ## Fase 4 — Pantallas del cuaderno
 (pendiente)

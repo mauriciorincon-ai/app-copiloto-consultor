@@ -216,6 +216,24 @@
   </div>
 </section>
 
+<!-- ============ 8-bis · PÍLDORA DE VOZ ============ -->
+<section class="k-sec">
+  <h2>8-bis · <span lang="es">Píldora de voz</span><span lang="en">Voice pill</span> <small>C15 — <span lang="es">modo solo audio: la ficha se OYE; 260 × 56; sin auriculares no habla</span><span lang="en">audio-only mode: the card is HEARD; 260 × 56; without headphones it does not speak</span></small></h2>
+  <p class="regla"><span lang="es">Reemplaza al panel, no lo acompaña: toda la pantalla queda libre. Lee <b>la misma ficha</b> (titular · línea · fuente), nunca un guion para leer en voz alta. Por defecto solo habla cuando lo pides (⌘⇧A); jamás mientras alguien está hablando.</span><span lang="en">It replaces the panel, it does not accompany it: the whole screen stays free. It reads <b>the same card</b> (headline · line · source), never a script to read aloud. By default it only speaks when you ask (⌘⇧A); never while someone is talking.</span></p>
+  <div class="k-grid">
+    <div class="k-item"><span class="etq"><span lang="es">en silencio · esperando</span><span lang="en">silent · waiting</span></span>
+      <div class="k-marco"><section class="pildora"><span class="glifo"><svg class="ic"><use href="#i-voz"/></svg></span><span class="texto"><span class="q"><span lang="es">Te escucho, sin hablar</span><span lang="en">Listening, not speaking</span></span><span class="de"><span lang="es">pídemela con ⌘⇧A</span><span lang="en">ask me with ⌘⇧A</span></span></span><span class="tecla"><kbd>⌘⇧A</kbd></span></section></div></div>
+    <div class="k-item"><span class="etq"><span lang="es">hablando (acento halo)</span><span lang="en">speaking (halo accent)</span></span>
+      <div class="k-marco"><section class="pildora hablando"><span class="glifo"><svg class="ic"><use href="#i-voz"/></svg></span><span class="texto"><span class="q"><span lang="es">Diciéndote la ficha…</span><span lang="en">Reading you the card…</span></span><span class="de"><span lang="es">propuesta · §3.2 Alcance</span><span lang="en">proposal · §3.2 Scope</span></span></span><span class="tecla"><kbd>⎋</kbd></span></section></div></div>
+    <div class="k-item"><span class="etq"><span lang="es">sin auriculares: NO habla (salvaguarda)</span><span lang="en">no headphones: does NOT speak (safeguard)</span></span>
+      <div class="k-marco"><section class="pildora sin-auriculares"><span class="glifo"><svg class="ic"><use href="#i-auriculares-off"/></svg></span><span class="texto"><span class="q"><span lang="es">Conecta auriculares</span><span lang="en">Plug in headphones</span></span><span class="de"><span lang="es">el cliente te oiría</span><span lang="en">the client would hear you</span></span></span><span class="tecla"><kbd>⌘⇧V</kbd></span></section></div></div>
+  </div>
+  <div class="grid-2">
+    <div class="franja warn" role="status"><svg class="ic relleno"><use href="#i-alert"/></svg><div><strong><span lang="es">Mientras habla, no se escucha a sí misma</span><span lang="en">While it speaks, it does not hear itself</span></strong><p><span lang="es">Su voz entraría por tu micrófono y se transcribiría como si hablaras tú, disparando fichas falsas. El disparador se silencia mientras habla.</span><span lang="en">Its voice would enter your mic and be transcribed as if you spoke, firing false cards. The trigger is muted while it speaks.</span></p></div></div>
+    <div class="franja ok" role="status"><svg class="ic relleno"><use href="#i-check-circle"/></svg><div><strong><span lang="es">Voz del sistema, en tu Mac</span><span lang="en">System voice, on your Mac</span></strong><p><span lang="es">La síntesis de voz es la de macOS: cero red, cero costo, cero modelo de lenguaje.</span><span lang="en">Speech synthesis is macOS’s own: zero network, zero cost, zero language model.</span></p></div></div>
+  </div>
+</section>
+
 <!-- ============ 9 · PROHIBIDOS ============ -->
 <section class="k-sec">
   <h2>9 · <span lang="es">Prohibidos</span><span lang="en">Forbidden</span> <small><span lang="es">lo que este sistema jamás hace (design-system.md §8)</span><span lang="en">what this system never does (design-system.md §8)</span></small></h2>
@@ -229,6 +247,8 @@
     <li><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span><b><span lang="es">Texto en --ink-3</span><span lang="en">Text in --ink-3</span></b> — <span lang="es">no alcanza AA; solo separadores (fallará en lint).</span><span lang="en">fails AA; separators only (lint will fail).</span></span></li>
     <li><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span><b><span lang="es">Vocabulario de ocultamiento</span><span lang="en">Concealment vocabulary</span></b> — <span lang="es">la app protege una ventana y lo dice así; barrido en pnpm test.</span><span lang="en">the app protects a window and says so; swept in pnpm test.</span></span></li>
     <li><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span><b><span lang="es">Nombres de personas en el transcript</span><span lang="en">People’s names in the transcript</span></b> — <span lang="es">solo pistas: cliente / tú. Cero biometría.</span><span lang="en">tracks only: client / you. Zero biometrics.</span></span></li>
+    <li><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span><b><span lang="es">Un guion para leer en voz alta</span><span lang="en">A script to read aloud</span></b> — <span lang="es">la voz lee la ficha, no libretos: más asistencia, menos juicio propio.</span><span lang="en">the voice reads the card, not scripts: more assistance, less own judgment.</span></span></li>
+    <li><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span><b><span lang="es">Hablar por los parlantes</span><span lang="en">Speaking through the speakers</span></b> — <span lang="es">sin auriculares no habla: el cliente la oiría.</span><span lang="en">without headphones it stays silent: the client would hear it.</span></span></li>
     <li><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span><b><span lang="es">Rojo vs. verde como única distinción</span><span lang="en">Red vs. green as the only distinction</span></b> — <span lang="es">pares seguros: verde-azulado · ámbar · coral.</span><span lang="en">safe pairs: teal · amber · coral.</span></span></li>
   </ul>
 </section>

@@ -25,6 +25,8 @@
     <button data-estado="sin-verificar">cliente sin verificar</button>
     <button data-estado="radar">alerta del radar</button>
     <button data-estado="transcript">transcript visible</button>
+    <button data-estado="voz">solo audio · hablando</button>
+    <button data-estado="voz-sin">solo audio · sin auriculares</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -41,6 +43,8 @@
   <div class="n" data-para="sin-verificar"><b>Qué mirar:</b> resultado del spike. En Zoom la protección no está verificada: franja ámbar (tinte + borde sólido + triángulo) con el camino alterno. El pie cambia de «Meet · verificada» a «Zoom · sin verificar». Es aviso, no bloqueo.</div>
   <div class="n" data-para="radar"><b>Qué mirar:</b> el radar (C14) solo mira tu Mac y tu pantalla: la reunión se está grabando y hay un bot de notas. El panel avisa y recuerda tu protección propia. No bloquea nada.</div>
   <div class="n" data-para="transcript"><b>Qué mirar:</b> el transcript en vivo, oculto por defecto, con ⌘⇧T. El panel crece a 380 × 420; cada turno lleva su pista (sistema = cliente, mic = tú), nunca un nombre. Solo en memoria.</div>
+  <div class="n" data-para="voz"><b>Qué mirar:</b> el <b>modo solo audio</b>. El panel desaparece: queda una píldora de <b>260 × 56</b> y la ficha se <b>oye</b> en vez de leerse. La píldora no repite el texto (para eso está el oído): dice de dónde salió y cómo callarla. Toda tu pantalla queda libre.</div>
+  <div class="n" data-para="voz-sin"><b>Qué mirar:</b> la salvaguarda. Sin auriculares la app <b>no habla</b> — por los parlantes el cliente oiría la sugerencia y se rompería la promesa entera. No es un aviso que puedas ignorar: es una condición. Si los desconectas a mitad, calla.</div>
   <div class="mq-medida">380 × 220 px · esquina superior derecha, 16 px del borde, 8 px bajo la barra de menús (D1, D2) · opaco, sin glass (D3) · Charter · Avenir Next · Menlo (D4)</div>
 </div>
 
@@ -58,8 +62,28 @@
   </div>
 
   <div class="mq-panel-pos">
+
+  <!-- ===== PÍLDORA DE VOZ · modo solo audio (C15) ===== -->
+  <section class="pildora hablando" data-en="voz" data-captura-alt aria-label="Angel Ghost · modo solo audio">
+    <span class="glifo"><svg class="ic"><use href="#i-voz"/></svg></span>
+    <span class="texto">
+      <span class="q"><span lang="es">Diciéndote la ficha…</span><span lang="en">Reading you the card…</span></span>
+      <span class="de"><span lang="es">propuesta · §3.2 Alcance</span><span lang="en">proposal · §3.2 Scope</span></span>
+    </span>
+    <span class="tecla"><kbd>⎋</kbd></span>
+  </section>
+
+  <section class="pildora sin-auriculares" data-en="voz-sin" data-captura-alt aria-label="Angel Ghost · modo solo audio">
+    <span class="glifo"><svg class="ic"><use href="#i-auriculares-off"/></svg></span>
+    <span class="texto">
+      <span class="q"><span lang="es">Conecta auriculares</span><span lang="en">Plug in headphones</span></span>
+      <span class="de"><span lang="es">el cliente te oiría</span><span lang="en">the client would hear you</span></span>
+    </span>
+    <span class="tecla"><kbd>⌘⇧V</kbd></span>
+  </section>
+
   <!-- ================= EL PANEL (producto) ================= -->
-  <section class="panel" data-captura data-transcript-en="transcript" aria-label="Angel Ghost">
+  <section class="panel" data-captura data-en="esperando buscando ficha sugerencia-local sugerencia-api sin-resultado sin-verificar radar transcript" data-transcript-en="transcript" aria-label="Angel Ghost">
 
     <header class="barra">
       <span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando</span><span lang="en">Listening</span></span>
