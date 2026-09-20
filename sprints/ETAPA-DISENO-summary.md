@@ -5,7 +5,7 @@ status: closed
 opened: 2026-09-20
 closed: 2026-09-20
 branch: diseno/fundacion
-pr: (se llena al abrir)
+pr: https://github.com/mauriciorincon-ai/app-copiloto-consultor/pull/3
 ---
 
 # Etapa de Diseño (F2a) — Summary · Angel Ghost
@@ -37,7 +37,7 @@ botón de colgar.
 | Estándar | Estado | Evidencia |
 |---|---|---|
 | Testing | ✓ | 9 tests en `quality`; **los 3 nuevos se vieron en rojo** antes de verlos en verde |
-| CI/CD | ✓ | `quality` · `e2e` · `build-escritorio` con conclusión propia (ver PR) |
+| CI/CD | ✓ | **conclusión propia `success`** en los tres checks requeridos: `quality` 24 s · `e2e` 37 s · `build-escritorio` 1 m 20 s. Ninguno `skipped`. `build-escritorio` y `e2e` corrieron por primera vez con tests reales en esta rama |
 | Observabilidad | n/a | no hay código de producto todavía; entra por ADR en el S1 |
 | Seguridad | ✓ | gitleaks en cada commit; **barrido de CERO ENLACES limpio** (se corrigió el único hit heredado, `CHANGELOG.md`) |
 | Performance | ✓ (de diseño) | presupuesto declarado: fin de turno → ficha ≤ 4 s; el kit de evaluación lo maqueta medido |
