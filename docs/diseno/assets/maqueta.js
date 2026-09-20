@@ -17,6 +17,10 @@
     document.querySelectorAll(".mq-bar [data-lang-set]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.langSet === html.dataset.lang)));
     document.querySelectorAll(".mq-nota .n").forEach((n) => n.classList.toggle("activa", n.dataset.para === e));
     document.querySelectorAll("[data-transcript-en]").forEach((p) => { p.dataset.transcript = p.dataset.transcriptEn.split(" ").includes(e) ? "on" : "off"; });
+    document.querySelectorAll("[data-acople-en]").forEach((el) => {
+      const mapa = Object.fromEntries(el.dataset.acopleEn.split(" ").map((par) => par.split(":")));
+      if (mapa[e]) el.dataset.acople = mapa[e]; else delete el.dataset.acople;
+    });
     html.lang = html.dataset.lang;
   }
   window.__mqApply = aplicar;

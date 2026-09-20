@@ -245,7 +245,8 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .tarjeta h3 { font-size: var(--t-h2); font-weight: 600; }
 .tarjeta p { color: var(--ink-2); font-size: var(--t-ui); }
 .fila { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.fila .crece { flex: 1 1 auto; }
+.fila > .ic { flex: 0 0 auto; }
+.fila .crece { flex: 1 1 auto; min-width: 0; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); align-items: start; }
 .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--s-3); align-items: start; }
 
@@ -349,17 +350,43 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .pildora .tecla { flex: 0 0 auto; }
 
 /* ---------------------------------------------------------------------------
-   BANDA INFERIOR — variante de posición: el panel como franja de lado a lado.
-   Altura mínima, una sola línea de lectura, anclada al borde inferior.
+   BANDA INFERIOR — la forma principal del panel cuando hay reunión (D2 revisada).
+   Ancho completo, pegada al borde inferior. Dos alturas y un modo ACOPLADO en el
+   que la ventana de la reunión se recorta y las dos conviven como aplicaciones
+   pegadas, con un asa que ajusta ambas a la vez.
+     · compacta  88 px  → titular + línea + fuente (dos renglones)
+     · ampliada 200 px  → la ficha entera + las acumuladas o la sugerencia
+     · voz       44 px  → una línea: modo solo audio
    --------------------------------------------------------------------------- */
-.banda { display: flex; align-items: center; gap: 14px; height: 44px; padding: 0 14px; background: var(--bg); color: var(--ink); border: var(--borde) solid var(--line); border-radius: var(--r-ficha); box-shadow: var(--sombra-panel); overflow: hidden; }
-.banda .marca-min { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-size: var(--t-meta); white-space: nowrap; }
-.banda .cuerpo-b { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 10px; }
-.banda .titular-b { font-family: var(--font-evidencia); font-size: 15px; font-weight: 700; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; }
-.banda .linea-b { font-family: var(--font-evidencia); font-size: 13px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1 1 auto; min-width: 0; }
-.banda .fuente-b { flex: 0 0 auto; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; }
-.banda .atajos-b { flex: 0 0 auto; display: inline-flex; gap: 10px; }
-.banda.voz .cuerpo-b { color: var(--ink-2); }
+.banda { position: relative; display: flex; flex-direction: column; height: 88px; background: var(--bg); color: var(--ink); border-top: var(--borde) solid var(--line); box-shadow: 0 -10px 30px rgba(0,0,0,.35); overflow: hidden; }
+.banda.ampliada { height: 200px; }
+.banda.voz { height: 44px; }
+
+/* Asa: ajusta la banda y la reunión a la vez (modo acoplado) */
+.banda .asa { position: absolute; top: 0; left: 0; right: 0; height: 5px; display: flex; align-items: center; justify-content: center; cursor: ns-resize; }
+.banda .asa i { display: block; width: 46px; height: 3px; border-radius: 2px; background: var(--line-2); }
+.banda .asa:hover i { background: var(--halo); }
+
+.banda .cab-b { display: flex; align-items: center; gap: 12px; height: 26px; padding: 5px 14px 0; font-size: var(--t-meta); color: var(--ink-2); flex: 0 0 auto; }
+.banda .cab-b .red { margin-left: auto; }
+.banda .cuerpo-b { flex: 1 1 auto; min-height: 0; display: flex; align-items: flex-start; gap: 16px; padding: 2px 14px 10px; }
+.banda .ficha-b { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.banda .titular-b { font-family: var(--font-evidencia); font-size: 16px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.banda .linea-b { font-family: var(--font-evidencia); font-size: 13.5px; line-height: 1.35; color: var(--ink-2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+.banda.ampliada .linea-b { -webkit-line-clamp: 2; }
+.banda .lado-b { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; max-width: 34%; }
+.banda .fuente-b { font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.banda .atajos-b { display: inline-flex; gap: 10px; }
+.banda .mas { padding: 0; }
+
+/* Modo voz: una sola línea */
+.banda.voz .cuerpo-b { align-items: center; padding: 0 14px; height: 100%; }
+.banda.voz .linea-b { font-size: 13px; -webkit-line-clamp: 1; white-space: nowrap; }
+.banda.voz .cab-b { display: none; }
+
+/* Marca mínima a la izquierda */
+.banda .marca-min { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-size: var(--t-meta); white-space: nowrap; flex: 0 0 auto; }
+.banda .marca-min.halo { color: var(--halo); }
 
 /* Gota — la ventana más pequeña posible: solo el estado, sin texto (modo solo audio) */
 .gota { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; background: var(--bg); color: var(--ink-2); border: var(--borde) solid var(--line); border-radius: 50%; box-shadow: var(--sombra-panel); }

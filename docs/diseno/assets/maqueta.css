@@ -49,3 +49,13 @@ body.mq { min-height: 100vh; background: #0d0e10; color: #cfd3d8; font-family: "
 .mq-tabla-pos td { padding: 9px 10px; border-bottom: 1px solid #1c1f25; vertical-align: top; line-height: 1.5; }
 .mq-tabla-pos td b { color: #e5e7eb; }
 .mq-tabla-pos .si { color: #62d3b4; } .mq-tabla-pos .no { color: #ff8577; } .mq-tabla-pos .mas { color: #f0b64a; }
+
+/* Modo ACOPLADO: la reunión se recorta y la banda ocupa el borde inferior */
+.mq-escritorio[data-acople="88"] .mq-meet { bottom: 104px; }
+.mq-escritorio[data-acople="200"] .mq-meet { bottom: 216px; }
+.mq-escritorio[data-acople="44"] .mq-meet { bottom: 60px; }
+.mq-escritorio[data-acople] .mq-dock { display: none; }
+.mq-escritorio .mq-meet { transition: bottom 150ms cubic-bezier(.2,.6,.2,1); }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
+.mq-corte { position: absolute; left: 0; right: 0; height: 0; border-top: 2px dashed #7dd3fc; z-index: 5; pointer-events: none; }
+.mq-corte span { position: absolute; right: 14px; top: -22px; background: #0b1016; color: #7dd3fc; font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 1px solid #7dd3fc; white-space: nowrap; }

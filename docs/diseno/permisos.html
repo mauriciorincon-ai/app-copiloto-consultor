@@ -16,6 +16,7 @@
     <button data-estado="concedido">concedido</button>
     <button data-estado="revocado">revocado a mitad</button>
     <button data-estado="solicitando">consentimiento de pantalla</button>
+    <button data-estado="acople">acoplar la ventana</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -26,6 +27,7 @@
   <div class="n" data-para="sin-conceder"><b>Qué mirar:</b> la primera vez. Ningún permiso concedido y la app <b>sigue siendo usable</b>: puedes indexar tu corpus y escribir notas. Cada permiso dice <b>para qué</b> en una línea — ese mismo texto es el que macOS mostrará en su diálogo, en español y en inglés.</div>
   <div class="n" data-para="concedido"><b>Qué mirar:</b> los tres concedidos. La app recuerda que macOS (desde Sequoia) vuelve a pedirlos cada mes: lo dice antes de que te sorprenda.</div>
   <div class="n" data-para="revocado"><b>Qué mirar:</b> el permiso de pantalla se cayó a mitad de la reunión. La franja dice qué se detuvo y qué sigue funcionando; el resto de la sesión continúa. Nunca un modal que robe el foco mientras hablas.</div>
+  <div class="n" data-para="acople"><b>Qué mirar:</b> el permiso que pide el <b>modo acoplado</b> (la banda que recorta la reunión). Es el único permiso <b>opcional</b>: sin él la banda flota encima en vez de acoplarse, y todo lo demás funciona igual. Es un permiso potente de macOS y la pantalla dice, sin adornos, qué se hace con él y qué no.</div>
   <div class="n" data-para="solicitando"><b>Qué mirar:</b> el consentimiento de lectura de pantalla (C8) con sus dos modos: continua solo ante cambio, o bajo demanda por región para reuniones bajo NDA estricta. Y lo que jamás ocurre: las imágenes no se guardan ni salen.</div>
   <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
 </div>
@@ -43,7 +45,7 @@
     <a href="idioma.html"><svg class="ic s"><use href="#i-globo"/></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
     <a href="ia.html"><svg class="ic s"><use href="#i-chispa"/></svg><span lang="es">IA</span><span lang="en">AI</span></a>
     <div class="abajo">
-      <span class="estado ok" data-en="concedido revocado"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando · 0 B</span><span lang="en">Listening · 0 B</span></span>
+      <span class="estado ok" data-en="concedido revocado acople"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando · 0 B</span><span lang="en">Listening · 0 B</span></span>
       <span class="estado mute" data-en="sin-conceder solicitando"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Sin sesión · 0 B</span><span lang="en">No session · 0 B</span></span>
     </div>
   </nav>
@@ -152,6 +154,37 @@
         </div>
       </div>
       <p class="mono" style="color:var(--ink-2)"><span lang="es">Lo ya leído de la pantalla murió con el buffer. No quedó ninguna imagen.</span><span lang="en">What had been read from the screen died with the buffer. No image remains.</span></p>
+    </div>
+
+    <!-- acoplar la ventana -->
+    <div data-en="acople" style="display:flex;flex-direction:column;gap:14px">
+      <div class="permiso">
+        <svg class="ic"><use href="#i-flecha"/></svg>
+        <span class="nombre"><span lang="es">Acoplar la ventana de la reunión</span><span lang="en">Dock the meeting window</span></span>
+        <span class="para"><span lang="es">Para que la banda no tape la llamada: la reunión se encoge y las dos conviven. macOS lo llama «Accesibilidad».</span><span lang="en">So the band does not cover the call: the meeting shrinks and both live side by side. macOS calls it “Accessibility”.</span></span>
+        <div class="accion"><span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Opcional</span><span lang="en">Optional</span></span><button class="btn mini primario"><span lang="es">Conceder en macOS</span><span lang="en">Grant in macOS</span></button></div>
+      </div>
+      <div class="grid-2">
+        <div class="tarjeta">
+          <h2 class="seccion"><span lang="es">Qué hace la app con este permiso</span><span lang="en">What the app does with it</span></h2>
+          <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-flecha"/></svg><span class="crece"><span lang="es">Cambiar el <b>tamaño y la posición</b> de la ventana de la reunión</span><span lang="en">Change the <b>size and position</b> of the meeting window</span></span></div>
+          <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-flecha"/></svg><span class="crece"><span lang="es">Devolverla a su tamaño al cerrar la sesión</span><span lang="en">Restore it when the session closes</span></span></div>
+          <p><span lang="es">Nada más. Solo la ventana de la reunión que tú tienes delante, en tu propio Mac.</span><span lang="en">Nothing else. Only the meeting window in front of you, on your own Mac.</span></p>
+        </div>
+        <div class="tarjeta">
+          <h2 class="seccion"><span lang="es">Qué NO hace, aunque el permiso lo permitiría</span><span lang="en">What it does NOT do, though the permission would allow it</span></h2>
+          <div class="fila"><svg class="ic s" style="color:var(--err)"><use href="#i-x-circle"/></svg><span class="crece"><span lang="es">Leer el contenido de otras apps</span><span lang="en">Read the contents of other apps</span></span></div>
+          <div class="fila"><svg class="ic s" style="color:var(--err)"><use href="#i-x-circle"/></svg><span class="crece"><span lang="es">Escribir, pulsar o hacer clic por ti</span><span lang="en">Type, press or click on your behalf</span></span></div>
+          <div class="fila"><svg class="ic s" style="color:var(--err)"><use href="#i-x-circle"/></svg><span class="crece"><span lang="es">Tocar ninguna máquina que no sea la tuya</span><span lang="en">Touch any machine other than yours</span></span></div>
+        </div>
+      </div>
+      <div class="franja ok" role="status">
+        <svg class="ic relleno"><use href="#i-check-circle"/></svg>
+        <div>
+          <strong><span lang="es">Si no lo concedes, no pierdes casi nada</span><span lang="en">If you do not grant it, you lose almost nothing</span></strong>
+          <p><span lang="es">La banda flota encima de la reunión en vez de acoplarse. Todo lo demás —fichas, notas, voz, radar— funciona igual.</span><span lang="en">The band floats over the meeting instead of docking. Everything else — cards, notes, voice, radar — works the same.</span></p>
+        </div>
+      </div>
     </div>
 
     <!-- consentimiento de pantalla -->

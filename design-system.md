@@ -1,7 +1,7 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.2.0   # 1.2.0 (Fase 3-ter): banda y gota + radar de dos niveles. 1.1.0 voz. 1.0.0 completo.
+version: 1.3.0   # 1.3.0: banda ACOPLADA como forma principal. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
 fecha: 2026-09-20
 estado: propuesto   # → aprobado con G-Diseño
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
@@ -113,15 +113,32 @@ motion** (regla 5a del CLAUDE.md): reduced-motion cambia propiedades, no element
 |---|---|---|
 | **Panel flotante** | **380 × 220**; con transcript **380 × 420**; con 3 fichas hasta 380 × 360; **nunca más ancho** | opaco, sin blur; **esquina superior derecha**, 16 px del borde, 8 px bajo la barra de menús; todos los Spaces; posición recordada (preferencia) |
 | **Píldora de voz** (C15, modo solo audio) | **260 × 56** | **reemplaza al panel**, no convive con él: la pantalla queda libre. Misma familia visual (opaca, radio 10, borde 1 px). No muestra la ficha —se oye—: solo su origen y cómo callarla |
-| **Banda inferior** (variante de forma) | **ancho completo × 44** | el mismo contenido en una línea: titular · línea · fuente. Al borde inferior. Recorta la frase con elipsis; **queda sobre el Dock** |
+| **Banda inferior — forma PRINCIPAL en reunión** | ancho completo × **88** (compacta) · **200** (ampliada) · **44** (modo solo audio) | pegada al borde inferior, con **asa** que ajusta su alto. **Acoplada por defecto**: la ventana de la reunión se recorta y las dos conviven como aplicaciones pegadas; el asa mueve las dos a la vez. Sin el permiso de acople, flota encima |
 | **Gota** (modo solo audio, mínima) | **44 × 44** | solo el estado, sin texto. Esquina inferior izquierda: la única zona libre en Meet, Zoom y Teams |
 
-**Posición (D2, revisada en la mirada 3):** la ventana flotante es **elegible por el usuario**
-—cuatro esquinas o banda inferior— y recuerda su elección. Por defecto: **tarjeta arriba a la
-derecha** con ficha, **gota abajo a la izquierda** en modo solo audio. Lo medido sobre el
-escritorio de referencia (`docs/diseno/posicion.html`): la banda **separada** del borde tapa los
-controles de la videollamada (descartada); la banda **al borde** queda sobre el Dock; arriba a la
-derecha y abajo a la izquierda no chocan con Meet, Zoom ni Teams.
+**Posición y forma (D2, decidida en la mirada 3-ter sobre `docs/diseno/posicion.html`):**
+
+| Situación | Forma por defecto |
+|---|---|
+| En reunión, con ficha | **banda inferior acoplada, 88 px** — ampliable a 200 con el asa |
+| En reunión, modo solo audio | **banda inferior acoplada, 44 px** (una línea) |
+| Sin el permiso de acople | la misma banda, **flotando** sobre la reunión |
+| Fuera de reunión o por preferencia | tarjeta 380 × 220 en cualquiera de las cuatro esquinas |
+
+Alternativa disponible pero no por defecto: **gota de 44 × 44** abajo a la izquierda en modo
+solo audio. Medido y **descartado**: la banda separada del borde tapa los controles de la
+videollamada (el botón de colgar).
+
+**Qué ve el cliente en modo acoplado** (verificación ⭐ en llamada real):
+- **Compartiendo VENTANA** — ve esa ventana, más pequeña, y nada más. La banda no existe para
+  él. Es el modo **más seguro de todos**.
+- **Compartiendo PANTALLA completa** — la banda está protegida de la captura, así que en esa
+  franja vería **el escritorio de detrás**. No revela contenido, pero sí que algo ocupa el
+  espacio. Recomendación de la app en ese caso: compartir ventana.
+
+**Permiso que exige el acople:** Accesibilidad de macOS, **opcional**. Solo se usa para cambiar
+tamaño y posición de la ventana de la reunión y devolverla al cerrar. Declarado en
+`permisos.html` con lo que la app **no** hace aunque el permiso lo permitiría.
 | **Ventana principal** | **960 × 640** (mín. 800 × 560) | rail izquierdo 200 px fijo; contenido con padding 24/32 |
 
 ## 4 · Estados — SIEMPRE símbolo + texto + color (daltonismo leve)
@@ -283,3 +300,4 @@ muere») y declara con letra que el usuario responde por su propia carpeta. Deta
 | 1.0.0 | 2026-09-20 | completo: 6 componentes canon con todos sus estados, primitivas, tabla de contraste, vetados, contrato con el código |
 | 1.1.0 | 2026-09-20 | mirada 3: píldora de voz (C15, 7.º componente canon) · §9-bis qué persiste · dos prohibidos nuevos |
 | 1.2.0 | 2026-09-20 | mirada 3 (2.ª vuelta): banda inferior y gota · posición elegible (D2 revisada) · radar con dos niveles de severidad y cinco categorías |
+| 1.3.0 | 2026-09-20 | mirada 3-ter: **banda acoplada** como forma principal (88/200/44, con asa) · permiso de acople · qué ve el cliente por modo de compartir |

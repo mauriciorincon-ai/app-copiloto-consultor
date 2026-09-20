@@ -325,7 +325,53 @@ salida ES el gate**; un `&&` no sustituye mirar.
 
 **Gates:** `pnpm test` 7/7 ✓ (tras la corrección).
 
-**Mirada 3-ter:** pendiente — mensaje de gate emitido.
+**Mirada 3-ter (2026-09-20): DECIDIDO** — «me gusta mucho la D · banda pegada al borde aunque
+un poco más arriba al menos el doble, con la posibilidad de ampliarla y ojalá en la medida que
+se amplíe hacia arriba recorte la pantalla de la reunión como si fueran dos aplicaciones
+pegadas con opción de ajustar dimensiones proporcional al tiempo. Y en cuanto al E y F ambas me
+gustan mucho pero vamos con F. Muy bien lo de anti…, estamos solo protegiéndonos de software que
+quiera invadir nuestra independencia y que nos permita tomar decisiones».
+
+## Fase 3-quater — la banda acoplada (2026-09-20)
+
+**La forma principal del panel cambia.** La tarjeta 380 × 220 deja de ser el defecto en reunión:
+pasa a serlo la **banda inferior acoplada**.
+
+| Alto | Cuándo | Qué cabe |
+|---|---|---|
+| **88 px** (el doble del primer boceto) | por defecto con ficha | titular + línea + fuente, sin recortar |
+| **200 px** | arrastrando el asa | la ficha entera, las acumuladas y la sugerencia |
+| **44 px** | modo solo audio (opción F) | una línea: qué dice y de dónde salió |
+
+**Acoplada** significa que la ventana de la reunión **se recorta** y las dos conviven como
+aplicaciones pegadas; el **asa** superior ajusta las dos a la vez. Sin el permiso, la misma
+banda flota encima. La gota (E) queda como alternativa declarada, no como defecto.
+
+**Interpretación declarada:** «ajustar dimensiones proporcional al tiempo» se interpretó como
+**arrastrar el asa y que las dos ventanas se ajusten a la vez** (un divisor tipo split view).
+Si querías otra cosa, se corrige aquí.
+
+**Dos consecuencias que el diseño tuvo que resolver, no esconder:**
+
+1. **Permiso nuevo, opcional: Accesibilidad de macOS.** Redimensionar la ventana de Chrome/Zoom
+   exige ese permiso, que es potente. `permisos.html` gana un cuarto estado que declara qué se
+   hace con él (cambiar tamaño y posición de la ventana de la reunión, y devolverla al cerrar) y
+   **qué no se hace aunque el permiso lo permitiría** (leer otras apps, escribir o pulsar por ti,
+   tocar una máquina ajena). Sin concederlo no se pierde casi nada: la banda flota.
+2. **Qué ve el cliente.** Compartiendo **ventana**, ve esa ventana más pequeña y nada más: el
+   modo acoplado es **más seguro** que el flotante. Compartiendo **pantalla completa**, en la
+   franja de la banda vería el escritorio de detrás (la banda está protegida de la captura): no
+   revela contenido, pero sí que algo ocupa ese espacio. Queda como **parada del gate ⭐** en
+   llamada real, junto a la verificación de Zoom y Teams.
+
+**Frase del usuario que entra al posicionamiento del radar** (para el brochure y el copy):
+*«estamos solo protegiéndonos de software que quiera invadir nuestra independencia y que nos
+permita tomar decisiones»*. Es exactamente la frontera de la regla dura 9: el radar protege la
+máquina propia y devuelve la decisión al usuario; jamás toca la ajena.
+
+**Contraste medido:** permisos 20 capturas · posición 32 → **0 bajo AA**.
+
+**Mirada 3-quater:** pendiente — mensaje de gate emitido.
 
 ## Fase 4 — Pantallas del cuaderno
 (pendiente)

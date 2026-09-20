@@ -34,7 +34,8 @@ construir el siguiente artefacto.
 | 2026-09-20 | `kit.html` + `design-system.md` v1.0.0 (mirada 2) | **Aprobado** — «Si apruebo el kit me gusto mucho muy oportuno el diseño y elementos» (con el archivo abierto en su Mac) | Fase 3: `sesion.html` · `permisos.html` · `honestidad.html` |
 | 2026-09-20 | `sesion.html` · `permisos.html` · `honestidad.html` (mirada 3) | **Aprobadas con dos cambios** — «en honestidad está bien que lo del cliente se elimine no le veo problema pero lo que sí quiero es que me quede lo que es mío o lo que dije o escribí, adicional quisiera tener un modo solo audio que me hable de forma paralela por si quiero ver completamente la pantalla y no me interrumpa, todo el resto lo veo muy bien» | Fase 3-bis: los dos cambios, antes de la Fase 4 |
 | 2026-09-20 | `honestidad.html` + `panel.html` (mirada 3-bis) | **Dos ajustes más** — modo audio como icono pequeño abajo izquierda o banda inferior («¿y si manejamos el panel en la parte inferior?»); y el radar debe detectar proctoring y anti-cheat, «que son invasivos» | Fase 3-ter: `posicion.html` + radar de dos niveles |
-| — | `posicion.html` + radar invasivo (mirada 3-ter) | *(pendiente)* | — |
+| 2026-09-20 | `posicion.html` + radar invasivo (mirada 3-ter) | **Decidido: D acoplada + F** — «me gusta mucho la D · banda pegada al borde aunque un poco más arriba al menos el doble, con la posibilidad de ampliarla y ojalá […] recorte la pantalla de la reunión como si fueran dos aplicaciones pegadas […]. En cuanto al E y F ambas me gustan mucho pero vamos con F. Muy bien lo de anti…, estamos solo protegiéndonos de software que quiera invadir nuestra independencia» | Fase 3-quater: banda acoplada 88/200/44 + permiso de acople |
+| — | `posicion.html` (banda acoplada) + `permisos.html` (acople) (mirada 3-quater) | *(pendiente)* | — |
 
 ## Decisiones de diseño declaradas antes del segundo artefacto
 
