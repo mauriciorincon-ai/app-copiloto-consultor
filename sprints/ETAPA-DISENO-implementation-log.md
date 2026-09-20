@@ -371,7 +371,55 @@ máquina propia y devuelve la decisión al usuario; jamás toca la ajena.
 
 **Contraste medido:** permisos 20 capturas · posición 32 → **0 bajo AA**.
 
-**Mirada 3-quater:** pendiente — mensaje de gate emitido.
+**Mirada 3-quater (2026-09-20): APROBADA con un cambio** — «me pareció genial D2, D3 y F. ¿Qué
+te parece a ti? ¿Por qué es más seguro que el flotante? Podemos hacer que no se vea el escritorio
+sino en negro, no quiero que vea que algo ocupa ese espacio».
+
+## Fase 3-quinquies — el relleno de captura (2026-09-20)
+
+**La franja deja de ser un problema abierto.** Hasta aquí, compartiendo pantalla completa, donde
+vive la banda protegida la captura mostraba **lo que hubiera detrás**. El usuario lo vio y pidió
+negro. Se construyó el mecanismo que eso exige y se amplió a tres opciones.
+
+**El mecanismo: una ventana de relleno.** La protección de captura es **por ventana**. Una
+segunda ventana, SIN contenido, dibujada justo debajo de la banda y pegada a su geometría, no
+lleva el flag: es lo único que la captura encuentra en ese rectángulo. El usuario nunca la ve
+(la banda es opaca y va encima). No recibe foco ni clics, no aparece en el conmutador de apps,
+muere con la banda, y **no puede tener contenido**: es un color o una imagen, no un contenedor.
+
+| Relleno | Qué ve el cliente | Estado |
+|---|---|---|
+| **Fondo de escritorio** | una reunión que no llega al borde inferior | **por defecto** (recomendación propia) |
+| **Negro** | una franja muerta, tipo letterbox | preferencia de una tecla (lo que el usuario pidió) |
+| **Sin relleno** | el escritorio y las ventanas de detrás | **descartado**; solo fallback honesto, y avisado |
+
+**Por qué el fondo de escritorio y no el negro, siendo el negro lo que se pidió:** ambos sellan
+la fuga por igual — esa era la razón de fondo, y pesa más que la estética: sin relleno no solo se
+nota el hueco, se **fuga contenido ajeno a la reunión**. La diferencia está en qué historia
+cuenta la franja. El negro se lee como una banda muerta y admite pregunta; el fondo de escritorio
+se lee como una ventana que no llega al borde, que es lo más común del mundo en un Mac. Se deja
+el negro a una tecla porque tiene su caso propio: fondos con foto o nombre personal. **Decide el
+usuario en la mirada 3-quinquies.**
+
+**Por qué la banda acoplada es más segura que el panel flotante** (respuesta que entra al
+design-system y al brochure): compartiendo **una ventana**, el flotante vive ENCIMA del
+rectángulo compartido y la única cosa que lo separa del cliente es el flag de protección. La
+banda acoplada vive **fuera** de ese rectángulo. Así la geometría se vuelve una segunda línea
+de defensa **independiente del flag**: si el flag falla —cliente sin verificar, cambio de macOS,
+una ruta de captura distinta— el flotante se expone entero y la acoplada no. Lo que la geometría
+NO cubre, y se dice igual: una cámara apuntando a la pantalla, o alguien mirando por encima del
+hombro. Ahí no hay flag ni geometría que valga.
+
+**Gate (las tres preguntas, regla 15).** ¿Puede fallar? Sí: que la captura componga el relleno
+y no la banda depende del sistema. ¿Se vio correr? **No todavía** — se verifica en llamada real,
+parada ⭐ junto a Zoom y Teams. ¿Se verá fallar? La demo en rojo es la propia opción «sin
+relleno», que está en la maqueta mostrando exactamente el fallo que el relleno evita.
+
+**Archivos:** `docs/diseno/posicion.html` (bloque nuevo «el relleno de la franja», tres
+opciones lado a lado) · `docs/diseno/assets/maqueta.css` · `design-system.md` v1.4.0 (§3.6:
+el relleno como ventana canon + tabla de opciones + regla de verificación).
+
+**Mirada 3-quinquies:** pendiente — mensaje de gate emitido.
 
 ## Fase 4 — Pantallas del cuaderno
 (pendiente)

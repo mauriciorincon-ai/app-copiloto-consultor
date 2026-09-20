@@ -59,3 +59,24 @@ body.mq { min-height: 100vh; background: #0d0e10; color: #cfd3d8; font-family: "
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
 .mq-corte { position: absolute; left: 0; right: 0; height: 0; border-top: 2px dashed #7dd3fc; z-index: 5; pointer-events: none; }
 .mq-corte span { position: absolute; right: 14px; top: -22px; background: #0b1016; color: #7dd3fc; font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 1px solid #7dd3fc; white-space: nowrap; }
+
+/* Relleno de captura: qué ve el cliente en la franja de la banda (fase 3-quinquies) */
+.mq-h2 { font-size: 14px; color: #e5e7eb; margin: 0 0 4px; font-weight: 600; }
+.mq-h2 + .mq-sub { font-size: 12.5px; color: #9aa2ad; margin: 0 0 14px; line-height: 1.6; }
+.mq-relleno { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.mq-relleno figure { margin: 0; }
+.mq-relleno .mini { position: relative; height: 158px; border: 1px solid #3a3e46; border-radius: 8px; overflow: hidden; background: linear-gradient(150deg, #2b3550 0%, #3a3350 55%, #4a3a44 100%); }
+.mq-relleno .mini-meet { position: absolute; left: 10px; right: 10px; top: 10px; bottom: 40px; background: #1f2126; border: 1px solid #3a3e46; border-radius: 6px; }
+.mq-relleno .mini-meet::before { content: ""; position: absolute; inset: 8px 8px 18px; background: #2a2d33; border-radius: 4px; }
+.mq-relleno .mini-meet::after { content: ""; position: absolute; left: 50%; transform: translateX(-50%); bottom: 5px; width: 46px; height: 8px; border-radius: 4px; background: #8b3a3a; }
+.mq-relleno .mini-franja { position: absolute; left: 0; right: 0; bottom: 0; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-family: Menlo, monospace; letter-spacing: .02em; }
+.mq-relleno .mini-franja.esc { background: linear-gradient(150deg, #33405f 0%, #463d5e 100%); color: #cfd3d8; }
+.mq-relleno .mini-franja.esc i { position: absolute; display: block; border-radius: 3px; background: #23262c; border: 1px solid #40444c; }
+.mq-relleno .mini-franja.esc i.a { left: 12px; bottom: 6px; width: 92px; height: 20px; }
+.mq-relleno .mini-franja.esc i.b { right: 16px; bottom: 10px; width: 120px; height: 16px; }
+.mq-relleno .mini-franja.negro { background: #000; color: #4a4a4a; }
+.mq-relleno .mini-franja.fondo { background: linear-gradient(150deg, #33405f 0%, #463d5e 100%); }
+.mq-relleno figcaption { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; font-size: 12.5px; line-height: 1.55; color: #9aa2ad; }
+.mq-relleno figcaption strong { display: block; color: #e5e7eb; font-size: 13px; margin-bottom: 2px; }
+.mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
+.mq-relleno .elegido { outline: 2px solid #62d3b4; outline-offset: 3px; }

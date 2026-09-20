@@ -1,7 +1,7 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.3.0   # 1.3.0: banda ACOPLADA como forma principal. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
+version: 1.4.0   # 1.4.0: relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
 fecha: 2026-09-20
 estado: propuesto   # → aprobado con G-Diseño
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
@@ -115,6 +115,7 @@ motion** (regla 5a del CLAUDE.md): reduced-motion cambia propiedades, no element
 | **Píldora de voz** (C15, modo solo audio) | **260 × 56** | **reemplaza al panel**, no convive con él: la pantalla queda libre. Misma familia visual (opaca, radio 10, borde 1 px). No muestra la ficha —se oye—: solo su origen y cómo callarla |
 | **Banda inferior — forma PRINCIPAL en reunión** | ancho completo × **88** (compacta) · **200** (ampliada) · **44** (modo solo audio) | pegada al borde inferior, con **asa** que ajusta su alto. **Acoplada por defecto**: la ventana de la reunión se recorta y las dos conviven como aplicaciones pegadas; el asa mueve las dos a la vez. Sin el permiso de acople, flota encima |
 | **Gota** (modo solo audio, mínima) | **44 × 44** | solo el estado, sin texto. Esquina inferior izquierda: la única zona libre en Meet, Zoom y Teams |
+| **Relleno de captura** | **idéntico a la banda**, siempre | ventana SIN contenido que se dibuja justo **debajo** de la banda y viaja pegada a ella. La banda es opaca: el usuario no la ve nunca. Es lo único que una captura de pantalla completa encuentra donde vive la banda. **Jamás dibuja contenido de ninguna app** — solo un relleno plano |
 
 **Posición y forma (D2, decidida en la mirada 3-ter sobre `docs/diseno/posicion.html`):**
 
@@ -123,6 +124,16 @@ motion** (regla 5a del CLAUDE.md): reduced-motion cambia propiedades, no element
 | En reunión, con ficha | **banda inferior acoplada, 88 px** — ampliable a 200 con el asa |
 | En reunión, modo solo audio | **banda inferior acoplada, 44 px** (una línea) |
 | Sin el permiso de acople | la misma banda, **flotando** sobre la reunión |
+
+**Relleno de captura (decidido en la mirada 3-quater, 2026-09-20).** La banda lleva el flag de protección de captura, así que una grabación o un «compartir pantalla completa» renderiza la escena **sin** la banda — y muestra lo que quede detrás. Eso no es aceptable por dos razones, y la segunda pesa más que la primera: (1) delata que algo ocupa ese rectángulo; (2) **filtra ventanas ajenas a la reunión** que estén debajo. Por eso la banda no viaja sola: viaja con su relleno.
+
+| Relleno | Qué ve el cliente | Cuándo |
+|---|---|---|
+| **Fondo de escritorio** (por defecto) | una reunión que no llega al borde inferior: lo más ordinario que existe en un Mac | defecto; no hay nada que explicar |
+| **Negro** | una franja muerta, tipo letterbox | preferencia de una tecla; para fondos de escritorio con foto o nombre personal, y para quien prefiera no dar ninguna pista de estética |
+| **Sin relleno** | el escritorio y las ventanas de detrás | **descartado como defecto**; solo el fallback honesto si el relleno no se pudo dibujar, y entonces la app lo DICE antes de compartir |
+
+Reglas del relleno: nace sin contenido y no puede tener contenido (no es un contenedor, es un color o una imagen); no recibe foco ni clics; no aparece en el conmutador de apps; muere con la banda. **Y su verificación es un gate:** que la captura componga el relleno y no la banda depende del sistema, no de nosotros — parada ⭐ en llamada real, junto a Zoom y Teams (`docs/diseno/posicion.html`).
 | Fuera de reunión o por preferencia | tarjeta 380 × 220 en cualquiera de las cuatro esquinas |
 
 Alternativa disponible pero no por defecto: **gota de 44 × 44** abajo a la izquierda en modo

@@ -155,11 +155,53 @@
       <svg class="ic relleno" style="color:#f0b64a"><use href="#i-alert"/></svg>
       <div>
         <strong style="color:#e5e7eb"><span lang="es">Acoplada, compartiendo PANTALLA completa</span><span lang="en">Docked, sharing the FULL screen</span></strong>
-        <p style="color:#9aa2ad"><span lang="es">La banda está protegida de la captura: en esa franja el cliente vería <b>el escritorio de detrás</b>, no la banda. No revela su contenido, pero sí que algo ocupa ese espacio. <b>Verificarlo en una llamada real es parada del gate ⭐.</b></span><span lang="en">The band is protected from capture: in that strip the client would see <b>the desktop behind</b>, not the band. It reveals no content, but it does show that something occupies the space. <b>Verifying this in a real call is a ⭐ gate stop.</b></span></p>
+        <p style="color:#9aa2ad"><span lang="es">La banda está protegida de la captura, así que en esa franja el cliente ve <b>lo que quede detrás</b>. Por eso la banda viaja con un <b>relleno</b>: una segunda ventana, sin contenido, que ocupa exactamente ese rectángulo y es lo único que la captura encuentra ahí. Abajo, las tres opciones. <b>Verificarlo en una llamada real sigue siendo parada del gate ⭐.</b></span><span lang="en">The band is protected from capture, so in that strip the client sees <b>whatever is behind it</b>. That is why the band ships with a <b>filler</b>: a second, contentless window occupying exactly that rectangle — the only thing capture finds there. The three options are below. <b>Verifying this in a real call is still a ⭐ gate stop.</b></span></p>
       </div>
     </div>
   </div>
 </div>
+
+<div class="mq-tabla-pos" style="margin-bottom:34px">
+  <h2 class="mq-h2"><span lang="es">El relleno de la franja — qué encuentra la captura donde vive la banda</span><span lang="en">The strip filler — what capture finds where the band lives</span></h2>
+  <p class="mq-sub"><span lang="es">Una ventana de relleno se dibuja justo <b>debajo</b> de la banda, con su mismo tamaño y sin nada dentro: ni texto, ni fichas, ni otras apps. Tú no la ves nunca (la banda es opaca y va encima); la captura sí. Nunca muestra contenido de ninguna aplicación.</span><span lang="en">A filler window is drawn right <b>beneath</b> the band, same size, with nothing inside: no text, no cards, no other apps. You never see it (the band is opaque and sits on top); capture does. It never shows any application's content.</span></p>
+  <div class="mq-relleno">
+
+    <figure>
+      <div class="mini">
+        <div class="mini-meet"></div>
+        <div class="mini-franja esc"><i class="a"></i><i class="b"></i></div>
+      </div>
+      <figcaption>
+        <svg class="ic" style="color:#ff8577"><use href="#i-x-circle"/></svg>
+        <div><strong><span lang="es">Sin relleno — descartado</span><span lang="en">No filler — discarded</span></strong><span lang="es">Se ve el escritorio y <b>las ventanas que haya detrás</b>. No es solo que se note el hueco: se fuga contenido ajeno a la reunión.</span><span lang="en">The desktop shows, and <b>any windows behind it</b>. It is not just a visible gap: unrelated content leaks.</span></div>
+      </figcaption>
+    </figure>
+
+    <figure>
+      <div class="mini">
+        <div class="mini-meet"></div>
+        <div class="mini-franja negro"></div>
+      </div>
+      <figcaption>
+        <svg class="ic" style="color:#62d3b4"><use href="#i-check-circle"/></svg>
+        <div><strong><span lang="es">Negro — lo que pediste</span><span lang="en">Black — what you asked for</span></strong><span lang="es">No se fuga absolutamente nada. Se lee como una banda muerta de pantalla, igual que el letterbox de un vídeo.</span><span lang="en">Nothing whatsoever leaks. It reads as a dead strip of screen, like a video's letterbox.</span></div>
+      </figcaption>
+    </figure>
+
+    <figure>
+      <div class="mini elegido">
+        <div class="mini-meet"></div>
+        <div class="mini-franja fondo"></div>
+      </div>
+      <figcaption>
+        <svg class="ic" style="color:#62d3b4"><use href="#i-check-circle"/></svg>
+        <div><strong><span lang="es">Tu fondo de escritorio — por defecto</span><span lang="en">Your wallpaper — the default</span></strong><span lang="es">Tampoco se fuga nada, y además <b>no hay nada que explicar</b>: se lee como una ventana de reunión que no llega al borde. Lo más común del mundo en un Mac.</span><span lang="en">Nothing leaks either, and there is <b>nothing to explain</b>: it reads as a meeting window that does not reach the edge. The most ordinary thing on a Mac.</span></div>
+      </figcaption>
+    </figure>
+
+  </div>
+</div>
+
 <div class="mq-tabla-pos">
   <table>
     <thead><tr><th>opción</th><th>choca con</th><th>a favor</th><th>en contra</th></tr></thead>
