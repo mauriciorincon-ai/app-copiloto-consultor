@@ -99,7 +99,8 @@ luminosidad y todo estado lleva símbolo + texto).
 
 **Gates:** `pnpm test` 7/7 ✓ (vocabulario + autocontenida + dependabot) · `pnpm typecheck` ✓ ·
 barrido de CERO ENLACES: un hit **preexistente en `main`**, `CHANGELOG.md:110` del kit escribe
-`pages.dev` en claro — se corrige en la Fase 5 (escribirlo con clase de carácter).
+`pages[.]dev` en claro — se corrige en la Fase 5. *(Aquí va con clase de carácter: un
+documento que narra el barrido y cita el literal rompe el grep y mata el gate — regla 17.)*
 
 **Decisiones tomadas en la construcción (a juzgar en la mirada 1):**
 - D14 · El transcript visible es un **estado** del panel (380 × 420), no una ventana aparte.
