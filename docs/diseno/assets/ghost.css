@@ -125,7 +125,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .estado.halo { color: var(--halo); background: var(--halo-tint); border-color: var(--halo); }
 
 /* Franja de aviso dentro del panel o de una pantalla */
-.franja { display: grid; grid-template-columns: 16px 1fr; gap: 6px 10px; padding: 10px 12px; border-radius: var(--r-ficha); border: var(--borde) solid; font-size: var(--t-meta); line-height: 1.4; }
+.franja { display: grid; grid-template-columns: 16px 1fr; gap: 5px 10px; padding: 9px 11px; border-radius: var(--r-ficha); border: var(--borde) solid; font-size: var(--t-meta); line-height: 1.4; }
 .franja .ic { margin-top: 1px; }
 .franja strong { display: block; font-weight: 600; font-size: var(--t-ui); color: var(--ink); }
 .franja p { color: var(--ink-2); }
@@ -234,20 +234,20 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .rail a:hover { background: var(--surface-2); color: var(--ink); }
 .rail a[aria-current="page"], .rail .item.activo { color: var(--ink); background: var(--surface-2); border-left-color: var(--halo); }
 .rail .abajo { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: var(--borde) solid var(--line); }
-.contenido { padding: var(--s-6) var(--s-8); overflow: auto; display: flex; flex-direction: column; gap: var(--s-5); }
+.contenido { padding: var(--s-5) var(--s-6); overflow: auto; display: flex; flex-direction: column; gap: var(--s-4); }
 .titulo { display: flex; flex-direction: column; gap: 4px; }
-.titulo h1 { font-size: var(--t-h1); font-weight: 600; letter-spacing: -.01em; }
+.titulo h1 { font-size: var(--t-h1); font-weight: 600; letter-spacing: -.01em; line-height: 1.2; }
 .titulo .sub { font-size: var(--t-ui); color: var(--ink-2); max-width: 60ch; }
 h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-weight: 400; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 8px; }
 
 /* Tarjeta */
-.tarjeta { background: var(--surface); border: var(--borde) solid var(--line); border-radius: var(--r-ficha); padding: var(--s-4); display: flex; flex-direction: column; gap: 10px; }
+.tarjeta { background: var(--surface); border: var(--borde) solid var(--line); border-radius: var(--r-ficha); padding: var(--s-3) var(--s-4); display: flex; flex-direction: column; gap: 9px; }
 .tarjeta h3 { font-size: var(--t-h2); font-weight: 600; }
 .tarjeta p { color: var(--ink-2); font-size: var(--t-ui); }
 .fila { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .fila .crece { flex: 1 1 auto; }
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-4); }
-.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--s-4); }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); align-items: start; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--s-3); align-items: start; }
 
 /* Campo de texto */
 .campo { display: flex; flex-direction: column; gap: 4px; font-size: var(--t-meta); color: var(--ink-2); }
@@ -275,7 +275,7 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .tabla tr.apagada td { color: var(--ink-2); }
 
 /* Estado de permiso (C12) */
-.permiso { display: grid; grid-template-columns: 24px 1fr auto; gap: 4px 12px; align-items: center; padding: 10px 12px; border: var(--borde) solid var(--line); border-radius: var(--r-ficha); background: var(--surface); }
+.permiso { display: grid; grid-template-columns: 24px 1fr auto; gap: 3px 12px; align-items: center; padding: 9px 12px; border: var(--borde) solid var(--line); border-radius: var(--r-ficha); background: var(--surface); }
 .permiso .ic { width: 20px; height: 20px; color: var(--ink-2); }
 .permiso .nombre { font-weight: 600; font-size: var(--t-ui); }
 .permiso .para { grid-column: 2; font-size: var(--t-meta); color: var(--ink-2); }
@@ -285,7 +285,7 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .permiso.solicitando { border-color: var(--halo); }
 
 /* Bandera de jurisdicción (C11) — informativa, nunca bloquea */
-.bandera { display: grid; grid-template-columns: 20px 1fr; gap: 4px 10px; padding: 12px 14px; border: var(--borde) solid var(--line); border-radius: var(--r-ficha); background: var(--surface); font-size: var(--t-meta); }
+.bandera { display: grid; grid-template-columns: 20px 1fr; gap: 3px 10px; padding: 10px 12px; border: var(--borde) solid var(--line); border-radius: var(--r-ficha); background: var(--surface); font-size: var(--t-meta); }
 .bandera .ic { width: 18px; height: 18px; margin-top: 1px; grid-column: 1; }
 .bandera > :not(.ic) { grid-column: 2; }
 .bandera .donde { font-weight: 600; font-size: var(--t-ui); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

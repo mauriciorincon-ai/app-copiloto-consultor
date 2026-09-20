@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="es" data-theme="dark" data-lang="es" data-estado="activa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Angel Ghost · Maqueta — 06 Honestidad</title>
+<link rel="stylesheet" href="assets/ghost.css">
+<link rel="stylesheet" href="assets/maqueta.css">
+</head>
+<body class="mq">
+
+<div class="mq-bar" role="toolbar" aria-label="Sala de diseño">
+  <span class="mq-t">06 · Honestidad</span>
+  <span class="mq-g"><span>estado</span>
+    <button data-estado="activa">sesión activa</button>
+    <button data-estado="kill">tras kill-switch</button>
+    <button data-estado="verificacion">verificación en verde</button>
+  </span>
+  <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
+  <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
+  <a href="index.html">← recorrido</a>
+</div>
+
+<div class="mq-nota">
+  <div class="n" data-para="activa"><b>Qué mirar:</b> la promesa, hecha pantalla. A la izquierda, <b>qué vive en la memoria ahora mismo</b>, buffer por buffer, con su tamaño real. A la derecha, el contador: <b>0 B</b> salieron de tu equipo. Abajo, lo único que persiste. Nada de esto es una casilla de ajustes: es un estado de cuentas.</div>
+  <div class="n" data-para="kill"><b>Qué mirar:</b> pulsaste ⌥⎋. Todos los buffers en 0 B, tachados; la captura cortada. Lo que queda es lo que tú escribiste. La misma pantalla, después del corte — eso es lo que hace verificable la promesa.</div>
+  <div class="n" data-para="verificacion"><b>Qué mirar:</b> la prueba que corre en tu Mac, no una declaración. Cuatro comprobaciones con su resultado y su fecha; la de fuga inyectada dice cuándo se vio fallar. Si una se pone roja, aquí se ve.</div>
+  <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
+</div>
+
+<div style="display:flex;justify-content:center;padding:0 18px 40px">
+<main class="ventana" data-captura>
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"/></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a href="sesion.html"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a href="permisos.html"><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a href="corpus.html"><svg class="ic s"><use href="#i-doc"/></svg>Corpus</a>
+    <a href="notas.html"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a href="honestidad.html" aria-current="page"><svg class="ic s"><use href="#i-ram"/></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a href="idioma.html"><svg class="ic s"><use href="#i-globo"/></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a href="ia.html"><svg class="ic s"><use href="#i-chispa"/></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      <span class="estado ok" data-en="activa verificacion"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando · 0 B</span><span lang="en">Listening · 0 B</span></span>
+      <span class="estado err" data-en="kill"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span lang="es">Cortado · 0 B</span><span lang="en">Cut · 0 B</span></span>
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">Honestidad</span><span lang="en">Honesty</span></h1>
+      <p class="sub"><span lang="es">Qué vive en la memoria ahora mismo y qué salió de tu equipo. Se demuestra, no se promete.</span><span lang="en">What lives in memory right now and what left your machine. Proven, not promised.</span></p>
+    </div>
+
+    <!-- ===== sesión activa ===== -->
+    <div data-en="activa" style="display:flex;flex-direction:column;gap:14px">
+      <div class="grid-2" style="grid-template-columns:1.25fr 1fr">
+        <div class="tarjeta" style="padding-bottom:4px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Qué vive en la memoria ahora</span><span lang="en">What lives in memory now</span></h2><span class="mono" style="color:var(--ink-2)">RAM · 3,1 MB</span></div>
+          <div style="margin:0 -4px">
+            <div class="buffer"><svg class="ic s"><use href="#i-mic"/></svg><span class="que"><span lang="es">Audio · micrófono</span><span lang="en">Audio · microphone</span></span><span class="donde"><span lang="es">ring buffer · últimos 8 s</span><span lang="en">ring buffer · last 8 s</span></span><span class="cuanto">0,7 MB</span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-sistema"/></svg><span class="que"><span lang="es">Audio · sistema</span><span lang="en">Audio · system</span></span><span class="donde"><span lang="es">ring buffer · últimos 8 s</span><span lang="en">ring buffer · last 8 s</span></span><span class="cuanto">0,7 MB</span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-ojo"/></svg><span class="que">Transcript</span><span class="donde"><span lang="es">ventana de 12 turnos</span><span lang="en">window of 12 turns</span></span><span class="cuanto">14 KB</span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-pantalla"/></svg><span class="que"><span lang="es">Último frame leído</span><span lang="en">Last frame read</span></span><span class="donde"><span lang="es">se reemplaza al cambiar</span><span lang="en">replaced when it changes</span></span><span class="cuanto">1,6 MB</span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-chispa"/></svg><span class="que"><span lang="es">Fichas en pantalla</span><span lang="en">Cards on screen</span></span><span class="donde"><span lang="es">3 · del índice, no del documento</span><span lang="en">3 · from the index, not the document</span></span><span class="cuanto">6 KB</span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="contador cero">
+            <div class="cifra">0 <small>B</small></div>
+            <div class="etq"><svg class="ic s relleno" style="color:var(--ok)"><use href="#i-check-circle"/></svg> <span lang="es">salieron de tu equipo en esta reunión</span><span lang="en">left your machine in this meeting</span></div>
+          </div>
+          <div class="tarjeta">
+            <h2 class="seccion"><span lang="es">Modo</span><span lang="en">Mode</span></h2>
+            <span class="estado ok"><svg class="ic s relleno"><use href="#i-mac"/></svg><span lang="es">100 % local · API apagado</span><span lang="en">100 % local · API off</span></span>
+            <p><span lang="es">Transcripción, lectura de pantalla, búsqueda y sugerencia corren en tu Mac.</span><span lang="en">Transcription, screen reading, search and suggestion all run on your Mac.</span></p>
+          </div>
+          <button class="kill" style="justify-content:center"><svg class="ic s relleno"><use href="#i-rayo"/></svg><span lang="es">Corta todo y vacía la memoria</span><span lang="en">Cut everything and wipe memory</span> <kbd>⌥⎋</kbd></button>
+        </div>
+      </div>
+      <div class="tarjeta">
+        <h2 class="seccion"><span lang="es">Lo único que quedará cuando cierres</span><span lang="en">The only thing left when you close</span></h2>
+        <div class="fila">
+          <svg class="ic s" style="color:var(--ok)"><use href="#i-nota"/></svg>
+          <span class="crece"><span lang="es"><b>Tus notas</b> — 4 anotadas, 2 acuerdos, 1 ficha fijada. Cifradas, en tu carpeta.</span><span lang="en"><b>Your notes</b> — 4 jotted, 2 agreements, 1 pinned card. Encrypted, in your folder.</span></span>
+          <span class="mono" style="color:var(--ink-2)">~/Documentos/Angel Ghost/</span>
+        </div>
+        <div class="fila">
+          <svg class="ic s" style="color:var(--mute)"><use href="#i-basura"/></svg>
+          <span class="crece" style="color:var(--ink-2)"><span lang="es">Audio, transcript y frames <b>mueren</b>. No hay archivo temporal, ni respaldo, ni registro con su contenido.</span><span lang="en">Audio, transcript and frames <b>die</b>. No temp file, no backup, no log with their content.</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== tras kill-switch ===== -->
+    <div data-en="kill" style="display:flex;flex-direction:column;gap:14px">
+      <div class="franja err" role="alert">
+        <svg class="ic relleno"><use href="#i-x-circle"/></svg>
+        <div>
+          <strong><span lang="es">Cortaste todo · 14:09</span><span lang="en">You cut everything · 14:09</span></strong>
+          <p><span lang="es">La captura se detuvo y los buffers se sobrescribieron. Para volver a escuchar tienes que iniciar sesión otra vez, a mano.</span><span lang="en">Capture stopped and the buffers were overwritten. To listen again you must start a session by hand.</span></p>
+        </div>
+      </div>
+      <div class="grid-2" style="grid-template-columns:1.25fr 1fr">
+        <div class="tarjeta" style="padding-bottom:4px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Qué vive en la memoria ahora</span><span lang="en">What lives in memory now</span></h2><span class="mono" style="color:var(--ok)">RAM · 0 B</span></div>
+          <div style="margin:0 -4px">
+            <div class="buffer muerto"><svg class="ic s"><use href="#i-mic-off"/></svg><span class="que"><span lang="es">Audio · micrófono</span><span lang="en">Audio · microphone</span></span><span class="donde"><span lang="es">sobrescrito</span><span lang="en">overwritten</span></span><span class="cuanto">0 B</span></div>
+            <div class="buffer muerto"><svg class="ic s"><use href="#i-sistema-off"/></svg><span class="que"><span lang="es">Audio · sistema</span><span lang="en">Audio · system</span></span><span class="donde"><span lang="es">sobrescrito</span><span lang="en">overwritten</span></span><span class="cuanto">0 B</span></div>
+            <div class="buffer muerto"><svg class="ic s"><use href="#i-ojo-off"/></svg><span class="que">Transcript</span><span class="donde"><span lang="es">vaciado</span><span lang="en">wiped</span></span><span class="cuanto">0 B</span></div>
+            <div class="buffer muerto"><svg class="ic s"><use href="#i-pantalla-off"/></svg><span class="que"><span lang="es">Último frame leído</span><span lang="en">Last frame read</span></span><span class="donde"><span lang="es">vaciado</span><span lang="en">wiped</span></span><span class="cuanto">0 B</span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="contador cero">
+            <div class="cifra">0 <small>B</small></div>
+            <div class="etq"><svg class="ic s relleno" style="color:var(--ok)"><use href="#i-check-circle"/></svg> <span lang="es">salieron de tu equipo en esta reunión</span><span lang="en">left your machine in this meeting</span></div>
+          </div>
+          <div class="franja ok" role="status">
+            <svg class="ic relleno"><use href="#i-check-circle"/></svg>
+            <div>
+              <strong><span lang="es">Tus notas siguen ahí</span><span lang="en">Your notes are still there</span></strong>
+              <p><span lang="es">El kill-switch no toca lo que escribiste.</span><span lang="en">The kill-switch does not touch what you wrote.</span></p>
+            </div>
+          </div>
+          <button class="btn primario" style="justify-content:center;padding:8px"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Volver a iniciar sesión</span><span lang="en">Start a session again</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== verificación en verde ===== -->
+    <div data-en="verificacion" style="display:flex;flex-direction:column;gap:14px">
+      <div class="franja ok" role="status">
+        <svg class="ic relleno"><use href="#i-check-circle"/></svg>
+        <div>
+          <strong><span lang="es">La comprobación corrió en tu Mac hace 3 minutos</span><span lang="en">The check ran on your Mac 3 minutes ago</span></strong>
+          <p><span lang="es">No es una declaración nuestra: es una prueba que se ejecuta aquí y que puedes volver a correr cuando quieras.</span><span lang="en">This is not a claim of ours: it is a test that runs here and that you can run again whenever you want.</span></p>
+        </div>
+      </div>
+      <div class="tarjeta" style="padding:0">
+        <table class="tabla">
+          <thead><tr><th><span lang="es">qué se comprueba</span><span lang="en">what is checked</span></th><th><span lang="es">resultado</span><span lang="en">result</span></th><th><span lang="es">cuándo</span><span lang="en">when</span></th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span lang="es">Ningún archivo nuevo fuera de tu carpeta de notas tras una sesión completa</span><span lang="en">No new file outside your notes folder after a full session</span></td>
+              <td><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">0 archivos</span><span lang="en">0 files</span></span></td>
+              <td class="mono">14:06</td>
+            </tr>
+            <tr>
+              <td><span lang="es">Los módulos de captura no pueden escribir en disco ni abrir la red</span><span lang="en">Capture modules cannot write to disk or open the network</span></td>
+              <td><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Verificado</span><span lang="en">Verified</span></span></td>
+              <td class="mono">14:06</td>
+            </tr>
+            <tr>
+              <td><span lang="es">Una fuga plantada a propósito hace fallar la prueba</span><span lang="en">A deliberately planted leak makes the test fail</span></td>
+              <td><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Se vio fallar</span><span lang="en">Seen to fail</span></span></td>
+              <td class="mono">2026-09-19</td>
+            </tr>
+            <tr>
+              <td><span lang="es">Los registros de la app no contienen lo que se dijo ni lo que se vio</span><span lang="en">App logs contain nothing of what was said or seen</span></td>
+              <td><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Verificado</span><span lang="en">Verified</span></span></td>
+              <td class="mono">14:06</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="fila">
+        <button class="btn"><svg class="ic s"><use href="#i-buscar"/></svg><span lang="es">Volver a comprobar</span><span lang="en">Check again</span></button>
+        <button class="btn"><svg class="ic s"><use href="#i-doc"/></svg><span lang="es">Guardar el informe</span><span lang="en">Save the report</span></button>
+        <span class="crece"></span>
+        <span class="mono" style="color:var(--ink-2)"><span lang="es">la prueba también corre sola en cada cambio del código</span><span lang="en">the test also runs on its own with every code change</span></span>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<script src="assets/iconos.js"></script>
+<script src="assets/maqueta.js"></script>
+</body>
+</html>

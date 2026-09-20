@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="es" data-theme="dark" data-lang="es" data-estado="detectada">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Angel Ghost · Maqueta — 02 Inicio de sesión de reunión</title>
+<link rel="stylesheet" href="assets/ghost.css">
+<link rel="stylesheet" href="assets/maqueta.css">
+</head>
+<body class="mq">
+
+<div class="mq-bar" role="toolbar" aria-label="Sala de diseño">
+  <span class="mq-t">02 · Sesión</span>
+  <span class="mq-g"><span>estado</span>
+    <button data-estado="detectada">reunión detectada</button>
+    <button data-estado="sin-reunion">sin reunión</button>
+    <button data-estado="nda">NDA prohíbe transcribir</button>
+    <button data-estado="vigilancia">vigilancia en tu Mac</button>
+  </span>
+  <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
+  <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
+  <a href="index.html">← recorrido</a>
+</div>
+
+<div class="mq-nota">
+  <div class="n" data-para="detectada"><b>Qué mirar:</b> la pantalla antes de empezar. Meet detectado con su protección <b>verificada el 2026-09-20</b>; las dos pistas listas; la bandera de Colombia con su fuente; el chequeo de NDA respondido. Un solo botón grande: iniciar. Nada arranca sin que tú lo digas.</div>
+  <div class="n" data-para="sin-reunion"><b>Qué mirar:</b> sin reunión abierta la app no es inútil: abre el corpus, escribe notas o revisa la ficha del cliente. El vacío está diseñado.</div>
+  <div class="n" data-para="nda"><b>Qué mirar:</b> respondiste que la NDA prohíbe registrar por cualquier medio. La app <b>no bloquea</b>: pasa a modo solo notas, apaga las dos pistas y lo dice con símbolo + texto. El panel sigue, sin transcripción.</div>
+  <div class="n" data-para="vigilancia"><b>Qué mirar:</b> el radar (C14) encontró un agente de monitoreo <b>en tu propio Mac</b> — no en el del cliente, jamás. Es un aviso con su catálogo y fuente; tú decides si inicias.</div>
+  <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
+</div>
+
+<div style="display:flex;justify-content:center;padding:0 18px 40px">
+<main class="ventana" data-captura>
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"/></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a href="sesion.html" aria-current="page"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a href="permisos.html"><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a href="corpus.html"><svg class="ic s"><use href="#i-doc"/></svg>Corpus</a>
+    <a href="notas.html"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a href="honestidad.html"><svg class="ic s"><use href="#i-ram"/></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a href="idioma.html"><svg class="ic s"><use href="#i-globo"/></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a href="ia.html"><svg class="ic s"><use href="#i-chispa"/></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      <span class="estado mute" data-en="sin-reunion nda vigilancia"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Sin sesión · 0 B</span><span lang="en">No session · 0 B</span></span>
+      <span class="estado halo" data-en="detectada"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">Antes de empezar</span><span lang="en">Before you start</span></h1>
+      <p class="sub"><span lang="es">Nada se enciende hasta que tú lo digas. Esto es lo que la app ve de tu propio Mac.</span><span lang="en">Nothing turns on until you say so. This is what the app sees of your own Mac.</span></p>
+    </div>
+
+    <!-- ===== reunión detectada ===== -->
+    <div data-en="detectada" style="display:flex;flex-direction:column;gap:14px">
+      <div class="tarjeta">
+        <div class="fila">
+          <svg class="ic" style="color:var(--halo)"><use href="#i-video"/></svg>
+          <h3 class="crece"><span lang="es">Google Meet · Páramo Azul — Propuesta tablero de rentabilidad</span><span lang="en">Google Meet · Páramo Azul — Profitability dashboard proposal</span></h3>
+          <span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Protección verificada</span><span lang="en">Protection verified</span></span>
+        </div>
+        <p><span lang="es">Tu panel no aparece en la pantalla que compartes. Verificado en tu Mac (macOS 26.6.2) el 2026-09-20. En Zoom y Teams está sin verificar.</span><span lang="en">Your panel does not show in the screen you share. Verified on your Mac (macOS 26.6.2) on 2026-09-20. In Zoom and Teams it is unverified.</span></p>
+      </div>
+
+      <div class="grid-2">
+        <div class="tarjeta">
+          <h2 class="seccion"><span lang="es">Las dos pistas</span><span lang="en">The two tracks</span></h2>
+          <div class="fila"><svg class="ic s"><use href="#i-mic"/></svg><span class="crece"><span lang="es">Micrófono — tú</span><span lang="en">Microphone — you</span></span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Listo</span><span lang="en">Ready</span></span></div>
+          <div class="fila"><svg class="ic s"><use href="#i-sistema"/></svg><span class="crece"><span lang="es">Audio del sistema — el cliente</span><span lang="en">System audio — the client</span></span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Listo</span><span lang="en">Ready</span></span></div>
+          <div class="fila"><svg class="ic s"><use href="#i-pantalla"/></svg><span class="crece"><span lang="es">Pantalla — solo cuando cambia</span><span lang="en">Screen — only when it changes</span></span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Listo</span><span lang="en">Ready</span></span></div>
+          <div class="franja warn" role="status"><svg class="ic"><use href="#i-auriculares"/></svg><div><strong><span lang="es">Usa auriculares</span><span lang="en">Use headphones</span></strong><p><span lang="es">Sin ellos tu micrófono capta al cliente y las dos pistas se mezclan.</span><span lang="en">Without them your mic picks up the client and the two tracks mix.</span></p></div></div>
+        </div>
+
+        <div class="tarjeta">
+          <h2 class="seccion"><span lang="es">Este cliente</span><span lang="en">This client</span></h2>
+          <div class="bandera riesgo-bajo">
+            <svg class="ic"><use href="#i-globo"/></svg>
+            <div class="donde">Colombia <span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">riesgo bajo-medio</span><span lang="en">low-medium risk</span></span></div>
+            <div class="regla"><span lang="es">Escuchar como participante es lícito; la transcripción efímera probablemente es «tratamiento».</span><span lang="en">Listening as a participant is lawful; ephemeral transcription is probably “processing”.</span></div>
+            <div class="implica"><span lang="es">Tu cláusula de encargo ya lo cubre.</span><span lang="en">Your engagement clause already covers it.</span></div>
+            <div class="fuente">CSJ AP1465-2018 · Ley 1581 art. 3 · 2026-09-17</div>
+          </div>
+          <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-check-circle"/></svg><span class="crece" style="font-size:var(--t-meta)"><span lang="es">NDA revisada: no lo prohíbe</span><span lang="en">NDA checked: not forbidden</span></span><button class="btn mini"><span lang="es">Revisar</span><span lang="en">Review</span></button></div>
+          <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-check-circle"/></svg><span class="crece" style="font-size:var(--t-meta)"><span lang="es">Radar: nada anómalo en tu Mac</span><span lang="en">Radar: nothing unusual on your Mac</span></span><span class="mono" style="color:var(--ink-2)"><span lang="es">catálogo v1</span><span lang="en">catalog v1</span></span></div>
+        </div>
+      </div>
+
+      <div class="fila">
+        <button class="btn primario" style="padding:9px 16px;font-size:var(--t-ui)"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Iniciar sesión</span><span lang="en">Start session</span></button>
+        <button class="btn"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Solo notas</span><span lang="en">Notes only</span></button>
+        <span class="crece"></span>
+        <span class="mono" style="color:var(--ink-2)"><span lang="es">nada se graba · nada sale de tu equipo</span><span lang="en">nothing is recorded · nothing leaves your machine</span></span>
+      </div>
+    </div>
+
+    <!-- ===== sin reunión ===== -->
+    <div data-en="sin-reunion" style="display:flex;flex-direction:column;gap:14px">
+      <div class="tarjeta" style="align-items:flex-start;gap:14px">
+        <span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Sin reunión abierta</span><span lang="en">No meeting open</span></span>
+        <p class="voz" style="font-family:var(--font-evidencia);font-style:italic;font-size:17px;color:var(--ink-2);max-width:56ch"><span lang="es">Abre Zoom, Meet o Teams y aparecerá aquí. Mientras tanto, prepara la reunión.</span><span lang="en">Open Zoom, Meet or Teams and it will show up here. Meanwhile, get ready.</span></p>
+        <div class="fila">
+          <button class="btn"><svg class="ic s"><use href="#i-doc"/></svg><span lang="es">Añadir documentos al corpus</span><span lang="en">Add documents to the corpus</span></button>
+          <button class="btn"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Escribir notas</span><span lang="en">Write notes</span></button>
+          <button class="btn"><svg class="ic s"><use href="#i-globo"/></svg><span lang="es">Ficha del cliente</span><span lang="en">Client file</span></button>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="tarjeta"><h2 class="seccion"><span lang="es">Corpus</span><span lang="en">Corpus</span></h2><p style="font-family:var(--font-mono);font-size:20px;color:var(--ink)">143 <small style="font-size:12px;color:var(--ink-2)"><span lang="es">documentos</span><span lang="en">documents</span></small></p><p><span lang="es">Última actualización: hace 2 días.</span><span lang="en">Last updated: 2 days ago.</span></p></div>
+        <div class="tarjeta"><h2 class="seccion"><span lang="es">Permisos</span><span lang="en">Permissions</span></h2><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Los tres concedidos</span><span lang="en">All three granted</span></span><p><span lang="es">macOS puede volver a pedirlos cada mes.</span><span lang="en">macOS may ask again monthly.</span></p></div>
+        <div class="tarjeta"><h2 class="seccion"><span lang="es">Última reunión</span><span lang="en">Last meeting</span></h2><p style="font-size:var(--t-ui)"><span lang="es">Páramo Azul · 18 sep</span><span lang="en">Páramo Azul · Sep 18</span></p><p><span lang="es">Quedaron tus notas. El transcript murió al cerrar.</span><span lang="en">Your notes remain. The transcript died on close.</span></p></div>
+      </div>
+    </div>
+
+    <!-- ===== NDA prohíbe transcribir ===== -->
+    <div data-en="nda" style="display:flex;flex-direction:column;gap:14px">
+      <div class="franja warn" role="status" style="padding:14px 16px">
+        <svg class="ic relleno"><use href="#i-alert"/></svg>
+        <div>
+          <strong><span lang="es">La NDA de este cliente prohíbe registrar por cualquier medio</span><span lang="en">This client’s NDA forbids recording by any means</span></strong>
+          <p style="margin-top:4px"><span lang="es">Respondiste que sí en el chequeo. La app pasa a <b>modo solo notas</b>: no escucha, no transcribe, no lee la pantalla. Tú decides; nunca se bloquea sola.</span><span lang="en">You answered yes in the check. The app switches to <b>notes-only mode</b>: it does not listen, transcribe or read the screen. You decide; it never blocks itself.</span></p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="tarjeta">
+          <h2 class="seccion"><span lang="es">Qué queda apagado</span><span lang="en">What stays off</span></h2>
+          <div class="fila"><svg class="ic s" style="color:var(--mute)"><use href="#i-mic-off"/></svg><span class="crece" style="color:var(--mute)"><span lang="es">Micrófono</span><span lang="en">Microphone</span></span><span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Apagado</span><span lang="en">Off</span></span></div>
+          <div class="fila"><svg class="ic s" style="color:var(--mute)"><use href="#i-sistema-off"/></svg><span class="crece" style="color:var(--mute)"><span lang="es">Audio del sistema</span><span lang="en">System audio</span></span><span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Apagado</span><span lang="en">Off</span></span></div>
+          <div class="fila"><svg class="ic s" style="color:var(--mute)"><use href="#i-pantalla-off"/></svg><span class="crece" style="color:var(--mute)"><span lang="es">Lectura de pantalla</span><span lang="en">Screen reading</span></span><span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Apagado</span><span lang="en">Off</span></span></div>
+        </div>
+        <div class="tarjeta">
+          <h2 class="seccion"><span lang="es">Qué sigue funcionando</span><span lang="en">What keeps working</span></h2>
+          <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-nota"/></svg><span class="crece"><span lang="es">Notas y acuerdos, en una tecla</span><span lang="en">Notes and agreements, one key</span></span><span class="tecla"><kbd>⌘⇧N</kbd></span></div>
+          <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-buscar"/></svg><span class="crece"><span lang="es">Buscar en tu corpus a mano</span><span lang="en">Search your corpus by hand</span></span><span class="tecla"><kbd>⌘⇧A</kbd></span></div>
+          <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-candado"/></svg><span class="crece"><span lang="es">El panel sigue protegido de la captura</span><span lang="en">The panel stays protected from capture</span></span></div>
+        </div>
+      </div>
+      <div class="fila">
+        <button class="btn primario" style="padding:9px 16px;font-size:var(--t-ui)"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Iniciar en modo solo notas</span><span lang="en">Start in notes-only mode</span></button>
+        <button class="btn"><span lang="es">Volver a revisar la NDA</span><span lang="en">Review the NDA again</span></button>
+      </div>
+    </div>
+
+    <!-- ===== vigilancia en tu Mac ===== -->
+    <div data-en="vigilancia" style="display:flex;flex-direction:column;gap:14px">
+      <div class="franja warn" role="status" style="padding:14px 16px">
+        <svg class="ic"><use href="#i-radar"/></svg>
+        <div>
+          <strong><span lang="es">Hay software de monitoreo corriendo en tu Mac</span><span lang="en">Monitoring software is running on your Mac</span></strong>
+          <p style="margin-top:4px"><span lang="es">El radar mira <b>solo tu equipo y tu pantalla</b> — jamás el computador de la contraparte. Es un aviso para que decidas, no un bloqueo.</span><span lang="en">The radar watches <b>only your machine and your screen</b> — never the other party’s computer. It is a notice so you can decide, not a block.</span></p>
+        </div>
+      </div>
+      <div class="tarjeta" style="padding:0">
+        <table class="tabla">
+          <thead><tr><th><span lang="es">proceso</span><span lang="en">process</span></th><th><span lang="es">qué es</span><span lang="en">what it is</span></th><th><span lang="es">fuente del catálogo</span><span lang="en">catalog source</span></th></tr></thead>
+          <tbody>
+            <tr><td class="mono">VigilaAgente</td><td><span lang="es">Agente de monitoreo de actividad (ejemplo sintético)</span><span lang="en">Activity monitoring agent (synthetic example)</span></td><td class="mono">catálogo v1 · 2026-09-15</td></tr>
+            <tr class="apagada"><td class="mono">MDM-Corp</td><td><span lang="es">Gestión de dispositivos de un tercero</span><span lang="en">Third-party device management</span></td><td class="mono">catálogo v1 · 2026-09-15</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid-2">
+        <div class="franja ok" role="status"><svg class="ic relleno"><use href="#i-check-circle"/></svg><div><strong><span lang="es">Tu protección propia sigue en pie</span><span lang="en">Your own protection still holds</span></strong><p><span lang="es">Panel protegido de la captura · 0 B a la red · nada se escribe en disco.</span><span lang="en">Panel protected from capture · 0 B to the network · nothing written to disk.</span></p></div></div>
+        <div class="fila" style="align-items:flex-start">
+          <button class="btn primario"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Iniciar de todos modos</span><span lang="en">Start anyway</span></button>
+          <button class="btn"><span lang="es">No iniciar</span><span lang="en">Do not start</span></button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+</div>
+
+<script src="assets/iconos.js"></script>
+<script src="assets/maqueta.js"></script>
+</body>
+</html>

@@ -138,5 +138,41 @@ capturas de página completa; nuevo `seccion.mjs` para leer secciones de cerca.
 y elementos». Registrada en `docs/diseno/README.md`. Modelo para las Fases 3–4 fijado por el
 usuario: Opus 5 (1M context).
 
-## Fase 3 — Pantallas de sesión
+## Fase 3 — Pantallas de sesión (2026-09-20)
+
+**Construido:** `docs/diseno/sesion.html` (4 estados: reunión detectada · sin reunión · NDA
+prohíbe transcribir · vigilancia en tu Mac) · `permisos.html` (4: sin conceder · concedido ·
+revocado a mitad · consentimiento de pantalla) · `honestidad.html` (3: sesión activa · tras
+kill-switch · verificación en verde). Las tres sobre el shell `.ventana` + `.rail` del kit ya
+aprobado; cero componentes nuevos.
+
+**Pasada de capturas:** 11 estados × 2 temas × 2 idiomas = 44 capturas leídas como imagen.
+Corregido antes de presentar:
+1. **El contenido no cabía en 960 × 640.** Compactado el sistema (no la pantalla): `.contenido`
+   20/24 px, `.tarjeta` 12/16, `.grid-*` gap 12 + `align-items: start`, `.franja`, `.permiso` y
+   `.bandera` más ajustados. Nuevo chequeo en el arnés: avisa si `.contenido` desborda su alto.
+2. **Defecto del ARNÉS, no del diseño:** la barra sticky de la sala tapaba el borde superior del
+   elemento capturado (el h1 salía cortado en todas las pantallas). Se neutraliza `position:
+   sticky` solo durante la captura. Lección: un defecto de la herramienta de verificación se lee
+   igual que un defecto del producto — se distingue mirando el HTML, no la captura.
+3. Copy recortado en la tarjeta de Meet y en el chequeo de NDA para evitar reflujos feos.
+
+**Decisiones de la construcción (a juzgar en la mirada 3):**
+- D18 · El rail es el mismo en las 7 pantallas y se genera desde una plantilla única (no se
+  copia a mano) — en producto será un componente.
+- D19 · «Honestidad» no es una pantalla de ajustes: es un **estado de cuentas**. Buffers con su
+  tamaño real a la izquierda, contador grande a la derecha, y lo único que persiste abajo.
+- D20 · El mismo layout se reusa tras el kill-switch (todo en 0 B, tachado): la promesa se
+  verifica comparando **la misma pantalla antes y después**.
+- D21 · La verificación en verde muestra la fila «una fuga plantada hace fallar la prueba · se
+  vio fallar · 2026-09-19»: la regla 15 del método, hecha interfaz para el usuario.
+
+**Contraste medido:** sesión 16 capturas · permisos 16 · honestidad 12 → **0 textos bajo AA**.
+Panel y kit re-medidos tras compactar el sistema: 0 bajo AA.
+
+**Gates:** `pnpm test` 7/7 ✓.
+
+**Mirada 3:** pendiente — mensaje de gate emitido.
+
+## Fase 4 — Pantallas del cuaderno
 (pendiente)

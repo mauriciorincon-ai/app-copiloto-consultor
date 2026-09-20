@@ -30,6 +30,7 @@ construir el siguiente artefacto.
 |---|---|---|---|
 | 2026-09-20 | `panel.html` (mirada 1) ⭐ | **Aprobado** — «El panel se ve muy bien aprobado» (con el archivo abierto en su Mac; antes había respondido «Continua» y se le repreguntó, regla 10) | Fase 2: `kit.html` + `design-system.md` completo |
 | 2026-09-20 | `kit.html` + `design-system.md` v1.0.0 (mirada 2) | **Aprobado** — «Si apruebo el kit me gusto mucho muy oportuno el diseño y elementos» (con el archivo abierto en su Mac) | Fase 3: `sesion.html` · `permisos.html` · `honestidad.html` |
+| — | `sesion.html` · `permisos.html` · `honestidad.html` (mirada 3) | *(pendiente)* | — |
 
 ## Decisiones de diseño declaradas antes del segundo artefacto
 

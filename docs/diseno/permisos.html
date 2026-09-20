@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es" data-theme="dark" data-lang="es" data-estado="sin-conceder">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Angel Ghost · Maqueta — 03 Permisos de macOS</title>
+<link rel="stylesheet" href="assets/ghost.css">
+<link rel="stylesheet" href="assets/maqueta.css">
+</head>
+<body class="mq">
+
+<div class="mq-bar" role="toolbar" aria-label="Sala de diseño">
+  <span class="mq-t">03 · Permisos</span>
+  <span class="mq-g"><span>estado</span>
+    <button data-estado="sin-conceder">sin conceder</button>
+    <button data-estado="concedido">concedido</button>
+    <button data-estado="revocado">revocado a mitad</button>
+    <button data-estado="solicitando">consentimiento de pantalla</button>
+  </span>
+  <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
+  <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
+  <a href="index.html">← recorrido</a>
+</div>
+
+<div class="mq-nota">
+  <div class="n" data-para="sin-conceder"><b>Qué mirar:</b> la primera vez. Ningún permiso concedido y la app <b>sigue siendo usable</b>: puedes indexar tu corpus y escribir notas. Cada permiso dice <b>para qué</b> en una línea — ese mismo texto es el que macOS mostrará en su diálogo, en español y en inglés.</div>
+  <div class="n" data-para="concedido"><b>Qué mirar:</b> los tres concedidos. La app recuerda que macOS (desde Sequoia) vuelve a pedirlos cada mes: lo dice antes de que te sorprenda.</div>
+  <div class="n" data-para="revocado"><b>Qué mirar:</b> el permiso de pantalla se cayó a mitad de la reunión. La franja dice qué se detuvo y qué sigue funcionando; el resto de la sesión continúa. Nunca un modal que robe el foco mientras hablas.</div>
+  <div class="n" data-para="solicitando"><b>Qué mirar:</b> el consentimiento de lectura de pantalla (C8) con sus dos modos: continua solo ante cambio, o bajo demanda por región para reuniones bajo NDA estricta. Y lo que jamás ocurre: las imágenes no se guardan ni salen.</div>
+  <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
+</div>
+
+<div style="display:flex;justify-content:center;padding:0 18px 40px">
+<main class="ventana" data-captura>
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"/></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a href="sesion.html"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a href="permisos.html" aria-current="page"><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a href="corpus.html"><svg class="ic s"><use href="#i-doc"/></svg>Corpus</a>
+    <a href="notas.html"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a href="honestidad.html"><svg class="ic s"><use href="#i-ram"/></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a href="idioma.html"><svg class="ic s"><use href="#i-globo"/></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a href="ia.html"><svg class="ic s"><use href="#i-chispa"/></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      <span class="estado ok" data-en="concedido revocado"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando · 0 B</span><span lang="en">Listening · 0 B</span></span>
+      <span class="estado mute" data-en="sin-conceder solicitando"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Sin sesión · 0 B</span><span lang="en">No session · 0 B</span></span>
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">Permisos de macOS</span><span lang="en">macOS permissions</span></h1>
+      <p class="sub"><span lang="es">Tú los concedes en el sistema, no aquí. La app funciona sin ellos: solo hace menos.</span><span lang="en">You grant them in the system, not here. The app works without them: it just does less.</span></p>
+    </div>
+
+    <!-- sin conceder -->
+    <div data-en="sin-conceder" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="permiso ">
+          <svg class="ic"><use href="#i-mic"/></svg>
+          <span class="nombre"><span lang="es">Micrófono</span><span lang="en">Microphone</span></span>
+          <span class="para"><span lang="es">Tu voz, para saber cuándo hablas tú. Solo en memoria; nunca se graba.</span><span lang="en">Your voice, to know when you speak. In memory only; never recorded.</span></span>
+          <div class="accion"><span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Sin conceder</span><span lang="en">Not granted</span></span><button class="btn mini primario"><span lang="es">Conceder en macOS</span><span lang="en">Grant in macOS</span></button></div>
+        </div>
+        <div class="permiso ">
+          <svg class="ic"><use href="#i-sistema"/></svg>
+          <span class="nombre"><span lang="es">Audio del sistema</span><span lang="en">System audio</span></span>
+          <span class="para"><span lang="es">Lo que suena en tu Mac: la voz del cliente. Sin bot en la reunión.</span><span lang="en">What plays on your Mac: the client’s voice. No bot in the meeting.</span></span>
+          <div class="accion"><span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Sin conceder</span><span lang="en">Not granted</span></span><button class="btn mini primario"><span lang="es">Conceder en macOS</span><span lang="en">Grant in macOS</span></button></div>
+        </div>
+        <div class="permiso ">
+          <svg class="ic"><use href="#i-pantalla"/></svg>
+          <span class="nombre"><span lang="es">Pantalla</span><span lang="en">Screen</span></span>
+          <span class="para"><span lang="es">Lee cifras y títulos solo cuando la pantalla cambia. Las imágenes no se guardan.</span><span lang="en">Reads figures and titles only when the screen changes. Images are not stored.</span></span>
+          <div class="accion"><span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Sin conceder</span><span lang="en">Not granted</span></span><button class="btn mini primario"><span lang="es">Conceder en macOS</span><span lang="en">Grant in macOS</span></button></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="tarjeta">
+          <h2 class="seccion"><span lang="es">Qué puedes hacer ya, sin conceder nada</span><span lang="en">What you can do now, granting nothing</span></h2>
+          <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-doc"/></svg><span class="crece"><span lang="es">Indexar tu corpus</span><span lang="en">Index your corpus</span></span></div>
+          <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-nota"/></svg><span class="crece"><span lang="es">Escribir notas y acuerdos</span><span lang="en">Write notes and agreements</span></span></div>
+          <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-buscar"/></svg><span class="crece"><span lang="es">Buscar tu evidencia a mano</span><span lang="en">Search your evidence by hand</span></span></div>
+        </div>
+        <div class="tarjeta">
+          <h2 class="seccion"><span lang="es">Qué texto verás en macOS</span><span lang="en">What macOS will show you</span></h2>
+          <p style="font-family:var(--font-evidencia);font-size:14px;color:var(--ink)"><span lang="es">«Angel Ghost usa el micrófono para saber cuándo hablas tú. El audio vive solo en memoria y no se graba.»</span><span lang="en">“Angel Ghost uses the microphone to know when you are speaking. Audio lives in memory only and is never recorded.”</span></p>
+          <p class="mono" style="color:var(--ink-2)">NSMicrophoneUsageDescription · es / en</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- concedido -->
+    <div data-en="concedido" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="permiso concedido">
+          <svg class="ic"><use href="#i-mic"/></svg>
+          <span class="nombre"><span lang="es">Micrófono</span><span lang="en">Microphone</span></span>
+          <span class="para"><span lang="es">Tu voz, para saber cuándo hablas tú. Solo en memoria; nunca se graba.</span><span lang="en">Your voice, to know when you speak. In memory only; never recorded.</span></span>
+          <div class="accion"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Concedido</span><span lang="en">Granted</span></span></div>
+        </div>
+        <div class="permiso concedido">
+          <svg class="ic"><use href="#i-sistema"/></svg>
+          <span class="nombre"><span lang="es">Audio del sistema</span><span lang="en">System audio</span></span>
+          <span class="para"><span lang="es">Lo que suena en tu Mac: la voz del cliente. Sin bot en la reunión.</span><span lang="en">What plays on your Mac: the client’s voice. No bot in the meeting.</span></span>
+          <div class="accion"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Concedido</span><span lang="en">Granted</span></span></div>
+        </div>
+        <div class="permiso concedido">
+          <svg class="ic"><use href="#i-pantalla"/></svg>
+          <span class="nombre"><span lang="es">Pantalla</span><span lang="en">Screen</span></span>
+          <span class="para"><span lang="es">Lee cifras y títulos solo cuando la pantalla cambia. Las imágenes no se guardan.</span><span lang="en">Reads figures and titles only when the screen changes. Images are not stored.</span></span>
+          <div class="accion"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Concedido</span><span lang="en">Granted</span></span></div>
+        </div>
+      </div>
+      <div class="franja warn" role="status">
+        <svg class="ic relleno"><use href="#i-alert"/></svg>
+        <div>
+          <strong><span lang="es">macOS puede volver a pedírtelos cada mes</span><span lang="en">macOS may ask you again every month</span></strong>
+          <p><span lang="es">Desde Sequoia el sistema revalida el permiso de pantalla periódicamente. No es un fallo de la app: te avisaremos aquí y en el panel.</span><span lang="en">Since Sequoia the system re-validates screen permission periodically. It is not an app failure: we will tell you here and in the panel.</span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- revocado a mitad -->
+    <div data-en="revocado" style="display:flex;flex-direction:column;gap:14px">
+      <div class="franja err" role="alert">
+        <svg class="ic relleno"><use href="#i-x-circle"/></svg>
+        <div>
+          <strong><span lang="es">El permiso de pantalla se revocó a mitad de la reunión</span><span lang="en">Screen permission was revoked mid-meeting</span></strong>
+          <p><span lang="es">La lectura de pantalla se detuvo. El audio, las fichas y tus notas siguen funcionando: la sesión no se interrumpe.</span><span lang="en">Screen reading stopped. Audio, cards and your notes keep working: the session is not interrupted.</span></p>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="permiso concedido">
+          <svg class="ic"><use href="#i-mic"/></svg>
+          <span class="nombre"><span lang="es">Micrófono</span><span lang="en">Microphone</span></span>
+          <span class="para"><span lang="es">Tu voz, para saber cuándo hablas tú. Solo en memoria; nunca se graba.</span><span lang="en">Your voice, to know when you speak. In memory only; never recorded.</span></span>
+          <div class="accion"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Concedido</span><span lang="en">Granted</span></span></div>
+        </div>
+        <div class="permiso concedido">
+          <svg class="ic"><use href="#i-sistema"/></svg>
+          <span class="nombre"><span lang="es">Audio del sistema</span><span lang="en">System audio</span></span>
+          <span class="para"><span lang="es">Lo que suena en tu Mac: la voz del cliente. Sin bot en la reunión.</span><span lang="en">What plays on your Mac: the client’s voice. No bot in the meeting.</span></span>
+          <div class="accion"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Concedido</span><span lang="en">Granted</span></span></div>
+        </div>
+        <div class="permiso revocado">
+          <svg class="ic"><use href="#i-pantalla"/></svg>
+          <span class="nombre"><span lang="es">Pantalla</span><span lang="en">Screen</span></span>
+          <span class="para"><span lang="es">Lee cifras y títulos solo cuando la pantalla cambia. Las imágenes no se guardan.</span><span lang="en">Reads figures and titles only when the screen changes. Images are not stored.</span></span>
+          <div class="accion"><span class="estado err"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span lang="es">Revocado</span><span lang="en">Revoked</span></span><button class="btn mini"><span lang="es">Volver a conceder</span><span lang="en">Grant again</span></button></div>
+        </div>
+      </div>
+      <p class="mono" style="color:var(--ink-2)"><span lang="es">Lo ya leído de la pantalla murió con el buffer. No quedó ninguna imagen.</span><span lang="en">What had been read from the screen died with the buffer. No image remains.</span></p>
+    </div>
+
+    <!-- consentimiento de pantalla -->
+    <div data-en="solicitando" style="display:flex;flex-direction:column;gap:14px">
+        <div class="permiso solicitando">
+          <svg class="ic"><use href="#i-pantalla"/></svg>
+          <span class="nombre"><span lang="es">Pantalla</span><span lang="en">Screen</span></span>
+          <span class="para"><span lang="es">Lee cifras y títulos solo cuando la pantalla cambia. Las imágenes no se guardan.</span><span lang="en">Reads figures and titles only when the screen changes. Images are not stored.</span></span>
+          <div class="accion"><span class="estado halo"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Solicitando…</span><span lang="en">Requesting…</span></span></div>
+        </div>
+      <div class="grid-2">
+        <div class="tarjeta">
+          <h2 class="seccion"><span lang="es">Cómo quieres que lea la pantalla</span><span lang="en">How you want it to read the screen</span></h2>
+          <label class="conm on"><span class="track"></span><span class="etq"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Solo cuando la pantalla cambia</span><span lang="en">Only when the screen changes</span></span></label>
+          <p><span lang="es">Compara la imagen con la anterior y solo lee si cambió. Lo normal.</span><span lang="en">It compares with the previous image and only reads if it changed. The usual choice.</span></p>
+          <label class="conm off"><span class="track"></span><span class="etq"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Solo cuando yo lo pida, por región</span><span lang="en">Only when I ask, by region</span></span></label>
+          <p><span lang="es">Para reuniones bajo NDA estricta: seleccionas un recuadro y solo eso se lee.</span><span lang="en">For strict-NDA meetings: you select a box and only that is read.</span></p>
+        </div>
+        <div class="tarjeta">
+          <h2 class="seccion"><span lang="es">Lo que nunca ocurre</span><span lang="en">What never happens</span></h2>
+          <div class="fila"><svg class="ic s" style="color:var(--err)"><use href="#i-x-circle"/></svg><span class="crece"><span lang="es">Guardar una imagen en disco</span><span lang="en">Saving an image to disk</span></span></div>
+          <div class="fila"><svg class="ic s" style="color:var(--err)"><use href="#i-x-circle"/></svg><span class="crece"><span lang="es">Enviar una imagen a un servicio</span><span lang="en">Sending an image to a service</span></span></div>
+          <div class="fila"><svg class="ic s" style="color:var(--err)"><use href="#i-x-circle"/></svg><span class="crece"><span lang="es">Leer la pantalla del cliente en su equipo</span><span lang="en">Reading the client’s screen on their machine</span></span></div>
+          <p><span lang="es">Solo se lee lo que ya está en <b>tu</b> pantalla, incluido lo que el cliente comparte contigo.</span><span lang="en">Only what is already on <b>your</b> screen is read, including what the client shares with you.</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<script src="assets/iconos.js"></script>
+<script src="assets/maqueta.js"></script>
+</body>
+</html>
