@@ -127,4 +127,27 @@ fallar?* Los tres corren en `pnpm test`, es decir en el job `quality`.
 
 ## Registro de G-Diseño
 
-*(pendiente — se llena con el veredicto del usuario sobre la maqueta completa abierta en su Mac)*
+**APROBADO — 2026-09-20.** Veredicto del usuario sobre la maqueta completa abierta en su Mac:
+
+> «sí apruebo la pantalla completa»
+
+**Qué queda aprobado:** `design-system.md` v1.7.0 como **fuente de verdad visual** y la maqueta de
+`docs/diseno/` (9 pantallas, 51 estados, dos temas, dos idiomas) como **contrato de forma**. Desde
+aquí, toda pantalla de producto obedece a esta maqueta: el primer sprint con UI se detiene tras la
+primera pantalla construida y presenta capturas comparadas contra ella (**gate de FIDELIDAD**,
+indiferible — no viaja con el gate ⭐).
+
+**Cómo se llegó:** **10 miradas** del usuario (plan de 5, ampliado cinco veces a petición suya,
+cada ampliación propuesta y aprobada antes de construir). Ninguna pantalla se construyó encima de
+un artefacto que él no hubiera abierto. Dos veces llegó solo la palabra de fase y se repreguntó;
+la segunda vez él observó, con razón, que no tiene que rendir cuentas de lo que ve — la
+repregunta se hizo porque esa pantalla aflojaba una regla dura, y eso debió decirse junto a la
+pregunta, no después.
+
+**Estado de cierre:** PR [#3](https://github.com/mauriciorincon-ai/app-copiloto-consultor/pull/3)
+con conclusión propia `success` en `quality`, `e2e` y `build-escritorio`; barrido de CERO ENLACES
+limpio; 9 gates verdes, los 3 nuevos vistos en rojo.
+
+**Lo que esta etapa NO pudo verificar** (paradas del gate de prueba del primer sprint): Zoom y
+Teams · que la captura componga el relleno de la franja · que el acople devuelva la ventana de la
+reunión a su sitio al cerrar.

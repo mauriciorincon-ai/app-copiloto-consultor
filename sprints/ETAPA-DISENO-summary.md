@@ -12,6 +12,8 @@ pr: https://github.com/mauriciorincon-ai/app-copiloto-consultor/pull/3
 
 ## Outcome
 
+**Sí — G-Diseño APROBADO el 2026-09-20** («sí apruebo la pantalla completa»).
+
 **Sí.** La fundación visual existe y el usuario la recorrió entera: `design-system.md` completo
 (v1.7.0) + maqueta navegable del H1 completo en `docs/diseno/` — **nueve pantallas, 51 estados**,
 dos temas, dos idiomas, datos 100 % sintéticos, HTML autocontenido que se abre con doble clic.
