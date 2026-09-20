@@ -25,7 +25,7 @@
 <div class="mq-nota">
   <div class="n" data-para="activa"><b>Qué mirar:</b> la promesa, hecha pantalla. A la izquierda, <b>qué vive en la memoria ahora mismo</b>, buffer por buffer, con su tamaño real. A la derecha, el contador: <b>0 B</b> salieron de tu equipo. Abajo, lo único que persiste. Nada de esto es una casilla de ajustes: es un estado de cuentas.</div>
   <div class="n" data-para="kill"><b>Qué mirar:</b> pulsaste ⌥⎋. Todos los buffers en 0 B, tachados; la captura cortada. Lo que queda es lo que tú escribiste. La misma pantalla, después del corte — eso es lo que hace verificable la promesa.</div>
-  <div class="n" data-para="al-cerrar"><b>Qué mirar:</b> el cambio que pediste. Dos columnas, una frente a otra: <b>lo tuyo queda</b> (lo que escribiste y lo que dijiste con tu voz, en texto y cifrado) y <b>lo del cliente muere</b> (su voz, su transcript, las capturas). El <b>audio nunca se guarda</b>, ni el tuyo: lo que queda de ti es texto. Conservar tus turnos es una casilla que enciendes tú; por defecto sigue apagada.</div>
+  <div class="n" data-para="al-cerrar"><b>Qué mirar:</b> el cambio que pediste. Dos columnas, una frente a otra: <b>lo tuyo queda</b> (lo que escribiste y lo que dijiste con tu voz, en texto y cifrado) y <b>lo del cliente muere</b> (su voz, su transcript, las capturas). El <b>audio nunca se guarda</b>, ni el tuyo: lo que queda de ti es texto. Conservar tus turnos es una casilla que enciendes tú; por defecto sigue apagada. Y abajo, la <b>bandeja</b>: lo único que no muere al instante, con su ventana y su borrado automático.</div>
   <div class="n" data-para="verificacion"><b>Qué mirar:</b> la prueba que corre en tu Mac, no una declaración. Cuatro comprobaciones con su resultado y su fecha; la de fuga inyectada dice cuándo se vio fallar. Si una se pone roja, aquí se ve.</div>
   <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
 </div>
@@ -131,7 +131,7 @@
 
 
     <!-- ===== al cerrar: qué queda ===== -->
-    <div data-en="al-cerrar" style="display:flex;flex-direction:column;gap:14px">
+    <div data-en="al-cerrar" style="display:flex;flex-direction:column;gap:8px">
       <div class="grid-2">
 
         <div class="tarjeta" style="border-color:var(--ok)">
@@ -166,6 +166,13 @@
 
       </div>
 
+      <div class="franja warn" role="status">
+        <svg class="ic relleno"><use href="#i-reloj"/></svg>
+        <div>
+          <strong><span lang="es">Y una tercera cosa, que no muere al instante: la bandeja</span><span lang="en">And a third thing that does not die at once: the tray</span></strong>
+          <p><span lang="es">Las <b>frases</b> que la app te propuso esperan la ventana que elijas (3 h por defecto, o cero). No es la reunión: una lista de líneas cifrada que <b>se borra sola al vencer</b> aunque no abras la app. Las tres de la derecha ya murieron; esta no, todavía — y se dice aquí, no al pie.</span><span lang="en">The <b>sentences</b> the app suggested wait for the window you choose (3 h by default, or zero). Not the meeting: an encrypted list of lines that <b>deletes itself on expiry</b> even if you never open the app. The three on the right are already dead; this one is not, yet — said here, not in a footnote.</span></p>
+        </div>
+      </div>
       <div class="franja warn" role="status">
         <svg class="ic relleno"><use href="#i-alert"/></svg>
         <div>

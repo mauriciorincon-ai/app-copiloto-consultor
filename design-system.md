@@ -1,7 +1,7 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.6.0   # 1.6.0: propuesta de nota, selector de varios idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
+version: 1.7.0   # 1.7.0: bandeja de propuestas con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
 fecha: 2026-09-20
 estado: propuesto   # → aprobado con G-Diseño
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
@@ -283,6 +283,26 @@ CTAs grandes en el panel · tamaños de ventana distintos de los declarados (§3
   contra `docs/diseno/` a píxel real, ambos temas.
 - `NSMicrophoneUsageDescription` / `NSScreenCaptureUsageDescription` usan los textos «para
   qué» de `.permiso` (bilingües).
+
+## 9-quater · La bandeja (cambio de la mirada 4-bis, 2026-09-20)
+
+**El problema:** decidir qué guardar **durante** la reunión es pedirle al usuario que trabaje
+mientras habla — lo mismo que el producto entero existe para evitar.
+
+**`.cuenta` + `.ventanas` — la bandeja.** Al cerrar la reunión, las **frases candidatas**
+sobreviven en una bandeja cifrada con **cuenta atrás visible**. Reglas del componente, todas
+obligatorias en cualquier pantalla que lo use:
+
+1. **La bandeja guarda frases, no la reunión.** Audio, transcript y lecturas de pantalla mueren
+   en el instante de cerrar: sin ventana, sin casilla, sin excepción. Eso no se toca.
+2. **La ventana la elige el usuario** y puede ser **cero** (`al cerrar · 1 h · 3 h · fin del día ·
+   24 h`; defecto 3 h, techo 24 h).
+3. **La cuenta atrás se ve**, con la misma lógica que el contador de red: la promesa es visible o
+   no es promesa.
+4. **Se borra sola al vencer aunque la app no vuelva a abrirse** — mismo mecanismo que la
+   retención de 90 días. Una ventana que depende de que el usuario vuelva no tiene fondo.
+5. **Aparece en las cuentas de Honestidad.** Es lo único que no muere al instante; omitirlo en la
+   pantalla que promete honestidad sería mentir por omisión.
 
 ## 9-ter · Tres componentes de la mirada 4 (2026-09-20)
 

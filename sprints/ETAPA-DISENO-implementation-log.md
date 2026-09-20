@@ -179,7 +179,7 @@ que dije o escribí, adicional quisiera tener un modo solo audio que me hable de
 por si quiero ver completamente la pantalla y no me interrumpa, todo el resto lo veo muy bien».
 Ambos cambios son de PRODUCTO, no de estilo → ver «Desviación del plan» abajo.
 
-## Desviación del plan (2026-09-20) — CUATRO CAMBIOS DE PRODUCTO (miradas 3 y 4)
+## Desviación del plan (2026-09-20) — CINCO CAMBIOS DE PRODUCTO (miradas 3, 4 y 4-bis)
 
 > **Aviso al usuario y a la planeadora:** con C15 (modo solo audio, mirada 3) y **C16 (puerta
 > local para un agente, mirada 4)**, la VISION v1.2.0 pasa de **25 a 27 funcionalidades**. Los
@@ -556,7 +556,53 @@ caben ahora en 960 × 640 en ambos temas y ambos idiomas.
 **Contraste medido:** corpus 16 · notas 16 · idioma 16 · IA 20 = **68 capturas, 0 bajo AA**;
 **0 desbordes**.
 
-**Mirada 4-bis:** pendiente — mensaje de gate emitido.
+**Mirada 4-bis (2026-09-20): IDIOMA E IA APROBADOS, una cosa en notas** — «me gusta mucho lo de
+las notas, me preocupa es que mientras estoy en la reunión no puedo decidir; ¿es posible decidir
+apenas finalice la reunión y darme una o unas horas antes de borrar las sugerencias? De resto sí
+que me gusta mucho notas. Idioma muy completo, incluso mejor de lo que pensaba. IA también quedó
+excelente, aprobado».
+
+## Fase 4-ter — la bandeja (2026-09-20)
+
+**El usuario tenía razón y señaló una contradicción mía.** En la fase 4-bis escribí que la
+solución era «mover el trabajo al final», y luego dejé la decisión **dentro** de la reunión. La
+bandeja lo corrige de verdad.
+
+**Qué es:** al cerrar, las **frases candidatas** sobreviven en una bandeja cifrada con **cuenta
+atrás visible**. Estado nuevo `bandeja` en `notas.html`.
+
+**Esto toca la regla dura 1 y hay que decirlo claro, no esconderlo en un componente.** Hasta
+aquí, «al cerrar no queda nada de la reunión salvo lo que el usuario escribió y —opt-in— sus
+propios turnos». Ahora sobrevive, durante una ventana acotada, una lista de frases que la app
+redujo. Cinco condiciones lo mantienen dentro del estándar 4-T, y las cinco son parte del
+componente, no recomendaciones:
+
+1. **La bandeja guarda frases, no la reunión.** Audio, transcript y lecturas de pantalla mueren
+   en el instante de cerrar: sin ventana, sin casilla, sin excepción. La pantalla lo enseña al
+   lado, en 0 B, para que la comparación esté a la vista.
+2. **La ventana la elige el usuario y puede ser cero** (`al cerrar · 1 h · 3 h · fin del día ·
+   24 h`; defecto 3 h). Quien quiera el comportamiento anterior lo tiene en un clic.
+3. **La cuenta atrás se ve**, con la misma lógica que el contador de red.
+4. **Se borra sola al vencer aunque la app no vuelva a abrirse** — mismo mecanismo que la
+   retención de 90 días. Una ventana que dependa de que el usuario vuelva no tiene fondo.
+5. **Aparece en las cuentas de `honestidad.html`.** Es lo único que no muere al instante;
+   omitirlo en la pantalla que promete honestidad sería mentir por omisión. Se añadió allí con
+   su franja propia.
+
+**Sobre el estándar 4-T:** su regla es «nada **de terceros** se persiste **sin autorización
+previa**». Elegir la ventana por adelantado ES esa autorización previa, y lo que espera en la
+bandeja es un hecho de una línea («piden cuatro fuentes»), nunca la transcripción literal del
+cliente. Aun así **es un relajamiento real** de una promesa que esta app llevaba más estricta que
+el estándar por decisión propia: queda declarado como cambio de producto, no como detalle de UI.
+
+**Componentes nuevos:** `.cuenta` (cuenta atrás) · `.ventanas` (elegir la ventana).
+`design-system.md` v1.7.0.
+
+**Contraste y desbordes:** notas 20 · honestidad 16 → **0 bajo AA, 0 desbordes**. Esta vez el
+arnés se leyó entero desde el principio (lección de la fase 4-bis): los desbordes aparecieron en
+los dos archivos y se cerraron antes de comitear.
+
+**Mirada 4-ter:** pendiente — mensaje de gate emitido.
 
 ### C · Propuestas de nota (extiende C9) — mirada 4
 
@@ -578,6 +624,24 @@ Es compatible con las reglas duras 1, 2 y 9 **porque la puerta se cierra en reun
 condición, no un detalle. Sin ella, C16 abriría un camino de lectura a los buffers efímeros y
 rompería el estándar 4-T. La planeadora debe registrarla con esa condición escrita, no como
 «integración con Claude Code» a secas.
+
+### E · La bandeja de propuestas (relaja la regla dura 1) — mirada 4-bis
+
+**Qué cambia:** la regla dura 1 del `CLAUDE.md` y la VISION dicen que al cerrar no sobrevive nada
+de la reunión salvo lo escrito por el consultor (y, desde el cambio A, sus propios turnos).
+Ahora sobrevive además, **durante una ventana acotada que el usuario elige (defecto 3 h, techo
+24 h, mínimo cero)**, la lista de **frases candidatas** que la app propuso guardar.
+
+**Por qué sigue siendo compatible con el estándar 4-T:** la regla del estándar es «nada de
+terceros se persiste **sin autorización previa**»; elegir la ventana por adelantado es esa
+autorización, y lo que espera es un hecho de una línea, no la transcripción del cliente. Pero es
+un **relajamiento real** de una promesa que esta app llevaba más estricta que el estándar: la
+planeadora debe registrarlo con sus cinco condiciones (ver Fase 4-ter), no como «ventana de
+gracia» a secas. Sin la condición 4 —borrado automático al vencer, con la app cerrada— el cambio
+NO es compatible.
+
+**Lo que NO cambia:** audio, transcript y lecturas de pantalla siguen muriendo en el instante de
+cerrar, sin ventana ni casilla.
 
 ## Fase 5 — Cierre (recorrido, README, auditoría, PR)
 (pendiente)
