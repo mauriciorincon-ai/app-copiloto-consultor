@@ -424,5 +424,63 @@ el relleno como ventana canon + tabla de opciones + regla de verificación).
 
 **Mirada 3-quinquies:** pendiente — mensaje de gate emitido.
 
-## Fase 4 — Pantallas del cuaderno
+## Fase 4 — Pantallas del cuaderno (2026-09-20)
+
+Las cuatro pantallas de la ventana principal que faltaban, **14 estados** en total. Ninguna
+necesitó componentes nuevos: se componen enteras con el kit de la fase 2 (`tarjeta`, `tabla`,
+`buffer`, `franja`, `conm`, `contador`, `campo`, `unidad-chip`, `progreso`, `diccionario`,
+`oido`, `mas`, `tecla`). Que el sistema aguantara cuatro pantallas sin pedir una clase nueva es
+el resultado que importa de esta fase.
+
+| Pantalla | Estados | Funcionalidades |
+|---|---|---|
+| `corpus.html` | vacío · indexando · con documentos · documento ilegible | C4 · B1 |
+| `notas.html` | durante · al cerrar · el archivo cifrado | C9 |
+| `idioma.html` | transcript oculto · visible · diccionario técnico | C3 · B3 |
+| `ia.html` | local · API apagado · API encendido · kit de evaluación | C7 · C13 · B2 |
+
+**Decisiones de diseño que la orden no escribía:**
+
+- **El corpus vacío explica, no pide.** La primera impresión dice por qué la app no sabe nada
+  todavía, y desarma la confusión más cara del producto: **indexar no es subir**.
+- **Un documento ilegible se deja fuera antes que adivinar.** Y la pantalla nombra la salida
+  fácil que NO existe —mandarlo a un OCR en la nube— para poder negarla en voz alta. Nombrar lo
+  que no se hace es más honesto que omitirlo.
+- **Los acuerdos los marca el usuario.** La app no decide qué fue un acuerdo: sería juicio suyo
+  sobre la conversación de otros.
+- **El transcript nace oculto, con su razón escrita en la pantalla:** leer lo que acaban de
+  decir es la forma más rápida de dejar de escuchar [S12][S14]. Corre igual — es lo que dispara
+  las fichas.
+- **El diccionario conserva el término original entre paréntesis** cuando vive en los dos
+  idiomas («fuga de clientes (churn)»): la ficha tiene que poder encontrarse por cualquiera.
+- **El kit de evaluación enseña la fila incómoda.** 1 de 40 casos inventó una cifra, en los dos
+  modelos, y sale en la tabla, no en una nota al pie. Es la regla dura 14 («código primero»)
+  convertida en medición: el código solo acierta 34/40 en 1,1 s y no puede inventar nada; el
+  modelo aporta 3 aciertos y cuesta 2,3 s. La tabla ES la razón del defecto, no su coartada.
+- **Con el API encendido la app no se vuelve opaca:** enseña el texto exacto que salió, con lo
+  anonimizado tachado, y el registro de las 9 peticiones — que también muere al cerrar.
+
+**Tres defectos que encontró la pasada de capturas, no los tests:**
+
+1. **Glifo tachado con `.relleno`.** `i-nube-off` relleno pierde la barra y se lee como «nube» a
+   secas: el icono decía lo contrario de su texto. Regla nueva en el design system §6 y en los
+   anti-patrones; para «esto no se hace» el símbolo canon es `i-x-circle`.
+2. **`.fila` con texto largo + botones envuelve** y deja el botón primario suelto en otra línea.
+   Pasó dos veces (notas y IA). Al anti-patrón §8.
+3. **`.unidad-chip` dentro de `.fila` con `crece`** se estiraba a todo el ancho y dejaba de leerse
+   como chip. Se corrige con un espaciador, no tocando el componente.
+
+**Gates:** `pnpm test` 7/7 ✓. **Demo en rojo sobre terreno nuevo** (regla 15, tercera pregunta —
+¿alcanza el gate a estos archivos?): «indetectable» plantado en `ia.html` ⇒ vocabulario en
+**ROJO** nombrando el archivo; verde al revertir. El barrido llega a las pantallas nuevas.
+
+**Contraste medido:** corpus 16 · notas 12 · idioma 12 · IA 16 = **56 capturas, 0 bajo AA**,
+más la pasada **deutan** sobre corpus e IA: ok y atención siguen distinguiéndose, y cada estado
+lleva su símbolo propio además del color.
+
+`design-system.md` sube a **v1.5.0**.
+
+**Mirada 4:** pendiente — mensaje de gate emitido.
+
+## Fase 5 — Cierre (recorrido, README, auditoría, PR)
 (pendiente)

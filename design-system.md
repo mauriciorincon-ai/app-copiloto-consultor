@@ -1,7 +1,7 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.4.0   # 1.4.0: relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
+version: 1.5.0   # 1.5.0: pantallas del cuaderno (corpus, notas, idioma, IA). 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
 fecha: 2026-09-20
 estado: propuesto   # → aprobado con G-Diseño
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
@@ -205,6 +205,12 @@ cambiar nombres: `i-check-circle` · `i-alert` · `i-x-circle` · `i-dot` · `i-
 · `i-bot` · `i-radar` · `i-chevron` · `i-mac` · `i-nube(-off)` · `i-auriculares` · `i-nota` ·
 `i-ram` · `i-reloj` · `i-basura` · `i-llave` · `i-flecha`.
 
+**Regla del glifo tachado (fase 4, 2026-09-20):** los glifos con barra (`-off`) **nunca llevan
+`.relleno`**. El relleno cierra la silueta y se traga la barra: el icono pasa a decir lo
+contrario de lo que significa (una nube tachada rellena se lee «subiendo a la nube»). Para
+«esto no se hace» el símbolo canon es `i-x-circle` relleno, no un `-off` relleno. Lo encontró la
+pasada de capturas leída como imagen, no un test.
+
 ## 7 · Accesibilidad — medida, no declarada
 
 ### 7.1 Contraste por token (WCAG, calculado sobre los hex de `ghost.css`)
@@ -261,7 +267,7 @@ decorativos, sombras pesadas · texto en `--ink-3` · vocabulario de ocultamient
 (vocabulario:cita; barrido en `pnpm test`) · nombres de personas en el transcript (solo pistas;
 cero biometría) · rojo vs. verde como única distinción · Inter/system-ui como única voz · grid
 de cards idénticas · placeholder «Lorem» o inglés residual en la UI en español (y viceversa) ·
-CTAs grandes en el panel · tamaños de ventana distintos de los declarados (§3.6).
+CTAs grandes en el panel · tamaños de ventana distintos de los declarados (§3.6) · **glifos `-off` con `.relleno`** (§6) · **una `.fila` con texto largo y botones**: envuelve y deja el botón primario suelto en otra línea — el texto va arriba y los botones en su propia fila (visto dos veces en la fase 4).
 
 ## 9 · Contrato con el código futuro (S1 en adelante)
 
