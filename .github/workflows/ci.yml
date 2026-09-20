@@ -1,0 +1,77 @@
+# CI del kit-app — PERFIL ESCRITORIO (Tauri; kit v1.27.0). Lo instala el estampador con
+# `--perfil escritorio` EN LUGAR de ci.yml. Misma filosofia que el perfil web: todo gate nace
+# con su DEMO en rojo (metodo v1.12.0) y todo job que pueda ponerse rojo sube su evidencia
+# (kit v1.26.0). Diferencias con el perfil web:
+#   - NO hay Vercel ni Lighthouse: la app no se sirve, se DISTRIBUYE como binario firmado.
+#   - e2e corre sobre la UI (webview) servida por Vite `preview`; lo nativo (audio, ventana
+#     protegida, permisos) se prueba con `cargo test` y con el gate ⭐ del usuario — un e2e
+#     de navegador NO puede ver si una ventana aparece en una pantalla compartida.
+#   - `build-escritorio` compila el crate en macOS (cargo check + cargo test); el bundle
+#     completo (`pnpm tauri build`) se corre en /release-check, no en cada PR (tiempo).
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4   # SIN `version`: la lee de "packageManager" del package.json (fuente unica, kit v1.10.2)
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm peers check
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test            # vitest run --coverage (umbral en vitest.config)
+      - run: pnpm build           # build del frontend (Vite) — el binario va en build-escritorio
+      - run: pnpm audit --audit-level high
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e        # UI de la webview via `pnpm preview` (playwright.config) + axe
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-test-results
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  build-escritorio:
+    runs-on: macos-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: src-tauri }
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: cargo check + test (crate de Tauri)
+        working-directory: src-tauri
+        run: |
+          cargo check --locked
+          cargo test --locked
+      # Gate de NO PERSISTENCIA (estandar 4-T, captura de terceros): si la app capta audio o
+      # pantalla de terceros, `pnpm verify:ephemeral` debe existir y pasar. Sin el script el
+      # gate NO se salta en silencio: falla (un gate saltado se ve igual que uno verde).
+      - name: verify:ephemeral (solo apps que captan a terceros)
+        run: |
+          if jq -e '.scripts["verify:ephemeral"]' package.json >/dev/null; then pnpm verify:ephemeral; \
+          elif grep -q 'captura_terceros: true' CLAUDE.md 2>/dev/null; then echo "::error::CLAUDE.md declara captura_terceros pero no existe el script verify:ephemeral"; exit 1; \
+          else echo "app sin captura de terceros: gate no aplica"; fi

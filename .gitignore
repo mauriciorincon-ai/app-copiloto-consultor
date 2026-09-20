@@ -1,0 +1,27 @@
+# Renombrar a .gitignore al estampar la app
+.claude/settings.local.json
+node_modules/
+.next/
+out/
+build/
+coverage/
+playwright-report/
+test-results/
+.env
+.env.local
+.env.*.local
+*.tsbuildinfo
+.vercel/
+.DS_Store
+Thumbs.db
+
+# Artefactos de Lighthouse CI al correr `lhci` en local (kit v1.26.0): se colaron en un PR por
+# un `git add -A` y disparaban el barrido de CERO ENLACES con falsos positivos del JS del visor.
+# Un gate que grita en falso deja de leerse — y ahi se pierde la fuga real.
+.lighthouseci/
+.lh-*.json
+
+# Perfil escritorio (Tauri, kit v1.27.0)
+dist/
+src-tauri/target/
+src-tauri/gen/schemas/
