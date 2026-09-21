@@ -6,6 +6,7 @@ import { Relleno } from "./componentes/Relleno";
 import { Principal } from "./componentes/Principal";
 import { ventanaActual } from "./ventanas";
 import { useAltoDeVentana, DESDE_AMPLIADA } from "./asa";
+import { useAcoplada } from "./acople";
 
 /**
  * Cáscara de la app.
@@ -66,14 +67,25 @@ function bandaDesdeLaUrl(busqueda: string, alto: number) {
     // sin avisar a nadie: cambia la ventana, y la banda se entera midiendo.
     ampliada: alto >= DESDE_AMPLIADA,
     transcript: p.get("transcript") === "1",
-    acoplada: p.get("acoplada") !== "0",
     verificado: p.get("verificado") !== "0",
   };
+}
+
+/**
+ * `acoplada` tampoco se pide: se PREGUNTA a la parte nativa, porque depende de si el usuario
+ * concedió Accesibilidad y de si la ventana de la reunión se dejó recortar. El parámetro de URL
+ * sigue existiendo —sin él, el gate de fidelidad no podría recorrer el encuadre «sin acople» en
+ * un navegador— pero solo manda cuando está escrito.
+ */
+function acopleDesdeLaUrl(busqueda: string): boolean | undefined {
+  const pedido = new URLSearchParams(busqueda).get("acoplada");
+  return pedido === null ? undefined : pedido !== "0";
 }
 
 export function Enrutador({ busqueda = globalThis.location?.search ?? "" }: { busqueda?: string }) {
   const ventana = ventanaActual(busqueda);
   const alto = useAltoDeVentana();
+  const acoplada = useAcoplada(acopleDesdeLaUrl(busqueda));
 
   // La identidad de la ventana vive en `<html>`, al lado del tema y del idioma: un solo lugar de
   // verdad del que cuelga el CSS de ventana — y, de paso, lo que un e2e puede leer sin adivinar.
@@ -89,7 +101,7 @@ export function Enrutador({ busqueda = globalThis.location?.search ?? "" }: { bu
       return (
         <>
           <SpriteIconos />
-          <Banda {...bandaDesdeLaUrl(busqueda, alto)} />
+          <Banda {...bandaDesdeLaUrl(busqueda, alto)} acoplada={acoplada} />
         </>
       );
     default:

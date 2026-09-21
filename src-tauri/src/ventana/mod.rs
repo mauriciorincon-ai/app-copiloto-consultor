@@ -131,6 +131,25 @@ pub fn ajustar_banda<R: Runtime>(app: &AppHandle<R>, alto: u32) -> Result<(), St
     Ok(())
 }
 
+/// La franja que ocupa la banda, como rectángulo.
+///
+/// Sale en **puntos con origen arriba-izquierda**, que es exactamente el sistema en el que habla
+/// la Accessibility API: los dos lados usan el mismo sin conversión de por medio. Una conversión
+/// de más entre estos dos puntos valdría 2× en una pantalla Retina, y 2× de 88 px es media banda
+/// — el tipo de error que se ve como «el acople recorta de más» y se busca en el sitio equivocado.
+pub fn franja<R: Runtime>(app: &AppHandle<R>, alto: u32) -> Result<crate::acople::Marco, String> {
+    let (ancho, x, y) = geometria(app, alto)?;
+    Ok(crate::acople::Marco::nuevo(x, y, ancho, f64::from(alto)))
+}
+
+/// El alto actual de la banda, leído de la ventana. `None` si la banda no está abierta.
+pub fn alto_actual<R: Runtime>(app: &AppHandle<R>) -> Option<u32> {
+    let v = app.get_webview_window(BANDA)?;
+    let escala = v.scale_factor().unwrap_or(1.0);
+    let t = v.outer_size().ok()?.to_logical::<f64>(escala);
+    Some(t.height.round() as u32)
+}
+
 /// Ancho y esquina superior izquierda de la franja, para un alto dado.
 fn geometria<R: Runtime>(app: &AppHandle<R>, alto: u32) -> Result<(f64, f64, f64), String> {
     let monitor = app

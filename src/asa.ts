@@ -53,6 +53,11 @@ export function useAsa() {
       el.releasePointerCapture?.(e.pointerId);
       globalThis.removeEventListener("pointermove", mover);
       globalThis.removeEventListener("pointerup", soltar);
+      // El acople se rehace AQUÍ, no en cada cuadro del arrastre: recortar la ventana de la
+      // reunión son varias idas y vueltas a otro proceso por la Accessibility API, y hacerlo
+      // sesenta veces por segundo convierte el arrastre en un tirón y deja la reunión
+      // parpadeando. Lo nuestro se mueve mientras arrastras; lo ajeno, al soltar.
+      void llamar("asentar_banda", { alto: pedido });
     };
 
     const agarrar = (e: PointerEvent) => {

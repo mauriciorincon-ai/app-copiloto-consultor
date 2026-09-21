@@ -396,6 +396,233 @@ Dos comportamientos nativos que **necesitan al usuario delante** para verlos cor
 
 Ninguno de los dos cambia la banda que el gate de fidelidad compara: son comportamiento, no UI.
 
+### Fase 1c — el acople y el fondo del relleno (2026-09-20)
+
+Los dos comportamientos nativos que la fase 1 debía. No cambian ni un píxel de la banda que el
+gate de fidelidad compara: son comportamiento, no UI — el gate se volvió a correr entero y siguió
+en 40/40, con el mismo máximo de 0,070 %.
+
+#### El acople — la banda no tapa la reunión, la reunión se hace sitio
+
+Sin acople, la banda se queda **encima** de la ventana de la videollamada y el consultor pierde
+los 88 px de abajo de su reunión. Con acople, esa ventana se **encoge** hasta que su borde
+inferior queda justo sobre la franja, y vuelve a su tamaño al terminar.
+
+Tocar la ventana de otra aplicación es la operación más invasiva de toda la app. Se escribió con
+tres reglas explícitas, y las tres están en código, no en la documentación:
+
+| Regla | Cómo se sostiene |
+|---|---|
+| **Se encoge, nunca se mueve** | solo se escribe `AXSize`. La posición no se toca: una ventana que se mueve sola es un susto, una que se acorta por abajo es una que cabe |
+| **Se devuelve SIEMPRE** | al cerrar la banda · al salir de la app (`RunEvent::Exit`, que cubre ⌘Q y el menú, por donde `cerrar_banda` no pasa) · **y al arrancar**, si la vez anterior terminó en una caída |
+| **Solo se devuelve lo que sigue como lo dejamos** | la huella guarda el marco *leído del sistema después de escribir*, no el pedido; si el usuario redimensionó esa ventana a mano, no encaja y no se toca |
+
+Esa tercera regla es la que hace que **la devolución normal y la devolución tras una caída sean
+el mismo camino**: la huella no distingue, y por eso no hay dos funciones que puedan divergir.
+
+**Lo que NO se pide, pudiendo.** La Accessibility API es una llave maestra: da el árbol entero de
+cualquier aplicación, sus títulos y su contenido. Aquí se leen **tres atributos** (`AXWindows`,
+`AXPosition`, `AXSize`) y se escribe uno. La huella **no tiene dónde guardar un título de
+ventana** —el nombre de una reunión es información del cliente, y el estándar 4-T divide por de
+quién es la información, no por su formato— y hay un test que lo afirma, para que añadir el campo
+«para depurar» tenga que pasar por encima de un motivo escrito.
+
+**Frontera de memoria.** Todo lo `unsafe` vive en `src-tauri/src/acople/ax.rs`: seis funciones de
+`ApplicationServices` y dos clases de AppKit. Hacia arriba solo salen `Marco`, `String` y `bool`;
+la lógica que decide qué hacer con esos valores es Rust seguro con tests. Las cuatro dependencias
+nativas nuevas (`core-foundation`, `objc2`, `objc2-app-kit`, `objc2-foundation`) **ya viajaban en
+el árbol de Tauri**: declararlas no añade una descarga, hace explícito que este crate las usa de
+primera mano.
+
+#### El relleno pinta el fondo de escritorio, y declara sus límites
+
+`NSWorkspace.desktopImageURL` da la ruta; Rust la lee y la entrega en `data:`; el relleno la
+encuadra al tamaño de la **pantalla** (`cover` centrado, que es «Rellenar pantalla», el modo por
+defecto de macOS) y la sube para que por la franja asome exactamente el trozo que habría debajo.
+Reproducir el **encuadre** y no solo la imagen es lo que hace que la costura no se vea.
+
+Tres límites, escritos en el código en vez de descubiertos por el usuario: **solo la pantalla
+principal** · **solo el modo «Rellenar pantalla»** · **hasta 12 MB** (los fondos dinámicos de
+macOS son HEIC de varias decenas de MB con todas las horas del día dentro; meter eso por el IPC
+para pintar 88 px no compensa). Y en **cualquier** fallo, negro — que no es un modo degradado
+sino la otra opción que el diseño aprobó, y la única que no filtra nada.
+
+La imagen se **pide**, no se empuja: un evento emitido antes de que el webview del relleno
+registre su oyente se pierde en silencio y la franja se quedaría negra sin que nada lo dijera.
+Preguntando, el orden lo pone quien necesita la respuesta.
+
+#### «acoplada» deja de ser una etiqueta
+
+La cabecera de la banda dibuja «acoplada» o «sin acople». Hasta ahora salía de un parámetro de
+URL, es decir, era **fija**: exactamente la clase de promesa que esta app existe para no hacer.
+Ahora se pregunta a la parte nativa al montar y se escucha el cambio, y la verdad está en **el
+mismo archivo de huella que usa la devolución** — así la banda no puede decir «acoplada» mientras
+no hay nada que devolver, ni al revés. El parámetro de URL sigue existiendo pero solo manda
+cuando está escrito: sin él, el gate de fidelidad no podría recorrer el encuadre «sin acople» en
+un navegador.
+
+#### Los dos gates nuevos, y lo que el rojo encontró en ELLOS
+
+Los dos nacen en este mismo commit (regla 15, kit v1.25.0). Y la primera pasada en rojo **no
+encontró defectos en el código: encontró que los dos gates no podían fallar**.
+
+| Gate | Primera versión | Qué pasó al exigirle el rojo |
+|---|---|---|
+| **La huella nace privada** (regla 17-bis a) | afirmaba `modo(ruta) == MODO_ARCHIVO` | **VERDE con la huella en 0o644.** El test leía la misma constante que el código: cambiarla cambiaba también lo que el test esperaba. Un gate medido contra sí mismo |
+| **El recorte no invade la franja** | afirmaba `fondo <= franja.y + HOLGURA` | **VERDE con un error de 1 px plantado.** La tolerancia del test era la del propio código, y se tragaba cualquier error menor que ella |
+
+Arreglados —permisos con el **número literal**, invasión **sin holgura** porque el alto se calcula
+exacto— los dos fallan como deben:
+
+```
+DEMO 1 · MODO_ARCHIVO = 0o644
+  la_huella_nace_privada_y_repara_lo_que_encuentre_flojo ... FAILED
+  assertion `left == right` failed: la huella quedó legible por otros
+DEMO 2 · alto = franja.y - ventana.y + 1.0
+  ninguna_decision_de_encoger_deja_la_ventana_dentro_de_la_franja ... FAILED
+  franja invadida por 1 px: y=0 alto=900 banda=44
+  una_ventana_que_llega_al_fondo_se_encoge_hasta_justo_encima_de_la_franja ... FAILED
+  una_ventana_pequena_abajo_no_se_mutila ... FAILED
+```
+
+y vuelven a verde al revertir (24/24 en `cargo test`).
+
+> **La lección, que vale para todo el pipeline:** la tercera pregunta de la regla 15 —*¿puede este
+> gate fallar siquiera?*— **no se contesta leyendo el test**. Los dos se leían perfectamente. Se
+> contesta plantando el fallo. Y las dos formas de gate inalcanzable que aparecieron aquí son
+> genéricas y fáciles de repetir: **medirse contra la misma constante que el código**, y **usar
+> la misma tolerancia que el código**.
+
+#### Lo que el arranque en vivo encontró, que ningún test podía
+
+La app corrió de verdad, varias veces (regla 15, tercer filo). **Cuatro hallazgos, y ninguno
+estaba al alcance de un test**: los tests prueban la decisión y la huella; lo que falló fue quién
+dispara, qué devuelve el sistema y qué pasa cuando el proceso muere mal.
+
+**1 · El disparador estaba mal pensado — dos veces.**
+
+```
+[acople] al arrancar: permiso=true app=«—» ventanas=0
+[acople]   · no hay ninguna otra aplicación al frente
+```
+
+«Acopla la aplicación que esté al frente», llamado al arrancar, **se salta a sí mismo**: la
+aplicación de delante somos nosotros, que acabamos de abrir la ventana principal. El mecanismo
+entero era correcto y no se ejecutó ni una vez.
+
+Segundo intento: disparar cuando la ventana principal **pierde el foco** —el usuario ha vuelto a
+su trabajo y delante hay otra aplicación—. Funcionó a la primera:
+
+```
+[acople] al volver el usuario a su trabajo: permiso=true app=«Claude» ventanas=2
+[acople] reacople: permiso=true app=«Claude» ventanas=2      ← el asa, al soltarla
+```
+
+…y **no volvió a dispararse** tras el reinicio del observador de `tauri dev`: si la principal
+nunca llegó a tener el foco, `Focused(false)` no llega nunca. Un disparador que depende de un
+evento que puede no ocurrir no es un disparador. Tercera versión, la que queda: **un latido
+acotado** (cada 1,5 s durante 30 s) que acopla en cuanto hay alguien delante que no seamos
+nosotros, y para.
+
+> Es **andamio de la fase 1 y se declara como tal**: en el producto el disparador es la detección
+> de la reunión (fase 2), que llama a `acoplar` sabiendo a quién. Lo de debajo —medir, encoger,
+> anotar la huella, devolver— es lo mismo y no cambia.
+
+**2 · La devolución tras una caída, probada de verdad y sin querer.** Al cerrar la app con
+`pkill` —que es SIGTERM, y **SIGTERM no pasa por `RunEvent::Exit`**— quedaron dos ventanas
+encogidas y la huella en disco. Es decir: una caída real. Al relanzar:
+
+```
+[acople] la sesión anterior dejó 2 ventana(s) encogida(s): se devuelven
+[acople] devolver tras una caída: permiso=true app=«Claude» ventanas=1
+[acople]   · … no se toca
+```
+
+Medido después con la Accessibility API: la ventana que seguía existiendo volvió a **1249×815**,
+su tamaño original exacto. La huella se borró sola. La otra no se tocó porque ya no existía.
+
+**3 · Y ahí el mensaje mentía.** Decía *«cambió de tamaño desde el acople: manda el usuario»*
+cuando en realidad la ventana **se había cerrado**. Dos causas distintas por el mismo camino, y el
+mensaje solo nombraba una — mandando a buscar un fallo donde no lo había. Ahora dice lo que de
+verdad se sabe: *ninguna ventana coincide con la huella (la redimensionaron o la cerraron)*.
+
+**4 · macOS no entrega el fondo de escritorio de este Mac.** `NSWorkspace.desktopImageURL`
+devuelve `/System/Library/CoreServices/DefaultDesktop.heic`, que pesa **54 bytes**: un marcador de
+posición. Es lo que da el sistema cuando el usuario tiene un fondo dinámico o un aéreo — la imagen
+real no se expone. Sin suelo de tamaño, esos 54 bytes viajaban como `data:` perfectamente válido,
+el webview no los sabía decodificar y **la franja acababa negra igual… por un camino que nadie
+registraba**. Un fallo silencioso indistinguible de un acierto. Se añadió el **suelo de 4 KB** con
+su test, y ahora el sistema lo dice en una línea.
+
+> **Consecuencia honesta:** el relleno con fondo de escritorio está construido y es correcto, pero
+> **en este Mac no se puede ver funcionando** porque macOS no entrega la imagen. Queda como
+> **parada ⭐** en una máquina con fondo estático. Mientras tanto la franja es negra, que es la
+> otra opción que el diseño aprobó y la única que no filtra nada.
+
+**Y un aviso sobre `permiso=true`.** En `pnpm tauri dev` el binario lo lanza la terminal, y la
+Accesibilidad de macOS se concede al **proceso responsable**: un `true` en desarrollo puede ser el
+permiso de la terminal, no el de Angel Ghost. El binario firmado pedirá el suyo. No es un matiz —
+es «funcionaba en mi máquina» con nombre y apellidos, y va a la guía de prueba como parada.
+
+**5 · El acople se apuntaba ventanas que no encogió.** La huella lo delató:
+
+```
+Code: original 923 -> dejada 923
+[acople] al volver el usuario a su trabajo: permiso=true app=«Code» ventanas=1
+```
+
+La Accessibility API **aceptó la escritura sin error** y la aplicación mantuvo su tamaño: pasa con
+ventanas en pantalla completa, en Split View o con tamaño fijo. Sin comprobarlo, el acople se
+apunta una ventana que no cambió, la huella guarda una devolución que no hay que hacer, y la
+banda dice **«acoplada» mientras sigue tapando la reunión** — exactamente la etiqueta falsa que
+esta app existe para no poner.
+
+> **La regla que sale de aquí:** *«lo pedí» no es «pasó»*. Se cuenta releyendo del sistema, no
+> asumiendo que la escritura hizo algo. Vale por los dos lados: acoplar **y** devolver, porque la
+> devolución es la mitad que el usuario nota. Ahora, cuando una ventana no se deja, lo dice con
+> su causa probable en vez de sumar uno.
+
+#### Lo que la devolución cubre, y lo que no
+
+| Camino | Quién lo devuelve | Probado |
+|---|---|---|
+| cerrar la banda | `cerrar_banda` | por código |
+| salir de la app (⌘Q, menú, última ventana) | `RunEvent::Exit` | **no en vivo** — parada ⭐ |
+| **matar el proceso / caída** | la huella, al arrancar la vez siguiente | **sí, en vivo** |
+| force quit (SIGKILL) | la huella, al arrancar la vez siguiente | mismo camino que el anterior |
+
+El hueco declarado: si el proceso muere mal y **Angel Ghost no se vuelve a abrir**, la ventana se
+queda corta hasta que se abra. Se puede cerrar con un hilo en `sigwait` para SIGTERM/SIGINT; no se
+hizo porque el plan resuelve la caída por la huella y esto queda anotado, no olvidado.
+
+#### El asa, el acople y por qué no van en la misma llamada
+
+Arrastrar el asa dispara decenas de ajustes por segundo. Cada acople son varias idas y vueltas a
+**otro proceso** por la Accessibility API: hacerlo en cada cuadro convertiría el arrastre en un
+tirón y dejaría la ventana de la reunión parpadeando. Se separó en dos comandos: `ajustar_banda`
+mueve lo nuestro durante el arrastre, `asentar_banda` rehace el acople **al soltar**. Y el
+reacople usa el PID de la huella, no «quien esté al frente»: mientras arrastras, el que está al
+frente eres tú arrastrando la banda, y preguntar soltaría la reunión justo al agrandarla.
+
+#### Archivos de la fase 1c
+
+| Archivo | Qué |
+|---|---|
+| `src-tauri/src/acople/mod.rs` | **nuevo** — geometría pura, huella en disco, la maniobra completa |
+| `src-tauri/src/acople/ax.rs` | **nuevo** — Accessibility + NSWorkspace; todo el `unsafe` del crate |
+| `src-tauri/src/relleno.rs` | **nuevo** — el fondo de escritorio, con sus tres límites y el negro |
+| `src-tauri/src/lib.rs` | comandos del acople · devolución en `RunEvent::Exit` · disparador por foco |
+| `src-tauri/src/ventana/mod.rs` | `franja()` y `alto_actual()` — la franja en coordenadas de la API de accesibilidad |
+| `src-tauri/Cargo.toml` | cuatro dependencias nativas, ya presentes en el árbol de Tauri |
+| `src/acople.ts` | **nuevo** — «acoplada» preguntado y escuchado, no supuesto |
+| `src/componentes/Relleno.tsx` | el fondo de escritorio encuadrado; negro ante cualquier fallo |
+| `src/puente.ts` | `preguntar` y `escuchar` |
+| `src/asa.ts` | `asentar_banda` al soltar |
+| `tests/unit/acople.test.tsx` | **nuevo** — 9 tests de las dos cosas que solo fallan en el webview |
+
+**Estado:** `typecheck` · `lint` · `test` **63/63 (85,1 % líneas)** · `cargo test` **24/24** ·
+`fidelidad` **40/40**, máximo 0,070 %.
+
 ## Desviación del plan (2026-09-20) — la MANIOBRA es producto nuevo
 
 **Qué.** El estado «sin resultado» deja de limitarse a admitir el vacío: sugiere **cómo abordar la

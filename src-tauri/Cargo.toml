@@ -23,6 +23,33 @@ tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+# Solo macOS, y solo para el ACOPLE y el RELLENO. Las cuatro ya viajaban en el árbol de Tauri
+# (`cargo tree` las lista bajo tao/wry): declararlas aquí no añade una descarga, hace explícito
+# que este crate las usa de primera mano y que la superficie nativa que tocamos son dos APIs del
+# sistema — Accessibility (mover ventanas ajenas) y NSWorkspace (leer el fondo de escritorio) —
+# y ninguna más.
+[target.'cfg(target_os = "macos")'.dependencies]
+base64 = "0.22"
+core-foundation = "0.10"
+core-foundation-sys = "0.8"
+objc2 = "0.6"
+objc2-app-kit = { version = "0.3", default-features = false, features = [
+  "std",
+  "NSWorkspace",
+  "NSRunningApplication",
+  "NSScreen",
+  "NSResponder",
+  "libc",
+] }
+objc2-foundation = { version = "0.3", default-features = false, features = [
+  "std",
+  "NSString",
+  "NSURL",
+  "NSArray",
+  "NSDictionary",
+  "NSGeometry",
+] }
+
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]

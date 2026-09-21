@@ -195,8 +195,27 @@ html[data-ventana="banda"] .banda {
   border-bottom: 0;
 }
 
-/* El relleno: un rectángulo y nada más. Negro hasta que llegue el fondo de escritorio. */
+/* -----------------------------------------------------------------------------
+   EL RELLENO — lo único que la captura encuentra donde está la banda.
+
+   Negro SIEMPRE debajo: si la imagen no carga, no llega o el formato no se sabe
+   pintar, lo que queda es negro, que es la otra opción que el diseño aprobó y la
+   única que no filtra nada. Un relleno transparente sería la franja descubierta.
+
+   Encima, el fondo de escritorio recortado: la imagen se pinta al tamaño de la
+   PANTALLA (cover y centrada, que es «Rellenar pantalla», el modo por defecto de
+   macOS) y se sube para que lo que asome por la franja sea exactamente el trozo
+   que habría debajo. Reproducir el encuadre y no solo la imagen es lo que hace
+   que la costura no se vea.
+   -------------------------------------------------------------------------- */
 html[data-ventana="relleno"] body { background: #000; }
-.relleno-franja { height: 100%; }
+.relleno-franja { height: 100%; overflow: hidden; position: relative; background: #000; }
+.relleno-fondo {
+  position: absolute;
+  left: 0;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
 
 .principal-vacia { height: 100%; }
