@@ -1,7 +1,7 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.8.0   # 1.8.0: los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
+version: 1.9.0   # 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
 fecha: 2026-09-20
 estado: aprobado   # G-Diseño aprobado el 2026-09-20 («sí apruebo la pantalla completa»)
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
@@ -362,7 +362,8 @@ referencia es un juicio a ojo. La referencia es `docs/diseno/banda.html`.
 | buscando | 88 | lo oído entre comillas con su pista + «buscando» estático | atajos |
 | ficha | 88 | titular + línea | fuente · atajos |
 | ficha ampliada | 200 | titular + línea + **las dos acumuladas abiertas** | fuente · atajos |
-| sin resultado | 88 | «nada en tu corpus» + la pregunta que lo provocó | las dos salidas, como teclas |
+| sin resultado | 88 | qué buscó y no encontró + **la maniobra** | lo más cercano que sí tienes · las salidas como teclas |
+| sin resultado ampliada | 200 | la pregunta entera + la maniobra + **las tres más cercanas** | los dos botones del panel |
 | sin verificar | 88 | aviso ámbar + **una** salida | cliente, versión y fecha verificadas |
 | sin verificar ampliada | 200 | el aviso con las **tres** salidas | los dos botones del panel |
 | transcript | 200 | la ficha y sus acumuladas, intactas | el transcript, 3 turnos **por pista** |
@@ -380,6 +381,37 @@ referencia es un juicio a ojo. La referencia es `docs/diseno/banda.html`.
 3. **El transcript va a la derecha, no abajo.** En el panel vertical crecía hacia abajo; una
    banda ya ocupa el ancho entero y no puede crecer más. Ocupa la columna donde irá la
    sugerencia (sprint 2), y así **la banda no cambia de alto al encenderlo**.
+
+### La MANIOBRA — qué sugiere la app cuando el corpus no tiene nada (mirada 11, 2026-09-20)
+
+Decir «no tengo nada» y callarse deja al consultor solo justo cuando más lo necesita. Pero la app
+**no puede inventar** una respuesta sobre su negocio: sería exactamente lo que promete no hacer, y
+este sprint es **cero LLM** (regla del código primero). Así que sugiere **dos cosas, las dos
+deterministas**:
+
+1. **Lo más cercano que SÍ tiene.** La búsqueda no encontró nada por encima del umbral, pero sabe
+   qué quedó justo debajo. Sale del corpus del usuario con su fuente exacta, y la app dice sin
+   adornos que **ninguno responde la pregunta**. Es recuperación, no redacción.
+2. **Una manera de responder**, de un **catálogo versionado** de seis maniobras escritas por
+   personas, elegida por **reglas léxicas** sobre lo que preguntó el cliente — el mismo mecanismo
+   determinista del disparo.
+
+| Si la pregunta trae… | Maniobra | Por qué esa |
+|---|---|---|
+| `certificación · ISO · acreditado · licencia` | Dilo sin adornos y ofrece confirmarlo hoy mismo. | una credencial se tiene o no; dudar cuesta más que el «no» |
+| `cuánto · precio · costo · descuento · tarifa` | No improvises cifras: ofrece el rango del caso comparable. | un número dicho al aire se vuelve compromiso |
+| `cuándo · plazo · semanas · entrega` | Da el plazo del caso más parecido y confírmalo por escrito. | anclar en un caso real es defendible; una fecha inventada, no |
+| `quién más · referencia · han trabajado con` | Ofrece una referencia del sector sin nombrar al cliente aún. | nombrar clientes sin permiso es un problema, no una venta |
+| `contrato · cláusula · penalidad · NDA` | No opines de contrato en vivo: anótalo y respóndelo por escrito. | lo contractual no se improvisa en una llamada |
+| *cualquier otra* | Devuelve la pregunta: ¿para qué lo necesitan? | la pregunta real suele ser otra — y da tiempo |
+
+**Las maniobras hablan de cómo conducirse, jamás del negocio del usuario** — por eso pueden ser
+fijas. Y no pueden parecer salida de un modelo: **sin acento `halo` y sin `i-chispa`** (que en
+este sistema marcan la síntesis de la IA), en **Avenir** —la voz de la app— nunca en **Charter**,
+que es la voz de la evidencia. Clase canon: `maniobra-b`; el vecino de la derecha, `cercano-b`.
+
+Cuando exista la síntesis con modelo (sprint 2), la maniobra **no desaparece**: es su fallback
+permanente, como manda la regla del código primero.
 
 **Lo que esta extensión NO redecide:** el relleno de la franja (ya elegido: fondo de escritorio,
 negro a una tecla), el modo solo audio de 44 px (C15, fuera del sprint 001) y la sugerencia
@@ -416,3 +448,4 @@ test de `src-tauri/` que falla si la ventana y la maqueta se separan.
 | 1.6.0 | 2026-09-20 | mirada 4-bis: `propuesta` (proponer ≠ guardar) · varios idiomas · puerta local para Claude Code |
 | 1.7.0 | 2026-09-20 | mirada 4-ter: **bandeja de propuestas con cuenta atrás** (§9-quater) · G-Diseño aprobado |
 | 1.8.0 | 2026-09-20 | sprint 001, fase 1a: **§9-quinquies — los seis estados de CONTENIDO de la banda** · tokens de alto (`--banda-h*`) · acciones como teclas · el asa con un trabajo · transcript a la derecha |
+| 1.9.0 | 2026-09-20 | mirada 11: **la maniobra** — catálogo versionado de seis maneras de responder + «lo más cercano que sí tienes», los dos deterministas; `maniobra-b` y `cercano-b`; estado «sin resultado · ampliada» |

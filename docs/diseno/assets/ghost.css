@@ -430,6 +430,18 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .banda .transcript-b .turno.tu .quien { color: var(--halo); }
 .banda .transcript-b .turno q { font-family: var(--font-evidencia); font-size: 12.5px; color: var(--ink); quotes: "\00ab" "\00bb"; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* LA MANIOBRA (sin resultado) — cómo abordar la situación cuando el corpus no tiene nada.
+   NO es una sugerencia del modelo y no puede parecerlo: nada de acento `halo` (que en este
+   sistema marca la síntesis de la IA) ni de `chispa`. Va en Avenir, que es la voz de la app,
+   nunca en Charter, que es la voz de tu corpus. Sale de un catálogo versionado de maneras de
+   responder elegido por reglas léxicas — jamás habla del negocio del usuario. */
+.banda .maniobra-b { display: flex; align-items: baseline; gap: 7px; min-width: 0; font-family: var(--font-ui); font-size: 13px; line-height: 1.35; color: var(--ink); }
+.banda .maniobra-b .ic { flex: 0 0 auto; align-self: center; color: var(--ink-2); }
+.banda .maniobra-b .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banda .cercano-b { display: inline-flex; align-items: baseline; gap: 9px; min-width: 0; max-width: 100%; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.banda .cercano-b .et { flex: 0 0 auto; font-family: var(--font-ui); font-size: 11px; color: var(--ink-2); }
+.banda .cercano-b .d { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+
 /* acciones apiladas — solo en la banda ampliada, donde hay alto para botones */
 .banda .acciones-b { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 

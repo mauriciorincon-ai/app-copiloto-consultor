@@ -160,5 +160,63 @@ imprime **al final y juntos** tres bloques: desbordes · estados sin recorte · 
 `pnpm test` **19/19** verdes tras cada cambio. Capturas: 36 del escritorio + 36 del artefacto
 solo, **cero desbordes, cero errores de página, cero estados sin recorte**.
 
+### Mirada 11 — veredicto del usuario (2026-09-20)
+
+**Aprobada con un cambio** — *«Si me gusta mucho muy bien docs/diseno/banda.html, pero en Sin
+resultado esta bien que digas que no hay nada pero sugierele como abordar la situacion. El resto
+esta muy muy bien»*. (Abrió el archivo: nombra la ruta y un estado concreto con su crítica.)
+
+**El cambio, resuelto sin una línea de IA.** «Sugerir cómo abordar la situación» suena a LLM y es
+exactamente donde la regla del código primero tiene que morder. La app no puede inventar una
+respuesta sobre el negocio del usuario —sería lo que promete no hacer— así que el estado sugiere
+**dos cosas, las dos deterministas**:
+
+1. **Lo más cercano que SÍ tiene.** La búsqueda no encontró nada sobre el umbral pero sabe qué
+   quedó debajo: sale del corpus del usuario, con su fuente, y la app dice sin adornos que
+   **ninguno responde la pregunta**. Recuperación, no redacción.
+2. **Una maniobra** de un **catálogo versionado de seis** maneras de responder, elegida por reglas
+   léxicas sobre lo que preguntó el cliente — el mismo mecanismo del disparo. Hablan de **cómo
+   conducirse**, jamás del negocio: por eso pueden ser fijas.
+
+Y no puede **parecer** salida de un modelo: sin acento `halo` ni `i-chispa` (que en este sistema
+marcan la síntesis de la IA), en **Avenir** —la voz de la app— nunca en **Charter**, que es la voz
+de la evidencia. Cuando exista la síntesis (sprint 2), la maniobra es su **fallback permanente**.
+
+**Cabía en 88 px reordenando, no recortando.** El estado tenía dos renglones ocupados por el
+veredicto y la pregunta oída; la maniobra necesitaba un tercero y tres renglones no entran (50 px
+de cuerpo contra ~57 px de texto — medido, no estimado). Se fundieron veredicto y pregunta en uno:
+**«Nada en tu corpus sobre "certificación ISO 27001"»**, con los términos que realmente se
+buscaron. Sale ganando: si la app entendió mal, se ve en el acto. El asa abre el estado ampliado
+con la pregunta entera y las tres más cercanas — el mismo trato que «sin verificar».
+
+| Archivo | Qué cambió |
+|---|---|
+| `docs/diseno/banda.html` | `sin resultado` reescrito · estado nuevo `sin resultado · ampliada` · bloque del catálogo de maniobras con su tabla y la nota de lo que la maniobra NUNCA hace |
+| `docs/diseno/assets/ghost.css` | `maniobra-b` y `cercano-b` |
+| `design-system.md` | **v1.9.0** — la maniobra dentro de §9-quinquies, con el catálogo entero |
+
+`pnpm test` 19/19 · 40 capturas × 2 encuadres · cero desbordes, cero errores, cero huecos.
+
 ### Fase 1b — la banda construida
-(pendiente de la mirada 11)
+(pendiente)
+
+## Desviación del plan (2026-09-20) — la MANIOBRA es producto nuevo
+
+**Qué.** El estado «sin resultado» deja de limitarse a admitir el vacío: sugiere **cómo abordar la
+situación** con (a) lo más cercano del propio corpus, declarado como insuficiente, y (b) una
+maniobra de un catálogo versionado de seis, elegida por reglas léxicas.
+
+**Por qué.** Petición del usuario en la mirada 11, con su razón: *«está bien que digas que no hay
+nada pero sugiérele cómo abordar la situación»*. Un vacío honesto que no ofrece salida deja al
+consultor solo en el peor momento.
+
+**Qué NO es.** No es una funcionalidad de IA y no debe contarse como tal: cero tokens, cero red,
+catálogo escrito por personas y versionado en el repo. Es **código primero** en su forma literal —
+y cuando llegue la síntesis con modelo (sprint 2), este catálogo es su fallback permanente, como
+exige la regla. No necesita ADR «código primero» porque no enciende ninguna feature LLM; lo que
+necesitaría ADR es lo contrario.
+
+**Qué debe absorber la planeadora.** El catálogo de maniobras es superficie de producto nueva,
+hermana de **C6** (fichas de evidencia): la VISION debería recogerla al lado de C6, o como C17 si
+prefiere numerarla aparte. Va sumada a **C15** (modo solo audio) y **C16** (puerta local para
+Claude Code), que siguen pendientes de absorción desde la Etapa de Diseño.
