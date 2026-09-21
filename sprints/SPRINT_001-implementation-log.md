@@ -197,8 +197,27 @@ con la pregunta entera y las tres más cercanas — el mismo trato que «sin ver
 
 `pnpm test` 19/19 · 40 capturas × 2 encuadres · cero desbordes, cero errores, cero huecos.
 
+### Mirada 11, segunda vuelta — aprobada, con una deuda abierta a propósito (2026-09-20)
+
+*«Así está perfecta la sugerencia, pero la sugerencia estándar… me preocupa, deja solo al
+consultor/asesor, pero bueno después lo resolvemos. No quiero de todas maneras que invente una
+respuesta, quiero es que le sugiera cómo abordar la situación muy a medida de la situación.»*
+
+Tiene razón y el reparo es exacto: cinco de las seis maniobras se apoyan en algo (una credencial,
+una cifra, un plazo, una referencia, un contrato); **la sexta no se apoya en nada** y es
+precisamente la que más se va a disparar. El usuario decide aplazarlo, y el requisito queda
+escrito para que no se pierda: **sin inventar respuesta, pero a medida de la situación**.
+
+**Lo que abre el camino sin LLM** (para el ADR del sprint 2): «a medida» no exige un modelo, exige
+**material**. La app ya sabrá, de forma determinista, qué unidad falta, cuál es la sección más
+cercana del corpus, qué dice la ficha del cliente, la jurisdicción, y qué se comprometió ya en
+esta reunión. Una maniobra armada con eso —«no tienes nada de certificación; lo más parecido es tu
+§5.1 de seguridad de datos: apóyate ahí y ofrece confirmarlo hoy»— es específica **y** sigue sin
+afirmar nada que la app no haya leído. El catálogo fijo pasa entonces a ser el último recurso, no
+la respuesta normal. Registrado en `design-system.md` §10.
+
 ### Fase 1b — la banda construida
-(pendiente)
+(en curso)
 
 ## Desviación del plan (2026-09-20) — la MANIOBRA es producto nuevo
 

@@ -433,6 +433,7 @@ test de `src-tauri/` que falla si la ventana y la maqueta se separan.
 | El pie del panel abrevia «corta» (kill-switch) | 380 px | el `kbd` ⌥⎋ y el tooltip completan; en Sesión y Honestidad va el texto entero |
 | Simulación deutan del arnés (capturas `--cvd`) | herramienta de la etapa, no gate | corregida en la Fase 2; se vuelve gate visual del S1 |
 | La píldora de voz no muestra el texto de la ficha | ocuparía la pantalla que el modo existe para liberar | si el usuario lo pide, un estado «píldora expandida» en el S2 |
+| **La maniobra genérica deja solo al consultor** — «devuelve la pregunta: ¿para qué lo necesitan?» | es la única de las seis que no se apoya en nada: cuando ni las reglas léxicas ni el corpus dan material, la app se queda sin qué decir | **sprint 2.** Requisito del usuario (mirada 11): *no inventar una respuesta, pero sugerir cómo abordar la situación* **a medida de la situación**. Camino determinista disponible sin LLM: construir la maniobra con lo que la app **sí sabe** —la unidad que falta, la sección más cercana del corpus, la ficha del cliente, la jurisdicción, lo ya comprometido en esta reunión— en vez de elegir una frase de catálogo. El catálogo queda como último recurso, no como respuesta normal |
 
 ## Registro de cambios
 
