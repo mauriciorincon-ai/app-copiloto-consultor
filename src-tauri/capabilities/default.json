@@ -1,8 +1,8 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the main window",
-  "windows": ["main"],
+  "description": "Permisos de la ventana principal — la única que abre cosas hacia afuera (el opener, para llevar al usuario a Ajustes del Sistema). La banda y el relleno NO los tienen: ver sus propias capabilities.",
+  "windows": ["principal"],
   "permissions": [
     "core:default",
     "opener:default"

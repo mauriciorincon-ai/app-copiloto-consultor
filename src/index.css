@@ -175,3 +175,28 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   LA VENTANA ES EL ARTEFACTO (sprint 001, fase 1)
+   En la maqueta la banda se dibujaba DENTRO de un escritorio de referencia y su
+   alto lo ponía el CSS. En producto el alto lo pone la ventana nativa —que lo
+   lee de los mismos tokens (`--banda-h*`), con su test en `src-tauri/`— así que
+   aquí la banda ocupa su marco entero. Es la única diferencia entre la maqueta y
+   el producto, y es la correcta: una ventana no puede ser más alta que sí misma.
+   --------------------------------------------------------------------------- */
+html[data-ventana] body,
+html[data-ventana] #root { height: 100%; overflow: hidden; }
+
+html[data-ventana="banda"] .banda {
+  height: 100%;
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+/* El relleno: un rectángulo y nada más. Negro hasta que llegue el fondo de escritorio. */
+html[data-ventana="relleno"] body { background: #000; }
+.relleno-franja { height: 100%; }
+
+.principal-vacia { height: 100%; }

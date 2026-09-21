@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "app-copiloto-consultor",
+  "productName": "Angel Ghost",
   "version": "0.1.0",
   "identifier": "com.aiapps.copiloto-consultor",
   "build": {
@@ -12,9 +12,45 @@
   "app": {
     "windows": [
       {
-        "title": "app-copiloto-consultor",
-        "width": 800,
-        "height": 600
+        "label": "principal",
+        "title": "Angel Ghost",
+        "width": 960,
+        "height": 640,
+        "minWidth": 800,
+        "minHeight": 560,
+        "center": true,
+        "resizable": true,
+        "contentProtected": false
+      },
+      {
+        "label": "relleno",
+        "title": "Angel Ghost",
+        "create": false,
+        "width": 1440,
+        "height": 88,
+        "decorations": false,
+        "resizable": false,
+        "alwaysOnTop": true,
+        "visibleOnAllWorkspaces": true,
+        "skipTaskbar": true,
+        "focus": false,
+        "focusable": false,
+        "shadow": false,
+        "contentProtected": false
+      },
+      {
+        "label": "banda",
+        "title": "Angel Ghost",
+        "create": false,
+        "width": 1440,
+        "height": 88,
+        "decorations": false,
+        "resizable": false,
+        "alwaysOnTop": true,
+        "visibleOnAllWorkspaces": true,
+        "skipTaskbar": true,
+        "shadow": false,
+        "contentProtected": true
       }
     ],
     "security": {

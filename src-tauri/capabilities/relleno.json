@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "relleno",
+  "description": "El relleno de la franja: nace SIN contenido y no puede tener contenido. Solo `core:event` y `core:window`, lo justo para que Rust lo mueva con la banda. Sin `opener`, sin `webview`, sin nada que pueda cargar o mostrar algo.",
+  "windows": ["relleno"],
+  "permissions": [
+    "core:event:default",
+    "core:window:default"
+  ]
+}

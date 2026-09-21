@@ -1,0 +1,9 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "banda",
+  "description": "La banda: solo lo mínimo de `core` para vivir (eventos, tamaño, posición). Sin `opener` — una ventana que no puede abrir nada hacia afuera es una superficie más pequeña, y la banda es la que está encima de la reunión.",
+  "windows": ["banda"],
+  "permissions": [
+    "core:default"
+  ]
+}
