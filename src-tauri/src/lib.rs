@@ -1,14 +1,22 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+//! Angel Ghost — núcleo nativo.
+//!
+//! La frontera que organiza este crate no es técnica, es la regla del efímero verificable:
+//!
+//! - **Protegidos** (`capture`, `stt`): RAM y nada más. `pnpm verify:ephemeral` barre estos
+//!   directorios buscando API de disco y de red, y la CI se pone roja si aparece una.
+//! - **Libres** (`corpus`): pueden abrir disco porque manejan lo que ES del usuario —sus
+//!   documentos, su índice—, que la regla permite persistir.
+//!
+//! Todo lo demás vive en la raíz del crate. El sprint 001 va llenando estos módulos por fases.
+
+pub mod capture;
+pub mod corpus;
+pub mod stt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .expect("error al arrancar Angel Ghost");
 }

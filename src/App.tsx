@@ -1,51 +1,45 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import { useEffect, useState, type ReactNode } from "react";
+import { IdiomaContext, type Idioma } from "./i18n";
 
-function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+/**
+ * Cáscara de la app.
+ *
+ * Tema e idioma viven en el elemento `<html>`, exactamente como en la maqueta: `data-theme`
+ * y `lang`. Un solo lugar de verdad del que cuelgan el CSS (los tokens se redefinen por
+ * `html[data-theme]`) y el diccionario. En la maqueta el conmutador era un botón de la sala
+ * de diseño; en producto lo moverán las preferencias del usuario y el sistema.
+ */
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
-
-  return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
-  );
+/** Lee el tema del sistema la primera vez; el design system manda oscuro como primario. */
+function temaInicial(): "dark" | "light" {
+  const declarado = document.documentElement.dataset.theme;
+  if (declarado === "light" || declarado === "dark") return declarado;
+  return window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
 }
 
-export default App;
+function idiomaInicial(): Idioma {
+  const declarado = document.documentElement.lang;
+  if (declarado.startsWith("en")) return "en";
+  if (declarado.startsWith("es")) return "es";
+  return navigator.language?.startsWith("en") ? "en" : "es";
+}
+
+export function Cascara({ children }: { children?: ReactNode }) {
+  const [tema] = useState(temaInicial);
+  const [idioma] = useState(idiomaInicial);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = tema;
+  }, [tema]);
+
+  useEffect(() => {
+    document.documentElement.lang = idioma;
+  }, [idioma]);
+
+  return <IdiomaContext.Provider value={idioma}>{children}</IdiomaContext.Provider>;
+}
+
+export default function App() {
+  // La fase 1 monta aquí la banda; la fase 2, la ventana principal.
+  return <Cascara />;
+}

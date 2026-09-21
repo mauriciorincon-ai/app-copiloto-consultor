@@ -20,8 +20,8 @@ import { describe, expect, it } from "vitest";
  * el método, y el método escribe sus gates con ⭐. La regla prohíbe emojis como ICONOGRAFÍA, no
  * como notación en prosa sobre el método.
  */
-const RAICES = ["docs/diseno"];
-const EXT = /\.(html|css|js)$/;
+const RAICES = ["docs/diseno", "src", "src-tauri/src"];
+const EXT = /\.(html|css|js|ts|tsx|rs)$/;
 
 /**
  * EXCEPCIÓN NOMINAL (declarada, no aflojada): `✓` (U+2713). El design system NOMBRA su propio
