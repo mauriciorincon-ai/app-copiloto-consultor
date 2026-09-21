@@ -1,9 +1,9 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.7.0   # 1.7.0: bandeja de propuestas con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
+version: 1.8.0   # 1.8.0: los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
 fecha: 2026-09-20
-estado: propuesto   # → aprobado con G-Diseño
+estado: aprobado   # G-Diseño aprobado el 2026-09-20 («sí apruebo la pantalla completa»)
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
 ---
 
@@ -340,6 +340,59 @@ La pantalla lo muestra como **dos columnas enfrentadas** («lo tuyo queda» / «
 muere») y declara con letra que el usuario responde por su propia carpeta. Detalle y base legal:
 `sprints/ETAPA-DISENO-implementation-log.md` § Desviación del plan.
 
+## 9-quinquies · Los seis estados de CONTENIDO de la banda (sprint 001, 2026-09-20)
+
+La Etapa de Diseño decidió la **forma** de la banda (`posicion.html`: 88 · 200 · 44, acoplada,
+con asa) y el **contenido** de los estados (`panel.html`, dentro de 380 × 220). Lo que nunca se
+escribió fue el cruce: **qué dice la banda en cada estado**. Cinco de los seis estados que el
+sprint 001 construye no tenían referencia contra la cual comparar, y un gate de fidelidad sin
+referencia es un juicio a ojo. La referencia es `docs/diseno/banda.html`.
+
+**Gramática de la banda** (vale para todo estado, y el código la obedece):
+
+| Zona | Qué lleva, siempre |
+|---|---|
+| `cab-b` | el estado (símbolo + texto + color) · el cliente y su verificación · el contador de red |
+| `ficha-b` (izquierda) | **lo que la banda dice**: una línea fuerte y una de apoyo |
+| `lado-b` (derecha) | **de dónde sale** (unidad · documento · sección) y **qué teclas hay** |
+
+| Estado | Alto | Izquierda | Derecha |
+|---|---|---|---|
+| esperando | 88 | frase en Charter + conteo del corpus | reunión y minutos · atajos |
+| buscando | 88 | lo oído entre comillas con su pista + «buscando» estático | atajos |
+| ficha | 88 | titular + línea | fuente · atajos |
+| ficha ampliada | 200 | titular + línea + **las dos acumuladas abiertas** | fuente · atajos |
+| sin resultado | 88 | «nada en tu corpus» + la pregunta que lo provocó | las dos salidas, como teclas |
+| sin verificar | 88 | aviso ámbar + **una** salida | cliente, versión y fecha verificadas |
+| sin verificar ampliada | 200 | el aviso con las **tres** salidas | los dos botones del panel |
+| transcript | 200 | la ficha y sus acumuladas, intactas | el transcript, 3 turnos **por pista** |
+| sin acople (fallback) | 88 | igual que ficha | igual que ficha; la cabecera añade «sin acople» |
+
+**Tres decisiones que la maqueta no había escrito:**
+
+1. **En la banda, las acciones son TECLAS.** El panel de 380 × 220 tenía botones; en 88 px de
+   alto dos botones y una frase larga se pelean por el renglón y el primario cae abajo — el
+   anti-patrón de §8 que ya mordió dos veces. Los botones vuelven **al ampliar**, donde hay alto.
+2. **El asa tiene un trabajo.** «Sin verificar» tiene tres salidas y en 88 px cabe una: la banda
+   muestra la primera y dice que el asa muestra el resto. Ampliar deja de ser decorativo — es
+   donde vive lo que no cabía. Y el alto es **continuo**: 88 px es el reposo, 200 px el máximo
+   que dibujó el diseño.
+3. **El transcript va a la derecha, no abajo.** En el panel vertical crecía hacia abajo; una
+   banda ya ocupa el ancho entero y no puede crecer más. Ocupa la columna donde irá la
+   sugerencia (sprint 2), y así **la banda no cambia de alto al encenderlo**.
+
+**Lo que esta extensión NO redecide:** el relleno de la franja (ya elegido: fondo de escritorio,
+negro a una tecla), el modo solo audio de 44 px (C15, fuera del sprint 001) y la sugerencia
+(sprint 2). La `unidad` sigue **sin chip** en `fuente-b`, a diferencia del panel: la columna
+derecha de la banda es toda Menlo de bajo contraste —«lo medible»— y un tercer peso visual junto
+a los `kbd` la volvería ruido. El chip sí aparece en las **acumuladas** de la banda ampliada,
+donde la unidad es lo que distingue una ficha de otra.
+
+**Altura y código:** las tres alturas son tokens (`--banda-h`, `--banda-h-ampliada`,
+`--banda-h-voz`) y son la fuente única — el CSS las usa y la ventana nativa las lee. El gate de
+tokens las excluye a propósito (el webview ocupa la ventana entera, no la dibuja); las vigila un
+test de `src-tauri/` que falla si la ventana y la maqueta se separan.
+
 ## 10 · Deuda de diseño declarada
 
 | Qué | Por qué | Cuándo se paga |
@@ -358,3 +411,8 @@ muere») y declara con letra que el usuario responde por su propia carpeta. Deta
 | 1.1.0 | 2026-09-20 | mirada 3: píldora de voz (C15, 7.º componente canon) · §9-bis qué persiste · dos prohibidos nuevos |
 | 1.2.0 | 2026-09-20 | mirada 3 (2.ª vuelta): banda inferior y gota · posición elegible (D2 revisada) · radar con dos niveles de severidad y cinco categorías |
 | 1.3.0 | 2026-09-20 | mirada 3-ter: **banda acoplada** como forma principal (88/200/44, con asa) · permiso de acople · qué ve el cliente por modo de compartir |
+| 1.4.0 | 2026-09-20 | mirada 3-quinquies: **relleno de captura** (fondo de escritorio elegido; negro a una tecla) |
+| 1.5.0 | 2026-09-20 | mirada 4: las cuatro pantallas del cuaderno (corpus · notas · idioma · IA) |
+| 1.6.0 | 2026-09-20 | mirada 4-bis: `propuesta` (proponer ≠ guardar) · varios idiomas · puerta local para Claude Code |
+| 1.7.0 | 2026-09-20 | mirada 4-ter: **bandeja de propuestas con cuenta atrás** (§9-quater) · G-Diseño aprobado |
+| 1.8.0 | 2026-09-20 | sprint 001, fase 1a: **§9-quinquies — los seis estados de CONTENIDO de la banda** · tokens de alto (`--banda-h*`) · acciones como teclas · el asa con un trabajo · transcript a la derecha |

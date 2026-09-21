@@ -92,4 +92,73 @@ regenera antes del cierre, se declara en el summary.
 `pnpm build` ✓ · `cargo test` ✓ (1 test) · `pnpm verify:ephemeral` ✓ · CI con los tres checks.
 
 ## Fase 1 — La banda
-(pendiente)
+
+### Fase 1a — decisión de diseño no escrita: los seis estados de CONTENIDO de la banda (2026-09-20)
+
+La orden lo exige literalmente: *«cualquier estado que la maqueta no cubra se propone en la
+bitácora bajo "decisión de diseño no escrita" ANTES de construirlo»*. Aquí está.
+
+**El hueco.** La Etapa de Diseño decidió la **forma** de la banda (`posicion.html`: 88 · 200 · 44,
+acoplada, con asa) y el **contenido** de los estados (`panel.html`, dentro de 380 × 220). Nunca se
+escribió el cruce. La maqueta dibujó la banda **tres veces y las tres con una ficha dentro**; el
+sprint construye **seis** estados de contenido. Cinco no tenían referencia contra la cual comparar
+— y el gate de FIDELIDAD de esta fase se habría resuelto a ojo.
+
+**Qué se hizo antes de construir:** extender la maqueta con `docs/diseno/banda.html`, nueve
+estados (los seis del sprint + dos variantes ampliadas + el fallback sin acople), ambos temas,
+ambos idiomas, con el CSS ya aprobado y el copy tomado literalmente de `panel.html` y
+`posicion.html`. Es la **mirada 11**, propuesta en el plan del sprint y aprobada por el usuario
+antes de construir (el plan de miradas es parte del gate).
+
+**Las tres decisiones que la maqueta no había escrito** (en `design-system.md` §9-quinquies):
+
+| # | Decisión | Por qué |
+|---|---|---|
+| 1 | En la banda, **las acciones son teclas**; los botones vuelven al ampliar | en 88 px de alto dos botones y una frase larga se pelean por el renglón y el primario cae abajo — el anti-patrón §8 que ya mordió dos veces en la Etapa de Diseño |
+| 2 | **El asa tiene un trabajo**: «sin verificar» muestra una salida en 88 px y las tres al ampliar | la alternativa era recortar el aviso o inventar un menú. El alto es continuo: 88 es el reposo, 200 el máximo dibujado |
+| 3 | **El transcript va a la derecha**, no abajo | una banda ya ocupa el ancho entero y no puede crecer; ocupa la columna de la sugerencia (sprint 2) y así no cambia de alto al encenderse |
+
+Y una **no-decisión declarada**: la `unidad` sigue sin chip en `fuente-b` (a diferencia del
+panel), porque la columna derecha de la banda es toda Menlo de bajo contraste y un tercer peso
+visual junto a los `kbd` la volvería ruido. El chip sí aparece en las acumuladas de la ampliada,
+donde la unidad es lo que distingue una ficha de otra.
+
+**Cambio menor de contenido, declarado:** en la banda ampliada el «+2» se **abre** (las dos fichas
+acumuladas, con su unidad). `posicion.html` D3 lo dibujó colapsado, pero su propia nota prometía
+que el alto extra era para «la ficha entera, **las acumuladas** y la sugerencia». Con el «+2»
+colapsado y sin sugerencia (sprint 2), la mitad inferior de la banda quedaba vacía sin razón.
+
+### El arnés de capturas vuelve al repo — y se le exigió el rojo
+
+En la Etapa de Diseño el arnés de capturas vivió en el scratchpad y **se perdió al terminar**; sus
+avisos de desborde se imprimían antes de cada estado y un `tail -n 3` los escondió durante cuatro
+fases (queda registrado en la bitácora de diseño: *leer la salida ES el gate, y leerla entera*).
+Ahora vive en `scripts/capturar-maqueta.mjs`, declara su árbol al arrancar (regla 17-bis) e
+imprime **al final y juntos** tres bloques: desbordes · estados sin recorte · errores de página.
+
+- **Demo en rojo (regla 15):** `--banda-h: 88px` → `58px` ⇒ **12 desbordes** nombrados por estado,
+  tema e idioma (`banda → alto +11px`, `cuerpo-b → alto +13px`, …). Revertido ⇒ verde. El gate
+  puede fallar, y falla nombrando el estado.
+- **Fallo encontrado por el propio arnés, en su primera corrida útil:** escribió **24 de 36**
+  recortes del artefacto y no dijo nada. Tomaba `$(".banda")` —el primero del DOM— y los tres
+  estados ampliados no tenían recorte. Corregido a recorrer todos los candidatos, **y el hueco es
+  ahora un hallazgo impreso**, no un silencio: «estados sin recorte del artefacto». Mismo defecto
+  de clase que un `skipped` leído como verde.
+
+### Archivos de la fase 1a
+
+| Archivo | Qué |
+|---|---|
+| `docs/diseno/banda.html` | **nuevo** — la referencia del gate de FIDELIDAD: 9 estados × 2 temas × 2 idiomas |
+| `docs/diseno/assets/ghost.css` | tokens `--banda-h*` (las tres alturas dejan de ser literales) + bloque «estados de contenido de la banda» |
+| `docs/diseno/index.html` | tarjeta `01-c` en el recorrido; la portada declara que la décima pantalla la añadió el sprint |
+| `docs/diseno/README.md` | mirada 11 en el plan y en la tabla pantalla → funcionalidad |
+| `design-system.md` | **v1.8.0** — §9-quinquies; y el registro de cambios, que se había quedado en 1.3.0 mientras el frontmatter iba en 1.7.0 |
+| `scripts/capturar-maqueta.mjs` | **nuevo** — el arnés, ya no efímero |
+| `tests/unit/tokens-fieles.test.ts` | los tres `--banda-h*` a `NO_APLICAN`, con la razón y quién sí los vigila |
+
+`pnpm test` **19/19** verdes tras cada cambio. Capturas: 36 del escritorio + 36 del artefacto
+solo, **cero desbordes, cero errores de página, cero estados sin recorte**.
+
+### Fase 1b — la banda construida
+(pendiente de la mirada 11)

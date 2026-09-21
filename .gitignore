@@ -25,3 +25,4 @@ Thumbs.db
 dist/
 src-tauri/target/
 src-tauri/gen/schemas/
+capturas/

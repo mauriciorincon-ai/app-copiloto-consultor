@@ -30,6 +30,16 @@ superior conmuta **estado · tema · idioma** y la nota bajo la barra dice qué 
 Cualquier cambio al plan (agrupar, reordenar, posponer) se propone y se aprueba ANTES de
 construir el siguiente artefacto.
 
+### Extensión posterior a G-Diseño (sprint 001)
+
+| Mirada | Artefacto | Por qué existe | Orden |
+|---|---|---|---|
+| 11 | `banda.html` — los seis estados de contenido de la banda | el gate de FIDELIDAD del sprint 001 compara la banda construida contra la maqueta, y la maqueta dibujó la banda **siempre con una ficha dentro**: cinco de los seis estados no tenían referencia. Se propuso en el plan del sprint, **aprobado por el usuario antes de construir** | antes de escribir la primera línea de UI del sprint 001 |
+
+La maqueta no se congela con G-Diseño: se extiende por el mismo camino (propuesta → mirada →
+registro). Lo que **no** cambia sin una mirada nueva es lo ya aprobado — y esta extensión no
+redecide nada: cruza la forma elegida en la mirada 3-ter con el contenido aprobado en la 1.
+
 ## Registro de miradas
 
 | Fecha | Artefacto | Veredicto del usuario (línea textual) | Qué se construyó encima, después |
@@ -62,6 +72,7 @@ planeadora debe absorberlas: ver `## Desviación del plan` en la bitácora).
 |---|---|---|---|
 | 01 | `panel.html` | esperando · buscando · ficha · sugerencia local · sugerencia API · sin resultado · sin verificar · radar · radar invasivo · transcript · voz · voz sin auriculares | **C1** ventana protegida · **C5** disparo y atajo · **C6** fichas de evidencia · **C7** sugerencia · **C8** lectura de pantalla · **C14** radar · **C15** modo solo audio · **B2** contador de red |
 | 01-b | `posicion.html` | A · B · C (descartada) · D · D2 · D3 · F · E | **C1** — decide forma y posición: banda acoplada 88/200, solo audio 44, y el relleno de la franja |
+| 01-c | `banda.html` *(sprint 001)* | esperando · buscando · ficha · ficha ampliada · sin resultado · sin verificar · sin verificar ampliada · transcript · sin acople | **C1** forma × contenido · **C3** transcript por pista · **C6** ficha y acumuladas — referencia del gate de FIDELIDAD |
 | 02 | `sesion.html` | detectada · sin reunión · NDA (solo notas) · vigilancia local | **C2** dos pistas · **C11** jurisdicción y NDA · **C12** detección de cliente · **C14** radar local |
 | 03 | `permisos.html` | sin conceder · concedido · revocado a mitad · solicitando · acople | **C8** consentimiento de pantalla · **C12** micrófono, audio del sistema y acople |
 | 04 | `corpus.html` | vacío · indexando · con documentos · ilegible | **C4** ingesta e índice · **B1** cinco unidades |

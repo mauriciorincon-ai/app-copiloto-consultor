@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="es" data-theme="dark" data-lang="es" data-estado="esperando">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Angel Ghost · Maqueta — 01-c La banda: los seis estados</title>
+<link rel="stylesheet" href="assets/ghost.css">
+<link rel="stylesheet" href="assets/maqueta.css">
+</head>
+<body class="mq">
+
+<div class="mq-bar" role="toolbar" aria-label="Sala de diseño">
+  <span class="mq-t">01-c · La banda</span>
+  <span class="mq-g"><span>estado</span>
+    <button data-estado="esperando">esperando</button>
+    <button data-estado="buscando">buscando</button>
+    <button data-estado="ficha">ficha</button>
+    <button data-estado="ficha-2">ficha · ampliada</button>
+    <button data-estado="sin-resultado">sin resultado</button>
+    <button data-estado="sin-verificar">sin verificar</button>
+    <button data-estado="sin-verificar-2">sin verificar · ampliada</button>
+    <button data-estado="transcript">transcript</button>
+    <button data-estado="flotante">sin acople · flota</button>
+  </span>
+  <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
+  <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
+  <a href="index.html">← recorrido</a>
+</div>
+
+<div class="mq-nota">
+  <div class="n" data-para="esperando"><b>Qué mirar:</b> la banda en reposo, 88 px acoplada al borde inferior. La reunión ya está recortada (línea azul). A la izquierda, lo que la banda dice: una frase en <b>Charter</b>, no un ícono gris. A la derecha, de dónde saldrá la evidencia y las teclas. El contador de red marca <b>0 B</b>.</div>
+  <div class="n" data-para="buscando"><b>Qué mirar:</b> el cliente acabó de preguntar y la banda lo repite entre comillas con su pista (<b>sistema = cliente</b>). Debajo, «buscando» en texto estático: <b>sin spinner, sin pulso</b>, nada que te robe la mirada en mitad de una frase tuya.</div>
+  <div class="n" data-para="ficha"><b>Qué mirar:</b> el estado que la maqueta de diseño ya había dibujado (D2). Titular ≤ 8 palabras en Charter, una línea, y a la derecha la fuente exacta en Menlo. ¿Se lee en dos segundos sin dejar de hablar?</div>
+  <div class="n" data-para="ficha-2"><b>Qué mirar:</b> arrastras el asa y la banda crece; 88 px es el reposo y 200 px el máximo que dibujó el diseño (D3). Entra la línea entera y <b>las otras dos fichas se abren</b>, cada una con su unidad a la izquierda: en 88 px eran un «+2», aquí se leen. Es lo que el alto extra prometía. <b>El hueco de la derecha es deliberado:</b> ahí irá la sugerencia, que es del sprint 2 — en este sprint no hay una sola línea de IA generativa.</div>
+  <div class="n" data-para="sin-resultado"><b>Qué mirar:</b> la banda admite que no tiene nada. La pregunta que lo provocó queda a la vista para que juzgues si la entendió bien, y a la derecha las dos salidas. <b>En la banda, las acciones son teclas</b> — 88 px es una superficie de teclado, no de clic.</div>
+  <div class="n" data-para="sin-verificar"><b>Qué mirar:</b> el resultado del spike en la banda. En Zoom la protección no está verificada: ámbar, triángulo <b>y</b> texto (los tres, siempre). En 88 px cabe el aviso y <b>una</b> salida; la fecha y la versión verificadas van a la derecha. Es aviso, no bloqueo.</div>
+  <div class="n" data-para="sin-verificar-2"><b>Qué mirar:</b> el mismo aviso con el asa arriba: las <b>tres</b> salidas y los dos botones. Es la razón de que el asa exista — no es un lujo, es donde cabe lo que en 88 px no cabía.</div>
+  <div class="n" data-para="transcript"><b>Qué mirar:</b> el transcript en vivo con ⌘⇧T, <b>oculto por defecto</b>. Ocupa la columna derecha de la banda ampliada y cada turno lleva su pista (sistema = cliente, mic = tú), <b>nunca un nombre</b>. Solo en memoria: al cerrar la sesión no queda nada de esto.</div>
+  <div class="n" data-para="flotante"><b>Qué mirar:</b> el <b>fallback</b> sin el permiso de Accesibilidad. La banda no puede recortar la reunión, así que flota encima: mira el recuadro ámbar sobre el Dock. La cabecera lo dice con símbolo, texto y color — <b>«sin acople»</b>. Todo lo demás funciona igual.</div>
+  <div class="mq-medida">escritorio de referencia 1180 × 720 · banda 88 px (asa → 200) · 44 px reservado para el modo solo audio · datos sintéticos «Páramo Azul»</div>
+</div>
+
+<div class="mq-escritorio" data-acople-en="esperando:88 buscando:88 ficha:88 sin-resultado:88 sin-verificar:88 ficha-2:200 sin-verificar-2:200 transcript:200" aria-label="Escritorio de referencia a píxel real">
+  <div class="mq-menubar"><b></b><span>Google Chrome</span><span>Archivo</span><span>Editar</span><span>Ver</span><span class="der">14:02</span></div>
+  <div class="mq-etiqueta">Google Meet — esto es lo que el cliente ve. La banda de abajo no aparece en su pantalla (verificado 2026-09-20).</div>
+  <div class="mq-meet">
+    <div class="titulo"><i></i><i></i><i></i> meet · Páramo Azul — Propuesta tablero de rentabilidad</div>
+    <div class="tiles">
+      <div class="tile"><span>Ana Torres · Páramo Azul</span></div>
+      <div class="tile"><span>Tú (presentando)</span></div>
+    </div>
+    <div class="presentando">Estás presentando tu pantalla</div>
+    <div class="controles"><i></i><i></i><i></i><i class="rojo"></i><i></i></div>
+  </div>
+  <div class="mq-dock" data-en="flotante"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+  <div class="mq-corte" data-en="esperando buscando ficha sin-resultado sin-verificar" style="bottom:104px"><span>aquí se recorta la reunión</span></div>
+  <div class="mq-corte" data-en="ficha-2 sin-verificar-2 transcript" style="bottom:216px"><span>aquí se recorta la reunión</span></div>
+  <div class="mq-choque" data-en="flotante" style="left:calc(50% - 215px);width:430px;bottom:2px;height:56px"><span>sin permiso de acople: la banda queda encima del Dock</span></div>
+
+  <!-- ===================== BANDA COMPACTA · 88 px ===================== -->
+  <div class="mq-pos banda-borde" data-en="esperando buscando ficha sin-resultado sin-verificar flotante">
+    <section class="banda" data-captura aria-label="Angel Ghost">
+
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
+
+      <div class="cab-b">
+        <span class="marca-min">
+          <svg class="ic s relleno"><use href="#i-check-circle"/></svg>
+          <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        <span class="cliente-b warn" data-en="flotante" title="sin el permiso de Accesibilidad la banda no puede recortar la reunión">
+          <svg class="ic s relleno"><use href="#i-alert"/></svg>
+          <span lang="es">sin acople</span><span lang="en">not docked</span>
+        </span>
+
+        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante">
+          <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        <span class="cliente-b warn" data-en="sin-verificar">
+          <svg class="ic s relleno"><use href="#i-alert"/></svg>
+          <span lang="es">Zoom · sin verificar</span><span lang="en">Zoom · not verified</span>
+        </span>
+
+        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"/></svg>0 B</span>
+      </div>
+
+      <div class="cuerpo-b">
+
+        <!-- ------------------------------ esperando ------------------------------ -->
+        <span class="ficha-b" data-en="esperando">
+          <span class="voz-b"><span lang="es">Cuando el cliente pregunte, aquí aparece tu evidencia.</span><span lang="en">When the client asks, your evidence shows up here.</span></span>
+          <span class="meta-b"><svg class="ic s"><use href="#i-doc"/></svg><span lang="es">143 documentos · 5 unidades</span><span lang="en">143 documents · 5 units</span></span>
+        </span>
+        <span class="lado-b" data-en="esperando">
+          <span class="meta-b"><svg class="ic s"><use href="#i-reloj"/></svg><span lang="es">Páramo Azul · 12 min</span><span lang="en">Páramo Azul · 12 min</span></span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
+            <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
+          </span>
+        </span>
+
+        <!-- ------------------------------ buscando ------------------------------- -->
+        <span class="ficha-b" data-en="buscando">
+          <span class="oido">
+            <span class="quien"><svg class="ic s"><use href="#i-sistema"/></svg> <span lang="es">cliente 14:02</span><span lang="en">client 14:02</span></span>
+            <q><span lang="es">Y la limpieza de datos, ¿eso está dentro del alcance?</span><span lang="en">And the data cleansing, is that within scope?</span></q>
+          </span>
+          <span class="meta-b"><svg class="ic s"><use href="#i-buscar"/></svg><span lang="es">Buscando en tu corpus…</span><span lang="en">Searching your corpus…</span></span>
+        </span>
+        <span class="lado-b" data-en="buscando">
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
+            <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
+          </span>
+        </span>
+
+        <!-- --------------------------- ficha · flotante --------------------------- -->
+        <span class="ficha-b" data-en="ficha flotante">
+          <span class="titular-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></span>
+          <span class="linea-b"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on.</span></span>
+        </span>
+        <span class="lado-b" data-en="ficha flotante">
+          <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla"><kbd>⌘⇧T</kbd> transcript</span>
+            <span class="tecla"><kbd>⌥⎋</kbd></span>
+          </span>
+        </span>
+
+        <!-- ---------------------------- sin resultado ---------------------------- -->
+        <span class="ficha-b" data-en="sin-resultado">
+          <span class="titular-b"><span lang="es">Nada en tu corpus sobre esto.</span><span lang="en">Nothing in your corpus about this.</span></span>
+          <span class="oido">
+            <span class="quien"><svg class="ic s"><use href="#i-sistema"/></svg> <span lang="es">cliente 14:02</span><span lang="en">client 14:02</span></span>
+            <q><span lang="es">¿Ustedes tienen certificación ISO 27001?</span><span lang="en">Are you ISO 27001 certified?</span></q>
+          </span>
+        </span>
+        <span class="lado-b" data-en="sin-resultado">
+          <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">Buscar con otras palabras</span><span lang="en">Search with other words</span></span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧N</kbd> <span lang="es">Anotar para después</span><span lang="en">Note it for later</span></span>
+            <span class="tecla"><kbd>⌥⎋</kbd></span>
+          </span>
+        </span>
+
+        <!-- ---------------------------- sin verificar ---------------------------- -->
+        <span class="ficha-b" data-en="sin-verificar">
+          <span class="aviso-b" role="status">
+            <svg class="ic relleno"><use href="#i-alert"/></svg>
+            <span>
+              <strong><span lang="es">Zoom: protección sin verificar</span><span lang="en">Zoom: protection not verified</span></strong>
+              <span class="salida"><span lang="es">→ Comparte una ventana, no la pantalla · el asa muestra las otras dos salidas</span><span lang="en">→ Share a window, not the screen · the handle shows the other two ways out</span></span>
+            </span>
+          </span>
+        </span>
+        <span class="lado-b" data-en="sin-verificar">
+          <span class="meta-b"><span lang="es">Verificada solo en Meet · macOS 26.6.2 · 2026-09-20</span><span lang="en">Verified only in Meet · macOS 26.6.2 · 2026-09-20</span></span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
+            <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
+          </span>
+        </span>
+
+      </div>
+    </section>
+  </div>
+
+  <!-- ===================== BANDA AMPLIADA · 200 px ===================== -->
+  <div class="mq-pos banda-borde" data-en="ficha-2 sin-verificar-2 transcript">
+    <section class="banda ampliada" data-captura aria-label="Angel Ghost">
+
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
+
+      <div class="cab-b">
+        <span class="marca-min">
+          <svg class="ic s relleno"><use href="#i-check-circle"/></svg>
+          <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        <span class="cliente-b" data-en="ficha-2 transcript">
+          <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        <span class="cliente-b warn" data-en="sin-verificar-2">
+          <svg class="ic s relleno"><use href="#i-alert"/></svg>
+          <span lang="es">Zoom · sin verificar</span><span lang="en">Zoom · not verified</span>
+        </span>
+        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"/></svg>0 B</span>
+      </div>
+
+      <div class="cuerpo-b">
+
+        <!-- --------------------- ficha ampliada · transcript --------------------- -->
+        <span class="ficha-b" data-en="ficha-2 transcript">
+          <span class="titular-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></span>
+          <span class="linea-b"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional y se cotiza aparte.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on, priced separately.</span></span>
+          <span class="mas-b">
+            <span class="item">
+              <span class="unidad"><span lang="es">marco</span><span lang="en">framework</span></span>
+              <span class="t"><span lang="es">Etapa 2 Preparación: perfilar antes de modelar</span><span lang="en">Stage 2 Preparation: profile before modelling</span></span>
+            </span>
+            <span class="item">
+              <span class="unidad"><span lang="es">caso</span><span lang="en">case</span></span>
+              <span class="t"><span lang="es">Sur del Valle: cuatro fuentes en 9 semanas</span><span lang="en">Sur del Valle: four sources in 9 weeks</span></span>
+            </span>
+          </span>
+        </span>
+
+        <span class="lado-b" data-en="ficha-2">
+          <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla"><kbd>⌘⇧T</kbd> transcript</span>
+            <span class="tecla"><kbd>⌥⎋</kbd></span>
+          </span>
+        </span>
+
+        <span class="lado-b" data-en="transcript">
+          <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <span class="transcript-b" aria-label="Transcript en vivo">
+            <span class="cab">
+              <svg class="ic s"><use href="#i-ojo"/></svg>
+              <span lang="es">en vivo · solo en memoria</span><span lang="en">live · in memory only</span>
+              <span class="tecla"><kbd>⌘⇧T</kbd> <span lang="es">ocultar</span><span lang="en">hide</span></span>
+            </span>
+            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"/></svg><span lang="es">cliente</span><span lang="en">client</span> 14:01</span><q><span lang="es">Y la limpieza de datos, ¿eso está dentro del alcance?</span><span lang="en">And the data cleansing, is that within scope?</span></q></span>
+            <span class="turno tu"><span class="quien"><svg class="ic s"><use href="#i-mic"/></svg><span lang="es">tú</span><span lang="en">you</span> 14:02</span><q><span lang="es">Sí, la limpieza de las tres fuentes que acordamos está incluida.</span><span lang="en">Yes, cleansing the three sources we agreed on is included.</span></q></span>
+            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"/></svg><span lang="es">cliente</span><span lang="en">client</span> 14:02</span><q><span lang="es">¿Y si sumamos el Excel de la fuerza comercial? Lo tenemos en Power BI.</span><span lang="en">What if we add the sales team’s Excel? We have it in Power BI.</span></q></span>
+          </span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla"><kbd>⌥⎋</kbd></span>
+          </span>
+        </span>
+
+        <!-- ----------------------- sin verificar · ampliada ----------------------- -->
+        <span class="ficha-b" data-en="sin-verificar-2">
+          <div class="franja warn" role="status">
+            <svg class="ic relleno"><use href="#i-alert"/></svg>
+            <div>
+              <strong><span lang="es">Zoom: protección sin verificar</span><span lang="en">Zoom: protection not verified</span></strong>
+              <p><span lang="es">Verificada solo en Meet · macOS 26.6.2 · 2026-09-20</span><span lang="en">Verified only in Meet · macOS 26.6.2 · 2026-09-20</span></p>
+              <ul class="vertical">
+                <li><span lang="es">Comparte una ventana, no la pantalla</span><span lang="en">Share a window, not the screen</span></li>
+                <li><span lang="es">O usa un segundo monitor</span><span lang="en">Or use a second monitor</span></li>
+                <li><span lang="es">O pasa a modo solo notas</span><span lang="en">Or switch to notes-only mode</span></li>
+              </ul>
+            </div>
+          </div>
+        </span>
+        <span class="lado-b" data-en="sin-verificar-2">
+          <span class="acciones-b">
+            <button class="btn mini"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Ya lo verifiqué en Zoom</span><span lang="en">I verified it in Zoom</span></button>
+            <button class="btn mini"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Modo solo notas</span><span lang="en">Notes-only mode</span></button>
+          </span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
+          </span>
+        </span>
+
+      </div>
+    </section>
+  </div>
+
+</div>
+
+<div class="mq-tabla-pos">
+  <h2 class="mq-h2"><span lang="es">De dónde sale cada estado — esto no inventa diseño, lo traslada</span><span lang="en">Where each state comes from — this invents no design, it relocates it</span></h2>
+  <p class="mq-sub"><span lang="es">La Etapa de Diseño aprobó la <b>forma</b> de la banda (<code>posicion.html</code>, D2/D3/F) y el <b>contenido</b> de los estados (<code>panel.html</code>, en 380 × 220). Lo que faltaba era el cruce: qué dice la banda en cada estado. Esta página es ese cruce, y el gate de fidelidad del sprint compara contra ella.</span><span lang="en">The design stage approved the band’s <b>shape</b> (<code>posicion.html</code>, D2/D3/F) and the states’ <b>content</b> (<code>panel.html</code>, at 380 × 220). What was missing is the crossing: what the band says in each state. This page is that crossing, and the sprint’s fidelity gate compares against it.</span></p>
+  <table>
+    <thead><tr><th>estado</th><th>alto</th><th>izquierda — qué dice</th><th>derecha — de dónde sale y qué teclas</th><th>copy tomado de</th></tr></thead>
+    <tbody>
+      <tr><td><b>esperando</b></td><td>88</td><td>frase en Charter + conteo del corpus</td><td>reunión y minutos · ⌘⇧A · ⌥⎋</td><td><code>panel.html</code> · vacío</td></tr>
+      <tr><td><b>buscando</b></td><td>88</td><td>lo que se oyó, con su pista + «buscando» estático</td><td>⌘⇧A · ⌥⎋</td><td><code>panel.html</code> · buscando</td></tr>
+      <tr><td><b>ficha</b></td><td>88</td><td>titular + línea</td><td>unidad · documento · sección · ⌘⇧P · ⌘⇧T · ⌥⎋</td><td><code>posicion.html</code> · D2</td></tr>
+      <tr><td><b>ficha · ampliada</b></td><td>200</td><td>titular + línea + <b>las dos acumuladas abiertas</b></td><td>igual que D2</td><td><code>posicion.html</code> · D3, <b>sin la sugerencia</b> (sprint 2)</td></tr>
+      <tr><td><b>sin resultado</b></td><td>88</td><td>«nada en tu corpus» + la pregunta que lo provocó</td><td>⌘⇧A buscar con otras palabras · ⌘⇧N anotar</td><td><code>panel.html</code> · sin resultado</td></tr>
+      <tr><td><b>sin verificar</b></td><td>88</td><td>aviso ámbar + <b>una</b> salida</td><td>cliente, versión y fecha verificadas</td><td><code>panel.html</code> · sin verificar</td></tr>
+      <tr><td><b>sin verificar · ampliada</b></td><td>200</td><td>el aviso con las <b>tres</b> salidas</td><td>los dos botones del panel</td><td><code>panel.html</code> · sin verificar</td></tr>
+      <tr><td><b>transcript</b></td><td>200</td><td>la ficha y sus acumuladas, intactas</td><td>el transcript en la columna derecha, 3 turnos por pista</td><td><code>panel.html</code> · transcript</td></tr>
+      <tr><td><b>sin acople</b></td><td>88</td><td>igual que ficha</td><td>igual que ficha</td><td><code>permisos.html</code> · acople (fallback declarado)</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="mq-tabla-pos">
+  <h2 class="mq-h2"><span lang="es">Tres decisiones que la maqueta no había escrito</span><span lang="en">Three decisions the mockup had not written down</span></h2>
+  <div class="grid-2" style="gap:14px">
+    <div class="franja ok" role="status" style="background:#0f1a16;border-color:#62d3b4">
+      <svg class="ic relleno" style="color:#62d3b4"><use href="#i-check-circle"/></svg>
+      <div>
+        <strong style="color:#e5e7eb"><span lang="es">1 · En la banda, las acciones son TECLAS</span><span lang="en">1 · On the band, actions are KEYS</span></strong>
+        <p style="color:#9aa2ad"><span lang="es">El panel de 380 × 220 tenía botones. En 88 px de alto, dos botones y una frase larga se pelean por el renglón y el primario cae abajo — el anti-patrón que ya nos mordió dos veces en el diseño. La banda usa teclas; los botones vuelven al ampliarla, donde hay alto para ellos.</span><span lang="en">The 380 × 220 panel had buttons. At 88 px tall, two buttons and a long sentence fight over one line and the primary drops below — the anti-pattern that already bit us twice during design. The band uses keys; buttons return when it expands, where there is height for them.</span></p>
+      </div>
+    </div>
+    <div class="franja ok" role="status" style="background:#0f1a16;border-color:#62d3b4">
+      <svg class="ic relleno" style="color:#62d3b4"><use href="#i-check-circle"/></svg>
+      <div>
+        <strong style="color:#e5e7eb"><span lang="es">2 · El asa tiene un trabajo, no es un lujo</span><span lang="en">2 · The handle has a job; it is not a luxury</span></strong>
+        <p style="color:#9aa2ad"><span lang="es">«Sin verificar» tiene tres salidas y en 88 px cabe una. En vez de recortar el aviso o inventar un menú, la banda muestra la primera y dice que el asa muestra el resto. Ampliar deja de ser decorativo: es donde vive lo que no cabía.</span><span lang="en">“Not verified” has three ways out and only one fits in 88 px. Instead of trimming the notice or inventing a menu, the band shows the first and says the handle shows the rest. Expanding stops being decorative: it is where what did not fit lives.</span></p>
+      </div>
+    </div>
+    <div class="franja ok" role="status" style="background:#0f1a16;border-color:#62d3b4">
+      <svg class="ic relleno" style="color:#62d3b4"><use href="#i-check-circle"/></svg>
+      <div>
+        <strong style="color:#e5e7eb"><span lang="es">3 · El transcript va a la derecha, no abajo</span><span lang="en">3 · The transcript goes right, not below</span></strong>
+        <p style="color:#9aa2ad"><span lang="es">En el panel vertical el transcript crecía hacia abajo. Una banda no puede crecer más: ya ocupa el ancho entero. Va donde en la maqueta iba la sugerencia — que es del sprint 2 — y así la banda no cambia de alto al encenderlo.</span><span lang="en">In the vertical panel the transcript grew downward. A band cannot grow further: it already spans the full width. It goes where the mockup put the suggestion — which belongs to sprint 2 — so the band does not change height when you turn it on.</span></p>
+      </div>
+    </div>
+    <div class="franja warn" role="status" style="background:#1a1400;border-color:#f0b64a">
+      <svg class="ic relleno" style="color:#f0b64a"><use href="#i-alert"/></svg>
+      <div>
+        <strong style="color:#e5e7eb"><span lang="es">Lo que esta página NO decide</span><span lang="en">What this page does NOT decide</span></strong>
+        <p style="color:#9aa2ad"><span lang="es">El relleno de la franja ya lo decidiste (fondo de escritorio, negro a una tecla) y vive en <code>posicion.html</code>. El modo solo audio de 44 px es C15 y no entra en este sprint. La sugerencia es del sprint 2. Nada de eso se redecide aquí.</span><span lang="en">The strip filler is already decided (your wallpaper, black one key away) and lives in <code>posicion.html</code>. The 44 px audio-only mode is C15 and is out of this sprint. The suggestion belongs to sprint 2. None of that is re-decided here.</span></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/iconos.js"></script>
+<script src="assets/maqueta.js"></script>
+</body>
+</html>

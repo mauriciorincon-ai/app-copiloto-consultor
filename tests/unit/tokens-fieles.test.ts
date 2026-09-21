@@ -20,7 +20,12 @@ import { describe, expect, it } from "vitest";
 const MAQUETA = "docs/diseno/assets/ghost.css";
 const PRODUCTO = "src/index.css";
 
-/** Tokens que el producto NO hereda: son medidas de la ventana, que en producto las fija Tauri. */
+/**
+ * Tokens que el producto NO hereda: son medidas de la VENTANA, que en producto las fija Tauri.
+ * El webview ocupa la ventana entera, así que su CSS no las necesita — y exigirlas aquí sería
+ * un gate imposible de cumplir. Quedan vigiladas por el otro lado: `src-tauri/` lee las alturas
+ * de la banda desde `ghost.css` y falla si se separan (fase 1 del sprint 001).
+ */
 const NO_APLICAN = new Set([
   "--panel-w",
   "--panel-h",
@@ -28,6 +33,9 @@ const NO_APLICAN = new Set([
   "--panel-h-max",
   "--principal-w",
   "--principal-h",
+  "--banda-h",
+  "--banda-h-ampliada",
+  "--banda-h-voz",
 ]);
 
 /** Extrae `--token: valor` de los bloques de tokens (los de `:root` y `[data-theme]`). */
