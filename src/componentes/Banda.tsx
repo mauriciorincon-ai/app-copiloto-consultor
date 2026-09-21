@@ -1,5 +1,6 @@
 import { useT } from "../i18n";
 import { Ic } from "./Iconos";
+import { useAsa } from "../asa";
 
 /**
  * LA BANDA — la forma principal de Angel Ghost durante una reunión.
@@ -53,6 +54,7 @@ export function Banda({
   const t = useT().banda;
   const m = t.muestra;
   const grande = ampliada || transcript;
+  const asa = useAsa();
 
   const atajos = (
     <span className="atajos-b">
@@ -91,7 +93,8 @@ export function Banda({
       aria-label="Angel Ghost"
       data-estado={estado}
     >
-      <span className="asa">
+      {/* El asa ajusta la banda Y su relleno a la vez; el arrastre lo resuelve Rust. */}
+      <span className="asa" ref={asa} title="arrastra para ajustar las dos a la vez">
         <i />
       </span>
 

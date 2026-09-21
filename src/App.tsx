@@ -5,6 +5,7 @@ import { Banda, type EstadoBanda } from "./componentes/Banda";
 import { Relleno } from "./componentes/Relleno";
 import { Principal } from "./componentes/Principal";
 import { ventanaActual } from "./ventanas";
+import { useAltoDeVentana, DESDE_AMPLIADA } from "./asa";
 
 /**
  * Cáscara de la app.
@@ -54,13 +55,16 @@ const ESTADOS: EstadoBanda[] = ["esperando", "buscando", "ficha", "sin-resultado
  * que hace posible el **gate de FIDELIDAD** —recorrer los nueve encuadres de `banda.html` en la
  * ventana real, en los dos temas y los dos idiomas— y muere en cuanto el disparo sea real.
  */
-function bandaDesdeLaUrl(busqueda: string) {
+function bandaDesdeLaUrl(busqueda: string, alto: number) {
   const p = new URLSearchParams(busqueda);
   const pedido = p.get("estado");
   const estado = ESTADOS.find((e) => e === pedido) ?? "esperando";
   return {
     estado,
-    ampliada: p.get("ampliada") === "1",
+    // `ampliada` NO se pide: se deduce del alto de la VENTANA, que es quien manda. Así la banda
+    // no puede dibujarse ampliada dentro de un marco de 88 px (ni al revés) y el asa funciona
+    // sin avisar a nadie: cambia la ventana, y la banda se entera midiendo.
+    ampliada: alto >= DESDE_AMPLIADA,
     transcript: p.get("transcript") === "1",
     acoplada: p.get("acoplada") !== "0",
     verificado: p.get("verificado") !== "0",
@@ -69,6 +73,7 @@ function bandaDesdeLaUrl(busqueda: string) {
 
 export function Enrutador({ busqueda = globalThis.location?.search ?? "" }: { busqueda?: string }) {
   const ventana = ventanaActual(busqueda);
+  const alto = useAltoDeVentana();
 
   // La identidad de la ventana vive en `<html>`, al lado del tema y del idioma: un solo lugar de
   // verdad del que cuelga el CSS de ventana — y, de paso, lo que un e2e puede leer sin adivinar.
@@ -84,7 +89,7 @@ export function Enrutador({ busqueda = globalThis.location?.search ?? "" }: { bu
       return (
         <>
           <SpriteIconos />
-          <Banda {...bandaDesdeLaUrl(busqueda)} />
+          <Banda {...bandaDesdeLaUrl(busqueda, alto)} />
         </>
       );
     default:

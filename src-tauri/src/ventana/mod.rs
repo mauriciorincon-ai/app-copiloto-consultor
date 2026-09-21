@@ -85,16 +85,7 @@ pub fn abrir_banda<R: Runtime>(app: &AppHandle<R>, alto: u32) -> Result<(), Stri
     let ventanas = app.config().app.windows.clone();
     invariante_de_proteccion(&proteccion_declarada(&ventanas))?;
 
-    let monitor = app
-        .primary_monitor()
-        .map_err(|e| format!("no se pudo leer el monitor principal: {e}"))?
-        .ok_or_else(|| "no hay monitor principal".to_string())?;
-    let escala = monitor.scale_factor();
-    let tamano: LogicalSize<f64> = monitor.size().to_logical(escala);
-    let origen: LogicalPosition<f64> = monitor.position().to_logical(escala);
-
-    let ancho = tamano.width;
-    let y = origen.y + tamano.height - f64::from(alto);
+    let (ancho, x, y) = geometria(app, alto)?;
 
     for etiqueta in [RELLENO, BANDA] {
         let cfg = config_de(&ventanas, etiqueta)?;
@@ -107,7 +98,7 @@ pub fn abrir_banda<R: Runtime>(app: &AppHandle<R>, alto: u32) -> Result<(), Stri
             .set_size(LogicalSize::new(ancho, f64::from(alto)))
             .map_err(|e| format!("«{etiqueta}»: {e}"))?;
         ventana
-            .set_position(LogicalPosition::new(origen.x, y))
+            .set_position(LogicalPosition::new(x, y))
             .map_err(|e| format!("«{etiqueta}»: {e}"))?;
 
         // El relleno no intercepta nada: ni clics ni foco. Es un rectángulo y nada más.
@@ -119,6 +110,65 @@ pub fn abrir_banda<R: Runtime>(app: &AppHandle<R>, alto: u32) -> Result<(), Stri
     }
 
     Ok(())
+}
+
+/// Ajusta el alto de la banda **y el de su relleno**, manteniendo el borde inferior pegado a la
+/// pantalla. Es lo que hace el asa.
+///
+/// Los dos se mueven en la misma llamada a propósito: si el relleno pudiera quedarse en 88 px
+/// mientras la banda crece a 200, la franja de arriba dejaría de estar cubierta y la captura vería
+/// lo que hay detrás — el mismo fallo que el relleno existe para evitar, por la puerta de al lado.
+pub fn ajustar_banda<R: Runtime>(app: &AppHandle<R>, alto: u32) -> Result<(), String> {
+    let alto = alto.clamp(ALTO_VOZ, ALTO_AMPLIADA);
+    let (ancho, x, y) = geometria(app, alto)?;
+    for etiqueta in [RELLENO, BANDA] {
+        let Some(v) = app.get_webview_window(etiqueta) else { continue };
+        v.set_size(LogicalSize::new(ancho, f64::from(alto)))
+            .map_err(|e| format!("«{etiqueta}»: {e}"))?;
+        v.set_position(LogicalPosition::new(x, y))
+            .map_err(|e| format!("«{etiqueta}»: {e}"))?;
+    }
+    Ok(())
+}
+
+/// Ancho y esquina superior izquierda de la franja, para un alto dado.
+fn geometria<R: Runtime>(app: &AppHandle<R>, alto: u32) -> Result<(f64, f64, f64), String> {
+    let monitor = app
+        .primary_monitor()
+        .map_err(|e| format!("no se pudo leer el monitor principal: {e}"))?
+        .ok_or_else(|| "no hay monitor principal".to_string())?;
+    let escala = monitor.scale_factor();
+    let tamano: LogicalSize<f64> = monitor.size().to_logical(escala);
+    let origen: LogicalPosition<f64> = monitor.position().to_logical(escala);
+    Ok((
+        tamano.width,
+        origen.x,
+        origen.y + tamano.height - f64::from(alto),
+    ))
+}
+
+/// Deja en el log la geometría REAL de cada ventana: etiqueta, posición y tamaño. Solo metadatos
+/// —ni una cadena de contenido— y es lo que vuelve contestable la pregunta «¿lo viste correr?».
+/// Sin esto, comprobar dónde acabó una ventana obliga a interrogar al sistema desde fuera, y el
+/// sistema contesta cosas distintas según el momento (medido: la misma ventana reportada en x=0,
+/// x=-84 y x=-1753 en lecturas seguidas).
+pub fn registrar_geometria<R: Runtime>(app: &AppHandle<R>) {
+    for etiqueta in [PRINCIPAL, BANDA, RELLENO] {
+        let Some(v) = app.get_webview_window(etiqueta) else {
+            println!("[ventanas] «{etiqueta}»: no existe");
+            continue;
+        };
+        let escala = v.scale_factor().unwrap_or(1.0);
+        let t = v.outer_size().map(|s| s.to_logical::<f64>(escala));
+        let p = v.outer_position().map(|q| q.to_logical::<f64>(escala));
+        match (t, p) {
+            (Ok(t), Ok(p)) => println!(
+                "[ventanas] «{etiqueta}»: {:.0}x{:.0} en ({:.0},{:.0}) escala {escala}",
+                t.width, t.height, p.x, p.y
+            ),
+            _ => println!("[ventanas] «{etiqueta}»: geometría ilegible"),
+        }
+    }
 }
 
 /// Cierra la banda y su relleno. El relleno **muere con la banda**, siempre: una franja de relleno

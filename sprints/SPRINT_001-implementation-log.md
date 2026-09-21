@@ -341,6 +341,49 @@ hoja de contacto: el 2,5 % del transcript lo encontró la resta, no el ojo.
 **Estado:** `typecheck` · `lint` · `test` **50/50 (94,5 % líneas)** · `build` · `cargo test` 8/8 ·
 `verify:ephemeral` · `fidelidad` 40/40. 
 
+#### La verificación en vivo de la promesa — lo que se probó y lo que NO
+
+La app corrió de verdad (regla 15, tercer filo). El registro de geometría que se añadió para esto
+dice, con la ventana ya asentada:
+
+```
+[ventanas] «principal»: 960x641 en (255,175)
+[ventanas] «banda»:    1470x88  en (0,868)
+[ventanas] «relleno»:  1470x88  en (0,868)
+```
+
+**Verificado, con evidencia directa:**
+
+| Qué | Cómo |
+|---|---|
+| La banda lleva la protección del sistema | `sharingState = 0` y macOS **se niega** a capturarla: `screencapture -l <id>` responde *«could not create image from window»*. La misma orden sobre el relleno sí produce imagen |
+| El relleno es opaco y negro, exactamente en el rectángulo de la banda | capturado a solas: 2940×176, **100 % opaco, rgb(0,0,0)** |
+| Exactamente una ventana protegida, y es la banda | en ejecución, no solo en la configuración |
+
+**NO verificado — y es lo que más importa:** que el relleno **cubra la franja en una pantalla
+compartida**. No se pudo decidir aquí, y las dos herramientas fallan por motivos distintos:
+
+- **`screencapture` mueve lo que mide.** Justo después de una captura, las ventanas de la app se
+  reportan en `x=-1530, y=839, 1470x117` cuando en reposo están en `x=0, y=868, 1470x88`. Con la
+  herramienta desplazando aquello mismo que se quiere fotografiar, la franja sale «vacía» — y eso
+  se lee, con toda la buena fe, como «el relleno no funciona».
+- **ScreenCaptureKit** (la API que usan Meet, Zoom y Teams; `scripts/verificar-proteccion.swift`)
+  dio **100 % negro una vez** —la franja cubierta, nada filtrado— y **0 % las cinco siguientes**,
+  sin cambiar nada. Intermitente.
+
+**Un error propio, registrado porque casi se publica.** Entre medias monté un A/B: con
+`visibleOnAllWorkspaces: false` la franja salió negra y con `true` no, y la conclusión «la bandera
+de todos los Espacios rompe el relleno» era redonda, grave y **falsa**. Al repetirla con la
+bandera en `false`, cinco de cinco dieron 0 %. La bandera queda como estaba, aprobada en el
+diseño. Lo que fallaba era el método: **una sola pasada de una medición intermitente no es una
+medición**, y una conclusión limpia sobre un fallo grave es justo la que más ganas dan de no
+repetir.
+
+**Consecuencia:** la comprobación del relleno queda como **parada ⭐ obligatoria** en llamada real
+con pantalla compartida — que era el riesgo nº 3 del plan, ahora con medidas detrás en vez de
+cautela genérica. `scripts/verificar-proteccion.swift` viaja en el repo como su instrumento:
+inspecciona **solo** la franja inferior y reporta color medio y porcentaje de negro.
+
 #### Lo que la fase 1 todavía debe
 
 Dos comportamientos nativos que **necesitan al usuario delante** para verlos correr de verdad

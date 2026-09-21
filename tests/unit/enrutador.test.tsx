@@ -17,6 +17,11 @@ function pinta(busqueda: string) {
   return render(<Enrutador busqueda={busqueda} />);
 }
 
+/** El alto de la ventana, que es lo que decide si la banda va compacta o ampliada. */
+function alto(px: number) {
+  Object.defineProperty(globalThis, "innerHeight", { value: px, configurable: true, writable: true });
+}
+
 describe("el enrutador de ventanas", () => {
   it("la banda dibuja la banda, con su sprite de iconos", () => {
     const { container } = pinta("?ventana=banda&estado=ficha");
@@ -25,9 +30,22 @@ describe("el enrutador de ventanas", () => {
     expect(document.documentElement.dataset.ventana).toBe("banda");
   });
 
-  it("el asa y el transcript se piden por parámetro (así se recorre el gate de fidelidad)", () => {
-    const { container } = pinta("?ventana=banda&estado=ficha&ampliada=1&transcript=1");
-    expect(container.querySelector("section.banda")?.className).toBe("banda ampliada");
+  it("la banda se dibuja ampliada o no según el ALTO DE LA VENTANA, no según un parámetro", () => {
+    // Quien manda es la ventana: el asa la cambia de tamaño y la banda se entera midiendo. Si
+    // esto dependiera de un parámetro, una banda ampliada podría acabar dibujada dentro de un
+    // marco de 88 px —recortada por `overflow: hidden`— sin que nada se quejara.
+    alto(88);
+    expect(pinta("?ventana=banda&estado=ficha").container.querySelector("section.banda")?.className).toBe("banda");
+
+    alto(200);
+    expect(pinta("?ventana=banda&estado=ficha").container.querySelector("section.banda")?.className).toBe(
+      "banda ampliada",
+    );
+  });
+
+  it("el transcript se pide por parámetro (así se recorre el gate de fidelidad)", () => {
+    alto(200);
+    const { container } = pinta("?ventana=banda&estado=ficha&transcript=1");
     expect(container.querySelector(".transcript-b")).not.toBeNull();
   });
 
