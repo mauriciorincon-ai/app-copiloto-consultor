@@ -356,21 +356,24 @@ function Transcript() {
       <span className="turno">
         <span className="quien">
           <Ic id="i-sistema" s />
-          {t.cliente} {m.hora1}
+          {t.cliente}
+          <span className="hora">{m.hora1}</span>
         </span>
         <q>{m.turno1}</q>
       </span>
       <span className="turno tu">
         <span className="quien">
           <Ic id="i-mic" s />
-          {t.tu} {m.hora2}
+          {t.tu}
+          <span className="hora">{m.hora2}</span>
         </span>
         <q>{m.turno2}</q>
       </span>
       <span className="turno">
         <span className="quien">
           <Ic id="i-sistema" s />
-          {t.cliente} {m.hora2}
+          {t.cliente}
+          <span className="hora">{m.hora2}</span>
         </span>
         <q>{m.turno3}</q>
       </span>

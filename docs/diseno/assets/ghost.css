@@ -107,7 +107,7 @@ html[data-lang="es"] [lang="en"] { display: none !important; }
 html[data-lang="en"] [lang="es"] { display: none !important; }
 
 /* Iconos (D9): SVG de trazo 16 px, monocromo, currentColor */
-.ic { width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; }
+.ic { display: inline-block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; }
 .ic.s { width: 13px; height: 13px; vertical-align: -2px; }
 .ic.relleno { fill: currentColor; stroke: none; }
 
@@ -166,9 +166,10 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .barra .pistas .pista { display: inline-flex; align-items: center; gap: 3px; }
 .barra .pistas .pista.off { color: var(--mute); }
 .barra .pistas .pista.off .ic { opacity: .75; }
-.barra .red { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; color: var(--ink-2); }
-.barra .red.cero { color: var(--ok); }
-.barra .red.api { color: var(--halo); }
+.red { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.red.cero { color: var(--ok); }
+.red.api { color: var(--halo); }
+.barra .red { margin-left: auto; }
 
 /* Cuerpo */
 .cuerpo { flex: 1 1 auto; min-height: 0; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
@@ -427,6 +428,10 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .banda .transcript-b .cab .tecla { margin-left: auto; }
 .banda .transcript-b .turno { display: flex; gap: 6px; align-items: baseline; min-width: 0; }
 .banda .transcript-b .turno .quien { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 3px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
+/* La hora es un dato, no el resto del renglón: elemento propio y cifras de ancho fijo.
+   Sin elemento, el hueco entre hablante y hora dependía de DÓNDE cayera un espacio del
+   HTML — y la maqueta y el producto no parten el texto por el mismo sitio. */
+.banda .transcript-b .turno .quien .hora { font-variant-numeric: tabular-nums; }
 .banda .transcript-b .turno.tu .quien { color: var(--halo); }
 .banda .transcript-b .turno q { font-family: var(--font-evidencia); font-size: 12.5px; color: var(--ink); quotes: "\00ab" "\00bb"; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

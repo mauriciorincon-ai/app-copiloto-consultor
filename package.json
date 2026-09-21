@@ -13,7 +13,9 @@
     "test": "vitest run --coverage",
     "test:e2e": "playwright test --pass-with-no-tests",
     "prepare": "git config core.hooksPath githooks",
-    "verify:ephemeral": "node scripts/verify-ephemeral.mjs"
+    "verify:ephemeral": "node scripts/verify-ephemeral.mjs",
+    "fidelidad": "pnpm build && node scripts/capturar-fidelidad.mjs",
+    "capturas": "node scripts/capturar-maqueta.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

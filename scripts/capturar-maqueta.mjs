@@ -102,9 +102,10 @@ for (const estado of estados) {
       // el mismo fallo que un gate que no corre: por eso ahora se cuenta y se reporta.
       // El recorte es la REFERENCIA del gate de fidelidad: solo producto. Se apaga el chrome
       // de la sala de diseño, que está posicionado encima y se colaría en la imagen.
-      await pag.evaluate(() => {
-        for (const el of document.querySelectorAll(".mq-choque, .mq-corte, .mq-etiqueta")) el.style.visibility = "hidden";
-      });
+      await pag.evaluate((sel) => {
+        for (const el of document.querySelectorAll(sel)) el.style.display = "none";
+        window.scrollTo(0, 0);
+      }, ".mq-bar, .mq-nota, .mq-choque, .mq-corte, .mq-etiqueta, .mq-tabla-pos, .mq-hero, .mq-grupo");
       let recortado = false;
       for (const sel of [".banda", ".panel", ".pildora"]) {
         for (const el of await pag.$$(sel)) {
@@ -116,9 +117,9 @@ for (const estado of estados) {
         if (recortado) break;
       }
       if (!recortado) sinRecorte.push(`${estado} · ${tema} · ${idioma}`);
-      await pag.evaluate(() => {
-        for (const el of document.querySelectorAll(".mq-choque, .mq-corte, .mq-etiqueta")) el.style.visibility = "";
-      });
+      await pag.evaluate((sel) => {
+        for (const el of document.querySelectorAll(sel)) el.style.display = "";
+      }, ".mq-bar, .mq-nota, .mq-choque, .mq-corte, .mq-etiqueta, .mq-tabla-pos, .mq-hero, .mq-grupo");
     }
   }
 }

@@ -216,8 +216,142 @@ esta reunión. Una maniobra armada con eso —«no tienes nada de certificación
 afirmar nada que la app no haya leído. El catálogo fijo pasa entonces a ser el último recurso, no
 la respuesta normal. Registrado en `design-system.md` §10.
 
-### Fase 1b — la banda construida
-(en curso)
+### Fase 1b — la banda construida (2026-09-20)
+
+#### Las tres ventanas, y dónde vive el flag que lo sostiene todo
+
+| Ventana | Qué es | Protegida de la captura |
+|---|---|---|
+| `principal` | 960 × 640, las pantallas del cuaderno (fase 2) | no |
+| `banda` | ancho de pantalla × 88 (asa → 200), pegada al borde inferior | **sí, y es la única** |
+| `relleno` | la misma geometría, sin contenido, justo debajo | no, **a propósito** |
+
+El **riesgo nº 1 del plan** era que el relleno heredara el flag de protección al copiar el
+constructor de la banda: la franja volvería a mostrar lo que hay detrás y **nadie se enteraría**,
+porque desde el Mac del consultor las dos versiones se ven idénticas. Se resolvió quitándole el
+sitio donde podía pasar: **el flag vive solo en `tauri.conf.json`** y las ventanas se construyen
+con `from_config` (verificado en el código de `tauri-runtime-wry`: `with_config` aplica
+`content_protected`). No hay nada que heredar en un constructor porque el constructor no lo lleva.
+
+Encima, `invariante_de_proteccion()` corre en `setup()` **antes de abrir nada** y aborta el
+arranque si el invariante no se cumple. Una banda que se abre sin su promesa es peor que una
+banda que no se abre.
+
+Capabilities por ventana: el relleno solo tiene `core:event` y `core:window` — lo justo para que
+Rust lo mueva. Nada que pueda cargar ni mostrar algo.
+
+#### La banda en React — sin copiar el design system
+
+Dos decisiones que quitan deriva en vez de vigilarla:
+
+- **El producto importa `ghost.css`**, no lo copia. `design-system.md` ya declaraba ese archivo
+  como `fuente_en_codigo`; ahora es literal. La banda construida y la maqueta comparten el mismo
+  CSS, así que el gate de fidelidad compara dos cosas que **no pueden** separarse.
+- **El sprite de iconos se extrae de `iconos.js` en compilación** (`?raw`). Una sola fuente para
+  los cuarenta símbolos. `<use href="#i-lo-que-sea">` con un id inexistente no lanza error: dibuja
+  **nada**, y el estado se queda sin símbolo — justo lo que la regla del daltonismo prohíbe.
+
+#### Gates nuevos, cada uno visto en rojo en el mismo commit (regla 15)
+
+| Gate | Demo en rojo | Qué nombró |
+|---|---|---|
+| `proteccion-de-captura` (config) | `contentProtected: true` en el relleno | «protegidas: [relleno, banda] — tiene que ser exactamente ["banda"]» |
+| `proteccion-de-captura` (código) | `.content_protected(true)` plantado en el bucle que crea las dos ventanas | `ventana/mod.rs:103`. **La config no lo habría visto**: seguiría siendo correcta. Por eso son dos caminos |
+| `invariante_de_proteccion` (Rust) | el mismo cambio de config | «hay 2 ventanas protegidas (relleno, banda), y solo la banda puede estarlo» |
+| `iconos` | renombrar `i-flecha` en la maqueta | «Banda.tsx pide «i-flecha», que el sprite no declara» |
+| `sistema-sin-sala-de-diseno` | plantar `.mq-bar .banda {…}` en `ghost.css` | `ghost.css:498`. Ahora que el producto importa ese archivo, lo que entre ahí viaja al binario |
+| **fidelidad** (píxel a píxel) | `padding-left: 17px` en la cabecera de la banda del producto | los **40** encuadres en rojo, 1,2–1,9 % |
+
+Y uno que no es de código: **el relleno no dibuja nada** — ni texto, ni banda, ni iconos, ni
+imágenes. Es lo único que una captura encuentra donde vive la banda; si alguien le mete contenido
+«solo para depurar», eso es exactamente lo que vería el cliente, y no hay aviso posible porque
+desde este lado el relleno está tapado por la banda y no se ve nunca.
+
+#### El gate de FIDELIDAD se mide, no se ojea
+
+`pnpm fidelidad` captura el mismo encuadre dos veces —la maqueta aprobada y el producto servido
+desde el build— en **diez encuadres × dos temas × dos idiomas**, y los compara **píxel a píxel**
+dentro del navegador (canvas; sin dependencias nuevas). Una hoja de contacto en
+`docs/fidelidad/S1-banda.html` los pone en pareja para mirarlos.
+
+Comparar de verdad no es ceremonia: **un ojo cansado aprueba una banda desplazada 3 px**, y esa
+banda ya no obedece a la maqueta. El umbral es **0,15 %**, con su suelo medido: la banda de la
+maqueta vive dentro del escritorio de referencia, cuyo marco redondeado le muerde la última fila
+—73 px sobre 103 000, todos en `y = 85..87`— y eso es del encuadre, no del producto. Un
+desplazamiento real de texto pasa del 2 %, así que 0,15 % separa artefacto de defecto sin holgura
+de sobra. Un umbral generoso «por si acaso» es un gate que no puede fallar.
+
+**Resultado: 40/40 por debajo del umbral, máximo 0,070 %.**
+
+#### Lo que el gate encontró — tres defectos que ninguna captura mirada a ojo habría dado
+
+1. **El *preflight* de Tailwind reescribe el design system.** Pone `display: block` en todo `svg`;
+   el contador de red partía en dos renglones («↑» arriba, «0 B» abajo) solo en el producto. Y al
+   ir a arreglarlo apareció la causa de fondo: **el contador estaba escrito como `.barra .red`**,
+   es decir como hijo del panel, así que dentro de la banda perdía su anatomía entera —ni Menlo,
+   ni cifras de ancho fijo, ni verde, ni una sola línea— **también en la maqueta**. Se promovió a
+   componente (`.red`) y `.ic` declara su propio `display`, para que ningún reset de al lado
+   vuelva a moverlo. Arreglado, la maqueta y el producto mejoraron a la vez.
+2. **`index.html` seguía siendo el andamio de Vite**, con `<html lang="en">`. Eso pisaba la
+   detección de idioma: un Mac en español veía la app en inglés, y la primera pasada del gate
+   capturó los cuatro cruces de tema e idioma… en inglés los cuatro. El archivo ya no pinta el
+   idioma: lo fija la cáscara desde el sistema. De paso murió el resto del andamio (`vite.svg`,
+   `tauri.svg`, `react.svg`, `App.css`, el título «Tauri + React + Typescript»).
+3. **El transcript se desviaba 2,5 %** en los cuatro cruces, y a ojo parecía idéntico. La causa:
+   en la maqueta «cliente» y «14:01» son dos elementos flex (el espacio cae fuera del par
+   `<span lang>`), y en el producto uno solo — 3 px de `gap` de diferencia que empujaban toda la
+   cita. La hora pasa a ser **un elemento con nombre** en los dos lados, con cifras de ancho fijo,
+   que es lo que debió ser desde el principio: un dato, no «lo que quedó del renglón».
+
+> **Regla que sale de aquí, para el design system:** dentro de un contenedor flex, **cada dato
+> lleva su propio elemento**. Dejar que el hueco lo decida dónde cae un espacio del HTML funciona
+> hasta que dos plantillas parten el texto por sitios distintos — y entonces la diferencia es de
+> 3 px y no la ve nadie.
+
+#### El arnés de capturas, tercera corrección — y el patrón
+
+Ya volvió al repo en la fase 1a; en esta fase falló **dos veces más**, las dos por lo mismo:
+- escribía **24 de 36** recortes y callaba (tomaba el primer `.banda` del DOM; los tres estados
+  ampliados no tenían recorte). Ahora los huecos se **imprimen**;
+- la barra de estados de la sala de diseño es `position: sticky`: al desplazarse para fotografiar
+  la banda ampliada **se le montaba encima**, y la referencia del gate salía con media banda
+  tapada por botones. Ahora se apaga la sala de diseño entera antes de cada recorte.
+
+El patrón es el mismo las tres veces: **un arnés de imágenes falla por lo que NO está en el
+cuadro**, y eso no se ve mirando el cuadro. De ahí que la comparación numérica valga más que la
+hoja de contacto: el 2,5 % del transcript lo encontró la resta, no el ojo.
+
+#### Archivos de la fase 1b
+
+| Archivo | Qué |
+|---|---|
+| `src-tauri/tauri.conf.json` | las tres ventanas; `productName: Angel Ghost` |
+| `src-tauri/src/ventana/mod.rs` | **nuevo** — geometría, ciclo de vida e invariante de protección |
+| `src-tauri/src/lib.rs` | comandos `abrir_banda`/`cerrar_banda`; el invariante aborta el arranque |
+| `src-tauri/capabilities/{default,banda,relleno}.json` | permisos por ventana |
+| `src/componentes/{Banda,Iconos,Relleno,Principal}.tsx` | **nuevos** |
+| `src/ventanas.ts`, `src/App.tsx` | **nuevo** / enrutado por etiqueta de ventana |
+| `src/i18n/{es,en}.ts` | el diccionario de la banda entera + la muestra sintética (muere en la fase 4) |
+| `src/index.css`, `index.html` | CSS de ventana; el andamio de Vite fuera |
+| `docs/diseno/assets/ghost.css` | `.red` promovido a componente · `.ic` con `display` propio · `.hora` |
+| `scripts/capturar-fidelidad.mjs` | **nuevo** — el gate de fidelidad, con su comparación numérica |
+| `docs/fidelidad/S1-banda.html` + `s1/` | la evidencia: 80 imágenes en pareja |
+| `tests/unit/{banda,enrutador,ventanas,iconos,proteccion-de-captura,sistema-sin-sala-de-diseno}.*` | **nuevos** |
+
+**Estado:** `typecheck` · `lint` · `test` **50/50 (94,5 % líneas)** · `build` · `cargo test` 8/8 ·
+`verify:ephemeral` · `fidelidad` 40/40. 
+
+#### Lo que la fase 1 todavía debe
+
+Dos comportamientos nativos que **necesitan al usuario delante** para verlos correr de verdad
+(regla 15, tercer filo: ¿lo viste correr en el modo en que se va a usar?):
+
+- **El acople** (Accessibility): recortar la ventana de la reunión y devolverla al cerrar y al
+  crashear. Exige que el usuario conceda el permiso de Accesibilidad en su Mac.
+- **El relleno con el fondo de escritorio** (hoy negro, que es la opción declarada de una tecla y
+  no filtra nada). Exige mirar una captura de pantalla compartida real.
+
+Ninguno de los dos cambia la banda que el gate de fidelidad compara: son comportamiento, no UI.
 
 ## Desviación del plan (2026-09-20) — la MANIOBRA es producto nuevo
 
