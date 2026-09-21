@@ -218,4 +218,21 @@ html[data-ventana="relleno"] body { background: #000; }
   background-position: center;
 }
 
-.principal-vacia { height: 100%; }
+/* La ventana principal ES el cuaderno: en la maqueta la tarjeta de 960 × 640 vive centrada
+   dentro de la página; en producto la ventana nativa ya tiene ese tamaño, así que ocupa su marco
+   entero. Pierde el REDONDEO y la SOMBRA —los dibuja macOS en la ventana de verdad, y repetirlos
+   por dentro deja las esquinas rotas— pero **conserva el borde**.
+
+   Conservarlo no es cosmético: el borde ocupa 1 px arriba, y quitarlo sube el contenido entero
+   ese píxel. A ojo no se ve; medido contra la maqueta valía 9 % de píxeles distintos, porque un
+   desplazamiento de 1 px ensucia el borde de cada letra de la pantalla.
+
+   Y la SOMBRA también se queda. La de fuera no se ve —cae fuera de la ventana nativa— pero
+   `--sombra-panel` lleva además una línea interior de 1 px en el borde superior, y quitarla
+   entera se llevaba esa línea por delante: 765 px distintos en la primera fila. Lo único que
+   sobra es el REDONDEO, que lo dibuja macOS y repetirlo por dentro deja las esquinas rotas. */
+html[data-ventana="principal"] .ventana {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}

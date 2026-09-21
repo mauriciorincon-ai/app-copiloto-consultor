@@ -99,6 +99,99 @@ export const es = {
       hora2: "14:02",
     },
   },
+  /**
+   * EL CUADERNO — las pantallas de la ventana principal (960 × 640).
+   *
+   * Referencia: `docs/diseno/{sesion,permisos,honestidad}.html`, estado **«así se ve hoy · sprint
+   * 1»** (mirada 12, aprobada el 2026-09-21). Igual que con la banda, cada cadena de aquí existe
+   * TAL CUAL en la maqueta y el gate del diccionario lo vigila.
+   */
+  cuaderno: {
+    // ---- el rail, compartido por las tres ----
+    marca: "Angel Ghost",
+    marcaSub: "cuaderno privado",
+    navSesion: "Sesión",
+    navPermisos: "Permisos",
+    navCorpus: "Corpus",
+    navNotas: "Notas",
+    navHonestidad: "Honestidad",
+    navIdioma: "Idioma",
+    navIa: "IA",
+    sinSesion: "Sin sesión · 0 B",
+    meetDetectado: "Meet detectado · 0 B",
+
+    // ---- vocabulario de «todavía no» (§9-sexies) ----
+    todaviaNo: "Todavía no",
+    funciona: "Funciona",
+
+    // ---- sesión ----
+    sesionTitulo: "Antes de empezar",
+    sesionSub: "Nada se enciende hasta que tú lo digas. Esto es lo que la app ve de tu propio Mac.",
+    proteccionVerificada: "Protección verificada",
+    proteccionSinVerificar: "Zoom · sin verificar",
+    proteccionDetalle:
+      "Tu panel no aparece en la pantalla que compartes. Verificado en tu Mac (macOS 26.6.2) el 2026-09-20. En Zoom y Teams está sin verificar.",
+    dosPistas: "Las dos pistas",
+    pistaMic: "Micrófono — tú",
+    pistaSistema: "Audio del sistema — el cliente",
+    pistaPantalla: "Pantalla — solo cuando cambia",
+    pistaAuriculares: "Auriculares conectados",
+    esteCliente: "Este cliente",
+    fichaNdaRadar: "Ficha del cliente, NDA y radar",
+    noSeInventa: "No se inventa nada mientras no exista: ni bandera, ni riesgo, ni catálogo.",
+    queFuncionaHoy: "Qué funciona hoy",
+    funcionaBanda: "La banda, abajo, protegida de la captura",
+    funcionaAcople: "La reunión se hace sitio: se acopla y vuelve al cerrar",
+    funcionaCorte: "Corta todo y vacía la memoria",
+    iniciarSesion: "Iniciar sesión",
+    nadaSale: "el sonido nunca se guarda · nada sale de tu equipo",
+    sinReunion: "Sin reunión abierta",
+    tituloDeMuestra: "Páramo Azul — Propuesta tablero de rentabilidad",
+    sinReunionVoz: "Abre Zoom, Meet o Teams y aparecerá aquí. Mientras tanto, prepara la reunión.",
+
+    // ---- permisos ----
+    permisosTitulo: "Permisos de macOS",
+    permisosSub: "Tú los concedes en el sistema, no aquí. La app funciona sin ellos: solo hace menos.",
+    permMic: "Micrófono",
+    permMicPara: "Tu voz, para saber cuándo hablas tú. Solo en memoria; nunca se graba.",
+    permSistema: "Audio del sistema",
+    permSistemaPara: "Lo que suena en tu Mac: la voz del cliente. Sin bot en la reunión.",
+    permPantalla: "Pantalla",
+    permPantallaPara: "Lee cifras y títulos solo cuando la pantalla cambia. Las imágenes no se guardan.",
+    permAcople: "Acoplar la ventana de la reunión",
+    permAcoplePara:
+      "Para que la banda no tape la llamada: la reunión se encoge y las dos conviven. macOS lo llama «Accesibilidad».",
+    concedido: "Concedido",
+    sinConceder: "Sin conceder",
+    concederEnMacos: "Conceder en macOS",
+    unSoloPermiso: "Audio del sistema y Pantalla son un solo permiso en macOS: se conceden y se caen juntos.",
+    sinConcederNada: "Qué puedes hacer ya, sin conceder nada",
+    indexar: "Indexar tu corpus",
+    escribirNotas: "Escribir notas y acuerdos",
+    buscarAMano: "Buscar tu evidencia a mano",
+    queTextoVeras: "Qué texto verás en macOS",
+    textoMicrofono:
+      "«Angel Ghost usa el micrófono para saber cuándo hablas tú. El audio vive solo en memoria y no se graba.»",
+    claveMicrofono: "NSMicrophoneUsageDescription · es / en",
+
+    // ---- honestidad ----
+    honestidadTitulo: "Honestidad",
+    honestidadSub: "Qué vive en la memoria ahora mismo y qué salió de tu equipo. Se demuestra, no se promete.",
+    queViveEnMemoria: "Qué vive en la memoria ahora",
+    bufMic: "Audio · micrófono",
+    bufSistema: "Audio · sistema",
+    bufTranscript: "Transcript",
+    bufFrame: "Último frame leído",
+    salieronDeTuEquipo: "salieron de tu equipo en esta reunión",
+    modo: "Modo",
+    modoLocal: "100 % local · API apagado",
+    modoDetalle:
+      "En esta versión no existe código capaz de abrir una conexión: el cero no se mantiene por disciplina.",
+    piezasCola: "piezas: las otras cuatro todavía no existen.",
+    loQueQuedara: "Lo que quedará cuando cierres",
+    loQueQuedaraDetalle:
+      "Notas, acuerdos y fichas fijadas llegan más adelante. Hoy no queda nada porque hoy no se escribe nada.",
+  },
 };
 
 /**

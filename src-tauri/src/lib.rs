@@ -286,6 +286,7 @@ pub fn run() {
                 // (0,868)». Un registro que miente es peor que no tenerlo — se usa para decidir.
                 std::thread::sleep(std::time::Duration::from_millis(600));
                 ventana::registrar_geometria(&mango);
+                registrar_lo_que_ve();
                 arrancar_el_acople(&mango);
                 acoplar_cuando_haya_a_quien(&mango);
             });
@@ -331,6 +332,33 @@ fn arrancar_el_acople<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
         println!("[acople] sin permiso de Accesibilidad: la banda flota. Se pide una vez.");
         acople::pedir_permiso();
     }
+}
+
+/// Deja en el log lo que la app VE del Mac al arrancar: qué videollamada hay y qué permisos
+/// tiene. Es lo que vuelve contestable la pregunta «¿lo viste correr?» para dos módulos cuya
+/// respuesta depende por completo de la máquina, y que por tanto ningún test puede afirmar.
+///
+/// **Metadatos y nada más**: el cliente de videollamada («Google Meet») y los cuatro estados de
+/// permiso. **El título de la reunión no se escribe** — es información del cliente, vive en
+/// memoria mientras la pantalla lo muestra, y un log es un archivo.
+fn registrar_lo_que_ve() {
+    let p = permisos::leer();
+    println!(
+        "[permisos] micrófono={:?} pantalla={:?} accesibilidad={:?} · cara={:?}",
+        p.microfono,
+        p.pantalla,
+        p.accesibilidad,
+        permisos::cara(&p)
+    );
+    match sesion::ahora() {
+        sesion::Reunion::Detectada { cliente, proteccion, .. } => println!(
+            "[sesion] reunión detectada: «{cliente}» · protección {proteccion:?} · catálogo {}",
+            sesion::VERSION_CATALOGO
+        ),
+        sesion::Reunion::Ninguna => println!("[sesion] ninguna videollamada del catálogo abierta"),
+        sesion::Reunion::NoSePuedeSaber { motivo } => println!("[sesion] no se puede saber: {motivo}"),
+    }
+    println!("[red] salida acumulada: {}", red::formatear(red::bytes()));
 }
 
 /// `⌥⎋` — la tecla del kill-switch, tal y como la dibuja la maqueta.

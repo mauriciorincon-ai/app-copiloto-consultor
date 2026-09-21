@@ -38,6 +38,18 @@ construir el siguiente artefacto.
 
 | 12 | `sesion.html` · `permisos.html` · `honestidad.html` — el estado **«así se ve hoy · sprint 1»** y el componente **«todavía no»** | la maqueta dibuja el producto terminado y cada sprint entrega un trozo; sin una forma escrita de decir «esto aún no existe», las pantallas de la fase 2 solo podían mentir en verde o esconder lo que falta. Se propuso en la bitácora ANTES de construir la UI del producto | antes de escribir la primera línea de las pantallas del cuaderno |
 
+### Mirada 12 — veredicto del usuario (2026-09-21)
+
+> **«Esta muy bien como indica que no todavia no existe en sesion permisos y honestidad»**
+
+**Aprobada.** El usuario abrió las tres pantallas y nombró las tres. `.estado.pendiente` y el
+estado «así se ve hoy · sprint 1» quedan aprobados como parte del design system (§9-sexies,
+v1.10.0), y con ellos las dos decisiones que la maqueta no había escrito: el permiso único de
+macOS para «Audio del sistema» y «Pantalla», y la Accesibilidad en la lista principal de permisos.
+
+A partir de aquí, **toda pantalla que se entregue a medias usa este estado**: no se pinta en verde
+lo que no existe, y no se esconde.
+
 La maqueta no se congela con G-Diseño: se extiende por el mismo camino (propuesta → mirada →
 registro). Lo que **no** cambia sin una mirada nueva es lo ya aprobado — y esta extensión no
 redecide nada: cruza la forma elegida en la mirada 3-ter con el contenido aprobado en la 1.

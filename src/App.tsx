@@ -108,7 +108,7 @@ export function Enrutador({ busqueda = globalThis.location?.search ?? "" }: { bu
       return (
         <>
           <SpriteIconos />
-          <Principal />
+          <Principal busqueda={busqueda} />
         </>
       );
   }

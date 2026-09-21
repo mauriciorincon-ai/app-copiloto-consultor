@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Angel Ghost · Gate de fidelidad S1 — el cuaderno</title>
+<style>
+  body { margin: 0; padding: 22px; background: #0d0e10; color: #cfd3d8; font: 14px/1.6 "Avenir Next", system-ui, sans-serif; }
+  h1 { font-family: Charter, Georgia, serif; font-size: 26px; color: #e5e7eb; margin: 0 0 6px; }
+  p { max-width: 900px; color: #9aa2ad; margin: 0 0 10px; }
+  p b { color: #e5e7eb; }
+  .aviso { border-left: 3px solid #f0b64a; background: #1a1400; padding: 10px 14px; margin: 16px 0 24px; max-width: 900px; }
+  figure { margin: 0 0 26px; }
+  figcaption { font-family: Menlo, monospace; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #7dd3fc; margin-bottom: 6px; }
+  figcaption b { color: #e5e7eb; }
+  .par > div { margin-bottom: 6px; }
+  .et { display: inline-block; font-family: Menlo, monospace; font-size: 10.5px; color: #6b7280; margin-bottom: 2px; }
+  img { display: block; width: 100%; max-width: 960px; border: 1px solid #2b2f37; }
+  .filtros { position: sticky; top: 0; background: #14161a; margin: -22px -22px 20px; padding: 10px 22px; border-bottom: 1px solid #23262c; display: flex; gap: 8px; align-items: center; font-size: 12px; }
+  .filtros button { font: inherit; color: #cfd3d8; background: #1c1f25; border: 1px solid #2b2f37; border-radius: 5px; padding: 3px 9px; cursor: pointer; }
+  .filtros button[aria-pressed="true"] { background: #7dd3fc; border-color: #7dd3fc; color: #0b1016; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="filtros" role="toolbar" aria-label="Filtros">
+  <span>ver</span>
+  <button data-f="todo" aria-pressed="true">todo</button>
+  <button data-f="dark">oscuro</button>
+  <button data-f="light">claro</button>
+  <button data-f="es">es</button>
+  <button data-f="en">en</button>
+</div>
+<h1>Gate de fidelidad — el cuaderno</h1>
+<p>Arriba la <b>maqueta</b> que aprobaste en la mirada 12; abajo lo <b>construido</b>, servido desde el build del producto. 3 encuadres × dos temas × dos idiomas.</p>
+<p>Comparten literalmente el mismo CSS —el producto <b>importa</b> <code>ghost.css</code> en vez de copiarlo— y el mismo diccionario, que un gate verifica contra la maqueta cadena por cadena. Lo que buscas aquí es lo que ningún test puede afirmar: si se <b>lee</b> igual de bien.</p>
+<div class="aviso"><b>Lo que estas imágenes NO prueban:</b> que la ventana esté protegida de la captura. No pueden — una ventana protegida no aparece en una captura de pantalla, que es exactamente el punto. Lo fotografiado es el webview, no la ventana nativa. Comprobar la protección en una llamada real con la pantalla compartida es una parada ⭐ del gate de prueba.</div>
+  <figure data-tema="dark" data-idioma="es">
+    <figcaption><b>sesion</b> · dark · es · 640 px</figcaption>
+    <div class="par">
+      <div><span class="et">maqueta</span><img src="s1-cuaderno/maqueta/sesion--dark--es.png" alt="sesion en la maqueta, tema dark, idioma es"></div>
+      <div><span class="et">producto</span><img src="s1-cuaderno/producto/sesion--dark--es.png" alt="sesion en el producto, tema dark, idioma es"></div>
+    </div>
+  </figure>
+  <figure data-tema="dark" data-idioma="en">
+    <figcaption><b>sesion</b> · dark · en · 640 px</figcaption>
+    <div class="par">
+      <div><span class="et">maqueta</span><img src="s1-cuaderno/maqueta/sesion--dark--en.png" alt="sesion en la maqueta, tema dark, idioma en"></div>
+      <div><span class="et">producto</span><img src="s1-cuaderno/producto/sesion--dark--en.png" alt="sesion en el producto, tema dark, idioma en"></div>
+    </div>
+  </figure>
+  <figure data-tema="light" data-idioma="es">
+    <figcaption><b>sesion</b> · light · es · 640 px</figcaption>
+    <div class="par">
+      <div><span class="et">maqueta</span><img src="s1-cuaderno/maqueta/sesion--light--es.png" alt="sesion en la maqueta, tema light, idioma es"></div>
+      <div><span class="et">producto</span><img src="s1-cuaderno/producto/sesion--light--es.png" alt="sesion en el producto, tema light, idioma es"></div>
+    </div>
+  </figure>
+  <figure data-tema="light" data-idioma="en">
+    <figcaption><b>sesion</b> · light · en · 640 px</figcaption>
+    <div class="par">
+      <div><span class="et">maqueta</span><img src="s1-cuaderno/maqueta/sesion--light--en.png" alt="sesion en la maqueta, tema light, idioma en"></div>
+      <div><span class="et">producto</span><img src="s1-cuaderno/producto/sesion--light--en.png" alt="sesion en el producto, tema light, idioma en"></div>
+    </div>
+  </figure>
+  <figure data-tema="dark" data-idioma="es">
+    <figcaption><b>permisos</b> · dark · es · 640 px</figcaption>
+    <div class="par">
+      <div><span class="et">maqueta</span><img src="s1-cuaderno/maqueta/permisos--dark--es.png" alt="permisos en la maqueta, tema dark, idioma es"></div>
+      <div><span class="et">producto</span><img src="s1-cuaderno/producto/permisos--dark--es.png" alt="permisos en el producto, tema dark, idioma es"></div>
+    </div>
+  </figure>
+  <figure data-tema="dark" data-idioma="en">
+    <figcaption><b>permisos</b> · dark · en · 640 px</figcaption>
+    <div class="par">
+      <div><span class="et">maqueta</span><img src="s1-cuaderno/maqueta/permisos--dark--en.png" alt="permisos en la maqueta, tema dark, idioma en"></div>
+      <div><span class="et">producto</span><img src="s1-cuaderno/producto/permisos--dark--en.png" alt="permisos en el producto, tema dark, idioma en"></div>
+    </div>
+  </figure>
+  <figure data-tema="light" data-idioma="es">
+    <figcaption><b>permisos</b> · light · es · 640 px</figcaption>
+    <div class="par">
+      <div><span class="et">maqueta</span><img src="s1-cuaderno/maqueta/permisos--light--es.png" alt="permisos en la maqueta, tema light, idioma es"></div>
+      <div><span class="et">producto</span><img src="s1-cuaderno/producto/permisos--light--es.png" alt="permisos en el producto, tema light, idioma es"></div>
+    </div>
+  </figure>
+  <figure data-tema="light" data-idioma="en">
+    <figcaption><b>permisos</b> · light · en · 640 px</figcaption>
+    <div class="par">
+      <div><span class="et">maqueta</span><img src="s1-cuaderno/maqueta/permisos--light--en.png" alt="permisos en la maqueta, tema light, idioma en"></div>
+      <div><span class="et">producto</span><img src="s1-cuaderno/producto/permisos--light--en.png" alt="permisos en el producto, tema light, idioma en"></div>
+    </div>
+  </figure>
+  <figure data-tema="dark" data-idioma="es">
+    <figcaption><b>honestidad</b> · dark · es · 640 px</figcaption>
+    <div class="par">
+      <div><span class="et">maqueta</span><img src="s1-cuaderno/maqueta/honestidad--dark--es.png" alt="honestidad en la maqueta, tema dark, idioma es"></div>
+      <div><span class="et">producto</span><img src="s1-cuaderno/producto/honestidad--dark--es.png" alt="honestidad en el producto, tema dark, idioma es"></div>
+    </div>
+  </figure>
+  <figure data-tema="dark" data-idioma="en">
+    <figcaption><b>honestidad</b> · dark · en · 640 px</figcaption>
+    <div class="par">
+      <div><span class="et">maqueta</span><img src="s1-cuaderno/maqueta/honestidad--dark--en.png" alt="honestidad en la maqueta, tema dark, idioma en"></div>
+      <div><span class="et">producto</span><img src="s1-cuaderno/producto/honestidad--dark--en.png" alt="honestidad en el producto, tema dark, idioma en"></div>
+    </div>
+  </figure>
+  <figure data-tema="light" data-idioma="es">
+    <figcaption><b>honestidad</b> · light · es · 640 px</figcaption>
+    <div class="par">
+      <div><span class="et">maqueta</span><img src="s1-cuaderno/maqueta/honestidad--light--es.png" alt="honestidad en la maqueta, tema light, idioma es"></div>
+      <div><span class="et">producto</span><img src="s1-cuaderno/producto/honestidad--light--es.png" alt="honestidad en el producto, tema light, idioma es"></div>
+    </div>
+  </figure>
+  <figure data-tema="light" data-idioma="en">
+    <figcaption><b>honestidad</b> · light · en · 640 px</figcaption>
+    <div class="par">
+      <div><span class="et">maqueta</span><img src="s1-cuaderno/maqueta/honestidad--light--en.png" alt="honestidad en la maqueta, tema light, idioma en"></div>
+      <div><span class="et">producto</span><img src="s1-cuaderno/producto/honestidad--light--en.png" alt="honestidad en el producto, tema light, idioma en"></div>
+    </div>
+  </figure>
+<script>
+  document.querySelector(".filtros").addEventListener("click", (ev) => {
+    const b = ev.target.closest("button"); if (!b) return;
+    const f = b.dataset.f;
+    document.querySelectorAll(".filtros button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    document.querySelectorAll("figure").forEach((fig) => {
+      fig.hidden = f !== "todo" && fig.dataset.tema !== f && fig.dataset.idioma !== f;
+    });
+  });
+</script>
+</body>
+</html>

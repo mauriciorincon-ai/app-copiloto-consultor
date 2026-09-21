@@ -737,6 +737,112 @@ pantalla tal y como se entrega, que es además la referencia del gate de fidelid
 **La construcción de las tres pantallas de producto espera a la mirada 12.** El motor no: no
 depende de la respuesta.
 
+### Mirada 12 — aprobada (2026-09-21)
+
+> **«Esta muy bien como indica que no todavia no existe en sesion permisos y honestidad»**
+
+Registrada en `docs/diseno/README.md`. Con ella quedan aprobados `.estado.pendiente`, el estado
+«así se ve hoy · sprint 1» y las dos decisiones que la maqueta no había escrito (el permiso único
+de macOS, la Accesibilidad en la lista principal).
+
+### Fase 2b — las tres pantallas construidas (2026-09-21)
+
+#### El gate de fidelidad deja de estar cableado a un artefacto
+
+Nació para la banda. Cablearlo otra vez para tres pantallas más habría duplicado justo la parte
+delicada —medir el ancho de la referencia, apagar la sala de diseño, restar los mapas de bits— y
+**una copia de un gate es un gate que se arregla en un sitio y sigue roto en el otro**. Ahora
+recorre una lista de artefactos: añadir uno es añadir una entrada.
+
+**52 encuadres** (10 de la banda + 3 del cuaderno, × 2 temas × 2 idiomas), todos bajo el umbral.
+
+#### Seis defectos que encontró la comparación, y ninguno se veía a ojo
+
+Esta es la parte que importa de la fase: **la pantalla «parecía bien» en las seis versiones**.
+
+| # | Lo que medía | Causa |
+|---|---|---|
+| 1 | `924x640 vs 960x640` | la maqueta centra su artefacto con relleno lateral: si el navegador mide justo lo que mide el artefacto, ese relleno lo **encoge**. Se medía en una ventana y se fotografiaba en otra |
+| 2 | **10 %** | el rail del producto no llevaba la clase `item`: sin ella la fila pierde `display:flex`, el hueco y el relleno, y el icono se pega al texto |
+| 3 | **9 %** | quité el borde de 1 px del cuaderno «porque la ventana nativa ya es el marco». Eso **sube el contenido entero 1 px**, y un desplazamiento de 1 px ensucia el borde de cada letra de la pantalla |
+| 4 | 765 px en la primera fila | quitar la sombra se llevaba por delante la **línea interior** de 1 px que `--sombra-panel` dibuja arriba. La sombra exterior no se ve dentro de una ventana; la interior sí |
+| 5 | **0,75 %** | en permisos y honestidad olvidé darle chip al rail en el estado nuevo: la maqueta no dibujaba ninguno y el producto sí |
+| 6 | **0,34 %, solo en inglés** | el título de la reunión de muestra estaba escrito en español **fijo**, así que el cruce inglés mostraba texto español dentro de una pantalla inglesa |
+
+> **El patrón, y es el mismo de la fase 1:** los defectos de fidelidad no son de forma, son de
+> **un píxel que se arrastra**. El nº 3 es el ejemplar: una decisión razonable —«quita el marco,
+> la ventana ya es el marco»— movió la pantalla entera 1 px y valió 9 % de píxeles distintos.
+> Ningún ojo lo ve; la resta sí.
+
+#### Y un agujero en el gate del diccionario, que este encontró
+
+El defecto nº 6 llevó a mirar por qué el gate del diccionario **no había cazado** una cadena
+inglesa mal. Y apareció otro, peor: el gate normalizaba `’` a `'` antes de comparar, así que
+`the client's voice` con apóstrofo recto pasaba en verde mientras la maqueta escribía
+`the client’s voice`. El producto renderiza un glifo distinto, la pantalla deja de ser idéntica, y
+el gate cuyo trabajo es exactamente eso decía que sí.
+
+Lo cazó el gate de FIDELIDAD, comparando píxeles, **tres pantallas después**. Ahora las entidades
+HTML sí se traducen (`&#8217;` ES el mismo carácter, escrito de otra forma) pero los signos
+tipográficos **no se normalizan**: se comparan carácter a carácter. Demostrado en rojo.
+
+> **La lección se suma a la lista del sprint:** un gate que *normaliza* antes de comparar está
+> decidiendo qué diferencias no le importan. Aquí decidió que el apóstrofo no importaba, y el
+> apóstrofo era la diferencia.
+
+#### Lo que corrió en vivo, y la limitación que apareció al probarlo
+
+La app corrió de verdad (regla 15, tercer filo). Se añadió un registro de arranque —**solo
+metadatos**: el cliente de videollamada y los cuatro estados de permiso, **nunca el título de la
+reunión**, que es información del cliente y un log es un archivo.
+
+```
+[corte]    kill-switch ⌥⎋ registrado
+[permisos] micrófono=Concedido pantalla=Concedido accesibilidad=Concedido · cara=Concedido
+[sesion]   reunión detectada: «Google Meet» · protección Verificada · catálogo v1 · 2026-09-21
+[red]      salida acumulada: 0 B
+```
+
+Con eso quedan verificadas en vivo las tres lecturas del sistema —y la de permisos es la que más
+importaba, porque el micrófono se pregunta por **mensaje de Objective-C a una clase buscada por
+nombre**, que es la FFI más frágil de esta fase y la que ningún test podía afirmar.
+
+**La limitación, encontrada probándolo mal.** La primera prueba abrió una página titulada como una
+pestaña de Meet… y el detector dijo que no había reunión. No era un fallo: `open -a` la dejó en
+una **pestaña de fondo**, y el `AXTitle` de una ventana de Chrome es el título de su **pestaña
+activa**. Comprobado con una sonda aparte:
+
+```
+pid 59137 · com.google.Chrome
+  1 ventana(s)
+    [0] AXTitle = «What's new - Google Chrome»
+```
+
+Abierta en ventana propia, el detector la reconoció a la primera. **Consecuencia real y
+declarada (ADR 005): si el consultor tiene Meet en una pestaña de fondo, la app no lo ve** —
+aunque el audio siga sonando. Llegar a las pestañas exige automatizar el navegador, que es
+bastante más invasivo que leer un título; queda como decisión futura con su propio ADR.
+
+**Lo que NO se vio correr:** el atajo `⌥⎋`. Se registra —el log lo dice— pero pulsarlo es cosa de
+una tecla que esta sesión no puede pulsar. **Parada ⭐** del gate de prueba, junto con el botón de
+la pantalla de Honestidad.
+
+#### Archivos de la fase 2
+
+| Archivo | Qué |
+|---|---|
+| `src-tauri/src/sesion/mod.rs` · `permisos.rs` · `red.rs` · `corte.rs` | **nuevos** — el motor |
+| `src-tauri/src/lib.rs` | seis comandos nuevos · el atajo global `⌥⎋` |
+| `src/cuaderno.ts` | **nuevo** — lo que las pantallas preguntan a lo nativo |
+| `src/componentes/Ventana.tsx` | **nuevo** — el marco del cuaderno, el rail, «todavía no» |
+| `src/pantallas/{Sesion,Permisos,Honestidad}.tsx` | **nuevas** |
+| `src/componentes/Principal.tsx` | de hueco a cuaderno |
+| `docs/diseno/{sesion,permisos,honestidad}.html` | el estado «así se ve hoy · sprint 1» |
+| `docs/diseno/assets/{ghost.css,iconos.js}` | `.estado.pendiente` · `#i-pendiente` |
+| `design-system.md` | §9-sexies (v1.10.0) |
+| `scripts/capturar-fidelidad.mjs` | de un artefacto a una lista |
+| `tests/unit/{cuaderno,contador-de-red}.test.tsx` | **nuevos** |
+
 ## Desviación del plan (2026-09-20) — la MANIOBRA es producto nuevo
 
 **Qué.** El estado «sin resultado» deja de limitarse a admitir el vacío: sugiere **cómo abordar la

@@ -28,7 +28,18 @@ function html(dir: string): string[] {
   });
 }
 
-/** La maqueta escribe entidades HTML y parte el texto en `<span>`: se normaliza para comparar. */
+/**
+ * La maqueta escribe entidades HTML y parte el texto en `<span>`: se normaliza para comparar.
+ *
+ * **Lo que NO se normaliza, y es deliberado: los signos tipográficos.** La primera versión de
+ * este gate convertía `’` en `'`, y eso le abrió un agujero: `the client's voice` con apóstrofo
+ * recto pasaba en verde mientras la maqueta escribía `the client’s voice`. El producto renderiza
+ * un glifo distinto, la pantalla deja de ser idéntica y este gate —cuyo trabajo es exactamente
+ * eso— decía que sí. Lo cazó el gate de FIDELIDAD, comparando píxeles, tres pantallas después.
+ *
+ * Las entidades HTML sí se traducen (`&#8217;` ES el mismo carácter que `’`, escrito de otra
+ * forma); lo que se compara después es carácter a carácter.
+ */
 function normaliza(s: string): string {
   return s
     .replace(/<[^>]+>/g, "")
@@ -36,7 +47,9 @@ function normaliza(s: string): string {
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
-    .replace(/&#8217;|&rsquo;|’/g, "'")
+    .replace(/&#8217;|&rsquo;/g, "\u2019")
+    .replace(/&#8220;|&ldquo;/g, "\u201c")
+    .replace(/&#8221;|&rdquo;/g, "\u201d")
     .replace(/\s+/g, " ")
     .trim();
 }

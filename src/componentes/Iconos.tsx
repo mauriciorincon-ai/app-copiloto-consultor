@@ -40,14 +40,22 @@ export function Ic({
   id,
   s,
   relleno,
+  color,
 }: {
   id: string;
   s?: boolean;
   relleno?: boolean;
+  /**
+   * El color va en el PROPIO `<svg>`, como en la maqueta, y no en un `<span>` que lo envuelva.
+   * No es un detalle de estilo: dentro de un contenedor flex, envolver cambia los elementos del
+   * flex y con ellos los huecos. Es exactamente el defecto que costó 2,5 % de divergencia en el
+   * transcript de la fase 1 y que a ojo parecía idéntico.
+   */
+  color?: string;
 }) {
   const clases = ["ic", s ? "s" : "", relleno ? "relleno" : ""].filter(Boolean).join(" ");
   return (
-    <svg className={clases} aria-hidden="true">
+    <svg className={clases} aria-hidden="true" style={color ? { color } : undefined}>
       <use href={`#${id}`} />
     </svg>
   );

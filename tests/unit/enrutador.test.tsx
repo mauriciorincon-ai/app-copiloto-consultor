@@ -65,7 +65,9 @@ describe("el enrutador de ventanas", () => {
 
   it("sin etiqueta, la principal", () => {
     const { container } = pinta("");
-    expect(container.querySelector(".principal-vacia")).not.toBeNull();
+    // La principal dejó de ser un hueco en la fase 2: ahora es el cuaderno, con su rail.
+    expect(container.querySelector("main.ventana")).not.toBeNull();
+    expect(container.querySelector("nav.rail")).not.toBeNull();
     expect(container.querySelector("section.banda")).toBeNull();
   });
 });
