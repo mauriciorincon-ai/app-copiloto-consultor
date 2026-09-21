@@ -36,6 +36,8 @@ construir el siguiente artefacto.
 |---|---|---|---|
 | 11 | `banda.html` — los seis estados de contenido de la banda | el gate de FIDELIDAD del sprint 001 compara la banda construida contra la maqueta, y la maqueta dibujó la banda **siempre con una ficha dentro**: cinco de los seis estados no tenían referencia. Se propuso en el plan del sprint, **aprobado por el usuario antes de construir** | antes de escribir la primera línea de UI del sprint 001 |
 
+| 12 | `sesion.html` · `permisos.html` · `honestidad.html` — el estado **«así se ve hoy · sprint 1»** y el componente **«todavía no»** | la maqueta dibuja el producto terminado y cada sprint entrega un trozo; sin una forma escrita de decir «esto aún no existe», las pantallas de la fase 2 solo podían mentir en verde o esconder lo que falta. Se propuso en la bitácora ANTES de construir la UI del producto | antes de escribir la primera línea de las pantallas del cuaderno |
+
 La maqueta no se congela con G-Diseño: se extiende por el mismo camino (propuesta → mirada →
 registro). Lo que **no** cambia sin una mirada nueva es lo ya aprobado — y esta extensión no
 redecide nada: cruza la forma elegida en la mirada 3-ter con el contenido aprobado en la 1.

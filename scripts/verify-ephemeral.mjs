@@ -10,7 +10,20 @@ import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
 
 // Módulos protegidos: TODO lo que vive aquí es efímero (RAM) por definición.
-const PROTEGIDOS = ["src-tauri/src/capture", "src-tauri/src/stt", "src-tauri/src/screen", "src/capture"];
+//
+// `sesion` se añadió en el sprint 001, fase 2, y conviene decir por qué: no toca audio ni
+// pantalla, pero **lee títulos de ventana** para distinguir «tienes una reunión de Meet» de
+// «tienes Chrome abierto», que es siempre cierto. El título de una reunión es información del
+// cliente — el estándar 4-T divide por DE QUIÉN es, no por su formato— así que cae del mismo lado
+// que el transcript y vive bajo la misma regla: memoria mientras la pantalla lo muestra, y nada
+// más. Sin esta línea, el módulo que maneja nombres de reuniones sería el único sin vigilancia.
+const PROTEGIDOS = [
+  "src-tauri/src/capture",
+  "src-tauri/src/stt",
+  "src-tauri/src/screen",
+  "src-tauri/src/sesion",
+  "src/capture",
+];
 // API prohibida dentro de los protegidos (Rust y TS). Se puede ampliar; jamás recortar sin ADR.
 const PROHIBIDO = [
   /std::fs\b/, /tokio::fs\b/, /File::create\b/, /OpenOptions\b/, /\bfs::write\b/, /\bwrite_all\b/,

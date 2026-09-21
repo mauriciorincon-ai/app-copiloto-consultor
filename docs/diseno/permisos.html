@@ -17,6 +17,7 @@
     <button data-estado="revocado">revocado a mitad</button>
     <button data-estado="solicitando">consentimiento de pantalla</button>
     <button data-estado="acople">acoplar la ventana</button>
+    <button data-estado="s1">así se ve hoy · sprint 1</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -29,6 +30,7 @@
   <div class="n" data-para="revocado"><b>Qué mirar:</b> el permiso de pantalla se cayó a mitad de la reunión. La franja dice qué se detuvo y qué sigue funcionando; el resto de la sesión continúa. Nunca un modal que robe el foco mientras hablas.</div>
   <div class="n" data-para="acople"><b>Qué mirar:</b> el permiso que pide el <b>modo acoplado</b> (la banda que recorta la reunión). Es el único permiso <b>opcional</b>: sin él la banda flota encima en vez de acoplarse, y todo lo demás funciona igual. Es un permiso potente de macOS y la pantalla dice, sin adornos, qué se hace con él y qué no.</div>
   <div class="n" data-para="solicitando"><b>Qué mirar:</b> el consentimiento de lectura de pantalla (C8) con sus dos modos: continua solo ante cambio, o bajo demanda por región para reuniones bajo NDA estricta. Y lo que jamás ocurre: las imágenes no se guardan ni salen.</div>
+  <div class="n" data-para="s1"><b>Qué mirar:</b> la misma pantalla en el sprint 1. Los tres permisos se leen de tu Mac de verdad. Y hay algo que la maqueta no había escrito y el sistema obliga: <b>«Audio del sistema» y «Pantalla» son UN SOLO permiso en macOS</b> («Grabación de pantalla y audio del sistema»), así que se conceden y se caen juntos. Se dibujan como dos filas porque son dos usos distintos, con una línea que lo dice. Lo que aún no existe —indexar, notas, búsqueda— lleva «todavía no». Y la <b>Accesibilidad</b> sube a la lista: en la maqueta vivía en su propio estado, pero el acople se entrega en este sprint y es el único permiso que hoy cambia algo.</div>
   <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
 </div>
 
@@ -209,6 +211,50 @@
           <div class="fila"><svg class="ic s" style="color:var(--err)"><use href="#i-x-circle"/></svg><span class="crece"><span lang="es">Enviar una imagen a un servicio</span><span lang="en">Sending an image to a service</span></span></div>
           <div class="fila"><svg class="ic s" style="color:var(--err)"><use href="#i-x-circle"/></svg><span class="crece"><span lang="es">Leer la pantalla del cliente en su equipo</span><span lang="en">Reading the client’s screen on their machine</span></span></div>
           <p><span lang="es">Solo se lee lo que ya está en <b>tu</b> pantalla, incluido lo que el cliente comparte contigo.</span><span lang="en">Only what is already on <b>your</b> screen is read, including what the client shares with you.</span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== así se ve hoy · sprint 1 ===== -->
+    <div data-en="s1" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="permiso concedido">
+          <svg class="ic"><use href="#i-mic"/></svg>
+          <span class="nombre"><span lang="es">Micrófono</span><span lang="en">Microphone</span></span>
+          <span class="para"><span lang="es">Tu voz, para saber cuándo hablas tú. Solo en memoria; nunca se graba.</span><span lang="en">Your voice, to know when you speak. In memory only; never recorded.</span></span>
+          <div class="accion"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Concedido</span><span lang="en">Granted</span></span></div>
+        </div>
+        <div class="permiso ">
+          <svg class="ic"><use href="#i-sistema"/></svg>
+          <span class="nombre"><span lang="es">Audio del sistema</span><span lang="en">System audio</span></span>
+          <span class="para"><span lang="es">Lo que suena en tu Mac: la voz del cliente. Sin bot en la reunión.</span><span lang="en">What plays on your Mac: the client’s voice. No bot in the meeting.</span></span>
+          <div class="accion"><span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Sin conceder</span><span lang="en">Not granted</span></span><button class="btn mini primario"><span lang="es">Conceder en macOS</span><span lang="en">Grant in macOS</span></button></div>
+        </div>
+        <div class="permiso ">
+          <svg class="ic"><use href="#i-pantalla"/></svg>
+          <span class="nombre"><span lang="es">Pantalla</span><span lang="en">Screen</span></span>
+          <span class="para"><span lang="es">Lee cifras y títulos solo cuando la pantalla cambia. Las imágenes no se guardan.</span><span lang="en">Reads figures and titles only when the screen changes. Images are not stored.</span></span>
+          <div class="accion"><span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Sin conceder</span><span lang="en">Not granted</span></span><button class="btn mini primario"><span lang="es">Conceder en macOS</span><span lang="en">Grant in macOS</span></button></div>
+        </div>
+        <div class="permiso concedido">
+          <svg class="ic"><use href="#i-flecha"/></svg>
+          <span class="nombre"><span lang="es">Acoplar la ventana de la reunión</span><span lang="en">Dock the meeting window</span></span>
+          <span class="para"><span lang="es">Para que la banda no tape la llamada: la reunión se encoge y las dos conviven. macOS lo llama «Accesibilidad».</span><span lang="en">So the band does not cover the call: the meeting shrinks and both live side by side. macOS calls it “Accessibility”.</span></span>
+          <div class="accion"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Concedido</span><span lang="en">Granted</span></span></div>
+        </div>
+        <p class="mono" style="color:var(--ink-2)"><span lang="es">Audio del sistema y Pantalla son un solo permiso en macOS: se conceden y se caen juntos.</span><span lang="en">System audio and Screen are a single macOS permission: they are granted and lost together.</span></p>
+      </div>
+      <div class="grid-2">
+        <div class="tarjeta pendiente">
+          <h2 class="seccion"><span lang="es">Qué puedes hacer ya, sin conceder nada</span><span lang="en">What you can do now, granting nothing</span></h2>
+          <div class="fila pendiente"><svg class="ic s"><use href="#i-doc"/></svg><span class="crece"><span lang="es">Indexar tu corpus</span><span lang="en">Index your corpus</span></span><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
+          <div class="fila pendiente"><svg class="ic s"><use href="#i-nota"/></svg><span class="crece"><span lang="es">Escribir notas y acuerdos</span><span lang="en">Write notes and agreements</span></span><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
+          <div class="fila pendiente"><svg class="ic s"><use href="#i-buscar"/></svg><span class="crece"><span lang="es">Buscar tu evidencia a mano</span><span lang="en">Search your evidence by hand</span></span><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
+        </div>
+        <div class="tarjeta">
+          <h2 class="seccion"><span lang="es">Qué texto verás en macOS</span><span lang="en">What macOS will show you</span></h2>
+          <p style="font-family:var(--font-evidencia);font-size:14px;color:var(--ink)"><span lang="es">«Angel Ghost usa el micrófono para saber cuándo hablas tú. El audio vive solo en memoria y no se graba.»</span><span lang="en">“Angel Ghost uses the microphone to know when you are speaking. Audio lives in memory only and is never recorded.”</span></p>
+          <p class="mono" style="color:var(--ink-2)">NSMicrophoneUsageDescription · es / en</p>
         </div>
       </div>
     </div>

@@ -623,6 +623,120 @@ frente eres tú arrastrando la banda, y preguntar soltaría la reunión justo al
 **Estado:** `typecheck` · `lint` · `test` **63/63 (85,1 % líneas)** · `cargo test` **24/24** ·
 `fidelidad` **40/40**, máximo 0,070 %.
 
+## Fase 2 — Sesión, permisos, kill-switch, contador y honestidad
+
+### Fase 2a — el motor, y el problema que apareció antes de escribir una línea de UI (2026-09-21)
+
+#### Lo que se construyó
+
+| Módulo | Qué hace | Tests |
+|---|---|---|
+| `sesion/` | detecta la videollamada abierta por **catálogo versionado** de identificadores | 12 |
+| `permisos.rs` | lee los tres permisos de macOS; **no los pide** | 8 |
+| `red.rs` | el contador de bytes que salieron (B2) | 4 |
+| `corte.rs` | el kill-switch `⌥⎋`, pieza por pieza | 3 |
+
+**La detección es un catálogo, no una heurística.** Adivinar por nombre —«algo que contenga
+*meeting*»— confundiría un calendario con una llamada y lo haría distinto en cada Mac. El
+catálogo viaja versionado en el repo, **se consulta sin red**, y su versión se muestra en pantalla
+al lado de lo que afirma: un catálogo sin versión visible no se puede contrastar con nada.
+
+**Meet obligó a una decisión incómoda y se escribe entera.** Zoom y Teams se detectan por su
+identificador. Meet es una **pestaña**, y la única forma de distinguir «tiene Meet abierto» de
+«tiene Chrome abierto» —que es siempre cierto— es mirar el **título de la ventana**. De ahí tres
+consecuencias, y las tres están en código:
+
+- el título de una reunión **es información del cliente** (el estándar 4-T divide por de quién es,
+  no por su formato), así que `sesion` entra en los módulos protegidos de `verify:ephemeral`:
+  memoria mientras la pantalla lo muestra, y nada más;
+- **solo se preguntan títulos a los navegadores del catálogo**, nunca a todo el Mac. Es una función
+  pura con su test — sin ella, «leer títulos» significaría leer el nombre de cada documento
+  abierto, cada conversación y cada expediente;
+- sin permiso no se dice «no hay reunión», que sería mentira por omisión: se dice **«no puedo
+  saberlo»**, con su motivo. La diferencia entre las dos es lo único que separa una app honesta de
+  una que contesta «no» cuando no sabe.
+
+**Los permisos se leen, no se piden.** Es decisión de la maqueta (*«Tú los concedes en el sistema,
+no aquí»*) y además es lo correcto: un permiso pedido en el primer arranque, antes de que la app
+haya demostrado nada, se deniega — y un «no» de macOS es muchísimo más caro de deshacer que un
+«todavía no». El botón abre el panel de Ajustes del Sistema que corresponde.
+
+**El contador de red existe ya, vacío, a propósito.** Una promesa que se instrumenta cuando llega
+la primera conexión llega tarde: el día que el adaptador de LLM se encienda (sprint 2, con su ADR),
+el contador tiene que estar puesto desde antes, con su cero comprobado, o no hay contra qué
+comparar.
+
+#### Los gates nuevos, y lo que el rojo encontró en ellos — **otra vez**
+
+| Gate | Demo en rojo | Resultado |
+|---|---|---|
+| ningún archivo de Rust abre un socket | `TcpStream::connect` plantado | **rojo**, nombra archivo y línea |
+| ninguna dependencia de Rust es un cliente de red | `reqwest` en `Cargo.toml` | **rojo** |
+| ningún archivo del webview sale a la red | `fetch()` plantado en `puente.ts` | **rojo** |
+| `sesion` no escribe en disco (efímero) | `fs::write` con un título de reunión | **rojo** |
+| el kill-switch no deja piezas sin cortar | una pieza nueva sin resolver | **VERDE — el gate no podía fallar** |
+
+La quinta volvió a pasar lo mismo que en la fase 1: el test comprobaba `TODAS.len() == 7`, y **el
+7 lo había escrito yo**. Se medía contra mi propio número, no contra el código.
+
+Rehecho: el gate ya no es un test, es **el compilador**. Dos `match` sin comodín (`Pieza::orden` y
+`suerte_en_este_sprint`) hacen que añadir una pieza y no resolverla **no compile**:
+
+```
+error[E0004]: non-exhaustive patterns: `corte::Pieza::NotasSinGuardar` not covered
+error[E0004]: non-exhaustive patterns: `corte::Pieza::NotasSinGuardar` not covered
+error: could not compile `app-copiloto-consultor` (lib test) due to 2 previous errors
+```
+
+y el test se queda con lo que al compilador se le escapa — que la lista y los puestos digan lo
+mismo —, que también se vio en rojo (`«Banda» está en el puesto 5 de TODAS pero dice ser el 4`).
+
+> **Tercera vez en el sprint, y ya es un patrón con nombre: un gate que se mide contra un número o
+> una tolerancia que escribí yo no mide el código, me mide a mí.** Las tres formas encontradas
+> hasta ahora: comparar contra la **misma constante** que usa el código · usar la **misma
+> tolerancia** que usa el código · comparar contra un **conteo escrito a mano**. Cuando el
+> lenguaje puede obligar —un `match` exhaustivo, un tipo—, el gate es el compilador y el test
+> solo cubre el resto.
+
+#### Un test intermitente, cazado antes de entrar
+
+Los dos tests del contador compartían un estático y `cargo test` corre en paralelo: se pisaban una
+vez de cada muchas. Un gate intermitente es peor que no tenerlo —se aprende a reintentar hasta que
+pasa—, así que se turnan con un mutex. Comprobado **cinco de cinco**, que es la lección de la
+fase 1 aplicada sin que hiciera falta equivocarse otra vez.
+
+### Decisión de diseño no escrita — «TODAVÍA NO» (mirada 12 propuesta)
+
+**El problema, encontrado al ir a construir las tres pantallas.** La maqueta dibuja el producto
+TERMINADO. El sprint 001 entrega un trozo. Las tres pantallas de esta fase tienen cartas enteras
+que el producto de hoy no puede sostener: las dos pistas de audio (fase 3), la ficha del cliente,
+los búferes de memoria, las notas.
+
+Solo hay dos salidas sin una decisión escrita, y las dos son malas: **pintarlo en verde** —
+«Micrófono · Listo» con el audio sin construir es la afirmación falsa que esta app existe para no
+hacer— o **quitarlo de la pantalla**, y entonces el usuario no sabe que va a llegar y la pantalla
+del sprint 1 se lee como el producto completo.
+
+La orden ya lo había anticipado para dos casos concretos («NDA y radar: *próximamente*, sin
+inventar»). Lo que faltaba era la forma, y la maqueta **no tenía ninguna palabra para esto**
+(se comprobó: cero apariciones de «próximamente» o equivalente en las nueve pantallas).
+
+**Lo construido para la mirada:** el componente `.estado.pendiente` en `ghost.css`, el icono
+`#i-pendiente`, y un estado nuevo **«así se ve hoy · sprint 1»** en las tres pantallas — la misma
+pantalla tal y como se entrega, que es además la referencia del gate de fidelidad. Registrado en
+`design-system.md` §9-sexies (v1.10.0) y en el plan de miradas del README de diseño.
+
+**Y dos cosas que la maqueta no había escrito y el sistema obliga**, encontradas construyendo:
+
+1. **«Audio del sistema» y «Pantalla» son UN SOLO permiso en macOS.** Se conceden y se caen
+   juntos. Se siguen dibujando como dos filas —son dos usos distintos— con una línea que lo dice.
+2. **La Accesibilidad sube a la lista principal de permisos.** En la maqueta vivía en su propio
+   estado porque era opcional y futura; el acople se entrega en este sprint y es **el único
+   permiso que hoy cambia algo**.
+
+**La construcción de las tres pantallas de producto espera a la mirada 12.** El motor no: no
+depende de la respuesta.
+
 ## Desviación del plan (2026-09-20) — la MANIOBRA es producto nuevo
 
 **Qué.** El estado «sin resultado» deja de limitarse a admitir el vacío: sugiere **cómo abordar la

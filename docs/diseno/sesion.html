@@ -16,6 +16,7 @@
     <button data-estado="sin-reunion">sin reunión</button>
     <button data-estado="nda">NDA prohíbe transcribir</button>
     <button data-estado="vigilancia">software invasivo en tu Mac</button>
+    <button data-estado="s1">así se ve hoy · sprint 1</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -27,6 +28,7 @@
   <div class="n" data-para="sin-reunion"><b>Qué mirar:</b> sin reunión abierta la app no es inútil: abre el corpus, escribe notas o revisa la ficha del cliente. El vacío está diseñado.</div>
   <div class="n" data-para="nda"><b>Qué mirar:</b> respondiste que la NDA prohíbe registrar por cualquier medio. La app <b>no bloquea</b>: pasa a modo solo notas, apaga las dos pistas y lo dice con símbolo + texto. El panel sigue, sin transcripción.</div>
   <div class="n" data-para="vigilancia"><b>Qué mirar:</b> el radar en su nivel grave. No habla de grabación ni de transcripción: son programas que miran <b>tu propio equipo</b> — supervisión de exámenes, anti-trampa con acceso al núcleo, monitoreo de empleados, acceso remoto activo. Dos niveles con símbolo y palabra: <b>invasivo</b> (coral) y <b>sábelo</b> (ámbar). Y la columna que importa: <b>qué alcanza a ver</b>. Nunca toca la máquina de nadie más.</div>
+  <div class="n" data-para="s1"><b>Qué mirar:</b> la MISMA pantalla, tal y como se entrega en el sprint 1. Lo que ya funciona está vivo —la reunión detectada y su protección, leídas de tu Mac—; lo que aún no existe lleva <b>«todavía no»</b>: trazo discontinuo, aro punteado y la palabra. No es «apagado» (eso existe y se puede encender): es que todavía no está construido. La pregunta es si al mirarla entiendes qué tienes hoy sin creer que algo está roto.</div>
   <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
 </div>
 
@@ -43,7 +45,7 @@
     <a href="idioma.html"><svg class="ic s"><use href="#i-globo"/></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
     <a href="ia.html"><svg class="ic s"><use href="#i-chispa"/></svg><span lang="es">IA</span><span lang="en">AI</span></a>
     <div class="abajo">
-      <span class="estado mute" data-en="sin-reunion nda vigilancia"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Sin sesión · 0 B</span><span lang="en">No session · 0 B</span></span>
+      <span class="estado mute" data-en="sin-reunion nda vigilancia s1"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Sin sesión · 0 B</span><span lang="en">No session · 0 B</span></span>
       <span class="estado halo" data-en="detectada"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
     </div>
   </nav>
@@ -198,6 +200,46 @@
           <button class="btn primario"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Iniciar de todos modos</span><span lang="en">Start anyway</span></button>
           <button class="btn"><span lang="es">No iniciar</span><span lang="en">Do not start</span></button>
         </div>
+      </div>
+    </div>
+
+    <!-- ===== así se ve hoy · sprint 1 ===== -->
+    <div data-en="s1" style="display:flex;flex-direction:column;gap:14px">
+      <div class="tarjeta">
+        <div class="fila">
+          <svg class="ic" style="color:var(--halo)"><use href="#i-video"/></svg>
+          <h3 class="crece"><span lang="es">Google Meet · Páramo Azul — Propuesta tablero de rentabilidad</span><span lang="en">Google Meet · Páramo Azul — Profitability dashboard proposal</span></h3>
+          <span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Protección verificada</span><span lang="en">Protection verified</span></span>
+        </div>
+        <p><span lang="es">Tu panel no aparece en la pantalla que compartes. Verificado en tu Mac (macOS 26.6.2) el 2026-09-20. En Zoom y Teams está sin verificar.</span><span lang="en">Your panel does not show in the screen you share. Verified on your Mac (macOS 26.6.2) on 2026-09-20. In Zoom and Teams it is unverified.</span></p>
+      </div>
+
+      <div class="grid-2">
+        <div class="tarjeta">
+          <h2 class="seccion"><span lang="es">Las dos pistas</span><span lang="en">The two tracks</span></h2>
+          <div class="fila pendiente"><svg class="ic s"><use href="#i-mic"/></svg><span class="crece"><span lang="es">Micrófono — tú</span><span lang="en">Microphone — you</span></span><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
+          <div class="fila pendiente"><svg class="ic s"><use href="#i-sistema"/></svg><span class="crece"><span lang="es">Audio del sistema — el cliente</span><span lang="en">System audio — the client</span></span><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
+          <div class="fila pendiente"><svg class="ic s"><use href="#i-pantalla"/></svg><span class="crece"><span lang="es">Pantalla — solo cuando cambia</span><span lang="en">Screen — only when it changes</span></span><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
+          <div class="fila pendiente"><svg class="ic s"><use href="#i-auriculares"/></svg><span class="crece"><span lang="es">Auriculares conectados</span><span lang="en">Headphones connected</span></span><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
+        </div>
+
+        <div class="tarjeta pendiente">
+          <h2 class="seccion"><span lang="es">Este cliente</span><span lang="en">This client</span></h2>
+          <div class="fila"><span class="crece"><span lang="es">Ficha del cliente, NDA y radar</span><span lang="en">Client file, NDA and radar</span></span><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
+          <p><span lang="es">No se inventa nada mientras no exista: ni bandera, ni riesgo, ni catálogo.</span><span lang="en">Nothing is made up while it does not exist: no flag, no risk, no catalog.</span></p>
+        </div>
+      </div>
+
+      <div class="tarjeta">
+        <h2 class="seccion"><span lang="es">Qué funciona hoy</span><span lang="en">What works today</span></h2>
+        <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-candado"/></svg><span class="crece"><span lang="es">La banda, abajo, protegida de la captura</span><span lang="en">The band, at the bottom, protected from capture</span></span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Funciona</span><span lang="en">Works</span></span></div>
+        <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-video"/></svg><span class="crece"><span lang="es">La reunión se hace sitio: se acopla y vuelve al cerrar</span><span lang="en">The meeting makes room: it docks and returns on close</span></span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Funciona</span><span lang="en">Works</span></span></div>
+        <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-rayo"/></svg><span class="crece"><span lang="es">Corta todo y vacía la memoria</span><span lang="en">Cut everything and wipe memory</span></span><span class="tecla"><kbd>⌥⎋</kbd></span></div>
+        <div class="fila pendiente"><svg class="ic s"><use href="#i-voz"/></svg><span class="crece"><span lang="es">Iniciar sesión</span><span lang="en">Start session</span></span><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
+      </div>
+      <div class="fila">
+        <span class="crece"></span>
+        <span class="mono" style="color:var(--ink-2)"><span lang="es">el sonido nunca se guarda · nada sale de tu equipo</span><span lang="en">sound is never stored · nothing leaves your machine</span></span>
       </div>
     </div>
 

@@ -1,8 +1,8 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.9.0   # 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
-fecha: 2026-09-20
+version: 1.10.0  # 1.10.0: «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2). 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
+fecha: 2026-09-21
 estado: aprobado   # G-Diseño aprobado el 2026-09-20 («sí apruebo la pantalla completa»)
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
 ---
@@ -424,6 +424,64 @@ donde la unidad es lo que distingue una ficha de otra.
 `--banda-h-voz`) y son la fuente única — el CSS las usa y la ventana nativa las lee. El gate de
 tokens las excluye a propósito (el webview ocupa la ventana entera, no la dibuja); las vigila un
 test de `src-tauri/` que falla si la ventana y la maqueta se separan.
+
+## 9-sexies · «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2, 2026-09-21)
+
+**El problema.** La maqueta dibuja el producto TERMINADO. Cada sprint entrega un trozo. Al
+construir las pantallas del cuaderno en el sprint 001 aparecieron tres cartas con contenido que
+el producto de hoy no puede sostener: las dos pistas de audio (fase 3), la ficha del cliente
+(sprints posteriores), los búferes de memoria (fase 3), las notas (S3).
+
+Sin una respuesta escrita solo quedan dos salidas, y las dos son malas:
+
+| Salida | Por qué no |
+|---|---|
+| Pintarlo como la maqueta, en verde | «Micrófono — Listo» con el audio sin construir es exactamente la afirmación falsa que esta app existe para no hacer |
+| Quitarlo de la pantalla | el usuario no sabe que va a llegar, y la pantalla del sprint 1 se lee como el producto completo |
+
+**La decisión: un quinto significado en el vocabulario de estados.** `.estado.pendiente` —
+**«todavía no» / «not yet»**.
+
+Y es distinto de `.mute`, que ya existía: **`.mute` significa «existe y está apagado»** (se puede
+encender), **`.pendiente` significa «todavía no está construido»** (no hay interruptor). Confundir
+los dos manda al usuario a buscar un botón que no existe.
+
+**Tres señales, porque el color solo no basta** (daltonismo leve del usuario) — y aquí la señal
+principal **no es el color**, que es el mismo `--mute`:
+
+1. **trazo discontinuo** en el borde del chip — es lo que lo separa de `.mute` de un golpe de
+   vista, y funciona igual en los dos temas;
+2. **aro punteado** (`#i-pendiente`), no el aro continuo de `.mute`;
+3. **la palabra literal**: «todavía no».
+
+`.tarjeta.pendiente` aplica lo mismo a una tarjeta entera; `.fila.pendiente` baja el énfasis de la
+fila sin ocultarla.
+
+### La otra mitad: el estado «así se ve hoy» en la maqueta
+
+Un componente para decir «esto no existe» no basta: hay que poder **comparar** la pantalla
+entregada contra una referencia, o el gate de FIDELIDAD del sprint no tiene contra qué medir.
+
+Por eso cada pantalla que se construye a medias gana un estado **`s1`** en la maqueta — la misma
+pantalla, tal y como se entrega. La maqueta conserva la visión completa **y** registra qué se
+entregó en cada versión. Cuando la fase 3 traiga el audio, el estado `s1` de sesión se convierte
+en `s3` con menos «todavía no», y el que quiera ver qué cambió tiene las dos.
+
+### Una regla de producto que sale de aquí
+
+**Lo que no existe se dice; nunca se rellena.** La tarjeta «Este cliente» del sprint 1 no muestra
+una bandera gris ni un riesgo en blanco: muestra una frase — *«No se inventa nada mientras no
+exista: ni bandera, ni riesgo, ni catálogo»*. Y el kill-switch informa **«3 de 7 piezas: las otras
+cuatro todavía no existen»**, no «7 de 7».
+
+### Dos cosas que la maqueta no había escrito y el sistema obliga
+
+1. **«Audio del sistema» y «Pantalla» son UN SOLO permiso en macOS** («Grabación de pantalla y
+   audio del sistema»): se conceden y se caen juntos. Se siguen dibujando como dos filas —son dos
+   usos distintos y el usuario los entiende así— con una línea que lo dice.
+2. **La Accesibilidad sube a la lista principal de permisos.** En la maqueta vivía en su propio
+   estado porque era opcional y futura; el acople se entrega en el sprint 001 y es **el único
+   permiso que hoy cambia algo**.
 
 ## 10 · Deuda de diseño declarada
 

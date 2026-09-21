@@ -14,7 +14,11 @@
 pub mod acople;
 pub mod capture;
 pub mod corpus;
+pub mod corte;
+pub mod permisos;
+pub mod red;
 pub mod relleno;
+pub mod sesion;
 pub mod stt;
 pub mod ventana;
 
@@ -26,7 +30,7 @@ use tauri::{Emitter, Manager};
 /// mal**. En la carpeta de configuración de la app, nunca en el repo ni en un temporal del
 /// sistema: un temporal lo barre macOS, y entonces la ventana de la reunión se queda encogida sin
 /// que nadie sepa quién lo hizo.
-fn huella(app: &tauri::AppHandle) -> PathBuf {
+fn huella<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
     let base = app
         .path()
         .app_config_dir()
@@ -88,7 +92,7 @@ struct EstadoDelAcople {
 /// El nombre del evento con el que la banda se entera de que el acople cambió.
 const EVENTO_ACOPLE: &str = "acople";
 
-fn estado_ahora(app: &tauri::AppHandle) -> EstadoDelAcople {
+fn estado_ahora<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> EstadoDelAcople {
     EstadoDelAcople {
         permiso: acople::hay_permiso(),
         // La verdad está en la huella, no en una variable nuestra: es el mismo archivo que usa
@@ -144,13 +148,88 @@ fn fondo_del_relleno(estado: tauri::State<'_, FondoDelRelleno>) -> Option<String
     }
 }
 
+// ---------------------------------------------------------------------------------------------
+// Fase 2 — sesión, permisos, contador de red y el kill-switch
+// ---------------------------------------------------------------------------------------------
+
+/// ¿Qué videollamada hay abierta? Se consulta, no se vigila: la pantalla de sesión pregunta
+/// cuando se muestra, y no hay nada corriendo en segundo plano mirando las ventanas del usuario.
+#[tauri::command]
+fn reunion_abierta() -> sesion::Reunion {
+    sesion::ahora()
+}
+
+/// La versión del catálogo de clientes de videollamada, para mostrarla al lado de lo que afirma.
+#[tauri::command]
+fn version_del_catalogo() -> &'static str {
+    sesion::VERSION_CATALOGO
+}
+
+#[tauri::command]
+fn permisos_de_macos() -> permisos::Permisos {
+    permisos::leer()
+}
+
+/// Abre el panel de Ajustes del Sistema donde se concede un permiso. **No pide el permiso**: lo
+/// concede el usuario en el sistema, que es lo que la maqueta decidió.
+#[tauri::command]
+fn abrir_ajustes_de(permiso: String) -> Result<(), String> {
+    let url = permisos::ajustes_de(&permiso)
+        .ok_or_else(|| format!("«{permiso}» no es un permiso que esta app pida"))?;
+    tauri_plugin_opener::open_url(url, None::<&str>).map_err(|e| e.to_string())
+}
+
+/// Los bytes que han salido del equipo en esta reunión, ya formateados como los escribe la
+/// maqueta. Se devuelve **leído**, no como constante de la interfaz: un contador escrito a mano
+/// en el webview no es un contador.
+#[tauri::command]
+fn bytes_a_la_red() -> String {
+    red::formatear(red::bytes())
+}
+
+/// El kill-switch. Corta lo que existe y **declara lo que todavía no**, pieza por pieza.
+#[tauri::command]
+fn cortar_todo(app: tauri::AppHandle) -> corte::Informe {
+    ejecutar_el_corte(&app)
+}
+
+fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Informe {
+    let mut piezas = Vec::new();
+    for pieza in corte::TODAS {
+        let suerte = corte::suerte_en_este_sprint(*pieza);
+        if suerte == corte::Suerte::Cortada {
+            match pieza {
+                corte::Pieza::ContadorDeRed => red::reiniciar(),
+                corte::Pieza::Banda => ventana::cerrar_banda(app),
+                corte::Pieza::Acople => {
+                    registrar_acople(app, "kill-switch", &acople::soltar(&huella(app)))
+                }
+                _ => {}
+            }
+        }
+        piezas.push((*pieza, suerte));
+    }
+    let informe = corte::Informe { piezas, bytes_en_red: red::bytes() };
+    println!(
+        "[corte] ⌥⎋: {} de {} piezas cortadas · red {}",
+        informe.cortadas(),
+        corte::TODAS.len(),
+        red::formatear(informe.bytes_en_red)
+    );
+    let _ = app.emit(EVENTO_CORTE, informe.clone());
+    informe
+}
+
+/// El nombre del evento con el que las pantallas se enteran de que se cortó todo.
+const EVENTO_CORTE: &str = "corte";
+
 /// Deja constancia de lo que pasó y **se lo cuenta a la banda**, que dibuja «acoplada» o «sin
 /// acople» con ese dato. La banda pregunta al montarse y escucha a partir de ahí: preguntar sola
 /// la dejaría sondeando cada dos segundos por algo que cambia tres veces en una reunión.
 ///
 /// Lo que va al log son solo metadatos: cuántas ventanas y por qué no las demás. Ni títulos de
 /// ventana, ni rutas, ni contenido — la Accessibility API los daría, y no se piden.
-fn registrar_acople(app: &tauri::AppHandle, que: &str, informe: &acople::Informe) {
+fn registrar_acople<R: tauri::Runtime>(app: &tauri::AppHandle<R>, que: &str, informe: &acople::Informe) {
     let nombre = informe.app.as_deref().unwrap_or("—");
     println!(
         "[acople] {que}: permiso={} app=«{nombre}» ventanas={}",
@@ -166,6 +245,7 @@ fn registrar_acople(app: &tauri::AppHandle, que: &str, informe: &acople::Informe
 pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().with_handler(atender_el_atajo).build())
         .invoke_handler(tauri::generate_handler![
             abrir_banda,
             ajustar_banda,
@@ -175,7 +255,13 @@ pub fn run() {
             acoplar,
             soltar_acople,
             pedir_permiso_de_acople,
-            fondo_del_relleno
+            fondo_del_relleno,
+            reunion_abierta,
+            version_del_catalogo,
+            permisos_de_macos,
+            abrir_ajustes_de,
+            bytes_a_la_red,
+            cortar_todo
         ])
         .setup(|app| {
             // El invariante se comprueba ANTES de abrir nada y aborta el arranque si falla:
@@ -186,6 +272,8 @@ pub fn run() {
 
             // `setup` corre en el hilo principal, que es donde `NSScreen` se deja preguntar.
             app.manage(FondoDelRelleno(acople::fondo_de_escritorio()));
+
+            registrar_el_kill_switch(app.handle());
 
             ventana::abrir_banda(app.handle(), ventana::ALTO_COMPACTA)?;
 
@@ -228,7 +316,7 @@ static YA_SE_ACOPLO: AtomicBool = AtomicBool::new(false);
 /// hoy. Si no hay permiso, se pide una vez: macOS abre su propio diálogo y lleva a Ajustes del
 /// Sistema; la respuesta real llega cuando el usuario vuelve, y hasta entonces la banda flota y
 /// lo dice.
-fn arrancar_el_acople(app: &tauri::AppHandle) {
+fn arrancar_el_acople<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
     let ruta = huella(app);
     let pendiente = acople::leer(&ruta);
     if !pendiente.huellas.is_empty() {
@@ -242,6 +330,41 @@ fn arrancar_el_acople(app: &tauri::AppHandle) {
     if !acople::hay_permiso() {
         println!("[acople] sin permiso de Accesibilidad: la banda flota. Se pide una vez.");
         acople::pedir_permiso();
+    }
+}
+
+/// `⌥⎋` — la tecla del kill-switch, tal y como la dibuja la maqueta.
+fn el_atajo() -> tauri_plugin_global_shortcut::Shortcut {
+    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
+    Shortcut::new(Some(Modifiers::ALT), Code::Escape)
+}
+
+fn atender_el_atajo<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+    atajo: &tauri_plugin_global_shortcut::Shortcut,
+    evento: tauri_plugin_global_shortcut::ShortcutEvent,
+) {
+    use tauri_plugin_global_shortcut::ShortcutState;
+    if *atajo != el_atajo() || evento.state() != ShortcutState::Pressed {
+        return;
+    }
+    ejecutar_el_corte(app);
+}
+
+/// Registra `⌥⎋`, y **si no puede, lo dice**.
+///
+/// Un atajo global puede estar cogido por el sistema, por la reunión o por otra app, y la
+/// respuesta correcta no es morir: la app funciona igual, con el botón de la pantalla de
+/// honestidad. Lo que no puede pasar es que falle en silencio — el usuario pulsaría la tecla en
+/// mitad de una reunión creyendo que cortó, y no habría cortado nada. (Riesgo nº 7 del plan.)
+fn registrar_el_kill_switch<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    use tauri_plugin_global_shortcut::GlobalShortcutExt;
+    match app.global_shortcut().register(el_atajo()) {
+        Ok(()) => println!("[corte] kill-switch ⌥⎋ registrado"),
+        Err(e) => println!(
+            "[corte] NO se pudo registrar ⌥⎋ ({e}): el kill-switch sigue en el botón de Honestidad, \
+             pero la tecla no va a responder"
+        ),
     }
 }
 
@@ -268,7 +391,7 @@ fn arrancar_el_acople(app: &tauri::AppHandle) {
 const LATIDO: std::time::Duration = std::time::Duration::from_millis(1500);
 const ESPERA: u32 = 20;
 
-fn acoplar_cuando_haya_a_quien(app: &tauri::AppHandle) {
+fn acoplar_cuando_haya_a_quien<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
     let mango = app.clone();
     std::thread::spawn(move || {
         // El bucle deja UNA línea por motivo, no una por vuelta. Escrito sin esto dejaba veinte

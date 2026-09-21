@@ -127,6 +127,43 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .estado.mute { color: var(--mute); background: transparent;      border-color: var(--line); }
 .estado.halo { color: var(--halo); background: var(--halo-tint); border-color: var(--halo); }
 
+/* ---------------------------------------------------------------------------
+   «TODAVÍA NO» — lo que aún no existe en esta versión (§9-sexies)
+   ---------------------------------------------------------------------------
+   No es un error, no es un aviso y NO es «apagado». `.mute` significa «existe y
+   está apagado»; esto significa «todavía no está construido». Confundirlos hace
+   que el usuario busque un interruptor que no existe.
+
+   Tres señales, porque el color solo no basta (daltonismo leve del usuario):
+   el TRAZO DISCONTINUO del borde y del símbolo — que es lo que lo separa de
+   `.mute` a un golpe de vista, sin depender del color—, el aro punteado, y la
+   palabra literal «todavía no».
+
+   Existe porque la app se entrega por sprints: la maqueta dibuja el producto
+   terminado y cada versión trae un trozo. Sin esto solo quedan dos salidas,
+   y las dos son malas: pintar en verde lo que no existe, o quitarlo de la
+   pantalla y que el usuario no sepa que va a llegar.
+   --------------------------------------------------------------------------- */
+.estado.pendiente {
+  color: var(--mute);
+  background: transparent;
+  border-color: var(--line-2);
+  border-style: dashed;
+}
+
+/* La fila que espera: se lee, pero no compite con lo que sí funciona. */
+.pendiente { color: var(--mute); }
+.pendiente .ic { opacity: .75; }
+
+/* Una tarjeta entera que todavía no existe. El borde discontinuo dice «aquí va
+   algo» sin fingir que ya está. */
+.tarjeta.pendiente {
+  border-style: dashed;
+  border-color: var(--line-2);
+  background: transparent;
+}
+.tarjeta.pendiente .seccion { color: var(--mute); }
+
 /* Franja de aviso dentro del panel o de una pantalla */
 .franja { display: grid; grid-template-columns: 16px 1fr; gap: 5px 10px; padding: 9px 11px; border-radius: var(--r-ficha); border: var(--borde) solid; font-size: var(--t-meta); line-height: 1.4; }
 .franja .ic { margin-top: 1px; }

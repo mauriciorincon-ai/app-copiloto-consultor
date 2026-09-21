@@ -190,6 +190,52 @@ impl Drop for Aplicacion {
     }
 }
 
+/// Los **títulos** de las ventanas de un proceso — para el DETECTOR de reunión, no para el
+/// acople.
+///
+/// Está aquí porque aquí vive todo el `unsafe` del crate, pero es de otro dueño y conviene que se
+/// note: el acople no lee títulos (ADR 004) y no llama a esto. Quien lo necesita es
+/// [`crate::sesion`], porque Meet no es una aplicación sino una pestaña, y sin el título no hay
+/// forma de distinguir «tiene una reunión» de «tiene Chrome abierto», que es siempre cierto.
+///
+/// Lo que devuelve es **información del cliente** y muere con la pantalla que la muestra.
+pub fn titulos_de(pid: i32) -> Vec<String> {
+    let Some(app) = Aplicacion::de(pid) else { return Vec::new() };
+    unsafe {
+        let Some(lista) = atributo(app.elemento, "AXWindows") else { return Vec::new() };
+        let arreglo = lista as CFArrayRef;
+        let mut salida = Vec::new();
+        for i in 0..CFArrayGetCount(arreglo) {
+            let v = CFArrayGetValueAtIndex(arreglo, i) as AXUIElementRef;
+            if v.is_null() {
+                continue;
+            }
+            if let Some(t) = atributo(v, "AXTitle") {
+                let texto = CFString::wrap_under_create_rule(t as CFStringRef).to_string();
+                if !texto.is_empty() {
+                    salida.push(texto);
+                }
+            }
+        }
+        CFRelease(lista);
+        salida
+    }
+}
+
+/// Las aplicaciones en ejecución con interfaz, como `(pid, identificador)`. Sin identificador no
+/// entran: el catálogo del detector se consulta por identificador, no por nombre.
+pub fn aplicaciones_en_ejecucion() -> Vec<(i32, String)> {
+    use objc2_app_kit::NSWorkspace;
+    NSWorkspace::sharedWorkspace()
+        .runningApplications()
+        .iter()
+        .filter_map(|a| {
+            let bundle = a.bundleIdentifier()?.to_string();
+            Some((a.processIdentifier(), bundle))
+        })
+        .collect()
+}
+
 /// Las ventanas de un proceso, medidas. Vacío si no hay permiso o el proceso no las expone.
 pub fn ventanas_de(pid: i32) -> Vec<(usize, Marco)> {
     Aplicacion::de(pid).map(|a| a.ventanas()).unwrap_or_default()
