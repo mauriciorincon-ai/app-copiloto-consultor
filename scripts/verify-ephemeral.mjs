@@ -1,5 +1,14 @@
 #!/usr/bin/env node
 // verify-ephemeral — gate del estándar 4-T «captura de terceros» (kit v1.27.1).
+//
+// ESTE ARCHIVO ES LA MITAD ESTÁTICA. Lee el código y prohíbe API de disco y de red en los
+// módulos protegidos. Necesario, y NO suficiente: no ve lo que escriben las librerías de Apple
+// por debajo, ni un temporal que nazca dentro del puente de Swift, ni un log que se lleve una
+// frase del cliente. La otra mitad mira el DISCO —inventario antes y después de una sesión
+// completa, con una canaria que solo dice el cliente— y vive en
+// `src-tauri/tests/contra-el-mac-de-verdad.rs`. Se corre con `pnpm verify:ephemeral:runtime`, y
+// en la integración continua la arrastra `cargo test`. Decirlo aquí no es cortesía: sin esta
+// nota, un verde de este script se lee como «la promesa está verificada», y no lo está.
 // Corre en CI (job build-escritorio) y en /release-check cuando CLAUDE.md declara
 // `captura_terceros: true`. Falla (exit 1) si algún módulo que toca audio, transcript o
 // pantalla de terceros usa API de DISCO o de RED. Es estático y determinista: crece con el
@@ -75,4 +84,8 @@ for (const dir of PROTEGIDOS) {
 const existentes = PROTEGIDOS.filter((d) => existsSync(d));
 console.log(`verify:ephemeral — módulos protegidos presentes: ${existentes.length ? existentes.join(", ") : "ninguno aún"} · archivos inspeccionados: ${inspeccionados}`);
 if (hallazgos) { console.error(`✕ ${hallazgos} uso(s) de disco/red en módulos efímeros. Regla dura 1 (estándar 4-T).`); process.exit(1); }
-console.log("✓ cero API de disco o red en los módulos efímeros (verificación estática; la de runtime llega con el S1)");
+console.log("✓ cero API de disco o red en los módulos efímeros (verificación estática)");
+console.log(
+  "· la mitad EN MARCHA (inventario del disco tras una sesión completa) no está en este script:\n" +
+    "  `pnpm verify:ephemeral:runtime` · en CI la arrastra `cargo test`",
+);

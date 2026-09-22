@@ -13,10 +13,12 @@
 //! más de cinco de esos minutos eran enlazar lo mismo tres veces. Medido en la corrida
 //! `35673597848`, no supuesto.
 //!
-//! **Y por eso hay un turno.** En un solo binario los tests corren en paralelo, y los de audio
-//! comparten algo que no se puede compartir: los altavoces del Mac. Sin el turno, el audio que
-//! reproduce uno entra por el tap que mide otro. **Los del corpus no lo toman**: no tocan
-//! hardware, cada uno estrena su carpeta, y hacerlos esperar solo alargaría el job.
+//! **Y por eso hay un turno, que lo toman TODOS.** En un solo binario los tests corren en
+//! paralelo, y aquí hay dos cosas que no se pueden compartir: los altavoces del Mac, y **el
+//! disco mientras alguien lo está midiendo**. El gate del efímero inventaría el disco antes y
+//! después de una sesión; cualquier archivo que otro test cree mientras tanto aparecería como
+//! una fuga. Los del corpus no necesitan hardware, pero sí necesitan estarse quietos durante
+//! esa medición, y cuesta menos de un segundo.
 //!
 //! **Cuándo miden y cuándo no.** Necesitan altavoces, permisos y el modelo del idioma. Si falta
 //! algo, cada bloque comprueba **lo otro que sí se puede comprobar** —que el motivo de no poder
@@ -349,6 +351,7 @@ fn corpus_sintetico() -> PathBuf {
 
 #[test]
 fn de_una_carpeta_de_verdad_a_una_ficha_con_su_fuente() {
+    let _turno = turno();
     let carpeta = corpus_sintetico();
     let mut corpus = Corpus::en_memoria().unwrap();
     corpus.indexar(&carpeta, &|_| {}).unwrap();
@@ -383,6 +386,7 @@ fn de_una_carpeta_de_verdad_a_una_ficha_con_su_fuente() {
 /// fuente concreta debajo — que es el fallo más caro que esta app puede cometer.
 #[test]
 fn lo_que_no_esta_en_el_corpus_se_declara_en_vez_de_aproximarse() {
+    let _turno = turno();
     let carpeta = corpus_sintetico();
     let mut corpus = Corpus::en_memoria().unwrap();
     corpus.indexar(&carpeta, &|_| {}).unwrap();
@@ -403,6 +407,7 @@ fn lo_que_no_esta_en_el_corpus_se_declara_en_vez_de_aproximarse() {
 /// lector marca es conjetura, y el documento **tiene que declararlo** hasta la ficha.
 #[test]
 fn un_pdf_de_verdad_se_lee_y_declara_que_sus_secciones_son_conjetura() {
+    let _turno = turno();
     let carpeta = std::env::temp_dir().join(format!("ag-pdf-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&carpeta);
     std::fs::create_dir_all(&carpeta).unwrap();
@@ -430,4 +435,202 @@ fn un_pdf_de_verdad_se_lee_y_declara_que_sus_secciones_son_conjetura() {
     assert!(hallazgos[0].conjeturado);
 
     let _ = std::fs::remove_dir_all(&carpeta);
+}
+
+// ═══════════════════════════════════════════ el efímero, verificado EN MARCHA
+
+use std::collections::BTreeSet;
+use std::path::Path;
+
+use app_copiloto_consultor_lib::disparo::{Contexto, Disparador};
+use app_copiloto_consultor_lib::stt::Turno;
+use app_copiloto_consultor_lib::voz::turno::{Suceso, Turnos};
+use app_copiloto_consultor_lib::voz::vad::PorEnergia;
+
+/// La frase que solo dice el cliente. No se parece a nada del corpus ni del código, para que
+/// encontrarla en un archivo signifique una sola cosa.
+const CANARIA: &str = "quetzalcoatlus-de-bolsillo-7731";
+
+/// Lo único que una sesión puede dejar escrito, y por qué.
+struct Permitido {
+    /// El índice del corpus: documentos DEL USUARIO, que la regla del efímero sí deja persistir.
+    indice: PathBuf,
+}
+
+impl Permitido {
+    fn cubre(&self, ruta: &Path) -> bool {
+        ruta.starts_with(&self.indice)
+    }
+}
+
+/// Todo lo que cuelga de una carpeta, como rutas absolutas. Los enlaces no se siguen.
+fn inventario(raiz: &Path) -> BTreeSet<PathBuf> {
+    let mut salida = BTreeSet::new();
+    let Ok(entradas) = std::fs::read_dir(raiz) else {
+        return salida;
+    };
+    for e in entradas.flatten() {
+        let ruta = e.path();
+        match e.file_type() {
+            Ok(t) if t.is_dir() => salida.extend(inventario(&ruta)),
+            Ok(t) if t.is_file() => {
+                salida.insert(ruta);
+            }
+            _ => {}
+        }
+    }
+    salida
+}
+
+/// Dónde se mira. No es el disco entero —el sistema escribe sin parar y eso sería ruido— sino
+/// **los sitios donde esta app podría escribir**: su propio árbol, su carpeta de datos, el
+/// temporal del proceso y las carpetas del usuario donde un descuido dejaría un archivo a la
+/// vista.
+fn donde_se_mira(casa: &Path) -> Vec<PathBuf> {
+    let hogar = std::env::var("HOME").map(PathBuf::from).unwrap_or_default();
+    let mut sitios = vec![
+        casa.to_path_buf(),
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".."),
+        std::env::temp_dir(),
+    ];
+    for c in ["Documents", "Desktop", "Downloads"] {
+        let d = hogar.join(c);
+        if d.is_dir() {
+            sitios.push(d);
+        }
+    }
+    sitios
+}
+
+/// La sesión. Devuelve lo que se dijo, para poder afirmar que de verdad pasó por dentro.
+fn una_sesion_completa(casa: &Path, corpus_en: &Path) -> Vec<String> {
+    let mut dicho = Vec::new();
+
+    // 1 · El corpus del usuario, indexado. Esto SÍ escribe, y por eso está en `PERMITIDO`.
+    let mut corpus = Corpus::en(&casa.join("corpus")).expect("el índice no se pudo abrir");
+    corpus.indexar(corpus_en, &|_| {}).expect("no se pudo indexar el corpus sintético");
+    assert!(corpus.estado().documentos > 0, "el corpus sintético quedó vacío");
+
+    // 2 · Audio de verdad por el motor de verdad. Es el paso que el barrido estático no puede
+    //     mirar: lo que Apple escriba por debajo, se escribe aquí.
+    let motor = motor_de_la_casa();
+    let (muestras, hz) = leer_wav(concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba/audio/pregunta-es.wav"));
+    match motor.transcribir("es-ES", &muestras, hz) {
+        Ok(texto) => {
+            println!("[sesión] el motor devolvió {} letras", texto.chars().count());
+            dicho.push(texto);
+        }
+        Err(e) => println!("[sesión] el motor no pudo transcribir ({e:?}): se sigue con la canaria"),
+    }
+
+    // 3 · El detector de turnos, con el mismo audio. Corta donde cortaría en una reunión.
+    //
+    // El `cerrar()` del final no es un detalle: el archivo del kit **termina justo después de la
+    // frase**, sin el silencio que cierra un turno en una reunión de verdad. Sin él, este paso
+    // contaba cero turnos y se quedaba de adorno — lo dijo su propia traza la primera vez que
+    // corrió, y se arregló antes de dar el gate por bueno.
+    let mut turnos = Turnos::nuevo(PorEnergia::nuevo());
+    let mut cerrados = 0;
+    for marco in muestras.chunks(320) {
+        if let Some(Suceso::Termina { .. }) = turnos.marco(marco) {
+            cerrados += 1;
+        }
+    }
+    if let Some(Suceso::Termina { .. }) = turnos.cerrar() {
+        cerrados += 1;
+    }
+    println!("[sesión] {cerrados} turnos cerrados por el detector");
+    assert!(cerrados > 0, "el detector no vio ni un turno en el audio del kit: este paso no midió nada");
+
+    // 4 · La canaria entra como turno del cliente y recorre disparador y ficha.
+    let turno = Turno {
+        pista: Pista::Sistema,
+        desde_ms: 0,
+        hasta_ms: 2_000,
+        texto: format!("¿Y el alcance del {CANARIA} está dentro de la propuesta?"),
+        hora: "14:02".into(),
+        eco: false,
+    };
+    dicho.push(turno.texto.clone());
+
+    let vocabulario = corpus.vocabulario().to_vec();
+    let mut disparador = Disparador::nuevo();
+    let motivo = disparador
+        .mirar(&turno, &Contexto { ahora_ms: 2_000, vocabulario: &vocabulario })
+        .expect("la pregunta del cliente no disparó: la sesión no probó el camino de la ficha");
+    println!("[sesión] disparó por «{}»", motivo.etiqueta());
+
+    let hallazgos = corpus.buscar(&turno.texto, 3).unwrap();
+    match armar(&turno.texto, &hallazgos) {
+        Respuesta::Ficha(f) => dicho.push(f.titular),
+        Respuesta::SinResultado { buscado, .. } => dicho.push(buscado),
+    }
+
+    // 5 · El kill-switch sobre lo que guardó la última pregunta del cliente.
+    disparador.reiniciar();
+    dicho
+}
+
+/// Un corpus mínimo para la sesión del efímero: una propuesta y nada más.
+fn corpus_para_el_efimero() -> PathBuf {
+    let c = std::env::temp_dir().join(format!("ag-efimero-fuente-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&c);
+    std::fs::create_dir_all(&c).unwrap();
+    std::fs::write(
+        c.join("Propuesta Páramo Azul.md"),
+        "# Alcance\nCubre perfilado y limpieza de tres fuentes: ERP, POS y el Excel de canal.\n\n\
+         # Plazo de entrega\nLa entrega completa toma cuatro semanas desde la firma.\n",
+    )
+    .unwrap();
+    c
+}
+
+#[test]
+fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
+    let _turno = turno();
+    let casa = std::env::temp_dir().join(format!("ag-efimero-casa-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&casa);
+    std::fs::create_dir_all(&casa).unwrap();
+    let fuente = corpus_para_el_efimero();
+    let permitido = Permitido { indice: casa.join("corpus") };
+
+    // El inventario se toma DESPUÉS de crear los fixtures: lo que se mide es lo que deja la
+    // sesión, no lo que deja el test preparándola.
+    let sitios = donde_se_mira(&casa);
+    let antes: BTreeSet<PathBuf> = sitios.iter().flat_map(|s| inventario(s)).collect();
+    println!("[efímero] {} archivos antes, en {} sitios", antes.len(), sitios.len());
+
+    let dicho = una_sesion_completa(&casa, &fuente);
+
+    let despues: BTreeSet<PathBuf> = sitios.iter().flat_map(|s| inventario(s)).collect();
+    let nuevos: Vec<&PathBuf> = despues
+        .difference(&antes)
+        // Los fixtures del propio test no cuentan: los creó el test, no la sesión.
+        .filter(|r| !r.starts_with(&fuente))
+        .collect();
+    println!("[efímero] {} archivos nuevos", nuevos.len());
+
+    let intrusos: Vec<&&PathBuf> = nuevos.iter().filter(|r| !permitido.cubre(r)).collect();
+    assert!(
+        intrusos.is_empty(),
+        "la sesión dejó {} archivo(s) fuera del índice del corpus:\n  {}",
+        intrusos.len(),
+        intrusos.iter().map(|r| r.display().to_string()).collect::<Vec<_>>().join("\n  ")
+    );
+    assert!(!nuevos.is_empty(), "no se escribió NI el índice: la sesión no llegó a correr");
+
+    // Y la canaria: lo que dijo el cliente no puede estar dentro de lo que sí se escribió.
+    for ruta in &nuevos {
+        let Ok(bytes) = std::fs::read(ruta) else { continue };
+        let texto = String::from_utf8_lossy(&bytes);
+        assert!(
+            !texto.contains(CANARIA),
+            "la frase del cliente acabó dentro de {}",
+            ruta.display()
+        );
+    }
+    assert!(dicho.iter().any(|d| d.contains(CANARIA)), "la canaria no llegó a recorrer la sesión");
+
+    let _ = std::fs::remove_dir_all(&casa);
+    let _ = std::fs::remove_dir_all(&fuente);
 }
