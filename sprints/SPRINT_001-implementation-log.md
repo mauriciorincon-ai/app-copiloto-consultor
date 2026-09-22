@@ -1135,7 +1135,7 @@ la pantalla de Honestidad lo dice: **«6 de 7 piezas: la otra todavía no existe
 | `src-tauri/nativo/Transcriptor.swift` · `build.rs` | **nuevos** — el puente de Swift y su compilación |
 | `src-tauri/Info.plist` · `lproj/{es,en}.lproj/InfoPlist.strings` | **nuevos** — lo que macOS dirá al pedir un permiso |
 | `src-tauri/src/{lib,corte,capture/mod}.rs` | siete comandos nuevos · `⌘⇧T` · el corte de seis piezas |
-| `src-tauri/tests/{el-puente-transcribe,los-dos-grifos,de-la-voz-a-la-frase}.rs` | **nuevos** — lo que ningún test unitario puede afirmar |
+| `src-tauri/tests/contra-el-mac-de-verdad.rs` | **nuevo** — lo que ningún test unitario puede afirmar |
 | `src/pantallas/Idioma.tsx` · `src/turnos.ts` | **nuevos** — la cuarta pantalla y el transcript |
 | `src/{cuaderno.ts,App.tsx,componentes/{Banda,Principal,Ventana}.tsx,pantallas/{Sesion,Honestidad}.tsx}` | las pistas, el eco y los turnos reales |
 | `docs/diseno/{idioma,sesion,honestidad}.html` | el estado `s1` nuevo y los dos puestos al día (mirada 13) |
@@ -1151,6 +1151,21 @@ la pantalla de Honestidad lo dice: **«6 de 7 piezas: la otra todavía no existe
 - **fidelidad 56/56** bajo el umbral de 0,15 % · **cero desbordes** · cero errores de página
 - las dos pistas capturan en vivo, el fin de turno cae en 320 ms y un turno de 5,9 s se transcribe
   en 243 ms — todo medido, nada supuesto
+- **CI verde con conclusión propia por check** (`quality` · `e2e` · `build-escritorio`)
+
+#### Lo que costó la integración continua, y lo que se hizo con eso
+
+La primera corrida verde de esta fase (`35673597848`) dejó a `build-escritorio` en **7 min 32 s**,
+de 1 min 11 s que venía marcando. No fue el crate: fueron los **tres archivos de `tests/`**. Cada
+archivo de ahí es un binario aparte y cada binario vuelve a enlazar el crate entero más la
+librería de Swift — tres veces lo mismo, más de cinco minutos.
+
+Los tres se juntaron en `contra-el-mac-de-verdad.rs`. Y juntarlos trajo su propio problema, que es
+por qué el archivo tiene un turno: **en un solo binario los tests corren en paralelo y comparten
+los altavoces del Mac**, así que el `afplay` de uno entraba en las mediciones de otro. Se
+descubrió en el momento más justo: mientras escribía esto puse a sonar el audio a mano para
+mirar la salida, y el test cayó con la mezcla transcrita. El mensaje del fallo lo dice ahora, para
+que a nadie le cueste media hora — *«el tap oye TODO lo que suena en este Mac»*.
 
 ### Decisión de diseño no escrita — lo que la fase 3 descubrió y la maqueta no dice (mirada 13 propuesta)
 
