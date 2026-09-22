@@ -1278,6 +1278,26 @@ Y hay tres hechos que no salieron de ningún plan, sino de construir:
 No se redecide nada aprobado: se aplica la forma de la mirada 12 al trozo que la fase 3 entrega.
 Pero **el usuario no ha visto ninguna de las tres**, y «continúa» no aprueba diseño.
 
+### Mirada 13 — aprobada (2026-09-21)
+
+> **«Me gustó mucho el diseño y cómo se van evidenciando los elementos construidos y lo que falta,
+> muy bien lograda»**
+
+Lo que el usuario nombra —*«cómo se van evidenciando los elementos construidos y lo que falta»*— es
+exactamente el mecanismo que la mirada 12 aprobó en abstracto y esta ve ya aplicado a un sprint
+concreto: el par «funciona / todavía no» de `design-system.md` §9-sexies, con cuatro filas que
+cambiaron de lado en esta fase. Queda aprobado, entonces, no solo el aspecto de las tres pantallas
+sino **la manera en que envejece «todavía no»**: el estado `s1` de `idioma.html`, y los de
+`sesion.html` y `honestidad.html` puestos al día.
+
+**Cómo llegó el veredicto, que importa para la auditoría.** El usuario respondió primero
+«Apruebo las tres pantallas idioma sesion y honestidad. continúa». Un «apruebo» no es un «lo vi»:
+se repreguntó por la regla 10 —*«¿qué viste al abrirlas?»*— y la frase de arriba es la respuesta.
+Es la tercera vez en esta app que la repregunta hace falta (miradas 1, 3-quinquies y 13) y la
+segunda que, al hacerla, aparece contenido que la palabra de aprobación no traía.
+
+Registrada también en `docs/diseno/README.md`. Con ella se desbloquea la fase 4.
+
 ## Desviación del plan (2026-09-20) — la MANIOBRA es producto nuevo
 
 **Qué.** El estado «sin resultado» deja de limitarse a admitir el vacío: sugiere **cómo abordar la

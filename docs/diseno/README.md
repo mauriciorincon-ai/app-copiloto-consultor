@@ -50,6 +50,22 @@ macOS para «Audio del sistema» y «Pantalla», y la Accesibilidad en la lista 
 A partir de aquí, **toda pantalla que se entregue a medias usa este estado**: no se pinta en verde
 lo que no existe, y no se esconde.
 
+### Mirada 13 — veredicto del usuario (2026-09-21)
+
+> **«Me gustó mucho el diseño y cómo se van evidenciando los elementos construidos y lo que falta,
+> muy bien lograda»**
+
+**Aprobada.** Lo que el usuario nombra es el mecanismo de la mirada 12 ya aplicado a un sprint
+concreto, no su enunciado: las cuatro filas que la fase 3 movió de *pendiente* a *funciona*. Con
+ello quedan aprobados el estado `s1` nuevo de `idioma.html`, los de `sesion.html` y
+`honestidad.html` puestos al día, y los tres hechos que solo se supieron construyendo y que la
+maqueta ahora dice — el **eco** con altavoces internos, el **techo de cinco idiomas** de macOS y
+la **descarga del modelo**.
+
+*(El veredicto llegó tras repreguntar por la regla 10: la primera respuesta fue «Apruebo las tres
+pantallas… continúa», y un «apruebo» no es un «lo vi». Se registra el camino porque es la segunda
+vez en esta app que la repregunta hace aparecer contenido que la palabra de aprobación no traía.)*
+
 La maqueta no se congela con G-Diseño: se extiende por el mismo camino (propuesta → mirada →
 registro). Lo que **no** cambia sin una mirada nueva es lo ya aprobado — y esta extensión no
 redecide nada: cruza la forma elegida en la mirada 3-ter con el contenido aprobado en la 1.
@@ -69,6 +85,8 @@ redecide nada: cruza la forma elegida en la mirada 3-ter con el contenido aproba
 | 2026-09-20 | `notas.html` · `idioma.html` · `ia.html` (mirada 4-bis) | **Idioma e IA aprobados; una cosa en notas** — «me gusta mucho lo de las notas, me preocupa es que mientras estoy en la reunión no puedo decidir; ¿es posible decidir apenas finalice la reunión y darme una o unas horas antes de borrar las sugerencias? De resto sí que me gusta mucho notas. Idioma muy completo, incluso mejor de lo que pensaba. IA también quedó excelente, aprobado» | Fase 4-ter: bandeja de propuestas con cuenta atrás |
 | 2026-09-20 | `notas.html` (bandeja) + `honestidad.html` (bandeja en las cuentas) (mirada 4-ter) | **Aprobada** — «abrí la ventana, claramente la exploré con sus botones y me pareció excelente, continuamos». *(Se le repreguntó por la regla 10 al llegar solo la palabra de fase; respondió con la exploración descrita. Observación suya, justa y registrada: no tiene que rendir cuentas de lo que ve.)* | Fase 5: recorrido, README, auditoría y G-Diseño |
 | 2026-09-20 | `banda.html` — los seis estados de contenido de la banda (mirada 11, sprint 001) | **Aprobada con un cambio** — «Si me gusta mucho muy bien docs/diseno/banda.html, pero en Sin resultado esta bien que digas que no hay nada pero sugierele como abordar la situacion. El resto esta muy muy bien» | La **maniobra**: lo más cercano del corpus + un catálogo versionado de seis maneras de responder, los dos deterministas (cero LLM). Luego, la fase 1b: las tres ventanas |
+| 2026-09-21 | `sesion.html` · `permisos.html` · `honestidad.html` — estado «así se ve hoy · sprint 1» y el componente «todavía no» (mirada 12, sprint 001) | **Aprobada** — «Esta muy bien como indica que no todavia no existe en sesion permisos y honestidad» (abrió las tres y nombró las tres) | Fase 2b: las tres pantallas del cuaderno construidas |
+| 2026-09-21 | `idioma.html` (estado s1 nuevo) · `sesion.html` y `honestidad.html` al día (mirada 13, sprint 001) | **Aprobada** — «Me gustó mucho el diseño y cómo se van evidenciando los elementos construidos y lo que falta, muy bien lograda». *(Se repreguntó por la regla 10: la primera respuesta fue «Apruebo las tres pantallas… continúa», y un «apruebo» no es un «lo vi».)* | Fase 4: corpus, disparo y ficha |
 
 ## Decisiones de diseño declaradas antes del segundo artefacto
 
