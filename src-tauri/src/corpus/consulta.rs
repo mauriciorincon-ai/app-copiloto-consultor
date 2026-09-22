@@ -30,6 +30,12 @@ const VACIAS: &[&str] = &[
     "en", "por", "para", "con", "sin", "sobre", "como", "mas", "pero", "sus", "nos", "les",
     "esta", "este", "esto", "estos", "estas", "ese", "esa", "eso", "muy", "ya", "hay", "son",
     "ser", "fue", "era", "han", "has", "hemos", "cuando", "donde", "porque", "cual", "cuales",
+    // Los interrogativos que faltaban, y que el kit de evaluación encontró de la peor manera
+    // posible: «¿cuánto cuesta el software de Salesforce?» acabó citando una sección sobre
+    // gobierno de datos, que traía «cuánto» y «cuesta» — dos palabras que dice todo el mundo —
+    // y con eso le bastó para pasar por respuesta. Un interrogativo dice que hay una pregunta,
+    // no de QUÉ va.
+    "cuanto", "cuanta", "cuantos", "cuantas", "quien", "quienes", "adonde", "acaso", "cuyo",
     "nosotros", "ustedes", "ellos", "ellas", "usted", "tambien", "hacer", "tiene", "tienen",
     // inglés
     "the", "and", "for", "with", "that", "this", "these", "those", "from", "are", "was", "were",

@@ -634,3 +634,128 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     let _ = std::fs::remove_dir_all(&casa);
     let _ = std::fs::remove_dir_all(&fuente);
 }
+
+// ═══════════════════════════════════════════════ el KIT DE EVALUACIÓN v0 (nDCG@5 y la negativa)
+
+// (bloque) Treinta preguntas contra el corpus sintético del kit, con umbrales declarados.
+//
+// **Por qué un número y no una impresión.** Cada decisión de la fase 4 —el plegado de acentos,
+// el peso del título, el mínimo de términos— se puede defender con una anécdota. Con esto se
+// puede defender con una medida, y sobre todo se puede *comparar*: cuando el sprint 2 quiera
+// meter embeddings, la pregunta «¿hacen falta?» tiene por fin una respuesta que no depende de
+// a quién se le pregunte.
+//
+// **Y la mitad que más importa son las cuatro últimas.** Las preguntas de `sinRespuesta` no
+// están en el corpus, y la app tiene que DECIRLO. Un buscador que acierta 30 de 30 y además
+// contesta con seguridad a lo que no sabe es peor que uno que acierta 25: el fallo caro de esta
+// app no es no encontrar, es encontrar cualquier cosa y ponerle una fuente debajo.
+
+/// Umbral del nDCG@5. Se fija **con la primera medición**, no antes: un umbral inventado o pasa
+/// siempre o no pasa nunca, y en los dos casos deja de medir. Medido **0,823** con el corpus y
+/// las preguntas del kit v0; el mínimo se deja dos centésimas por debajo para que el ruido de un
+/// empate no tumbe la integración continua, y lo bastante cerca para que una regresión de
+/// verdad se note. Se sube cuando el retriever mejore; bajarlo exige decirlo en la bitácora.
+const NDCG_MINIMO: f64 = 0.80;
+
+/// Las tres que fallan hoy, y por qué se dejan fallando: **ninguna comparte una sola palabra con
+/// su sección**. «¿Por qué nos contrataron para esto?» contra una sección que habla de márgenes
+/// y canales; «¿cómo les fue en lo de la cooperativa?» contra una que dice «la implementación
+/// cerró con dos semanas de retraso». BM25 no puede resolverlas y reescribir las preguntas para
+/// que las acierte convertiría el kit en un espejo. Son la evidencia que el sprint 2 necesita
+/// para decidir si los embeddings hacen falta — y ahora esa pregunta tiene un número detrás.
+const FALLOS_SEMANTICOS_CONOCIDOS: usize = 3;
+
+/// Cuántas de las que NO están en el corpus tiene que rechazar. Aquí no hay margen: aproximar
+/// una ficha sobre algo que no se tiene es el fallo que esta app existe para no cometer.
+const RECHAZO_MINIMO: f64 = 1.0;
+
+#[derive(serde::Deserialize)]
+struct Kit {
+    preguntas: Vec<Caso>,
+    #[serde(rename = "sinRespuesta")]
+    sin_respuesta: Vec<String>,
+}
+
+#[derive(serde::Deserialize)]
+struct Caso {
+    dice: String,
+    espera: String,
+}
+
+/// nDCG@5 con relevancia binaria: la sección esperada vale 1 y todo lo demás 0. Con un solo
+/// documento relevante, el ideal es 1.0 y el descuento sale del puesto en el que aparece.
+fn ndcg_5(puestos: &[String], espera: &str) -> f64 {
+    puestos
+        .iter()
+        .take(5)
+        .position(|s| s == espera)
+        .map(|i| 1.0 / ((i + 2) as f64).log2())
+        .unwrap_or(0.0)
+}
+
+#[test]
+fn el_kit_de_evaluacion_mide_el_retriever_y_su_negativa() {
+    let _turno = turno();
+    let raiz = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba");
+    let kit: Kit = serde_json::from_str(
+        &std::fs::read_to_string(format!("{raiz}/preguntas.json")).expect("falta preguntas.json"),
+    )
+    .expect("preguntas.json no se pudo leer");
+
+    let mut corpus = Corpus::en_memoria().unwrap();
+    corpus.indexar(Path::new(&format!("{raiz}/corpus")), &|_| {}).expect("no se indexó el kit");
+    assert_eq!(corpus.estado().documentos, 6, "el corpus del kit cambió de tamaño");
+
+    // ---- nDCG@5 sobre las treinta que SÍ están
+    let mut suma = 0.0;
+    let mut fallos = Vec::new();
+    for c in &kit.preguntas {
+        let puestos: Vec<String> = corpus
+            .buscar(&c.dice, 5)
+            .unwrap()
+            .into_iter()
+            .map(|h| h.seccion.unwrap_or_default())
+            .collect();
+        let n = ndcg_5(&puestos, &c.espera);
+        suma += n;
+        if n == 0.0 {
+            fallos.push(format!("  «{}» → esperaba «{}», trajo {:?}", c.dice, c.espera, puestos));
+        }
+    }
+    let ndcg = suma / kit.preguntas.len() as f64;
+
+    // ---- y la negativa sobre las que NO están
+    let mut rechazadas = 0;
+    let mut aproximadas = Vec::new();
+    for dice in &kit.sin_respuesta {
+        let hallazgos = corpus.buscar(dice, 3).unwrap();
+        match armar(dice, &hallazgos) {
+            Respuesta::SinResultado { .. } => rechazadas += 1,
+            Respuesta::Ficha(f) => {
+                aproximadas.push(format!("  «{dice}» → citó «{}»", f.fuente.documento))
+            }
+        }
+    }
+    let rechazo = rechazadas as f64 / kit.sin_respuesta.len() as f64;
+
+    println!("\n╭─ kit de evaluación v0 ─────────────────────────────");
+    println!("│ nDCG@5          {ndcg:.3}   (mínimo {NDCG_MINIMO:.2})");
+    println!("│ rechazo         {rechazo:.3}   (mínimo {RECHAZO_MINIMO:.2})");
+    println!("│ preguntas       {}", kit.preguntas.len());
+    println!("│ sin respuesta   {}", kit.sin_respuesta.len());
+    println!("╰────────────────────────────────────────────────────");
+    if !fallos.is_empty() {
+        println!("las que no encontraron su sección en los cinco primeros:\n{}", fallos.join("\n"));
+    }
+    if !aproximadas.is_empty() {
+        println!("las que se aproximaron en vez de callar:\n{}", aproximadas.join("\n"));
+    }
+
+    assert!(ndcg >= NDCG_MINIMO, "nDCG@5 {ndcg:.3} por debajo de {NDCG_MINIMO:.2}");
+    assert!(
+        fallos.len() <= FALLOS_SEMANTICOS_CONOCIDOS,
+        "aparecieron {} fallos, {FALLOS_SEMANTICOS_CONOCIDOS} conocidos: alguno es nuevo",
+        fallos.len()
+    );
+    assert!(rechazo >= RECHAZO_MINIMO, "rechazó {rechazadas} de {}", kit.sin_respuesta.len());
+}
