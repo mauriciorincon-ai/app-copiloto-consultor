@@ -35,9 +35,7 @@ construir el siguiente artefacto.
 | Mirada | Artefacto | Por qué existe | Orden |
 |---|---|---|---|
 | 11 | `banda.html` — los seis estados de contenido de la banda | el gate de FIDELIDAD del sprint 001 compara la banda construida contra la maqueta, y la maqueta dibujó la banda **siempre con una ficha dentro**: cinco de los seis estados no tenían referencia. Se propuso en el plan del sprint, **aprobado por el usuario antes de construir** | antes de escribir la primera línea de UI del sprint 001 |
-
 | 12 | `sesion.html` · `permisos.html` · `honestidad.html` — el estado **«así se ve hoy · sprint 1»** y el componente **«todavía no»** | la maqueta dibuja el producto terminado y cada sprint entrega un trozo; sin una forma escrita de decir «esto aún no existe», las pantallas de la fase 2 solo podían mentir en verde o esconder lo que falta. Se propuso en la bitácora ANTES de construir la UI del producto | antes de escribir la primera línea de las pantallas del cuaderno |
-
 | 13 | `idioma.html` (estado s1 nuevo) · `sesion.html` y `honestidad.html` (su estado s1 **puesto al día**) | consecuencia directa del «todavía no» aprobado en la 12: cada sprint mueve filas de *pendiente* a *funciona*, y ese movimiento **también es diseño**. La fase 3 mueve cuatro (las dos pistas, la escucha, el transcript) y trae una pantalla que no tenía estado de sprint 1. Además, tres hechos que solo se supieron construyendo piden sitio en la maqueta: el **eco** con altavoces, el **techo de cinco idiomas** de macOS y la **descarga del modelo**. Se propuso en la bitácora ANTES de construir la UI de la fase 3 | antes de escribir la primera línea de la pantalla de Idioma |
 
 ### Mirada 12 — veredicto del usuario (2026-09-21)
