@@ -1473,6 +1473,21 @@ de macOS e indexarla desde la ventana. Es un panel nativo; solo una persona pued
 - gate de fidelidad **60/60** bajo el umbral del 0,15 %, cero desbordes, cero errores de página
 - arrancada en vivo con los tres atajos registrados
 
+### Mirada 14 — aprobada (2026-09-21)
+
+> **«Ya vi el diseño del corpus, vamos muy bien; ya están las secciones de las temáticas
+> principales y lo que falta es muy interesante, por ejemplo lo de arrastrar los documentos»**
+
+El usuario nombra una de las tres filas de «todavía no» del bloque, así que el veredicto llega
+con el archivo abierto y sin necesidad de repreguntar — la primera vez en tres miradas seguidas.
+Registrada también en `docs/diseno/README.md`.
+
+**Queda abierto y es decisión suya:** la pantalla de Honestidad escribe «1,8 MB» con coma decimal
+también en inglés. Es el mismo defecto que la fase 4 arregló en Corpus, pero vive en una pantalla
+aprobada en la mirada 13 y en `red::formatear`, que usan varias. Se le presentó en el gate de la
+fase 4 y no se tocó por cuenta propia; se paga en la fase 5 y su delta visual entra en la mirada
+de esa fase.
+
 ## Desviación del plan (2026-09-20) — la MANIOBRA es producto nuevo
 
 **Qué.** El estado «sin resultado» deja de limitarse a admitir el vacío: sugiere **cómo abordar la

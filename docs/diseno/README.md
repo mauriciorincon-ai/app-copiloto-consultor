@@ -70,6 +70,18 @@ La maqueta no se congela con G-Diseño: se extiende por el mismo camino (propues
 registro). Lo que **no** cambia sin una mirada nueva es lo ya aprobado — y esta extensión no
 redecide nada: cruza la forma elegida en la mirada 3-ter con el contenido aprobado en la 1.
 
+### Mirada 14 — veredicto del usuario (2026-09-21)
+
+> **«Ya vi el diseño del corpus, vamos muy bien; ya están las secciones de las temáticas
+> principales y lo que falta es muy interesante, por ejemplo lo de arrastrar los documentos»**
+
+**Aprobada.** El usuario nombra una de las tres filas de «todavía no» del bloque —*arrastrar y
+soltar documentos*—, así que el veredicto llega con el archivo abierto. Quedan aprobados el
+estado `s1` de `corpus.html` y las tres cosas que solo se supieron construyendo y que la pantalla
+dice en vez de esconder: que **las secciones de un PDF son conjetura** y se cuentan, que el
+índice vive en la carpeta de datos de la app **y solo su dueño puede leerlo**, y el techo de
+2 000 documentos por carpeta.
+
 ## Registro de miradas
 
 | Fecha | Artefacto | Veredicto del usuario (línea textual) | Qué se construyó encima, después |
@@ -87,6 +99,7 @@ redecide nada: cruza la forma elegida en la mirada 3-ter con el contenido aproba
 | 2026-09-20 | `banda.html` — los seis estados de contenido de la banda (mirada 11, sprint 001) | **Aprobada con un cambio** — «Si me gusta mucho muy bien docs/diseno/banda.html, pero en Sin resultado esta bien que digas que no hay nada pero sugierele como abordar la situacion. El resto esta muy muy bien» | La **maniobra**: lo más cercano del corpus + un catálogo versionado de seis maneras de responder, los dos deterministas (cero LLM). Luego, la fase 1b: las tres ventanas |
 | 2026-09-21 | `sesion.html` · `permisos.html` · `honestidad.html` — estado «así se ve hoy · sprint 1» y el componente «todavía no» (mirada 12, sprint 001) | **Aprobada** — «Esta muy bien como indica que no todavia no existe en sesion permisos y honestidad» (abrió las tres y nombró las tres) | Fase 2b: las tres pantallas del cuaderno construidas |
 | 2026-09-21 | `idioma.html` (estado s1 nuevo) · `sesion.html` y `honestidad.html` al día (mirada 13, sprint 001) | **Aprobada** — «Me gustó mucho el diseño y cómo se van evidenciando los elementos construidos y lo que falta, muy bien lograda». *(Se repreguntó por la regla 10: la primera respuesta fue «Apruebo las tres pantallas… continúa», y un «apruebo» no es un «lo vi».)* | Fase 4: corpus, disparo y ficha |
+| 2026-09-21 | `corpus.html` (estado s1 nuevo) (mirada 14, sprint 001) | **Aprobada** — «Ya vi el diseño del corpus, vamos muy bien; ya están las secciones de las temáticas principales y lo que falta es muy interesante, por ejemplo lo de arrastrar los documentos» (nombra una de las tres filas de «todavía no»: llegó con el archivo abierto) | Fase 5: efímero en runtime, kit de evaluación, guía de prueba y manual |
 
 ## Decisiones de diseño declaradas antes del segundo artefacto
 
