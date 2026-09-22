@@ -324,21 +324,31 @@ impl Drop for Escucha {
 
 /// Saca del anillo lo que haya llegado y se lo da a la máquina de turnos, marco a marco.
 fn mirar(p: &mut PistaViva, manda: &Sender<Encargo>, avisar: &dyn Fn(Novedad)) {
-    let (totales, nuevas) = {
+    // `rango` distingue dos vacíos que no significan lo mismo, y de ahí sale toda la lógica de
+    // abajo: `Some(vacío)` es «no ha entrado nada desde la última vez», que es lo normal cuando
+    // nadie habla; `None` es «ese audio ya se pisó», que solo pasa si el anillo dio la vuelta
+    // entera —treinta segundos— entre dos latidos de cuarenta milisegundos.
+    let (nuevas, totales) = {
         let Ok(a) = p.anillo.lock() else { return };
         let totales = a.totales();
-        let desde = p.origen + p.procesadas;
-        let nuevas = a.rango(desde, totales).unwrap_or_default();
-        (totales, nuevas)
+        (a.rango(p.origen + p.procesadas, totales), totales)
+    };
+    let Some(nuevas) = nuevas else {
+        // Volver a engancharse al presente, **diciéndolo**. Que la app se salte medio minuto de
+        // reunión y nadie se entere es exactamente el silencio que esta casa no se permite; al
+        // log va el hecho y los segundos, nunca lo que se dijo.
+        let perdidos = (totales.saturating_sub(p.origen + p.procesadas)) as f32 / HZ as f32;
+        println!(
+            "[escucha] la pista «{}» se quedó atrás {perdidos:.1}s: ese audio ya se pisó y no se \
+             va a transcribir",
+            p.cual.etiqueta()
+        );
+        p.origen = totales;
+        p.procesadas = 0;
+        p.sobrante.clear();
+        return;
     };
     if nuevas.is_empty() && p.sobrante.len() < MARCO {
-        // Si el anillo dio la vuelta entera entre dos latidos, `rango` devuelve vacío y hay que
-        // volver a engancharse al presente en vez de quedarse pidiendo audio que ya no existe.
-        if totales > p.origen + p.procesadas + Anillo::de_la_app().capacidad() as u64 {
-            p.origen = totales;
-            p.procesadas = 0;
-            p.sobrante.clear();
-        }
         return;
     }
     p.procesadas += nuevas.len() as u64;

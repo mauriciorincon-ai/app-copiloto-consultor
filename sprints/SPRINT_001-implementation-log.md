@@ -1153,6 +1153,27 @@ la pantalla de Honestidad lo dice: **«6 de 7 piezas: la otra todavía no existe
   en 243 ms — todo medido, nada supuesto
 - **CI verde con conclusión propia por check** (`quality` · `e2e` · `build-escritorio`)
 
+#### Y un defecto que no encontró ningún test, sino releer el diff
+
+En el hilo que mira los marcos, la rama que detecta «el anillo dio la vuelta entera» estaba
+escrita así:
+
+```rust
+if totales > p.origen + p.procesadas + Anillo::de_la_app().capacidad() as u64 {
+```
+
+`Anillo::de_la_app()` **construye un anillo nuevo** —480 000 flotantes, 1,9 MB— solo para
+preguntarle su tamaño. Y esa rama se evalúa cada vez que no ha entrado audio, que es lo normal
+cuando nadie habla: **1,9 MB reservados y tirados veinticinco veces por segundo**, en una app que
+presume de caber en la memoria de un Mac en mitad de una videollamada.
+
+Se arregló mirando mejor lo que ya había: `Anillo::rango` distingue `Some(vacío)` —«no ha entrado
+nada», lo normal— de `None` —«ese audio ya se pisó»—, y esa diferencia es exactamente la pregunta
+que la rama quería hacer. Sin constante nueva y sin reservar nada. Y ahora, cuando pasa, **se
+dice**: `la pista «sistema» se quedó atrás 31.2s: ese audio ya se pisó y no se va a transcribir`.
+Que la app se salte medio minuto de reunión sin que nadie se entere es el mismo silencio que el
+resto de este sprint se ha dedicado a no permitir.
+
 #### El gate de fidelidad dio dos respuestas distintas al mismo código
 
 Terminando la fase, una corrida marcó **2,574 %** de divergencia en `sin-verificar-2 · light · es`

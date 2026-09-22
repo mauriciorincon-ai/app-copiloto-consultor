@@ -24,8 +24,8 @@
 
 use std::sync::{Mutex, MutexGuard};
 
-/// Los altavoces y el tap del sistema son uno solo para todo el Mac: los tests que los usan van
-/// de a uno. Sin esto, el `afplay` de un test aparece dentro de las mediciones de otro.
+// Los altavoces y el tap del sistema son uno solo para todo el Mac: los tests que los usan van
+// de a uno. Sin esto, el `afplay` de un test aparece dentro de las mediciones de otro.
 static TURNO: Mutex<()> = Mutex::new(());
 
 fn turno() -> MutexGuard<'static, ()> {
@@ -36,14 +36,14 @@ fn turno() -> MutexGuard<'static, ()> {
 // el puente de Swift transcribe
 // =============================================================================================
 
-/// Al meter voz por un lado tiene que salir texto por el otro. Los tests de `src/stt/` prueban
-/// la frontera —que un idioma inventado no rompa nada, que el motor ausente no se confunda con
-/// silencio—; ninguno prueba lo único que importa.
+// Al meter voz por un lado tiene que salir texto por el otro. Los tests de `src/stt/` prueban
+// la frontera —que un idioma inventado no rompa nada, que el motor ausente no se confunda con
+// silencio—; ninguno prueba lo único que importa.
 
 use app_copiloto_consultor_lib::stt::{motor_de_la_casa, Disponibilidad, Fallo};
 
-/// Lee un WAV PCM de 16 bits mono. Veinte líneas en vez de una dependencia: el kit controla el
-/// formato de sus propios archivos, así que no hace falta un lector que entienda cuarenta.
+// Lee un WAV PCM de 16 bits mono. Veinte líneas en vez de una dependencia: el kit controla el
+// formato de sus propios archivos, así que no hace falta un lector que entienda cuarenta.
 fn leer_wav(ruta: &str) -> (Vec<f32>, u32) {
     let bytes = std::fs::read(ruta).unwrap_or_else(|e| panic!("no se pudo leer {ruta}: {e}"));
     assert_eq!(&bytes[0..4], b"RIFF", "{ruta} no es un WAV");
@@ -124,9 +124,9 @@ fn transcribe_la_pregunta_en_ingles() {
     probar("pregunta-en.wav", "en-US", &["data cleaning", "scope"]);
 }
 
-/// El hallazgo del spike, convertido en test: el motor escribe las cifras con separador de miles
-/// («ISO27.001», «ISO 27,001») y el corpus las tiene sin él. La fase 4 tendrá que normalizarlas
-/// antes de buscar, y este test existe para que ese día no parezca un bug nuevo.
+// El hallazgo del spike, convertido en test: el motor escribe las cifras con separador de miles
+// («ISO27.001», «ISO 27,001») y el corpus las tiene sin él. La fase 4 tendrá que normalizarlas
+// antes de buscar, y este test existe para que ese día no parezca un bug nuevo.
 #[test]
 fn las_cifras_llegan_con_separadores_del_idioma() {
     let (muestras, hz) = leer_wav("../docs/kit-de-prueba/audio/pregunta-es.wav");
@@ -149,9 +149,9 @@ fn las_cifras_llegan_con_separadores_del_idioma() {
 // los dos grifos se abren
 // =============================================================================================
 
-/// Afirma que los grifos **se abren** —o que, si no, dicen por qué con una frase legible—. No
-/// afirma que lleguen muestras: cuando no suena nada el sistema no llama al callback ni una vez,
-/// así que exigir muestras convertiría el silencio de una habitación en un fallo de la suite.
+// Afirma que los grifos **se abren** —o que, si no, dicen por qué con una frase legible—. No
+// afirma que lleguen muestras: cuando no suena nada el sistema no llama al callback ni una vez,
+// así que exigir muestras convertiría el silencio de una habitación en un fallo de la suite.
 
 use app_copiloto_consultor_lib::capture::anillo::Anillo;
 use app_copiloto_consultor_lib::capture::nativo::Grifo;
@@ -199,10 +199,10 @@ fn el_audio_del_sistema_se_abre_o_dice_por_que_no() {
 // de la voz a la frase, de punta a punta
 // =============================================================================================
 
-/// Suena una frase por los altavoces; el tap la capta; el detector la corta en turno; el motor la
-/// transcribe. Es el único sitio donde las cuatro piezas de la fase 3 se tocan, y la respuesta a
-/// la pregunta que ningún test unitario contesta: *¿funciona en el modo en que lo va a usar el
-/// usuario?*
+// Suena una frase por los altavoces; el tap la capta; el detector la corta en turno; el motor la
+// transcribe. Es el único sitio donde las cuatro piezas de la fase 3 se tocan, y la respuesta a
+// la pregunta que ningún test unitario contesta: *¿funciona en el modo en que lo va a usar el
+// usuario?*
 
 use app_copiloto_consultor_lib::capture::Pista;
 use app_copiloto_consultor_lib::escucha::{Escucha, Novedad};
