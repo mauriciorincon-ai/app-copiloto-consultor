@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Guía de prueba — [APP_NAME]</title>
+<title>Guía de prueba — Angel Ghost</title>
 <!--
   GUÍA DE PRUEBA VIVA Y ACUMULATIVA — entregable estándar de TODO sprint con UI (reglas duras
   del pipeline, G-Metodo 2026-07-12). Referencia: app-habla/docs/GUIA-DE-PRUEBA.html.
@@ -61,9 +61,10 @@
      la prueba A6 de habla pedía ver subir un mínimo corrido dentro de la misma sesión — un
      imposible del instrumento que solo el gate humano detectó.
 
-  AL ESTAMPAR/ACTUALIZAR: reemplazar [APP_NAME], [SLUG], [SPRINT], [FECHA], la URL de preview y
-  los bloques de ejemplo por los reales. Actualizar el NS del script a s[SPRINT]. Los tokens de
-  color pueden alinearse con el design-system de la app.
+  AL ABRIR EL SPRINT SIGUIENTE: cambiar el NS del script (hoy `ag-s1-`) a `ag-s2-`, pasar los
+  chips «Nuevo · S1» a «S1» a secas —salvo lo que el sprint nuevo toque, que pasa a «Mejorado en
+  S2»— y añadir los bloques nuevos SIN resumir los de aquí. Esta app no tiene URL de preview y no
+  va a tenerla: es de escritorio, y la caja de arriba dice cómo se arranca en su lugar.
 -->
 <style>
   :root {
@@ -157,28 +158,35 @@
 <body>
 <div class="pagina">
   <header>
-    <p class="eyebrow">[APP_NAME] · Guía de prueba viva y acumulativa · Sprint [SPRINT] · [FECHA]</p>
+    <p class="eyebrow">Angel Ghost · Guía de prueba viva y acumulativa · Sprint 001 · 2026-09-22</p>
     <h1>Guía de prueba</h1>
     <p class="suave">Todas las pruebas vigentes de la app — las nuevas de este sprint, las que
       cambiaron y las heredadas (regresión). Filtra por origen para correr todo o solo lo que
       cambió. Las casillas se guardan solas en este navegador.</p>
-    <p class="chica"><strong>Gate corto ⭐⭐: [K] paradas · ~20 min — es el que el cierre de
-      ciclo exige.</strong> Solo lo que únicamente un humano puede juzgar; si el CI lo verifica
-      por otro camino, no entra. Deja fuera [N−K] pruebas ⭐ — ninguna se borra: siguen enteras
-      en el filtro ⭐, que se ofrece para cuando quieras la confianza completa.</p>
-    <p class="chica"><strong>Gate mínimo ⭐: [N] pruebas · ~[M] min.</strong> Es lo que ninguna
-      automatización puede verificar (hardware/micrófono/voz reales, juicio sobre el contenido,
-      aprobación visual). Lo que la CI ya respalda queda fuera del mínimo y se corre en pases
-      completos.</p>
+    <p class="chica"><strong>Gate corto ⭐⭐: 8 paradas · ~20 min — es el que el cierre de ciclo
+      exige.</strong> Es un recorrido: se camina de arriba abajo, en el orden del documento, y
+      cada parada deja la app lista para la siguiente. Solo entra lo que únicamente una persona
+      puede juzgar; si la integración continua lo verifica por otro camino, se queda fuera aunque
+      esté en el ⭐. <strong>Deja fuera 18 pruebas ⭐</strong> —instalar un modelo de idioma, el
+      comportamiento sin permisos, el aviso del eco, la restauración tras un cierre brusco, entre
+      otras—: ninguna se borra, siguen enteras en el filtro ⭐ para cuando quieras la confianza
+      completa.</p>
+    <p class="chica"><strong>Gate mínimo ⭐: 26 pruebas · ~35 min.</strong> Es lo que ninguna
+      automatización puede verificar: hardware de verdad, voz de verdad, una videollamada de
+      verdad, y el juicio humano sobre lo que se ve. Lo que la CI ya respalda queda fuera del
+      mínimo y se corre en los pases completos.</p>
     <div class="url-caja">
-      <p class="eyebrow" style="margin:0 0 6px">URL de prueba</p>
-      <code>[URL de la preview de la rama del sprint]</code>
-      <p class="chica suave" style="margin:8px 0 0">Dirección estable de la rama: no cambia aunque
-        se suban correcciones. Si pide login de Vercel: Settings → Deployment Protection →
-        Vercel Authentication → Disabled.</p>
+      <p class="eyebrow" style="margin:0 0 6px">Cómo se arranca</p>
+      <code>pnpm tauri dev</code>
+      <p class="chica suave" style="margin:8px 0 0">Angel Ghost es una app de <strong>escritorio</strong>:
+        no hay dirección web que abrir ni preview que visitar. Se arranca desde la carpeta del
+        repo con ese comando y aparecen tres ventanas — el cuaderno, la banda y su relleno.
+        La primera vez tarda un par de minutos compilando.</p>
       <p class="chica suave" style="margin:8px 0 0"><strong>Cada bloque abre con "Empieza en:"</strong> —
-        la ruta exacta (sobre esta URL) donde arranca su primera prueba. Navega ahí antes de
-        empezar el bloque.</p>
+        dónde estar antes de empezar: una pantalla del cuaderno, la banda, o la reunión.</p>
+      <p class="chica suave" style="margin:8px 0 0"><strong>Qué hace falta tener a mano:</strong>
+        auriculares, una reunión de Google Meet (basta una sala tuya, sin invitados) y la carpeta
+        <code>docs/kit-de-prueba/corpus/</code> de este mismo repo.</p>
     </div>
   </header>
 
@@ -189,58 +197,170 @@
     </div>
     <div class="filtros" role="group" aria-label="Filtrar pruebas por origen">
       <button type="button" data-filtro="todo" class="activo">Todo</button>
-      <button type="button" data-filtro="cambios">Lo que cambió en S[SPRINT]</button>
+      <button type="button" data-filtro="cambios">Lo que cambió en S1</button>
       <button type="button" data-filtro="minimo">Gate mínimo ⭐</button>
       <button type="button" data-filtro="corto">Gate corto ⭐⭐</button>
     </div>
   </div>
 
-  <!-- ANATOMÍA DE UN BLOQUE (copiar y adaptar; uno por área a probar).
-       Cada <li> DEBE llevar data-origen="nuevo|mejorado|heredada" + su chip visible, y
-       data-minimo (sin valor) + "⭐ mínimo" si integra el gate mínimo, y ADEMÁS data-corto +
-       "⭐⭐ Parada N de M" si integra el gate corto (toda data-corto lleva también data-minimo:
-       el corto es subconjunto del mínimo). Ids únicos.
-       La meta-línea SIEMPRE abre con "Empieza en:" + la ruta exacta (regla 8). -->
   <section class="bloque">
-    <div class="bloque-cabeza"><span class="letra">A</span><h2>[Nombre del bloque]</h2></div>
-    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>[/ruta-exacta]</code> ·
-      [~N min · qué valida en una línea]</p>
+    <div class="bloque-cabeza"><span class="letra">A</span><h2>La banda: que el cliente no la vea</h2></div>
+    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la banda, encima de todo</code> ·
+      ~6 min · la promesa central de la app — si esto falla, lo demás da igual</p>
     <ul class="pasos">
-      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="a1"><label for="a1">[Paso
-        NUEVO de este sprint cuyo veredicto SOLO puede ser humano — entra al gate corto.]
-        <span class="origen origen-nuevo">Nuevo · S[SPRINT]</span>
+      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="a1"><label for="a1">Arranca con <code>pnpm tauri dev</code>. <strong>Aparecen tres ventanas:</strong> el cuaderno (960×640), una banda apaisada pegada al borde inferior de la pantalla, y nada más visible — el relleno queda justo debajo de la banda y no se distingue de ella.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
         <span class="minimo">⭐ mínimo</span>
-        <span class="minimo">⭐⭐ Parada 1 de [K]</span></label></li>
-      <li data-origen="mejorado"><input type="checkbox" id="a2"><label for="a2">[Paso que venía
-        de antes y este sprint CAMBIÓ — con el resultado esperado en <strong>negrita</strong>.]
-        <span class="origen origen-mejorado">Mejorado en S[SPRINT]</span></label></li>
-      <li data-origen="heredada"><input type="checkbox" id="a3"><label for="a3">[Paso heredado
-        del sprint anterior SIN cambios ⇒ regresión. Se copia ENTERO, no se resume.]
-        <span class="origen origen-heredada">S[SPRINT-1]</span></label></li>
+        <span class="minimo">⭐⭐ Parada 1 de 8</span></label></li>
+      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="a2"><label for="a2">Abre Google Meet, entra a una sala y <strong>comparte la pantalla completa</strong>. Mírate en la miniatura de tu propia compartición, o pide a alguien que mire. <strong>La franja de abajo NO muestra la banda: muestra tu fondo de escritorio.</strong> Ésta es la promesa entera de la app.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span>
+        <span class="minimo">⭐⭐ Parada 2 de 8</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="a3"><label for="a3">Con la pantalla todavía compartida, mira la franja con atención: <strong>no se ve el escritorio de verdad</strong> (ni iconos, ni ventanas por detrás), sino un trozo de tu fondo de pantalla. Si se vieran ventanas ajenas asomando, el relleno no está haciendo su trabajo.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="a4"><label for="a4">Arrastra el <strong>asa</strong> de la banda hacia arriba. La banda crece a 200 px <strong>y el relleno crece con ella</strong> — no se separan ni un píxel, ni durante el arrastre.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="a5"><label for="a5">Con Chrome abierto en la reunión: la ventana de Chrome <strong>se ha recortado por abajo</strong> para dejarle sitio a la banda, como dos aplicaciones pegadas. Si no concediste Accesibilidad, la banda flota encima y la propia banda lo dice con «sin acople».
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="a6"><label for="a6">Cierra la banda. <strong>Chrome recupera su tamaño anterior</strong>, exactamente el que tenía.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
     </ul>
-    <div class="tabla-scroll"><table>
-      <tr><th>Qué mirar</th><th>Valor / comportamiento correcto</th></tr>
-      <tr><td>[dato o pantalla]</td><td class="valor">[lo que debe verse si está bien]</td></tr>
-    </table></div>
-    <div class="kit"><p><strong>Kit de prueba:</strong> [si un paso necesita documento, código o
-      dataset de prueba, vive en <code>docs/kit-de-prueba/</code> — nómbralo aquí con su ruta y
-      cómo usarlo. Si el bloque no necesita kit, elimina este callout].</p></div>
-    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> [las señales que significan que
-      algo está roto y hay que arreglar antes del merge].</p></div>
+    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> que la franja muestre la banda al compartir pantalla (es el fallo que anula la app entera), que el relleno deje ver ventanas ajenas, o que Chrome no recupere su tamaño.</p></div>
+    <div class="diferido"><p><strong>Diferido:</strong> la promesa de invisibilidad está verificada <strong>solo en Google Meet</strong>, sobre macOS 26.6.2. Zoom y Teams no se han comprobado y la app lo dice en la propia banda con «sin verificar». Se paga cuando haya con qué probarlos.</p></div>
   </section>
 
-  <!-- Repetir <section class="bloque"> por cada área. -->
+  <section class="bloque">
+    <div class="bloque-cabeza"><span class="letra">B</span><h2>El cuaderno: cinco pantallas que no mienten</h2></div>
+    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la ventana del cuaderno (la grande)</code> ·
+      ~7 min · que lo que aún no existe se diga, en vez de pintarse en verde</p>
+    <ul class="pasos">
+      <li data-origen="nuevo"><input type="checkbox" id="b1"><label for="b1">Recorre el rail de la izquierda. <strong>Cinco secciones se abren</strong> (Sesión, Permisos, Corpus, Honestidad, Idioma) y <strong>dos no</strong> (Notas, IA): están apagadas y sin enlace, no llevan a ninguna parte porque todavía no existen.
+        <span class="origen origen-nuevo">Nuevo · S1</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="b2"><label for="b2">En <strong>Sesión</strong>, con Meet abierto: dice qué cliente detectó y si su protección está verificada. Cierra Chrome y vuelve a la ventana: <strong>el estado cambia solo</strong> a «sin reunión».
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo"><input type="checkbox" id="b3"><label for="b3">En <strong>Permisos</strong>: «Audio del sistema» y «Pantalla» muestran <strong>exactamente el mismo estado</strong> — son un solo permiso en macOS y la pantalla lo explica. Si mostraran estados distintos, te mandaría a conceder algo ya concedido.
+        <span class="origen origen-nuevo">Nuevo · S1</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="b4"><label for="b4">Revoca el permiso de micrófono en Ajustes del Sistema y vuelve a la app. <strong>La pantalla se pone al día sola</strong> al recuperar el foco, sin reiniciar nada.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="b5"><label for="b5">Cambia el idioma del sistema a inglés y reabre la app. <strong>Las cinco pantallas están enteras en inglés</strong>, incluidos los textos de permisos que enseña macOS. Ni una frase en español.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo"><input type="checkbox" id="b6"><label for="b6">Cambia a tema claro y recórrelas otra vez. <strong>Todo estado sigue teniendo símbolo y texto</strong>, no solo color.
+        <span class="origen origen-nuevo">Nuevo · S1</span></label></li>
+    </ul>
+    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> cualquier pantalla que pinte en verde algo que no exista, una frase en español dentro de la interfaz en inglés, o un estado que solo se distinga por el color.</p></div>
+  </section>
 
   <section class="bloque">
-    <div class="bloque-cabeza"><span class="letra">B</span><h2>[Siguiente bloque]</h2></div>
-    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>[/ruta-exacta]</code> ·
-      [~N min · qué valida en una línea]</p>
+    <div class="bloque-cabeza"><span class="letra">C</span><h2>El corpus: tus documentos, donde están</h2></div>
+    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la pantalla de Corpus</code> ·
+      ~5 min · que lea lo tuyo sin copiarlo, y que diga lo que no pudo leer</p>
     <ul class="pasos">
-      <li data-origen="heredada"><input type="checkbox" id="b1"><label for="b1">[…]
-        <span class="origen origen-heredada">S[SPRINT-1]</span></label></li>
+      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="c1"><label for="c1">Pulsa <strong>«Señalar una carpeta»</strong> y elige <code>docs/kit-de-prueba/corpus/</code> de este repo. Se abre el panel de macOS. Al aceptar, la pantalla se llena: <strong>6 documentos repartidos en las cinco unidades</strong>.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span>
+        <span class="minimo">⭐⭐ Parada 3 de 8</span></label></li>
+      <li data-origen="nuevo"><input type="checkbox" id="c2"><label for="c2">Abre la carpeta que señalaste en el Finder. <strong>No hay archivos nuevos dentro</strong>: la app leyó donde estaban y no copió nada.
+        <span class="origen origen-nuevo">Nuevo · S1</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="c3"><label for="c3">Mira la tarjeta «Dónde vive el índice»: dice la ruta, el tamaño, y <strong>700</strong> — solo tu cuenta puede leerlo. Compruébalo en Terminal si quieres: <code>ls -ld ~/Library/Application\ Support/*/corpus</code>.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="c4"><label for="c4">Señala ahora una carpeta con un PDF escaneado dentro (o cualquier PDF sin texto). <strong>Aparece contado como «sin leer» con su motivo</strong>, y los demás documentos se indexan igual — uno ilegible no detiene a los otros.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
     </ul>
-    <div class="diferido"><p><strong>Diferido:</strong> [lo que no se puede probar hoy y por qué;
-      cuándo se probará. Los diferidos se ACUMULAN entre sprints hasta pagarse].</p></div>
+    <div class="kit"><p><strong>Kit de prueba:</strong> la carpeta <code>docs/kit-de-prueba/corpus/</code> de este repo — seis documentos sintéticos del cliente inventado «Páramo Azul», uno por cada unidad del modelo. Las preguntas que aparecen en los pasos salen de <code>docs/kit-de-prueba/preguntas.json</code>, que es el mismo juego de treinta con el que la CI mide el buscador.</p></div>
+    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> un archivo nuevo dentro de la carpeta que señalaste, un índice con permisos distintos de 700, o un documento ilegible que detenga a los demás.</p></div>
+  </section>
+
+  <section class="bloque">
+    <div class="bloque-cabeza"><span class="letra">D</span><h2>Oír y responder: las dos pistas y la ficha</h2></div>
+    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>una reunión de Meet, con auriculares puestos</code> ·
+      ~10 min · el camino entero: alguien pregunta, aparece una ficha de lo tuyo</p>
+    <ul class="pasos">
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="d1"><label for="d1"><strong>Ponte los auriculares.</strong> En Sesión, la fila «Auriculares conectados» lo confirma. Quítatelos: <strong>avisa de que el micrófono va a oír al cliente</strong> y que esos turnos se marcarán como eco. Vuelve a ponértelos.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="d2"><label for="d2">Pulsa <strong>«Iniciar sesión»</strong>. En Honestidad, los dos anillos de audio empiezan a contar bytes. <strong>Si no hablas, se quedan quietos — eso es correcto</strong>, no es una avería: cuando nadie habla, macOS no entrega una sola muestra.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span>
+        <span class="minimo">⭐⭐ Parada 4 de 8</span></label></li>
+      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="d3"><label for="d3">Di en voz alta, por el micrófono: <strong>«¿Y la limpieza de datos, eso está dentro del alcance?»</strong> Espera. <strong>En menos de cuatro segundos la banda enseña una ficha</strong> con su titular, una línea y la fuente — «propuesta · Páramo Azul… · Alcance».
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span>
+        <span class="minimo">⭐⭐ Parada 5 de 8</span></label></li>
+      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="d4"><label for="d4">Ahora di algo que el corpus <strong>no tiene</strong>: «¿Ustedes tienen certificación ISO 27001?». La banda dice <strong>«Nada en tu corpus sobre…»</strong> con los términos que de verdad buscó, y debajo una sugerencia de cómo conducirse. <strong>No inventa una respuesta.</strong>
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span>
+        <span class="minimo">⭐⭐ Parada 6 de 8</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="d5"><label for="d5">Pulsa <strong>⌘⇧A</strong> («ayúdame con esto») sin decir nada nuevo. Vuelve a buscar sobre lo último que oyó del cliente, sin esperar.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="d6"><label for="d6">Pulsa <strong>⌘⇧T</strong>. Se abre el transcript en la banda, con los turnos separados por quién habló. <strong>Ojo:</strong> mientras Angel Ghost esté abierto, esa tecla deja de reabrir la última pestaña cerrada en el navegador. Pulsa ⌘⇧T otra vez para cerrarlo.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span>
+        <span class="minimo">⭐⭐ Parada 7 de 8</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="d7"><label for="d7">Amplía la banda con el asa mientras hay una ficha. <strong>Aparecen las otras dos secciones más cercanas</strong> y la línea larga de la ficha.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="d8"><label for="d8">Quítate los auriculares y habla otra vez. El mismo turno llega por las dos pistas y <strong>el que entró por el micrófono queda marcado como eco</strong> — no se borra, se marca. No se dispara una segunda ficha por la misma pregunta.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+    </ul>
+    <div class="kit"><p><strong>Kit de prueba:</strong> la carpeta <code>docs/kit-de-prueba/corpus/</code> de este repo — seis documentos sintéticos del cliente inventado «Páramo Azul», uno por cada unidad del modelo. Las preguntas que aparecen en los pasos salen de <code>docs/kit-de-prueba/preguntas.json</code>, que es el mismo juego de treinta con el que la CI mide el buscador.</p></div>
+    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> una ficha que tarde más de cuatro segundos, una ficha que cite una fuente que no responde la pregunta, o una respuesta inventada donde el corpus no tiene nada.</p></div>
+  </section>
+
+  <section class="bloque">
+    <div class="bloque-cabeza"><span class="letra">E</span><h2>Que no quede nada: el corte y el cierre</h2></div>
+    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la pantalla de Honestidad, con la sesión corriendo</code> ·
+      ~6 min · la otra mitad de la promesa: que se pueda comprobar que no queda nada</p>
+    <ul class="pasos">
+      <li data-origen="nuevo"><input type="checkbox" id="e1"><label for="e1">Con la sesión corriendo, mira Honestidad: <strong>los tres búferes con sus cifras</strong> y el cuarto («último fotograma») marcado como que todavía no existe. El contador de red dice <strong>0 B</strong>.
+        <span class="origen origen-nuevo">Nuevo · S1</span></label></li>
+      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="e2"><label for="e2">Pulsa <strong>⌥⎋</strong>. En el acto: la banda y su relleno desaparecen, Chrome recupera su tamaño, y en Honestidad <strong>los tres búferes vuelven a 0 B</strong>. Dice «6 de 7 piezas» porque la séptima aún no existe.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span>
+        <span class="minimo">⭐⭐ Parada 8 de 8</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="e3"><label for="e3">Repítelo con el <strong>botón</strong> de Honestidad en vez de la tecla. Hace exactamente lo mismo — el atajo puede estar cogido por otra app y la app tiene que seguir siendo usable.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="e4"><label for="e4">Cierra la app entera con <strong>⌘Q</strong> mientras la sesión corre. Vuelve a abrirla: <strong>no hay nada de la reunión anterior</strong>, ni turnos ni audio. Y Chrome quedó con su tamaño correcto.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="e5"><label for="e5">Fuerza un cierre brusco (Monitor de Actividad → forzar salida) con la banda acoplada. Al volver a arrancar, <strong>Chrome recupera su tamaño</strong>: la restauración no depende de un cierre limpio.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo"><input type="checkbox" id="e6"><label for="e6">En Terminal, tras una sesión completa: <code>ls -lt ~/Documents ~/Desktop ~/Downloads | head</code>. <strong>Ningún archivo nuevo</strong> con la fecha de hoy que venga de la app.
+        <span class="origen origen-nuevo">Nuevo · S1</span></label></li>
+    </ul>
+    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> cualquier cifra que no vuelva a cero tras ⌥⎋, cualquier archivo nuevo en tus carpetas, o Chrome sin recuperar su tamaño tras un cierre brusco.</p></div>
+    <div class="diferido"><p><strong>Diferido:</strong> el cuarto búfer —el último fotograma de pantalla— no existe todavía: la lectura de pantalla llega en el sprint 2. Por eso el corte dice «6 de 7» y no «7 de 7», que sería la mentira cómoda.</p></div>
+  </section>
+
+  <section class="bloque">
+    <div class="bloque-cabeza"><span class="letra">F</span><h2>El idioma y los modelos de voz</h2></div>
+    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la pantalla de Idioma</code> ·
+      ~4 min · lo único que hace entrar datos por la red, y que se diga</p>
+    <ul class="pasos">
+      <li data-origen="nuevo"><input type="checkbox" id="f1"><label for="f1">Mira las dos pistas con su idioma y el estado real de su modelo. <strong>Si un modelo no está instalado, lo dice</strong> en vez de fallar en silencio cuando alguien hable.
+        <span class="origen origen-nuevo">Nuevo · S1</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="f2"><label for="f2">Pide instalar un idioma que no tengas. <strong>macOS descarga el modelo</strong> y la pantalla lo refleja. Es la única vez que la app toca la red, y en la dirección contraria: entra el modelo, no sale nada. El contador sigue en <strong>0 B</strong>.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo"><input type="checkbox" id="f3"><label for="f3">Comprueba el aviso del techo: <strong>cinco idiomas listos a la vez, como mucho</strong>. Es un límite de macOS, no de la app, y la pantalla lo dice así.
+        <span class="origen origen-nuevo">Nuevo · S1</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="f4"><label for="f4">En una reunión en inglés, con el idioma del cliente en <code>en-US</code>: los turnos del cliente <strong>se transcriben en inglés</strong> y los tuyos en español, cada pista por su lado.
+        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+    </ul>
+    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> que el contador de red se mueva de 0 B por algo que no sea la descarga de un modelo que tú pediste.</p></div>
   </section>
 
   <footer>
@@ -251,10 +371,11 @@
     <details class="chica">
       <summary>Historial de la guía</summary>
       <ul>
-        <li><strong>S[SPRINT] · [FECHA]:</strong> [qué bloques/pruebas se agregaron o mejoraron ·
-          pruebas eliminadas y la feature muerta que las justifica — o "ninguna eliminada"].</li>
-        <li><strong>S[SPRINT-1] · [FECHA]:</strong> [entrada anterior — el historial también es
-          acumulativo].</li>
+        <li><strong>S1 · 2026-09-22:</strong> nace la guía con seis bloques y 34 pruebas, todas
+          nuevas — es el primer sprint con producto. Gate mínimo ⭐ de 26; gate corto ⭐⭐ de 8
+          paradas caminables. <strong>Ninguna eliminada:</strong> no hay sprint anterior del que
+          heredar. A partir del S2, lo que aquí dice «Nuevo · S1» pasará a decir «S1» a secas y
+          será regresión.</li>
       </ul>
     </details>
   </footer>
@@ -263,8 +384,8 @@
 <script>
   (function () {
     // NS VERSIONADO POR SPRINT (regla dura): al publicar la guía de un sprint nuevo se cambia
-    // s[SPRINT] — así una regresión sin correr no aparece marcada por el sprint anterior.
-    var NS = "guia-[SLUG]:s[SPRINT]:";
+    // `ag-s1-` — así una regresión sin correr no aparece marcada por el sprint anterior.
+    var NS = "ag-s1-";
     var casillas = Array.prototype.slice.call(document.querySelectorAll('input[type="checkbox"]'));
     var barra = document.getElementById("barra-avance");
     var contador = document.getElementById("contador");

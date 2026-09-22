@@ -24,6 +24,12 @@ const RAIL: { id: Seccion | null; icono: string; clave: keyof ReturnType<typeof 
   { id: null, icono: "i-chispa", clave: "navIa" },
 ];
 
+/** Cómo se llama una sección, con la misma palabra que usa el rail. */
+function nombreDe(t: ReturnType<typeof useT>["cuaderno"], seccion: Seccion): string {
+  const fila = RAIL.find((r) => r.id === seccion);
+  return fila ? String(t[fila.clave]) : "";
+}
+
 export function Ventana({
   seccion,
   ir,
@@ -94,7 +100,16 @@ export function Ventana({
         </div>
       </nav>
 
-      <div className="contenido">{children}</div>
+      {/* Esto no es adorno. La ventana principal **es redimensionable**, y cuando el usuario la
+          hace más baja este contenedor se vuelve desplazable: sin foco, lo que queda por debajo
+          del borde no se alcanza con el teclado. Axe lo nombró `scrollable-region-focusable` en
+          la pantalla de Idioma — el primer hallazgo del primer e2e de accesibilidad de esta app,
+          que llevaba cuatro fases sin correr.
+          El nombre sale del rail y no de una cadena nueva: es la misma palabra que el usuario
+          acaba de pulsar para llegar aquí. */}
+      <div className="contenido" role="region" aria-label={nombreDe(t, seccion)} tabIndex={0}>
+        {children}
+      </div>
     </main>
   );
 }
