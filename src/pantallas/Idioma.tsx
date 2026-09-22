@@ -1,7 +1,7 @@
 import { useT } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { TodaviaNo, PILA } from "../componentes/Ventana";
-import type { Disponibilidad, QueSabeTranscribir } from "../cuaderno";
+import { DEL_CLIENTE, DEL_CONSULTOR, type Disponibilidad, type QueSabeTranscribir } from "../cuaderno";
 
 /**
  * IDIOMA — «Idioma y transcripción».
@@ -17,10 +17,6 @@ import type { Disponibilidad, QueSabeTranscribir } from "../cuaderno";
  * macOS cuando el usuario se lo pide — la única vez que un módulo protegido de esta app toca la
  * red, y en la dirección contraria: entra el modelo, no sale nada.
  */
-
-/** Qué idioma escucha cada pista en este sprint. Elegirlos es de la fase siguiente. */
-const DEL_CONSULTOR = "es-ES";
-const DEL_CLIENTE = "en-US";
 
 function estadoDelModelo(d: Disponibilidad | undefined, instalado: string): string | null {
   if (!d) return null;
@@ -155,6 +151,3 @@ function motivo(d: Disponibilidad | undefined, general: string | null): string {
       return "";
   }
 }
-
-/** Lo que la fila «Idioma» del rail necesita para no mentir. */
-export { DEL_CONSULTOR, DEL_CLIENTE };

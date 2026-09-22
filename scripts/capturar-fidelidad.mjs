@@ -114,6 +114,26 @@ async function esperarServidor() {
 }
 await esperarServidor();
 
+/**
+ * Deja la página QUIETA antes de fotografiarla. Se aplica a los dos lados por igual.
+ *
+ * **Por qué existe:** una corrida devolvió **2,574 %** de divergencia en `sin-verificar-2 · light
+ * · es` y la siguiente, sin tocar nada, **0,069 %**. Un gate que da dos respuestas distintas al
+ * mismo código no es un gate: o deja pasar lo que debía parar, o para lo que debía pasar, y en
+ * cualquiera de los dos casos deja de creerse. Las tres esperas de aquí quitan las tres fuentes
+ * de ruido: tipografías que aún no habían cargado, transiciones a medio camino y un cuadro de
+ * pintado sin terminar.
+ */
+async function asentar(pag) {
+  await pag.addStyleTag({
+    content: "*,*::before,*::after{animation:none!important;transition:none!important}",
+  });
+  await pag.evaluate(() => document.fonts.ready);
+  await pag.evaluate(
+    () => new Promise((listo) => requestAnimationFrame(() => requestAnimationFrame(listo))),
+  );
+}
+
 const navegador = await chromium.launch();
 const errores = [];
 const desbordes = [];
@@ -175,6 +195,7 @@ for (const art of ARTEFACTOS) {
           window.scrollTo(0, 0);
         }, [e.estado, tema, idioma.id, SALA_DE_DISENO]);
 
+        await asentar(pag);
         const candidatos = await pag.$$(art.selectorMaqueta);
         let pintado = null;
         for (const el of candidatos) if (await el.isVisible()) { pintado = el; break; }
@@ -199,6 +220,7 @@ for (const art of ARTEFACTOS) {
         }, art.desbordes);
         for (const f of fuera) desbordes.push(`${art.id} · ${e.id} · ${tema} · ${idioma.id}  ${f}`);
 
+        await asentar(pag);
         const nodo = await pag.$(art.selectorProducto);
         await nodo.screenshot({ path: join(salida, "producto", `${e.id}--${tema}--${idioma.id}.png`) });
         hechas++;

@@ -1153,6 +1153,20 @@ la pantalla de Honestidad lo dice: **«6 de 7 piezas: la otra todavía no existe
   en 243 ms — todo medido, nada supuesto
 - **CI verde con conclusión propia por check** (`quality` · `e2e` · `build-escritorio`)
 
+#### El gate de fidelidad dio dos respuestas distintas al mismo código
+
+Terminando la fase, una corrida marcó **2,574 %** de divergencia en `sin-verificar-2 · light · es`
+y la siguiente, sin tocar una línea, **0,069 %**. Eso no es un defecto de la pantalla: es un
+defecto **del gate**. Un gate que contesta distinto al mismo código deja de creerse, y el día que
+pare de verdad nadie va a mirarlo.
+
+El arnés fotografiaba en cuanto aparecía el selector. Ahora, **en los dos lados por igual**,
+espera tres cosas antes de disparar: que las tipografías estén cargadas (`document.fonts.ready`),
+que no haya transiciones en marcha (se anulan por CSS) y que haya pasado un cuadro de pintado
+entero. Tres corridas seguidas después del arreglo: `0.084 %`, `0.084 %`, `0.084 %`. Y de paso
+desapareció una diferencia real que llevaba escondida entre el ruido —`sesion · light · en` bajó
+de 0,105 % a cero—, que era una transición congelada a media ejecución.
+
 #### Lo que costó la integración continua, y lo que se hizo con eso
 
 La primera corrida verde de esta fase (`35673597848`) dejó a `build-escritorio` en **7 min 32 s**,

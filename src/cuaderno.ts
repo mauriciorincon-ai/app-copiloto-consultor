@@ -239,6 +239,17 @@ export function useQueSabeTranscribir(): QueSabeTranscribir {
   return usePreguntaAlVolver<QueSabeTranscribir>("que_sabe_transcribir", TRANSCRIPCION_DE_MUESTRA);
 }
 
+/**
+ * Qué idioma escucha cada pista en este sprint.
+ *
+ * Fijos, y por eso viven aquí y no en la pantalla de Idioma: los usa quien **enciende** la escucha
+ * (la pantalla de Sesión) y quien los **enseña** (la de Idioma), y una constante que dos pantallas
+ * copian por su cuenta es una constante que un día dirá dos cosas distintas. Elegirlos es de la
+ * fase siguiente; hasta entonces la pantalla de Idioma los marca como lo que son.
+ */
+export const DEL_CONSULTOR = "es-ES";
+export const DEL_CLIENTE = "en-US";
+
 export function empezarAEscuchar(idiomaDelConsultor: string, idiomaDelCliente: string) {
   void llamar("empezar_a_escuchar", { idiomaDelConsultor, idiomaDelCliente });
 }

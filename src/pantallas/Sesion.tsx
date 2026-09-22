@@ -1,8 +1,15 @@
 import { useT } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { Fila, Funciona, TodaviaNo, PILA } from "../componentes/Ventana";
-import { empezarAEscuchar, dejarDeEscuchar, type EstadoDeEscucha, type Reunion, type Salida } from "../cuaderno";
-import { DEL_CLIENTE, DEL_CONSULTOR } from "./Idioma";
+import {
+  empezarAEscuchar,
+  dejarDeEscuchar,
+  DEL_CLIENTE,
+  DEL_CONSULTOR,
+  type EstadoDeEscucha,
+  type Reunion,
+  type Salida,
+} from "../cuaderno";
 
 /**
  * SESIÓN — «Antes de empezar».
