@@ -1,7 +1,7 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.10.0  # 1.10.0: «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2). 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
+version: 1.11.0  # 1.11.0: cómo ENVEJECE «todavía no» — el estado del sprint se pone al día, y lo que se libera se agrupa (sprint 001, fase 3). 1.10.0: «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2). 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
 fecha: 2026-09-21
 estado: aprobado   # G-Diseño aprobado el 2026-09-20 («sí apruebo la pantalla completa»)
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
@@ -464,8 +464,39 @@ entregada contra una referencia, o el gate de FIDELIDAD del sprint no tiene cont
 
 Por eso cada pantalla que se construye a medias gana un estado **`s1`** en la maqueta — la misma
 pantalla, tal y como se entrega. La maqueta conserva la visión completa **y** registra qué se
-entregó en cada versión. Cuando la fase 3 traiga el audio, el estado `s1` de sesión se convierte
-en `s3` con menos «todavía no», y el que quiera ver qué cambió tiene las dos.
+entregó en cada versión.
+
+### Cómo envejece «todavía no» (fase 3, 2026-09-21)
+
+La sección de arriba dejó una frase ambigua —*«cuando la fase 3 traiga el audio, el estado `s1` de
+sesión se convierte en `s3`»*— y la fase 3 la resolvió al llegar. **El número del estado es el del
+SPRINT, no el de la fase.** Mientras el sprint 1 no cierre, `s1` significa «así se ve hoy» y se
+pone al día tantas veces como haga falta; `s3` nacerá cuando exista un sprint 3 que entregue algo
+distinto. Un estado por fase habría dejado la maqueta con cinco versiones de la misma pantalla y
+al gate de fidelidad sin saber contra cuál medir.
+
+De ahí salen tres reglas, y las tres nacen de aplicarlo:
+
+**1 · Mover una fila de «todavía no» a «funciona» es diseño, y pasa por una mirada.** No es un
+detalle de implementación: cambia lo que el usuario entiende al abrir la pantalla. La fase 3 movió
+cuatro filas de golpe y eso fue la mirada 13.
+
+**2 · Una fila puede dejar de estar pendiente sin ponerse verde.** «Auriculares conectados» era
+`.pendiente` mientras no se medía nada; al empezar a medirse de verdad resultó que este Mac usa
+altavoces internos, y el estado correcto no es `.ok` sino `.warn` con su explicación. *Construir
+una fila no la aprueba: la pone a decir la verdad, sea cual sea.*
+
+**3 · Lo que sigue faltando se AGRUPA cuando son más de dos.** Tres tarjetas `.pendiente` seguidas
+ocupan media pantalla y se leen como tres ausencias distintas cuando son la misma cosa: lo que
+llega después de este sprint. A partir de tres, una sola tarjeta `.pendiente` con una fila por
+pieza y un párrafo que las explique junta. La pantalla de Idioma es el ejemplo canónico.
+
+> **Y una restricción que este patrón hace visible: el cuaderno tiene techo.** Las pantallas del
+> cuaderno viven en 960 × 640 y cada sprint mueve filas de pendiente a funciona **añadiendo texto**
+> —una fila que funciona suele necesitar decir algo que una pendiente no—. En la fase 3 Sesión
+> quedó con **0 px de margen** y hubo que reordenarla midiendo. El gate de fidelidad lo cobra
+> (`desbordes en el producto`), así que el problema no se puede acumular en silencio; pero la
+> decisión de fondo —crecer la ventana o aceptar que estas pantallas se desplacen— sigue abierta.
 
 ### Una regla de producto que sale de aquí
 
