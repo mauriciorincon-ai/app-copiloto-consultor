@@ -1,4 +1,4 @@
-import { useT } from "../i18n";
+import { useIdioma, useT, type Idioma } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { TodaviaNo, PILA } from "../componentes/Ventana";
 import { cortarTodo, type EstadoDeEscucha } from "../cuaderno";
@@ -31,7 +31,13 @@ const PIEZAS_TOTALES = 7;
 
 export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoDeEscucha }) {
   const t = useT().cuaderno;
+  const idioma = useIdioma();
   const [cifra, unidad = "B"] = bytes.split(" ");
+  // Las cifras se formatean **aquí**, con el separador decimal del idioma. Lo nativo también las
+  // manda escritas (`legible`, `ramLegible`) y siempre con coma: sirven para el log, que es
+  // español, pero puestas en una pantalla inglesa dejaban «1,8 MB» dentro de «What lives in
+  // memory now». La app promete ser bilingüe en TODO, y un separador decimal es interfaz.
+  const ram = escucha.microfono.bytes + escucha.sistema.bytes + escucha.bytesDelTranscript;
 
   /** Un búfer que ya existe: se dice dónde vive y cuánto ocupa. */
   const buffer = (icono: string, que: string, donde: string, cuanto: string) => (
@@ -71,15 +77,15 @@ export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoD
               </h2>
               <span
                 className="mono"
-                style={{ color: escucha.ramLegible === "0 B" ? "var(--ok)" : "var(--ink-2)" }}
+                style={{ color: ram === 0 ? "var(--ok)" : "var(--ink-2)" }}
               >
-                RAM · {escucha.ramLegible}
+                RAM · {formatear(ram, idioma)}
               </span>
             </div>
             <div style={{ margin: "0 -4px" }}>
-              {buffer("i-mic", t.bufMic, t.ringBuffer30, escucha.microfono.legible)}
-              {buffer("i-sistema", t.bufSistema, t.ringBuffer30, escucha.sistema.legible)}
-              {buffer("i-ojo", t.bufTranscript, t.ventana12, formatear(escucha.bytesDelTranscript))}
+              {buffer("i-mic", t.bufMic, t.ringBuffer30, formatear(escucha.microfono.bytes, idioma))}
+              {buffer("i-sistema", t.bufSistema, t.ringBuffer30, formatear(escucha.sistema.bytes, idioma))}
+              {buffer("i-ojo", t.bufTranscript, t.ventana12, formatear(escucha.bytesDelTranscript, idioma))}
               {pendiente("i-pantalla", t.bufFrame)}
             </div>
           </div>
@@ -130,14 +136,18 @@ export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoD
 }
 
 /**
- * Los bytes del transcript, escritos como los escribe el resto de la app.
+ * Los bytes, escritos **con el separador decimal del idioma**.
  *
- * Es la **única** cifra que se formatea de este lado, y es a propósito: el transcript cambia con
- * cada turno, y pedirle a lo nativo una cadena nueva por turno sería una llamada por frase dicha.
- * Sigue la misma regla que `red::formatear` —base 1024 y coma decimal—; el test de esta pantalla
- * compara las dos contra los mismos números.
+ * Desde la fase 5 se formatean todos aquí y ninguno se toma ya escrito de lo nativo. `red::
+ * formatear` sigue existiendo y sigue poniendo coma: su sitio es el log, que es español. Lo que
+ * no podía seguir era que esa coma llegara a una pantalla inglesa — «1,8 MB» dentro de «What
+ * lives in memory now». Es la misma corrección que la fase 4 hizo en Corpus, traída a una
+ * pantalla ya aprobada; su delta visual va a la mirada de esta fase.
+ *
+ * Base 1024, como `red::formatear`: el test de esta pantalla compara las dos contra los mismos
+ * números.
  */
-function formatear(bytes: number): string {
+function formatear(bytes: number, idioma: Idioma): string {
   if (bytes === 0) return "0 B";
   const KB = 1024;
   const unidades: [number, string][] = [
@@ -147,9 +157,8 @@ function formatear(bytes: number): string {
   ];
   for (const [tamano, nombre] of unidades) {
     if (bytes >= tamano) {
-      const v = bytes / tamano;
-      const redondeado = Math.round(v * 10) / 10;
-      return `${String(redondeado).replace(".", ",")} ${nombre}`;
+      const v = Math.round((bytes / tamano) * 10) / 10;
+      return `${new Intl.NumberFormat(idioma, { maximumFractionDigits: 1 }).format(v)} ${nombre}`;
     }
   }
   return `${bytes} B`;
