@@ -1174,6 +1174,39 @@ dice**: `la pista «sistema» se quedó atrás 31.2s: ese audio ya se pisó y no
 Que la app se salte medio minuto de reunión sin que nadie se entere es el mismo silencio que el
 resto de este sprint se ha dedicado a no permitir.
 
+#### Y detrás de ese defecto había otro, y detrás del otro un test que no podía fallar
+
+Arreglar lo de arriba dejó a la vista un segundo problema en la misma rama. Cuando la pista se
+reengancha al presente, `origen` salta a donde va el anillo — pero **el reloj de los turnos seguía
+contando desde el principio**. Y `indice()`, que traduce un instante del reloj a una muestra
+concreta, suma los dos. Con uno movido y el otro no, cada turno posterior habría pedido un trozo
+desplazado por todo lo que la pista llevaba vista: **se transcribiría un momento de la reunión
+creyendo que es otro**. Perder audio es malo; inventar de quién es una frase es peor.
+
+El arreglo es una línea (`p.turnos.reiniciar()` junto al salto del origen). Lo que costó fue el
+test — porque el primero que escribí **no podía fallar**:
+
+```rust
+p.origen = 9_999;  p.procesadas = 0;  p.turnos.reiniciar();
+assert_eq!(p.indice(p.turnos.reloj_ms()), p.origen + p.procesadas);
+```
+
+Movía las dos cosas **a mano** y luego comprobaba que cuadraban: comprobaba su propia aritmética,
+no el código. Con el defecto puesto pasó en verde. Es la tercera pregunta de la regla 15 —*¿puede
+este gate fallar siquiera?*— y la respuesta era no.
+
+El bueno hace lo único que sirve: llama a `mirar()` con el anillo ya dado la vuelta y deja que
+decida el código. Con el defecto puesto cae solo, y además dice por cuánto:
+
+```
+left: 552000   right: 520000
+```
+
+Treinta y dos mil muestras: exactamente los dos segundos que la pista llevaba vistos. De paso el
+test corrigió el invariante que yo había escrito mal — no es `origen + procesadas`, porque el
+reloj solo avanza con **marcos completos** y lo que sobra esperando al siguiente todavía no ha
+llegado a él.
+
 #### El gate de fidelidad dio dos respuestas distintas al mismo código
 
 Terminando la fase, una corrida marcó **2,574 %** de divergencia en `sin-verificar-2 · light · es`
@@ -1187,6 +1220,18 @@ que no haya transiciones en marcha (se anulan por CSS) y que haya pasado un cuad
 entero. Tres corridas seguidas después del arreglo: `0.084 %`, `0.084 %`, `0.084 %`. Y de paso
 desapareció una diferencia real que llevaba escondida entre el ruido —`sesion · light · en` bajó
 de 0,105 % a cero—, que era una transición congelada a media ejecución.
+
+#### Un test que fallaba por el reloj y no por el código
+
+Dentro de un `cargo test` completo, el de punta a punta cayó una vez y pasó solo al repetirlo. La
+causa no era el audio: eran los **seis segundos** que esperaba a que llegara el turno. En este Mac
+en reposo sobran; recién compilando —o en una máquina de integración continua— no. Un test que se
+rinde antes de tiempo falla por el reloj, y un fallo que no se puede reproducir enseña a ignorar
+los rojos.
+
+Ahora espera doce segundos y **se corta en cuanto llega el turno del cliente**, que es lo que
+viene a ver. En el caso normal tarda menos que antes (9,7 s en vez de 15,8) y bajo carga aguanta
+el doble. Tres `cargo test` completos seguidos, verdes.
 
 #### Lo que costó la integración continua, y lo que se hizo con eso
 

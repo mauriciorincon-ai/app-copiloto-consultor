@@ -246,11 +246,19 @@ fn una_frase_por_los_altavoces_acaba_siendo_texto() {
     let _ = reproductor.wait();
     println!("la frase sonó en {} ms", arranque.elapsed().as_millis());
 
-    // El turno se cierra 320 ms después del último sonido, y transcribirlo cuesta ~250 ms más.
-    let hasta = Instant::now() + Duration::from_secs(6);
+    // El turno se cierra 320 ms después del último sonido y transcribirlo cuesta ~250 ms más, así
+    // que con un segundo bastaría. La espera es de doce **y se corta en cuanto llega el turno del
+    // cliente**, que es lo que este test viene a ver: una máquina cargada —recién compilando, o
+    // una de integración continua— puede tardar mucho más que este Mac en reposo, y un test que
+    // se rinde antes de tiempo falla por el reloj y no por el código. Pasó una vez dentro de un
+    // `cargo test` completo: los seis segundos que había no alcanzaron.
+    let hasta = Instant::now() + Duration::from_secs(12);
     let mut turnos = Vec::new();
     let mut sin_texto = Vec::new();
     while Instant::now() < hasta {
+        if turnos.iter().any(|t: &app_copiloto_consultor_lib::stt::Turno| t.pista == Pista::Sistema) {
+            break;
+        }
         match recibe.recv_timeout(Duration::from_millis(300)) {
             Ok(Novedad::Turno(t)) => {
                 println!(

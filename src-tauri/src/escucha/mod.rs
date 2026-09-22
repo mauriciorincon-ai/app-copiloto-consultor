@@ -346,6 +346,11 @@ fn mirar(p: &mut PistaViva, manda: &Sender<Encargo>, avisar: &dyn Fn(Novedad)) {
         p.origen = totales;
         p.procesadas = 0;
         p.sobrante.clear();
+        // **Y el reloj de los turnos se reinicia CON el origen.** `indice()` traduce un instante
+        // del reloj de la pista a una muestra del anillo sumando los dos, así que moverle uno solo
+        // dejaría cada turno pidiendo el trozo equivocado: se transcribiría un momento de la
+        // reunión creyendo que es otro. Eso es peor que perder el audio — es inventarlo.
+        p.turnos.reiniciar();
         return;
     };
     if nuevas.is_empty() && p.sobrante.len() < MARCO {
@@ -484,6 +489,68 @@ pub fn explicar(d: &Disponibilidad, idioma: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// El invariante que hace que un turno se transcriba con SU audio y no con el de otro
+    /// momento: `indice()` suma el origen de la pista y el reloj de los turnos, así que los dos
+    /// tienen que moverse a la vez.
+    ///
+    /// **Y este test tuvo que escribirse dos veces.** La primera versión movía el origen y
+    /// reiniciaba el reloj *a mano* y luego comprobaba que cuadraban — comprobaba su propia
+    /// aritmética, no el código, y por eso pasó en verde con el defecto puesto. La buena hace lo
+    /// único que sirve: **llama a `mirar()`** con el anillo ya dado la vuelta, y deja que sea el
+    /// código el que decida.
+    ///
+    /// Se ve en rojo quitando el `p.turnos.reiniciar()` de la rama del reenganche.
+    #[test]
+    fn al_reengancharse_el_reloj_y_el_origen_se_mueven_juntos() {
+        let anillo = Arc::new(Mutex::new(crate::capture::Anillo::de_la_app()));
+        let mut p = PistaViva {
+            cual: Pista::Sistema,
+            anillo: anillo.clone(),
+            _grifo: None,
+            motivo: None,
+            turnos: Turnos::default(),
+            origen: 0,
+            procesadas: 0,
+            sobrante: Vec::new(),
+            idioma: "es-ES".into(),
+        };
+        // La pista lleva un rato vista: el reloj de los turnos ha avanzado.
+        for _ in 0..100 {
+            p.turnos.marco(&[0.0; MARCO]);
+        }
+        p.procesadas = 100 * MARCO as u64;
+        assert_eq!(p.indice(p.turnos.reloj_ms()), donde_va_el_reloj(&p));
+
+        // Y ahora el anillo da la vuelta ENTERA sin que nadie mire: tanto que lo más viejo que le
+        // queda dentro es más nuevo que lo que la pista tenía pendiente. Ese audio ya no existe.
+        {
+            let mut a = anillo.lock().unwrap();
+            let capacidad = a.capacidad();
+            a.escribir(&vec![0.0; capacidad + 40_000]);
+        }
+
+        let (manda, _recibe) = std::sync::mpsc::channel();
+        mirar(&mut p, &manda, &|_| {});
+
+        assert_eq!(p.procesadas, 0, "el reenganche no llegó a ocurrir: el test no prueba nada");
+        assert_eq!(
+            p.indice(p.turnos.reloj_ms()),
+            donde_va_el_reloj(&p),
+            "tras reengancharse, el reloj de los turnos y el origen del audio apuntan a sitios \
+             distintos: cada turno siguiente pediría el trozo equivocado y se transcribiría un \
+             momento de la reunión creyendo que es otro"
+        );
+    }
+
+    /// Qué muestra del anillo corresponde al instante en que va el reloj de los turnos.
+    ///
+    /// No es `origen + procesadas` a secas, y el matiz importa: `procesadas` cuenta lo que se sacó
+    /// del anillo, y el reloj solo avanza con **marcos completos**. Lo que sobra esperando a
+    /// completar el marco siguiente vive en `sobrante` y todavía no ha llegado al reloj.
+    fn donde_va_el_reloj(p: &PistaViva) -> u64 {
+        p.origen + p.procesadas - p.sobrante.len() as u64
+    }
 
     #[test]
     fn cada_motivo_se_explica_en_castellano_y_sin_codigos() {
