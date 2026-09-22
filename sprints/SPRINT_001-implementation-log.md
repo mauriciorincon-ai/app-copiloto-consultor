@@ -1488,6 +1488,85 @@ aprobada en la mirada 13 y en `red::formatear`, que usan varias. Se le presentó
 fase 4 y no se tocó por cuenta propia; se paga en la fase 5 y su delta visual entra en la mirada
 de esa fase.
 
+## Fase 5 — Efímero en runtime, kit de evaluación y cierre
+
+### El efímero, verificado EN MARCHA (2026-09-22)
+
+El barrido estático lee el código. No ve lo que escriben las librerías de Apple por debajo, ni un
+temporal que nazca dentro del puente de Swift, ni un log que se lleve una frase del cliente. La
+mitad nueva mira **el disco**: 71 000 archivos inventariados antes y después de una sesión
+completa —corpus indexado, audio del kit por el motor de verdad, detector de turnos, disparador,
+ficha y kill-switch—, con una **canaria que solo existe en la boca del cliente** recorriendo el
+transcript, el disparador y la ficha.
+
+**Dos rojos, porque son dos afirmaciones y no una.** Un `fs::write` de depuración en el temporal
+da *«la sesión dejó 1 archivo fuera del índice del corpus»* con la ruta; el mismo archivo **dentro
+de la carpeta permitida** la primera aserción no lo ve, y la de la canaria sí: *«la frase del
+cliente acabó dentro de …/corpus/cache.txt»*.
+
+Y su primera corrida se delató sola: **«0 turnos cerrados por el detector»**. El audio del kit
+termina justo después de la frase, sin el silencio que cierra un turno, así que ese paso era
+adorno. Ahora cierra y lo afirma.
+
+### El kit de evaluación v0, y lo que midió antes de que nadie lo mirara
+
+Treinta preguntas contra un corpus sintético de seis documentos, más cuatro que el corpus **no
+puede** responder. **Falló al nacer, y ese fue su rojo:** la app citó una sección sobre gobierno de
+datos para responder *«¿cuánto cuesta el software de Salesforce?»*. La sección traía «cuánto» y
+«cuesta» —dos palabras que dice todo el mundo— y con eso le bastaba. Faltaban seis interrogativos
+en la lista de palabras vacías.
+
+| Medida | Antes | Después | Mínimo |
+|---|---|---|---|
+| nDCG@5 | 0,821 | **0,823** | 0,80 |
+| rechazo de lo que no tiene | 0,750 | **1,000** | 1,00 |
+
+**Tres preguntas siguen fallando a propósito.** Ninguna comparte una sola palabra con su sección.
+BM25 no puede resolverlas y reescribirlas convertiría el kit en un espejo. Son la evidencia con la
+que el sprint 2 decidirá si hacen falta embeddings — y ahora esa pregunta tiene un número detrás.
+
+### El gate que llevaba cuatro fases sin ejecutar
+
+El job `e2e` corre `playwright test --pass-with-no-tests`, y **no había ni una prueba**. El check
+estuvo verde todo el sprint sin ejecutar nada: la segunda pregunta de la regla de los gates
+—*¿lo viste correr, alguna vez?*— respondida que no.
+
+Se pagó con 66 pruebas en tres archivos, y **su primera corrida encontró un defecto real**: axe
+nombró `scrollable-region-focusable` en la pantalla de Idioma. La ventana principal es
+redimensionable, así que al hacerla más baja el contenido se desplaza y lo que queda por debajo
+del borde **no se alcanza con el teclado**. Arreglado con una región con nombre, sacado del rail y
+no de una cadena nueva.
+
+El de `reduced-motion` comprueba **visibilidad real**, no presencia en el DOM —un elemento con
+`opacity: 0` esperando una animación que no llega está en el árbol y no se ve— y compara la
+**forma** del árbol con y sin el cinturón, que es el otro filo de esa regla.
+
+### El «1,8 MB» de Honestidad
+
+Se le presentó al usuario en el gate de la fase 4 y no se tocó por cuenta propia: vive en una
+pantalla que él aprobó en la mirada 13. Pagado aquí: las cifras se formatean con el separador
+decimal del idioma. `red::formatear` conserva la coma para el log, que sí es español.
+
+### Archivos de la fase 5
+
+| Archivo | Qué es |
+|---|---|
+| `src-tauri/tests/contra-el-mac-de-verdad.rs` | el efímero en marcha y el kit de evaluación, en el binario único |
+| `docs/kit-de-prueba/corpus/` + `preguntas.json` | **nuevos** — seis documentos sintéticos y treinta preguntas |
+| `tests/e2e/{recorrido,reduced-motion,a11y}.spec.ts` | **nuevos** — 66 pruebas |
+| `docs/GUIA-DE-PRUEBA.html` | 34 pruebas, gate ⭐ de 26 y gate ⭐⭐ de 8 paradas |
+| `docs/MANUAL-DE-USO.md` | siete features con sus limitaciones |
+| `src/pantallas/Honestidad.tsx` · `docs/diseno/honestidad.html` | el separador decimal del idioma |
+| `eslint.config.js` | `tabIndex` permitido en una región, y solo ahí |
+
+### Desviación de mi propio plan — el manual NO es bilingüe
+
+El plan de este sprint decía «`docs/MANUAL-DE-USO.md` bilingüe». La orden de la planeadora no lo
+pide, y el `CLAUDE.md` dice lo contrario en su regla del manual vivo: *«en español llano»*. La
+regla bilingüe de la app enumera dónde aplica —interfaz, transcripción, corpus, fichas,
+sugerencias y los textos de permisos de macOS— y el manual no está en esa lista. Se entrega en
+español. Si la planeadora lo quiere en los dos idiomas, es trabajo declarado y no un olvido.
+
 ## Desviación del plan (2026-09-20) — la MANIOBRA es producto nuevo
 
 **Qué.** El estado «sin resultado» deja de limitarse a admitir el vacío: sugiere **cómo abordar la
