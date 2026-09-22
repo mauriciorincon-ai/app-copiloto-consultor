@@ -205,7 +205,7 @@ fn el_audio_del_sistema_se_abre_o_dice_por_que_no() {
 // usuario?*
 
 use app_copiloto_consultor_lib::capture::Pista;
-use app_copiloto_consultor_lib::escucha::{Escucha, Novedad};
+use app_copiloto_consultor_lib::escucha::{Escucha, Novedad, SinCorpus};
 use std::sync::mpsc;
 use std::time::Instant;
 
@@ -217,7 +217,9 @@ fn una_frase_por_los_altavoces_acaba_siendo_texto() {
     println!("motor «{}» · es-ES listo: {hay_motor}", motor.nombre());
 
     let (manda, recibe) = mpsc::channel();
-    let escucha = Escucha::arrancar("es-ES", "es-ES", motor, move |n| {
+    // Sin corpus: lo que este test comprueba es que una frase por los altavoces acaba siendo
+    // texto. La ficha tiene su propio camino y sus propias pruebas.
+    let escucha = Escucha::arrancar("es-ES", "es-ES", motor, std::sync::Arc::new(SinCorpus), move |n| {
         let _ = manda.send(n);
     });
 

@@ -15,7 +15,9 @@ pub mod acople;
 pub mod capture;
 pub mod corpus;
 pub mod corte;
+pub mod disparo;
 pub mod escucha;
+pub mod ficha;
 pub mod permisos;
 pub mod red;
 pub mod relleno;
@@ -202,6 +204,86 @@ struct LaEscucha(std::sync::Mutex<Option<escucha::Escucha>>);
 /// El nombre del evento con el que la banda se entera de que alguien habló.
 const EVENTO_ESCUCHA: &str = "escucha";
 
+/// EL CORPUS DEL USUARIO, vivo mientras la app esté abierta.
+///
+/// Se comparte con la escucha —que necesita buscar en él cuando el cliente pregunta— por
+/// `Arc`, no copiándolo: el índice es uno solo y reindexar desde la pantalla tiene que verse en
+/// la banda en el acto, sin reiniciar nada.
+#[derive(Default, Clone)]
+struct ElCorpus(std::sync::Arc<std::sync::Mutex<Option<corpus::Corpus>>>);
+
+impl escucha::Buscador for ElCorpus {
+    fn buscar(&self, texto: &str, cuantos: usize) -> Vec<corpus::Hallazgo> {
+        self.0
+            .lock()
+            .ok()
+            .and_then(|g| g.as_ref().map(|c| c.buscar(texto, cuantos).unwrap_or_default()))
+            .unwrap_or_default()
+    }
+    fn vocabulario(&self) -> Vec<String> {
+        self.0
+            .lock()
+            .ok()
+            .and_then(|g| g.as_ref().map(|c| c.vocabulario().to_vec()))
+            .unwrap_or_default()
+    }
+}
+
+/// Dónde vive el índice: en la carpeta de datos de la app, **jamás en el repo ni al lado de los
+/// documentos del usuario**. La pantalla de corpus enseña esta ruta, porque quien confía su
+/// carpeta a una app tiene derecho a saber dónde acabó el derivado.
+fn donde_va_el_indice(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+    use tauri::Manager;
+    app.path()
+        .app_data_dir()
+        .map(|d| d.join("corpus"))
+        .map_err(|e| format!("no se supo dónde poner el índice: {e}"))
+}
+
+/// Indexa la carpeta que el usuario señale. Los documentos **no se copian**: se leen donde están.
+#[tauri::command]
+fn indexar_corpus(
+    app: tauri::AppHandle,
+    estado: tauri::State<'_, ElCorpus>,
+    carpeta: String,
+) -> Result<corpus::EstadoDelCorpus, String> {
+    let donde = donde_va_el_indice(&app)?;
+    let mut guardado = estado.0.lock().map_err(|_| "el corpus quedó en mal estado")?;
+    if guardado.is_none() {
+        *guardado = Some(corpus::Corpus::en(&donde)?);
+    }
+    let c = guardado.as_mut().expect("acaba de crearse");
+    let cuantos = c.indexar(std::path::Path::new(&carpeta), &|d| {
+        // Metadata, jamás contenido: el nombre del archivo es del usuario y el log es un archivo.
+        let _ = d;
+    })?;
+    let informe = c.estado();
+    println!(
+        "[corpus] {cuantos} documentos · {} secciones · {} ilegibles · índice en {}",
+        informe.secciones,
+        informe.ilegibles,
+        informe.donde_vive.as_deref().unwrap_or("memoria")
+    );
+    Ok(informe)
+}
+
+/// Qué hay en el corpus ahora mismo. Lo pide la pantalla de Corpus.
+#[tauri::command]
+fn estado_del_corpus(estado: tauri::State<'_, ElCorpus>) -> Option<corpus::EstadoDelCorpus> {
+    estado.0.lock().ok()?.as_ref().map(|c| c.estado())
+}
+
+/// Los documentos, uno a uno, con su unidad y su estado.
+#[tauri::command]
+fn documentos_del_corpus(estado: tauri::State<'_, ElCorpus>) -> Vec<corpus::Documento> {
+    estado
+        .0
+        .lock()
+        .ok()
+        .and_then(|g| g.as_ref().map(|c| c.documentos().to_vec()))
+        .unwrap_or_default()
+}
+
 /// Empieza a escuchar las dos pistas.
 ///
 /// **No se llama sola al arrancar**, y es deliberado: la maqueta de la pantalla de Sesión dice
@@ -211,6 +293,7 @@ const EVENTO_ESCUCHA: &str = "escucha";
 fn empezar_a_escuchar(
     app: tauri::AppHandle,
     estado: tauri::State<'_, LaEscucha>,
+    el_corpus: tauri::State<'_, ElCorpus>,
     idioma_del_consultor: String,
     idioma_del_cliente: String,
 ) -> Result<escucha::EstadoDeEscucha, String> {
@@ -223,6 +306,7 @@ fn empezar_a_escuchar(
         &idioma_del_consultor,
         &idioma_del_cliente,
         stt::motor_de_la_casa(),
+        std::sync::Arc::new(el_corpus.inner().clone()),
         move |novedad| {
             // Al log va **el hecho, nunca lo dicho**: quién habló y cuánto duró. El texto es del
             // cliente y un log es un archivo.
@@ -237,6 +321,12 @@ fn empezar_a_escuchar(
                 escucha::Novedad::SinTexto { pista, motivo, .. } => {
                     println!("[escucha] turno de «{}» sin texto: {motivo}", pista.etiqueta())
                 }
+                escucha::Novedad::Aparece(a)
+                    // El presupuesto del sprint es 4 s de fin de turno a ficha. Se dice cuando se
+                    // pasa, en el momento, y no al final en una media que esconde los picos.
+                    if a.ms > 4_000 => {
+                        println!("[ficha] {} ms — por encima del presupuesto de 4 s", a.ms);
+                    }
                 _ => {}
             }
             let _ = mango.emit(EVENTO_ESCUCHA, novedad);
@@ -443,7 +533,11 @@ pub fn run() {
             turnos_recientes,
             que_sabe_transcribir,
             instalar_idioma,
-            salida_de_audio
+            salida_de_audio,
+            indexar_corpus,
+            estado_del_corpus,
+            documentos_del_corpus,
+            pedir_ficha
         ])
         .setup(|app| {
             // El invariante se comprueba ANTES de abrir nada y aborta el arranque si falla:
@@ -455,6 +549,7 @@ pub fn run() {
             // `setup` corre en el hilo principal, que es donde `NSScreen` se deja preguntar.
             app.manage(FondoDelRelleno(acople::fondo_de_escritorio()));
             app.manage(LaEscucha::default());
+            app.manage(ElCorpus::default());
 
             registrar_el_kill_switch(app.handle());
 
@@ -593,9 +688,55 @@ fn el_atajo_del_transcript() -> tauri_plugin_global_shortcut::Shortcut {
     Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyT)
 }
 
+/// `⌘⇧A` — «ayúdame con esto», el atajo que la maqueta dibuja en la banda.
+///
+/// Es la salida cuando el disparador automático no acierta, y por eso su camino es distinto: se
+/// salta la espera entre fichas y la regla de no repetir. Si el usuario lo pulsa dos veces
+/// seguidas es porque la primera no le sirvió, y contestarle con silencio sería lo peor posible
+/// justo en el momento en que decidió pedir ayuda a mano.
+fn el_atajo_de_ayuda() -> tauri_plugin_global_shortcut::Shortcut {
+    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
+    Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyA)
+}
+
 /// El nombre del evento con el que la banda se entera de que hay que enseñar u ocultar el
 /// transcript.
 const EVENTO_TRANSCRIPT: &str = "transcript";
+
+/// El nombre del evento con el que la banda recibe una ficha.
+const EVENTO_FICHA: &str = "ficha";
+
+/// La ficha a petición del usuario: `⌘⇧A`, o el botón de la banda ampliada.
+///
+/// Busca con **el último turno del cliente**, que es de lo que se estaba hablando. Sin turnos no
+/// hay con qué buscar, y eso se dice en vez de devolver una ficha vacía.
+#[tauri::command]
+fn pedir_ficha(
+    escucha_viva: tauri::State<'_, LaEscucha>,
+    el_corpus: tauri::State<'_, ElCorpus>,
+) -> Result<ficha::Aparicion, String> {
+    use escucha::Buscador;
+    let ultimo = escucha_viva
+        .0
+        .lock()
+        .map_err(|_| "la escucha quedó en mal estado")?
+        .as_ref()
+        .and_then(|e| {
+            e.ultimos_turnos(6)
+                .into_iter()
+                .rev()
+                .find(|t| t.pista == capture::Pista::Sistema && !t.eco)
+        })
+        .ok_or("todavía no he oído nada del cliente")?;
+
+    let empezo = std::time::Instant::now();
+    let buscador = el_corpus.inner().clone();
+    let hallazgos = buscador.buscar(&ultimo.texto, ficha::TOP);
+    let respuesta = ficha::armar(&ultimo.texto, &hallazgos);
+    let ms = empezo.elapsed().as_millis() as u64;
+    println!("[ficha] a petición del usuario en {ms} ms · {} candidatas", hallazgos.len());
+    Ok(ficha::Aparicion { respuesta, motivo: disparo::Motivo::Atajo, ms, hora: ultimo.hora })
+}
 
 fn atender_el_atajo<R: tauri::Runtime>(
     app: &tauri::AppHandle<R>,
@@ -611,6 +752,9 @@ fn atender_el_atajo<R: tauri::Runtime>(
     } else if *atajo == el_atajo_del_transcript() {
         println!("[transcript] ⌘⇧T");
         let _ = app.emit_to(ventana::BANDA, EVENTO_TRANSCRIPT, ());
+    } else if *atajo == el_atajo_de_ayuda() {
+        println!("[ficha] ⌘⇧A");
+        let _ = app.emit_to(ventana::BANDA, EVENTO_FICHA, ());
     }
 }
 
@@ -637,6 +781,13 @@ fn registrar_el_kill_switch<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
         Err(e) => println!(
             "[transcript] NO se pudo registrar ⌘⇧T ({e}): el transcript no se va a poder abrir \
              con la tecla"
+        ),
+    }
+    match app.global_shortcut().register(el_atajo_de_ayuda()) {
+        Ok(()) => println!("[ficha] ⌘⇧A «ayúdame con esto» registrado"),
+        Err(e) => println!(
+            "[ficha] NO se pudo registrar ⌘⇧A ({e}): la ficha a petición sigue en el botón de la \
+             banda ampliada, pero la tecla no va a responder"
         ),
     }
 }

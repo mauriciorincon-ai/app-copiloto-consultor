@@ -26,6 +26,10 @@ const PROTEGIDOS = [
   "src-tauri/src/capture",
   "src-tauri/src/stt",
   "src-tauri/src/voz",
+  // El disparador guarda la última pregunta del CLIENTE para no repetir ficha, y la ficha se
+  // arma con sus palabras. Los dos manejan contenido de terceros: ni disco ni red.
+  "src-tauri/src/disparo",
+  "src-tauri/src/ficha",
   "src-tauri/src/screen",
   "src-tauri/src/sesion",
   "src-tauri/nativo",

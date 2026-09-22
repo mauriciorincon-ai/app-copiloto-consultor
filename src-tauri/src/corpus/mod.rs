@@ -78,15 +78,28 @@ pub struct Corpus {
     indice: Indice,
     documentos: Vec<Documento>,
     carpeta: Option<PathBuf>,
+    /// Las palabras distintivas del corpus, para el motivo «término tuyo» del disparador. Se
+    /// calculan al indexar y no en cada turno: la escucha las pide veinticinco veces por segundo.
+    vocabulario: Vec<String>,
 }
 
 impl Corpus {
     pub fn en(carpeta_del_indice: &Path) -> Result<Self, String> {
-        Ok(Corpus { indice: Indice::en(carpeta_del_indice)?, documentos: Vec::new(), carpeta: None })
+        Ok(Corpus {
+            indice: Indice::en(carpeta_del_indice)?,
+            documentos: Vec::new(),
+            carpeta: None,
+            vocabulario: Vec::new(),
+        })
     }
 
     pub fn en_memoria() -> Result<Self, String> {
-        Ok(Corpus { indice: Indice::en_memoria()?, documentos: Vec::new(), carpeta: None })
+        Ok(Corpus {
+            indice: Indice::en_memoria()?,
+            documentos: Vec::new(),
+            carpeta: None,
+            vocabulario: Vec::new(),
+        })
     }
 
     /// Indexa una carpeta entera. `avisar` recibe cada documento en cuanto se resuelve, para que
@@ -100,7 +113,9 @@ impl Corpus {
         }
         self.indice.vaciar()?;
         self.documentos.clear();
+        self.vocabulario.clear();
         self.carpeta = Some(carpeta.to_path_buf());
+        let mut titulos: Vec<String> = Vec::new();
 
         for ruta in recorrer(carpeta, HONDURA) {
             if self.documentos.len() >= TECHO_DE_DOCUMENTOS {
@@ -109,27 +124,34 @@ impl Corpus {
                 );
                 break;
             }
-            let doc = self.indexar_uno(&ruta);
+            let (doc, suyos) = self.indexar_uno(&ruta);
+            titulos.extend(suyos);
             avisar(&doc);
             self.documentos.push(doc);
         }
+        let nombres: Vec<String> = self.documentos.iter().map(|d| d.nombre.clone()).collect();
+        self.vocabulario = crate::disparo::vocabulario(&nombres, &titulos);
         Ok(self.documentos.len())
     }
 
-    fn indexar_uno(&self, ruta: &Path) -> Documento {
+    /// Devuelve el documento y los títulos de sus secciones (que alimentan el vocabulario).
+    fn indexar_uno(&self, ruta: &Path) -> (Documento, Vec<String>) {
         let nombre = ruta.file_stem().and_then(|s| s.to_str()).unwrap_or("").to_string();
         let como_texto = ruta.to_string_lossy().to_string();
 
         let leido = match leer::leer(ruta) {
             Ok(l) => l,
             Err(e) => {
-                return Documento {
-                    ruta: como_texto,
-                    nombre,
-                    unidad: None,
-                    conjeturado: false,
-                    estado: Estado::SinLeer { motivo: e.motivo() },
-                }
+                return (
+                    Documento {
+                        ruta: como_texto,
+                        nombre,
+                        unidad: None,
+                        conjeturado: false,
+                        estado: Estado::SinLeer { motivo: e.motivo() },
+                    },
+                    Vec::new(),
+                )
             }
         };
 
@@ -137,22 +159,40 @@ impl Corpus {
         let plano: String = secciones.iter().map(|s| s.texto.as_str()).collect::<Vec<_>>().join(" ");
         let unidad = Unidad::clasificar(&nombre, &plano);
 
+        let titulos: Vec<String> = secciones.iter().filter_map(|s| s.titulo.clone()).collect();
         match self.indice.meter(&como_texto, &nombre, unidad, leido.conjeturado, &secciones) {
-            Ok(n) => Documento {
-                ruta: como_texto,
-                nombre,
-                unidad,
-                conjeturado: leido.conjeturado,
-                estado: Estado::Indexado { secciones: n },
-            },
-            Err(e) => Documento {
-                ruta: como_texto,
-                nombre,
-                unidad,
-                conjeturado: leido.conjeturado,
-                estado: Estado::SinLeer { motivo: format!("no se pudo indexar: {e}") },
-            },
+            Ok(n) => (
+                Documento {
+                    ruta: como_texto,
+                    nombre,
+                    unidad,
+                    conjeturado: leido.conjeturado,
+                    estado: Estado::Indexado { secciones: n },
+                },
+                titulos,
+            ),
+            Err(e) => (
+                Documento {
+                    ruta: como_texto,
+                    nombre,
+                    unidad,
+                    conjeturado: leido.conjeturado,
+                    estado: Estado::SinLeer { motivo: format!("no se pudo indexar: {e}") },
+                },
+                Vec::new(),
+            ),
         }
+    }
+
+    /// El índice, para las pruebas que necesitan meter secciones a mano sin pasar por archivos.
+    #[cfg(test)]
+    pub fn indice_para_pruebas(&self) -> &Indice {
+        &self.indice
+    }
+
+    /// Las palabras distintivas del corpus. Vacío mientras no haya carpeta señalada.
+    pub fn vocabulario(&self) -> &[String] {
+        &self.vocabulario
     }
 
     pub fn buscar(&self, texto: &str, cuantos: usize) -> Result<Vec<Hallazgo>, String> {

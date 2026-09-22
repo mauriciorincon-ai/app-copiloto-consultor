@@ -28,6 +28,8 @@
 
 use crate::capture::anillo::{Anillo, HZ};
 use crate::capture::Pista;
+use crate::disparo::{Contexto, Disparador};
+use crate::ficha::{Aparicion, Respuesta};
 use crate::stt::{Disponibilidad, Fallo, Motor, Turno, Ventana};
 use crate::voz::{Suceso, Turnos, MARCO};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -53,6 +55,9 @@ pub enum Novedad {
     SinTexto { pista: Pista, desde_ms: usize, hasta_ms: usize, motivo: String },
     /// El detector oyó algo demasiado corto para ser un turno.
     Ruido { pista: Pista, duracion_ms: usize },
+    /// El disparador decidió que había que buscar, y esto es lo que salió: una ficha del corpus
+    /// del usuario, o la declaración de que no hay nada con su maniobra.
+    Aparece(Box<Aparicion>),
 }
 
 /// Lo que la pantalla de Honestidad enseña de una pista.
@@ -153,6 +158,31 @@ impl PistaViva {
     }
 }
 
+/// LO QUE LA ESCUCHA NECESITA DEL CORPUS, y nada más.
+///
+/// La misma frontera que `stt::Motor`: la escucha no conoce a tantivy, conoce a quien sabe
+/// buscar. Así se puede probar el camino entero —turno, disparo, ficha— sin índice, y así el
+/// corpus se puede cambiar sin tocar una línea de aquí.
+pub trait Buscador: Send + Sync {
+    fn buscar(&self, texto: &str, cuantos: usize) -> Vec<crate::corpus::Hallazgo>;
+    /// Las palabras distintivas del corpus, para el motivo «término tuyo» del disparador.
+    fn vocabulario(&self) -> Vec<String>;
+}
+
+/// El buscador de primera clase para cuando no hay corpus: no encuentra nada y lo dice sin
+/// romperse. Con él, la app funciona desde el primer arranque —sin carpeta señalada— y lo que
+/// enseña es «no tengo nada» con su maniobra, que es la verdad.
+pub struct SinCorpus;
+
+impl Buscador for SinCorpus {
+    fn buscar(&self, _texto: &str, _cuantos: usize) -> Vec<crate::corpus::Hallazgo> {
+        Vec::new()
+    }
+    fn vocabulario(&self) -> Vec<String> {
+        Vec::new()
+    }
+}
+
 /// Lo que el hilo de escucha manda al hilo que transcribe.
 struct Encargo {
     pista: Pista,
@@ -162,10 +192,16 @@ struct Encargo {
     /// El audio del turno, ya recortado. Es la única copia que se hace, y vive lo que tarda el
     /// motor: se suelta en cuanto vuelve el texto.
     muestras: Option<Vec<f32>>,
+    /// Cuándo cerró el turno. El presupuesto del sprint —ficha en ≤4 s— se cuenta desde aquí,
+    /// que es el instante que el usuario percibe: el cliente terminó de hablar.
+    cerro: std::time::Instant,
 }
 
 /// La escucha en marcha.
 pub struct Escucha {
+    /// El disparador vive aquí y no dentro del hilo porque **el kill-switch tiene que poder
+    /// alcanzarlo**: guarda la última pregunta del cliente, y eso es contenido de terceros.
+    disparador: Arc<Mutex<Disparador>>,
     pistas: Arc<Mutex<Vec<PistaViva>>>,
     ventana: Arc<Mutex<Ventana>>,
     viva: Arc<AtomicBool>,
@@ -181,6 +217,7 @@ impl Escucha {
         idioma_del_consultor: &str,
         idioma_del_cliente: &str,
         motor: Box<dyn Motor>,
+        buscador: Arc<dyn Buscador>,
         avisar: impl Fn(Novedad) + Send + Sync + 'static,
     ) -> Self {
         let pistas = Arc::new(Mutex::new(vec![
@@ -200,6 +237,7 @@ impl Escucha {
 
         let (manda, recibe): (Sender<Encargo>, Receiver<Encargo>) = std::sync::mpsc::channel();
         let avisar = Arc::new(avisar);
+        let disparador = Arc::new(Mutex::new(Disparador::nuevo()));
 
         // Hilo 1 — mira los marcos y corta los turnos.
         {
@@ -222,9 +260,11 @@ impl Escucha {
         {
             let ventana = ventana.clone();
             let avisar = avisar.clone();
+            let disparador = disparador.clone();
             std::thread::spawn(move || {
                 for encargo in recibe {
-                    let mut novedad = transcribir(&*motor, encargo);
+                    let mut novedad = transcribir(&*motor, &encargo);
+                    let mut aparicion = None;
                     if let Novedad::Turno(t) = &mut novedad {
                         // El eco se decide **con la ventana delante**: hace falta saber qué dijo
                         // el cliente para saber si el micrófono lo está repitiendo. Por eso vive
@@ -237,13 +277,21 @@ impl Escucha {
                         if let Ok(mut v) = ventana.lock() {
                             v.empujar(t.clone());
                         }
+                        if let Ok(mut d) = disparador.lock() {
+                            aparicion = buscar_si_toca(&mut d, &*buscador, t, &encargo);
+                        }
                     }
+                    // El turno va PRIMERO y la ficha después: el transcript de la banda se pinta
+                    // en cuanto hay texto, sin esperar a una búsqueda que puede no llegar nunca.
                     avisar(novedad);
+                    if let Some(a) = aparicion {
+                        avisar(Novedad::Aparece(Box::new(a)));
+                    }
                 }
             });
         }
 
-        Self { pistas, ventana, viva, motor: nombre_del_motor }
+        Self { disparador, pistas, ventana, viva, motor: nombre_del_motor }
     }
 
     pub fn estado(&self) -> EstadoDeEscucha {
@@ -313,6 +361,10 @@ impl Escucha {
         if let Ok(mut v) = self.ventana.lock() {
             v.vaciar();
         }
+        // La última pregunta del cliente también es transcript, aunque viva en otro sitio.
+        if let Ok(mut d) = self.disparador.lock() {
+            d.reiniciar();
+        }
     }
 }
 
@@ -381,6 +433,7 @@ fn mirar(p: &mut PistaViva, manda: &Sender<Encargo>, avisar: &dyn Fn(Novedad)) {
                     desde_ms,
                     hasta_ms,
                     muestras,
+                    cerro: std::time::Instant::now(),
                 });
             }
         }
@@ -413,8 +466,38 @@ fn huele_a_eco(turno: &Turno, ventana: &Ventana) -> bool {
     )
 }
 
-fn transcribir(motor: &dyn Motor, encargo: Encargo) -> Novedad {
-    let Encargo { pista, idioma, desde_ms, hasta_ms, muestras } = encargo;
+/// Del turno del cliente a la ficha — o a la declaración de que no hay nada.
+///
+/// **La latencia se mide de verdad**, desde que el turno cerró hasta que la ficha está armada:
+/// es el trayecto que el usuario percibe y el que el presupuesto del sprint acota en 4 s. No se
+/// estima ni se promedia: cada aparición trae la suya.
+fn buscar_si_toca(
+    disparador: &mut Disparador,
+    buscador: &dyn Buscador,
+    turno: &Turno,
+    encargo: &Encargo,
+) -> Option<Aparicion> {
+    let vocabulario = buscador.vocabulario();
+    let ctx = Contexto { ahora_ms: turno.hasta_ms, vocabulario: &vocabulario };
+    let motivo = disparador.mirar(turno, &ctx)?;
+
+    let hallazgos = buscador.buscar(&turno.texto, crate::ficha::TOP);
+    let respuesta = crate::ficha::armar(&turno.texto, &hallazgos);
+    let ms = encargo.cerro.elapsed().as_millis() as u64;
+
+    // Metadata, jamás contenido: ni la pregunta ni la ficha pasan por el log.
+    let que = match &respuesta {
+        Respuesta::Ficha(_) => "ficha",
+        Respuesta::SinResultado { .. } => "sin resultado",
+    };
+    println!("[ficha] {que} por «{}» en {ms} ms · {} candidatas", motivo.etiqueta(), hallazgos.len());
+
+    Some(Aparicion { respuesta, motivo, ms, hora: turno.hora.clone() })
+}
+
+fn transcribir(motor: &dyn Motor, encargo: &Encargo) -> Novedad {
+    let Encargo { pista, idioma, desde_ms, hasta_ms, muestras, cerro: _ } = encargo;
+    let (pista, desde_ms, hasta_ms) = (*pista, *desde_ms, *hasta_ms);
     let sin_texto = |motivo: String| Novedad::SinTexto { pista, desde_ms, hasta_ms, motivo };
 
     let Some(muestras) = muestras else {
@@ -424,14 +507,14 @@ fn transcribir(motor: &dyn Motor, encargo: Encargo) -> Novedad {
                 .into(),
         );
     };
-    match motor.transcribir(&idioma, &muestras, HZ) {
+    match motor.transcribir(idioma, muestras, HZ) {
         Ok(texto) if texto.trim().is_empty() => {
             sin_texto("el motor no reconoció palabras en ese turno".into())
         }
         Ok(texto) => {
             Novedad::Turno(Turno { pista, desde_ms, hasta_ms, texto, hora: la_hora(), eco: false })
         }
-        Err(Fallo::NoDisponible(d)) => sin_texto(explicar(&d, &idioma)),
+        Err(Fallo::NoDisponible(d)) => sin_texto(explicar(&d, idioma)),
         Err(Fallo::Motor(c)) => sin_texto(format!("el motor de transcripción falló ({c})")),
     }
 }
@@ -577,7 +660,14 @@ mod tests {
         let motor = crate::stt::Mudo::por("sin motor de prueba");
         let perdido = transcribir(
             &motor,
-            Encargo { pista: Pista::Sistema, idioma: "es-ES".into(), desde_ms: 0, hasta_ms: 900, muestras: None },
+            &Encargo {
+                pista: Pista::Sistema,
+                idioma: "es-ES".into(),
+                desde_ms: 0,
+                hasta_ms: 900,
+                muestras: None,
+                cerro: std::time::Instant::now(),
+            },
         );
         match perdido {
             Novedad::SinTexto { motivo, .. } => assert!(motivo.contains("pisado")),
@@ -619,17 +709,138 @@ mod tests {
         assert!(!huele_a_eco(&de_verdad, &v), "se marcó como eco una respuesta real del consultor");
     }
 
+    /// EL CAMINO ENTERO, sin audio y sin disco: corpus indexado → turno del cliente → disparo →
+    /// ficha. Es el trayecto que la app promete y el único test que lo recorre de una pieza.
+    struct CorpusDePrueba(crate::corpus::Corpus);
+
+    impl Buscador for CorpusDePrueba {
+        fn buscar(&self, texto: &str, cuantos: usize) -> Vec<crate::corpus::Hallazgo> {
+            self.0.buscar(texto, cuantos).unwrap_or_default()
+        }
+        fn vocabulario(&self) -> Vec<String> {
+            self.0.vocabulario().to_vec()
+        }
+    }
+
+    fn corpus_de_prueba() -> CorpusDePrueba {
+        let c = crate::corpus::Corpus::en_memoria().unwrap();
+        // Se mete por el índice directamente: lo que se prueba aquí es el camino de la escucha,
+        // no los lectores de archivo, que ya tienen los suyos.
+        CorpusDePrueba(c)
+    }
+
+    fn turno_del_cliente(texto: &str, hasta_ms: usize) -> Turno {
+        Turno {
+            pista: Pista::Sistema,
+            desde_ms: hasta_ms.saturating_sub(2_000),
+            hasta_ms,
+            texto: texto.into(),
+            hora: "14:02".into(),
+            eco: false,
+        }
+    }
+
+    fn encargo_cerrado_ahora() -> Encargo {
+        Encargo {
+            pista: Pista::Sistema,
+            idioma: "es-ES".into(),
+            desde_ms: 0,
+            hasta_ms: 2_000,
+            muestras: None,
+            cerro: std::time::Instant::now(),
+        }
+    }
+
+    #[test]
+    fn del_turno_del_cliente_a_la_ficha_de_su_corpus() {
+        use crate::corpus::seccion::Seccion;
+        let corpus = corpus_de_prueba();
+        corpus
+            .0
+            .indice_para_pruebas()
+            .meter("/c/propuesta.md", "Páramo Azul · Propuesta", Some(crate::corpus::Unidad::Propuesta), false, &[
+                Seccion {
+                    titulo: Some("Plazo de entrega".into()),
+                    texto: "La entrega completa toma cuatro semanas desde la firma del contrato."
+                        .into(),
+                },
+            ])
+            .unwrap();
+
+        let mut d = Disparador::nuevo();
+        let turno = turno_del_cliente("¿En cuántas semanas hacen la entrega completa?", 2_000);
+        let a = buscar_si_toca(&mut d, &corpus, &turno, &encargo_cerrado_ahora())
+            .expect("la pregunta del cliente no disparó");
+
+        assert_eq!(a.motivo, crate::disparo::Motivo::Pregunta);
+        let Respuesta::Ficha(f) = a.respuesta else { panic!("no encontró la sección que responde") };
+        assert_eq!(f.fuente.seccion.as_deref(), Some("Plazo de entrega"));
+        assert!(f.linea.contains("cuatro semanas"));
+        // El presupuesto del sprint. Sin audio ni modelo esto son microsegundos; lo que este
+        // número vigila es que no se cuele una espera en el camino.
+        assert!(a.ms < 4_000, "la ficha tardó {} ms", a.ms);
+    }
+
+    /// Y el otro lado, que es el que más se va a ver: el corpus no tiene nada. La app dice qué
+    /// buscó y ofrece una maniobra, en vez de enseñar la sección «menos mala».
+    #[test]
+    fn sin_nada_en_el_corpus_la_app_dice_que_busco_y_sugiere_como_conducirse() {
+        let corpus = corpus_de_prueba();
+        let mut d = Disparador::nuevo();
+        let turno = turno_del_cliente("¿Ustedes tienen certificación ISO 27001?", 2_000);
+        let a = buscar_si_toca(&mut d, &corpus, &turno, &encargo_cerrado_ahora()).expect("no disparó");
+
+        let Respuesta::SinResultado { buscado, maniobra, .. } = a.respuesta else {
+            panic!("armó una ficha sobre un corpus vacío")
+        };
+        assert!(buscado.contains("27001"), "no dice qué buscó: «{buscado}»");
+        assert!(maniobra.starts_with("Dilo sin adornos"));
+    }
+
+    /// El primer arranque de la app: sin carpeta señalada no hay corpus, y la app **tiene que
+    /// funcionar igual**. Lo que enseña entonces es «no tengo nada» con su maniobra, que es la
+    /// verdad, y no una pantalla de error.
+    #[test]
+    fn sin_corpus_señalado_la_app_responde_igual_en_vez_de_romperse() {
+        let mut d = Disparador::nuevo();
+        let turno = turno_del_cliente("¿Cuánto costaría el proyecto completo?", 2_000);
+        let a = buscar_si_toca(&mut d, &SinCorpus, &turno, &encargo_cerrado_ahora())
+            .expect("sin corpus dejó de disparar");
+        let Respuesta::SinResultado { maniobra, cercanas, .. } = a.respuesta else {
+            panic!("armó una ficha sin corpus")
+        };
+        assert!(cercanas.is_empty());
+        assert!(maniobra.starts_with("No improvises cifras"));
+    }
+
+    /// El eco con altavoces internos: el mismo turno llega por las dos pistas. Si el de micrófono
+    /// disparara, la app buscaría y enseñaría la ficha dos veces por la misma pregunta.
+    #[test]
+    fn el_eco_del_propio_altavoz_no_dispara_una_segunda_ficha() {
+        let corpus = corpus_de_prueba();
+        let mut d = Disparador::nuevo();
+        let del_cliente = turno_del_cliente("¿En cuántas semanas hacen la entrega?", 2_000);
+        assert!(buscar_si_toca(&mut d, &corpus, &del_cliente, &encargo_cerrado_ahora()).is_some());
+
+        let por_el_microfono = Turno { pista: Pista::Microfono, eco: true, ..del_cliente };
+        assert!(
+            buscar_si_toca(&mut d, &corpus, &por_el_microfono, &encargo_cerrado_ahora()).is_none(),
+            "el eco disparó una segunda ficha por la misma pregunta"
+        );
+    }
+
     #[test]
     fn sin_motor_el_turno_sale_con_el_motivo_del_motor() {
         let motor = crate::stt::Mudo::por("este Mac no trae el transcriptor de macOS 26");
         let novedad = transcribir(
             &motor,
-            Encargo {
+            &Encargo {
                 pista: Pista::Sistema,
                 idioma: "es-ES".into(),
                 desde_ms: 0,
                 hasta_ms: 900,
                 muestras: Some(vec![0.1; 14_400]),
+                cerro: std::time::Instant::now(),
             },
         );
         match novedad {

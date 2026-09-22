@@ -1298,6 +1298,96 @@ segunda que, al hacerla, aparece contenido que la palabra de aprobación no tra�
 
 Registrada también en `docs/diseno/README.md`. Con ella se desbloquea la fase 4.
 
+## Fase 4 — Corpus, disparo y ficha
+
+### Fase 4a — el motor, antes de tocar una pantalla (2026-09-21)
+
+#### Lo que se construyó
+
+| Módulo | Qué hace |
+|---|---|
+| `corpus/unidad.rs` | las cinco unidades del modelo de consultoría, por reglas léxicas bilingües. **El nombre del archivo pesa tres veces más que el cuerpo**: quien guarda «Propuesta Páramo Azul.pdf» ya clasificó el documento |
+| `corpus/seccion.rs` | el troceado por sección; parte las largas conservando la fuente y pega las migajas sin cruzar un título |
+| `corpus/leer.rs` | Markdown, `.docx` (zip + XML) y PDF, cada uno con su forma de reconocer títulos |
+| `corpus/consulta.rs` | del turno hablado a la consulta: separadores de millares, palabras vacías de los dos idiomas, signos que rompen el analizador |
+| `corpus/indice.rs` | BM25 sobre `tantivy`, dos campos por idioma, título con peso 3 |
+| `corpus/mod.rs` | recorre la carpeta, orquesta, y reparte por unidad |
+| `disparo/mod.rs` | los cinco motivos de la VISION: pregunta, cifra, término tuyo, silencio, atajo |
+| `ficha/mod.rs` | titular ≤8 palabras · línea · fuente, **recortados del documento, jamás redactados** |
+| `ficha/maniobra.rs` | el catálogo de seis de la mirada 11, ejecutado y no reescrito |
+
+#### Las cuatro cosas que solo se supieron midiendo
+
+1. **Mi propio spike se dio la razón a sí mismo.** Afirmaba que «rentable» encuentra
+   «rentabilidad» y pasaba en verde — pero pasaba por la palabra «canal», que iba en la misma
+   consulta. `rentabl` y `rentabil` son raíces distintas. Una aserción que no distingue entre dos
+   causas no ha medido nada; el test que quedó afirma lo que el stemmer hace de verdad.
+2. **`metodología` y `metodologia` no se encuentran entre sí.** El stemmer español usa la tilde
+   para reconocer sufijos. Se midieron las dos cadenas de análisis sobre **23 parejas** de
+   lenguaje de consultoría: **17/23 con plegado de acentos contra 15/23 sin él**. Va con plegado,
+   y las dos pérdidas (`implementación~implementar`) quedan declaradas en el ADR 008 con el
+   instrumento para revisarlas: el nDCG@5 del kit.
+3. **Un `.docx` del propio macOS no escribe un solo `pStyle`.** Marca los títulos con negrita y
+   cuerpo mayor. Con la regla semántica sola, un documento así se indexaba entero como una
+   sección. El lector reconoce los dos caminos.
+4. **Un PDF no trae títulos, trae líneas.** Sus secciones son **conjetura** por la forma del
+   texto, y el documento lo declara hasta la ficha para que no prometa lo que nadie escribió.
+
+#### Tres defectos que encontró un test antes que una reunión
+
+- **«¿Tienen certificación?» no disparaba.** El mínimo de tres palabras se comía las preguntas
+  cortas. Con signo de interrogación bastan dos, y el signo es la señal más fiable que hay.
+- **Cuatro tests del corpus compartían carpeta** por PID y se pisaban al correr en paralelo — el
+  mismo defecto que en la fase 3 obligó a serializar los tests de audio. Aquí se resolvió con un
+  nombre por test en vez de con un candado.
+- **Un test mío preguntaba «cuánto cuesta» a un documento que dice «tarifa cerrada»**: ni una
+  palabra en común. Estaba mal el test, no el código.
+
+#### Gates nuevos, cada uno visto en rojo en su propio commit (regla 15)
+
+| Gate | Qué protege | Su rojo |
+|---|---|---|
+| `el_indice_nace_en_700_y_se_repara_si_lo_encuentra_abierto` | el índice guarda el corpus del usuario **en claro** y no puede nacer legible para las demás cuentas del Mac | desactivado: **493 (`0o755`) contra 448 (`0o700`)** |
+| `el_catalogo_dice_lo_mismo_que_el_design_system` | el catálogo de maniobras vive en dos sitios y **tienen que decir lo mismo** | cambiada una palabra de la sexta maniobra: *«no está en design-system.md — el catálogo se separó de lo que el usuario aprobó»* |
+| `disparo/` y `ficha/` en `verify:ephemeral` | el disparador guarda la última pregunta del **cliente** | el gate mordió al primer intento: la autorización de la lectura de test estaba una línea más arriba de donde tiene que ir |
+
+#### Lo que el kill-switch no alcanzaba
+
+El disparador guarda la última consulta para no repetir ficha, y eso son palabras del cliente en
+memoria. Vivía dentro del hilo de transcripción, donde `cortar()` no llega. Ahora vive en la
+`Escucha` tras un candado, y el corte **pisa las letras con ceros** antes de soltarlas — la misma
+disciplina que la ventana de turnos, en su otro escondite. No añade una pieza al kill-switch: es
+la pieza «Transcript», que sigue siendo **6 de 7**.
+
+### Decisión de diseño no escrita — la pantalla de Corpus a medio construir (mirada 14 propuesta)
+
+La fase 4 entrega el corpus indexado y la ficha. Eso toca dos superficies visuales, y **solo una
+de ellas ya tiene veredicto**:
+
+1. **La banda con ficha real.** Sus seis estados de contenido —incluido «sin resultado» con su
+   maniobra— se aprobaron en la **mirada 11** sobre `docs/diseno/banda.html`. Aquí no se decide
+   nada nuevo: se llena con datos de verdad la forma que ya está aprobada. **No pide mirada.**
+2. **La pantalla de Corpus.** `docs/diseno/corpus.html` existe con sus cuatro estados, pero
+   **no tiene estado «así se ve hoy · sprint 1»** — y este sprint entrega solo una parte: se
+   indexa, se reparte por unidad, se dice qué quedó sin leer; **no** hay arrastrar y soltar, ni
+   reindexado automático al cambiar un archivo, ni OCR de lo escaneado. Por la regla que la
+   mirada 12 dejó escrita —*«toda pantalla que se entregue a medias usa este estado»*— hay que
+   construir su `s1`, y eso **sí es diseño**.
+
+Y hay tres hechos que solo se supieron construyendo y que la maqueta no dice:
+
+- **la sección de un PDF es una conjetura**, y la ficha tiene que poder declararlo sin que parezca
+  una avería;
+- **el índice vive en la carpeta de datos de la app, en 700**, y la pantalla lo enseña: quien
+  confía su carpeta tiene derecho a saber dónde acabó el derivado;
+- **hay un techo de documentos por carpeta** (2 000) que es un aviso y no un límite técnico.
+
+**Lo que se propone, entonces:** una sola mirada, la **14**, sobre `corpus.html` en su estado
+`s1`, antes de escribir la primera línea de la pantalla de Corpus. La banda no entra porque su
+forma ya tiene veredicto. Si el usuario prefiere que la banda con ficha real también se mire
+—tiene todo el derecho: una cosa es la forma aprobada y otra verla con contenido de verdad— se
+agrupa en la misma mirada y se dice aquí antes de construir.
+
 ## Desviación del plan (2026-09-20) — la MANIOBRA es producto nuevo
 
 **Qué.** El estado «sin resultado» deja de limitarse a admitir el vacío: sugiere **cómo abordar la
