@@ -28,8 +28,35 @@ export const es = {
     // ---- sin resultado: el veredicto, la maniobra y lo más cercano ----
     // La maniobra sale de un catálogo versionado elegido por reglas léxicas. NO es una
     // sugerencia del modelo y no puede parecerlo (design-system §9-quinquies).
-    nada: "Nada en tu corpus sobre «certificación ISO 27001»",
-    maniobra: "Dilo sin adornos y ofrece confirmarlo hoy mismo.",
+    /** Se compone con los términos que de verdad se buscaron: «Nada en tu corpus sobre «…»». */
+    nadaSobre: "Nada en tu corpus sobre",
+    /**
+     * EL CATÁLOGO DE MANIOBRAS, bilingüe.
+     *
+     * Rust dice **cuál** maniobra (`credencial`, `cifra`, …) y el texto vive aquí, porque la
+     * maniobra es voz de la app y la app es bilingüe por regla dura. Las seis están en
+     * `docs/diseno/banda.html` —la maqueta es el primer diccionario— y en `design-system.md`,
+     * donde el usuario las aprobó en la mirada 11.
+     */
+    /** Las comillas del idioma: la maqueta escribe «…» en español y “…” en inglés. */
+    comillaAbre: "«",
+    comillaCierra: "»",
+    /** Las cinco unidades del modelo de consultoría, como las escriben los chips de la maqueta. */
+    unidades: {
+      propuesta: "propuesta",
+      marco: "marco",
+      caso: "caso",
+      cliente: "cliente",
+      perfil: "perfil",
+    },
+    maniobras: {
+      credencial: "Dilo sin adornos y ofrece confirmarlo hoy mismo.",
+      cifra: "No improvises cifras: ofrece el rango del caso comparable.",
+      plazo: "Da el plazo del caso más parecido y confírmalo por escrito.",
+      referencia: "Ofrece una referencia del sector sin nombrar al cliente aún.",
+      contrato: "No opines de contrato en vivo: anótalo y respóndelo por escrito.",
+      generica: "Devuelve la pregunta: ¿para qué lo necesitan?",
+    },
     cercano: "lo más cercano",
     cercanoLargo: "lo más cercano que sí tienes · ninguno responde la pregunta",
     buscarOtras: "Buscar con otras palabras",
@@ -70,6 +97,7 @@ export const es = {
     muestra: {
       oidoQuien: "cliente 14:02",
       oido: "Y la limpieza de datos, ¿eso está dentro del alcance?",
+      buscado: "certificación ISO 27001",
       oidoIso: "¿Ustedes tienen certificación ISO 27001?",
 
       titular: "Limpieza de datos: incluida, hasta tres fuentes",

@@ -18,8 +18,26 @@ export const en: Diccionario = {
 
     buscando: "Searching your corpus…",
 
-    nada: "Nothing in your corpus about “ISO 27001 certification”",
-    maniobra: "Say so plainly and offer to confirm it today.",
+    nadaSobre: "Nothing in your corpus about",
+    /** Las comillas del idioma: la maqueta escribe «…» en español y “…” en inglés. */
+    comillaAbre: "“",
+    comillaCierra: "”",
+    /** Las cinco unidades del modelo de consultoría, como las escriben los chips de la maqueta. */
+    unidades: {
+      propuesta: "proposal",
+      marco: "framework",
+      caso: "case",
+      cliente: "client",
+      perfil: "profile",
+    },
+    maniobras: {
+      credencial: "Say so plainly and offer to confirm it today.",
+      cifra: "Do not improvise figures: offer the range from the comparable case.",
+      plazo: "Give the timeline from the closest case and confirm it in writing.",
+      referencia: "Offer a reference from the sector without naming the client yet.",
+      contrato: "Do not opine on contracts live: note it down and answer in writing.",
+      generica: "Turn the question around: what do they need it for?",
+    },
     cercano: "closest match",
     cercanoLargo: "closest things you do have · none answers the question",
     buscarOtras: "Search with other words",
@@ -49,6 +67,7 @@ export const en: Diccionario = {
     muestra: {
       oidoQuien: "client 14:02",
       oido: "And the data cleansing, is that within scope?",
+      buscado: "ISO 27001 certification",
       oidoIso: "Are you ISO 27001 certified?",
 
       titular: "Data cleansing: included, up to three sources",

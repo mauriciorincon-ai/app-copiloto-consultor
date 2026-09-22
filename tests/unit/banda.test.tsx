@@ -96,11 +96,21 @@ describe("la banda", () => {
     expect(document.querySelectorAll("button")).toHaveLength(2);
   });
 
+  /**
+   * La fase 4 cambió de dónde sale este texto: el titular ya no es una cadena fija, se **compone
+   * con los términos que de verdad se buscaron**, y la maniobra llega del catálogo por su
+   * identificador. Lo que la pantalla enseña es lo mismo; lo que cambió es que ahora puede ser
+   * verdad.
+   */
   it("«sin resultado» no deja solo al consultor: dice qué buscó, cómo abordarlo y qué tiene cerca", () => {
     pinta({ estado: "sin-resultado" });
-    expect(document.querySelector(".titular-b")?.textContent).toBe(es.banda.nada);
-    expect(document.querySelector(".maniobra-b .t")?.textContent).toBe(es.banda.maniobra);
-    expect(document.querySelector(".cercano-b .d")?.textContent).toBe(es.banda.muestra.cercana);
+    expect(document.querySelector(".titular-b")?.textContent).toBe(
+      `${es.banda.nadaSobre} ${es.banda.comillaAbre}${es.banda.muestra.buscado}${es.banda.comillaCierra}`,
+    );
+    expect(document.querySelector(".maniobra-b .t")?.textContent).toBe(es.banda.maniobras.credencial);
+    expect(document.querySelector(".cercano-b .d")?.textContent).toBe(
+      `${es.banda.unidades.marco} · ${es.banda.muestra.cercana1}`,
+    );
   });
 
   it("la maniobra NO puede parecer salida del modelo", () => {
@@ -150,8 +160,10 @@ describe("la banda", () => {
 
   it("habla inglés con las mismas clases", () => {
     pinta({ estado: "sin-resultado" }, "en");
-    expect(document.querySelector(".titular-b")?.textContent).toBe(en.banda.nada);
-    expect(document.querySelector(".maniobra-b .t")?.textContent).toBe(en.banda.maniobra);
+    expect(document.querySelector(".titular-b")?.textContent).toBe(
+      `${en.banda.nadaSobre} ${en.banda.comillaAbre}${en.banda.muestra.buscado}${en.banda.comillaCierra}`,
+    );
+    expect(document.querySelector(".maniobra-b .t")?.textContent).toBe(en.banda.maniobras.credencial);
     expect(screen.getByText(en.banda.escuchando)).toBeInTheDocument();
   });
 });

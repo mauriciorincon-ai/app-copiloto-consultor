@@ -2,6 +2,8 @@ import { useT } from "../i18n";
 import { Ic } from "./Iconos";
 import { useAsa } from "../asa";
 import { useTurnos } from "../turnos";
+import { useFicha, type Acumulada, type Aparicion } from "../ficha";
+import { hayTauri } from "../puente";
 import type { Turno } from "../cuaderno";
 
 /**
@@ -56,6 +58,26 @@ export function Banda({
   const t = useT().banda;
   const m = t.muestra;
   const grande = ampliada || transcript;
+  // La ficha viene del corpus del usuario. Fuera de Tauri es la de la maqueta, que es lo que
+  // hace posible el gate de FIDELIDAD; dentro del producto es la de verdad, y si no hay ninguna
+  // no se pinta ninguna.
+  const { aparicion, buscando } = useFicha(estado);
+
+  // **Dentro del producto el estado de contenido lo decide la ficha, no la URL.** Tener las dos
+  // cosas mandando a la vez fue un defecto real: la banda pedía «sin resultado» y la ficha traía
+  // una ficha, así que no se pintaba nada. `sin-verificar` es la excepción y no es capricho: lo
+  // decide la protección de la ventana, que no tiene nada que ver con el corpus.
+  const estadoReal: EstadoBanda = !hayTauri()
+    ? estado
+    : estado === "sin-verificar"
+      ? estado
+      : buscando
+        ? "buscando"
+        : aparicion?.clase === "ficha"
+          ? "ficha"
+          : aparicion?.clase === "sinResultado"
+            ? "sin-resultado"
+            : "esperando";
   // Los turnos se piden SIEMPRE, no solo con el transcript abierto: el hueco entre abrirlo y
   // recibir la primera respuesta se vería como un transcript vacío, y un transcript vacío en una
   // reunión con gente hablando parece una avería.
@@ -87,9 +109,26 @@ export function Banda({
     </span>
   );
 
-  const fuente = (
+  const fuente = (f: Aparicion & { clase: "ficha" }) => (
     <span className="fuente-b">
-      <span className="unidad">{m.unidad}</span> {m.fuente}
+      {f.fuente.unidad && <span className="unidad">{t.unidades[f.fuente.unidad]}</span>}{" "}
+      {f.fuente.seccion ? `${f.fuente.documento} · ${f.fuente.seccion}` : f.fuente.documento}
+      {/* Un PDF no trae títulos y los suyos son conjetura del lector. Aquí NO se marca: en 88 px
+          no cabe copy nuevo, y el sitio donde el usuario puede juzgar cómo se leyeron sus
+          documentos es la pantalla de Corpus, que lo cuenta. La sección se cita igual porque es
+          una línea que está de verdad en el documento — lo conjeturado es que fuera un título. */}
+    </span>
+  );
+
+  /** Las acumuladas y las cercanas se dibujan igual: unidad + texto. */
+  const lista = (items: Acumulada[], estilo?: React.CSSProperties) => (
+    <span className="mas-b" style={estilo}>
+      {items.map((a, i) => (
+        <span className="item" key={`${a.texto}-${i}`}>
+          {a.unidad && <span className="unidad">{t.unidades[a.unidad]}</span>}
+          <span className="t">{a.texto}</span>
+        </span>
+      ))}
     </span>
   );
 
@@ -97,7 +136,7 @@ export function Banda({
     <section
       className={grande ? "banda ampliada" : "banda"}
       aria-label="Angel Ghost"
-      data-estado={estado}
+      data-estado={estadoReal}
     >
       {/* El asa ajusta la banda Y su relleno a la vez; el arrastre lo resuelve Rust. */}
       <span className="asa" ref={asa} title="arrastra para ajustar las dos a la vez">
@@ -133,7 +172,7 @@ export function Banda({
       </div>
 
       <div className="cuerpo-b">
-        {estado === "esperando" && (
+        {estadoReal === "esperando" && (
           <>
             <span className="ficha-b">
               <span className="voz-b">{t.esperando}</span>
@@ -152,7 +191,7 @@ export function Banda({
           </>
         )}
 
-        {estado === "buscando" && (
+        {estadoReal === "buscando" && (
           <>
             <span className="ficha-b">
               <span className="oido">
@@ -170,26 +209,15 @@ export function Banda({
           </>
         )}
 
-        {estado === "ficha" && (
+        {estadoReal === "ficha" && aparicion?.clase === "ficha" && (
           <>
             <span className="ficha-b">
-              <span className="titular-b">{m.titular}</span>
-              <span className="linea-b">{grande ? m.lineaLarga : m.linea}</span>
-              {grande && (
-                <span className="mas-b">
-                  <span className="item">
-                    <span className="unidad">{m.acumulada1Unidad}</span>
-                    <span className="t">{m.acumulada1}</span>
-                  </span>
-                  <span className="item">
-                    <span className="unidad">{m.acumulada2Unidad}</span>
-                    <span className="t">{m.acumulada2}</span>
-                  </span>
-                </span>
-              )}
+              <span className="titular-b">{aparicion.titular}</span>
+              <span className="linea-b">{grande ? aparicion.lineaLarga : aparicion.linea}</span>
+              {grande && lista(aparicion.acumuladas)}
             </span>
             <span className="lado-b">
-              {fuente}
+              {fuente(aparicion)}
               {transcript && <Transcript turnos={turnos} />}
               {transcript ? (
                 <span className="atajos-b">
@@ -207,41 +235,34 @@ export function Banda({
           </>
         )}
 
-        {estado === "sin-resultado" && (
+        {estadoReal === "sin-resultado" && aparicion?.clase === "sinResultado" && (
           <>
             <span className="ficha-b">
-              <span className="titular-b">{t.nada}</span>
+              {/* Con los términos que DE VERDAD se buscaron: si la app entendió mal, se ve en el
+                  acto en vez de después, cuando la ficha ya se creyó. */}
+              <span className="titular-b">
+                {t.nadaSobre} {t.comillaAbre}
+                {aparicion.buscado}
+                {t.comillaCierra}
+              </span>
               {grande && (
                 <span className="oido">
                   <span className="quien">
-                    <Ic id="i-sistema" s /> {m.oidoQuien}
+                    <Ic id="i-sistema" s /> {t.cliente} {aparicion.hora}
                   </span>
                   <q>{m.oidoIso}</q>
                 </span>
               )}
               <span className="maniobra-b">
                 <Ic id="i-flecha" s />
-                <span className="t">{t.maniobra}</span>
+                <span className="t">{t.maniobras[aparicion.maniobra]}</span>
               </span>
-              {grande && (
+              {grande && aparicion.cercanas.length > 0 && (
                 <>
                   <span className="cercano-b" style={{ marginTop: "7px" }}>
                     <span className="et">{t.cercanoLargo}</span>
                   </span>
-                  <span className="mas-b" style={{ marginTop: "3px" }}>
-                    <span className="item">
-                      <span className="unidad">{m.cercana1Unidad}</span>
-                      <span className="t">{m.cercana1}</span>
-                    </span>
-                    <span className="item">
-                      <span className="unidad">{m.cercana2Unidad}</span>
-                      <span className="t">{m.cercana2}</span>
-                    </span>
-                    <span className="item">
-                      <span className="unidad">{m.cercana3Unidad}</span>
-                      <span className="t">{m.cercana3}</span>
-                    </span>
-                  </span>
+                  {lista(aparicion.cercanas, { marginTop: "3px" })}
                 </>
               )}
             </span>
@@ -266,10 +287,16 @@ export function Banda({
                 </>
               ) : (
                 <>
-                  <span className="cercano-b">
-                    <span className="et">{t.cercano}</span>
-                    <span className="d">{m.cercana}</span>
-                  </span>
+                  {aparicion.cercanas[0] && (
+                    <span className="cercano-b">
+                      <span className="et">{t.cercano}</span>
+                      <span className="d">
+                        {aparicion.cercanas[0].unidad
+                          ? `${t.unidades[aparicion.cercanas[0].unidad]} · ${aparicion.cercanas[0].texto}`
+                          : aparicion.cercanas[0].texto}
+                      </span>
+                    </span>
+                  )}
                   <span className="atajos-b">
                     <span className="tecla">
                       <kbd>⌘⇧A</kbd> {t.otrasPalabras}
@@ -287,7 +314,7 @@ export function Banda({
           </>
         )}
 
-        {estado === "sin-verificar" && (
+        {estadoReal === "sin-verificar" && (
           <>
             <span className="ficha-b">
               {grande ? (

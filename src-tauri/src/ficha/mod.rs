@@ -76,8 +76,8 @@ pub enum Respuesta {
     SinResultado {
         buscado: String,
         cercanas: Vec<Cercana>,
+        /// **Cuál** maniobra, no su texto: el copy es bilingüe y vive en el diccionario.
         maniobra: String,
-        porque: String,
     },
 }
 
@@ -128,7 +128,6 @@ pub fn armar(pregunta: &str, hallazgos: &[Hallazgo]) -> Respuesta {
             }))
         }
         None => {
-            let m = maniobra::elegir(pregunta);
             Respuesta::SinResultado {
                 buscado: consulta,
                 cercanas: hallazgos
@@ -139,8 +138,7 @@ pub fn armar(pregunta: &str, hallazgos: &[Hallazgo]) -> Respuesta {
                         texto: recortar(&titular_de(h), PALABRAS_DEL_TITULAR),
                     })
                     .collect(),
-                maniobra: m.texto.to_string(),
-                porque: m.porque.to_string(),
+                maniobra: maniobra::elegir(pregunta).id.to_string(),
             }
         }
     }
@@ -309,7 +307,7 @@ mod pruebas {
     fn sin_resultado_trae_su_maniobra_del_catalogo() {
         let r = armar("¿tienen certificación ISO 27001?", &[]);
         let Respuesta::SinResultado { maniobra, cercanas, .. } = r else { panic!("armó ficha de la nada") };
-        assert!(maniobra.starts_with("Dilo sin adornos"));
+        assert_eq!(maniobra, "credencial");
         assert!(cercanas.is_empty());
     }
 

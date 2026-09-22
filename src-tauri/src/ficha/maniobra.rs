@@ -16,9 +16,16 @@
 //! escrito para el sprint 2 es «sin inventar respuesta, pero a medida de la situación», y el
 //! camino determinista está en `design-system.md` §10.
 
-/// Una maniobra del catálogo: el texto que ve el usuario y la razón por la que es esa.
+/// Una maniobra del catálogo.
+///
+/// **`id` es lo que viaja a la interfaz, no `texto`.** La maniobra es voz de la app y la app es
+/// bilingüe por regla dura, así que su copy vive en el diccionario (`src/i18n/`) como el resto
+/// —y ahí lo vigila el gate que exige que toda cadena visible esté en la maqueta—. Aquí se
+/// guarda el español porque es lo que el design system escribió y lo que el test compara: si
+/// alguien reescribe una maniobra en cualquiera de los dos sitios, se nota.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Maniobra {
+    pub id: &'static str,
     pub texto: &'static str,
     pub porque: &'static str,
 }
@@ -29,6 +36,7 @@ const CATALOGO: &[(&[&str], Maniobra)] = &[
         &["certificacion", "certificado", "certificados", "iso", "acreditado", "acreditacion",
           "licencia", "certification", "certified", "accredited", "license", "licence"],
         Maniobra {
+            id: "credencial",
             texto: "Dilo sin adornos y ofrece confirmarlo hoy mismo.",
             porque: "una credencial se tiene o no; dudar cuesta más que el «no»",
         },
@@ -38,6 +46,7 @@ const CATALOGO: &[(&[&str], Maniobra)] = &[
           "tarifa", "tarifas", "presupuesto", "price", "cost", "discount", "fee", "fees",
           "budget", "rate"],
         Maniobra {
+            id: "cifra",
             texto: "No improvises cifras: ofrece el rango del caso comparable.",
             porque: "un número dicho al aire se vuelve compromiso",
         },
@@ -46,6 +55,7 @@ const CATALOGO: &[(&[&str], Maniobra)] = &[
         &["cuando", "plazo", "plazos", "semanas", "meses", "entrega", "cronograma", "when",
           "timeline", "weeks", "months", "delivery", "deadline", "schedule"],
         Maniobra {
+            id: "plazo",
             texto: "Da el plazo del caso más parecido y confírmalo por escrito.",
             porque: "anclar en un caso real es defendible; una fecha inventada, no",
         },
@@ -54,6 +64,7 @@ const CATALOGO: &[(&[&str], Maniobra)] = &[
         &["referencia", "referencias", "referencias", "trabajado", "clientes", "sector",
           "reference", "references", "worked", "customers", "clients"],
         Maniobra {
+            id: "referencia",
             texto: "Ofrece una referencia del sector sin nombrar al cliente aún.",
             porque: "nombrar clientes sin permiso es un problema, no una venta",
         },
@@ -62,6 +73,7 @@ const CATALOGO: &[(&[&str], Maniobra)] = &[
         &["contrato", "contractual", "clausula", "clausulas", "penalidad", "penalizacion",
           "nda", "confidencialidad", "contract", "clause", "penalty", "liability"],
         Maniobra {
+            id: "contrato",
             texto: "No opines de contrato en vivo: anótalo y respóndelo por escrito.",
             porque: "lo contractual no se improvisa en una llamada",
         },
@@ -70,6 +82,7 @@ const CATALOGO: &[(&[&str], Maniobra)] = &[
 
 /// La sexta: la que sale cuando ninguna marca aparece.
 pub const GENERICA: Maniobra = Maniobra {
+    id: "generica",
     texto: "Devuelve la pregunta: ¿para qué lo necesitan?",
     porque: "la pregunta real suele ser otra — y da tiempo",
 };
@@ -154,6 +167,7 @@ mod pruebas {
         for (i, a) in t.iter().enumerate() {
             for b in t.iter().skip(i + 1) {
                 assert_ne!(a.texto, b.texto);
+                assert_ne!(a.id, b.id, "dos maniobras con el mismo id: la interfaz no las distingue");
             }
         }
     }

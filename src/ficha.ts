@@ -1,0 +1,159 @@
+import { useEffect, useState } from "react";
+import { escuchar, hayTauri, preguntar } from "./puente";
+import { useT } from "./i18n";
+
+/**
+ * LA FICHA EN LA BANDA — lo que la app encontró en el corpus del consultor.
+ *
+ * Vive al lado de `turnos.ts` y por la misma razón: lo usa la **banda**, no el cuaderno.
+ *
+ * **Fuera de Tauri son los datos de la maqueta**, y eso es lo que hace posible el gate de
+ * FIDELIDAD: el arnés de capturas abre la banda en el navegador y compara contra
+ * `docs/diseno/banda.html`. Dentro del producto son los de verdad, y si no hay ficha no se
+ * enseña ninguna — pintar la muestra «Páramo Azul» dentro de la app sería inventarle al usuario
+ * un corpus que no tiene.
+ */
+
+export type Unidad = "propuesta" | "marco" | "caso" | "cliente" | "perfil";
+
+export type MotivoDelDisparo = "pregunta" | "cifra" | "terminoDelCorpus" | "silencioLargo" | "atajo";
+
+export type Fuente = {
+  documento: string;
+  seccion: string | null;
+  unidad: Unidad | null;
+  /** La sección la conjeturó el lector por la forma del texto (PDF), nadie la escribió. */
+  conjeturada: boolean;
+};
+
+export type Acumulada = { unidad: Unidad | null; texto: string };
+
+export type Ficha = {
+  clase: "ficha";
+  titular: string;
+  linea: string;
+  lineaLarga: string;
+  fuente: Fuente;
+  acumuladas: Acumulada[];
+};
+
+/**
+ * Cuál maniobra del catálogo. Es un identificador y no el texto: el copy es bilingüe y vive en
+ * el diccionario, donde el gate que exige que toda cadena esté en la maqueta puede vigilarlo.
+ */
+export type IdDeManiobra =
+  | "credencial"
+  | "cifra"
+  | "plazo"
+  | "referencia"
+  | "contrato"
+  | "generica";
+
+export type SinResultado = {
+  clase: "sinResultado";
+  /** Los términos con los que se buscó de verdad. Si la app entendió mal, se ve en el acto. */
+  buscado: string;
+  cercanas: Acumulada[];
+  maniobra: IdDeManiobra;
+};
+
+export type Respuesta = Ficha | SinResultado;
+
+export type Aparicion = Respuesta & {
+  motivo: MotivoDelDisparo;
+  /** Del fin de turno a la ficha. El presupuesto del sprint son 4 000 ms. */
+  ms: number;
+  hora: string;
+};
+
+/** Lo que el evento «escucha» trae. Solo interesan dos de sus formas. */
+type Novedad = { Aparece?: Aparicion; Turno?: { pista: string; eco: boolean } };
+
+export type LoQueLaBandaEnseña = {
+  aparicion: Aparicion | null;
+  /** El cliente terminó de hablar y todavía no hay respuesta. Es el estado «buscando». */
+  buscando: boolean;
+};
+
+/**
+ * La última aparición, y si hay una búsqueda en marcha.
+ *
+ * Escucha tres caminos porque son tres: el turno del cliente abre el «buscando», la aparición
+ * automática llega dentro del evento `escucha`, y la de `⌘⇧A` llega por su propio evento y hay
+ * que ir a buscarla — el atajo se salta la espera entre fichas, y hacerle esperar al evento
+ * común le quitaría justo eso.
+ *
+ * `paraLaMuestra` solo pinta **fuera de Tauri**: es el estado que el arnés de capturas pide por
+ * URL, y lo que sostiene el gate de FIDELIDAD. Dentro del producto no se mira.
+ */
+export function useFicha(paraLaMuestra: "ficha" | "sin-resultado" | string): LoQueLaBandaEnseña {
+  const m = useT().banda.muestra;
+  const [ficha, setFicha] = useState<Aparicion | null>(() =>
+    hayTauri() ? null : deMuestra(m, paraLaMuestra),
+  );
+  const [buscando, setBuscando] = useState(false);
+
+  useEffect(() => {
+    if (!hayTauri()) return;
+    const bajas = [
+      escuchar<Novedad>("escucha", (n) => {
+        // Un turno del cliente puede acabar en ficha o en nada, y hasta saberlo la banda dice
+        // que está buscando. El eco no cuenta: es el consultor oyéndose a sí mismo.
+        if (n?.Turno && n.Turno.pista === "sistema" && !n.Turno.eco) setBuscando(true);
+        if (n?.Aparece) {
+          setFicha(n.Aparece);
+          setBuscando(false);
+        }
+      }),
+      escuchar("ficha", () => {
+        setBuscando(true);
+        void preguntar<Aparicion>("pedir_ficha").then((a) => {
+          setBuscando(false);
+          if (a !== null) setFicha(a);
+        });
+      }),
+      // Tras el kill-switch no queda ficha en pantalla: la promesa es que no queda nada.
+      escuchar("corte", () => {
+        setFicha(null);
+        setBuscando(false);
+      }),
+    ];
+    return () => bajas.forEach((b) => b());
+  }, []);
+
+  return { aparicion: ficha, buscando };
+}
+
+/** Los datos «Páramo Azul» de la maqueta, con los textos del diccionario. */
+function deMuestra(m: ReturnType<typeof useT>["banda"]["muestra"], estado: string): Aparicion {
+  const comun = { motivo: "pregunta" as const, ms: 1_400, hora: m.hora1 };
+  if (estado === "sin-resultado") {
+    return {
+      clase: "sinResultado",
+      buscado: m.buscado,
+      cercanas: [
+        { unidad: "marco", texto: m.cercana1 },
+        { unidad: "propuesta", texto: m.cercana2 },
+        { unidad: "caso", texto: m.cercana3 },
+      ],
+      maniobra: "credencial",
+      ...comun,
+    };
+  }
+  return {
+    clase: "ficha",
+    titular: m.titular,
+    linea: m.linea,
+    lineaLarga: m.lineaLarga,
+    // Las unidades van por su CLAVE, jamás por su etiqueta traducida. Castear la etiqueta a
+    // clave funcionaba en español por casualidad —«propuesta» es las dos cosas— y dejaba la
+    // unidad vacía en inglés. Lo cazó el gate de fidelidad: ocho encuadres en inglés y ninguno
+    // en español.
+    fuente: { documento: m.fuente, seccion: null, unidad: "propuesta", conjeturada: false },
+    acumuladas: [
+      { unidad: "marco", texto: m.acumulada1 },
+      { unidad: "caso", texto: m.acumulada2 },
+    ],
+    ...comun,
+  };
+}

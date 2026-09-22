@@ -794,7 +794,7 @@ mod tests {
             panic!("armó una ficha sobre un corpus vacío")
         };
         assert!(buscado.contains("27001"), "no dice qué buscó: «{buscado}»");
-        assert!(maniobra.starts_with("Dilo sin adornos"));
+        assert_eq!(maniobra, "credencial");
     }
 
     /// El primer arranque de la app: sin carpeta señalada no hay corpus, y la app **tiene que
@@ -810,7 +810,7 @@ mod tests {
             panic!("armó una ficha sin corpus")
         };
         assert!(cercanas.is_empty());
-        assert!(maniobra.starts_with("No improvises cifras"));
+        assert_eq!(maniobra, "cifra");
     }
 
     /// El eco con altavoces internos: el mismo turno llega por las dos pistas. Si el de micrófono
