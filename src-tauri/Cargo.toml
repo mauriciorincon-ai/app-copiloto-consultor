@@ -38,6 +38,10 @@ tantivy = "0.26"
 pdf-extract = "0.12"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 quick-xml = "0.42"
+# Para UNA cosa: el diálogo con el que el usuario señala su carpeta de documentos. La app no
+# puede abrir un selector de carpetas sin él, y pedir la ruta escrita a mano sería empujar al
+# usuario a teclear rutas en una app de escritorio.
+tauri-plugin-dialog = "2"
 
 # Solo macOS, y solo para el ACOPLE y el RELLENO. Las cuatro ya viajaban en el árbol de Tauri
 # (`cargo tree` las lista bajo tao/wry): declararlas aquí no añade una descarga, hace explícito

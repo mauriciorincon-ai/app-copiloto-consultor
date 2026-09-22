@@ -240,6 +240,20 @@ fn donde_va_el_indice(app: &tauri::AppHandle) -> Result<std::path::PathBuf, Stri
         .map_err(|e| format!("no se supo dónde poner el índice: {e}"))
 }
 
+/// Abre el selector de carpetas y devuelve lo que el usuario eligió. `None` si canceló.
+///
+/// Va aparte de `indexar_corpus` porque son dos cosas distintas y una de ellas tarda: elegir es
+/// instantáneo, indexar ciento cuarenta documentos no. Juntarlas dejaría la ventana congelada
+/// desde el clic hasta el final, y la maqueta promete progreso «sin bloquear la ventana».
+/// No es `async` a propósito: Tauri corre los comandos síncronos en su pool de hilos, así que
+/// esperar aquí al usuario **no congela la ventana**, y a cambio no hace falta traerse un
+/// runtime asíncrono entero para una llamada que ocurre una vez cada varios días.
+#[tauri::command]
+fn elegir_carpeta(app: tauri::AppHandle) -> Option<String> {
+    use tauri_plugin_dialog::DialogExt;
+    app.dialog().file().blocking_pick_folder().map(|r| r.to_string())
+}
+
 /// Indexa la carpeta que el usuario señale. Los documentos **no se copian**: se leen donde están.
 #[tauri::command]
 fn indexar_corpus(
@@ -510,6 +524,7 @@ fn registrar_acople<R: tauri::Runtime>(app: &tauri::AppHandle<R>, que: &str, inf
 pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().with_handler(atender_el_atajo).build())
         .invoke_handler(tauri::generate_handler![
             abrir_banda,
@@ -534,6 +549,7 @@ pub fn run() {
             que_sabe_transcribir,
             instalar_idioma,
             salida_de_audio,
+            elegir_carpeta,
             indexar_corpus,
             estado_del_corpus,
             documentos_del_corpus,

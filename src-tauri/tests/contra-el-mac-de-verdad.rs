@@ -1,9 +1,11 @@
-//! **Lo que solo se puede comprobar hablando con el Mac de verdad.**
+//! **Lo que solo se puede comprobar contra el Mac y el disco de verdad.**
 //!
-//! Los tres bloques de este archivo son lo que ningún test unitario puede afirmar: que el puente
-//! de Swift transcribe, que los dos grifos de audio se abren, y que una frase que suena por los
-//! altavoces acaba siendo texto. Viven fuera de `src/` porque leen archivos del kit y arrancan
-//! procesos, y `src/stt/` y `src/capture/` tienen prohibido tocar el disco.
+//! Los bloques de este archivo son lo que ningún test unitario puede afirmar: que el puente de
+//! Swift transcribe, que los dos grifos de audio se abren, que una frase que suena por los
+//! altavoces acaba siendo texto, y que una carpeta de documentos de verdad —Markdown y un PDF
+//! hecho con las herramientas del propio macOS— acaba siendo una ficha con su fuente. Viven
+//! fuera de `src/` porque leen archivos y arrancan procesos, y `src/stt/`, `src/capture/` y
+//! `src/ficha/` tienen prohibido tocar el disco.
 //!
 //! **Por qué los tres están en UN archivo y no en tres.** Cada archivo de `tests/` es un binario
 //! aparte, y cada binario vuelve a enlazar el crate entero **más la librería de Swift**. Con tres
@@ -11,9 +13,10 @@
 //! más de cinco de esos minutos eran enlazar lo mismo tres veces. Medido en la corrida
 //! `35673597848`, no supuesto.
 //!
-//! **Y por eso hay un turno.** En un solo binario los tests corren en paralelo, y estos comparten
-//! algo que no se puede compartir: los altavoces del Mac. Sin el turno, el audio que reproduce
-//! uno entra por el tap que mide otro.
+//! **Y por eso hay un turno.** En un solo binario los tests corren en paralelo, y los de audio
+//! comparten algo que no se puede compartir: los altavoces del Mac. Sin el turno, el audio que
+//! reproduce uno entra por el tap que mide otro. **Los del corpus no lo toman**: no tocan
+//! hardware, cada uno estrena su carpeta, y hacerlos esperar solo alargaría el job.
 //!
 //! **Cuándo miden y cuándo no.** Necesitan altavoces, permisos y el modelo del idioma. Si falta
 //! algo, cada bloque comprueba **lo otro que sí se puede comprobar** —que el motivo de no poder
@@ -311,4 +314,120 @@ fn una_frase_por_los_altavoces_acaba_siendo_texto() {
          escribiendo esto— otro `afplay` a la vez, lo transcrito es la mezcla. Silencia el Mac y \
          vuelve a correrlo antes de buscar el fallo en el código."
     );
+}
+
+// ═══════════════════════════════════════════════════ el corpus, contra archivos de verdad
+
+use std::path::PathBuf;
+
+use app_copiloto_consultor_lib::corpus::{Corpus, Unidad};
+use app_copiloto_consultor_lib::ficha::{armar, Respuesta};
+
+fn corpus_sintetico() -> PathBuf {
+    let c = std::env::temp_dir().join(format!("ag-corpus-vivo-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&c);
+    std::fs::create_dir_all(c.join("casos")).unwrap();
+    std::fs::write(
+        c.join("Propuesta Páramo Azul · rentabilidad por canal.md"),
+        "# Alcance\nCubre perfilado y limpieza de tres fuentes: ERP, POS y el Excel de canal.\n\n\
+         # Precio\nTarifa cerrada. El precio incluye el taller de cierre y dos rondas de revisión.\n\n\
+         # Plazo de entrega\nLa entrega completa toma cuatro semanas contadas desde la firma.\n",
+    )
+    .unwrap();
+    std::fs::write(
+        c.join("casos/Cooperativa Sur del Valle · cierre de caso.md"),
+        "# Resultados\nLa implementación cerró con dos semanas de retraso y sin sobrecosto.\n",
+    )
+    .unwrap();
+    std::fs::write(
+        c.join("Adopción de datos en cuatro etapas.md"),
+        "# Etapas\nEl marco recorre cuatro etapas de adopción de datos: inventario, calidad, gobierno y uso.\n",
+    )
+    .unwrap();
+    c
+}
+
+#[test]
+fn de_una_carpeta_de_verdad_a_una_ficha_con_su_fuente() {
+    let carpeta = corpus_sintetico();
+    let mut corpus = Corpus::en_memoria().unwrap();
+    corpus.indexar(&carpeta, &|_| {}).unwrap();
+
+    let e = corpus.estado();
+    assert_eq!(e.documentos, 3, "{:?}", corpus.documentos());
+    assert_eq!(e.ilegibles, 0);
+
+    // Las unidades salen del nombre del archivo, que es como el usuario las guarda.
+    let unidad = |trozo: &str| {
+        corpus.documentos().iter().find(|d| d.nombre.contains(trozo)).unwrap().unidad
+    };
+    assert_eq!(unidad("Propuesta"), Some(Unidad::Propuesta));
+    assert_eq!(unidad("Cooperativa"), Some(Unidad::Caso));
+    assert_eq!(unidad("Adopción"), Some(Unidad::Marco));
+
+    // Y la ficha: la pregunta del cliente, tal y como la escribiría el transcriptor.
+    let pregunta = "¿En cuántas semanas hacen la entrega completa?";
+    let hallazgos = corpus.buscar(pregunta, 3).unwrap();
+    let Respuesta::Ficha(f) = armar(pregunta, &hallazgos) else {
+        panic!("no encontró el plazo que sí está en el corpus")
+    };
+    assert_eq!(f.fuente.seccion.as_deref(), Some("Plazo de entrega"));
+    assert_eq!(f.fuente.unidad, Some(Unidad::Propuesta));
+    assert!(f.linea.contains("cuatro semanas"), "la línea no responde: {}", f.linea);
+
+    let _ = std::fs::remove_dir_all(&carpeta);
+}
+
+/// El otro lado, y el que más se va a ver: el corpus no tiene nada de lo que preguntan. La app
+/// **dice qué buscó** y ofrece una maniobra, en vez de enseñar la sección menos mala con su
+/// fuente concreta debajo — que es el fallo más caro que esta app puede cometer.
+#[test]
+fn lo_que_no_esta_en_el_corpus_se_declara_en_vez_de_aproximarse() {
+    let carpeta = corpus_sintetico();
+    let mut corpus = Corpus::en_memoria().unwrap();
+    corpus.indexar(&carpeta, &|_| {}).unwrap();
+
+    let pregunta = "¿Ustedes tienen certificación ISO 27001?";
+    let hallazgos = corpus.buscar(pregunta, 3).unwrap();
+    match armar(pregunta, &hallazgos) {
+        Respuesta::SinResultado { buscado, maniobra, .. } => {
+            assert!(buscado.contains("27001"), "no dice qué buscó: «{buscado}»");
+            assert_eq!(maniobra, "credencial");
+        }
+        Respuesta::Ficha(f) => panic!("aproximó una ficha sobre algo que no tiene: {f:?}"),
+    }
+    let _ = std::fs::remove_dir_all(&carpeta);
+}
+
+/// Un PDF de verdad, hecho con las herramientas del propio macOS. No trae títulos: lo que el
+/// lector marca es conjetura, y el documento **tiene que declararlo** hasta la ficha.
+#[test]
+fn un_pdf_de_verdad_se_lee_y_declara_que_sus_secciones_son_conjetura() {
+    let carpeta = std::env::temp_dir().join(format!("ag-pdf-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&carpeta);
+    std::fs::create_dir_all(&carpeta).unwrap();
+
+    let txt = carpeta.join("fuente.txt");
+    std::fs::write(
+        &txt,
+        "Perfil profesional\nQuince años en consultoría de datos para retail y cooperativas.\n\
+         Certificaciones\nNinguna certificación ISO vigente a la fecha.\n",
+    )
+    .unwrap();
+    let pdf = carpeta.join("Mi perfil y trayectoria.pdf");
+    let salida = std::process::Command::new("cupsfilter").arg(&txt).output().expect("cupsfilter");
+    std::fs::write(&pdf, salida.stdout).unwrap();
+    std::fs::remove_file(&txt).unwrap();
+
+    let mut corpus = Corpus::en_memoria().unwrap();
+    corpus.indexar(&carpeta, &|_| {}).unwrap();
+    let doc = &corpus.documentos()[0];
+    assert_eq!(doc.unidad, Some(Unidad::Perfil), "{doc:?}");
+    assert!(doc.conjeturado, "un PDF declaró sus secciones como si alguien las hubiera escrito");
+
+    let hallazgos = corpus.buscar("¿cuántos años de experiencia tienen en retail?", 3).unwrap();
+    assert!(!hallazgos.is_empty(), "no encontró nada dentro del PDF");
+    assert!(hallazgos[0].conjeturado);
+
+    let _ = std::fs::remove_dir_all(&carpeta);
 }

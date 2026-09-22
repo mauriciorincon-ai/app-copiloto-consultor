@@ -1388,6 +1388,91 @@ forma ya tiene veredicto. Si el usuario prefiere que la banda con ficha real tam
 —tiene todo el derecho: una cosa es la forma aprobada y otra verla con contenido de verdad— se
 agrupa en la misma mirada y se dice aquí antes de construir.
 
+### Fase 4b — la banda con fichas de verdad y la pantalla de Corpus (2026-09-21)
+
+#### Lo que la banda dejó de inventarse
+
+La banda pintaba «Páramo Azul» desde el diccionario. Ahora pinta lo que devolvió el corpus, y
+fuera de Tauri sigue pintando la muestra — que es lo que sostiene el gate de FIDELIDAD.
+
+**Dos defectos aparecieron al conectarla:**
+
+1. **La banda tenía DOS fuentes de verdad para lo mismo.** El `estado` llegaba por URL (para el
+   arnés de capturas) y la clase de la ficha decía otra cosa, así que pedirle «sin resultado» con
+   una ficha cargada **no pintaba nada**. Dentro del producto manda la ficha; fuera sigue mandando
+   la URL, que es donde vive el arnés.
+2. **En `deMuestra` casteaba la etiqueta traducida a clave de unidad.** En español coincidían por
+   casualidad —«propuesta» es la clave y la etiqueta— y en inglés dejaba la unidad vacía. Lo cazó
+   el gate de fidelidad: **ocho encuadres en inglés y ninguno en español**, y esa asimetría era
+   toda la pista que hacía falta.
+
+#### La regla del diccionario mordió antes de escribir el código
+
+La maqueta dibujó **una** de las seis maniobras. Las otras cinco no tenían texto en inglés, y la
+app es bilingüe por regla dura. Se escribió primero en `banda.html` —la maqueta es el primer
+diccionario— y Rust pasó a devolver **cuál** maniobra (`credencial`, `cifra`, …) en vez de su
+texto: la maniobra es voz de la app, y la voz de la app vive en `src/i18n/`.
+
+#### La pantalla de Corpus, y lo que costó que cupiera
+
+El bloque `s1` desbordaba **74 px**. Recortar párrafos no sirvió de nada —ya cabían— y una
+reestructura a ojo lo dejó **peor (82/101 px)** por romper el anidamiento. Lo que funcionó fue
+medir: la rejilla de tres que la maqueta ya había aprobado para las unidades convierte seis filas
+en dos, y las tarjetas de abajo en dos columnas quitan el resto. **0 px de desborde** en los
+cuatro cruces de tema e idioma.
+
+Y dos cosas que solo se vieron **leyendo la captura**, no en un test:
+
+- el chip del pie decía «143 documentos» porque copié el del estado «con documentos»; el producto
+  pinta ahí el estado de la sesión, como en todas sus pantallas;
+- **«18,4 MB» con coma decimal también en inglés.** La maqueta ya distinguía («4,2 MB» / «4.2 MB»)
+  en otro estado, y mi bloque traía el defecto — por eso los dos encuadres pasaban el umbral: el
+  producto copiaba fielmente una maqueta equivocada. El tamaño del índice se formatea ahora con
+  el separador del idioma.
+
+#### El corpus contra archivos de verdad
+
+Tres tests nuevos recorren el camino entero contra el disco: Markdown y **un PDF hecho con las
+herramientas del propio macOS**. Comprueban lo que ninguna pieza ve sola — que el lector devuelva
+texto, que el troceado encuentre secciones en lo que devolvió, que la unidad salga del nombre del
+archivo y que la ficha cite una fuente que existe.
+
+**Van en el MISMO binario** que los tests de audio. Un archivo más en `tests/` es un binario más,
+y cada binario vuelve a enlazar el crate entero más la librería de Swift: fue lo que llevó la CI
+de macOS de 1 min 11 s a 7 min 32 s en la fase 3. Los del corpus **no toman el turno** de los de
+audio: no tocan hardware y cada uno estrena carpeta.
+
+#### Qué se vio correr en vivo, y qué no
+
+`pnpm tauri dev`: las tres ventanas, los **tres** atajos registrados —`⌥⎋`, `⌘⇧T` y el nuevo
+`⌘⇧A`—, el motor de voz con sus 13 modelos y el aviso del eco. El plugin de diálogo carga sin
+romper nada y su capability es la mínima: `dialog:allow-open`, sin `allow-save`, porque esta app
+no escribe archivos por diálogo.
+
+**Lo que NO se pudo comprobar aquí y es parada ⭐:** señalar una carpeta de verdad con el panel
+de macOS e indexarla desde la ventana. Es un panel nativo; solo una persona puede pulsarlo.
+
+#### Archivos de la fase 4
+
+| Archivo | Qué es |
+|---|---|
+| `src-tauri/src/corpus/{unidad,seccion,leer,consulta,indice,mod}.rs` | **nuevos** — las cinco unidades, el troceado, los tres lectores, la consulta y BM25 |
+| `src-tauri/src/disparo/mod.rs` | **nuevo** — los cinco motivos de la VISION |
+| `src-tauri/src/ficha/{mod,maniobra}.rs` | **nuevos** — la ficha y el catálogo de seis |
+| `src-tauri/src/escucha/mod.rs` | el `Buscador`, el «buscando», la latencia medida por aparición |
+| `src-tauri/src/lib.rs` | `ElCorpus`, `⌘⇧A`, y los comandos de corpus y ficha |
+| `src/ficha.ts` · `src/pantallas/Corpus.tsx` | **nuevos** |
+| `docs/diseno/corpus.html` | estado `s1` **nuevo** (mirada 14) |
+| `docs/diseno/banda.html` | el catálogo de maniobras, bilingüe |
+| `decisions/008-el-corpus-el-disparo-y-la-ficha.md` | **nuevo** |
+
+#### Criterio de fase completa
+
+- `pnpm test` **87/87** · `tsc` · `eslint` · `verify:ephemeral` ✓
+- `cargo test` **211** (202 de librería + 9 contra el Mac y el disco) · `clippy` 0 avisos
+- gate de fidelidad **60/60** bajo el umbral del 0,15 %, cero desbordes, cero errores de página
+- arrancada en vivo con los tres atajos registrados
+
 ## Desviación del plan (2026-09-20) — la MANIOBRA es producto nuevo
 
 **Qué.** El estado «sin resultado» deja de limitarse a admitir el vacío: sugiere **cómo abordar la

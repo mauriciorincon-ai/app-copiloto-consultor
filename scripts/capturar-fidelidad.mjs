@@ -71,6 +71,7 @@ const ARTEFACTOS = [
     encuadres: [
       { id: "sesion", maqueta: "sesion.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=sesion" },
       { id: "permisos", maqueta: "permisos.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=permisos" },
+      { id: "corpus", maqueta: "corpus.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=corpus" },
       { id: "honestidad", maqueta: "honestidad.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=honestidad" },
       { id: "idioma", maqueta: "idioma.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=idioma" },
     ],

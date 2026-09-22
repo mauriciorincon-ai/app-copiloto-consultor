@@ -250,6 +250,63 @@ export function useQueSabeTranscribir(): QueSabeTranscribir {
 export const DEL_CONSULTOR = "es-ES";
 export const DEL_CLIENTE = "en-US";
 
+/* ----------------------------------------------------------------- el corpus (fase 4) ------ */
+
+export type UnidadDelCorpus = "propuesta" | "marco" | "caso" | "cliente" | "perfil";
+
+export type PorUnidad = { unidad: UnidadDelCorpus; documentos: number };
+
+export type EstadoDelCorpus = {
+  /** `null` mientras el usuario no haya señalado carpeta: el estado «vacío» de la maqueta. */
+  carpeta: string | null;
+  documentos: number;
+  secciones: number;
+  porUnidad: PorUnidad[];
+  sinUnidad: number;
+  ilegibles: number;
+  /** Documentos cuyas secciones se conjeturaron por la forma del texto (PDF). */
+  conjeturados: number;
+  /** Dónde acabó el derivado. Quien confía su carpeta tiene derecho a saberlo. */
+  dondeVive: string | null;
+  bytesDelIndice: number;
+};
+
+/**
+ * El corpus de muestra que se enseña **fuera de Tauri** — los mismos números que dibuja
+ * `corpus.html`, que es lo que hace comparable el gate de FIDELIDAD. Datos 100 % sintéticos.
+ */
+export const CORPUS_DE_MUESTRA: EstadoDelCorpus = {
+  carpeta: "~/Documentos/Consultoría",
+  documentos: 143,
+  secciones: 1_284,
+  porUnidad: [
+    { unidad: "propuesta", documentos: 31 },
+    { unidad: "marco", documentos: 12 },
+    { unidad: "caso", documentos: 28 },
+    { unidad: "cliente", documentos: 63 },
+    { unidad: "perfil", documentos: 9 },
+  ],
+  sinUnidad: 0,
+  ilegibles: 4,
+  conjeturados: 9,
+  dondeVive: "~/Library/…/Angel Ghost/corpus",
+  bytesDelIndice: 19_293_798,
+};
+
+export function useCorpus(): EstadoDelCorpus {
+  return usePreguntaAlVolver<EstadoDelCorpus>("estado_del_corpus", CORPUS_DE_MUESTRA);
+}
+
+/**
+ * Señalar una carpeta e indexarla. Dos llamadas y no una: elegir es instantáneo, indexar ciento
+ * cuarenta documentos no, y juntarlas dejaría la ventana congelada desde el clic hasta el final.
+ */
+export async function indexarCorpus(): Promise<void> {
+  const carpeta = await preguntar<string | null>("elegir_carpeta");
+  if (!carpeta) return; // el usuario canceló: no es un fallo y no se dice nada
+  await preguntar("indexar_corpus", { carpeta });
+}
+
 export function empezarAEscuchar(idiomaDelConsultor: string, idiomaDelCliente: string) {
   void llamar("empezar_a_escuchar", { idiomaDelConsultor, idiomaDelCliente });
 }

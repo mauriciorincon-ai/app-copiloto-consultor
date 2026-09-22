@@ -156,16 +156,37 @@ describe("el cuaderno: lo que no existe se dice", () => {
     expect(screen.getAllByText(t.modeloInstalado)).toHaveLength(2);
   });
 
+  /**
+   * La fase 4 abrió Corpus: pasa de fila apagada a enlace. Notas e IA siguen sin existir y el
+   * rail lo dice — un rail lleno de enlaces que no llevan a ninguna parte es peor que uno corto.
+   */
   it("el rail deja las secciones que aún no existen sin enlace", () => {
     const { container } = pinta("?pantalla=sesion");
     const rail = container.querySelector("nav.rail") as HTMLElement;
     const enlaces = [...rail.querySelectorAll("a")].map((a) => a.textContent);
-    expect(enlaces).toEqual([t.navSesion, t.navPermisos, t.navHonestidad, t.navIdioma]);
-    for (const nombre of [t.navCorpus, t.navNotas, t.navIa]) {
+    expect(enlaces).toEqual([t.navSesion, t.navPermisos, t.navCorpus, t.navHonestidad, t.navIdioma]);
+    for (const nombre of [t.navNotas, t.navIa]) {
       const fila = within(rail).getByText(nombre).closest(".item") as HTMLElement;
       expect(fila.className).toContain("pendiente");
       expect(fila.tagName).not.toBe("A");
     }
+  });
+
+  /**
+   * Corpus nace con la fase 4. Como en Idioma, aquí no se comprueba la forma —de eso se ocupa el
+   * gate de fidelidad— sino que **las cifras vienen de fuera** y que lo que falta se marca.
+   */
+  it("corpus: enseña lo que indexó hoy y marca lo que todavía no", () => {
+    const { container } = pinta("?pantalla=corpus");
+    // «Corpus» aparece dos veces —en el rail y en el título—, así que se busca el del título.
+    expect(container.querySelector('.titulo h1')?.textContent).toBe(t.corpusTitulo);
+    expect(screen.getAllByText(t.todaviaNo)).toHaveLength(3);
+    // Las cinco unidades más la sexta respuesta: lo que no encaja en ninguna.
+    expect(container.querySelectorAll(".unidad-chip")).toHaveLength(6);
+    expect(screen.getByText(t.sinUnidad)).toBeInTheDocument();
+    // El tamaño del índice no puede estar escrito en la interfaz: se mide.
+    expect(container.querySelector(".buffer .cuanto")?.textContent).not.toBe("0 B");
+    expect(screen.getByText(t.soloTu)).toBeInTheDocument();
   });
 
   it("la pantalla la elige la URL, y una desconocida cae en sesión", () => {

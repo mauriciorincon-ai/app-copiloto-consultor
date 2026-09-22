@@ -69,6 +69,9 @@ pub struct EstadoDelCorpus {
     pub por_unidad: Vec<PorUnidad>,
     pub sin_unidad: usize,
     pub ilegibles: usize,
+    /// Documentos cuyas secciones se **conjeturaron** por la forma del texto (PDF), en vez de
+    /// venir escritas. Se cuenta para que el usuario pueda juzgar cómo se leyó su corpus.
+    pub conjeturados: usize,
     /// Dónde vive el índice, en claro, porque la pantalla de corpus lo enseña.
     pub donde_vive: Option<String>,
     pub bytes_del_indice: u64,
@@ -224,6 +227,7 @@ impl Corpus {
                 .collect(),
             sin_unidad: legibles().filter(|d| d.unidad.is_none()).count(),
             ilegibles,
+            conjeturados: legibles().filter(|d| d.conjeturado).count(),
             donde_vive: self.indice.carpeta().map(|c| c.to_string_lossy().to_string()),
             bytes_del_indice: self.indice.carpeta().map(pesa).unwrap_or(0),
         }
