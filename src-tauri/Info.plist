@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Los textos que macOS enseña cuando pide un permiso.
+
+  No son texto de relleno: son LO ÚNICO que el usuario lee antes de decidir si esta app oye su
+  micrófono, y la pantalla de Permisos de la app los enseña palabra por palabra bajo el título
+  «Qué texto verás en macOS». Si los dos textos se separan, la pantalla miente — y por eso hay un
+  test que compara este archivo con el diccionario de la interfaz.
+
+  Aquí van en inglés porque es la región de desarrollo del paquete; el español está en
+  `lproj/es.lproj/InfoPlist.strings` y es el que verá el usuario con el Mac en español.
+-->
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleLocalizations</key>
+  <array>
+    <string>en</string>
+    <string>es</string>
+  </array>
+
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Angel Ghost uses the microphone to know when you are speaking. Audio lives in memory only and is never recorded.</string>
+
+  <!--
+    El permiso del audio del sistema (process taps de Core Audio, macOS 14.2+). La clave exacta no
+    aparece en las cabeceras públicas del SDK; se declara porque una clave de más es inofensiva y
+    una clave de menos hace que macOS mate la app al pedir el permiso. **Queda como parada ⭐:**
+    solo se puede comprobar de verdad con la app empaquetada y firmada, no en desarrollo, donde el
+    permiso que se usa es el del terminal que la lanzó.
+  -->
+  <key>NSAudioCaptureUsageDescription</key>
+  <string>Angel Ghost listens to what plays on your Mac so it can hear the other side of the call without putting a bot in the meeting. Audio lives in memory only and is never recorded.</string>
+
+  <key>NSSpeechRecognitionUsageDescription</key>
+  <string>Angel Ghost turns speech into text on this Mac, using the macOS speech engine. No audio ever leaves your computer to become text.</string>
+</dict>
+</plist>

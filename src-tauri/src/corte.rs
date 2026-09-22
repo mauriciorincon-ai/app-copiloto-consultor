@@ -5,11 +5,16 @@
 //! honestidad de esta app no es un texto legal, es un botón que deja la cifra en `0 B` a la
 //! vista.
 //!
-//! **El problema de un kill-switch a medio construir.** En el sprint 001 la mitad de lo que hay
-//! que cortar todavía no existe —no hay audio, ni transcript, ni lectura de pantalla hasta la
-//! fase 3—. La tentación es escribir el corte de lo que hay hoy y «ya lo ampliaremos». Y eso
-//! falla en silencio: cuando la fase 3 añada los búferes de audio, nadie recordará volver aquí,
-//! el kill-switch seguirá en verde y **dejará el audio dentro**.
+//! **El problema de un kill-switch a medio construir.** En la fase 2 de este sprint la mitad de lo
+//! que hay que cortar todavía no existía —ni audio, ni transcript, ni lectura de pantalla—. La
+//! tentación era escribir el corte de lo que había y «ya lo ampliaremos». Y eso falla en silencio:
+//! cuando la fase 3 añadiera los búferes de audio, nadie recordaría volver aquí, el kill-switch
+//! seguiría en verde y **dejaría el audio dentro**.
+//!
+//! No pasó, y no pasó por cómo está escrito este archivo: al añadir las pistas en la fase 3, el
+//! compilador no dejó compilar hasta resolverlas. La cuenta pasó de tres piezas cortadas a seis, y
+//! la única que sigue declarada como inexistente es la lectura de pantalla, que llega en el
+//! sprint 2 con su propia funcionalidad.
 //!
 //! Por eso el corte no es una lista de acciones sino una lista de **piezas** ([`Pieza`]), y cada
 //! una tiene que estar en uno de dos sitios: cortada, o declarada como que aún no existe.
@@ -34,13 +39,13 @@ pub enum Pieza {
     Acople,
     /// La banda y su relleno desaparecen de la pantalla.
     Banda,
-    /// Búfer circular del micrófono. **Fase 3.**
+    /// Búfer circular del micrófono: se cierra el grifo y se pisan las muestras con ceros.
     AudioDelMicrofono,
-    /// Búfer circular del audio del sistema. **Fase 3.**
+    /// Búfer circular del audio del sistema: el tap se destruye y el anillo se pisa.
     AudioDelSistema,
-    /// El último fotograma leído de la pantalla. **Fase 3.**
+    /// El último fotograma leído de la pantalla. **Todavía no existe: llega con C8, en el sprint 2.**
     UltimoFrame,
-    /// La ventana de turnos transcritos. **Fase 3.**
+    /// La ventana de turnos transcritos: se sobrescriben las letras antes de soltarlas.
     Transcript,
 }
 
@@ -109,13 +114,15 @@ impl Informe {
 /// pieza empiece a existir.
 pub fn suerte_en_este_sprint(pieza: Pieza) -> Suerte {
     match pieza {
-        Pieza::ContadorDeRed | Pieza::Banda | Pieza::Acople => Suerte::Cortada,
-        // Fase 3. Cuando existan, esta rama se queda vacía y el test de abajo sigue verde por el
-        // otro lado.
-        Pieza::AudioDelMicrofono
+        Pieza::ContadorDeRed
+        | Pieza::Banda
+        | Pieza::Acople
+        | Pieza::AudioDelMicrofono
         | Pieza::AudioDelSistema
-        | Pieza::UltimoFrame
-        | Pieza::Transcript => Suerte::AunNoExiste,
+        | Pieza::Transcript => Suerte::Cortada,
+        // La lectura de pantalla es C8 y llega en el sprint 2. Mientras tanto se declara, que es
+        // lo contrario de disimularse.
+        Pieza::UltimoFrame => Suerte::AunNoExiste,
     }
 }
 
@@ -166,11 +173,19 @@ mod tests {
     }
 
     /// En este sprint se corta lo que existe, y lo que no existe **se dice**. Un kill-switch que
-    /// informara «7 de 7 cortadas» teniendo cuatro sin construir sería una mentira cómoda.
+    /// informara «7 de 7 cortadas» teniendo piezas sin construir sería una mentira cómoda.
+    ///
+    /// La cuenta cambió en la fase 3 (de 3 y 4 a 6 y 1) y **el compilador obligó a cambiarla**:
+    /// las pistas de audio y el transcript pasaron de declararse a cortarse de verdad.
     #[test]
-    fn en_este_sprint_se_cortan_tres_y_las_otras_cuatro_se_declaran() {
+    fn en_este_sprint_se_cortan_seis_y_la_septima_se_declara() {
         let cortadas = TODAS.iter().filter(|p| suerte_en_este_sprint(**p) == Suerte::Cortada).count();
         let futuras = TODAS.iter().filter(|p| suerte_en_este_sprint(**p) == Suerte::AunNoExiste).count();
-        assert_eq!((cortadas, futuras), (3, 4));
+        assert_eq!((cortadas, futuras), (6, 1));
+        assert_eq!(
+            suerte_en_este_sprint(Pieza::UltimoFrame),
+            Suerte::AunNoExiste,
+            "la única pieza que este sprint no puede cortar es la lectura de pantalla"
+        );
     }
 }

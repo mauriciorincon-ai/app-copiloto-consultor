@@ -15,12 +15,14 @@ pub mod acople;
 pub mod capture;
 pub mod corpus;
 pub mod corte;
+pub mod escucha;
 pub mod permisos;
 pub mod red;
 pub mod relleno;
 pub mod sesion;
 pub mod stt;
 pub mod ventana;
+pub mod voz;
 
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -187,6 +189,156 @@ fn bytes_a_la_red() -> String {
     red::formatear(red::bytes())
 }
 
+// ---------------------------------------------------------------------------------------------
+// Fase 3 — las dos pistas, los turnos y la transcripción local
+// ---------------------------------------------------------------------------------------------
+
+/// La escucha en marcha, si la hay. Vive en un `Mutex` porque empezar y cortar pueden llegar por
+/// caminos distintos —un botón, una tecla global, el cierre de la app— y el único desenlace
+/// inaceptable es que dos de ellos se pisen y dejen un grifo abierto sin nadie que lo cierre.
+#[derive(Default)]
+struct LaEscucha(std::sync::Mutex<Option<escucha::Escucha>>);
+
+/// El nombre del evento con el que la banda se entera de que alguien habló.
+const EVENTO_ESCUCHA: &str = "escucha";
+
+/// Empieza a escuchar las dos pistas.
+///
+/// **No se llama sola al arrancar**, y es deliberado: la maqueta de la pantalla de Sesión dice
+/// «nada se enciende hasta que tú lo digas», y encender el micrófono de alguien sin que lo pida
+/// sería exactamente lo que esta app promete no hacer.
+#[tauri::command]
+fn empezar_a_escuchar(
+    app: tauri::AppHandle,
+    estado: tauri::State<'_, LaEscucha>,
+    idioma_del_consultor: String,
+    idioma_del_cliente: String,
+) -> Result<escucha::EstadoDeEscucha, String> {
+    let mut guardada = estado.0.lock().map_err(|_| "la escucha quedó en mal estado")?;
+    if let Some(vieja) = guardada.take() {
+        vieja.cortar();
+    }
+    let mango = app.clone();
+    let nueva = escucha::Escucha::arrancar(
+        &idioma_del_consultor,
+        &idioma_del_cliente,
+        stt::motor_de_la_casa(),
+        move |novedad| {
+            // Al log va **el hecho, nunca lo dicho**: quién habló y cuánto duró. El texto es del
+            // cliente y un log es un archivo.
+            match &novedad {
+                escucha::Novedad::Turno(t) => println!(
+                    "[escucha] turno de «{}» · {} ms · {} letras{}",
+                    t.pista.etiqueta(),
+                    t.duracion_ms(),
+                    t.texto.chars().count(),
+                    if t.eco { " · marcado como eco" } else { "" }
+                ),
+                escucha::Novedad::SinTexto { pista, motivo, .. } => {
+                    println!("[escucha] turno de «{}» sin texto: {motivo}", pista.etiqueta())
+                }
+                _ => {}
+            }
+            let _ = mango.emit(EVENTO_ESCUCHA, novedad);
+        },
+    );
+    let informe = nueva.estado();
+    *guardada = Some(nueva);
+    Ok(informe)
+}
+
+#[tauri::command]
+fn dejar_de_escuchar(estado: tauri::State<'_, LaEscucha>) {
+    if let Ok(mut g) = estado.0.lock() {
+        if let Some(e) = g.take() {
+            e.cortar();
+            println!("[escucha] parada a petición del usuario");
+        }
+    }
+}
+
+/// Qué vive en memoria ahora mismo por culpa de la escucha. Lo pide la pantalla de Honestidad.
+#[tauri::command]
+fn estado_de_la_escucha(estado: tauri::State<'_, LaEscucha>) -> Option<escucha::EstadoDeEscucha> {
+    estado.0.lock().ok()?.as_ref().map(|e| e.estado())
+}
+
+/// Los últimos turnos, para el transcript de la banda.
+#[tauri::command]
+fn turnos_recientes(estado: tauri::State<'_, LaEscucha>, cuantos: usize) -> Vec<stt::Turno> {
+    estado
+        .0
+        .lock()
+        .ok()
+        .and_then(|g| g.as_ref().map(|e| e.ultimos_turnos(cuantos)))
+        .unwrap_or_default()
+}
+
+/// Un idioma tal y como lo enseña la pantalla de Idioma.
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct IdiomaDelMotor {
+    codigo: String,
+    disponibilidad: stt::Disponibilidad,
+}
+
+/// Lo que el motor de este Mac sabe hacer. **Se pregunta al sistema**, no se lleva una lista
+/// escrita que quedaría desfasada con la siguiente versión de macOS.
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct QueSabeTranscribir {
+    motor: &'static str,
+    techo: u32,
+    idiomas: Vec<IdiomaDelMotor>,
+    /// Si no hay motor, por qué. En español, para enseñarlo tal cual.
+    motivo: Option<String>,
+}
+
+#[tauri::command]
+fn que_sabe_transcribir() -> QueSabeTranscribir {
+    let motor = stt::motor_de_la_casa();
+    let codigos = motor.idiomas();
+    let motivo = match motor.disponibilidad("es-ES") {
+        stt::Disponibilidad::SinMotor { motivo } => Some(motivo),
+        _ => None,
+    };
+    QueSabeTranscribir {
+        motor: motor.nombre(),
+        techo: motor.techo_de_idiomas(),
+        idiomas: codigos
+            .into_iter()
+            .map(|codigo| {
+                let disponibilidad = motor.disponibilidad(&codigo);
+                IdiomaDelMotor { codigo, disponibilidad }
+            })
+            .collect(),
+        motivo,
+    }
+}
+
+/// Instala el modelo de un idioma. **Usa la red y tarda**: macOS descarga su propio modelo de
+/// reconocimiento. Solo se llama desde el botón de la pantalla de Idioma; la app jamás descarga
+/// nada por su cuenta.
+#[tauri::command]
+async fn instalar_idioma(codigo: String) -> stt::Disponibilidad {
+    tauri::async_runtime::spawn_blocking(move || {
+        println!("[idioma] el usuario pidió instalar el modelo de {codigo}");
+        let d = stt::motor_de_la_casa().instalar(&codigo);
+        println!("[idioma] {codigo}: {d:?}");
+        d
+    })
+    .await
+    .unwrap_or(stt::Disponibilidad::SinMotor {
+        motivo: "la instalación se interrumpió".into(),
+    })
+}
+
+/// Por dónde sale el sonido, y por tanto si el micrófono va a oír al cliente.
+#[tauri::command]
+fn salida_de_audio() -> capture::nativo::Salida {
+    capture::nativo::salida_de_audio()
+}
+
 /// El kill-switch. Corta lo que existe y **declara lo que todavía no**, pieza por pieza.
 #[tauri::command]
 fn cortar_todo(app: tauri::AppHandle) -> corte::Informe {
@@ -194,6 +346,22 @@ fn cortar_todo(app: tauri::AppHandle) -> corte::Informe {
 }
 
 fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Informe {
+    // La escucha se corta ENTERA de una vez, porque las tres piezas que le tocan (las dos pistas
+    // y el transcript) comparten grifos y candados: cortarlas por separado desde fuera obligaría a
+    // exponer los tres por su cuenta y a confiar en que nadie cambie el orden. Se apunta aquí y se
+    // marca abajo, pieza por pieza, para que el informe siga siendo el de siempre.
+    let escuchaba = {
+        let estado = app.state::<LaEscucha>();
+        let cortada = estado.0.lock().ok().and_then(|mut g| g.take());
+        match cortada {
+            Some(e) => {
+                e.cortar();
+                true
+            }
+            None => false,
+        }
+    };
+
     let mut piezas = Vec::new();
     for pieza in corte::TODAS {
         let suerte = corte::suerte_en_este_sprint(*pieza);
@@ -204,10 +372,17 @@ fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Inf
                 corte::Pieza::Acople => {
                     registrar_acople(app, "kill-switch", &acople::soltar(&huella(app)))
                 }
-                _ => {}
+                // Ya cortadas arriba, todas a la vez.
+                corte::Pieza::AudioDelMicrofono
+                | corte::Pieza::AudioDelSistema
+                | corte::Pieza::Transcript => {}
+                corte::Pieza::UltimoFrame => {}
             }
         }
         piezas.push((*pieza, suerte));
+    }
+    if escuchaba {
+        println!("[corte] las dos pistas estaban abiertas: cerradas y vaciadas");
     }
     let informe = corte::Informe { piezas, bytes_en_red: red::bytes() };
     println!(
@@ -261,7 +436,14 @@ pub fn run() {
             permisos_de_macos,
             abrir_ajustes_de,
             bytes_a_la_red,
-            cortar_todo
+            cortar_todo,
+            empezar_a_escuchar,
+            dejar_de_escuchar,
+            estado_de_la_escucha,
+            turnos_recientes,
+            que_sabe_transcribir,
+            instalar_idioma,
+            salida_de_audio
         ])
         .setup(|app| {
             // El invariante se comprueba ANTES de abrir nada y aborta el arranque si falla:
@@ -272,6 +454,7 @@ pub fn run() {
 
             // `setup` corre en el hilo principal, que es donde `NSScreen` se deja preguntar.
             app.manage(FondoDelRelleno(acople::fondo_de_escritorio()));
+            app.manage(LaEscucha::default());
 
             registrar_el_kill_switch(app.handle());
 
@@ -301,6 +484,13 @@ pub fn run() {
         // de una reunión encogida al salir es exactamente el fallo que este módulo existe para
         // no cometer. La huella cubre el caso que ni esto alcanza: la caída.
         if let tauri::RunEvent::Exit = evento {
+            // Salir con los grifos abiertos dejaría el tap del sistema vivo en Core Audio hasta
+            // que macOS lo recogiera. El `Drop` del grifo lo cierra; lo que hace falta es que
+            // alguien suelte la escucha, y aquí es donde se sabe que ya no habrá otra ocasión.
+            if let Some(e) = mango.state::<LaEscucha>().0.lock().ok().and_then(|mut g| g.take()) {
+                e.cortar();
+                println!("[escucha] cerrada al salir");
+            }
             registrar_acople(mango, "soltar al salir", &acople::soltar(&huella(mango)));
         }
     });
@@ -359,6 +549,30 @@ fn registrar_lo_que_ve() {
         sesion::Reunion::NoSePuedeSaber { motivo } => println!("[sesion] no se puede saber: {motivo}"),
     }
     println!("[red] salida acumulada: {}", red::formatear(red::bytes()));
+
+    // El motor de transcripción y la salida de audio: las dos cosas de la fase 3 que dependen por
+    // completo de la máquina y que ningún test puede afirmar.
+    let que = que_sabe_transcribir();
+    println!(
+        "[stt] motor «{}» · {} idiomas soportados · techo {}{}",
+        que.motor,
+        que.idiomas.len(),
+        que.techo,
+        que.motivo.map(|m| format!(" · {m}")).unwrap_or_default()
+    );
+    let listos: Vec<&str> = que
+        .idiomas
+        .iter()
+        .filter(|i| matches!(i.disponibilidad, stt::Disponibilidad::Listo))
+        .map(|i| i.codigo.as_str())
+        .collect();
+    println!("[stt] modelos instalados: {}", if listos.is_empty() { "ninguno".into() } else { listos.join(", ") });
+    let salida = capture::nativo::salida_de_audio();
+    match salida.puede_haber_eco() {
+        Some(true) => println!("[audio] {salida:?} · el micrófono va a oír al cliente: se marcará el eco"),
+        Some(false) => println!("[audio] {salida:?} · las dos pistas quedan limpias"),
+        None => println!("[audio] {salida:?} · no se puede saber si habrá eco"),
+    }
 }
 
 /// `⌥⎋` — la tecla del kill-switch, tal y como la dibuja la maqueta.
@@ -367,16 +581,37 @@ fn el_atajo() -> tauri_plugin_global_shortcut::Shortcut {
     Shortcut::new(Some(Modifiers::ALT), Code::Escape)
 }
 
+/// `⌘⇧T` — enseñar u ocultar el transcript, tal y como lo dibuja `idioma.html`.
+///
+/// **Y una advertencia que no se puede callar:** en Chrome, Safari y Firefox esta combinación
+/// vuelve a abrir la última pestaña cerrada. Registrarla globalmente se la quita al navegador
+/// mientras Angel Ghost esté abierto — y el navegador es donde vive la reunión de Meet. Se
+/// registra porque es lo que el diseño aprobó, se deja dicho aquí y en el log, y la decisión de
+/// cambiarla es del usuario (riesgo nº 7 del plan: atajo configurable).
+fn el_atajo_del_transcript() -> tauri_plugin_global_shortcut::Shortcut {
+    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
+    Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyT)
+}
+
+/// El nombre del evento con el que la banda se entera de que hay que enseñar u ocultar el
+/// transcript.
+const EVENTO_TRANSCRIPT: &str = "transcript";
+
 fn atender_el_atajo<R: tauri::Runtime>(
     app: &tauri::AppHandle<R>,
     atajo: &tauri_plugin_global_shortcut::Shortcut,
     evento: tauri_plugin_global_shortcut::ShortcutEvent,
 ) {
     use tauri_plugin_global_shortcut::ShortcutState;
-    if *atajo != el_atajo() || evento.state() != ShortcutState::Pressed {
+    if evento.state() != ShortcutState::Pressed {
         return;
     }
-    ejecutar_el_corte(app);
+    if *atajo == el_atajo() {
+        ejecutar_el_corte(app);
+    } else if *atajo == el_atajo_del_transcript() {
+        println!("[transcript] ⌘⇧T");
+        let _ = app.emit_to(ventana::BANDA, EVENTO_TRANSCRIPT, ());
+    }
 }
 
 /// Registra `⌥⎋`, y **si no puede, lo dice**.
@@ -392,6 +627,16 @@ fn registrar_el_kill_switch<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
         Err(e) => println!(
             "[corte] NO se pudo registrar ⌥⎋ ({e}): el kill-switch sigue en el botón de Honestidad, \
              pero la tecla no va a responder"
+        ),
+    }
+    match app.global_shortcut().register(el_atajo_del_transcript()) {
+        Ok(()) => println!(
+            "[transcript] ⌘⇧T registrado · OJO: mientras Angel Ghost esté abierto, el navegador \
+             deja de reabrir la última pestaña cerrada con esa tecla"
+        ),
+        Err(e) => println!(
+            "[transcript] NO se pudo registrar ⌘⇧T ({e}): el transcript no se va a poder abrir \
+             con la tecla"
         ),
     }
 }

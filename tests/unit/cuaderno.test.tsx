@@ -9,7 +9,7 @@ vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn() }));
 
 /**
- * LAS TRES PANTALLAS DEL CUADERNO (fase 2).
+ * LAS PANTALLAS DEL CUADERNO (fases 2 y 3).
  *
  * El gate de FIDELIDAD ya compara estas pantallas contra la maqueta píxel a píxel, así que aquí
  * no se repite la forma. Lo que se prueba es lo que una imagen no puede afirmar: que **lo que no
@@ -32,11 +32,30 @@ function pinta(busqueda: string) {
 }
 
 describe("el cuaderno: lo que no existe se dice", () => {
-  it("sesión marca las cuatro pistas como «todavía no», ninguna en verde", () => {
+  /**
+   * La fase 3 movió dos pistas de «todavía no» a «funciona», y ese movimiento es el que hay que
+   * vigilar: **la pantalla ni se adelanta ni se queda corta**. La de pantalla sigue pendiente
+   * (llega en el sprint 2) y la de auriculares dejó de ser una promesa para pasar a medir.
+   */
+  it("sesión: las pistas que ya escuchan dicen «funciona» y la que no, «todavía no»", () => {
     pinta("?pantalla=sesion");
     const pistas = screen.getByText(t.dosPistas).closest(".tarjeta") as HTMLElement;
-    expect(within(pistas).getAllByText(t.todaviaNo)).toHaveLength(4);
-    expect(within(pistas).queryByText(t.funciona)).toBeNull();
+    expect(within(pistas).getAllByText(t.funciona)).toHaveLength(2);
+    expect(within(pistas).getAllByText(t.todaviaNo)).toHaveLength(1);
+    expect(within(pistas).getByText(t.pistaPantalla).closest(".fila")?.className).toContain(
+      "pendiente",
+    );
+  });
+
+  /**
+   * Con altavoces internos, el micrófono oye también al cliente. La pantalla **avisa antes de la
+   * reunión**, que es cuando el usuario todavía puede ponerse los auriculares.
+   */
+  it("sesión: con altavoces avisa del eco en vez de dar las dos pistas por limpias", () => {
+    pinta("?pantalla=sesion");
+    const pistas = screen.getByText(t.dosPistas).closest(".tarjeta") as HTMLElement;
+    expect(within(pistas).getByText(t.altavocesInternos)).toBeInTheDocument();
+    expect(within(pistas).getByText(t.avisoDelEco)).toBeInTheDocument();
   });
 
   /**
@@ -44,12 +63,14 @@ describe("el cuaderno: lo que no existe se dice", () => {
    * protegida, el acople y el kill-switch, y una pantalla llena de «todavía no» se leería como
    * que no hay nada.
    */
-  it("sesión enseña lo que sí funciona hoy, y son tres cosas", () => {
+  it("sesión enseña lo que sí funciona hoy, y ya no queda nada pendiente en esa tarjeta", () => {
     pinta("?pantalla=sesion");
     const hoy = screen.getByText(t.queFuncionaHoy).closest(".tarjeta") as HTMLElement;
-    expect(within(hoy).getAllByText(t.funciona)).toHaveLength(2);
+    expect(within(hoy).getAllByText(t.funciona)).toHaveLength(3);
     expect(within(hoy).getByText("⌥⎋")).toBeInTheDocument();
-    expect(within(hoy).getAllByText(t.todaviaNo)).toHaveLength(1);
+    expect(within(hoy).queryByText(t.todaviaNo)).toBeNull();
+    // Y «Iniciar sesión» dejó de ser una promesa: es un botón que se puede pulsar.
+    expect(screen.getByRole("button", { name: new RegExp(t.iniciarSesion) })).toBeInTheDocument();
   });
 
   it("sesión no inventa la ficha del cliente: la declara ausente con su motivo", () => {
@@ -95,28 +116,52 @@ describe("el cuaderno: lo que no existe se dice", () => {
     expect(cifra.querySelector("small")?.textContent).toBe("B");
   });
 
-  it("honestidad: los cuatro búferes están en cero y marcados como inexistentes", () => {
+  /**
+   * Tres búferes existen y uno no. El que no existe **sigue en la lista**: quitarlo escondería
+   * que la app va a leer la pantalla, y ponerlo en cero sin marca lo haría parecer vacío en vez
+   * de inexistente.
+   */
+  it("honestidad: los búferes que existen traen cifras y el que no, su marca", () => {
     const { container } = pinta("?pantalla=honestidad");
     const bufs = [...container.querySelectorAll(".buffer")];
     expect(bufs).toHaveLength(4);
-    for (const b of bufs) {
-      expect(b.className).toContain("pendiente");
-      expect(b.querySelector(".cuanto")?.textContent).toBe("0 B");
+    const vivos = bufs.filter((b) => !b.className.includes("pendiente"));
+    expect(vivos).toHaveLength(3);
+    for (const b of vivos) {
+      expect(b.querySelector(".cuanto")?.textContent).not.toBe("0 B");
     }
+    const pendiente = bufs.find((b) => b.className.includes("pendiente")) as HTMLElement;
+    expect(within(pendiente).getByText(t.todaviaNo)).toBeInTheDocument();
+    expect(pendiente.querySelector(".cuanto")?.textContent).toBe("0 B");
   });
 
-  /** «7 de 7» con cuatro piezas sin construir sería la mentira cómoda. */
+  /** «7 de 7» con una pieza sin construir seguiría siendo la mentira cómoda. */
   it("honestidad: el kill-switch dice cuántas piezas corta de cuántas hay", () => {
     pinta("?pantalla=honestidad");
-    expect(screen.getByText(/3 de 7/)).toBeInTheDocument();
+    expect(screen.getByText(/6 de 7/)).toBeInTheDocument();
+    expect(screen.queryByText(/7 de 7/)).toBeNull();
+  });
+
+  /**
+   * La pantalla de Idioma nace con la fase 3. Lo que se comprueba aquí no es su forma —de eso se
+   * ocupa el gate de fidelidad— sino que **no promete lo que no hay**: tres bloques pendientes y
+   * el aviso del techo de macOS, que es un límite del sistema y no una decisión nuestra.
+   */
+  it("idioma: enseña lo que transcribe hoy y marca lo que todavía no", () => {
+    pinta("?pantalla=idioma");
+    expect(screen.getByText(t.idiomaTitulo)).toBeInTheDocument();
+    expect(screen.getAllByText(t.todaviaNo)).toHaveLength(3);
+    expect(screen.getByText(t.cincoIdiomas)).toBeInTheDocument();
+    // Las dos pistas con su idioma y el estado real de su modelo.
+    expect(screen.getAllByText(t.modeloInstalado)).toHaveLength(2);
   });
 
   it("el rail deja las secciones que aún no existen sin enlace", () => {
     const { container } = pinta("?pantalla=sesion");
     const rail = container.querySelector("nav.rail") as HTMLElement;
     const enlaces = [...rail.querySelectorAll("a")].map((a) => a.textContent);
-    expect(enlaces).toEqual([t.navSesion, t.navPermisos, t.navHonestidad]);
-    for (const nombre of [t.navCorpus, t.navNotas, t.navIdioma, t.navIa]) {
+    expect(enlaces).toEqual([t.navSesion, t.navPermisos, t.navHonestidad, t.navIdioma]);
+    for (const nombre of [t.navCorpus, t.navNotas, t.navIa]) {
       const fila = within(rail).getByText(nombre).closest(".item") as HTMLElement;
       expect(fila.className).toContain("pendiente");
       expect(fila.tagName).not.toBe("A");

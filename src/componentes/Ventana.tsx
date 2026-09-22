@@ -12,7 +12,7 @@ import { Ic } from "./Iconos";
  * app va a tenerlas; ponerlas navegables prometería una pantalla que no está. Es la misma
  * decisión que «todavía no» (design-system §9-sexies), aplicada a la navegación.
  */
-export type Seccion = "sesion" | "permisos" | "honestidad";
+export type Seccion = "sesion" | "permisos" | "honestidad" | "idioma";
 
 const RAIL: { id: Seccion | null; icono: string; clave: keyof ReturnType<typeof useT>["cuaderno"] }[] = [
   { id: "sesion", icono: "i-video", clave: "navSesion" },
@@ -20,7 +20,7 @@ const RAIL: { id: Seccion | null; icono: string; clave: keyof ReturnType<typeof 
   { id: null, icono: "i-doc", clave: "navCorpus" },
   { id: null, icono: "i-nota", clave: "navNotas" },
   { id: "honestidad", icono: "i-ram", clave: "navHonestidad" },
-  { id: null, icono: "i-globo", clave: "navIdioma" },
+  { id: "idioma", icono: "i-globo", clave: "navIdioma" },
   { id: null, icono: "i-chispa", clave: "navIa" },
 ];
 

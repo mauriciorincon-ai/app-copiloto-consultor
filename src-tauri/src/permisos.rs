@@ -80,7 +80,7 @@ fn los_de_escuchar(p: &Permisos) -> [Estado; 2] {
 /// mitad de una reunión es lo único de esta pantalla que interrumpe al usuario, y preguntarlo
 /// después de «¿están todos?» lo escondería detrás del caso feliz.
 pub fn cara(p: &Permisos) -> Cara {
-    if los_de_escuchar(p).iter().any(|e| *e == Estado::Denegado) {
+    if los_de_escuchar(p).contains(&Estado::Denegado) {
         return Cara::Revocado;
     }
     if los_de_escuchar(p).iter().all(|e| *e == Estado::Concedido) {

@@ -29,6 +29,11 @@ tauri-plugin-global-shortcut = "2.3.2"
 # que este crate las usa de primera mano y que la superficie nativa que tocamos son dos APIs del
 # sistema — Accessibility (mover ventanas ajenas) y NSWorkspace (leer el fondo de escritorio) —
 # y ninguna más.
+[target.'cfg(unix)'.dependencies]
+# Solo para leer el desplazamiento horario del sistema y escribir «14:02» en un turno. Viajaba ya
+# en el árbol (tao la usa); declararla hace explícito que este crate la llama de primera mano.
+libc = "0.2"
+
 [target.'cfg(target_os = "macos")'.dependencies]
 base64 = "0.22"
 core-foundation = "0.10"
@@ -49,6 +54,8 @@ objc2-foundation = { version = "0.3", default-features = false, features = [
   "NSArray",
   "NSDictionary",
   "NSGeometry",
+  "NSValue",
+  "NSUUID",
 ] }
 
 

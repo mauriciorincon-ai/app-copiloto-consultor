@@ -144,7 +144,7 @@ export const es = {
     funcionaAcople: "La reunión se hace sitio: se acopla y vuelve al cerrar",
     funcionaCorte: "Corta todo y vacía la memoria",
     iniciarSesion: "Iniciar sesión",
-    nadaSale: "el sonido nunca se guarda · nada sale de tu equipo",
+    nadaSale: "corta todo · el sonido nunca se guarda · nada sale de tu equipo",
     sinReunion: "Sin reunión abierta",
     tituloDeMuestra: "Páramo Azul — Propuesta tablero de rentabilidad",
     sinReunionVoz: "Abre Zoom, Meet o Teams y aparecerá aquí. Mientras tanto, prepara la reunión.",
@@ -187,10 +187,44 @@ export const es = {
     modoLocal: "100 % local · API apagado",
     modoDetalle:
       "En esta versión no existe código capaz de abrir una conexión: el cero no se mantiene por disciplina.",
-    piezasCola: "piezas: las otras cuatro todavía no existen.",
+    piezasCola: "piezas: la otra todavía no existe.",
     loQueQuedara: "Lo que quedará cuando cierres",
     loQueQuedaraDetalle:
       "Notas, acuerdos y fichas fijadas llegan más adelante. Hoy no queda nada porque hoy no se escribe nada.",
+    // ---- sesión · lo que la fase 3 puso a funcionar ----
+    funcionaEscucha: "Escucha las dos pistas y las transcribe en tu Mac",
+    altavocesInternos: "Altavoces internos",
+    avisoDelEco:
+      "El micrófono también lo oye: se marca como eco.",
+
+    // ---- honestidad · los búferes que ya existen ----
+    ringBuffer30: "ring buffer · últimos 30 s",
+    ventana12: "ventana de 12 turnos",
+
+    // ---- idioma (subconjunto del sprint 1) ----
+    idiomaTitulo: "Idioma y transcripción",
+    idiomaSub:
+      "Dos pistas, los idiomas que marques, y un diccionario que es tuyo. La transcripción trabaja; casi nunca la miras.",
+    transcripcionEnVivo: "Transcripción en vivo",
+    oculta: "oculta",
+    visible: "visible",
+    naceOculta:
+      "Nace oculta a propósito. Leer lo que acaban de decir es la forma más rápida de dejar de escuchar: los ojos se van al texto y la conversación se queda sola.",
+    laMuestraCuando: "la muestra cuando la necesites",
+    idiomaPorPista: "Idioma por pista",
+    tuMicrofono: "Tú · micrófono",
+    clienteSistema: "Cliente · sistema",
+    modeloInstalado: "modelo instalado",
+    cincoIdiomas: "Cinco idiomas listos a la vez, como mucho: lo impone macOS, no la app.",
+    transcribeTuMac: "Transcribe tu Mac, no un servicio",
+    transcribeTuMacDetalle:
+      "El motor de voz de macOS, dentro de tu equipo. Ningún audio sale para convertirse en texto. La única vez que la app toca la red es cuando tú pides instalar el modelo de un idioma: entonces macOS lo descarga, y no sale nada de aquí.",
+    loQueTodaviaNo: "Lo que todavía no existe",
+    variosIdiomasPorPista: "Varios idiomas a la vez, marcados por pista",
+    loQueFaltaDetalle:
+      "Hoy cada pista escucha un idioma, los nombres propios se transcriben como suenen, y los turnos mueren los dos —el tuyo y el del cliente— al cerrar y con la tecla.",
+    diccionarioTecnico: "Diccionario técnico: lo que se oye por lo que quieres leer",
+    conservarTusTurnos: "Conservar lo que dijiste tú",
   },
 };
 

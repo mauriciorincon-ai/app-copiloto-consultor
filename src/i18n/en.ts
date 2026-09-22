@@ -114,7 +114,7 @@ export const en: Diccionario = {
     funcionaAcople: "The meeting makes room: it docks and returns on close",
     funcionaCorte: "Cut everything and wipe memory",
     iniciarSesion: "Start session",
-    nadaSale: "sound is never stored · nothing leaves your machine",
+    nadaSale: "cuts everything · sound is never stored · nothing leaves your machine",
     sinReunion: "No meeting open",
     tituloDeMuestra: "Páramo Azul — Profitability dashboard proposal",
     sinReunionVoz: "Open Zoom, Meet or Teams and it will show up here. Meanwhile, get ready.",
@@ -155,9 +155,43 @@ export const en: Diccionario = {
     modoLocal: "100 % local · API off",
     modoDetalle:
       "In this version there is no code able to open a connection: the zero is not kept by discipline.",
-    piezasCola: "pieces: the other four do not exist yet.",
+    piezasCola: "pieces: the other one does not exist yet.",
     loQueQuedara: "What will be left when you close",
     loQueQuedaraDetalle:
       "Notes, agreements and pinned cards come later. Today nothing is left because today nothing is written.",
+    // ---- session · what phase 3 turned on ----
+    funcionaEscucha: "It listens to both tracks and transcribes them on your Mac",
+    altavocesInternos: "Internal speakers",
+    avisoDelEco:
+      "The microphone hears it too: marked as echo.",
+
+    // ---- honesty · the buffers that now exist ----
+    ringBuffer30: "ring buffer · last 30 s",
+    ventana12: "window of 12 turns",
+
+    // ---- language (sprint 1 subset) ----
+    idiomaTitulo: "Language and transcript",
+    idiomaSub:
+      "Two tracks, the languages you tick, and a dictionary that is yours. The transcript works; you hardly ever look at it.",
+    transcripcionEnVivo: "Live transcript",
+    oculta: "hidden",
+    visible: "visible",
+    naceOculta:
+      "It ships hidden on purpose. Reading what was just said is the fastest way to stop listening: your eyes go to the text and the conversation is left alone.",
+    laMuestraCuando: "shows it when you need it",
+    idiomaPorPista: "Language per track",
+    tuMicrofono: "You · microphone",
+    clienteSistema: "Client · system",
+    modeloInstalado: "model installed",
+    cincoIdiomas: "Five languages ready at a time, at most: macOS imposes it, not the app.",
+    transcribeTuMac: "Your Mac transcribes, not a service",
+    transcribeTuMacDetalle:
+      "The macOS speech engine, inside your machine. No audio leaves to become text. The only time the app touches the network is when you ask to install a language model: macOS downloads it then, and nothing leaves here.",
+    loQueTodaviaNo: "What does not exist yet",
+    variosIdiomasPorPista: "Several languages at once, ticked per track",
+    loQueFaltaDetalle:
+      "Today each track listens to one language, proper names are transcribed as they sound, and both sets of turns die — yours and the client’s — on close and with the key.",
+    diccionarioTecnico: "Technical dictionary: what is heard into what you want to read",
+    conservarTusTurnos: "Keep what you said",
   },
 };

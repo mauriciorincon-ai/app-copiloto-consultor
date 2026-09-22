@@ -17,11 +17,18 @@ import { join, relative } from "node:path";
 // cliente — el estándar 4-T divide por DE QUIÉN es, no por su formato— así que cae del mismo lado
 // que el transcript y vive bajo la misma regla: memoria mientras la pantalla lo muestra, y nada
 // más. Sin esta línea, el módulo que maneja nombres de reuniones sería el único sin vigilancia.
+// `voz` y `src-tauri/nativo` se añadieron en el sprint 001, fase 3. `voz` parte la voz del
+// cliente en turnos: no la guarda, pero la tiene entera en las manos, que es lo mismo desde el
+// lado de la regla. Y `nativo/` es el puente de Swift hacia el transcriptor — sin esa línea, el
+// único archivo del producto que llama a una API de descarga de Apple sería el único sin barrer,
+// y la vigilancia se habría detenido justo en la frontera del lenguaje.
 const PROTEGIDOS = [
   "src-tauri/src/capture",
   "src-tauri/src/stt",
+  "src-tauri/src/voz",
   "src-tauri/src/screen",
   "src-tauri/src/sesion",
+  "src-tauri/nativo",
   "src/capture",
 ];
 // API prohibida dentro de los protegidos (Rust y TS). Se puede ampliar; jamás recortar sin ADR.
@@ -30,6 +37,15 @@ const PROHIBIDO = [
   /std::net\b/, /TcpStream\b/, /UdpSocket\b/, /\breqwest\b/, /\bhyper\b/, /tauri_plugin_fs\b/,
   /tauri_plugin_store\b/, /tauri_plugin_http\b/, /rusqlite\b/, /sqlx\b/,
   /\bfetch\(/, /XMLHttpRequest\b/, /WebSocket\b/, /localStorage\b/, /indexedDB\b/, /writeFile\b/,
+  // Swift y Objective-C (fase 3): el puente del transcriptor vive en Swift y su API de disco y de
+  // red no se parece en nada a la de Rust. Sin estas líneas el barrido leía el archivo y no veía
+  // nada, que es la peor forma de pasar: verde por no saber mirar.
+  /\bFileManager\b/, /\bURLSession\b/, /\bNSURLConnection\b/, /contentsOf:/, /\bwrite\(to:/,
+  /\bNWConnection\b/, /\bCFSocket/, /\bNSFileHandle\b/, /\bUserDefaults\b/,
+  // La descarga del modelo de reconocimiento que hace macOS. Es legítima y necesaria, y por eso
+  // NO se prohíbe a secas: se obliga a que la línea lleve su marca y su ADR. Una puerta a la red
+  // en un módulo efímero puede existir; lo que no puede es existir sin que se vea.
+  /\bdownloadAndInstall\b/, /\bassetInstallationRequest\b/,
 ];
 const ALLOW = /verify-ephemeral:allow\b/; // línea explícitamente autorizada (exige ADR citado en la misma línea)
 
@@ -37,7 +53,7 @@ function archivos(dir) {
   if (!existsSync(dir)) return [];
   return readdirSync(dir).flatMap((n) => {
     const p = join(dir, n);
-    return statSync(p).isDirectory() ? archivos(p) : /\.(rs|ts|tsx|js|mjs)$/.test(n) ? [p] : [];
+    return statSync(p).isDirectory() ? archivos(p) : /\.(rs|ts|tsx|js|mjs|swift|m|mm)$/.test(n) ? [p] : [];
   });
 }
 

@@ -843,6 +843,346 @@ la pantalla de Honestidad.
 | `scripts/capturar-fidelidad.mjs` | de un artefacto a una lista |
 | `tests/unit/{cuaderno,contador-de-red}.test.tsx` | **nuevos** |
 
+## Fase 3 — Audio en dos pistas + transcripción local
+
+### Fase 3a — el spike, antes de comprometer ningún motor (2026-09-21)
+
+El plan del sprint lo pedía con estas palabras: *«Spike en la fase 3 antes de comprometer el
+motor»*. Tres preguntas, y ninguna se podía contestar leyendo documentación: si el audio del
+sistema se puede capturar sin bot y sin pedirle nada al cliente, si la transcripción local de
+macOS 26 alcanza para una reunión en vivo, y si un puente Swift se deja enlazar dentro del
+binario de Rust con solo las Command Line Tools instaladas. Las tres se probaron con programas
+de usar y tirar en el scratchpad; ninguno viaja al repo.
+
+#### Pregunta 1 — ¿se puede oír al cliente sin meter un bot en la reunión?
+
+**Sí, con Core Audio process taps** (macOS 14.2+ según la cabecera; el plan decía 14.4).
+`AudioHardwareCreateProcessTap` sobre una `CATapDescription` de *mezcla mono global excluyendo
+nuestro propio proceso* → dispositivo agregado privado → `AudioDeviceCreateIOProcIDWithBlock`.
+
+```
+translate pid 66144 -> 108 (st=0)
+AudioHardwareCreateProcessTap -> st=0 tapID=109
+formato st=0 rate=48000.0 ch=1 bits=32 flags=9
+salida por defecto: BuiltInSpeakerDevice
+AudioHardwareCreateAggregateDevice -> st=0 agg=110
+AudioDeviceStart -> st=0
+RESULTADO: llamadas=374 buffers=1 191488 muestras en 4.0s · pico=0.55
+```
+
+48 kHz, **mono**, float32 — el formato lo decide el tap, no nosotros. Excluir nuestro propio
+proceso importa: sin eso, el modo solo audio (C15, sprint 2) se oiría a sí mismo.
+
+**El hallazgo que cambia el diseño, y que solo apareció corriéndolo.** La primera pasada devolvió
+`0 muestras` y pareció un fallo. No lo era. El control lo dejó claro:
+
+```
+=== control: SIN audio sonando ===
+RESULTADO: llamadas=0 buffers=0 0 muestras en 2.0s
+=== con audio ===
+RESULTADO: llamadas=268 buffers=1 137216 muestras en 3.0s · pico=0.75
+```
+
+**Sin nada sonando, el callback no se llama ni una vez.** No llegan ceros: no llega nada. La pista
+del sistema no tiene «nivel cero», tiene *silencio del que no se entera nadie*. Consecuencia
+directa para la pantalla de Honestidad y para la de Sesión: **«0 muestras» NO se puede pintar como
+avería**. Un cliente callado y un tap roto se ven exactamente igual desde dentro del programa, y
+la única diferencia honesta que podemos mostrar es *«conectada, todavía sin sonido»* frente a
+*«no se pudo abrir»* — que sí son distinguibles, porque el fallo aparece en la creación del tap,
+no en la ausencia de muestras.
+
+#### Pregunta 2 — ¿alcanza la transcripción local de macOS 26?
+
+**Sí, y con mucho margen.** `SpeechAnalyzer` + `SpeechTranscriber` (macOS 26), sobre los dos audios
+sintéticos que genera `say` con las frases de la maqueta:
+
+| Pasada | Audio | Primer parcial | Total | Velocidad |
+|---|---|---|---|---|
+| es-ES, modelo recién instalado | 5,88 s | 247 ms | 370 ms | ×15,9 |
+| en-US, modelo recién instalado | 5,39 s | 87 ms | 227 ms | ×23,7 |
+| **es-ES, modelo ya instalado** | 5,88 s | **51 ms** | **84 ms** | **×69,9** |
+
+Treinta locales soportados; `es-ES`, `es-MX`, `es-US`, `es-CL`, `en-US`, `en-GB` y el resto de la
+familia inglesa quedaron instalados tras pedirlo. El presupuesto de la orden es **≤4 s de fin de
+turno a ficha**: la transcripción de un turno de seis segundos cuesta 84 ms. El cuello de botella
+de este sprint no va a ser el STT.
+
+**Y el defecto que hay que anotar ahora, porque muerde en la fase 4.** Las dos transcripciones
+escribieron mal el número:
+
+```
+es: «certificación ISO27.001»        en: «ISO 27,001 certification»
+```
+
+El motor formatea cifras según el idioma. La frase de la maqueta —la que dispara el estado «sin
+resultado»— es literalmente *«certificación ISO 27001»*. Si el disparador de la fase 4 busca
+`27001` en el corpus, no lo va a encontrar. **Se normalizan los separadores de miles antes de
+buscar**; queda escrito aquí para que no se descubra como un bug misterioso dentro de dos fases.
+
+#### Pregunta 3 — ¿se deja enlazar Swift dentro del binario de Rust?
+
+`SpeechAnalyzer` es un `actor` de Swift con secuencias asíncronas: no hay forma de llamarlo por
+mensajes de Objective-C como hicimos con la Accessibility API. O hay puente, o no hay motor.
+
+```
+swiftc -emit-library -static -O -module-name agstt -o libagstt.a
+cargo run → SpeechTranscriber.isAvailable = 1
+```
+
+**Enlaza a la primera**, con las Command Line Tools y sin Xcode completo, añadiendo
+`/usr/lib/swift` a las rutas de búsqueda. El riesgo nº 1 de la fase queda cerrado igual que quedó
+el de la fase 0: probándolo, no razonándolo.
+
+#### Lo que el spike decide, y lo que deja abierto
+
+- **El audio del sistema se hace con Core Audio taps en Rust puro** (FFI declarada a mano, como
+  `acople/ax.rs`), sin puente Swift: `AudioDeviceCreateIOProcID` acepta un puntero a función de C.
+- **El STT se hace con SpeechAnalyzer a través de un puente Swift** compilado por `build.rs`.
+- **Queda abierto** —y se decide en el ADR con la medición delante— si el VAD necesita Silero o si
+  el detector determinista alcanza. Medirlo es de la fase 5 (el kit); construirlo, de esta.
+
+
+### Fase 3b — las dos pistas, los turnos y la transcripción (2026-09-21)
+
+La fase más grande del sprint, y la primera en la que la app **oye**. Cuatro piezas que no se
+conocen entre sí —`capture` abre los grifos, `voz` corta los turnos, `stt` los convierte en texto,
+`escucha` los junta— y una lección que se repitió tres veces: **lo que se descubre corriendo no se
+descubre leyendo**.
+
+#### Lo que se construyó
+
+| Módulo | Qué hace | Por qué está separado |
+|---|---|---|
+| `capture/anillo.rs` | búfer circular de 30 s por pista, con índice global | es la promesa del efímero hecha forma: un tamaño que no crece |
+| `capture/remuestreo.rs` | 48 kHz → 16 kHz **con filtro** | decimar sin filtrar convierte los agudos en voz que nadie dijo |
+| `capture/nativo.rs` | los dos grifos de Core Audio | todo el `unsafe` de la captura, en un solo archivo |
+| `voz/vad.rs` | detector de voz por energía con suelo adaptativo | código primero: Silero tendrá que ganarse el puesto con una medición |
+| `voz/turno.rs` | fin de turno determinista (320 ms) | es de donde arrancan los 4 s de presupuesto del sprint |
+| `voz/eco.rs` | el micrófono repitiendo al cliente | nació de la primera prueba de punta a punta |
+| `stt/mod.rs` · `apple.rs` · `ventana.rs` | motor, puente y ventana de 12 turnos | el motor es sustituible **con una medición delante** |
+| `nativo/Transcriptor.swift` | el puente a `SpeechAnalyzer` | `actor` de Swift: no hay selectores que mandar desde Rust |
+| `escucha/mod.rs` | dos hilos: uno mira marcos, otro transcribe | transcribir no puede dejar ciega a la otra pista |
+
+Los dos ADRs: **006** (el motor y su modelo) y **007** (las dos pistas y el eco).
+
+#### Los cinco defectos que encontró un test antes que una persona
+
+1. **El suelo de ruido se comía al hablante.** El detector actualizaba su estimación del silencio
+   en todos los marcos, subiendo despacio. «Despacio» sigue siendo subir: a los **3,7 segundos**
+   de habla continua el hablante quedaba por debajo de su propio umbral y la app se habría quedado
+   muda justo con el cliente que más habla. La regla correcta es que **el suelo solo se mueve
+   cuando NO hay voz**; y contra el atasco que eso abre —un ruido nuevo que empieza a mitad de una
+   frase—, [`PACIENCIA_MS`]: a los treinta segundos afirmando «voz» sin una sola pausa, el
+   detector desconfía de sí mismo y vuelve a medir la sala.
+2. **Decimar sin filtrar inventaba voz.** Un tono de 18 kHz reaparecía a 2 kHz con RMS **0,707**,
+   a todo volumen y en mitad de la banda de la voz humana. El detector lo habría oído como alguien
+   hablando y el fin de turno se habría disparado sobre silencio.
+3. **`vaciar()` disimulaba.** Mover el cursor deja las muestras íntegras en la memoria del
+   proceso. El kill-switch de esta app se pulsa **delante del cliente**; si después su voz sigue
+   ahí, la tecla es un adorno. Ahora se sobrescribe con ceros — y lo mismo con las letras del
+   transcript antes de soltarlas.
+4. **Quedarse con el primer canal dejaba sorda a la app** con unos auriculares desbalanceados.
+5. **La pantalla no cabía en la pantalla.** El gate de fidelidad midió **+108 px** de desborde en
+   Sesión: el botón «Iniciar sesión» se salía de la ventana. A ojo se veía perfecta.
+
+#### Los tres hallazgos que solo aparecieron corriéndolo
+
+**Uno · el silencio y la avería se ven igual.** Con nada sonando, el callback del tap **no se
+llama ni una vez**. No llegan ceros: no llega nada.
+
+```
+=== control: SIN audio sonando ===   RESULTADO: llamadas=0 buffers=0 0 muestras en 2.0s
+=== con audio ===                    RESULTADO: llamadas=268 buffers=1 137216 muestras en 3.0s · pico=0.75
+```
+
+Así que un contador en cero no distingue «el cliente está callado» de «el tap se rompió». Lo que
+sí se puede afirmar es si el grifo **se abrió**, y es lo que la app enseña: la pantalla de Sesión
+dice «Funciona» del grifo, no de las muestras.
+
+**Dos · el micrófono oye a los altavoces.** La primera prueba de punta a punta —sonó
+`pregunta-es.wav` por los altavoces del MacBook— devolvió el mismo turno por las dos pistas:
+
+```
+turno · Microfono · 880–2920 ms · «Tienen certificaciones o 27»
+turno · Microfono · 3420–6240 ms · «Y la limpieza de datos, eso está dentro del alcance?»
+turno · Sistema   · 740–6100 ms · «¿Tienen certificación ISO27.001 y la limpieza de datos eso está dentro del alcance.»
+```
+
+La app promete «micrófono = tú, sistema = el cliente». Con altavoces esa promesa **es falsa**: le
+atribuye al consultor palabras que no dijo. La maqueta ya lo había previsto —la fila «Auriculares
+conectados» existía desde la mirada 3— pero como un «todavía no» sin nada detrás. Ahora mide de
+verdad (`bltn` + `ispk` = altavoces internos) y la app hace dos cosas: **avisa antes de la
+reunión** y **marca el eco** con dos condiciones que tienen que cumplirse las dos —solapar en el
+tiempo y decir casi lo mismo—, porque cada una sola confunde una interrupción o un resumen con un
+reflejo. Los textos de arriba son, literalmente, los casos del test.
+
+**Tres · preguntar estaba cambiando el sistema.** Al arrancar la app en vivo, el log dijo:
+
+```
+[stt] motor «apple-speechanalyzer» · 30 idiomas soportados · techo 5
+[stt] modelos instalados: en-AU, es-ES
+```
+
+Dos de treinta, y elegidos por el orden en que la pantalla preguntó. macOS reparte los modelos de
+reconocimiento **por reserva**, con techo de cinco por app — y enumerar los idiomas para pintar
+una lista estaba gastando los cinco cupos del usuario, en silencio. Ahora el estado se lee de
+`installedLocales` (qué hay en el Mac) y solo se reserva al instalar y al transcribir. Después del
+arreglo, el mismo arranque:
+
+```
+[stt] modelos instalados: en-AU, en-CA, en-GB, en-IE, en-IN, en-NZ, en-SG, en-US, en-ZA, es-CL, es-ES, es-MX, es-US
+```
+
+#### La medición que decidió el motor (ADR 006)
+
+| Pasada | Audio | Primer parcial | Total | Velocidad |
+|---|---|---|---|---|
+| es-ES, modelo recién instalado | 5,88 s | 247 ms | 370 ms | ×15,9 |
+| en-US, modelo recién instalado | 5,39 s | 87 ms | 227 ms | ×23,7 |
+| **es-ES, modelo ya instalado** | 5,88 s | **51 ms** | **84 ms** | **×69,9** |
+| es-ES, desde Rust a través del puente | 5,88 s | — | 243 ms | ×24,2 |
+
+El presupuesto del sprint son **cuatro segundos**. `whisper-rs` no llegó a medirse: la comparación
+se detiene cuando una opción cabe treinta veces dentro del presupuesto y la otra pide 1,5 GB de
+descarga para entrar en la carrera. Queda declarado como respaldo para macOS < 26, **sin
+implementar**: deuda dicha, no olvido.
+
+#### Gates nuevos, cada uno visto en rojo antes que en verde (regla 15)
+
+| Gate | Qué vigila | Cómo se vio en rojo | Qué dijo al caer |
+|---|---|---|---|
+| `vaciar_sobrescribe_la_memoria_no_solo_el_cursor` | el kill-switch vacía de verdad | `vaciar()` solo mueve el cursor | «la muestra 0 sigue en memoria después de vaciar: el kill-switch no vacía, disimula» |
+| `un_agudo_no_se_convierte_en_voz` | el remuestreo no inventa voz | decimación de una de cada tres | «un siseo de 18 kHz salió a 0.707 de RMS» |
+| `una_frase_larga_no_se_convierte_en_silencio` | el suelo no se come al hablante | suelo actualizado en todos los marcos | «dejó de oír la voz en el segundo 3.6» |
+| `el_fin_de_turno_cae_dentro_del_presupuesto_de_la_orden` | 160–400 ms | `FIN_MS = 800` | «el fin de turno tardó 800 ms; la orden pide entre 160 y 400» |
+| `una_voz_que_solo_esta_en_un_canal_no_se_pierde` | la mezcla a mono | quedarse con el primer canal | «la voz del canal derecho se perdió al mezclar» |
+| `un_trozo_que_ya_se_piso_se_declara_perdido` | un turno perdido se dice | sin la comprobación del borde | devolvía audio recortado como si fuera entero |
+| `interrumpir_no_es_hacer_eco` | el eco pide las dos condiciones | solo la del solape | «una interrupción del consultor se tomó por eco (parecido 0.17)» |
+| `repetir_despues_lo_que_dijo_el_cliente_no_es_eco` | ídem, por el otro lado | solo la del parecido | el resumen del consultor se borraba |
+| `verify:ephemeral` extendido a Swift y a `voz` | el barrido sabe leer `.swift` | `Data(...).write(to:)` plantado en el puente | `✕ Transcriptor.swift:161 /\bwrite\(to:/` |
+| `lo-que-macos-dira.test.ts` | el plist promete lo que la pantalla enseña | una palabra cambiada en el plist | «expected … to contain 'solo en memoria'» |
+
+**Y dos gates que cobraron solos, sin que nadie los provocara:**
+
+- el **barrido de vocabulario vetado** encontró «trampa» y «engañar» en mis propios comentarios de
+  `remuestreo.rs`, `turno.rs` y `vad.rs`, usados como metáfora. La regla es absoluta y el barrido
+  cubre `src-tauri/src`: se reescribieron las tres frases;
+- el **gate de fidelidad** midió +108 px de desborde en Sesión y +50 en Idioma, y no dejó cerrar
+  la fase hasta que las dos pantallas cupieron.
+
+#### La pantalla que no cabía, y lo que se reordenó para que cupiera
+
+Sesión estaba **al límite exacto** de los 640 px antes de esta fase (638 de 638). Todo lo que la
+fase 3 tenía que añadir —dos pistas que ya funcionan, el aviso del eco, el botón de iniciar— la
+sacaba de la ventana. Se reordenó midiendo, no a ojo:
+
+- el **kill-switch salió de «Qué funciona hoy»** y bajó a la fila de la acción, al lado de la
+  promesa que cumple: «corta todo · el sonido nunca se guarda · nada sale de tu equipo». La lista
+  se quedó con lo que sí lleva la palabra «Funciona»;
+- el **aviso del eco** cabe en una línea;
+- en Idioma, los **tres «todavía no»** —varios idiomas, diccionario, conservar tus turnos— pasaron
+  de tres tarjetas a una sola con tres filas. Ocupaban media pantalla y además se leían como tres
+  ausencias distintas cuando son la misma: lo que llega después de este sprint.
+
+> **Y una pregunta estructural que este sprint deja abierta, porque no es mía:** el cuaderno está
+> **al borde de su techo**. Sesión cabe hoy con 0 px de margen y las pantallas crecen cada sprint
+> —en el S2 llegan la lectura de pantalla y el radar; en el S3, las notas y la bandeja—. O la
+> ventana crece (960 × 720), o se acepta que estas pantallas se desplacen. Las dos son decisiones
+> de diseño y ninguna es urgente hoy.
+
+#### Qué se vio correr en vivo, y qué no
+
+`pnpm tauri dev`, con la app abierta de verdad:
+
+```
+[transcript] ⌘⇧T registrado · OJO: mientras Angel Ghost esté abierto, el navegador deja de reabrir la última pestaña cerrada con esa tecla
+[stt] motor «apple-speechanalyzer» · 30 idiomas soportados · techo 5
+[stt] modelos instalados: en-AU, en-CA, en-GB, … es-ES, es-MX, es-US
+[audio] Altavoces · el micrófono va a oír al cliente: se marcará el eco
+```
+
+Y la cadena entera, de los altavoces al texto, en el test de integración `de-la-voz-a-la-frase`
+(13 s, con `afplay` sonando de verdad). Las dos pistas abiertas, medidas: **19 265 muestras en
+1,20 s** por el micrófono y **19 094 en 1,19 s** por el tap del sistema.
+
+**Lo que NO se vio correr, y por qué:**
+
+- **el botón «Iniciar sesión»** y el de Honestidad: hay que pulsarlos. Parada ⭐.
+- **`⌘⇧T`**: registrada —el log lo dice— pero pulsarla es cosa de una tecla. Parada ⭐, y con una
+  pregunta encima: **esa combinación es «reabrir la última pestaña» en Chrome, Safari y Firefox**,
+  y el navegador es donde vive la reunión de Meet. Se registra porque es lo que el diseño aprobó,
+  se avisa en el log, y cambiarla es decisión del usuario (riesgo nº 7 del plan).
+- **el transcript de la banda con turnos reales**: necesita una sesión encendida a mano.
+- **`NSAudioCaptureUsageDescription`**: la clave no aparece en las cabeceras públicas del SDK. Se
+  declara porque una de más es inofensiva y una de menos mata la app al pedir el permiso, pero
+  solo se comprueba de verdad con la app **empaquetada y firmada**. Parada ⭐.
+
+#### El kill-switch pasó de 3 piezas a 6, y lo obligó el compilador
+
+`Pieza::orden` es un `match` sin comodín. Al llegar el audio, `AudioDelMicrofono`,
+`AudioDelSistema` y `Transcript` no se pudieron dejar como «todavía no existe»: el crate no
+compilaba. La única que sigue declarada es `UltimoFrame` —la lectura de pantalla, C8, sprint 2— y
+la pantalla de Honestidad lo dice: **«6 de 7 piezas: la otra todavía no existe»**.
+
+#### Archivos de la fase 3
+
+| Archivo | Qué |
+|---|---|
+| `src-tauri/src/capture/{anillo,remuestreo,nativo}.rs` | **nuevos** — los dos grifos y el audio en memoria |
+| `src-tauri/src/voz/{mod,vad,turno,eco}.rs` | **nuevos** — cuándo alguien habla y cuándo terminó |
+| `src-tauri/src/stt/{mod,apple,ventana}.rs` | **nuevos** — el motor, el puente y los 12 turnos |
+| `src-tauri/src/escucha/mod.rs` | **nuevo** — los dos hilos que lo juntan todo |
+| `src-tauri/nativo/Transcriptor.swift` · `build.rs` | **nuevos** — el puente de Swift y su compilación |
+| `src-tauri/Info.plist` · `lproj/{es,en}.lproj/InfoPlist.strings` | **nuevos** — lo que macOS dirá al pedir un permiso |
+| `src-tauri/src/{lib,corte,capture/mod}.rs` | siete comandos nuevos · `⌘⇧T` · el corte de seis piezas |
+| `src-tauri/tests/{el-puente-transcribe,los-dos-grifos,de-la-voz-a-la-frase}.rs` | **nuevos** — lo que ningún test unitario puede afirmar |
+| `src/pantallas/Idioma.tsx` · `src/turnos.ts` | **nuevos** — la cuarta pantalla y el transcript |
+| `src/{cuaderno.ts,App.tsx,componentes/{Banda,Principal,Ventana}.tsx,pantallas/{Sesion,Honestidad}.tsx}` | las pistas, el eco y los turnos reales |
+| `docs/diseno/{idioma,sesion,honestidad}.html` | el estado `s1` nuevo y los dos puestos al día (mirada 13) |
+| `docs/kit-de-prueba/audio/` | **nuevo** — dos frases sintéticas, 16 kHz mono |
+| `scripts/{verify-ephemeral,capturar-fidelidad}.mjs` | Swift y `voz` bajo el barrido · el cuarto encuadre |
+| `tests/unit/{lo-que-macos-dira,cuaderno,vocabulario-vetado}.test.*` | **uno nuevo** y dos puestos al día |
+| `decisions/{006-stt-local-y-su-modelo,007-el-audio-en-dos-pistas}.md` | **nuevos** |
+
+#### Criterio de fase completa
+
+- `pnpm typecheck` ✓ · `pnpm lint` ✓ · **86/86** vitest · **130/130** `cargo test` (124 unitarios
+  + 6 de integración contra el Mac de verdad) · `pnpm verify:ephemeral` ✓
+- **fidelidad 56/56** bajo el umbral de 0,15 % · **cero desbordes** · cero errores de página
+- las dos pistas capturan en vivo, el fin de turno cae en 320 ms y un turno de 5,9 s se transcribe
+  en 243 ms — todo medido, nada supuesto
+
+### Decisión de diseño no escrita — lo que la fase 3 descubrió y la maqueta no dice (mirada 13 propuesta)
+
+La mirada 12 dejó una regla: *«a partir de aquí, toda pantalla que se entregue a medias usa este
+estado: no se pinta en verde lo que no existe, y no se esconde»*. La fase 3 es la primera que la
+cobra por el otro lado — **mover filas de «todavía no» a «funciona» también es diseño**, y mover
+cuatro de golpe cambia lo que el usuario entiende al abrir la pantalla.
+
+Y hay tres hechos que no salieron de ningún plan, sino de construir:
+
+| Hecho | Cómo se supo | Por qué necesita sitio en la maqueta |
+|---|---|---|
+| **Con altavoces, el micrófono oye al cliente** | la primera prueba de punta a punta: la misma frase salió por las dos pistas | la app promete «micrófono = tú, sistema = el cliente». Con altavoces esa promesa es falsa y hay que decirlo **antes** de la reunión, no después |
+| **macOS solo deja cinco idiomas listos a la vez** | `AssetInventory.maximumReservedLocales` | la pantalla ofrecía una lista; una lista sin techo deja que el sexto falle sin explicación |
+| **El modelo de cada idioma lo descarga macOS** | `AssetInventory.status` decía «sin instalar» con el modelo puesto: faltaba reservarlo | es la **única** vez que un módulo protegido de esta app toca la red. Esconderlo sería exactamente lo que la pantalla de Honestidad existe para no hacer |
+
+**Qué se propone, y por qué es una mirada y no un ajuste sobre la marcha.** Tres artefactos:
+
+1. **`idioma.html` — estado `s1` nuevo.** La pantalla no tenía versión de sprint 1. Lleva lo que
+   funciona (transcripción oculta por defecto, idioma por pista con el estado real de su modelo, el
+   motor dentro del Mac) y lo que no (varios idiomas a la vez, diccionario técnico, conservar tus
+   turnos), con el mismo trazo discontinuo de la mirada 12.
+2. **`sesion.html` — estado `s1` al día.** Micrófono y audio del sistema pasan a «Funciona»; se
+   añade «Escucha las dos pistas y las transcribe en tu Mac»; el botón «Iniciar sesión» deja de ser
+   una promesa. Y la fila **«Auriculares conectados»**, que era «todavía no», ahora mide de verdad:
+   con altavoces internos avisa, y explica qué hace la app mientras tanto.
+3. **`honestidad.html` — estado `s1` al día.** Los anillos y el transcript dejan de estar
+   pendientes y muestran cifras contadas; el kill-switch pasa de **3 de 7 a 6 de 7** piezas.
+
+No se redecide nada aprobado: se aplica la forma de la mirada 12 al trozo que la fase 3 entrega.
+Pero **el usuario no ha visto ninguna de las tres**, y «continúa» no aprueba diseño.
+
 ## Desviación del plan (2026-09-20) — la MANIOBRA es producto nuevo
 
 **Qué.** El estado «sin resultado» deja de limitarse a admitir el vacío: sugiere **cómo abordar la

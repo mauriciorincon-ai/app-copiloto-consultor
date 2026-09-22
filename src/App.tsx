@@ -7,6 +7,7 @@ import { Principal } from "./componentes/Principal";
 import { ventanaActual } from "./ventanas";
 import { useAltoDeVentana, DESDE_AMPLIADA } from "./asa";
 import { useAcoplada } from "./acople";
+import { useTranscriptVisible } from "./turnos";
 
 /**
  * Cáscara de la app.
@@ -66,7 +67,6 @@ function bandaDesdeLaUrl(busqueda: string, alto: number) {
     // no puede dibujarse ampliada dentro de un marco de 88 px (ni al revés) y el asa funciona
     // sin avisar a nadie: cambia la ventana, y la banda se entera midiendo.
     ampliada: alto >= DESDE_AMPLIADA,
-    transcript: p.get("transcript") === "1",
     verificado: p.get("verificado") !== "0",
   };
 }
@@ -86,6 +86,11 @@ export function Enrutador({ busqueda = globalThis.location?.search ?? "" }: { bu
   const ventana = ventanaActual(busqueda);
   const alto = useAltoDeVentana();
   const acoplada = useAcoplada(acopleDesdeLaUrl(busqueda));
+  // `⌘⇧T` conmuta el transcript desde la parte nativa. El parámetro de URL sigue existiendo para
+  // que el arnés de capturas pueda fotografiar el encuadre abierto sin pulsar una tecla global.
+  const transcript = useTranscriptVisible(
+    new URLSearchParams(busqueda).get("transcript") === "1",
+  );
 
   // La identidad de la ventana vive en `<html>`, al lado del tema y del idioma: un solo lugar de
   // verdad del que cuelga el CSS de ventana — y, de paso, lo que un e2e puede leer sin adivinar.
@@ -101,7 +106,7 @@ export function Enrutador({ busqueda = globalThis.location?.search ?? "" }: { bu
       return (
         <>
           <SpriteIconos />
-          <Banda {...bandaDesdeLaUrl(busqueda, alto)} acoplada={acoplada} />
+          <Banda {...bandaDesdeLaUrl(busqueda, alto)} transcript={transcript} acoplada={acoplada} />
         </>
       );
     default:

@@ -1,0 +1,8 @@
+/* Los mismos textos del Info.plist, en español. La pantalla de Permisos enseña el primero
+   palabra por palabra: si se separan, la pantalla miente. Hay un test que lo vigila. */
+
+"NSMicrophoneUsageDescription" = "Angel Ghost usa el micrófono para saber cuándo hablas tú. El audio vive solo en memoria y no se graba.";
+
+"NSAudioCaptureUsageDescription" = "Angel Ghost escucha lo que suena en tu Mac para oír el otro lado de la llamada sin meter un bot en la reunión. El audio vive solo en memoria y no se graba.";
+
+"NSSpeechRecognitionUsageDescription" = "Angel Ghost convierte voz en texto dentro de este Mac, con el motor de voz de macOS. Ningún audio sale de tu equipo para convertirse en texto.";

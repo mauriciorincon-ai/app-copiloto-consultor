@@ -1,6 +1,8 @@
 import { useT } from "../i18n";
 import { Ic } from "./Iconos";
 import { useAsa } from "../asa";
+import { useTurnos } from "../turnos";
+import type { Turno } from "../cuaderno";
 
 /**
  * LA BANDA — la forma principal de Angel Ghost durante una reunión.
@@ -54,6 +56,10 @@ export function Banda({
   const t = useT().banda;
   const m = t.muestra;
   const grande = ampliada || transcript;
+  // Los turnos se piden SIEMPRE, no solo con el transcript abierto: el hueco entre abrirlo y
+  // recibir la primera respuesta se vería como un transcript vacío, y un transcript vacío en una
+  // reunión con gente hablando parece una avería.
+  const turnos = useTurnos();
   const asa = useAsa();
 
   const atajos = (
@@ -184,7 +190,7 @@ export function Banda({
             </span>
             <span className="lado-b">
               {fuente}
-              {transcript && <Transcript />}
+              {transcript && <Transcript turnos={turnos} />}
               {transcript ? (
                 <span className="atajos-b">
                   <span className="tecla">
@@ -344,9 +350,8 @@ export function Banda({
  * El transcript en vivo. **Solo en memoria**: cada turno lleva su pista (sistema = cliente,
  * mic = tú), jamás un nombre — la atribución se resuelve por pista y nunca por biometría.
  */
-function Transcript() {
+function Transcript({ turnos }: { turnos: Turno[] }) {
   const t = useT().banda;
-  const m = t.muestra;
   return (
     <span className="transcript-b" aria-label="Transcript">
       <span className="cab">
@@ -356,30 +361,22 @@ function Transcript() {
           <kbd>⌘⇧T</kbd> {t.ocultar}
         </span>
       </span>
-      <span className="turno">
-        <span className="quien">
-          <Ic id="i-sistema" s />
-          {t.cliente}
-          <span className="hora">{m.hora1}</span>
-        </span>
-        <q>{m.turno1}</q>
-      </span>
-      <span className="turno tu">
-        <span className="quien">
-          <Ic id="i-mic" s />
-          {t.tu}
-          <span className="hora">{m.hora2}</span>
-        </span>
-        <q>{m.turno2}</q>
-      </span>
-      <span className="turno">
-        <span className="quien">
-          <Ic id="i-sistema" s />
-          {t.cliente}
-          <span className="hora">{m.hora2}</span>
-        </span>
-        <q>{m.turno3}</q>
-      </span>
+      {turnos.map((turno, i) => {
+        // **El eco no se atribuye a nadie.** Si el micrófono captó por los altavoces lo que decía
+        // el cliente, ese turno no es del consultor — pintarlo como «tú» sería ponerle en la boca
+        // palabras que no dijo. Se enseña como del cliente, que es de quien son.
+        const mio = turno.pista === "microfono" && !turno.eco;
+        return (
+          <span className={mio ? "turno tu" : "turno"} key={`${turno.desdeMs}-${i}`}>
+            <span className="quien">
+              <Ic id={mio ? "i-mic" : "i-sistema"} s />
+              {mio ? t.tu : t.cliente}
+              <span className="hora">{turno.hora}</span>
+            </span>
+            <q>{turno.texto}</q>
+          </span>
+        );
+      })}
     </span>
   );
 }

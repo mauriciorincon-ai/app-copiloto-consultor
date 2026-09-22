@@ -64,7 +64,7 @@ const ARTEFACTOS = [
   {
     id: "cuaderno",
     titulo: "el cuaderno",
-    mirada: "la mirada 12",
+    mirada: "las miradas 12 y 13",
     selectorMaqueta: ".ventana",
     selectorProducto: "main.ventana",
     desbordes: ".ventana .contenido, .ventana .rail",
@@ -72,6 +72,7 @@ const ARTEFACTOS = [
       { id: "sesion", maqueta: "sesion.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=sesion" },
       { id: "permisos", maqueta: "permisos.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=permisos" },
       { id: "honestidad", maqueta: "honestidad.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=honestidad" },
+      { id: "idioma", maqueta: "idioma.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=idioma" },
     ],
   },
 ];

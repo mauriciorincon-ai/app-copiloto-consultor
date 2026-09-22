@@ -108,6 +108,149 @@ export function useBytesALaRed(): string {
   return bytes;
 }
 
+// ---------------------------------------------------------------------------------------------
+// Fase 3 — las dos pistas, la transcripción y el idioma
+// ---------------------------------------------------------------------------------------------
+
+/** Por dónde sale el sonido del Mac, y por tanto si el micrófono va a oír al cliente. */
+export type Salida =
+  | { salida: "altavoces" }
+  | { salida: "auriculares" }
+  | { salida: "otra"; nombre: string }
+  | { salida: "no-se-sabe"; motivo: string };
+
+/** En qué estado está el motor de transcripción para un idioma. */
+export type Disponibilidad =
+  | { estado: "listo" }
+  | { estado: "sin-modelo" }
+  | { estado: "idioma-desconocido" }
+  | { estado: "sin-motor"; motivo: string };
+
+export type EstadoDePista = {
+  /** **Esto, y no el número de muestras, distingue una avería de un silencio.** Cuando nadie
+   *  habla, macOS no entrega ni una muestra: cero no es un fallo. */
+  abierta: boolean;
+  motivo: string | null;
+  bytes: number;
+  legible: string;
+  segundos: number;
+  muestrasRecibidas: number;
+  hablando: boolean;
+};
+
+export type EstadoDeEscucha = {
+  escuchando: boolean;
+  microfono: EstadoDePista;
+  sistema: EstadoDePista;
+  turnosEnMemoria: number;
+  bytesDelTranscript: number;
+  ramLegible: string;
+  motor: string;
+};
+
+export type Turno = {
+  pista: "microfono" | "sistema";
+  desdeMs: number;
+  hastaMs: number;
+  texto: string;
+  /** «14:02» — la hora del reloj, calculada en la parte nativa y viva solo en memoria. */
+  hora: string;
+  /** El micrófono captó por los altavoces lo que decía el cliente. No se borra: se marca. */
+  eco: boolean;
+};
+
+export type QueSabeTranscribir = {
+  motor: string;
+  techo: number;
+  idiomas: { codigo: string; disponibilidad: Disponibilidad }[];
+  motivo: string | null;
+};
+
+/**
+ * Lo que la maqueta dibuja en el estado «así se ve hoy · sprint 1»: las dos pistas abiertas con
+ * sus treinta segundos dentro. Vive aquí por la misma razón que la muestra de la banda — es lo
+ * que hace posible comparar el producto contra la maqueta en un navegador — y muere igual.
+ */
+const ESCUCHA_DE_MUESTRA: EstadoDeEscucha = {
+  escuchando: true,
+  microfono: { abierta: true, motivo: null, bytes: 1_920_000, legible: "1,8 MB", segundos: 30, muestrasRecibidas: 480_000, hablando: false },
+  sistema: { abierta: true, motivo: null, bytes: 1_920_000, legible: "1,8 MB", segundos: 30, muestrasRecibidas: 480_000, hablando: false },
+  turnosEnMemoria: 12,
+  bytesDelTranscript: 2_048,
+  ramLegible: "3,7 MB",
+  motor: "apple-speechanalyzer",
+};
+
+const SALIDA_DE_MUESTRA: Salida = { salida: "altavoces" };
+
+const TRANSCRIPCION_DE_MUESTRA: QueSabeTranscribir = {
+  motor: "apple-speechanalyzer",
+  techo: 5,
+  idiomas: [
+    { codigo: "es-ES", disponibilidad: { estado: "listo" } },
+    { codigo: "en-US", disponibilidad: { estado: "listo" } },
+  ],
+  motivo: null,
+};
+
+/**
+ * Lo que vive en memoria ahora mismo. Se refresca con cada novedad de la escucha y con el corte,
+ * **no con un temporizador**: los bytes solo cambian cuando entra audio o cuando se corta, y un
+ * sondeo cada segundo gastaría un candado compartido con el hilo que mira los marcos.
+ */
+export function useEscucha(): EstadoDeEscucha {
+  const [estado, setEstado] = useState<EstadoDeEscucha>(ESCUCHA_DE_MUESTRA);
+  useEffect(() => {
+    if (!hayTauri()) return;
+    let vivo = true;
+    const leer = () => {
+      void preguntar<EstadoDeEscucha | null>("estado_de_la_escucha").then((e) => {
+        if (vivo) setEstado(e ?? APAGADA);
+      });
+    };
+    leer();
+    const bajas = [escuchar("escucha", leer), escuchar("corte", leer)];
+    globalThis.addEventListener("focus", leer);
+    return () => {
+      vivo = false;
+      bajas.forEach((b) => b());
+      globalThis.removeEventListener("focus", leer);
+    };
+  }, []);
+  return estado;
+}
+
+/** Nadie está escuchando: ni pistas abiertas ni bytes. No es un error, es el estado de reposo. */
+const APAGADA: EstadoDeEscucha = {
+  escuchando: false,
+  microfono: { abierta: false, motivo: null, bytes: 0, legible: "0 B", segundos: 0, muestrasRecibidas: 0, hablando: false },
+  sistema: { abierta: false, motivo: null, bytes: 0, legible: "0 B", segundos: 0, muestrasRecibidas: 0, hablando: false },
+  turnosEnMemoria: 0,
+  bytesDelTranscript: 0,
+  ramLegible: "0 B",
+  motor: "—",
+};
+
+export function useSalidaDeAudio(): Salida {
+  return usePreguntaAlVolver<Salida>("salida_de_audio", SALIDA_DE_MUESTRA);
+}
+
+export function useQueSabeTranscribir(): QueSabeTranscribir {
+  return usePreguntaAlVolver<QueSabeTranscribir>("que_sabe_transcribir", TRANSCRIPCION_DE_MUESTRA);
+}
+
+export function empezarAEscuchar(idiomaDelConsultor: string, idiomaDelCliente: string) {
+  void llamar("empezar_a_escuchar", { idiomaDelConsultor, idiomaDelCliente });
+}
+
+export function dejarDeEscuchar() {
+  void llamar("dejar_de_escuchar");
+}
+
+export async function instalarIdioma(codigo: string): Promise<Disponibilidad | null> {
+  return preguntar<Disponibilidad>("instalar_idioma", { codigo });
+}
+
 export function abrirAjustesDe(permiso: "microfono" | "pantalla" | "accesibilidad") {
   void llamar("abrir_ajustes_de", { permiso });
 }

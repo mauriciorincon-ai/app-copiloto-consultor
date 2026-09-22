@@ -28,7 +28,7 @@
   <div class="n" data-para="kill"><b>Qué mirar:</b> pulsaste ⌥⎋. Todos los buffers en 0 B, tachados; la captura cortada. Lo que queda es lo que tú escribiste. La misma pantalla, después del corte — eso es lo que hace verificable la promesa.</div>
   <div class="n" data-para="al-cerrar"><b>Qué mirar:</b> el cambio que pediste. Dos columnas, una frente a otra: <b>lo tuyo queda</b> (lo que escribiste y lo que dijiste con tu voz, en texto y cifrado) y <b>lo del cliente muere</b> (su voz, su transcript, las capturas). El <b>audio nunca se guarda</b>, ni el tuyo: lo que queda de ti es texto. Conservar tus turnos es una casilla que enciendes tú; por defecto sigue apagada. Y abajo, la <b>bandeja</b>: lo único que no muere al instante, con su ventana y su borrado automático.</div>
   <div class="n" data-para="verificacion"><b>Qué mirar:</b> la prueba que corre en tu Mac, no una declaración. Cuatro comprobaciones con su resultado y su fecha; la de fuga inyectada dice cuándo se vio fallar. Si una se pone roja, aquí se ve.</div>
-  <div class="n" data-para="s1"><b>Qué mirar:</b> la misma pantalla en el sprint 1 — y es la más honesta de las tres, porque hoy <b>de verdad no vive nada en memoria</b>: no hay audio, ni transcript, ni lectura de pantalla. El <b>0 B</b> y el <b>RAM · 0 B</b> están leídos, no escritos en la interfaz. El kill-switch funciona y dice <b>cuántas piezas cortó de cuántas hay</b>: 3 de 7, porque las otras cuatro todavía no existen. Un «7 de 7» sería la mentira cómoda.</div>
+  <div class="n" data-para="s1"><b>Qué mirar (mirada 13):</b> la misma pantalla del sprint 1, con lo que cambió al llegar el audio. Ahora <b>sí vive algo en memoria</b> y se dice cuánto: dos anillos de treinta segundos y una ventana de doce turnos, contados, no estimados. El kill-switch dice <b>cuántas piezas cortó de cuántas hay</b>, y la cuenta subió de <b>3 de 7 a 6 de 7</b>: la única que falta es la lectura de pantalla, que llega en el sprint 2. Un «7 de 7» seguiría siendo la mentira cómoda.</div>
   <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
 </div>
 
@@ -233,11 +233,11 @@
     <div data-en="s1" style="display:flex;flex-direction:column;gap:14px">
       <div class="grid-2" style="grid-template-columns:1.25fr 1fr">
         <div class="tarjeta" style="padding-bottom:4px">
-          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Qué vive en la memoria ahora</span><span lang="en">What lives in memory now</span></h2><span class="mono" style="color:var(--ok)">RAM · 0 B</span></div>
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Qué vive en la memoria ahora</span><span lang="en">What lives in memory now</span></h2><span class="mono" style="color:var(--ink-2)">RAM · 3,7 MB</span></div>
           <div style="margin:0 -4px">
-            <div class="buffer pendiente"><svg class="ic s"><use href="#i-mic"/></svg><span class="que"><span lang="es">Audio · micrófono</span><span lang="en">Audio · microphone</span></span><span class="donde"><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></span><span class="cuanto">0 B</span></div>
-            <div class="buffer pendiente"><svg class="ic s"><use href="#i-sistema"/></svg><span class="que"><span lang="es">Audio · sistema</span><span lang="en">Audio · system</span></span><span class="donde"><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></span><span class="cuanto">0 B</span></div>
-            <div class="buffer pendiente"><svg class="ic s"><use href="#i-ojo"/></svg><span class="que">Transcript</span><span class="donde"><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></span><span class="cuanto">0 B</span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-mic"/></svg><span class="que"><span lang="es">Audio · micrófono</span><span lang="en">Audio · microphone</span></span><span class="donde"><span lang="es">ring buffer · últimos 30 s</span><span lang="en">ring buffer · last 30 s</span></span><span class="cuanto">1,8 MB</span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-sistema"/></svg><span class="que"><span lang="es">Audio · sistema</span><span lang="en">Audio · system</span></span><span class="donde"><span lang="es">ring buffer · últimos 30 s</span><span lang="en">ring buffer · last 30 s</span></span><span class="cuanto">1,8 MB</span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-ojo"/></svg><span class="que">Transcript</span><span class="donde"><span lang="es">ventana de 12 turnos</span><span lang="en">window of 12 turns</span></span><span class="cuanto">2 KB</span></div>
             <div class="buffer pendiente"><svg class="ic s"><use href="#i-pantalla"/></svg><span class="que"><span lang="es">Último frame leído</span><span lang="en">Last frame read</span></span><span class="donde"><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></span><span class="cuanto">0 B</span></div>
           </div>
         </div>
@@ -252,7 +252,7 @@
             <p><span lang="es">En esta versión no existe código capaz de abrir una conexión: el cero no se mantiene por disciplina.</span><span lang="en">In this version there is no code able to open a connection: the zero is not kept by discipline.</span></p>
           </div>
           <button class="kill" style="justify-content:center"><svg class="ic s relleno"><use href="#i-rayo"/></svg><span lang="es">Corta todo y vacía la memoria</span><span lang="en">Cut everything and wipe memory</span> <kbd>⌥⎋</kbd></button>
-          <p class="mono" style="color:var(--ink-2)"><span lang="es">3 de 7 piezas: las otras cuatro todavía no existen.</span><span lang="en">3 of 7 pieces: the other four do not exist yet.</span></p>
+          <p class="mono" style="color:var(--ink-2)"><span lang="es">6 de 7 piezas: la otra todavía no existe.</span><span lang="en">6 of 7 pieces: the other one does not exist yet.</span></p>
         </div>
       </div>
       <div class="tarjeta pendiente">

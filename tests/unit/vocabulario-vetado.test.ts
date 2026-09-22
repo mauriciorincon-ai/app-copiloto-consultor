@@ -22,8 +22,14 @@ const RAICES = [
   // la regla dura del vocabulario importa más que en ningún documento.
   "src",
   "src-tauri/src",
+  // Fase 3: el puente de Swift lleva comentarios en español, y el `Info.plist` con sus
+  // traducciones ES el copy que macOS enseña en su propio diálogo — el sitio donde una palabra
+  // vetada haría más daño, porque lo firma el sistema y no la app.
+  "src-tauri/nativo",
+  "src-tauri/Info.plist",
+  "src-tauri/lproj",
 ];
-const EXT = /\.(html|css|js|md|json|txt|ts|tsx|rs)$/;
+const EXT = /\.(html|css|js|md|json|txt|ts|tsx|rs|swift|plist|strings)$/;
 
 // Términos vetados (es/en). Se comparan en minúsculas y sin tildes.
 const VETADOS = [
