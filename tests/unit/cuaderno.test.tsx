@@ -98,10 +98,24 @@ describe("el cuaderno: lo que no existe se dice", () => {
     expect(screen.getByText(t.permAcople)).toBeInTheDocument();
   });
 
-  it("permisos: lo que la app aún no puede hacer sin permisos lleva «todavía no»", () => {
+  /**
+   * **Y este test decía «tres todavía no» mientras dos de las tres cosas ya funcionaban.**
+   *
+   * Es la cara simétrica del resto de la auditoría: la app escondiendo lo que SÍ hace, justo en la
+   * pantalla que existe para decir qué se puede hacer sin conceder un solo permiso. El test pasaba
+   * en verde porque repetía lo que la pantalla decía, no lo que la app hacía — un test escrito
+   * contra la interfaz y no contra el producto no puede cazar esto. Hallazgo M11.
+   */
+  it("permisos: lo que ya se puede hacer sin permisos dice «funciona», y solo lo que falta «todavía no»", () => {
     pinta("?pantalla=permisos");
     const tarjeta = screen.getByText(t.sinConcederNada).closest(".tarjeta") as HTMLElement;
-    expect(within(tarjeta).getAllByText(t.todaviaNo)).toHaveLength(3);
+    // Indexar el corpus (fase 4) y buscar a mano con ⌘⇧A: ninguna necesita permisos.
+    expect(within(tarjeta).getAllByText(t.funciona)).toHaveLength(2);
+    // Escribir notas y acuerdos es lo único que todavía no existe.
+    expect(within(tarjeta).getAllByText(t.todaviaNo)).toHaveLength(1);
+    expect(within(tarjeta).getByText(t.escribirNotas).closest(".fila")?.className).toContain(
+      "pendiente",
+    );
   });
 
   /**
@@ -152,8 +166,12 @@ describe("el cuaderno: lo que no existe se dice", () => {
     expect(screen.getByText(t.idiomaTitulo)).toBeInTheDocument();
     expect(screen.getAllByText(t.todaviaNo)).toHaveLength(3);
     expect(screen.getByText(t.cincoIdiomas)).toBeInTheDocument();
-    // Las dos pistas con su idioma y el estado real de su modelo.
-    expect(screen.getAllByText(t.modeloInstalado)).toHaveLength(2);
+    // Las dos pistas con su idioma y el estado real de su modelo. **La del cliente no lo tiene**,
+    // que es el estado más probable en un Mac de verdad y el que la muestra dibuja desde la
+    // auditoría: uno en español no trae el modelo de inglés. Y por eso hay un botón.
+    expect(screen.getByText(t.modeloInstalado)).toBeInTheDocument();
+    expect(screen.getByText(t.sinModelo)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: new RegExp(t.instalarModelo) })).toBeInTheDocument();
   });
 
   /**

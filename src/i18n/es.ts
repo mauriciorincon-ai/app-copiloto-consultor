@@ -12,15 +12,34 @@
 export const es = {
   banda: {
     // ---- cabecera: estado de la sesión ----
+    /**
+     * LAS CINCO CADENAS DE ABAJO SON LO QUE LA MAQUETA DIBUJA, y dentro del producto **ya no se
+     * pintan tal cual**: la banda las compone con lo que de verdad hay (hallazgo A1 de la
+     * auditoría). Siguen existiendo porque son lo que el arnés del gate de FIDELIDAD fotografía
+     * fuera de Tauri, y porque de ellas salen las piezas: los números y el nombre del cliente son
+     * del sistema, las palabras son de la maqueta.
+     */
     escuchando: "Escuchando · 2 pistas",
     protegido: "Meet · protegido",
     sinVerificar: "Zoom · sin verificar",
     sinAcople: "sin acople",
 
+    /** Las piezas con las que se compone la cabecera. Cada una existe en la maqueta. */
+    escuchandoPrefijo: "Escuchando",
+    pista: "pista",
+    pistas: "pistas",
+    protegidoSufijo: "protegido",
+    sinVerificarSufijo: "sin verificar",
+
     // ---- esperando ----
     esperando: "Cuando el cliente pregunte, aquí aparece tu evidencia.",
     corpus: "143 documentos · 5 unidades",
     reunion: "Páramo Azul · 12 min",
+    /** Las piezas del contador del corpus. `unidades` ya es el objeto de las cinco etiquetas. */
+    documento: "documento",
+    documentos: "documentos",
+    unidadPalabra: "unidad",
+    unidadesPalabra: "unidades",
 
     // ---- buscando ----
     buscando: "Buscando en tu corpus…",
@@ -90,9 +109,13 @@ export const es = {
      * MUESTRA SINTÉTICA «Páramo Azul» — la misma de la maqueta, con datos 100 % inventados.
      *
      * Vive aquí, y no en un módulo aparte, porque es texto bilingüe y el gate del diccionario lo
-     * vigila igual que al resto: así no puede colarse contenido que la maqueta no dice. **Muere
-     * en la fase 4**, cuando el corpus real alimente la banda; hasta entonces es lo que hace
-     * posible el gate de FIDELIDAD, que compara la banda construida contra la maqueta.
+     * vigila igual que al resto: así no puede colarse contenido que la maqueta no dice.
+     *
+     * **Decía «muere en la fase 4», y no murió:** la fase 4 trajo el corpus real y cinco de estas
+     * cadenas siguieron pintándose DENTRO del producto —incluida una frase puesta en boca del
+     * cliente— hasta la fase 2 de la auditoría (hallazgo A1). Ya no. Hoy solo se pintan **fuera de
+     * Tauri**, que es donde el arnés del gate de FIDELIDAD fotografía la banda para compararla con
+     * la maqueta, y dentro del producto no se miran. Morirán cuando muera ese gate, no antes.
      */
     muestra: {
       oidoQuien: "cliente 14:02",
@@ -238,8 +261,16 @@ export const es = {
     salieronDeTuEquipo: "salieron de tu equipo en esta reunión",
     modo: "Modo",
     modoLocal: "100 % local · API apagado",
+    /**
+     * **Esta frase decía otra cosa hasta la fase 2 de la auditoría**, y es el hallazgo A8: decía
+     * «no existe código capaz de abrir una conexión», que era verdad al escribirla y dejó de serlo
+     * en la fase 3, cuando el puente de voz ganó la descarga del modelo de macOS. Nadie volvió a
+     * mirar la frase — y estaba en la pantalla de Honestidad, el peor sitio posible para una
+     * afirmación caducada. Lo que ahora dice es comprobable, y lo comprueba
+     * `tests/unit/contador-de-red.test.ts` contando las puertas una a una.
+     */
     modoDetalle:
-      "En esta versión no existe código capaz de abrir una conexión: el cero no se mantiene por disciplina.",
+      "En esta versión la app no abre ninguna conexión: la única que existe la abre macOS cuando le pides instalar un modelo de voz.",
     piezasCola: "piezas: la otra todavía no existe.",
     loQueQuedara: "Lo que quedará cuando cierres",
     loQueQuedaraDetalle:
@@ -268,10 +299,24 @@ export const es = {
     tuMicrofono: "Tú · micrófono",
     clienteSistema: "Cliente · sistema",
     modeloInstalado: "modelo instalado",
+    /**
+     * LOS TRES MOTIVOS por los que un idioma no se puede transcribir, **en el diccionario**.
+     *
+     * Estaban escritos en español dentro de `Idioma.tsx`, así que la interfaz inglesa enseñaba
+     * «sin modelo» y «no lo reconoce» (hallazgo A6). Y el gate del diccionario no podía verlo:
+     * compara `i18n/` con la maqueta, no barre los componentes. Desde la fase 2 de la auditoría
+     * hay un barrido que sí lo hace.
+     */
+    sinModelo: "sin modelo",
+    noLoReconoce: "no lo reconoce",
+    sinMotorDeVoz: "sin motor",
+    /** El botón que faltaba (A7): sin él, un Mac sin el modelo no tenía cómo conseguirlo. */
+    instalarModelo: "Instalar el modelo",
+    instalando: "instalando…",
     cincoIdiomas: "Cinco idiomas listos a la vez, como mucho: lo impone macOS, no la app.",
     transcribeTuMac: "Transcribe tu Mac, no un servicio",
     transcribeTuMacDetalle:
-      "El motor de voz de macOS, dentro de tu equipo. Ningún audio sale para convertirse en texto. La única vez que la app toca la red es cuando tú pides instalar el modelo de un idioma: entonces macOS lo descarga, y no sale nada de aquí.",
+      "El motor de voz de macOS, dentro de tu equipo. Ningún audio sale para convertirse en texto. La única vez que toca la red es cuando pides instalar el modelo de un idioma: lo descarga macOS —mientras dura, instalando…— y si no puede: no lo reconoce · sin motor.",
     loQueTodaviaNo: "Lo que todavía no existe",
     variosIdiomasPorPista: "Varios idiomas a la vez, marcados por pista",
     loQueFaltaDetalle:

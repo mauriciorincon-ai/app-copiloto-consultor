@@ -246,11 +246,16 @@
         <p class="mono" style="color:var(--ink-2)"><span lang="es">Audio del sistema y Pantalla son un solo permiso en macOS: se conceden y se caen juntos.</span><span lang="en">System audio and Screen are a single macOS permission: they are granted and lost together.</span></p>
       </div>
       <div class="grid-2">
-        <div class="tarjeta pendiente">
+        <!-- DOS DE LAS TRES YA FUNCIONAN (fase 2 de la auditoría del sprint 001, hallazgo M11).
+             Este estado se dibujó antes de la fase 4 y se quedó con los tres «todavía no»: indexar
+             el corpus existe desde la fase 4 y buscar a mano es ⌘⇧A, y ninguna de las dos necesita
+             un permiso. Es el error simétrico del resto de la auditoría — la app escondiendo lo que
+             sí hace, en la pantalla que existe para decir qué se puede hacer sin conceder nada. -->
+        <div class="tarjeta">
           <h2 class="seccion"><span lang="es">Qué puedes hacer ya, sin conceder nada</span><span lang="en">What you can do now, granting nothing</span></h2>
-          <div class="fila pendiente"><svg class="ic s"><use href="#i-doc"/></svg><span class="crece"><span lang="es">Indexar tu corpus</span><span lang="en">Index your corpus</span></span><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
+          <div class="fila"><svg class="ic s"><use href="#i-doc"/></svg><span class="crece"><span lang="es">Indexar tu corpus</span><span lang="en">Index your corpus</span></span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Funciona</span><span lang="en">Works</span></span></div>
           <div class="fila pendiente"><svg class="ic s"><use href="#i-nota"/></svg><span class="crece"><span lang="es">Escribir notas y acuerdos</span><span lang="en">Write notes and agreements</span></span><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
-          <div class="fila pendiente"><svg class="ic s"><use href="#i-buscar"/></svg><span class="crece"><span lang="es">Buscar tu evidencia a mano</span><span lang="en">Search your evidence by hand</span></span><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
+          <div class="fila"><svg class="ic s"><use href="#i-buscar"/></svg><span class="crece"><span lang="es">Buscar tu evidencia a mano</span><span lang="en">Search your evidence by hand</span></span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Funciona</span><span lang="en">Works</span></span></div>
         </div>
         <div class="tarjeta">
           <h2 class="seccion"><span lang="es">Qué texto verás en macOS</span><span lang="en">What macOS will show you</span></h2>

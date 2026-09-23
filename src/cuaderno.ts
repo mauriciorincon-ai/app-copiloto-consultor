@@ -55,8 +55,17 @@ const PERMISOS_DE_MUESTRA: Permisos = {
  * accesibilidad —que van a otro proceso— para preguntar por algo que solo cambia cuando el
  * usuario hace algo fuera.
  */
-function usePreguntaAlVolver<T>(comando: string, deMuestra: T): T {
-  const [valor, setValor] = useState<T>(deMuestra);
+/**
+ * @param deMuestra lo que se enseña **fuera de Tauri**: los datos que dibuja la maqueta, y lo que
+ * hace posible el gate de FIDELIDAD.
+ * @param vacio lo que se enseña **dentro del producto mientras lo nativo no ha contestado**. Es un
+ * parámetro aparte y no el mismo valor por una razón que costó un hallazgo de auditoría: con la
+ * muestra como estado inicial, el producto pintaba «143 documentos · 5 unidades» y «Meet ·
+ * protegido» durante el primer instante de cada arranque —y para siempre si el comando fallaba—.
+ * Datos de una consultora inventada dentro de la app de alguien. La familia del hallazgo A1.
+ */
+function usePreguntaAlVolver<T>(comando: string, deMuestra: T, vacio: T): T {
+  const [valor, setValor] = useState<T>(() => (hayTauri() ? vacio : deMuestra));
   useEffect(() => {
     if (!hayTauri()) return;
     let vivo = true;
@@ -77,11 +86,24 @@ function usePreguntaAlVolver<T>(comando: string, deMuestra: T): T {
 
 export function useReunion(): Reunion {
   const t = useT().cuaderno;
-  return usePreguntaAlVolver<Reunion>("reunion_abierta", reunionDeMuestra(t.tituloDeMuestra));
+  return usePreguntaAlVolver<Reunion>("reunion_abierta", reunionDeMuestra(t.tituloDeMuestra), {
+    que: "ninguna",
+  });
 }
 
+/** Lo que se sabe de los permisos antes de preguntar: nada. Y «no lo sé» **no es «no»**. */
+const PERMISOS_SIN_PREGUNTAR: Permisos = {
+  microfono: "no-se-sabe",
+  pantalla: "no-se-sabe",
+  accesibilidad: "no-se-sabe",
+};
+
 export function usePermisos(): Permisos {
-  return usePreguntaAlVolver<Permisos>("permisos_de_macos", PERMISOS_DE_MUESTRA);
+  return usePreguntaAlVolver<Permisos>(
+    "permisos_de_macos",
+    PERMISOS_DE_MUESTRA,
+    PERMISOS_SIN_PREGUNTAR,
+  );
 }
 
 /**
@@ -190,12 +212,21 @@ const ESCUCHA_DE_MUESTRA: EstadoDeEscucha = {
 
 const SALIDA_DE_MUESTRA: Salida = { salida: "altavoces" };
 
+/**
+ * La muestra de la maqueta: el modelo del consultor instalado y **el del cliente sin instalar**.
+ *
+ * No es un capricho ni pesimismo: es el estado más probable en un Mac real —uno en español no trae
+ * el modelo de inglés— y es el que la maqueta dibuja desde la fase 2 de la auditoría. Mientras la
+ * muestra tenía los dos modelos listos, el gate de FIDELIDAD fotografiaba sesenta encuadres sin
+ * pasar nunca por el estado que la app iba a enseñarle a casi todo el mundo: el que no tenía cómo
+ * instalar nada (hallazgos A6 y A7).
+ */
 const TRANSCRIPCION_DE_MUESTRA: QueSabeTranscribir = {
   motor: "apple-speechanalyzer",
   techo: 5,
   idiomas: [
     { codigo: "es-ES", disponibilidad: { estado: "listo" } },
-    { codigo: "en-US", disponibilidad: { estado: "listo" } },
+    { codigo: "en-US", disponibilidad: { estado: "sin-modelo" } },
   ],
   motivo: null,
 };
@@ -239,11 +270,21 @@ const APAGADA: EstadoDeEscucha = {
 };
 
 export function useSalidaDeAudio(): Salida {
-  return usePreguntaAlVolver<Salida>("salida_de_audio", SALIDA_DE_MUESTRA);
+  // El motivo va **vacío** a propósito: nadie lo pinta hoy, y escribir aquí una frase en español
+  // sería meter copy de una sola lengua en el camino de una pantalla — el hallazgo A6 otra vez. Si
+  // algún día se enseña, saldrá del diccionario. Lo vigila el barrido de copy cableado.
+  return usePreguntaAlVolver<Salida>("salida_de_audio", SALIDA_DE_MUESTRA, {
+    salida: "no-se-sabe",
+    motivo: "",
+  });
 }
 
 export function useQueSabeTranscribir(): QueSabeTranscribir {
-  return usePreguntaAlVolver<QueSabeTranscribir>("que_sabe_transcribir", TRANSCRIPCION_DE_MUESTRA);
+  return usePreguntaAlVolver<QueSabeTranscribir>(
+    "que_sabe_transcribir",
+    TRANSCRIPCION_DE_MUESTRA,
+    { motor: "—", techo: 0, idiomas: [], motivo: null },
+  );
 }
 
 /**
@@ -300,8 +341,21 @@ export const CORPUS_DE_MUESTRA: EstadoDelCorpus = {
   bytesDelIndice: 19_293_798,
 };
 
+/** Sin carpeta señalada —el primer arranque de la app— no hay nada, y eso es lo que se enseña. */
+export const CORPUS_VACIO: EstadoDelCorpus = {
+  carpeta: null,
+  documentos: 0,
+  secciones: 0,
+  porUnidad: [],
+  sinUnidad: 0,
+  ilegibles: 0,
+  conjeturados: 0,
+  dondeVive: null,
+  bytesDelIndice: 0,
+};
+
 export function useCorpus(): EstadoDelCorpus {
-  return usePreguntaAlVolver<EstadoDelCorpus>("estado_del_corpus", CORPUS_DE_MUESTRA);
+  return usePreguntaAlVolver<EstadoDelCorpus>("estado_del_corpus", CORPUS_DE_MUESTRA, CORPUS_VACIO);
 }
 
 /**

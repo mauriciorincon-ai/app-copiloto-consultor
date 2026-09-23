@@ -4,7 +4,7 @@ import { useAsa } from "../asa";
 import { useTurnos } from "../turnos";
 import { useFicha, type Acumulada, type Aparicion } from "../ficha";
 import { hayTauri } from "../puente";
-import type { Turno } from "../cuaderno";
+import { useCorpus, useEscucha, useReunion, type Turno } from "../cuaderno";
 
 /**
  * LA BANDA — la forma principal de Angel Ghost durante una reunión.
@@ -56,8 +56,25 @@ export function Banda({
   verificado = true,
 }: PropsBanda) {
   const t = useT().banda;
+  const tc = useT().cuaderno;
   const m = t.muestra;
   const grande = ampliada || transcript;
+  /**
+   * **Fuera de Tauri manda la maqueta; dentro, lo que de verdad hay.**
+   *
+   * La banda llevaba todo el sprint pintando dentro del producto los datos de muestra: «Escuchando
+   * · 2 pistas» aunque nadie escuchara, «143 documentos» sin corpus señalado, «Páramo Azul · 12
+   * min» sin reunión, «Meet · protegido» en una llamada de Zoom, y —lo peor— **una frase inventada
+   * puesta en boca del cliente, con su hora**. Hallazgo A1 de la auditoría.
+   *
+   * Fuera de Tauri las cadenas de la maqueta siguen tal cual, y no es una puerta trasera: es lo que
+   * fotografía el arnés del gate de FIDELIDAD, que compara esta ventana contra `banda.html`. Dentro
+   * del producto cada una viene de su comando: la escucha, la reunión, el corpus y los turnos.
+   */
+  const deLaMaqueta = !hayTauri();
+  const reunion = useReunion();
+  const escucha = useEscucha();
+  const corpus = useCorpus();
   // La ficha viene del corpus del usuario. Fuera de Tauri es la de la maqueta, que es lo que
   // hace posible el gate de FIDELIDAD; dentro del producto es la de verdad, y si no hay ninguna
   // no se pinta ninguna.
@@ -83,6 +100,62 @@ export function Banda({
   // reunión con gente hablando parece una avería.
   const turnos = useTurnos();
   const asa = useAsa();
+
+  /** «1 documento» y no «1 documentos»: el contador es visible y la app es bilingüe por regla. */
+  const cuenta = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
+
+  const pistasAbiertas = [escucha.microfono, escucha.sistema].filter((p) => p.abierta).length;
+  const cliente = reunion.que === "detectada" ? reunion.cliente : null;
+  /**
+   * **La protección es un hecho comprobado por cliente de videollamada, no una etiqueta.** Estaba
+   * puesta a `true` por defecto, así que la banda decía «protegido» en Zoom — contra la promesa
+   * graduada que la app hace por escrito. El parámetro de URL sigue mandando fuera de Tauri porque
+   * el arnés de capturas tiene que poder recorrer los dos encuadres.
+   */
+  const protegido = deLaMaqueta
+    ? verificado
+    : reunion.que === "detectada" && reunion.proteccion === "Verificada";
+
+  /**
+   * Lo último que dijo el cliente, que es de quien son las palabras. Se saca de los turnos que ya
+   * están en la banda —pista del sistema, sin eco— y si no hay ninguno **no se dibuja nada**: la
+   * alternativa era la que había, inventar una frase y ponerle una hora.
+   */
+  const delCliente = turnos.filter((x) => x.pista === "sistema" && !x.eco);
+  const ultimoDelCliente = delCliente[delCliente.length - 1];
+  const oido = deLaMaqueta
+    ? { quien: m.oidoQuien, texto: m.oido }
+    : ultimoDelCliente && {
+        quien: `${t.cliente} ${ultimoDelCliente.hora}`,
+        texto: ultimoDelCliente.texto,
+      };
+
+  /** El chip del cliente: su nombre y si la protección está comprobada **en ese** cliente. */
+  const chipDelCliente = () => {
+    if (deLaMaqueta) {
+      return protegido ? (
+        <span className="cliente-b">{t.protegido}</span>
+      ) : (
+        <span className="cliente-b warn">
+          <Ic id="i-alert" s relleno />
+          {t.sinVerificar}
+        </span>
+      );
+    }
+    // Sin reunión no hay nada que proteger, y decirlo no es una advertencia: es el estado normal
+    // de la banda mientras el usuario prepara la llamada.
+    if (cliente === null) return <span className="cliente-b">{tc.sinReunion}</span>;
+    return protegido ? (
+      <span className="cliente-b">
+        {cliente} · {t.protegidoSufijo}
+      </span>
+    ) : (
+      <span className="cliente-b warn">
+        <Ic id="i-alert" s relleno />
+        {cliente} · {t.sinVerificarSufijo}
+      </span>
+    );
+  };
 
   const atajos = (
     <span className="atajos-b">
@@ -144,10 +217,17 @@ export function Banda({
       </span>
 
       <div className="cab-b">
-        <span className="marca-min">
-          <Ic id="i-check-circle" s relleno />
-          {t.escuchando}
-        </span>
+        {/* «Escuchando» solo cuando se está escuchando de verdad, y con las pistas que de verdad
+            se abrieron. Antes lo decía siempre — también durante la media hora en que la banda
+            está abierta y el usuario todavía no ha pulsado «Iniciar sesión». */}
+        {(deLaMaqueta || escucha.escuchando) && (
+          <span className="marca-min">
+            <Ic id="i-check-circle" s relleno />
+            {deLaMaqueta
+              ? t.escuchando
+              : `${t.escuchandoPrefijo} · ${cuenta(pistasAbiertas, t.pista, t.pistas)}`}
+          </span>
+        )}
 
         {!acoplada && (
           <span className="cliente-b warn">
@@ -156,14 +236,7 @@ export function Banda({
           </span>
         )}
 
-        {verificado ? (
-          <span className="cliente-b">{t.protegido}</span>
-        ) : (
-          <span className="cliente-b warn">
-            <Ic id="i-alert" s relleno />
-            {t.sinVerificar}
-          </span>
-        )}
+        {chipDelCliente()}
 
         <span className="red cero mono">
           <Ic id="i-subir" s />
@@ -176,15 +249,31 @@ export function Banda({
           <>
             <span className="ficha-b">
               <span className="voz-b">{t.esperando}</span>
+              {/* El corpus se compone con los números que el índice tiene, no con los de la
+                  maqueta. Con los datos de muestra sale la misma línea que `banda.html` dibuja —
+                  143 documentos y cinco unidades—, así que el encuadre del gate no se mueve. */}
               <span className="meta-b">
                 <Ic id="i-doc" s />
-                {t.corpus}
+                {cuenta(corpus.documentos, t.documento, t.documentos)} ·{" "}
+                {cuenta(
+                  corpus.porUnidad.filter((u) => u.documentos > 0).length,
+                  t.unidadPalabra,
+                  t.unidadesPalabra,
+                )}
               </span>
             </span>
             <span className="lado-b">
               <span className="meta-b">
                 <Ic id="i-reloj" s />
-                {t.reunion}
+                {/* El nombre de la reunión sale del detector. **Los «12 min» de la maqueta no se
+                    pintan dentro del producto**: nadie mide todavía cuánto lleva la llamada, y
+                    escribir un número que no se mide es lo que esta pantalla existe para no hacer.
+                    Queda declarado en la bitácora para la mirada. */}
+                {deLaMaqueta
+                  ? t.reunion
+                  : reunion.que === "detectada"
+                    ? (reunion.titulo ?? reunion.cliente)
+                    : tc.sinReunion}
               </span>
               {atajos}
             </span>
@@ -194,12 +283,14 @@ export function Banda({
         {estadoReal === "buscando" && (
           <>
             <span className="ficha-b">
-              <span className="oido">
-                <span className="quien">
-                  <Ic id="i-sistema" s /> {m.oidoQuien}
+              {oido && (
+                <span className="oido">
+                  <span className="quien">
+                    <Ic id="i-sistema" s /> {oido.quien}
+                  </span>
+                  <q>{oido.texto}</q>
                 </span>
-                <q>{m.oido}</q>
-              </span>
+              )}
               <span className="meta-b">
                 <Ic id="i-buscar" s />
                 {t.buscando}
@@ -245,12 +336,13 @@ export function Banda({
                 {aparicion.buscado}
                 {t.comillaCierra}
               </span>
-              {grande && (
+              {grande && (deLaMaqueta || oido) && (
                 <span className="oido">
                   <span className="quien">
-                    <Ic id="i-sistema" s /> {t.cliente} {aparicion.hora}
+                    <Ic id="i-sistema" s />{" "}
+                    {deLaMaqueta ? `${t.cliente} ${aparicion.hora}` : oido?.quien}
                   </span>
-                  <q>{m.oidoIso}</q>
+                  <q>{deLaMaqueta ? m.oidoIso : oido?.texto}</q>
                 </span>
               )}
               <span className="maniobra-b">

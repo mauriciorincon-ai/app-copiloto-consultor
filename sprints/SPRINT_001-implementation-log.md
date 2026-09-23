@@ -1782,3 +1782,160 @@ devolviendo `panic = "abort"` al manifiesto.
 **Y la promesa se comprobó EN RELEASE una vez, a mano**, que es la pregunta que este hallazgo hace:
 `cargo test --release --lib corpus::` → **46 pruebas verdes**, la del PDF roto entre ellas. Antes de
 quitar la línea, ese mismo comando no habría llegado al final: habría muerto el proceso.
+
+---
+
+## Bloque 2 — la app no podía afirmar lo que afirmaba
+
+### A1 · La banda pintaba la consultora inventada DENTRO del producto
+
+Cinco cosas, y la última es la que no tiene excusa:
+
+| Lo que la banda decía en el producto | Lo que había |
+|---|---|
+| «Escuchando · 2 pistas» | los dos grifos cerrados, media hora antes de que el usuario pulse «Iniciar sesión» |
+| «143 documentos · 5 unidades» | ninguna carpeta señalada |
+| «Páramo Azul · 12 min» | ninguna reunión |
+| «Meet · protegido» | una llamada de Zoom, contra la promesa **graduada** que la app hace por escrito |
+| «cliente 14:02 · "Y la limpieza de datos, ¿eso está dentro del alcance?"» | **una frase inventada puesta en boca del cliente, con hora falsa** |
+
+Todo estaba ya disponible para decir la verdad: `reunion_abierta`, `estado_de_la_escucha`,
+`estado_del_corpus` y `turnos_recientes` existen desde las fases 2, 3 y 4. La banda simplemente no
+los preguntaba.
+
+**Cómo se arregló sin mover un píxel del gate de fidelidad.** Dentro de Tauri cada dato viene de su
+comando; **fuera** siguen las cadenas de la maqueta, que es lo que el arnés de capturas fotografía.
+Y donde se pudo, la composición con los datos de muestra da **exactamente** la línea de la maqueta:
+«143 documentos · 5 unidades» sale de `documentos` + `unidades con documentos`, y con la muestra son
+143 y 5. Lo vigila un test nuevo que compara la composición contra la cadena del diccionario en los
+dos idiomas — porque una diferencia de un espacio ahí vale 0,0x % de píxeles y pasa por debajo del
+umbral del gate sin que nadie la vea.
+
+Los «12 min» de la maqueta **no se pintan** dentro del producto: nadie mide todavía cuánto lleva la
+llamada, y escribir un número que no se mide es lo que esta app existe para no hacer. Declarado.
+
+**Y la familia del mismo defecto, que el hallazgo no nombraba pero es el mismo:** las cuatro
+pantallas del cuaderno arrancaban con los datos de muestra **dentro del producto** y los enseñaban
+hasta que lo nativo contestaba —o para siempre, si el comando fallaba—. `usePreguntaAlVolver` recibe
+ahora dos valores: la muestra para fuera de Tauri y **el vacío honesto** para dentro.
+
+**En rojo:** las cinco pruebas nuevas de `la-ficha-llega-a-la-banda.test.tsx` con `deLaMaqueta =
+true`, y el mensaje es el propio hallazgo — *«expected 'Escuchando · 2 pistasMeet · protegido…' not
+to contain 'Escuchando · 2 pistas'»*.
+
+### A8 · «No existe código capaz de abrir una conexión» — y existía desde la fase 3
+
+La frase estaba **en la pantalla de Honestidad**, el peor sitio posible. Era cierta cuando se
+escribió y dejó de serlo en la fase 3, cuando el puente de voz ganó la descarga del modelo de macOS.
+Nadie volvió a mirarla. Y el gate que la respaldaba **no leía `src-tauri/nativo/`**: el único archivo
+del producto capaz de abrir una conexión era el único que ese barrido no abría.
+
+Ahora la pantalla dice lo que se puede comprobar —*«la app no abre ninguna conexión: la única que
+existe la abre macOS cuando le pides instalar un modelo de voz»*— y el gate **cuenta las puertas**:
+son dos líneas, cada una con su ADR en la misma línea, y si aparece una tercera el test falla
+diciendo que hay que volver a escribir la frase de la pantalla. Un «cero» absoluto sostenido por un
+barrido incompleto vale menos que un número exacto que se puede comprobar.
+
+**Dos rojos:** un `URLSession.shared` sin declarar en el puente (*«salidas a la red en el puente
+nativo sin declarar»*) y una tercera puerta declarada (*«cambió el número de puertas a la red»*).
+
+### A6 · Copy en español cableado, y el agujero de clase del gate del diccionario
+
+`Idioma.tsx` devolvía «sin modelo» y «no lo reconoce» escritos en español **dentro del código**, así
+que la interfaz inglesa los enseñaba en español. Y los ocho encuadres en inglés del gate de
+FIDELIDAD no podían verlo: con los datos de muestra esos estados no se pintaban nunca.
+
+El gate del diccionario tenía un agujero de clase — **solo miraba `i18n/`**. Ahora barre los
+componentes con dos reglas:
+
+1. **Ninguna cadena de un componente puede ser un valor que el diccionario ya traduce.** Sin falsos
+   positivos posibles: si está traducida y alguien la escribe igual a mano, esa copia no es bilingüe.
+2. Toda cadena de dos palabras escrita a mano **tiene que existir en la maqueta**, como las del
+   diccionario.
+
+Lo que no es copy se reconoce por su forma y no por una lista que mantener: clases del design system
+(cada palabra es un selector de `ghost.css`), valores de CSS, y mensajes de `throw`/`Error(`/
+`console.` — estos últimos se recortan **enteros y antes de partir en líneas**, porque una llamada a
+`Error(` ocupa cinco y mirando solo la línea del literal el mensaje de un `throw` se leía como copy.
+
+**Tres vueltas atrás que vale registrar**, porque las tres eran el gate midiendo ruido:
+
+- la regla 1 saltaba con `"transcript"`, `"Angel Ghost"` y `"Transcript"`: se escriben **igual en los
+  dos idiomas**, así que un `aria-label` con ese texto no rompe nada. Fuera las que coinciden.
+- saltaba con `"unidad"` y `"track"`, que son **clases** del design system homónimas de palabras del
+  diccionario. Las exclusiones de forma van primero.
+- saltaba con `"marco"`, `"caso"` y `"perfil"`: son **las claves** de las cinco unidades del corpus,
+  y en español se escriben igual que sus etiquetas. Por eso las dos reglas exigen dos palabras. Lo
+  que se pierde queda dicho en el test: una etiqueta traducida de una sola palabra pasaría.
+
+**En rojo** devolviendo las dos cadenas a `Idioma.tsx`: *«"sin modelo" — el diccionario lo traduce en
+"cuaderno.sinModelo"»*.
+
+### A7 · No había forma de instalar el modelo de voz
+
+`instalar_idioma` existía **sin un solo llamador** desde la fase 3, y tres comentarios del código
+hablaban de «el botón de la pantalla de Idioma». En un Mac sin el modelo del cliente —el caso normal:
+uno en español no trae el de inglés— la transcripción del cliente era inalcanzable desde dentro de la
+app, y la pantalla solo decía «sin modelo».
+
+Es el estado que la maqueta no dibujaba, así que **se dibujó primero**: `docs/diseno/idioma.html`
+gana la pista del cliente sin modelo, con su chip ámbar y su botón. Luego el producto. Y la muestra
+de `TRANSCRIPCION_DE_MUESTRA` cambia a ese estado, que es lo que hace que el gate de fidelidad y los
+e2e pasen por él: mientras los dos modelos estaban listos, sesenta encuadres no tocaban nunca el
+estado que la app iba a enseñarle a casi todo el mundo.
+
+El botón **solo aparece cuando hay algo que descargar**: con un idioma que este Mac no conoce, o sin
+motor de voz, no hay nada que instalar y ofrecerlo sería mandar al usuario a un botón que no puede
+funcionar. Mientras macOS descarga dice «instalando…» y no se puede volver a pulsar.
+
+**En rojo:** cinco pruebas nuevas en `idioma-sin-modelo.test.tsx`; sin el botón, *«Unable to find an
+accessible element with the role "button" and name /Instalar el modelo/»*.
+
+**Y el precio de dibujarlo, medido:** la pantalla de Idioma estaba **a 0 px del borde** de la ventana
+de 640, así que cada cosa nueva la desbordaba. Tres pasadas del gate de fidelidad para colocarla —
+botón en fila propia **+58 px**, al lado del motivo **+37 px**, en la columna que ya ocupa las dos
+filas del `buffer` **+29 px**— y una cuarta comprimiendo la frase de la franja. Lo midió el gate, no
+el ojo.
+
+### Las 9 frases que habían caducado
+
+Cuatro se volvieron verdad al arreglar el código (A3, A4, A7 y la de «sin verificar» de A1); cinco se
+reescribieron:
+
+| Dónde | Qué se hizo |
+|---|---|
+| `MANUAL` · la ficha | fuera «o se queda callado»: **el disparo por silencio no está cableado** (`por_silencio` no tiene llamadores). Se declara como limitación en vez de dejarlo a medias |
+| `MANUAL` · FAQ de internet | ahora dice **dónde** está el botón, porque ahora existe |
+| `MANUAL` · features | nueva sección «El modelo de voz de un idioma» + nota de qué corrigió la auditoría |
+| `i18n` · comentario de la muestra | decía «muere en la fase 4» y no murió; ahora dice qué la mantiene viva y hasta cuándo |
+| `Permisos.tsx` + su maqueta | «Todavía no» en **dos cosas que ya se podían hacer** (M11) |
+| `kit-de-prueba/audio/LEEME.md` | prometía tres cosas «para la fase 5»; ahora tabla de qué hay y qué es deuda |
+| `corpus/leer.rs` · `escucha/mod.rs` | las dos cabeceras dicen desde cuándo su promesa es cierta, y por qué antes no lo era |
+
+**Y un test que encodificaba la mentira:** `permisos: lo que la app aún no puede hacer…` afirmaba
+«tres todavía no» mientras dos de las tres funcionaban. Pasaba en verde porque repetía lo que la
+pantalla decía, no lo que la app hacía. Un test escrito contra la interfaz no puede cazar esto.
+
+#### El desborde que queda, medido y declarado
+
+La pantalla de Idioma **estaba a 0 px del borde** de la ventana de 640 antes de la auditoría. Con la
+fila del modelo que falta y su botón, el estado «sin modelo» mide **667 px: 29 px de desplazamiento**.
+Los otros tres bloques no se tocaron.
+
+| Bloque | Alto | Nota |
+|---|---|---|
+| título | 68 px | |
+| `grid-2` | 238 px | lo manda la tarjeta de la derecha; la fila del cliente pasa de 53 a 73 px por el botón |
+| `franja ok` | 89 px | tres líneas, las mismas que tenía |
+| `tarjeta pendiente` | 188 px | |
+
+**Por qué se deja así y no se recorta copy.** Las dos salidas eran quitar 29 px de texto —y el único
+candidato era la frase de la franja que dice *«la única vez que la app toca la red…»*, que es una de
+las afirmaciones que esta app existe para sostener— o aceptar el desplazamiento. Recortar honestidad
+para poner un gate en verde es exactamente el fallo que esta auditoría entera está pagando.
+
+Y el desborde **solo existe en el estado que ofrece la acción**: en cuanto el modelo está instalado la
+fila vuelve a 53 px y la pantalla cabe. El contenedor es desplazable y **alcanzable con el teclado**
+desde la fase 5, que es justo el cinturón que esta situación necesita.
+
+Va a la **mirada** con su número delante: si el usuario prefiere recortar, se recorta con él.

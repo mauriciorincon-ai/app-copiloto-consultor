@@ -12,9 +12,19 @@ export const en: Diccionario = {
     sinVerificar: "Zoom · not verified",
     sinAcople: "not docked",
 
+    escuchandoPrefijo: "Listening",
+    pista: "track",
+    pistas: "tracks",
+    protegidoSufijo: "protected",
+    sinVerificarSufijo: "not verified",
+
     esperando: "When the client asks, your evidence shows up here.",
     corpus: "143 documents · 5 units",
     reunion: "Páramo Azul · 12 min",
+    documento: "document",
+    documentos: "documents",
+    unidadPalabra: "unit",
+    unidadesPalabra: "units",
 
     buscando: "Searching your corpus…",
 
@@ -198,7 +208,7 @@ export const en: Diccionario = {
     modo: "Mode",
     modoLocal: "100 % local · API off",
     modoDetalle:
-      "In this version there is no code able to open a connection: the zero is not kept by discipline.",
+      "In this version the app opens no connection: the only one there is belongs to macOS, when you ask it to install a speech model.",
     piezasCola: "pieces: the other one does not exist yet.",
     loQueQuedara: "What will be left when you close",
     loQueQuedaraDetalle:
@@ -227,10 +237,15 @@ export const en: Diccionario = {
     tuMicrofono: "You · microphone",
     clienteSistema: "Client · system",
     modeloInstalado: "model installed",
+    sinModelo: "no model",
+    noLoReconoce: "not recognised",
+    sinMotorDeVoz: "no engine",
+    instalarModelo: "Install the model",
+    instalando: "installing…",
     cincoIdiomas: "Five languages ready at a time, at most: macOS imposes it, not the app.",
     transcribeTuMac: "Your Mac transcribes, not a service",
     transcribeTuMacDetalle:
-      "The macOS speech engine, inside your machine. No audio leaves to become text. The only time the app touches the network is when you ask to install a language model: macOS downloads it then, and nothing leaves here.",
+      "The macOS speech engine, inside your machine. No audio leaves to become text. The only time it touches the network is when you ask to install a language model: macOS downloads it —while it runs, installing…— and if it cannot: not recognised · no engine.",
     loQueTodaviaNo: "What does not exist yet",
     variosIdiomasPorPista: "Several languages at once, ticked per track",
     loQueFaltaDetalle:

@@ -635,6 +635,55 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     let _ = std::fs::remove_dir_all(&fuente);
 }
 
+/// **LA CANARIA EN EL LOG** — la otra mitad del término plantado, que la DoD pedía y no existía.
+///
+/// El test de arriba vigila el DISCO: ni un archivo nuevo contiene lo que dijo el cliente. El log
+/// es la otra salida por la que el texto de un tercero se escapa —a la consola, al `Console.app`
+/// de macOS, al portapapeles de quien pega una traza en un mensaje— y nadie la miraba. Hallazgo A10
+/// de la auditoría del sprint 001.
+///
+/// **Se corre la sesión en un proceso HIJO** y se lee su salida. Capturar `println!` desde dentro
+/// del propio proceso obligaría a reemplazar la salida estándar por una de mentira, y entonces el
+/// gate mediría el logger del test y no el del producto. El hijo es este mismo binario con el
+/// filtro exacto de la sesión, así que no hay forma de que se llame a sí mismo en bucle.
+///
+/// Se ve en rojo poniendo `println!("{}", turno.texto)` en cualquier sitio del camino.
+#[test]
+fn la_canaria_del_cliente_no_aparece_en_el_log() {
+    let yo = std::env::current_exe().expect("no se supo cuál es este binario de pruebas");
+    let hijo = std::process::Command::new(&yo)
+        .args([
+            "una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus",
+            "--exact",
+            "--nocapture",
+            "--test-threads=1",
+        ])
+        .output()
+        .expect("no se pudo correr la sesión en un proceso hijo");
+
+    let salida =
+        format!("{}{}", String::from_utf8_lossy(&hijo.stdout), String::from_utf8_lossy(&hijo.stderr));
+
+    // Que el hijo haya corrido DE VERDAD la sesión: si no, esto no mide nada y se vería verde.
+    assert!(hijo.status.success(), "la sesión falló en el hijo:\n{salida}");
+    assert!(
+        salida.contains("[sesión]") && salida.contains("[efímero]"),
+        "el hijo no llegó a correr la sesión: este gate no midió nada.\n{salida}"
+    );
+
+    let lineas: Vec<&str> = salida.lines().filter(|l| l.contains(CANARIA)).collect();
+    assert!(
+        lineas.is_empty(),
+        "lo que dijo el cliente salió por el log, en {} línea(s):\n  {}",
+        lineas.len(),
+        lineas.join("\n  ")
+    );
+    println!(
+        "[canaria] {} líneas de log revisadas · ni una con la frase del cliente",
+        salida.lines().count()
+    );
+}
+
 // ═══════════════════════════════════════════════ el KIT DE EVALUACIÓN v0 (nDCG@5 y la negativa)
 
 // (bloque) Treinta preguntas contra el corpus sintético del kit, con umbrales declarados.
@@ -706,16 +755,20 @@ fn el_kit_de_evaluacion_mide_el_retriever_y_su_negativa() {
     corpus.indexar(Path::new(&format!("{raiz}/corpus")), &|_| {}).expect("no se indexó el kit");
     assert_eq!(corpus.estado().documentos, 6, "el corpus del kit cambió de tamaño");
 
-    // ---- nDCG@5 sobre las treinta que SÍ están
+    // ---- nDCG@5 sobre las treinta que SÍ están, y la LATENCIA de cada una
     let mut suma = 0.0;
     let mut fallos = Vec::new();
+    let mut latencias = Vec::new();
     for c in &kit.preguntas {
-        let puestos: Vec<String> = corpus
-            .buscar(&c.dice, 5)
-            .unwrap()
-            .into_iter()
-            .map(|h| h.seccion.unwrap_or_default())
-            .collect();
+        // Se cronometra lo mismo que cronometra el producto —buscar y armar la ficha—, y se
+        // cronometra **por pregunta**, no el total: una media esconde los picos, y el presupuesto
+        // del sprint es sobre el turno que el usuario está esperando, no sobre el promedio del día.
+        let reloj = Instant::now();
+        let hallazgos = corpus.buscar(&c.dice, 5).unwrap();
+        let _ = armar(&c.dice, &hallazgos);
+        latencias.push(reloj.elapsed().as_micros() as u64);
+        let puestos: Vec<String> =
+            hallazgos.into_iter().map(|h| h.seccion.unwrap_or_default()).collect();
         let n = ndcg_5(&puestos, &c.espera);
         suma += n;
         if n == 0.0 {
@@ -723,6 +776,9 @@ fn el_kit_de_evaluacion_mide_el_retriever_y_su_negativa() {
         }
     }
     let ndcg = suma / kit.preguntas.len() as f64;
+    latencias.sort_unstable();
+    let percentil = |p: f64| latencias[((latencias.len() as f64 - 1.0) * p).round() as usize];
+    let (mediana, p90, peor) = (percentil(0.5), percentil(0.9), *latencias.last().unwrap());
 
     // ---- y la negativa sobre las que NO están
     let mut rechazadas = 0;
@@ -743,6 +799,10 @@ fn el_kit_de_evaluacion_mide_el_retriever_y_su_negativa() {
     println!("│ rechazo         {rechazo:.3}   (mínimo {RECHAZO_MINIMO:.2})");
     println!("│ preguntas       {}", kit.preguntas.len());
     println!("│ sin respuesta   {}", kit.sin_respuesta.len());
+    println!("├─ de la pregunta a la ficha (µs) ───────────────────");
+    println!("│ mediana {mediana}   p90 {p90}   peor {peor}");
+    println!("│ presupuesto del sprint: {} µs de FIN DE TURNO a ficha,", PRESUPUESTO_US);
+    println!("│ del que esto es el tramo determinista — sin captura ni STT.");
     println!("╰────────────────────────────────────────────────────");
     if !fallos.is_empty() {
         println!("las que no encontraron su sección en los cinco primeros:\n{}", fallos.join("\n"));
@@ -758,4 +818,121 @@ fn el_kit_de_evaluacion_mide_el_retriever_y_su_negativa() {
         fallos.len()
     );
     assert!(rechazo >= RECHAZO_MINIMO, "rechazó {rechazadas} de {}", kit.sin_respuesta.len());
+    // La mediana era lo que el plan pedía y el kit no daba (hallazgo A9). Se compara contra el
+    // presupuesto entero a propósito: lo que hay que saber es cuánto de los 4 s se lleva la parte
+    // que no depende del Mac ni del motor de voz. Hoy son microsegundos; el día que alguien meta
+    // una espera en este camino, este número lo dirá antes que una reunión.
+    assert!(
+        mediana < PRESUPUESTO_US,
+        "la mediana de la búsqueda son {mediana} µs y el presupuesto entero es {PRESUPUESTO_US}"
+    );
+    assert!(peor < PRESUPUESTO_US, "la peor pregunta del kit tardó {peor} µs");
+}
+
+/// El presupuesto del sprint, en microsegundos: **4 s del fin de turno a la ficha en la banda.**
+/// Lo fija la orden. Aquí se mide solo el tramo determinista —buscar y armar—, y se dice.
+const PRESUPUESTO_US: u64 = 4_000_000;
+
+// =============================================================================================
+// el disparador, medido: precisión y recall sobre una reunión marcada turno a turno
+// =============================================================================================
+//
+// **Faltaba, y estaba en el plan del sprint** (hallazgo A9 de la auditoría): «P/R del disparo ±1
+// turno». Sin esto, del disparador solo se sabía que sus reglas pasaban sus propios tests unitarios
+// — que es otra cosa que saber cuántas veces se equivoca en una reunión entera, con la espera entre
+// fichas y la negativa a repetir metidas en la cuenta.
+//
+// Los dos errores no cuestan lo mismo, y por eso se miden por separado:
+//   · un **falso positivo** interrumpe al consultor con una ficha que nadie pidió;
+//   · un **falso negativo** es una ficha que no llega — molesta menos y se arregla con `⌘⇧A`.
+// De ahí que el umbral de precisión sea más alto que el de recall.
+
+/// Precisión mínima: **ni un falso positivo** sobre el kit. Medida 1.000 en la primera corrida.
+const PRECISION_MINIMA: f64 = 1.0;
+
+/// Recall mínimo: **1.000, el mismo que se midió.**
+///
+/// Se dejó primero en 0,90 «por si un empate léxico cambia de lado», y la demo en rojo lo tumbó:
+/// devolviendo `MINIMO_CON_SIGNO` a 3 —el defecto real que la fase 4 encontró y arregló—
+/// «¿Tienen certificación?» deja de disparar, el recall baja a 0,909… **y el test seguía verde**.
+/// Con once turnos que deben disparar, un umbral del 90 % regala uno. No hay ninguno regalable:
+/// cada turno de este kit está marcado a mano porque la app tiene que acertarlo. Bajar este número
+/// exige decirlo en la bitácora, como el del nDCG.
+const RECALL_MINIMO: f64 = 1.0;
+
+#[derive(serde::Deserialize)]
+struct KitDelDisparo {
+    turnos: Vec<TurnoMarcado>,
+}
+
+#[derive(serde::Deserialize)]
+struct TurnoMarcado {
+    dice: String,
+    pista: String,
+    #[serde(default)]
+    eco: bool,
+    ms: usize,
+    dispara: bool,
+    porque: String,
+}
+
+#[test]
+fn el_kit_mide_el_disparador_turno_a_turno() {
+    let _turno = turno();
+    let raiz = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba");
+    let kit: KitDelDisparo = serde_json::from_str(
+        &std::fs::read_to_string(format!("{raiz}/disparo.json")).expect("falta disparo.json"),
+    )
+    .expect("disparo.json no se pudo leer");
+
+    // El vocabulario sale del corpus del kit, porque una de las reglas es «nombró algo tuyo».
+    let mut corpus = Corpus::en_memoria().unwrap();
+    corpus.indexar(Path::new(&format!("{raiz}/corpus")), &|_| {}).expect("no se indexó el kit");
+    let vocabulario = corpus.vocabulario().to_vec();
+
+    let mut disparador = Disparador::nuevo();
+    let (mut ciertos, mut falsos_positivos, mut falsos_negativos) = (0, Vec::new(), Vec::new());
+
+    for t in &kit.turnos {
+        let turno = app_copiloto_consultor_lib::stt::Turno {
+            pista: if t.pista == "microfono" { Pista::Microfono } else { Pista::Sistema },
+            desde_ms: t.ms.saturating_sub(2_000),
+            hasta_ms: t.ms,
+            texto: t.dice.clone(),
+            hora: "14:02".into(),
+            eco: t.eco,
+        };
+        let ctx = Contexto { ahora_ms: t.ms, vocabulario: &vocabulario };
+        let disparo = disparador.mirar(&turno, &ctx);
+        match (disparo.is_some(), t.dispara) {
+            (true, true) => ciertos += 1,
+            (true, false) => falsos_positivos.push(format!("  «{}» — {}", t.dice, t.porque)),
+            (false, true) => falsos_negativos.push(format!("  «{}» — {}", t.dice, t.porque)),
+            (false, false) => {}
+        }
+    }
+
+    let disparados = ciertos + falsos_positivos.len();
+    let esperados = ciertos + falsos_negativos.len();
+    let precision = if disparados == 0 { 1.0 } else { ciertos as f64 / disparados as f64 };
+    let recall = if esperados == 0 { 1.0 } else { ciertos as f64 / esperados as f64 };
+
+    println!("\n╭─ el disparador sobre el kit ───────────────────────");
+    println!("│ turnos          {}", kit.turnos.len());
+    println!("│ aciertos        {ciertos}");
+    println!("│ precisión       {precision:.3}   (mínimo {PRECISION_MINIMA:.2})");
+    println!("│ recall          {recall:.3}   (mínimo {RECALL_MINIMO:.2})");
+    println!("╰────────────────────────────────────────────────────");
+    if !falsos_positivos.is_empty() {
+        println!("disparó y no debía:\n{}", falsos_positivos.join("\n"));
+    }
+    if !falsos_negativos.is_empty() {
+        println!("no disparó y debía:\n{}", falsos_negativos.join("\n"));
+    }
+
+    assert!(
+        precision >= PRECISION_MINIMA,
+        "precisión {precision:.3}: el disparador interrumpe cuando no debe"
+    );
+    assert!(recall >= RECALL_MINIMO, "recall {recall:.3}: se está quedando callado cuando debería buscar");
 }

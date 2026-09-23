@@ -167,3 +167,33 @@ describe("la banda", () => {
     expect(screen.getByText(en.banda.escuchando)).toBeInTheDocument();
   });
 });
+
+/**
+ * **La composición tiene que dar EXACTAMENTE la línea de la maqueta.**
+ *
+ * Desde el arreglo del hallazgo A1, la banda no pinta las cadenas de la maqueta: las compone con
+ * los números que de verdad hay («143 documentos · 5 unidades» = documentos del índice + unidades
+ * con documentos). Fuera de Tauri los números son los de muestra, así que la línea tiene que salir
+ * carácter a carácter igual — si no, el gate de FIDELIDAD compara contra un documento que ya no
+ * describe el producto, y esa diferencia es de 0,0x % de píxeles: pasa por debajo del umbral sin
+ * que nadie la vea.
+ */
+describe("la banda compone los contadores sin apartarse de la maqueta", () => {
+  it.each([
+    ["es", es],
+    ["en", en],
+  ])("el contador del corpus da la línea de la maqueta en %s", (idioma, dic) => {
+    pinta({ estado: "esperando" }, idioma as Idioma);
+    const meta = [...banda().querySelectorAll(".meta-b")].map((n) => n.textContent?.trim());
+    expect(meta).toContain(dic.banda.corpus);
+  });
+
+  it.each([
+    ["es", es],
+    ["en", en],
+  ])("la cabecera dice lo que la maqueta dice en %s", (idioma, dic) => {
+    pinta({ estado: "esperando" }, idioma as Idioma);
+    expect(banda().querySelector(".marca-min")?.textContent?.trim()).toBe(dic.banda.escuchando);
+    expect(banda().querySelector(".cliente-b")?.textContent?.trim()).toBe(dic.banda.protegido);
+  });
+});

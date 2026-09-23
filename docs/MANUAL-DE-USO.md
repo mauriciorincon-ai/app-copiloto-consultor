@@ -86,11 +86,14 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
 
 ### La ficha en el momento justo · desde Sprint 001
 
-- **Qué hace:** cuando el cliente pregunta algo, dice una cifra, nombra algo tuyo o se queda
-  callado, la app busca en tu corpus y pone en la banda un **titular de ocho palabras, una línea y
-  la fuente exacta** — documento y sección.
+- **Qué hace:** cuando el cliente pregunta algo, dice una cifra o nombra algo que está en tus
+  documentos, la app busca en tu corpus y pone en la banda un **titular de ocho palabras, una línea
+  y la fuente exacta** — documento y sección.
 - **Cómo se usa:** sola. Y `⌘⇧A` («ayúdame con esto») la pide a mano cuando no acierte.
 - **Limitaciones conocidas:**
+  - **No dispara por silencio todavía.** Si el cliente pregunta y se queda callado esperando tu
+    respuesta, la ficha no llega sola: pídela con `⌘⇧A`. Estaba previsto para esta versión y no
+    llegó; se dice en vez de dejarlo a medias.
   - **Todo lo que la ficha dice está recortado de tus documentos.** La app no redacta: si no
     encuentra nada, lo dice.
   - Cuando no encuentra nada, enseña **qué buscó** —para que veas en el acto si te entendió mal—,
@@ -109,6 +112,17 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
   atajo está cogido por otra app.
 - **Limitaciones conocidas:** el corte alcanza **6 de las 7 piezas** previstas. La séptima —lo que
   la app lea de tu pantalla— todavía no existe, y por eso no dice «7 de 7».
+
+### El modelo de voz de un idioma · desde Sprint 001
+
+- **Qué hace:** cada idioma necesita su modelo de voz, y macOS no los trae todos. *Idioma* dice de
+  cada pista si su modelo está instalado y, **si falta, ofrece instalarlo**.
+- **Cómo se usa:** *Idioma* → «Instalar el modelo». Lo descarga macOS y tarda: mientras dura, el
+  botón dice «instalando…». Es la única vez que la app toca la red, y solo porque tú lo pediste.
+- **Limitaciones conocidas:**
+  - Si tu Mac **no reconoce** ese idioma, o no trae motor de voz, no hay nada que instalar y la app
+    lo dice con esas palabras en vez de ofrecerte un botón que no puede funcionar.
+  - macOS permite **cinco idiomas listos a la vez**. Es un límite del sistema.
 
 ### Español e inglés, en todo · desde Sprint 001
 
@@ -145,8 +159,8 @@ enciendas.
 
 **¿Necesito internet?**
 Solo para la videollamada. La app transcribe y busca dentro de tu Mac. La única vez que toca la red
-es cuando tú le pides instalar el modelo de voz de un idioma: entonces macOS lo descarga, y no sale
-nada de aquí.
+es cuando tú le pides instalar el modelo de voz de un idioma —el botón **«Instalar el modelo»** de
+*Idioma*—: entonces macOS lo descarga, y no sale nada de aquí.
 
 **¿Por qué me pide auriculares?**
 Con los altavoces, tu micrófono oye también al cliente y las dos pistas se mezclan. La app lo
@@ -156,4 +170,10 @@ detecta y lo marca, pero funciona mejor con auriculares.
 
 | Sprint | Features añadidas a este manual |
 |---|---|
-| 001 | la banda protegida · el acople · las dos pistas y la transcripción local · el corpus indexado · la ficha de evidencia y la sugerencia de cómo conducirse · el corte y la pantalla de Honestidad · español e inglés |
+| 001 | la banda protegida · el acople · las dos pistas y la transcripción local · el corpus indexado · la ficha de evidencia y la sugerencia de cómo conducirse · el modelo de voz de un idioma · el corte y la pantalla de Honestidad · español e inglés |
+
+> **Corregido tras la auditoría del sprint 001** (2026-09-22): tres frases de este manual habían
+> dejado de ser ciertas y se arreglaron con lo que el código hace de verdad — el disparo por
+> silencio, que no existe y ahora se declara; la instalación del modelo de voz, que no tenía botón y
+> ahora lo tiene; y la ficha automática, que no llegaba a la banda por un defecto del puente. El
+> detalle está en `sprints/SPRINT_001-auditoria.md`.

@@ -219,7 +219,12 @@
         <div class="tarjeta">
           <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Idioma por pista</span><span lang="en">Language per track</span></h2>
           <div class="buffer"><svg class="ic s"><use href="#i-mic"/></svg><span class="que"><span lang="es">Tú · micrófono</span><span lang="en">You · microphone</span></span><span class="donde"><span lang="es">modelo instalado</span><span lang="en">model installed</span></span><span class="cuanto">es-ES</span></div>
-          <div class="buffer"><svg class="ic s"><use href="#i-sistema"/></svg><span class="que"><span lang="es">Cliente · sistema</span><span lang="en">Client · system</span></span><span class="donde"><span lang="es">modelo instalado</span><span lang="en">model installed</span></span><span class="cuanto">en-US</span></div>
+          <!-- EL IDIOMA QUE NO TIENE MODELO (fase 2 de la auditoría del sprint 001, hallazgos A6 y A7).
+               Faltaba, y faltaba el estado más probable: un Mac en español no trae el modelo de
+               inglés. Sin él, la pantalla decía «sin modelo» —en español, también en la interfaz
+               inglesa— y no ofrecía nada que hacer: la transcripción del cliente quedaba
+               inalcanzable desde dentro de la app. -->
+          <div class="buffer"><svg class="ic s"><use href="#i-sistema"/></svg><span class="que"><span lang="es">Cliente · sistema</span><span lang="en">Client · system</span></span><span class="donde"><span class="estado warn"><svg class="ic s"><use href="#i-alert"/></svg><span><span lang="es">sin modelo</span><span lang="en">no model</span></span></span></span><span class="cuanto">en-US <button class="btn mini" type="button"><svg class="ic s"><use href="#i-nube"/></svg><span lang="es">Instalar el modelo</span><span lang="en">Install the model</span></button></span></div>
           <p style="font-size:11.5px;color:var(--ink-2);margin-top:6px"><span lang="es">Cinco idiomas listos a la vez, como mucho: lo impone macOS, no la app.</span><span lang="en">Five languages ready at a time, at most: macOS imposes it, not the app.</span></p>
         </div>
       </div>
@@ -228,7 +233,7 @@
         <svg class="ic relleno"><use href="#i-mac"/></svg>
         <div>
           <strong><span lang="es">Transcribe tu Mac, no un servicio</span><span lang="en">Your Mac transcribes, not a service</span></strong>
-          <p><span lang="es">El motor de voz de macOS, dentro de tu equipo. Ningún audio sale para convertirse en texto. La única vez que la app toca la red es cuando tú pides instalar el modelo de un idioma: entonces macOS lo descarga, y no sale nada de aquí.</span><span lang="en">The macOS speech engine, inside your machine. No audio leaves to become text. The only time the app touches the network is when you ask to install a language model: macOS downloads it then, and nothing leaves here.</span></p>
+          <p><span lang="es">El motor de voz de macOS, dentro de tu equipo. Ningún audio sale para convertirse en texto. La única vez que toca la red es cuando pides instalar el modelo de un idioma: lo descarga macOS —mientras dura, instalando…— y si no puede: no lo reconoce · sin motor.</span><span lang="en">The macOS speech engine, inside your machine. No audio leaves to become text. The only time it touches the network is when you ask to install a language model: macOS downloads it —while it runs, installing…— and if it cannot: not recognised · no engine.</span></p>
         </div>
       </div>
 

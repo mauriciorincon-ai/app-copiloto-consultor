@@ -11,6 +11,13 @@
 //! literalmente: *«un documento ilegible no detiene a los otros 142»*. Como la librería de PDF
 //! puede entrar en pánico con un archivo mal formado —y los PDF del mundo real lo están—, su
 //! llamada va dentro de `catch_unwind`: el documento se marca ilegible y la indexación sigue.
+//!
+//! **Y esa promesa dependía de una línea del manifiesto que la anulaba.** `panic = "abort"` en el
+//! perfil de release —lo traía la plantilla de Tauri— hace que un `panic!` no se desenrede: mata el
+//! proceso. El test de esta promesa corre en debug, así que estuvo verde todo el sprint mientras en
+//! el binario que se distribuye **un PDF roto cerraba la app**. Hallazgo A3 de la auditoría del
+//! sprint 001. Hoy el perfil desenreda, lo vigila `el_perfil_de_release_desenreda` en este archivo,
+//! y la promesa se comprobó corriendo la suite del corpus en release.
 
 use std::path::Path;
 

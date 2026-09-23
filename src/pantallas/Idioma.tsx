@@ -1,7 +1,14 @@
+import { useState } from "react";
 import { useT } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { TodaviaNo, PILA } from "../componentes/Ventana";
-import { DEL_CLIENTE, DEL_CONSULTOR, type Disponibilidad, type QueSabeTranscribir } from "../cuaderno";
+import {
+  DEL_CLIENTE,
+  DEL_CONSULTOR,
+  instalarIdioma,
+  type Disponibilidad,
+  type QueSabeTranscribir,
+} from "../cuaderno";
 
 /**
  * IDIOMA — «Idioma y transcripción».
@@ -25,28 +32,83 @@ function estadoDelModelo(d: Disponibilidad | undefined, instalado: string): stri
 
 export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
   const t = useT().cuaderno;
-  const de = (codigo: string) => transcribe.idiomas.find((i) => i.codigo === codigo)?.disponibilidad;
+  /**
+   * **Lo que pasó al instalar, que la pregunta de `useQueSabeTranscribir` no sabe todavía.**
+   *
+   * Instalar tarda —lo descarga macOS— y el comando devuelve el estado nuevo. Esperar a que la
+   * ventana recupere el foco para volver a preguntar dejaría el botón como si no hubiera pasado
+   * nada durante toda la descarga.
+   */
+  const [instalado, setInstalado] = useState<Record<string, Disponibilidad | "instalando">>({});
+  const de = (codigo: string): Disponibilidad | "instalando" | undefined =>
+    instalado[codigo] ?? transcribe.idiomas.find((i) => i.codigo === codigo)?.disponibilidad;
+
+  /** El botón que faltaba: pide a macOS el modelo de ese idioma. Hallazgo A7 de la auditoría. */
+  const instalar = async (codigo: string) => {
+    setInstalado((antes) => ({ ...antes, [codigo]: "instalando" }));
+    const d = await instalarIdioma(codigo);
+    setInstalado((antes) => {
+      const nuevo = { ...antes };
+      // `null` es «no hay nadie al otro lado» (fuera de Tauri): se deja como estaba en vez de
+      // inventar un desenlace.
+      if (d === null) delete nuevo[codigo];
+      else nuevo[codigo] = d;
+      return nuevo;
+    });
+  };
+
+  const botonDeInstalar = (codigo: string) => {
+    const d = de(codigo);
+    if (d === "instalando") {
+      return (
+        <button className="btn mini" type="button" disabled key={codigo}>
+          <Ic id="i-nube" s />
+          {t.instalando}
+        </button>
+      );
+    }
+    if (!d || d.estado !== "sin-modelo") return null;
+    return (
+      <button className="btn mini" type="button" onClick={() => void instalar(codigo)} key={codigo}>
+        <Ic id="i-nube" s />
+        {t.instalarModelo}
+      </button>
+    );
+  };
 
   /** Una pista con su idioma y el estado de su modelo. Si el modelo no está, se dice por qué. */
   const pista = (icono: string, quien: string, codigo: string) => {
     const d = de(codigo);
-    const listo = estadoDelModelo(d, t.modeloInstalado);
+    const listo = d !== "instalando" && estadoDelModelo(d, t.modeloInstalado);
     return (
       <div className="buffer" key={codigo}>
         <Ic id={icono} s />
         <span className="que">{quien}</span>
         <span className="donde">
-          {listo ?? (
+          {listo || (
             <span className="estado warn">
               <Ic id="i-alert" s />
-              <span>{motivo(d, transcribe.motivo)}</span>
+              <span>{motivo(t, d)}</span>
             </span>
           )}
         </span>
-        <span className="cuanto">{codigo}</span>
+        {/* **El botón va en la columna de la derecha**, que en `.buffer` ocupa las dos filas: ahí
+            cabe sin hacer la fila más alta. En una fila propia empujaba la pantalla 58 px fuera de
+            la ventana de 640, y al lado del motivo, 20 px. Lo midió el gate de fidelidad, no el
+            ojo — y esta pantalla ya estaba justo al límite antes de tocarla. */}
+        <span className="cuanto">
+          {codigo} {botonDeInstalar(codigo)}
+        </span>
       </div>
     );
   };
+
+  /**
+   * El botón solo aparece cuando hay algo que instalar. Con el idioma que este Mac no conoce, o sin
+   * motor de voz, **no hay nada que descargar** y ofrecerlo sería mandar al usuario a un botón que
+   * no puede funcionar.
+   */
+
 
   return (
     <>
@@ -131,22 +193,31 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
 }
 
 /**
- * Por qué no se puede transcribir un idioma, en español llano.
+ * Por qué no se puede transcribir un idioma. **Del diccionario, en los dos idiomas.**
  *
  * Los tres motivos son distintos y se enseñan distintos: **el modelo no está** (se puede
  * instalar), **el Mac no sabe ese idioma** (no hay nada que instalar) y **no hay motor** (no es
  * cosa del idioma). Colapsarlos en un «no disponible» dejaría al usuario sin saber si esperar,
  * instalar o rendirse.
+ *
+ * **Estaban escritos aquí en español**, y así llegaban a la interfaz inglesa (hallazgo A6). Y el
+ * `motivo` que manda la parte nativa tampoco se pinta: es prosa en español escrita para el log —
+ * una frase del sistema en una pantalla inglesa es el mismo defecto por otra puerta—. Lo que se
+ * pierde de detalle se gana en que la app diga la verdad en el idioma del usuario.
  */
-function motivo(d: Disponibilidad | undefined, general: string | null): string {
-  if (!d) return general ?? "—";
+function motivo(
+  t: ReturnType<typeof useT>["cuaderno"],
+  d: Disponibilidad | "instalando" | undefined,
+): string {
+  if (d === "instalando") return t.instalando;
+  if (!d) return "—";
   switch (d.estado) {
     case "sin-modelo":
-      return "sin modelo";
+      return t.sinModelo;
     case "idioma-desconocido":
-      return "no lo reconoce";
+      return t.noLoReconoce;
     case "sin-motor":
-      return d.motivo;
+      return t.sinMotorDeVoz;
     default:
       return "";
   }

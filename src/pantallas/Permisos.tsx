@@ -1,6 +1,6 @@
 import { useT } from "../i18n";
 import { Ic } from "../componentes/Iconos";
-import { Fila, TodaviaNo, PILA } from "../componentes/Ventana";
+import { Fila, Funciona, TodaviaNo, PILA } from "../componentes/Ventana";
 import { abrirAjustesDe, type EstadoPermiso, type Permisos as EstadoDeLosPermisos } from "../cuaderno";
 
 /**
@@ -119,16 +119,22 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
         </div>
 
         <div className="grid-2">
-          <div className="tarjeta pendiente">
+          {/* «Qué puedes hacer ya, sin conceder nada» — y desde la fase 4 se pueden hacer DOS de
+              las tres. Marcarlas «todavía no» era el error simétrico del resto de la auditoría: la
+              app escondiendo lo que sí hace, en la pantalla que existe para decir qué se puede
+              hacer sin conceder permisos. Lo encontró el barrido de promesas aplazadas (M11).
+              La tarjeta deja de ser `pendiente`: dos de tres funcionan. */}
+          <div className="tarjeta">
             <h2 className="seccion">{t.sinConcederNada}</h2>
-            <Fila icono="i-doc" texto={t.indexar} pendiente>
-              <TodaviaNo />
+            <Fila icono="i-doc" texto={t.indexar}>
+              <Funciona />
             </Fila>
             <Fila icono="i-nota" texto={t.escribirNotas} pendiente>
               <TodaviaNo />
             </Fila>
-            <Fila icono="i-buscar" texto={t.buscarAMano} pendiente>
-              <TodaviaNo />
+            {/* Buscar a mano es `⌘⇧A`: no necesita micrófono ni pantalla, solo el corpus. */}
+            <Fila icono="i-buscar" texto={t.buscarAMano}>
+              <Funciona />
             </Fila>
           </div>
           <div className="tarjeta">

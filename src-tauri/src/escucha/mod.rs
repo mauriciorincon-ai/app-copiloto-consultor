@@ -7,7 +7,10 @@
 //! kill-switch que puede caer en cualquier instante de todo lo anterior.
 //!
 //! **MÓDULO PROTEGIDO.** Tiene en las manos la voz del cliente entera; no la guarda en ninguna
-//! parte, y `pnpm verify:ephemeral` lo comprueba.
+//! parte, y `pnpm verify:ephemeral` lo comprueba — **desde la fase 2 de la auditoría del sprint
+//! 001, no antes**: esta línea decía lo mismo durante dos fases y el módulo no estaba en la lista
+//! del script (hallazgo A4). Hoy además hay un gate sobre el gate: quien lleva esta marca está en
+//! esa lista o el script falla.
 //!
 //! ### Las tres decisiones de forma que tiene este módulo
 //!
