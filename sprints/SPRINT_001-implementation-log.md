@@ -1891,11 +1891,8 @@ funcionar. Mientras macOS descarga dice «instalando…» y no se puede volver a
 **En rojo:** cinco pruebas nuevas en `idioma-sin-modelo.test.tsx`; sin el botón, *«Unable to find an
 accessible element with the role "button" and name /Instalar el modelo/»*.
 
-**Y el precio de dibujarlo, medido:** la pantalla de Idioma estaba **a 0 px del borde** de la ventana
-de 640, así que cada cosa nueva la desbordaba. Tres pasadas del gate de fidelidad para colocarla —
-botón en fila propia **+58 px**, al lado del motivo **+37 px**, en la columna que ya ocupa las dos
-filas del `buffer` **+29 px**— y una cuarta comprimiendo la frase de la franja. Lo midió el gate, no
-el ojo.
+**Y el precio de dibujarlo está medido abajo**, en «el desborde que queda»: cuatro pasadas del gate
+de fidelidad, y la última decidida leyendo la captura y no el número.
 
 ### Las 9 frases que habían caducado
 
@@ -1918,21 +1915,28 @@ pantalla decía, no lo que la app hacía. Un test escrito contra la interfaz no 
 
 #### El desborde que queda, medido y declarado
 
-La pantalla de Idioma **estaba a 0 px del borde** de la ventana de 640 antes de la auditoría. Con la
-fila del modelo que falta y su botón, el estado «sin modelo» mide **667 px: 29 px de desplazamiento**.
-Los otros tres bloques no se tocaron.
+La pantalla de Idioma **estaba a 0 px del borde** de la ventana de 640 antes de la auditoría, así que
+cada cosa nueva la desbordaba. Cuatro pasadas del gate para colocar una fila y un botón:
 
-| Bloque | Alto | Nota |
-|---|---|---|
-| título | 68 px | |
-| `grid-2` | 238 px | lo manda la tarjeta de la derecha; la fila del cliente pasa de 53 a 73 px por el botón |
-| `franja ok` | 89 px | tres líneas, las mismas que tenía |
-| `tarjeta pendiente` | 188 px | |
+| Dónde fue el botón | Desborde |
+|---|---|
+| en una fila propia debajo de las dos pistas | **+58 px** |
+| al lado del motivo, con la etiqueta «Instalar el modelo» | **+37 px** |
+| en la columna de la derecha, que ya ocupa las dos filas del `buffer` | **+29 px** |
+| **al lado del motivo, etiqueta «Instalar»** | **+15 px** ← así queda |
 
-**Por qué se deja así y no se recorta copy.** Las dos salidas eran quitar 29 px de texto —y el único
-candidato era la frase de la franja que dice *«la única vez que la app toca la red…»*, que es una de
-las afirmaciones que esta app existe para sostener— o aceptar el desplazamiento. Recortar honestidad
-para poner un gate en verde es exactamente el fallo que esta auditoría entera está pagando.
+**Y la última la decidió una captura, no un número.** Con el botón en la columna de la derecha el
+desborde bajaba a 29 px y ahí lo habría dejado: el gate solo dice cuántos píxeles sobran. Al **leer
+el PNG como imagen** —la disciplina de la pasada de capturas— se vio lo que ningún número dice: la
+etiqueta partía en dos líneas, «Instalar el» / «modelo», y el código del idioma quedaba flotando
+encima, leyéndose como parte de la fila anterior. Con la etiqueta de una palabra, al lado del motivo
+que arregla, cabe en una línea y sobran 15 px en vez de 29.
+
+**Por qué se dejan esos 15 px y no se recorta copy.** Lo que queda fuera es la última línea del
+párrafo de «Lo que todavía no existe». Quitarlos exigía cortar la frase de la franja que dice *«la
+única vez que la app toca la red…»*, que es una de las afirmaciones que esta app existe para
+sostener. Recortar honestidad para poner un gate en verde es exactamente el fallo que esta auditoría
+entera está pagando.
 
 Y el desborde **solo existe en el estado que ofrece la acción**: en cuanto el modelo está instalado la
 fila vuelve a 53 px y la pantalla cabe. El contenedor es desplazable y **alcanzable con el teclado**

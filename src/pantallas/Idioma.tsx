@@ -84,21 +84,23 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
       <div className="buffer" key={codigo}>
         <Ic id={icono} s />
         <span className="que">{quien}</span>
+        {/* **El botón va al lado del motivo que arregla**, y su etiqueta es una palabra.
+            Costó tres pasadas del gate de fidelidad y una captura leída como imagen: en fila
+            propia empujaba la pantalla 58 px fuera de la ventana de 640; en la columna de la
+            derecha, 29 px **y partía en dos líneas** —«Instalar el» / «modelo»— con el código del
+            idioma flotando encima. Eso último no lo dice ningún número: se vio mirando el PNG. */}
         <span className="donde">
           {listo || (
-            <span className="estado warn">
-              <Ic id="i-alert" s />
-              <span>{motivo(t, d)}</span>
-            </span>
+            <>
+              <span className="estado warn">
+                <Ic id="i-alert" s />
+                <span>{motivo(t, d)}</span>
+              </span>{" "}
+              {botonDeInstalar(codigo)}
+            </>
           )}
         </span>
-        {/* **El botón va en la columna de la derecha**, que en `.buffer` ocupa las dos filas: ahí
-            cabe sin hacer la fila más alta. En una fila propia empujaba la pantalla 58 px fuera de
-            la ventana de 640, y al lado del motivo, 20 px. Lo midió el gate de fidelidad, no el
-            ojo — y esta pantalla ya estaba justo al límite antes de tocarla. */}
-        <span className="cuanto">
-          {codigo} {botonDeInstalar(codigo)}
-        </span>
+        <span className="cuanto">{codigo}</span>
       </div>
     );
   };

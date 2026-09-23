@@ -24,7 +24,7 @@ Los tres outcomes, uno a uno:
 | Outcome | Estado |
 |---|---|
 | **Principal** — banda acoplada y protegida, ficha del corpus propio en ≤4 s tras el fin de turno, nada en disco, red en 0 | **en el producto sí; la reunión real de verdad es del gate ⭐** del usuario. Lo verificado por máquina: la ficha llega por el evento (test dentro de Tauri con el payload que Rust emite), la latencia determinista es de 376 µs de mediana, la sesión completa no deja un archivo fuera del índice, y el contador no tiene con qué moverse |
-| **Secundario** — las pantallas fieles a la maqueta, dos temas, dos idiomas | **sí.** 60 encuadres comparados, ninguno pasa del umbral de 0,15 %. Un desborde de 29 px declarado en Idioma cuando falta un modelo |
+| **Secundario** — las pantallas fieles a la maqueta, dos temas, dos idiomas | **sí.** 60 encuadres comparados, ninguno pasa del umbral de 0,15 %. Un desborde de 15 px declarado en Idioma cuando falta un modelo |
 | **Terciario** — kit de evaluación v0 con P/R del disparo y nDCG@5 | **sí, tras la auditoría.** La fase 5 entregó el nDCG; el P/R del disparador y la mediana de latencia se añadieron pagando el hallazgo A9. WER y audio de mezcla quedan como deuda |
 
 ## Qué se construyó
@@ -160,7 +160,7 @@ atravesaba. El contrato se escribía dos veces a mano y nadie comparaba las copi
 | **WER informativo y audio de mezcla** del kit | el plan los pedía; la fase 5 no los hizo y la auditoría los declara | S2 |
 | **Disparo por silencio** | `por_silencio` existe y no tiene llamadores. **El manual ya lo declara** en vez de prometerlo | S2 |
 | **El VAD no es Silero** | regla 14: el modelo se gana el puesto con una medición, y esa medición es el WER que falta | S2, en el ADR del STT |
-| **Desborde de 29 px en Idioma** sin modelo | la alternativa era recortar una frase de honestidad | a la mirada del usuario |
+| **Desborde de 15 px en Idioma** sin modelo | la alternativa era recortar una frase de honestidad | a la mirada del usuario |
 | **`lru` *unsound*** (RUSTSEC-2026-0253) vía tantivy | sin arreglo compatible: tantivy fija `^0.16` y el arreglo está en 0.18. **Y quitar `panic = "abort"` (A3) ensancha su exposición**, porque ahora un pánico se desenreda en vez de abortar | S2, vigilando tantivy |
 | **17 campos del contrato sin consumidor** | el gate nuevo compara la FORMA, no si alguien lee. `Documento`, `corte::Informe` y `Aparicion.ms` siguen sin llegar a la pantalla | S2 |
 

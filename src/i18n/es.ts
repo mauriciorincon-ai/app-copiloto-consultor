@@ -311,7 +311,7 @@ export const es = {
     noLoReconoce: "no lo reconoce",
     sinMotorDeVoz: "sin motor",
     /** El botón que faltaba (A7): sin él, un Mac sin el modelo no tenía cómo conseguirlo. */
-    instalarModelo: "Instalar el modelo",
+    instalarModelo: "Instalar",
     instalando: "instalando…",
     cincoIdiomas: "Cinco idiomas listos a la vez, como mucho: lo impone macOS, no la app.",
     transcribeTuMac: "Transcribe tu Mac, no un servicio",

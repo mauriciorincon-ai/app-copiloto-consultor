@@ -240,7 +240,7 @@ export const en: Diccionario = {
     sinModelo: "no model",
     noLoReconoce: "not recognised",
     sinMotorDeVoz: "no engine",
-    instalarModelo: "Install the model",
+    instalarModelo: "Install",
     instalando: "installing…",
     cincoIdiomas: "Five languages ready at a time, at most: macOS imposes it, not the app.",
     transcribeTuMac: "Your Mac transcribes, not a service",

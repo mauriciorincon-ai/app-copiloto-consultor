@@ -383,7 +383,7 @@
     <ul class="pasos">
       <li data-origen="nuevo"><input type="checkbox" id="f1"><label for="f1">Mira las dos pistas con su idioma y el estado real de su modelo. <strong>Si un modelo no está instalado, lo dice</strong> en vez de fallar en silencio cuando alguien hable.
         <span class="origen origen-nuevo">Nuevo · S1</span></label></li>
-      <li data-origen="mejorado" data-minimo><input type="checkbox" id="f2"><label for="f2">Con un idioma sin modelo, la fila lo dice en ámbar y ofrece <strong>«Instalar el modelo»</strong>. Púlsalo: el botón pasa a <strong>«instalando…»</strong> y no se puede volver a pulsar; cuando macOS termina, la fila dice <strong>«modelo instalado»</strong>. Es la única vez que la app toca la red, y en la dirección contraria: entra el modelo, no sale nada. El contador sigue en <strong>0 B</strong>.
+      <li data-origen="mejorado" data-minimo><input type="checkbox" id="f2"><label for="f2">Con un idioma sin modelo, la fila lo dice en ámbar y ofrece <strong>«Instalar»</strong>. Púlsalo: el botón pasa a <strong>«instalando…»</strong> y no se puede volver a pulsar; cuando macOS termina, la fila dice <strong>«modelo instalado»</strong>. Es la única vez que la app toca la red, y en la dirección contraria: entra el modelo, no sale nada. El contador sigue en <strong>0 B</strong>.
         <p class="chica suave" style="margin:6px 0 0"><strong>Este botón no existía.</strong> La auditoría encontró que el comando que instala el modelo no tenía un solo llamador: en un Mac sin el modelo del cliente —lo normal, si tu sistema está en español— la transcripción del cliente era inalcanzable desde dentro de la app, y la pantalla solo decía «sin modelo».</p>
         <span class="origen origen-mejorado">Mejorado en S1 · auditoría</span>
         <span class="minimo">⭐ mínimo</span></label></li>
@@ -392,7 +392,7 @@
       <li data-origen="nuevo" data-minimo><input type="checkbox" id="f4"><label for="f4">En una reunión en inglés, con el idioma del cliente en <code>en-US</code>: los turnos del cliente <strong>se transcriben en inglés</strong> y los tuyos en español, cada pista por su lado.
         <span class="origen origen-nuevo">Nuevo · S1</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="f5"><label for="f5"><strong>Y una que es una pregunta para ti, no una comprobación.</strong> Con un idioma sin modelo, esta pantalla mide 667 px y la ventana 640: <strong>se desplaza 29 px</strong>. Baja con la rueda o con el teclado y dime si te molesta. La alternativa era recortar la frase de «Transcribe tu Mac» que dice cuál es la única vez que la app toca la red, y recortar honestidad para que un gate quede en verde es justo lo que esta auditoría vino a arreglar. En cuanto el modelo está instalado, la pantalla vuelve a caber.
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="f5"><label for="f5"><strong>Y una que es una pregunta para ti, no una comprobación.</strong> Con un idioma sin modelo, esta pantalla mide 653 px y la ventana 640: <strong>se desplaza 15 px</strong> — la última línea del párrafo de abajo. Baja con la rueda o con el teclado y dime si te molesta. La alternativa era recortar la frase de «Transcribe tu Mac» que dice cuál es la única vez que la app toca la red, y recortar honestidad para que un gate quede en verde es justo lo que esta auditoría vino a arreglar. En cuanto el modelo está instalado, la pantalla vuelve a caber.
         <span class="origen origen-nuevo">Nuevo · S1 · auditoría</span>
         <span class="minimo">⭐ mínimo</span></label></li>
     </ul>
@@ -409,7 +409,7 @@
       <ul>
         <li><strong>S1 · v2 · 2026-09-22 (tras la auditoría):</strong> 39 pruebas. <strong>Seis
           nuevas</strong> —la banda sin reunión ni corpus, la frase del cliente que enseña al buscar,
-          el corte mientras hablas (novena parada del ⭐⭐), el log sin palabras y el desborde de la
+          el corte mientras hablas (novena parada del ⭐⭐), el log sin palabras y el desborde de 15 px de la
           pantalla de Idioma— y <strong>tres reescritas</strong>: la ficha en menos de cuatro
           segundos (que no funcionaba), el PDF roto (que en la app compilada cerraba el programa) y
           la instalación del modelo (que no tenía botón). Gate mínimo ⭐ de 31; corto ⭐⭐ de 9 paradas.
