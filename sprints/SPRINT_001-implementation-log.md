@@ -1939,3 +1939,134 @@ fila vuelve a 53 px y la pantalla cabe. El contenedor es desplazable y **alcanza
 desde la fase 5, que es justo el cinturón que esta situación necesita.
 
 Va a la **mirada** con su número delante: si el usuario prefiere recortar, se recorta con él.
+
+---
+
+## Bloque 3 — alcance y método
+
+### A9 · El kit de evaluación medía una de las cuatro cosas del plan
+
+El plan pedía cuatro: nDCG@5 del retriever, **P/R del disparo ±1 turno**, **WER informativo**,
+**audio de mezcla** — y la **mediana** de latencia. La fase 5 entregó la primera, y el `LEEME` del
+kit siguió prometiendo el resto «para la fase 5», que ya había terminado.
+
+**Lo que se añadió:**
+
+`docs/kit-de-prueba/disparo.json` — **26 turnos de una reunión inventada, en orden y con su reloj**,
+cada uno marcado con si debe disparar. Se pasan todos por un mismo `Disparador`, así que lo que se
+mide no es solo la regla léxica: también la espera de 6 s entre fichas y la negativa a repetir la
+misma consulta. Y los dos errores se miden por separado porque no cuestan lo mismo — un falso
+positivo interrumpe al consultor; un falso negativo se arregla con `⌘⇧A`.
+
+```
+│ turnos          26        │ precisión  1.000   (mínimo 1.00)
+│ aciertos        11        │ recall     1.000   (mínimo 1.00)
+```
+
+La **mediana de latencia** entra en el test del kit, por pregunta y no en total: **mediana 376 µs ·
+p90 567 µs · peor 2 492 µs**, contra un presupuesto de 4 000 000 µs. Se dice qué mide y qué no —es el
+tramo determinista, sin captura ni STT— porque un número sin su frontera se lee como el total.
+
+**Lo que el kit encontró en su primera corrida, como debe ser:**
+
+- **«Nosotros manejamos catorce canales de venta distintos» NO dispara.** La regla de la cifra mira
+  **dígitos**, no números escritos con letras. Mi marca decía «trae una cifra» y la equivocada era
+  la marca, no el código. Quedan las dos: la de `14` que dispara, y la de `catorce` que no, con su
+  motivo escrito — **una limitación medida en vez de contada**, porque que el transcriptor escriba
+  «14» o «catorce» no lo decide esta app.
+- **La espera se cuenta desde la última FICHA, no desde el último turno.** Otra marca mía mal puesta.
+  Se corrigió, y se añadió un turno que sí mide la espera: una pregunta nueva a dos segundos de una
+  ficha, que no debe disparar.
+
+**Y el umbral del recall tuvo que subir a 1.0 por su propia demo en rojo.** Estaba en 0,90 «por si un
+empate léxico cambia de lado»; devolviendo `MINIMO_CON_SIGNO` a 3 —el defecto real que la fase 4
+encontró— «¿Tienen certificación?» deja de disparar, el recall baja a 0,909… **y el test seguía
+verde**. Con once turnos que deben disparar, un umbral del 90 % regala uno, y no hay ninguno
+regalable: cada turno está marcado a mano porque la app tiene que acertarlo. Con 1.0, rojo:
+*«recall 0.909: se está quedando callado cuando debería buscar»*.
+
+**WER y audio de mezcla quedan como deuda declarada**, con su tabla en el `LEEME` del kit y su línea
+en el summary. Y el margen de ±1 turno se declara **no aplicado**: aquí los turnos son texto y el
+reloj exacto, así que la medida es turno a turno, más estricta. El margen tendrá sentido cuando la
+medida se haga sobre audio.
+
+### A10 · El ADR decía `tracing` y el código tenía 45 `println!`
+
+Y `pino` estaba declarado en `package.json` **sin un solo uso**. Una decisión que el código no sigue
+no es una decisión, y una dependencia declarada y sin usar es superficie regalada en un repo público.
+
+**Se enmienda el ADR 003, no el código, y con su razón delante:** `tracing` vale por lo que trae
+alrededor —suscriptores, filtros, spans, salidas estructuradas— y esta app **no tiene sumidero al que
+escribir**: sin archivo de log (sería disco), sin servicio remoto (sería red), sin telemetría. El
+único destino es la consola de quien desarrolla, y con ese destino `tracing` sin suscriptor no
+registra nada y con `fmt()` es `println!` con más pasos. Se revisará cuando exista un destino de
+verdad. `pino` sale; vuelve con su uso en el mismo PR.
+
+**Y el gate que de verdad faltaba se construyó.** El «término plantado en logs» que la DoD exige y
+que el ADR prometía **no existía como test**: la canaria solo se buscaba en los archivos del disco.
+El log es la otra salida —a la consola, al `Console.app`, al portapapeles de quien pega una traza— y
+nadie la miraba.
+
+`la_canaria_del_cliente_no_aparece_en_el_log` corre la sesión completa **en un proceso hijo** —este
+mismo binario con el filtro exacto de la sesión— y lee su salida. Capturar `println!` desde dentro
+del propio proceso obligaría a sustituir la salida estándar, y entonces el gate mediría un logger de
+mentira en vez del del producto. Comprueba además que el hijo **llegó a correr** la sesión: sin eso,
+un hijo que fallara al arrancar daría verde.
+
+**En rojo** con un `println!("[disparo] mirando «{}»", turno.texto)`:
+
+```
+lo que dijo el cliente salió por el log, en 1 línea(s):
+  [disparo] mirando «¿Y el alcance del quetzalcoatlus-de-bolsillo-7731 está dentro de la propuesta?»
+```
+
+### El gate de contrato Rust→TS
+
+Construido en el commit de C1, que es donde hacía falta. Su descripción, sus dos gates y sus dos
+demos en rojo están arriba.
+
+---
+
+## Bloque 4 — la deuda, declarada
+
+### Desviación del plan — el VAD no es Silero, es un detector por energía
+
+El plan del sprint y la orden nombran **Silero VAD (ONNX)**. Lo que hay es un **detector por energía
+con suelo de ruido adaptativo** (`src-tauri/src/voz/vad.rs`), y hasta ahora eso solo estaba dicho en
+la cabecera de ese módulo. Sube aquí, que es donde la planeadora lo lee.
+
+**Por qué.** La regla 14 de esta casa dice que la funcionalidad interna se resuelve **primero con
+programación** y que el modelo tiene que *ganarse* el puesto con una medición. Silero son 2 MB que se
+descargan aparte, un runtime de ONNX en el árbol de dependencias y un modelo que hay que distribuir;
+el detector por energía cabe en una pantalla, no descarga nada, corre en microsegundos y se puede
+leer entero. El `trait Detector` existe precisamente para que el motor sea **sustituible con una
+medición delante**.
+
+**Qué falta para decidir.** El kit no mide todavía la calidad del fin de turno contra una referencia
+—eso es WER y audio de mezcla, la deuda de A9—. Hasta que exista ese número, cambiar de motor sería
+preferencia y no ingeniería. **Queda como decisión abierta del sprint 2, con el ADR del STT y del VAD
+como sitio donde cerrarla.**
+
+### Medios y bajos: lo que se paga en el S2
+
+| # | Qué | Por qué no ahora | Pago |
+|---|---|---|---|
+| **M1** | `"csp": null` en `tauri.conf.json`: el webview puede cargar de cualquier origen | Ponerle una CSP a una app de Tauri toca el IPC y los estilos que Tailwind inyecta en caliente; hacerlo sin arrancar la app de verdad es cambiar un gate por una avería silenciosa. Necesita `pnpm tauri dev` delante | S2 |
+| **M2** | Sesión afirma `Funciona` en las dos pistas **sin leer `abierta`/`motivo`**: con el tap caído, la app dice que funciona | Es la misma clase que A1 y merece el mismo arreglo, pero toca una pantalla aprobada en la mirada 12 y su estado «pista caída» no está dibujado en la maqueta | S2, con su mirada |
+| **M4** | Tras `⌥⎋` **la banda no vuelve** hasta reiniciar la app, y el manual no lo advierte | El corte es irreversible por diseño en este sprint; lo que falta es o la vuelta o la advertencia | S2 |
+| **M9** | El gate de efímero en runtime **no mira `~/Library`** —donde escribe una app de macOS— y solo compara archivos NUEVOS: una fuga que *añada* a un archivo existente es invisible | Ampliarlo bien pide comparar hashes de un árbol grande; hacerlo mal lo vuelve lento y ruidoso | S2 |
+| **M10** | `nativo.rs` reinterpreta los bytes del buffer como `f32` **sin validar el formato** | Hoy el formato lo fija la misma app en los dos lados; validarlo es cinturón, no arreglo | S2 |
+| **M11** | «Qué puedes hacer ya, sin conceder nada» marcaba «Todavía no» en dos cosas que ya se pueden hacer | **PAGADO en el bloque 2** (estaba en la lista de frases caducadas) | — |
+| **M3, M5–M8, M12–M14** · **B1–B7** | contados por el auditor | **su detalle no llegó al artefacto del repo** (ver abajo) | S2 |
+
+### Y un hallazgo sobre el propio método, que este bloque destapa
+
+`sprints/SPRINT_001-auditoria.md` guarda **con archivo y línea** el crítico y los diez altos, y de
+los catorce medios detalla seis. De los ocho medios restantes y los siete bajos guarda **solo el
+conteo**: el reporte del auditor se resumió al escribirlo en el repo, y el resumen se comió lo único
+que hace pagable un hallazgo — dónde está.
+
+No se inventan aquí. Se declaran por conteo, y la lección va al summary como sugerencia al método:
+**el artefacto del repo tiene que llevar los hallazgos de TODAS las severidades con su archivo y su
+línea**, porque es el único que sobrevive a la sesión que los encontró. Un hallazgo sin sitio no es
+deuda: es un rumor.
