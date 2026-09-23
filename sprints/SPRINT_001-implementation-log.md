@@ -2054,6 +2054,19 @@ la suite baja de 17,4 s a 14,5 s— y el gate sigue dando su rojo con el mismo `
 **Lo que este episodio deja dicho:** el rojo que de verdad enseñó algo no fue ninguno de los trece
 que preparé. Fue el que no pedí, en la máquina que no es la mía.
 
+**Y el verde que lo cierra, con conclusión propia por check** (`e83b8fb`, corrida `35810284907`):
+
+```
+quality           SUCCESS  COMPLETED
+e2e               SUCCESS  COMPLETED
+build-escritorio  SUCCESS  COMPLETED
+```
+
+El rojo no fue un accidente de una corrida: cayó en **dos seguidas** (`35808919334` sobre `e85aa2d`
+y `35809163879` sobre `b967124`), las dos que llevaban la canaria antes del arreglo. Queda dicho para
+la segunda pregunta de la regla 15 —*¿lo viste correr?*—: la canaria del log corrió en la integración
+continua, en rojo dos veces y en verde después del arreglo, y nunca por un `skipped`.
+
 ### El gate de contrato Rust→TS
 
 Construido en el commit de C1, que es donde hacía falta. Su descripción, sus dos gates y sus dos
