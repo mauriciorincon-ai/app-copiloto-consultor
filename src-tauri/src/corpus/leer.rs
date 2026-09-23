@@ -276,6 +276,39 @@ pub fn conjeturar_titulos(texto: &str) -> Leido {
 mod pruebas {
     use super::*;
 
+    /// **El `catch_unwind` de `de_pdf` solo existe si el perfil de release DESENREDA.**
+    ///
+    /// Con `panic = "abort"` —que es lo que traía la plantilla de Tauri— un `panic!` no se
+    /// desenreda: mata el proceso. Así que el módulo prometía que «un documento dañado no detiene a
+    /// los otros», el test de la carpeta entera lo comprobaba **en debug**, y en el binario que se
+    /// distribuye un solo PDF roto de la carpeta del usuario cerraba la app. Un gate que no puede
+    /// fallar en el modo en que el usuario usa el programa no está probando ese modo.
+    ///
+    /// Esta comprobación es estática a propósito: correr la suite en release costaría otra
+    /// compilación entera con LTO en cada PR para vigilar una línea de un archivo de configuración.
+    /// Lo que hay que impedir es que esa línea vuelva, y eso se lee.
+    ///
+    /// Se ve en rojo devolviendo `panic = "abort"` a `[profile.release]` de `src-tauri/Cargo.toml`.
+    #[test]
+    fn el_perfil_de_release_desenreda() {
+        let manifiesto =
+            std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.toml"))
+                .expect("no se pudo leer el manifiesto");
+        let release = manifiesto
+            .split("[profile.release]")
+            .nth(1)
+            .expect("el manifiesto ya no tiene perfil de release: revisa este test");
+        let release = release.split("\n[").next().unwrap_or(release);
+        for linea in release.lines() {
+            let l = linea.trim();
+            assert!(
+                l.starts_with('#') || !(l.starts_with("panic") && l.contains("abort")),
+                "`panic = \"abort\"` volvió al perfil de release: con él, el `catch_unwind` de \
+                 `de_pdf` no protege nada y un PDF roto de la carpeta del usuario cierra la app"
+            );
+        }
+    }
+
     #[test]
     fn el_markdown_reconoce_las_dos_formas_de_titulo() {
         let l = de_markdown("# Alcance\nTres canales.\n\nPrecio\n======\nCerrado.\n");

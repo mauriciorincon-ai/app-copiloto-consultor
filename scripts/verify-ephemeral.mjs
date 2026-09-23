@@ -31,8 +31,15 @@ import { join, relative } from "node:path";
 // lado de la regla. Y `nativo/` es el puente de Swift hacia el transcriptor — sin esa línea, el
 // único archivo del producto que llama a una API de descarga de Apple sería el único sin barrer,
 // y la vigilancia se habría detenido justo en la frontera del lenguaje.
+// `escucha` se añadió en la FASE 2 DE LA AUDITORÍA del sprint 001, y es el hallazgo A4: su
+// cabecera decía «**MÓDULO PROTEGIDO.** … y `pnpm verify:ephemeral` lo comprueba» **y no estaba en
+// esta lista**. Es el módulo de mayor superficie de los tres —copia el audio del turno, mantiene la
+// ventana de transcript y guarda la última pregunta del cliente—, así que un `fs::write` ahí pasaba
+// el gate en verde. De ahí sale también la comprobación de abajo: que la cabecera y esta lista no
+// puedan volver a decir cosas distintas.
 const PROTEGIDOS = [
   "src-tauri/src/capture",
+  "src-tauri/src/escucha",
   "src-tauri/src/stt",
   "src-tauri/src/voz",
   // El disparador guarda la última pregunta del CLIENTE para no repetir ficha, y la ficha se
@@ -81,6 +88,31 @@ for (const dir of PROTEGIDOS) {
     });
   }
 }
+// ---------------------------------------------------------------------------------------------
+// Y el gate del propio gate: **quien se declara protegido tiene que estar vigilado.**
+//
+// La lista de arriba se escribe a mano y el sprint 001 demostró lo que eso significa: `escucha`
+// llevaba dos fases afirmando en su cabecera que este script lo comprobaba, sin estar en la lista.
+// Un módulo que se cree vigilado es peor que uno que se sabe descubierto — nadie va a mirarlo.
+// Así que la marca «MÓDULO PROTEGIDO» del código es la que manda: si un archivo la lleva, su
+// carpeta está en `PROTEGIDOS` o esto falla.
+const MARCA = /MÓDULO PROTEGIDO/;
+const CANDIDATOS = ["src-tauri/src", "src-tauri/nativo", "src"];
+let mentirosos = 0;
+for (const raiz of CANDIDATOS) {
+  for (const f of archivos(raiz)) {
+    if (!MARCA.test(readFileSync(f, "utf8"))) continue;
+    const ruta = relative(".", f);
+    if (PROTEGIDOS.some((d) => ruta.startsWith(d + "/") || ruta === d)) continue;
+    mentirosos++;
+    console.error(
+      `✕ ${ruta} se declara «MÓDULO PROTEGIDO» y NO está en la lista de este script: o entra en ` +
+        `PROTEGIDOS, o su cabecera deja de afirmarlo.`,
+    );
+  }
+}
+if (mentirosos) process.exit(1);
+
 const existentes = PROTEGIDOS.filter((d) => existsSync(d));
 console.log(`verify:ephemeral — módulos protegidos presentes: ${existentes.length ? existentes.join(", ") : "ninguno aún"} · archivos inspeccionados: ${inspeccionados}`);
 if (hallazgos) { console.error(`✕ ${hallazgos} uso(s) de disco/red en módulos efímeros. Regla dura 1 (estándar 4-T).`); process.exit(1); }

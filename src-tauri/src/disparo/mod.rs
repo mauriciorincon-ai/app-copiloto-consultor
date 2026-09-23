@@ -127,7 +127,14 @@ impl Disparador {
 
     fn aceptar(&mut self, texto: &str, ahora_ms: usize, motivo: Motivo) -> Option<Motivo> {
         if let Some(antes) = self.ultimo_ms {
-            if ahora_ms.saturating_sub(antes) < ESPERA_MS {
+            // **El reloj puede VOLVER ATRÁS.** `ahora_ms` es el reloj de la pista, y cuando su
+            // anillo da la vuelta entera la escucha se reengancha al presente y ese reloj vuelve a
+            // empezar en cero. Con la resta saturada que había aquí, «0 − 60 000» daba 0: la espera
+            // entre fichas se cumplía para siempre y **el disparador quedaba muerto el resto de la
+            // sesión**, sin que nada lo dijera. Un reloj que retrocede no es «hace un instante»: es
+            // otro reloj, y lo que midió el anterior ya no sirve para comparar. Hallazgo A5 de la
+            // auditoría del sprint.
+            if ahora_ms >= antes && ahora_ms - antes < ESPERA_MS {
                 return None;
             }
         }
@@ -268,6 +275,31 @@ mod pruebas {
         let mut d = Disparador::nuevo();
         let eco = Turno { eco: true, ..turno("¿Ustedes tienen certificación?") };
         assert_eq!(d.mirar(&eco, &ctx(0)), None);
+    }
+
+    /// **El reloj de una pista vuelve a cero** cuando su anillo da la vuelta y la escucha se
+    /// reengancha al presente. Antes de este arreglo, el disparador comparaba el reloj nuevo con el
+    /// viejo, la resta saturada daba cero y la espera entre fichas se cumplía para siempre: a
+    /// partir de ese instante la app no volvía a buscar nada en toda la reunión, callada.
+    ///
+    /// Se ve en rojo devolviendo la comparación a `ahora_ms.saturating_sub(antes) < ESPERA_MS`.
+    #[test]
+    fn un_reloj_que_vuelve_atras_no_deja_al_disparador_muerto() {
+        let mut d = Disparador::nuevo();
+        // Un minuto de reunión: la primera pregunta dispara.
+        assert_eq!(
+            d.mirar(&turno("¿Ustedes tienen certificación?"), &ctx(60_000)),
+            Some(Motivo::Pregunta)
+        );
+        // Y aquí el anillo dio la vuelta: la pista se reengancha y su reloj arranca de cero.
+        assert_eq!(
+            d.mirar(&turno("¿Y en cuántas semanas hacen la entrega?"), &ctx(500)),
+            Some(Motivo::Pregunta),
+            "tras el reenganche el disparador se quedó mudo el resto de la sesión"
+        );
+        // Lo que NO cambia es la espera de verdad: con el reloj nuevo ya en marcha, dos preguntas
+        // seguidas siguen siendo una sola ficha.
+        assert_eq!(d.mirar(&turno("¿Y el soporte está incluido?"), &ctx(1_200)), None);
     }
 
     #[test]

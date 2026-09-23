@@ -83,7 +83,19 @@ objc2-foundation = { version = "0.3", default-features = false, features = [
 codegen-units = 1
 lto = true
 opt-level = 3
-panic = "abort"
+# **`panic = "abort"` estuvo aquí y tuvo que salir** (hallazgo A3 de la auditoría del sprint 001).
+# Lo traía la plantilla de Tauri para adelgazar el binario, y en esta app anulaba en silencio el
+# `catch_unwind` de `corpus::leer::de_pdf`: la librería de PDF se rompe con archivos malformados
+# —por eso está envuelta— y con `abort` el proceso no se desenreda, se muere. El módulo prometía
+# que «un documento dañado no detiene a los otros», su test lo comprobaba en debug, y en el binario
+# que se distribuye **un solo PDF roto de la carpeta del usuario cerraba la app**. Es el tercer filo
+# de la regla de los gates: probado, pero no en el modo en que el usuario lo usa.
+#
+# Lo que cuesta, MEDIDO en este Mac y no estimado: el binario de release pasa de **9,01 MB a
+# 11,07 MB** (+2,07 MB, +22,9 %). Son las tablas de desenredo, y es mucho para un número que se
+# anota por PR — pero la alternativa es que la app se cierre la primera vez que alguien le señale
+# una carpeta con un PDF malformado, que es el caso normal de una carpeta de verdad. Se paga y se
+# declara. Lo vigila `el_perfil_de_release_desenreda` en `corpus/leer.rs`.
 strip = true
 
 [dev-dependencies]

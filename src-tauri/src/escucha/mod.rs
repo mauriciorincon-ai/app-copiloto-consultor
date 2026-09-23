@@ -111,6 +111,18 @@ struct PistaViva {
     /// Muestras que llegaron pero no llenaron un marco completo.
     sobrante: Vec<f32>,
     idioma: String,
+    /// **Dónde cae el cero de ESTA pista en el reloj de la escucha.**
+    ///
+    /// Cada pista cuenta su tiempo con sus propias muestras, y ese reloj vuelve a cero cada vez que
+    /// su anillo da la vuelta y hay que reengancharse al presente. Mientras las dos pistas
+    /// arrancaran juntas y ninguna se reenganchara, sus relojes coincidían por casualidad — y en
+    /// esa casualidad se apoyaban dos cosas: el detector de eco, que compara un turno del micrófono
+    /// con los del sistema, y el disparador, que mide la espera entre fichas. Tras un reenganche de
+    /// una sola pista los dos comparaban tiempos de relojes distintos. Hallazgo A5 de la auditoría.
+    ///
+    /// Con esto, lo que sale de la pista hacia el resto de la app va **en el reloj de la escucha**,
+    /// que es uno solo y no vuelve atrás nunca.
+    desfase_ms: usize,
 }
 
 impl PistaViva {
@@ -135,7 +147,15 @@ impl PistaViva {
             procesadas: 0,
             sobrante: Vec::with_capacity(MARCO * 4),
             idioma: idioma.to_string(),
+            // Las dos pistas se abren en el mismo instante que nace la escucha, así que su cero es
+            // el cero del reloj común. Lo que lo mueve es el reenganche, y lo mueve `mirar`.
+            desfase_ms: 0,
         }
+    }
+
+    /// Un instante del reloj de esta pista, traído al reloj de la escucha.
+    fn en_el_reloj_comun(&self, ms: usize) -> usize {
+        ms + self.desfase_ms
     }
 
     /// El índice global de la muestra que corresponde a un instante del reloj de esta pista.
@@ -223,6 +243,11 @@ impl Escucha {
         buscador: Arc<dyn Buscador>,
         avisar: impl Fn(Novedad) + Send + Sync + 'static,
     ) -> Self {
+        // **El reloj de la escucha**: uno solo para las dos pistas, monótono, que no vuelve atrás
+        // ni cuando un anillo da la vuelta. Los relojes de cada pista se cuentan en muestras y
+        // valen para pedirle su trozo al anillo; para todo lo demás —el eco, el disparador, la
+        // banda— manda este.
+        let nacio = std::time::Instant::now();
         let pistas = Arc::new(Mutex::new(vec![
             PistaViva::abrir(Pista::Microfono, idioma_del_consultor),
             PistaViva::abrir(Pista::Sistema, idioma_del_cliente),
@@ -251,7 +276,7 @@ impl Escucha {
                 while viva.load(Ordering::Relaxed) {
                     if let Ok(mut lista) = pistas.lock() {
                         for p in lista.iter_mut() {
-                            mirar(p, &manda, avisar.as_ref());
+                            mirar(p, &manda, avisar.as_ref(), nacio);
                         }
                     }
                     std::thread::sleep(std::time::Duration::from_millis(LATIDO_MS));
@@ -259,31 +284,26 @@ impl Escucha {
             });
         }
 
-        // Hilo 2 — transcribe lo que el primero le pasa.
+        // Hilo 2 — transcribe lo que el primero le pasa. Lo que hace con cada encargo vive en
+        // `atender`, fuera del hilo, para poder probar el caso que este sprint no probaba: que el
+        // corte llegue justo en medio.
         {
             let ventana = ventana.clone();
             let avisar = avisar.clone();
             let disparador = disparador.clone();
+            let viva_aqui = viva.clone();
             std::thread::spawn(move || {
-                for encargo in recibe {
-                    let mut novedad = transcribir(&*motor, &encargo);
-                    let mut aparicion = None;
-                    if let Novedad::Turno(t) = &mut novedad {
-                        // El eco se decide **con la ventana delante**: hace falta saber qué dijo
-                        // el cliente para saber si el micrófono lo está repitiendo. Por eso vive
-                        // aquí y no en `transcribir`, que no conoce a nadie más.
-                        if t.pista == Pista::Microfono {
-                            if let Ok(v) = ventana.lock() {
-                                t.eco = huele_a_eco(t, &v);
-                            }
-                        }
-                        if let Ok(mut v) = ventana.lock() {
-                            v.empujar(t.clone());
-                        }
-                        if let Ok(mut d) = disparador.lock() {
-                            aparicion = buscar_si_toca(&mut d, &*buscador, t, &encargo);
-                        }
-                    }
+                for mut encargo in recibe {
+                    let Some((novedad, aparicion)) = atender(
+                        &mut encargo,
+                        &*motor,
+                        &*buscador,
+                        &ventana,
+                        &disparador,
+                        &viva_aqui,
+                    ) else {
+                        continue;
+                    };
                     // El turno va PRIMERO y la ficha después: el transcript de la banda se pinta
                     // en cuanto hay texto, sin esperar a una búsqueda que puede no llegar nunca.
                     avisar(novedad);
@@ -378,7 +398,12 @@ impl Drop for Escucha {
 }
 
 /// Saca del anillo lo que haya llegado y se lo da a la máquina de turnos, marco a marco.
-fn mirar(p: &mut PistaViva, manda: &Sender<Encargo>, avisar: &dyn Fn(Novedad)) {
+fn mirar(
+    p: &mut PistaViva,
+    manda: &Sender<Encargo>,
+    avisar: &dyn Fn(Novedad),
+    nacio: std::time::Instant,
+) {
     // `rango` distingue dos vacíos que no significan lo mismo, y de ahí sale toda la lógica de
     // abajo: `Some(vacío)` es «no ha entrado nada desde la última vez», que es lo normal cuando
     // nadie habla; `None` es «ese audio ya se pisó», que solo pasa si el anillo dio la vuelta
@@ -406,6 +431,11 @@ fn mirar(p: &mut PistaViva, manda: &Sender<Encargo>, avisar: &dyn Fn(Novedad)) {
         // dejaría cada turno pidiendo el trozo equivocado: se transcribiría un momento de la
         // reunión creyendo que es otro. Eso es peor que perder el audio — es inventarlo.
         p.turnos.reiniciar();
+        // **Y el desfase con el reloj común se recalcula aquí.** El cero de esta pista pasa a ser
+        // este instante; sin esto, sus turnos volverían a contar desde cero y el resto de la app
+        // —el eco, que compara las dos pistas, y el disparador, que mide la espera entre fichas—
+        // compararía tiempos de dos relojes distintos.
+        p.desfase_ms = nacio.elapsed().as_millis() as usize;
         return;
     };
     if nuevas.is_empty() && p.sobrante.len() < MARCO {
@@ -433,8 +463,11 @@ fn mirar(p: &mut PistaViva, manda: &Sender<Encargo>, avisar: &dyn Fn(Novedad)) {
                 let _ = manda.send(Encargo {
                     pista: p.cual,
                     idioma: p.idioma.clone(),
-                    desde_ms,
-                    hasta_ms,
+                    // El audio se pidió con el reloj de la pista, que es el que sabe qué muestra
+                    // es cuál; lo que sale de aquí va en el reloj de la escucha, que es el único
+                    // que las dos pistas comparten.
+                    desde_ms: p.en_el_reloj_comun(desde_ms),
+                    hasta_ms: p.en_el_reloj_comun(hasta_ms),
                     muestras,
                     cerro: std::time::Instant::now(),
                 });
@@ -469,6 +502,64 @@ fn huele_a_eco(turno: &Turno, ventana: &Ventana) -> bool {
     )
 }
 
+/// UN ENCARGO, ATENDIDO: de audio a novedad, y a ficha si toca. `None` cuando el corte ya llegó y
+/// no hay nada que anunciar.
+///
+/// **Vive fuera del hilo para poder probar el corte a media transcripción.** El kill-switch no
+/// alcanzaba a este camino: el audio que ya iba en vuelo se transcribía DESPUÉS del corte,
+/// repoblaba la ventana recién vaciada y volvía a guardar en el disparador la pregunta que
+/// `reiniciar()` había pisado. La banda acababa enseñando una ficha de una reunión que el usuario
+/// había cortado. Lo encontró la auditoría del sprint (hallazgo A2).
+///
+/// Se comprueba **dos veces** porque son dos ventanas distintas: antes de empezar (el encargo
+/// estaba en la cola) y al volver del motor (que tarda un cuarto de segundo, y la tecla se pulsa
+/// cuando el usuario quiere). En los dos casos el audio del encargo se pisa: es la única copia que
+/// existe fuera del anillo, así que el `vaciar()` del corte no lo alcanza.
+fn atender(
+    encargo: &mut Encargo,
+    motor: &dyn Motor,
+    buscador: &dyn Buscador,
+    ventana: &Mutex<Ventana>,
+    disparador: &Mutex<Disparador>,
+    viva: &AtomicBool,
+) -> Option<(Novedad, Option<Aparicion>)> {
+    if !viva.load(Ordering::Relaxed) {
+        olvidar(encargo);
+        return None;
+    }
+    let mut novedad = transcribir(motor, encargo);
+    if !viva.load(Ordering::Relaxed) {
+        olvidar(encargo);
+        if let Novedad::Turno(t) = &mut novedad {
+            // Las letras se pisan antes de soltarlas, igual que en la ventana de turnos y en el
+            // disparador: es texto del cliente.
+            // SEGURIDAD: se escriben ceros sobre bytes que ya eran UTF-8 válido, y el cero también
+            // lo es, así que la cadena sigue siendo válida en todo momento.
+            unsafe { t.texto.as_mut_vec() }.fill(0);
+        }
+        return None;
+    }
+
+    let mut aparicion = None;
+    if let Novedad::Turno(t) = &mut novedad {
+        // El eco se decide **con la ventana delante**: hace falta saber qué dijo el cliente para
+        // saber si el micrófono lo está repitiendo. Por eso vive aquí y no en `transcribir`, que no
+        // conoce a nadie más.
+        if t.pista == Pista::Microfono {
+            if let Ok(v) = ventana.lock() {
+                t.eco = huele_a_eco(t, &v);
+            }
+        }
+        if let Ok(mut v) = ventana.lock() {
+            v.empujar(t.clone());
+        }
+        if let Ok(mut d) = disparador.lock() {
+            aparicion = buscar_si_toca(&mut d, buscador, t, encargo);
+        }
+    }
+    Some((novedad, aparicion))
+}
+
 /// Del turno del cliente a la ficha — o a la declaración de que no hay nada.
 ///
 /// **La latencia se mide de verdad**, desde que el turno cerró hasta que la ficha está armada:
@@ -496,6 +587,18 @@ fn buscar_si_toca(
     println!("[ficha] {que} por «{}» en {ms} ms · {} candidatas", motivo.etiqueta(), hallazgos.len());
 
     Some(Aparicion { respuesta, motivo, ms, hora: turno.hora.clone() })
+}
+
+/// Pisa el audio de un encargo que no se va a transcribir.
+///
+/// `muestras` es **la única copia del audio de ese turno fuera del anillo**, y la hizo el hilo que
+/// mira los marcos. Soltar el `Vec` dejaría sus bytes en el montón hasta que otra cosa los pisara;
+/// aquí se pisan a mano, que es lo mismo que hace el anillo al vaciarse.
+fn olvidar(encargo: &mut Encargo) {
+    if let Some(m) = &mut encargo.muestras {
+        m.fill(0.0);
+        m.clear();
+    }
 }
 
 fn transcribir(motor: &dyn Motor, encargo: &Encargo) -> Novedad {
@@ -600,6 +703,7 @@ mod tests {
             procesadas: 0,
             sobrante: Vec::new(),
             idioma: "es-ES".into(),
+            desfase_ms: 0,
         };
         // La pista lleva un rato vista: el reloj de los turnos ha avanzado.
         for _ in 0..100 {
@@ -617,7 +721,7 @@ mod tests {
         }
 
         let (manda, _recibe) = std::sync::mpsc::channel();
-        mirar(&mut p, &manda, &|_| {});
+        mirar(&mut p, &manda, &|_| {}, std::time::Instant::now());
 
         assert_eq!(p.procesadas, 0, "el reenganche no llegó a ocurrir: el test no prueba nada");
         assert_eq!(
@@ -627,6 +731,82 @@ mod tests {
              distintos: cada turno siguiente pediría el trozo equivocado y se transcribiría un \
              momento de la reunión creyendo que es otro"
         );
+    }
+
+    /// **Y tras el reenganche, lo que sale de la pista sigue en el reloj de la escucha.**
+    ///
+    /// El reloj de cada pista se cuenta en muestras y vuelve a cero al reengancharse; el de la
+    /// escucha no. De que los dos no se confundan dependen dos cosas que fallaban en silencio: el
+    /// detector de eco —que compara un turno del micrófono contra los del sistema, cada uno con su
+    /// reloj— y la espera entre fichas del disparador. Hallazgo A5.
+    ///
+    /// Se ve en rojo devolviendo `desde_ms`/`hasta_ms` sin pasar por `en_el_reloj_comun`.
+    #[test]
+    fn tras_el_reenganche_los_turnos_siguen_en_el_reloj_de_la_escucha() {
+        // La escucha lleva cinco segundos en marcha. Se finge hacia atrás para que el test no tenga
+        // que esperarlos: lo que importa es que el desfase se lea del reloj común, no del de aquí.
+        let nacio = std::time::Instant::now() - std::time::Duration::from_millis(5_000);
+        let anillo = Arc::new(Mutex::new(crate::capture::Anillo::de_la_app()));
+        let mut p = PistaViva {
+            cual: Pista::Sistema,
+            anillo: anillo.clone(),
+            _grifo: None,
+            motivo: None,
+            turnos: Turnos::default(),
+            origen: 0,
+            procesadas: 0,
+            sobrante: Vec::new(),
+            idioma: "es-ES".into(),
+            desfase_ms: 0,
+        };
+        let (manda, recibe) = std::sync::mpsc::channel();
+
+        // El anillo da la vuelta entera sin que nadie mire: la pista se queda atrás y se reengancha.
+        {
+            let mut a = anillo.lock().unwrap();
+            let capacidad = a.capacidad();
+            a.escribir(&vec![0.0; capacidad + 40_000]);
+        }
+        mirar(&mut p, &manda, &|_| {}, nacio);
+        assert_eq!(p.procesadas, 0, "el reenganche no llegó a ocurrir: el test no prueba nada");
+        assert!(
+            (4_950..=5_200).contains(&p.desfase_ms),
+            "el cero de la pista no se colocó donde va el reloj de la escucha: {} ms",
+            p.desfase_ms
+        );
+
+        // Y ahora alguien habla. El orden importa y lo enseñó este test en rojo: **medio segundo
+        // de sala callada primero**. El detector por energía dedica sus primeros 25 marcos a medir
+        // el silencio de esta sala, y si lo primero que oye es la frase, aprende que la frase es el
+        // silencio y no vuelve a oír nada. Es el fallo que `vad.rs` declara —si la app arranca con
+        // alguien ya hablando, pierde ese turno— visto desde el arnés.
+        {
+            let mut a = anillo.lock().unwrap();
+            let hz = crate::capture::anillo::HZ as usize;
+            a.escribir(&vec![0.0; hz * 6 / 10]);
+            a.escribir(&voz(hz));
+            a.escribir(&vec![0.0; hz / 2]);
+        }
+        mirar(&mut p, &manda, &|_| {}, nacio);
+
+        let encargo = recibe.try_recv().expect("el turno no se cerró: el test no prueba nada");
+        assert!(
+            encargo.desde_ms >= 4_950,
+            "el turno salió con el reloj de la pista ({} ms) y no con el de la escucha: el eco y \
+             la espera entre fichas compararían relojes distintos",
+            encargo.desde_ms
+        );
+    }
+
+    /// «Voz» para el detector por energía: una onda bien por encima del suelo de ruido. No pretende
+    /// parecerse a una voz — el detector mira energía, no timbre.
+    fn voz(muestras: usize) -> Vec<f32> {
+        (0..muestras)
+            .map(|i| {
+                let t = i as f32 / crate::capture::anillo::HZ as f32;
+                0.5 * (2.0 * std::f32::consts::PI * 180.0 * t).sin()
+            })
+            .collect()
     }
 
     /// Qué muestra del anillo corresponde al instante en que va el reloj de los turnos.
@@ -653,6 +833,139 @@ mod tests {
                 "«{texto}» está enseñando el nombre del tipo"
             );
         }
+    }
+
+    /// EL CORTE A MEDIA TRANSCRIPCIÓN. `⌥⎋` no alcanzaba a este camino: el turno que ya estaba en
+    /// la cola —o dentro del motor— se transcribía después, repoblaba la ventana recién vaciada y
+    /// volvía a dejar la pregunta del cliente en el disparador. El usuario cortaba y la banda
+    /// seguía enseñando su reunión.
+    ///
+    /// Se ve en rojo quitando cualquiera de las dos comprobaciones de `viva` en `atender`.
+    #[test]
+    fn el_corte_alcanza_al_turno_que_ya_estaba_en_vuelo() {
+        /// Un motor que devuelve texto siempre — y que, si se le da un interruptor, **lo apaga
+        /// mientras transcribe**. Eso es el caso real: el motor tarda un cuarto de segundo y el
+        /// usuario pulsa `⌥⎋` cuando le da la gana, no entre dos turnos.
+        struct Loro(Option<Arc<AtomicBool>>, Arc<AtomicBool>);
+        impl Motor for Loro {
+            fn nombre(&self) -> &'static str {
+                "loro"
+            }
+            fn disponibilidad(&self, _idioma: &str) -> Disponibilidad {
+                Disponibilidad::Listo
+            }
+            fn instalar(&self, _idioma: &str) -> Disponibilidad {
+                Disponibilidad::Listo
+            }
+            fn transcribir(&self, _idioma: &str, _muestras: &[f32], _hz: u32) -> Result<String, Fallo> {
+                // Que este motor haya trabajado se nota: tras el corte, el audio del cliente no
+                // tiene que llegar ni al transcriptor.
+                self.1.store(true, Ordering::Relaxed);
+                if let Some(interruptor) = &self.0 {
+                    interruptor.store(false, Ordering::Relaxed);
+                }
+                Ok("¿Ustedes tienen certificación ISO 27001?".into())
+            }
+            fn techo_de_idiomas(&self) -> u32 {
+                1
+            }
+            fn idiomas(&self) -> Vec<String> {
+                vec!["es-ES".into()]
+            }
+        }
+
+        let ventana = Mutex::new(Ventana::nueva());
+        let disparador = Mutex::new(Disparador::nuevo());
+        let viva = Arc::new(AtomicBool::new(true));
+        let mut encargo = Encargo {
+            pista: Pista::Sistema,
+            idioma: "es-ES".into(),
+            desde_ms: 0,
+            hasta_ms: 2_000,
+            // El audio del turno, que es la única copia fuera del anillo.
+            muestras: Some(vec![0.7; 32_000]),
+            cerro: std::time::Instant::now(),
+        };
+
+        // Primero, con la escucha viva: el turno llega a la ventana. Sin esto el test pasaría
+        // también con un `atender` que no hiciera nada nunca.
+        let trabajo = Arc::new(AtomicBool::new(false));
+        let (novedad, _) = atender(
+            &mut encargo,
+            &Loro(None, trabajo.clone()),
+            &SinCorpus,
+            &ventana,
+            &disparador,
+            &viva,
+        )
+        .expect("con la escucha viva el turno tiene que llegar");
+        assert!(matches!(novedad, Novedad::Turno(_)));
+        assert_eq!(ventana.lock().unwrap().cuantos(), 1);
+
+        /// Lo que tiene que quedar tras un corte, mire uno donde mire.
+        fn nada_sobrevivio(
+            encargo: &Encargo,
+            ventana: &Mutex<Ventana>,
+            devuelto: &Option<(Novedad, Option<Aparicion>)>,
+            cuando: &str,
+        ) {
+            assert!(devuelto.is_none(), "{cuando}: se anunció una novedad de la reunión cortada");
+            assert_eq!(
+                ventana.lock().unwrap().cuantos(),
+                0,
+                "{cuando}: el turno repobló la ventana que el corte acababa de vaciar"
+            );
+            assert!(
+                encargo.muestras.as_ref().is_none_or(|m| m.is_empty()),
+                "{cuando}: el audio sobrevivió al corte, y es la única copia fuera del anillo"
+            );
+        }
+
+        let mut en_vuelo = |desde_ms: usize| Encargo {
+            pista: Pista::Sistema,
+            idioma: "es-ES".into(),
+            desde_ms,
+            hasta_ms: desde_ms + 2_000,
+            // El audio del turno, que es la única copia fuera del anillo.
+            muestras: Some(vec![0.7; 32_000]),
+            cerro: std::time::Instant::now(),
+        };
+
+        // **Caso uno: el corte llegó mientras el encargo esperaba su turno en la cola.**
+        viva.store(false, Ordering::Relaxed);
+        ventana.lock().unwrap().vaciar();
+        disparador.lock().unwrap().reiniciar();
+        let mut encolado = en_vuelo(2_400);
+        trabajo.store(false, Ordering::Relaxed);
+        let devuelto = atender(
+            &mut encolado,
+            &Loro(None, trabajo.clone()),
+            &SinCorpus,
+            &ventana,
+            &disparador,
+            &viva,
+        );
+        nada_sobrevivio(&encolado, &ventana, &devuelto, "esperando en la cola");
+        assert!(
+            !trabajo.load(Ordering::Relaxed),
+            "el audio del cliente llegó al transcriptor DESPUÉS del corte: no es solo trabajo \
+             gastado, es lo que la app promete no hacer"
+        );
+
+        // **Caso dos: el corte llega DENTRO del motor**, que es donde de verdad cae — el motor
+        // tarda y la tecla se pulsa a mitad. Este caso es el que el primer arreglo no cubría: con
+        // solo la comprobación de la entrada, el turno se anunciaba igual.
+        viva.store(true, Ordering::Relaxed);
+        let mut mientras_transcribia = en_vuelo(5_400);
+        let devuelto = atender(
+            &mut mientras_transcribia,
+            &Loro(Some(viva.clone()), trabajo.clone()),
+            &SinCorpus,
+            &ventana,
+            &disparador,
+            &viva,
+        );
+        nada_sobrevivio(&mientras_transcribia, &ventana, &devuelto, "dentro del motor");
     }
 
     /// El turno perdido tiene su propia novedad, distinta del turno callado. Si los dos acabaran en

@@ -1673,3 +1673,112 @@ sus propios tests contra la API real— y entonces cada emisión llega a quien t
 `Novedad::Ruido` seguían en snake_case mientras el resto del puente es camelCase. Nadie los leía
 todavía — así es como una inconsistencia espera a que alguien la encuentre en producción. Resuelto
 con `rename_all_fields = "camelCase"`.
+
+## A2 · El kill-switch no alcanzaba al hilo que transcribe
+
+`⌥⎋` cerraba los grifos, pisaba los anillos y vaciaba la ventana de turnos — y el hilo que
+transcribe seguía a lo suyo. El bucle `for encargo in recibe` no consultaba `viva`, así que el audio
+del cliente **que ya iba en vuelo** se transcribía después del corte, **repoblaba la ventana que se
+acababa de vaciar** y volvía a dejar en el disparador la pregunta que `reiniciar()` había pisado. El
+usuario cortaba y la banda seguía enseñando su reunión.
+
+El arreglo tiene dos comprobaciones porque son dos ventanas distintas:
+
+| Cuándo | Qué evita |
+|---|---|
+| antes de transcribir | que el audio del cliente llegue **al transcriptor** después del corte |
+| al volver del motor | que un turno que ya tenía texto se anuncie, guarde o busque |
+
+En los dos casos el audio del encargo se pisa a mano (`olvidar`): es **la única copia que existe
+fuera del anillo**, hecha por el hilo que mira los marcos, así que el `vaciar()` del corte no la
+alcanza. Y si el turno ya traía texto, las letras se pisan igual que en la ventana de turnos y en el
+disparador — es texto del cliente.
+
+**Lo que hizo falta para poder probarlo:** el cuerpo del bucle salió del hilo a una función,
+`atender`. Un `std::thread::spawn` con un `for` dentro no se puede examinar; una función a la que se
+le pasa el interruptor, sí.
+
+**En rojo, dos veces y por separado** (`el_corte_alcanza_al_turno_que_ya_estaba_en_vuelo`):
+
+1. Sin la comprobación de la **salida** del motor: *«el turno repobló la ventana que el corte
+   acababa de vaciar»*. El caso es el real — el motor tarda 250 ms y la tecla se pulsa a mitad, así
+   que el motor de prueba **apaga la escucha mientras transcribe**.
+2. Sin la comprobación de la **entrada**: *«el audio del cliente llegó al transcriptor DESPUÉS del
+   corte»*. La primera versión del test no distinguía este caso —la comprobación de salida lo tapaba
+   y la de entrada quedaba sin rojo, que por la tercera pregunta de la regla 15 no es un gate—; se
+   añadió al motor de prueba una marca de «he trabajado» y entonces cada comprobación tiene su
+   propio rojo.
+
+## A4 · `escucha/` afirmaba estar vigilado por `verify:ephemeral` y no lo estaba
+
+Su cabecera decía, desde la fase 3: *«**MÓDULO PROTEGIDO.** … no la guarda en ninguna parte, y
+`pnpm verify:ephemeral` lo comprueba»*. No estaba en `PROTEGIDOS`. Es el módulo de **mayor
+superficie** de los tres —copia el audio del turno, mantiene la ventana de transcript y guarda la
+última pregunta del cliente—, y un `fs::write` ahí pasaba el gate en verde.
+
+Se añadió a la lista. Y como el problema de fondo es que **la lista se escribe a mano**, el script
+gana un gate sobre sí mismo: la marca «MÓDULO PROTEGIDO» del código es la que manda, y si un archivo
+la lleva, su carpeta está en la lista o el script falla. Un módulo que se cree vigilado es peor que
+uno que se sabe descubierto — nadie va a mirarlo.
+
+**Dos rojos:**
+
+- un `std::fs::write` plantado en `escucha/mod.rs` → `✕ src-tauri/src/escucha/mod.rs:560
+  /std::fs\b/` (antes: silencio).
+- quitando `escucha` de la lista sin tocar su cabecera → `✕ … se declara «MÓDULO PROTEGIDO» y NO
+  está en la lista de este script`.
+
+## A5 · Tras un reenganche, el disparador quedaba muerto el resto de la sesión
+
+Cuando el anillo de una pista da la vuelta entera, la escucha se reengancha al presente y **el reloj
+de esa pista vuelve a cero**. El disparador comparaba el reloj nuevo con el viejo:
+`ahora_ms.saturating_sub(antes)` daba **0**, la espera entre fichas se cumplía siempre y la app no
+volvía a buscar nada — callada, sin un log, sin un estado en la banda. Y el detector de eco tenía la
+misma enfermedad: compara un turno del micrófono contra los del sistema, y tras el reenganche de una
+sola pista comparaba tiempos de dos relojes distintos.
+
+Se arregló en los dos sitios, porque son dos cosas:
+
+1. **El síntoma, en el disparador.** Un reloj que retrocede no es «hace un instante»: es otro reloj.
+   La comparación pasa a `ahora_ms >= antes && ahora_ms - antes < ESPERA_MS`.
+2. **La causa, en la escucha.** Nace **el reloj de la escucha**: uno solo, monótono, que no vuelve
+   atrás. Cada pista guarda su `desfase_ms` —dónde cae su cero en ese reloj— y lo recalcula al
+   reengancharse. Los relojes de pista siguen contando muestras, que es lo que sirve para pedirle su
+   trozo al anillo; lo que sale de la pista hacia el resto de la app va ya en el reloj común.
+
+**Dos rojos:**
+
+- `un_reloj_que_vuelve_atras_no_deja_al_disparador_muerto`, devolviendo la resta saturada: *«tras el
+  reenganche el disparador se quedó mudo el resto de la sesión»*.
+- `tras_el_reenganche_los_turnos_siguen_en_el_reloj_de_la_escucha`, sin `en_el_reloj_comun`: *«el
+  turno salió con el reloj de la pista (600 ms) y no con el de la escucha»*.
+
+**Y el segundo test enseñó algo del detector de voz que no estaba escrito en ningún arnés:** la
+primera versión escribía medio segundo de voz y el turno no se cerraba nunca. El detector por
+energía dedica sus primeros 25 marcos —500 ms— a **medir el silencio de la sala**, y si lo primero
+que oye es la frase, aprende que la frase es el silencio. Es el fallo que `vad.rs` ya declaraba en su
+cabecera («si la app arranca con alguien ya hablando, pierde ese turno»), visto por primera vez desde
+fuera. El test escribe ahora 600 ms de sala callada antes de la frase, y lo dice.
+
+## A3 · `panic = "abort"` anulaba el `catch_unwind` del PDF en release
+
+`corpus::leer::de_pdf` envuelve la librería de PDF en `std::panic::catch_unwind` porque se rompe con
+archivos malformados, y el módulo promete que «un documento dañado no detiene a los otros». Con
+`panic = "abort"` —que traía la plantilla de Tauri para adelgazar el binario— **un `panic!` no se
+desenreda: mata el proceso**. En el binario que se distribuye, un solo PDF roto de la carpeta del
+usuario cerraba la app. El test que cubría la promesa corre en debug: es el **tercer filo** de la
+regla de los gates — probado, pero no en el modo en que el usuario lo usa.
+
+Se quitó la línea. **Lo que cuesta, medido y no estimado: el binario de release pasa de 9,01 MB a
+11,07 MB (+2,07 MB, +22,9 %).** Son las tablas de desenredo. Es mucho para un número que se anota por
+PR, y se paga: la alternativa es que la app se cierre la primera vez que alguien le señale una
+carpeta de documentos de verdad.
+
+**El gate** es estático a propósito (`el_perfil_de_release_desenreda`, al lado del `catch_unwind` que
+protege): correr la suite en release costaría otra compilación con LTO en cada PR para vigilar una
+línea de configuración. Lo que hay que impedir es que esa línea vuelva, y eso se lee. **En rojo**
+devolviendo `panic = "abort"` al manifiesto.
+
+**Y la promesa se comprobó EN RELEASE una vez, a mano**, que es la pregunta que este hallazgo hace:
+`cargo test --release --lib corpus::` → **46 pruebas verdes**, la del PDF roto entre ellas. Antes de
+quitar la línea, ese mismo comando no habría llegado al final: habría muerto el proceso.
