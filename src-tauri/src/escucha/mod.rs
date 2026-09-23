@@ -45,7 +45,10 @@ const LATIDO_MS: u64 = 40;
 /// Lo que pasa mientras se escucha. Sale de aquí hacia quien quiera enterarse — en la app, hacia
 /// la banda y la pantalla de Honestidad.
 #[derive(Clone, Debug, serde::Serialize)]
-#[serde(rename_all = "kebab-case", tag = "que")]
+// `rename_all` solo toca los NOMBRES de las variantes; los campos de dentro seguían en
+// snake_case mientras el resto del contrato es camelCase. Nadie los leía todavía, y así es
+// como una inconsistencia espera a que alguien la encuentre en producción.
+#[serde(rename_all = "kebab-case", rename_all_fields = "camelCase", tag = "que")]
 pub enum Novedad {
     /// Alguien empezó a hablar en esta pista.
     Empieza { pista: Pista },

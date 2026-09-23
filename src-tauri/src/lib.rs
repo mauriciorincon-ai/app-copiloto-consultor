@@ -15,6 +15,10 @@ pub mod acople;
 pub mod capture;
 pub mod corpus;
 pub mod corte;
+/// El contrato con la interfaz, y el gate que lo compara. Solo se compila en `cargo test`: su
+/// trabajo es escribir `src/contrato.generado.ts`, no viajar en el binario del usuario.
+#[cfg(test)]
+mod contrato;
 pub mod disparo;
 pub mod escucha;
 pub mod ficha;
@@ -88,9 +92,9 @@ fn cerrar_banda(app: tauri::AppHandle) {
 /// Lo que la banda necesita para dibujar «acoplada» o «sin acople» — y lo que hace que esa
 /// palabra sea un hecho comprobado, no una etiqueta fija.
 #[derive(Clone, serde::Serialize)]
-struct EstadoDelAcople {
-    permiso: bool,
-    acoplada: bool,
+pub struct EstadoDelAcople {
+    pub permiso: bool,
+    pub acoplada: bool,
 }
 
 /// El nombre del evento con el que la banda se entera de que el acople cambió.

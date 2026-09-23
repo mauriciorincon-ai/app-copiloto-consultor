@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { escuchar, hayTauri, preguntar } from "./puente";
 import { useT } from "./i18n";
+import type { Pista, Turno } from "./cuaderno";
 
 /**
  * LA FICHA EN LA BANDA — lo que la app encontró en el corpus del consultor.
@@ -66,8 +67,26 @@ export type Aparicion = Respuesta & {
   hora: string;
 };
 
-/** Lo que el evento «escucha» trae. Solo interesan dos de sus formas. */
-type Novedad = { Aparece?: Aparicion; Turno?: { pista: string; eco: boolean } };
+/**
+ * Lo que el evento «escucha» trae, en sus cinco formas.
+ *
+ * **Va etiquetada por dentro**: Rust la serializa con `#[serde(tag = "que")]`, así que lo que
+ * llega es `{"que":"aparece", …los campos de la aparición}` y no `{"Aparece":{…}}`. Estuvo escrito
+ * al revés todo el sprint y **la ficha automática no llegó nunca a la banda**: `n.Aparece` era
+ * `undefined` en cada evento, la banda se quedaba en «esperando» toda la reunión y solo funcionaba
+ * `⌘⇧A`, que va por otro camino. Ningún test podía verlo —todos corren fuera de Tauri, donde esta
+ * suscripción no se monta— y la cobertura lo delataba desde dos fases antes con este bloque sin
+ * cubrir. Lo encontró la auditoría del sprint (hallazgo C1).
+ *
+ * Desde entonces las dos copias del contrato las compara un gate: `src/contrato.generado.ts` lo
+ * escribe Rust con el serde de producción, y `pnpm typecheck` falla si un campo deja de encajar.
+ */
+export type Novedad =
+  | { que: "empieza"; pista: Pista }
+  | ({ que: "turno" } & Turno)
+  | { que: "sin-texto"; pista: Pista; desdeMs: number; hastaMs: number; motivo: string }
+  | { que: "ruido"; pista: Pista; duracionMs: number }
+  | ({ que: "aparece" } & Aparicion);
 
 export type LoQueLaBandaEnseña = {
   aparicion: Aparicion | null;
@@ -99,9 +118,9 @@ export function useFicha(paraLaMuestra: "ficha" | "sin-resultado" | string): LoQ
       escuchar<Novedad>("escucha", (n) => {
         // Un turno del cliente puede acabar en ficha o en nada, y hasta saberlo la banda dice
         // que está buscando. El eco no cuenta: es el consultor oyéndose a sí mismo.
-        if (n?.Turno && n.Turno.pista === "sistema" && !n.Turno.eco) setBuscando(true);
-        if (n?.Aparece) {
-          setFicha(n.Aparece);
+        if (n?.que === "turno" && n.pista === "sistema" && !n.eco) setBuscando(true);
+        if (n?.que === "aparece") {
+          setFicha(n);
           setBuscando(false);
         }
       }),

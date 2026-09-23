@@ -148,8 +148,15 @@ export type EstadoDeEscucha = {
   motor: string;
 };
 
+/**
+ * Quién habló, **por el origen de la muestra**: el micrófono es el consultor y el audio del
+ * sistema es la contraparte. Regla dura de la casa — la atribución se resuelve por pista y jamás
+ * por biometría.
+ */
+export type Pista = "microfono" | "sistema";
+
 export type Turno = {
-  pista: "microfono" | "sistema";
+  pista: Pista;
   desdeMs: number;
   hastaMs: number;
   texto: string;

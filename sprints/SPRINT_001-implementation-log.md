@@ -1587,3 +1587,89 @@ necesitaría ADR es lo contrario.
 hermana de **C6** (fichas de evidencia): la VISION debería recogerla al lado de C6, o como C17 si
 prefiere numerarla aparte. Va sumada a **C15** (modo solo audio) y **C16** (puerta local para
 Claude Code), que siguen pendientes de absorción desde la Etapa de Diseño.
+
+---
+
+# Auditoría del sprint — Fase 2 (correcciones)
+
+La Fase 1 la corrió un auditor independiente con el diff delante y su reporte vive en
+`sprints/SPRINT_001-auditoria.md`: **1 crítico, 10 altos, 14 medios, 7 bajos**, veredicto
+*requiere ajustes*. El usuario aprobó la Fase 1 y su plan el 2026-09-22 («ejecuta la fase 2»).
+Aquí va lo que se pagó, en el orden del plan.
+
+## Desviación del plan de la Fase 2, declarada antes de ejecutarla
+
+El plan pone el **gate de contrato Rust→TS** en el bloque 3 y C1 en el bloque 1. Se han hecho
+**juntos, en el mismo commit**, porque verificar C1 exige un payload real: escribir a mano en el
+test el JSON que Rust emite sería repetir el defecto que se está arreglando —dos copias del
+contrato, ninguna comparada—. No cambia el alcance; adelanta el gate.
+
+## C1 · La ficha automática nunca llegaba a la banda
+
+**La causa.** `escucha::Novedad` viaja etiquetada **por dentro** (`#[serde(tag = "que")]`) y el
+webview la leía etiquetada **por fuera**: `{ Aparece?: Aparicion }` contra un
+`{"que":"aparece", …}`. `n.Aparece` era `undefined` en cada evento, así que en el binario la banda
+se quedaba en «esperando» toda la reunión y solo funcionaba `⌘⇧A`, que va por otro camino. El
+outcome del sprint —*ficha en ≤4 s tras el fin de turno*— no ocurría.
+
+**El arreglo** es de seis líneas (`src/ficha.ts`: la unión discriminada de las cinco formas y el
+`n.que === "aparece"`). Lo que costó trabajo es lo otro: **que nadie pueda volver a escribirlo mal
+en silencio.**
+
+### El gate que faltaba: `src-tauri/src/contrato.rs` → `src/contrato.generado.ts`
+
+Rust construye una muestra de **cada cosa que cruza el puente** y la serializa con el mismo serde
+que corre en producción. De ahí sale un archivo de TypeScript donde cada constante lleva el valor
+que la parte nativa emite y **el tipo que la interfaz declara**. Dos gates, en dos jobs distintos:
+
+| Gate | Dónde corre | Qué caza |
+|---|---|---|
+| `cargo test --lib contrato` | `build-escritorio` | que el archivo del repo sea el que Rust emite hoy |
+| `pnpm typecheck` | `quality` | que ese valor encaje en el tipo declarado |
+
+El segundo es el que importa, y funciona porque son **literales**: TypeScript comprueba las tres
+direcciones —campo que falta, campo de más, campo con otro tipo—. El módulo va bajo `#[cfg(test)]`:
+su trabajo es escribir el archivo, no viajar en el binario del usuario.
+
+**Las tres preguntas de la regla 15, respondidas:**
+
+- **¿Puede fallar?** Sí, y no hay regla previa que lo haga inalcanzable: hasta hoy el repo entero
+  compilaba con el contrato roto.
+- **¿Lo vi fallar?** Dos veces, las dos en el mismo commit que introduce el gate:
+  1. Devolviendo a `src/ficha.ts` el tipo que tenía el sprint, `pnpm typecheck` da **6 errores en
+     `src/contrato.generado.ts`** nombrando los campos: *«'pista' does not exist in type
+     'Novedad'»*, *«'desdeMs'…»*, *«'acumuladas'…»*, *«'buscado'…»*. El gate señala el defecto C1
+     por su nombre.
+  2. Poniendo `#[serde(rename = "lineaExtendida")]` en `ficha::Ficha::linea_larga` —un cambio que
+     **compila perfectamente** y cambia el cable— `cargo test` falla y enseña las dos líneas:
+     `- en el repo: "lineaLarga"… / + Rust emite: "lineaExtendida"…`.
+- **¿Lo vi correr?** Sí: verde en los dos jobs tras revertir las dos demos.
+
+El primer intento del mensaje de fallo volcaba los dos archivos enteros escapados —cuatrocientas
+líneas donde no se encuentra nada—. Se cambió por un diff de las líneas que se separan: un gate
+cuyo fallo no se puede leer avisa a medias.
+
+### Y el test que ningún test de este sprint era
+
+`tests/unit/la-ficha-llega-a-la-banda.test.tsx` (5 pruebas) monta la banda **dentro de Tauri** y le
+emite los payloads de `contrato.generado.ts`. Es el primer test del repo que atraviesa la
+suscripción: los 87 unitarios y los 66 e2e corren con `hayTauri() === false`, donde `useFicha`
+devuelve la muestra y no se suscribe a nada. La cobertura lo delataba desde dos fases antes —
+`src/ficha.ts` líneas 98-121 sin cubrir, que son exactamente esas. Hoy el archivo está al **100 %**
+de líneas.
+
+**En rojo con el defecto puesto:** las cinco fallan, y con el mensaje exacto de la auditoría —
+`Expected: "ficha" · Received: "esperando"`.
+
+**Una vuelta atrás que vale registrar:** el primer arnés fingía `@tauri-apps/api/event`. La banda
+registra **cinco suscripciones en el mismo instante** y solo la primera llegaba al doble; las otras
+cuatro entraban a la librería de verdad y reventaban contra un `__TAURI_INTERNALS__` de mentira. El
+test pasaba midiendo una de cinco. Se cambió al seam que la app declara —`src/puente.ts`, que tiene
+sus propios tests contra la API real— y entonces cada emisión llega a quien tiene que llegar.
+
+### De propina, el contrato dejó de tener dos gramáticas
+
+`rename_all` solo toca los **nombres de las variantes**: los campos dentro de `Novedad::SinTexto` y
+`Novedad::Ruido` seguían en snake_case mientras el resto del puente es camelCase. Nadie los leía
+todavía — así es como una inconsistencia espera a que alguien la encuentre en producción. Resuelto
+con `rename_all_fields = "camelCase"`.
