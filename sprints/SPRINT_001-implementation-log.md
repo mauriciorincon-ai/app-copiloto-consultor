@@ -2117,3 +2117,107 @@ No se inventan aquí. Se declaran por conteo, y la lección va al summary como s
 **el artefacto del repo tiene que llevar los hallazgos de TODAS las severidades con su archivo y su
 línea**, porque es el único que sobrevive a la sesión que los encontró. Un hallazgo sin sitio no es
 deuda: es un rumor.
+
+---
+
+## El `/release-check` — las doce casillas, y las cuatro cosas que encontró
+
+El checklist se corrió entero sobre `5c13a8e`, con los comandos del `ci.yml` y no con parecidos.
+Diez casillas pasaron sin ruido. Las otras dos dieron cuatro hallazgos, y ninguno lo había visto ni
+la auditoría ni la CI.
+
+### 1 · `cargo clippy` lo pedía el checklist desde el estampado y NUNCA lo corría nadie
+
+**Estaba en rojo.** Primera vez que se ejecuta en la vida del repo:
+
+```
+error: variable does not need to be mutable
+   --> src/escucha/mod.rs:927:13
+    |
+927 |         let mut en_vuelo = |desde_ms: usize| Encargo {
+    = note: `-D unused-mut` implied by `-D warnings`
+```
+
+Un `mut` de más en un cierre de un test que escribí en la fase 2. Trivial de arreglar; lo que no es
+trivial es **por qué llevaba ahí desde entonces**: `ci.yml` corre `cargo check` y `cargo test`, y
+clippy no estaba en ningún job. Un gate que el checklist exige y ningún job ejecuta es la segunda
+pregunta de la regla 15 en su forma más pura —*¿lo viste correr?*— contestada con un no.
+
+**Arreglo en dos partes:** el `mut` fuera, y clippy dentro de `build-escritorio` (paso propio, no job
+nuevo, así que la ruleset no se toca). **Su demo en rojo no hubo que fabricarla: ya estaba roja**, que
+es la única demo que no se puede acusar de complaciente.
+
+### 2 · El gate del efímero acusaba al compilador — cuarta vez que dos cosas comparten carpeta
+
+Corriendo `verify:ephemeral:runtime` mientras un `pnpm tauri build` compilaba al lado:
+
+```
+la sesión dejó 6 archivo(s) fuera del índice del corpus:
+  …/src-tauri/target/release/deps/libtantivy_columnar-e02d283488e778db.rlib
+  …/src-tauri/target/release/deps/libwry-cb1b28a9b61f2eb0.rlib
+  …
+```
+
+Ninguna fuga: seis `.rlib` recién compilados por el vecino. El inventario miraba **el árbol del repo
+entero**, `target/` incluido, así que su veredicto dependía de quién más estuviera corriendo. Es la
+**cuarta vez en este sprint** que un test se rompe por compartir carpeta con otro —audio en la fase 3,
+corpus en la fase 4, la canaria en la CI, y ahora el compilador— y la primera en que el acusado no es
+un test hermano sino la herramienta.
+
+**Arreglo:** `DE_LA_HERRAMIENTA` — `target` · `node_modules` · `.git` · `coverage` · `dist` ·
+`playwright-report` · `test-results` quedan fuera del inventario, y el mensaje del fallo las nombra
+para que nadie se pregunte qué no se miró. **No afloja el gate, lo apunta:** la app nunca escribe ahí
+—su carpeta de datos está en `~/Library/Application Support` y su directorio de trabajo durante el
+test es `src-tauri/`, vigilado entero—, y un gate que acusa al compilador se acaba desactivando, que
+es el día en que la fuga de verdad pasa con él.
+
+**Demo en rojo, en el mismo commit y con la exclusión ya puesta** (`fs::write` plantado dentro de
+`una_sesion_completa`):
+
+```
+la sesión dejó 1 archivo(s) fuera del índice del corpus:
+  …/src-tauri/fuga-inyectada-de-la-demo.txt
+(fuera del inventario, porque las escribe la herramienta y no la app: target · node_modules · …)
+test una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus ... FAILED
+```
+
+Revertida la fuga, verde. La exclusión no le quitó el diente.
+
+### 3 · El manual nombraba un botón que dejó de llamarse así — y lo rompí yo, doce horas antes
+
+`docs/MANUAL-DE-USO.md` decía dos veces **«Instalar el modelo»**. El botón se llama **«Instalar»**
+desde `b967124`, el commit que le acortó la etiqueta para que no partiera en dos líneas. La maqueta,
+el diccionario y la guía de prueba dicen «Instalar»; el manual se quedó con el rótulo viejo.
+
+Lo que deja dicho, y va al summary como sugerencia al método: **el barrido de frases caducadas se
+corrió en la Fase 1 de la auditoría, y la Fase 2 fabricó una frase caducada nueva.** Es exactamente
+la lección de la regla 17 con el barrido de enlaces —*corre sobre el árbol que se va a subir, después
+del último `git add`*— aplicada a las frases. Un barrido de caducidad hecho antes de los arreglos
+audita el repo que ya no existe.
+
+### 4 · `design-sync/` no existe, y la razón declarada no es la que manda
+
+La Etapa de Diseño lo anotó como deuda con este motivo: *«no hay ciclo cerrado que publicar»*. Pero la
+regla 16 de esta casa no habla de publicar: **«todo sprint que toque UI actualiza el bundle en su MISMO
+PR … publicar puede esperar al cierre de ciclo, y así el cierre es un delta pequeño y nunca una
+reconstrucción»**. Este sprint es el primero con UI y no tocó el bundle, así que la deuda sigue viva
+con el motivo equivocado. Sube al summary con el motivo correcto y **con la decisión en manos del
+usuario**: construirlo antes del merge, o pagarlo en el S2 sabiendo que el cierre de ciclo será un
+delta mayor.
+
+### Las casillas que pasaron, con su número
+
+| Casilla | Evidencia |
+|---|---|
+| §1 tests | 108 unitarios (89,2 % líneas) · 66 e2e sin flaky · 208 + 14 de cargo |
+| §2 tipos y lint | `tsc --noEmit` · `eslint src` · **clippy limpio en las dos formas**, ya |
+| §3 binario | `pnpm tauri build` produce `.app` y `.dmg`: **binario 11,05 MB · .app 11 MB · dmg 4,88 MB** |
+| §4 permisos | tres `NS*UsageDescription` en `Info.plist` + `lproj/{es,en}.lproj/InfoPlist.strings` |
+| §5 ventana protegida | `ventana/mod.rs` + `tests/unit/proteccion-de-captura.test.ts`, exactamente una protegida |
+| §6 no persistencia | barrido estático (17 archivos, 8 módulos) **y** el de runtime, con su fuga inyectada |
+| §7 seguridad | `pnpm audit --audit-level high` sin vulnerabilidades · `cargo audit` 0 vulnerabilidades (3 warnings declarados) |
+| §8 observabilidad | ni `pino` ni Sentry en el árbol; la canaria demuestra que el log no lleva al cliente |
+| §9 a11y | axe dentro de los 66 e2e · ambos temas · **§9 del bundle: hallazgo 4** |
+| §10 documentación | manual corregido (hallazgo 3) · guía v2 · summary DENTRO del PR · barrido de enlaces limpio |
+| §11 los checks | conclusión propia `SUCCESS` en `quality`, `e2e` y `build-escritorio` sobre `e83b8fb` |
+| §12 el disco en runtime | 10 archivos nuevos, todos del índice del corpus; la carpeta reparada de 755 a 700 |

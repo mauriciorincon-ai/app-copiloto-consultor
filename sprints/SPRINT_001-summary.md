@@ -46,10 +46,10 @@ Los tres outcomes, uno a uno:
 | Estándar | Evidencia |
 |---|---|
 | **Testing** | 108 unitarios (TS) · 208 de la librería (Rust) · 14 contra el Mac de verdad · 66 e2e con axe. Cobertura del webview 89 % de líneas |
-| **CI/CD** | `quality` · `e2e` · `build-escritorio`, con **conclusión propia** por check. El `e2e` corrió por primera vez en la fase 5: sin histórico **no puede afirmarse no-regresión**, y su primera corrida encontró un defecto real de accesibilidad |
+| **CI/CD** | `quality` · `e2e` · `build-escritorio`, con **conclusión propia** por check. El `e2e` corrió por primera vez en la fase 5: sin histórico **no puede afirmarse no-regresión**, y su primera corrida encontró un defecto real de accesibilidad. **`cargo clippy` entra a `build-escritorio` en el `/release-check`**: el checklist lo exigía desde el estampado y ningún job lo corría — al ejecutarlo por primera vez estaba en rojo |
 | **Observabilidad** | ADR 003 **enmendado** (A10): `println!` con prefijo por subsistema y solo metadatos; `tracing` cuando exista un sumidero, con su razón escrita. `pino` fuera del manifiesto. **Término plantado en el log**, que no existía, ahora corre la sesión en un proceso hijo y lee su salida |
 | **Seguridad** | `pnpm audit` limpio · `cargo audit` **0 vulnerabilidades** (9 warnings; `lru` *unsound* llega por tantivy y no tiene arreglo compatible) · gitleaks bloqueó la carnada canónica · capabilities por ventana · `verify:ephemeral` estático **y en runtime**, con fuga inyectada en rojo |
-| **Performance** | latencia determinista de la ficha: **mediana 376 µs · p90 567 · peor 2 492**, contra 4 s de presupuesto. **Binario de release: 11,07 MB** (subió 2,07 MB al quitar `panic = "abort"`, ver A3) |
+| **Performance** | latencia determinista de la ficha: **mediana 376 µs · p90 567 · peor 2 492**, contra 4 s de presupuesto. **Binario de release: 11,05 MB** (subió 2,07 MB al quitar `panic = "abort"`, ver A3); `.app` 11 MB, `.dmg` 4,88 MB |
 | **UX/A11y** | teclado de punta a punta · axe en 66 e2e · símbolo + texto + color · dos temas · dos idiomas · **gate de FIDELIDAD** con 60 encuadres, aprobado en las miradas 11 a 14 |
 | **IA embebida** | **no aplica: cero LLM, cero tokens, cero red.** El catálogo de maniobras es código y datos versionados, y es el fallback permanente de la síntesis del S2 |
 | **Manual** | `docs/MANUAL-DE-USO.md`, ocho features con sus limitaciones. **En español** — desviación declarada de mi propio plan, con su razón |
@@ -101,7 +101,7 @@ de 0,90 a 1.0 porque con 0,90 **romper una regla dejaba el test verde**.
 | rechazo de lo que no está | sin margen | **1,000** (mínimo 1,00) |
 | P/R del disparador | nuevo en la auditoría | **1,000 / 1,000** sobre 26 turnos marcados |
 | bytes a la red | 0 | **0**, y el gate cuenta las dos puertas declaradas del puente |
-| peso del binario | anotado por PR | **11,07 MB** (9,01 antes de A3) |
+| peso del binario | anotado por PR | **11,05 MB** (9,01 antes de A3). Bundle del `/release-check`: `.app` 11 MB · `.dmg` **4,88 MB** |
 
 ## Decisiones no anticipadas
 
@@ -152,6 +152,19 @@ atravesaba. El contrato se escribía dos veces a mano y nadie comparaba las copi
    `/audita-sprint`) funcionó, y lo que encontró sugiere algo más fuerte: **las frases que afirman
    algo sobre el código deberían llevar el gate que las sostiene escrito al lado** — como quedaron
    las de `leer.rs`, `escucha/mod.rs` y la de Honestidad.
+5. **El barrido de frases caducadas se corre DESPUÉS del último arreglo, no en la Fase 1.** La casilla
+   4 de `/audita-sprint` barrió el repo en la Fase 1; la Fase 2 arregló el desborde de Idioma
+   acortando un botón de «Instalar el modelo» a «Instalar», y **fabricó una frase caducada nueva** que
+   el `/release-check` encontró en el manual doce horas después. Es palabra por palabra la lección que
+   la regla 17 ya aprendió con los enlaces —*el barrido corre sobre el árbol que se va a subir,
+   después del último `git add`*—: un barrido de caducidad hecho antes de los arreglos audita un repo
+   que ya no existe. Pequeño y mecánico: repetir la casilla 4 al cerrar la Fase 2.
+6. **Un gate que el checklist exige y ningún job ejecuta no existe.** `cargo clippy -- -D warnings`
+   estaba en el `/release-check` desde el estampado y **ningún job del `ci.yml` lo corría**: al
+   ejecutarlo por primera vez en este cierre estaba en rojo. La sugerencia no es «acuérdate de correr
+   clippy», es **mecánica**: el `/release-check` debería exigir, casilla por casilla, que el comando
+   viva en un job de CI o quede declarado como manual con su razón — hoy la plantilla dice «verifica
+   con EL comando del `ci-escritorio.yml`» y no comprueba que ese comando esté en algún `yml`.
 
 ## Deuda técnica aceptada
 
@@ -168,6 +181,7 @@ atravesaba. El contrato se escribía dos veces a mano y nadie comparaba las copi
 | **El VAD no es Silero** | regla 14: el modelo se gana el puesto con una medición, y esa medición es el WER que falta | S2, en el ADR del STT |
 | **Desborde de 15 px en Idioma** sin modelo | la alternativa era recortar una frase de honestidad | a la mirada del usuario |
 | **`lru` *unsound*** (RUSTSEC-2026-0253) vía tantivy | sin arreglo compatible: tantivy fija `^0.16` y el arreglo está en 0.18. **Y quitar `panic = "abort"` (A3) ensancha su exposición**, porque ahora un pánico se desenreda en vez de abortar | S2, vigilando tantivy |
+| **`design-sync/` no existe** | la Etapa de Diseño lo anotó como «no hay ciclo cerrado que publicar», y ese no es el motivo que manda: la **regla 16** pide que todo sprint que toque UI actualice el bundle **en su mismo PR**, precisamente para que el cierre de ciclo sea un delta y no una reconstrucción. Este es el primer sprint con UI. **Decisión del usuario**: construirlo antes del merge, o pagarlo en el S2 con el cierre más caro | S2, salvo que el usuario lo pida ahora |
 | **17 campos del contrato sin consumidor** | el gate nuevo compara la FORMA, no si alguien lee. `Documento`, `corte::Informe` y `Aparicion.ms` siguen sin llegar a la pantalla | S2 |
 
 ## Archivos clave

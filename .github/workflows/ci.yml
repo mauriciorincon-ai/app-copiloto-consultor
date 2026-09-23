@@ -62,6 +62,14 @@ jobs:
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      # `cargo clippy` lo EXIGE el /release-check desde el estampado y NINGUN job lo corria: se
+      # ejecutaba cuando alguien se acordaba, que es la definicion de gate decorado (regla 15,
+      # segunda pregunta). Entro aqui —no en un job nuevo— para no tocar la ruleset. Su rojo no
+      # hubo que fabricarlo: al correrlo por primera vez en el /release-check del S1 estaba en
+      # rojo por un `mut` de mas en un test de `escucha`.
+      - name: cargo clippy (el gate que el checklist pedia y nadie corria)
+        working-directory: src-tauri
+        run: cargo clippy --locked --all-targets -- -D warnings
       - name: cargo check + test (crate de Tauri)
         working-directory: src-tauri
         run: |

@@ -924,7 +924,7 @@ mod tests {
             );
         }
 
-        let mut en_vuelo = |desde_ms: usize| Encargo {
+        let en_vuelo = |desde_ms: usize| Encargo {
             pista: Pista::Sistema,
             idioma: "es-ES".into(),
             desde_ms,

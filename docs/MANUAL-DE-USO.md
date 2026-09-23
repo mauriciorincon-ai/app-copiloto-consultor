@@ -117,8 +117,9 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
 
 - **Qué hace:** cada idioma necesita su modelo de voz, y macOS no los trae todos. *Idioma* dice de
   cada pista si su modelo está instalado y, **si falta, ofrece instalarlo**.
-- **Cómo se usa:** *Idioma* → «Instalar el modelo». Lo descarga macOS y tarda: mientras dura, el
-  botón dice «instalando…». Es la única vez que la app toca la red, y solo porque tú lo pediste.
+- **Cómo se usa:** *Idioma* → «Instalar», el botón junto al aviso ámbar de la fila. Lo
+  descarga macOS y tarda: mientras dura, el botón dice «instalando…» y no se deja pulsar otra
+  vez. Es la única vez que la app toca la red, y solo porque tú lo pediste.
 - **Limitaciones conocidas:**
   - Si tu Mac **no reconoce** ese idioma, o no trae motor de voz, no hay nada que instalar y la app
     lo dice con esas palabras en vez de ofrecerte un botón que no puede funcionar.
@@ -159,7 +160,7 @@ enciendas.
 
 **¿Necesito internet?**
 Solo para la videollamada. La app transcribe y busca dentro de tu Mac. La única vez que toca la red
-es cuando tú le pides instalar el modelo de voz de un idioma —el botón **«Instalar el modelo»** de
+es cuando tú le pides instalar el modelo de voz de un idioma —el botón **«Instalar»** de
 *Idioma*—: entonces macOS lo descarga, y no sale nada de aquí.
 
 **¿Por qué me pide auriculares?**

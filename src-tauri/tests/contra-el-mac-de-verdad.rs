@@ -463,6 +463,21 @@ impl Permitido {
     }
 }
 
+/// Carpetas que **escribe la herramienta, jamás la app**: el compilador, el gestor de paquetes,
+/// git, el cubridor de tests, el empaquetador del frontend. Quedan fuera del inventario y esto no
+/// es aflojar el gate, es apuntarlo: mientras estuvieron dentro, su veredicto dependía de **quién
+/// más estuviera corriendo**. La primera vez que se corrió este gate en el `/release-check` del
+/// S1 salió en rojo acusando a la sesión de dejar seis `.rlib` en `target/release/deps/` — los
+/// había escrito un `pnpm tauri build` que compilaba al lado. Un gate que acusa al compilador se
+/// acaba desactivando, y ese día la fuga de verdad pasa con él.
+///
+/// **Qué NO se pierde:** la app nunca escribe dentro de estas carpetas. Su carpeta de datos está
+/// en `~/Library/Application Support`, su directorio de trabajo durante el test es `src-tauri/`
+/// —que sigue vigilado entero— y una fuga con ruta relativa cae ahí, no en `target/`. La demo en
+/// rojo de la fuga inyectada se repitió con esta exclusión puesta y siguió cazándola.
+const DE_LA_HERRAMIENTA: [&str; 7] =
+    ["target", "node_modules", ".git", "coverage", "dist", "playwright-report", "test-results"];
+
 /// Todo lo que cuelga de una carpeta, como rutas absolutas. Los enlaces no se siguen.
 fn inventario(raiz: &Path) -> BTreeSet<PathBuf> {
     let mut salida = BTreeSet::new();
@@ -471,6 +486,9 @@ fn inventario(raiz: &Path) -> BTreeSet<PathBuf> {
     };
     for e in entradas.flatten() {
         let ruta = e.path();
+        if ruta.file_name().is_some_and(|n| DE_LA_HERRAMIENTA.iter().any(|d| n == *d)) {
+            continue;
+        }
         match e.file_type() {
             Ok(t) if t.is_dir() => salida.extend(inventario(&ruta)),
             Ok(t) if t.is_file() => {
@@ -613,9 +631,11 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     let intrusos: Vec<&&PathBuf> = nuevos.iter().filter(|r| !permitido.cubre(r)).collect();
     assert!(
         intrusos.is_empty(),
-        "la sesión dejó {} archivo(s) fuera del índice del corpus:\n  {}",
+        "la sesión dejó {} archivo(s) fuera del índice del corpus:\n  {}\n\
+         (fuera del inventario, porque las escribe la herramienta y no la app: {})",
         intrusos.len(),
-        intrusos.iter().map(|r| r.display().to_string()).collect::<Vec<_>>().join("\n  ")
+        intrusos.iter().map(|r| r.display().to_string()).collect::<Vec<_>>().join("\n  "),
+        DE_LA_HERRAMIENTA.join(" · ")
     );
     assert!(!nuevos.is_empty(), "no se escribió NI el índice: la sesión no llegó a correr");
 
