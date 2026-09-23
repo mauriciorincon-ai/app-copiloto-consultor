@@ -648,16 +648,40 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
 /// filtro exacto de la sesión, así que no hay forma de que se llame a sí mismo en bucle.
 ///
 /// Se ve en rojo poniendo `println!("{}", turno.texto)` en cualquier sitio del camino.
+/// La sesión, **sin inventario del disco**, para que otro proceso pueda leer su log.
+///
+/// Es la misma `una_sesion_completa` que vigila el disco arriba; lo que aquí no se hace es recorrer
+/// el temporal entero antes y después. Y esa diferencia es el arreglo de un fallo real: la primera
+/// versión de la canaria lanzaba al hijo el test del disco, el hijo inventariaba `/var/folders`
+/// mientras el padre creaba los fixtures de otro test, y **denunciaba como fuga de la sesión los
+/// tres documentos del vecino**. Pasó en este Mac cinco veces seguidas y tumbó la integración
+/// continua a la primera.
+///
+/// Dos procesos no comparten el mutex del turno, así que la respuesta no era un candado: era que el
+/// hijo **no mire lo que no le toca**. Para leer un log hace falta la sesión, no el inventario.
+#[test]
+fn sesion_para_el_log() {
+    let _turno = turno();
+    let casa = std::env::temp_dir().join(format!("ag-log-casa-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&casa);
+    std::fs::create_dir_all(&casa).unwrap();
+    let fuente = corpus_para_el_efimero();
+
+    let dicho = una_sesion_completa(&casa, &fuente);
+    assert!(dicho.iter().any(|d| d.contains(CANARIA)), "la canaria no llegó a recorrer la sesión");
+
+    let _ = std::fs::remove_dir_all(&casa);
+    let _ = std::fs::remove_dir_all(&fuente);
+}
+
 #[test]
 fn la_canaria_del_cliente_no_aparece_en_el_log() {
+    // El turno porque el hijo usa el motor de voz, y los tests de audio de este binario usan los
+    // altavoces y el tap del sistema: van de a uno, como todos los demás.
+    let _turno = turno();
     let yo = std::env::current_exe().expect("no se supo cuál es este binario de pruebas");
     let hijo = std::process::Command::new(&yo)
-        .args([
-            "una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus",
-            "--exact",
-            "--nocapture",
-            "--test-threads=1",
-        ])
+        .args(["sesion_para_el_log", "--exact", "--nocapture", "--test-threads=1"])
         .output()
         .expect("no se pudo correr la sesión en un proceso hijo");
 
@@ -666,9 +690,12 @@ fn la_canaria_del_cliente_no_aparece_en_el_log() {
 
     // Que el hijo haya corrido DE VERDAD la sesión: si no, esto no mide nada y se vería verde.
     assert!(hijo.status.success(), "la sesión falló en el hijo:\n{salida}");
+    // «disparó por» es el paso 4 de la sesión: la frase del cliente ya entró en el disparador y en
+    // la ficha, que es justo el tramo donde podría escaparse al log. Sin esta comprobación, un hijo
+    // que muriera al arrancar dejaría este gate en verde sin haber mirado nada.
     assert!(
-        salida.contains("[sesión]") && salida.contains("[efímero]"),
-        "el hijo no llegó a correr la sesión: este gate no midió nada.\n{salida}"
+        salida.contains("[sesión]") && salida.contains("disparó por"),
+        "el hijo no llegó a correr la sesión entera: este gate no midió nada.\n{salida}"
     );
 
     let lineas: Vec<&str> = salida.lines().filter(|l| l.contains(CANARIA)).collect();

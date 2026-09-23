@@ -45,7 +45,7 @@ Los tres outcomes, uno a uno:
 
 | Estándar | Evidencia |
 |---|---|
-| **Testing** | 108 unitarios (TS) · 208 de la librería (Rust) · 13 contra el Mac de verdad · 66 e2e con axe. Cobertura del webview 89 % de líneas |
+| **Testing** | 108 unitarios (TS) · 208 de la librería (Rust) · 14 contra el Mac de verdad · 66 e2e con axe. Cobertura del webview 89 % de líneas |
 | **CI/CD** | `quality` · `e2e` · `build-escritorio`, con **conclusión propia** por check. El `e2e` corrió por primera vez en la fase 5: sin histórico **no puede afirmarse no-regresión**, y su primera corrida encontró un defecto real de accesibilidad |
 | **Observabilidad** | ADR 003 **enmendado** (A10): `println!` con prefijo por subsistema y solo metadatos; `tracing` cuando exista un sumidero, con su razón escrita. `pino` fuera del manifiesto. **Término plantado en el log**, que no existía, ahora corre la sesión en un proceso hijo y lee su salida |
 | **Seguridad** | `pnpm audit` limpio · `cargo audit` **0 vulnerabilidades** (9 warnings; `lru` *unsound* llega por tantivy y no tiene arreglo compatible) · gitleaks bloqueó la carnada canónica · capabilities por ventana · `verify:ephemeral` estático **y en runtime**, con fuga inyectada en rojo |
@@ -80,8 +80,14 @@ Pagos y demos en rojo: `sprints/SPRINT_001-implementation-log.md`.
 **Nueve frases caducadas:** cuatro se volvieron verdad al arreglar el código; cinco se reescribieron
 (manual, `LEEME` del kit, Permisos y dos cabeceras de módulo).
 
-**Cada arreglo nació con su demo en rojo en el mismo commit.** Trece rojos en total; dos de ellos
-cambiaron el arreglo: la comprobación de entrada del kill-switch no tenía rojo propio hasta que el
+**Cada arreglo nació con su demo en rojo en el mismo commit.** Trece rojos preparados — y **el que
+más enseñó fue el catorceavo, que no pedí**: el gate nuevo de la canaria tumbó `build-escritorio` a
+la primera. Su hijo inventariaba el temporal entero mientras el padre creaba los fixtures de otro
+test, y los denunciaba como fuga. Tercera vez en el sprint que dos tests comparten una carpeta
+temporal; la primera con el vecino en otro proceso, donde el mutex del turno no llega. El arreglo fue
+quitarle al hijo el inventario, que no necesitaba.
+
+Dos de los rojos preparados cambiaron el arreglo: la comprobación de entrada del kill-switch no tenía rojo propio hasta que el
 motor de prueba aprendió a decir «he trabajado», y el umbral de recall del disparador tuvo que subir
 de 0,90 a 1.0 porque con 0,90 **romper una regla dejaba el test verde**.
 
@@ -185,7 +191,7 @@ pnpm install
 pnpm typecheck && pnpm lint && pnpm test        # 108 unitarios con cobertura
 pnpm test:e2e                                    # 66 e2e con axe
 pnpm verify:ephemeral                            # el barrido estático
-cd src-tauri && cargo test                       # 208 + 13, con el Mac de verdad
+cd src-tauri && cargo test                       # 208 + 14, con el Mac de verdad
 pnpm fidelidad                                   # 60 encuadres contra la maqueta
 pnpm tauri dev                                   # la app: tres ventanas
 ```

@@ -2024,6 +2024,36 @@ lo que dijo el cliente salió por el log, en 1 línea(s):
   [disparo] mirando «¿Y el alcance del quetzalcoatlus-de-bolsillo-7731 está dentro de la propuesta?»
 ```
 
+### Y el gate de la canaria tumbó la CI a la primera — el rojo que no pedí
+
+`quality` y `e2e` en verde; **`build-escritorio` en rojo**, y el culpable era el test que acababa de
+escribir:
+
+```
+la sesión dejó 3 archivo(s) fuera del índice del corpus:
+  /var/folders/…/T/ag-corpus-vivo-5705/Adopción de datos en cuatro etapas.md
+  /var/folders/…/T/ag-corpus-vivo-5705/Propuesta Páramo Azul · rentabilidad por canal.md
+  /var/folders/…/T/ag-corpus-vivo-5705/casos/Cooperativa Sur del Valle · cierre de caso.md
+```
+
+**Qué pasó.** La canaria lanzaba al hijo el test del efímero, que hace **inventario de `/var/folders`
+entero** antes y después. Mientras el hijo inventariaba, el padre seguía corriendo sus otros tests y
+creó los tres documentos de `corpus_sintetico()`. El hijo los vio nacer y los denunció como fuga de
+la sesión. **En este Mac pasó cinco veces seguidas; en la integración continua falló a la primera** —
+la máquina es más lenta y las ventanas se solapan.
+
+Es la **tercera vez en este sprint** que un test se rompe por compartir una carpeta temporal con otro
+que corre a la vez: la fase 3 con el audio, la fase 4 con el corpus, y ahora esta. La novedad es que
+el vecino estaba **en otro proceso**, y el mutex del turno no cruza procesos.
+
+**El arreglo no fue un candado, fue quitarle al hijo lo que no le toca.** Para leer un log hace falta
+la sesión, no el inventario: nace `sesion_para_el_log`, que corre exactamente la misma
+`una_sesion_completa` y no mira el disco. El hijo pasa a ser ese. Además de correcto es más barato —
+la suite baja de 17,4 s a 14,5 s— y el gate sigue dando su rojo con el mismo `println!` plantado.
+
+**Lo que este episodio deja dicho:** el rojo que de verdad enseñó algo no fue ninguno de los trece
+que preparé. Fue el que no pedí, en la máquina que no es la mía.
+
 ### El gate de contrato Rust→TS
 
 Construido en el commit de C1, que es donde hacía falta. Su descripción, sus dos gates y sus dos
