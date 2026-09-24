@@ -1,10 +1,13 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the main window",
-  "windows": ["main"],
+  "description": "Permisos de la ventana principal — la única que abre cosas hacia afuera: el opener, para llevar al usuario a Ajustes del Sistema, y el diálogo de ABRIR, para que señale su carpeta de documentos. `dialog:allow-save` NO está: esta app no escribe archivos por diálogo, y un permiso que nadie usa es superficie regalada. La banda y el relleno no tienen ninguno de los dos: ver sus propias capabilities.",
+  "windows": [
+    "principal"
+  ],
   "permissions": [
     "core:default",
-    "opener:default"
+    "opener:default",
+    "dialog:allow-open"
   ]
 }

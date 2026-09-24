@@ -1,9 +1,9 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.7.0   # 1.7.0: bandeja de propuestas con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
-fecha: 2026-09-20
-estado: propuesto   # → aprobado con G-Diseño
+version: 1.11.0  # 1.11.0: cómo ENVEJECE «todavía no» — el estado del sprint se pone al día, y lo que se libera se agrupa (sprint 001, fase 3). 1.10.0: «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2). 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
+fecha: 2026-09-21
+estado: aprobado   # G-Diseño aprobado el 2026-09-20 («sí apruebo la pantalla completa»)
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
 ---
 
@@ -340,6 +340,180 @@ La pantalla lo muestra como **dos columnas enfrentadas** («lo tuyo queda» / «
 muere») y declara con letra que el usuario responde por su propia carpeta. Detalle y base legal:
 `sprints/ETAPA-DISENO-implementation-log.md` § Desviación del plan.
 
+## 9-quinquies · Los seis estados de CONTENIDO de la banda (sprint 001, 2026-09-20)
+
+La Etapa de Diseño decidió la **forma** de la banda (`posicion.html`: 88 · 200 · 44, acoplada,
+con asa) y el **contenido** de los estados (`panel.html`, dentro de 380 × 220). Lo que nunca se
+escribió fue el cruce: **qué dice la banda en cada estado**. Cinco de los seis estados que el
+sprint 001 construye no tenían referencia contra la cual comparar, y un gate de fidelidad sin
+referencia es un juicio a ojo. La referencia es `docs/diseno/banda.html`.
+
+**Gramática de la banda** (vale para todo estado, y el código la obedece):
+
+| Zona | Qué lleva, siempre |
+|---|---|
+| `cab-b` | el estado (símbolo + texto + color) · el cliente y su verificación · el contador de red |
+| `ficha-b` (izquierda) | **lo que la banda dice**: una línea fuerte y una de apoyo |
+| `lado-b` (derecha) | **de dónde sale** (unidad · documento · sección) y **qué teclas hay** |
+
+| Estado | Alto | Izquierda | Derecha |
+|---|---|---|---|
+| esperando | 88 | frase en Charter + conteo del corpus | reunión y minutos · atajos |
+| buscando | 88 | lo oído entre comillas con su pista + «buscando» estático | atajos |
+| ficha | 88 | titular + línea | fuente · atajos |
+| ficha ampliada | 200 | titular + línea + **las dos acumuladas abiertas** | fuente · atajos |
+| sin resultado | 88 | qué buscó y no encontró + **la maniobra** | lo más cercano que sí tienes · las salidas como teclas |
+| sin resultado ampliada | 200 | la pregunta entera + la maniobra + **las tres más cercanas** | los dos botones del panel |
+| sin verificar | 88 | aviso ámbar + **una** salida | cliente, versión y fecha verificadas |
+| sin verificar ampliada | 200 | el aviso con las **tres** salidas | los dos botones del panel |
+| transcript | 200 | la ficha y sus acumuladas, intactas | el transcript, 3 turnos **por pista** |
+| sin acople (fallback) | 88 | igual que ficha | igual que ficha; la cabecera añade «sin acople» |
+
+**Tres decisiones que la maqueta no había escrito:**
+
+1. **En la banda, las acciones son TECLAS.** El panel de 380 × 220 tenía botones; en 88 px de
+   alto dos botones y una frase larga se pelean por el renglón y el primario cae abajo — el
+   anti-patrón de §8 que ya mordió dos veces. Los botones vuelven **al ampliar**, donde hay alto.
+2. **El asa tiene un trabajo.** «Sin verificar» tiene tres salidas y en 88 px cabe una: la banda
+   muestra la primera y dice que el asa muestra el resto. Ampliar deja de ser decorativo — es
+   donde vive lo que no cabía. Y el alto es **continuo**: 88 px es el reposo, 200 px el máximo
+   que dibujó el diseño.
+3. **El transcript va a la derecha, no abajo.** En el panel vertical crecía hacia abajo; una
+   banda ya ocupa el ancho entero y no puede crecer más. Ocupa la columna donde irá la
+   sugerencia (sprint 2), y así **la banda no cambia de alto al encenderlo**.
+
+### La MANIOBRA — qué sugiere la app cuando el corpus no tiene nada (mirada 11, 2026-09-20)
+
+Decir «no tengo nada» y callarse deja al consultor solo justo cuando más lo necesita. Pero la app
+**no puede inventar** una respuesta sobre su negocio: sería exactamente lo que promete no hacer, y
+este sprint es **cero LLM** (regla del código primero). Así que sugiere **dos cosas, las dos
+deterministas**:
+
+1. **Lo más cercano que SÍ tiene.** La búsqueda no encontró nada por encima del umbral, pero sabe
+   qué quedó justo debajo. Sale del corpus del usuario con su fuente exacta, y la app dice sin
+   adornos que **ninguno responde la pregunta**. Es recuperación, no redacción.
+2. **Una manera de responder**, de un **catálogo versionado** de seis maniobras escritas por
+   personas, elegida por **reglas léxicas** sobre lo que preguntó el cliente — el mismo mecanismo
+   determinista del disparo.
+
+| Si la pregunta trae… | Maniobra | Por qué esa |
+|---|---|---|
+| `certificación · ISO · acreditado · licencia` | Dilo sin adornos y ofrece confirmarlo hoy mismo. | una credencial se tiene o no; dudar cuesta más que el «no» |
+| `cuánto · precio · costo · descuento · tarifa` | No improvises cifras: ofrece el rango del caso comparable. | un número dicho al aire se vuelve compromiso |
+| `cuándo · plazo · semanas · entrega` | Da el plazo del caso más parecido y confírmalo por escrito. | anclar en un caso real es defendible; una fecha inventada, no |
+| `quién más · referencia · han trabajado con` | Ofrece una referencia del sector sin nombrar al cliente aún. | nombrar clientes sin permiso es un problema, no una venta |
+| `contrato · cláusula · penalidad · NDA` | No opines de contrato en vivo: anótalo y respóndelo por escrito. | lo contractual no se improvisa en una llamada |
+| *cualquier otra* | Devuelve la pregunta: ¿para qué lo necesitan? | la pregunta real suele ser otra — y da tiempo |
+
+**Las maniobras hablan de cómo conducirse, jamás del negocio del usuario** — por eso pueden ser
+fijas. Y no pueden parecer salida de un modelo: **sin acento `halo` y sin `i-chispa`** (que en
+este sistema marcan la síntesis de la IA), en **Avenir** —la voz de la app— nunca en **Charter**,
+que es la voz de la evidencia. Clase canon: `maniobra-b`; el vecino de la derecha, `cercano-b`.
+
+Cuando exista la síntesis con modelo (sprint 2), la maniobra **no desaparece**: es su fallback
+permanente, como manda la regla del código primero.
+
+**Lo que esta extensión NO redecide:** el relleno de la franja (ya elegido: fondo de escritorio,
+negro a una tecla), el modo solo audio de 44 px (C15, fuera del sprint 001) y la sugerencia
+(sprint 2). La `unidad` sigue **sin chip** en `fuente-b`, a diferencia del panel: la columna
+derecha de la banda es toda Menlo de bajo contraste —«lo medible»— y un tercer peso visual junto
+a los `kbd` la volvería ruido. El chip sí aparece en las **acumuladas** de la banda ampliada,
+donde la unidad es lo que distingue una ficha de otra.
+
+**Altura y código:** las tres alturas son tokens (`--banda-h`, `--banda-h-ampliada`,
+`--banda-h-voz`) y son la fuente única — el CSS las usa y la ventana nativa las lee. El gate de
+tokens las excluye a propósito (el webview ocupa la ventana entera, no la dibuja); las vigila un
+test de `src-tauri/` que falla si la ventana y la maqueta se separan.
+
+## 9-sexies · «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2, 2026-09-21)
+
+**El problema.** La maqueta dibuja el producto TERMINADO. Cada sprint entrega un trozo. Al
+construir las pantallas del cuaderno en el sprint 001 aparecieron tres cartas con contenido que
+el producto de hoy no puede sostener: las dos pistas de audio (fase 3), la ficha del cliente
+(sprints posteriores), los búferes de memoria (fase 3), las notas (S3).
+
+Sin una respuesta escrita solo quedan dos salidas, y las dos son malas:
+
+| Salida | Por qué no |
+|---|---|
+| Pintarlo como la maqueta, en verde | «Micrófono — Listo» con el audio sin construir es exactamente la afirmación falsa que esta app existe para no hacer |
+| Quitarlo de la pantalla | el usuario no sabe que va a llegar, y la pantalla del sprint 1 se lee como el producto completo |
+
+**La decisión: un quinto significado en el vocabulario de estados.** `.estado.pendiente` —
+**«todavía no» / «not yet»**.
+
+Y es distinto de `.mute`, que ya existía: **`.mute` significa «existe y está apagado»** (se puede
+encender), **`.pendiente` significa «todavía no está construido»** (no hay interruptor). Confundir
+los dos manda al usuario a buscar un botón que no existe.
+
+**Tres señales, porque el color solo no basta** (daltonismo leve del usuario) — y aquí la señal
+principal **no es el color**, que es el mismo `--mute`:
+
+1. **trazo discontinuo** en el borde del chip — es lo que lo separa de `.mute` de un golpe de
+   vista, y funciona igual en los dos temas;
+2. **aro punteado** (`#i-pendiente`), no el aro continuo de `.mute`;
+3. **la palabra literal**: «todavía no».
+
+`.tarjeta.pendiente` aplica lo mismo a una tarjeta entera; `.fila.pendiente` baja el énfasis de la
+fila sin ocultarla.
+
+### La otra mitad: el estado «así se ve hoy» en la maqueta
+
+Un componente para decir «esto no existe» no basta: hay que poder **comparar** la pantalla
+entregada contra una referencia, o el gate de FIDELIDAD del sprint no tiene contra qué medir.
+
+Por eso cada pantalla que se construye a medias gana un estado **`s1`** en la maqueta — la misma
+pantalla, tal y como se entrega. La maqueta conserva la visión completa **y** registra qué se
+entregó en cada versión.
+
+### Cómo envejece «todavía no» (fase 3, 2026-09-21)
+
+La sección de arriba dejó una frase ambigua —*«cuando la fase 3 traiga el audio, el estado `s1` de
+sesión se convierte en `s3`»*— y la fase 3 la resolvió al llegar. **El número del estado es el del
+SPRINT, no el de la fase.** Mientras el sprint 1 no cierre, `s1` significa «así se ve hoy» y se
+pone al día tantas veces como haga falta; `s3` nacerá cuando exista un sprint 3 que entregue algo
+distinto. Un estado por fase habría dejado la maqueta con cinco versiones de la misma pantalla y
+al gate de fidelidad sin saber contra cuál medir.
+
+De ahí salen tres reglas, y las tres nacen de aplicarlo:
+
+**1 · Mover una fila de «todavía no» a «funciona» es diseño, y pasa por una mirada.** No es un
+detalle de implementación: cambia lo que el usuario entiende al abrir la pantalla. La fase 3 movió
+cuatro filas de golpe y eso fue la mirada 13.
+
+**2 · Una fila puede dejar de estar pendiente sin ponerse verde.** «Auriculares conectados» era
+`.pendiente` mientras no se medía nada; al empezar a medirse de verdad resultó que este Mac usa
+altavoces internos, y el estado correcto no es `.ok` sino `.warn` con su explicación. *Construir
+una fila no la aprueba: la pone a decir la verdad, sea cual sea.*
+
+**3 · Lo que sigue faltando se AGRUPA cuando son más de dos.** Tres tarjetas `.pendiente` seguidas
+ocupan media pantalla y se leen como tres ausencias distintas cuando son la misma cosa: lo que
+llega después de este sprint. A partir de tres, una sola tarjeta `.pendiente` con una fila por
+pieza y un párrafo que las explique junta. La pantalla de Idioma es el ejemplo canónico.
+
+> **Y una restricción que este patrón hace visible: el cuaderno tiene techo.** Las pantallas del
+> cuaderno viven en 960 × 640 y cada sprint mueve filas de pendiente a funciona **añadiendo texto**
+> —una fila que funciona suele necesitar decir algo que una pendiente no—. En la fase 3 Sesión
+> quedó con **0 px de margen** y hubo que reordenarla midiendo. El gate de fidelidad lo cobra
+> (`desbordes en el producto`), así que el problema no se puede acumular en silencio; pero la
+> decisión de fondo —crecer la ventana o aceptar que estas pantallas se desplacen— sigue abierta.
+
+### Una regla de producto que sale de aquí
+
+**Lo que no existe se dice; nunca se rellena.** La tarjeta «Este cliente» del sprint 1 no muestra
+una bandera gris ni un riesgo en blanco: muestra una frase — *«No se inventa nada mientras no
+exista: ni bandera, ni riesgo, ni catálogo»*. Y el kill-switch informa **«3 de 7 piezas: las otras
+cuatro todavía no existen»**, no «7 de 7».
+
+### Dos cosas que la maqueta no había escrito y el sistema obliga
+
+1. **«Audio del sistema» y «Pantalla» son UN SOLO permiso en macOS** («Grabación de pantalla y
+   audio del sistema»): se conceden y se caen juntos. Se siguen dibujando como dos filas —son dos
+   usos distintos y el usuario los entiende así— con una línea que lo dice.
+2. **La Accesibilidad sube a la lista principal de permisos.** En la maqueta vivía en su propio
+   estado porque era opcional y futura; el acople se entrega en el sprint 001 y es **el único
+   permiso que hoy cambia algo**.
+
 ## 10 · Deuda de diseño declarada
 
 | Qué | Por qué | Cuándo se paga |
@@ -348,6 +522,7 @@ muere») y declara con letra que el usuario responde por su propia carpeta. Deta
 | El pie del panel abrevia «corta» (kill-switch) | 380 px | el `kbd` ⌥⎋ y el tooltip completan; en Sesión y Honestidad va el texto entero |
 | Simulación deutan del arnés (capturas `--cvd`) | herramienta de la etapa, no gate | corregida en la Fase 2; se vuelve gate visual del S1 |
 | La píldora de voz no muestra el texto de la ficha | ocuparía la pantalla que el modo existe para liberar | si el usuario lo pide, un estado «píldora expandida» en el S2 |
+| **La maniobra genérica deja solo al consultor** — «devuelve la pregunta: ¿para qué lo necesitan?» | es la única de las seis que no se apoya en nada: cuando ni las reglas léxicas ni el corpus dan material, la app se queda sin qué decir | **sprint 2.** Requisito del usuario (mirada 11): *no inventar una respuesta, pero sugerir cómo abordar la situación* **a medida de la situación**. Camino determinista disponible sin LLM: construir la maniobra con lo que la app **sí sabe** —la unidad que falta, la sección más cercana del corpus, la ficha del cliente, la jurisdicción, lo ya comprometido en esta reunión— en vez de elegir una frase de catálogo. El catálogo queda como último recurso, no como respuesta normal |
 
 ## Registro de cambios
 
@@ -358,3 +533,9 @@ muere») y declara con letra que el usuario responde por su propia carpeta. Deta
 | 1.1.0 | 2026-09-20 | mirada 3: píldora de voz (C15, 7.º componente canon) · §9-bis qué persiste · dos prohibidos nuevos |
 | 1.2.0 | 2026-09-20 | mirada 3 (2.ª vuelta): banda inferior y gota · posición elegible (D2 revisada) · radar con dos niveles de severidad y cinco categorías |
 | 1.3.0 | 2026-09-20 | mirada 3-ter: **banda acoplada** como forma principal (88/200/44, con asa) · permiso de acople · qué ve el cliente por modo de compartir |
+| 1.4.0 | 2026-09-20 | mirada 3-quinquies: **relleno de captura** (fondo de escritorio elegido; negro a una tecla) |
+| 1.5.0 | 2026-09-20 | mirada 4: las cuatro pantallas del cuaderno (corpus · notas · idioma · IA) |
+| 1.6.0 | 2026-09-20 | mirada 4-bis: `propuesta` (proponer ≠ guardar) · varios idiomas · puerta local para Claude Code |
+| 1.7.0 | 2026-09-20 | mirada 4-ter: **bandeja de propuestas con cuenta atrás** (§9-quater) · G-Diseño aprobado |
+| 1.8.0 | 2026-09-20 | sprint 001, fase 1a: **§9-quinquies — los seis estados de CONTENIDO de la banda** · tokens de alto (`--banda-h*`) · acciones como teclas · el asa con un trabajo · transcript a la derecha |
+| 1.9.0 | 2026-09-20 | mirada 11: **la maniobra** — catálogo versionado de seis maneras de responder + «lo más cercano que sí tienes», los dos deterministas; `maniobra-b` y `cercano-b`; estado «sin resultado · ampliada» |

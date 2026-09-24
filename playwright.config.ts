@@ -17,14 +17,24 @@ export default defineConfig({
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
   },
+  // K1 (sprint 001): el kit trae un proyecto MÓVIL porque las apps del pipeline son
+  // mobile-first. Angel Ghost NO lo es: es una app de ESCRITORIO para macOS y la orden de
+  // diseño lo dice ("sin viewport móvil"). Dejar el proyecto Pixel 7 no era neutro — duplicaba
+  // cada prueba contra un viewport que el producto no tiene, y un fallo ahí habría costado
+  // tiempo de depuración sobre algo que no existe. Se sustituye por los DOS tamaños reales de
+  // ventana del design system §3.6.
   projects: [
     {
-      name: "mobile-chromium",
-      use: { ...devices["Pixel 7"] },
+      // La ventana principal: 960 × 640 (--principal-w / --principal-h).
+      name: "ventana-principal",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 960, height: 640 } },
     },
     {
-      name: "desktop-chromium",
-      use: { ...devices["Desktop Chrome"] },
+      // La banda acoplada a lo ancho de la pantalla, 88 px de alto (§3.6).
+      // El ancho de la banda es el de la pantalla; 1180 es el escritorio de referencia de
+      // `docs/diseno/posicion.html`.
+      name: "banda",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1180, height: 200 } },
     },
   ],
   webServer: {

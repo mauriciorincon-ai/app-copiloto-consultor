@@ -1,0 +1,980 @@
+<!-- @dsCard group="Componentes · S1" name="La banda — seis estados" -->
+<!doctype html>
+<html lang="es" data-lang="es">
+<head>
+<meta charset="utf-8">
+<title>La banda — seis estados — Angel Ghost</title>
+<style>
+:root {
+  /* ---- Tipografía (D4): nativa de macOS, sin embeber bytes ---- */
+  --font-evidencia: "Charter", "Iowan Old Style", Georgia, serif;     /* lo que dice TU corpus */
+  --font-ui: "Avenir Next", "Helvetica Neue", system-ui, sans-serif;   /* la interfaz */
+  --font-mono: "Menlo", "SF Mono", ui-monospace, monospace;            /* lo medible */
+
+  /* ---- Escala tipográfica ---- */
+  --t-titular: 17px;   /* ficha: titular ≤ 8 palabras */
+  --t-linea: 14px;     /* ficha: una línea */
+  --t-ui: 13px;        /* interfaz general */
+  --t-meta: 12px;      /* estado, fuente, etiquetas */
+  --t-mono: 11.5px;    /* contador, atajos, fuente de ficha */
+  --t-h1: 22px;        /* título de pantalla (ventana principal) */
+  --t-h2: 15px;
+
+  /* ---- Espacio (múltiplos de 4) ---- */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+
+  /* ---- Radios y trazos ---- */
+  --r-chip: 5px; --r-ficha: 8px; --r-panel: 10px; --r-tecla: 4px;
+  --borde: 1px;
+
+  /* ---- Motion (D10): casi ninguno ---- */
+  --dur: 150ms; --ease: cubic-bezier(.2,.6,.2,1);
+
+  /* ---- Tamaños de ventana (D1, D6) ---- */
+  --panel-w: 380px; --panel-h: 220px; --panel-h-transcript: 420px; --panel-h-max: 360px;
+  --principal-w: 960px; --principal-h: 640px;
+  /* La banda ocupa el ancho de la pantalla; solo su ALTO es una medida. Estas tres son la
+     fuente única: las usa el CSS de abajo y las lee la ventana nativa (test en `src-tauri/`). */
+  --banda-h: 88px; --banda-h-ampliada: 200px; --banda-h-voz: 44px;
+}
+:root, .tema.oscuro {
+  color-scheme: dark;
+  --bg: #1a1917;          /* ventana */
+  --surface: #242320;     /* ficha, tarjetas */
+  --surface-2: #2e2d29;   /* chips, teclas, hover */
+  --line: #3b3a35;        /* bordes */
+  --line-2: #4a4841;      /* bordes en foco/hover */
+  --ink: #ece7dc;         /* texto principal — marfil */
+  --ink-2: #b9b3a6;       /* texto secundario (AA sobre bg y surface) */
+  --ink-3: #7c776c;       /* SOLO ORNAMENTO (líneas, separadores). Jamás texto — vetado */
+  --halo: #9ecbff;        /* acento único: foco, fijado, interactivo */
+  --halo-tint: rgba(158,203,255,.14);
+  --ok: #62d3b4;          /* activo / verificado / verde */
+  --ok-tint: rgba(98,211,180,.15);
+  --warn: #f0b64a;        /* atención / sin verificar / aviso */
+  --warn-tint: rgba(240,182,74,.15);
+  --err: #ff8577;         /* error / cortado / revocado */
+  --err-tint: rgba(255,133,119,.15);
+  --mute: #9a958a;        /* inactivo (texto AA sobre bg) */
+  --sombra-panel: 0 10px 30px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.04) inset;
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.25);
+}
+.tema.claro {
+  color-scheme: light;
+  --bg: #f5f2ea;
+  --surface: #fffdf8;
+  --surface-2: #ece8de;
+  --line: #d6d1c4;
+  --line-2: #bdb7a8;
+  --ink: #1f1e1a;
+  --ink-2: #5a5650;
+  --ink-3: #a19b8e;       /* SOLO ORNAMENTO — vetado como texto */
+  --halo: #1d5c9c;
+  --halo-tint: rgba(29,92,156,.12);
+  --ok: #0f6350;
+  --ok-tint: rgba(21,122,98,.13);
+  --warn: #7a4f00;
+  --warn-tint: rgba(198,131,0,.16);
+  --err: #a32a22;
+  --err-tint: rgba(184,50,42,.12);
+  --mute: #6d685f;
+  --sombra-panel: 0 10px 28px rgba(40,30,10,.18), 0 0 0 1px rgba(0,0,0,.04);
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.05);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { font-family: var(--font-ui); font-size: var(--t-ui); color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+body { margin: 0; line-height: 1.45; }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--halo); outline-offset: 2px; border-radius: var(--r-chip); }
+.mono { font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+[hidden] { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+html[data-lang="es"] [lang="en"] { display: none !important; }
+html[data-lang="en"] [lang="es"] { display: none !important; }
+.ic { display: inline-block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; }
+.ic.s { width: 13px; height: 13px; vertical-align: -2px; }
+.ic.relleno { fill: currentColor; stroke: none; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+.estado.warn { color: var(--warn); background: var(--warn-tint); border-color: var(--warn); }
+.pendiente .ic { opacity: .75; }
+.franja .ic { margin-top: 1px; }
+.franja.warn { border-color: var(--warn); background: var(--warn-tint); }
+.franja.warn .ic { color: var(--warn); }
+.franja.err .ic { color: var(--err); }
+.franja.ok .ic { color: var(--ok); }
+.tecla { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.tecla kbd { font: inherit; padding: 0 5px; border: var(--borde) solid var(--line-2); border-bottom-width: 2px; border-radius: var(--r-tecla); background: var(--surface-2); color: var(--ink); line-height: 16px; }
+.barra .pistas .pista.off .ic { opacity: .75; }
+.red { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.red.cero { color: var(--ok); }
+.red.api { color: var(--halo); }
+.barra .red { margin-left: auto; }
+.ficha .fuente .unidad { padding: 0 5px; border-radius: 3px; background: var(--surface-2); color: var(--ink-2); font-family: var(--font-ui); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; line-height: 15px; }
+.sugerencia .cab { display: flex; align-items: center; gap: 6px; white-space: nowrap; font-size: var(--t-mono); font-family: var(--font-mono); color: var(--halo); }
+.sugerencia .cab .conf { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; color: var(--ink-2); font-family: var(--font-ui); font-size: var(--t-meta); }
+.oido { display: flex; gap: 8px; align-items: baseline; font-size: var(--t-meta); color: var(--ink-2); }
+.oido .quien { font-family: var(--font-mono); font-size: var(--t-mono); flex: 0 0 auto; }
+.oido q { font-family: var(--font-evidencia); font-size: var(--t-linea); color: var(--ink); quotes: "«" "»"; }
+.transcript .turno { display: grid; grid-template-columns: 104px 1fr; gap: 8px; padding: 3px 0; }
+.transcript .turno .quien { font-family: var(--font-mono); font-size: 11px; white-space: nowrap; color: var(--ink-2); display: inline-flex; gap: 4px; align-items: center; }
+.transcript .turno.tu .quien { color: var(--halo); }
+.transcript .turno q { quotes: none; color: var(--ink); }
+.transcript .cab { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-family: var(--font-mono); font-size: var(--t-mono); }
+.transcript .cab .tecla { margin-left: auto; }
+.pie .cliente.warn { color: var(--warn); }
+.rail .marca .ic { color: var(--halo); }
+.rail a, .rail .item { display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: var(--r-chip); color: var(--ink-2); text-decoration: none; font-size: var(--t-ui); border-left: 2px solid transparent; }
+.rail a[aria-current="page"], .rail .item.activo { color: var(--ink); background: var(--surface-2); border-left-color: var(--halo); }
+.fila > .ic { flex: 0 0 auto; }
+.campo input.mono { font-family: var(--font-mono); font-size: var(--t-mono); }
+.tabla td.mono, .tabla th.num, .tabla td.num { font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; }
+.permiso .ic { width: 20px; height: 20px; color: var(--ink-2); }
+.bandera .ic { width: 18px; height: 18px; margin-top: 1px; grid-column: 1; }
+.bandera > :not(.ic) { grid-column: 2; }
+.contador.cero .cifra { color: var(--ok); }
+.buffer .ic { color: var(--ink-2); }
+.pildora .tecla { flex: 0 0 auto; }
+.banda { position: relative; display: flex; flex-direction: column; height: var(--banda-h); background: var(--bg); color: var(--ink); border-top: var(--borde) solid var(--line); box-shadow: 0 -10px 30px rgba(0,0,0,.35); overflow: hidden; }
+.banda.ampliada { height: var(--banda-h-ampliada); }
+.banda.voz { height: var(--banda-h-voz); }
+.banda .asa { position: absolute; top: 0; left: 0; right: 0; height: 5px; display: flex; align-items: center; justify-content: center; cursor: ns-resize; }
+.banda .asa i { display: block; width: 46px; height: 3px; border-radius: 2px; background: var(--line-2); }
+.banda .asa:hover i { background: var(--halo); }
+.banda .cab-b { display: flex; align-items: center; gap: 12px; height: 26px; padding: 5px 14px 0; font-size: var(--t-meta); color: var(--ink-2); flex: 0 0 auto; }
+.banda .cab-b .red { margin-left: auto; }
+.banda .cuerpo-b { flex: 1 1 auto; min-height: 0; display: flex; align-items: flex-start; gap: 16px; padding: 2px 14px 10px; }
+.banda .ficha-b { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.banda .titular-b { font-family: var(--font-evidencia); font-size: 16px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.banda .linea-b { font-family: var(--font-evidencia); font-size: 13.5px; line-height: 1.35; color: var(--ink-2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+.banda.ampliada .linea-b { -webkit-line-clamp: 2; }
+.banda .lado-b { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; max-width: 34%; }
+.banda .fuente-b { font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.banda .atajos-b { display: inline-flex; gap: 10px; }
+.banda .mas { padding: 0; }
+.banda.voz .cuerpo-b { align-items: center; padding: 0 14px; height: 100%; }
+.banda.voz .linea-b { font-size: 13px; -webkit-line-clamp: 1; white-space: nowrap; }
+.banda.voz .cab-b { display: none; }
+.banda .marca-min { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-size: var(--t-meta); white-space: nowrap; flex: 0 0 auto; }
+.banda .marca-min.halo { color: var(--halo); }
+.banda .marca-min.warn { color: var(--warn); }
+.banda .cliente-b { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; }
+.banda .cliente-b.warn { color: var(--warn); }
+.banda .voz-b { font-family: var(--font-evidencia); font-style: italic; font-size: 15px; line-height: 1.4; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.banda .meta-b { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.banda .oido { font-size: var(--t-meta); min-width: 0; }
+.banda .oido q { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banda .aviso-b { display: flex; align-items: flex-start; gap: 8px; min-width: 0; font-size: var(--t-meta); line-height: 1.35; color: var(--warn); }
+.banda .aviso-b .ic { flex: 0 0 auto; margin-top: 1px; }
+.banda .aviso-b strong { display: block; font-size: var(--t-ui); font-weight: 600; color: var(--ink); }
+.banda .aviso-b .salida { display: block; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.banda.ampliada .lado-b { max-width: 40%; }
+.banda .transcript-b { display: flex; flex-direction: column; gap: 3px; width: 100%; min-width: 0; padding: 6px 8px; border: var(--borde) solid var(--line-2); border-radius: var(--r-ficha); background: var(--surface); }
+.banda .transcript-b .cab { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.banda .transcript-b .cab .tecla { margin-left: auto; }
+.banda .transcript-b .turno { display: flex; gap: 6px; align-items: baseline; min-width: 0; }
+.banda .transcript-b .turno .quien { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 3px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
+.banda .transcript-b .turno .quien .hora { font-variant-numeric: tabular-nums; }
+.banda .transcript-b .turno.tu .quien { color: var(--halo); }
+.banda .transcript-b .turno q { font-family: var(--font-evidencia); font-size: 12.5px; color: var(--ink); quotes: "\00ab" "\00bb"; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banda .maniobra-b { display: flex; align-items: baseline; gap: 7px; min-width: 0; font-family: var(--font-ui); font-size: 13px; line-height: 1.35; color: var(--ink); }
+.banda .maniobra-b .ic { flex: 0 0 auto; align-self: center; color: var(--ink-2); }
+.banda .maniobra-b .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banda .cercano-b { display: inline-flex; align-items: baseline; gap: 9px; min-width: 0; max-width: 100%; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.banda .cercano-b .et { flex: 0 0 auto; font-family: var(--font-ui); font-size: 11px; color: var(--ink-2); }
+.banda .cercano-b .d { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.banda .acciones-b { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.banda .mas-b { display: flex; flex-direction: column; gap: 3px; margin-top: 7px; min-width: 0; }
+.banda .mas-b .item { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.banda .mas-b .item .unidad { flex: 0 0 auto; padding: 0 5px; border-radius: 3px; background: var(--surface-2); color: var(--ink-2); font-family: var(--font-ui); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; line-height: 15px; }
+.banda .mas-b .item .t { font-family: var(--font-evidencia); font-size: 13px; line-height: 1.35; color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banda .mas-b .item .tecla { flex: 0 0 auto; margin-left: auto; }
+.propuesta > .ic { margin-top: 2px; color: var(--halo); }
+.propuesta.aceptada > .ic { color: var(--ok); }
+.idiomas .lg .ic { flex: 0 0 auto; }
+.puerta > .ic { margin-top: 2px; }
+.puerta.si > .ic { color: var(--ok); }
+.puerta.no > .ic { color: var(--err); }
+.cuenta .ic { flex: 0 0 auto; color: var(--halo); }
+.mq-pos.banda-borde .banda { border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
+.mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
+@media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
+.prohibido li .ic { color: var(--err); }
+/* marco de exhibición del bundle */
+  body { margin: 0; padding: var(--s-6); }
+  .ds-cab { width: 100%; max-width: 1180px; margin: 0 auto var(--s-5); }
+  .ds-cab h1 { font-family: var(--font-ui); font-size: var(--t-h1); font-weight: 600; margin: 0 0 var(--s-2); }
+  .ds-cab p { font-family: var(--font-ui); font-size: var(--t-ui); color: var(--ink-2); margin: 0; line-height: 1.5; max-width: 82ch; }
+  .ds-cab p.ds-regla { color: var(--ink); margin-bottom: var(--s-2); }
+  .ds-cab code { font-family: var(--font-mono); font-size: var(--t-mono); }
+  /* 1180 px o lo que haya: la banda ocupa el ancho de la PANTALLA, y en un marco estrecho su
+     ellipsis recorta la fuente y la fecha como si fuera un defecto del componente. */
+  .ds-temas { width: 100%; max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--s-6); }
+  .tema { padding: var(--s-5); border: var(--borde) solid var(--line); border-radius: var(--r-panel); background: var(--bg); color: var(--ink); }
+  .tema > .ds-t { display: block; margin: 0 0 var(--s-4); font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+  .ds-pieza + .ds-pieza { margin-top: var(--s-6); }
+  .ds-pieza > .ds-et { display: block; margin: 0 0 var(--s-2); font-family: var(--font-ui); font-size: var(--t-meta); font-weight: 600; color: var(--ink); }
+  .ds-pieza > .ds-nota { display: block; margin: 0 0 var(--s-3); font-family: var(--font-ui); font-size: var(--t-meta); color: var(--ink-2); line-height: 1.5; max-width: 72ch; }
+  .ds-marco-banda { border: var(--borde) solid var(--line); border-radius: var(--r-ficha); overflow: hidden; }
+  @media (max-width: 720px) { body { padding: var(--s-4); } }
+</style>
+</head>
+<body>
+<svg style="display:none" aria-hidden="true">
+<symbol id="i-check-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor" stroke="none"/><path d="M5 8.2l2 2 4-4.4" stroke="var(--bg)" stroke-width="1.9" fill="none"/></symbol>
+<symbol id="i-subir" viewBox="0 0 16 16"><path d="M8 13.5v-11M3.5 7 8 2.5 12.5 7"/></symbol>
+<symbol id="i-doc" viewBox="0 0 16 16"><path d="M4 1.5h5l3.5 3.5v9.5H4z"/><path d="M9 1.5V5h3.5M6 8.5h4M6 11h4"/></symbol>
+<symbol id="i-reloj" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5V8l2.5 1.5"/></symbol>
+<symbol id="i-sistema" viewBox="0 0 16 16"><path d="M2.5 6h2.5l3.5-3v10L5 10H2.5zM11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.2a6 6 0 0 1 0 9.6"/></symbol>
+<symbol id="i-buscar" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></symbol>
+<symbol id="i-flecha" viewBox="0 0 16 16"><path d="M2.5 8h11M9.5 4l4 4-4 4"/></symbol>
+<symbol id="i-alert" viewBox="0 0 16 16"><path d="M8 2.2 14.3 13H1.7z" fill="currentColor" stroke="none"/><path d="M8 6v3.4M8 11.6v.2" stroke="var(--bg)" stroke-width="1.8" fill="none"/></symbol>
+<symbol id="i-ojo" viewBox="0 0 16 16"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></symbol>
+<symbol id="i-mic" viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2M5.5 14.5h5"/></symbol>
+</svg>
+  <div class="ds-cab">
+    <h1>La banda — seis estados</h1>
+    <p class="ds-regla"><span lang="es">Seis estados de contenido · la banda dice a la izquierda, de dónde sale y qué teclas hay a la derecha · en la banda las acciones son TECLAS</span><span lang="en">Six content states · the band speaks on the left, where it comes from and which keys exist on the right · in the band, actions are KEYS</span></p>
+    <p>Angel Ghost · Componentes · S1 — derivado de <code>docs/diseno</code> y <code>design-system.md</code>. Los dos temas, las dos lenguas (se muestra <code>es</code>).</p>
+  </div>
+  <div class="ds-temas">
+    <section class="tema oscuro">
+      <span class="ds-t">tema oscuro · primario</span>
+      <div class="ds-pieza">
+        <span class="ds-et">esperando</span>
+        <span class="ds-nota">88 px · <b>izquierda:</b> frase en Charter + conteo del corpus · <b>derecha:</b> reunión y minutos · atajos</span>
+        <div class="ds-marco-banda"><section class="banda" data-captura="" aria-label="Angel Ghost">
+
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
+
+      <div class="cab-b">
+        <span class="marca-min">
+          <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
+          <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        
+
+        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante">
+          <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        
+
+        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+      </div>
+
+      <div class="cuerpo-b">
+
+        <!-- ------------------------------ esperando ------------------------------ -->
+        <span class="ficha-b" data-en="esperando">
+          <span class="voz-b"><span lang="es">Cuando el cliente pregunte, aquí aparece tu evidencia.</span><span lang="en">When the client asks, your evidence shows up here.</span></span>
+          <span class="meta-b"><svg class="ic s"><use href="#i-doc"></use></svg><span lang="es">143 documentos · 5 unidades</span><span lang="en">143 documents · 5 units</span></span>
+        </span>
+        <span class="lado-b" data-en="esperando">
+          <span class="meta-b"><svg class="ic s"><use href="#i-reloj"></use></svg><span lang="es">Páramo Azul · 12 min</span><span lang="en">Páramo Azul · 12 min</span></span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
+            <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
+          </span>
+        </span>
+
+        <!-- ------------------------------ buscando ------------------------------- -->
+        
+        
+
+        <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- ---------------------------- sin resultado ---------------------------- -->
+        
+        
+
+        <!-- ---------------------------- sin verificar ---------------------------- -->
+        
+        
+
+      </div>
+    </section></div>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">buscando</span>
+        <span class="ds-nota">88 px · <b>izquierda:</b> lo oído entre comillas con su pista + «buscando» estático · <b>derecha:</b> atajos</span>
+        <div class="ds-marco-banda"><section class="banda" data-captura="" aria-label="Angel Ghost">
+
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
+
+      <div class="cab-b">
+        <span class="marca-min">
+          <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
+          <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        
+
+        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante">
+          <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        
+
+        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+      </div>
+
+      <div class="cuerpo-b">
+
+        <!-- ------------------------------ esperando ------------------------------ -->
+        
+        
+
+        <!-- ------------------------------ buscando ------------------------------- -->
+        <span class="ficha-b" data-en="buscando">
+          <span class="oido">
+            <span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg> <span lang="es">cliente 14:02</span><span lang="en">client 14:02</span></span>
+            <q><span lang="es">Y la limpieza de datos, ¿eso está dentro del alcance?</span><span lang="en">And the data cleansing, is that within scope?</span></q>
+          </span>
+          <span class="meta-b"><svg class="ic s"><use href="#i-buscar"></use></svg><span lang="es">Buscando en tu corpus…</span><span lang="en">Searching your corpus…</span></span>
+        </span>
+        <span class="lado-b" data-en="buscando">
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
+            <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
+          </span>
+        </span>
+
+        <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- ---------------------------- sin resultado ---------------------------- -->
+        
+        
+
+        <!-- ---------------------------- sin verificar ---------------------------- -->
+        
+        
+
+      </div>
+    </section></div>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">ficha</span>
+        <span class="ds-nota">88 px · <b>izquierda:</b> titular + línea · <b>derecha:</b> fuente · atajos</span>
+        <div class="ds-marco-banda"><section class="banda" data-captura="" aria-label="Angel Ghost">
+
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
+
+      <div class="cab-b">
+        <span class="marca-min">
+          <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
+          <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        
+
+        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante">
+          <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        
+
+        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+      </div>
+
+      <div class="cuerpo-b">
+
+        <!-- ------------------------------ esperando ------------------------------ -->
+        
+        
+
+        <!-- ------------------------------ buscando ------------------------------- -->
+        
+        
+
+        <!-- --------------------------- ficha · flotante --------------------------- -->
+        <span class="ficha-b" data-en="ficha flotante">
+          <span class="titular-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></span>
+          <span class="linea-b"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on.</span></span>
+        </span>
+        <span class="lado-b" data-en="ficha flotante">
+          <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla"><kbd>⌘⇧T</kbd> transcript</span>
+            <span class="tecla"><kbd>⌥⎋</kbd></span>
+          </span>
+        </span>
+
+        <!-- ---------------------------- sin resultado ---------------------------- -->
+        
+        
+
+        <!-- ---------------------------- sin verificar ---------------------------- -->
+        
+        
+
+      </div>
+    </section></div>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">sin resultado</span>
+        <span class="ds-nota">88 px · <b>izquierda:</b> qué buscó y no encontró + <b>la maniobra</b> · <b>derecha:</b> lo más cercano que sí tienes · las salidas como teclas</span>
+        <div class="ds-marco-banda"><section class="banda" data-captura="" aria-label="Angel Ghost">
+
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
+
+      <div class="cab-b">
+        <span class="marca-min">
+          <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
+          <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        
+
+        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante">
+          <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        
+
+        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+      </div>
+
+      <div class="cuerpo-b">
+
+        <!-- ------------------------------ esperando ------------------------------ -->
+        
+        
+
+        <!-- ------------------------------ buscando ------------------------------- -->
+        
+        
+
+        <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- ---------------------------- sin resultado ---------------------------- -->
+        <span class="ficha-b" data-en="sin-resultado">
+          <span class="titular-b"><span lang="es">Nada en tu corpus sobre «certificación ISO 27001»</span><span lang="en">Nothing in your corpus about “ISO 27001 certification”</span></span>
+          <span class="maniobra-b">
+            <svg class="ic s"><use href="#i-flecha"></use></svg>
+            <span class="t"><span lang="es">Dilo sin adornos y ofrece confirmarlo hoy mismo.</span><span lang="en">Say so plainly and offer to confirm it today.</span></span>
+          </span>
+        </span>
+        <span class="lado-b" data-en="sin-resultado">
+          <span class="cercano-b">
+            <span class="et"><span lang="es">lo más cercano</span><span lang="en">closest match</span></span>
+            <span class="d"><span lang="es">marco · §5.1 Seguridad y manejo de datos</span><span lang="en">framework · §5.1 Data security and handling</span></span>
+          </span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">otras palabras</span><span lang="en">other words</span></span>
+            <span class="tecla"><kbd>⌘⇧N</kbd> <span lang="es">anotar</span><span lang="en">note it</span></span>
+            <span class="tecla"><kbd>⌥⎋</kbd></span>
+          </span>
+        </span>
+
+        <!-- ---------------------------- sin verificar ---------------------------- -->
+        
+        
+
+      </div>
+    </section></div>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">sin verificar</span>
+        <span class="ds-nota">88 px · <b>izquierda:</b> aviso ámbar + <b>una</b> salida · <b>derecha:</b> cliente, versión y fecha verificadas</span>
+        <div class="ds-marco-banda"><section class="banda" data-captura="" aria-label="Angel Ghost">
+
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
+
+      <div class="cab-b">
+        <span class="marca-min">
+          <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
+          <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        
+
+        
+        <span class="cliente-b warn" data-en="sin-verificar">
+          <svg class="ic s relleno"><use href="#i-alert"></use></svg>
+          <span lang="es">Zoom · sin verificar</span><span lang="en">Zoom · not verified</span>
+        </span>
+
+        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+      </div>
+
+      <div class="cuerpo-b">
+
+        <!-- ------------------------------ esperando ------------------------------ -->
+        
+        
+
+        <!-- ------------------------------ buscando ------------------------------- -->
+        
+        
+
+        <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- ---------------------------- sin resultado ---------------------------- -->
+        
+        
+
+        <!-- ---------------------------- sin verificar ---------------------------- -->
+        <span class="ficha-b" data-en="sin-verificar">
+          <span class="aviso-b" role="status">
+            <svg class="ic relleno"><use href="#i-alert"></use></svg>
+            <span>
+              <strong><span lang="es">Zoom: protección sin verificar</span><span lang="en">Zoom: protection not verified</span></strong>
+              <span class="salida"><span lang="es">→ Comparte una ventana, no la pantalla · el asa muestra las otras dos salidas</span><span lang="en">→ Share a window, not the screen · the handle shows the other two ways out</span></span>
+            </span>
+          </span>
+        </span>
+        <span class="lado-b" data-en="sin-verificar">
+          <span class="meta-b"><span lang="es">Verificada solo en Meet · macOS 26.6.2 · 2026-09-20</span><span lang="en">Verified only in Meet · macOS 26.6.2 · 2026-09-20</span></span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
+            <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
+          </span>
+        </span>
+
+      </div>
+    </section></div>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">transcript</span>
+        <span class="ds-nota">200 px · <b>izquierda:</b> la ficha y sus acumuladas, intactas · <b>derecha:</b> el transcript, 3 turnos <b>por pista</b></span>
+        <div class="ds-marco-banda"><section class="banda ampliada" data-captura="" aria-label="Angel Ghost">
+
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
+
+      <div class="cab-b">
+        <span class="marca-min">
+          <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
+          <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        <span class="cliente-b" data-en="ficha-2 sin-resultado-2 transcript">
+          <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        
+        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+      </div>
+
+      <div class="cuerpo-b">
+
+        <!-- --------------------- ficha ampliada · transcript --------------------- -->
+        <span class="ficha-b" data-en="ficha-2 transcript">
+          <span class="titular-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></span>
+          <span class="linea-b"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional y se cotiza aparte.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on, priced separately.</span></span>
+          <span class="mas-b">
+            <span class="item">
+              <span class="unidad"><span lang="es">marco</span><span lang="en">framework</span></span>
+              <span class="t"><span lang="es">Etapa 2 Preparación: perfilar antes de modelar</span><span lang="en">Stage 2 Preparation: profile before modelling</span></span>
+            </span>
+            <span class="item">
+              <span class="unidad"><span lang="es">caso</span><span lang="en">case</span></span>
+              <span class="t"><span lang="es">Sur del Valle: cuatro fuentes en 9 semanas</span><span lang="en">Sur del Valle: four sources in 9 weeks</span></span>
+            </span>
+          </span>
+        </span>
+
+        
+
+        <span class="lado-b" data-en="transcript">
+          <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <span class="transcript-b" aria-label="Transcript en vivo">
+            <span class="cab">
+              <svg class="ic s"><use href="#i-ojo"></use></svg>
+              <span lang="es">en vivo · solo en memoria</span><span lang="en">live · in memory only</span>
+              <span class="tecla"><kbd>⌘⇧T</kbd> <span lang="es">ocultar</span><span lang="en">hide</span></span>
+            </span>
+            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:01</span></span><q><span lang="es">Y la limpieza de datos, ¿eso está dentro del alcance?</span><span lang="en">And the data cleansing, is that within scope?</span></q></span>
+            <span class="turno tu"><span class="quien"><svg class="ic s"><use href="#i-mic"></use></svg><span lang="es">tú</span><span lang="en">you</span><span class="hora">14:02</span></span><q><span lang="es">Sí, la limpieza de las tres fuentes que acordamos está incluida.</span><span lang="en">Yes, cleansing the three sources we agreed on is included.</span></q></span>
+            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:02</span></span><q><span lang="es">¿Y si sumamos el Excel de la fuerza comercial? Lo tenemos en Power BI.</span><span lang="en">What if we add the sales team’s Excel? We have it in Power BI.</span></q></span>
+          </span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla"><kbd>⌥⎋</kbd></span>
+          </span>
+        </span>
+
+        <!-- ----------------------- sin resultado · ampliada ----------------------- -->
+        
+        
+
+        <!-- ----------------------- sin verificar · ampliada ----------------------- -->
+        
+        
+
+      </div>
+    </section></div>
+      </div>
+    </section>
+    <section class="tema claro">
+      <span class="ds-t">tema claro · papel</span>
+      <div class="ds-pieza">
+        <span class="ds-et">esperando</span>
+        <span class="ds-nota">88 px · <b>izquierda:</b> frase en Charter + conteo del corpus · <b>derecha:</b> reunión y minutos · atajos</span>
+        <div class="ds-marco-banda"><section class="banda" data-captura="" aria-label="Angel Ghost">
+
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
+
+      <div class="cab-b">
+        <span class="marca-min">
+          <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
+          <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        
+
+        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante">
+          <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        
+
+        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+      </div>
+
+      <div class="cuerpo-b">
+
+        <!-- ------------------------------ esperando ------------------------------ -->
+        <span class="ficha-b" data-en="esperando">
+          <span class="voz-b"><span lang="es">Cuando el cliente pregunte, aquí aparece tu evidencia.</span><span lang="en">When the client asks, your evidence shows up here.</span></span>
+          <span class="meta-b"><svg class="ic s"><use href="#i-doc"></use></svg><span lang="es">143 documentos · 5 unidades</span><span lang="en">143 documents · 5 units</span></span>
+        </span>
+        <span class="lado-b" data-en="esperando">
+          <span class="meta-b"><svg class="ic s"><use href="#i-reloj"></use></svg><span lang="es">Páramo Azul · 12 min</span><span lang="en">Páramo Azul · 12 min</span></span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
+            <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
+          </span>
+        </span>
+
+        <!-- ------------------------------ buscando ------------------------------- -->
+        
+        
+
+        <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- ---------------------------- sin resultado ---------------------------- -->
+        
+        
+
+        <!-- ---------------------------- sin verificar ---------------------------- -->
+        
+        
+
+      </div>
+    </section></div>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">buscando</span>
+        <span class="ds-nota">88 px · <b>izquierda:</b> lo oído entre comillas con su pista + «buscando» estático · <b>derecha:</b> atajos</span>
+        <div class="ds-marco-banda"><section class="banda" data-captura="" aria-label="Angel Ghost">
+
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
+
+      <div class="cab-b">
+        <span class="marca-min">
+          <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
+          <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        
+
+        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante">
+          <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        
+
+        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+      </div>
+
+      <div class="cuerpo-b">
+
+        <!-- ------------------------------ esperando ------------------------------ -->
+        
+        
+
+        <!-- ------------------------------ buscando ------------------------------- -->
+        <span class="ficha-b" data-en="buscando">
+          <span class="oido">
+            <span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg> <span lang="es">cliente 14:02</span><span lang="en">client 14:02</span></span>
+            <q><span lang="es">Y la limpieza de datos, ¿eso está dentro del alcance?</span><span lang="en">And the data cleansing, is that within scope?</span></q>
+          </span>
+          <span class="meta-b"><svg class="ic s"><use href="#i-buscar"></use></svg><span lang="es">Buscando en tu corpus…</span><span lang="en">Searching your corpus…</span></span>
+        </span>
+        <span class="lado-b" data-en="buscando">
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
+            <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
+          </span>
+        </span>
+
+        <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- ---------------------------- sin resultado ---------------------------- -->
+        
+        
+
+        <!-- ---------------------------- sin verificar ---------------------------- -->
+        
+        
+
+      </div>
+    </section></div>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">ficha</span>
+        <span class="ds-nota">88 px · <b>izquierda:</b> titular + línea · <b>derecha:</b> fuente · atajos</span>
+        <div class="ds-marco-banda"><section class="banda" data-captura="" aria-label="Angel Ghost">
+
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
+
+      <div class="cab-b">
+        <span class="marca-min">
+          <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
+          <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        
+
+        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante">
+          <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        
+
+        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+      </div>
+
+      <div class="cuerpo-b">
+
+        <!-- ------------------------------ esperando ------------------------------ -->
+        
+        
+
+        <!-- ------------------------------ buscando ------------------------------- -->
+        
+        
+
+        <!-- --------------------------- ficha · flotante --------------------------- -->
+        <span class="ficha-b" data-en="ficha flotante">
+          <span class="titular-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></span>
+          <span class="linea-b"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on.</span></span>
+        </span>
+        <span class="lado-b" data-en="ficha flotante">
+          <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla"><kbd>⌘⇧T</kbd> transcript</span>
+            <span class="tecla"><kbd>⌥⎋</kbd></span>
+          </span>
+        </span>
+
+        <!-- ---------------------------- sin resultado ---------------------------- -->
+        
+        
+
+        <!-- ---------------------------- sin verificar ---------------------------- -->
+        
+        
+
+      </div>
+    </section></div>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">sin resultado</span>
+        <span class="ds-nota">88 px · <b>izquierda:</b> qué buscó y no encontró + <b>la maniobra</b> · <b>derecha:</b> lo más cercano que sí tienes · las salidas como teclas</span>
+        <div class="ds-marco-banda"><section class="banda" data-captura="" aria-label="Angel Ghost">
+
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
+
+      <div class="cab-b">
+        <span class="marca-min">
+          <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
+          <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        
+
+        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante">
+          <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        
+
+        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+      </div>
+
+      <div class="cuerpo-b">
+
+        <!-- ------------------------------ esperando ------------------------------ -->
+        
+        
+
+        <!-- ------------------------------ buscando ------------------------------- -->
+        
+        
+
+        <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- ---------------------------- sin resultado ---------------------------- -->
+        <span class="ficha-b" data-en="sin-resultado">
+          <span class="titular-b"><span lang="es">Nada en tu corpus sobre «certificación ISO 27001»</span><span lang="en">Nothing in your corpus about “ISO 27001 certification”</span></span>
+          <span class="maniobra-b">
+            <svg class="ic s"><use href="#i-flecha"></use></svg>
+            <span class="t"><span lang="es">Dilo sin adornos y ofrece confirmarlo hoy mismo.</span><span lang="en">Say so plainly and offer to confirm it today.</span></span>
+          </span>
+        </span>
+        <span class="lado-b" data-en="sin-resultado">
+          <span class="cercano-b">
+            <span class="et"><span lang="es">lo más cercano</span><span lang="en">closest match</span></span>
+            <span class="d"><span lang="es">marco · §5.1 Seguridad y manejo de datos</span><span lang="en">framework · §5.1 Data security and handling</span></span>
+          </span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">otras palabras</span><span lang="en">other words</span></span>
+            <span class="tecla"><kbd>⌘⇧N</kbd> <span lang="es">anotar</span><span lang="en">note it</span></span>
+            <span class="tecla"><kbd>⌥⎋</kbd></span>
+          </span>
+        </span>
+
+        <!-- ---------------------------- sin verificar ---------------------------- -->
+        
+        
+
+      </div>
+    </section></div>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">sin verificar</span>
+        <span class="ds-nota">88 px · <b>izquierda:</b> aviso ámbar + <b>una</b> salida · <b>derecha:</b> cliente, versión y fecha verificadas</span>
+        <div class="ds-marco-banda"><section class="banda" data-captura="" aria-label="Angel Ghost">
+
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
+
+      <div class="cab-b">
+        <span class="marca-min">
+          <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
+          <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        
+
+        
+        <span class="cliente-b warn" data-en="sin-verificar">
+          <svg class="ic s relleno"><use href="#i-alert"></use></svg>
+          <span lang="es">Zoom · sin verificar</span><span lang="en">Zoom · not verified</span>
+        </span>
+
+        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+      </div>
+
+      <div class="cuerpo-b">
+
+        <!-- ------------------------------ esperando ------------------------------ -->
+        
+        
+
+        <!-- ------------------------------ buscando ------------------------------- -->
+        
+        
+
+        <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- ---------------------------- sin resultado ---------------------------- -->
+        
+        
+
+        <!-- ---------------------------- sin verificar ---------------------------- -->
+        <span class="ficha-b" data-en="sin-verificar">
+          <span class="aviso-b" role="status">
+            <svg class="ic relleno"><use href="#i-alert"></use></svg>
+            <span>
+              <strong><span lang="es">Zoom: protección sin verificar</span><span lang="en">Zoom: protection not verified</span></strong>
+              <span class="salida"><span lang="es">→ Comparte una ventana, no la pantalla · el asa muestra las otras dos salidas</span><span lang="en">→ Share a window, not the screen · the handle shows the other two ways out</span></span>
+            </span>
+          </span>
+        </span>
+        <span class="lado-b" data-en="sin-verificar">
+          <span class="meta-b"><span lang="es">Verificada solo en Meet · macOS 26.6.2 · 2026-09-20</span><span lang="en">Verified only in Meet · macOS 26.6.2 · 2026-09-20</span></span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
+            <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
+          </span>
+        </span>
+
+      </div>
+    </section></div>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">transcript</span>
+        <span class="ds-nota">200 px · <b>izquierda:</b> la ficha y sus acumuladas, intactas · <b>derecha:</b> el transcript, 3 turnos <b>por pista</b></span>
+        <div class="ds-marco-banda"><section class="banda ampliada" data-captura="" aria-label="Angel Ghost">
+
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
+
+      <div class="cab-b">
+        <span class="marca-min">
+          <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
+          <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        <span class="cliente-b" data-en="ficha-2 sin-resultado-2 transcript">
+          <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        
+        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+      </div>
+
+      <div class="cuerpo-b">
+
+        <!-- --------------------- ficha ampliada · transcript --------------------- -->
+        <span class="ficha-b" data-en="ficha-2 transcript">
+          <span class="titular-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></span>
+          <span class="linea-b"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional y se cotiza aparte.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on, priced separately.</span></span>
+          <span class="mas-b">
+            <span class="item">
+              <span class="unidad"><span lang="es">marco</span><span lang="en">framework</span></span>
+              <span class="t"><span lang="es">Etapa 2 Preparación: perfilar antes de modelar</span><span lang="en">Stage 2 Preparation: profile before modelling</span></span>
+            </span>
+            <span class="item">
+              <span class="unidad"><span lang="es">caso</span><span lang="en">case</span></span>
+              <span class="t"><span lang="es">Sur del Valle: cuatro fuentes en 9 semanas</span><span lang="en">Sur del Valle: four sources in 9 weeks</span></span>
+            </span>
+          </span>
+        </span>
+
+        
+
+        <span class="lado-b" data-en="transcript">
+          <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <span class="transcript-b" aria-label="Transcript en vivo">
+            <span class="cab">
+              <svg class="ic s"><use href="#i-ojo"></use></svg>
+              <span lang="es">en vivo · solo en memoria</span><span lang="en">live · in memory only</span>
+              <span class="tecla"><kbd>⌘⇧T</kbd> <span lang="es">ocultar</span><span lang="en">hide</span></span>
+            </span>
+            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:01</span></span><q><span lang="es">Y la limpieza de datos, ¿eso está dentro del alcance?</span><span lang="en">And the data cleansing, is that within scope?</span></q></span>
+            <span class="turno tu"><span class="quien"><svg class="ic s"><use href="#i-mic"></use></svg><span lang="es">tú</span><span lang="en">you</span><span class="hora">14:02</span></span><q><span lang="es">Sí, la limpieza de las tres fuentes que acordamos está incluida.</span><span lang="en">Yes, cleansing the three sources we agreed on is included.</span></q></span>
+            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:02</span></span><q><span lang="es">¿Y si sumamos el Excel de la fuerza comercial? Lo tenemos en Power BI.</span><span lang="en">What if we add the sales team’s Excel? We have it in Power BI.</span></q></span>
+          </span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla"><kbd>⌥⎋</kbd></span>
+          </span>
+        </span>
+
+        <!-- ----------------------- sin resultado · ampliada ----------------------- -->
+        
+        
+
+        <!-- ----------------------- sin verificar · ampliada ----------------------- -->
+        
+        
+
+      </div>
+    </section></div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

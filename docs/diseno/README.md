@@ -30,6 +30,58 @@ superior conmuta **estado · tema · idioma** y la nota bajo la barra dice qué 
 Cualquier cambio al plan (agrupar, reordenar, posponer) se propone y se aprueba ANTES de
 construir el siguiente artefacto.
 
+### Extensión posterior a G-Diseño (sprint 001)
+
+| Mirada | Artefacto | Por qué existe | Orden |
+|---|---|---|---|
+| 11 | `banda.html` — los seis estados de contenido de la banda | el gate de FIDELIDAD del sprint 001 compara la banda construida contra la maqueta, y la maqueta dibujó la banda **siempre con una ficha dentro**: cinco de los seis estados no tenían referencia. Se propuso en el plan del sprint, **aprobado por el usuario antes de construir** | antes de escribir la primera línea de UI del sprint 001 |
+| 12 | `sesion.html` · `permisos.html` · `honestidad.html` — el estado **«así se ve hoy · sprint 1»** y el componente **«todavía no»** | la maqueta dibuja el producto terminado y cada sprint entrega un trozo; sin una forma escrita de decir «esto aún no existe», las pantallas de la fase 2 solo podían mentir en verde o esconder lo que falta. Se propuso en la bitácora ANTES de construir la UI del producto | antes de escribir la primera línea de las pantallas del cuaderno |
+| 13 | `idioma.html` (estado s1 nuevo) · `sesion.html` y `honestidad.html` (su estado s1 **puesto al día**) | consecuencia directa del «todavía no» aprobado en la 12: cada sprint mueve filas de *pendiente* a *funciona*, y ese movimiento **también es diseño**. La fase 3 mueve cuatro (las dos pistas, la escucha, el transcript) y trae una pantalla que no tenía estado de sprint 1. Además, tres hechos que solo se supieron construyendo piden sitio en la maqueta: el **eco** con altavoces, el **techo de cinco idiomas** de macOS y la **descarga del modelo**. Se propuso en la bitácora ANTES de construir la UI de la fase 3 | antes de escribir la primera línea de la pantalla de Idioma |
+
+### Mirada 12 — veredicto del usuario (2026-09-21)
+
+> **«Esta muy bien como indica que no todavia no existe en sesion permisos y honestidad»**
+
+**Aprobada.** El usuario abrió las tres pantallas y nombró las tres. `.estado.pendiente` y el
+estado «así se ve hoy · sprint 1» quedan aprobados como parte del design system (§9-sexies,
+v1.10.0), y con ellos las dos decisiones que la maqueta no había escrito: el permiso único de
+macOS para «Audio del sistema» y «Pantalla», y la Accesibilidad en la lista principal de permisos.
+
+A partir de aquí, **toda pantalla que se entregue a medias usa este estado**: no se pinta en verde
+lo que no existe, y no se esconde.
+
+### Mirada 13 — veredicto del usuario (2026-09-21)
+
+> **«Me gustó mucho el diseño y cómo se van evidenciando los elementos construidos y lo que falta,
+> muy bien lograda»**
+
+**Aprobada.** Lo que el usuario nombra es el mecanismo de la mirada 12 ya aplicado a un sprint
+concreto, no su enunciado: las cuatro filas que la fase 3 movió de *pendiente* a *funciona*. Con
+ello quedan aprobados el estado `s1` nuevo de `idioma.html`, los de `sesion.html` y
+`honestidad.html` puestos al día, y los tres hechos que solo se supieron construyendo y que la
+maqueta ahora dice — el **eco** con altavoces internos, el **techo de cinco idiomas** de macOS y
+la **descarga del modelo**.
+
+*(El veredicto llegó tras repreguntar por la regla 10: la primera respuesta fue «Apruebo las tres
+pantallas… continúa», y un «apruebo» no es un «lo vi». Se registra el camino porque es la segunda
+vez en esta app que la repregunta hace aparecer contenido que la palabra de aprobación no traía.)*
+
+La maqueta no se congela con G-Diseño: se extiende por el mismo camino (propuesta → mirada →
+registro). Lo que **no** cambia sin una mirada nueva es lo ya aprobado — y esta extensión no
+redecide nada: cruza la forma elegida en la mirada 3-ter con el contenido aprobado en la 1.
+
+### Mirada 14 — veredicto del usuario (2026-09-21)
+
+> **«Ya vi el diseño del corpus, vamos muy bien; ya están las secciones de las temáticas
+> principales y lo que falta es muy interesante, por ejemplo lo de arrastrar los documentos»**
+
+**Aprobada.** El usuario nombra una de las tres filas de «todavía no» del bloque —*arrastrar y
+soltar documentos*—, así que el veredicto llega con el archivo abierto. Quedan aprobados el
+estado `s1` de `corpus.html` y las tres cosas que solo se supieron construyendo y que la pantalla
+dice en vez de esconder: que **las secciones de un PDF son conjetura** y se cuentan, que el
+índice vive en la carpeta de datos de la app **y solo su dueño puede leerlo**, y el techo de
+2 000 documentos por carpeta.
+
 ## Registro de miradas
 
 | Fecha | Artefacto | Veredicto del usuario (línea textual) | Qué se construyó encima, después |
@@ -44,6 +96,10 @@ construir el siguiente artefacto.
 | 2026-09-20 | `corpus.html` · `notas.html` · `idioma.html` · `ia.html` (mirada 4) | **Corpus aprobado; tres cambios** — «Notas: me gusta pero es que soy malo tomando notas, no sé cómo voy a lograr tomar notas; no sé si fuera posible que me propusiera si x información deba guardarse como notas. Idioma está bien pero siento que también debería la opción bilingüe para seleccionar más de un idioma. IA me gusta, está bien, aunque quiero que Claude Code también me pueda ayudar a operarla ya que estamos en local» | Fase 4-bis: notas propuestas · varios idiomas · puerta local para Claude Code |
 | 2026-09-20 | `notas.html` · `idioma.html` · `ia.html` (mirada 4-bis) | **Idioma e IA aprobados; una cosa en notas** — «me gusta mucho lo de las notas, me preocupa es que mientras estoy en la reunión no puedo decidir; ¿es posible decidir apenas finalice la reunión y darme una o unas horas antes de borrar las sugerencias? De resto sí que me gusta mucho notas. Idioma muy completo, incluso mejor de lo que pensaba. IA también quedó excelente, aprobado» | Fase 4-ter: bandeja de propuestas con cuenta atrás |
 | 2026-09-20 | `notas.html` (bandeja) + `honestidad.html` (bandeja en las cuentas) (mirada 4-ter) | **Aprobada** — «abrí la ventana, claramente la exploré con sus botones y me pareció excelente, continuamos». *(Se le repreguntó por la regla 10 al llegar solo la palabra de fase; respondió con la exploración descrita. Observación suya, justa y registrada: no tiene que rendir cuentas de lo que ve.)* | Fase 5: recorrido, README, auditoría y G-Diseño |
+| 2026-09-20 | `banda.html` — los seis estados de contenido de la banda (mirada 11, sprint 001) | **Aprobada con un cambio** — «Si me gusta mucho muy bien docs/diseno/banda.html, pero en Sin resultado esta bien que digas que no hay nada pero sugierele como abordar la situacion. El resto esta muy muy bien» | La **maniobra**: lo más cercano del corpus + un catálogo versionado de seis maneras de responder, los dos deterministas (cero LLM). Luego, la fase 1b: las tres ventanas |
+| 2026-09-21 | `sesion.html` · `permisos.html` · `honestidad.html` — estado «así se ve hoy · sprint 1» y el componente «todavía no» (mirada 12, sprint 001) | **Aprobada** — «Esta muy bien como indica que no todavia no existe en sesion permisos y honestidad» (abrió las tres y nombró las tres) | Fase 2b: las tres pantallas del cuaderno construidas |
+| 2026-09-21 | `idioma.html` (estado s1 nuevo) · `sesion.html` y `honestidad.html` al día (mirada 13, sprint 001) | **Aprobada** — «Me gustó mucho el diseño y cómo se van evidenciando los elementos construidos y lo que falta, muy bien lograda». *(Se repreguntó por la regla 10: la primera respuesta fue «Apruebo las tres pantallas… continúa», y un «apruebo» no es un «lo vi».)* | Fase 4: corpus, disparo y ficha |
+| 2026-09-21 | `corpus.html` (estado s1 nuevo) (mirada 14, sprint 001) | **Aprobada** — «Ya vi el diseño del corpus, vamos muy bien; ya están las secciones de las temáticas principales y lo que falta es muy interesante, por ejemplo lo de arrastrar los documentos» (nombra una de las tres filas de «todavía no»: llegó con el archivo abierto) | Fase 5: efímero en runtime, kit de evaluación, guía de prueba y manual |
 
 ## Decisiones de diseño declaradas antes del segundo artefacto
 
@@ -62,6 +118,7 @@ planeadora debe absorberlas: ver `## Desviación del plan` en la bitácora).
 |---|---|---|---|
 | 01 | `panel.html` | esperando · buscando · ficha · sugerencia local · sugerencia API · sin resultado · sin verificar · radar · radar invasivo · transcript · voz · voz sin auriculares | **C1** ventana protegida · **C5** disparo y atajo · **C6** fichas de evidencia · **C7** sugerencia · **C8** lectura de pantalla · **C14** radar · **C15** modo solo audio · **B2** contador de red |
 | 01-b | `posicion.html` | A · B · C (descartada) · D · D2 · D3 · F · E | **C1** — decide forma y posición: banda acoplada 88/200, solo audio 44, y el relleno de la franja |
+| 01-c | `banda.html` *(sprint 001)* | esperando · buscando · ficha · ficha ampliada · sin resultado · sin verificar · sin verificar ampliada · transcript · sin acople | **C1** forma × contenido · **C3** transcript por pista · **C6** ficha y acumuladas — referencia del gate de FIDELIDAD |
 | 02 | `sesion.html` | detectada · sin reunión · NDA (solo notas) · vigilancia local | **C2** dos pistas · **C11** jurisdicción y NDA · **C12** detección de cliente · **C14** radar local |
 | 03 | `permisos.html` | sin conceder · concedido · revocado a mitad · solicitando · acople | **C8** consentimiento de pantalla · **C12** micrófono, audio del sistema y acople |
 | 04 | `corpus.html` | vacío · indexando · con documentos · ilegible | **C4** ingesta e índice · **B1** cinco unidades |

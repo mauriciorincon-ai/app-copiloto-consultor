@@ -1,51 +1,128 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import { useEffect, useState, type ReactNode } from "react";
+import { IdiomaContext, type Idioma } from "./i18n";
+import { SpriteIconos } from "./componentes/Iconos";
+import { Banda, type EstadoBanda } from "./componentes/Banda";
+import { Relleno } from "./componentes/Relleno";
+import { Principal } from "./componentes/Principal";
+import { ventanaActual } from "./ventanas";
+import { useAltoDeVentana, DESDE_AMPLIADA } from "./asa";
+import { useAcoplada } from "./acople";
+import { useTranscriptVisible } from "./turnos";
 
-function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+/**
+ * Cáscara de la app.
+ *
+ * Tema e idioma viven en el elemento `<html>`, exactamente como en la maqueta: `data-theme`
+ * y `lang`. Un solo lugar de verdad del que cuelgan el CSS (los tokens se redefinen por
+ * `html[data-theme]`) y el diccionario. En la maqueta el conmutador era un botón de la sala
+ * de diseño; en producto lo moverán las preferencias del usuario y el sistema.
+ */
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
-
-  return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
-  );
+/** Lee el tema del sistema la primera vez; el design system manda oscuro como primario. */
+function temaInicial(): "dark" | "light" {
+  const declarado = document.documentElement.dataset.theme;
+  if (declarado === "light" || declarado === "dark") return declarado;
+  return window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
 }
 
-export default App;
+function idiomaInicial(): Idioma {
+  const declarado = document.documentElement.lang;
+  if (declarado.startsWith("en")) return "en";
+  if (declarado.startsWith("es")) return "es";
+  return navigator.language?.startsWith("en") ? "en" : "es";
+}
+
+export function Cascara({ children }: { children?: ReactNode }) {
+  const [tema] = useState(temaInicial);
+  const [idioma] = useState(idiomaInicial);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = tema;
+  }, [tema]);
+
+  useEffect(() => {
+    document.documentElement.lang = idioma;
+  }, [idioma]);
+
+  return <IdiomaContext.Provider value={idioma}>{children}</IdiomaContext.Provider>;
+}
+
+const ESTADOS: EstadoBanda[] = ["esperando", "buscando", "ficha", "sin-resultado", "sin-verificar"];
+
+/**
+ * Qué estado muestra la banda mientras no hay ni audio ni corpus.
+ *
+ * Hasta la **fase 3** (dos pistas + fin de turno) y la **fase 4** (corpus y disparo) no existe
+ * nada que decida el estado de verdad, así que lo elige la URL. No es una puerta trasera: es lo
+ * que hace posible el **gate de FIDELIDAD** —recorrer los nueve encuadres de `banda.html` en la
+ * ventana real, en los dos temas y los dos idiomas— y muere en cuanto el disparo sea real.
+ */
+function bandaDesdeLaUrl(busqueda: string, alto: number) {
+  const p = new URLSearchParams(busqueda);
+  const pedido = p.get("estado");
+  const estado = ESTADOS.find((e) => e === pedido) ?? "esperando";
+  return {
+    estado,
+    // `ampliada` NO se pide: se deduce del alto de la VENTANA, que es quien manda. Así la banda
+    // no puede dibujarse ampliada dentro de un marco de 88 px (ni al revés) y el asa funciona
+    // sin avisar a nadie: cambia la ventana, y la banda se entera midiendo.
+    ampliada: alto >= DESDE_AMPLIADA,
+    verificado: p.get("verificado") !== "0",
+  };
+}
+
+/**
+ * `acoplada` tampoco se pide: se PREGUNTA a la parte nativa, porque depende de si el usuario
+ * concedió Accesibilidad y de si la ventana de la reunión se dejó recortar. El parámetro de URL
+ * sigue existiendo —sin él, el gate de fidelidad no podría recorrer el encuadre «sin acople» en
+ * un navegador— pero solo manda cuando está escrito.
+ */
+function acopleDesdeLaUrl(busqueda: string): boolean | undefined {
+  const pedido = new URLSearchParams(busqueda).get("acoplada");
+  return pedido === null ? undefined : pedido !== "0";
+}
+
+export function Enrutador({ busqueda = globalThis.location?.search ?? "" }: { busqueda?: string }) {
+  const ventana = ventanaActual(busqueda);
+  const alto = useAltoDeVentana();
+  const acoplada = useAcoplada(acopleDesdeLaUrl(busqueda));
+  // `⌘⇧T` conmuta el transcript desde la parte nativa. El parámetro de URL sigue existiendo para
+  // que el arnés de capturas pueda fotografiar el encuadre abierto sin pulsar una tecla global.
+  const transcript = useTranscriptVisible(
+    new URLSearchParams(busqueda).get("transcript") === "1",
+  );
+
+  // La identidad de la ventana vive en `<html>`, al lado del tema y del idioma: un solo lugar de
+  // verdad del que cuelga el CSS de ventana — y, de paso, lo que un e2e puede leer sin adivinar.
+  useEffect(() => {
+    document.documentElement.dataset.ventana = ventana;
+  }, [ventana]);
+
+  switch (ventana) {
+    case "relleno":
+      // Sin sprite y sin nada: el relleno no dibuja contenido, por definición.
+      return <Relleno />;
+    case "banda":
+      return (
+        <>
+          <SpriteIconos />
+          <Banda {...bandaDesdeLaUrl(busqueda, alto)} transcript={transcript} acoplada={acoplada} />
+        </>
+      );
+    default:
+      return (
+        <>
+          <SpriteIconos />
+          <Principal busqueda={busqueda} />
+        </>
+      );
+  }
+}
+
+export default function App() {
+  return (
+    <Cascara>
+      <Enrutador />
+    </Cascara>
+  );
+}

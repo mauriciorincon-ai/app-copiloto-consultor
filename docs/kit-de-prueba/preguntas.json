@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "comentario": "Kit de evaluación v0 del sprint 001. Treinta preguntas que un cliente haría en una reunión, con la sección del corpus que DEBERÍA responderlas. Datos 100 % sintéticos: ni un cliente real, ni una cifra real. Se mide nDCG@5 sobre el corpus de `corpus/`. Las marcadas `sinRespuesta` son igual de importantes que las otras: comprueban que la app dice «no tengo nada» en vez de aproximar la sección menos mala, que es el fallo más caro que puede cometer.",
+  "preguntas": [
+    { "dice": "¿Y la limpieza de datos, eso está dentro del alcance?", "espera": "Alcance" },
+    { "dice": "¿Cuántas fuentes de datos cubre la propuesta?", "espera": "Alcance" },
+    { "dice": "¿Y si aparece una cuarta fuente qué pasa?", "espera": "Alcance" },
+    { "dice": "¿En cuántas semanas hacen la entrega completa?", "espera": "Plazo de entrega" },
+    { "dice": "¿Desde cuándo cuentan el plazo?", "espera": "Plazo de entrega" },
+    { "dice": "¿La tarifa es cerrada o por horas?", "espera": "Precio" },
+    { "dice": "¿Cuántas rondas de revisión incluye?", "espera": "Precio" },
+    { "dice": "¿El taller de cierre va aparte?", "espera": "Precio" },
+    { "dice": "¿Qué nos entregan exactamente al final?", "espera": "Entregables" },
+    { "dice": "¿Qué pasa si los extractos del ERP llegan tarde?", "espera": "Supuestos" },
+    { "dice": "¿Por qué nos contrataron para esto?", "espera": "Contexto" },
+    { "dice": "¿Cuáles son las etapas del método?", "espera": "Las cuatro etapas" },
+    { "dice": "¿Qué se hace primero, inventario o calidad?", "espera": "Las cuatro etapas" },
+    { "dice": "¿Cómo miden la calidad de los datos?", "espera": "Calidad" },
+    { "dice": "¿Cuántas reglas por fuente acuerdan?", "espera": "Calidad" },
+    { "dice": "¿Quién responde por cada fuente después?", "espera": "Gobierno" },
+    { "dice": "¿Para qué sirve el tablero al final?", "espera": "Uso" },
+    { "dice": "¿Dónde quedan guardados nuestros extractos?", "espera": "Dónde viven los datos" },
+    { "dice": "¿Cuánto tiempo conservan los datos después del cierre?", "espera": "Retención" },
+    { "dice": "¿Cómo piden acceso a nuestros sistemas?", "espera": "Confidencialidad y acceso a sistemas" },
+    { "dice": "¿Ustedes tienen certificación ISO 27001?", "espera": "Certificaciones" },
+    { "dice": "¿Con quién más del sector han trabajado?", "espera": "Qué pidió el cliente" },
+    { "dice": "¿Cómo les fue en ese proyecto de la cooperativa?", "espera": "Resultados" },
+    { "dice": "¿Se les ha retrasado un proyecto alguna vez?", "espera": "Qué costó" },
+    { "dice": "¿Qué aprendieron de ese caso?", "espera": "Aprendizajes" },
+    { "dice": "¿Quién firma por parte de ustedes?", "espera": "Quién decide" },
+    { "dice": "¿Hay penalidad si terminamos antes?", "espera": "Acuerdos previos" },
+    { "dice": "¿Cuántos años lleva usted en esto?", "espera": "Trayectoria" },
+    { "dice": "¿Cuántos proyectos ha cerrado en distribución?", "espera": "Cifras" },
+    { "dice": "¿Qué títulos tiene usted?", "espera": "Credenciales" }
+  ],
+  "sinRespuesta": [
+    "¿Ustedes manejan nómina también?",
+    "¿Tienen oficina en Medellín?",
+    "¿Cuánto cuesta el software de Salesforce?",
+    "¿Nos pueden montar la red del almacén?"
+  ]
+}

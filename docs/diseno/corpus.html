@@ -16,6 +16,7 @@
     <button data-estado="indexando">indexando</button>
     <button data-estado="con-docs">con documentos</button>
     <button data-estado="ilegible">documento ilegible</button>
+    <button data-estado="s1">así se ve hoy · sprint 1</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -27,6 +28,7 @@
   <div class="n" data-para="indexando"><b>Qué mirar:</b> progreso real, por unidad, sin bloquear la ventana. El contador dice <b>0 B</b> también aquí: leer tus documentos es un trabajo local. Un documento ilegible no detiene a los otros 142.</div>
   <div class="n" data-para="con-docs"><b>Qué mirar:</b> el corpus como inventario, no como carpeta. Las cinco unidades con su cuenta, el índice con su tamaño <b>y dónde vive</b>, y la última fila en ámbar: hay uno sin leer.</div>
   <div class="n" data-para="ilegible"><b>Qué mirar:</b> el fallo dicho entero. Por qué se deja fuera en vez de adivinar, qué puedes hacer <b>en tu Mac</b>, y —a la derecha— la salida fácil que <b>no</b> existe: mandarlo a un OCR en la nube. Se nombra para poder negarla.</div>
+  <div class="n" data-para="s1"><b>Qué mirar (mirada 14):</b> la MISMA pantalla, tal y como se entrega en el sprint 1. <b>Lo que ya funciona está vivo</b>: señalas una carpeta, la app lee tus PDF, Word y Markdown <b>donde están</b>, los reparte en las cinco unidades y te dice qué quedó sin leer y por qué. Lo que aún no existe lleva <b>«todavía no»</b>: arrastrar y soltar, releer solo lo que cambies, y leer lo escaneado. Y tres cosas que solo se supieron al construirlo, dichas aquí en vez de escondidas: <b>un PDF no trae títulos</b> —los suyos los conjetura la app por la forma del texto, y por eso se cuentan—, el índice <b>vive en la carpeta de datos de la app y solo tú puedes leerlo</b>, y hay un techo de <b>2 000 documentos por carpeta</b> que es un aviso, no un límite.</div>
   <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
 </div>
 
@@ -47,6 +49,7 @@
       <span class="estado halo" data-en="indexando"><svg class="ic s"><use href="#i-buscar"/></svg><span lang="es">Indexando…</span><span lang="en">Indexing…</span></span>
       <span class="estado mute" data-en="vacio"><svg class="ic s"><use href="#i-doc"/></svg><span lang="es">Sin documentos</span><span lang="en">No documents</span></span>
       <span class="estado warn" data-en="ilegible"><svg class="ic s relleno"><use href="#i-alert"/></svg><span lang="es">1 sin leer</span><span lang="en">1 unread</span></span>
+      <span class="estado halo" data-en="s1"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
     </div>
   </nav>
 
@@ -187,6 +190,48 @@
             </div>
           </div>
           <p style="margin-top:10px;font-size:12.5px;color:var(--ink-2)"><span lang="es">Si el documento importa y el OCR local no basta, conviértelo tú y vuelve a añadirlo.</span><span lang="en">If the document matters and local OCR is not enough, convert it yourself and add it again.</span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== así se ve hoy · sprint 1 ===== -->
+    <div data-en="s1" style="display:flex;flex-direction:column;gap:12px">
+      <div class="fila">
+        <button class="btn"><svg class="ic s"><use href="#i-doc"/></svg><span lang="es">Señalar una carpeta</span><span lang="en">Point to a folder</span></button>
+        <span class="crece" style="font-size:12.5px;color:var(--ink-2)"><span lang="es">Tus documentos <b>no se copian</b>: se leen donde están.</span><span lang="en">Your documents are <b>not copied</b>: they are read where they live.</span></span>
+        <span class="red cero mono"><svg class="ic s"><use href="#i-subir"/></svg>0 B</span>
+      </div>
+
+      <div class="grid-3" style="gap:10px">
+        <div class="tarjeta" style="padding:10px 12px"><div class="fila"><span class="unidad-chip"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span class="crece"></span><span class="mono" style="font-size:17px">31</span></div><p style="margin-top:2px"><span lang="es">alcance, precio, supuestos</span><span lang="en">scope, price, assumptions</span></p></div>
+        <div class="tarjeta" style="padding:10px 12px"><div class="fila"><span class="unidad-chip"><span lang="es">marco</span><span lang="en">framework</span></span><span class="crece"></span><span class="mono" style="font-size:17px">12</span></div><p style="margin-top:2px"><span lang="es">tu método, tus etapas</span><span lang="en">your method, your stages</span></p></div>
+        <div class="tarjeta" style="padding:10px 12px"><div class="fila"><span class="unidad-chip"><span lang="es">caso</span><span lang="en">case</span></span><span class="crece"></span><span class="mono" style="font-size:17px">28</span></div><p style="margin-top:2px"><span lang="es">qué pasó y qué costó</span><span lang="en">what happened, what it cost</span></p></div>
+        <div class="tarjeta" style="padding:10px 12px"><div class="fila"><span class="unidad-chip"><span lang="es">cliente</span><span lang="en">client</span></span><span class="crece"></span><span class="mono" style="font-size:17px">63</span></div><p style="margin-top:2px"><span lang="es">fichas y acuerdos previos</span><span lang="en">briefs and past agreements</span></p></div>
+        <div class="tarjeta" style="padding:10px 12px"><div class="fila"><span class="unidad-chip"><span lang="es">perfil</span><span lang="en">profile</span></span><span class="crece"></span><span class="mono" style="font-size:17px">9</span></div><p style="margin-top:2px"><span lang="es">tu trayectoria y cifras</span><span lang="en">your track record</span></p></div>
+        <div class="tarjeta" style="padding:10px 12px;border-style:dashed"><div class="fila"><span class="unidad-chip" style="background:transparent;border:var(--borde) dashed var(--line-2)"><span lang="es">sin unidad</span><span lang="en">no unit</span></span><span class="crece"></span><span class="mono" style="font-size:17px">0</span></div><p style="margin-top:2px"><span lang="es">no encaja, y no se fuerza</span><span lang="en">fits none, and is not forced</span></p></div>
+      </div>
+
+      <div class="grid-2" style="gap:12px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="tarjeta">
+          <h2 class="seccion" style="margin:0 0 6px"><span lang="es">Dónde vive el índice</span><span lang="en">Where the index lives</span></h2>
+          <div class="buffer"><svg class="ic s"><use href="#i-candado"/></svg><span class="que"><span lang="es">Solo tú puedes leerlo</span><span lang="en">Only you can read it</span></span><span class="donde mono">700</span><span class="cuanto"><span lang="es">18,4 MB</span><span lang="en">18.4 MB</span></span></div>
+          <p class="mono" style="font-size:10.5px;color:var(--ink-2);margin-top:5px">~/Library/…/Angel&nbsp;Ghost/corpus</p>
+        </div>
+        <div class="franja warn" role="status" style="margin:0">
+          <svg class="ic relleno"><use href="#i-alert"/></svg>
+          <div>
+            <strong><span lang="es">4 sin leer · 9 con secciones conjeturadas</span><span lang="en">4 unread · 9 with guessed sections</span></strong>
+            <p><span lang="es">Un PDF no trae títulos, trae líneas: la app conjetura dónde empieza cada sección por la forma del texto. Se cuenta para que puedas juzgarlo.</span><span lang="en">A PDF carries no headings, only lines: the app guesses where each section starts from the shape of the text. It is counted so you can judge it.</span></p>
+          </div>
+        </div>
+        </div>
+        <div class="tarjeta pendiente" style="margin:0">
+          <h2 class="seccion"><span lang="es">Lo que todavía no existe</span><span lang="en">What does not exist yet</span></h2>
+          <div class="fila"><span class="crece"><span lang="es">Arrastrar y soltar documentos</span><span lang="en">Drag and drop documents</span></span><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
+          <div class="fila"><span class="crece"><span lang="es">Releer solo lo que cambies</span><span lang="en">Re-read only what you change</span></span><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
+          <div class="fila"><span class="crece"><span lang="es">Leer lo escaneado</span><span lang="en">Read what is scanned</span></span><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
+          <p><span lang="es">Hoy la app recorre la carpeta entera, hasta 2 000 documentos. Lo escaneado se queda fuera con su motivo, y nunca se manda a un servicio.</span><span lang="en">Today the app walks the whole folder, up to 2,000 documents. Scanned files stay out with their reason, and are never sent to a service.</span></p>
         </div>
       </div>
     </div>

@@ -1,0 +1,8 @@
+/* The same texts as Info.plist. Kept as its own file so that adding a third language is adding a
+   third folder, not editing the plist. */
+
+"NSMicrophoneUsageDescription" = "Angel Ghost uses the microphone to know when you are speaking. Audio lives in memory only and is never recorded.";
+
+"NSAudioCaptureUsageDescription" = "Angel Ghost listens to what plays on your Mac so it can hear the other side of the call without putting a bot in the meeting. Audio lives in memory only and is never recorded.";
+
+"NSSpeechRecognitionUsageDescription" = "Angel Ghost turns speech into text on this Mac, using the macOS speech engine. No audio ever leaves your computer to become text.";

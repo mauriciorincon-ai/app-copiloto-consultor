@@ -1,0 +1,204 @@
+<!-- @dsCard group="Componentes" name="Contador de red" -->
+<!doctype html>
+<html lang="es" data-lang="es">
+<head>
+<meta charset="utf-8">
+<title>Contador de red — Angel Ghost</title>
+<style>
+:root {
+  /* ---- Tipografía (D4): nativa de macOS, sin embeber bytes ---- */
+  --font-evidencia: "Charter", "Iowan Old Style", Georgia, serif;     /* lo que dice TU corpus */
+  --font-ui: "Avenir Next", "Helvetica Neue", system-ui, sans-serif;   /* la interfaz */
+  --font-mono: "Menlo", "SF Mono", ui-monospace, monospace;            /* lo medible */
+
+  /* ---- Escala tipográfica ---- */
+  --t-titular: 17px;   /* ficha: titular ≤ 8 palabras */
+  --t-linea: 14px;     /* ficha: una línea */
+  --t-ui: 13px;        /* interfaz general */
+  --t-meta: 12px;      /* estado, fuente, etiquetas */
+  --t-mono: 11.5px;    /* contador, atajos, fuente de ficha */
+  --t-h1: 22px;        /* título de pantalla (ventana principal) */
+  --t-h2: 15px;
+
+  /* ---- Espacio (múltiplos de 4) ---- */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+
+  /* ---- Radios y trazos ---- */
+  --r-chip: 5px; --r-ficha: 8px; --r-panel: 10px; --r-tecla: 4px;
+  --borde: 1px;
+
+  /* ---- Motion (D10): casi ninguno ---- */
+  --dur: 150ms; --ease: cubic-bezier(.2,.6,.2,1);
+
+  /* ---- Tamaños de ventana (D1, D6) ---- */
+  --panel-w: 380px; --panel-h: 220px; --panel-h-transcript: 420px; --panel-h-max: 360px;
+  --principal-w: 960px; --principal-h: 640px;
+  /* La banda ocupa el ancho de la pantalla; solo su ALTO es una medida. Estas tres son la
+     fuente única: las usa el CSS de abajo y las lee la ventana nativa (test en `src-tauri/`). */
+  --banda-h: 88px; --banda-h-ampliada: 200px; --banda-h-voz: 44px;
+}
+:root, .tema.oscuro {
+  color-scheme: dark;
+  --bg: #1a1917;          /* ventana */
+  --surface: #242320;     /* ficha, tarjetas */
+  --surface-2: #2e2d29;   /* chips, teclas, hover */
+  --line: #3b3a35;        /* bordes */
+  --line-2: #4a4841;      /* bordes en foco/hover */
+  --ink: #ece7dc;         /* texto principal — marfil */
+  --ink-2: #b9b3a6;       /* texto secundario (AA sobre bg y surface) */
+  --ink-3: #7c776c;       /* SOLO ORNAMENTO (líneas, separadores). Jamás texto — vetado */
+  --halo: #9ecbff;        /* acento único: foco, fijado, interactivo */
+  --halo-tint: rgba(158,203,255,.14);
+  --ok: #62d3b4;          /* activo / verificado / verde */
+  --ok-tint: rgba(98,211,180,.15);
+  --warn: #f0b64a;        /* atención / sin verificar / aviso */
+  --warn-tint: rgba(240,182,74,.15);
+  --err: #ff8577;         /* error / cortado / revocado */
+  --err-tint: rgba(255,133,119,.15);
+  --mute: #9a958a;        /* inactivo (texto AA sobre bg) */
+  --sombra-panel: 0 10px 30px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.04) inset;
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.25);
+}
+.tema.claro {
+  color-scheme: light;
+  --bg: #f5f2ea;
+  --surface: #fffdf8;
+  --surface-2: #ece8de;
+  --line: #d6d1c4;
+  --line-2: #bdb7a8;
+  --ink: #1f1e1a;
+  --ink-2: #5a5650;
+  --ink-3: #a19b8e;       /* SOLO ORNAMENTO — vetado como texto */
+  --halo: #1d5c9c;
+  --halo-tint: rgba(29,92,156,.12);
+  --ok: #0f6350;
+  --ok-tint: rgba(21,122,98,.13);
+  --warn: #7a4f00;
+  --warn-tint: rgba(198,131,0,.16);
+  --err: #a32a22;
+  --err-tint: rgba(184,50,42,.12);
+  --mute: #6d685f;
+  --sombra-panel: 0 10px 28px rgba(40,30,10,.18), 0 0 0 1px rgba(0,0,0,.04);
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.05);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { font-family: var(--font-ui); font-size: var(--t-ui); color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+body { margin: 0; line-height: 1.45; }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--halo); outline-offset: 2px; border-radius: var(--r-chip); }
+.mono { font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+[hidden] { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+html[data-lang="es"] [lang="en"] { display: none !important; }
+html[data-lang="en"] [lang="es"] { display: none !important; }
+.ic { display: inline-block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; }
+.ic.s { width: 13px; height: 13px; vertical-align: -2px; }
+.ic.relleno { fill: currentColor; stroke: none; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+.pendiente .ic { opacity: .75; }
+.franja .ic { margin-top: 1px; }
+.franja.warn .ic { color: var(--warn); }
+.franja.err .ic { color: var(--err); }
+.franja.ok .ic { color: var(--ok); }
+.barra .pistas .pista.off .ic { opacity: .75; }
+.red { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.red.cero { color: var(--ok); }
+.red.api { color: var(--halo); }
+.barra .red { margin-left: auto; }
+.rail .marca .ic { color: var(--halo); }
+.fila { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fila > .ic { flex: 0 0 auto; }
+.fila .crece { flex: 1 1 auto; min-width: 0; }
+.campo input.mono { font-family: var(--font-mono); font-size: var(--t-mono); }
+.conm .etq { display: inline-flex; align-items: center; gap: 5px; }
+.conm.on .etq { color: var(--ok); }
+.conm.off .etq { color: var(--mute); }
+.tabla td.mono, .tabla th.num, .tabla td.num { font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; }
+.permiso .ic { width: 20px; height: 20px; color: var(--ink-2); }
+.bandera .ic { width: 18px; height: 18px; margin-top: 1px; grid-column: 1; }
+.bandera > :not(.ic) { grid-column: 2; }
+.contador { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: var(--borde) solid var(--line); border-radius: var(--r-ficha); background: var(--surface); }
+.contador .cifra { font-family: var(--font-mono); font-size: 28px; font-weight: 400; font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1.1; display: flex; align-items: baseline; gap: 6px; }
+.contador .cifra small { font-size: 13px; color: var(--ink-2); letter-spacing: 0; }
+.contador .etq { font-size: var(--t-meta); color: var(--ink-2); }
+.contador.cero .cifra { color: var(--ok); }
+.contador.api .cifra { color: var(--halo); }
+.buffer .ic { color: var(--ink-2); }
+.banda .cab-b .red { margin-left: auto; }
+.banda .aviso-b .ic { flex: 0 0 auto; margin-top: 1px; }
+.banda .maniobra-b .ic { flex: 0 0 auto; align-self: center; color: var(--ink-2); }
+.propuesta > .ic { margin-top: 2px; color: var(--halo); }
+.propuesta.aceptada > .ic { color: var(--ok); }
+.idiomas .lg .ic { flex: 0 0 auto; }
+.puerta > .ic { margin-top: 2px; }
+.puerta.si > .ic { color: var(--ok); }
+.puerta.no > .ic { color: var(--err); }
+.cuenta .ic { flex: 0 0 auto; color: var(--halo); }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
+.mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
+@media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
+.k-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+.k-grid.ancha { grid-template-columns: 1fr; }
+.k-item { display: flex; flex-direction: column; gap: 6px; }
+.k-item > .etq { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.k-marco { padding: 12px; border: 1px dashed var(--line-2); border-radius: var(--r-ficha); }
+.k-marco.panelito { width: 100%; max-width: 380px; }
+.k-grid.fichas { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
+.prohibido li .ic { color: var(--err); }
+/* marco de exhibición del bundle */
+  body { margin: 0; padding: var(--s-6); }
+  .ds-cab { width: 100%; max-width: 1180px; margin: 0 auto var(--s-5); }
+  .ds-cab h1 { font-family: var(--font-ui); font-size: var(--t-h1); font-weight: 600; margin: 0 0 var(--s-2); }
+  .ds-cab p { font-family: var(--font-ui); font-size: var(--t-ui); color: var(--ink-2); margin: 0; line-height: 1.5; max-width: 82ch; }
+  .ds-cab p.ds-regla { color: var(--ink); margin-bottom: var(--s-2); }
+  .ds-cab code { font-family: var(--font-mono); font-size: var(--t-mono); }
+  /* 1180 px o lo que haya: la banda ocupa el ancho de la PANTALLA, y en un marco estrecho su
+     ellipsis recorta la fuente y la fecha como si fuera un defecto del componente. */
+  .ds-temas { width: 100%; max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--s-6); }
+  .tema { padding: var(--s-5); border: var(--borde) solid var(--line); border-radius: var(--r-panel); background: var(--bg); color: var(--ink); }
+  .tema > .ds-t { display: block; margin: 0 0 var(--s-4); font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+  .ds-pieza + .ds-pieza { margin-top: var(--s-6); }
+  .ds-pieza > .ds-et { display: block; margin: 0 0 var(--s-2); font-family: var(--font-ui); font-size: var(--t-meta); font-weight: 600; color: var(--ink); }
+  .ds-pieza > .ds-nota { display: block; margin: 0 0 var(--s-3); font-family: var(--font-ui); font-size: var(--t-meta); color: var(--ink-2); line-height: 1.5; max-width: 72ch; }
+  .ds-marco-banda { border: var(--borde) solid var(--line); border-radius: var(--r-ficha); overflow: hidden; }
+  @media (max-width: 720px) { body { padding: var(--s-4); } }
+</style>
+</head>
+<body>
+<svg style="display:none" aria-hidden="true">
+<symbol id="i-subir" viewBox="0 0 16 16"><path d="M8 13.5v-11M3.5 7 8 2.5 12.5 7"/></symbol>
+<symbol id="i-check-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor" stroke="none"/><path d="M5 8.2l2 2 4-4.4" stroke="var(--bg)" stroke-width="1.9" fill="none"/></symbol>
+<symbol id="i-nube" viewBox="0 0 16 16"><path d="M4.5 12.5h7a3 3 0 0 0 .4-6A4 4 0 0 0 4.3 7.6 2.5 2.5 0 0 0 4.5 12.5z"/></symbol>
+</svg>
+  <div class="ds-cab">
+    <h1>Contador de red</h1>
+    <p class="ds-regla">B2 — <span lang="es">bytes y peticiones que salieron del equipo en esta reunión</span><span lang="en">bytes and requests that left the machine in this meeting</span></p>
+    <p>Angel Ghost · Componentes — derivado de <code>docs/diseno</code> y <code>design-system.md</code>. Los dos temas, las dos lenguas (se muestra <code>es</code>).</p>
+  </div>
+  <div class="ds-temas">
+    <section class="tema oscuro">
+      <span class="ds-t">tema oscuro · primario</span>
+      <div class="ds-pieza">
+        <div class="k-grid">
+    <div class="k-item"><span class="etq"><span lang="es">en la barra del panel</span><span lang="en">in the panel bar</span></span><div class="k-marco fila"><span class="red cero mono" style="display:inline-flex;gap:4px;align-items:center;color:var(--ok)"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span><span class="red api mono" style="display:inline-flex;gap:4px;align-items:center;color:var(--halo)"><svg class="ic s"><use href="#i-subir"></use></svg>1,2 KB</span></div></div>
+    <div class="k-item"><span class="etq"><span lang="es">grande · modo local</span><span lang="en">large · local mode</span></span><div class="contador cero"><div class="cifra">0 <small>B</small></div><div class="etq"><svg class="ic s relleno" style="color:var(--ok)"><use href="#i-check-circle"></use></svg> <span lang="es">salida a red · 0 peticiones · modo local</span><span lang="en">network egress · 0 requests · local mode</span></div></div></div>
+    <div class="k-item"><span class="etq"><span lang="es">grande · API encendido por ti</span><span lang="en">large · API turned on by you</span></span><div class="contador api"><div class="cifra">1,2 <small>KB</small></div><div class="etq"><svg class="ic s"><use href="#i-nube"></use></svg> <span lang="es">1 petición · Claude Haiku · solo texto anonimizado</span><span lang="en">1 request · Claude Haiku · anonymized text only</span></div></div></div>
+  </div>
+      </div>
+    </section>
+    <section class="tema claro">
+      <span class="ds-t">tema claro · papel</span>
+      <div class="ds-pieza">
+        <div class="k-grid">
+    <div class="k-item"><span class="etq"><span lang="es">en la barra del panel</span><span lang="en">in the panel bar</span></span><div class="k-marco fila"><span class="red cero mono" style="display:inline-flex;gap:4px;align-items:center;color:var(--ok)"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span><span class="red api mono" style="display:inline-flex;gap:4px;align-items:center;color:var(--halo)"><svg class="ic s"><use href="#i-subir"></use></svg>1,2 KB</span></div></div>
+    <div class="k-item"><span class="etq"><span lang="es">grande · modo local</span><span lang="en">large · local mode</span></span><div class="contador cero"><div class="cifra">0 <small>B</small></div><div class="etq"><svg class="ic s relleno" style="color:var(--ok)"><use href="#i-check-circle"></use></svg> <span lang="es">salida a red · 0 peticiones · modo local</span><span lang="en">network egress · 0 requests · local mode</span></div></div></div>
+    <div class="k-item"><span class="etq"><span lang="es">grande · API encendido por ti</span><span lang="en">large · API turned on by you</span></span><div class="contador api"><div class="cifra">1,2 <small>KB</small></div><div class="etq"><svg class="ic s"><use href="#i-nube"></use></svg> <span lang="es">1 petición · Claude Haiku · solo texto anonimizado</span><span lang="en">1 request · Claude Haiku · anonymized text only</span></div></div></div>
+  </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

@@ -9,16 +9,27 @@ import { describe, expect, it } from "vitest";
  *
  * Nace en la Etapa de Diseño porque la maqueta es un entregable versionado y público.
  * Demo en rojo (regla 15): plantar «indetectable» en docs/diseno/panel.html lo pone rojo —
- * registrada en sprints/ETAPA-DISENO-implementation-log.md. Cuando exista `src/`, el
- * barrido se extiende a él (mismo test, otra raíz).
+ * registrada en sprints/ETAPA-DISENO-implementation-log.md. Desde el sprint 001 el barrido
+ * cubre también `src/` y `src-tauri/src/`: ahí vive el copy que ve el usuario final.
  */
 const RAICES = [
   "docs/diseno",
   "design-system.md",
   "README.md",
   "docs/MANUAL-DE-USO.md",
+  // Sprint 001: ya existe código de producto. El copy que ve el usuario final vive ahora en
+  // `src/` (diccionario i18n incluido) y en los comentarios de `src-tauri/src/`, que es donde
+  // la regla dura del vocabulario importa más que en ningún documento.
+  "src",
+  "src-tauri/src",
+  // Fase 3: el puente de Swift lleva comentarios en español, y el `Info.plist` con sus
+  // traducciones ES el copy que macOS enseña en su propio diálogo — el sitio donde una palabra
+  // vetada haría más daño, porque lo firma el sistema y no la app.
+  "src-tauri/nativo",
+  "src-tauri/Info.plist",
+  "src-tauri/lproj",
 ];
-const EXT = /\.(html|css|js|md|json|txt)$/;
+const EXT = /\.(html|css|js|md|json|txt|ts|tsx|rs|swift|plist|strings)$/;
 
 // Términos vetados (es/en). Se comparan en minúsculas y sin tildes.
 const VETADOS = [

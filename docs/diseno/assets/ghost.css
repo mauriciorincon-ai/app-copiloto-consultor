@@ -32,6 +32,9 @@
   /* ---- Tamaños de ventana (D1, D6) ---- */
   --panel-w: 380px; --panel-h: 220px; --panel-h-transcript: 420px; --panel-h-max: 360px;
   --principal-w: 960px; --principal-h: 640px;
+  /* La banda ocupa el ancho de la pantalla; solo su ALTO es una medida. Estas tres son la
+     fuente única: las usa el CSS de abajo y las lee la ventana nativa (test en `src-tauri/`). */
+  --banda-h: 88px; --banda-h-ampliada: 200px; --banda-h-voz: 44px;
 }
 
 /* ---------------------------------------------------------------------------
@@ -104,7 +107,7 @@ html[data-lang="es"] [lang="en"] { display: none !important; }
 html[data-lang="en"] [lang="es"] { display: none !important; }
 
 /* Iconos (D9): SVG de trazo 16 px, monocromo, currentColor */
-.ic { width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; }
+.ic { display: inline-block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; }
 .ic.s { width: 13px; height: 13px; vertical-align: -2px; }
 .ic.relleno { fill: currentColor; stroke: none; }
 
@@ -123,6 +126,43 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .estado.err  { color: var(--err);  background: var(--err-tint);  border-color: var(--err); }
 .estado.mute { color: var(--mute); background: transparent;      border-color: var(--line); }
 .estado.halo { color: var(--halo); background: var(--halo-tint); border-color: var(--halo); }
+
+/* ---------------------------------------------------------------------------
+   «TODAVÍA NO» — lo que aún no existe en esta versión (§9-sexies)
+   ---------------------------------------------------------------------------
+   No es un error, no es un aviso y NO es «apagado». `.mute` significa «existe y
+   está apagado»; esto significa «todavía no está construido». Confundirlos hace
+   que el usuario busque un interruptor que no existe.
+
+   Tres señales, porque el color solo no basta (daltonismo leve del usuario):
+   el TRAZO DISCONTINUO del borde y del símbolo — que es lo que lo separa de
+   `.mute` a un golpe de vista, sin depender del color—, el aro punteado, y la
+   palabra literal «todavía no».
+
+   Existe porque la app se entrega por sprints: la maqueta dibuja el producto
+   terminado y cada versión trae un trozo. Sin esto solo quedan dos salidas,
+   y las dos son malas: pintar en verde lo que no existe, o quitarlo de la
+   pantalla y que el usuario no sepa que va a llegar.
+   --------------------------------------------------------------------------- */
+.estado.pendiente {
+  color: var(--mute);
+  background: transparent;
+  border-color: var(--line-2);
+  border-style: dashed;
+}
+
+/* La fila que espera: se lee, pero no compite con lo que sí funciona. */
+.pendiente { color: var(--mute); }
+.pendiente .ic { opacity: .75; }
+
+/* Una tarjeta entera que todavía no existe. El borde discontinuo dice «aquí va
+   algo» sin fingir que ya está. */
+.tarjeta.pendiente {
+  border-style: dashed;
+  border-color: var(--line-2);
+  background: transparent;
+}
+.tarjeta.pendiente .seccion { color: var(--mute); }
 
 /* Franja de aviso dentro del panel o de una pantalla */
 .franja { display: grid; grid-template-columns: 16px 1fr; gap: 5px 10px; padding: 9px 11px; border-radius: var(--r-ficha); border: var(--borde) solid; font-size: var(--t-meta); line-height: 1.4; }
@@ -163,9 +203,10 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .barra .pistas .pista { display: inline-flex; align-items: center; gap: 3px; }
 .barra .pistas .pista.off { color: var(--mute); }
 .barra .pistas .pista.off .ic { opacity: .75; }
-.barra .red { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; color: var(--ink-2); }
-.barra .red.cero { color: var(--ok); }
-.barra .red.api { color: var(--halo); }
+.red { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.red.cero { color: var(--ok); }
+.red.api { color: var(--halo); }
+.barra .red { margin-left: auto; }
 
 /* Cuerpo */
 .cuerpo { flex: 1 1 auto; min-height: 0; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
@@ -358,9 +399,9 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
      · ampliada 200 px  → la ficha entera + las acumuladas o la sugerencia
      · voz       44 px  → una línea: modo solo audio
    --------------------------------------------------------------------------- */
-.banda { position: relative; display: flex; flex-direction: column; height: 88px; background: var(--bg); color: var(--ink); border-top: var(--borde) solid var(--line); box-shadow: 0 -10px 30px rgba(0,0,0,.35); overflow: hidden; }
-.banda.ampliada { height: 200px; }
-.banda.voz { height: 44px; }
+.banda { position: relative; display: flex; flex-direction: column; height: var(--banda-h); background: var(--bg); color: var(--ink); border-top: var(--borde) solid var(--line); box-shadow: 0 -10px 30px rgba(0,0,0,.35); overflow: hidden; }
+.banda.ampliada { height: var(--banda-h-ampliada); }
+.banda.voz { height: var(--banda-h-voz); }
 
 /* Asa: ajusta la banda y la reunión a la vez (modo acoplado) */
 .banda .asa { position: absolute; top: 0; left: 0; right: 0; height: 5px; display: flex; align-items: center; justify-content: center; cursor: ns-resize; }
@@ -387,6 +428,72 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 /* Marca mínima a la izquierda */
 .banda .marca-min { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-size: var(--t-meta); white-space: nowrap; flex: 0 0 auto; }
 .banda .marca-min.halo { color: var(--halo); }
+.banda .marca-min.warn { color: var(--warn); }
+
+/* ---------------------------------------------------------------------------
+   ESTADOS DE CONTENIDO DE LA BANDA (sprint 001, fase 1a — `banda.html`)
+   La Etapa de Diseño dibujó la FORMA de la banda (88 · 200 · 44) y la dibujó
+   siempre con una ficha dentro. El sprint necesita SEIS estados de contenido y
+   cinco no tenían referencia contra la cual comparar: esto la da.
+
+   Gramática de la banda, declarada: lo que la banda DICE va a la izquierda
+   (`ficha-b`); de dónde sale y qué teclas hay, a la derecha (`lado-b`). Y las
+   acciones de la banda son TECLAS, no botones — 88 px es una superficie de
+   teclado, no de clic; los botones viven en la banda ampliada y en el panel.
+   --------------------------------------------------------------------------- */
+.banda .cliente-b { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; }
+.banda .cliente-b.warn { color: var(--warn); }
+
+/* esperando — el vacío está diseñado: una frase en Charter, no un ícono gris */
+.banda .voz-b { font-family: var(--font-evidencia); font-style: italic; font-size: 15px; line-height: 1.4; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.banda .meta-b { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+/* buscando · sin resultado — lo que se oyó, entre comillas, con su pista */
+.banda .oido { font-size: var(--t-meta); min-width: 0; }
+.banda .oido q { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* sin verificar — aviso en línea: símbolo + texto + color (los tres, siempre) */
+.banda .aviso-b { display: flex; align-items: flex-start; gap: 8px; min-width: 0; font-size: var(--t-meta); line-height: 1.35; color: var(--warn); }
+.banda .aviso-b .ic { flex: 0 0 auto; margin-top: 1px; }
+.banda .aviso-b strong { display: block; font-size: var(--t-ui); font-weight: 600; color: var(--ink); }
+.banda .aviso-b .salida { display: block; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* transcript — ocupa la columna derecha de la banda AMPLIADA. Solo en memoria. */
+.banda.ampliada .lado-b { max-width: 40%; }
+.banda .transcript-b { display: flex; flex-direction: column; gap: 3px; width: 100%; min-width: 0; padding: 6px 8px; border: var(--borde) solid var(--line-2); border-radius: var(--r-ficha); background: var(--surface); }
+.banda .transcript-b .cab { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.banda .transcript-b .cab .tecla { margin-left: auto; }
+.banda .transcript-b .turno { display: flex; gap: 6px; align-items: baseline; min-width: 0; }
+.banda .transcript-b .turno .quien { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 3px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
+/* La hora es un dato, no el resto del renglón: elemento propio y cifras de ancho fijo.
+   Sin elemento, el hueco entre hablante y hora dependía de DÓNDE cayera un espacio del
+   HTML — y la maqueta y el producto no parten el texto por el mismo sitio. */
+.banda .transcript-b .turno .quien .hora { font-variant-numeric: tabular-nums; }
+.banda .transcript-b .turno.tu .quien { color: var(--halo); }
+.banda .transcript-b .turno q { font-family: var(--font-evidencia); font-size: 12.5px; color: var(--ink); quotes: "\00ab" "\00bb"; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* LA MANIOBRA (sin resultado) — cómo abordar la situación cuando el corpus no tiene nada.
+   NO es una sugerencia del modelo y no puede parecerlo: nada de acento `halo` (que en este
+   sistema marca la síntesis de la IA) ni de `chispa`. Va en Avenir, que es la voz de la app,
+   nunca en Charter, que es la voz de tu corpus. Sale de un catálogo versionado de maneras de
+   responder elegido por reglas léxicas — jamás habla del negocio del usuario. */
+.banda .maniobra-b { display: flex; align-items: baseline; gap: 7px; min-width: 0; font-family: var(--font-ui); font-size: 13px; line-height: 1.35; color: var(--ink); }
+.banda .maniobra-b .ic { flex: 0 0 auto; align-self: center; color: var(--ink-2); }
+.banda .maniobra-b .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banda .cercano-b { display: inline-flex; align-items: baseline; gap: 9px; min-width: 0; max-width: 100%; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.banda .cercano-b .et { flex: 0 0 auto; font-family: var(--font-ui); font-size: 11px; color: var(--ink-2); }
+.banda .cercano-b .d { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+
+/* acciones apiladas — solo en la banda ampliada, donde hay alto para botones */
+.banda .acciones-b { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+
+/* las acumuladas, abiertas — en 200 px el «+2» deja de ser una promesa y se abre.
+   Es lo que la nota de D3 prometía del alto extra: «la ficha entera y las acumuladas». */
+.banda .mas-b { display: flex; flex-direction: column; gap: 3px; margin-top: 7px; min-width: 0; }
+.banda .mas-b .item { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.banda .mas-b .item .unidad { flex: 0 0 auto; padding: 0 5px; border-radius: 3px; background: var(--surface-2); color: var(--ink-2); font-family: var(--font-ui); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; line-height: 15px; }
+.banda .mas-b .item .t { font-family: var(--font-evidencia); font-size: 13px; line-height: 1.35; color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banda .mas-b .item .tecla { flex: 0 0 auto; margin-left: auto; }
 
 /* Gota — la ventana más pequeña posible: solo el estado, sin texto (modo solo audio) */
 .gota { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; background: var(--bg); color: var(--ink-2); border: var(--borde) solid var(--line); border-radius: 50%; box-shadow: var(--sombra-panel); }

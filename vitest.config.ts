@@ -17,24 +17,20 @@ export default defineConfig({
     include: ["tests/unit/**/*.test.{ts,tsx}"],
     coverage: {
       provider: "v8",
-      // Solo *.ts: un include de directorio hace que v8 intente parsear .gitkeep y truene
-      // con PARSE_ERROR (K8, ds S1).
-      include: ["src/lib/**/*.ts", "src/engine/**/*.ts"],
+      // K2 (sprint 001): el kit apunta a `src/lib/**` y `src/engine/**` porque asume que los
+      // motores puros viven en TypeScript. En Angel Ghost NO: VAD, fin de turno, BM25 y el
+      // disparador son Rust, y los cubre `cargo test` en el job build-escritorio. Lo que vive
+      // en TS es la capa visual y el diccionario. Dejar los globs del kit habría dado un
+      // umbral que se cumple solo porque no mide nada — el peor tipo de verde.
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/main.tsx", "src/vite-env.d.ts"],
       thresholds: {
-        lines: 70,
-        functions: 70,
-        branches: 70,
-        statements: 70,
-        // Los motores puros exigen más (regla 2 del CLAUDE.md; K6 ds S1 + K-habla-1).
-        // ⚠ AJUSTA estos globs al layout de motores de TU app en el S1 (ds: src/engine/**;
-        // habla: src/lib/**) — el kit no puede adivinarlo; es parte de la verificación de
-        // supuestos del kit.
-        "src/engine/**/*.ts": {
-          lines: 80,
-          functions: 80,
-          branches: 80,
-          statements: 80,
-        },
+        // Regla 2 del CLAUDE.md para la capa de UI.
+        lines: 50,
+        functions: 50,
+        branches: 50,
+        statements: 50,
+        // Si algún día aparece lógica pura en TS, se le exige lo de los motores.
         "src/lib/**/*.ts": {
           lines: 80,
           functions: 80,

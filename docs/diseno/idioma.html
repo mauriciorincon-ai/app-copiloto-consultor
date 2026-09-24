@@ -16,6 +16,7 @@
     <button data-estado="visible">transcript visible</button>
     <button data-estado="varios">varios idiomas</button>
     <button data-estado="diccionario">diccionario técnico</button>
+    <button data-estado="s1">así se ve hoy · sprint 1</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -27,6 +28,7 @@
   <div class="n" data-para="visible"><b>Qué mirar:</b> cuando la abres, sigue siendo austera: turnos cortos, quién habló, nada de colores ni burbujas. Y el aviso que la propia pantalla se hace a sí misma. Abajo a la derecha, la regla de siempre: <b>tus turnos pueden quedarse, los del cliente no</b>.</div>
   <div class="n" data-para="varios"><b>Qué mirar:</b> el cambio que pediste. Cada pista deja de tener <b>un</b> idioma y pasa a tener <b>los que tú marques</b>. Tres modos: automático, fijo o varios a la vez — para las reuniones donde se salta de un idioma a otro en la misma frase. Abajo, lo que cuesta dicho sin adornos, y una decisión aparte que la gente confunde: <b>en qué idioma quieres leer tus fichas</b>.</div>
   <div class="n" data-para="diccionario"><b>Qué mirar:</b> el diccionario como herramienta tuya, no como corrector automático. Lo tachado es lo que se oyó; lo resaltado, lo que tú decidiste leer. Fíjate en «churn»: cuando el término vive en los dos idiomas, se conserva el original entre paréntesis.</div>
+  <div class="n" data-para="s1"><b>Qué mirar (mirada 13):</b> la MISMA pantalla, tal y como se entrega en el sprint 1. <b>Lo que ya funciona está vivo</b>: la transcripción corre en tu Mac, nace oculta, y cada pista tiene su idioma con el estado real de su modelo — instalado o no—. Lo que aún no existe lleva <b>«todavía no»</b>: varios idiomas a la vez, el diccionario técnico y conservar tus turnos. Y dos cosas que solo se supieron al construirlo, dichas aquí en vez de escondidas: macOS solo deja tener <b>cinco idiomas listos a la vez</b>, y el modelo de cada idioma <b>lo descarga macOS</b> cuando tú se lo pides — es la única vez que esta app toca la red, y no sale nada, solo entra el modelo.</div>
   <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
 </div>
 
@@ -47,6 +49,7 @@
       <span class="estado halo" data-en="visible"><svg class="ic s"><use href="#i-ojo"/></svg><span lang="es">Transcript visible</span><span lang="en">Transcript visible</span></span>
       <span class="estado halo" data-en="varios"><svg class="ic s"><use href="#i-globo"/></svg><span lang="es">es · en · pt</span><span lang="en">es · en · pt</span></span>
       <span class="estado ok" data-en="diccionario"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">312 términos</span><span lang="en">312 terms</span></span>
+      <span class="estado halo" data-en="s1"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
     </div>
   </nav>
 
@@ -201,6 +204,45 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ===== así se ve hoy · sprint 1 ===== -->
+    <div data-en="s1" style="display:flex;flex-direction:column;gap:14px">
+      <div class="grid-2" style="grid-template-columns:1.15fr 1fr">
+        <div class="tarjeta">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Transcripción en vivo</span><span lang="en">Live transcript</span></h2><label class="conm off"><span class="track"></span><span class="etq"><svg class="ic s"><use href="#i-ojo-off"/></svg><span lang="es">oculta</span><span lang="en">hidden</span></span></label></div>
+          <p style="margin-top:8px"><span lang="es">Nace oculta a propósito. Leer lo que acaban de decir es la forma más rápida de dejar de escuchar: los ojos se van al texto y la conversación se queda sola.</span><span lang="en">It ships hidden on purpose. Reading what was just said is the fastest way to stop listening: your eyes go to the text and the conversation is left alone.</span></p>
+          <div class="fila" style="margin-top:10px;gap:10px"><span class="tecla"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>T</kbd></span><span style="font-size:12.5px;color:var(--ink-2)"><span lang="es">la muestra cuando la necesites</span><span lang="en">shows it when you need it</span></span></div>
+        </div>
+
+        <div class="tarjeta">
+          <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Idioma por pista</span><span lang="en">Language per track</span></h2>
+          <div class="buffer"><svg class="ic s"><use href="#i-mic"/></svg><span class="que"><span lang="es">Tú · micrófono</span><span lang="en">You · microphone</span></span><span class="donde"><span lang="es">modelo instalado</span><span lang="en">model installed</span></span><span class="cuanto">es-ES</span></div>
+          <!-- EL IDIOMA QUE NO TIENE MODELO (fase 2 de la auditoría del sprint 001, hallazgos A6 y A7).
+               Faltaba, y faltaba el estado más probable: un Mac en español no trae el modelo de
+               inglés. Sin él, la pantalla decía «sin modelo» —en español, también en la interfaz
+               inglesa— y no ofrecía nada que hacer: la transcripción del cliente quedaba
+               inalcanzable desde dentro de la app. -->
+          <div class="buffer"><svg class="ic s"><use href="#i-sistema"/></svg><span class="que"><span lang="es">Cliente · sistema</span><span lang="en">Client · system</span></span><span class="donde"><span class="estado warn"><svg class="ic s"><use href="#i-alert"/></svg><span><span lang="es">sin modelo</span><span lang="en">no model</span></span></span> <button class="btn mini" type="button"><svg class="ic s"><use href="#i-nube"/></svg><span lang="es">Instalar</span><span lang="en">Install</span></button></span><span class="cuanto">en-US</span></div>
+          <p style="font-size:11.5px;color:var(--ink-2);margin-top:6px"><span lang="es">Cinco idiomas listos a la vez, como mucho: lo impone macOS, no la app.</span><span lang="en">Five languages ready at a time, at most: macOS imposes it, not the app.</span></p>
+        </div>
+      </div>
+
+      <div class="franja ok" role="status">
+        <svg class="ic relleno"><use href="#i-mac"/></svg>
+        <div>
+          <strong><span lang="es">Transcribe tu Mac, no un servicio</span><span lang="en">Your Mac transcribes, not a service</span></strong>
+          <p><span lang="es">El motor de voz de macOS, dentro de tu equipo. Ningún audio sale para convertirse en texto. La única vez que toca la red es cuando pides instalar el modelo de un idioma: lo descarga macOS —mientras dura, instalando…— y si no puede: no lo reconoce · sin motor.</span><span lang="en">The macOS speech engine, inside your machine. No audio leaves to become text. The only time it touches the network is when you ask to install a language model: macOS downloads it —while it runs, installing…— and if it cannot: not recognised · no engine.</span></p>
+        </div>
+      </div>
+
+      <div class="tarjeta pendiente">
+        <h2 class="seccion"><span lang="es">Lo que todavía no existe</span><span lang="en">What does not exist yet</span></h2>
+        <div class="fila"><span class="crece"><span lang="es">Varios idiomas a la vez, marcados por pista</span><span lang="en">Several languages at once, ticked per track</span></span><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
+        <div class="fila"><span class="crece"><span lang="es">Diccionario técnico: lo que se oye por lo que quieres leer</span><span lang="en">Technical dictionary: what is heard into what you want to read</span></span><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
+        <div class="fila"><span class="crece"><span lang="es">Conservar lo que dijiste tú</span><span lang="en">Keep what you said</span></span><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
+        <p><span lang="es">Hoy cada pista escucha un idioma, los nombres propios se transcriben como suenen, y los turnos mueren los dos —el tuyo y el del cliente— al cerrar y con la tecla.</span><span lang="en">Today each track listens to one language, proper names are transcribed as they sound, and both sets of turns die — yours and the client’s — on close and with the key.</span></p>
       </div>
     </div>
 

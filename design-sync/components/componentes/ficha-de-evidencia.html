@@ -1,0 +1,258 @@
+<!-- @dsCard group="Componentes" name="Ficha de evidencia" -->
+<!doctype html>
+<html lang="es" data-lang="es">
+<head>
+<meta charset="utf-8">
+<title>Ficha de evidencia — Angel Ghost</title>
+<style>
+:root {
+  /* ---- Tipografía (D4): nativa de macOS, sin embeber bytes ---- */
+  --font-evidencia: "Charter", "Iowan Old Style", Georgia, serif;     /* lo que dice TU corpus */
+  --font-ui: "Avenir Next", "Helvetica Neue", system-ui, sans-serif;   /* la interfaz */
+  --font-mono: "Menlo", "SF Mono", ui-monospace, monospace;            /* lo medible */
+
+  /* ---- Escala tipográfica ---- */
+  --t-titular: 17px;   /* ficha: titular ≤ 8 palabras */
+  --t-linea: 14px;     /* ficha: una línea */
+  --t-ui: 13px;        /* interfaz general */
+  --t-meta: 12px;      /* estado, fuente, etiquetas */
+  --t-mono: 11.5px;    /* contador, atajos, fuente de ficha */
+  --t-h1: 22px;        /* título de pantalla (ventana principal) */
+  --t-h2: 15px;
+
+  /* ---- Espacio (múltiplos de 4) ---- */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+
+  /* ---- Radios y trazos ---- */
+  --r-chip: 5px; --r-ficha: 8px; --r-panel: 10px; --r-tecla: 4px;
+  --borde: 1px;
+
+  /* ---- Motion (D10): casi ninguno ---- */
+  --dur: 150ms; --ease: cubic-bezier(.2,.6,.2,1);
+
+  /* ---- Tamaños de ventana (D1, D6) ---- */
+  --panel-w: 380px; --panel-h: 220px; --panel-h-transcript: 420px; --panel-h-max: 360px;
+  --principal-w: 960px; --principal-h: 640px;
+  /* La banda ocupa el ancho de la pantalla; solo su ALTO es una medida. Estas tres son la
+     fuente única: las usa el CSS de abajo y las lee la ventana nativa (test en `src-tauri/`). */
+  --banda-h: 88px; --banda-h-ampliada: 200px; --banda-h-voz: 44px;
+}
+:root, .tema.oscuro {
+  color-scheme: dark;
+  --bg: #1a1917;          /* ventana */
+  --surface: #242320;     /* ficha, tarjetas */
+  --surface-2: #2e2d29;   /* chips, teclas, hover */
+  --line: #3b3a35;        /* bordes */
+  --line-2: #4a4841;      /* bordes en foco/hover */
+  --ink: #ece7dc;         /* texto principal — marfil */
+  --ink-2: #b9b3a6;       /* texto secundario (AA sobre bg y surface) */
+  --ink-3: #7c776c;       /* SOLO ORNAMENTO (líneas, separadores). Jamás texto — vetado */
+  --halo: #9ecbff;        /* acento único: foco, fijado, interactivo */
+  --halo-tint: rgba(158,203,255,.14);
+  --ok: #62d3b4;          /* activo / verificado / verde */
+  --ok-tint: rgba(98,211,180,.15);
+  --warn: #f0b64a;        /* atención / sin verificar / aviso */
+  --warn-tint: rgba(240,182,74,.15);
+  --err: #ff8577;         /* error / cortado / revocado */
+  --err-tint: rgba(255,133,119,.15);
+  --mute: #9a958a;        /* inactivo (texto AA sobre bg) */
+  --sombra-panel: 0 10px 30px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.04) inset;
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.25);
+}
+.tema.claro {
+  color-scheme: light;
+  --bg: #f5f2ea;
+  --surface: #fffdf8;
+  --surface-2: #ece8de;
+  --line: #d6d1c4;
+  --line-2: #bdb7a8;
+  --ink: #1f1e1a;
+  --ink-2: #5a5650;
+  --ink-3: #a19b8e;       /* SOLO ORNAMENTO — vetado como texto */
+  --halo: #1d5c9c;
+  --halo-tint: rgba(29,92,156,.12);
+  --ok: #0f6350;
+  --ok-tint: rgba(21,122,98,.13);
+  --warn: #7a4f00;
+  --warn-tint: rgba(198,131,0,.16);
+  --err: #a32a22;
+  --err-tint: rgba(184,50,42,.12);
+  --mute: #6d685f;
+  --sombra-panel: 0 10px 28px rgba(40,30,10,.18), 0 0 0 1px rgba(0,0,0,.04);
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.05);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { font-family: var(--font-ui); font-size: var(--t-ui); color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+body { margin: 0; line-height: 1.45; }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--halo); outline-offset: 2px; border-radius: var(--r-chip); }
+.mono { font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+[hidden] { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+html[data-lang="es"] [lang="en"] { display: none !important; }
+html[data-lang="en"] [lang="es"] { display: none !important; }
+.ic { display: inline-block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; }
+.ic.s { width: 13px; height: 13px; vertical-align: -2px; }
+.ic.relleno { fill: currentColor; stroke: none; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+.pendiente .ic { opacity: .75; }
+.franja .ic { margin-top: 1px; }
+.franja.warn .ic { color: var(--warn); }
+.franja.err .ic { color: var(--err); }
+.franja.ok .ic { color: var(--ok); }
+.barra .pistas .pista.off .ic { opacity: .75; }
+.ficha { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px 7px; background: var(--surface); border: var(--borde) solid var(--line); border-radius: var(--r-ficha); box-shadow: var(--sombra-ficha); }
+.ficha.nueva { animation: aparecer var(--dur) var(--ease); }
+.ficha .titular { font-family: var(--font-evidencia); font-size: var(--t-titular); font-weight: 700; line-height: 1.25; letter-spacing: -.005em; color: var(--ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ficha .linea { font-family: var(--font-evidencia); font-size: var(--t-linea); line-height: 1.35; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ficha .fuente { display: flex; align-items: center; gap: 6px; margin-top: 1px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; }
+.ficha .fuente .unidad { padding: 0 5px; border-radius: 3px; background: var(--surface-2); color: var(--ink-2); font-family: var(--font-ui); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; line-height: 15px; }
+.ficha .fuente .doc { overflow: hidden; text-overflow: ellipsis; }
+.ficha .fuente .pin { margin-left: auto; color: var(--ink-2); display: inline-flex; align-items: center; gap: 3px; }
+.ficha.fijada { border-color: var(--halo); }
+.ficha.fijada .pin { color: var(--halo); }
+.ficha.compacta .linea { display: none; }
+.mas { display: flex; align-items: center; gap: 8px; padding: 2px 4px; font-size: var(--t-meta); color: var(--ink-2); }
+.mas .n { font-family: var(--font-mono); font-size: var(--t-mono); }
+.mas .titulos { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-evidencia); }
+.sugerencia { display: flex; flex-direction: column; gap: 3px; padding: 7px 10px; border-left: 2px solid var(--halo); background: var(--halo-tint); border-radius: 0 var(--r-ficha) var(--r-ficha) 0; }
+.sugerencia .cab { display: flex; align-items: center; gap: 6px; white-space: nowrap; font-size: var(--t-mono); font-family: var(--font-mono); color: var(--halo); }
+.sugerencia .cab .conf { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; color: var(--ink-2); font-family: var(--font-ui); font-size: var(--t-meta); }
+.sugerencia .texto { font-size: var(--t-ui); line-height: 1.4; color: var(--ink); }
+.oido { display: flex; gap: 8px; align-items: baseline; font-size: var(--t-meta); color: var(--ink-2); }
+.oido .quien { font-family: var(--font-mono); font-size: var(--t-mono); flex: 0 0 auto; }
+.oido q { font-family: var(--font-evidencia); font-size: var(--t-linea); color: var(--ink); quotes: "«" "»"; }
+.transcript .turno .quien { font-family: var(--font-mono); font-size: 11px; white-space: nowrap; color: var(--ink-2); display: inline-flex; gap: 4px; align-items: center; }
+.transcript .turno.tu .quien { color: var(--halo); }
+.transcript .cab { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-family: var(--font-mono); font-size: var(--t-mono); }
+.transcript .cab .tecla { margin-left: auto; }
+.rail .marca .ic { color: var(--halo); }
+.fila > .ic { flex: 0 0 auto; }
+.conm .etq { display: inline-flex; align-items: center; gap: 5px; }
+.conm.on .etq { color: var(--ok); }
+.conm.off .etq { color: var(--mute); }
+.permiso .ic { width: 20px; height: 20px; color: var(--ink-2); }
+.bandera .ic { width: 18px; height: 18px; margin-top: 1px; grid-column: 1; }
+.bandera > :not(.ic) { grid-column: 2; }
+.bandera .fuente { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
+.contador .etq { font-size: var(--t-meta); color: var(--ink-2); }
+.buffer .ic { color: var(--ink-2); }
+.pildora .texto { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.pildora .texto .q { font-size: var(--t-meta); font-weight: 600; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pildora .texto .de { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pildora.sin-auriculares .texto .q { color: var(--warn); }
+.banda .mas { padding: 0; }
+.banda .oido { font-size: var(--t-meta); min-width: 0; }
+.banda .oido q { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banda .aviso-b .ic { flex: 0 0 auto; margin-top: 1px; }
+.banda .transcript-b .cab { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.banda .transcript-b .cab .tecla { margin-left: auto; }
+.banda .transcript-b .turno .quien { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 3px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
+.banda .transcript-b .turno .quien .hora { font-variant-numeric: tabular-nums; }
+.banda .transcript-b .turno.tu .quien { color: var(--halo); }
+.banda .maniobra-b .ic { flex: 0 0 auto; align-self: center; color: var(--ink-2); }
+.banda .mas-b .item .unidad { flex: 0 0 auto; padding: 0 5px; border-radius: 3px; background: var(--surface-2); color: var(--ink-2); font-family: var(--font-ui); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; line-height: 15px; }
+.propuesta > .ic { margin-top: 2px; color: var(--halo); }
+.propuesta.aceptada > .ic { color: var(--ok); }
+.idiomas .lg .ic { flex: 0 0 auto; }
+.puerta > .ic { margin-top: 2px; }
+.puerta.si > .ic { color: var(--ok); }
+.puerta.no > .ic { color: var(--err); }
+.cuenta .ic { flex: 0 0 auto; color: var(--halo); }
+.mq-nota .n { display: none; border-left: 3px solid #7dd3fc; padding: 8px 12px; background: #111418; }
+.mq-nota .n.activa { display: block; }
+.mq-tabla-pos .mas { color: #f0b64a; }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
+.mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
+@media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
+.k-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+.k-grid.ancha { grid-template-columns: 1fr; }
+.k-item { display: flex; flex-direction: column; gap: 6px; }
+.k-item > .etq { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.k-marco { padding: 12px; border: 1px dashed var(--line-2); border-radius: var(--r-ficha); }
+.k-marco.panelito { width: 100%; max-width: 380px; }
+.k-grid.fichas { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
+.escala .n { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); width: 150px; flex: 0 0 auto; }
+.prohibido li .ic { color: var(--err); }
+/* marco de exhibición del bundle */
+  body { margin: 0; padding: var(--s-6); }
+  .ds-cab { width: 100%; max-width: 1180px; margin: 0 auto var(--s-5); }
+  .ds-cab h1 { font-family: var(--font-ui); font-size: var(--t-h1); font-weight: 600; margin: 0 0 var(--s-2); }
+  .ds-cab p { font-family: var(--font-ui); font-size: var(--t-ui); color: var(--ink-2); margin: 0; line-height: 1.5; max-width: 82ch; }
+  .ds-cab p.ds-regla { color: var(--ink); margin-bottom: var(--s-2); }
+  .ds-cab code { font-family: var(--font-mono); font-size: var(--t-mono); }
+  /* 1180 px o lo que haya: la banda ocupa el ancho de la PANTALLA, y en un marco estrecho su
+     ellipsis recorta la fuente y la fecha como si fuera un defecto del componente. */
+  .ds-temas { width: 100%; max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--s-6); }
+  .tema { padding: var(--s-5); border: var(--borde) solid var(--line); border-radius: var(--r-panel); background: var(--bg); color: var(--ink); }
+  .tema > .ds-t { display: block; margin: 0 0 var(--s-4); font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+  .ds-pieza + .ds-pieza { margin-top: var(--s-6); }
+  .ds-pieza > .ds-et { display: block; margin: 0 0 var(--s-2); font-family: var(--font-ui); font-size: var(--t-meta); font-weight: 600; color: var(--ink); }
+  .ds-pieza > .ds-nota { display: block; margin: 0 0 var(--s-3); font-family: var(--font-ui); font-size: var(--t-meta); color: var(--ink-2); line-height: 1.5; max-width: 72ch; }
+  .ds-marco-banda { border: var(--borde) solid var(--line); border-radius: var(--r-ficha); overflow: hidden; }
+  @media (max-width: 720px) { body { padding: var(--s-4); } }
+</style>
+</head>
+<body>
+<svg style="display:none" aria-hidden="true">
+<symbol id="i-pin" viewBox="0 0 16 16"><path d="M9.5 1.5 14.5 6.5l-2 .5-2.5 2.5.5 3-1 1-3-3-4 4-.5-.5 4-4-3-3 1-1 3 .5L9.5 3.5z"/></symbol>
+<symbol id="i-pin-lleno" viewBox="0 0 16 16"><path d="M9.5 1.5 14.5 6.5l-2 .5-2.5 2.5.5 3-1 1-3-3-4 4-.5-.5 4-4-3-3 1-1 3 .5L9.5 3.5z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-chevron" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4"/></symbol>
+<symbol id="i-mac" viewBox="0 0 16 16"><path d="M11.2 8.6c0-1.6 1.3-2.3 1.4-2.4-.8-1.1-2-1.3-2.4-1.3-1-.1-2 .6-2.5.6s-1.3-.6-2.2-.6C4.4 4.9 3.3 5.6 2.7 6.6c-1.2 2-.3 5 .8 6.6.6.8 1.2 1.7 2.1 1.7.8 0 1.2-.5 2.2-.5s1.3.5 2.2.5c.9 0 1.5-.8 2-1.6.6-.9.9-1.8.9-1.9 0 0-1.7-.7-1.7-2.8zM9.6 3.9c.4-.5.7-1.3.7-2-.6 0-1.4.4-1.8.9-.4.5-.8 1.2-.7 2 .7 0 1.4-.4 1.8-.9z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-half" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11A5.5 5.5 0 0 0 8 2.5z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-nube" viewBox="0 0 16 16"><path d="M4.5 12.5h7a3 3 0 0 0 .4-6A4 4 0 0 0 4.3 7.6 2.5 2.5 0 0 0 4.5 12.5z"/></symbol>
+<symbol id="i-ring" viewBox="0 0 16 16"><circle cx="8" cy="8" r="4"/></symbol>
+<symbol id="i-sistema" viewBox="0 0 16 16"><path d="M2.5 6h2.5l3.5-3v10L5 10H2.5zM11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.2a6 6 0 0 1 0 9.6"/></symbol>
+</svg>
+  <div class="ds-cab">
+    <h1>Ficha de evidencia</h1>
+    <p class="ds-regla">C6 · B1 — <span lang="es">titular ≤ 8 palabras · una línea · fuente exacta</span><span lang="en">headline ≤ 8 words · one line · exact source</span></p>
+    <p>Angel Ghost · Componentes — derivado de <code>docs/diseno</code> y <code>design-system.md</code>. Los dos temas, las dos lenguas (se muestra <code>es</code>).</p>
+  </div>
+  <div class="ds-temas">
+    <section class="tema oscuro">
+      <span class="ds-t">tema oscuro · primario</span>
+      <div class="ds-pieza">
+        <div class="k-grid fichas">
+    <div class="k-item"><span class="etq"><span lang="es">nueva (fade 150 ms, sin desplazamiento)</span><span lang="en">new (150 ms fade, no movement)</span></span>
+      <div class="k-marco panelito"><article class="ficha nueva"><h3 class="titular"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></h3><p class="linea"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on.</span></p><p class="fuente"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span class="doc"><span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span><span class="pin"><svg class="ic s"><use href="#i-pin"></use></svg>⌘⇧P</span></p></article></div></div>
+    <div class="k-item"><span class="etq"><span lang="es">fijada (borde halo, pin relleno)</span><span lang="en">pinned (halo border, filled pin)</span></span>
+      <div class="k-marco panelito"><article class="ficha fijada"><h3 class="titular"><span lang="es">Cuatro fuentes en 9 semanas, sin sobrecosto</span><span lang="en">Four sources in 9 weeks, no overrun</span></h3><p class="linea"><span lang="es">La cooperativa integró ERP, core bancario, CRM y Excel en el plazo pactado.</span><span lang="en">The co-op integrated ERP, core banking, CRM and Excel within the agreed term.</span></p><p class="fuente"><span class="unidad"><span lang="es">caso</span><span lang="en">case</span></span><span class="doc"><span lang="es">Sur del Valle · §2 Resultados</span><span lang="en">Sur del Valle · §2 Results</span></span><span class="pin"><svg class="ic s relleno"><use href="#i-pin-lleno"></use></svg><span lang="es">fijada</span><span lang="en">pinned</span></span></p></article></div></div>
+    <div class="k-item"><span class="etq"><span lang="es">colapsadas (2ª y 3ª)</span><span lang="en">collapsed (2nd and 3rd)</span></span>
+      <div class="k-marco panelito"><p class="mas"><span class="n">+2</span><span class="titulos"><span lang="es">Marco · etapa 2 Preparación — Caso Sur del Valle: cuatro fuentes</span><span lang="en">Framework · stage 2 Preparation — Sur del Valle case: four sources</span></span><svg class="ic s"><use href="#i-chevron"></use></svg></p></div></div>
+    <div class="k-item"><span class="etq"><span lang="es">con sugerencia (ficha compacta + síntesis, C7)</span><span lang="en">with suggestion (compact card + synthesis, C7)</span></span>
+      <div class="k-marco panelito" style="display:flex;flex-direction:column;gap:6px"><article class="ficha compacta"><h3 class="titular"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></h3><p class="fuente"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span class="doc"><span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span><span class="pin"><svg class="ic s"><use href="#i-pin"></use></svg>⌘⇧P</span></p></article>
+      <div class="sugerencia"><p class="cab"><span><svg class="ic s"><use href="#i-mac"></use></svg> <span lang="es">sugerencia · en tu Mac</span><span lang="en">suggestion · on your Mac</span></span><span class="conf"><svg class="ic s"><use href="#i-half"></use></svg><span lang="es">confianza media</span><span lang="en">medium confidence</span></span></p><p class="texto"><span lang="es">Confirma que las tres fuentes están dentro; una cuarta va como adicional con costo aparte.</span><span lang="en">Confirm the three sources are in scope; a fourth goes as a priced add-on.</span></p></div></div></div>
+    <div class="k-item"><span class="etq"><span lang="es">confianza baja (○ + palabra + «revisa la fuente»)</span><span lang="en">low confidence (○ + word + “check the source”)</span></span>
+      <div class="k-marco panelito"><div class="sugerencia"><p class="cab"><span><svg class="ic s"><use href="#i-nube"></use></svg> Claude Haiku · API</span><span class="conf"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">confianza baja</span><span lang="en">low confidence</span></span></p><p class="texto"><span lang="es">Puede que el precio incluya soporte; revisa la fuente antes de afirmarlo.</span><span lang="en">The price may include support; check the source before stating it.</span></p></div></div></div>
+    <div class="k-item"><span class="etq"><span lang="es">lo que se oyó (dispara la ficha, C5)</span><span lang="en">what was heard (triggers the card, C5)</span></span>
+      <div class="k-marco panelito"><p class="oido"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg> <span lang="es">cliente 14:02</span><span lang="en">client 14:02</span></span><q><span lang="es">Y la limpieza de datos, ¿eso está dentro del alcance?</span><span lang="en">And the data cleansing, is that within scope?</span></q></p></div></div>
+  </div>
+      </div>
+    </section>
+    <section class="tema claro">
+      <span class="ds-t">tema claro · papel</span>
+      <div class="ds-pieza">
+        <div class="k-grid fichas">
+    <div class="k-item"><span class="etq"><span lang="es">nueva (fade 150 ms, sin desplazamiento)</span><span lang="en">new (150 ms fade, no movement)</span></span>
+      <div class="k-marco panelito"><article class="ficha nueva"><h3 class="titular"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></h3><p class="linea"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on.</span></p><p class="fuente"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span class="doc"><span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span><span class="pin"><svg class="ic s"><use href="#i-pin"></use></svg>⌘⇧P</span></p></article></div></div>
+    <div class="k-item"><span class="etq"><span lang="es">fijada (borde halo, pin relleno)</span><span lang="en">pinned (halo border, filled pin)</span></span>
+      <div class="k-marco panelito"><article class="ficha fijada"><h3 class="titular"><span lang="es">Cuatro fuentes en 9 semanas, sin sobrecosto</span><span lang="en">Four sources in 9 weeks, no overrun</span></h3><p class="linea"><span lang="es">La cooperativa integró ERP, core bancario, CRM y Excel en el plazo pactado.</span><span lang="en">The co-op integrated ERP, core banking, CRM and Excel within the agreed term.</span></p><p class="fuente"><span class="unidad"><span lang="es">caso</span><span lang="en">case</span></span><span class="doc"><span lang="es">Sur del Valle · §2 Resultados</span><span lang="en">Sur del Valle · §2 Results</span></span><span class="pin"><svg class="ic s relleno"><use href="#i-pin-lleno"></use></svg><span lang="es">fijada</span><span lang="en">pinned</span></span></p></article></div></div>
+    <div class="k-item"><span class="etq"><span lang="es">colapsadas (2ª y 3ª)</span><span lang="en">collapsed (2nd and 3rd)</span></span>
+      <div class="k-marco panelito"><p class="mas"><span class="n">+2</span><span class="titulos"><span lang="es">Marco · etapa 2 Preparación — Caso Sur del Valle: cuatro fuentes</span><span lang="en">Framework · stage 2 Preparation — Sur del Valle case: four sources</span></span><svg class="ic s"><use href="#i-chevron"></use></svg></p></div></div>
+    <div class="k-item"><span class="etq"><span lang="es">con sugerencia (ficha compacta + síntesis, C7)</span><span lang="en">with suggestion (compact card + synthesis, C7)</span></span>
+      <div class="k-marco panelito" style="display:flex;flex-direction:column;gap:6px"><article class="ficha compacta"><h3 class="titular"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></h3><p class="fuente"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span class="doc"><span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span><span class="pin"><svg class="ic s"><use href="#i-pin"></use></svg>⌘⇧P</span></p></article>
+      <div class="sugerencia"><p class="cab"><span><svg class="ic s"><use href="#i-mac"></use></svg> <span lang="es">sugerencia · en tu Mac</span><span lang="en">suggestion · on your Mac</span></span><span class="conf"><svg class="ic s"><use href="#i-half"></use></svg><span lang="es">confianza media</span><span lang="en">medium confidence</span></span></p><p class="texto"><span lang="es">Confirma que las tres fuentes están dentro; una cuarta va como adicional con costo aparte.</span><span lang="en">Confirm the three sources are in scope; a fourth goes as a priced add-on.</span></p></div></div></div>
+    <div class="k-item"><span class="etq"><span lang="es">confianza baja (○ + palabra + «revisa la fuente»)</span><span lang="en">low confidence (○ + word + “check the source”)</span></span>
+      <div class="k-marco panelito"><div class="sugerencia"><p class="cab"><span><svg class="ic s"><use href="#i-nube"></use></svg> Claude Haiku · API</span><span class="conf"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">confianza baja</span><span lang="en">low confidence</span></span></p><p class="texto"><span lang="es">Puede que el precio incluya soporte; revisa la fuente antes de afirmarlo.</span><span lang="en">The price may include support; check the source before stating it.</span></p></div></div></div>
+    <div class="k-item"><span class="etq"><span lang="es">lo que se oyó (dispara la ficha, C5)</span><span lang="en">what was heard (triggers the card, C5)</span></span>
+      <div class="k-marco panelito"><p class="oido"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg> <span lang="es">cliente 14:02</span><span lang="en">client 14:02</span></span><q><span lang="es">Y la limpieza de datos, ¿eso está dentro del alcance?</span><span lang="en">And the data cleansing, is that within scope?</span></q></p></div></div>
+  </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

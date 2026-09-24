@@ -1,0 +1,2330 @@
+# Sprint 001 «La banda y la ficha» — bitácora
+
+> Registro vivo del sprint. Decisiones, fricciones (K#), gates con su demo en rojo y
+> desviaciones del plan. La planeadora lee esto; no se le reporta a mano.
+
+## Fase 0 — Setup y verificación de supuestos (2026-09-20)
+
+### Verificación de supuestos del kit escritorio (primera app que lo usa)
+
+| Supuesto del kit | Resultado |
+|---|---|
+| Hooks activos (`githooks`, `pre-commit` ejecutable) | ✓ |
+| Scripts `typecheck · lint · test · test:e2e · verify:ephemeral · prepare` | ✓ |
+| `ci.yml` con `build-escritorio` | ✓ |
+| `playwright.config.ts` → `pnpm preview --port 3000` | ✓ (pero ver **K1**) |
+| `cargo test` corre en `src-tauri/` | ✓ |
+| `pnpm peers check` limpio | ✓ (eslint 9.39.5 por lockfile) |
+| Tailwind: `@tailwindcss/vite` instalado pero sin cablear | deuda declarada del estampado, **pagada** |
+
+### Fricciones encontradas (K#)
+
+- **K1 — Playwright venía mobile-first en una app de escritorio.** El kit trae un proyecto
+  `devices["Pixel 7"]` porque las apps del pipeline son mobile-first; Angel Ghost no lo es y la
+  orden de diseño lo dice («sin viewport móvil»). Dejarlo no era neutro: duplicaba cada prueba
+  contra un viewport que el producto no tiene, y un rojo ahí habría costado depuración sobre algo
+  inexistente. Sustituido por los **dos tamaños reales** del design system §3.6: `ventana-principal`
+  960 × 640 y `banda` 1180 × 200.
+
+- **K2 — Los umbrales de cobertura apuntaban a motores que en esta app no son de TypeScript.**
+  El kit fija 80 % sobre `src/lib/**` y `src/engine/**`. En Angel Ghost los motores puros (VAD,
+  fin de turno, BM25, disparo) son **Rust**, y los cubre `cargo test`. Dejar los globs del kit
+  habría dado un umbral que se cumple porque no mide nada — el peor tipo de verde. Ahora:
+  `include: src/**/*.{ts,tsx}` con umbral 50 (regla de UI) y 80 reservado para `src/lib/**` si
+  algún día aparece lógica pura en TS. `--coverage` añadido al script `test`, como pedía la orden.
+
+- **K3 — Testing Library no limpiaba entre tests.** Su limpieza automática solo se registra con
+  `globals: true` en vitest, y aquí no lo está. Sin ella los renders se **acumulan**: el segundo
+  `getByTestId` encuentra dos nodos y falla con un mensaje que parece del componente cuando el
+  defecto es del arnés. Lo descubrió el primer test de UI del sprint; arreglado en `tests/setup.ts`
+  para todos los que vienen. *(Misma clase que el defecto de la barra sticky en la Etapa de
+  Diseño: un fallo del arnés se ve idéntico a un fallo del producto.)*
+
+### Hallazgo que cambia un riesgo del plan
+
+**El bridge nativo no necesita Xcode completo.** Se verificó ANTES de comprometer la fase 3, no
+después: `swiftc` con Command Line Tools compila contra `ScreenCaptureKit`, `AVFoundation`,
+`CoreAudio` y `Speech`, y `SpeechAnalyzer` está en el SDK (macOS 27 SDK; la máquina corre 26.6.2).
+Desaparece el riesgo nº 1 del sprint y con él una descarga de ~10 GB. Queda en el **ADR 001**.
+
+### Qué se construyó
+
+- **`CLAUDE.md`**: regla del efímero verificable en su **forma final** (tabla de qué persiste y
+  qué muere), trasplantada de `ordenes/CLAUDE-md-para-app.md`.
+- **`src/index.css`**: los tokens del design system v1.7.0 **copiados literalmente** de
+  `ghost.css`, más el puente a Tailwind v4 con `@theme inline` — `inline` a propósito: con
+  `@theme` a secas los valores se congelan en el build y el tema claro dejaría de existir.
+- **`src/i18n/{es,en,index}.ts`**: el diccionario con las cadenas de la banda, verbatim de la
+  maqueta. El tipo `Diccionario` deriva la **forma** de `es` (no sus valores) para que ningún
+  idioma se quede atrás sin que el compilador lo note.
+- **`src/App.tsx`**: la cáscara real (tema e idioma en `<html>`, como la maqueta). **Se borró el
+  scaffold `greet()`** de Tauri: era código muerto que además arrastraba la cobertura al 15 %.
+- **`src-tauri/src/{capture,stt,corpus}/`**: la estructura con **la frontera del efímero escrita
+  en el árbol**, no en una convención. `capture/` y `stt/` protegidos; `corpus/` fuera del barrido
+  a propósito (ver ADR 002).
+- **ADRs 001 (plataforma y bridge), 002 (persistencia), 003 (observabilidad).**
+
+### Gates nuevos, cada uno visto en rojo antes que en verde (regla 15)
+
+| Gate | Qué impide | Demo en rojo |
+|---|---|---|
+| `tokens-fieles` | que los tokens del producto se separen de la maqueta | valor cambiado (`--halo`) ⇒ rojo · token borrado (`--ok-tint`) ⇒ rojo · verde al revertir |
+| `i18n-fiel-a-la-maqueta` | que el producto invente copy que la maqueta no dice | «Buscando en tu corpus, un momento…» ⇒ rojo nombrando la clave |
+| `cascara` | que tema/idioma dejen de vivir en `<html>` | (cubierto por sus 4 aserciones) |
+
+**Gates heredados extendidos al terreno nuevo, y demostrados ahí:** `vocabulario-vetado` y
+`maqueta-sin-emojis` ahora barren `src/` y `src-tauri/src/`. El primero se puso rojo con
+«indetectable» plantado en `src/i18n/es.ts`; el segundo, con un emoji en `src/App.tsx`.
+`verify:ephemeral` pasó de inspeccionar **0 archivos a 2** —antes era un gate que no leía nada— y
+se demostró rojo con un `fs::write` plantado en `capture/`.
+
+### Dependabot PR #1 (4 bumps de Actions)
+
+No se mergeó ni se cerró: **está obsoleto, no roto.** Su CI falla en `pnpm peers check` por una
+causa ajena a los bumps — la rama nace de un `main` anterior al arreglo `eslint@9` (13cc7e5), así
+que resuelve eslint 10 y rompe el peer de `jsx-a11y`. Se pidió `@dependabot recreate` en vez de
+resolver el lockfile a mano (regla de dependencias: se deja regenerar, no se pelea). Si no
+regenera antes del cierre, se declara en el summary.
+
+### Criterio de fase completa
+
+`pnpm typecheck` ✓ · `pnpm lint` ✓ · `pnpm test` **19/19 con `--coverage` activo** (95 % líneas) ·
+`pnpm build` ✓ · `cargo test` ✓ (1 test) · `pnpm verify:ephemeral` ✓ · CI con los tres checks.
+
+## Fase 1 — La banda
+
+### Fase 1a — decisión de diseño no escrita: los seis estados de CONTENIDO de la banda (2026-09-20)
+
+La orden lo exige literalmente: *«cualquier estado que la maqueta no cubra se propone en la
+bitácora bajo "decisión de diseño no escrita" ANTES de construirlo»*. Aquí está.
+
+**El hueco.** La Etapa de Diseño decidió la **forma** de la banda (`posicion.html`: 88 · 200 · 44,
+acoplada, con asa) y el **contenido** de los estados (`panel.html`, dentro de 380 × 220). Nunca se
+escribió el cruce. La maqueta dibujó la banda **tres veces y las tres con una ficha dentro**; el
+sprint construye **seis** estados de contenido. Cinco no tenían referencia contra la cual comparar
+— y el gate de FIDELIDAD de esta fase se habría resuelto a ojo.
+
+**Qué se hizo antes de construir:** extender la maqueta con `docs/diseno/banda.html`, nueve
+estados (los seis del sprint + dos variantes ampliadas + el fallback sin acople), ambos temas,
+ambos idiomas, con el CSS ya aprobado y el copy tomado literalmente de `panel.html` y
+`posicion.html`. Es la **mirada 11**, propuesta en el plan del sprint y aprobada por el usuario
+antes de construir (el plan de miradas es parte del gate).
+
+**Las tres decisiones que la maqueta no había escrito** (en `design-system.md` §9-quinquies):
+
+| # | Decisión | Por qué |
+|---|---|---|
+| 1 | En la banda, **las acciones son teclas**; los botones vuelven al ampliar | en 88 px de alto dos botones y una frase larga se pelean por el renglón y el primario cae abajo — el anti-patrón §8 que ya mordió dos veces en la Etapa de Diseño |
+| 2 | **El asa tiene un trabajo**: «sin verificar» muestra una salida en 88 px y las tres al ampliar | la alternativa era recortar el aviso o inventar un menú. El alto es continuo: 88 es el reposo, 200 el máximo dibujado |
+| 3 | **El transcript va a la derecha**, no abajo | una banda ya ocupa el ancho entero y no puede crecer; ocupa la columna de la sugerencia (sprint 2) y así no cambia de alto al encenderse |
+
+Y una **no-decisión declarada**: la `unidad` sigue sin chip en `fuente-b` (a diferencia del
+panel), porque la columna derecha de la banda es toda Menlo de bajo contraste y un tercer peso
+visual junto a los `kbd` la volvería ruido. El chip sí aparece en las acumuladas de la ampliada,
+donde la unidad es lo que distingue una ficha de otra.
+
+**Cambio menor de contenido, declarado:** en la banda ampliada el «+2» se **abre** (las dos fichas
+acumuladas, con su unidad). `posicion.html` D3 lo dibujó colapsado, pero su propia nota prometía
+que el alto extra era para «la ficha entera, **las acumuladas** y la sugerencia». Con el «+2»
+colapsado y sin sugerencia (sprint 2), la mitad inferior de la banda quedaba vacía sin razón.
+
+### El arnés de capturas vuelve al repo — y se le exigió el rojo
+
+En la Etapa de Diseño el arnés de capturas vivió en el scratchpad y **se perdió al terminar**; sus
+avisos de desborde se imprimían antes de cada estado y un `tail -n 3` los escondió durante cuatro
+fases (queda registrado en la bitácora de diseño: *leer la salida ES el gate, y leerla entera*).
+Ahora vive en `scripts/capturar-maqueta.mjs`, declara su árbol al arrancar (regla 17-bis) e
+imprime **al final y juntos** tres bloques: desbordes · estados sin recorte · errores de página.
+
+- **Demo en rojo (regla 15):** `--banda-h: 88px` → `58px` ⇒ **12 desbordes** nombrados por estado,
+  tema e idioma (`banda → alto +11px`, `cuerpo-b → alto +13px`, …). Revertido ⇒ verde. El gate
+  puede fallar, y falla nombrando el estado.
+- **Fallo encontrado por el propio arnés, en su primera corrida útil:** escribió **24 de 36**
+  recortes del artefacto y no dijo nada. Tomaba `$(".banda")` —el primero del DOM— y los tres
+  estados ampliados no tenían recorte. Corregido a recorrer todos los candidatos, **y el hueco es
+  ahora un hallazgo impreso**, no un silencio: «estados sin recorte del artefacto». Mismo defecto
+  de clase que un `skipped` leído como verde.
+
+### Archivos de la fase 1a
+
+| Archivo | Qué |
+|---|---|
+| `docs/diseno/banda.html` | **nuevo** — la referencia del gate de FIDELIDAD: 9 estados × 2 temas × 2 idiomas |
+| `docs/diseno/assets/ghost.css` | tokens `--banda-h*` (las tres alturas dejan de ser literales) + bloque «estados de contenido de la banda» |
+| `docs/diseno/index.html` | tarjeta `01-c` en el recorrido; la portada declara que la décima pantalla la añadió el sprint |
+| `docs/diseno/README.md` | mirada 11 en el plan y en la tabla pantalla → funcionalidad |
+| `design-system.md` | **v1.8.0** — §9-quinquies; y el registro de cambios, que se había quedado en 1.3.0 mientras el frontmatter iba en 1.7.0 |
+| `scripts/capturar-maqueta.mjs` | **nuevo** — el arnés, ya no efímero |
+| `tests/unit/tokens-fieles.test.ts` | los tres `--banda-h*` a `NO_APLICAN`, con la razón y quién sí los vigila |
+
+`pnpm test` **19/19** verdes tras cada cambio. Capturas: 36 del escritorio + 36 del artefacto
+solo, **cero desbordes, cero errores de página, cero estados sin recorte**.
+
+### Mirada 11 — veredicto del usuario (2026-09-20)
+
+**Aprobada con un cambio** — *«Si me gusta mucho muy bien docs/diseno/banda.html, pero en Sin
+resultado esta bien que digas que no hay nada pero sugierele como abordar la situacion. El resto
+esta muy muy bien»*. (Abrió el archivo: nombra la ruta y un estado concreto con su crítica.)
+
+**El cambio, resuelto sin una línea de IA.** «Sugerir cómo abordar la situación» suena a LLM y es
+exactamente donde la regla del código primero tiene que morder. La app no puede inventar una
+respuesta sobre el negocio del usuario —sería lo que promete no hacer— así que el estado sugiere
+**dos cosas, las dos deterministas**:
+
+1. **Lo más cercano que SÍ tiene.** La búsqueda no encontró nada sobre el umbral pero sabe qué
+   quedó debajo: sale del corpus del usuario, con su fuente, y la app dice sin adornos que
+   **ninguno responde la pregunta**. Recuperación, no redacción.
+2. **Una maniobra** de un **catálogo versionado de seis** maneras de responder, elegida por reglas
+   léxicas sobre lo que preguntó el cliente — el mismo mecanismo del disparo. Hablan de **cómo
+   conducirse**, jamás del negocio: por eso pueden ser fijas.
+
+Y no puede **parecer** salida de un modelo: sin acento `halo` ni `i-chispa` (que en este sistema
+marcan la síntesis de la IA), en **Avenir** —la voz de la app— nunca en **Charter**, que es la voz
+de la evidencia. Cuando exista la síntesis (sprint 2), la maniobra es su **fallback permanente**.
+
+**Cabía en 88 px reordenando, no recortando.** El estado tenía dos renglones ocupados por el
+veredicto y la pregunta oída; la maniobra necesitaba un tercero y tres renglones no entran (50 px
+de cuerpo contra ~57 px de texto — medido, no estimado). Se fundieron veredicto y pregunta en uno:
+**«Nada en tu corpus sobre "certificación ISO 27001"»**, con los términos que realmente se
+buscaron. Sale ganando: si la app entendió mal, se ve en el acto. El asa abre el estado ampliado
+con la pregunta entera y las tres más cercanas — el mismo trato que «sin verificar».
+
+| Archivo | Qué cambió |
+|---|---|
+| `docs/diseno/banda.html` | `sin resultado` reescrito · estado nuevo `sin resultado · ampliada` · bloque del catálogo de maniobras con su tabla y la nota de lo que la maniobra NUNCA hace |
+| `docs/diseno/assets/ghost.css` | `maniobra-b` y `cercano-b` |
+| `design-system.md` | **v1.9.0** — la maniobra dentro de §9-quinquies, con el catálogo entero |
+
+`pnpm test` 19/19 · 40 capturas × 2 encuadres · cero desbordes, cero errores, cero huecos.
+
+### Mirada 11, segunda vuelta — aprobada, con una deuda abierta a propósito (2026-09-20)
+
+*«Así está perfecta la sugerencia, pero la sugerencia estándar… me preocupa, deja solo al
+consultor/asesor, pero bueno después lo resolvemos. No quiero de todas maneras que invente una
+respuesta, quiero es que le sugiera cómo abordar la situación muy a medida de la situación.»*
+
+Tiene razón y el reparo es exacto: cinco de las seis maniobras se apoyan en algo (una credencial,
+una cifra, un plazo, una referencia, un contrato); **la sexta no se apoya en nada** y es
+precisamente la que más se va a disparar. El usuario decide aplazarlo, y el requisito queda
+escrito para que no se pierda: **sin inventar respuesta, pero a medida de la situación**.
+
+**Lo que abre el camino sin LLM** (para el ADR del sprint 2): «a medida» no exige un modelo, exige
+**material**. La app ya sabrá, de forma determinista, qué unidad falta, cuál es la sección más
+cercana del corpus, qué dice la ficha del cliente, la jurisdicción, y qué se comprometió ya en
+esta reunión. Una maniobra armada con eso —«no tienes nada de certificación; lo más parecido es tu
+§5.1 de seguridad de datos: apóyate ahí y ofrece confirmarlo hoy»— es específica **y** sigue sin
+afirmar nada que la app no haya leído. El catálogo fijo pasa entonces a ser el último recurso, no
+la respuesta normal. Registrado en `design-system.md` §10.
+
+### Fase 1b — la banda construida (2026-09-20)
+
+#### Las tres ventanas, y dónde vive el flag que lo sostiene todo
+
+| Ventana | Qué es | Protegida de la captura |
+|---|---|---|
+| `principal` | 960 × 640, las pantallas del cuaderno (fase 2) | no |
+| `banda` | ancho de pantalla × 88 (asa → 200), pegada al borde inferior | **sí, y es la única** |
+| `relleno` | la misma geometría, sin contenido, justo debajo | no, **a propósito** |
+
+El **riesgo nº 1 del plan** era que el relleno heredara el flag de protección al copiar el
+constructor de la banda: la franja volvería a mostrar lo que hay detrás y **nadie se enteraría**,
+porque desde el Mac del consultor las dos versiones se ven idénticas. Se resolvió quitándole el
+sitio donde podía pasar: **el flag vive solo en `tauri.conf.json`** y las ventanas se construyen
+con `from_config` (verificado en el código de `tauri-runtime-wry`: `with_config` aplica
+`content_protected`). No hay nada que heredar en un constructor porque el constructor no lo lleva.
+
+Encima, `invariante_de_proteccion()` corre en `setup()` **antes de abrir nada** y aborta el
+arranque si el invariante no se cumple. Una banda que se abre sin su promesa es peor que una
+banda que no se abre.
+
+Capabilities por ventana: el relleno solo tiene `core:event` y `core:window` — lo justo para que
+Rust lo mueva. Nada que pueda cargar ni mostrar algo.
+
+#### La banda en React — sin copiar el design system
+
+Dos decisiones que quitan deriva en vez de vigilarla:
+
+- **El producto importa `ghost.css`**, no lo copia. `design-system.md` ya declaraba ese archivo
+  como `fuente_en_codigo`; ahora es literal. La banda construida y la maqueta comparten el mismo
+  CSS, así que el gate de fidelidad compara dos cosas que **no pueden** separarse.
+- **El sprite de iconos se extrae de `iconos.js` en compilación** (`?raw`). Una sola fuente para
+  los cuarenta símbolos. `<use href="#i-lo-que-sea">` con un id inexistente no lanza error: dibuja
+  **nada**, y el estado se queda sin símbolo — justo lo que la regla del daltonismo prohíbe.
+
+#### Gates nuevos, cada uno visto en rojo en el mismo commit (regla 15)
+
+| Gate | Demo en rojo | Qué nombró |
+|---|---|---|
+| `proteccion-de-captura` (config) | `contentProtected: true` en el relleno | «protegidas: [relleno, banda] — tiene que ser exactamente ["banda"]» |
+| `proteccion-de-captura` (código) | `.content_protected(true)` plantado en el bucle que crea las dos ventanas | `ventana/mod.rs:103`. **La config no lo habría visto**: seguiría siendo correcta. Por eso son dos caminos |
+| `invariante_de_proteccion` (Rust) | el mismo cambio de config | «hay 2 ventanas protegidas (relleno, banda), y solo la banda puede estarlo» |
+| `iconos` | renombrar `i-flecha` en la maqueta | «Banda.tsx pide «i-flecha», que el sprite no declara» |
+| `sistema-sin-sala-de-diseno` | plantar `.mq-bar .banda {…}` en `ghost.css` | `ghost.css:498`. Ahora que el producto importa ese archivo, lo que entre ahí viaja al binario |
+| **fidelidad** (píxel a píxel) | `padding-left: 17px` en la cabecera de la banda del producto | los **40** encuadres en rojo, 1,2–1,9 % |
+
+Y uno que no es de código: **el relleno no dibuja nada** — ni texto, ni banda, ni iconos, ni
+imágenes. Es lo único que una captura encuentra donde vive la banda; si alguien le mete contenido
+«solo para depurar», eso es exactamente lo que vería el cliente, y no hay aviso posible porque
+desde este lado el relleno está tapado por la banda y no se ve nunca.
+
+#### El gate de FIDELIDAD se mide, no se ojea
+
+`pnpm fidelidad` captura el mismo encuadre dos veces —la maqueta aprobada y el producto servido
+desde el build— en **diez encuadres × dos temas × dos idiomas**, y los compara **píxel a píxel**
+dentro del navegador (canvas; sin dependencias nuevas). Una hoja de contacto en
+`docs/fidelidad/S1-banda.html` los pone en pareja para mirarlos.
+
+Comparar de verdad no es ceremonia: **un ojo cansado aprueba una banda desplazada 3 px**, y esa
+banda ya no obedece a la maqueta. El umbral es **0,15 %**, con su suelo medido: la banda de la
+maqueta vive dentro del escritorio de referencia, cuyo marco redondeado le muerde la última fila
+—73 px sobre 103 000, todos en `y = 85..87`— y eso es del encuadre, no del producto. Un
+desplazamiento real de texto pasa del 2 %, así que 0,15 % separa artefacto de defecto sin holgura
+de sobra. Un umbral generoso «por si acaso» es un gate que no puede fallar.
+
+**Resultado: 40/40 por debajo del umbral, máximo 0,070 %.**
+
+#### Lo que el gate encontró — tres defectos que ninguna captura mirada a ojo habría dado
+
+1. **El *preflight* de Tailwind reescribe el design system.** Pone `display: block` en todo `svg`;
+   el contador de red partía en dos renglones («↑» arriba, «0 B» abajo) solo en el producto. Y al
+   ir a arreglarlo apareció la causa de fondo: **el contador estaba escrito como `.barra .red`**,
+   es decir como hijo del panel, así que dentro de la banda perdía su anatomía entera —ni Menlo,
+   ni cifras de ancho fijo, ni verde, ni una sola línea— **también en la maqueta**. Se promovió a
+   componente (`.red`) y `.ic` declara su propio `display`, para que ningún reset de al lado
+   vuelva a moverlo. Arreglado, la maqueta y el producto mejoraron a la vez.
+2. **`index.html` seguía siendo el andamio de Vite**, con `<html lang="en">`. Eso pisaba la
+   detección de idioma: un Mac en español veía la app en inglés, y la primera pasada del gate
+   capturó los cuatro cruces de tema e idioma… en inglés los cuatro. El archivo ya no pinta el
+   idioma: lo fija la cáscara desde el sistema. De paso murió el resto del andamio (`vite.svg`,
+   `tauri.svg`, `react.svg`, `App.css`, el título «Tauri + React + Typescript»).
+3. **El transcript se desviaba 2,5 %** en los cuatro cruces, y a ojo parecía idéntico. La causa:
+   en la maqueta «cliente» y «14:01» son dos elementos flex (el espacio cae fuera del par
+   `<span lang>`), y en el producto uno solo — 3 px de `gap` de diferencia que empujaban toda la
+   cita. La hora pasa a ser **un elemento con nombre** en los dos lados, con cifras de ancho fijo,
+   que es lo que debió ser desde el principio: un dato, no «lo que quedó del renglón».
+
+> **Regla que sale de aquí, para el design system:** dentro de un contenedor flex, **cada dato
+> lleva su propio elemento**. Dejar que el hueco lo decida dónde cae un espacio del HTML funciona
+> hasta que dos plantillas parten el texto por sitios distintos — y entonces la diferencia es de
+> 3 px y no la ve nadie.
+
+#### El arnés de capturas, tercera corrección — y el patrón
+
+Ya volvió al repo en la fase 1a; en esta fase falló **dos veces más**, las dos por lo mismo:
+- escribía **24 de 36** recortes y callaba (tomaba el primer `.banda` del DOM; los tres estados
+  ampliados no tenían recorte). Ahora los huecos se **imprimen**;
+- la barra de estados de la sala de diseño es `position: sticky`: al desplazarse para fotografiar
+  la banda ampliada **se le montaba encima**, y la referencia del gate salía con media banda
+  tapada por botones. Ahora se apaga la sala de diseño entera antes de cada recorte.
+
+El patrón es el mismo las tres veces: **un arnés de imágenes falla por lo que NO está en el
+cuadro**, y eso no se ve mirando el cuadro. De ahí que la comparación numérica valga más que la
+hoja de contacto: el 2,5 % del transcript lo encontró la resta, no el ojo.
+
+#### Archivos de la fase 1b
+
+| Archivo | Qué |
+|---|---|
+| `src-tauri/tauri.conf.json` | las tres ventanas; `productName: Angel Ghost` |
+| `src-tauri/src/ventana/mod.rs` | **nuevo** — geometría, ciclo de vida e invariante de protección |
+| `src-tauri/src/lib.rs` | comandos `abrir_banda`/`cerrar_banda`; el invariante aborta el arranque |
+| `src-tauri/capabilities/{default,banda,relleno}.json` | permisos por ventana |
+| `src/componentes/{Banda,Iconos,Relleno,Principal}.tsx` | **nuevos** |
+| `src/ventanas.ts`, `src/App.tsx` | **nuevo** / enrutado por etiqueta de ventana |
+| `src/i18n/{es,en}.ts` | el diccionario de la banda entera + la muestra sintética (muere en la fase 4) |
+| `src/index.css`, `index.html` | CSS de ventana; el andamio de Vite fuera |
+| `docs/diseno/assets/ghost.css` | `.red` promovido a componente · `.ic` con `display` propio · `.hora` |
+| `scripts/capturar-fidelidad.mjs` | **nuevo** — el gate de fidelidad, con su comparación numérica |
+| `docs/fidelidad/S1-banda.html` + `s1/` | la evidencia: 80 imágenes en pareja |
+| `tests/unit/{banda,enrutador,ventanas,iconos,proteccion-de-captura,sistema-sin-sala-de-diseno}.*` | **nuevos** |
+
+**Estado:** `typecheck` · `lint` · `test` **50/50 (94,5 % líneas)** · `build` · `cargo test` 8/8 ·
+`verify:ephemeral` · `fidelidad` 40/40. 
+
+#### La verificación en vivo de la promesa — lo que se probó y lo que NO
+
+La app corrió de verdad (regla 15, tercer filo). El registro de geometría que se añadió para esto
+dice, con la ventana ya asentada:
+
+```
+[ventanas] «principal»: 960x641 en (255,175)
+[ventanas] «banda»:    1470x88  en (0,868)
+[ventanas] «relleno»:  1470x88  en (0,868)
+```
+
+**Verificado, con evidencia directa:**
+
+| Qué | Cómo |
+|---|---|
+| La banda lleva la protección del sistema | `sharingState = 0` y macOS **se niega** a capturarla: `screencapture -l <id>` responde *«could not create image from window»*. La misma orden sobre el relleno sí produce imagen |
+| El relleno es opaco y negro, exactamente en el rectángulo de la banda | capturado a solas: 2940×176, **100 % opaco, rgb(0,0,0)** |
+| Exactamente una ventana protegida, y es la banda | en ejecución, no solo en la configuración |
+
+**NO verificado — y es lo que más importa:** que el relleno **cubra la franja en una pantalla
+compartida**. No se pudo decidir aquí, y las dos herramientas fallan por motivos distintos:
+
+- **`screencapture` mueve lo que mide.** Justo después de una captura, las ventanas de la app se
+  reportan en `x=-1530, y=839, 1470x117` cuando en reposo están en `x=0, y=868, 1470x88`. Con la
+  herramienta desplazando aquello mismo que se quiere fotografiar, la franja sale «vacía» — y eso
+  se lee, con toda la buena fe, como «el relleno no funciona».
+- **ScreenCaptureKit** (la API que usan Meet, Zoom y Teams; `scripts/verificar-proteccion.swift`)
+  dio **100 % negro una vez** —la franja cubierta, nada filtrado— y **0 % las cinco siguientes**,
+  sin cambiar nada. Intermitente.
+
+**Un error propio, registrado porque casi se publica.** Entre medias monté un A/B: con
+`visibleOnAllWorkspaces: false` la franja salió negra y con `true` no, y la conclusión «la bandera
+de todos los Espacios rompe el relleno» era redonda, grave y **falsa**. Al repetirla con la
+bandera en `false`, cinco de cinco dieron 0 %. La bandera queda como estaba, aprobada en el
+diseño. Lo que fallaba era el método: **una sola pasada de una medición intermitente no es una
+medición**, y una conclusión limpia sobre un fallo grave es justo la que más ganas dan de no
+repetir.
+
+**Consecuencia:** la comprobación del relleno queda como **parada ⭐ obligatoria** en llamada real
+con pantalla compartida — que era el riesgo nº 3 del plan, ahora con medidas detrás en vez de
+cautela genérica. `scripts/verificar-proteccion.swift` viaja en el repo como su instrumento:
+inspecciona **solo** la franja inferior y reporta color medio y porcentaje de negro.
+
+#### Lo que la fase 1 todavía debe
+
+Dos comportamientos nativos que **necesitan al usuario delante** para verlos correr de verdad
+(regla 15, tercer filo: ¿lo viste correr en el modo en que se va a usar?):
+
+- **El acople** (Accessibility): recortar la ventana de la reunión y devolverla al cerrar y al
+  crashear. Exige que el usuario conceda el permiso de Accesibilidad en su Mac.
+- **El relleno con el fondo de escritorio** (hoy negro, que es la opción declarada de una tecla y
+  no filtra nada). Exige mirar una captura de pantalla compartida real.
+
+Ninguno de los dos cambia la banda que el gate de fidelidad compara: son comportamiento, no UI.
+
+### Fase 1c — el acople y el fondo del relleno (2026-09-20)
+
+Los dos comportamientos nativos que la fase 1 debía. No cambian ni un píxel de la banda que el
+gate de fidelidad compara: son comportamiento, no UI — el gate se volvió a correr entero y siguió
+en 40/40, con el mismo máximo de 0,070 %.
+
+#### El acople — la banda no tapa la reunión, la reunión se hace sitio
+
+Sin acople, la banda se queda **encima** de la ventana de la videollamada y el consultor pierde
+los 88 px de abajo de su reunión. Con acople, esa ventana se **encoge** hasta que su borde
+inferior queda justo sobre la franja, y vuelve a su tamaño al terminar.
+
+Tocar la ventana de otra aplicación es la operación más invasiva de toda la app. Se escribió con
+tres reglas explícitas, y las tres están en código, no en la documentación:
+
+| Regla | Cómo se sostiene |
+|---|---|
+| **Se encoge, nunca se mueve** | solo se escribe `AXSize`. La posición no se toca: una ventana que se mueve sola es un susto, una que se acorta por abajo es una que cabe |
+| **Se devuelve SIEMPRE** | al cerrar la banda · al salir de la app (`RunEvent::Exit`, que cubre ⌘Q y el menú, por donde `cerrar_banda` no pasa) · **y al arrancar**, si la vez anterior terminó en una caída |
+| **Solo se devuelve lo que sigue como lo dejamos** | la huella guarda el marco *leído del sistema después de escribir*, no el pedido; si el usuario redimensionó esa ventana a mano, no encaja y no se toca |
+
+Esa tercera regla es la que hace que **la devolución normal y la devolución tras una caída sean
+el mismo camino**: la huella no distingue, y por eso no hay dos funciones que puedan divergir.
+
+**Lo que NO se pide, pudiendo.** La Accessibility API es una llave maestra: da el árbol entero de
+cualquier aplicación, sus títulos y su contenido. Aquí se leen **tres atributos** (`AXWindows`,
+`AXPosition`, `AXSize`) y se escribe uno. La huella **no tiene dónde guardar un título de
+ventana** —el nombre de una reunión es información del cliente, y el estándar 4-T divide por de
+quién es la información, no por su formato— y hay un test que lo afirma, para que añadir el campo
+«para depurar» tenga que pasar por encima de un motivo escrito.
+
+**Frontera de memoria.** Todo lo `unsafe` vive en `src-tauri/src/acople/ax.rs`: seis funciones de
+`ApplicationServices` y dos clases de AppKit. Hacia arriba solo salen `Marco`, `String` y `bool`;
+la lógica que decide qué hacer con esos valores es Rust seguro con tests. Las cuatro dependencias
+nativas nuevas (`core-foundation`, `objc2`, `objc2-app-kit`, `objc2-foundation`) **ya viajaban en
+el árbol de Tauri**: declararlas no añade una descarga, hace explícito que este crate las usa de
+primera mano.
+
+#### El relleno pinta el fondo de escritorio, y declara sus límites
+
+`NSWorkspace.desktopImageURL` da la ruta; Rust la lee y la entrega en `data:`; el relleno la
+encuadra al tamaño de la **pantalla** (`cover` centrado, que es «Rellenar pantalla», el modo por
+defecto de macOS) y la sube para que por la franja asome exactamente el trozo que habría debajo.
+Reproducir el **encuadre** y no solo la imagen es lo que hace que la costura no se vea.
+
+Tres límites, escritos en el código en vez de descubiertos por el usuario: **solo la pantalla
+principal** · **solo el modo «Rellenar pantalla»** · **hasta 12 MB** (los fondos dinámicos de
+macOS son HEIC de varias decenas de MB con todas las horas del día dentro; meter eso por el IPC
+para pintar 88 px no compensa). Y en **cualquier** fallo, negro — que no es un modo degradado
+sino la otra opción que el diseño aprobó, y la única que no filtra nada.
+
+La imagen se **pide**, no se empuja: un evento emitido antes de que el webview del relleno
+registre su oyente se pierde en silencio y la franja se quedaría negra sin que nada lo dijera.
+Preguntando, el orden lo pone quien necesita la respuesta.
+
+#### «acoplada» deja de ser una etiqueta
+
+La cabecera de la banda dibuja «acoplada» o «sin acople». Hasta ahora salía de un parámetro de
+URL, es decir, era **fija**: exactamente la clase de promesa que esta app existe para no hacer.
+Ahora se pregunta a la parte nativa al montar y se escucha el cambio, y la verdad está en **el
+mismo archivo de huella que usa la devolución** — así la banda no puede decir «acoplada» mientras
+no hay nada que devolver, ni al revés. El parámetro de URL sigue existiendo pero solo manda
+cuando está escrito: sin él, el gate de fidelidad no podría recorrer el encuadre «sin acople» en
+un navegador.
+
+#### Los dos gates nuevos, y lo que el rojo encontró en ELLOS
+
+Los dos nacen en este mismo commit (regla 15, kit v1.25.0). Y la primera pasada en rojo **no
+encontró defectos en el código: encontró que los dos gates no podían fallar**.
+
+| Gate | Primera versión | Qué pasó al exigirle el rojo |
+|---|---|---|
+| **La huella nace privada** (regla 17-bis a) | afirmaba `modo(ruta) == MODO_ARCHIVO` | **VERDE con la huella en 0o644.** El test leía la misma constante que el código: cambiarla cambiaba también lo que el test esperaba. Un gate medido contra sí mismo |
+| **El recorte no invade la franja** | afirmaba `fondo <= franja.y + HOLGURA` | **VERDE con un error de 1 px plantado.** La tolerancia del test era la del propio código, y se tragaba cualquier error menor que ella |
+
+Arreglados —permisos con el **número literal**, invasión **sin holgura** porque el alto se calcula
+exacto— los dos fallan como deben:
+
+```
+DEMO 1 · MODO_ARCHIVO = 0o644
+  la_huella_nace_privada_y_repara_lo_que_encuentre_flojo ... FAILED
+  assertion `left == right` failed: la huella quedó legible por otros
+DEMO 2 · alto = franja.y - ventana.y + 1.0
+  ninguna_decision_de_encoger_deja_la_ventana_dentro_de_la_franja ... FAILED
+  franja invadida por 1 px: y=0 alto=900 banda=44
+  una_ventana_que_llega_al_fondo_se_encoge_hasta_justo_encima_de_la_franja ... FAILED
+  una_ventana_pequena_abajo_no_se_mutila ... FAILED
+```
+
+y vuelven a verde al revertir (24/24 en `cargo test`).
+
+> **La lección, que vale para todo el pipeline:** la tercera pregunta de la regla 15 —*¿puede este
+> gate fallar siquiera?*— **no se contesta leyendo el test**. Los dos se leían perfectamente. Se
+> contesta plantando el fallo. Y las dos formas de gate inalcanzable que aparecieron aquí son
+> genéricas y fáciles de repetir: **medirse contra la misma constante que el código**, y **usar
+> la misma tolerancia que el código**.
+
+#### Lo que el arranque en vivo encontró, que ningún test podía
+
+La app corrió de verdad, varias veces (regla 15, tercer filo). **Cuatro hallazgos, y ninguno
+estaba al alcance de un test**: los tests prueban la decisión y la huella; lo que falló fue quién
+dispara, qué devuelve el sistema y qué pasa cuando el proceso muere mal.
+
+**1 · El disparador estaba mal pensado — dos veces.**
+
+```
+[acople] al arrancar: permiso=true app=«—» ventanas=0
+[acople]   · no hay ninguna otra aplicación al frente
+```
+
+«Acopla la aplicación que esté al frente», llamado al arrancar, **se salta a sí mismo**: la
+aplicación de delante somos nosotros, que acabamos de abrir la ventana principal. El mecanismo
+entero era correcto y no se ejecutó ni una vez.
+
+Segundo intento: disparar cuando la ventana principal **pierde el foco** —el usuario ha vuelto a
+su trabajo y delante hay otra aplicación—. Funcionó a la primera:
+
+```
+[acople] al volver el usuario a su trabajo: permiso=true app=«Claude» ventanas=2
+[acople] reacople: permiso=true app=«Claude» ventanas=2      ← el asa, al soltarla
+```
+
+…y **no volvió a dispararse** tras el reinicio del observador de `tauri dev`: si la principal
+nunca llegó a tener el foco, `Focused(false)` no llega nunca. Un disparador que depende de un
+evento que puede no ocurrir no es un disparador. Tercera versión, la que queda: **un latido
+acotado** (cada 1,5 s durante 30 s) que acopla en cuanto hay alguien delante que no seamos
+nosotros, y para.
+
+> Es **andamio de la fase 1 y se declara como tal**: en el producto el disparador es la detección
+> de la reunión (fase 2), que llama a `acoplar` sabiendo a quién. Lo de debajo —medir, encoger,
+> anotar la huella, devolver— es lo mismo y no cambia.
+
+**2 · La devolución tras una caída, probada de verdad y sin querer.** Al cerrar la app con
+`pkill` —que es SIGTERM, y **SIGTERM no pasa por `RunEvent::Exit`**— quedaron dos ventanas
+encogidas y la huella en disco. Es decir: una caída real. Al relanzar:
+
+```
+[acople] la sesión anterior dejó 2 ventana(s) encogida(s): se devuelven
+[acople] devolver tras una caída: permiso=true app=«Claude» ventanas=1
+[acople]   · … no se toca
+```
+
+Medido después con la Accessibility API: la ventana que seguía existiendo volvió a **1249×815**,
+su tamaño original exacto. La huella se borró sola. La otra no se tocó porque ya no existía.
+
+**3 · Y ahí el mensaje mentía.** Decía *«cambió de tamaño desde el acople: manda el usuario»*
+cuando en realidad la ventana **se había cerrado**. Dos causas distintas por el mismo camino, y el
+mensaje solo nombraba una — mandando a buscar un fallo donde no lo había. Ahora dice lo que de
+verdad se sabe: *ninguna ventana coincide con la huella (la redimensionaron o la cerraron)*.
+
+**4 · macOS no entrega el fondo de escritorio de este Mac.** `NSWorkspace.desktopImageURL`
+devuelve `/System/Library/CoreServices/DefaultDesktop.heic`, que pesa **54 bytes**: un marcador de
+posición. Es lo que da el sistema cuando el usuario tiene un fondo dinámico o un aéreo — la imagen
+real no se expone. Sin suelo de tamaño, esos 54 bytes viajaban como `data:` perfectamente válido,
+el webview no los sabía decodificar y **la franja acababa negra igual… por un camino que nadie
+registraba**. Un fallo silencioso indistinguible de un acierto. Se añadió el **suelo de 4 KB** con
+su test, y ahora el sistema lo dice en una línea.
+
+> **Consecuencia honesta:** el relleno con fondo de escritorio está construido y es correcto, pero
+> **en este Mac no se puede ver funcionando** porque macOS no entrega la imagen. Queda como
+> **parada ⭐** en una máquina con fondo estático. Mientras tanto la franja es negra, que es la
+> otra opción que el diseño aprobó y la única que no filtra nada.
+
+**Y un aviso sobre `permiso=true`.** En `pnpm tauri dev` el binario lo lanza la terminal, y la
+Accesibilidad de macOS se concede al **proceso responsable**: un `true` en desarrollo puede ser el
+permiso de la terminal, no el de Angel Ghost. El binario firmado pedirá el suyo. No es un matiz —
+es «funcionaba en mi máquina» con nombre y apellidos, y va a la guía de prueba como parada.
+
+**5 · El acople se apuntaba ventanas que no encogió.** La huella lo delató:
+
+```
+Code: original 923 -> dejada 923
+[acople] al volver el usuario a su trabajo: permiso=true app=«Code» ventanas=1
+```
+
+La Accessibility API **aceptó la escritura sin error** y la aplicación mantuvo su tamaño: pasa con
+ventanas en pantalla completa, en Split View o con tamaño fijo. Sin comprobarlo, el acople se
+apunta una ventana que no cambió, la huella guarda una devolución que no hay que hacer, y la
+banda dice **«acoplada» mientras sigue tapando la reunión** — exactamente la etiqueta falsa que
+esta app existe para no poner.
+
+> **La regla que sale de aquí:** *«lo pedí» no es «pasó»*. Se cuenta releyendo del sistema, no
+> asumiendo que la escritura hizo algo. Vale por los dos lados: acoplar **y** devolver, porque la
+> devolución es la mitad que el usuario nota. Ahora, cuando una ventana no se deja, lo dice con
+> su causa probable en vez de sumar uno.
+
+#### Lo que la devolución cubre, y lo que no
+
+| Camino | Quién lo devuelve | Probado |
+|---|---|---|
+| cerrar la banda | `cerrar_banda` | por código |
+| salir de la app (⌘Q, menú, última ventana) | `RunEvent::Exit` | **no en vivo** — parada ⭐ |
+| **matar el proceso / caída** | la huella, al arrancar la vez siguiente | **sí, en vivo** |
+| force quit (SIGKILL) | la huella, al arrancar la vez siguiente | mismo camino que el anterior |
+
+El hueco declarado: si el proceso muere mal y **Angel Ghost no se vuelve a abrir**, la ventana se
+queda corta hasta que se abra. Se puede cerrar con un hilo en `sigwait` para SIGTERM/SIGINT; no se
+hizo porque el plan resuelve la caída por la huella y esto queda anotado, no olvidado.
+
+#### El asa, el acople y por qué no van en la misma llamada
+
+Arrastrar el asa dispara decenas de ajustes por segundo. Cada acople son varias idas y vueltas a
+**otro proceso** por la Accessibility API: hacerlo en cada cuadro convertiría el arrastre en un
+tirón y dejaría la ventana de la reunión parpadeando. Se separó en dos comandos: `ajustar_banda`
+mueve lo nuestro durante el arrastre, `asentar_banda` rehace el acople **al soltar**. Y el
+reacople usa el PID de la huella, no «quien esté al frente»: mientras arrastras, el que está al
+frente eres tú arrastrando la banda, y preguntar soltaría la reunión justo al agrandarla.
+
+#### Archivos de la fase 1c
+
+| Archivo | Qué |
+|---|---|
+| `src-tauri/src/acople/mod.rs` | **nuevo** — geometría pura, huella en disco, la maniobra completa |
+| `src-tauri/src/acople/ax.rs` | **nuevo** — Accessibility + NSWorkspace; todo el `unsafe` del crate |
+| `src-tauri/src/relleno.rs` | **nuevo** — el fondo de escritorio, con sus tres límites y el negro |
+| `src-tauri/src/lib.rs` | comandos del acople · devolución en `RunEvent::Exit` · disparador por foco |
+| `src-tauri/src/ventana/mod.rs` | `franja()` y `alto_actual()` — la franja en coordenadas de la API de accesibilidad |
+| `src-tauri/Cargo.toml` | cuatro dependencias nativas, ya presentes en el árbol de Tauri |
+| `src/acople.ts` | **nuevo** — «acoplada» preguntado y escuchado, no supuesto |
+| `src/componentes/Relleno.tsx` | el fondo de escritorio encuadrado; negro ante cualquier fallo |
+| `src/puente.ts` | `preguntar` y `escuchar` |
+| `src/asa.ts` | `asentar_banda` al soltar |
+| `tests/unit/acople.test.tsx` | **nuevo** — 9 tests de las dos cosas que solo fallan en el webview |
+
+**Estado:** `typecheck` · `lint` · `test` **63/63 (85,1 % líneas)** · `cargo test` **24/24** ·
+`fidelidad` **40/40**, máximo 0,070 %.
+
+## Fase 2 — Sesión, permisos, kill-switch, contador y honestidad
+
+### Fase 2a — el motor, y el problema que apareció antes de escribir una línea de UI (2026-09-21)
+
+#### Lo que se construyó
+
+| Módulo | Qué hace | Tests |
+|---|---|---|
+| `sesion/` | detecta la videollamada abierta por **catálogo versionado** de identificadores | 12 |
+| `permisos.rs` | lee los tres permisos de macOS; **no los pide** | 8 |
+| `red.rs` | el contador de bytes que salieron (B2) | 4 |
+| `corte.rs` | el kill-switch `⌥⎋`, pieza por pieza | 3 |
+
+**La detección es un catálogo, no una heurística.** Adivinar por nombre —«algo que contenga
+*meeting*»— confundiría un calendario con una llamada y lo haría distinto en cada Mac. El
+catálogo viaja versionado en el repo, **se consulta sin red**, y su versión se muestra en pantalla
+al lado de lo que afirma: un catálogo sin versión visible no se puede contrastar con nada.
+
+**Meet obligó a una decisión incómoda y se escribe entera.** Zoom y Teams se detectan por su
+identificador. Meet es una **pestaña**, y la única forma de distinguir «tiene Meet abierto» de
+«tiene Chrome abierto» —que es siempre cierto— es mirar el **título de la ventana**. De ahí tres
+consecuencias, y las tres están en código:
+
+- el título de una reunión **es información del cliente** (el estándar 4-T divide por de quién es,
+  no por su formato), así que `sesion` entra en los módulos protegidos de `verify:ephemeral`:
+  memoria mientras la pantalla lo muestra, y nada más;
+- **solo se preguntan títulos a los navegadores del catálogo**, nunca a todo el Mac. Es una función
+  pura con su test — sin ella, «leer títulos» significaría leer el nombre de cada documento
+  abierto, cada conversación y cada expediente;
+- sin permiso no se dice «no hay reunión», que sería mentira por omisión: se dice **«no puedo
+  saberlo»**, con su motivo. La diferencia entre las dos es lo único que separa una app honesta de
+  una que contesta «no» cuando no sabe.
+
+**Los permisos se leen, no se piden.** Es decisión de la maqueta (*«Tú los concedes en el sistema,
+no aquí»*) y además es lo correcto: un permiso pedido en el primer arranque, antes de que la app
+haya demostrado nada, se deniega — y un «no» de macOS es muchísimo más caro de deshacer que un
+«todavía no». El botón abre el panel de Ajustes del Sistema que corresponde.
+
+**El contador de red existe ya, vacío, a propósito.** Una promesa que se instrumenta cuando llega
+la primera conexión llega tarde: el día que el adaptador de LLM se encienda (sprint 2, con su ADR),
+el contador tiene que estar puesto desde antes, con su cero comprobado, o no hay contra qué
+comparar.
+
+#### Los gates nuevos, y lo que el rojo encontró en ellos — **otra vez**
+
+| Gate | Demo en rojo | Resultado |
+|---|---|---|
+| ningún archivo de Rust abre un socket | `TcpStream::connect` plantado | **rojo**, nombra archivo y línea |
+| ninguna dependencia de Rust es un cliente de red | `reqwest` en `Cargo.toml` | **rojo** |
+| ningún archivo del webview sale a la red | `fetch()` plantado en `puente.ts` | **rojo** |
+| `sesion` no escribe en disco (efímero) | `fs::write` con un título de reunión | **rojo** |
+| el kill-switch no deja piezas sin cortar | una pieza nueva sin resolver | **VERDE — el gate no podía fallar** |
+
+La quinta volvió a pasar lo mismo que en la fase 1: el test comprobaba `TODAS.len() == 7`, y **el
+7 lo había escrito yo**. Se medía contra mi propio número, no contra el código.
+
+Rehecho: el gate ya no es un test, es **el compilador**. Dos `match` sin comodín (`Pieza::orden` y
+`suerte_en_este_sprint`) hacen que añadir una pieza y no resolverla **no compile**:
+
+```
+error[E0004]: non-exhaustive patterns: `corte::Pieza::NotasSinGuardar` not covered
+error[E0004]: non-exhaustive patterns: `corte::Pieza::NotasSinGuardar` not covered
+error: could not compile `app-copiloto-consultor` (lib test) due to 2 previous errors
+```
+
+y el test se queda con lo que al compilador se le escapa — que la lista y los puestos digan lo
+mismo —, que también se vio en rojo (`«Banda» está en el puesto 5 de TODAS pero dice ser el 4`).
+
+> **Tercera vez en el sprint, y ya es un patrón con nombre: un gate que se mide contra un número o
+> una tolerancia que escribí yo no mide el código, me mide a mí.** Las tres formas encontradas
+> hasta ahora: comparar contra la **misma constante** que usa el código · usar la **misma
+> tolerancia** que usa el código · comparar contra un **conteo escrito a mano**. Cuando el
+> lenguaje puede obligar —un `match` exhaustivo, un tipo—, el gate es el compilador y el test
+> solo cubre el resto.
+
+#### Un test intermitente, cazado antes de entrar
+
+Los dos tests del contador compartían un estático y `cargo test` corre en paralelo: se pisaban una
+vez de cada muchas. Un gate intermitente es peor que no tenerlo —se aprende a reintentar hasta que
+pasa—, así que se turnan con un mutex. Comprobado **cinco de cinco**, que es la lección de la
+fase 1 aplicada sin que hiciera falta equivocarse otra vez.
+
+### Decisión de diseño no escrita — «TODAVÍA NO» (mirada 12 propuesta)
+
+**El problema, encontrado al ir a construir las tres pantallas.** La maqueta dibuja el producto
+TERMINADO. El sprint 001 entrega un trozo. Las tres pantallas de esta fase tienen cartas enteras
+que el producto de hoy no puede sostener: las dos pistas de audio (fase 3), la ficha del cliente,
+los búferes de memoria, las notas.
+
+Solo hay dos salidas sin una decisión escrita, y las dos son malas: **pintarlo en verde** —
+«Micrófono · Listo» con el audio sin construir es la afirmación falsa que esta app existe para no
+hacer— o **quitarlo de la pantalla**, y entonces el usuario no sabe que va a llegar y la pantalla
+del sprint 1 se lee como el producto completo.
+
+La orden ya lo había anticipado para dos casos concretos («NDA y radar: *próximamente*, sin
+inventar»). Lo que faltaba era la forma, y la maqueta **no tenía ninguna palabra para esto**
+(se comprobó: cero apariciones de «próximamente» o equivalente en las nueve pantallas).
+
+**Lo construido para la mirada:** el componente `.estado.pendiente` en `ghost.css`, el icono
+`#i-pendiente`, y un estado nuevo **«así se ve hoy · sprint 1»** en las tres pantallas — la misma
+pantalla tal y como se entrega, que es además la referencia del gate de fidelidad. Registrado en
+`design-system.md` §9-sexies (v1.10.0) y en el plan de miradas del README de diseño.
+
+**Y dos cosas que la maqueta no había escrito y el sistema obliga**, encontradas construyendo:
+
+1. **«Audio del sistema» y «Pantalla» son UN SOLO permiso en macOS.** Se conceden y se caen
+   juntos. Se siguen dibujando como dos filas —son dos usos distintos— con una línea que lo dice.
+2. **La Accesibilidad sube a la lista principal de permisos.** En la maqueta vivía en su propio
+   estado porque era opcional y futura; el acople se entrega en este sprint y es **el único
+   permiso que hoy cambia algo**.
+
+**La construcción de las tres pantallas de producto espera a la mirada 12.** El motor no: no
+depende de la respuesta.
+
+### Mirada 12 — aprobada (2026-09-21)
+
+> **«Esta muy bien como indica que no todavia no existe en sesion permisos y honestidad»**
+
+Registrada en `docs/diseno/README.md`. Con ella quedan aprobados `.estado.pendiente`, el estado
+«así se ve hoy · sprint 1» y las dos decisiones que la maqueta no había escrito (el permiso único
+de macOS, la Accesibilidad en la lista principal).
+
+### Fase 2b — las tres pantallas construidas (2026-09-21)
+
+#### El gate de fidelidad deja de estar cableado a un artefacto
+
+Nació para la banda. Cablearlo otra vez para tres pantallas más habría duplicado justo la parte
+delicada —medir el ancho de la referencia, apagar la sala de diseño, restar los mapas de bits— y
+**una copia de un gate es un gate que se arregla en un sitio y sigue roto en el otro**. Ahora
+recorre una lista de artefactos: añadir uno es añadir una entrada.
+
+**52 encuadres** (10 de la banda + 3 del cuaderno, × 2 temas × 2 idiomas), todos bajo el umbral.
+
+#### Seis defectos que encontró la comparación, y ninguno se veía a ojo
+
+Esta es la parte que importa de la fase: **la pantalla «parecía bien» en las seis versiones**.
+
+| # | Lo que medía | Causa |
+|---|---|---|
+| 1 | `924x640 vs 960x640` | la maqueta centra su artefacto con relleno lateral: si el navegador mide justo lo que mide el artefacto, ese relleno lo **encoge**. Se medía en una ventana y se fotografiaba en otra |
+| 2 | **10 %** | el rail del producto no llevaba la clase `item`: sin ella la fila pierde `display:flex`, el hueco y el relleno, y el icono se pega al texto |
+| 3 | **9 %** | quité el borde de 1 px del cuaderno «porque la ventana nativa ya es el marco». Eso **sube el contenido entero 1 px**, y un desplazamiento de 1 px ensucia el borde de cada letra de la pantalla |
+| 4 | 765 px en la primera fila | quitar la sombra se llevaba por delante la **línea interior** de 1 px que `--sombra-panel` dibuja arriba. La sombra exterior no se ve dentro de una ventana; la interior sí |
+| 5 | **0,75 %** | en permisos y honestidad olvidé darle chip al rail en el estado nuevo: la maqueta no dibujaba ninguno y el producto sí |
+| 6 | **0,34 %, solo en inglés** | el título de la reunión de muestra estaba escrito en español **fijo**, así que el cruce inglés mostraba texto español dentro de una pantalla inglesa |
+
+> **El patrón, y es el mismo de la fase 1:** los defectos de fidelidad no son de forma, son de
+> **un píxel que se arrastra**. El nº 3 es el ejemplar: una decisión razonable —«quita el marco,
+> la ventana ya es el marco»— movió la pantalla entera 1 px y valió 9 % de píxeles distintos.
+> Ningún ojo lo ve; la resta sí.
+
+#### Y un agujero en el gate del diccionario, que este encontró
+
+El defecto nº 6 llevó a mirar por qué el gate del diccionario **no había cazado** una cadena
+inglesa mal. Y apareció otro, peor: el gate normalizaba `’` a `'` antes de comparar, así que
+`the client's voice` con apóstrofo recto pasaba en verde mientras la maqueta escribía
+`the client’s voice`. El producto renderiza un glifo distinto, la pantalla deja de ser idéntica, y
+el gate cuyo trabajo es exactamente eso decía que sí.
+
+Lo cazó el gate de FIDELIDAD, comparando píxeles, **tres pantallas después**. Ahora las entidades
+HTML sí se traducen (`&#8217;` ES el mismo carácter, escrito de otra forma) pero los signos
+tipográficos **no se normalizan**: se comparan carácter a carácter. Demostrado en rojo.
+
+> **La lección se suma a la lista del sprint:** un gate que *normaliza* antes de comparar está
+> decidiendo qué diferencias no le importan. Aquí decidió que el apóstrofo no importaba, y el
+> apóstrofo era la diferencia.
+
+#### Lo que corrió en vivo, y la limitación que apareció al probarlo
+
+La app corrió de verdad (regla 15, tercer filo). Se añadió un registro de arranque —**solo
+metadatos**: el cliente de videollamada y los cuatro estados de permiso, **nunca el título de la
+reunión**, que es información del cliente y un log es un archivo.
+
+```
+[corte]    kill-switch ⌥⎋ registrado
+[permisos] micrófono=Concedido pantalla=Concedido accesibilidad=Concedido · cara=Concedido
+[sesion]   reunión detectada: «Google Meet» · protección Verificada · catálogo v1 · 2026-09-21
+[red]      salida acumulada: 0 B
+```
+
+Con eso quedan verificadas en vivo las tres lecturas del sistema —y la de permisos es la que más
+importaba, porque el micrófono se pregunta por **mensaje de Objective-C a una clase buscada por
+nombre**, que es la FFI más frágil de esta fase y la que ningún test podía afirmar.
+
+**La limitación, encontrada probándolo mal.** La primera prueba abrió una página titulada como una
+pestaña de Meet… y el detector dijo que no había reunión. No era un fallo: `open -a` la dejó en
+una **pestaña de fondo**, y el `AXTitle` de una ventana de Chrome es el título de su **pestaña
+activa**. Comprobado con una sonda aparte:
+
+```
+pid 59137 · com.google.Chrome
+  1 ventana(s)
+    [0] AXTitle = «What's new - Google Chrome»
+```
+
+Abierta en ventana propia, el detector la reconoció a la primera. **Consecuencia real y
+declarada (ADR 005): si el consultor tiene Meet en una pestaña de fondo, la app no lo ve** —
+aunque el audio siga sonando. Llegar a las pestañas exige automatizar el navegador, que es
+bastante más invasivo que leer un título; queda como decisión futura con su propio ADR.
+
+**Lo que NO se vio correr:** el atajo `⌥⎋`. Se registra —el log lo dice— pero pulsarlo es cosa de
+una tecla que esta sesión no puede pulsar. **Parada ⭐** del gate de prueba, junto con el botón de
+la pantalla de Honestidad.
+
+#### Archivos de la fase 2
+
+| Archivo | Qué |
+|---|---|
+| `src-tauri/src/sesion/mod.rs` · `permisos.rs` · `red.rs` · `corte.rs` | **nuevos** — el motor |
+| `src-tauri/src/lib.rs` | seis comandos nuevos · el atajo global `⌥⎋` |
+| `src/cuaderno.ts` | **nuevo** — lo que las pantallas preguntan a lo nativo |
+| `src/componentes/Ventana.tsx` | **nuevo** — el marco del cuaderno, el rail, «todavía no» |
+| `src/pantallas/{Sesion,Permisos,Honestidad}.tsx` | **nuevas** |
+| `src/componentes/Principal.tsx` | de hueco a cuaderno |
+| `docs/diseno/{sesion,permisos,honestidad}.html` | el estado «así se ve hoy · sprint 1» |
+| `docs/diseno/assets/{ghost.css,iconos.js}` | `.estado.pendiente` · `#i-pendiente` |
+| `design-system.md` | §9-sexies (v1.10.0) |
+| `scripts/capturar-fidelidad.mjs` | de un artefacto a una lista |
+| `tests/unit/{cuaderno,contador-de-red}.test.tsx` | **nuevos** |
+
+## Fase 3 — Audio en dos pistas + transcripción local
+
+### Fase 3a — el spike, antes de comprometer ningún motor (2026-09-21)
+
+El plan del sprint lo pedía con estas palabras: *«Spike en la fase 3 antes de comprometer el
+motor»*. Tres preguntas, y ninguna se podía contestar leyendo documentación: si el audio del
+sistema se puede capturar sin bot y sin pedirle nada al cliente, si la transcripción local de
+macOS 26 alcanza para una reunión en vivo, y si un puente Swift se deja enlazar dentro del
+binario de Rust con solo las Command Line Tools instaladas. Las tres se probaron con programas
+de usar y tirar en el scratchpad; ninguno viaja al repo.
+
+#### Pregunta 1 — ¿se puede oír al cliente sin meter un bot en la reunión?
+
+**Sí, con Core Audio process taps** (macOS 14.2+ según la cabecera; el plan decía 14.4).
+`AudioHardwareCreateProcessTap` sobre una `CATapDescription` de *mezcla mono global excluyendo
+nuestro propio proceso* → dispositivo agregado privado → `AudioDeviceCreateIOProcIDWithBlock`.
+
+```
+translate pid 66144 -> 108 (st=0)
+AudioHardwareCreateProcessTap -> st=0 tapID=109
+formato st=0 rate=48000.0 ch=1 bits=32 flags=9
+salida por defecto: BuiltInSpeakerDevice
+AudioHardwareCreateAggregateDevice -> st=0 agg=110
+AudioDeviceStart -> st=0
+RESULTADO: llamadas=374 buffers=1 191488 muestras en 4.0s · pico=0.55
+```
+
+48 kHz, **mono**, float32 — el formato lo decide el tap, no nosotros. Excluir nuestro propio
+proceso importa: sin eso, el modo solo audio (C15, sprint 2) se oiría a sí mismo.
+
+**El hallazgo que cambia el diseño, y que solo apareció corriéndolo.** La primera pasada devolvió
+`0 muestras` y pareció un fallo. No lo era. El control lo dejó claro:
+
+```
+=== control: SIN audio sonando ===
+RESULTADO: llamadas=0 buffers=0 0 muestras en 2.0s
+=== con audio ===
+RESULTADO: llamadas=268 buffers=1 137216 muestras en 3.0s · pico=0.75
+```
+
+**Sin nada sonando, el callback no se llama ni una vez.** No llegan ceros: no llega nada. La pista
+del sistema no tiene «nivel cero», tiene *silencio del que no se entera nadie*. Consecuencia
+directa para la pantalla de Honestidad y para la de Sesión: **«0 muestras» NO se puede pintar como
+avería**. Un cliente callado y un tap roto se ven exactamente igual desde dentro del programa, y
+la única diferencia honesta que podemos mostrar es *«conectada, todavía sin sonido»* frente a
+*«no se pudo abrir»* — que sí son distinguibles, porque el fallo aparece en la creación del tap,
+no en la ausencia de muestras.
+
+#### Pregunta 2 — ¿alcanza la transcripción local de macOS 26?
+
+**Sí, y con mucho margen.** `SpeechAnalyzer` + `SpeechTranscriber` (macOS 26), sobre los dos audios
+sintéticos que genera `say` con las frases de la maqueta:
+
+| Pasada | Audio | Primer parcial | Total | Velocidad |
+|---|---|---|---|---|
+| es-ES, modelo recién instalado | 5,88 s | 247 ms | 370 ms | ×15,9 |
+| en-US, modelo recién instalado | 5,39 s | 87 ms | 227 ms | ×23,7 |
+| **es-ES, modelo ya instalado** | 5,88 s | **51 ms** | **84 ms** | **×69,9** |
+
+Treinta locales soportados; `es-ES`, `es-MX`, `es-US`, `es-CL`, `en-US`, `en-GB` y el resto de la
+familia inglesa quedaron instalados tras pedirlo. El presupuesto de la orden es **≤4 s de fin de
+turno a ficha**: la transcripción de un turno de seis segundos cuesta 84 ms. El cuello de botella
+de este sprint no va a ser el STT.
+
+**Y el defecto que hay que anotar ahora, porque muerde en la fase 4.** Las dos transcripciones
+escribieron mal el número:
+
+```
+es: «certificación ISO27.001»        en: «ISO 27,001 certification»
+```
+
+El motor formatea cifras según el idioma. La frase de la maqueta —la que dispara el estado «sin
+resultado»— es literalmente *«certificación ISO 27001»*. Si el disparador de la fase 4 busca
+`27001` en el corpus, no lo va a encontrar. **Se normalizan los separadores de miles antes de
+buscar**; queda escrito aquí para que no se descubra como un bug misterioso dentro de dos fases.
+
+#### Pregunta 3 — ¿se deja enlazar Swift dentro del binario de Rust?
+
+`SpeechAnalyzer` es un `actor` de Swift con secuencias asíncronas: no hay forma de llamarlo por
+mensajes de Objective-C como hicimos con la Accessibility API. O hay puente, o no hay motor.
+
+```
+swiftc -emit-library -static -O -module-name agstt -o libagstt.a
+cargo run → SpeechTranscriber.isAvailable = 1
+```
+
+**Enlaza a la primera**, con las Command Line Tools y sin Xcode completo, añadiendo
+`/usr/lib/swift` a las rutas de búsqueda. El riesgo nº 1 de la fase queda cerrado igual que quedó
+el de la fase 0: probándolo, no razonándolo.
+
+#### Lo que el spike decide, y lo que deja abierto
+
+- **El audio del sistema se hace con Core Audio taps en Rust puro** (FFI declarada a mano, como
+  `acople/ax.rs`), sin puente Swift: `AudioDeviceCreateIOProcID` acepta un puntero a función de C.
+- **El STT se hace con SpeechAnalyzer a través de un puente Swift** compilado por `build.rs`.
+- **Queda abierto** —y se decide en el ADR con la medición delante— si el VAD necesita Silero o si
+  el detector determinista alcanza. Medirlo es de la fase 5 (el kit); construirlo, de esta.
+
+
+### Fase 3b — las dos pistas, los turnos y la transcripción (2026-09-21)
+
+La fase más grande del sprint, y la primera en la que la app **oye**. Cuatro piezas que no se
+conocen entre sí —`capture` abre los grifos, `voz` corta los turnos, `stt` los convierte en texto,
+`escucha` los junta— y una lección que se repitió tres veces: **lo que se descubre corriendo no se
+descubre leyendo**.
+
+#### Lo que se construyó
+
+| Módulo | Qué hace | Por qué está separado |
+|---|---|---|
+| `capture/anillo.rs` | búfer circular de 30 s por pista, con índice global | es la promesa del efímero hecha forma: un tamaño que no crece |
+| `capture/remuestreo.rs` | 48 kHz → 16 kHz **con filtro** | decimar sin filtrar convierte los agudos en voz que nadie dijo |
+| `capture/nativo.rs` | los dos grifos de Core Audio | todo el `unsafe` de la captura, en un solo archivo |
+| `voz/vad.rs` | detector de voz por energía con suelo adaptativo | código primero: Silero tendrá que ganarse el puesto con una medición |
+| `voz/turno.rs` | fin de turno determinista (320 ms) | es de donde arrancan los 4 s de presupuesto del sprint |
+| `voz/eco.rs` | el micrófono repitiendo al cliente | nació de la primera prueba de punta a punta |
+| `stt/mod.rs` · `apple.rs` · `ventana.rs` | motor, puente y ventana de 12 turnos | el motor es sustituible **con una medición delante** |
+| `nativo/Transcriptor.swift` | el puente a `SpeechAnalyzer` | `actor` de Swift: no hay selectores que mandar desde Rust |
+| `escucha/mod.rs` | dos hilos: uno mira marcos, otro transcribe | transcribir no puede dejar ciega a la otra pista |
+
+Los dos ADRs: **006** (el motor y su modelo) y **007** (las dos pistas y el eco).
+
+#### Los cinco defectos que encontró un test antes que una persona
+
+1. **El suelo de ruido se comía al hablante.** El detector actualizaba su estimación del silencio
+   en todos los marcos, subiendo despacio. «Despacio» sigue siendo subir: a los **3,7 segundos**
+   de habla continua el hablante quedaba por debajo de su propio umbral y la app se habría quedado
+   muda justo con el cliente que más habla. La regla correcta es que **el suelo solo se mueve
+   cuando NO hay voz**; y contra el atasco que eso abre —un ruido nuevo que empieza a mitad de una
+   frase—, [`PACIENCIA_MS`]: a los treinta segundos afirmando «voz» sin una sola pausa, el
+   detector desconfía de sí mismo y vuelve a medir la sala.
+2. **Decimar sin filtrar inventaba voz.** Un tono de 18 kHz reaparecía a 2 kHz con RMS **0,707**,
+   a todo volumen y en mitad de la banda de la voz humana. El detector lo habría oído como alguien
+   hablando y el fin de turno se habría disparado sobre silencio.
+3. **`vaciar()` disimulaba.** Mover el cursor deja las muestras íntegras en la memoria del
+   proceso. El kill-switch de esta app se pulsa **delante del cliente**; si después su voz sigue
+   ahí, la tecla es un adorno. Ahora se sobrescribe con ceros — y lo mismo con las letras del
+   transcript antes de soltarlas.
+4. **Quedarse con el primer canal dejaba sorda a la app** con unos auriculares desbalanceados.
+5. **La pantalla no cabía en la pantalla.** El gate de fidelidad midió **+108 px** de desborde en
+   Sesión: el botón «Iniciar sesión» se salía de la ventana. A ojo se veía perfecta.
+
+#### Los tres hallazgos que solo aparecieron corriéndolo
+
+**Uno · el silencio y la avería se ven igual.** Con nada sonando, el callback del tap **no se
+llama ni una vez**. No llegan ceros: no llega nada.
+
+```
+=== control: SIN audio sonando ===   RESULTADO: llamadas=0 buffers=0 0 muestras en 2.0s
+=== con audio ===                    RESULTADO: llamadas=268 buffers=1 137216 muestras en 3.0s · pico=0.75
+```
+
+Así que un contador en cero no distingue «el cliente está callado» de «el tap se rompió». Lo que
+sí se puede afirmar es si el grifo **se abrió**, y es lo que la app enseña: la pantalla de Sesión
+dice «Funciona» del grifo, no de las muestras.
+
+**Dos · el micrófono oye a los altavoces.** La primera prueba de punta a punta —sonó
+`pregunta-es.wav` por los altavoces del MacBook— devolvió el mismo turno por las dos pistas:
+
+```
+turno · Microfono · 880–2920 ms · «Tienen certificaciones o 27»
+turno · Microfono · 3420–6240 ms · «Y la limpieza de datos, eso está dentro del alcance?»
+turno · Sistema   · 740–6100 ms · «¿Tienen certificación ISO27.001 y la limpieza de datos eso está dentro del alcance.»
+```
+
+La app promete «micrófono = tú, sistema = el cliente». Con altavoces esa promesa **es falsa**: le
+atribuye al consultor palabras que no dijo. La maqueta ya lo había previsto —la fila «Auriculares
+conectados» existía desde la mirada 3— pero como un «todavía no» sin nada detrás. Ahora mide de
+verdad (`bltn` + `ispk` = altavoces internos) y la app hace dos cosas: **avisa antes de la
+reunión** y **marca el eco** con dos condiciones que tienen que cumplirse las dos —solapar en el
+tiempo y decir casi lo mismo—, porque cada una sola confunde una interrupción o un resumen con un
+reflejo. Los textos de arriba son, literalmente, los casos del test.
+
+**Tres · preguntar estaba cambiando el sistema.** Al arrancar la app en vivo, el log dijo:
+
+```
+[stt] motor «apple-speechanalyzer» · 30 idiomas soportados · techo 5
+[stt] modelos instalados: en-AU, es-ES
+```
+
+Dos de treinta, y elegidos por el orden en que la pantalla preguntó. macOS reparte los modelos de
+reconocimiento **por reserva**, con techo de cinco por app — y enumerar los idiomas para pintar
+una lista estaba gastando los cinco cupos del usuario, en silencio. Ahora el estado se lee de
+`installedLocales` (qué hay en el Mac) y solo se reserva al instalar y al transcribir. Después del
+arreglo, el mismo arranque:
+
+```
+[stt] modelos instalados: en-AU, en-CA, en-GB, en-IE, en-IN, en-NZ, en-SG, en-US, en-ZA, es-CL, es-ES, es-MX, es-US
+```
+
+#### La medición que decidió el motor (ADR 006)
+
+| Pasada | Audio | Primer parcial | Total | Velocidad |
+|---|---|---|---|---|
+| es-ES, modelo recién instalado | 5,88 s | 247 ms | 370 ms | ×15,9 |
+| en-US, modelo recién instalado | 5,39 s | 87 ms | 227 ms | ×23,7 |
+| **es-ES, modelo ya instalado** | 5,88 s | **51 ms** | **84 ms** | **×69,9** |
+| es-ES, desde Rust a través del puente | 5,88 s | — | 243 ms | ×24,2 |
+
+El presupuesto del sprint son **cuatro segundos**. `whisper-rs` no llegó a medirse: la comparación
+se detiene cuando una opción cabe treinta veces dentro del presupuesto y la otra pide 1,5 GB de
+descarga para entrar en la carrera. Queda declarado como respaldo para macOS < 26, **sin
+implementar**: deuda dicha, no olvido.
+
+#### Gates nuevos, cada uno visto en rojo antes que en verde (regla 15)
+
+| Gate | Qué vigila | Cómo se vio en rojo | Qué dijo al caer |
+|---|---|---|---|
+| `vaciar_sobrescribe_la_memoria_no_solo_el_cursor` | el kill-switch vacía de verdad | `vaciar()` solo mueve el cursor | «la muestra 0 sigue en memoria después de vaciar: el kill-switch no vacía, disimula» |
+| `un_agudo_no_se_convierte_en_voz` | el remuestreo no inventa voz | decimación de una de cada tres | «un siseo de 18 kHz salió a 0.707 de RMS» |
+| `una_frase_larga_no_se_convierte_en_silencio` | el suelo no se come al hablante | suelo actualizado en todos los marcos | «dejó de oír la voz en el segundo 3.6» |
+| `el_fin_de_turno_cae_dentro_del_presupuesto_de_la_orden` | 160–400 ms | `FIN_MS = 800` | «el fin de turno tardó 800 ms; la orden pide entre 160 y 400» |
+| `una_voz_que_solo_esta_en_un_canal_no_se_pierde` | la mezcla a mono | quedarse con el primer canal | «la voz del canal derecho se perdió al mezclar» |
+| `un_trozo_que_ya_se_piso_se_declara_perdido` | un turno perdido se dice | sin la comprobación del borde | devolvía audio recortado como si fuera entero |
+| `interrumpir_no_es_hacer_eco` | el eco pide las dos condiciones | solo la del solape | «una interrupción del consultor se tomó por eco (parecido 0.17)» |
+| `repetir_despues_lo_que_dijo_el_cliente_no_es_eco` | ídem, por el otro lado | solo la del parecido | el resumen del consultor se borraba |
+| `verify:ephemeral` extendido a Swift y a `voz` | el barrido sabe leer `.swift` | `Data(...).write(to:)` plantado en el puente | `✕ Transcriptor.swift:161 /\bwrite\(to:/` |
+| `lo-que-macos-dira.test.ts` | el plist promete lo que la pantalla enseña | una palabra cambiada en el plist | «expected … to contain 'solo en memoria'» |
+
+**Y dos gates que cobraron solos, sin que nadie los provocara:**
+
+- el **barrido de vocabulario vetado** encontró «trampa» y «engañar» en mis propios comentarios de
+  `remuestreo.rs`, `turno.rs` y `vad.rs`, usados como metáfora. La regla es absoluta y el barrido
+  cubre `src-tauri/src`: se reescribieron las tres frases;
+- el **gate de fidelidad** midió +108 px de desborde en Sesión y +50 en Idioma, y no dejó cerrar
+  la fase hasta que las dos pantallas cupieron.
+
+#### La pantalla que no cabía, y lo que se reordenó para que cupiera
+
+Sesión estaba **al límite exacto** de los 640 px antes de esta fase (638 de 638). Todo lo que la
+fase 3 tenía que añadir —dos pistas que ya funcionan, el aviso del eco, el botón de iniciar— la
+sacaba de la ventana. Se reordenó midiendo, no a ojo:
+
+- el **kill-switch salió de «Qué funciona hoy»** y bajó a la fila de la acción, al lado de la
+  promesa que cumple: «corta todo · el sonido nunca se guarda · nada sale de tu equipo». La lista
+  se quedó con lo que sí lleva la palabra «Funciona»;
+- el **aviso del eco** cabe en una línea;
+- en Idioma, los **tres «todavía no»** —varios idiomas, diccionario, conservar tus turnos— pasaron
+  de tres tarjetas a una sola con tres filas. Ocupaban media pantalla y además se leían como tres
+  ausencias distintas cuando son la misma: lo que llega después de este sprint.
+
+> **Y una pregunta estructural que este sprint deja abierta, porque no es mía:** el cuaderno está
+> **al borde de su techo**. Sesión cabe hoy con 0 px de margen y las pantallas crecen cada sprint
+> —en el S2 llegan la lectura de pantalla y el radar; en el S3, las notas y la bandeja—. O la
+> ventana crece (960 × 720), o se acepta que estas pantallas se desplacen. Las dos son decisiones
+> de diseño y ninguna es urgente hoy.
+
+#### Qué se vio correr en vivo, y qué no
+
+`pnpm tauri dev`, con la app abierta de verdad:
+
+```
+[transcript] ⌘⇧T registrado · OJO: mientras Angel Ghost esté abierto, el navegador deja de reabrir la última pestaña cerrada con esa tecla
+[stt] motor «apple-speechanalyzer» · 30 idiomas soportados · techo 5
+[stt] modelos instalados: en-AU, en-CA, en-GB, … es-ES, es-MX, es-US
+[audio] Altavoces · el micrófono va a oír al cliente: se marcará el eco
+```
+
+Y la cadena entera, de los altavoces al texto, en el test de integración `de-la-voz-a-la-frase`
+(13 s, con `afplay` sonando de verdad). Las dos pistas abiertas, medidas: **19 265 muestras en
+1,20 s** por el micrófono y **19 094 en 1,19 s** por el tap del sistema.
+
+**Lo que NO se vio correr, y por qué:**
+
+- **el botón «Iniciar sesión»** y el de Honestidad: hay que pulsarlos. Parada ⭐.
+- **`⌘⇧T`**: registrada —el log lo dice— pero pulsarla es cosa de una tecla. Parada ⭐, y con una
+  pregunta encima: **esa combinación es «reabrir la última pestaña» en Chrome, Safari y Firefox**,
+  y el navegador es donde vive la reunión de Meet. Se registra porque es lo que el diseño aprobó,
+  se avisa en el log, y cambiarla es decisión del usuario (riesgo nº 7 del plan).
+- **el transcript de la banda con turnos reales**: necesita una sesión encendida a mano.
+- **`NSAudioCaptureUsageDescription`**: la clave no aparece en las cabeceras públicas del SDK. Se
+  declara porque una de más es inofensiva y una de menos mata la app al pedir el permiso, pero
+  solo se comprueba de verdad con la app **empaquetada y firmada**. Parada ⭐.
+
+#### El kill-switch pasó de 3 piezas a 6, y lo obligó el compilador
+
+`Pieza::orden` es un `match` sin comodín. Al llegar el audio, `AudioDelMicrofono`,
+`AudioDelSistema` y `Transcript` no se pudieron dejar como «todavía no existe»: el crate no
+compilaba. La única que sigue declarada es `UltimoFrame` —la lectura de pantalla, C8, sprint 2— y
+la pantalla de Honestidad lo dice: **«6 de 7 piezas: la otra todavía no existe»**.
+
+#### Archivos de la fase 3
+
+| Archivo | Qué |
+|---|---|
+| `src-tauri/src/capture/{anillo,remuestreo,nativo}.rs` | **nuevos** — los dos grifos y el audio en memoria |
+| `src-tauri/src/voz/{mod,vad,turno,eco}.rs` | **nuevos** — cuándo alguien habla y cuándo terminó |
+| `src-tauri/src/stt/{mod,apple,ventana}.rs` | **nuevos** — el motor, el puente y los 12 turnos |
+| `src-tauri/src/escucha/mod.rs` | **nuevo** — los dos hilos que lo juntan todo |
+| `src-tauri/nativo/Transcriptor.swift` · `build.rs` | **nuevos** — el puente de Swift y su compilación |
+| `src-tauri/Info.plist` · `lproj/{es,en}.lproj/InfoPlist.strings` | **nuevos** — lo que macOS dirá al pedir un permiso |
+| `src-tauri/src/{lib,corte,capture/mod}.rs` | siete comandos nuevos · `⌘⇧T` · el corte de seis piezas |
+| `src-tauri/tests/contra-el-mac-de-verdad.rs` | **nuevo** — lo que ningún test unitario puede afirmar |
+| `src/pantallas/Idioma.tsx` · `src/turnos.ts` | **nuevos** — la cuarta pantalla y el transcript |
+| `src/{cuaderno.ts,App.tsx,componentes/{Banda,Principal,Ventana}.tsx,pantallas/{Sesion,Honestidad}.tsx}` | las pistas, el eco y los turnos reales |
+| `docs/diseno/{idioma,sesion,honestidad}.html` | el estado `s1` nuevo y los dos puestos al día (mirada 13) |
+| `docs/kit-de-prueba/audio/` | **nuevo** — dos frases sintéticas, 16 kHz mono |
+| `scripts/{verify-ephemeral,capturar-fidelidad}.mjs` | Swift y `voz` bajo el barrido · el cuarto encuadre |
+| `tests/unit/{lo-que-macos-dira,cuaderno,vocabulario-vetado}.test.*` | **uno nuevo** y dos puestos al día |
+| `decisions/{006-stt-local-y-su-modelo,007-el-audio-en-dos-pistas}.md` | **nuevos** |
+
+#### Criterio de fase completa
+
+- `pnpm typecheck` ✓ · `pnpm lint` ✓ · **86/86** vitest · **130/130** `cargo test` (124 unitarios
+  + 6 de integración contra el Mac de verdad) · `pnpm verify:ephemeral` ✓
+- **fidelidad 56/56** bajo el umbral de 0,15 % · **cero desbordes** · cero errores de página
+- las dos pistas capturan en vivo, el fin de turno cae en 320 ms y un turno de 5,9 s se transcribe
+  en 243 ms — todo medido, nada supuesto
+- **CI verde con conclusión propia por check** (`quality` · `e2e` · `build-escritorio`)
+
+#### Y un defecto que no encontró ningún test, sino releer el diff
+
+En el hilo que mira los marcos, la rama que detecta «el anillo dio la vuelta entera» estaba
+escrita así:
+
+```rust
+if totales > p.origen + p.procesadas + Anillo::de_la_app().capacidad() as u64 {
+```
+
+`Anillo::de_la_app()` **construye un anillo nuevo** —480 000 flotantes, 1,9 MB— solo para
+preguntarle su tamaño. Y esa rama se evalúa cada vez que no ha entrado audio, que es lo normal
+cuando nadie habla: **1,9 MB reservados y tirados veinticinco veces por segundo**, en una app que
+presume de caber en la memoria de un Mac en mitad de una videollamada.
+
+Se arregló mirando mejor lo que ya había: `Anillo::rango` distingue `Some(vacío)` —«no ha entrado
+nada», lo normal— de `None` —«ese audio ya se pisó»—, y esa diferencia es exactamente la pregunta
+que la rama quería hacer. Sin constante nueva y sin reservar nada. Y ahora, cuando pasa, **se
+dice**: `la pista «sistema» se quedó atrás 31.2s: ese audio ya se pisó y no se va a transcribir`.
+Que la app se salte medio minuto de reunión sin que nadie se entere es el mismo silencio que el
+resto de este sprint se ha dedicado a no permitir.
+
+#### Y detrás de ese defecto había otro, y detrás del otro un test que no podía fallar
+
+Arreglar lo de arriba dejó a la vista un segundo problema en la misma rama. Cuando la pista se
+reengancha al presente, `origen` salta a donde va el anillo — pero **el reloj de los turnos seguía
+contando desde el principio**. Y `indice()`, que traduce un instante del reloj a una muestra
+concreta, suma los dos. Con uno movido y el otro no, cada turno posterior habría pedido un trozo
+desplazado por todo lo que la pista llevaba vista: **se transcribiría un momento de la reunión
+creyendo que es otro**. Perder audio es malo; inventar de quién es una frase es peor.
+
+El arreglo es una línea (`p.turnos.reiniciar()` junto al salto del origen). Lo que costó fue el
+test — porque el primero que escribí **no podía fallar**:
+
+```rust
+p.origen = 9_999;  p.procesadas = 0;  p.turnos.reiniciar();
+assert_eq!(p.indice(p.turnos.reloj_ms()), p.origen + p.procesadas);
+```
+
+Movía las dos cosas **a mano** y luego comprobaba que cuadraban: comprobaba su propia aritmética,
+no el código. Con el defecto puesto pasó en verde. Es la tercera pregunta de la regla 15 —*¿puede
+este gate fallar siquiera?*— y la respuesta era no.
+
+El bueno hace lo único que sirve: llama a `mirar()` con el anillo ya dado la vuelta y deja que
+decida el código. Con el defecto puesto cae solo, y además dice por cuánto:
+
+```
+left: 552000   right: 520000
+```
+
+Treinta y dos mil muestras: exactamente los dos segundos que la pista llevaba vistos. De paso el
+test corrigió el invariante que yo había escrito mal — no es `origen + procesadas`, porque el
+reloj solo avanza con **marcos completos** y lo que sobra esperando al siguiente todavía no ha
+llegado a él.
+
+#### El gate de fidelidad dio dos respuestas distintas al mismo código
+
+Terminando la fase, una corrida marcó **2,574 %** de divergencia en `sin-verificar-2 · light · es`
+y la siguiente, sin tocar una línea, **0,069 %**. Eso no es un defecto de la pantalla: es un
+defecto **del gate**. Un gate que contesta distinto al mismo código deja de creerse, y el día que
+pare de verdad nadie va a mirarlo.
+
+El arnés fotografiaba en cuanto aparecía el selector. Ahora, **en los dos lados por igual**,
+espera tres cosas antes de disparar: que las tipografías estén cargadas (`document.fonts.ready`),
+que no haya transiciones en marcha (se anulan por CSS) y que haya pasado un cuadro de pintado
+entero. Tres corridas seguidas después del arreglo: `0.084 %`, `0.084 %`, `0.084 %`. Y de paso
+desapareció una diferencia real que llevaba escondida entre el ruido —`sesion · light · en` bajó
+de 0,105 % a cero—, que era una transición congelada a media ejecución.
+
+#### Un test que fallaba por el reloj y no por el código
+
+Dentro de un `cargo test` completo, el de punta a punta cayó una vez y pasó solo al repetirlo. La
+causa no era el audio: eran los **seis segundos** que esperaba a que llegara el turno. En este Mac
+en reposo sobran; recién compilando —o en una máquina de integración continua— no. Un test que se
+rinde antes de tiempo falla por el reloj, y un fallo que no se puede reproducir enseña a ignorar
+los rojos.
+
+Ahora espera doce segundos y **se corta en cuanto llega el turno del cliente**, que es lo que
+viene a ver. En el caso normal tarda menos que antes (9,7 s en vez de 15,8) y bajo carga aguanta
+el doble. Tres `cargo test` completos seguidos, verdes.
+
+#### Lo que costó la integración continua, y lo que se hizo con eso
+
+La primera corrida verde de esta fase (`35673597848`) dejó a `build-escritorio` en **7 min 32 s**,
+de 1 min 11 s que venía marcando. No fue el crate: fueron los **tres archivos de `tests/`**. Cada
+archivo de ahí es un binario aparte y cada binario vuelve a enlazar el crate entero más la
+librería de Swift — tres veces lo mismo, más de cinco minutos.
+
+Los tres se juntaron en `contra-el-mac-de-verdad.rs`. Y juntarlos trajo su propio problema, que es
+por qué el archivo tiene un turno: **en un solo binario los tests corren en paralelo y comparten
+los altavoces del Mac**, así que el `afplay` de uno entraba en las mediciones de otro. Se
+descubrió en el momento más justo: mientras escribía esto puse a sonar el audio a mano para
+mirar la salida, y el test cayó con la mezcla transcrita. El mensaje del fallo lo dice ahora, para
+que a nadie le cueste media hora — *«el tap oye TODO lo que suena en este Mac»*.
+
+### Decisión de diseño no escrita — lo que la fase 3 descubrió y la maqueta no dice (mirada 13 propuesta)
+
+La mirada 12 dejó una regla: *«a partir de aquí, toda pantalla que se entregue a medias usa este
+estado: no se pinta en verde lo que no existe, y no se esconde»*. La fase 3 es la primera que la
+cobra por el otro lado — **mover filas de «todavía no» a «funciona» también es diseño**, y mover
+cuatro de golpe cambia lo que el usuario entiende al abrir la pantalla.
+
+Y hay tres hechos que no salieron de ningún plan, sino de construir:
+
+| Hecho | Cómo se supo | Por qué necesita sitio en la maqueta |
+|---|---|---|
+| **Con altavoces, el micrófono oye al cliente** | la primera prueba de punta a punta: la misma frase salió por las dos pistas | la app promete «micrófono = tú, sistema = el cliente». Con altavoces esa promesa es falsa y hay que decirlo **antes** de la reunión, no después |
+| **macOS solo deja cinco idiomas listos a la vez** | `AssetInventory.maximumReservedLocales` | la pantalla ofrecía una lista; una lista sin techo deja que el sexto falle sin explicación |
+| **El modelo de cada idioma lo descarga macOS** | `AssetInventory.status` decía «sin instalar» con el modelo puesto: faltaba reservarlo | es la **única** vez que un módulo protegido de esta app toca la red. Esconderlo sería exactamente lo que la pantalla de Honestidad existe para no hacer |
+
+**Qué se propone, y por qué es una mirada y no un ajuste sobre la marcha.** Tres artefactos:
+
+1. **`idioma.html` — estado `s1` nuevo.** La pantalla no tenía versión de sprint 1. Lleva lo que
+   funciona (transcripción oculta por defecto, idioma por pista con el estado real de su modelo, el
+   motor dentro del Mac) y lo que no (varios idiomas a la vez, diccionario técnico, conservar tus
+   turnos), con el mismo trazo discontinuo de la mirada 12.
+2. **`sesion.html` — estado `s1` al día.** Micrófono y audio del sistema pasan a «Funciona»; se
+   añade «Escucha las dos pistas y las transcribe en tu Mac»; el botón «Iniciar sesión» deja de ser
+   una promesa. Y la fila **«Auriculares conectados»**, que era «todavía no», ahora mide de verdad:
+   con altavoces internos avisa, y explica qué hace la app mientras tanto.
+3. **`honestidad.html` — estado `s1` al día.** Los anillos y el transcript dejan de estar
+   pendientes y muestran cifras contadas; el kill-switch pasa de **3 de 7 a 6 de 7** piezas.
+
+No se redecide nada aprobado: se aplica la forma de la mirada 12 al trozo que la fase 3 entrega.
+Pero **el usuario no ha visto ninguna de las tres**, y «continúa» no aprueba diseño.
+
+### Mirada 13 — aprobada (2026-09-21)
+
+> **«Me gustó mucho el diseño y cómo se van evidenciando los elementos construidos y lo que falta,
+> muy bien lograda»**
+
+Lo que el usuario nombra —*«cómo se van evidenciando los elementos construidos y lo que falta»*— es
+exactamente el mecanismo que la mirada 12 aprobó en abstracto y esta ve ya aplicado a un sprint
+concreto: el par «funciona / todavía no» de `design-system.md` §9-sexies, con cuatro filas que
+cambiaron de lado en esta fase. Queda aprobado, entonces, no solo el aspecto de las tres pantallas
+sino **la manera en que envejece «todavía no»**: el estado `s1` de `idioma.html`, y los de
+`sesion.html` y `honestidad.html` puestos al día.
+
+**Cómo llegó el veredicto, que importa para la auditoría.** El usuario respondió primero
+«Apruebo las tres pantallas idioma sesion y honestidad. continúa». Un «apruebo» no es un «lo vi»:
+se repreguntó por la regla 10 —*«¿qué viste al abrirlas?»*— y la frase de arriba es la respuesta.
+Es la tercera vez en esta app que la repregunta hace falta (miradas 1, 3-quinquies y 13) y la
+segunda que, al hacerla, aparece contenido que la palabra de aprobación no traía.
+
+Registrada también en `docs/diseno/README.md`. Con ella se desbloquea la fase 4.
+
+## Fase 4 — Corpus, disparo y ficha
+
+### Fase 4a — el motor, antes de tocar una pantalla (2026-09-21)
+
+#### Lo que se construyó
+
+| Módulo | Qué hace |
+|---|---|
+| `corpus/unidad.rs` | las cinco unidades del modelo de consultoría, por reglas léxicas bilingües. **El nombre del archivo pesa tres veces más que el cuerpo**: quien guarda «Propuesta Páramo Azul.pdf» ya clasificó el documento |
+| `corpus/seccion.rs` | el troceado por sección; parte las largas conservando la fuente y pega las migajas sin cruzar un título |
+| `corpus/leer.rs` | Markdown, `.docx` (zip + XML) y PDF, cada uno con su forma de reconocer títulos |
+| `corpus/consulta.rs` | del turno hablado a la consulta: separadores de millares, palabras vacías de los dos idiomas, signos que rompen el analizador |
+| `corpus/indice.rs` | BM25 sobre `tantivy`, dos campos por idioma, título con peso 3 |
+| `corpus/mod.rs` | recorre la carpeta, orquesta, y reparte por unidad |
+| `disparo/mod.rs` | los cinco motivos de la VISION: pregunta, cifra, término tuyo, silencio, atajo |
+| `ficha/mod.rs` | titular ≤8 palabras · línea · fuente, **recortados del documento, jamás redactados** |
+| `ficha/maniobra.rs` | el catálogo de seis de la mirada 11, ejecutado y no reescrito |
+
+#### Las cuatro cosas que solo se supieron midiendo
+
+1. **Mi propio spike se dio la razón a sí mismo.** Afirmaba que «rentable» encuentra
+   «rentabilidad» y pasaba en verde — pero pasaba por la palabra «canal», que iba en la misma
+   consulta. `rentabl` y `rentabil` son raíces distintas. Una aserción que no distingue entre dos
+   causas no ha medido nada; el test que quedó afirma lo que el stemmer hace de verdad.
+2. **`metodología` y `metodologia` no se encuentran entre sí.** El stemmer español usa la tilde
+   para reconocer sufijos. Se midieron las dos cadenas de análisis sobre **23 parejas** de
+   lenguaje de consultoría: **17/23 con plegado de acentos contra 15/23 sin él**. Va con plegado,
+   y las dos pérdidas (`implementación~implementar`) quedan declaradas en el ADR 008 con el
+   instrumento para revisarlas: el nDCG@5 del kit.
+3. **Un `.docx` del propio macOS no escribe un solo `pStyle`.** Marca los títulos con negrita y
+   cuerpo mayor. Con la regla semántica sola, un documento así se indexaba entero como una
+   sección. El lector reconoce los dos caminos.
+4. **Un PDF no trae títulos, trae líneas.** Sus secciones son **conjetura** por la forma del
+   texto, y el documento lo declara hasta la ficha para que no prometa lo que nadie escribió.
+
+#### Tres defectos que encontró un test antes que una reunión
+
+- **«¿Tienen certificación?» no disparaba.** El mínimo de tres palabras se comía las preguntas
+  cortas. Con signo de interrogación bastan dos, y el signo es la señal más fiable que hay.
+- **Cuatro tests del corpus compartían carpeta** por PID y se pisaban al correr en paralelo — el
+  mismo defecto que en la fase 3 obligó a serializar los tests de audio. Aquí se resolvió con un
+  nombre por test en vez de con un candado.
+- **Un test mío preguntaba «cuánto cuesta» a un documento que dice «tarifa cerrada»**: ni una
+  palabra en común. Estaba mal el test, no el código.
+
+#### Gates nuevos, cada uno visto en rojo en su propio commit (regla 15)
+
+| Gate | Qué protege | Su rojo |
+|---|---|---|
+| `el_indice_nace_en_700_y_se_repara_si_lo_encuentra_abierto` | el índice guarda el corpus del usuario **en claro** y no puede nacer legible para las demás cuentas del Mac | desactivado: **493 (`0o755`) contra 448 (`0o700`)** |
+| `el_catalogo_dice_lo_mismo_que_el_design_system` | el catálogo de maniobras vive en dos sitios y **tienen que decir lo mismo** | cambiada una palabra de la sexta maniobra: *«no está en design-system.md — el catálogo se separó de lo que el usuario aprobó»* |
+| `disparo/` y `ficha/` en `verify:ephemeral` | el disparador guarda la última pregunta del **cliente** | el gate mordió al primer intento: la autorización de la lectura de test estaba una línea más arriba de donde tiene que ir |
+
+#### Lo que el kill-switch no alcanzaba
+
+El disparador guarda la última consulta para no repetir ficha, y eso son palabras del cliente en
+memoria. Vivía dentro del hilo de transcripción, donde `cortar()` no llega. Ahora vive en la
+`Escucha` tras un candado, y el corte **pisa las letras con ceros** antes de soltarlas — la misma
+disciplina que la ventana de turnos, en su otro escondite. No añade una pieza al kill-switch: es
+la pieza «Transcript», que sigue siendo **6 de 7**.
+
+### Decisión de diseño no escrita — la pantalla de Corpus a medio construir (mirada 14 propuesta)
+
+La fase 4 entrega el corpus indexado y la ficha. Eso toca dos superficies visuales, y **solo una
+de ellas ya tiene veredicto**:
+
+1. **La banda con ficha real.** Sus seis estados de contenido —incluido «sin resultado» con su
+   maniobra— se aprobaron en la **mirada 11** sobre `docs/diseno/banda.html`. Aquí no se decide
+   nada nuevo: se llena con datos de verdad la forma que ya está aprobada. **No pide mirada.**
+2. **La pantalla de Corpus.** `docs/diseno/corpus.html` existe con sus cuatro estados, pero
+   **no tiene estado «así se ve hoy · sprint 1»** — y este sprint entrega solo una parte: se
+   indexa, se reparte por unidad, se dice qué quedó sin leer; **no** hay arrastrar y soltar, ni
+   reindexado automático al cambiar un archivo, ni OCR de lo escaneado. Por la regla que la
+   mirada 12 dejó escrita —*«toda pantalla que se entregue a medias usa este estado»*— hay que
+   construir su `s1`, y eso **sí es diseño**.
+
+Y hay tres hechos que solo se supieron construyendo y que la maqueta no dice:
+
+- **la sección de un PDF es una conjetura**, y la ficha tiene que poder declararlo sin que parezca
+  una avería;
+- **el índice vive en la carpeta de datos de la app, en 700**, y la pantalla lo enseña: quien
+  confía su carpeta tiene derecho a saber dónde acabó el derivado;
+- **hay un techo de documentos por carpeta** (2 000) que es un aviso y no un límite técnico.
+
+**Lo que se propone, entonces:** una sola mirada, la **14**, sobre `corpus.html` en su estado
+`s1`, antes de escribir la primera línea de la pantalla de Corpus. La banda no entra porque su
+forma ya tiene veredicto. Si el usuario prefiere que la banda con ficha real también se mire
+—tiene todo el derecho: una cosa es la forma aprobada y otra verla con contenido de verdad— se
+agrupa en la misma mirada y se dice aquí antes de construir.
+
+### Fase 4b — la banda con fichas de verdad y la pantalla de Corpus (2026-09-21)
+
+#### Lo que la banda dejó de inventarse
+
+La banda pintaba «Páramo Azul» desde el diccionario. Ahora pinta lo que devolvió el corpus, y
+fuera de Tauri sigue pintando la muestra — que es lo que sostiene el gate de FIDELIDAD.
+
+**Dos defectos aparecieron al conectarla:**
+
+1. **La banda tenía DOS fuentes de verdad para lo mismo.** El `estado` llegaba por URL (para el
+   arnés de capturas) y la clase de la ficha decía otra cosa, así que pedirle «sin resultado» con
+   una ficha cargada **no pintaba nada**. Dentro del producto manda la ficha; fuera sigue mandando
+   la URL, que es donde vive el arnés.
+2. **En `deMuestra` casteaba la etiqueta traducida a clave de unidad.** En español coincidían por
+   casualidad —«propuesta» es la clave y la etiqueta— y en inglés dejaba la unidad vacía. Lo cazó
+   el gate de fidelidad: **ocho encuadres en inglés y ninguno en español**, y esa asimetría era
+   toda la pista que hacía falta.
+
+#### La regla del diccionario mordió antes de escribir el código
+
+La maqueta dibujó **una** de las seis maniobras. Las otras cinco no tenían texto en inglés, y la
+app es bilingüe por regla dura. Se escribió primero en `banda.html` —la maqueta es el primer
+diccionario— y Rust pasó a devolver **cuál** maniobra (`credencial`, `cifra`, …) en vez de su
+texto: la maniobra es voz de la app, y la voz de la app vive en `src/i18n/`.
+
+#### La pantalla de Corpus, y lo que costó que cupiera
+
+El bloque `s1` desbordaba **74 px**. Recortar párrafos no sirvió de nada —ya cabían— y una
+reestructura a ojo lo dejó **peor (82/101 px)** por romper el anidamiento. Lo que funcionó fue
+medir: la rejilla de tres que la maqueta ya había aprobado para las unidades convierte seis filas
+en dos, y las tarjetas de abajo en dos columnas quitan el resto. **0 px de desborde** en los
+cuatro cruces de tema e idioma.
+
+Y dos cosas que solo se vieron **leyendo la captura**, no en un test:
+
+- el chip del pie decía «143 documentos» porque copié el del estado «con documentos»; el producto
+  pinta ahí el estado de la sesión, como en todas sus pantallas;
+- **«18,4 MB» con coma decimal también en inglés.** La maqueta ya distinguía («4,2 MB» / «4.2 MB»)
+  en otro estado, y mi bloque traía el defecto — por eso los dos encuadres pasaban el umbral: el
+  producto copiaba fielmente una maqueta equivocada. El tamaño del índice se formatea ahora con
+  el separador del idioma.
+
+#### El corpus contra archivos de verdad
+
+Tres tests nuevos recorren el camino entero contra el disco: Markdown y **un PDF hecho con las
+herramientas del propio macOS**. Comprueban lo que ninguna pieza ve sola — que el lector devuelva
+texto, que el troceado encuentre secciones en lo que devolvió, que la unidad salga del nombre del
+archivo y que la ficha cite una fuente que existe.
+
+**Van en el MISMO binario** que los tests de audio. Un archivo más en `tests/` es un binario más,
+y cada binario vuelve a enlazar el crate entero más la librería de Swift: fue lo que llevó la CI
+de macOS de 1 min 11 s a 7 min 32 s en la fase 3. Los del corpus **no toman el turno** de los de
+audio: no tocan hardware y cada uno estrena carpeta.
+
+#### Qué se vio correr en vivo, y qué no
+
+`pnpm tauri dev`: las tres ventanas, los **tres** atajos registrados —`⌥⎋`, `⌘⇧T` y el nuevo
+`⌘⇧A`—, el motor de voz con sus 13 modelos y el aviso del eco. El plugin de diálogo carga sin
+romper nada y su capability es la mínima: `dialog:allow-open`, sin `allow-save`, porque esta app
+no escribe archivos por diálogo.
+
+**Lo que NO se pudo comprobar aquí y es parada ⭐:** señalar una carpeta de verdad con el panel
+de macOS e indexarla desde la ventana. Es un panel nativo; solo una persona puede pulsarlo.
+
+#### Archivos de la fase 4
+
+| Archivo | Qué es |
+|---|---|
+| `src-tauri/src/corpus/{unidad,seccion,leer,consulta,indice,mod}.rs` | **nuevos** — las cinco unidades, el troceado, los tres lectores, la consulta y BM25 |
+| `src-tauri/src/disparo/mod.rs` | **nuevo** — los cinco motivos de la VISION |
+| `src-tauri/src/ficha/{mod,maniobra}.rs` | **nuevos** — la ficha y el catálogo de seis |
+| `src-tauri/src/escucha/mod.rs` | el `Buscador`, el «buscando», la latencia medida por aparición |
+| `src-tauri/src/lib.rs` | `ElCorpus`, `⌘⇧A`, y los comandos de corpus y ficha |
+| `src/ficha.ts` · `src/pantallas/Corpus.tsx` | **nuevos** |
+| `docs/diseno/corpus.html` | estado `s1` **nuevo** (mirada 14) |
+| `docs/diseno/banda.html` | el catálogo de maniobras, bilingüe |
+| `decisions/008-el-corpus-el-disparo-y-la-ficha.md` | **nuevo** |
+
+#### Criterio de fase completa
+
+- `pnpm test` **87/87** · `tsc` · `eslint` · `verify:ephemeral` ✓
+- `cargo test` **211** (202 de librería + 9 contra el Mac y el disco) · `clippy` 0 avisos
+- gate de fidelidad **60/60** bajo el umbral del 0,15 %, cero desbordes, cero errores de página
+- arrancada en vivo con los tres atajos registrados
+
+### Mirada 14 — aprobada (2026-09-21)
+
+> **«Ya vi el diseño del corpus, vamos muy bien; ya están las secciones de las temáticas
+> principales y lo que falta es muy interesante, por ejemplo lo de arrastrar los documentos»**
+
+El usuario nombra una de las tres filas de «todavía no» del bloque, así que el veredicto llega
+con el archivo abierto y sin necesidad de repreguntar — la primera vez en tres miradas seguidas.
+Registrada también en `docs/diseno/README.md`.
+
+**Queda abierto y es decisión suya:** la pantalla de Honestidad escribe «1,8 MB» con coma decimal
+también en inglés. Es el mismo defecto que la fase 4 arregló en Corpus, pero vive en una pantalla
+aprobada en la mirada 13 y en `red::formatear`, que usan varias. Se le presentó en el gate de la
+fase 4 y no se tocó por cuenta propia; se paga en la fase 5 y su delta visual entra en la mirada
+de esa fase.
+
+## Fase 5 — Efímero en runtime, kit de evaluación y cierre
+
+### El efímero, verificado EN MARCHA (2026-09-22)
+
+El barrido estático lee el código. No ve lo que escriben las librerías de Apple por debajo, ni un
+temporal que nazca dentro del puente de Swift, ni un log que se lleve una frase del cliente. La
+mitad nueva mira **el disco**: 71 000 archivos inventariados antes y después de una sesión
+completa —corpus indexado, audio del kit por el motor de verdad, detector de turnos, disparador,
+ficha y kill-switch—, con una **canaria que solo existe en la boca del cliente** recorriendo el
+transcript, el disparador y la ficha.
+
+**Dos rojos, porque son dos afirmaciones y no una.** Un `fs::write` de depuración en el temporal
+da *«la sesión dejó 1 archivo fuera del índice del corpus»* con la ruta; el mismo archivo **dentro
+de la carpeta permitida** la primera aserción no lo ve, y la de la canaria sí: *«la frase del
+cliente acabó dentro de …/corpus/cache.txt»*.
+
+Y su primera corrida se delató sola: **«0 turnos cerrados por el detector»**. El audio del kit
+termina justo después de la frase, sin el silencio que cierra un turno, así que ese paso era
+adorno. Ahora cierra y lo afirma.
+
+### El kit de evaluación v0, y lo que midió antes de que nadie lo mirara
+
+Treinta preguntas contra un corpus sintético de seis documentos, más cuatro que el corpus **no
+puede** responder. **Falló al nacer, y ese fue su rojo:** la app citó una sección sobre gobierno de
+datos para responder *«¿cuánto cuesta el software de Salesforce?»*. La sección traía «cuánto» y
+«cuesta» —dos palabras que dice todo el mundo— y con eso le bastaba. Faltaban seis interrogativos
+en la lista de palabras vacías.
+
+| Medida | Antes | Después | Mínimo |
+|---|---|---|---|
+| nDCG@5 | 0,821 | **0,823** | 0,80 |
+| rechazo de lo que no tiene | 0,750 | **1,000** | 1,00 |
+
+**Tres preguntas siguen fallando a propósito.** Ninguna comparte una sola palabra con su sección.
+BM25 no puede resolverlas y reescribirlas convertiría el kit en un espejo. Son la evidencia con la
+que el sprint 2 decidirá si hacen falta embeddings — y ahora esa pregunta tiene un número detrás.
+
+### El gate que llevaba cuatro fases sin ejecutar
+
+El job `e2e` corre `playwright test --pass-with-no-tests`, y **no había ni una prueba**. El check
+estuvo verde todo el sprint sin ejecutar nada: la segunda pregunta de la regla de los gates
+—*¿lo viste correr, alguna vez?*— respondida que no.
+
+Se pagó con 66 pruebas en tres archivos, y **su primera corrida encontró un defecto real**: axe
+nombró `scrollable-region-focusable` en la pantalla de Idioma. La ventana principal es
+redimensionable, así que al hacerla más baja el contenido se desplaza y lo que queda por debajo
+del borde **no se alcanza con el teclado**. Arreglado con una región con nombre, sacado del rail y
+no de una cadena nueva.
+
+El de `reduced-motion` comprueba **visibilidad real**, no presencia en el DOM —un elemento con
+`opacity: 0` esperando una animación que no llega está en el árbol y no se ve— y compara la
+**forma** del árbol con y sin el cinturón, que es el otro filo de esa regla.
+
+### El «1,8 MB» de Honestidad
+
+Se le presentó al usuario en el gate de la fase 4 y no se tocó por cuenta propia: vive en una
+pantalla que él aprobó en la mirada 13. Pagado aquí: las cifras se formatean con el separador
+decimal del idioma. `red::formatear` conserva la coma para el log, que sí es español.
+
+### Archivos de la fase 5
+
+| Archivo | Qué es |
+|---|---|
+| `src-tauri/tests/contra-el-mac-de-verdad.rs` | el efímero en marcha y el kit de evaluación, en el binario único |
+| `docs/kit-de-prueba/corpus/` + `preguntas.json` | **nuevos** — seis documentos sintéticos y treinta preguntas |
+| `tests/e2e/{recorrido,reduced-motion,a11y}.spec.ts` | **nuevos** — 66 pruebas |
+| `docs/GUIA-DE-PRUEBA.html` | 34 pruebas, gate ⭐ de 26 y gate ⭐⭐ de 8 paradas |
+| `docs/MANUAL-DE-USO.md` | siete features con sus limitaciones |
+| `src/pantallas/Honestidad.tsx` · `docs/diseno/honestidad.html` | el separador decimal del idioma |
+| `eslint.config.js` | `tabIndex` permitido en una región, y solo ahí |
+
+### Desviación de mi propio plan — el manual NO es bilingüe
+
+El plan de este sprint decía «`docs/MANUAL-DE-USO.md` bilingüe». La orden de la planeadora no lo
+pide, y el `CLAUDE.md` dice lo contrario en su regla del manual vivo: *«en español llano»*. La
+regla bilingüe de la app enumera dónde aplica —interfaz, transcripción, corpus, fichas,
+sugerencias y los textos de permisos de macOS— y el manual no está en esa lista. Se entrega en
+español. Si la planeadora lo quiere en los dos idiomas, es trabajo declarado y no un olvido.
+
+## Desviación del plan (2026-09-20) — la MANIOBRA es producto nuevo
+
+**Qué.** El estado «sin resultado» deja de limitarse a admitir el vacío: sugiere **cómo abordar la
+situación** con (a) lo más cercano del propio corpus, declarado como insuficiente, y (b) una
+maniobra de un catálogo versionado de seis, elegida por reglas léxicas.
+
+**Por qué.** Petición del usuario en la mirada 11, con su razón: *«está bien que digas que no hay
+nada pero sugiérele cómo abordar la situación»*. Un vacío honesto que no ofrece salida deja al
+consultor solo en el peor momento.
+
+**Qué NO es.** No es una funcionalidad de IA y no debe contarse como tal: cero tokens, cero red,
+catálogo escrito por personas y versionado en el repo. Es **código primero** en su forma literal —
+y cuando llegue la síntesis con modelo (sprint 2), este catálogo es su fallback permanente, como
+exige la regla. No necesita ADR «código primero» porque no enciende ninguna feature LLM; lo que
+necesitaría ADR es lo contrario.
+
+**Qué debe absorber la planeadora.** El catálogo de maniobras es superficie de producto nueva,
+hermana de **C6** (fichas de evidencia): la VISION debería recogerla al lado de C6, o como C17 si
+prefiere numerarla aparte. Va sumada a **C15** (modo solo audio) y **C16** (puerta local para
+Claude Code), que siguen pendientes de absorción desde la Etapa de Diseño.
+
+---
+
+# Auditoría del sprint — Fase 2 (correcciones)
+
+La Fase 1 la corrió un auditor independiente con el diff delante y su reporte vive en
+`sprints/SPRINT_001-auditoria.md`: **1 crítico, 10 altos, 14 medios, 7 bajos**, veredicto
+*requiere ajustes*. El usuario aprobó la Fase 1 y su plan el 2026-09-22 («ejecuta la fase 2»).
+Aquí va lo que se pagó, en el orden del plan.
+
+## Desviación del plan de la Fase 2, declarada antes de ejecutarla
+
+El plan pone el **gate de contrato Rust→TS** en el bloque 3 y C1 en el bloque 1. Se han hecho
+**juntos, en el mismo commit**, porque verificar C1 exige un payload real: escribir a mano en el
+test el JSON que Rust emite sería repetir el defecto que se está arreglando —dos copias del
+contrato, ninguna comparada—. No cambia el alcance; adelanta el gate.
+
+## C1 · La ficha automática nunca llegaba a la banda
+
+**La causa.** `escucha::Novedad` viaja etiquetada **por dentro** (`#[serde(tag = "que")]`) y el
+webview la leía etiquetada **por fuera**: `{ Aparece?: Aparicion }` contra un
+`{"que":"aparece", …}`. `n.Aparece` era `undefined` en cada evento, así que en el binario la banda
+se quedaba en «esperando» toda la reunión y solo funcionaba `⌘⇧A`, que va por otro camino. El
+outcome del sprint —*ficha en ≤4 s tras el fin de turno*— no ocurría.
+
+**El arreglo** es de seis líneas (`src/ficha.ts`: la unión discriminada de las cinco formas y el
+`n.que === "aparece"`). Lo que costó trabajo es lo otro: **que nadie pueda volver a escribirlo mal
+en silencio.**
+
+### El gate que faltaba: `src-tauri/src/contrato.rs` → `src/contrato.generado.ts`
+
+Rust construye una muestra de **cada cosa que cruza el puente** y la serializa con el mismo serde
+que corre en producción. De ahí sale un archivo de TypeScript donde cada constante lleva el valor
+que la parte nativa emite y **el tipo que la interfaz declara**. Dos gates, en dos jobs distintos:
+
+| Gate | Dónde corre | Qué caza |
+|---|---|---|
+| `cargo test --lib contrato` | `build-escritorio` | que el archivo del repo sea el que Rust emite hoy |
+| `pnpm typecheck` | `quality` | que ese valor encaje en el tipo declarado |
+
+El segundo es el que importa, y funciona porque son **literales**: TypeScript comprueba las tres
+direcciones —campo que falta, campo de más, campo con otro tipo—. El módulo va bajo `#[cfg(test)]`:
+su trabajo es escribir el archivo, no viajar en el binario del usuario.
+
+**Las tres preguntas de la regla 15, respondidas:**
+
+- **¿Puede fallar?** Sí, y no hay regla previa que lo haga inalcanzable: hasta hoy el repo entero
+  compilaba con el contrato roto.
+- **¿Lo vi fallar?** Dos veces, las dos en el mismo commit que introduce el gate:
+  1. Devolviendo a `src/ficha.ts` el tipo que tenía el sprint, `pnpm typecheck` da **6 errores en
+     `src/contrato.generado.ts`** nombrando los campos: *«'pista' does not exist in type
+     'Novedad'»*, *«'desdeMs'…»*, *«'acumuladas'…»*, *«'buscado'…»*. El gate señala el defecto C1
+     por su nombre.
+  2. Poniendo `#[serde(rename = "lineaExtendida")]` en `ficha::Ficha::linea_larga` —un cambio que
+     **compila perfectamente** y cambia el cable— `cargo test` falla y enseña las dos líneas:
+     `- en el repo: "lineaLarga"… / + Rust emite: "lineaExtendida"…`.
+- **¿Lo vi correr?** Sí: verde en los dos jobs tras revertir las dos demos.
+
+El primer intento del mensaje de fallo volcaba los dos archivos enteros escapados —cuatrocientas
+líneas donde no se encuentra nada—. Se cambió por un diff de las líneas que se separan: un gate
+cuyo fallo no se puede leer avisa a medias.
+
+### Y el test que ningún test de este sprint era
+
+`tests/unit/la-ficha-llega-a-la-banda.test.tsx` (5 pruebas) monta la banda **dentro de Tauri** y le
+emite los payloads de `contrato.generado.ts`. Es el primer test del repo que atraviesa la
+suscripción: los 87 unitarios y los 66 e2e corren con `hayTauri() === false`, donde `useFicha`
+devuelve la muestra y no se suscribe a nada. La cobertura lo delataba desde dos fases antes —
+`src/ficha.ts` líneas 98-121 sin cubrir, que son exactamente esas. Hoy el archivo está al **100 %**
+de líneas.
+
+**En rojo con el defecto puesto:** las cinco fallan, y con el mensaje exacto de la auditoría —
+`Expected: "ficha" · Received: "esperando"`.
+
+**Una vuelta atrás que vale registrar:** el primer arnés fingía `@tauri-apps/api/event`. La banda
+registra **cinco suscripciones en el mismo instante** y solo la primera llegaba al doble; las otras
+cuatro entraban a la librería de verdad y reventaban contra un `__TAURI_INTERNALS__` de mentira. El
+test pasaba midiendo una de cinco. Se cambió al seam que la app declara —`src/puente.ts`, que tiene
+sus propios tests contra la API real— y entonces cada emisión llega a quien tiene que llegar.
+
+### De propina, el contrato dejó de tener dos gramáticas
+
+`rename_all` solo toca los **nombres de las variantes**: los campos dentro de `Novedad::SinTexto` y
+`Novedad::Ruido` seguían en snake_case mientras el resto del puente es camelCase. Nadie los leía
+todavía — así es como una inconsistencia espera a que alguien la encuentre en producción. Resuelto
+con `rename_all_fields = "camelCase"`.
+
+## A2 · El kill-switch no alcanzaba al hilo que transcribe
+
+`⌥⎋` cerraba los grifos, pisaba los anillos y vaciaba la ventana de turnos — y el hilo que
+transcribe seguía a lo suyo. El bucle `for encargo in recibe` no consultaba `viva`, así que el audio
+del cliente **que ya iba en vuelo** se transcribía después del corte, **repoblaba la ventana que se
+acababa de vaciar** y volvía a dejar en el disparador la pregunta que `reiniciar()` había pisado. El
+usuario cortaba y la banda seguía enseñando su reunión.
+
+El arreglo tiene dos comprobaciones porque son dos ventanas distintas:
+
+| Cuándo | Qué evita |
+|---|---|
+| antes de transcribir | que el audio del cliente llegue **al transcriptor** después del corte |
+| al volver del motor | que un turno que ya tenía texto se anuncie, guarde o busque |
+
+En los dos casos el audio del encargo se pisa a mano (`olvidar`): es **la única copia que existe
+fuera del anillo**, hecha por el hilo que mira los marcos, así que el `vaciar()` del corte no la
+alcanza. Y si el turno ya traía texto, las letras se pisan igual que en la ventana de turnos y en el
+disparador — es texto del cliente.
+
+**Lo que hizo falta para poder probarlo:** el cuerpo del bucle salió del hilo a una función,
+`atender`. Un `std::thread::spawn` con un `for` dentro no se puede examinar; una función a la que se
+le pasa el interruptor, sí.
+
+**En rojo, dos veces y por separado** (`el_corte_alcanza_al_turno_que_ya_estaba_en_vuelo`):
+
+1. Sin la comprobación de la **salida** del motor: *«el turno repobló la ventana que el corte
+   acababa de vaciar»*. El caso es el real — el motor tarda 250 ms y la tecla se pulsa a mitad, así
+   que el motor de prueba **apaga la escucha mientras transcribe**.
+2. Sin la comprobación de la **entrada**: *«el audio del cliente llegó al transcriptor DESPUÉS del
+   corte»*. La primera versión del test no distinguía este caso —la comprobación de salida lo tapaba
+   y la de entrada quedaba sin rojo, que por la tercera pregunta de la regla 15 no es un gate—; se
+   añadió al motor de prueba una marca de «he trabajado» y entonces cada comprobación tiene su
+   propio rojo.
+
+## A4 · `escucha/` afirmaba estar vigilado por `verify:ephemeral` y no lo estaba
+
+Su cabecera decía, desde la fase 3: *«**MÓDULO PROTEGIDO.** … no la guarda en ninguna parte, y
+`pnpm verify:ephemeral` lo comprueba»*. No estaba en `PROTEGIDOS`. Es el módulo de **mayor
+superficie** de los tres —copia el audio del turno, mantiene la ventana de transcript y guarda la
+última pregunta del cliente—, y un `fs::write` ahí pasaba el gate en verde.
+
+Se añadió a la lista. Y como el problema de fondo es que **la lista se escribe a mano**, el script
+gana un gate sobre sí mismo: la marca «MÓDULO PROTEGIDO» del código es la que manda, y si un archivo
+la lleva, su carpeta está en la lista o el script falla. Un módulo que se cree vigilado es peor que
+uno que se sabe descubierto — nadie va a mirarlo.
+
+**Dos rojos:**
+
+- un `std::fs::write` plantado en `escucha/mod.rs` → `✕ src-tauri/src/escucha/mod.rs:560
+  /std::fs\b/` (antes: silencio).
+- quitando `escucha` de la lista sin tocar su cabecera → `✕ … se declara «MÓDULO PROTEGIDO» y NO
+  está en la lista de este script`.
+
+## A5 · Tras un reenganche, el disparador quedaba muerto el resto de la sesión
+
+Cuando el anillo de una pista da la vuelta entera, la escucha se reengancha al presente y **el reloj
+de esa pista vuelve a cero**. El disparador comparaba el reloj nuevo con el viejo:
+`ahora_ms.saturating_sub(antes)` daba **0**, la espera entre fichas se cumplía siempre y la app no
+volvía a buscar nada — callada, sin un log, sin un estado en la banda. Y el detector de eco tenía la
+misma enfermedad: compara un turno del micrófono contra los del sistema, y tras el reenganche de una
+sola pista comparaba tiempos de dos relojes distintos.
+
+Se arregló en los dos sitios, porque son dos cosas:
+
+1. **El síntoma, en el disparador.** Un reloj que retrocede no es «hace un instante»: es otro reloj.
+   La comparación pasa a `ahora_ms >= antes && ahora_ms - antes < ESPERA_MS`.
+2. **La causa, en la escucha.** Nace **el reloj de la escucha**: uno solo, monótono, que no vuelve
+   atrás. Cada pista guarda su `desfase_ms` —dónde cae su cero en ese reloj— y lo recalcula al
+   reengancharse. Los relojes de pista siguen contando muestras, que es lo que sirve para pedirle su
+   trozo al anillo; lo que sale de la pista hacia el resto de la app va ya en el reloj común.
+
+**Dos rojos:**
+
+- `un_reloj_que_vuelve_atras_no_deja_al_disparador_muerto`, devolviendo la resta saturada: *«tras el
+  reenganche el disparador se quedó mudo el resto de la sesión»*.
+- `tras_el_reenganche_los_turnos_siguen_en_el_reloj_de_la_escucha`, sin `en_el_reloj_comun`: *«el
+  turno salió con el reloj de la pista (600 ms) y no con el de la escucha»*.
+
+**Y el segundo test enseñó algo del detector de voz que no estaba escrito en ningún arnés:** la
+primera versión escribía medio segundo de voz y el turno no se cerraba nunca. El detector por
+energía dedica sus primeros 25 marcos —500 ms— a **medir el silencio de la sala**, y si lo primero
+que oye es la frase, aprende que la frase es el silencio. Es el fallo que `vad.rs` ya declaraba en su
+cabecera («si la app arranca con alguien ya hablando, pierde ese turno»), visto por primera vez desde
+fuera. El test escribe ahora 600 ms de sala callada antes de la frase, y lo dice.
+
+## A3 · `panic = "abort"` anulaba el `catch_unwind` del PDF en release
+
+`corpus::leer::de_pdf` envuelve la librería de PDF en `std::panic::catch_unwind` porque se rompe con
+archivos malformados, y el módulo promete que «un documento dañado no detiene a los otros». Con
+`panic = "abort"` —que traía la plantilla de Tauri para adelgazar el binario— **un `panic!` no se
+desenreda: mata el proceso**. En el binario que se distribuye, un solo PDF roto de la carpeta del
+usuario cerraba la app. El test que cubría la promesa corre en debug: es el **tercer filo** de la
+regla de los gates — probado, pero no en el modo en que el usuario lo usa.
+
+Se quitó la línea. **Lo que cuesta, medido y no estimado: el binario de release pasa de 9,01 MB a
+11,07 MB (+2,07 MB, +22,9 %).** Son las tablas de desenredo. Es mucho para un número que se anota por
+PR, y se paga: la alternativa es que la app se cierre la primera vez que alguien le señale una
+carpeta de documentos de verdad.
+
+**El gate** es estático a propósito (`el_perfil_de_release_desenreda`, al lado del `catch_unwind` que
+protege): correr la suite en release costaría otra compilación con LTO en cada PR para vigilar una
+línea de configuración. Lo que hay que impedir es que esa línea vuelva, y eso se lee. **En rojo**
+devolviendo `panic = "abort"` al manifiesto.
+
+**Y la promesa se comprobó EN RELEASE una vez, a mano**, que es la pregunta que este hallazgo hace:
+`cargo test --release --lib corpus::` → **46 pruebas verdes**, la del PDF roto entre ellas. Antes de
+quitar la línea, ese mismo comando no habría llegado al final: habría muerto el proceso.
+
+---
+
+## Bloque 2 — la app no podía afirmar lo que afirmaba
+
+### A1 · La banda pintaba la consultora inventada DENTRO del producto
+
+Cinco cosas, y la última es la que no tiene excusa:
+
+| Lo que la banda decía en el producto | Lo que había |
+|---|---|
+| «Escuchando · 2 pistas» | los dos grifos cerrados, media hora antes de que el usuario pulse «Iniciar sesión» |
+| «143 documentos · 5 unidades» | ninguna carpeta señalada |
+| «Páramo Azul · 12 min» | ninguna reunión |
+| «Meet · protegido» | una llamada de Zoom, contra la promesa **graduada** que la app hace por escrito |
+| «cliente 14:02 · "Y la limpieza de datos, ¿eso está dentro del alcance?"» | **una frase inventada puesta en boca del cliente, con hora falsa** |
+
+Todo estaba ya disponible para decir la verdad: `reunion_abierta`, `estado_de_la_escucha`,
+`estado_del_corpus` y `turnos_recientes` existen desde las fases 2, 3 y 4. La banda simplemente no
+los preguntaba.
+
+**Cómo se arregló sin mover un píxel del gate de fidelidad.** Dentro de Tauri cada dato viene de su
+comando; **fuera** siguen las cadenas de la maqueta, que es lo que el arnés de capturas fotografía.
+Y donde se pudo, la composición con los datos de muestra da **exactamente** la línea de la maqueta:
+«143 documentos · 5 unidades» sale de `documentos` + `unidades con documentos`, y con la muestra son
+143 y 5. Lo vigila un test nuevo que compara la composición contra la cadena del diccionario en los
+dos idiomas — porque una diferencia de un espacio ahí vale 0,0x % de píxeles y pasa por debajo del
+umbral del gate sin que nadie la vea.
+
+Los «12 min» de la maqueta **no se pintan** dentro del producto: nadie mide todavía cuánto lleva la
+llamada, y escribir un número que no se mide es lo que esta app existe para no hacer. Declarado.
+
+**Y la familia del mismo defecto, que el hallazgo no nombraba pero es el mismo:** las cuatro
+pantallas del cuaderno arrancaban con los datos de muestra **dentro del producto** y los enseñaban
+hasta que lo nativo contestaba —o para siempre, si el comando fallaba—. `usePreguntaAlVolver` recibe
+ahora dos valores: la muestra para fuera de Tauri y **el vacío honesto** para dentro.
+
+**En rojo:** las cinco pruebas nuevas de `la-ficha-llega-a-la-banda.test.tsx` con `deLaMaqueta =
+true`, y el mensaje es el propio hallazgo — *«expected 'Escuchando · 2 pistasMeet · protegido…' not
+to contain 'Escuchando · 2 pistas'»*.
+
+### A8 · «No existe código capaz de abrir una conexión» — y existía desde la fase 3
+
+La frase estaba **en la pantalla de Honestidad**, el peor sitio posible. Era cierta cuando se
+escribió y dejó de serlo en la fase 3, cuando el puente de voz ganó la descarga del modelo de macOS.
+Nadie volvió a mirarla. Y el gate que la respaldaba **no leía `src-tauri/nativo/`**: el único archivo
+del producto capaz de abrir una conexión era el único que ese barrido no abría.
+
+Ahora la pantalla dice lo que se puede comprobar —*«la app no abre ninguna conexión: la única que
+existe la abre macOS cuando le pides instalar un modelo de voz»*— y el gate **cuenta las puertas**:
+son dos líneas, cada una con su ADR en la misma línea, y si aparece una tercera el test falla
+diciendo que hay que volver a escribir la frase de la pantalla. Un «cero» absoluto sostenido por un
+barrido incompleto vale menos que un número exacto que se puede comprobar.
+
+**Dos rojos:** un `URLSession.shared` sin declarar en el puente (*«salidas a la red en el puente
+nativo sin declarar»*) y una tercera puerta declarada (*«cambió el número de puertas a la red»*).
+
+### A6 · Copy en español cableado, y el agujero de clase del gate del diccionario
+
+`Idioma.tsx` devolvía «sin modelo» y «no lo reconoce» escritos en español **dentro del código**, así
+que la interfaz inglesa los enseñaba en español. Y los ocho encuadres en inglés del gate de
+FIDELIDAD no podían verlo: con los datos de muestra esos estados no se pintaban nunca.
+
+El gate del diccionario tenía un agujero de clase — **solo miraba `i18n/`**. Ahora barre los
+componentes con dos reglas:
+
+1. **Ninguna cadena de un componente puede ser un valor que el diccionario ya traduce.** Sin falsos
+   positivos posibles: si está traducida y alguien la escribe igual a mano, esa copia no es bilingüe.
+2. Toda cadena de dos palabras escrita a mano **tiene que existir en la maqueta**, como las del
+   diccionario.
+
+Lo que no es copy se reconoce por su forma y no por una lista que mantener: clases del design system
+(cada palabra es un selector de `ghost.css`), valores de CSS, y mensajes de `throw`/`Error(`/
+`console.` — estos últimos se recortan **enteros y antes de partir en líneas**, porque una llamada a
+`Error(` ocupa cinco y mirando solo la línea del literal el mensaje de un `throw` se leía como copy.
+
+**Tres vueltas atrás que vale registrar**, porque las tres eran el gate midiendo ruido:
+
+- la regla 1 saltaba con `"transcript"`, `"Angel Ghost"` y `"Transcript"`: se escriben **igual en los
+  dos idiomas**, así que un `aria-label` con ese texto no rompe nada. Fuera las que coinciden.
+- saltaba con `"unidad"` y `"track"`, que son **clases** del design system homónimas de palabras del
+  diccionario. Las exclusiones de forma van primero.
+- saltaba con `"marco"`, `"caso"` y `"perfil"`: son **las claves** de las cinco unidades del corpus,
+  y en español se escriben igual que sus etiquetas. Por eso las dos reglas exigen dos palabras. Lo
+  que se pierde queda dicho en el test: una etiqueta traducida de una sola palabra pasaría.
+
+**En rojo** devolviendo las dos cadenas a `Idioma.tsx`: *«"sin modelo" — el diccionario lo traduce en
+"cuaderno.sinModelo"»*.
+
+### A7 · No había forma de instalar el modelo de voz
+
+`instalar_idioma` existía **sin un solo llamador** desde la fase 3, y tres comentarios del código
+hablaban de «el botón de la pantalla de Idioma». En un Mac sin el modelo del cliente —el caso normal:
+uno en español no trae el de inglés— la transcripción del cliente era inalcanzable desde dentro de la
+app, y la pantalla solo decía «sin modelo».
+
+Es el estado que la maqueta no dibujaba, así que **se dibujó primero**: `docs/diseno/idioma.html`
+gana la pista del cliente sin modelo, con su chip ámbar y su botón. Luego el producto. Y la muestra
+de `TRANSCRIPCION_DE_MUESTRA` cambia a ese estado, que es lo que hace que el gate de fidelidad y los
+e2e pasen por él: mientras los dos modelos estaban listos, sesenta encuadres no tocaban nunca el
+estado que la app iba a enseñarle a casi todo el mundo.
+
+El botón **solo aparece cuando hay algo que descargar**: con un idioma que este Mac no conoce, o sin
+motor de voz, no hay nada que instalar y ofrecerlo sería mandar al usuario a un botón que no puede
+funcionar. Mientras macOS descarga dice «instalando…» y no se puede volver a pulsar.
+
+**En rojo:** cinco pruebas nuevas en `idioma-sin-modelo.test.tsx`; sin el botón, *«Unable to find an
+accessible element with the role "button" and name /Instalar el modelo/»*.
+
+**Y el precio de dibujarlo está medido abajo**, en «el desborde que queda»: cuatro pasadas del gate
+de fidelidad, y la última decidida leyendo la captura y no el número.
+
+### Las 9 frases que habían caducado
+
+Cuatro se volvieron verdad al arreglar el código (A3, A4, A7 y la de «sin verificar» de A1); cinco se
+reescribieron:
+
+| Dónde | Qué se hizo |
+|---|---|
+| `MANUAL` · la ficha | fuera «o se queda callado»: **el disparo por silencio no está cableado** (`por_silencio` no tiene llamadores). Se declara como limitación en vez de dejarlo a medias |
+| `MANUAL` · FAQ de internet | ahora dice **dónde** está el botón, porque ahora existe |
+| `MANUAL` · features | nueva sección «El modelo de voz de un idioma» + nota de qué corrigió la auditoría |
+| `i18n` · comentario de la muestra | decía «muere en la fase 4» y no murió; ahora dice qué la mantiene viva y hasta cuándo |
+| `Permisos.tsx` + su maqueta | «Todavía no» en **dos cosas que ya se podían hacer** (M11) |
+| `kit-de-prueba/audio/LEEME.md` | prometía tres cosas «para la fase 5»; ahora tabla de qué hay y qué es deuda |
+| `corpus/leer.rs` · `escucha/mod.rs` | las dos cabeceras dicen desde cuándo su promesa es cierta, y por qué antes no lo era |
+
+**Y un test que encodificaba la mentira:** `permisos: lo que la app aún no puede hacer…` afirmaba
+«tres todavía no» mientras dos de las tres funcionaban. Pasaba en verde porque repetía lo que la
+pantalla decía, no lo que la app hacía. Un test escrito contra la interfaz no puede cazar esto.
+
+#### El desborde que queda, medido y declarado
+
+La pantalla de Idioma **estaba a 0 px del borde** de la ventana de 640 antes de la auditoría, así que
+cada cosa nueva la desbordaba. Cuatro pasadas del gate para colocar una fila y un botón:
+
+| Dónde fue el botón | Desborde |
+|---|---|
+| en una fila propia debajo de las dos pistas | **+58 px** |
+| al lado del motivo, con la etiqueta «Instalar el modelo» | **+37 px** |
+| en la columna de la derecha, que ya ocupa las dos filas del `buffer` | **+29 px** |
+| **al lado del motivo, etiqueta «Instalar»** | **+15 px** ← así queda |
+
+**Y la última la decidió una captura, no un número.** Con el botón en la columna de la derecha el
+desborde bajaba a 29 px y ahí lo habría dejado: el gate solo dice cuántos píxeles sobran. Al **leer
+el PNG como imagen** —la disciplina de la pasada de capturas— se vio lo que ningún número dice: la
+etiqueta partía en dos líneas, «Instalar el» / «modelo», y el código del idioma quedaba flotando
+encima, leyéndose como parte de la fila anterior. Con la etiqueta de una palabra, al lado del motivo
+que arregla, cabe en una línea y sobran 15 px en vez de 29.
+
+**Por qué se dejan esos 15 px y no se recorta copy.** Lo que queda fuera es la última línea del
+párrafo de «Lo que todavía no existe». Quitarlos exigía cortar la frase de la franja que dice *«la
+única vez que la app toca la red…»*, que es una de las afirmaciones que esta app existe para
+sostener. Recortar honestidad para poner un gate en verde es exactamente el fallo que esta auditoría
+entera está pagando.
+
+Y el desborde **solo existe en el estado que ofrece la acción**: en cuanto el modelo está instalado la
+fila vuelve a 53 px y la pantalla cabe. El contenedor es desplazable y **alcanzable con el teclado**
+desde la fase 5, que es justo el cinturón que esta situación necesita.
+
+Va a la **mirada** con su número delante: si el usuario prefiere recortar, se recorta con él.
+
+---
+
+## Bloque 3 — alcance y método
+
+### A9 · El kit de evaluación medía una de las cuatro cosas del plan
+
+El plan pedía cuatro: nDCG@5 del retriever, **P/R del disparo ±1 turno**, **WER informativo**,
+**audio de mezcla** — y la **mediana** de latencia. La fase 5 entregó la primera, y el `LEEME` del
+kit siguió prometiendo el resto «para la fase 5», que ya había terminado.
+
+**Lo que se añadió:**
+
+`docs/kit-de-prueba/disparo.json` — **26 turnos de una reunión inventada, en orden y con su reloj**,
+cada uno marcado con si debe disparar. Se pasan todos por un mismo `Disparador`, así que lo que se
+mide no es solo la regla léxica: también la espera de 6 s entre fichas y la negativa a repetir la
+misma consulta. Y los dos errores se miden por separado porque no cuestan lo mismo — un falso
+positivo interrumpe al consultor; un falso negativo se arregla con `⌘⇧A`.
+
+```
+│ turnos          26        │ precisión  1.000   (mínimo 1.00)
+│ aciertos        11        │ recall     1.000   (mínimo 1.00)
+```
+
+La **mediana de latencia** entra en el test del kit, por pregunta y no en total: **mediana 376 µs ·
+p90 567 µs · peor 2 492 µs**, contra un presupuesto de 4 000 000 µs. Se dice qué mide y qué no —es el
+tramo determinista, sin captura ni STT— porque un número sin su frontera se lee como el total.
+
+**Lo que el kit encontró en su primera corrida, como debe ser:**
+
+- **«Nosotros manejamos catorce canales de venta distintos» NO dispara.** La regla de la cifra mira
+  **dígitos**, no números escritos con letras. Mi marca decía «trae una cifra» y la equivocada era
+  la marca, no el código. Quedan las dos: la de `14` que dispara, y la de `catorce` que no, con su
+  motivo escrito — **una limitación medida en vez de contada**, porque que el transcriptor escriba
+  «14» o «catorce» no lo decide esta app.
+- **La espera se cuenta desde la última FICHA, no desde el último turno.** Otra marca mía mal puesta.
+  Se corrigió, y se añadió un turno que sí mide la espera: una pregunta nueva a dos segundos de una
+  ficha, que no debe disparar.
+
+**Y el umbral del recall tuvo que subir a 1.0 por su propia demo en rojo.** Estaba en 0,90 «por si un
+empate léxico cambia de lado»; devolviendo `MINIMO_CON_SIGNO` a 3 —el defecto real que la fase 4
+encontró— «¿Tienen certificación?» deja de disparar, el recall baja a 0,909… **y el test seguía
+verde**. Con once turnos que deben disparar, un umbral del 90 % regala uno, y no hay ninguno
+regalable: cada turno está marcado a mano porque la app tiene que acertarlo. Con 1.0, rojo:
+*«recall 0.909: se está quedando callado cuando debería buscar»*.
+
+**WER y audio de mezcla quedan como deuda declarada**, con su tabla en el `LEEME` del kit y su línea
+en el summary. Y el margen de ±1 turno se declara **no aplicado**: aquí los turnos son texto y el
+reloj exacto, así que la medida es turno a turno, más estricta. El margen tendrá sentido cuando la
+medida se haga sobre audio.
+
+### A10 · El ADR decía `tracing` y el código tenía 45 `println!`
+
+Y `pino` estaba declarado en `package.json` **sin un solo uso**. Una decisión que el código no sigue
+no es una decisión, y una dependencia declarada y sin usar es superficie regalada en un repo público.
+
+**Se enmienda el ADR 003, no el código, y con su razón delante:** `tracing` vale por lo que trae
+alrededor —suscriptores, filtros, spans, salidas estructuradas— y esta app **no tiene sumidero al que
+escribir**: sin archivo de log (sería disco), sin servicio remoto (sería red), sin telemetría. El
+único destino es la consola de quien desarrolla, y con ese destino `tracing` sin suscriptor no
+registra nada y con `fmt()` es `println!` con más pasos. Se revisará cuando exista un destino de
+verdad. `pino` sale; vuelve con su uso en el mismo PR.
+
+**Y el gate que de verdad faltaba se construyó.** El «término plantado en logs» que la DoD exige y
+que el ADR prometía **no existía como test**: la canaria solo se buscaba en los archivos del disco.
+El log es la otra salida —a la consola, al `Console.app`, al portapapeles de quien pega una traza— y
+nadie la miraba.
+
+`la_canaria_del_cliente_no_aparece_en_el_log` corre la sesión completa **en un proceso hijo** —este
+mismo binario con el filtro exacto de la sesión— y lee su salida. Capturar `println!` desde dentro
+del propio proceso obligaría a sustituir la salida estándar, y entonces el gate mediría un logger de
+mentira en vez del del producto. Comprueba además que el hijo **llegó a correr** la sesión: sin eso,
+un hijo que fallara al arrancar daría verde.
+
+**En rojo** con un `println!("[disparo] mirando «{}»", turno.texto)`:
+
+```
+lo que dijo el cliente salió por el log, en 1 línea(s):
+  [disparo] mirando «¿Y el alcance del quetzalcoatlus-de-bolsillo-7731 está dentro de la propuesta?»
+```
+
+### Y el gate de la canaria tumbó la CI a la primera — el rojo que no pedí
+
+`quality` y `e2e` en verde; **`build-escritorio` en rojo**, y el culpable era el test que acababa de
+escribir:
+
+```
+la sesión dejó 3 archivo(s) fuera del índice del corpus:
+  /var/folders/…/T/ag-corpus-vivo-5705/Adopción de datos en cuatro etapas.md
+  /var/folders/…/T/ag-corpus-vivo-5705/Propuesta Páramo Azul · rentabilidad por canal.md
+  /var/folders/…/T/ag-corpus-vivo-5705/casos/Cooperativa Sur del Valle · cierre de caso.md
+```
+
+**Qué pasó.** La canaria lanzaba al hijo el test del efímero, que hace **inventario de `/var/folders`
+entero** antes y después. Mientras el hijo inventariaba, el padre seguía corriendo sus otros tests y
+creó los tres documentos de `corpus_sintetico()`. El hijo los vio nacer y los denunció como fuga de
+la sesión. **En este Mac pasó cinco veces seguidas; en la integración continua falló a la primera** —
+la máquina es más lenta y las ventanas se solapan.
+
+Es la **tercera vez en este sprint** que un test se rompe por compartir una carpeta temporal con otro
+que corre a la vez: la fase 3 con el audio, la fase 4 con el corpus, y ahora esta. La novedad es que
+el vecino estaba **en otro proceso**, y el mutex del turno no cruza procesos.
+
+**El arreglo no fue un candado, fue quitarle al hijo lo que no le toca.** Para leer un log hace falta
+la sesión, no el inventario: nace `sesion_para_el_log`, que corre exactamente la misma
+`una_sesion_completa` y no mira el disco. El hijo pasa a ser ese. Además de correcto es más barato —
+la suite baja de 17,4 s a 14,5 s— y el gate sigue dando su rojo con el mismo `println!` plantado.
+
+**Lo que este episodio deja dicho:** el rojo que de verdad enseñó algo no fue ninguno de los trece
+que preparé. Fue el que no pedí, en la máquina que no es la mía.
+
+**Y el verde que lo cierra, con conclusión propia por check** (`e83b8fb`, corrida `35810284907`):
+
+```
+quality           SUCCESS  COMPLETED
+e2e               SUCCESS  COMPLETED
+build-escritorio  SUCCESS  COMPLETED
+```
+
+El rojo no fue un accidente de una corrida: cayó en **dos seguidas** (`35808919334` sobre `e85aa2d`
+y `35809163879` sobre `b967124`), las dos que llevaban la canaria antes del arreglo. Queda dicho para
+la segunda pregunta de la regla 15 —*¿lo viste correr?*—: la canaria del log corrió en la integración
+continua, en rojo dos veces y en verde después del arreglo, y nunca por un `skipped`.
+
+### El gate de contrato Rust→TS
+
+Construido en el commit de C1, que es donde hacía falta. Su descripción, sus dos gates y sus dos
+demos en rojo están arriba.
+
+---
+
+## Bloque 4 — la deuda, declarada
+
+### Desviación del plan — el VAD no es Silero, es un detector por energía
+
+El plan del sprint y la orden nombran **Silero VAD (ONNX)**. Lo que hay es un **detector por energía
+con suelo de ruido adaptativo** (`src-tauri/src/voz/vad.rs`), y hasta ahora eso solo estaba dicho en
+la cabecera de ese módulo. Sube aquí, que es donde la planeadora lo lee.
+
+**Por qué.** La regla 14 de esta casa dice que la funcionalidad interna se resuelve **primero con
+programación** y que el modelo tiene que *ganarse* el puesto con una medición. Silero son 2 MB que se
+descargan aparte, un runtime de ONNX en el árbol de dependencias y un modelo que hay que distribuir;
+el detector por energía cabe en una pantalla, no descarga nada, corre en microsegundos y se puede
+leer entero. El `trait Detector` existe precisamente para que el motor sea **sustituible con una
+medición delante**.
+
+**Qué falta para decidir.** El kit no mide todavía la calidad del fin de turno contra una referencia
+—eso es WER y audio de mezcla, la deuda de A9—. Hasta que exista ese número, cambiar de motor sería
+preferencia y no ingeniería. **Queda como decisión abierta del sprint 2, con el ADR del STT y del VAD
+como sitio donde cerrarla.**
+
+### Medios y bajos: lo que se paga en el S2
+
+| # | Qué | Por qué no ahora | Pago |
+|---|---|---|---|
+| **M1** | `"csp": null` en `tauri.conf.json`: el webview puede cargar de cualquier origen | Ponerle una CSP a una app de Tauri toca el IPC y los estilos que Tailwind inyecta en caliente; hacerlo sin arrancar la app de verdad es cambiar un gate por una avería silenciosa. Necesita `pnpm tauri dev` delante | S2 |
+| **M2** | Sesión afirma `Funciona` en las dos pistas **sin leer `abierta`/`motivo`**: con el tap caído, la app dice que funciona | Es la misma clase que A1 y merece el mismo arreglo, pero toca una pantalla aprobada en la mirada 12 y su estado «pista caída» no está dibujado en la maqueta | S2, con su mirada |
+| **M4** | Tras `⌥⎋` **la banda no vuelve** hasta reiniciar la app, y el manual no lo advierte | El corte es irreversible por diseño en este sprint; lo que falta es o la vuelta o la advertencia | S2 |
+| **M9** | El gate de efímero en runtime **no mira `~/Library`** —donde escribe una app de macOS— y solo compara archivos NUEVOS: una fuga que *añada* a un archivo existente es invisible | Ampliarlo bien pide comparar hashes de un árbol grande; hacerlo mal lo vuelve lento y ruidoso | S2 |
+| **M10** | `nativo.rs` reinterpreta los bytes del buffer como `f32` **sin validar el formato** | Hoy el formato lo fija la misma app en los dos lados; validarlo es cinturón, no arreglo | S2 |
+| **M11** | «Qué puedes hacer ya, sin conceder nada» marcaba «Todavía no» en dos cosas que ya se pueden hacer | **PAGADO en el bloque 2** (estaba en la lista de frases caducadas) | — |
+| **M3, M5–M8, M12–M14** · **B1–B7** | contados por el auditor | **su detalle no llegó al artefacto del repo** (ver abajo) | S2 |
+
+### Y un hallazgo sobre el propio método, que este bloque destapa
+
+`sprints/SPRINT_001-auditoria.md` guarda **con archivo y línea** el crítico y los diez altos, y de
+los catorce medios detalla seis. De los ocho medios restantes y los siete bajos guarda **solo el
+conteo**: el reporte del auditor se resumió al escribirlo en el repo, y el resumen se comió lo único
+que hace pagable un hallazgo — dónde está.
+
+No se inventan aquí. Se declaran por conteo, y la lección va al summary como sugerencia al método:
+**el artefacto del repo tiene que llevar los hallazgos de TODAS las severidades con su archivo y su
+línea**, porque es el único que sobrevive a la sesión que los encontró. Un hallazgo sin sitio no es
+deuda: es un rumor.
+
+---
+
+## El `/release-check` — las doce casillas, y las cuatro cosas que encontró
+
+El checklist se corrió entero sobre `5c13a8e`, con los comandos del `ci.yml` y no con parecidos.
+Diez casillas pasaron sin ruido. Las otras dos dieron cuatro hallazgos, y ninguno lo había visto ni
+la auditoría ni la CI.
+
+### 1 · `cargo clippy` lo pedía el checklist desde el estampado y NUNCA lo corría nadie
+
+**Estaba en rojo.** Primera vez que se ejecuta en la vida del repo:
+
+```
+error: variable does not need to be mutable
+   --> src/escucha/mod.rs:927:13
+    |
+927 |         let mut en_vuelo = |desde_ms: usize| Encargo {
+    = note: `-D unused-mut` implied by `-D warnings`
+```
+
+Un `mut` de más en un cierre de un test que escribí en la fase 2. Trivial de arreglar; lo que no es
+trivial es **por qué llevaba ahí desde entonces**: `ci.yml` corre `cargo check` y `cargo test`, y
+clippy no estaba en ningún job. Un gate que el checklist exige y ningún job ejecuta es la segunda
+pregunta de la regla 15 en su forma más pura —*¿lo viste correr?*— contestada con un no.
+
+**Arreglo en dos partes:** el `mut` fuera, y clippy dentro de `build-escritorio` (paso propio, no job
+nuevo, así que la ruleset no se toca). **Su demo en rojo no hubo que fabricarla: ya estaba roja**, que
+es la única demo que no se puede acusar de complaciente.
+
+### 2 · El gate del efímero acusaba al compilador — cuarta vez que dos cosas comparten carpeta
+
+Corriendo `verify:ephemeral:runtime` mientras un `pnpm tauri build` compilaba al lado:
+
+```
+la sesión dejó 6 archivo(s) fuera del índice del corpus:
+  …/src-tauri/target/release/deps/libtantivy_columnar-e02d283488e778db.rlib
+  …/src-tauri/target/release/deps/libwry-cb1b28a9b61f2eb0.rlib
+  …
+```
+
+Ninguna fuga: seis `.rlib` recién compilados por el vecino. El inventario miraba **el árbol del repo
+entero**, `target/` incluido, así que su veredicto dependía de quién más estuviera corriendo. Es la
+**cuarta vez en este sprint** que un test se rompe por compartir carpeta con otro —audio en la fase 3,
+corpus en la fase 4, la canaria en la CI, y ahora el compilador— y la primera en que el acusado no es
+un test hermano sino la herramienta.
+
+**Arreglo:** `DE_LA_HERRAMIENTA` — `target` · `node_modules` · `.git` · `coverage` · `dist` ·
+`playwright-report` · `test-results` quedan fuera del inventario, y el mensaje del fallo las nombra
+para que nadie se pregunte qué no se miró. **No afloja el gate, lo apunta:** la app nunca escribe ahí
+—su carpeta de datos está en `~/Library/Application Support` y su directorio de trabajo durante el
+test es `src-tauri/`, vigilado entero—, y un gate que acusa al compilador se acaba desactivando, que
+es el día en que la fuga de verdad pasa con él.
+
+**Demo en rojo, en el mismo commit y con la exclusión ya puesta** (`fs::write` plantado dentro de
+`una_sesion_completa`):
+
+```
+la sesión dejó 1 archivo(s) fuera del índice del corpus:
+  …/src-tauri/fuga-inyectada-de-la-demo.txt
+(fuera del inventario, porque las escribe la herramienta y no la app: target · node_modules · …)
+test una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus ... FAILED
+```
+
+Revertida la fuga, verde. La exclusión no le quitó el diente.
+
+### 3 · El manual nombraba un botón que dejó de llamarse así — y lo rompí yo, doce horas antes
+
+`docs/MANUAL-DE-USO.md` decía dos veces **«Instalar el modelo»**. El botón se llama **«Instalar»**
+desde `b967124`, el commit que le acortó la etiqueta para que no partiera en dos líneas. La maqueta,
+el diccionario y la guía de prueba dicen «Instalar»; el manual se quedó con el rótulo viejo.
+
+Lo que deja dicho, y va al summary como sugerencia al método: **el barrido de frases caducadas se
+corrió en la Fase 1 de la auditoría, y la Fase 2 fabricó una frase caducada nueva.** Es exactamente
+la lección de la regla 17 con el barrido de enlaces —*corre sobre el árbol que se va a subir, después
+del último `git add`*— aplicada a las frases. Un barrido de caducidad hecho antes de los arreglos
+audita el repo que ya no existe.
+
+### 4 · `design-sync/` no existe, y la razón declarada no es la que manda
+
+La Etapa de Diseño lo anotó como deuda con este motivo: *«no hay ciclo cerrado que publicar»*. Pero la
+regla 16 de esta casa no habla de publicar: **«todo sprint que toque UI actualiza el bundle en su MISMO
+PR … publicar puede esperar al cierre de ciclo, y así el cierre es un delta pequeño y nunca una
+reconstrucción»**. Este sprint es el primero con UI y no tocó el bundle, así que la deuda sigue viva
+con el motivo equivocado. Sube al summary con el motivo correcto y **con la decisión en manos del
+usuario**: construirlo antes del merge, o pagarlo en el S2 sabiendo que el cierre de ciclo será un
+delta mayor.
+
+### Las casillas que pasaron, con su número
+
+| Casilla | Evidencia |
+|---|---|
+| §1 tests | 108 unitarios (89,2 % líneas) · 66 e2e sin flaky · 208 + 14 de cargo |
+| §2 tipos y lint | `tsc --noEmit` · `eslint src` · **clippy limpio en las dos formas**, ya |
+| §3 binario | `pnpm tauri build` produce `.app` y `.dmg`: **binario 11,05 MB · .app 11 MB · dmg 4,88 MB** |
+| §4 permisos | tres `NS*UsageDescription` en `Info.plist` + `lproj/{es,en}.lproj/InfoPlist.strings` |
+| §5 ventana protegida | `ventana/mod.rs` + `tests/unit/proteccion-de-captura.test.ts`, exactamente una protegida |
+| §6 no persistencia | barrido estático (17 archivos, 8 módulos) **y** el de runtime, con su fuga inyectada |
+| §7 seguridad | `pnpm audit --audit-level high` sin vulnerabilidades · `cargo audit` 0 vulnerabilidades (3 warnings declarados) |
+| §8 observabilidad | ni `pino` ni Sentry en el árbol; la canaria demuestra que el log no lleva al cliente |
+| §9 a11y | axe dentro de los 66 e2e · ambos temas · **§9 del bundle: hallazgo 4** |
+| §10 documentación | manual corregido (hallazgo 3) · guía v2 · summary DENTRO del PR · barrido de enlaces limpio |
+| §11 los checks | conclusión propia `SUCCESS` en `quality`, `e2e` y `build-escritorio` sobre `e83b8fb` |
+| §12 el disco en runtime | 10 archivos nuevos, todos del índice del corpus; la carpeta reparada de 755 a 700 |
+
+---
+
+### Mirada 15 — el cuaderno del cierre, aprobado (2026-09-23)
+
+> **«Está perfecto lo de transcripción en vivo y lo que transcribe el mac muy bien, ¿qué sigue?»**
+
+El cuaderno de fidelidad que se le presentó —`docs/fidelidad/S1-cuaderno.html`, 60 encuadres del
+producto construido contra la maqueta— se abrió: el usuario nombra **dos cosas que solo están ahí
+dentro**, el transcript en vivo de la banda y el motor de voz del Mac por pista de la pantalla de
+Idioma. Veredicto: aprobado.
+
+**Lo que el veredicto NO dice, y se anota para que nadie lo lea como que sí:** la pregunta puntual
+que se le hizo era si aprobaba el estado **«sin modelo»** de Idioma con su desborde de **15 px**, y
+sobre esos 15 px no dijo nada. Se toma como **aceptado con el defecto declarado** —está en la tabla
+de deuda del summary con esa misma palabra— y no como corregido. Si el usuario prefiere recortar la
+frase de honestidad del pie para que la pantalla quepa, se recorta con él: la alternativa sigue
+abierta y cuesta una línea.
+
+---
+
+## El bundle `design-sync/` — pagado aquí, y no a mano
+
+Cuarto hallazgo del `/release-check`. La Etapa de Diseño lo había anotado como deuda con el motivo
+*«no hay ciclo cerrado que publicar»*, y ese no es el motivo que manda: la **regla 16** no habla de
+publicar, pide que **todo sprint que toque UI actualice el bundle en su mismo PR** — para que el
+cierre de ciclo sea un delta pequeño y jamás una reconstrucción. El usuario decidió pagarlo aquí.
+
+**Qué es y qué no es.** `design-sync/` es el espejo en el repo de lo que algún día se publica en
+Claude Design. **Publicar no ocurrió y no ocurre en este sprint**: lo hace `/design-sync`, que solo
+invoca el usuario, en el cierre de ciclo y **después del gate ⭐⭐**. Por eso `project.json` lleva
+`projectId: null` y `lastPublished: null`, y el propio archivo explica por qué: el destino se
+decide con el usuario la primera vez, jamás se adivina.
+
+**La decisión de fondo: es un GENERADOR, no una carpeta escrita a mano.** Un espejo copiado a mano
+se desvía en el primer sprint —alguien cambia un hex en `ghost.css`, la tarjeta se queda con el
+viejo— y nadie se entera, porque la vitrina no tiene CI ni la abre nadie entre ciclo y ciclo.
+`scripts/design-sync-bundle.mjs` arma cada tarjeta **leyendo** `ghost.css`, la maqueta aprobada y
+el propio `design-system.md`: ni un hex, ni una clase, ni una línea de copy se escriben dos veces.
+
+| Grupo | Tarjetas |
+|---|---|
+| Fundamentos | Tokens · Estados · Anti-patrones |
+| Componentes | Ficha de evidencia · Contador de red · Estado de permiso · Bandera de jurisdicción · Estado de sesión · Alerta del radar · Primitivas · Píldora de voz |
+| Componentes · S1 | La banda (seis estados) · «Todavía no» |
+
+Trece tarjetas autocontenidas —CSS y sprite en línea, cero CDNs—, cada una con su primera línea
+exacta `<!-- @dsCard … -->` (sin ella Claude Design no la indexa) y cada una en **los dos temas**,
+porque el sistema tiene dos y uno solo no es el sistema. 372 KB en el repo.
+
+### Lo que solo se vio MIRANDO las tarjetas
+
+Las tres cosas que el conteo dio por buenas y la foto desmintió — la misma lección de la fase 2,
+otra vez:
+
+1. **Las etiquetas pegaban las dos lenguas**: «Alerta del radarRadar alert». Venía de aplanar el
+   `<h2>` bilingüe de la maqueta a texto; la corrección es tomarlo como **HTML** y dejar que el CSS
+   esconda el idioma que no toca, como hace el producto.
+2. **Las notas de cada estado de la banda señalaban cosas ausentes.** Salían de la nota «qué mirar»
+   de la maqueta, que es de la SALA de diseño y habla de «la línea azul del recorte» y «el recuadro
+   ámbar sobre el Dock» — marco que al publicar se quita. Una nota que apunta a algo que no está es
+   peor que ninguna. Ahora salen de la **tabla del `design-system.md` §9-quinquies**, que describe
+   el estado y nada más.
+3. **El markdown llegaba crudo**: la tabla del sistema escribe `**la maniobra**` y la tarjeta
+   publicaba los asteriscos.
+
+Y una cuarta de tipografía del dato: la etiqueta de las tarjetas «todavía no» decía `sesion`, sin
+tilde, porque era el nombre del archivo. Ahora sale del título de la pantalla en la maqueta.
+
+### El gate del espejo, con sus dos rojos
+
+`tests/unit/design-sync-espejo.test.ts` (42 aserciones) exige que **el bundle del repo sea el que
+el generador emite hoy** —el mismo trato que el contrato Rust→TS: el que emite escribe, el repo
+guarda, el gate compara— más, por tarjeta: la línea `@dsCard` exacta, cero recursos externos, los
+tokens y los dos temas dentro, y el bilingüe escondido por CSS y no borrado.
+
+**Rojo 1 — el sistema cambia y el bundle no** (`--halo` a magenta en `ghost.css`):
+
+```
+AssertionError: el bundle derivó del sistema. Regenéralo con `node scripts/design-sync-bundle.mjs`:
+· deriva en design-sync/components/fundamentos/tokens.html
+· deriva en design-sync/components/fundamentos/estados.html
+  … 13 tarjetas
+```
+
+**Rojo 2 — alguien edita una tarjeta a mano** (un `style` inline y un CDN de propina):
+
+```
+× …/ficha-de-evidencia.html es autocontenida: cero CDNs, cero recursos externos
+  https://cdn.example.com/x.css: expected [ 'https://cdn.example.com/x.css' ] to deeply equal []
+· deriva en design-sync/components/componentes/ficha-de-evidencia.html
+```
+
+Revertidas las dos, verde: 42 de 42. Corre en `pnpm test`, o sea en `quality`, o sea en cada PR.
+
+---
+
+## El gate ⭐ — diferido por decisión del usuario (2026-09-23)
+
+El usuario decidió **no correr el recorrido de la guía de prueba en este sprint**: *«no vamos a
+diferir el gate hasta lograr algo avanzado»*. Queda registrado como decisión suya y no como olvido,
+y conviene decir por qué **no es un corte**: la regla del kit dice que el gate ⭐ **se OFRECE**, y
+el que el cierre EXIGE —el ⭐⭐— pertenece al **cierre de CICLO**, no al de un sprint. Este es el S1
+de un ciclo de tres o más. Lo que sí arrastra: las nueve paradas siguen sin caminarse, y entre
+ellas la **parada 5**, que es el re-test humano del hallazgo C1 (la ficha llegando a la banda). El
+CI lo cubre por otro camino —`la-ficha-llega-a-la-banda.test.tsx`, y el kit mide el disparador— pero
+**nadie lo ha visto con su voz y su Mac**, y eso el summary lo dice tal cual.

@@ -7,6 +7,7 @@
   <symbol id="i-x-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor" stroke="none"/><path d="M5.6 5.6l4.8 4.8M10.4 5.6l-4.8 4.8" stroke="var(--bg)" stroke-width="1.8" fill="none"/></symbol>
   <symbol id="i-dot" viewBox="0 0 16 16"><circle cx="8" cy="8" r="4" fill="currentColor" stroke="none"/></symbol>
   <symbol id="i-ring" viewBox="0 0 16 16"><circle cx="8" cy="8" r="4"/></symbol>
+  <symbol id="i-pendiente" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.2" stroke-dasharray="2.1 2.3"/></symbol>
   <symbol id="i-half" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11A5.5 5.5 0 0 0 8 2.5z" fill="currentColor" stroke="none"/></symbol>
   <symbol id="i-mic" viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2M5.5 14.5h5"/></symbol>
   <symbol id="i-mic-off" viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2M5.5 14.5h5M2 2l12 12"/></symbol>

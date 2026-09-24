@@ -1,0 +1,218 @@
+<!-- @dsCard group="Componentes" name="Bandera de jurisdicción" -->
+<!doctype html>
+<html lang="es" data-lang="es">
+<head>
+<meta charset="utf-8">
+<title>Bandera de jurisdicción — Angel Ghost</title>
+<style>
+:root {
+  /* ---- Tipografía (D4): nativa de macOS, sin embeber bytes ---- */
+  --font-evidencia: "Charter", "Iowan Old Style", Georgia, serif;     /* lo que dice TU corpus */
+  --font-ui: "Avenir Next", "Helvetica Neue", system-ui, sans-serif;   /* la interfaz */
+  --font-mono: "Menlo", "SF Mono", ui-monospace, monospace;            /* lo medible */
+
+  /* ---- Escala tipográfica ---- */
+  --t-titular: 17px;   /* ficha: titular ≤ 8 palabras */
+  --t-linea: 14px;     /* ficha: una línea */
+  --t-ui: 13px;        /* interfaz general */
+  --t-meta: 12px;      /* estado, fuente, etiquetas */
+  --t-mono: 11.5px;    /* contador, atajos, fuente de ficha */
+  --t-h1: 22px;        /* título de pantalla (ventana principal) */
+  --t-h2: 15px;
+
+  /* ---- Espacio (múltiplos de 4) ---- */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+
+  /* ---- Radios y trazos ---- */
+  --r-chip: 5px; --r-ficha: 8px; --r-panel: 10px; --r-tecla: 4px;
+  --borde: 1px;
+
+  /* ---- Motion (D10): casi ninguno ---- */
+  --dur: 150ms; --ease: cubic-bezier(.2,.6,.2,1);
+
+  /* ---- Tamaños de ventana (D1, D6) ---- */
+  --panel-w: 380px; --panel-h: 220px; --panel-h-transcript: 420px; --panel-h-max: 360px;
+  --principal-w: 960px; --principal-h: 640px;
+  /* La banda ocupa el ancho de la pantalla; solo su ALTO es una medida. Estas tres son la
+     fuente única: las usa el CSS de abajo y las lee la ventana nativa (test en `src-tauri/`). */
+  --banda-h: 88px; --banda-h-ampliada: 200px; --banda-h-voz: 44px;
+}
+:root, .tema.oscuro {
+  color-scheme: dark;
+  --bg: #1a1917;          /* ventana */
+  --surface: #242320;     /* ficha, tarjetas */
+  --surface-2: #2e2d29;   /* chips, teclas, hover */
+  --line: #3b3a35;        /* bordes */
+  --line-2: #4a4841;      /* bordes en foco/hover */
+  --ink: #ece7dc;         /* texto principal — marfil */
+  --ink-2: #b9b3a6;       /* texto secundario (AA sobre bg y surface) */
+  --ink-3: #7c776c;       /* SOLO ORNAMENTO (líneas, separadores). Jamás texto — vetado */
+  --halo: #9ecbff;        /* acento único: foco, fijado, interactivo */
+  --halo-tint: rgba(158,203,255,.14);
+  --ok: #62d3b4;          /* activo / verificado / verde */
+  --ok-tint: rgba(98,211,180,.15);
+  --warn: #f0b64a;        /* atención / sin verificar / aviso */
+  --warn-tint: rgba(240,182,74,.15);
+  --err: #ff8577;         /* error / cortado / revocado */
+  --err-tint: rgba(255,133,119,.15);
+  --mute: #9a958a;        /* inactivo (texto AA sobre bg) */
+  --sombra-panel: 0 10px 30px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.04) inset;
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.25);
+}
+.tema.claro {
+  color-scheme: light;
+  --bg: #f5f2ea;
+  --surface: #fffdf8;
+  --surface-2: #ece8de;
+  --line: #d6d1c4;
+  --line-2: #bdb7a8;
+  --ink: #1f1e1a;
+  --ink-2: #5a5650;
+  --ink-3: #a19b8e;       /* SOLO ORNAMENTO — vetado como texto */
+  --halo: #1d5c9c;
+  --halo-tint: rgba(29,92,156,.12);
+  --ok: #0f6350;
+  --ok-tint: rgba(21,122,98,.13);
+  --warn: #7a4f00;
+  --warn-tint: rgba(198,131,0,.16);
+  --err: #a32a22;
+  --err-tint: rgba(184,50,42,.12);
+  --mute: #6d685f;
+  --sombra-panel: 0 10px 28px rgba(40,30,10,.18), 0 0 0 1px rgba(0,0,0,.04);
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.05);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { font-family: var(--font-ui); font-size: var(--t-ui); color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+body { margin: 0; line-height: 1.45; }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--halo); outline-offset: 2px; border-radius: var(--r-chip); }
+.mono { font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+[hidden] { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+html[data-lang="es"] [lang="en"] { display: none !important; }
+html[data-lang="en"] [lang="es"] { display: none !important; }
+.ic { display: inline-block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; }
+.ic.s { width: 13px; height: 13px; vertical-align: -2px; }
+.ic.relleno { fill: currentColor; stroke: none; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+.estado { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px 2px 6px; border-radius: var(--r-chip); border: var(--borde) solid transparent; font-size: var(--t-meta); font-weight: 500; line-height: 1.3; white-space: nowrap; }
+.estado.ok { color: var(--ok);   background: var(--ok-tint);   border-color: var(--ok); }
+.estado.warn { color: var(--warn); background: var(--warn-tint); border-color: var(--warn); }
+.estado.err { color: var(--err);  background: var(--err-tint);  border-color: var(--err); }
+.estado.mute { color: var(--mute); background: transparent;      border-color: var(--line); }
+.estado.halo { color: var(--halo); background: var(--halo-tint); border-color: var(--halo); }
+.estado.pendiente {
+  color: var(--mute);
+  background: transparent;
+  border-color: var(--line-2);
+  border-style: dashed;
+}
+.pendiente .ic { opacity: .75; }
+.franja .ic { margin-top: 1px; }
+.franja.warn { border-color: var(--warn); background: var(--warn-tint); }
+.franja.warn .ic { color: var(--warn); }
+.franja.err .ic { color: var(--err); }
+.franja.ok { border-color: var(--ok);   background: var(--ok-tint); }
+.franja.ok .ic { color: var(--ok); }
+.barra .pistas .pista.off .ic { opacity: .75; }
+.ficha .fuente { display: flex; align-items: center; gap: 6px; margin-top: 1px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; }
+.ficha .fuente .unidad { padding: 0 5px; border-radius: 3px; background: var(--surface-2); color: var(--ink-2); font-family: var(--font-ui); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; line-height: 15px; }
+.ficha .fuente .doc { overflow: hidden; text-overflow: ellipsis; }
+.ficha .fuente .pin { margin-left: auto; color: var(--ink-2); display: inline-flex; align-items: center; gap: 3px; }
+.pie .cliente.ok { color: var(--ok); }
+.pie .cliente.warn { color: var(--warn); }
+.rail .marca .ic { color: var(--halo); }
+.fila > .ic { flex: 0 0 auto; }
+.permiso .ic { width: 20px; height: 20px; color: var(--ink-2); }
+.bandera { display: grid; grid-template-columns: 20px 1fr; gap: 3px 10px; padding: 10px 12px; border: var(--borde) solid var(--line); border-radius: var(--r-ficha); background: var(--surface); font-size: var(--t-meta); }
+.bandera .ic { width: 18px; height: 18px; margin-top: 1px; grid-column: 1; }
+.bandera > :not(.ic) { grid-column: 2; }
+.bandera .donde { font-weight: 600; font-size: var(--t-ui); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bandera .regla { color: var(--ink); }
+.bandera .implica { color: var(--ink-2); }
+.bandera .fuente { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
+.bandera.riesgo-bajo { border-left: 3px solid var(--ok); }
+.bandera.riesgo-medio { border-left: 3px solid var(--warn); }
+.bandera.riesgo-alto { border-left: 3px solid var(--err); }
+.bandera.desconocida { border-left: 3px solid var(--line-2); }
+.buffer .ic { color: var(--ink-2); }
+.buffer .donde { grid-column: 2; color: var(--ink-2); font-size: 11.5px; }
+.banda .marca-min.warn { color: var(--warn); }
+.banda .cliente-b.warn { color: var(--warn); }
+.banda .aviso-b .ic { flex: 0 0 auto; margin-top: 1px; }
+.banda .maniobra-b .ic { flex: 0 0 auto; align-self: center; color: var(--ink-2); }
+.propuesta > .ic { margin-top: 2px; color: var(--halo); }
+.propuesta.aceptada > .ic { color: var(--ok); }
+.idiomas .lg .ic { flex: 0 0 auto; }
+.puerta > .ic { margin-top: 2px; }
+.puerta.si > .ic { color: var(--ok); }
+.puerta.no > .ic { color: var(--err); }
+.cuenta .ic { flex: 0 0 auto; color: var(--halo); }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
+.mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
+@media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
+.k-sec > p.regla { font-size: var(--t-ui); color: var(--ink-2); max-width: 78ch; }
+.k-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+.k-grid.ancha { grid-template-columns: 1fr; }
+.k-grid.fichas { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
+.prohibido li .ic { color: var(--err); }
+/* marco de exhibición del bundle */
+  body { margin: 0; padding: var(--s-6); }
+  .ds-cab { width: 100%; max-width: 1180px; margin: 0 auto var(--s-5); }
+  .ds-cab h1 { font-family: var(--font-ui); font-size: var(--t-h1); font-weight: 600; margin: 0 0 var(--s-2); }
+  .ds-cab p { font-family: var(--font-ui); font-size: var(--t-ui); color: var(--ink-2); margin: 0; line-height: 1.5; max-width: 82ch; }
+  .ds-cab p.ds-regla { color: var(--ink); margin-bottom: var(--s-2); }
+  .ds-cab code { font-family: var(--font-mono); font-size: var(--t-mono); }
+  /* 1180 px o lo que haya: la banda ocupa el ancho de la PANTALLA, y en un marco estrecho su
+     ellipsis recorta la fuente y la fecha como si fuera un defecto del componente. */
+  .ds-temas { width: 100%; max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--s-6); }
+  .tema { padding: var(--s-5); border: var(--borde) solid var(--line); border-radius: var(--r-panel); background: var(--bg); color: var(--ink); }
+  .tema > .ds-t { display: block; margin: 0 0 var(--s-4); font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+  .ds-pieza + .ds-pieza { margin-top: var(--s-6); }
+  .ds-pieza > .ds-et { display: block; margin: 0 0 var(--s-2); font-family: var(--font-ui); font-size: var(--t-meta); font-weight: 600; color: var(--ink); }
+  .ds-pieza > .ds-nota { display: block; margin: 0 0 var(--s-3); font-family: var(--font-ui); font-size: var(--t-meta); color: var(--ink-2); line-height: 1.5; max-width: 72ch; }
+  .ds-marco-banda { border: var(--borde) solid var(--line); border-radius: var(--r-ficha); overflow: hidden; }
+  @media (max-width: 720px) { body { padding: var(--s-4); } }
+</style>
+</head>
+<body>
+<svg style="display:none" aria-hidden="true">
+<symbol id="i-globo" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M1.5 8h13M8 1.5c2 2 2 11 0 13M8 1.5c-2 2-2 11 0 13"/></symbol>
+<symbol id="i-check-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor" stroke="none"/><path d="M5 8.2l2 2 4-4.4" stroke="var(--bg)" stroke-width="1.9" fill="none"/></symbol>
+<symbol id="i-alert" viewBox="0 0 16 16"><path d="M8 2.2 14.3 13H1.7z" fill="currentColor" stroke="none"/><path d="M8 6v3.4M8 11.6v.2" stroke="var(--bg)" stroke-width="1.8" fill="none"/></symbol>
+<symbol id="i-ring" viewBox="0 0 16 16"><circle cx="8" cy="8" r="4"/></symbol>
+</svg>
+  <div class="ds-cab">
+    <h1>Bandera de jurisdicción</h1>
+    <p class="ds-regla">C11 — <span lang="es">informativa, con fuente y fecha; nunca bloquea; no es asesoría legal</span><span lang="en">informative, with source and date; never blocks; not legal advice</span></p>
+    <p>Angel Ghost · Componentes — derivado de <code>docs/diseno</code> y <code>design-system.md</code>. Los dos temas, las dos lenguas (se muestra <code>es</code>).</p>
+  </div>
+  <div class="ds-temas">
+    <section class="tema oscuro">
+      <span class="ds-t">tema oscuro · primario</span>
+      <div class="ds-pieza">
+        <div class="k-grid">
+    <div class="bandera riesgo-bajo"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde">Colombia <span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span lang="es">riesgo bajo-medio</span><span lang="en">low-medium risk</span></span></div><div class="regla"><span lang="es">Escuchar como participante es lícito; la transcripción efímera probablemente es «tratamiento».</span><span lang="en">Listening as a participant is lawful; ephemeral transcription is probably “processing”.</span></div><div class="implica"><span lang="es">Resuélvelo en el encargo: cláusula del contrato + chequeo de NDA.</span><span lang="en">Handle it at the engagement level: contract clause + NDA check.</span></div><div class="fuente">CSJ AP1465-2018 · Ley 1581 art. 3 · 2026-09-17</div></div>
+    <div class="bandera riesgo-alto"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde"><span lang="es">EE. UU. · Florida (todas las partes)</span><span lang="en">USA · Florida (all-party)</span> <span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"></use></svg><span lang="es">riesgo medio-alto</span><span lang="en">medium-high risk</span></span></div><div class="regla"><span lang="es">Exige consentimiento de todas las partes; sin precedente para transcripción local.</span><span lang="en">Requires all-party consent; no precedent for local transcription.</span></div><div class="implica"><span lang="es">Sugerido: aviso de una línea al cliente o modo solo notas.</span><span lang="en">Suggested: one-line notice to the client or notes-only mode.</span></div><div class="fuente">Fla. Stat. § 934.03 · 2026-09-17</div></div>
+    <div class="bandera riesgo-medio"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde"><span lang="es">Unión Europea (GDPR)</span><span lang="en">European Union (GDPR)</span> <span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"></use></svg><span lang="es">riesgo medio</span><span lang="en">medium risk</span></span></div><div class="regla"><span lang="es">Es tratamiento aunque sea efímero; deber de información (art. 13).</span><span lang="en">It is processing even if ephemeral; duty to inform (art. 13).</span></div><div class="implica"><span lang="es">Informa a nivel de encargo; sin emociones, sin audio a la nube.</span><span lang="en">Inform at engagement level; no emotions, no audio to the cloud.</span></div><div class="fuente">GDPR art. 4(2), 13 · EDPB 1/2024 · 2026-09-17</div></div>
+    <div class="bandera desconocida"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde"><span lang="es">Jurisdicción no indicada</span><span lang="en">Jurisdiction not set</span> <span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">sin bandera</span><span lang="en">no flag</span></span></div><div class="regla"><span lang="es">Indica dónde está la contraparte en la ficha del cliente.</span><span lang="en">Set where the other party is in the client file.</span></div><div class="implica"><span lang="es">Mientras tanto, la app funciona igual.</span><span lang="en">Meanwhile, the app works the same.</span></div><div class="fuente">—</div></div>
+  </div>
+      </div>
+    </section>
+    <section class="tema claro">
+      <span class="ds-t">tema claro · papel</span>
+      <div class="ds-pieza">
+        <div class="k-grid">
+    <div class="bandera riesgo-bajo"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde">Colombia <span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span lang="es">riesgo bajo-medio</span><span lang="en">low-medium risk</span></span></div><div class="regla"><span lang="es">Escuchar como participante es lícito; la transcripción efímera probablemente es «tratamiento».</span><span lang="en">Listening as a participant is lawful; ephemeral transcription is probably “processing”.</span></div><div class="implica"><span lang="es">Resuélvelo en el encargo: cláusula del contrato + chequeo de NDA.</span><span lang="en">Handle it at the engagement level: contract clause + NDA check.</span></div><div class="fuente">CSJ AP1465-2018 · Ley 1581 art. 3 · 2026-09-17</div></div>
+    <div class="bandera riesgo-alto"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde"><span lang="es">EE. UU. · Florida (todas las partes)</span><span lang="en">USA · Florida (all-party)</span> <span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"></use></svg><span lang="es">riesgo medio-alto</span><span lang="en">medium-high risk</span></span></div><div class="regla"><span lang="es">Exige consentimiento de todas las partes; sin precedente para transcripción local.</span><span lang="en">Requires all-party consent; no precedent for local transcription.</span></div><div class="implica"><span lang="es">Sugerido: aviso de una línea al cliente o modo solo notas.</span><span lang="en">Suggested: one-line notice to the client or notes-only mode.</span></div><div class="fuente">Fla. Stat. § 934.03 · 2026-09-17</div></div>
+    <div class="bandera riesgo-medio"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde"><span lang="es">Unión Europea (GDPR)</span><span lang="en">European Union (GDPR)</span> <span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"></use></svg><span lang="es">riesgo medio</span><span lang="en">medium risk</span></span></div><div class="regla"><span lang="es">Es tratamiento aunque sea efímero; deber de información (art. 13).</span><span lang="en">It is processing even if ephemeral; duty to inform (art. 13).</span></div><div class="implica"><span lang="es">Informa a nivel de encargo; sin emociones, sin audio a la nube.</span><span lang="en">Inform at engagement level; no emotions, no audio to the cloud.</span></div><div class="fuente">GDPR art. 4(2), 13 · EDPB 1/2024 · 2026-09-17</div></div>
+    <div class="bandera desconocida"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde"><span lang="es">Jurisdicción no indicada</span><span lang="en">Jurisdiction not set</span> <span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">sin bandera</span><span lang="en">no flag</span></span></div><div class="regla"><span lang="es">Indica dónde está la contraparte en la ficha del cliente.</span><span lang="en">Set where the other party is in the client file.</span></div><div class="implica"><span lang="es">Mientras tanto, la app funciona igual.</span><span lang="en">Meanwhile, the app works the same.</span></div><div class="fuente">—</div></div>
+  </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

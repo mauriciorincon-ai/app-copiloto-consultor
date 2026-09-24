@@ -1,0 +1,336 @@
+/**
+ * Diccionario ES — cadenas VERBATIM de la maqueta.
+ *
+ * Contrato §9 del design system: «en producto los pares `<span lang>` se sustituyen por el
+ * diccionario i18n con las MISMAS cadenas que la maqueta — la maqueta es el primer diccionario».
+ * `tests/unit/i18n-fiel-a-la-maqueta.test.ts` lo vigila: cada cadena de aquí debe existir tal
+ * cual en `docs/diseno/`. Si el producto necesita decir algo que la maqueta no dice, primero se
+ * escribe en la maqueta (es una decisión de diseño, va a una mirada), no aquí.
+ *
+ * La referencia de la banda es `docs/diseno/banda.html` (mirada 11).
+ */
+export const es = {
+  banda: {
+    // ---- cabecera: estado de la sesión ----
+    /**
+     * LAS CINCO CADENAS DE ABAJO SON LO QUE LA MAQUETA DIBUJA, y dentro del producto **ya no se
+     * pintan tal cual**: la banda las compone con lo que de verdad hay (hallazgo A1 de la
+     * auditoría). Siguen existiendo porque son lo que el arnés del gate de FIDELIDAD fotografía
+     * fuera de Tauri, y porque de ellas salen las piezas: los números y el nombre del cliente son
+     * del sistema, las palabras son de la maqueta.
+     */
+    escuchando: "Escuchando · 2 pistas",
+    protegido: "Meet · protegido",
+    sinVerificar: "Zoom · sin verificar",
+    sinAcople: "sin acople",
+
+    /** Las piezas con las que se compone la cabecera. Cada una existe en la maqueta. */
+    escuchandoPrefijo: "Escuchando",
+    pista: "pista",
+    pistas: "pistas",
+    protegidoSufijo: "protegido",
+    sinVerificarSufijo: "sin verificar",
+
+    // ---- esperando ----
+    esperando: "Cuando el cliente pregunte, aquí aparece tu evidencia.",
+    corpus: "143 documentos · 5 unidades",
+    reunion: "Páramo Azul · 12 min",
+    /** Las piezas del contador del corpus. `unidades` ya es el objeto de las cinco etiquetas. */
+    documento: "documento",
+    documentos: "documentos",
+    unidadPalabra: "unidad",
+    unidadesPalabra: "unidades",
+
+    // ---- buscando ----
+    buscando: "Buscando en tu corpus…",
+
+    // ---- sin resultado: el veredicto, la maniobra y lo más cercano ----
+    // La maniobra sale de un catálogo versionado elegido por reglas léxicas. NO es una
+    // sugerencia del modelo y no puede parecerlo (design-system §9-quinquies).
+    /** Se compone con los términos que de verdad se buscaron: «Nada en tu corpus sobre «…»». */
+    nadaSobre: "Nada en tu corpus sobre",
+    /**
+     * EL CATÁLOGO DE MANIOBRAS, bilingüe.
+     *
+     * Rust dice **cuál** maniobra (`credencial`, `cifra`, …) y el texto vive aquí, porque la
+     * maniobra es voz de la app y la app es bilingüe por regla dura. Las seis están en
+     * `docs/diseno/banda.html` —la maqueta es el primer diccionario— y en `design-system.md`,
+     * donde el usuario las aprobó en la mirada 11.
+     */
+    /** Las comillas del idioma: la maqueta escribe «…» en español y “…” en inglés. */
+    comillaAbre: "«",
+    comillaCierra: "»",
+    /** Las cinco unidades del modelo de consultoría, como las escriben los chips de la maqueta. */
+    unidades: {
+      propuesta: "propuesta",
+      marco: "marco",
+      caso: "caso",
+      cliente: "cliente",
+      perfil: "perfil",
+    },
+    maniobras: {
+      credencial: "Dilo sin adornos y ofrece confirmarlo hoy mismo.",
+      cifra: "No improvises cifras: ofrece el rango del caso comparable.",
+      plazo: "Da el plazo del caso más parecido y confírmalo por escrito.",
+      referencia: "Ofrece una referencia del sector sin nombrar al cliente aún.",
+      contrato: "No opines de contrato en vivo: anótalo y respóndelo por escrito.",
+      generica: "Devuelve la pregunta: ¿para qué lo necesitan?",
+    },
+    cercano: "lo más cercano",
+    cercanoLargo: "lo más cercano que sí tienes · ninguno responde la pregunta",
+    buscarOtras: "Buscar con otras palabras",
+    anotarDespues: "Anotar para después",
+    otrasPalabras: "otras palabras",
+    anotar: "anotar",
+
+    // ---- sin verificar en este cliente ----
+    sinVerificarTitulo: "Zoom: protección sin verificar",
+    sinVerificarSalida: "→ Comparte una ventana, no la pantalla · el asa muestra las otras dos salidas",
+    sinVerificarCuando: "Verificada solo en Meet · macOS 26.6.2 · 2026-09-20",
+    sinVerificarVentana: "Comparte una ventana, no la pantalla",
+    sinVerificarMonitor: "O usa un segundo monitor",
+    sinVerificarNotas: "O pasa a modo solo notas",
+    yaVerifique: "Ya lo verifiqué en Zoom",
+    soloNotas: "Modo solo notas",
+
+    // ---- transcript ----
+    transcriptCab: "en vivo · solo en memoria",
+    ocultar: "ocultar",
+    cliente: "cliente",
+    tu: "tú",
+
+    // ---- atajos ----
+    fijar: "fijar",
+    ayudame: "ayúdame",
+    corta: "corta",
+    transcript: "transcript",
+
+    /**
+     * MUESTRA SINTÉTICA «Páramo Azul» — la misma de la maqueta, con datos 100 % inventados.
+     *
+     * Vive aquí, y no en un módulo aparte, porque es texto bilingüe y el gate del diccionario lo
+     * vigila igual que al resto: así no puede colarse contenido que la maqueta no dice.
+     *
+     * **Decía «muere en la fase 4», y no murió:** la fase 4 trajo el corpus real y cinco de estas
+     * cadenas siguieron pintándose DENTRO del producto —incluida una frase puesta en boca del
+     * cliente— hasta la fase 2 de la auditoría (hallazgo A1). Ya no. Hoy solo se pintan **fuera de
+     * Tauri**, que es donde el arnés del gate de FIDELIDAD fotografía la banda para compararla con
+     * la maqueta, y dentro del producto no se miran. Morirán cuando muera ese gate, no antes.
+     */
+    muestra: {
+      oidoQuien: "cliente 14:02",
+      oido: "Y la limpieza de datos, ¿eso está dentro del alcance?",
+      buscado: "certificación ISO 27001",
+      oidoIso: "¿Ustedes tienen certificación ISO 27001?",
+
+      titular: "Limpieza de datos: incluida, hasta tres fuentes",
+      linea: "Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional.",
+      lineaLarga:
+        "Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional y se cotiza aparte.",
+      unidad: "propuesta",
+      fuente: "Páramo Azul · §3.2 Alcance",
+
+      acumulada1Unidad: "marco",
+      acumulada1: "Etapa 2 Preparación: perfilar antes de modelar",
+      acumulada2Unidad: "caso",
+      acumulada2: "Sur del Valle: cuatro fuentes en 9 semanas",
+
+      cercana: "marco · §5.1 Seguridad y manejo de datos",
+      cercana1Unidad: "marco",
+      cercana1: "§5.1 Seguridad y manejo de datos",
+      cercana2Unidad: "propuesta",
+      cercana2: "§6.3 Confidencialidad y acceso a sistemas",
+      cercana3Unidad: "caso",
+      cercana3: "Sur del Valle: auditoría interna del cliente",
+
+      turno1: "Y la limpieza de datos, ¿eso está dentro del alcance?",
+      turno2: "Sí, la limpieza de las tres fuentes que acordamos está incluida.",
+      turno3: "¿Y si sumamos el Excel de la fuerza comercial? Lo tenemos en Power BI.",
+      hora1: "14:01",
+      hora2: "14:02",
+    },
+  },
+  /**
+   * EL CUADERNO — las pantallas de la ventana principal (960 × 640).
+   *
+   * Referencia: `docs/diseno/{sesion,permisos,honestidad}.html`, estado **«así se ve hoy · sprint
+   * 1»** (mirada 12, aprobada el 2026-09-21). Igual que con la banda, cada cadena de aquí existe
+   * TAL CUAL en la maqueta y el gate del diccionario lo vigila.
+   */
+  cuaderno: {
+    // ---- el rail, compartido por las tres ----
+    marca: "Angel Ghost",
+    marcaSub: "cuaderno privado",
+    // ---- corpus (fase 4) ----
+    corpusTitulo: "Corpus",
+    corpusSub: "Tus documentos, indexados donde están. De aquí sale cada ficha que verás en una reunión.",
+    senalarCarpeta: "Señalar una carpeta",
+    noSeCopianAntes: "Tus documentos",
+    noSeCopianFuerte: "no se copian",
+    noSeCopianDespues: ": se leen donde están.",
+    dondeVive: "Dónde vive el índice",
+    soloTu: "Solo tú puedes leerlo",
+    corpusPendiente: "Lo que todavía no existe",
+    arrastrar: "Arrastrar y soltar documentos",
+    releer: "Releer solo lo que cambies",
+    leerEscaneado: "Leer lo escaneado",
+    corpusNota: "Hoy la app recorre la carpeta entera, hasta 2 000 documentos. Lo escaneado se queda fuera con su motivo, y nunca se manda a un servicio.",
+    sinUnidad: "sin unidad",
+    sinUnidadNota: "no encaja, y no se fuerza",
+    uProp: "alcance, precio, supuestos",
+    uMarco: "tu método, tus etapas",
+    uCaso: "qué pasó y qué costó",
+    uCliente: "fichas y acuerdos previos",
+    uPerfil: "tu trayectoria y cifras",
+    sinLeer: "sin leer",
+    conSeccionesConjeturadas: "con secciones conjeturadas",
+    conjeturadas: "Un PDF no trae títulos, trae líneas: la app conjetura dónde empieza cada sección por la forma del texto. Se cuenta para que puedas juzgarlo.",
+
+    navSesion: "Sesión",
+    navPermisos: "Permisos",
+    navCorpus: "Corpus",
+    navNotas: "Notas",
+    navHonestidad: "Honestidad",
+    navIdioma: "Idioma",
+    navIa: "IA",
+    sinSesion: "Sin sesión · 0 B",
+    meetDetectado: "Meet detectado · 0 B",
+
+    // ---- vocabulario de «todavía no» (§9-sexies) ----
+    todaviaNo: "Todavía no",
+    funciona: "Funciona",
+
+    // ---- sesión ----
+    sesionTitulo: "Antes de empezar",
+    sesionSub: "Nada se enciende hasta que tú lo digas. Esto es lo que la app ve de tu propio Mac.",
+    proteccionVerificada: "Protección verificada",
+    proteccionSinVerificar: "Zoom · sin verificar",
+    proteccionDetalle:
+      "Tu panel no aparece en la pantalla que compartes. Verificado en tu Mac (macOS 26.6.2) el 2026-09-20. En Zoom y Teams está sin verificar.",
+    dosPistas: "Las dos pistas",
+    pistaMic: "Micrófono — tú",
+    pistaSistema: "Audio del sistema — el cliente",
+    pistaPantalla: "Pantalla — solo cuando cambia",
+    pistaAuriculares: "Auriculares conectados",
+    esteCliente: "Este cliente",
+    fichaNdaRadar: "Ficha del cliente, NDA y radar",
+    noSeInventa: "No se inventa nada mientras no exista: ni bandera, ni riesgo, ni catálogo.",
+    queFuncionaHoy: "Qué funciona hoy",
+    funcionaBanda: "La banda, abajo, protegida de la captura",
+    funcionaAcople: "La reunión se hace sitio: se acopla y vuelve al cerrar",
+    funcionaCorte: "Corta todo y vacía la memoria",
+    iniciarSesion: "Iniciar sesión",
+    nadaSale: "corta todo · el sonido nunca se guarda · nada sale de tu equipo",
+    sinReunion: "Sin reunión abierta",
+    tituloDeMuestra: "Páramo Azul — Propuesta tablero de rentabilidad",
+    sinReunionVoz: "Abre Zoom, Meet o Teams y aparecerá aquí. Mientras tanto, prepara la reunión.",
+
+    // ---- permisos ----
+    permisosTitulo: "Permisos de macOS",
+    permisosSub: "Tú los concedes en el sistema, no aquí. La app funciona sin ellos: solo hace menos.",
+    permMic: "Micrófono",
+    permMicPara: "Tu voz, para saber cuándo hablas tú. Solo en memoria; nunca se graba.",
+    permSistema: "Audio del sistema",
+    permSistemaPara: "Lo que suena en tu Mac: la voz del cliente. Sin bot en la reunión.",
+    permPantalla: "Pantalla",
+    permPantallaPara: "Lee cifras y títulos solo cuando la pantalla cambia. Las imágenes no se guardan.",
+    permAcople: "Acoplar la ventana de la reunión",
+    permAcoplePara:
+      "Para que la banda no tape la llamada: la reunión se encoge y las dos conviven. macOS lo llama «Accesibilidad».",
+    concedido: "Concedido",
+    sinConceder: "Sin conceder",
+    concederEnMacos: "Conceder en macOS",
+    unSoloPermiso: "Audio del sistema y Pantalla son un solo permiso en macOS: se conceden y se caen juntos.",
+    sinConcederNada: "Qué puedes hacer ya, sin conceder nada",
+    indexar: "Indexar tu corpus",
+    escribirNotas: "Escribir notas y acuerdos",
+    buscarAMano: "Buscar tu evidencia a mano",
+    queTextoVeras: "Qué texto verás en macOS",
+    textoMicrofono:
+      "«Angel Ghost usa el micrófono para saber cuándo hablas tú. El audio vive solo en memoria y no se graba.»",
+    claveMicrofono: "NSMicrophoneUsageDescription · es / en",
+
+    // ---- honestidad ----
+    honestidadTitulo: "Honestidad",
+    honestidadSub: "Qué vive en la memoria ahora mismo y qué salió de tu equipo. Se demuestra, no se promete.",
+    queViveEnMemoria: "Qué vive en la memoria ahora",
+    bufMic: "Audio · micrófono",
+    bufSistema: "Audio · sistema",
+    bufTranscript: "Transcript",
+    bufFrame: "Último frame leído",
+    salieronDeTuEquipo: "salieron de tu equipo en esta reunión",
+    modo: "Modo",
+    modoLocal: "100 % local · API apagado",
+    /**
+     * **Esta frase decía otra cosa hasta la fase 2 de la auditoría**, y es el hallazgo A8: decía
+     * «no existe código capaz de abrir una conexión», que era verdad al escribirla y dejó de serlo
+     * en la fase 3, cuando el puente de voz ganó la descarga del modelo de macOS. Nadie volvió a
+     * mirar la frase — y estaba en la pantalla de Honestidad, el peor sitio posible para una
+     * afirmación caducada. Lo que ahora dice es comprobable, y lo comprueba
+     * `tests/unit/contador-de-red.test.ts` contando las puertas una a una.
+     */
+    modoDetalle:
+      "En esta versión la app no abre ninguna conexión: la única que existe la abre macOS cuando le pides instalar un modelo de voz.",
+    piezasCola: "piezas: la otra todavía no existe.",
+    loQueQuedara: "Lo que quedará cuando cierres",
+    loQueQuedaraDetalle:
+      "Notas, acuerdos y fichas fijadas llegan más adelante. Hoy no queda nada porque hoy no se escribe nada.",
+    // ---- sesión · lo que la fase 3 puso a funcionar ----
+    funcionaEscucha: "Escucha las dos pistas y las transcribe en tu Mac",
+    altavocesInternos: "Altavoces internos",
+    avisoDelEco:
+      "El micrófono también lo oye: se marca como eco.",
+
+    // ---- honestidad · los búferes que ya existen ----
+    ringBuffer30: "ring buffer · últimos 30 s",
+    ventana12: "ventana de 12 turnos",
+
+    // ---- idioma (subconjunto del sprint 1) ----
+    idiomaTitulo: "Idioma y transcripción",
+    idiomaSub:
+      "Dos pistas, los idiomas que marques, y un diccionario que es tuyo. La transcripción trabaja; casi nunca la miras.",
+    transcripcionEnVivo: "Transcripción en vivo",
+    oculta: "oculta",
+    visible: "visible",
+    naceOculta:
+      "Nace oculta a propósito. Leer lo que acaban de decir es la forma más rápida de dejar de escuchar: los ojos se van al texto y la conversación se queda sola.",
+    laMuestraCuando: "la muestra cuando la necesites",
+    idiomaPorPista: "Idioma por pista",
+    tuMicrofono: "Tú · micrófono",
+    clienteSistema: "Cliente · sistema",
+    modeloInstalado: "modelo instalado",
+    /**
+     * LOS TRES MOTIVOS por los que un idioma no se puede transcribir, **en el diccionario**.
+     *
+     * Estaban escritos en español dentro de `Idioma.tsx`, así que la interfaz inglesa enseñaba
+     * «sin modelo» y «no lo reconoce» (hallazgo A6). Y el gate del diccionario no podía verlo:
+     * compara `i18n/` con la maqueta, no barre los componentes. Desde la fase 2 de la auditoría
+     * hay un barrido que sí lo hace.
+     */
+    sinModelo: "sin modelo",
+    noLoReconoce: "no lo reconoce",
+    sinMotorDeVoz: "sin motor",
+    /** El botón que faltaba (A7): sin él, un Mac sin el modelo no tenía cómo conseguirlo. */
+    instalarModelo: "Instalar",
+    instalando: "instalando…",
+    cincoIdiomas: "Cinco idiomas listos a la vez, como mucho: lo impone macOS, no la app.",
+    transcribeTuMac: "Transcribe tu Mac, no un servicio",
+    transcribeTuMacDetalle:
+      "El motor de voz de macOS, dentro de tu equipo. Ningún audio sale para convertirse en texto. La única vez que toca la red es cuando pides instalar el modelo de un idioma: lo descarga macOS —mientras dura, instalando…— y si no puede: no lo reconoce · sin motor.",
+    loQueTodaviaNo: "Lo que todavía no existe",
+    variosIdiomasPorPista: "Varios idiomas a la vez, marcados por pista",
+    loQueFaltaDetalle:
+      "Hoy cada pista escucha un idioma, los nombres propios se transcriben como suenen, y los turnos mueren los dos —el tuyo y el del cliente— al cerrar y con la tecla.",
+    diccionarioTecnico: "Diccionario técnico: lo que se oye por lo que quieres leer",
+    conservarTusTurnos: "Conservar lo que dijiste tú",
+  },
+};
+
+/**
+ * La FORMA del diccionario, no sus valores: obliga a que todo idioma tenga exactamente las
+ * mismas claves, pero deja que cada uno diga lo suyo. Con `as const` a secas el tipo congelaba
+ * también los textos y `en` no compilaba («"you" no es asignable a "tú"»).
+ */
+type Textos<T> = { [K in keyof T]: T[K] extends string ? string : Textos<T[K]> };
+
+export type Diccionario = Textos<typeof es>;

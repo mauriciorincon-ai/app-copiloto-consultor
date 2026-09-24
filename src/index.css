@@ -1,0 +1,238 @@
+@import "tailwindcss";
+
+/* =============================================================================
+   Angel Ghost — tokens del design system v1.7.0
+   =============================================================================
+   ESTOS BLOQUES SON COPIA LITERAL de `docs/diseno/assets/ghost.css` (líneas 7-87).
+   El contrato §9 del design system dice que los tokens pasan TAL CUAL al producto:
+   cero valores mágicos en componentes. Para que «tal cual» no sea una promesa,
+   `tests/unit/tokens-fieles.test.ts` compara token por token contra la maqueta y
+   se pone ROJO si alguien edita un lado y no el otro.
+
+   No edites valores aquí: edítalos en el design system, y la maqueta y el producto
+   se mueven juntos.
+   ========================================================================== */
+
+:root {
+  /* ---- Tipografía (D4): nativa de macOS, sin embeber bytes ---- */
+  --font-evidencia: "Charter", "Iowan Old Style", Georgia, serif;     /* lo que dice TU corpus */
+  --font-ui: "Avenir Next", "Helvetica Neue", system-ui, sans-serif;   /* la interfaz */
+  --font-mono: "Menlo", "SF Mono", ui-monospace, monospace;            /* lo medible */
+
+  /* ---- Escala tipográfica ---- */
+  --t-titular: 17px;   /* ficha: titular ≤ 8 palabras */
+  --t-linea: 14px;     /* ficha: una línea */
+  --t-ui: 13px;        /* interfaz general */
+  --t-meta: 12px;      /* estado, fuente, etiquetas */
+  --t-mono: 11.5px;    /* contador, atajos, fuente de ficha */
+  --t-h1: 22px;        /* título de pantalla (ventana principal) */
+  --t-h2: 15px;
+
+  /* ---- Espacio (múltiplos de 4) ---- */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+
+  /* ---- Radios y trazos ---- */
+  --r-chip: 5px; --r-ficha: 8px; --r-panel: 10px; --r-tecla: 4px;
+  --borde: 1px;
+
+  /* ---- Motion (D10): casi ninguno ---- */
+  --dur: 150ms; --ease: cubic-bezier(.2,.6,.2,1);
+
+  /* ---- Tamaños de ventana (D1, D6) ---- */
+  --panel-w: 380px; --panel-h: 220px; --panel-h-transcript: 420px; --panel-h-max: 360px;
+  --principal-w: 960px; --principal-h: 640px;
+}
+
+/* ---------------------------------------------------------------------------
+   Tema OSCURO (primario) — grafito cálido, tinta marfil, un solo acento «halo»
+   --------------------------------------------------------------------------- */
+:root, html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1a1917;          /* ventana */
+  --surface: #242320;     /* ficha, tarjetas */
+  --surface-2: #2e2d29;   /* chips, teclas, hover */
+  --line: #3b3a35;        /* bordes */
+  --line-2: #4a4841;      /* bordes en foco/hover */
+  --ink: #ece7dc;         /* texto principal — marfil */
+  --ink-2: #b9b3a6;       /* texto secundario (AA sobre bg y surface) */
+  --ink-3: #7c776c;       /* SOLO ORNAMENTO (líneas, separadores). Jamás texto — vetado */
+  --halo: #9ecbff;        /* acento único: foco, fijado, interactivo */
+  --halo-tint: rgba(158,203,255,.14);
+  --ok: #62d3b4;          /* activo / verificado / verde */
+  --ok-tint: rgba(98,211,180,.15);
+  --warn: #f0b64a;        /* atención / sin verificar / aviso */
+  --warn-tint: rgba(240,182,74,.15);
+  --err: #ff8577;         /* error / cortado / revocado */
+  --err-tint: rgba(255,133,119,.15);
+  --mute: #9a958a;        /* inactivo (texto AA sobre bg) */
+  --sombra-panel: 0 10px 30px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.04) inset;
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.25);
+}
+
+/* ---------------------------------------------------------------------------
+   Tema CLARO — papel
+   --------------------------------------------------------------------------- */
+html[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f5f2ea;
+  --surface: #fffdf8;
+  --surface-2: #ece8de;
+  --line: #d6d1c4;
+  --line-2: #bdb7a8;
+  --ink: #1f1e1a;
+  --ink-2: #5a5650;
+  --ink-3: #a19b8e;       /* SOLO ORNAMENTO — vetado como texto */
+  --halo: #1d5c9c;
+  --halo-tint: rgba(29,92,156,.12);
+  --ok: #0f6350;
+  --ok-tint: rgba(21,122,98,.13);
+  --warn: #7a4f00;
+  --warn-tint: rgba(198,131,0,.16);
+  --err: #a32a22;
+  --err-tint: rgba(184,50,42,.12);
+  --mute: #6d685f;
+  --sombra-panel: 0 10px 28px rgba(40,30,10,.18), 0 0 0 1px rgba(0,0,0,.04);
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.05);
+}
+
+/* -----------------------------------------------------------------------------
+   Puente a Tailwind v4.
+   `@theme inline` mapea los tokens semánticos a los namespaces que generan
+   utilidades (`bg-bg`, `text-ink`, `rounded-ficha`, `font-evidencia`…). Es
+   `inline` a propósito: así la utilidad resuelve `var(--bg)` en tiempo de
+   ejecución y el conmutador `html[data-theme]` sigue funcionando — con `@theme`
+   a secas los valores se congelarían en el build y el tema claro moriría.
+   -------------------------------------------------------------------------- */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-halo: var(--halo);
+  --color-halo-tint: var(--halo-tint);
+  --color-ok: var(--ok);
+  --color-ok-tint: var(--ok-tint);
+  --color-warn: var(--warn);
+  --color-warn-tint: var(--warn-tint);
+  --color-err: var(--err);
+  --color-err-tint: var(--err-tint);
+  --color-mute: var(--mute);
+
+  --font-evidencia: var(--font-evidencia);
+  --font-ui: var(--font-ui);
+  --font-mono: var(--font-mono);
+
+  --text-titular: var(--t-titular);
+  --text-linea: var(--t-linea);
+  --text-ui: var(--t-ui);
+  --text-meta: var(--t-meta);
+  --text-mono: var(--t-mono);
+  --text-h1: var(--t-h1);
+  --text-h2: var(--t-h2);
+
+  --radius-chip: var(--r-chip);
+  --radius-ficha: var(--r-ficha);
+  --radius-panel: var(--r-panel);
+  --radius-tecla: var(--r-tecla);
+
+  --shadow-panel: var(--sombra-panel);
+  --shadow-ficha: var(--sombra-ficha);
+
+  --ease-ghost: var(--ease);
+}
+
+/* -----------------------------------------------------------------------------
+   Base — mismo comportamiento que la maqueta.
+   -------------------------------------------------------------------------- */
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body, #root { height: 100%; margin: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--t-ui);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* El acento único (D8): el foco SIEMPRE se ve, y siempre igual. */
+:focus-visible { outline: 2px solid var(--halo); outline-offset: 2px; }
+
+/* Motion (D10): casi ninguno, y cero si el sistema lo pide.
+   La forma del árbol JAMÁS depende de esto — solo propiedades (regla 5a). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   LA VENTANA ES EL ARTEFACTO (sprint 001, fase 1)
+   En la maqueta la banda se dibujaba DENTRO de un escritorio de referencia y su
+   alto lo ponía el CSS. En producto el alto lo pone la ventana nativa —que lo
+   lee de los mismos tokens (`--banda-h*`), con su test en `src-tauri/`— así que
+   aquí la banda ocupa su marco entero. Es la única diferencia entre la maqueta y
+   el producto, y es la correcta: una ventana no puede ser más alta que sí misma.
+   --------------------------------------------------------------------------- */
+html[data-ventana] body,
+html[data-ventana] #root { height: 100%; overflow: hidden; }
+
+html[data-ventana="banda"] .banda {
+  height: 100%;
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+/* -----------------------------------------------------------------------------
+   EL RELLENO — lo único que la captura encuentra donde está la banda.
+
+   Negro SIEMPRE debajo: si la imagen no carga, no llega o el formato no se sabe
+   pintar, lo que queda es negro, que es la otra opción que el diseño aprobó y la
+   única que no filtra nada. Un relleno transparente sería la franja descubierta.
+
+   Encima, el fondo de escritorio recortado: la imagen se pinta al tamaño de la
+   PANTALLA (cover y centrada, que es «Rellenar pantalla», el modo por defecto de
+   macOS) y se sube para que lo que asome por la franja sea exactamente el trozo
+   que habría debajo. Reproducir el encuadre y no solo la imagen es lo que hace
+   que la costura no se vea.
+   -------------------------------------------------------------------------- */
+html[data-ventana="relleno"] body { background: #000; }
+.relleno-franja { height: 100%; overflow: hidden; position: relative; background: #000; }
+.relleno-fondo {
+  position: absolute;
+  left: 0;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+
+/* La ventana principal ES el cuaderno: en la maqueta la tarjeta de 960 × 640 vive centrada
+   dentro de la página; en producto la ventana nativa ya tiene ese tamaño, así que ocupa su marco
+   entero. Pierde el REDONDEO y la SOMBRA —los dibuja macOS en la ventana de verdad, y repetirlos
+   por dentro deja las esquinas rotas— pero **conserva el borde**.
+
+   Conservarlo no es cosmético: el borde ocupa 1 px arriba, y quitarlo sube el contenido entero
+   ese píxel. A ojo no se ve; medido contra la maqueta valía 9 % de píxeles distintos, porque un
+   desplazamiento de 1 px ensucia el borde de cada letra de la pantalla.
+
+   Y la SOMBRA también se queda. La de fuera no se ve —cae fuera de la ventana nativa— pero
+   `--sombra-panel` lleva además una línea interior de 1 px en el borde superior, y quitarla
+   entera se llevaba esa línea por delante: 765 px distintos en la primera fila. Lo único que
+   sobra es el REDONDEO, que lo dibuja macOS y repetirlo por dentro deja las esquinas rotas. */
+html[data-ventana="principal"] .ventana {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}

@@ -1,10 +1,15 @@
 <!doctype html>
-<html lang="en">
+<!--
+  Sin `lang` a propósito: el idioma lo fija la cáscara en el primer render, a partir del idioma
+  del sistema (la app es bilingüe y el usuario no debería tener que elegir). Escribirlo aquí
+  decidiría por él: con `lang="en"` —lo que traía el andamio— un Mac en español veía la app en
+  inglés, y el gate de fidelidad capturó los cuatro cruces de tema e idioma... en inglés los cuatro.
+-->
+<html>
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tauri + React + Typescript</title>
+    <title>Angel Ghost</title>
   </head>
 
   <body>

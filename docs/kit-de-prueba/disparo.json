@@ -1,0 +1,190 @@
+{
+  "version": 1,
+  "comentario": "Kit del DISPARADOR, sprint 001 (añadido en la fase 2 de la auditoría, hallazgo A9). Turnos de una reunión inventada, EN ORDEN y con su reloj, cada uno marcado con si debe disparar una búsqueda o no. Se pasan todos por un mismo `Disparador`, así que lo que se mide no es solo la regla léxica: también la espera de 6 s entre fichas y la negativa a repetir la misma consulta. Datos 100 % sintéticos. La app NO transcribe nada aquí: el camino del audio a estos textos lo mide `una_frase_por_los_altavoces_acaba_siendo_texto`, con el Mac de verdad.",
+  "tolerancia": "El plan del sprint pedía «P/R del disparo con margen de ±1 turno». Ese margen existe porque con audio real el fin de turno puede caer un turno antes o después; aquí los turnos son texto y el reloj es exacto, así que la medida es turno a turno, SIN margen — es más estricta, no más laxa, y conviene decirlo en vez de dejar creer que el margen se aplicó.",
+  "turnos": [
+    {
+      "dice": "Buenos días, gracias por hacer el espacio.",
+      "pista": "sistema",
+      "ms": 2000,
+      "dispara": false,
+      "porque": "cortesía: ni pregunta, ni cifra, ni término del corpus"
+    },
+    {
+      "dice": "Igualmente, empezamos cuando quieras.",
+      "pista": "microfono",
+      "ms": 5000,
+      "dispara": false,
+      "porque": "la voz del consultor no se dispara a sí misma"
+    },
+    {
+      "dice": "¿Y la limpieza de datos, eso está dentro del alcance?",
+      "pista": "sistema",
+      "ms": 12000,
+      "dispara": true,
+      "porque": "pregunta del cliente"
+    },
+    {
+      "dice": "Sí, las tres fuentes que acordamos están incluidas.",
+      "pista": "microfono",
+      "ms": 16000,
+      "dispara": false,
+      "porque": "pista del micrófono"
+    },
+    {
+      "dice": "¿Y la limpieza de datos, eso está dentro del alcance?",
+      "pista": "sistema",
+      "ms": 24000,
+      "dispara": false,
+      "porque": "la misma pregunta otra vez: ya se buscó"
+    },
+    {
+      "dice": "Claro.",
+      "pista": "sistema",
+      "ms": 31000,
+      "dispara": false,
+      "porque": "demasiado corto para ser una pregunta"
+    },
+    {
+      "dice": "Ajá, entiendo.",
+      "pista": "sistema",
+      "ms": 38000,
+      "dispara": false,
+      "porque": "dos palabras sin signo: no alcanza el mínimo"
+    },
+    {
+      "dice": "¿Tienen certificación?",
+      "pista": "sistema",
+      "ms": 45000,
+      "dispara": true,
+      "porque": "dos palabras, pero con signo de interrogación"
+    },
+    {
+      "dice": "Nosotros manejamos 14 canales de venta distintos.",
+      "pista": "sistema",
+      "ms": 52000,
+      "dispara": true,
+      "porque": "trae una cifra en dígitos"
+    },
+    {
+      "dice": "Somos catorce en la mesa de hoy.",
+      "pista": "sistema",
+      "ms": 55000,
+      "dispara": false,
+      "porque": "LIMITACIÓN DECLARADA: la regla de la cifra mira dígitos, no números escritos con letras. Si el transcriptor escribe «catorce» en vez de «14», no dispara. Está aquí para que se mida en vez de descubrirse en una reunión"
+    },
+    {
+      "dice": "El equipo de logística también quiere ver el tablero.",
+      "pista": "sistema",
+      "ms": 59000,
+      "dispara": false,
+      "porque": "afirmación sin cifra, sin signo y sin término del corpus"
+    },
+    {
+      "dice": "¿Y la limpieza de datos, eso está dentro del alcance?",
+      "pista": "sistema",
+      "ms": 61000,
+      "dispara": true,
+      "porque": "la espera se cuenta desde la última ficha, no desde el último turno: a nueve segundos de la anterior, dispara"
+    },
+    {
+      "dice": "¿Cómo miden la calidad de los datos?",
+      "pista": "sistema",
+      "ms": 68000,
+      "dispara": true,
+      "porque": "pregunta del cliente"
+    },
+    {
+      "dice": "¿Cómo miden la calidad de los datos?",
+      "pista": "microfono",
+      "eco": true,
+      "ms": 68200,
+      "dispara": false,
+      "porque": "eco por los altavoces: es el cliente, no el consultor, y ya disparó"
+    },
+    {
+      "dice": "¿Y eso cuánto nos tarda?",
+      "pista": "sistema",
+      "ms": 70000,
+      "dispara": false,
+      "porque": "a dos segundos de la ficha anterior: la espera de 6 s manda, aunque sea una pregunta nueva"
+    },
+    {
+      "dice": "How long does the rollout take?",
+      "pista": "sistema",
+      "ms": 76000,
+      "dispara": true,
+      "porque": "pregunta en inglés: las reglas son bilingües"
+    },
+    {
+      "dice": "We have four data sources, not three.",
+      "pista": "sistema",
+      "ms": 84000,
+      "dispara": true,
+      "porque": "cifra en inglés"
+    },
+    {
+      "dice": "That sounds reasonable to me.",
+      "pista": "sistema",
+      "ms": 91000,
+      "dispara": false,
+      "porque": "afirmación en inglés sin cifra ni interrogativo"
+    },
+    {
+      "dice": "Hablemos del gobierno de los datos después del cierre.",
+      "pista": "sistema",
+      "ms": 98000,
+      "dispara": true,
+      "porque": "nombra «gobierno», que está en el corpus del usuario"
+    },
+    {
+      "dice": "Perfecto, lo anotamos.",
+      "pista": "microfono",
+      "ms": 104000,
+      "dispara": false,
+      "porque": "pista del micrófono"
+    },
+    {
+      "dice": "¿Ustedes tienen certificación ISO 27001?",
+      "pista": "sistema",
+      "ms": 112000,
+      "dispara": true,
+      "porque": "pregunta del cliente: no está en el corpus, pero disparar es lo correcto — la app responderá que no tiene nada"
+    },
+    {
+      "dice": "Mmm.",
+      "pista": "sistema",
+      "ms": 119000,
+      "dispara": false,
+      "porque": "una sílaba"
+    },
+    {
+      "dice": "¿Y quién responde por cada fuente después del cierre?",
+      "pista": "sistema",
+      "ms": 126000,
+      "dispara": true,
+      "porque": "pregunta del cliente"
+    },
+    {
+      "dice": "Lo vemos con tu equipo la semana que viene.",
+      "pista": "microfono",
+      "ms": 132000,
+      "dispara": false,
+      "porque": "pista del micrófono"
+    },
+    {
+      "dice": "Gracias, nos vemos entonces.",
+      "pista": "sistema",
+      "ms": 140000,
+      "dispara": false,
+      "porque": "despedida: nada que buscar"
+    },
+    {
+      "dice": "¿Nos mandas el acta por correo?",
+      "pista": "sistema",
+      "ms": 147000,
+      "dispara": true,
+      "porque": "pregunta del cliente, aunque la respuesta no esté en el corpus"
+    }
+  ]
+}

@@ -22,6 +22,60 @@ tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+tauri-plugin-global-shortcut = "2.3.2"
+
+# EL CORPUS — y solo el corpus. Estas cuatro viven del lado NO protegido de la frontera del
+# efímero: leen los documentos PROPIOS del usuario, que es exactamente lo que la regla del
+# efímero verificable permite persistir. Ninguna se asoma a `capture/`, `stt/` ni `voz/`.
+#
+# `tantivy` es el BM25 que pidió la orden. Cuesta 193 nodos y 16,7 s de compilación en frío
+# (medido antes de comprometerla, no después); a cambio trae la tokenización y el stemming de
+# los dos idiomas de la app, que es justo la parte que a mano se hace mal y en silencio.
+tantivy = "0.26"
+# Los dos lectores que no son texto plano. El .docx es un zip con XML dentro, así que se abre
+# con las piezas y no con una librería de Word: menos superficie y ningún escritor de .docx
+# enlazado en una app que jamás escribe .docx.
+pdf-extract = "0.12"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+quick-xml = "0.42"
+# Para UNA cosa: el diálogo con el que el usuario señala su carpeta de documentos. La app no
+# puede abrir un selector de carpetas sin él, y pedir la ruta escrita a mano sería empujar al
+# usuario a teclear rutas en una app de escritorio.
+tauri-plugin-dialog = "2"
+
+# Solo macOS, y solo para el ACOPLE y el RELLENO. Las cuatro ya viajaban en el árbol de Tauri
+# (`cargo tree` las lista bajo tao/wry): declararlas aquí no añade una descarga, hace explícito
+# que este crate las usa de primera mano y que la superficie nativa que tocamos son dos APIs del
+# sistema — Accessibility (mover ventanas ajenas) y NSWorkspace (leer el fondo de escritorio) —
+# y ninguna más.
+[target.'cfg(unix)'.dependencies]
+# Solo para leer el desplazamiento horario del sistema y escribir «14:02» en un turno. Viajaba ya
+# en el árbol (tao la usa); declararla hace explícito que este crate la llama de primera mano.
+libc = "0.2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+base64 = "0.22"
+core-foundation = "0.10"
+core-foundation-sys = "0.8"
+objc2 = "0.6"
+objc2-app-kit = { version = "0.3", default-features = false, features = [
+  "std",
+  "NSWorkspace",
+  "NSRunningApplication",
+  "NSScreen",
+  "NSResponder",
+  "libc",
+] }
+objc2-foundation = { version = "0.3", default-features = false, features = [
+  "std",
+  "NSString",
+  "NSURL",
+  "NSArray",
+  "NSDictionary",
+  "NSGeometry",
+  "NSValue",
+  "NSUUID",
+] }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
@@ -29,5 +83,20 @@ serde_json = "1"
 codegen-units = 1
 lto = true
 opt-level = 3
-panic = "abort"
+# **`panic = "abort"` estuvo aquí y tuvo que salir** (hallazgo A3 de la auditoría del sprint 001).
+# Lo traía la plantilla de Tauri para adelgazar el binario, y en esta app anulaba en silencio el
+# `catch_unwind` de `corpus::leer::de_pdf`: la librería de PDF se rompe con archivos malformados
+# —por eso está envuelta— y con `abort` el proceso no se desenreda, se muere. El módulo prometía
+# que «un documento dañado no detiene a los otros», su test lo comprobaba en debug, y en el binario
+# que se distribuye **un solo PDF roto de la carpeta del usuario cerraba la app**. Es el tercer filo
+# de la regla de los gates: probado, pero no en el modo en que el usuario lo usa.
+#
+# Lo que cuesta, MEDIDO en este Mac y no estimado: el binario de release pasa de **9,01 MB a
+# 11,07 MB** (+2,07 MB, +22,9 %). Son las tablas de desenredo, y es mucho para un número que se
+# anota por PR — pero la alternativa es que la app se cierre la primera vez que alguien le señale
+# una carpeta con un PDF malformado, que es el caso normal de una carpeta de verdad. Se paga y se
+# declara. Lo vigila `el_perfil_de_release_desenreda` en `corpus/leer.rs`.
 strip = true
+
+[dev-dependencies]
+serde_json = "1"

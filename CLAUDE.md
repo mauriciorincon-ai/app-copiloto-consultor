@@ -44,9 +44,15 @@ vende **no persistir, verificable**.
    inyectada** (un `fs::write` plantado hace fallar la suite — se demuestra en rojo, regla 15);
    **(c)** `pnpm verify:ephemeral`: tras una sesión completa, cero archivos nuevos fuera de la
    carpeta de notas; **(d)** término plantado en logs; **(e)** kill-switch de una tecla que corta
-   captura y vacía buffers. Lo único que persiste: notas de texto escritas por el consultor
-   (cifradas, con retención y borrado), el índice del corpus (documentos PROPIOS del usuario, en
-   claro en su carpeta), preferencias y metadatos de costo.
+   captura y vacía buffers. **Qué persiste y qué no (mirada 3 de la Etapa de Diseño, 2026-09-20):**
+   el diseño distingue **lo del usuario** de **lo de terceros**, no «texto» de «audio». Persiste,
+   cifrado, con retención y borrado, en la carpeta del usuario: notas y acuerdos escritos · fichas
+   mostradas y fijadas · **turnos del propio consultor (pista de micrófono) en TEXTO, opt-in, por
+   defecto apagado** · la **bandeja de propuestas** durante la ventana elegida (defecto 3 h, techo
+   24 h, mínimo cero; borrado automático al vencer aunque la app no se abra; visible en Honestidad)
+   · el índice del corpus (documentos propios, en claro) · preferencias y metadatos de costo. Muere
+   SIEMPRE, sin conmutador que lo encienda: audio de cualquier pista (la propia incluida),
+   transcript del cliente, lo leído de la pantalla. El consultor responde por su propia carpeta.
 2. **NADA CRUDO SALE DEL EQUIPO.** Ningún audio ni imagen viaja jamás a un proveedor. Por
    defecto la app es **100 % local** (STT, OCR, retrieval y síntesis on-device); el API externo
    está APAGADO hasta que el usuario lo encienda con su propia clave, y aun así solo recibe texto
