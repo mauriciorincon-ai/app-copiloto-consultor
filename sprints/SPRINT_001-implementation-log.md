@@ -2221,3 +2221,21 @@ delta mayor.
 | §10 documentación | manual corregido (hallazgo 3) · guía v2 · summary DENTRO del PR · barrido de enlaces limpio |
 | §11 los checks | conclusión propia `SUCCESS` en `quality`, `e2e` y `build-escritorio` sobre `e83b8fb` |
 | §12 el disco en runtime | 10 archivos nuevos, todos del índice del corpus; la carpeta reparada de 755 a 700 |
+
+---
+
+### Mirada 15 — el cuaderno del cierre, aprobado (2026-09-23)
+
+> **«Está perfecto lo de transcripción en vivo y lo que transcribe el mac muy bien, ¿qué sigue?»**
+
+El cuaderno de fidelidad que se le presentó —`docs/fidelidad/S1-cuaderno.html`, 60 encuadres del
+producto construido contra la maqueta— se abrió: el usuario nombra **dos cosas que solo están ahí
+dentro**, el transcript en vivo de la banda y el motor de voz del Mac por pista de la pantalla de
+Idioma. Veredicto: aprobado.
+
+**Lo que el veredicto NO dice, y se anota para que nadie lo lea como que sí:** la pregunta puntual
+que se le hizo era si aprobaba el estado **«sin modelo»** de Idioma con su desborde de **15 px**, y
+sobre esos 15 px no dijo nada. Se toma como **aceptado con el defecto declarado** —está en la tabla
+de deuda del summary con esa misma palabra— y no como corregido. Si el usuario prefiere recortar la
+frase de honestidad del pie para que la pantalla quepa, se recorta con él: la alternativa sigue
+abierta y cuesta una línea.
