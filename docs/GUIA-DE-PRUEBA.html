@@ -61,7 +61,7 @@
      la prueba A6 de habla pedía ver subir un mínimo corrido dentro de la misma sesión — un
      imposible del instrumento que solo el gate humano detectó.
 
-  AL ABRIR EL SPRINT SIGUIENTE: cambiar el NS del script (hoy `ag-s1-aud-`) a `ag-s2-`, pasar los
+  AL ABRIR EL SPRINT SIGUIENTE: cambiar el NS del script (hoy `ag-s1-cierre-`) a `ag-s2-`, pasar los
   chips «Nuevo · S1» a «S1» a secas —salvo lo que el sprint nuevo toque, que pasa a «Mejorado en
   S2»— y añadir los bloques nuevos SIN resumir los de aquí. Esta app no tiene URL de preview y no
   va a tenerla: es de escritorio, y la caja de arriba dice cómo se arranca en su lugar.
@@ -158,14 +158,20 @@
 <body>
 <div class="pagina">
   <header>
-    <p class="eyebrow">Angel Ghost · Guía de prueba viva y acumulativa · Sprint 001 · 2026-09-22 · <strong>v2, tras la auditoría</strong></p>
+    <p class="eyebrow">Angel Ghost · Guía de prueba viva y acumulativa · Sprint 001 · 2026-09-23 · <strong>v3, al cerrar el sprint</strong></p>
     <h1>Guía de prueba</h1>
     <p class="suave">Todas las pruebas vigentes de la app — las nuevas de este sprint, las que
       cambiaron y las heredadas (regresión). Filtra por origen para correr todo o solo lo que
       cambió. Las casillas se guardan solas en este navegador.</p>
     <div class="url-caja" style="border-color:var(--pendiente)">
       <p class="eyebrow" style="margin:0 0 6px">Qué cambió en esta versión</p>
-      <p class="chica" style="margin:0"><strong>La auditoría del sprint encontró que el resultado
+      <p class="chica" style="margin:0"><strong>v3 — dos pruebas que faltaban: la banda en Zoom y en
+        Teams.</strong> La promesa de que el cliente no ve la banda estaba probada <strong>solo en
+        Google Meet</strong>, y el plan del sprint la pedía en los tres clientes. Son pruebas ⭐ (una
+        persona, una llamada de verdad) y llevan su anotación de versión: esta app promete
+        invisibilidad <strong>graduada</strong> —por cliente y por versión de macOS—, así que lo que
+        no se probó, no se afirma.</p>
+      <p class="chica" style="margin:8px 0 0"><strong>Y lo de v2, que sigue vigente: la auditoría del sprint encontró que el resultado
         principal no funcionaba</strong> —la ficha no llegaba nunca a la banda— y otros diez
         hallazgos altos. Esta guía trae <strong>seis pruebas nuevas y tres reescritas</strong> que
         vienen de ahí, marcadas «auditoría», y son las primeras que conviene correr: cada una
@@ -181,11 +187,11 @@
       puede juzgar; si la integración continua lo verifica por otro camino, se queda fuera aunque
       esté en el ⭐. La novena parada nace de la auditoría: <strong>cortar con ⌥⎋ mientras todavía
       estás hablando</strong>, que es el único instante en que el kill-switch podía fallar y solo se
-      provoca con la voz. <strong>Deja fuera 22 pruebas ⭐</strong> —instalar un modelo de idioma, el
+      provoca con la voz. <strong>Deja fuera 24 pruebas ⭐</strong> —instalar un modelo de idioma, el
       comportamiento sin permisos, el aviso del eco, la restauración tras un cierre brusco, leer el
       log con tus ojos, entre otras—: ninguna se borra, siguen enteras en el filtro ⭐ para cuando
       quieras la confianza completa.</p>
-    <p class="chica"><strong>Gate mínimo ⭐: 31 pruebas · ~45 min.</strong> Es lo que ninguna
+    <p class="chica"><strong>Gate mínimo ⭐: 33 pruebas · ~55 min.</strong> Es lo que ninguna
       automatización puede verificar: hardware de verdad, voz de verdad, una videollamada de
       verdad, y el juicio humano sobre lo que se ve. Lo que la CI ya respalda queda fuera del
       mínimo y se corre en los pases completos.</p>
@@ -232,6 +238,14 @@
         <span class="minimo">⭐⭐ Parada 2 de 9</span></label></li>
       <li data-origen="nuevo" data-minimo><input type="checkbox" id="a3"><label for="a3">Con la pantalla todavía compartida, mira la franja con atención: <strong>no se ve el escritorio de verdad</strong> (ni iconos, ni ventanas por detrás), sino un trozo de tu fondo de pantalla. Si se vieran ventanas ajenas asomando, el relleno no está haciendo su trabajo.
         <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="a3b"><label for="a3b">Ahora repite las dos pruebas anteriores en <strong>Zoom</strong>: entra a una reunión y comparte la pantalla completa. La franja de abajo tiene que mostrar el relleno, <strong>no la banda</strong>.
+        <p class="chica suave" style="margin:6px 0 0">La app <strong>no promete lo mismo en todos los clientes</strong>: en Sesión, Zoom sale en ámbar como «sin verificar», y esta prueba es la única que puede cambiarlo. Anota la <strong>versión de Zoom y la de macOS</strong> con las que lo probaste — la promesa vale para lo que probaste, no para el nombre del programa.</p>
+        <span class="origen origen-nuevo">Nuevo · S1 · cierre</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="a3c"><label for="a3c">Y lo mismo en <strong>Microsoft Teams</strong>: reunión, compartir pantalla completa, mirar la franja. El relleno, <strong>no la banda</strong>.
+        <p class="chica suave" style="margin:6px 0 0">Tres clientes, tres verificaciones: lo que vale en Meet no se hereda. Anota versión de Teams y de macOS. Si en alguno <strong>sí</strong> se ve la banda, no es un fallo que se arregle callando: la app tiene que decirlo en Sesión antes de que compartas.</p>
+        <span class="origen origen-nuevo">Nuevo · S1 · cierre</span>
         <span class="minimo">⭐ mínimo</span></label></li>
       <li data-origen="nuevo" data-minimo><input type="checkbox" id="a4"><label for="a4">Arrastra el <strong>asa</strong> de la banda hacia arriba. La banda crece a 200 px <strong>y el relleno crece con ella</strong> — no se separan ni un píxel, ni durante el arrastre.
         <span class="origen origen-nuevo">Nuevo · S1</span>
@@ -407,6 +421,12 @@
     <details class="chica">
       <summary>Historial de la guía</summary>
       <ul>
+        <li><strong>S1 · v3 · 2026-09-23 (al cerrar el sprint):</strong> 41 pruebas.
+          <strong>Dos nuevas</strong>, las dos ⭐: la banda que no se ve al compartir pantalla en
+          <strong>Zoom</strong> y en <strong>Teams</strong> — la promesa estaba probada solo en Meet y
+          el plan la pedía en los tres. <strong>Ninguna eliminada.</strong> Namespace nuevo
+          (<code>ag-s1-cierre-</code>): la versión anterior no llegó a correrse, y una casilla de otra
+          versión se lee como aprobada sin haberla corrido.</li>
         <li><strong>S1 · v2 · 2026-09-22 (tras la auditoría):</strong> 39 pruebas. <strong>Seis
           nuevas</strong> —la banda sin reunión ni corpus, la frase del cliente que enseña al buscar,
           el corte mientras hablas (novena parada del ⭐⭐), el log sin palabras y el desborde de 15 px de la
@@ -433,7 +453,7 @@
     // de la auditoría, y seis pruebas cambiaron. Con el namespace viejo, las casillas que el
     // usuario marcó antes de los arreglos seguirían marcadas sobre pruebas que ahora dicen otra
     // cosa — una regresión sin correr apareciendo como aprobada.
-    var NS = "ag-s1-aud-";
+    var NS = "ag-s1-cierre-";
     var casillas = Array.prototype.slice.call(document.querySelectorAll('input[type="checkbox"]'));
     var barra = document.getElementById("barra-avance");
     var contador = document.getElementById("contador");
