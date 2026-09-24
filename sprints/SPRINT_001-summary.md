@@ -3,7 +3,7 @@ sprint: 001
 app: copiloto-consultor
 status: closed
 opened: 2026-09-20
-closed: 2026-09-22
+closed: 2026-09-23
 branch: sprint-001/la-banda-y-la-ficha
 pr: "#4"
 ---
@@ -56,7 +56,7 @@ Los tres outcomes, uno a uno:
 | **UX/A11y** | teclado de punta a punta · axe en 66 e2e · símbolo + texto + color · dos temas · dos idiomas · **gate de FIDELIDAD** con 60 encuadres, aprobado en las miradas 11 a 15 · **bundle `design-sync/` al día en este mismo PR** (regla 16): 13 tarjetas generadas del sistema, con su gate de espejo en `quality` |
 | **IA embebida** | **no aplica: cero LLM, cero tokens, cero red.** El catálogo de maniobras es código y datos versionados, y es el fallback permanente de la síntesis del S2 |
 | **Manual** | `docs/MANUAL-DE-USO.md`, ocho features con sus limitaciones. **En español** — desviación declarada de mi propio plan, con su razón |
-| **Guía de prueba** | `docs/GUIA-DE-PRUEBA.html` **v2**: 39 pruebas, ⭐ de 31 (~45 min), ⭐⭐ de **9 paradas** caminables (~22 min), kit de prueba en el repo |
+| **Guía de prueba** | `docs/GUIA-DE-PRUEBA.html` **v3**: **41 pruebas**, ⭐ de **33** (~55 min), ⭐⭐ de **9 paradas** caminables (~22 min), kit de prueba en el repo. v3 añade las dos que el plan pedía y faltaban: la banda que no se ve al compartir pantalla **en Zoom y en Teams** — estaba probada solo en Meet |
 
 ## La auditoría — hallazgos, pagos y deuda
 
@@ -169,17 +169,31 @@ atravesaba. El contrato se escribía dos veces a mano y nadie comparaba las copi
    viva en un job de CI o quede declarado como manual con su razón — hoy la plantilla dice «verifica
    con EL comando del `ci-escritorio.yml`» y no comprueba que ese comando esté en algún `yml`.
 
-## El gate ⭐ — diferido, por decisión del usuario
+## El gate ⭐ — diferido, como el plan ya lo traía
 
-El usuario decidió **no correr el recorrido de la guía en este sprint** («no vamos a diferir el gate
-hasta lograr algo avanzado», 2026-09-23). Se registra como decisión suya, no como olvido. **No es un
-corte del sprint:** la regla del kit dice que el ⭐ **se ofrece**, y el que el cierre exige —el ⭐⭐—
-es del **cierre de CICLO**, y este es el S1 de un ciclo de tres o más.
+El `SPRINT_001.md` de la planeadora lo dice en su frontmatter: **`gate_estrella: diferido`**, sprint
+intermedio del ciclo H1. El usuario lo confirmó el **2026-09-23** («no vamos a diferir el gate hasta
+lograr algo avanzado»), así que no es una excepción ni un olvido: es lo planeado, ratificado.
+**Tampoco es un corte del sprint** — el ⭐ **se ofrece**, y el que el cierre exige, el ⭐⭐, es del
+**cierre de CICLO**; este es el sprint 1 de 3.
 
-Lo que arrastra, dicho sin adornos: las **nueve paradas** del ⭐⭐ siguen sin caminarse, y entre
-ellas la **parada 5**, que es el re-test humano del hallazgo C1 —la ficha llegando a la banda—. El
-CI lo cubre por otro camino (`la-ficha-llega-a-la-banda.test.tsx` y el kit del disparador, 1,000 de
-precisión y recall), pero **nadie lo ha visto con su voz y su Mac**, y un test verde no es una
+**Los dos contrapesos mecánicos que hacen VÁLIDO el diferimiento, con su evidencia:**
+
+| Contrapeso | Evidencia en este sprint |
+|---|---|
+| **Pasada de capturas del constructor** | `docs/fidelidad/S1-cuaderno.html` — **60 encuadres** del producto contra la maqueta (ambos temas, ambos idiomas, umbral 0,15 %), **leídos como imagen y no solo comparados por número**: así aparecieron el desborde de 15 px de Idioma y el icono relleno que decía lo contrario de lo que significa, dos defectos que ningún número reportó |
+| **e2e de `reduced-motion`** | `tests/e2e/reduced-motion.spec.ts` — **11 pruebas** dentro de los 66 e2e: cinco encuadres × dos modos comprobando **visibilidad real** (caja, `display`, `visibility` y `opacity`, no presencia en el DOM), más «la FORMA del árbol no cambia con reduced motion», que compara la estructura con y sin el cinturón |
+
+**Qué pasa al acumulado del ciclo:** las **33 pruebas ⭐** de la guía v3 (~55 min), y dentro de ellas
+las **9 paradas del ⭐⭐** (~22 min). Las ocho que el plan nombró viajan enteras, y **dos de ellas no
+existían hasta este cierre**: la banda que no se ve al compartir pantalla en **Zoom** y en **Teams**
+estaba probada solo en Meet. Se escribieron aquí, con su anotación de versión de cliente y de macOS,
+porque esta app promete invisibilidad **graduada** y lo que no se probó no se afirma.
+
+**Y lo que el diferimiento arrastra, dicho sin adornos:** las nueve paradas siguen sin caminarse, y
+entre ellas la **parada 5**, que es el re-test humano del hallazgo C1 —la ficha llegando a la banda—.
+El CI lo cubre por otro camino (`la-ficha-llega-a-la-banda.test.tsx` y el kit del disparador, 1,000
+de precisión y recall), pero **nadie lo ha visto con su voz y su Mac**, y un test verde no es una
 reunión.
 
 ## Deuda técnica aceptada
@@ -210,7 +224,7 @@ reunión.
 | `src/componentes/Banda.tsx` · `src/ficha.ts` | la banda y lo que enseña, ahora con datos reales |
 | `scripts/verify-ephemeral.mjs` | el barrido estático, con su gate sobre sí mismo |
 | `src-tauri/tests/contra-el-mac-de-verdad.rs` | el único binario de integración: audio real, efímero en marcha, la canaria en el log y el kit |
-| `docs/GUIA-DE-PRUEBA.html` | v2 tras la auditoría: 39 pruebas, ⭐ 31, ⭐⭐ 9 paradas |
+| `docs/GUIA-DE-PRUEBA.html` | v3: 41 pruebas, ⭐ 33, ⭐⭐ 9 paradas — los tres clientes, no solo Meet |
 | `sprints/SPRINT_001-auditoria.md` | el reporte de la auditoría independiente |
 | `scripts/design-sync-bundle.mjs` → `design-sync/` | el bundle del design system, derivado del sistema y con gate de espejo |
 
