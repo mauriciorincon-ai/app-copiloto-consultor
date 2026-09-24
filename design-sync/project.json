@@ -1,0 +1,10 @@
+{
+  "app": "copiloto-consultor",
+  "name": "Angel Ghost",
+  "designSystem": "design-system.md v1.11.0",
+  "projectId": null,
+  "publishedFiles": 0,
+  "lastPublished": null,
+  "nota": "projectId en null: NADA se ha publicado todavía. El destino se decide con el usuario la primera vez que él invoque /design-sync, que es en el cierre de ciclo y después del gate ⭐⭐ — jamás se adivina ni se crea un proyecto por cuenta propia.",
+  "generadoPor": "scripts/design-sync-bundle.mjs"
+}

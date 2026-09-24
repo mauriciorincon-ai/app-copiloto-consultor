@@ -1,0 +1,240 @@
+<!-- @dsCard group="Fundamentos" name="Tokens" -->
+<!doctype html>
+<html lang="es" data-lang="es">
+<head>
+<meta charset="utf-8">
+<title>Tokens — Angel Ghost</title>
+<style>
+:root {
+  /* ---- Tipografía (D4): nativa de macOS, sin embeber bytes ---- */
+  --font-evidencia: "Charter", "Iowan Old Style", Georgia, serif;     /* lo que dice TU corpus */
+  --font-ui: "Avenir Next", "Helvetica Neue", system-ui, sans-serif;   /* la interfaz */
+  --font-mono: "Menlo", "SF Mono", ui-monospace, monospace;            /* lo medible */
+
+  /* ---- Escala tipográfica ---- */
+  --t-titular: 17px;   /* ficha: titular ≤ 8 palabras */
+  --t-linea: 14px;     /* ficha: una línea */
+  --t-ui: 13px;        /* interfaz general */
+  --t-meta: 12px;      /* estado, fuente, etiquetas */
+  --t-mono: 11.5px;    /* contador, atajos, fuente de ficha */
+  --t-h1: 22px;        /* título de pantalla (ventana principal) */
+  --t-h2: 15px;
+
+  /* ---- Espacio (múltiplos de 4) ---- */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+
+  /* ---- Radios y trazos ---- */
+  --r-chip: 5px; --r-ficha: 8px; --r-panel: 10px; --r-tecla: 4px;
+  --borde: 1px;
+
+  /* ---- Motion (D10): casi ninguno ---- */
+  --dur: 150ms; --ease: cubic-bezier(.2,.6,.2,1);
+
+  /* ---- Tamaños de ventana (D1, D6) ---- */
+  --panel-w: 380px; --panel-h: 220px; --panel-h-transcript: 420px; --panel-h-max: 360px;
+  --principal-w: 960px; --principal-h: 640px;
+  /* La banda ocupa el ancho de la pantalla; solo su ALTO es una medida. Estas tres son la
+     fuente única: las usa el CSS de abajo y las lee la ventana nativa (test en `src-tauri/`). */
+  --banda-h: 88px; --banda-h-ampliada: 200px; --banda-h-voz: 44px;
+}
+:root, .tema.oscuro {
+  color-scheme: dark;
+  --bg: #1a1917;          /* ventana */
+  --surface: #242320;     /* ficha, tarjetas */
+  --surface-2: #2e2d29;   /* chips, teclas, hover */
+  --line: #3b3a35;        /* bordes */
+  --line-2: #4a4841;      /* bordes en foco/hover */
+  --ink: #ece7dc;         /* texto principal — marfil */
+  --ink-2: #b9b3a6;       /* texto secundario (AA sobre bg y surface) */
+  --ink-3: #7c776c;       /* SOLO ORNAMENTO (líneas, separadores). Jamás texto — vetado */
+  --halo: #9ecbff;        /* acento único: foco, fijado, interactivo */
+  --halo-tint: rgba(158,203,255,.14);
+  --ok: #62d3b4;          /* activo / verificado / verde */
+  --ok-tint: rgba(98,211,180,.15);
+  --warn: #f0b64a;        /* atención / sin verificar / aviso */
+  --warn-tint: rgba(240,182,74,.15);
+  --err: #ff8577;         /* error / cortado / revocado */
+  --err-tint: rgba(255,133,119,.15);
+  --mute: #9a958a;        /* inactivo (texto AA sobre bg) */
+  --sombra-panel: 0 10px 30px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.04) inset;
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.25);
+}
+.tema.claro {
+  color-scheme: light;
+  --bg: #f5f2ea;
+  --surface: #fffdf8;
+  --surface-2: #ece8de;
+  --line: #d6d1c4;
+  --line-2: #bdb7a8;
+  --ink: #1f1e1a;
+  --ink-2: #5a5650;
+  --ink-3: #a19b8e;       /* SOLO ORNAMENTO — vetado como texto */
+  --halo: #1d5c9c;
+  --halo-tint: rgba(29,92,156,.12);
+  --ok: #0f6350;
+  --ok-tint: rgba(21,122,98,.13);
+  --warn: #7a4f00;
+  --warn-tint: rgba(198,131,0,.16);
+  --err: #a32a22;
+  --err-tint: rgba(184,50,42,.12);
+  --mute: #6d685f;
+  --sombra-panel: 0 10px 28px rgba(40,30,10,.18), 0 0 0 1px rgba(0,0,0,.04);
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.05);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { font-family: var(--font-ui); font-size: var(--t-ui); color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+body { margin: 0; line-height: 1.45; }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--halo); outline-offset: 2px; border-radius: var(--r-chip); }
+.mono { font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+[hidden] { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+html[data-lang="es"] [lang="en"] { display: none !important; }
+html[data-lang="en"] [lang="es"] { display: none !important; }
+.ic { display: inline-block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; }
+.ic.s { width: 13px; height: 13px; vertical-align: -2px; }
+.ic.relleno { fill: currentColor; stroke: none; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+.mas .n { font-family: var(--font-mono); font-size: var(--t-mono); }
+.vacio .voz { font-family: var(--font-evidencia); font-style: italic; font-size: 15px; line-height: 1.4; color: var(--ink-2); }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); align-items: start; }
+.campo input.mono { font-family: var(--font-mono); font-size: var(--t-mono); }
+.conm .etq { display: inline-flex; align-items: center; gap: 5px; }
+.conm.on .etq { color: var(--ok); }
+.conm.off .etq { color: var(--mute); }
+.tabla td.mono, .tabla th.num, .tabla td.num { font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; }
+.permiso .nombre { font-weight: 600; font-size: var(--t-ui); }
+.contador .etq { font-size: var(--t-meta); color: var(--ink-2); }
+.banda.voz { height: var(--banda-h-voz); }
+.banda.voz .cuerpo-b { align-items: center; padding: 0 14px; height: 100%; }
+.banda.voz .linea-b { font-size: 13px; -webkit-line-clamp: 1; white-space: nowrap; }
+.banda.voz .cab-b { display: none; }
+.mq-nota .n { display: none; border-left: 3px solid #7dd3fc; padding: 8px 12px; background: #111418; }
+.mq-nota .n.activa { display: block; }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
+.k-item { display: flex; flex-direction: column; gap: 6px; }
+.k-item > .etq { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.sw { display: flex; flex-direction: column; gap: 4px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
+.sw i { display: block; height: 36px; border-radius: var(--r-chip); border: 1px solid var(--line); }
+.sw b { color: var(--ink); font-weight: 400; }
+.voces { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.voz { padding: 14px; border: var(--borde) solid var(--line); border-radius: var(--r-ficha); background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
+.voz .muestra { font-size: 20px; line-height: 1.2; }
+.voz .nombre { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
+.escala { display: flex; flex-direction: column; gap: 6px; }
+.escala div { display: flex; align-items: baseline; gap: 12px; }
+.escala .n { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); width: 150px; flex: 0 0 auto; }
+.espacios { display: flex; align-items: flex-end; gap: 10px; }
+.espacios i { display: block; background: var(--halo-tint); border: 1px solid var(--halo); }
+.espacios span { display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-2); }
+/* marco de exhibición del bundle */
+  body { margin: 0; padding: var(--s-6); }
+  .ds-cab { width: 100%; max-width: 1180px; margin: 0 auto var(--s-5); }
+  .ds-cab h1 { font-family: var(--font-ui); font-size: var(--t-h1); font-weight: 600; margin: 0 0 var(--s-2); }
+  .ds-cab p { font-family: var(--font-ui); font-size: var(--t-ui); color: var(--ink-2); margin: 0; line-height: 1.5; max-width: 82ch; }
+  .ds-cab p.ds-regla { color: var(--ink); margin-bottom: var(--s-2); }
+  .ds-cab code { font-family: var(--font-mono); font-size: var(--t-mono); }
+  /* 1180 px o lo que haya: la banda ocupa el ancho de la PANTALLA, y en un marco estrecho su
+     ellipsis recorta la fuente y la fecha como si fuera un defecto del componente. */
+  .ds-temas { width: 100%; max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--s-6); }
+  .tema { padding: var(--s-5); border: var(--borde) solid var(--line); border-radius: var(--r-panel); background: var(--bg); color: var(--ink); }
+  .tema > .ds-t { display: block; margin: 0 0 var(--s-4); font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+  .ds-pieza + .ds-pieza { margin-top: var(--s-6); }
+  .ds-pieza > .ds-et { display: block; margin: 0 0 var(--s-2); font-family: var(--font-ui); font-size: var(--t-meta); font-weight: 600; color: var(--ink); }
+  .ds-pieza > .ds-nota { display: block; margin: 0 0 var(--s-3); font-family: var(--font-ui); font-size: var(--t-meta); color: var(--ink-2); line-height: 1.5; max-width: 72ch; }
+  .ds-marco-banda { border: var(--borde) solid var(--line); border-radius: var(--r-ficha); overflow: hidden; }
+  @media (max-width: 720px) { body { padding: var(--s-4); } }
+</style>
+</head>
+<body>
+
+  <div class="ds-cab">
+    <h1>Tokens</h1>
+    <p class="ds-regla">design-system.md §3</p>
+    <p>Angel Ghost · Fundamentos — derivado de <code>docs/diseno</code> y <code>design-system.md</code>. Los dos temas, las dos lenguas (se muestra <code>es</code>).</p>
+  </div>
+  <div class="ds-temas">
+    <section class="tema oscuro">
+      <span class="ds-t">tema oscuro · primario</span>
+      <div class="ds-pieza">
+        <div class="swatches">
+    <div class="sw"><i style="background:var(--bg)"></i><b>--bg</b><span lang="es">ventana</span><span lang="en">window</span></div>
+    <div class="sw"><i style="background:var(--surface)"></i><b>--surface</b><span lang="es">ficha · tarjeta</span><span lang="en">card</span></div>
+    <div class="sw"><i style="background:var(--surface-2)"></i><b>--surface-2</b><span lang="es">chip · tecla · hover</span><span lang="en">chip · key · hover</span></div>
+    <div class="sw"><i style="background:var(--line)"></i><b>--line</b><span lang="es">bordes</span><span lang="en">borders</span></div>
+    <div class="sw"><i style="background:var(--ink)"></i><b>--ink</b><span lang="es">texto</span><span lang="en">text</span></div>
+    <div class="sw"><i style="background:var(--ink-2)"></i><b>--ink-2</b><span lang="es">texto secundario</span><span lang="en">secondary text</span></div>
+    <div class="sw"><i style="background:var(--ink-3)"></i><b>--ink-3</b><span lang="es">solo ornamento · vetado como texto</span><span lang="en">ornament only · banned for text</span></div>
+    <div class="sw"><i style="background:var(--halo)"></i><b>--halo</b><span lang="es">acento único</span><span lang="en">single accent</span></div>
+    <div class="sw"><i style="background:var(--ok)"></i><b>--ok</b><span lang="es">activo · verificado</span><span lang="en">active · verified</span></div>
+    <div class="sw"><i style="background:var(--warn)"></i><b>--warn</b><span lang="es">atención · sin verificar</span><span lang="en">attention · not verified</span></div>
+    <div class="sw"><i style="background:var(--err)"></i><b>--err</b><span lang="es">error · cortado</span><span lang="en">error · cut</span></div>
+    <div class="sw"><i style="background:var(--mute)"></i><b>--mute</b><span lang="es">inactivo</span><span lang="en">inactive</span></div>
+  </div>
+  <div class="voces">
+    <div class="voz"><div class="muestra" style="font-family:var(--font-evidencia);font-weight:700"><span lang="es">Lo que dice tu corpus</span><span lang="en">What your corpus says</span></div><div class="nombre">Charter · <span lang="es">evidencia</span><span lang="en">evidence</span></div></div>
+    <div class="voz"><div class="muestra" style="font-family:var(--font-ui);font-weight:600"><span lang="es">La interfaz que lo rodea</span><span lang="en">The interface around it</span></div><div class="nombre">Avenir Next · <span lang="es">interfaz</span><span lang="en">interface</span></div></div>
+    <div class="voz"><div class="muestra" style="font-family:var(--font-mono);font-size:18px">0 B · 14:02 · §3.2</div><div class="nombre">Menlo · <span lang="es">lo medible</span><span lang="en">what is measured</span></div></div>
+  </div>
+  <div class="grid-2">
+    <div class="escala">
+      <div><span class="n">titular 17 / Charter 700</span><span class="ficha-t" style="font-family:var(--font-evidencia);font-size:17px;font-weight:700"><span lang="es">Titular de ocho palabras como máximo</span><span lang="en">A headline of eight words at most</span></span></div>
+      <div><span class="n">línea 14 / Charter</span><span style="font-family:var(--font-evidencia);font-size:14px;color:var(--ink-2)"><span lang="es">Una sola línea que aterriza el titular.</span><span lang="en">A single line that grounds the headline.</span></span></div>
+      <div><span class="n">ui 13 / Avenir Next</span><span style="font-size:13px"><span lang="es">Texto de interfaz y avisos</span><span lang="en">Interface text and notices</span></span></div>
+      <div><span class="n">meta 12 / Avenir Next</span><span style="font-size:12px;color:var(--ink-2)"><span lang="es">Etiquetas y estados</span><span lang="en">Labels and states</span></span></div>
+      <div><span class="n">mono 11.5 / Menlo</span><span class="mono">Páramo Azul · §3.2 Alcance · 0 B</span></div>
+      <div><span class="n">h1 22 / Avenir Next 600</span><span style="font-size:22px;font-weight:600"><span lang="es">Título de pantalla</span><span lang="en">Screen title</span></span></div>
+    </div>
+    <div class="k-item"><span class="etq"><span lang="es">espacio (×4) · radios</span><span lang="en">spacing (×4) · radii</span></span>
+      <div class="espacios"><span><i style="width:4px;height:4px"></i>4</span><span><i style="width:8px;height:8px"></i>8</span><span><i style="width:12px;height:12px"></i>12</span><span><i style="width:16px;height:16px"></i>16</span><span><i style="width:20px;height:20px"></i>20</span><span><i style="width:24px;height:24px"></i>24</span><span><i style="width:32px;height:32px"></i>32</span><span><i style="width:40px;height:40px"></i>40</span></div>
+      <div class="espacios" style="margin-top:10px"><span><i style="width:36px;height:24px;border-radius:5px"></i>chip 5</span><span><i style="width:36px;height:24px;border-radius:8px"></i>ficha 8</span><span><i style="width:36px;height:24px;border-radius:10px"></i>panel 10</span><span><i style="width:36px;height:24px;border-radius:4px"></i>tecla 4</span></div>
+    </div>
+  </div>
+      </div>
+    </section>
+    <section class="tema claro">
+      <span class="ds-t">tema claro · papel</span>
+      <div class="ds-pieza">
+        <div class="swatches">
+    <div class="sw"><i style="background:var(--bg)"></i><b>--bg</b><span lang="es">ventana</span><span lang="en">window</span></div>
+    <div class="sw"><i style="background:var(--surface)"></i><b>--surface</b><span lang="es">ficha · tarjeta</span><span lang="en">card</span></div>
+    <div class="sw"><i style="background:var(--surface-2)"></i><b>--surface-2</b><span lang="es">chip · tecla · hover</span><span lang="en">chip · key · hover</span></div>
+    <div class="sw"><i style="background:var(--line)"></i><b>--line</b><span lang="es">bordes</span><span lang="en">borders</span></div>
+    <div class="sw"><i style="background:var(--ink)"></i><b>--ink</b><span lang="es">texto</span><span lang="en">text</span></div>
+    <div class="sw"><i style="background:var(--ink-2)"></i><b>--ink-2</b><span lang="es">texto secundario</span><span lang="en">secondary text</span></div>
+    <div class="sw"><i style="background:var(--ink-3)"></i><b>--ink-3</b><span lang="es">solo ornamento · vetado como texto</span><span lang="en">ornament only · banned for text</span></div>
+    <div class="sw"><i style="background:var(--halo)"></i><b>--halo</b><span lang="es">acento único</span><span lang="en">single accent</span></div>
+    <div class="sw"><i style="background:var(--ok)"></i><b>--ok</b><span lang="es">activo · verificado</span><span lang="en">active · verified</span></div>
+    <div class="sw"><i style="background:var(--warn)"></i><b>--warn</b><span lang="es">atención · sin verificar</span><span lang="en">attention · not verified</span></div>
+    <div class="sw"><i style="background:var(--err)"></i><b>--err</b><span lang="es">error · cortado</span><span lang="en">error · cut</span></div>
+    <div class="sw"><i style="background:var(--mute)"></i><b>--mute</b><span lang="es">inactivo</span><span lang="en">inactive</span></div>
+  </div>
+  <div class="voces">
+    <div class="voz"><div class="muestra" style="font-family:var(--font-evidencia);font-weight:700"><span lang="es">Lo que dice tu corpus</span><span lang="en">What your corpus says</span></div><div class="nombre">Charter · <span lang="es">evidencia</span><span lang="en">evidence</span></div></div>
+    <div class="voz"><div class="muestra" style="font-family:var(--font-ui);font-weight:600"><span lang="es">La interfaz que lo rodea</span><span lang="en">The interface around it</span></div><div class="nombre">Avenir Next · <span lang="es">interfaz</span><span lang="en">interface</span></div></div>
+    <div class="voz"><div class="muestra" style="font-family:var(--font-mono);font-size:18px">0 B · 14:02 · §3.2</div><div class="nombre">Menlo · <span lang="es">lo medible</span><span lang="en">what is measured</span></div></div>
+  </div>
+  <div class="grid-2">
+    <div class="escala">
+      <div><span class="n">titular 17 / Charter 700</span><span class="ficha-t" style="font-family:var(--font-evidencia);font-size:17px;font-weight:700"><span lang="es">Titular de ocho palabras como máximo</span><span lang="en">A headline of eight words at most</span></span></div>
+      <div><span class="n">línea 14 / Charter</span><span style="font-family:var(--font-evidencia);font-size:14px;color:var(--ink-2)"><span lang="es">Una sola línea que aterriza el titular.</span><span lang="en">A single line that grounds the headline.</span></span></div>
+      <div><span class="n">ui 13 / Avenir Next</span><span style="font-size:13px"><span lang="es">Texto de interfaz y avisos</span><span lang="en">Interface text and notices</span></span></div>
+      <div><span class="n">meta 12 / Avenir Next</span><span style="font-size:12px;color:var(--ink-2)"><span lang="es">Etiquetas y estados</span><span lang="en">Labels and states</span></span></div>
+      <div><span class="n">mono 11.5 / Menlo</span><span class="mono">Páramo Azul · §3.2 Alcance · 0 B</span></div>
+      <div><span class="n">h1 22 / Avenir Next 600</span><span style="font-size:22px;font-weight:600"><span lang="es">Título de pantalla</span><span lang="en">Screen title</span></span></div>
+    </div>
+    <div class="k-item"><span class="etq"><span lang="es">espacio (×4) · radios</span><span lang="en">spacing (×4) · radii</span></span>
+      <div class="espacios"><span><i style="width:4px;height:4px"></i>4</span><span><i style="width:8px;height:8px"></i>8</span><span><i style="width:12px;height:12px"></i>12</span><span><i style="width:16px;height:16px"></i>16</span><span><i style="width:20px;height:20px"></i>20</span><span><i style="width:24px;height:24px"></i>24</span><span><i style="width:32px;height:32px"></i>32</span><span><i style="width:40px;height:40px"></i>40</span></div>
+      <div class="espacios" style="margin-top:10px"><span><i style="width:36px;height:24px;border-radius:5px"></i>chip 5</span><span><i style="width:36px;height:24px;border-radius:8px"></i>ficha 8</span><span><i style="width:36px;height:24px;border-radius:10px"></i>panel 10</span><span><i style="width:36px;height:24px;border-radius:4px"></i>tecla 4</span></div>
+    </div>
+  </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

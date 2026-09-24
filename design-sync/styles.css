@@ -1,0 +1,547 @@
+/* ============================================================================
+   Angel Ghost — hoja del proyecto en Claude Design.
+   ESPEJO de docs/diseno/assets/ghost.css (design-system.md v1.11.0).
+   NO se edita aquí ni allá: se edita el sistema y se regenera con
+   `node scripts/design-sync-bundle.mjs`.
+   Las tarjetas no dependen de esta hoja —cada una lleva en línea lo que
+   necesita, para que se abra sola— y esta es el sistema entero, para el
+   proyecto.
+   ============================================================================ */
+/* ============================================================================
+   Angel Ghost — el design system en código (fuente de verdad: /design-system.md)
+   Tokens ambos temas · tipografía nativa de macOS · componentes canon.
+   Cero red, cero framework. El tema se fija en <html data-theme="dark|light">.
+   ============================================================================ */
+
+:root {
+  /* ---- Tipografía (D4): nativa de macOS, sin embeber bytes ---- */
+  --font-evidencia: "Charter", "Iowan Old Style", Georgia, serif;     /* lo que dice TU corpus */
+  --font-ui: "Avenir Next", "Helvetica Neue", system-ui, sans-serif;   /* la interfaz */
+  --font-mono: "Menlo", "SF Mono", ui-monospace, monospace;            /* lo medible */
+
+  /* ---- Escala tipográfica ---- */
+  --t-titular: 17px;   /* ficha: titular ≤ 8 palabras */
+  --t-linea: 14px;     /* ficha: una línea */
+  --t-ui: 13px;        /* interfaz general */
+  --t-meta: 12px;      /* estado, fuente, etiquetas */
+  --t-mono: 11.5px;    /* contador, atajos, fuente de ficha */
+  --t-h1: 22px;        /* título de pantalla (ventana principal) */
+  --t-h2: 15px;
+
+  /* ---- Espacio (múltiplos de 4) ---- */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+
+  /* ---- Radios y trazos ---- */
+  --r-chip: 5px; --r-ficha: 8px; --r-panel: 10px; --r-tecla: 4px;
+  --borde: 1px;
+
+  /* ---- Motion (D10): casi ninguno ---- */
+  --dur: 150ms; --ease: cubic-bezier(.2,.6,.2,1);
+
+  /* ---- Tamaños de ventana (D1, D6) ---- */
+  --panel-w: 380px; --panel-h: 220px; --panel-h-transcript: 420px; --panel-h-max: 360px;
+  --principal-w: 960px; --principal-h: 640px;
+  /* La banda ocupa el ancho de la pantalla; solo su ALTO es una medida. Estas tres son la
+     fuente única: las usa el CSS de abajo y las lee la ventana nativa (test en `src-tauri/`). */
+  --banda-h: 88px; --banda-h-ampliada: 200px; --banda-h-voz: 44px;
+}
+
+/* ---------------------------------------------------------------------------
+   Tema OSCURO (primario) — grafito cálido, tinta marfil, un solo acento «halo»
+   --------------------------------------------------------------------------- */
+:root, html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1a1917;          /* ventana */
+  --surface: #242320;     /* ficha, tarjetas */
+  --surface-2: #2e2d29;   /* chips, teclas, hover */
+  --line: #3b3a35;        /* bordes */
+  --line-2: #4a4841;      /* bordes en foco/hover */
+  --ink: #ece7dc;         /* texto principal — marfil */
+  --ink-2: #b9b3a6;       /* texto secundario (AA sobre bg y surface) */
+  --ink-3: #7c776c;       /* SOLO ORNAMENTO (líneas, separadores). Jamás texto — vetado */
+  --halo: #9ecbff;        /* acento único: foco, fijado, interactivo */
+  --halo-tint: rgba(158,203,255,.14);
+  --ok: #62d3b4;          /* activo / verificado / verde */
+  --ok-tint: rgba(98,211,180,.15);
+  --warn: #f0b64a;        /* atención / sin verificar / aviso */
+  --warn-tint: rgba(240,182,74,.15);
+  --err: #ff8577;         /* error / cortado / revocado */
+  --err-tint: rgba(255,133,119,.15);
+  --mute: #9a958a;        /* inactivo (texto AA sobre bg) */
+  --sombra-panel: 0 10px 30px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.04) inset;
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.25);
+}
+
+/* ---------------------------------------------------------------------------
+   Tema CLARO — papel
+   --------------------------------------------------------------------------- */
+html[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f5f2ea;
+  --surface: #fffdf8;
+  --surface-2: #ece8de;
+  --line: #d6d1c4;
+  --line-2: #bdb7a8;
+  --ink: #1f1e1a;
+  --ink-2: #5a5650;
+  --ink-3: #a19b8e;       /* SOLO ORNAMENTO — vetado como texto */
+  --halo: #1d5c9c;
+  --halo-tint: rgba(29,92,156,.12);
+  --ok: #0f6350;
+  --ok-tint: rgba(21,122,98,.13);
+  --warn: #7a4f00;
+  --warn-tint: rgba(198,131,0,.16);
+  --err: #a32a22;
+  --err-tint: rgba(184,50,42,.12);
+  --mute: #6d685f;
+  --sombra-panel: 0 10px 28px rgba(40,30,10,.18), 0 0 0 1px rgba(0,0,0,.04);
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.05);
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+   --------------------------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { font-family: var(--font-ui); font-size: var(--t-ui); color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+body { margin: 0; line-height: 1.45; }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--halo); outline-offset: 2px; border-radius: var(--r-chip); }
+.mono { font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+[hidden] { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Bilingüe (D11): el documento lleva data-lang; se oculta el otro idioma */
+html[data-lang="es"] [lang="en"] { display: none !important; }
+html[data-lang="en"] [lang="es"] { display: none !important; }
+
+/* Iconos (D9): SVG de trazo 16 px, monocromo, currentColor */
+.ic { display: inline-block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; }
+.ic.s { width: 13px; height: 13px; vertical-align: -2px; }
+.ic.relleno { fill: currentColor; stroke: none; }
+
+/* Motion (D10): solo propiedades, jamás la forma del árbol */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* ---------------------------------------------------------------------------
+   Estados semánticos — SIEMPRE símbolo + texto + color (daltonismo leve)
+   Positivo = tinte 15 % + borde sólido + ✓ en círculo relleno.
+   --------------------------------------------------------------------------- */
+.estado { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px 2px 6px; border-radius: var(--r-chip); border: var(--borde) solid transparent; font-size: var(--t-meta); font-weight: 500; line-height: 1.3; white-space: nowrap; }
+.estado.ok   { color: var(--ok);   background: var(--ok-tint);   border-color: var(--ok); }
+.estado.warn { color: var(--warn); background: var(--warn-tint); border-color: var(--warn); }
+.estado.err  { color: var(--err);  background: var(--err-tint);  border-color: var(--err); }
+.estado.mute { color: var(--mute); background: transparent;      border-color: var(--line); }
+.estado.halo { color: var(--halo); background: var(--halo-tint); border-color: var(--halo); }
+
+/* ---------------------------------------------------------------------------
+   «TODAVÍA NO» — lo que aún no existe en esta versión (§9-sexies)
+   ---------------------------------------------------------------------------
+   No es un error, no es un aviso y NO es «apagado». `.mute` significa «existe y
+   está apagado»; esto significa «todavía no está construido». Confundirlos hace
+   que el usuario busque un interruptor que no existe.
+
+   Tres señales, porque el color solo no basta (daltonismo leve del usuario):
+   el TRAZO DISCONTINUO del borde y del símbolo — que es lo que lo separa de
+   `.mute` a un golpe de vista, sin depender del color—, el aro punteado, y la
+   palabra literal «todavía no».
+
+   Existe porque la app se entrega por sprints: la maqueta dibuja el producto
+   terminado y cada versión trae un trozo. Sin esto solo quedan dos salidas,
+   y las dos son malas: pintar en verde lo que no existe, o quitarlo de la
+   pantalla y que el usuario no sepa que va a llegar.
+   --------------------------------------------------------------------------- */
+.estado.pendiente {
+  color: var(--mute);
+  background: transparent;
+  border-color: var(--line-2);
+  border-style: dashed;
+}
+
+/* La fila que espera: se lee, pero no compite con lo que sí funciona. */
+.pendiente { color: var(--mute); }
+.pendiente .ic { opacity: .75; }
+
+/* Una tarjeta entera que todavía no existe. El borde discontinuo dice «aquí va
+   algo» sin fingir que ya está. */
+.tarjeta.pendiente {
+  border-style: dashed;
+  border-color: var(--line-2);
+  background: transparent;
+}
+.tarjeta.pendiente .seccion { color: var(--mute); }
+
+/* Franja de aviso dentro del panel o de una pantalla */
+.franja { display: grid; grid-template-columns: 16px 1fr; gap: 5px 10px; padding: 9px 11px; border-radius: var(--r-ficha); border: var(--borde) solid; font-size: var(--t-meta); line-height: 1.4; }
+.franja .ic { margin-top: 1px; }
+.franja strong { display: block; font-weight: 600; font-size: var(--t-ui); color: var(--ink); }
+.franja p { color: var(--ink-2); }
+.franja.warn { border-color: var(--warn); background: var(--warn-tint); }
+.franja.warn .ic { color: var(--warn); }
+.franja.err  { border-color: var(--err);  background: var(--err-tint); }
+.franja.err .ic { color: var(--err); }
+.franja.ok   { border-color: var(--ok);   background: var(--ok-tint); }
+.franja.ok .ic { color: var(--ok); }
+.franja ul { margin: 4px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 10px; color: var(--ink-2); }
+.franja ul li::before { content: "·"; margin-right: 6px; color: var(--ink-2); }
+.franja ul li:first-child::before { content: none; }
+.franja ul.vertical { flex-direction: column; gap: 1px; }
+.franja ul.vertical li::before { content: "→"; margin-right: 6px; }
+
+/* Tecla / atajo */
+.tecla { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.tecla kbd { font: inherit; padding: 0 5px; border: var(--borde) solid var(--line-2); border-bottom-width: 2px; border-radius: var(--r-tecla); background: var(--surface-2); color: var(--ink); line-height: 16px; }
+
+/* Botón discreto (el panel no tiene CTAs grandes) */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: var(--r-chip); border: var(--borde) solid var(--line-2); background: var(--surface-2); color: var(--ink); font-size: var(--t-meta); font-weight: 500; transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease); }
+.btn:hover { border-color: var(--halo); }
+.btn.primario { border-color: var(--halo); background: var(--halo-tint); color: var(--halo); }
+.btn.mini { padding: 2px 7px; font-size: var(--t-mono); }
+
+/* ---------------------------------------------------------------------------
+   EL PANEL (C1 · C6 · C7 · C5 · B2 · C14) — 380 × 220, opaco, sin glass (D1, D3)
+   --------------------------------------------------------------------------- */
+.panel { width: var(--panel-w); height: var(--panel-h); display: flex; flex-direction: column; background: var(--bg); color: var(--ink); border: var(--borde) solid var(--line); border-radius: var(--r-panel); box-shadow: var(--sombra-panel); overflow: hidden; transition: height var(--dur) var(--ease); }
+.panel[data-transcript="on"] { height: var(--panel-h-transcript); }
+
+/* Barra de estado (C12 · C2 · C8 · B2) */
+.barra { display: flex; align-items: center; gap: var(--s-2); height: 26px; white-space: nowrap; padding: 0 10px 0 8px; border-bottom: var(--borde) solid var(--line); font-size: var(--t-meta); color: var(--ink-2); flex: 0 0 auto; }
+.barra .pistas { display: inline-flex; align-items: center; gap: 6px; margin-left: 2px; color: var(--ink-2); }
+.barra .pistas .pista { display: inline-flex; align-items: center; gap: 3px; }
+.barra .pistas .pista.off { color: var(--mute); }
+.barra .pistas .pista.off .ic { opacity: .75; }
+.red { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.red.cero { color: var(--ok); }
+.red.api { color: var(--halo); }
+.barra .red { margin-left: auto; }
+
+/* Cuerpo */
+.cuerpo { flex: 1 1 auto; min-height: 0; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+
+/* Ficha de evidencia (C6 · B1): titular ≤ 8 palabras · una línea · fuente */
+.ficha { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px 7px; background: var(--surface); border: var(--borde) solid var(--line); border-radius: var(--r-ficha); box-shadow: var(--sombra-ficha); }
+.ficha.nueva { animation: aparecer var(--dur) var(--ease); }
+@keyframes aparecer { from { opacity: 0; } to { opacity: 1; } }   /* fade sin desplazamiento (D10) */
+.ficha .titular { font-family: var(--font-evidencia); font-size: var(--t-titular); font-weight: 700; line-height: 1.25; letter-spacing: -.005em; color: var(--ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ficha .linea { font-family: var(--font-evidencia); font-size: var(--t-linea); line-height: 1.35; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ficha .fuente { display: flex; align-items: center; gap: 6px; margin-top: 1px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; }
+.ficha .fuente .unidad { padding: 0 5px; border-radius: 3px; background: var(--surface-2); color: var(--ink-2); font-family: var(--font-ui); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; line-height: 15px; }
+.ficha .fuente .doc { overflow: hidden; text-overflow: ellipsis; }
+.ficha .fuente .pin { margin-left: auto; color: var(--ink-2); display: inline-flex; align-items: center; gap: 3px; }
+.ficha.fijada { border-color: var(--halo); }
+.ficha.fijada .pin { color: var(--halo); }
+.ficha.compacta .linea { display: none; }
+
+/* Fichas acumuladas (2ª y 3ª colapsadas) */
+.mas { display: flex; align-items: center; gap: 8px; padding: 2px 4px; font-size: var(--t-meta); color: var(--ink-2); }
+.mas .n { font-family: var(--font-mono); font-size: var(--t-mono); }
+.mas .titulos { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-evidencia); }
+
+/* Sugerencia sintetizada (C7) — acento, con fallback = la ficha */
+.sugerencia { display: flex; flex-direction: column; gap: 3px; padding: 7px 10px; border-left: 2px solid var(--halo); background: var(--halo-tint); border-radius: 0 var(--r-ficha) var(--r-ficha) 0; }
+.sugerencia .cab { display: flex; align-items: center; gap: 6px; white-space: nowrap; font-size: var(--t-mono); font-family: var(--font-mono); color: var(--halo); }
+.sugerencia .cab .conf { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; color: var(--ink-2); font-family: var(--font-ui); font-size: var(--t-meta); }
+.sugerencia .texto { font-size: var(--t-ui); line-height: 1.4; color: var(--ink); }
+
+/* Vacío diseñado, buscando, sin resultado */
+.vacio { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 4px 6px; }
+.vacio .voz { font-family: var(--font-evidencia); font-style: italic; font-size: 15px; line-height: 1.4; color: var(--ink-2); }
+.vacio.arriba { justify-content: flex-start; }
+.vacio .meta { display: flex; align-items: center; gap: 8px; white-space: nowrap; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.oido { display: flex; gap: 8px; align-items: baseline; font-size: var(--t-meta); color: var(--ink-2); }
+.oido .quien { font-family: var(--font-mono); font-size: var(--t-mono); flex: 0 0 auto; }
+.oido q { font-family: var(--font-evidencia); font-size: var(--t-linea); color: var(--ink); quotes: "«" "»"; }
+.acciones { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* Transcript en vivo (C3) — OCULTO por defecto; toggle */
+.transcript { display: none; flex: 0 0 auto; max-height: 190px; overflow: auto; border-top: var(--borde) dashed var(--line); padding: 8px 12px; font-size: var(--t-meta); line-height: 1.4; color: var(--ink-2); }
+.panel[data-transcript="on"] .transcript { display: block; }
+.transcript .turno { display: grid; grid-template-columns: 104px 1fr; gap: 8px; padding: 3px 0; }
+.transcript .turno .quien { font-family: var(--font-mono); font-size: 11px; white-space: nowrap; color: var(--ink-2); display: inline-flex; gap: 4px; align-items: center; }
+.transcript .turno.tu .quien { color: var(--halo); }
+.transcript .turno q { quotes: none; color: var(--ink); }
+.transcript .cab { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-family: var(--font-mono); font-size: var(--t-mono); }
+.transcript .cab .tecla { margin-left: auto; }
+
+/* Pie: cliente + protección (C1/spike) · atajos (C5 · C12) */
+.pie { display: flex; align-items: center; gap: var(--s-3); height: 26px; white-space: nowrap; padding: 0 10px; border-top: var(--borde) solid var(--line); font-size: 11px; font-family: var(--font-mono); color: var(--ink-2); flex: 0 0 auto; }
+.pie .cliente { display: inline-flex; align-items: center; gap: 5px; }
+.pie .cliente.ok { color: var(--ok); }
+.pie .cliente.warn { color: var(--warn); }
+.pie .atajos { margin-left: auto; display: inline-flex; gap: 10px; }
+
+/* ===========================================================================
+   VENTANA PRINCIPAL (pantallas 2–8) — 960 × 640, rail izquierdo fijo (D6)
+   =========================================================================== */
+.ventana { width: var(--principal-w); height: var(--principal-h); display: grid; grid-template-columns: 200px 1fr; background: var(--bg); color: var(--ink); border: var(--borde) solid var(--line); border-radius: var(--r-panel); box-shadow: var(--sombra-panel); overflow: hidden; }
+.rail { display: flex; flex-direction: column; border-right: var(--borde) solid var(--line); background: var(--surface); padding: var(--s-4) var(--s-3); gap: var(--s-1); }
+.rail .marca { display: flex; align-items: center; gap: 8px; padding: 2px 6px 14px; font-family: var(--font-evidencia); font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+.rail .marca .ic { color: var(--halo); }
+.rail .marca small { display: block; font-family: var(--font-mono); font-size: 10px; font-weight: 400; color: var(--ink-2); letter-spacing: .04em; }
+.rail a, .rail .item { display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: var(--r-chip); color: var(--ink-2); text-decoration: none; font-size: var(--t-ui); border-left: 2px solid transparent; }
+.rail a:hover { background: var(--surface-2); color: var(--ink); }
+.rail a[aria-current="page"], .rail .item.activo { color: var(--ink); background: var(--surface-2); border-left-color: var(--halo); }
+.rail .abajo { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: var(--borde) solid var(--line); }
+.contenido { padding: var(--s-5) var(--s-6); overflow: auto; display: flex; flex-direction: column; gap: var(--s-4); }
+.titulo { display: flex; flex-direction: column; gap: 4px; }
+.titulo h1 { font-size: var(--t-h1); font-weight: 600; letter-spacing: -.01em; line-height: 1.2; }
+.titulo .sub { font-size: var(--t-ui); color: var(--ink-2); max-width: 60ch; }
+h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-weight: 400; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 8px; }
+
+/* Tarjeta */
+.tarjeta { background: var(--surface); border: var(--borde) solid var(--line); border-radius: var(--r-ficha); padding: var(--s-3) var(--s-4); display: flex; flex-direction: column; gap: 9px; }
+.tarjeta h3 { font-size: var(--t-h2); font-weight: 600; }
+.tarjeta p { color: var(--ink-2); font-size: var(--t-ui); }
+.fila { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fila > .ic { flex: 0 0 auto; }
+.fila .crece { flex: 1 1 auto; min-width: 0; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); align-items: start; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--s-3); align-items: start; }
+
+/* Campo de texto */
+.campo { display: flex; flex-direction: column; gap: 4px; font-size: var(--t-meta); color: var(--ink-2); }
+.campo input, .campo textarea, .campo select { font: inherit; font-size: var(--t-ui); color: var(--ink); background: var(--surface-2); border: var(--borde) solid var(--line-2); border-radius: var(--r-chip); padding: 6px 9px; }
+.campo input:focus-visible, .campo textarea:focus-visible { outline: 2px solid var(--halo); outline-offset: 1px; }
+.campo input.mono { font-family: var(--font-mono); font-size: var(--t-mono); }
+.campo .ayuda { font-size: 11.5px; color: var(--ink-2); }
+
+/* Conmutador: el track NO es el único portador — lleva texto al lado (Activado/Desactivado) */
+.conm { display: inline-flex; align-items: center; gap: 8px; font-size: var(--t-ui); color: var(--ink); cursor: pointer; }
+.conm .track { position: relative; width: 34px; height: 20px; border-radius: 10px; background: var(--surface-2); border: var(--borde) solid var(--line-2); transition: background var(--dur) var(--ease); }
+.conm .track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--ink-2); transition: transform var(--dur) var(--ease), background var(--dur) var(--ease); }
+.conm.on .track { background: var(--ok-tint); border-color: var(--ok); }
+.conm.on .track::after { transform: translateX(14px); background: var(--ok); }
+.conm .etq { display: inline-flex; align-items: center; gap: 5px; }
+.conm.on .etq { color: var(--ok); }
+.conm.off .etq { color: var(--mute); }
+
+/* Tabla */
+.tabla { width: 100%; border-collapse: collapse; font-size: var(--t-meta); }
+.tabla th { text-align: left; font-family: var(--font-mono); font-size: 10.5px; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); padding: 6px 8px; border-bottom: var(--borde) solid var(--line-2); }
+.tabla td { padding: 7px 8px; border-bottom: var(--borde) solid var(--line); vertical-align: top; color: var(--ink); }
+.tabla td.mono, .tabla th.num, .tabla td.num { font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; }
+.tabla td.num, .tabla th.num { text-align: right; }
+.tabla tr.apagada td { color: var(--ink-2); }
+
+/* Estado de permiso (C12) */
+.permiso { display: grid; grid-template-columns: 24px 1fr auto; gap: 3px 12px; align-items: center; padding: 9px 12px; border: var(--borde) solid var(--line); border-radius: var(--r-ficha); background: var(--surface); }
+.permiso .ic { width: 20px; height: 20px; color: var(--ink-2); }
+.permiso .nombre { font-weight: 600; font-size: var(--t-ui); }
+.permiso .para { grid-column: 2; font-size: var(--t-meta); color: var(--ink-2); }
+.permiso .accion { grid-column: 3; grid-row: 1 / span 2; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.permiso.concedido { border-color: var(--ok); }
+.permiso.revocado { border-color: var(--err); }
+.permiso.solicitando { border-color: var(--halo); }
+
+/* Bandera de jurisdicción (C11) — informativa, nunca bloquea */
+.bandera { display: grid; grid-template-columns: 20px 1fr; gap: 3px 10px; padding: 10px 12px; border: var(--borde) solid var(--line); border-radius: var(--r-ficha); background: var(--surface); font-size: var(--t-meta); }
+.bandera .ic { width: 18px; height: 18px; margin-top: 1px; grid-column: 1; }
+.bandera > :not(.ic) { grid-column: 2; }
+.bandera .donde { font-weight: 600; font-size: var(--t-ui); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bandera .regla { color: var(--ink); }
+.bandera .implica { color: var(--ink-2); }
+.bandera .fuente { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
+.bandera.riesgo-bajo { border-left: 3px solid var(--ok); }
+.bandera.riesgo-medio { border-left: 3px solid var(--warn); }
+.bandera.riesgo-alto { border-left: 3px solid var(--err); }
+.bandera.desconocida { border-left: 3px solid var(--line-2); }
+
+/* Contador de red — versión grande (Honestidad, B2) */
+.contador { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: var(--borde) solid var(--line); border-radius: var(--r-ficha); background: var(--surface); }
+.contador .cifra { font-family: var(--font-mono); font-size: 28px; font-weight: 400; font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1.1; display: flex; align-items: baseline; gap: 6px; }
+.contador .cifra small { font-size: 13px; color: var(--ink-2); letter-spacing: 0; }
+.contador .etq { font-size: var(--t-meta); color: var(--ink-2); }
+.contador.cero .cifra { color: var(--ok); }
+.contador.api .cifra { color: var(--halo); }
+
+/* Buffer en RAM (Honestidad, C10) */
+.buffer { display: grid; grid-template-columns: 18px 1fr auto; gap: 2px 10px; align-items: center; padding: 8px 10px; border-bottom: var(--borde) solid var(--line); font-size: var(--t-meta); }
+.buffer:last-child { border-bottom: 0; }
+.buffer .ic { color: var(--ink-2); }
+.buffer .que { font-weight: 500; color: var(--ink); }
+.buffer .donde { grid-column: 2; color: var(--ink-2); font-size: 11.5px; }
+.buffer .cuanto { grid-column: 3; grid-row: 1 / span 2; font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; color: var(--ink); text-align: right; }
+.buffer.muerto .que, .buffer.muerto .cuanto { color: var(--mute); text-decoration: line-through; }
+
+/* Kill-switch — botón de una tecla (C12) */
+.kill { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: var(--r-chip); border: var(--borde) solid var(--err); background: var(--err-tint); color: var(--err); font-weight: 600; font-size: var(--t-ui); }
+.kill kbd { font: inherit; font-family: var(--font-mono); font-size: var(--t-mono); padding: 0 5px; border: var(--borde) solid var(--err); border-radius: var(--r-tecla); }
+
+/* Turno del transcript fuera del panel (Idioma) */
+.diccionario mark { background: var(--halo-tint); color: var(--ink); border-bottom: 1px dashed var(--halo); padding: 0 2px; }
+.diccionario del { color: var(--mute); text-decoration: line-through; margin-right: 4px; }
+
+/* Unidad del corpus (B1) */
+.unidad-chip { display: inline-flex; align-items: center; padding: 0 6px; border-radius: 3px; background: var(--surface-2); color: var(--ink-2); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; line-height: 16px; }
+
+/* Barra de progreso (indexando) — sin animación: el porcentaje es el texto */
+.progreso { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.progreso .pista { flex: 1 1 auto; height: 4px; border-radius: 2px; background: var(--surface-2); overflow: hidden; }
+.progreso .pista i { display: block; height: 100%; background: var(--halo); }
+
+/* ---------------------------------------------------------------------------
+   PÍLDORA DE VOZ (C15 · modo solo audio) — 260 × 56, la ventana más pequeña.
+   Misma familia que el panel: opaca, mismo radio y borde. NO muestra la ficha:
+   la ficha se OYE. Solo dice de dónde salió y cómo callarla, para que toda la
+   pantalla quede libre. Sin auriculares no habla (el cliente la oiría).
+   --------------------------------------------------------------------------- */
+.pildora { width: 260px; height: 56px; display: flex; align-items: center; gap: 10px; padding: 0 12px; background: var(--bg); color: var(--ink); border: var(--borde) solid var(--line); border-radius: var(--r-panel); box-shadow: var(--sombra-panel); overflow: hidden; }
+.pildora .glifo { flex: 0 0 auto; display: inline-flex; color: var(--ink-2); }
+.pildora.hablando { border-color: var(--halo); }
+.pildora.hablando .glifo { color: var(--halo); }
+.pildora.sin-auriculares { border-color: var(--warn); }
+.pildora.sin-auriculares .glifo { color: var(--warn); }
+.pildora .texto { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.pildora .texto .q { font-size: var(--t-meta); font-weight: 600; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pildora .texto .de { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pildora.sin-auriculares .texto .q { color: var(--warn); }
+.pildora .tecla { flex: 0 0 auto; }
+
+/* ---------------------------------------------------------------------------
+   BANDA INFERIOR — la forma principal del panel cuando hay reunión (D2 revisada).
+   Ancho completo, pegada al borde inferior. Dos alturas y un modo ACOPLADO en el
+   que la ventana de la reunión se recorta y las dos conviven como aplicaciones
+   pegadas, con un asa que ajusta ambas a la vez.
+     · compacta  88 px  → titular + línea + fuente (dos renglones)
+     · ampliada 200 px  → la ficha entera + las acumuladas o la sugerencia
+     · voz       44 px  → una línea: modo solo audio
+   --------------------------------------------------------------------------- */
+.banda { position: relative; display: flex; flex-direction: column; height: var(--banda-h); background: var(--bg); color: var(--ink); border-top: var(--borde) solid var(--line); box-shadow: 0 -10px 30px rgba(0,0,0,.35); overflow: hidden; }
+.banda.ampliada { height: var(--banda-h-ampliada); }
+.banda.voz { height: var(--banda-h-voz); }
+
+/* Asa: ajusta la banda y la reunión a la vez (modo acoplado) */
+.banda .asa { position: absolute; top: 0; left: 0; right: 0; height: 5px; display: flex; align-items: center; justify-content: center; cursor: ns-resize; }
+.banda .asa i { display: block; width: 46px; height: 3px; border-radius: 2px; background: var(--line-2); }
+.banda .asa:hover i { background: var(--halo); }
+
+.banda .cab-b { display: flex; align-items: center; gap: 12px; height: 26px; padding: 5px 14px 0; font-size: var(--t-meta); color: var(--ink-2); flex: 0 0 auto; }
+.banda .cab-b .red { margin-left: auto; }
+.banda .cuerpo-b { flex: 1 1 auto; min-height: 0; display: flex; align-items: flex-start; gap: 16px; padding: 2px 14px 10px; }
+.banda .ficha-b { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.banda .titular-b { font-family: var(--font-evidencia); font-size: 16px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.banda .linea-b { font-family: var(--font-evidencia); font-size: 13.5px; line-height: 1.35; color: var(--ink-2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+.banda.ampliada .linea-b { -webkit-line-clamp: 2; }
+.banda .lado-b { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; max-width: 34%; }
+.banda .fuente-b { font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.banda .atajos-b { display: inline-flex; gap: 10px; }
+.banda .mas { padding: 0; }
+
+/* Modo voz: una sola línea */
+.banda.voz .cuerpo-b { align-items: center; padding: 0 14px; height: 100%; }
+.banda.voz .linea-b { font-size: 13px; -webkit-line-clamp: 1; white-space: nowrap; }
+.banda.voz .cab-b { display: none; }
+
+/* Marca mínima a la izquierda */
+.banda .marca-min { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-size: var(--t-meta); white-space: nowrap; flex: 0 0 auto; }
+.banda .marca-min.halo { color: var(--halo); }
+.banda .marca-min.warn { color: var(--warn); }
+
+/* ---------------------------------------------------------------------------
+   ESTADOS DE CONTENIDO DE LA BANDA (sprint 001, fase 1a — `banda.html`)
+   La Etapa de Diseño dibujó la FORMA de la banda (88 · 200 · 44) y la dibujó
+   siempre con una ficha dentro. El sprint necesita SEIS estados de contenido y
+   cinco no tenían referencia contra la cual comparar: esto la da.
+
+   Gramática de la banda, declarada: lo que la banda DICE va a la izquierda
+   (`ficha-b`); de dónde sale y qué teclas hay, a la derecha (`lado-b`). Y las
+   acciones de la banda son TECLAS, no botones — 88 px es una superficie de
+   teclado, no de clic; los botones viven en la banda ampliada y en el panel.
+   --------------------------------------------------------------------------- */
+.banda .cliente-b { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; }
+.banda .cliente-b.warn { color: var(--warn); }
+
+/* esperando — el vacío está diseñado: una frase en Charter, no un ícono gris */
+.banda .voz-b { font-family: var(--font-evidencia); font-style: italic; font-size: 15px; line-height: 1.4; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.banda .meta-b { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+/* buscando · sin resultado — lo que se oyó, entre comillas, con su pista */
+.banda .oido { font-size: var(--t-meta); min-width: 0; }
+.banda .oido q { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* sin verificar — aviso en línea: símbolo + texto + color (los tres, siempre) */
+.banda .aviso-b { display: flex; align-items: flex-start; gap: 8px; min-width: 0; font-size: var(--t-meta); line-height: 1.35; color: var(--warn); }
+.banda .aviso-b .ic { flex: 0 0 auto; margin-top: 1px; }
+.banda .aviso-b strong { display: block; font-size: var(--t-ui); font-weight: 600; color: var(--ink); }
+.banda .aviso-b .salida { display: block; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* transcript — ocupa la columna derecha de la banda AMPLIADA. Solo en memoria. */
+.banda.ampliada .lado-b { max-width: 40%; }
+.banda .transcript-b { display: flex; flex-direction: column; gap: 3px; width: 100%; min-width: 0; padding: 6px 8px; border: var(--borde) solid var(--line-2); border-radius: var(--r-ficha); background: var(--surface); }
+.banda .transcript-b .cab { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.banda .transcript-b .cab .tecla { margin-left: auto; }
+.banda .transcript-b .turno { display: flex; gap: 6px; align-items: baseline; min-width: 0; }
+.banda .transcript-b .turno .quien { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 3px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
+/* La hora es un dato, no el resto del renglón: elemento propio y cifras de ancho fijo.
+   Sin elemento, el hueco entre hablante y hora dependía de DÓNDE cayera un espacio del
+   HTML — y la maqueta y el producto no parten el texto por el mismo sitio. */
+.banda .transcript-b .turno .quien .hora { font-variant-numeric: tabular-nums; }
+.banda .transcript-b .turno.tu .quien { color: var(--halo); }
+.banda .transcript-b .turno q { font-family: var(--font-evidencia); font-size: 12.5px; color: var(--ink); quotes: "\00ab" "\00bb"; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* LA MANIOBRA (sin resultado) — cómo abordar la situación cuando el corpus no tiene nada.
+   NO es una sugerencia del modelo y no puede parecerlo: nada de acento `halo` (que en este
+   sistema marca la síntesis de la IA) ni de `chispa`. Va en Avenir, que es la voz de la app,
+   nunca en Charter, que es la voz de tu corpus. Sale de un catálogo versionado de maneras de
+   responder elegido por reglas léxicas — jamás habla del negocio del usuario. */
+.banda .maniobra-b { display: flex; align-items: baseline; gap: 7px; min-width: 0; font-family: var(--font-ui); font-size: 13px; line-height: 1.35; color: var(--ink); }
+.banda .maniobra-b .ic { flex: 0 0 auto; align-self: center; color: var(--ink-2); }
+.banda .maniobra-b .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banda .cercano-b { display: inline-flex; align-items: baseline; gap: 9px; min-width: 0; max-width: 100%; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.banda .cercano-b .et { flex: 0 0 auto; font-family: var(--font-ui); font-size: 11px; color: var(--ink-2); }
+.banda .cercano-b .d { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+
+/* acciones apiladas — solo en la banda ampliada, donde hay alto para botones */
+.banda .acciones-b { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+
+/* las acumuladas, abiertas — en 200 px el «+2» deja de ser una promesa y se abre.
+   Es lo que la nota de D3 prometía del alto extra: «la ficha entera y las acumuladas». */
+.banda .mas-b { display: flex; flex-direction: column; gap: 3px; margin-top: 7px; min-width: 0; }
+.banda .mas-b .item { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.banda .mas-b .item .unidad { flex: 0 0 auto; padding: 0 5px; border-radius: 3px; background: var(--surface-2); color: var(--ink-2); font-family: var(--font-ui); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; line-height: 15px; }
+.banda .mas-b .item .t { font-family: var(--font-evidencia); font-size: 13px; line-height: 1.35; color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banda .mas-b .item .tecla { flex: 0 0 auto; margin-left: auto; }
+
+/* Gota — la ventana más pequeña posible: solo el estado, sin texto (modo solo audio) */
+.gota { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; background: var(--bg); color: var(--ink-2); border: var(--borde) solid var(--line); border-radius: 50%; box-shadow: var(--sombra-panel); }
+.gota.hablando { border-color: var(--halo); color: var(--halo); }
+.gota.sin-auriculares { border-color: var(--warn); color: var(--warn); }
+
+/* Propuesta de nota (C9-bis, mirada 4): candidata a nota. Proponer NO es guardar. */
+.propuesta { display: grid; grid-template-columns: 16px 1fr auto; gap: 2px 9px; padding: 6px 10px; border: var(--borde) solid var(--line-2); border-radius: var(--r-ficha); background: var(--surface); align-items: start; }
+.propuesta > .ic { margin-top: 2px; color: var(--halo); }
+.propuesta .que { font-family: var(--font-evidencia); font-size: 13.5px; line-height: 1.4; color: var(--ink); }
+.propuesta .de { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-size: 11.5px; color: var(--ink-2); }
+.propuesta .de .origen { font-family: var(--font-mono); font-size: var(--t-mono); }
+.propuesta .acciones { grid-column: 3; grid-row: 1 / span 2; display: flex; gap: 5px; align-items: center; justify-content: flex-end; }
+.propuesta.aceptada { border-color: var(--ok); background: var(--ok-tint); }
+.propuesta.aceptada > .ic { color: var(--ok); }
+.propuesta.descartada { opacity: .5; }
+.propuesta.descartada .que { text-decoration: line-through; color: var(--ink-2); }
+
+/* Selector de idiomas por pista (mirada 4): varios a la vez, no uno */
+.idiomas { display: flex; flex-wrap: wrap; gap: 5px; }
+.idiomas .lg { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: var(--r-chip); border: var(--borde) solid var(--line-2); background: var(--surface-2); color: var(--ink-2); font-family: var(--font-mono); font-size: var(--t-mono); }
+.idiomas .lg.on { border-color: var(--halo); background: var(--halo-tint); color: var(--halo); }
+.idiomas .lg .ic { flex: 0 0 auto; }
+
+/* Puerta local (C16, mirada 4): qué puede y qué no puede un agente del propio Mac */
+.puerta { display: grid; grid-template-columns: 16px 1fr; gap: 1px 9px; padding: 5px 2px; align-items: start; border-bottom: var(--borde) solid var(--line); }
+.puerta:last-child { border-bottom: 0; }
+.puerta > .ic { margin-top: 2px; }
+.puerta.si > .ic { color: var(--ok); }
+.puerta.no > .ic { color: var(--err); }
+.puerta .qué { font-size: 12.5px; color: var(--ink); line-height: 1.35; }
+.puerta .por { grid-column: 2; font-size: 11px; color: var(--ink-2); line-height: 1.35; }
+
+/* Bandeja de propuestas (mirada 4-bis): la ventana para decidir después de la reunión */
+.cuenta { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: var(--borde) solid var(--halo); border-radius: var(--r-ficha); background: var(--halo-tint); }
+.cuenta .ic { flex: 0 0 auto; color: var(--halo); }
+.cuenta .reloj { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 19px; line-height: 1.1; color: var(--halo); }
+.cuenta .txt { font-size: var(--t-meta); color: var(--ink-2); line-height: 1.4; }
+.cuenta .txt b { color: var(--ink); }
+.ventanas { display: flex; flex-wrap: wrap; gap: 5px; }
+.ventanas .op { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: var(--r-chip); border: var(--borde) solid var(--line-2); background: var(--surface-2); color: var(--ink-2); font-family: var(--font-mono); font-size: var(--t-mono); }
+.ventanas .op.on { border-color: var(--halo); background: var(--halo-tint); color: var(--halo); }

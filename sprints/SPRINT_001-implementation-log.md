@@ -2239,3 +2239,92 @@ sobre esos 15 px no dijo nada. Se toma como **aceptado con el defecto declarado*
 de deuda del summary con esa misma palabra— y no como corregido. Si el usuario prefiere recortar la
 frase de honestidad del pie para que la pantalla quepa, se recorta con él: la alternativa sigue
 abierta y cuesta una línea.
+
+---
+
+## El bundle `design-sync/` — pagado aquí, y no a mano
+
+Cuarto hallazgo del `/release-check`. La Etapa de Diseño lo había anotado como deuda con el motivo
+*«no hay ciclo cerrado que publicar»*, y ese no es el motivo que manda: la **regla 16** no habla de
+publicar, pide que **todo sprint que toque UI actualice el bundle en su mismo PR** — para que el
+cierre de ciclo sea un delta pequeño y jamás una reconstrucción. El usuario decidió pagarlo aquí.
+
+**Qué es y qué no es.** `design-sync/` es el espejo en el repo de lo que algún día se publica en
+Claude Design. **Publicar no ocurrió y no ocurre en este sprint**: lo hace `/design-sync`, que solo
+invoca el usuario, en el cierre de ciclo y **después del gate ⭐⭐**. Por eso `project.json` lleva
+`projectId: null` y `lastPublished: null`, y el propio archivo explica por qué: el destino se
+decide con el usuario la primera vez, jamás se adivina.
+
+**La decisión de fondo: es un GENERADOR, no una carpeta escrita a mano.** Un espejo copiado a mano
+se desvía en el primer sprint —alguien cambia un hex en `ghost.css`, la tarjeta se queda con el
+viejo— y nadie se entera, porque la vitrina no tiene CI ni la abre nadie entre ciclo y ciclo.
+`scripts/design-sync-bundle.mjs` arma cada tarjeta **leyendo** `ghost.css`, la maqueta aprobada y
+el propio `design-system.md`: ni un hex, ni una clase, ni una línea de copy se escriben dos veces.
+
+| Grupo | Tarjetas |
+|---|---|
+| Fundamentos | Tokens · Estados · Anti-patrones |
+| Componentes | Ficha de evidencia · Contador de red · Estado de permiso · Bandera de jurisdicción · Estado de sesión · Alerta del radar · Primitivas · Píldora de voz |
+| Componentes · S1 | La banda (seis estados) · «Todavía no» |
+
+Trece tarjetas autocontenidas —CSS y sprite en línea, cero CDNs—, cada una con su primera línea
+exacta `<!-- @dsCard … -->` (sin ella Claude Design no la indexa) y cada una en **los dos temas**,
+porque el sistema tiene dos y uno solo no es el sistema. 372 KB en el repo.
+
+### Lo que solo se vio MIRANDO las tarjetas
+
+Las tres cosas que el conteo dio por buenas y la foto desmintió — la misma lección de la fase 2,
+otra vez:
+
+1. **Las etiquetas pegaban las dos lenguas**: «Alerta del radarRadar alert». Venía de aplanar el
+   `<h2>` bilingüe de la maqueta a texto; la corrección es tomarlo como **HTML** y dejar que el CSS
+   esconda el idioma que no toca, como hace el producto.
+2. **Las notas de cada estado de la banda señalaban cosas ausentes.** Salían de la nota «qué mirar»
+   de la maqueta, que es de la SALA de diseño y habla de «la línea azul del recorte» y «el recuadro
+   ámbar sobre el Dock» — marco que al publicar se quita. Una nota que apunta a algo que no está es
+   peor que ninguna. Ahora salen de la **tabla del `design-system.md` §9-quinquies**, que describe
+   el estado y nada más.
+3. **El markdown llegaba crudo**: la tabla del sistema escribe `**la maniobra**` y la tarjeta
+   publicaba los asteriscos.
+
+Y una cuarta de tipografía del dato: la etiqueta de las tarjetas «todavía no» decía `sesion`, sin
+tilde, porque era el nombre del archivo. Ahora sale del título de la pantalla en la maqueta.
+
+### El gate del espejo, con sus dos rojos
+
+`tests/unit/design-sync-espejo.test.ts` (42 aserciones) exige que **el bundle del repo sea el que
+el generador emite hoy** —el mismo trato que el contrato Rust→TS: el que emite escribe, el repo
+guarda, el gate compara— más, por tarjeta: la línea `@dsCard` exacta, cero recursos externos, los
+tokens y los dos temas dentro, y el bilingüe escondido por CSS y no borrado.
+
+**Rojo 1 — el sistema cambia y el bundle no** (`--halo` a magenta en `ghost.css`):
+
+```
+AssertionError: el bundle derivó del sistema. Regenéralo con `node scripts/design-sync-bundle.mjs`:
+· deriva en design-sync/components/fundamentos/tokens.html
+· deriva en design-sync/components/fundamentos/estados.html
+  … 13 tarjetas
+```
+
+**Rojo 2 — alguien edita una tarjeta a mano** (un `style` inline y un CDN de propina):
+
+```
+× …/ficha-de-evidencia.html es autocontenida: cero CDNs, cero recursos externos
+  https://cdn.example.com/x.css: expected [ 'https://cdn.example.com/x.css' ] to deeply equal []
+· deriva en design-sync/components/componentes/ficha-de-evidencia.html
+```
+
+Revertidas las dos, verde: 42 de 42. Corre en `pnpm test`, o sea en `quality`, o sea en cada PR.
+
+---
+
+## El gate ⭐ — diferido por decisión del usuario (2026-09-23)
+
+El usuario decidió **no correr el recorrido de la guía de prueba en este sprint**: *«no vamos a
+diferir el gate hasta lograr algo avanzado»*. Queda registrado como decisión suya y no como olvido,
+y conviene decir por qué **no es un corte**: la regla del kit dice que el gate ⭐ **se OFRECE**, y
+el que el cierre EXIGE —el ⭐⭐— pertenece al **cierre de CICLO**, no al de un sprint. Este es el S1
+de un ciclo de tres o más. Lo que sí arrastra: las nueve paradas siguen sin caminarse, y entre
+ellas la **parada 5**, que es el re-test humano del hallazgo C1 (la ficha llegando a la banda). El
+CI lo cubre por otro camino —`la-ficha-llega-a-la-banda.test.tsx`, y el kit mide el disparador— pero
+**nadie lo ha visto con su voz y su Mac**, y eso el summary lo dice tal cual.

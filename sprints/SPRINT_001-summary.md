@@ -40,6 +40,9 @@ Los tres outcomes, uno a uno:
 - **El disparo determinista** (pregunta · cifra · término del corpus · atajo) y la **ficha**:
   titular de ocho palabras, línea, fuente — y el catálogo de **maniobras** para cuando no hay nada.
 - **El kill-switch** `⌥⎋`, el contador de red, y `verify:ephemeral` estático y en runtime.
+- **El bundle `design-sync/`** — 13 tarjetas del design system, **generadas** del sistema y no
+  escritas a mano, con su gate de espejo. Nace aquí por la regla 16; **publicar es del cierre de
+  ciclo y del usuario**, y no ocurrió.
 
 ## DoD — checklist
 
@@ -50,7 +53,7 @@ Los tres outcomes, uno a uno:
 | **Observabilidad** | ADR 003 **enmendado** (A10): `println!` con prefijo por subsistema y solo metadatos; `tracing` cuando exista un sumidero, con su razón escrita. `pino` fuera del manifiesto. **Término plantado en el log**, que no existía, ahora corre la sesión en un proceso hijo y lee su salida |
 | **Seguridad** | `pnpm audit` limpio · `cargo audit` **0 vulnerabilidades** (9 warnings; `lru` *unsound* llega por tantivy y no tiene arreglo compatible) · gitleaks bloqueó la carnada canónica · capabilities por ventana · `verify:ephemeral` estático **y en runtime**, con fuga inyectada en rojo |
 | **Performance** | latencia determinista de la ficha: **mediana 376 µs · p90 567 · peor 2 492**, contra 4 s de presupuesto. **Binario de release: 11,05 MB** (subió 2,07 MB al quitar `panic = "abort"`, ver A3); `.app` 11 MB, `.dmg` 4,88 MB |
-| **UX/A11y** | teclado de punta a punta · axe en 66 e2e · símbolo + texto + color · dos temas · dos idiomas · **gate de FIDELIDAD** con 60 encuadres, aprobado en las miradas 11 a 14 |
+| **UX/A11y** | teclado de punta a punta · axe en 66 e2e · símbolo + texto + color · dos temas · dos idiomas · **gate de FIDELIDAD** con 60 encuadres, aprobado en las miradas 11 a 15 · **bundle `design-sync/` al día en este mismo PR** (regla 16): 13 tarjetas generadas del sistema, con su gate de espejo en `quality` |
 | **IA embebida** | **no aplica: cero LLM, cero tokens, cero red.** El catálogo de maniobras es código y datos versionados, y es el fallback permanente de la síntesis del S2 |
 | **Manual** | `docs/MANUAL-DE-USO.md`, ocho features con sus limitaciones. **En español** — desviación declarada de mi propio plan, con su razón |
 | **Guía de prueba** | `docs/GUIA-DE-PRUEBA.html` **v2**: 39 pruebas, ⭐ de 31 (~45 min), ⭐⭐ de **9 paradas** caminables (~22 min), kit de prueba en el repo |
@@ -166,6 +169,19 @@ atravesaba. El contrato se escribía dos veces a mano y nadie comparaba las copi
    viva en un job de CI o quede declarado como manual con su razón — hoy la plantilla dice «verifica
    con EL comando del `ci-escritorio.yml`» y no comprueba que ese comando esté en algún `yml`.
 
+## El gate ⭐ — diferido, por decisión del usuario
+
+El usuario decidió **no correr el recorrido de la guía en este sprint** («no vamos a diferir el gate
+hasta lograr algo avanzado», 2026-09-23). Se registra como decisión suya, no como olvido. **No es un
+corte del sprint:** la regla del kit dice que el ⭐ **se ofrece**, y el que el cierre exige —el ⭐⭐—
+es del **cierre de CICLO**, y este es el S1 de un ciclo de tres o más.
+
+Lo que arrastra, dicho sin adornos: las **nueve paradas** del ⭐⭐ siguen sin caminarse, y entre
+ellas la **parada 5**, que es el re-test humano del hallazgo C1 —la ficha llegando a la banda—. El
+CI lo cubre por otro camino (`la-ficha-llega-a-la-banda.test.tsx` y el kit del disparador, 1,000 de
+precisión y recall), pero **nadie lo ha visto con su voz y su Mac**, y un test verde no es una
+reunión.
+
 ## Deuda técnica aceptada
 
 | Qué | Por qué | Pago |
@@ -181,7 +197,6 @@ atravesaba. El contrato se escribía dos veces a mano y nadie comparaba las copi
 | **El VAD no es Silero** | regla 14: el modelo se gana el puesto con una medición, y esa medición es el WER que falta | S2, en el ADR del STT |
 | **Desborde de 15 px en Idioma** sin modelo | la alternativa era recortar una frase de honestidad | a la mirada del usuario |
 | **`lru` *unsound*** (RUSTSEC-2026-0253) vía tantivy | sin arreglo compatible: tantivy fija `^0.16` y el arreglo está en 0.18. **Y quitar `panic = "abort"` (A3) ensancha su exposición**, porque ahora un pánico se desenreda en vez de abortar | S2, vigilando tantivy |
-| **`design-sync/` no existe** | la Etapa de Diseño lo anotó como «no hay ciclo cerrado que publicar», y ese no es el motivo que manda: la **regla 16** pide que todo sprint que toque UI actualice el bundle **en su mismo PR**, precisamente para que el cierre de ciclo sea un delta y no una reconstrucción. Este es el primer sprint con UI. **Decisión del usuario**: construirlo antes del merge, o pagarlo en el S2 con el cierre más caro | S2, salvo que el usuario lo pida ahora |
 | **17 campos del contrato sin consumidor** | el gate nuevo compara la FORMA, no si alguien lee. `Documento`, `corte::Informe` y `Aparicion.ms` siguen sin llegar a la pantalla | S2 |
 
 ## Archivos clave
@@ -197,6 +212,7 @@ atravesaba. El contrato se escribía dos veces a mano y nadie comparaba las copi
 | `src-tauri/tests/contra-el-mac-de-verdad.rs` | el único binario de integración: audio real, efímero en marcha, la canaria en el log y el kit |
 | `docs/GUIA-DE-PRUEBA.html` | v2 tras la auditoría: 39 pruebas, ⭐ 31, ⭐⭐ 9 paradas |
 | `sprints/SPRINT_001-auditoria.md` | el reporte de la auditoría independiente |
+| `scripts/design-sync-bundle.mjs` → `design-sync/` | el bundle del design system, derivado del sistema y con gate de espejo |
 
 ## Cómo probar
 
