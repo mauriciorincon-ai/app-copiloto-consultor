@@ -152,6 +152,11 @@ src/capture/nativo.rs:798:13: entero de 16 bits no se puede leer como f32
 test result: FAILED. 0 passed; 1 failed
 ```
 
+**Y el primer dividendo de haber metido clippy en la CI (S1, `/release-check`):** el cinturón del
+callback lo escribí con `% != 0` y clippy lo paró en seco —`manual implementation of
+is_multiple_of`— antes de que llegara a ningún sitio. Un gate que se ganó el sueldo en su primer
+cambio ajeno.
+
 ---
 
 ## Fase 0 · El payload que el gate del contrato no miraba

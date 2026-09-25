@@ -420,7 +420,9 @@ unsafe extern "C" fn recibir(
         // traiga un número entero de muestras y empiece donde un `f32` puede empezar. Un
         // `from_raw_parts` desalineado es comportamiento indefinido, no un número raro.
         let tam = std::mem::size_of::<f32>();
-        if b.bytes as usize % tam != 0 || (b.datos as usize) % std::mem::align_of::<f32>() != 0 {
+        if !(b.bytes as usize).is_multiple_of(tam)
+            || !(b.datos as usize).is_multiple_of(std::mem::align_of::<f32>())
+        {
             continue;
         }
         canales = b.canales.max(1);
