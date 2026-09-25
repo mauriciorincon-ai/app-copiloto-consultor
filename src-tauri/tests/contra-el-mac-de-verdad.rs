@@ -596,7 +596,7 @@ fn una_sesion_completa(casa: &Path, corpus_en: &Path) -> Vec<String> {
     let ruta_dicc = casa.join("diccionario.yaml");
     app_copiloto_consultor_lib::asegurar_el_diccionario(&ruta_dicc)
         .expect("no se pudo dejar escrito el diccionario");
-    let jerga = app_copiloto_consultor_lib::diccionario_de_la_sesion(&ruta_dicc, &corpus.vocabulario().to_vec());
+    let jerga = app_copiloto_consultor_lib::diccionario_de_la_sesion(&ruta_dicc, corpus.vocabulario());
 
     // 2 · Audio de verdad por el motor de verdad. Es el paso que el barrido estático no puede
     //     mirar: lo que Apple escriba por debajo, se escribe aquí.
@@ -1075,4 +1075,160 @@ fn el_kit_mide_el_disparador_turno_a_turno() {
         "precisión {precision:.3}: el disparador interrumpe cuando no debe"
     );
     assert!(recall >= RECALL_MINIMO, "recall {recall:.3}: se está quedando callado cuando debería buscar");
+}
+
+// ═══════════════════════════════════════════ el WER, CON Y SIN DICCIONARIO (sprint 002, fase 1)
+//
+// **La deuda del sprint 001, pagada.** El kit de prueba prometía dos cosas que no entregó: un audio
+// con mezcla de idiomas y un WER de la transcripción. Las dos están aquí, y juntas por una razón: el
+// WER es la única forma de saber si el diccionario técnico **sirve o estorba**.
+//
+// Un corrector de jerga es fácil de escribir y fácil de auto-engañar. Con cinco términos elegidos y
+// cinco frases de ejemplo, cualquier diccionario parece bueno. Lo que dice la verdad es medir el
+// texto entero contra lo que se dijo de verdad, **con el diccionario puesto y sin él**, sobre el
+// mismo audio. Si el número no baja, el módulo no vale; si sube, hace daño.
+
+/// Palabras normalizadas para comparar: minúsculas, sin tildes, sin puntuación y sin separadores de
+/// miles.
+///
+/// Los separadores importan y no es una concesión: el motor escribe «ISO 27.001» y la referencia dice
+/// «ISO 27001». Es un hallazgo conocido del sprint 001 con su propio test, no un error de
+/// transcripción, y contarlo como tal metería ruido fijo en las cuatro medidas.
+fn palabras(texto: &str) -> Vec<String> {
+    texto
+        .split_whitespace()
+        .map(|p| {
+            p.chars()
+                .flat_map(|c| c.to_lowercase())
+                .map(|c| match c {
+                    'á' | 'à' | 'ä' | 'â' => 'a',
+                    'é' | 'è' | 'ë' | 'ê' => 'e',
+                    'í' | 'ì' | 'ï' | 'î' => 'i',
+                    'ó' | 'ò' | 'ö' | 'ô' => 'o',
+                    'ú' | 'ù' | 'ü' | 'û' => 'u',
+                    'ñ' => 'n',
+                    c => c,
+                })
+                .filter(|c| c.is_alphanumeric())
+                .collect::<String>()
+        })
+        .filter(|p| !p.is_empty())
+        .collect()
+}
+
+/// **Word Error Rate**: (sustituciones + inserciones + borrados) / palabras de la referencia.
+///
+/// Es la distancia de edición entre las dos listas de PALABRAS, no de letras. Se calcula entera —sin
+/// el corte que usa el diccionario— porque aquí el número exacto es el resultado, no un sí/no.
+fn wer(referencia: &[String], hipotesis: &[String]) -> f64 {
+    if referencia.is_empty() {
+        return if hipotesis.is_empty() { 0.0 } else { 1.0 };
+    }
+    let mut fila: Vec<usize> = (0..=hipotesis.len()).collect();
+    for (i, r) in referencia.iter().enumerate() {
+        let mut anterior = fila[0];
+        fila[0] = i + 1;
+        for (j, h) in hipotesis.iter().enumerate() {
+            let costo = usize::from(r != h);
+            let nuevo = (fila[j + 1] + 1).min(fila[j] + 1).min(anterior + costo);
+            anterior = fila[j + 1];
+            fila[j + 1] = nuevo;
+        }
+    }
+    fila[hipotesis.len()] as f64 / referencia.len() as f64
+}
+
+#[derive(serde::Deserialize)]
+struct AudioDelKit {
+    archivo: String,
+    idioma: String,
+    dice: String,
+    jerga: bool,
+}
+
+#[derive(serde::Deserialize)]
+struct Transcripciones {
+    audios: Vec<AudioDelKit>,
+}
+
+#[test]
+fn el_wer_no_empeora_con_el_diccionario_y_mejora_donde_hay_jerga() {
+    let _turno = turno();
+    let raiz = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba/audio");
+    let kit: Transcripciones = serde_json::from_str(
+        &std::fs::read_to_string(format!("{raiz}/transcripciones.json"))
+            .expect("falta transcripciones.json"),
+    )
+    .expect("transcripciones.json no se pudo leer");
+
+    let motor = motor_de_la_casa();
+    // La jerga sale de la SEMILLA, no del archivo del usuario: el kit tiene que medir lo mismo en
+    // esta máquina y en la integración continua, y el archivo del usuario es distinto en cada Mac.
+    let jerga = app_copiloto_consultor_lib::diccionario::Diccionario::semilla();
+
+    let mut medidos = 0;
+    let mut peor_subida = 0.0_f64;
+    let mut bajo_con_jerga = false;
+
+    println!("┌─ WER del kit · con y sin diccionario ────────────────────────────────");
+    for a in &kit.audios {
+        if !matches!(motor.disponibilidad(&a.idioma), Disponibilidad::Listo) {
+            // Nunca en silencio: sin modelo de ese idioma en esta máquina no hay nada que medir, y
+            // eso se dice en vez de contar el audio como aprobado.
+            println!("│ {:<16} sin modelo de {} en esta máquina: no se mide", a.archivo, a.idioma);
+            continue;
+        }
+        let (muestras, hz) = leer_wav(&format!("{raiz}/{}", a.archivo));
+        let Ok(crudo) = motor.transcribir(&a.idioma, &muestras, hz) else {
+            println!("│ {:<16} el motor estaba listo y falló: no se mide", a.archivo);
+            continue;
+        };
+        let corregido = jerga.corregir(&crudo);
+        let referencia = palabras(&a.dice);
+        let sin = wer(&referencia, &palabras(&crudo));
+        let con = wer(&referencia, &palabras(&corregido));
+        medidos += 1;
+        peor_subida = peor_subida.max(con - sin);
+        if a.jerga && con < sin {
+            bajo_con_jerga = true;
+        }
+        println!(
+            "│ {:<16} {:<6} sin {:.3} · con {:.3} · {}",
+            a.archivo,
+            a.idioma,
+            sin,
+            con,
+            if con < sin {
+                "MEJORA"
+            } else if con > sin {
+                "EMPEORA"
+            } else {
+                "igual"
+            }
+        );
+        println!("│   oyó      «{crudo}»");
+        if corregido != crudo {
+            println!("│   corregido «{corregido}»");
+        }
+    }
+    println!("└──────────────────────────────────────────────────────────────────────");
+
+    if medidos == 0 {
+        println!("sin modelos de voz en esta máquina: el WER no se pudo medir en ninguna pista");
+        return;
+    }
+
+    // **El umbral del plan: «no empeora».** Es la mitad que importa de un corrector — el daño de
+    // corregir de más no se ve en los ejemplos, se ve aquí.
+    assert!(
+        peor_subida <= 0.0,
+        "el diccionario EMPEORÓ el WER en {peor_subida:.3}: está corrigiendo lo que no debe"
+    );
+
+    // Y la otra mitad: donde hay jerga, tiene que bajar. Un diccionario que nunca empeora nada
+    // porque nunca corrige nada pasaría la aserción de arriba y no serviría para nada.
+    assert!(
+        bajo_con_jerga,
+        "el diccionario no bajó el WER en ningún audio con jerga: no está haciendo su trabajo"
+    );
 }

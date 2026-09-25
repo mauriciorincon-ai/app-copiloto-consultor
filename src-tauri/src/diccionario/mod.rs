@@ -168,7 +168,7 @@ impl Diccionario {
         // Primero lo exacto, y de un tirón por todos los términos: una variante escrita a mano vale
         // más que cualquier parecido, y es lo único que se acepta para los términos cortos.
         for t in &self.terminos {
-            if normalizar(&t.canonico) == norma || t.variantes.iter().any(|v| *v == norma) {
+            if normalizar(&t.canonico) == norma || t.variantes.contains(&norma) {
                 // Ya estaba bien escrito: no se toca, para no cambiar mayúsculas que el usuario
                 // pueda haber querido.
                 if t.canonico == trozo {
@@ -264,7 +264,7 @@ impl Diccionario {
                     })?;
                 dentro
                     .split(',')
-                    .map(|v| normalizar(v))
+                    .map(normalizar)
                     .filter(|v| !v.is_empty())
                     .collect()
             };

@@ -133,8 +133,44 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
 
 - **Qué hace:** la app entera, incluidos los textos que macOS te enseña al pedir permisos, está en
   los dos idiomas. Sigue el del sistema.
-- **Limitaciones conocidas:** el diccionario técnico —decirle a la app cómo quieres leer un término
-  que se oye de otra manera— llega más adelante.
+
+### Tu diccionario técnico · Nuevo · Sprint 002
+
+- **Qué hace:** el motor de voz de macOS no conoce tu jerga. «Power BI» le sale «power by», «DAX» le
+  sale «the ax» y «Lakehouse» le sale «lake house» — y cada una de esas es una ficha que no llega,
+  porque la app busca en tus documentos la palabra equivocada. El diccionario **corrige el texto
+  después de transcribir**, en tu Mac, sin modelo y sin que nada salga de tu equipo.
+- **Cómo se usa:** sin hacer nada. Viene con la jerga de datos ya puesta (Power BI · DAX · Microsoft
+  Fabric · Semantic Model · Lakehouse) y **los nombres de tus clientes salen solos de tu corpus** —
+  si tienes una ficha de «Páramo Azul», la app ya sabe escribirlo bien.
+- **Y si quieres añadir lo tuyo:** el archivo es
+  `~/Library/Application Support/com.aiapps.copiloto-consultor/diccionario.yaml`, y puedes editarlo
+  con cualquier editor de texto. Una línea por término:
+
+  ```
+  Power BI: [power bi, powerbi, power by]
+  Lakehouse: [lake house]
+  Contabilidad Regulatoria:
+  ```
+
+  A la izquierda, **como quieres verlo escrito**; entre corchetes, las formas en que se oye mal. Un
+  término sin corchetes también vale: se corrige por parecido. Los cambios se aplican **al empezar la
+  sesión siguiente** — no hace falta cerrar la app.
+- **Cuánto mejora, medido:** en el audio de prueba con jerga, la transcripción pasa de un 46 % de
+  palabras erradas a un 42 % en castellano, y de un 35 % a un 26 % en inglés. En los audios **sin**
+  jerga no cambia nada, que es igual de importante: no toca lo que ya estaba bien.
+- **Limitaciones conocidas:**
+  - **Arregla lo que se oyó parecido, no lo que se perdió.** «Power B» se convierte en «Power BI»,
+    pero si el motor oyó «Lakehouse» como «en la que usé», no queda nada a lo que parecerse.
+  - **Los términos de cuatro letras o menos solo se corrigen si tú escribes cómo se oyen.** «DAX»
+    está a una letra de «das», «dos», «tax» y «max»: corregir por parecido ahí estropearía más de lo
+    que arregla.
+  - **Los nombres de tus clientes no se guardan en el archivo.** Salen de tu corpus cada vez que
+    empiezas sesión, así que ese archivo no contiene el nombre de nadie.
+  - **Cada pista escucha un idioma.** Si en mitad de una frase castellana el cliente dice tres
+    palabras en inglés, el diccionario arregla la jerga que reconozca, pero **una frase entera en el
+    otro idioma no se transcribe bien** — está medido y está dicho en la pantalla de *Idioma*. Marcar
+    varios idiomas por pista llega más adelante.
 
 ## Atajos de teclado
 
@@ -176,6 +212,7 @@ detecta y lo marca, pero funciona mejor con auriculares.
 | Sprint | Features añadidas a este manual |
 |---|---|
 | 001 | la banda protegida · el acople · las dos pistas y la transcripción local · el corpus indexado · la ficha de evidencia y la sugerencia de cómo conducirse · el modelo de voz de un idioma · el corte y la pantalla de Honestidad · español e inglés |
+| 002 | el disparo por silencio · **tu diccionario técnico** |
 
 > **Corregido tras la auditoría del sprint 001** (2026-09-22): tres frases de este manual habían
 > dejado de ser ciertas y se arreglaron con lo que el código hacía de verdad — el disparo por

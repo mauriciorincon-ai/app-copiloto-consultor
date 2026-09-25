@@ -1,0 +1,33 @@
+{
+  "sobre": "Lo que cada audio del kit dice, palabra por palabra. Es la REFERENCIA del WER: el texto se escribe aquí con la jerga como el consultor la quiere ver escrita («Power BI», no «power by»), porque eso es lo que la app tiene que acabar produciendo. Medir contra lo que el motor oye sería medir el motor contra sí mismo.",
+  "audios": [
+    {
+      "archivo": "pregunta-es.wav",
+      "idioma": "es-ES",
+      "dice": "¿Ustedes tienen certificación ISO 27001? Y la limpieza de datos, ¿eso está dentro del alcance?",
+      "jerga": false,
+      "nota": "Del sprint 001. Sin jerga: sirve de control — el diccionario no debería moverle el WER ni un punto."
+    },
+    {
+      "archivo": "pregunta-en.wav",
+      "idioma": "en-US",
+      "dice": "Do you have ISO 27001 certification? And is data cleaning within the scope?",
+      "jerga": false,
+      "nota": "Del sprint 001. El otro control, en el otro idioma."
+    },
+    {
+      "archivo": "mezcla-es.wav",
+      "idioma": "es-ES",
+      "dice": "Nosotros ya tenemos el Semantic Model en Power BI, pero el Lakehouse todavía no está. And we need the data cleaning inside the scope.",
+      "jerga": true,
+      "nota": "La deuda del sprint 001, pagada. Voz castellana, jerga inglesa Y una frase entera en inglés al final: es como habla de verdad un consultor de datos bilingüe. Mide dos cosas a la vez — si el diccionario mejora la jerga, y si el motor con un solo idioma puesto sostiene el cambio de idioma."
+    },
+    {
+      "archivo": "mezcla-en.wav",
+      "idioma": "en-US",
+      "dice": "We already have the Semantic Model in Power BI, but the Lakehouse is not ready yet. Y el DAX lo escribió otro proveedor.",
+      "jerga": true,
+      "nota": "El mismo caso por la otra pista: voz inglesa que acaba en castellano."
+    }
+  ]
+}

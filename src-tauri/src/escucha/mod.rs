@@ -431,7 +431,7 @@ impl ElQueTranscribe {
                     &mut encargo,
                     &*self.motor,
                     &*self.buscador,
-                    &*self.diccionario,
+                    &self.diccionario,
                     &self.ventana,
                     &self.disparador,
                     &self.viva,

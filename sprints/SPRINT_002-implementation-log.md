@@ -632,3 +632,131 @@ lista tal como está:
 
 Los tres son de `banda.html`. Caben en la mirada 17 sin partir la sesión en dos, o pueden ir a la 18
 con la sugerencia, que también es de la banda. Es decisión del usuario.
+
+---
+---
+
+# FASE 1 · El diccionario técnico y el kit que mide (B3)
+
+## El diseño se aparta del plan, y a mejor
+
+El plan decía: «`diccionario/` … exige entrar en el `Permitido` del gate del efímero» y, en la tabla del
+ADR 002, que el módulo **puede tocar disco**. Al escribirlo se ve el problema: ese módulo **recibe cada
+turno del cliente** y devuelve el turno corregido, así que tiene el transcript en las manos. Por la
+frontera de este repo eso lo pone del lado de los protegidos; por su archivo, del otro.
+
+**Se resuelve partiendo la responsabilidad, no relajando la regla:**
+
+| Quién | Qué hace | Disco |
+|---|---|---|
+| `diccionario/` | corrige el turno y **serializa a un `String`** | **No** — está en `PROTEGIDOS` |
+| `lib.rs` | lee y escribe ese `String`, y cierra sus permisos | Sí — no ve un solo turno |
+
+Cuesta lo mismo y es más fuerte: el módulo que toca la voz del cliente **no tiene manera** de
+escribirla, y no hace falta confiar en que nadie se equivoque al añadir la función siguiente. Enmienda 1
+del ADR 002.
+
+### Y el gate del sprint 001 cazó mi cambio él solo
+
+Al escribir la cabecera «MÓDULO PROTEGIDO» y aún no estar en la lista, `pnpm verify:ephemeral` salió en
+rojo sin que yo provocara nada:
+
+```
+✕ src-tauri/src/diccionario/mod.rs se declara «MÓDULO PROTEGIDO» y NO está en la lista de este
+  script: o entra en PROTEGIDOS, o su cabecera deja de afirmarlo.
+```
+
+Ese gate sobre el gate nació del hallazgo A4 del S1 —`escucha` llevaba dos fases afirmando que el script
+lo comprobaba sin estar en la lista— y **este es el primer cambio ajeno que examina**. Funcionó.
+
+## La decisión que evita que el diccionario haga más daño que bien
+
+Con **cuatro letras o menos, la tolerancia es cero.** «DAX» está a una edición de «das», «dos», «día»,
+«tax» y «max»: palabras que la gente dice de verdad. Para los términos cortos la única corrección que se
+acepta es una **variante escrita a mano** — «the ax» → «DAX» porque alguien lo puso ahí, no porque se
+parezca. Su test mide cinco frases normales, en los dos idiomas, y exige que salgan **sin una letra
+cambiada**.
+
+La otra regla, la de privacidad: **el diccionario no aprende de la reunión.** Las entradas salen del
+archivo del usuario y de los **nombres propios de su corpus**, que se recalculan en cada arranque y **no
+se guardan en el archivo**. Un diccionario que se corrigiera con lo que oye sería un transcript
+persistido con otro nombre. `corregir` toma `&self`, y ese `&` es la regla escrita en el tipo; el test
+`lo_que_se_guarda_no_lleva_el_nombre_de_ningun_cliente` comprueba la otra mitad.
+
+## El kit: las dos deudas del sprint 001, pagadas
+
+`mezcla-es.wav` y `mezcla-en.wav`, generados con `say` + `afconvert` (16 kHz mono, como los del S1), con
+jerga técnica **y** una frase entera en el otro idioma — que es como habla de verdad un consultor de
+datos bilingüe. `transcripciones.json` guarda lo que cada audio dice palabra por palabra, con la jerga
+escrita **como el consultor quiere verla**: medir contra lo que el motor oye sería medirlo contra sí
+mismo.
+
+| Audio | WER sin diccionario | WER con diccionario | |
+|---|---|---|---|
+| `pregunta-es.wav` | 0,133 | 0,133 | control · sin jerga, **no se mueve** |
+| `pregunta-en.wav` | 0,000 | 0,000 | control · sin jerga, **no se mueve** |
+| `mezcla-es.wav` | 0,458 | **0,417** | mejora |
+| `mezcla-en.wav` | 0,348 | **0,261** | mejora |
+
+**El umbral es doble, y esa es la parte pensada.** El plan pedía «no empeora»; solo con eso, un
+diccionario que no corrigiera nada pasaría el gate. Así que también se exige que **baje en al menos un
+audio con jerga**. Las dos aserciones juntas son la única forma de que el número signifique algo.
+
+### Y de paso, la respuesta a la pregunta que el plan dejó abierta
+
+El plan decía: «si SpeechAnalyzer no sostiene la mezcla, la pantalla lo declara». **No la sostiene**, y
+no es un WER alto: es texto que no significa nada.
+
+```
+dicho:  «… Y el DAX lo escribió otro proveedor.»          (dentro de un audio en-US)
+oído:   «… YL Daxlo is Gribbio Otro Provider.»
+```
+
+De ahí sale el **ADR 009**, y con una distinción que importa: **lo que se midió es un idioma por pista**,
+que es lo único que la app puede configurar —`stt::Motor::transcribir` recibe **un** `idioma: &str` y los
+dos de la app son dos constantes—. Lo que **no** se midió es qué hace el motor con varios idiomas
+configurados a la vez, porque no hay manera de pedírselo. La frase de la maqueta sobre eso queda
+**marcada como no verificada**, no desmentida, y no se reescribe: es copy y es decisión del usuario.
+
+## Tres frases que esta fase volvió falsas, y su arreglo
+
+Es la casilla 4 de la auditoría aplicada a uno mismo, y salieron las tres del mismo sitio:
+
+1. **La pantalla de Idioma listaba «Diccionario técnico» dentro de «Lo que todavía no existe».** Una
+   pantalla que dice «todavía no» de algo que existe miente igual que una que promete lo que falta. La
+   fila **sale de la lista** (maqueta, diccionario i18n y `Idioma.tsx`), y su test pasa de contar tres
+   pendientes a comprobar **los dos que quedan por su nombre** — un conteo que cambia en silencio no
+   dice cuál se fue.
+2. **«los nombres propios se transcriben como suenen»**, en el detalle de esa misma tarjeta: falso desde
+   hoy. Se quita la cláusula y se deja la que sigue siendo verdad («hoy cada pista escucha un idioma»),
+   que además es justo lo que el ADR 009 manda declarar.
+3. **El manual decía que el diccionario técnico «llega más adelante».** Ahora tiene su sección, con la
+   ruta del archivo, cómo editarlo, los números medidos y sus cuatro limitaciones.
+
+**Y lo que NO se hizo, a propósito:** quitar una afirmación falsa es una corrección; **inventar cómo la
+pantalla enseña el diccionario es diseño**, y el diseño pasa por mirada. Así que la pantalla de Idioma
+deja de negarlo y no lo presume todavía. La propuesta va al gate de esta fase.
+
+## De propina, dos hallazgos del propio trabajo
+
+- **La voz «Mónica» ya no está instalada en este Mac.** El LEEME del kit documentaba los dos audios del
+  S1 como hechos con ella; los nuevos van con **Paulina**. Se corrige la tabla y se dice por qué los
+  audios se **versionan** en vez de generarse en cada corrida: un kit que se regenerara solo mediría una
+  voz distinta cada vez que Apple cambie de catálogo.
+- **El archivo del diccionario nacía en 644 y se apretaba a 600 después.** Lo delató la traza del propio
+  gate del efímero. Funcionaba y estaba mal: entre el `write` y el `set_permissions` hay una ventana en
+  la que la jerga del consultor es legible por cualquier cuenta del Mac, y la regla 17-bis dice **nace**.
+  Ahora se crea con `create_new` y su modo, y el test comprueba **que no hubo reparación** — no solo que
+  el modo final sea el bueno.
+
+## Criterio de fase, verificado
+
+| Gate | Resultado |
+|---|---|
+| WER medido y publicado en el kit | ✓ cuatro audios · tabla en `audio/LEEME.md` y en el ADR 009 |
+| El diccionario persiste sin romper el efímero | ✓ `Permitido` gana su segunda entrada, con su rojo |
+| El gate del diccionario (i18n fiel a la maqueta) | ✓ verde, con las tres frases corregidas en los dos lados |
+| `pnpm typecheck` · `lint` · `test` | ✓ 24 archivos · 164 tests |
+| `pnpm verify:ephemeral` estático y runtime | ✓ 18 archivos inspeccionados (era 17) |
+| `cargo clippy --locked --all-targets -- -D warnings` | ✓ **tras tres hallazgos suyos en mi código** |
+| `cargo test --locked` | ✓ 235 + 15 |

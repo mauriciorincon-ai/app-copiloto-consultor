@@ -249,8 +249,7 @@ export const en: Diccionario = {
     loQueTodaviaNo: "What does not exist yet",
     variosIdiomasPorPista: "Several languages at once, ticked per track",
     loQueFaltaDetalle:
-      "Today each track listens to one language, proper names are transcribed as they sound, and both sets of turns die — yours and the client’s — on close and with the key.",
-    diccionarioTecnico: "Technical dictionary: what is heard into what you want to read",
+      "Today each track listens to one language, and both sets of turns die — yours and the client’s — on close and with the key.",
     conservarTusTurnos: "Keep what you said",
   },
 };

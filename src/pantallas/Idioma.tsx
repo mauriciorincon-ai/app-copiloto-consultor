@@ -180,10 +180,6 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
             <TodaviaNo />
           </div>
           <div className="fila">
-            <span className="crece">{t.diccionarioTecnico}</span>
-            <TodaviaNo />
-          </div>
-          <div className="fila">
             <span className="crece">{t.conservarTusTurnos}</span>
             <TodaviaNo />
           </div>

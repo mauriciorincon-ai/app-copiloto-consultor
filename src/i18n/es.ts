@@ -320,8 +320,7 @@ export const es = {
     loQueTodaviaNo: "Lo que todavía no existe",
     variosIdiomasPorPista: "Varios idiomas a la vez, marcados por pista",
     loQueFaltaDetalle:
-      "Hoy cada pista escucha un idioma, los nombres propios se transcriben como suenen, y los turnos mueren los dos —el tuyo y el del cliente— al cerrar y con la tecla.",
-    diccionarioTecnico: "Diccionario técnico: lo que se oye por lo que quieres leer",
+      "Hoy cada pista escucha un idioma, y los turnos mueren los dos —el tuyo y el del cliente— al cerrar y con la tecla.",
     conservarTusTurnos: "Conservar lo que dijiste tú",
   },
 };

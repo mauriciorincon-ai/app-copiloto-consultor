@@ -158,13 +158,21 @@ describe("el cuaderno: lo que no existe se dice", () => {
 
   /**
    * La pantalla de Idioma nace con la fase 3. Lo que se comprueba aquí no es su forma —de eso se
-   * ocupa el gate de fidelidad— sino que **no promete lo que no hay**: tres bloques pendientes y
-   * el aviso del techo de macOS, que es un límite del sistema y no una decisión nuestra.
+   * ocupa el gate de fidelidad— sino que **no promete lo que no hay** ni niega lo que sí hay.
+   *
+   * **Eran tres pendientes y son dos.** El «Diccionario técnico» salió de la lista en el sprint 002,
+   * fase 1, porque se construyó: una pantalla que dice «todavía no» de algo que existe miente igual
+   * que una que promete lo que falta, y esta app no se permite ninguna de las dos. Se comprueban los
+   * dos que quedan **por su nombre** y no solo la cuenta: un conteo que cambia en silencio no dice
+   * cuál se fue.
    */
   it("idioma: enseña lo que transcribe hoy y marca lo que todavía no", () => {
     pinta("?pantalla=idioma");
     expect(screen.getByText(t.idiomaTitulo)).toBeInTheDocument();
-    expect(screen.getAllByText(t.todaviaNo)).toHaveLength(3);
+    expect(screen.getByText(t.variosIdiomasPorPista)).toBeInTheDocument();
+    expect(screen.getByText(t.conservarTusTurnos)).toBeInTheDocument();
+    expect(screen.queryByText(/[Dd]iccionario técnico|[Tt]echnical dictionary/)).toBeNull();
+    expect(screen.getAllByText(t.todaviaNo)).toHaveLength(2);
     expect(screen.getByText(t.cincoIdiomas)).toBeInTheDocument();
     // Las dos pistas con su idioma y el estado real de su modelo. **La del cliente no lo tiene**,
     // que es el estado más probable en un Mac de verdad y el que la muestra dibuja desde la
