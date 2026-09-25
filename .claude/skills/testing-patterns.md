@@ -164,6 +164,11 @@ verde que reportas es el de la config del kit, sin tocar.
    completa — **INCLUIDO su scan de axe** (kit v1.24.1, hoja-de-vida S4: diferir axe a la fase
    de integración dejó pasar un contraste roto UNA FASE ENTERA — el eyebrow usaba el tono
    decorativo del DS como texto real; se cazó, pero tarde).
+10. **Carpeta temporal ÚNICA por test, creada por el propio test** (kit v1.28.0, Angel Ghost S1
+   — tres reincidencias en un sprint): `mkdtemp` (o `tempfile::tempdir()` en Rust) dentro del
+   test, y la aserción cuenta SOLO lo que ese test escribió. Jamás un inventario del temporal
+   compartido (`/tmp`, `os.tmpdir()`, `target/`): con `fullyParallel` otro test —u otro
+   proceso de la máquina— escribe ahí y la prueba falla o pasa por lo que hizo un vecino.
 
 ## Reglas anti-"comportamiento sin experiencia" (G-Metodo 2026-07-12, habla S2)
 

@@ -84,3 +84,42 @@ del S2. Verde: 3 de 3, y la suite entera en 153.
 **Lo que este episodio deja dicho:** el S1 escribió el gate de contrato porque un defecto se coló
 entre dos lenguajes. Este es el mismo movimiento aplicado al método: el artefacto de auditoría
 también es un puente —entre el auditor y el sprint que viene—, y también necesitaba su gate.
+
+---
+
+## Fase 0 · El delta del kit (v1.27.1 + v1.28.0)
+
+El estampado de esta app fue con **v1.27.0**, así que el salto real son **dos** versiones, no una.
+Y la mayor parte del batch **nació aquí**, en el cierre del S1: los perfiles de Playwright y Vitest
+de escritorio, el `afterEach(cleanup)`, `cargo clippy` dentro de `build-escritorio`,
+`verify-ephemeral` y el propio artefacto de auditoría ya estaban. Lo que sí faltaba:
+
+| Qué | Dónde |
+|---|---|
+| **Regla 19 — gate de contrato entre lenguajes** | `CLAUDE.md:418`. **No existía**: la lista terminaba en la 18. Su origen es el C1 de este repo, así que se cita con el precedente de casa y con la advertencia de lo que NO cubre (la forma, no si alguien lee) |
+| **Regla 15, cuarto filo: el modo incluye el perfil de compilación** | `CLAUDE.md:348` |
+| **Regla 20 — el artefacto de auditoría se cuadra solo** | `CLAUDE.md:435`. No es del kit: es la petición del usuario de este sprint, escrita como regla de la casa |
+| Sección fija «Gate ⭐ — diferimiento y contrapesos» en la plantilla del summary | `CLAUDE.md:546-551` |
+| `/audita-sprint` — artefacto con todas las severidades · casilla 4 repetida tras la Fase 2 | `.claude/commands/audita-sprint.md` |
+| `/release-check` — la inversa de la regla v1.15.0, `clippy --locked`, `manual` en `tauri build`, casilla de `--release` | `.claude/commands/release-check.md` |
+| `testing-patterns` regla 10 — carpeta temporal única por test | `.claude/skills/testing-patterns.md:167` |
+| Fuera `--pass-with-no-tests` | `package.json:14` |
+| El CHANGELOG al día | `CHANGELOG.md` |
+
+### El rojo del `e2e` con cero pruebas
+
+La regla del kit es que **un job que no corre nada no puede dar verde**. Quitado el flag, se
+comprueba pidiéndole a Playwright un filtro que no existe:
+
+```
+$ pnpm test:e2e --grep "una-prueba-que-no-existe"
+Error: No tests found
+[ELIFECYCLE] Command failed with exit code 1.
+```
+
+Con `--pass-with-no-tests` eso era un verde. Los 66 e2e de verdad siguen pasando.
+
+**La regla 10 de `testing-patterns` llega con deuda pagada por adelantado:** este repo aprendió esa
+lección tres veces en el S1 —audio, corpus y la canaria de la CI— y la cuarta la encontró el
+`/release-check`, cuando el inventario del efímero acusó al compilador. El arreglo de entonces
+(excluir las carpetas de la herramienta) es exactamente lo que la regla ahora exige por defecto.
