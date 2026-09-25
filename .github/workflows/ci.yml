@@ -75,6 +75,16 @@ jobs:
         run: |
           cargo check --locked
           cargo test --locked
+      # EVIDENCIA, no un gate nuevo — y conviene decirlo para que nadie lo cuente como uno mas.
+      # Los tests del kit (WER, nDCG@5, disparador) SOLO pueden medir o saltarse: si este runner
+      # no trae los modelos de voz de macOS, salen `ok` habiendose saltado, y `ok` no distingue las
+      # dos cosas. Sin --nocapture, cargo se come la salida de los tests que pasan y el log de la CI
+      # no deja saber si el kit midio algo. Esto vuelve a correrlos (la compilacion ya esta en
+      # cache) solo para que sus numeros queden escritos. No anade ninguna forma nueva de fallar:
+      # falla si y solo si fallan ellos, que ya los corrio el paso de arriba.
+      - name: el kit, con su salida (porque «ok» no dice si midio)
+        working-directory: src-tauri
+        run: cargo test --locked --test contra-el-mac-de-verdad -- --nocapture el_kit el_wer
       # Gate de NO PERSISTENCIA (estandar 4-T, captura de terceros): si la app capta audio o
       # pantalla de terceros, `pnpm verify:ephemeral` debe existir y pasar. Sin el script el
       # gate NO se salta en silencio: falla (un gate saltado se ve igual que uno verde).
