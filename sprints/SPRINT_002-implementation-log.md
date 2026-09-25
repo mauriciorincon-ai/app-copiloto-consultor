@@ -760,3 +760,53 @@ deja de negarlo y no lo presume todavía. La propuesta va al gate de esta fase.
 | `pnpm verify:ephemeral` estático y runtime | ✓ 18 archivos inspeccionados (era 17) |
 | `cargo clippy --locked --all-targets -- -D warnings` | ✓ **tras tres hallazgos suyos en mi código** |
 | `cargo test --locked` | ✓ 235 + 15 |
+
+---
+
+## Fase 1 · El paso de evidencia encontró que el WER nunca ha medido en la CI
+
+El WER salía `ok` en la CI y eso no significaba nada. Con el paso de evidencia puesto, el log dice lo
+que estaba pasando:
+
+```
+┌─ WER del kit · con y sin diccionario ────────────────────────────────
+│ pregunta-es.wav  sin modelo de es-ES en esta máquina: no se mide
+│ pregunta-en.wav  sin modelo de en-US en esta máquina: no se mide
+│ mezcla-es.wav    sin modelo de es-ES en esta máquina: no se mide
+│ mezcla-en.wav    sin modelo de en-US en esta máquina: no se mide
+sin modelos de voz en esta máquina: el WER no se pudo medir en ninguna pista
+```
+
+**El runner de `macos-latest` no trae ni un modelo de voz.** El test hacía lo correcto —salir temprano
+diciendo por qué— y aun así el resultado era un `ok` verde que se leía como «medido».
+
+### Y no es solo el mío: es un gate del sprint 001 que nunca ha corrido en la CI
+
+`transcribe_la_pregunta_en_espanol` y `transcribe_la_pregunta_en_ingles` existen desde el S1 y llevan
+todo ese tiempo saliendo `ok` **sin transcribir nada** en la integración continua, por la misma razón.
+Su contrato tiene dos mitades y en la CI solo se ejerce la segunda —«sin motor, un motivo que se puede
+enseñar»—, que es la que no necesita modelo. Nadie lo había visto porque `ok` no distingue.
+
+`nDCG@5 0,823`, en cambio, **sí mide en la CI**: es texto contra texto y no necesita audio.
+
+### Qué se hace con esto, y qué NO
+
+**No se hace fallar la CI por esto.** Sería rojo en cada PR por un motivo del entorno, y lo que pasaría
+después es que alguien lo desactivaría — que es la muerte de todos los gates de esta familia. Tampoco
+se instalan modelos de voz en el runner: sería una descarga de red en la CI de una app cuya promesa es
+que no toca la red.
+
+**Lo que se hace es dejar de afirmar lo que no se sabe.** Tres cosas:
+
+1. El paso de evidencia se queda: sin él, esto era invisible.
+2. **El WER es una medida del Mac, no de la CI.** Su sitio es `/release-check` y el gate ⭐ del
+   usuario, y el summary del sprint tiene que decirlo con estas palabras: *sin histórico en la CI no
+   puede afirmarse ni regresión ni no-regresión* (regla 15, segunda pregunta). Los números de la tabla
+   se midieron en este Mac, con su fecha.
+3. Va a la auditoría del sprint como hallazgo, con su sitio: los dos tests de transcripción del S1 y el
+   del WER **no son gates de la CI**; son gates de la máquina del desarrollador con su salida escrita.
+
+**La lección, que es la útil:** el tercer filo de la regla 15 pregunta si lo viste correr *en el modo en
+que el usuario lo va a usar*. Aquí hacía falta la pregunta de al lado — **¿lo viste correr en el sitio
+donde crees que corre?** Un test que sale temprano diciendo por qué está bien escrito; lo que faltaba
+era que alguien leyera lo que decía.
