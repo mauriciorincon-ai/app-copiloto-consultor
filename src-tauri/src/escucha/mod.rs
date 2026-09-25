@@ -31,12 +31,12 @@
 
 use crate::capture::anillo::{Anillo, HZ};
 use crate::capture::Pista;
-use crate::disparo::{Contexto, Disparador};
+use crate::disparo::{Contexto, Disparador, Motivo};
 use crate::ficha::{Aparicion, Respuesta};
 use crate::stt::{Disponibilidad, Fallo, Motor, Turno, Ventana};
 use crate::voz::{Suceso, Turnos, MARCO};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{Receiver, Sender};
+use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender};
 use std::sync::{Arc, Mutex};
 
 /// Cada cuánto mira el hilo de escucha si hay marcos nuevos. Cuarenta milisegundos son dos marcos:
@@ -44,6 +44,14 @@ use std::sync::{Arc, Mutex};
 /// 320 ms que ya cuesta decidirlo, y lo bastante poco para no despertar la CPU cien veces por
 /// segundo durante una reunión de una hora.
 const LATIDO_MS: u64 = 40;
+
+/// Cada cuánto se pregunta el hilo que transcribe si el cliente lleva demasiado rato callado.
+///
+/// El umbral del disparo por silencio son cuatro segundos, así que cuatrocientos milisegundos son
+/// un diez por ciento de retraso en el peor caso — imperceptible al lado de los 320 ms que ya
+/// cuesta decidir un fin de turno. Y el hilo sigue pasando el resto del tiempo **dormido en el
+/// canal**, igual que antes: esto no es un bucle nuevo, es el mismo con un despertador.
+const LATIDO_DEL_SILENCIO_MS: u64 = 400;
 
 /// Lo que pasa mientras se escucha. Sale de aquí hacia quien quiera enterarse — en la app, hacia
 /// la banda y la pantalla de Honestidad.
@@ -290,31 +298,25 @@ impl Escucha {
         // Hilo 2 — transcribe lo que el primero le pasa. Lo que hace con cada encargo vive en
         // `atender`, fuera del hilo, para poder probar el caso que este sprint no probaba: que el
         // corte llegue justo en medio.
+        //
+        // **Y desde el sprint 002 no espera el encargo siguiente para siempre.** El quinto motivo
+        // del disparador —el silencio— es el único que no nace de un turno, así que necesitaba un
+        // bucle que tictaquee cuando nadie habla. Es este, con `recv_timeout`: el hilo que ya
+        // conoce al buscador y a la ventana, en vez del latido de los marcos, que no conoce a
+        // ninguno de los dos.
         {
-            let ventana = ventana.clone();
             let avisar = avisar.clone();
-            let disparador = disparador.clone();
-            let viva_aqui = viva.clone();
-            std::thread::spawn(move || {
-                for mut encargo in recibe {
-                    let Some((novedad, aparicion)) = atender(
-                        &mut encargo,
-                        &*motor,
-                        &*buscador,
-                        &ventana,
-                        &disparador,
-                        &viva_aqui,
-                    ) else {
-                        continue;
-                    };
-                    // El turno va PRIMERO y la ficha después: el transcript de la banda se pinta
-                    // en cuanto hay texto, sin esperar a una búsqueda que puede no llegar nunca.
-                    avisar(novedad);
-                    if let Some(a) = aparicion {
-                        avisar(Novedad::Aparece(Box::new(a)));
-                    }
-                }
-            });
+            let suyo = ElQueTranscribe {
+                motor,
+                buscador,
+                ventana: ventana.clone(),
+                disparador: disparador.clone(),
+                pistas: pistas.clone(),
+                viva: viva.clone(),
+                nacio,
+                espera: std::time::Duration::from_millis(LATIDO_DEL_SILENCIO_MS),
+            };
+            std::thread::spawn(move || while suyo.latir(&recibe, avisar.as_ref()) {});
         }
 
         Self { disparador, pistas, ventana, viva, motor: nombre_del_motor }
@@ -391,6 +393,80 @@ impl Escucha {
         if let Ok(mut d) = self.disparador.lock() {
             d.reiniciar();
         }
+    }
+}
+
+/// **LO QUE EL HILO QUE TRANSCRIBE TIENE EN LAS MANOS.**
+///
+/// Existe para que su latido viva **fuera** del hilo, que es la misma razón por la que `atender`
+/// vive fuera: lo que no se puede llamar desde un test no se puede probar. Y aquí eso no es una
+/// preferencia de estilo — es la deuda que este sprint paga: `Disparador::por_silencio` estuvo un
+/// sprint entero escrito y **probado** sin un solo llamador, así que probar solo al ayudante y
+/// dejar el cable a oscuras habría sido volver a dejar la misma deuda, esta vez con un test verde
+/// encima.
+struct ElQueTranscribe {
+    motor: Box<dyn Motor>,
+    buscador: Arc<dyn Buscador>,
+    ventana: Arc<Mutex<Ventana>>,
+    disparador: Arc<Mutex<Disparador>>,
+    /// Solo para una pregunta: ¿está el cliente hablando ahora mismo?
+    pistas: Arc<Mutex<Vec<PistaViva>>>,
+    viva: Arc<AtomicBool>,
+    /// El reloj de la escucha, el único que las dos pistas comparten.
+    nacio: std::time::Instant,
+    espera: std::time::Duration,
+}
+
+impl ElQueTranscribe {
+    /// **Un latido**: atiende el encargo que haya llegado y, si no llegó ninguno, mira el silencio.
+    /// Devuelve `false` cuando el canal se cerró y el hilo debe acabarse.
+    fn latir(&self, recibe: &Receiver<Encargo>, avisar: &dyn Fn(Novedad)) -> bool {
+        match recibe.recv_timeout(self.espera) {
+            Ok(mut encargo) => {
+                if let Some((novedad, aparicion)) = atender(
+                    &mut encargo,
+                    &*self.motor,
+                    &*self.buscador,
+                    &self.ventana,
+                    &self.disparador,
+                    &self.viva,
+                ) {
+                    // El turno va PRIMERO y la ficha después: el transcript de la banda se pinta en
+                    // cuanto hay texto, sin esperar a una búsqueda que puede no llegar nunca.
+                    avisar(novedad);
+                    if let Some(a) = aparicion {
+                        avisar(Novedad::Aparece(Box::new(a)));
+                    }
+                }
+                true
+            }
+            // Nadie habló en lo que dura la espera: el hueco donde vive el disparo por silencio.
+            Err(RecvTimeoutError::Timeout) => {
+                // **El corte llega también aquí.** Es la misma ventana del hallazgo A2: si el
+                // usuario pulsó la tecla, lo último que puede pasar es que la banda estrene una
+                // ficha de la reunión que acaba de cortar. El hilo se acaba un latido después, en
+                // cuanto el primero suelte el canal.
+                if self.viva.load(Ordering::Relaxed) {
+                    if let Some(a) = el_silencio_pide_ficha(
+                        &self.ventana,
+                        &self.disparador,
+                        &*self.buscador,
+                        self.nacio.elapsed().as_millis() as usize,
+                        self.cliente_hablando(),
+                    ) {
+                        avisar(Novedad::Aparece(Box::new(a)));
+                    }
+                }
+                true
+            }
+            Err(RecvTimeoutError::Disconnected) => false,
+        }
+    }
+
+    fn cliente_hablando(&self) -> bool {
+        self.pistas
+            .lock()
+            .is_ok_and(|l| l.iter().any(|p| p.cual == Pista::Sistema && p.turnos.hablando()))
     }
 }
 
@@ -577,10 +653,70 @@ fn buscar_si_toca(
     let vocabulario = buscador.vocabulario();
     let ctx = Contexto { ahora_ms: turno.hasta_ms, vocabulario: &vocabulario };
     let motivo = disparador.mirar(turno, &ctx)?;
+    Some(armar_y_anunciar(buscador, &turno.texto, motivo, &turno.hora, encargo.cerro))
+}
 
-    let hallazgos = buscador.buscar(&turno.texto, crate::ficha::TOP);
-    let respuesta = crate::ficha::armar(&turno.texto, &hallazgos);
-    let ms = encargo.cerro.elapsed().as_millis() as u64;
+/// **EL SILENCIO COMO DISPARO** — el quinto motivo, que existía sin cablear desde el sprint 001.
+///
+/// La VISION nombra cinco —«una pregunta, un término tuyo, una cifra o un silencio disparan la
+/// ficha; y un atajo global»— y `Disparador::por_silencio` estaba escrito y probado desde la fase 4
+/// **sin un solo llamador fuera de sus tests**. El manual lo declaraba como limitación en vez de
+/// prometerlo, que fue lo honesto; esto es el pago.
+///
+/// **Qué ficha trae.** La de lo último que dijo el cliente, que es justo lo que no disparó solo: una
+/// frase sin pregunta, sin cifra y sin término del corpus. Si esa frase ya trajo su ficha, el
+/// silencio no trae una segunda igual — por eso `por_silencio` recibe el texto y no una cadena
+/// vacía.
+///
+/// **Por qué la voz del cliente no se copia.** Lo último que dijo ya vive en la ventana del
+/// transcript, que es el sitio que el kill-switch alcanza; la búsqueda se hace sobre una
+/// **referencia**, con el candado de la ventana puesto, para no dejar una segunda copia en un hilo
+/// al que `cortar()` no llega. El precio es que quien consulte el estado en ese instante espera lo
+/// que dure la búsqueda, y en esta app ese es el lado correcto del trato.
+fn el_silencio_pide_ficha(
+    ventana: &Mutex<Ventana>,
+    disparador: &Mutex<Disparador>,
+    buscador: &dyn Buscador,
+    ahora_ms: usize,
+    cliente_hablando: bool,
+) -> Option<Aparicion> {
+    // Mientras el cliente habla no hay silencio que valga, aunque su turno anterior cerrara hace
+    // rato: el que está en curso todavía no tiene fin, así que el reloj diría que lleva callado
+    // justo cuando no lo está.
+    if cliente_hablando {
+        return None;
+    }
+    let empezo = std::time::Instant::now();
+    // Los dos candados en este orden y en ningún otro: es el único sitio de la app donde se anidan.
+    let v = ventana.lock().ok()?;
+    let ultimo = v.ultimo_de(Pista::Sistema)?;
+    let vocabulario = buscador.vocabulario();
+    let ctx = Contexto { ahora_ms, vocabulario: &vocabulario };
+    let motivo =
+        disparador.lock().ok()?.por_silencio(&ultimo.texto, ultimo.hasta_ms, &ctx)?;
+    Some(armar_y_anunciar(buscador, &ultimo.texto, motivo, &ultimo.hora, empezo))
+}
+
+/// De un texto del cliente a la aparición, con su medida y su línea de log.
+///
+/// Lo comparten los dos caminos que disparan —el turno que acaba de cerrarse y el silencio que vino
+/// después— y por eso existe: dos copias de esto acabarían midiendo o anunciando distinto, y la
+/// medida es la que el presupuesto de 4 s del sprint acota.
+///
+/// `desde` es el instante desde el que se mide, y no es el mismo en los dos casos: para un turno es
+/// **cuándo cerró**, que es lo que el usuario percibe; para el silencio es cuándo se decidió
+/// buscar, porque el fin de turno de ese texto quedó cuatro segundos atrás y contarlos sería
+/// cargarle a la búsqueda una espera que es del diseño.
+fn armar_y_anunciar(
+    buscador: &dyn Buscador,
+    texto: &str,
+    motivo: Motivo,
+    hora: &str,
+    desde: std::time::Instant,
+) -> Aparicion {
+    let hallazgos = buscador.buscar(texto, crate::ficha::TOP);
+    let respuesta = crate::ficha::armar(texto, &hallazgos);
+    let ms = desde.elapsed().as_millis() as u64;
 
     // Metadata, jamás contenido: ni la pregunta ni la ficha pasan por el log.
     let que = match &respuesta {
@@ -589,7 +725,7 @@ fn buscar_si_toca(
     };
     println!("[ficha] {que} por «{}» en {ms} ms · {} candidatas", motivo.etiqueta(), hallazgos.len());
 
-    Some(Aparicion { respuesta, motivo, ms, hora: turno.hora.clone() })
+    Aparicion { respuesta, motivo, ms, hora: hora.to_string() }
 }
 
 /// Pisa el audio de un encargo que no se va a transcribir.
@@ -1166,5 +1302,199 @@ mod tests {
             Novedad::SinTexto { motivo, .. } => assert!(motivo.contains("macOS 26"), "«{motivo}»"),
             otro => panic!("{otro:?}"),
         }
+    }
+
+    /// **EL QUINTO MOTIVO, CABLEADO — el camino entero del silencio.** El cliente dice algo que por
+    /// sí solo no dispara, se calla, y la ficha llega sin que nadie más hable.
+    ///
+    /// Es la deuda del sprint 001: `por_silencio` estaba escrito y probado y **no tenía un solo
+    /// llamador fuera de sus tests**, así que la app no disparó por silencio en toda la vida del
+    /// sprint y el manual lo declaró como limitación. Se ve en rojo borrando la llamada a
+    /// `el_silencio_pide_ficha` del brazo del `Timeout` — que es exactamente el estado en que el
+    /// sprint 001 lo dejó.
+    #[test]
+    fn el_cliente_se_queda_callado_y_la_ficha_llega_sin_que_nadie_hable() {
+        use crate::corpus::seccion::Seccion;
+        let corpus = corpus_de_prueba();
+        corpus
+            .0
+            .indice_para_pruebas()
+            .meter("/c/marco.md", "Gobierno de datos · Marco", Some(crate::corpus::Unidad::Marco), false, &[
+                Seccion {
+                    titulo: Some("Traspaso en dos oleadas".into()),
+                    texto: "El traspaso desde un proveedor anterior se hace en dos oleadas, sin \
+                            cortar el servicio."
+                        .into(),
+                },
+            ])
+            .unwrap();
+
+        let ventana = Mutex::new(Ventana::nueva());
+        let disparador = Mutex::new(Disparador::nuevo());
+
+        // Lo que el cliente dijo, y que por sí solo NO dispara: no es pregunta, no trae cifra y no
+        // nombra nada del corpus. Si esto disparara, el test estaría probando otra cosa — así que
+        // se comprueba, no se supone.
+        let dicho = "Nosotros veníamos trabajando con el proveedor anterior";
+        let turno = turno_del_cliente(dicho, 3_000);
+        {
+            let mut d = disparador.lock().unwrap();
+            assert!(
+                buscar_si_toca(&mut d, &corpus, &turno, &encargo_cerrado_ahora()).is_none(),
+                "esa frase disparó sola: este test ya no prueba el silencio"
+            );
+        }
+        ventana.lock().unwrap().empujar(turno);
+
+        // Tres segundos callado todavía no son los cuatro que el disparador pide.
+        let antes = el_silencio_pide_ficha(&ventana, &disparador, &corpus, 3_000 + 3_000, false);
+        assert!(antes.is_none(), "disparó antes de que el silencio fuera largo");
+
+        // Y con el cliente hablando no hay silencio, aunque el reloj diga que su último turno cerró
+        // hace rato: el que está en curso no tiene fin todavía.
+        assert!(
+            el_silencio_pide_ficha(&ventana, &disparador, &corpus, 3_000 + 9_000, true).is_none(),
+            "disparó con el cliente hablando encima"
+        );
+
+        let a = el_silencio_pide_ficha(&ventana, &disparador, &corpus, 3_000 + 9_000, false)
+            .expect("el silencio no disparó: `por_silencio` se quedó otra vez sin llamador");
+        assert_eq!(a.motivo, Motivo::SilencioLargo);
+        let Respuesta::Ficha(f) = a.respuesta else {
+            panic!("el silencio disparó pero no trajo la sección que responde")
+        };
+        assert_eq!(f.fuente.seccion.as_deref(), Some("Traspaso en dos oleadas"));
+        assert!(a.ms < 4_000, "la ficha del silencio tardó {} ms", a.ms);
+
+        // Y no insiste: el latido siguiente mira el mismo turno y se calla. Sin pasarle el texto a
+        // `por_silencio` esto era una segunda ficha idéntica cada seis segundos.
+        assert!(
+            el_silencio_pide_ficha(&ventana, &disparador, &corpus, 3_000 + 30_000, false).is_none(),
+            "el silencio repitió la ficha que acababa de enseñar"
+        );
+    }
+
+    /// **EL CABLE, no el ayudante.** El latido de verdad: un canal real, un `recv_timeout` real que
+    /// vence sin que llegue ningún encargo, y la aparición saliendo por `avisar` — que es el camino
+    /// por el que la banda se enteraría.
+    ///
+    /// Este test existe porque el anterior no bastaba. `el_silencio_pide_ficha` probado y sin
+    /// llamador sería **la misma deuda del sprint 001 otra vez**, esta vez con un test verde encima
+    /// que la taparía. Se ve en rojo borrando la llamada a `el_silencio_pide_ficha` del brazo del
+    /// `Timeout`: el ayudante sigue probado, y este test se cae.
+    #[test]
+    fn el_latido_sin_encargos_saca_la_ficha_del_silencio_por_donde_la_banda_la_oye() {
+        use crate::corpus::seccion::Seccion;
+        let corpus = Arc::new(corpus_de_prueba());
+        corpus
+            .0
+            .indice_para_pruebas()
+            .meter("/c/marco.md", "Gobierno de datos · Marco", Some(crate::corpus::Unidad::Marco), false, &[
+                Seccion {
+                    titulo: Some("Traspaso en dos oleadas".into()),
+                    texto: "El traspaso desde un proveedor anterior se hace en dos oleadas.".into(),
+                },
+            ])
+            .unwrap();
+
+        let ventana = Arc::new(Mutex::new(Ventana::nueva()));
+        ventana
+            .lock()
+            .unwrap()
+            .empujar(turno_del_cliente("Nosotros veníamos trabajando con el proveedor anterior", 3_000));
+
+        let suyo = ElQueTranscribe {
+            motor: Box::new(crate::stt::Mudo::por("aquí no transcribe nadie: no hay audio")),
+            buscador: corpus,
+            ventana,
+            disparador: Arc::new(Mutex::new(Disparador::nuevo())),
+            // Sin pistas abiertas nadie está hablando, que es lo que este test necesita.
+            pistas: Arc::new(Mutex::new(Vec::new())),
+            viva: Arc::new(AtomicBool::new(true)),
+            // La escucha lleva doce segundos en marcha: el turno cerró en el 3 000 y lleva nueve
+            // callado. Se finge hacia atrás para que el test no tenga que esperarlos.
+            nacio: std::time::Instant::now() - std::time::Duration::from_millis(12_000),
+            espera: std::time::Duration::from_millis(20),
+        };
+
+        let (manda, recibe) = std::sync::mpsc::channel::<Encargo>();
+        let dichas: Arc<Mutex<Vec<Novedad>>> = Arc::new(Mutex::new(Vec::new()));
+        let apuntar = {
+            let dichas = dichas.clone();
+            move |n: Novedad| dichas.lock().unwrap().push(n)
+        };
+
+        // El canal sigue abierto y vacío: exactamente la reunión en la que nadie habla.
+        assert!(suyo.latir(&recibe, &apuntar), "el latido se dio por acabado con el canal abierto");
+
+        let salio = dichas.lock().unwrap();
+        let [Novedad::Aparece(a)] = &salio[..] else {
+            panic!("el latido no sacó la ficha del silencio: {:?}", salio)
+        };
+        assert_eq!(a.motivo, Motivo::SilencioLargo);
+
+        // Y cuando el hilo que mira los marcos suelta el canal, este se da por acabado.
+        drop(manda);
+        assert!(!suyo.latir(&recibe, &apuntar), "el hilo se quedaría girando con el canal cerrado");
+    }
+
+    /// **Y el corte alcanza al latido.** Tras el kill-switch la banda no estrena una ficha de la
+    /// reunión que el usuario acaba de cortar: es la ventana del hallazgo A2, en el camino nuevo.
+    #[test]
+    fn tras_el_corte_el_silencio_ya_no_saca_ninguna_ficha() {
+        let ventana = Arc::new(Mutex::new(Ventana::nueva()));
+        ventana
+            .lock()
+            .unwrap()
+            .empujar(turno_del_cliente("Nosotros veníamos trabajando con el proveedor anterior", 3_000));
+
+        let suyo = ElQueTranscribe {
+            motor: Box::new(crate::stt::Mudo::por("aquí no transcribe nadie")),
+            buscador: Arc::new(corpus_de_prueba()),
+            ventana,
+            disparador: Arc::new(Mutex::new(Disparador::nuevo())),
+            pistas: Arc::new(Mutex::new(Vec::new())),
+            viva: Arc::new(AtomicBool::new(false)),
+            nacio: std::time::Instant::now() - std::time::Duration::from_millis(12_000),
+            espera: std::time::Duration::from_millis(20),
+        };
+
+        let (_manda, recibe) = std::sync::mpsc::channel::<Encargo>();
+        let dichas: Arc<Mutex<Vec<Novedad>>> = Arc::new(Mutex::new(Vec::new()));
+        let apuntar = {
+            let dichas = dichas.clone();
+            move |n: Novedad| dichas.lock().unwrap().push(n)
+        };
+        suyo.latir(&recibe, &apuntar);
+        assert!(
+            dichas.lock().unwrap().is_empty(),
+            "la banda estrenó una ficha después del kill-switch"
+        );
+    }
+
+    /// Una reunión que arranca callada no estrena la banda con una ficha de la nada: sin nada dicho
+    /// no hay silencio que interpretar.
+    #[test]
+    fn una_reunion_que_arranca_callada_no_dispara_nada() {
+        let corpus = corpus_de_prueba();
+        let ventana = Mutex::new(Ventana::nueva());
+        let disparador = Mutex::new(Disparador::nuevo());
+        assert!(el_silencio_pide_ficha(&ventana, &disparador, &corpus, 600_000, false).is_none());
+    }
+
+    /// Y el silencio del **consultor** no dispara nada: la ficha existe para responder a lo que
+    /// preguntan del otro lado, y si la propia voz del usuario contara, la app le contestaría a él
+    /// cada vez que se queda pensando. El último turno de la ventana es del micrófono; el disparo
+    /// mira el del sistema, y no hay ninguno.
+    #[test]
+    fn el_silencio_del_consultor_no_dispara() {
+        let corpus = corpus_de_prueba();
+        let ventana = Mutex::new(Ventana::nueva());
+        let disparador = Mutex::new(Disparador::nuevo());
+        ventana.lock().unwrap().empujar(Turno {
+            pista: Pista::Microfono,
+            ..turno_del_cliente("Déjame mirar la propuesta que les mandamos", 3_000)
+        });
+        assert!(el_silencio_pide_ficha(&ventana, &disparador, &corpus, 3_000 + 9_000, false).is_none());
     }
 }

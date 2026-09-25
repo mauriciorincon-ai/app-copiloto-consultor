@@ -194,3 +194,84 @@ mismo defecto necesitó un auditor independiente.
 que no es una pantalla pendiente de cablear sino API muerta. La struct `Documento` se queda: el
 corpus la usa por dentro. Cuando el S3 diseñe la lista, el comando vuelve **con su entrada en el
 contrato**.
+
+---
+
+## Fase 0 · El quinto motivo — `por_silencio`, cableado
+
+La VISION nombra cinco disparos: *«una pregunta, un término tuyo, una cifra o un silencio disparan la
+ficha; y un atajo global "ayúdame con esto"»*. En el sprint 001 el quinto se escribió, se probó y
+**no se conectó**: `Disparador::por_silencio` (`disparo/mod.rs:121`) tenía sus dos llamadores en sus
+propios tests y ninguno más, así que la app no disparó por silencio en toda la vida del sprint. El
+manual lo declaró como limitación, que fue lo honesto que se podía hacer entonces.
+
+### Dónde tenía que ir, y por qué no fue donde el plan decía
+
+El plan lo mandaba al **latido de 40 ms** (`escucha/mod.rs:272-287`), por una razón correcta: es el
+único bucle que tictaquea cuando nadie habla. Al abrirlo se ve que ese hilo **no conoce al buscador
+ni a la ventana del transcript** —solo mira marcos de audio y manda encargos—, y llevárselos habría
+duplicado el cableado que el otro hilo ya tiene entero.
+
+El sitio bueno es el **hilo que transcribe**, que ya tiene los dos: bastaba con que dejara de esperar
+el encargo siguiente para siempre. `recv_timeout` cada **400 ms** (diez por ciento del umbral de
+cuatro segundos, imperceptible al lado de los 320 ms que cuesta decidir un fin de turno), y el hilo
+sigue durmiendo en el canal el resto del tiempo: no es un bucle nuevo, es el mismo con un
+despertador.
+
+### Tres cosas que aparecieron al cablearlo
+
+**Una · `por_silencio` recibía una cadena vacía, y eso estaba mal.** `aceptar("")` se salta la
+guardia contra repetidos —una consulta vacía no se compara con nada— **y además pisa la última
+consulta con «»**. Dos consecuencias, las dos invisibles sin llamador: el silencio que sigue a una
+pregunta ya contestada habría puesto una **segunda ficha idéntica** en la banda cada seis segundos, y
+la pregunta siguiente del cliente, aunque fuera la misma de antes, habría vuelto a disparar. Ahora
+recibe **lo último que dijo el cliente**, que es lo que hace funcionar la guardia — y con eso el
+silencio dispara justo por lo que no disparó solo, que es para lo que existe.
+
+**Dos · la voz del cliente no se copia.** Lo último que dijo ya vive en la ventana del transcript,
+que es el sitio que el kill-switch alcanza; `Ventana::ultimo_de` existía desde el S1 con un comentario
+que decía *«es lo que la fase 4 preguntará»* y tampoco tenía llamador. La búsqueda se hace sobre una
+**referencia**, con el candado de la ventana puesto, para no dejar una segunda copia en un hilo al
+que `cortar()` no llega. El precio es que quien consulte el estado en ese instante espera lo que dure
+la búsqueda; en esta app ese es el lado correcto del trato. Los dos candados se anidan
+—ventana → disparador— y es el único sitio de la app donde eso pasa: se comprobó que ningún otro
+camino los toma en el orden inverso.
+
+**Tres · mientras el cliente habla no hay silencio.** Su turno anterior cerró hace rato y el que está
+en curso todavía no tiene fin, así que el reloj diría que lleva callado justo cuando no lo está. Se
+pregunta a la pista del sistema (`turnos.hablando()`) antes de mirar el reloj.
+
+### El gate, y el agujero que tenía mi primer gate
+
+El primer test que escribí prueba `el_silencio_pide_ficha` —el ayudante— de punta a punta: corpus
+indexado, frase que no dispara sola, silencio, ficha correcta, y no insiste. Verde.
+
+**Y con el cable cortado ese test sigue verde.** Probar el ayudante y no el cable habría sido dejar
+exactamente la misma deuda del sprint 001 —código probado sin llamador— esta vez con un test verde
+encima tapándola. Así que el latido salió del hilo a `ElQueTranscribe::latir`, por la misma razón por
+la que `atender` ya vivía fuera, y hay un segundo test que cruza el cable de verdad: canal real,
+`recv_timeout` que vence sin encargos, y la aparición saliendo por `avisar`, que es el camino por el
+que la banda se entera.
+
+**Demo en rojo** (borrada la llamada a `el_silencio_pide_ficha` del brazo del `Timeout` — el estado
+exacto en que el sprint 001 lo dejó):
+
+```
+test escucha::tests::el_cliente_se_queda_callado_y_la_ficha_llega_sin_que_nadie_hable ... ok
+test escucha::tests::el_latido_sin_encargos_saca_la_ficha_del_silencio_por_donde_la_banda_la_oye ... FAILED
+  panicked at src/escucha/mod.rs:1422:13: el latido no sacó la ficha del silencio: []
+test result: FAILED. 16 passed; 1 failed
+```
+
+Dieciséis en verde y uno en rojo: el del ayudante pasó con el cable cortado, y eso es la medida de
+para qué sirve cada uno.
+
+### De propina
+
+- `armar_y_anunciar` — los dos caminos que disparan comparten el armado, la medida y la línea de log.
+  Dos copias habrían acabado midiendo distinto, y la medida es la que el presupuesto de 4 s acota.
+- **`Ventana::esta_vacia` se retira**: misma clase que `por_silencio` —`pub fn` sin llamador fuera de
+  sus tests— y aquí no hay nada que cablear, porque `cuantos()` ya dice lo mismo.
+- **El manual deja de declarar la limitación** y describe lo que hace, incluidas las dos cosas que el
+  usuario nota: que no repite la ficha y que no cuenta como silencio mientras el cliente habla. La
+  nota histórica de la auditoría del S1 queda, fechada, con el cable declarado.

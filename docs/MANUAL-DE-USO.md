@@ -86,14 +86,18 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
 
 ### La ficha en el momento justo · desde Sprint 001
 
-- **Qué hace:** cuando el cliente pregunta algo, dice una cifra o nombra algo que está en tus
-  documentos, la app busca en tu corpus y pone en la banda un **titular de ocho palabras, una línea
-  y la fuente exacta** — documento y sección.
+- **Qué hace:** cuando el cliente pregunta algo, dice una cifra, nombra algo que está en tus
+  documentos **o se queda callado después de hablar**, la app busca en tu corpus y pone en la banda
+  un **titular de ocho palabras, una línea y la fuente exacta** — documento y sección.
 - **Cómo se usa:** sola. Y `⌘⇧A` («ayúdame con esto») la pide a mano cuando no acierte.
+- **El silencio también pide ficha · nuevo en Sprint 002.** Si el cliente dice algo que no lleva
+  pregunta ni cifra y se queda callado **cuatro segundos**, la app busca por su cuenta lo último que
+  dijo — es el hueco en el que te toca hablar a ti. Dos cosas que hace bien y conviene saber:
+  **mientras el cliente siga hablando no cuenta como silencio** (aunque su frase anterior cerrara
+  hace rato), y **no repite la ficha que ya está en la banda**, así que una pregunta que ya trajo su
+  ficha no trae una segunda al callarse. En el sprint 001 esto estaba escrito en el código y sin
+  conectar, y este manual lo declaraba como limitación; ahora funciona.
 - **Limitaciones conocidas:**
-  - **No dispara por silencio todavía.** Si el cliente pregunta y se queda callado esperando tu
-    respuesta, la ficha no llega sola: pídela con `⌘⇧A`. Estaba previsto para esta versión y no
-    llegó; se dice en vez de dejarlo a medias.
   - **Todo lo que la ficha dice está recortado de tus documentos.** La app no redacta: si no
     encuentra nada, lo dice.
   - Cuando no encuentra nada, enseña **qué buscó** —para que veas en el acto si te entendió mal—,
@@ -174,7 +178,8 @@ detecta y lo marca, pero funciona mejor con auriculares.
 | 001 | la banda protegida · el acople · las dos pistas y la transcripción local · el corpus indexado · la ficha de evidencia y la sugerencia de cómo conducirse · el modelo de voz de un idioma · el corte y la pantalla de Honestidad · español e inglés |
 
 > **Corregido tras la auditoría del sprint 001** (2026-09-22): tres frases de este manual habían
-> dejado de ser ciertas y se arreglaron con lo que el código hace de verdad — el disparo por
-> silencio, que no existe y ahora se declara; la instalación del modelo de voz, que no tenía botón y
-> ahora lo tiene; y la ficha automática, que no llegaba a la banda por un defecto del puente. El
-> detalle está en `sprints/SPRINT_001-auditoria.md`.
+> dejado de ser ciertas y se arreglaron con lo que el código hacía de verdad — el disparo por
+> silencio, que entonces no existía y se declaró como limitación (**se cableó en el sprint 002**, y
+> lo que dice este manual arriba es lo que hace hoy); la instalación del modelo de voz, que no tenía
+> botón y ahora lo tiene; y la ficha automática, que no llegaba a la banda por un defecto del
+> puente. El detalle está en `sprints/SPRINT_001-auditoria.md`.
