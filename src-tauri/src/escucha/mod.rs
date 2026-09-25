@@ -31,6 +31,7 @@
 
 use crate::capture::anillo::{Anillo, HZ};
 use crate::capture::Pista;
+use crate::diccionario::Diccionario;
 use crate::disparo::{Contexto, Disparador, Motivo};
 use crate::ficha::{Aparicion, Respuesta};
 use crate::stt::{Disponibilidad, Fallo, Motor, Turno, Ventana};
@@ -254,6 +255,7 @@ impl Escucha {
         idioma_del_cliente: &str,
         motor: Box<dyn Motor>,
         buscador: Arc<dyn Buscador>,
+        diccionario: Arc<Diccionario>,
         avisar: impl Fn(Novedad) + Send + Sync + 'static,
     ) -> Self {
         // **El reloj de la escucha**: uno solo para las dos pistas, monótono, que no vuelve atrás
@@ -311,6 +313,7 @@ impl Escucha {
             let suyo = ElQueTranscribe {
                 motor,
                 buscador,
+                diccionario,
                 ventana: ventana.clone(),
                 disparador: disparador.clone(),
                 pistas: pistas.clone(),
@@ -406,6 +409,8 @@ impl Escucha {
 struct ElQueTranscribe {
     motor: Box<dyn Motor>,
     buscador: Arc<dyn Buscador>,
+    /// La jerga del consultor, para corregir el turno **antes** de que nadie lo mire.
+    diccionario: Arc<Diccionario>,
     ventana: Arc<Mutex<Ventana>>,
     disparador: Arc<Mutex<Disparador>>,
     /// Solo para una pregunta: ¿está el cliente hablando ahora mismo?
@@ -426,6 +431,7 @@ impl ElQueTranscribe {
                     &mut encargo,
                     &*self.motor,
                     &*self.buscador,
+                    &*self.diccionario,
                     &self.ventana,
                     &self.disparador,
                     &self.viva,
@@ -597,6 +603,7 @@ fn atender(
     encargo: &mut Encargo,
     motor: &dyn Motor,
     buscador: &dyn Buscador,
+    diccionario: &Diccionario,
     ventana: &Mutex<Ventana>,
     disparador: &Mutex<Disparador>,
     viva: &AtomicBool,
@@ -605,7 +612,7 @@ fn atender(
         olvidar(encargo);
         return None;
     }
-    let mut novedad = transcribir(motor, encargo);
+    let mut novedad = transcribir(motor, diccionario, encargo);
     if !viva.load(Ordering::Relaxed) {
         olvidar(encargo);
         if let Novedad::Turno(t) = &mut novedad {
@@ -739,7 +746,7 @@ fn olvidar(encargo: &mut Encargo) {
     }
 }
 
-fn transcribir(motor: &dyn Motor, encargo: &Encargo) -> Novedad {
+fn transcribir(motor: &dyn Motor, diccionario: &Diccionario, encargo: &Encargo) -> Novedad {
     let Encargo { pista, idioma, desde_ms, hasta_ms, muestras, cerro: _ } = encargo;
     let (pista, desde_ms, hasta_ms) = (*pista, *desde_ms, *hasta_ms);
     let sin_texto = |motivo: String| Novedad::SinTexto { pista, desde_ms, hasta_ms, motivo };
@@ -756,6 +763,12 @@ fn transcribir(motor: &dyn Motor, encargo: &Encargo) -> Novedad {
             sin_texto("el motor no reconoció palabras en ese turno".into())
         }
         Ok(texto) => {
+            // **La corrección va AQUÍ y en ningún otro sitio**, que es donde el texto nace. Si
+            // viviera más adelante —en la banda, o justo antes de buscar— el disparador vería
+            // «power by» y no reconocería el término, el índice buscaría la errata, y la ventana del
+            // transcript guardaría una cosa mientras la ficha se armó con otra. Un turno tiene una
+            // sola forma, y esta es.
+            let texto = diccionario.corregir(&texto);
             Novedad::Turno(Turno { pista, desde_ms, hasta_ms, texto, hora: la_hora(), eco: false })
         }
         Err(Fallo::NoDisponible(d)) => sin_texto(explicar(&d, idioma)),
@@ -1032,6 +1045,7 @@ mod tests {
             &mut encargo,
             &Loro(None, trabajo.clone()),
             &SinCorpus,
+            &Diccionario::default(),
             &ventana,
             &disparador,
             &viva,
@@ -1079,6 +1093,7 @@ mod tests {
             &mut encolado,
             &Loro(None, trabajo.clone()),
             &SinCorpus,
+            &Diccionario::default(),
             &ventana,
             &disparador,
             &viva,
@@ -1099,6 +1114,7 @@ mod tests {
             &mut mientras_transcribia,
             &Loro(Some(viva.clone()), trabajo.clone()),
             &SinCorpus,
+            &Diccionario::default(),
             &ventana,
             &disparador,
             &viva,
@@ -1114,6 +1130,7 @@ mod tests {
         let motor = crate::stt::Mudo::por("sin motor de prueba");
         let perdido = transcribir(
             &motor,
+            &Diccionario::default(),
             &Encargo {
                 pista: Pista::Sistema,
                 idioma: "es-ES".into(),
@@ -1174,6 +1191,14 @@ mod tests {
         fn vocabulario(&self) -> Vec<String> {
             self.0.vocabulario().to_vec()
         }
+    }
+
+    /// **El diccionario que no corrige nada.** Los tests de este módulo miden el camino del turno,
+    /// no la jerga; con la semilla puesta, cualquiera que metiera «power by» en un texto de prueba
+    /// vería cambiar el resultado por un motivo que no es el que está probando. El diccionario tiene
+    /// sus propios tests, que sí miden lo suyo.
+    fn sin_diccionario() -> Arc<Diccionario> {
+        Arc::new(Diccionario::default())
     }
 
     fn corpus_de_prueba() -> CorpusDePrueba {
@@ -1288,6 +1313,7 @@ mod tests {
         let motor = crate::stt::Mudo::por("este Mac no trae el transcriptor de macOS 26");
         let novedad = transcribir(
             &motor,
+            &Diccionario::default(),
             &Encargo {
                 pista: Pista::Sistema,
                 idioma: "es-ES".into(),
@@ -1405,6 +1431,7 @@ mod tests {
         let suyo = ElQueTranscribe {
             motor: Box::new(crate::stt::Mudo::por("aquí no transcribe nadie: no hay audio")),
             buscador: corpus,
+            diccionario: sin_diccionario(),
             ventana,
             disparador: Arc::new(Mutex::new(Disparador::nuevo())),
             // Sin pistas abiertas nadie está hablando, que es lo que este test necesita.
@@ -1450,6 +1477,7 @@ mod tests {
         let suyo = ElQueTranscribe {
             motor: Box::new(crate::stt::Mudo::por("aquí no transcribe nadie")),
             buscador: Arc::new(corpus_de_prueba()),
+            diccionario: sin_diccionario(),
             ventana,
             disparador: Arc::new(Mutex::new(Disparador::nuevo())),
             pistas: Arc::new(Mutex::new(Vec::new())),

@@ -45,6 +45,13 @@ const PROTEGIDOS = [
   // El disparador guarda la última pregunta del CLIENTE para no repetir ficha, y la ficha se
   // arma con sus palabras. Los dos manejan contenido de terceros: ni disco ni red.
   "src-tauri/src/disparo",
+  // `diccionario` se añadió en el sprint 002, fase 1, y es el caso más interesante de la lista:
+  // **el diccionario PERSISTE** —es del consultor, como sus notas— y aun así el módulo está aquí.
+  // Recibe cada turno del cliente y devuelve el turno corregido, así que tiene el transcript en las
+  // manos; lo que hace es serializarse a un `String` y dejar que `lib.rs` escriba el archivo, que es
+  // la capa que no ve un solo turno. El plan del sprint decía «`diccionario/` puede tocar disco»;
+  // esto es más fuerte y cuesta lo mismo.
+  "src-tauri/src/diccionario",
   "src-tauri/src/ficha",
   "src-tauri/src/screen",
   "src-tauri/src/sesion",

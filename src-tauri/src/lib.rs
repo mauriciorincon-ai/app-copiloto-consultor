@@ -19,6 +19,7 @@ pub mod corte;
 /// trabajo es escribir `src/contrato.generado.ts`, no viajar en el binario del usuario.
 #[cfg(test)]
 mod contrato;
+pub mod diccionario;
 pub mod disparo;
 pub mod escucha;
 pub mod ficha;
@@ -44,6 +45,138 @@ fn huella<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
         .app_config_dir()
         .unwrap_or_else(|_| std::env::temp_dir());
     acople::ruta_de_la_huella(&base)
+}
+
+// ═══════════════════════════════════════════════════════ EL DICCIONARIO DEL CONSULTOR, EN DISCO
+//
+// **Por qué el archivo se lee y se escribe AQUÍ y no en `diccionario/`.** Ese módulo recibe cada
+// turno del cliente y devuelve el turno corregido, así que tiene el transcript en las manos: está
+// en la lista de `verify:ephemeral` y **no puede tocar disco**. La serialización vive allí, en dos
+// funciones que van de `Diccionario` a `String` y al revés; el `fs::read_to_string`, el `fs::write`
+// y los permisos viven aquí, en la capa que no ve un solo turno.
+//
+// El plan del sprint decía «`diccionario/` puede tocar disco». Esto es más fuerte y cuesta lo mismo:
+// el módulo que toca la voz del cliente no tiene manera de escribirla, y no hace falta confiar en
+// que nadie se equivoque al añadir la función siguiente.
+
+/// Cómo se llama el archivo. En la carpeta de configuración de la app, al lado de la huella del
+/// acople — es del usuario y él lo edita a mano.
+const DICCIONARIO: &str = "diccionario.yaml";
+
+/// Permisos del archivo: **solo su dueño**. Es la regla 17-bis — un derivado no nace menos privado
+/// que su fuente, y este desciende de los documentos del usuario.
+#[cfg(unix)]
+const PERMISOS_DEL_DICCIONARIO: u32 = 0o600;
+
+fn ruta_del_diccionario<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
+    app.path()
+        .app_config_dir()
+        .unwrap_or_else(|_| std::env::temp_dir())
+        .join(DICCIONARIO)
+}
+
+/// Deja el archivo escrito **si no existía**, con la semilla, y cierra sus permisos siempre.
+///
+/// Se llama al arrancar y por una razón de producto: **un archivo que no existe no se puede
+/// editar**. El manual le dice al usuario dónde está su diccionario, y si la app esperara a tener
+/// algo que guardar para crearlo, el usuario iría a buscarlo y no encontraría nada.
+///
+/// Los permisos se aseguran **también cuando ya existía**, igual que hace el índice del corpus: una
+/// versión anterior pudo dejarlo flojo, y descubrirlo no sirve de nada si no se repara.
+pub fn asegurar_el_diccionario(ruta: &std::path::Path) -> Result<(), String> {
+    if let Some(padre) = ruta.parent() {
+        std::fs::create_dir_all(padre).map_err(|e| format!("no se pudo crear {}: {e}", padre.display()))?;
+    }
+    if !ruta.exists() {
+        nacer_cerrado(ruta, &diccionario::Diccionario::semilla().a_texto())?;
+        println!("[diccionario] archivo nuevo con la semilla en {}", ruta.display());
+    }
+    if cerrar_permisos(ruta)? {
+        println!("[diccionario] lo encontró abierto y lo dejó en {PERMISOS_DEL_DICCIONARIO:o}");
+    }
+    Ok(())
+}
+
+/// Crea el archivo **ya con sus permisos puestos**, no con los que le toquen y un apretón después.
+///
+/// La primera versión usaba `std::fs::write` y el propio gate del efímero lo delató en su traza:
+/// «el archivo estaba en 644; se dejó en 600». Funcionaba, y aun así estaba mal: la regla 17-bis dice
+/// que un derivado **nace** con permisos restrictivos, y entre el `write` y el `set_permissions` hay
+/// una ventana —corta, pero real— en la que el archivo con la jerga del consultor es legible por
+/// cualquier cuenta del Mac. Un `create_new` con su modo no tiene esa ventana, y encima falla si
+/// alguien creó el archivo entre el `exists()` y aquí.
+#[cfg(unix)]
+fn nacer_cerrado(ruta: &std::path::Path, contenido: &str) -> Result<(), String> {
+    use std::io::Write;
+    use std::os::unix::fs::OpenOptionsExt;
+    let mut f = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .mode(PERMISOS_DEL_DICCIONARIO)
+        .open(ruta)
+        .map_err(|e| format!("no se pudo crear el diccionario: {e}"))?;
+    f.write_all(contenido.as_bytes())
+        .map_err(|e| format!("no se pudo escribir el diccionario: {e}"))
+}
+
+#[cfg(not(unix))]
+fn nacer_cerrado(ruta: &std::path::Path, contenido: &str) -> Result<(), String> {
+    std::fs::write(ruta, contenido).map_err(|e| format!("no se pudo escribir el diccionario: {e}"))
+}
+
+/// Aprieta los permisos si los encuentra flojos. **Devuelve si hubo que repararlos**, y eso no es
+/// un detalle de estilo: es lo que permite probar que el archivo nace cerrado en vez de nacer
+/// abierto y cerrarse un instante después.
+#[cfg(unix)]
+fn cerrar_permisos(ruta: &std::path::Path) -> Result<bool, String> {
+    use std::os::unix::fs::PermissionsExt;
+    let md = std::fs::metadata(ruta).map_err(|e| e.to_string())?;
+    if md.permissions().mode() & 0o777 == PERMISOS_DEL_DICCIONARIO {
+        return Ok(false);
+    }
+    std::fs::set_permissions(ruta, std::fs::Permissions::from_mode(PERMISOS_DEL_DICCIONARIO))
+        .map_err(|e| format!("no se pudieron cerrar los permisos del diccionario: {e}"))?;
+    Ok(true)
+}
+
+#[cfg(not(unix))]
+fn cerrar_permisos(_ruta: &std::path::Path) -> Result<bool, String> {
+    Ok(false)
+}
+
+/// El diccionario de **esta** sesión: lo que el usuario escribió en su archivo más los nombres
+/// propios de su corpus.
+///
+/// Se lee al empezar la sesión y no una sola vez al arrancar, a propósito: el usuario edita el
+/// archivo, pulsa «Iniciar sesión» y lo nuevo ya está puesto, sin cerrar la app.
+///
+/// **Un archivo torcido no detiene la reunión, pero se DICE.** Si no se puede leer o no se entiende,
+/// se sigue con la semilla y el motivo va al log con su número de línea. Callarlo sería lo peor de
+/// los dos mundos: el usuario creería que la app conoce su jerga y la app no la conocería.
+pub fn diccionario_de_la_sesion(
+    ruta: &std::path::Path,
+    del_corpus: &[String],
+) -> std::sync::Arc<diccionario::Diccionario> {
+    let mut d = match std::fs::read_to_string(ruta) {
+        Ok(texto) => match diccionario::Diccionario::de_texto(&texto) {
+            Ok(d) => d,
+            Err(e) => {
+                println!("[diccionario] {} no se entiende ({e}): se sigue con la semilla", ruta.display());
+                diccionario::Diccionario::semilla()
+            }
+        },
+        Err(e) => {
+            println!("[diccionario] no se pudo leer {} ({e}): se sigue con la semilla", ruta.display());
+            diccionario::Diccionario::semilla()
+        }
+    };
+    d.con_nombres_del_corpus(del_corpus);
+    println!(
+        "[diccionario] {} términos · {} de tu corpus",
+        d.terminos().len(),
+        d.cuantos_del_corpus()
+    );
+    std::sync::Arc::new(d)
 }
 
 /// La ruta del fondo de escritorio, leída **una vez, en el hilo principal** (`NSScreen` lo exige).
@@ -336,11 +469,19 @@ fn empezar_a_escuchar(
         Ok(()) => {}
     }
     let mango = app.clone();
+    let buscador = std::sync::Arc::new(el_corpus.inner().clone());
+    // Los nombres propios salen del corpus DEL USUARIO, jamás de la reunión: es lo que hace que el
+    // diccionario no sea un transcript persistido con otro nombre.
+    let jerga = diccionario_de_la_sesion(
+        &ruta_del_diccionario(&app),
+        &escucha::Buscador::vocabulario(&*buscador),
+    );
     let nueva = escucha::Escucha::arrancar(
         &idioma_del_consultor,
         &idioma_del_cliente,
         stt::motor_de_la_casa(),
-        std::sync::Arc::new(el_corpus.inner().clone()),
+        buscador,
+        jerga,
         move |novedad| {
             // Al log va **el hecho, nunca lo dicho**: quién habló y cuánto duró. El texto es del
             // cliente y un log es un archivo.
@@ -587,6 +728,13 @@ pub fn run() {
             app.manage(ElCorpus::default());
 
             registrar_el_kill_switch(app.handle());
+
+            // El diccionario del consultor: se deja escrito con la semilla si no existía, para que
+            // el usuario pueda ir a editarlo. Que falle no impide arrancar — la app funciona sin
+            // diccionario y la sesión cae a la semilla— pero se dice.
+            if let Err(e) = asegurar_el_diccionario(&ruta_del_diccionario(app.handle())) {
+                println!("[diccionario] {e}");
+            }
 
             ventana::abrir_banda(app.handle(), ventana::ALTO_COMPACTA)?;
 
@@ -890,4 +1038,90 @@ fn acoplar_cuando_haya_a_quien<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
             ESPERA * LATIDO.as_secs() as u32 + ESPERA * LATIDO.subsec_millis() / 1000
         );
     });
+}
+
+#[cfg(test)]
+mod pruebas_del_diccionario_en_disco {
+    use super::*;
+
+    fn temporal(nombre: &str) -> PathBuf {
+        let d = std::env::temp_dir().join(format!("ag-dicc-{}-{}", nombre, std::process::id()));
+        let _ = std::fs::remove_dir_all(&d);
+        d.join(DICCIONARIO)
+    }
+
+    /// **Un archivo que no existe no se puede editar.** El manual le dice al usuario dónde está su
+    /// diccionario; si la app esperara a tener algo que guardar, él iría a buscarlo y no habría nada.
+    #[test]
+    fn el_archivo_nace_con_la_semilla_y_el_usuario_puede_leerlo() {
+        let ruta = temporal("nace");
+        asegurar_el_diccionario(&ruta).expect("no se pudo dejar el archivo escrito");
+        let texto = std::fs::read_to_string(&ruta).unwrap();
+        assert!(texto.contains("Power BI:"), "la semilla no llegó al archivo");
+        assert!(texto.starts_with("# Tu diccionario técnico"), "sin cabecera nadie sabe qué editar");
+        // Y lo que se escribió se vuelve a leer: el archivo del usuario es su propio contrato.
+        let d = diccionario::Diccionario::de_texto(&texto).expect("la app escribió algo que no sabe leer");
+        assert_eq!(d.corregir("con power by"), "con Power BI");
+        let _ = std::fs::remove_dir_all(ruta.parent().unwrap());
+    }
+
+    /// **Regla 17-bis: un derivado no nace menos privado que su fuente.** Este desciende de los
+    /// documentos del usuario, así que 600 — y si lo encuentra flojo, lo repara, que es la parte que
+    /// el precedente del índice del corpus enseñó: descubrirlo no sirve de nada sin arreglarlo.
+    #[cfg(unix)]
+    #[test]
+    fn el_archivo_nace_en_600_y_se_repara_si_lo_encuentra_abierto() {
+        use std::os::unix::fs::PermissionsExt;
+        let ruta = temporal("permisos");
+        let modo = |p: &std::path::Path| std::fs::metadata(p).unwrap().permissions().mode() & 0o777;
+
+        asegurar_el_diccionario(&ruta).unwrap();
+        assert_eq!(modo(&ruta), 0o600, "el diccionario nació legible por otras cuentas del Mac");
+        // **Y nació así, no se apretó después.** La primera versión usaba `fs::write` y dejaba una
+        // ventana en 644; lo delató la traza del propio gate del efímero. Si `cerrar_permisos` dice
+        // que no tuvo que reparar nada, no hubo ventana.
+        assert!(
+            !cerrar_permisos(&ruta).unwrap(),
+            "el archivo hubo que repararlo: nació abierto y se cerró un instante después"
+        );
+
+        std::fs::set_permissions(&ruta, std::fs::Permissions::from_mode(0o644)).unwrap();
+        asegurar_el_diccionario(&ruta).unwrap();
+        assert_eq!(modo(&ruta), 0o600, "lo encontró abierto y lo dejó abierto");
+        let _ = std::fs::remove_dir_all(ruta.parent().unwrap());
+    }
+
+    /// Editar el archivo a mano tiene que servir para algo, y tiene que servir **sin reiniciar la
+    /// app**: se lee al empezar la sesión.
+    #[test]
+    fn lo_que_el_usuario_escribe_a_mano_manda() {
+        let ruta = temporal("a-mano");
+        std::fs::create_dir_all(ruta.parent().unwrap()).unwrap();
+        std::fs::write(&ruta, "# lo mío\nCooperativa Sur del Valle: [cooperativa sur, coope sur]\n").unwrap();
+        let d = diccionario_de_la_sesion(&ruta, &[]);
+        assert_eq!(d.corregir("lo de coope sur"), "lo de Cooperativa Sur del Valle");
+        // Y su archivo MANDA: la semilla no se le cuela por detrás.
+        assert_eq!(d.corregir("con power by"), "con power by");
+        let _ = std::fs::remove_dir_all(ruta.parent().unwrap());
+    }
+
+    /// **Un archivo torcido no detiene la reunión, y tampoco pasa en silencio.** Se sigue con la
+    /// semilla; el motivo, con su número de línea, va al log.
+    #[test]
+    fn un_archivo_torcido_cae_a_la_semilla_en_vez_de_dejar_la_app_sin_jerga() {
+        let ruta = temporal("torcido");
+        std::fs::create_dir_all(ruta.parent().unwrap()).unwrap();
+        std::fs::write(&ruta, "Power BI: power by\n").unwrap();  // sin corchetes
+        let d = diccionario_de_la_sesion(&ruta, &[]);
+        assert_eq!(d.corregir("con power by"), "con Power BI", "cayó a nada en vez de a la semilla");
+        let _ = std::fs::remove_dir_all(ruta.parent().unwrap());
+    }
+
+    /// Y si el archivo no está —primer arranque, o el usuario lo borró— la sesión funciona igual.
+    #[test]
+    fn sin_archivo_la_sesion_arranca_con_la_semilla() {
+        let d = diccionario_de_la_sesion(&temporal("ausente"), &["Páramo".into()]);
+        assert_eq!(d.corregir("con power by"), "con Power BI");
+        assert_eq!(d.cuantos_del_corpus(), 1, "los nombres del corpus entran igual");
+    }
 }

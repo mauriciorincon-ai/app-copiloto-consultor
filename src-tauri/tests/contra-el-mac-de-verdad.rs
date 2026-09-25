@@ -224,7 +224,14 @@ fn una_frase_por_los_altavoces_acaba_siendo_texto() {
     let (manda, recibe) = mpsc::channel();
     // Sin corpus: lo que este test comprueba es que una frase por los altavoces acaba siendo
     // texto. La ficha tiene su propio camino y sus propias pruebas.
-    let escucha = Escucha::arrancar("es-ES", "es-ES", motor, std::sync::Arc::new(SinCorpus), move |n| {
+    let escucha = Escucha::arrancar(
+        "es-ES",
+        "es-ES",
+        motor,
+        std::sync::Arc::new(SinCorpus),
+        // Sin jerga: este test mide el camino del audio, no la corrección del transcript.
+        std::sync::Arc::new(app_copiloto_consultor_lib::diccionario::Diccionario::default()),
+        move |n| {
         let _ = manda.send(n);
     });
 
@@ -452,14 +459,22 @@ use app_copiloto_consultor_lib::voz::vad::PorEnergia;
 const CANARIA: &str = "quetzalcoatlus-de-bolsillo-7731";
 
 /// Lo único que una sesión puede dejar escrito, y por qué.
+///
+/// **Cada entrada de aquí es una promesa que se afloja**, así que se añaden de a una, nombradas, y el
+/// summary del sprint las lista. Dos, al día del sprint 002.
 struct Permitido {
     /// El índice del corpus: documentos DEL USUARIO, que la regla del efímero sí deja persistir.
     indice: PathBuf,
+    /// El diccionario técnico del consultor (sprint 002, fase 1). Es del usuario: lo escribe él y la
+    /// app lo relee al empezar cada sesión. **Lo que hace que no sea un transcript con otro nombre**
+    /// es que sus entradas salen de dos sitios y de ninguno más: su archivo y los nombres de su
+    /// corpus. Nunca de la reunión — la canaria de abajo lo comprueba archivo por archivo.
+    diccionario: PathBuf,
 }
 
 impl Permitido {
     fn cubre(&self, ruta: &Path) -> bool {
-        ruta.starts_with(&self.indice)
+        ruta.starts_with(&self.indice) || ruta == self.diccionario
     }
 }
 
@@ -574,12 +589,22 @@ fn una_sesion_completa(casa: &Path, corpus_en: &Path) -> Vec<String> {
     corpus.indexar(corpus_en, &|_| {}).expect("no se pudo indexar el corpus sintético");
     assert!(corpus.estado().documentos > 0, "el corpus sintético quedó vacío");
 
+    // 1-bis · El diccionario del consultor, que persiste y por tanto ESCRIBE. Entró en el inventario
+    //     en el sprint 002 y tenía que entrar: la app lo deja escrito al arrancar y lo relee al
+    //     empezar cada sesión, así que un gate que no lo ejerciera estaría midiendo una app distinta
+    //     de la que el usuario usa. Y su corrección se aplica al turno de abajo, que es su sitio real.
+    let ruta_dicc = casa.join("diccionario.yaml");
+    app_copiloto_consultor_lib::asegurar_el_diccionario(&ruta_dicc)
+        .expect("no se pudo dejar escrito el diccionario");
+    let jerga = app_copiloto_consultor_lib::diccionario_de_la_sesion(&ruta_dicc, &corpus.vocabulario().to_vec());
+
     // 2 · Audio de verdad por el motor de verdad. Es el paso que el barrido estático no puede
     //     mirar: lo que Apple escriba por debajo, se escribe aquí.
     let motor = motor_de_la_casa();
     let (muestras, hz) = leer_wav(concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba/audio/pregunta-es.wav"));
     match motor.transcribir("es-ES", &muestras, hz) {
         Ok(texto) => {
+            let texto = jerga.corregir(&texto);
             println!("[sesión] el motor devolvió {} letras", texto.chars().count());
             dicho.push(texto);
         }
@@ -655,7 +680,8 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     let _ = std::fs::remove_dir_all(&casa);
     std::fs::create_dir_all(&casa).unwrap();
     let fuente = corpus_para_el_efimero();
-    let permitido = Permitido { indice: casa.join("corpus") };
+    let permitido =
+        Permitido { indice: casa.join("corpus"), diccionario: casa.join("diccionario.yaml") };
 
     // El inventario se toma DESPUÉS de crear los fixtures: lo que se mide es lo que deja la
     // sesión, no lo que deja el test preparándola.
