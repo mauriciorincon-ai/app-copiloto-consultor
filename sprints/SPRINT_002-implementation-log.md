@@ -595,3 +595,40 @@ caducada por mi propio cambio de hace veinte minutos, que es la casilla 4 de la 
 uno mismo. Se rehízo y se comprobó. **`git checkout` sobre un archivo con trabajo sin comitear no
 distingue lo que plantaste de lo que arreglaste**, y en una fase que planta y revierte demos en rojo
 todo el rato, eso no es mala suerte: es el guion. Lo que toca es comitear antes de plantar.
+
+---
+
+## Fase 0 · Criterio de fase, verificado
+
+| Gate | Resultado |
+|---|---|
+| `pnpm typecheck` | ✓ |
+| `pnpm lint` | ✓ |
+| `pnpm test` | ✓ 24 archivos · **164** tests (eran 153 al abrir la fase) |
+| `pnpm verify:ephemeral` (estático) | ✓ cero API de disco o red en los 8 módulos protegidos · 17 archivos |
+| `pnpm verify:ephemeral:runtime` | ✓ 10 archivos tocados, todos del índice del corpus |
+| `cargo clippy --locked --all-targets -- -D warnings` | ✓ |
+| `cargo test --locked --lib` | ✓ **217** (eran 210) |
+| `cargo test --release --lib corpus` | ✓ 50 — el cuarto filo de la regla 15 |
+| CERO ENLACES, después del último `git add` | ✓ limpio |
+| **La CSP viva con su rojo** | ✓ con control de tres lados |
+| **M9 con su rojo** | ✓ 192306 → 192312 bytes |
+| **CI con conclusión propia por check** | ✓ `quality` success · `e2e` success · `build-escritorio` success — leídas de la API, no de la columna |
+
+PR #6, en borrador: el sprint tiene siete fases y va por la 0. Se abre ahora porque la CI de este repo
+solo corre en `pull_request`, y un check sin conclusión propia no es verde.
+
+### Lo que esta fase deja pedido al usuario
+
+**El plan de miradas necesita un añadido, y se propone — no se decide sobre la marcha** (kit v1.21.0).
+La mirada 17 estaba planeada para el radar, «vigilancia local», «pista caída» (M2) y el consentimiento
+de pantalla. Tres de los campos huérfanos son de la **banda** y no de Sesión, así que no caben en esa
+lista tal como está:
+
+- **el motivo del disparo** en la ficha — `Motivo::etiqueta()` existe desde el S1 y la banda no lo
+  pinta; ahora hay cinco motivos, porque el silencio ya dispara;
+- **la latencia** de fin de turno a ficha, que se mide y se registra con su presupuesto de 4 s;
+- **la marca de sección conjeturada** en la fuente de la ficha (el lector de PDF la adivinó).
+
+Los tres son de `banda.html`. Caben en la mirada 17 sin partir la sesión en dos, o pueden ir a la 18
+con la sugerencia, que también es de la banda. Es decisión del usuario.
