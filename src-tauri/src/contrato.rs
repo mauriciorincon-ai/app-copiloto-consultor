@@ -247,6 +247,16 @@ pub fn muestras() -> Vec<Muestra> {
                 bytes_del_indice: 1_884_160,
             },
         ),
+        // ---- el corte, que Honestidad enseña ANTES de que nadie pulse la tecla -------------
+        // Entra en el sprint 002: le faltaba `rename_all` y llegaba como `bytes_en_red`, el mismo
+        // defecto del C1 en el único payload que el gate no miraba.
+        m("INFORME_DEL_CORTE", "InformeDelCorte", "./cuaderno", &crate::corte::Informe {
+            piezas: crate::corte::TODAS
+                .iter()
+                .map(|p| (*p, crate::corte::suerte_en_este_sprint(*p)))
+                .collect(),
+            bytes_en_red: 0,
+        }),
         // ---- el acople, que la banda dibuja en su cabecera --------------------------------
         m("ESTADO_DEL_ACOPLE", "EstadoDelAcople", "./acople", &crate::EstadoDelAcople {
             permiso: true,

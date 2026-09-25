@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { escuchar, hayTauri, llamar, preguntar } from "./puente";
 import { useT } from "./i18n";
+import { INFORME_DEL_CORTE } from "./contrato.generado";
 
 /**
  * EL PUENTE DEL CUADERNO — lo que las pantallas de la ventana principal preguntan a lo nativo.
@@ -91,6 +92,20 @@ export function useReunion(): Reunion {
   });
 }
 
+/**
+ * Las piezas del kill-switch, **leídas** de lo nativo.
+ *
+ * Antes de que conteste no se enseña una cuenta inventada: se enseña la lista vacía, que la
+ * pantalla sabe leer como «todavía no lo sé». La muestra para la maqueta es la del contrato, que
+ * es la forma que Rust emite de verdad.
+ */
+export function usePiezasDelCorte(): InformeDelCorte {
+  return usePreguntaAlVolver<InformeDelCorte>("piezas_del_corte", INFORME_DEL_CORTE, {
+    piezas: [],
+    bytesEnRed: 0,
+  });
+}
+
 /** Lo que se sabe de los permisos antes de preguntar: nada. Y «no lo sé» **no es «no»**. */
 const PERMISOS_SIN_PREGUNTAR: Permisos = {
   microfono: "no-se-sabe",
@@ -175,6 +190,30 @@ export type EstadoDeEscucha = {
  * sistema es la contraparte. Regla dura de la casa — la atribución se resuelve por pista y jamás
  * por biometría.
  */
+/**
+ * El kill-switch, visto desde la interfaz.
+ *
+ * Las piezas y su suerte las decide `src-tauri/src/corte.rs` con un `match` sin comodín: quien
+ * añada una pieza y no la resuelva no compila. Aquí solo se leen — hasta el sprint 002 esta cuenta
+ * estaba escrita a mano en la pantalla de Honestidad, con un comentario que lo confesaba.
+ */
+export type PiezaDelCorte =
+  | "audio-del-microfono"
+  | "audio-del-sistema"
+  | "ultimo-frame"
+  | "transcript"
+  | "contador-de-red"
+  | "banda"
+  | "acople";
+
+/** `cortada` = existe y se corta · `aun-no-existe` = todavía no está construida, y se dice. */
+export type SuerteDelCorte = "cortada" | "aun-no-existe";
+
+export type InformeDelCorte = {
+  piezas: [PiezaDelCorte, SuerteDelCorte][];
+  bytesEnRed: number;
+};
+
 export type Pista = "microfono" | "sistema";
 
 export type Turno = {

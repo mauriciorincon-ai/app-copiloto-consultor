@@ -49,6 +49,13 @@ const UID_DEL_DISPOSITIVO: u32 = cuatro(b"uid ");
 /// y es una lectura, no una escritura.
 const FORMATO_DEL_DISPOSITIVO: u32 = cuatro(b"sfmt");
 const FORMATO_DEL_TAP: u32 = cuatro(b"tfmt");
+/// `kAudioFormatLinearPCM` y las dos banderas que hacen legible un búfer como `f32`:
+/// `kAudioFormatFlagIsFloat` (1 << 0) y `kAudioFormatFlagIsPacked` (1 << 3). Se comprueban al
+/// ABRIR, no en el callback: el callback corre en un hilo de tiempo real y ahí ya es tarde para
+/// negociar nada — lo único que puede hacer es devolver sin tocar el búfer.
+const PCM_LINEAL: u32 = cuatro(b"lpcm");
+const ES_FLOTANTE: u32 = 1 << 0;
+const ES_EMPAQUETADO: u32 = 1 << 3;
 const TIPO_DE_TRANSPORTE: u32 = cuatro(b"tran");
 const FUENTE_DE_DATOS: u32 = cuatro(b"ssrc");
 const AMBITO_SALIDA: u32 = cuatro(b"outp");
@@ -319,6 +326,17 @@ impl Grifo {
         if hz == 0 {
             return Err("el dispositivo no declara frecuencia de muestreo".into());
         }
+        if !es_float32_empaquetado(&formato) {
+            // Nombrado, como todo error de este módulo: quien lea el log tiene que poder decidir
+            // qué hacer sin abrir el código.
+            return Err(format!(
+                "el audio no llega como flotante de 32 bits empaquetado y no se puede leer: \
+                 formato {} · {} bits · banderas {:#x}",
+                cuatro_letras(formato.id),
+                formato.bits,
+                formato.banderas
+            ));
+        }
         let entradas = Arc::new(std::sync::atomic::AtomicU64::new(0));
         let destino = Box::new(Destino {
             anillo,
@@ -398,8 +416,15 @@ unsafe extern "C" fn recibir(
         if b.datos.is_null() {
             continue;
         }
+        // El formato ya se validó al abrir; esto cubre lo que el formato no dice: que ESTE búfer
+        // traiga un número entero de muestras y empiece donde un `f32` puede empezar. Un
+        // `from_raw_parts` desalineado es comportamiento indefinido, no un número raro.
+        let tam = std::mem::size_of::<f32>();
+        if b.bytes as usize % tam != 0 || (b.datos as usize) % std::mem::align_of::<f32>() != 0 {
+            continue;
+        }
         canales = b.canales.max(1);
-        let n = b.bytes as usize / std::mem::size_of::<f32>();
+        let n = b.bytes as usize / tam;
         bloques.push(std::slice::from_raw_parts(b.datos as *const f32, n));
     }
     if bloques.is_empty() {
@@ -466,6 +491,21 @@ fn leer_u32(objeto: ObjetoDeAudio, selector: u32, ambito: u32) -> Option<u32> {
     (estado == OK).then_some(valor)
 }
 
+/// **¿Se puede leer este búfer como `f32`?**
+///
+/// El callback reinterpreta los bytes del sistema como flotantes de 32 bits. Hasta el sprint 002 lo
+/// hacía a ciegas: si Core Audio hubiera negociado entero de 16 bits —cosa que puede hacer, y que
+/// depende del dispositivo— cada muestra se habría leído como un número flotante formado por los
+/// bytes de dos muestras enteras. No es un fallo ruidoso: es ruido, y el detector de voz lo habría
+/// tomado por sonido. Por eso esto se responde **al abrir el grifo**, con un error nombrado, y no
+/// dentro del hilo de tiempo real.
+fn es_float32_empaquetado(f: &Formato) -> bool {
+    f.id == PCM_LINEAL
+        && f.bits == 32
+        && f.banderas & ES_FLOTANTE != 0
+        && f.banderas & ES_EMPAQUETADO != 0
+}
+
 fn leer_formato(objeto: ObjetoDeAudio, selector: u32, ambito: u32) -> Option<Formato> {
     let d = direccion(selector, ambito);
     let mut valor = Formato::default();
@@ -483,15 +523,18 @@ fn leer_formato(objeto: ObjetoDeAudio, selector: u32, ambito: u32) -> Option<For
     (estado == OK).then_some(valor)
 }
 
-fn formato_de_error(que: &str, estado: Estado) -> String {
-    // Los errores de Core Audio son cuatro letras empaquetadas; enseñarlas ahorra media hora a
-    // quien lea el log («!obj», «nope», «who?»).
-    let letras: String = estado
+/// Core Audio empaqueta cuatro letras en un entero —tanto sus errores como sus identificadores de
+/// formato— y enseñarlas ahorra media hora a quien lea el log («!obj», «nope», «lpcm»).
+fn cuatro_letras(valor: u32) -> String {
+    valor
         .to_be_bytes()
         .iter()
         .map(|b| if b.is_ascii_graphic() { *b as char } else { '·' })
-        .collect();
-    format!("{que} (estado {estado} «{letras}»)")
+        .collect()
+}
+
+fn formato_de_error(que: &str, estado: Estado) -> String {
+    format!("{que} (estado {estado} «{}»)", cuatro_letras(estado as u32))
 }
 
 /// Un `CATapDescription` vivo y el UID con el que referirse a él desde el dispositivo agregado.
@@ -733,5 +776,36 @@ mod tests {
         assert_eq!(ENTRADA_POR_DEFECTO, u32::from_be_bytes(*b"dIn "));
         assert_eq!(FORMATO_DEL_TAP, u32::from_be_bytes(*b"tfmt"));
         assert_eq!(AMBITO_ENTRADA, u32::from_be_bytes(*b"inpt"));
+        assert_eq!(PCM_LINEAL, u32::from_be_bytes(*b"lpcm"));
+    }
+
+    fn formato(id: u32, bits: u32, banderas: u32) -> Formato {
+        Formato { hz: 48_000.0, id, bits, banderas, canales: 2, ..Formato::default() }
+    }
+
+    /// **M10 del sprint 001.** El callback lee los bytes del sistema como `f32`. Si Core Audio
+    /// negocia otra cosa —entero de 16 bits, por ejemplo— cada muestra sale de los bytes de dos
+    /// muestras distintas: no es un fallo ruidoso, es ruido, y el detector de voz lo toma por
+    /// sonido. Antes se reinterpretaba a ciegas; ahora el grifo no abre.
+    #[test]
+    fn solo_se_abre_el_grifo_si_el_audio_llega_como_flotante_de_32_bits() {
+        let bueno = formato(PCM_LINEAL, 32, ES_FLOTANTE | ES_EMPAQUETADO);
+        assert!(es_float32_empaquetado(&bueno), "el formato que el Mac negocia de verdad");
+
+        for (nombre, malo) in [
+            ("entero de 16 bits", formato(PCM_LINEAL, 16, ES_EMPAQUETADO)),
+            ("flotante sin empaquetar", formato(PCM_LINEAL, 32, ES_FLOTANTE)),
+            ("entero de 32 bits", formato(PCM_LINEAL, 32, ES_EMPAQUETADO)),
+            ("comprimido (AAC)", formato(cuatro(b"aac "), 32, ES_FLOTANTE | ES_EMPAQUETADO)),
+        ] {
+            assert!(!es_float32_empaquetado(&malo), "{nombre} no se puede leer como f32");
+        }
+    }
+
+    #[test]
+    fn el_error_del_formato_enseña_las_cuatro_letras() {
+        assert_eq!(cuatro_letras(PCM_LINEAL), "lpcm");
+        // Un byte que no es imprimible no puede romper el mensaje del log.
+        assert_eq!(cuatro_letras(0), "····");
     }
 }

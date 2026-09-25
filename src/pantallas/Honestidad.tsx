@@ -1,7 +1,7 @@
 import { useIdioma, useT, type Idioma } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { TodaviaNo, PILA } from "../componentes/Ventana";
-import { cortarTodo, type EstadoDeEscucha } from "../cuaderno";
+import { cortarTodo, type EstadoDeEscucha, usePiezasDelCorte } from "../cuaderno";
 
 /**
  * HONESTIDAD — «Qué vive en la memoria ahora mismo y qué salió de tu equipo».
@@ -18,20 +18,16 @@ import { cortarTodo, type EstadoDeEscucha } from "../cuaderno";
  * interfaz, sino porque un `match` sin comodín en `corte.rs` no dejó compilar hasta resolverlas.
  */
 
-/**
- * Las piezas del kill-switch, en el mismo orden que `src-tauri/src/corte.rs`.
- *
- * Están escritas aquí y **no leídas de lo nativo**, y conviene decir por qué se acepta: el número
- * que importa no es este sino el que la app corta de verdad, y a ese lo vigila el compilador en
- * Rust. Si algún día se separan, lo que hay que arreglar es que este lado lo pregunte — queda
- * anotado, no disimulado.
- */
-const PIEZAS_CORTADAS = 6;
-const PIEZAS_TOTALES = 7;
+// Las piezas del kill-switch ya NO se escriben aquí: se preguntan. Hasta el sprint 002 eran dos
+// constantes con un comentario que confesaba el atajo —«si algún día se separan, lo que hay que
+// arreglar es que este lado lo pregunte»—, y el día llegó con la deuda del S1. La cuenta que la
+// pantalla enseña sale de `corte::TODAS` y de su `match` sin comodín.
 
 export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoDeEscucha }) {
   const t = useT().cuaderno;
   const idioma = useIdioma();
+  const corte = usePiezasDelCorte();
+  const cortadas = corte.piezas.filter(([, suerte]) => suerte === "cortada").length;
   const [cifra, unidad = "B"] = bytes.split(" ");
   // Las cifras se formatean **aquí**, con el separador decimal del idioma. Lo nativo también las
   // manda escritas (`legible`, `ramLegible`) y siempre con coma: sirven para el log, que es
@@ -116,7 +112,7 @@ export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoD
               <span>{t.funcionaCorte}</span> <kbd>⌥⎋</kbd>
             </button>
             <p className="mono" style={{ color: "var(--ink-2)" }}>
-              {PIEZAS_CORTADAS} de {PIEZAS_TOTALES} {t.piezasCola}
+              {cortadas} de {corte.piezas.length} {t.piezasCola}
             </p>
           </div>
         </div>

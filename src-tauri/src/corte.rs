@@ -95,8 +95,15 @@ pub enum Suerte {
     AunNoExiste,
 }
 
-/// Lo que el usuario ve después de pulsar la tecla.
+/// Lo que el usuario ve después de pulsar la tecla — y, antes de pulsarla, lo que el corte HARÍA.
+///
+/// **Le faltaba `rename_all` y nadie lo había notado**: llegaba al webview como `bytes_en_red`
+/// mientras TypeScript habría esperado `bytesEnRed`. Es el mismo defecto que el C1 del sprint 001,
+/// en el único sitio donde el gate del contrato no llegaba —porque esta struct no estaba en
+/// `contrato.rs`—, y sobrevivió porque los cuatro suscriptores del evento `corte` lo usan como
+/// **señal** y ninguno lee el payload. Desde el sprint 002 está en el contrato y se lee.
 #[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Informe {
     pub piezas: Vec<(Pieza, Suerte)>,
     /// Los bytes que quedaron en el contador. Es `0` siempre; se reporta para que la pantalla

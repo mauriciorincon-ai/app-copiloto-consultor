@@ -123,3 +123,69 @@ Con `--pass-with-no-tests` eso era un verde. Los 66 e2e de verdad siguen pasando
 lección tres veces en el S1 —audio, corpus y la canaria de la CI— y la cuarta la encontró el
 `/release-check`, cuando el inventario del efímero acusó al compilador. El arreglo de entonces
 (excluir las carpetas de la herramienta) es exactamente lo que la regla ahora exige por defecto.
+
+---
+
+## Fase 0 · M10 — el audio no se reinterpreta a ciegas
+
+El callback del tap leía los bytes del sistema como `f32` **sin comprobar que lo fueran**
+(`capture/nativo.rs:402-403`). Si Core Audio negociaba otra cosa —entero de 16 bits, por ejemplo,
+que depende del dispositivo— cada muestra habría salido de los bytes de dos muestras distintas. Y
+esto es lo que lo hace feo: **no es un fallo ruidoso, es ruido**, y el detector de voz lo habría
+tomado por sonido.
+
+La comprobación va **al abrir el grifo**, no en el callback: el callback corre en un hilo de tiempo
+real, donde ya es tarde para negociar nada y lo único que se puede hacer es devolver sin tocar nada.
+`es_float32_empaquetado()` exige `lpcm`, 32 bits y las banderas de flotante y empaquetado, y si no
+se cumple el grifo **no abre**, con el error nombrado y las cuatro letras del formato — para lo cual
+se extrajo `cuatro_letras()`, que `formato_de_error` ya hacía a mano.
+
+Y un cinturón dentro del callback para lo que el formato no dice: que **este** búfer traiga un
+número entero de muestras y empiece donde un `f32` puede empezar. Un `from_raw_parts` desalineado no
+es un número raro: es comportamiento indefinido.
+
+**Demo en rojo** (el defecto de M10 replantado, `es_float32_empaquetado` devolviendo siempre `true`):
+
+```
+thread '…::solo_se_abre_el_grifo_si_el_audio_llega_como_flotante_de_32_bits' panicked at
+src/capture/nativo.rs:798:13: entero de 16 bits no se puede leer como f32
+test result: FAILED. 0 passed; 1 failed
+```
+
+---
+
+## Fase 0 · El payload que el gate del contrato no miraba
+
+`corte::Informe` —lo que el kill-switch devuelve— **no tenía `rename_all`**. Llegaba al webview como
+`bytes_en_red` mientras TypeScript habría esperado `bytesEnRed`: **el mismo defecto que el C1 del
+sprint 001**, vivo, en el único payload que el gate nacido para cazarlo no miraba, porque esa struct
+no estaba en `contrato.rs`.
+
+Sobrevivió por una razón que vale la pena escribir: los **cuatro** suscriptores del evento `corte`
+lo usan como **señal** y ninguno lee el payload. Un contrato roto que nadie usa no se nota — hasta
+que alguien lo usa.
+
+Así que se arregló usándolo:
+
+1. `Informe` gana `#[serde(rename_all = "camelCase")]` y **entra al contrato** (`INFORME_DEL_CORTE`).
+2. Nace el comando `piezas_del_corte`, que devuelve lo que el corte **haría**, leído de
+   `corte::TODAS` y de su `match` sin comodín.
+3. **Honestidad deja de afirmar y pasa a leer.** Tenía dos constantes, `PIEZAS_CORTADAS = 6` y
+   `PIEZAS_TOTALES = 7`, con un comentario que confesaba el atajo: *«si algún día se separan, lo que
+   hay que arreglar es que este lado lo pregunte»*. El día llegó con la deuda del S1.
+
+**Demo en rojo** (quitarle el `rename_all` y regenerar el contrato):
+
+```
+src/contrato.generado.ts(200,5): error TS2353: Object literal may only specify known properties,
+and '"bytes_en_red"' does not exist in type 'InformeDelCorte'.
+```
+
+Eso es exactamente el C1, cazado por `pnpm typecheck` en la orilla que lo lee. En el sprint 001 ese
+mismo defecto necesitó un auditor independiente.
+
+**Y el otro huérfano: `documentos_del_corpus` se retira.** El comando existía, estaba registrado y
+**no tenía ni un llamador**; la maqueta de Corpus tampoco dibuja ninguna lista de documentos, así
+que no es una pantalla pendiente de cablear sino API muerta. La struct `Documento` se queda: el
+corpus la usa por dentro. Cuando el S3 diseñe la lista, el comando vuelve **con su entrada en el
+contrato**.

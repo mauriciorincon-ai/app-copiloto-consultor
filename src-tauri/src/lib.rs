@@ -291,15 +291,15 @@ fn estado_del_corpus(estado: tauri::State<'_, ElCorpus>) -> Option<corpus::Estad
     estado.0.lock().ok()?.as_ref().map(|c| c.estado())
 }
 
-/// Los documentos, uno a uno, con su unidad y su estado.
+/// Las piezas que el kill-switch cortaría, **leídas de `corte::TODAS`** y no escritas en la
+/// interfaz. La pantalla de Honestidad las contaba a mano con dos constantes y lo declaraba en un
+/// comentario; ahora pregunta. Es la misma doctrina del panel: medir, no afirmar.
 #[tauri::command]
-fn documentos_del_corpus(estado: tauri::State<'_, ElCorpus>) -> Vec<corpus::Documento> {
-    estado
-        .0
-        .lock()
-        .ok()
-        .and_then(|g| g.as_ref().map(|c| c.documentos().to_vec()))
-        .unwrap_or_default()
+fn piezas_del_corte() -> corte::Informe {
+    corte::Informe {
+        piezas: corte::TODAS.iter().map(|p| (*p, corte::suerte_en_este_sprint(*p))).collect(),
+        bytes_en_red: red::bytes(),
+    }
 }
 
 /// Empieza a escuchar las dos pistas.
@@ -556,7 +556,7 @@ pub fn run() {
             elegir_carpeta,
             indexar_corpus,
             estado_del_corpus,
-            documentos_del_corpus,
+            piezas_del_corte,
             pedir_ficha
         ])
         .setup(|app| {
