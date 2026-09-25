@@ -325,10 +325,15 @@ fn empezar_a_escuchar(
         vieja.cortar();
     }
     // Si la banda sigue en pantalla, esto no hace nada: `abrir_banda` es idempotente.
-    if let Err(e) = ventana::abrir_banda(&app, ventana::ALTO_COMPACTA) {
+    let la_habian_cortado = app.get_webview_window(ventana::BANDA).is_none();
+    match ventana::abrir_banda(&app, ventana::ALTO_COMPACTA) {
         // Que la banda no vuelva no impide escuchar, y callarlo sí sería un problema: el usuario
         // vería el transcript sin banda y no sabría por qué.
-        println!("[ventanas] la banda no pudo volver: {e}");
+        Err(e) => println!("[ventanas] la banda no pudo volver: {e}"),
+        // Se dice solo cuando de verdad volvió. Es la única traza de que M4 está cableado, y es
+        // por donde se verificó en vivo: sin ella, «vuelve» sería una afirmación sin testigo.
+        Ok(()) if la_habian_cortado => println!("[ventanas] la banda estaba cortada: vuelve"),
+        Ok(()) => {}
     }
     let mango = app.clone();
     let nueva = escucha::Escucha::arrancar(

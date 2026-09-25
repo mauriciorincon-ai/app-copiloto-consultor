@@ -362,3 +362,106 @@ la sesión dejó rastro en 1 archivo(s) fuera del índice del corpus:
 
 Seis bytes. Con el inventario del sprint 001, verde. Revertido: verde con 10 archivos tocados, que
 son los del índice, y el WAV del kit intacto (`git diff` en cero).
+
+---
+
+## Fase 0 · M1 — la CSP, que estaba en `null`
+
+`tauri.conf.json:57` traía `"csp": null` desde el estampado. Sin política, el webview puede pedir
+cualquier cosa a cualquier sitio.
+
+**Por qué importa aquí más que en una app cualquiera.** La promesa «nada crudo sale del equipo» tenía
+dos capas y las dos viven en Rust: el barrido que prohíbe API de red en los módulos protegidos y el
+contador de puertas declaradas. **Ninguna de las dos mira lo que el webview pueda hacer por su
+cuenta** — un `fetch` en un `.tsx`, un `<img>` a un dominio de fuera, una fuente de Google en un CSS.
+La CSP es la capa de ese lado, y la única que el navegador aplica sin depender de que alguien se
+acuerde.
+
+### La política
+
+`connect-src 'self' ipc: http://ipc.localhost` y nada más. Lo demás: `default-src 'self'`,
+`script-src 'self'`, `img-src 'self' data:` (el fondo del relleno llega como data URL),
+`media-src`/`object-src`/`frame-src`/`worker-src`/`child-src` en `'none'`, `base-uri 'self'`,
+`form-action 'none'`, `frame-ancestors 'none'`.
+
+Dos decisiones que conviene dejar escritas:
+
+- **`devCsp` aparte.** En desarrollo el webview carga de `http://localhost:1420` y el recargado en
+  caliente habla por `ws://`, y Vite inyecta scripts inline. Meter eso en la política de producción
+  habría dejado `localhost` y `'unsafe-inline'` en el binario firmado; `devCsp` es un campo del propio
+  Tauri (`tauri-utils` 2.9.3, `dev_csp`) y existe exactamente para esto.
+- **`'unsafe-inline'` en `style-src`, sí; en `script-src`, no.** La interfaz usa atributos `style` de
+  React por todas partes —es como se traslada la maqueta— y un atributo `style` inline no pasa por
+  nonce ni por hash. Es riesgo de estilo, no de ejecución. Queda escrito en el gate para que nadie
+  tenga que adivinar si fue decisión o prisa.
+
+### Con la app corriendo, que es la única forma de hacer esto
+
+Un error de CSP es **una pantalla en blanco callada**. Así que se hizo con `pnpm tauri dev` delante, y
+lo que se vio:
+
+```
+[ventanas] «principal»: 960x641 · «banda»: 1470x88 · «relleno»: 1470x88
+[permisos] micrófono=Concedido pantalla=Concedido accesibilidad=Concedido · cara=Concedido
+[stt] motor «apple-speechanalyzer» · 30 idiomas soportados
+```
+
+Las tres ventanas abiertas, el motor cargado, y —lo que prueba que el puente sobrevive a la política—
+**dos comandos ida y vuelta por el IPC de verdad** (`cortar_todo` y `empezar_a_escuchar`), con las dos
+pistas abriéndose después.
+
+### Demo en rojo, con su control
+
+Un `fetch("https://example.com/…")` plantado en `main.tsx`, sin `catch`, porque el cliente de Vite
+reenvía las promesas rechazadas al terminal:
+
+```
+[vite] (client) [Unhandled rejection] TypeError: Load failed
+```
+
+**Y «Load failed» también sería un fallo de red, así que la demo no vale sin control.** Dos lados más:
+
+```
+$ curl -o /dev/null -w "HTTP %{http_code} en %{time_total}s" https://example.com/
+HTTP 200 en 0.070958s
+```
+
+```
+[vite] (client) [Unhandled rejection] Error: CONTROL OK — el origen permitido pasa y el de fuera NO:
+TypeError: Load failed
+```
+
+El dominio se alcanza desde esta máquina en 70 ms; desde el webview no. Y un `fetch` al origen que la
+`devCsp` **sí** permite pasa sin problema. Lo que bloquea es la política, no la red.
+
+### Y un gate que la mantenga cerrada
+
+`tests/unit/csp-que-no-deja-salir.test.ts` (7 aserciones). No vigila «hay una CSP» —eso es un campo
+con texto— sino que **siga siendo cerrada**: todo origen que aparezca en cualquier directiva tiene que
+estar en una lista con su razón escrita. El día que el API opt-in de la fase 5 necesite un dominio,
+este test falla y **obliga a nombrarlo**: un proveedor concreto, con su línea en el summary, en vez de
+un `https:` suelto que abre la puerta a todos.
+
+Sus dos rojos:
+
+```
+· con "csp": null, como estaba el S1 → 5 de 7 en rojo
+· con https://api.anthropic.com en connect-src → 2 en rojo:
+  «la app promete que nada sale del equipo y la CSP dejaría salir por:
+   connect-src: https://api.anthropic.com»
+```
+
+### De paso, en vivo
+
+- **M4 verificado**, que es lo que esa fase debía: `[corte] ⌥⎋: 6 de 7 piezas cortadas` →
+  `[ventanas] la banda estaba cortada: vuelve` → las dos pistas abiertas. La línea del log se queda:
+  es la única traza de que M4 está cableado, y sin ella «vuelve» sería una afirmación sin testigo.
+- **El disparo por silencio no se dispara solo.** La sesión corrió sin que nadie hablara y no salió ni
+  una línea `[ficha]`: sin turnos del cliente, `ultimo_de(Sistema)` no devuelve nada y el latido se
+  calla. Es una observación débil —no prueba que dispare cuando debe, eso lo prueban sus tests— pero
+  es la que descarta el fallo más caro: una banda estrenando fichas en una reunión en silencio.
+- **Y un ruido de desarrollo que NO es de este sprint, anotado para la auditoría:**
+  `[Unhandled rejection] TypeError: undefined is not an object (evaluating 'listeners[eventId].handlerId')`
+  en `src/puente.ts:45`. Es la carrera de `StrictMode`, que monta los efectos dos veces: el
+  `unlisten` llega antes de que el `listen` acabe de registrarse. Solo en desarrollo, y anterior a
+  este sprint.
