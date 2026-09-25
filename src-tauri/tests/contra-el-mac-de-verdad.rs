@@ -439,7 +439,7 @@ fn un_pdf_de_verdad_se_lee_y_declara_que_sus_secciones_son_conjetura() {
 
 // ═══════════════════════════════════════════ el efímero, verificado EN MARCHA
 
-use std::collections::BTreeSet;
+use std::collections::BTreeMap;
 use std::path::Path;
 
 use app_copiloto_consultor_lib::disparo::{Contexto, Disparador};
@@ -478,9 +478,29 @@ impl Permitido {
 const DE_LA_HERRAMIENTA: [&str; 7] =
     ["target", "node_modules", ".git", "coverage", "dist", "playwright-report", "test-results"];
 
-/// Todo lo que cuelga de una carpeta, como rutas absolutas. Los enlaces no se siguen.
-fn inventario(raiz: &Path) -> BTreeSet<PathBuf> {
-    let mut salida = BTreeSet::new();
+/// Lo que se sabe de un archivo **sin abrirlo**: cuánto ocupa y cuándo se escribió por última vez.
+///
+/// El sprint 001 inventariaba un **conjunto de rutas**, y con eso un archivo que CRECE es invisible:
+/// añadirle una línea al final no le cambia la ruta, así que el inventario de antes y el de después
+/// salían idénticos y el gate daba verde (hallazgo M9). Son las dos formas de dejar rastro —crear un
+/// archivo y escribir en uno que ya estaba— y solo se miraba la primera.
+///
+/// **Y no se mira el CONTENIDO, a propósito.** El plan pedía un hash. Hashear lo que hay en
+/// `~/Documents`, `~/Desktop` y `~/Downloads` significa **leer los documentos del usuario en cada
+/// corrida del gate**, y un gate que abre los archivos privados para demostrar que la app no los
+/// toca es un trato que esta casa no hace. Tamaño y fecha salen de la misma llamada a `metadata()`
+/// que el inventario ya necesitaba para saber si algo es un archivo, cuestan cero lecturas, y cazan
+/// las dos escrituras que un hash cazaría: la que engorda el archivo (cambia el tamaño) y la que lo
+/// reescribe del mismo largo (cambia la fecha).
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
+struct Huella {
+    bytes: u64,
+    escrito: Option<std::time::SystemTime>,
+}
+
+/// Todo lo que cuelga de una carpeta, con su huella. Los enlaces no se siguen.
+fn inventario(raiz: &Path) -> BTreeMap<PathBuf, Huella> {
+    let mut salida = BTreeMap::new();
     let Ok(entradas) = std::fs::read_dir(raiz) else {
         return salida;
     };
@@ -492,7 +512,16 @@ fn inventario(raiz: &Path) -> BTreeSet<PathBuf> {
         match e.file_type() {
             Ok(t) if t.is_dir() => salida.extend(inventario(&ruta)),
             Ok(t) if t.is_file() => {
-                salida.insert(ruta);
+                // Si la metadata no se deja leer, se apunta el archivo con la huella en blanco: la
+                // ruta sigue contando como presencia. Dejarlo fuera sería un hueco silencioso.
+                let m = e.metadata().ok();
+                salida.insert(
+                    ruta,
+                    Huella {
+                        bytes: m.as_ref().map(|m| m.len()).unwrap_or(0),
+                        escrito: m.and_then(|m| m.modified().ok()),
+                    },
+                );
             }
             _ => {}
         }
@@ -511,6 +540,22 @@ fn donde_se_mira(casa: &Path) -> Vec<PathBuf> {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".."),
         std::env::temp_dir(),
     ];
+    // **Las tres carpetas de la app de verdad**, que hasta el sprint 002 no se miraban (hallazgo
+    // M9). El test le da a la sesión una `casa` en el temporal, así que nada de lo que ESTE test
+    // corre escribe ahí — y justo por eso hacía falta: si un día la app escribe con su ruta de
+    // producción en vez de con la que se le pasa, el rastro cae aquí y en ningún otro sitio del
+    // inventario.
+    //
+    // El nombre es el **identificador**, `com.aiapps.copiloto-consultor`, que es lo que macOS usa
+    // de verdad; el plan del sprint lo escribió como «Angel Ghost», que es el nombre del producto
+    // y una carpeta que no existe. Mirar donde no hay nada es la forma más fácil de que un gate
+    // dé verde para siempre.
+    for c in ["Application Support", "Caches", "Logs"] {
+        let d = hogar.join("Library").join(c).join("com.aiapps.copiloto-consultor");
+        if d.is_dir() {
+            sitios.push(d);
+        }
+    }
     for c in ["Documents", "Desktop", "Downloads"] {
         let d = hogar.join(c);
         if d.is_dir() {
@@ -615,32 +660,54 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     // El inventario se toma DESPUÉS de crear los fixtures: lo que se mide es lo que deja la
     // sesión, no lo que deja el test preparándola.
     let sitios = donde_se_mira(&casa);
-    let antes: BTreeSet<PathBuf> = sitios.iter().flat_map(|s| inventario(s)).collect();
+    let antes: BTreeMap<PathBuf, Huella> = sitios.iter().flat_map(|s| inventario(s)).collect();
     println!("[efímero] {} archivos antes, en {} sitios", antes.len(), sitios.len());
 
     let dicho = una_sesion_completa(&casa, &fuente);
 
-    let despues: BTreeSet<PathBuf> = sitios.iter().flat_map(|s| inventario(s)).collect();
-    let nuevos: Vec<&PathBuf> = despues
-        .difference(&antes)
-        // Los fixtures del propio test no cuentan: los creó el test, no la sesión.
-        .filter(|r| !r.starts_with(&fuente))
-        .collect();
-    println!("[efímero] {} archivos nuevos", nuevos.len());
+    let despues: BTreeMap<PathBuf, Huella> = sitios.iter().flat_map(|s| inventario(s)).collect();
 
-    let intrusos: Vec<&&PathBuf> = nuevos.iter().filter(|r| !permitido.cubre(r)).collect();
+    // **Las dos formas de dejar rastro.** Hasta el sprint 002 solo se miraba la primera —crear un
+    // archivo—, y con eso una fuga que le añade una línea a un archivo que ya estaba pasaba con el
+    // gate en verde: la ruta no cambia (hallazgo M9). Ahora un archivo que engorda o se reescribe
+    // cuenta igual que uno recién creado.
+    let tocados: Vec<(&PathBuf, &Huella, Option<&Huella>)> = despues
+        .iter()
+        // Los fixtures del propio test no cuentan: los creó el test, no la sesión.
+        .filter(|(r, _)| !r.starts_with(&fuente))
+        .filter_map(|(r, ahora)| match antes.get(r) {
+            None => Some((r, ahora, None)),
+            Some(a) if a != ahora => Some((r, ahora, Some(a))),
+            Some(_) => None,
+        })
+        .collect();
+    println!("[efímero] {} archivos tocados (creados o escritos)", tocados.len());
+
+    let intrusos: Vec<String> = tocados
+        .iter()
+        .filter(|(r, ..)| !permitido.cubre(r))
+        .map(|(r, ahora, antes)| match antes {
+            None => format!("{} — nuevo, {} bytes", r.display(), ahora.bytes),
+            Some(a) => format!(
+                "{} — ya existía y la sesión escribió encima: {} → {} bytes",
+                r.display(),
+                a.bytes,
+                ahora.bytes
+            ),
+        })
+        .collect();
     assert!(
         intrusos.is_empty(),
-        "la sesión dejó {} archivo(s) fuera del índice del corpus:\n  {}\n\
+        "la sesión dejó rastro en {} archivo(s) fuera del índice del corpus:\n  {}\n\
          (fuera del inventario, porque las escribe la herramienta y no la app: {})",
         intrusos.len(),
-        intrusos.iter().map(|r| r.display().to_string()).collect::<Vec<_>>().join("\n  "),
+        intrusos.join("\n  "),
         DE_LA_HERRAMIENTA.join(" · ")
     );
-    assert!(!nuevos.is_empty(), "no se escribió NI el índice: la sesión no llegó a correr");
+    assert!(!tocados.is_empty(), "no se escribió NI el índice: la sesión no llegó a correr");
 
     // Y la canaria: lo que dijo el cliente no puede estar dentro de lo que sí se escribió.
-    for ruta in &nuevos {
+    for (ruta, ..) in &tocados {
         let Ok(bytes) = std::fs::read(ruta) else { continue };
         let texto = String::from_utf8_lossy(&bytes);
         assert!(

@@ -51,13 +51,6 @@ fn huella<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
 /// sesión para pintar una franja de 88 px que el relleno pide una sola vez.
 struct FondoDelRelleno(Option<PathBuf>);
 
-/// Abre la banda y su relleno. La **fase 2** la llamará al detectar una reunión; en la fase 1 se
-/// llama al arrancar, que es lo que permite mirar la banda de verdad en el gate de fidelidad.
-#[tauri::command]
-fn abrir_banda(app: tauri::AppHandle, alto: u32) -> Result<(), String> {
-    ventana::abrir_banda(&app, alto)
-}
-
 /// El asa mientras se arrastra: ajusta la banda y su relleno a la vez. El webview no cambia su
 /// propio tamaño porque entonces el relleno podría quedarse atrás; la geometría de la franja vive
 /// en un solo sitio.
@@ -307,6 +300,18 @@ fn piezas_del_corte() -> corte::Informe {
 /// **No se llama sola al arrancar**, y es deliberado: la maqueta de la pantalla de Sesión dice
 /// «nada se enciende hasta que tú lo digas», y encender el micrófono de alguien sin que lo pida
 /// sería exactamente lo que esta app promete no hacer.
+///
+/// **Y es por donde la banda VUELVE tras el kill-switch** (hallazgo M4). `⌥⎋` cierra la banda —es
+/// una de las siete piezas del corte— y hasta el sprint 002 no había forma de recuperarla sin
+/// reiniciar la app. El sitio es este y no un botón nuevo: la banda es donde la ficha aparece, así
+/// que empezar una sesión sin banda es empezar una sesión sin ningún sitio donde enseñar nada. El
+/// invariante queda en un solo lado —hay escucha ⇒ hay banda— y no en cada lugar de la interfaz
+/// que se acuerde de pedirla.
+///
+/// **Lo que NO se repone: el acople.** El corte lo suelta a propósito, y volver a encoger la
+/// ventana de la reunión sin que nadie lo pida sería deshacer una pieza del kill-switch por la
+/// puerta de atrás. La banda vuelve flotando y lo dice —«sin acople» sale de la huella, no de una
+/// variable—, y el asa la vuelve a acoplar cuando el usuario quiera.
 #[tauri::command]
 fn empezar_a_escuchar(
     app: tauri::AppHandle,
@@ -318,6 +323,12 @@ fn empezar_a_escuchar(
     let mut guardada = estado.0.lock().map_err(|_| "la escucha quedó en mal estado")?;
     if let Some(vieja) = guardada.take() {
         vieja.cortar();
+    }
+    // Si la banda sigue en pantalla, esto no hace nada: `abrir_banda` es idempotente.
+    if let Err(e) = ventana::abrir_banda(&app, ventana::ALTO_COMPACTA) {
+        // Que la banda no vuelva no impide escuchar, y callarlo sí sería un problema: el usuario
+        // vería el transcript sin banda y no sabría por qué.
+        println!("[ventanas] la banda no pudo volver: {e}");
     }
     let mango = app.clone();
     let nueva = escucha::Escucha::arrancar(
@@ -531,7 +542,6 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().with_handler(atender_el_atajo).build())
         .invoke_handler(tauri::generate_handler![
-            abrir_banda,
             ajustar_banda,
             asentar_banda,
             cerrar_banda,

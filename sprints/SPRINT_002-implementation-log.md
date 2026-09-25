@@ -275,3 +275,90 @@ para qué sirve cada uno.
 - **El manual deja de declarar la limitación** y describe lo que hace, incluidas las dos cosas que el
   usuario nota: que no repite la ficha y que no cuenta como silencio mientras el cliente habla. La
   nota histórica de la auditoría del S1 queda, fechada, con el cable declarado.
+
+---
+
+## Fase 0 · M4 — la banda vuelve
+
+`⌥⎋` cierra la banda: es una de las siete piezas del corte, y está bien que lo sea. Lo que estaba mal
+es que **no había manera de recuperarla sin reiniciar la app**. `ventana::abrir_banda` existía, tenía
+su comando registrado en el `invoke_handler`, y **ni un llamador en `src/`**.
+
+**Dónde va el llamador, y por qué no es un botón.** Es `empezar_a_escuchar`. La banda es donde la
+ficha aparece, así que empezar una sesión sin banda es empezar una sesión sin ningún sitio donde
+enseñar nada; poniéndolo ahí el invariante —hay escucha ⇒ hay banda— queda en **un solo lado**, y no
+en cada rincón de la interfaz que se acuerde de pedirla. Un botón nuevo, además, habría sido un
+estado visual nuevo y esto no es una fase con mirada.
+
+**Y `abrir_banda` tenía que volverse idempotente**, porque `build()` no admite una etiqueta repetida:
+sin eso, «que la banda vuelva» habría sido un error cada vez que la banda no se hubiera ido. Se mira
+**ventana por ventana** y no «si falta alguna, las dos»: si alguna vez quedara el relleno sin su
+banda, lo que hay que reponer es la banda, y abrir un segundo relleno encima del que ya está serían
+dos rectángulos opacos sobre la reunión.
+
+**Lo que NO se repone, y es una decisión: el acople.** El corte lo suelta a propósito. Volver a
+encoger la ventana de la reunión sin que nadie lo pida sería deshacer una pieza del kill-switch por
+la puerta de atrás. La banda vuelve **flotando y diciéndolo** —«sin acople» sale de la huella, no de
+una variable nuestra— y el asa la vuelve a acoplar cuando el usuario quiera.
+
+**Y el comando huérfano se retira.** `#[tauri::command] abrir_banda` sale del `invoke_handler`: su
+doc decía que «la fase 2 la llamará al detectar una reunión», y esa detección vive en Rust, así que
+no necesita pasar por el puente. Es el mismo movimiento que con `documentos_del_corpus`: cuando haga
+falta, vuelve **con su llamador**.
+
+**Verificación:** esto no tiene test. `abrir_banda` necesita un `AppHandle` y un monitor de verdad
+—`geometria()` pregunta por el monitor principal—, y `tauri::test::mock_app` no trae ninguno de los
+dos; montarlo habría sido una maqueta del sistema de ventanas probándose a sí misma. Va por el
+**tercer filo de la regla 15**: se ve correr en el modo, con `pnpm tauri dev`, junto con la CSP.
+Queda anotado abajo, con lo que se vio.
+
+---
+
+## Fase 0 · M9 — el inventario del efímero veía aparecer, no crecer
+
+Dos formas de dejar rastro en un disco: **crear** un archivo y **escribir en uno que ya estaba**. El
+gate del sprint 001 inventariaba un **conjunto de rutas** (`contra-el-mac-de-verdad.rs:482`), así que
+solo veía la primera: una fuga que le añade una línea a un archivo existente no le cambia la ruta, el
+inventario de antes y el de después salían idénticos, y el gate daba verde.
+
+**Ahora cada archivo lleva su huella: tamaño y fecha de escritura.** Un archivo que engorda cambia de
+tamaño; uno reescrito del mismo largo cambia de fecha. Las dos escrituras se ven.
+
+### Una desviación del plan, y es la parte que importa
+
+El plan pedía **ruta → (tamaño, hash)**. El hash no se puso, y no por ahorrar: hashear lo que hay en
+`~/Documents`, `~/Desktop` y `~/Downloads` significa **leer los documentos del usuario en cada corrida
+del gate**, y un gate que abre los archivos privados para demostrar que la app no los toca es un trato
+que esta casa no hace. Tamaño y fecha salen de la **misma llamada a `metadata()`** que el inventario
+ya necesitaba para saber si algo es un archivo —cero lecturas de más— y cazan exactamente las dos
+escrituras que un hash cazaría.
+
+### Y las carpetas de la app, que no se miraban
+
+`donde_se_mira` gana `~/Library/{Application Support, Caches, Logs}/com.aiapps.copiloto-consultor`.
+El test le pasa a la sesión una `casa` en el temporal, así que nada de lo que corre aquí escribe en
+esas tres — **y justo por eso hacían falta**: si un día la app escribe con su ruta de producción en
+vez de con la que se le pasa, el rastro cae ahí y en ningún otro sitio del inventario.
+
+**El nombre de la carpeta lo trae el plan mal.** El plan dice `~/Library/Application Support/Angel
+Ghost`, que es el nombre del producto; macOS usa el **identificador**,
+`com.aiapps.copiloto-consultor`, que es la carpeta que existe de verdad (y ya nace en 700). Mirar
+donde no hay nada es la forma más fácil de que un gate dé verde para siempre.
+
+### Demo en rojo
+
+Una fuga que **añade** a un archivo que ya existía, plantada en `Corpus::buscar` — a propósito en un
+módulo **no protegido**, porque el barrido estático prohíbe el disco en `capture/`, `stt/`, `voz/` y
+`escucha/` y habría cazado la fuga antes que este gate. Es la tercera pregunta de la regla 15 puesta
+en práctica: ¿puede este gate fallar siquiera, o hay una regla anterior que lo hace inalcanzable? Sí
+puede, y este es el hueco que le toca cubrir — lo que escriben los módulos que sí pueden escribir.
+
+```
+[efímero] 11 archivos tocados (creados o escritos)
+la sesión dejó rastro en 1 archivo(s) fuera del índice del corpus:
+  …/docs/kit-de-prueba/audio/pregunta-es.wav — ya existía y la sesión escribió encima:
+  192306 → 192312 bytes
+```
+
+Seis bytes. Con el inventario del sprint 001, verde. Revertido: verde con 10 archivos tocados, que
+son los del índice, y el WAV del kit intacto (`git diff` en cero).
