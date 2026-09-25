@@ -465,3 +465,133 @@ Sus dos rojos:
   en `src/puente.ts:45`. Es la carrera de `StrictMode`, que monta los efectos dos veces: el
   `unlisten` llega antes de que el `listen` acabe de registrarse. Solo en desarrollo, y anterior a
   este sprint.
+
+---
+
+## Fase 0 · El `cargo test --release`, que es el cuarto filo de la regla 15
+
+La regla del kit v1.28.0 dice que un test que solo corre en `debug` no prueba `release`, y su origen es
+de esta casa: el `catch_unwind` que protege el parseo de PDF pasaba todos sus tests en debug y era
+letra muerta en release, donde `panic = "abort"` lo anula.
+
+El sprint 001 dejó un gate **estático** (`el_perfil_de_release_desenreda`, `corpus/leer.rs:300`) que
+lee el manifiesto y falla si `panic = "abort"` vuelve, con esta razón escrita: correr la suite en
+release en cada PR costaría otra compilación con LTO para vigilar una línea de configuración. Eso es
+correcto **y no sustituye a la corrida**, porque la regla pide *al menos una vez* con el perfil con que
+la app se distribuye. Esta es esa vez:
+
+```
+$ cargo test --release --lib corpus
+test corpus::leer::pruebas::el_perfil_de_release_desenreda ... ok
+test corpus::leer::pruebas::un_archivo_sin_texto_se_declara_ilegible_en_vez_de_indexarse_vacio ... ok
+test corpus::pruebas::indexa_una_carpeta_entera_y_un_documento_roto_no_detiene_a_los_demas ... ok
+test corpus::pruebas::el_documento_ilegible_trae_su_motivo_en_espanol_llano ... ok
+test result: ok. 50 passed; 0 failed
+```
+
+Las cincuenta del corpus en el perfil de distribución, con el camino del PDF dentro. El summary lo
+declara.
+
+---
+
+## Fase 0 · Los campos del contrato sin lector — y el gate que los cuenta
+
+La casilla 5 de `/audita-sprint` contó **diecisiete** campos que cruzan la costura y nadie lee. El
+plan decía: «cada uno gana lector o sale del contrato».
+
+### Primero, contarlos bien — y aquí me equivoqué dos veces
+
+Escribí un script para contarlos y **dio 13**. La segunda versión dio 17, que coincidía con la
+auditoría… por casualidad: eran 17 nombres distintos por un camino y 17 pares (tipo, campo) por otro.
+Los dos scripts tenían fallos de verdad:
+
+1. **Extraer los tipos con una expresión regular se comía bloques enteros.** Un `export type X = A | B;`
+   sin cuerpo hacía que la búsqueda no greedy se saltara el tipo siguiente. `EstadoDelCorpus`,
+   `Documento` y `QueSabeTranscribir` no se miraron nunca. Se arregló con un **parser que cuenta
+   llaves**, como el del generador de design-sync.
+2. **Y lo peor: daba por «leído» un campo que en realidad se ESCRIBE.** `EstadoDelCorpus.carpeta`
+   aparecía consumido por `preguntar("indexar_corpus", { carpeta })` — que es la carpeta viajando
+   **hacia** Rust, no la respuesta leyéndose. Un gate que confunde escribir con leer declara pagada la
+   deuda que existe.
+3. Y las **uniones** solo se miraban en su primera variante, así que los cuatro «motivo» de los
+   estados que no se pudieron determinar estaban invisibles.
+
+**La cuenta buena, con el parser y la regla de lectura arreglada: 20 pares (tipo, campo) sin un solo
+lector**, de 58 declarados. Tres más de los que la auditoría vio, no menos.
+
+### Dos que se pagaron borrándolos
+
+`EstadoDePista.legible` y `EstadoDeEscucha.ramLegible` mandaban los bytes **ya escritos** («1,8 MB»),
+con la razón de no tener dos formateadores. La fase 5 del sprint 001 descubrió que hacían falta dos:
+el separador decimal es interfaz, y este venía siempre con coma —«1,8 MB» dentro de «What lives in
+memory now»—. Desde entonces la pantalla los formatea con el idioma puesto y **estos dos cruzaban la
+costura sin que nadie los leyera, ni en TypeScript ni en Rust**. Fuera del contrato: quedan 18.
+
+### Y dieciocho que no se pueden pagar en la fase 0, dicho con nombre y sitio
+
+Se miraron uno a uno, y **ninguno se puede cablear sin escribir copy que la maqueta no tiene**:
+
+- los cinco de la pista y la ventana (`motivo`, `hablando`, `segundos`, `muestrasRecibidas`,
+  `turnosEnMemoria`) son el estado **«pista caída»** de Sesión, que es el M2 y espera la **mirada 17**;
+- los cuatro del motor (`EstadoDeEscucha.motor`, `QueSabeTranscribir.motor`/`techo`/`motivo`): la
+  maqueta de Idioma habla del motor **en prosa** («el motor de voz de macOS») y no tiene sitio para el
+  dato. Se verificó abriendo `idioma.html`;
+- los cuatro «por qué» (`Reunion.motivo`, `Salida.motivo`, `Salida.nombre`, `Disponibilidad.motivo`):
+  cada pantalla pinta el **estado** y se calla el motivo que lo acompaña. Idioma enseña
+  `t.sinMotorDeVoz`, una cadena fija del diccionario, no el motivo que Rust manda;
+- los tres de la ficha (`Aparicion.motivo`, `Aparicion.ms`, `Fuente.conjeturada`): la banda **mide** la
+  latencia y la registra en el log con su presupuesto de 4 s, y sabe por qué disparó —
+  `Motivo::etiqueta()` existe desde el S1— y no pinta ninguno de los dos. No hay hueco en `banda.html`;
+- `Turno.hastaMs`, `EstadoDelCorpus.carpeta` y `EstadoDelCorpus.secciones`, por lo mismo.
+
+**Y uno que no es deuda:** `InformeDelCorte.bytesEnRed` **lo lee Rust** —`ejecutar_el_corte` lo escribe
+en el log del corte— y cruza porque la forma tiene que cuadrar en las dos orillas. El webview ya tiene
+su contador por otro camino. Se declara, no se paga.
+
+### Desviación del plan, declarada
+
+**El plan ponía los 17 en la fase 0 y no cabían ahí.** Dos se pagaron; los dieciocho restantes **no se
+pueden cablear sin una mirada del usuario**, y en esta casa el copy nuevo no existe antes de su mirada
+(regla 10). Pagarlos en la fase 0 habría significado inventar interfaz a espaldas del gate de mirada —
+exactamente lo que el método prohíbe. Se pagan en la **fase 3**, con la mirada 17, que ya estaba
+planeada para el estado «pista caída» (M2) y es donde casi todos caen.
+
+**Tres de ellos piden algo que la mirada 17 no tenía en su lista** —la latencia y el motivo de la
+ficha, y la marca de sección conjeturada, que son de la banda y no de Sesión—, así que el plan de
+miradas necesita ese añadido. **Eso se propone, no se decide sobre la marcha** (kit v1.21.0): va en el
+resumen de esta fase.
+
+### Y lo que impide que se pierdan: `tests/unit/contrato-con-lectores.test.ts`
+
+La casilla 5 es una comprobación a mano, una vez por sprint, al final. Los diecisiete del S1 salieron a
+la luz **con el gate de la forma en verde y 153 tests pasando**. Así que la comprobación pasa a ser un
+gate, con la lista de deuda dentro, **cada campo con su `archivo:línea` y su fase de pago** — que es la
+regla 20 aplicada a esta clase de hallazgo.
+
+**Falla en los dos sentidos, y es a propósito.** Si aparece un huérfano nuevo, hay que cablearlo,
+sacarlo del contrato o declararlo. Y **si uno se paga y la línea sobrevive, también falla**: una lista
+de deuda que sobrevive a su deuda miente sobre lo que queda por hacer, que es la otra mitad de lo que
+pasó en el S1.
+
+**Demo en rojo, por los dos lados:**
+
+```
+· borrada la línea de «Aparicion.ms» de DEUDA:
+  campos que cruzan la costura y nadie lee, sin una línea en DEUDA:
+    Aparicion.ms  (src/ficha.ts:66)
+
+· cableado `escucha.turnosEnMemoria` sin borrar su línea:
+  DEUDA declara campos que YA tienen lector:
+    EstadoDeEscucha.turnosEnMemoria — ya tiene lector: src/pantallas/Honestidad.tsx:37
+```
+
+Y una cuarta aserción que exige que **cada línea de la deuda diga su fase**: nada por conteo.
+
+### De propina, un descuido propio
+
+Al revertir la segunda demo con `git checkout` me llevé por delante un arreglo sin comitear: el
+comentario de `Honestidad.tsx` que nombraba `legible` y `ramLegible` como campos vivos — una frase
+caducada por mi propio cambio de hace veinte minutos, que es la casilla 4 de la auditoría aplicada a
+uno mismo. Se rehízo y se comprobó. **`git checkout` sobre un archivo con trabajo sin comitear no
+distingue lo que plantaste de lo que arreglaste**, y en una fase que planta y revierte demos en rojo
+todo el rato, eso no es mala suerte: es el guion. Lo que toca es comitear antes de plantar.

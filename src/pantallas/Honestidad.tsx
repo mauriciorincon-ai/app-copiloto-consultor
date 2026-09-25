@@ -29,10 +29,11 @@ export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoD
   const corte = usePiezasDelCorte();
   const cortadas = corte.piezas.filter(([, suerte]) => suerte === "cortada").length;
   const [cifra, unidad = "B"] = bytes.split(" ");
-  // Las cifras se formatean **aquí**, con el separador decimal del idioma. Lo nativo también las
-  // manda escritas (`legible`, `ramLegible`) y siempre con coma: sirven para el log, que es
-  // español, pero puestas en una pantalla inglesa dejaban «1,8 MB» dentro de «What lives in
-  // memory now». La app promete ser bilingüe en TODO, y un separador decimal es interfaz.
+  // Las cifras se formatean **aquí**, con el separador decimal del idioma. Lo nativo las mandaba
+  // también escritas —y siempre con coma—, que dejaba «1,8 MB» dentro de «What lives in memory
+  // now»: la app promete ser bilingüe en TODO y un separador decimal es interfaz. Desde la fase 5
+  // del sprint 001 se formatean aquí, y en el sprint 002 **esos dos campos salieron del contrato**:
+  // llevaban una fase entera cruzando la costura sin que nadie los leyera.
   const ram = escucha.microfono.bytes + escucha.sistema.bytes + escucha.bytesDelTranscript;
 
   /** Un búfer que ya existe: se dice dónde vive y cuánto ocupa. */

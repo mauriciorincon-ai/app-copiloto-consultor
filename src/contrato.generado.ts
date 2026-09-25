@@ -142,18 +142,15 @@ export const ESTADO_DE_LA_ESCUCHA: EstadoDeEscucha = {
       "abierta": true,
       "bytes": 1920000,
       "hablando": false,
-      "legible": "1,8 MB",
       "motivo": null,
       "muestrasRecibidas": 480000,
       "segundos": 30.0
     },
     "motor": "apple-speechanalyzer",
-    "ramLegible": "1,8 MB",
     "sistema": {
       "abierta": false,
       "bytes": 0,
       "hablando": false,
-      "legible": "0 B",
       "motivo": "este Mac no deja abrir el audio del sistema",
       "muestrasRecibidas": 0,
       "segundos": 0.0

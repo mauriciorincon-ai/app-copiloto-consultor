@@ -84,10 +84,13 @@ pub struct EstadoDePista {
     /// Si no se pudo abrir, por qué. En español, para enseñarlo tal cual.
     pub motivo: Option<String>,
     pub bytes: usize,
-    /// Los mismos bytes, escritos como los escribe la maqueta («1,8 MB»). Se formatean **aquí y no
-    /// en la interfaz** porque ya hay un formateador probado en `red`, y dos formateadores acaban
-    /// discrepando el día que uno redondee distinto.
-    pub legible: String,
+    // **`legible` salió del contrato en el sprint 002.** Mandaba los mismos bytes ya escritos
+    // («1,8 MB») con la razón de no tener dos formateadores; la fase 5 del sprint 001 descubrió que
+    // hacían falta dos, porque el separador decimal es interfaz y este venía siempre con coma
+    // —«1,8 MB» dentro de «What lives in memory now»—. Desde entonces la pantalla los formatea con
+    // el idioma puesto y **este campo cruzaba la costura sin que nadie lo leyera**: uno de los
+    // diecisiete huérfanos que el gate del contrato no puede ver, porque compara la forma y no si
+    // alguien mira.
     pub segundos: f32,
     pub muestras_recibidas: u64,
     pub hablando: bool,
@@ -102,8 +105,8 @@ pub struct EstadoDeEscucha {
     pub sistema: EstadoDePista,
     pub turnos_en_memoria: usize,
     pub bytes_del_transcript: usize,
-    /// Lo que suman los tres búferes, para el «RAM · …» de la cabecera. Sumado, no estimado.
-    pub ram_legible: String,
+    // `ram_legible` salió del contrato en el sprint 002, por lo mismo que `legible`: la cabecera
+    // «RAM · …» suma los tres búferes y los escribe **en la pantalla**, con el idioma puesto.
     /// Qué motor transcribe, y si puede. Lo enseña la pantalla de Idioma.
     pub motor: &'static str,
 }
@@ -184,7 +187,6 @@ impl PistaViva {
             abierta: self._grifo.is_some(),
             motivo: self.motivo.clone(),
             bytes,
-            legible: crate::red::formatear(bytes as u64),
             segundos,
             muestras_recibidas: self._grifo.as_ref().map(|g| g.muestras_recibidas()).unwrap_or(0),
             hablando: self.turnos.hablando(),
@@ -333,7 +335,6 @@ impl Escucha {
                     abierta: false,
                     motivo: Some("esa pista no se abrió nunca".into()),
                     bytes: 0,
-                    legible: crate::red::formatear(0),
                     segundos: 0.0,
                     muestras_recibidas: 0,
                     hablando: false,
@@ -345,14 +346,12 @@ impl Escucha {
             .map(|v| (v.cuantos(), v.bytes()))
             .unwrap_or((0, 0));
         let (microfono, sistema) = (de(Pista::Microfono), de(Pista::Sistema));
-        let ram = (microfono.bytes + sistema.bytes + bytes) as u64;
         EstadoDeEscucha {
             escuchando: self.viva.load(Ordering::Relaxed),
             microfono,
             sistema,
             turnos_en_memoria: turnos,
             bytes_del_transcript: bytes,
-            ram_legible: crate::red::formatear(ram),
             motor: self.motor,
         }
     }

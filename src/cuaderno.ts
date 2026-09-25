@@ -169,7 +169,6 @@ export type EstadoDePista = {
   abierta: boolean;
   motivo: string | null;
   bytes: number;
-  legible: string;
   segundos: number;
   muestrasRecibidas: number;
   hablando: boolean;
@@ -181,7 +180,6 @@ export type EstadoDeEscucha = {
   sistema: EstadoDePista;
   turnosEnMemoria: number;
   bytesDelTranscript: number;
-  ramLegible: string;
   motor: string;
 };
 
@@ -241,11 +239,10 @@ export type QueSabeTranscribir = {
  */
 const ESCUCHA_DE_MUESTRA: EstadoDeEscucha = {
   escuchando: true,
-  microfono: { abierta: true, motivo: null, bytes: 1_920_000, legible: "1,8 MB", segundos: 30, muestrasRecibidas: 480_000, hablando: false },
-  sistema: { abierta: true, motivo: null, bytes: 1_920_000, legible: "1,8 MB", segundos: 30, muestrasRecibidas: 480_000, hablando: false },
+  microfono: { abierta: true, motivo: null, bytes: 1_920_000, segundos: 30, muestrasRecibidas: 480_000, hablando: false },
+  sistema: { abierta: true, motivo: null, bytes: 1_920_000, segundos: 30, muestrasRecibidas: 480_000, hablando: false },
   turnosEnMemoria: 12,
   bytesDelTranscript: 2_048,
-  ramLegible: "3,7 MB",
   motor: "apple-speechanalyzer",
 };
 
@@ -300,11 +297,10 @@ export function useEscucha(): EstadoDeEscucha {
 /** Nadie está escuchando: ni pistas abiertas ni bytes. No es un error, es el estado de reposo. */
 const APAGADA: EstadoDeEscucha = {
   escuchando: false,
-  microfono: { abierta: false, motivo: null, bytes: 0, legible: "0 B", segundos: 0, muestrasRecibidas: 0, hablando: false },
-  sistema: { abierta: false, motivo: null, bytes: 0, legible: "0 B", segundos: 0, muestrasRecibidas: 0, hablando: false },
+  microfono: { abierta: false, motivo: null, bytes: 0, segundos: 0, muestrasRecibidas: 0, hablando: false },
+  sistema: { abierta: false, motivo: null, bytes: 0, segundos: 0, muestrasRecibidas: 0, hablando: false },
   turnosEnMemoria: 0,
   bytesDelTranscript: 0,
-  ramLegible: "0 B",
   motor: "—",
 };
 
