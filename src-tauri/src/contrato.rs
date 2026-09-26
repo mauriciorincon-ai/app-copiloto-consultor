@@ -115,7 +115,6 @@ pub fn muestras() -> Vec<Muestra> {
         abierta: true,
         motivo: None,
         bytes: 1_920_000,
-        legible: "1,8 MB".into(),
         segundos: 30.0,
         muestras_recibidas: 480_000,
         hablando: false,
@@ -154,7 +153,7 @@ pub fn muestras() -> Vec<Muestra> {
             "./ficha",
             &Novedad::Aparece(Box::new(aparicion(sin_resultado(), Motivo::Pregunta))),
         ),
-        // ---- `pedir_ficha`, el camino del atajo ⌘⇧A ---------------------------------------
+        // ---- `pedir_ficha`, el camino del atajo ⌃⌥A ---------------------------------------
         m(
             "APARICION_DEL_ATAJO",
             "Aparicion",
@@ -179,9 +178,7 @@ pub fn muestras() -> Vec<Muestra> {
             "REUNION_NO_SE_PUEDE_SABER",
             "Reunion",
             "./cuaderno",
-            &Reunion::NoSePuedeSaber {
-                motivo: "hay un navegador abierto pero no se pueden leer sus ventanas".into(),
-            },
+            &Reunion::NoSePuedeSaber { motivo: crate::sesion::PorQueNoSeVe::SinAccesibilidad },
         ),
         // ---- permisos, escucha, idioma, salida de audio -----------------------------------
         m(
@@ -190,6 +187,7 @@ pub fn muestras() -> Vec<Muestra> {
             "./cuaderno",
             &Permisos {
                 microfono: Estado::Concedido,
+                audio: Estado::Concedido,
                 pantalla: Estado::SinConceder,
                 accesibilidad: Estado::NoSeSabe,
             },
@@ -203,16 +201,14 @@ pub fn muestras() -> Vec<Muestra> {
                 microfono: pista_abierta(),
                 sistema: EstadoDePista {
                     abierta: false,
-                    motivo: Some("este Mac no deja abrir el audio del sistema".into()),
+                    motivo: Some(crate::capture::PorQueNoAbrio::DispositivoOcupado),
                     bytes: 0,
-                    legible: "0 B".into(),
                     segundos: 0.0,
                     muestras_recibidas: 0,
                     hablando: false,
                 },
                 turnos_en_memoria: 3,
                 bytes_del_transcript: 2_048,
-                ram_legible: "1,8 MB".into(),
                 motor: "apple-speechanalyzer",
             },
         ),
@@ -221,7 +217,7 @@ pub fn muestras() -> Vec<Muestra> {
             "DISPONIBILIDAD_SIN_MOTOR",
             "Disponibilidad",
             "./cuaderno",
-            &Disponibilidad::SinMotor { motivo: "este Mac no trae el transcriptor".into() },
+            &Disponibilidad::SinMotor { motivo: crate::stt::PorQueNoHayMotor::SinTranscriptor },
         ),
         m("SALIDA_DE_AUDIO", "Salida", "./cuaderno", &Salida::Altavoces),
         m(
@@ -230,6 +226,23 @@ pub fn muestras() -> Vec<Muestra> {
             "./cuaderno",
             &Salida::Otra { nombre: "AirPods Pro".into() },
         ),
+        // El porqué cerrado cita el dispositivo: el nombre viaja aparte porque no se traduce.
+        m(
+            "SALIDA_DE_AUDIO_NO_SE_SABE",
+            "Salida",
+            "./cuaderno",
+            &Salida::NoSeSabe {
+                motivo: crate::capture::PorQueNoSeSabe::SinConexion,
+                nombre: Some("Altavoz USB".into()),
+            },
+        ),
+        // ---- el diccionario, en la pantalla de Idioma (mirada 17-bis) ------------------------
+        m("ESTADO_DEL_DICCIONARIO", "EstadoDelDiccionario", "./cuaderno", &crate::EstadoDelDiccionario {
+            terminos: 17,
+            del_corpus: 12,
+            en_tu_archivo: 5,
+            ruta: "~/Library/Application Support/com.aiapps.copiloto-consultor/diccionario.yaml".into(),
+        }),
         // ---- el corpus -------------------------------------------------------------------
         m(
             "ESTADO_DEL_CORPUS",
@@ -247,6 +260,110 @@ pub fn muestras() -> Vec<Muestra> {
                 bytes_del_indice: 1_884_160,
             },
         ),
+        // ---- el corte, que Honestidad enseña ANTES de que nadie pulse la tecla -------------
+        // Entra en el sprint 002: le faltaba `rename_all` y llegaba como `bytes_en_red`, el mismo
+        // defecto del C1 en el único payload que el gate no miraba.
+        m("INFORME_DEL_CORTE", "InformeDelCorte", "./cuaderno", &crate::corte::Informe {
+            piezas: crate::corte::TODAS
+                .iter()
+                .map(|p| (*p, crate::corte::suerte_en_este_sprint(*p)))
+                .collect(),
+            bytes_en_red: 0,
+        }),
+        // ---- la voz que sale, el modo solo audio (C15) del sprint 002 ---------------------
+        // Las tres formas que la banda dibuja: apagada (banda a 88 px), diciendo la ficha, y
+        // encendida sin poder hablar. La cuarta combinación —encendida, puede, y callada— es el
+        // hueco que la mirada 16 no dibujó y que solo apareció al construir esto: está declarada en
+        // la bitácora y pendiente de la mirada 16-bis.
+        m("LA_VOZ_APAGADA", "LaVoz", "./cuaderno", &crate::habla::LaVoz::APAGADA),
+        m("LA_VOZ_DICIENDO", "LaVoz", "./cuaderno", &crate::habla::LaVoz {
+            encendida: true,
+            puede: true,
+            diciendo: true,
+        }),
+        m("LA_VOZ_SIN_AURICULARES", "LaVoz", "./cuaderno", &crate::habla::LaVoz {
+            encendida: true,
+            puede: false,
+            diciendo: false,
+        }),
+        // ---- la lectura de pantalla (C8) del sprint 002 --------------------------------------
+        // El evento «pantalla» y el comando `estado_de_la_pantalla`: la vista es la fila de Sesión y
+        // los bytes en memoria, la de Honestidad. Las cinco vistas, porque las cinco se pintan.
+        m("PANTALLA_LEYENDO", "EstadoDeLaPantalla", "./cuaderno", &crate::pantalla::EstadoDeLaPantalla {
+            vista: crate::pantalla::Vista::Leyendo,
+            bytes_en_memoria: 1_440_318,
+        }),
+        m("PANTALLA_APAGADA", "EstadoDeLaPantalla", "./cuaderno", &crate::pantalla::EstadoDeLaPantalla {
+            vista: crate::pantalla::Vista::Apagada,
+            bytes_en_memoria: 0,
+        }),
+        m("PANTALLA_SIN_PERMISO", "EstadoDeLaPantalla", "./cuaderno", &crate::pantalla::EstadoDeLaPantalla {
+            vista: crate::pantalla::Vista::SinPermiso,
+            bytes_en_memoria: 0,
+        }),
+        m("PANTALLA_ESPERANDO_LA_REUNION", "EstadoDeLaPantalla", "./cuaderno", &crate::pantalla::EstadoDeLaPantalla {
+            vista: crate::pantalla::Vista::EsperandoLaReunion,
+            bytes_en_memoria: 0,
+        }),
+        m("PANTALLA_NO_PUDO", "EstadoDeLaPantalla", "./cuaderno", &crate::pantalla::EstadoDeLaPantalla {
+            vista: crate::pantalla::Vista::NoPudo,
+            bytes_en_memoria: 0,
+        }),
+        // La ficha que pide la pantalla sola: el motivo nuevo cruza con el MISMO evento «escucha».
+        m("NOVEDAD_APARECE_POR_PANTALLA", "Novedad", "./ficha", &Novedad::Aparece(Box::new(aparicion(
+            ficha(),
+            Motivo::Pantalla,
+        )))),
+        // `⌃⌥L` sin texto en la pantalla: la banda contesta igual, por el mismo evento.
+        m("NOVEDAD_NADA_EN_PANTALLA", "Novedad", "./ficha", &Novedad::NadaEnPantalla {
+            hora: "14:05".into(),
+        }),
+        // ---- el radar (C14) ----------------------------------------------------------------
+        // El ámbar cruza por el evento «escucha», como las fichas: la banda lo pinta en su sitio.
+        m("NOVEDAD_RADAR", "Novedad", "./ficha", &Novedad::Radar {
+            grabando: true,
+            bots: vec!["MinutaBot".into()],
+            hora: "14:03".into(),
+        }),
+        // El coral cruza por su propio evento, «radar», y lo leen Sesión y la banda. Los nombres
+        // son los de la maqueta, que son de ejemplo: el catálogo de verdad vive en `data/radar/`.
+        m("EN_TU_MAC_VIGILADO", "EnTuMac", "./radar", &crate::radar::EnTuMac {
+            programas: vec![
+                crate::radar::Programa {
+                    nombre: "ProctorLince".into(),
+                    categoria: crate::radar::Categoria::Supervision,
+                    nivel: crate::radar::Nivel::Invasivo,
+                    ve: crate::radar::Bilingue {
+                        es: "ve tu pantalla completa y tu cámara".into(),
+                        en: "sees your full screen and your camera".into(),
+                    },
+                    alcance: crate::radar::Bilingue {
+                        es: "Cámara, pantalla completa, apps abiertas; puede bloquear programas".into(),
+                        en: "Camera, full screen, open apps; can block programs".into(),
+                    },
+                    fuente: "no cruza".into(),
+                },
+                crate::radar::Programa {
+                    nombre: "MDM-Corp".into(),
+                    categoria: crate::radar::Categoria::Mdm,
+                    nivel: crate::radar::Nivel::Sabelo,
+                    ve: crate::radar::Bilingue {
+                        es: "puede instalar, borrar y leer la configuración".into(),
+                        en: "can install, wipe and read configuration".into(),
+                    },
+                    alcance: crate::radar::Bilingue {
+                        es: "Puede instalar, borrar y leer configuración. Normal en equipos de empresa".into(),
+                        en: "Can install, wipe and read configuration. Normal on company machines".into(),
+                    },
+                    fuente: "no cruza".into(),
+                },
+            ],
+            catalogo: crate::radar::CatalogoDelRadar { version: 1, fecha: "2026-09-26".into() },
+        }),
+        m("EN_TU_MAC_LIMPIO", "EnTuMac", "./radar", &crate::radar::EnTuMac {
+            programas: vec![],
+            catalogo: crate::radar::CatalogoDelRadar { version: 1, fecha: "2026-09-26".into() },
+        }),
         // ---- el acople, que la banda dibuja en su cabecera --------------------------------
         m("ESTADO_DEL_ACOPLE", "EstadoDelAcople", "./acople", &crate::EstadoDelAcople {
             permiso: true,

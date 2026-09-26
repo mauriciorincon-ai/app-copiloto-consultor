@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { escuchar, hayTauri, preguntar } from "./puente";
 import { useT } from "./i18n";
 import type { Pista, Turno } from "./cuaderno";
+import { invasivos, type CatalogoDelRadar, type EnTuMac, type Programa } from "./radar";
 
 /**
  * LA FICHA EN LA BANDA — lo que la app encontró en el corpus del consultor.
@@ -17,7 +18,14 @@ import type { Pista, Turno } from "./cuaderno";
 
 export type Unidad = "propuesta" | "marco" | "caso" | "cliente" | "perfil";
 
-export type MotivoDelDisparo = "pregunta" | "cifra" | "terminoDelCorpus" | "silencioLargo" | "atajo";
+export type MotivoDelDisparo =
+  | "pregunta"
+  | "cifra"
+  | "terminoDelCorpus"
+  | "silencioLargo"
+  | "atajo"
+  /** La pantalla que comparte el cliente cambió y trae una cifra o uno de tus términos (C8). */
+  | "pantalla";
 
 export type Fuente = {
   documento: string;
@@ -43,12 +51,7 @@ export type Ficha = {
  * el diccionario, donde el gate que exige que toda cadena esté en la maqueta puede vigilarlo.
  */
 export type IdDeManiobra =
-  | "credencial"
-  | "cifra"
-  | "plazo"
-  | "referencia"
-  | "contrato"
-  | "generica";
+  "credencial" | "cifra" | "plazo" | "referencia" | "contrato" | "generica";
 
 export type SinResultado = {
   clase: "sinResultado";
@@ -74,7 +77,7 @@ export type Aparicion = Respuesta & {
  * llega es `{"que":"aparece", …los campos de la aparición}` y no `{"Aparece":{…}}`. Estuvo escrito
  * al revés todo el sprint y **la ficha automática no llegó nunca a la banda**: `n.Aparece` era
  * `undefined` en cada evento, la banda se quedaba en «esperando» toda la reunión y solo funcionaba
- * `⌘⇧A`, que va por otro camino. Ningún test podía verlo —todos corren fuera de Tauri, donde esta
+ * `⌃⌥A`, que va por otro camino. Ningún test podía verlo —todos corren fuera de Tauri, donde esta
  * suscripción no se monta— y la cobertura lo delataba desde dos fases antes con este bloque sin
  * cubrir. Lo encontró la auditoría del sprint (hallazgo C1).
  *
@@ -84,68 +87,175 @@ export type Aparicion = Respuesta & {
 export type Novedad =
   | { que: "empieza"; pista: Pista }
   | ({ que: "turno" } & Turno)
-  | { que: "sin-texto"; pista: Pista; desdeMs: number; hastaMs: number; motivo: string }
+  | {
+      que: "sin-texto";
+      pista: Pista;
+      desdeMs: number;
+      hastaMs: number;
+      motivo: string;
+    }
   | { que: "ruido"; pista: Pista; duracionMs: number }
-  | ({ que: "aparece" } & Aparicion);
+  | ({ que: "aparece" } & Aparicion)
+  /** `⌃⌥L` leyó la pantalla y no había texto: la banda contesta igual, porque alguien preguntó. */
+  | { que: "nada-en-pantalla"; hora: string }
+  /**
+   * **El radar ámbar (C14)**: la pantalla de la reunión muestra el aviso de grabación, o hay un bot
+   * de notas en la lista de participantes. Los bots llegan con el nombre del catálogo.
+   */
+  | { que: "radar"; grabando: boolean; bots: string[]; hora: string };
+
+/**
+ * Lo que el radar pone en la banda: el ámbar («te graban», de la pantalla de la reunión) o el
+ * coral («te vigilan», de los procesos de tu Mac). Es lo último que pasó, así que manda sobre la
+ * ficha que hubiera; la siguiente ficha, a su vez, lo sustituye.
+ */
+export type RadarEnLaBanda =
+  | { que: "ambar"; grabando: boolean; bots: string[]; hora: string }
+  | { que: "coral"; programa: Programa; catalogo: CatalogoDelRadar };
 
 export type LoQueLaBandaEnseña = {
   aparicion: Aparicion | null;
   /** El cliente terminó de hablar y todavía no hay respuesta. Es el estado «buscando». */
   buscando: boolean;
+  /**
+   * `⌃⌥L` leyó la pantalla y no había texto: la hora a la que se pidió. La banda contesta igual
+   * —«Leí la pantalla: no hay texto que buscar.»—, porque alguien preguntó (mirada 17-quater).
+   */
+  nadaEnPantalla: string | null;
+  /** El radar, si lo último que pasó fue un aviso suyo. */
+  radar: RadarEnLaBanda | null;
 };
 
 /**
  * La última aparición, y si hay una búsqueda en marcha.
  *
  * Escucha tres caminos porque son tres: el turno del cliente abre el «buscando», la aparición
- * automática llega dentro del evento `escucha`, y la de `⌘⇧A` llega por su propio evento y hay
+ * automática llega dentro del evento `escucha`, y la de `⌃⌥A` llega por su propio evento y hay
  * que ir a buscarla — el atajo se salta la espera entre fichas, y hacerle esperar al evento
  * común le quitaría justo eso.
  *
  * `paraLaMuestra` solo pinta **fuera de Tauri**: es el estado que el arnés de capturas pide por
  * URL, y lo que sostiene el gate de FIDELIDAD. Dentro del producto no se mira.
  */
-export function useFicha(paraLaMuestra: "ficha" | "sin-resultado" | string): LoQueLaBandaEnseña {
+export function useFicha(
+  paraLaMuestra: "ficha" | "sin-resultado" | string,
+): LoQueLaBandaEnseña {
   const m = useT().banda.muestra;
   const [ficha, setFicha] = useState<Aparicion | null>(() =>
     hayTauri() ? null : deMuestra(m, paraLaMuestra),
   );
   const [buscando, setBuscando] = useState(false);
+  const [nadaEnPantalla, setNada] = useState<string | null>(() =>
+    !hayTauri() && paraLaMuestra === "pantalla-nada" ? m.hora3 : null,
+  );
+  const [radar, setRadar] = useState<RadarEnLaBanda | null>(() =>
+    hayTauri() ? null : radarDeMuestra(m, paraLaMuestra),
+  );
+  // Los invasivos que ya se enseñaron. El evento llega cada vez que cambia CUALQUIER cosa de la
+  // lista —también un MDM—, y la banda solo tiene que avisar cuando cambian los invasivos.
+  const coralVisto = useRef("");
 
   useEffect(() => {
     if (!hayTauri()) return;
+    /**
+     * Un programa invasivo nuevo se enseña; si ya no queda ninguno, el coral se quita. Se pregunta
+     * también al montarse: el radar da su primera vuelta al arrancar la app, y la banda puede
+     * montarse después y perderse el evento.
+     */
+    const atenderElCoral = (e: EnTuMac | null) => {
+      if (!e) return;
+      const inv = invasivos(e);
+      const clave = inv.map((p) => p.nombre).join("|");
+      if (clave === coralVisto.current) return;
+      coralVisto.current = clave;
+      const primero = inv[0];
+      if (primero) setRadar({ que: "coral", programa: primero, catalogo: e.catalogo });
+      else setRadar((r) => (r?.que === "coral" ? null : r));
+    };
+    void preguntar<EnTuMac>("radar_de_tu_mac").then(atenderElCoral);
     const bajas = [
       escuchar<Novedad>("escucha", (n) => {
         // Un turno del cliente puede acabar en ficha o en nada, y hasta saberlo la banda dice
         // que está buscando. El eco no cuenta: es el consultor oyéndose a sí mismo.
-        if (n?.que === "turno" && n.pista === "sistema" && !n.eco) setBuscando(true);
+        if (n?.que === "turno" && n.pista === "sistema" && !n.eco) {
+          setBuscando(true);
+          setNada(null);
+          setRadar(null);
+        }
         if (n?.que === "aparece") {
           setFicha(n);
           setBuscando(false);
+          setNada(null);
+          setRadar(null);
+        }
+        // La lectura pedida no encontró texto. Se contesta encima de lo que hubiera: fue lo
+        // último que el usuario pidió, y es lo que espera ver.
+        if (n?.que === "nada-en-pantalla") {
+          setNada(n.hora);
+          setRadar(null);
+        }
+        if (n?.que === "radar") {
+          setRadar({ que: "ambar", grabando: n.grabando, bots: n.bots, hora: n.hora });
+          setNada(null);
         }
       }),
+      escuchar<EnTuMac>("radar", atenderElCoral),
       escuchar("ficha", () => {
         setBuscando(true);
-        void preguntar<Aparicion>("pedir_ficha").then((a) => {
-          setBuscando(false);
-          if (a !== null) setFicha(a);
-        });
+        setNada(null);
+        setRadar(null);
+        // `null` es «todavía no he oído nada del cliente»: la banda vuelve a lo que enseñaba. Y
+        // pase lo que pase —también si el puente falla—, el «buscando» se cierra: una banda que se
+        // queda buscando para siempre es la avería que la corrida en vivo encontró.
+        void preguntar<Aparicion>("pedir_ficha")
+          .then((a) => {
+            if (a !== null) setFicha(a);
+          })
+          .catch(() => undefined)
+          .finally(() => setBuscando(false));
       }),
       // Tras el kill-switch no queda ficha en pantalla: la promesa es que no queda nada.
       escuchar("corte", () => {
         setFicha(null);
         setBuscando(false);
+        setNada(null);
+        setRadar(null);
       }),
     ];
     return () => bajas.forEach((b) => b());
   }, []);
 
-  return { aparicion: ficha, buscando };
+  return { aparicion: ficha, buscando, nadaEnPantalla, radar };
+}
+
+/** El radar de `banda.html`: «radar · te graban» y «radar · te vigilan», con MinutaBot y ProctorLince. */
+function radarDeMuestra(
+  m: ReturnType<typeof useT>["banda"]["muestra"],
+  estado: string,
+): RadarEnLaBanda | null {
+  if (estado === "radar") return { que: "ambar", grabando: true, bots: [m.radarBot], hora: m.radarHora };
+  if (estado === "radar-invasivo")
+    return {
+      que: "coral",
+      programa: {
+        nombre: m.radarPrograma,
+        categoria: "supervision",
+        nivel: "invasivo",
+        ve: { es: m.radarVe, en: m.radarVe },
+        alcance: { es: "", en: "" },
+      },
+      catalogo: { version: 1, fecha: "" },
+    };
+  return null;
 }
 
 /** Los datos «Páramo Azul» de la maqueta, con los textos del diccionario. */
-function deMuestra(m: ReturnType<typeof useT>["banda"]["muestra"], estado: string): Aparicion {
-  const comun = { motivo: "pregunta" as const, ms: 1_400, hora: m.hora1 };
+function deMuestra(
+  m: ReturnType<typeof useT>["banda"]["muestra"],
+  estado: string,
+): Aparicion {
+  // «pregunta · 1,2 s», como `banda.html` (mirada 17-bis).
+  const comun = { motivo: "pregunta" as const, ms: 1_200, hora: m.hora1 };
   if (estado === "sin-resultado") {
     return {
       clase: "sinResultado",
@@ -159,6 +269,34 @@ function deMuestra(m: ReturnType<typeof useT>["banda"]["muestra"], estado: strin
       ...comun,
     };
   }
+  // La ficha que sale de un PDF, con su sección conjeturada: «cifra · 0,9 s».
+  if (estado === "ficha-pdf") {
+    return {
+      clase: "ficha",
+      titular: m.titularPdf,
+      linea: m.lineaPdf,
+      lineaLarga: m.lineaPdf,
+      fuente: { documento: m.fuentePdf, seccion: null, unidad: "caso", conjeturada: true },
+      acumuladas: [],
+      motivo: "cifra",
+      ms: 900,
+      hora: m.hora1,
+    };
+  }
+  // La ficha que trajo la pantalla, sin que nadie preguntara: «en pantalla · 0,8 s».
+  if (estado === "ficha-pantalla") {
+    return {
+      clase: "ficha",
+      titular: m.titularPantalla,
+      linea: m.lineaPantalla,
+      lineaLarga: m.lineaPantalla,
+      fuente: { documento: m.fuentePantalla, seccion: null, unidad: "propuesta", conjeturada: false },
+      acumuladas: [],
+      motivo: "pantalla",
+      ms: 800,
+      hora: m.hora1,
+    };
+  }
   return {
     clase: "ficha",
     titular: m.titular,
@@ -168,7 +306,12 @@ function deMuestra(m: ReturnType<typeof useT>["banda"]["muestra"], estado: strin
     // clave funcionaba en español por casualidad —«propuesta» es las dos cosas— y dejaba la
     // unidad vacía en inglés. Lo cazó el gate de fidelidad: ocho encuadres en inglés y ninguno
     // en español.
-    fuente: { documento: m.fuente, seccion: null, unidad: "propuesta", conjeturada: false },
+    fuente: {
+      documento: m.fuente,
+      seccion: null,
+      unidad: "propuesta",
+      conjeturada: false,
+    },
     acumuladas: [
       { unidad: "marco", texto: m.acumulada1 },
       { unidad: "caso", texto: m.acumulada2 },

@@ -50,8 +50,11 @@ pub enum Motivo {
     TerminoDelCorpus,
     /// Lleva callado desde que preguntó.
     SilencioLargo,
-    /// El usuario lo pidió con ⌘⇧A. Siempre gana: es la salida cuando lo demás falla.
+    /// El usuario lo pidió con ⌃⌥A. Siempre gana: es la salida cuando lo demás falla.
     Atajo,
+    /// **La pantalla que comparte el cliente cambió** y trae una cifra o uno de tus términos. Nace en
+    /// el sprint 002 con la lectura de pantalla (C8): la ficha llega sin que nadie pregunte.
+    Pantalla,
 }
 
 impl Motivo {
@@ -63,6 +66,7 @@ impl Motivo {
             Motivo::TerminoDelCorpus => "término tuyo",
             Motivo::SilencioLargo => "silencio",
             Motivo::Atajo => "lo pediste",
+            Motivo::Pantalla => "en pantalla",
         }
     }
 }
@@ -118,11 +122,29 @@ impl Disparador {
     }
 
     /// El cliente preguntó y lleva callado desde entonces.
-    pub fn por_silencio(&mut self, desde_ms: usize, ctx: &Contexto) -> Option<Motivo> {
+    ///
+    /// **Se le pasa lo último que dijo, y no una cadena vacía como hasta el sprint 002**, porque el
+    /// texto es lo que hace funcionar la guardia contra repetidos: si esa frase ya trajo su ficha,
+    /// el silencio que viene detrás no tiene que traer la misma otra vez. Con la cadena vacía que
+    /// había aquí, `aceptar` se saltaba la comparación —una consulta vacía no se compara con
+    /// nada— **y además pisaba la última consulta con «»**, así que la pregunta siguiente del
+    /// cliente, aunque fuera idéntica a la anterior, volvía a disparar. Nunca se notó porque este
+    /// método no tuvo un llamador hasta que se cableó.
+    pub fn por_silencio(&mut self, texto: &str, desde_ms: usize, ctx: &Contexto) -> Option<Motivo> {
         if ctx.ahora_ms.checked_sub(desde_ms)? < SILENCIO_MS {
             return None;
         }
-        self.aceptar("", ctx.ahora_ms, Motivo::SilencioLargo)
+        self.aceptar(texto, ctx.ahora_ms, Motivo::SilencioLargo)
+    }
+
+    /// **La pantalla nueva pide ficha.** Pasa por la misma guardia que un turno —la espera entre
+    /// fichas y la negativa a repetir—, así que una diapositiva que se queda veinte minutos en
+    /// pantalla trae UNA ficha, no una cada vez que alguien mueve el ratón. `texto` es lo que la
+    /// pantalla aporta a la consulta, y es lo que se compara para no repetir.
+    ///
+    /// El reloj es el de la sesión en milisegundos, el mismo que usan los turnos.
+    pub fn por_pantalla(&mut self, texto: &str, ahora_ms: usize) -> Option<Motivo> {
+        self.aceptar(texto, ahora_ms, Motivo::Pantalla)
     }
 
     fn aceptar(&mut self, texto: &str, ahora_ms: usize, motivo: Motivo) -> Option<Motivo> {
@@ -189,7 +211,7 @@ impl Disparador {
     }
 }
 
-fn normalizar(texto: &str) -> String {
+pub(crate) fn normalizar(texto: &str) -> String {
     texto
         .chars()
         .flat_map(|c| c.to_lowercase())
@@ -381,7 +403,36 @@ mod pruebas {
     #[test]
     fn el_silencio_largo_dispara_solo_cuando_de_verdad_es_largo() {
         let mut d = Disparador::nuevo();
-        assert_eq!(d.por_silencio(0, &ctx(SILENCIO_MS - 1)), None);
-        assert_eq!(d.por_silencio(0, &ctx(SILENCIO_MS)), Some(Motivo::SilencioLargo));
+        assert_eq!(d.por_silencio("de 40 semanas nos hablaron", 0, &ctx(SILENCIO_MS - 1)), None);
+        assert_eq!(
+            d.por_silencio("de 40 semanas nos hablaron", 0, &ctx(SILENCIO_MS)),
+            Some(Motivo::SilencioLargo)
+        );
+    }
+
+    /// **El silencio que sigue a una pregunta ya contestada no vuelve a contestarla.** El turno
+    /// dispara su ficha; cuatro segundos después el cliente sigue callado y el silencio mira ese
+    /// mismo turno — la única cosa que dijo. Sin pasarle el texto, esto era una segunda ficha
+    /// idéntica en la banda, y a la tercera vuelta del reloj una tercera.
+    #[test]
+    fn el_silencio_no_repite_la_ficha_que_la_pregunta_ya_trajo() {
+        let mut d = Disparador::nuevo();
+        let dicho = "¿Ustedes tienen certificación ISO 27001?";
+        assert!(d.mirar(&turno(dicho), &ctx(2_000)).is_some());
+        // Pasada la espera entre fichas, que es lo único que frenaba al silencio antes.
+        assert_eq!(d.por_silencio(dicho, 2_000, &ctx(2_000 + ESPERA_MS + 1)), None);
+    }
+
+    /// Y al contrario: lo que el cliente dijo **sin** que disparara —una frase sin pregunta, sin
+    /// cifra y sin término del corpus— es exactamente el caso para el que existe el silencio.
+    #[test]
+    fn el_silencio_dispara_justo_por_lo_que_no_disparo_solo() {
+        let mut d = Disparador::nuevo();
+        let dicho = "Nosotros veníamos trabajando con otro proveedor";
+        assert_eq!(d.mirar(&turno(dicho), &ctx(2_000)), None, "esa frase no debería disparar sola");
+        assert_eq!(
+            d.por_silencio(dicho, 2_000, &ctx(2_000 + SILENCIO_MS)),
+            Some(Motivo::SilencioLargo)
+        );
     }
 }

@@ -82,6 +82,102 @@ dice en vez de esconder: que **las secciones de un PDF son conjetura** y se cuen
 índice vive en la carpeta de datos de la app **y solo su dueño puede leerlo**, y el techo de
 2 000 documentos por carpeta.
 
+### Mirada 16 — veredicto del usuario (2026-09-26)
+
+> **«Apruebo el diseño muy limpio icono azul a la izquierda indicando que se habla muy intuitivo y
+> amplio margen para la pantalla de reunión»**
+
+**Aprobada.** Las dos cosas que nombra son las dos que esta mirada tenía que decidir, y ninguna se
+puede ver sin abrir el archivo: el **glifo azul a la izquierda** es `i-voz` pintado con `--halo`
+(`#9ecbff` en oscuro, `#1d5c9c` en claro) —el mismo acento único del resto del sistema— y es el
+símbolo que la regla 8 exige al lado del texto; y el **margen para la pantalla de la reunión** es
+justamente lo que compra bajar la banda de 88 px a 44 px, que era el motivo de existir del modo.
+
+Quedan aprobados, con ella, los **tres criterios declarados** en las notas de «Qué mirar» del
+artefacto:
+
+1. **el contador de red se queda** en la línea, aunque a 44 px la cabecera desaparezca — es una
+   promesa dura (regla 2), no un adorno;
+2. **la tecla es `⌘⇧V`**, no el `⌘⇧A` que pedía la orden del sprint: `⌘⇧A` ya es «ayúdame con
+   esto» desde el sprint 001. Desviación declarada en la bitácora;
+3. **el glifo `⎋` se deja como está** — se lee como un borrón a 13 px igual que el `⌥⎋ corta` ya
+   aprobado de la banda de 88 px; si molesta, molesta en los dos sitios y es un cambio del sistema.
+
+No hubo que repreguntar: el veredicto llegó con la descripción de lo que vio, que es lo que la
+regla 10 pide.
+
+### Mirada 16-bis — veredicto del usuario (2026-09-26)
+
+> **«Ya revisé solo audio · callado, está bien, pero creo que sí debería hacer evidente el estado;
+> esto por ejemplo me parece diciente y apropiado: «callado», «esperando el siguiente turno»»**
+
+**Aprobada con un cambio, y el cambio corrige un error de criterio mío.** La propuesta enseñaba la
+línea de la ficha recién leída y presumía de «no inventar ni una palabra» — pero ese ahorro se pagaba
+con lo único que el estado tenía que comunicar: **que la app está encendida y callada**. Una banda
+que no dice en qué está obliga a mirarla para averiguarlo, que es exactamente lo contrario de un modo
+que existe para no tener que mirar.
+
+La línea queda **«Callado · esperando el siguiente turno»**, y detrás la fuente de lo último que se
+leyó. Es el mismo patrón **«estado · por qué»** que el usuario ya había aprobado en la mirada 16 con
+«Conecta auriculares · el cliente te oiría», así que el modo entero se lee igual en sus tres estados:
+
+| Estado | Lo que dice la línea |
+|---|---|
+| hablando | Diciéndote la ficha… · *de dónde sale* |
+| **callado** | **Callado · esperando el siguiente turno · *de dónde salió la última*** |
+| sin auriculares | Conecta auriculares · el cliente te oiría |
+
+Aplicado el mismo día en la maqueta, en el diccionario (`callado`, `esperandoElSiguienteTurno`, en los
+dos idiomas) y en el producto, con sus tests y el gate de fidelidad en verde.
+
+### Cambio al plan de miradas del sprint 002 — aprobado ANTES de construir (2026-09-26)
+
+El plan del sprint declaró **tres** miradas (16, 17, 18). La 17 se parte en **dos sesiones seguidas**,
+las dos al empezar la fase 3. Propuesto y **aprobado por el usuario antes de maquetar la primera**,
+que es lo que la regla del plan de miradas exige (kit v1.21.0).
+
+**Por qué se parte.** Al construir la fase 2 aparecieron **19 campos del contrato sin lector** —datos
+que la parte nativa ya mide y manda a la pantalla, y que nadie pinta, porque pintarlos exige copy que
+la maqueta no tiene—. Nueve caían dentro de la 17; los otros **diez, no**, y no tenían mirada
+asignada. Eran dos familias visuales distintas metidas en una sesión:
+
+| Mirada | Familia | Qué se maqueta |
+|---|---|---|
+| **17** | *algo falla o algo vigila* | radar ámbar · radar coral (banda) · «vigilancia local» (Sesión) · **«pista caída»** (Sesión, M2) · el consentimiento de pantalla (Permisos) |
+| **17-bis** | *la app se explica a sí misma* | la **ficha** con su motivo, su latencia y la marca de sección conjeturada · el **transcript** con el tramo del turno · **Idioma**: motor, techo, motivo y la fila del **diccionario** · **Corpus**: carpeta y secciones |
+| **17-ter** | *la frase de «MinutaBot»* — **añadida en la mirada 17** | una frase en el radar ámbar (banda) y en el catálogo (`kit.html`): **«Ese bot no es Angel Ghost, que nunca entra a la llamada»**. Va **antes de la fase 4**, que es la que construye el radar: no frena la fase 3 |
+| **17-quater** | *lo que la fase 3 necesita y la 17 no dibujó* — **aprobada por el usuario el 2026-09-26, antes de maquetar** | **Permisos**: dos frases falsas corregidas (macOS no admite texto propio en el diálogo de pantalla; audio del sistema y pantalla son **dos** permisos) · **Sesión**: el interruptor de la lectura automática, el estado sin permiso de pantalla, los motivos de la pista caída en es/en, el nombre de la salida de audio, y por qué no se sabe la salida ni la reunión · **banda**: los motivos de la ficha que faltan y el atajo de lectura bajo demanda. Se maqueta **después del motor**, para que el copy diga lo que el código distingue; va antes de construir esas pantallas |
+| **17-quinquies** | *la segunda vuelta de la 17-quater* — **nace de su veredicto**, como la 16-bis nació de la 16 | **Permisos** y **Sesión**: «solo cuando cambia», que no se entendió, pasa a «solo si hay algo nuevo, como otra diapositiva» (Permisos) y «Pantalla — solo lee lo nuevo» (Sesión) · **Honestidad**: «El botón corta 8 de 8 piezas…», porque «8 de 8» se leyó como «leyó todo» · **todas las teclas** pasan de `⌘⇧` a `⌃⌥` (decisión 7 = B) · y la fila de «ficha · la trajo la pantalla», que se quedó sin respuesta. Va antes de construir esas pantallas |
+
+**Las dos van seguidas, en la misma sesión de mirada**, para no añadir una parada más. Y las dos van
+antes de la fase 3, no de la 5: si esperaran a la 18, los diez campos se caerían con la fase 5, que es
+la primera de la lista de cortes declarada en el plan.
+
+**Y de paso queda decidido qué enseña Idioma del diccionario** (la otra pregunta abierta). De las
+cuatro piezas que la mirada 4 aprobó en `idioma.html`, entran las **dos que se pueden pintar hoy con
+datos de verdad** —la tabla «de dónde salen» y la franja «corregir no es inventar»— más **una línea
+con la ruta del archivo**, que es el único copy nuevo. Quedan fuera, declaradas: el **formulario**
+para añadir términos (haría escribir al módulo protegido, que la enmienda 1 del ADR 002 prohíbe a
+propósito) y la **lista de correcciones** tachado → resaltado (exige guardar las correcciones del
+turno). Las dos son decisiones de producto y su sitio es el sprint 003.
+
+### Cambio al plan de miradas del sprint 002 — una sola mirada humana, en el gate del MVP (2026-09-26)
+
+**Decidido por el usuario** al cerrar la fase 3 (su frase textual está en el registro, abajo). Desde
+ese momento, **las miradas de copy** —si una frase se entiende, si un rótulo es claro— **no paran la
+construcción**: se escriben en la maqueta, las vigilan los gates automáticos y se prueban y se editan
+**en el gate del MVP**, que es el único gate humano del ciclo. Lo que viaja allí, declarado para que
+no se pierda:
+
+| Qué | De dónde viene |
+|---|---|
+| Las siete filas de la mirada de cierre de la fase 3 (Sesión, Permisos, Honestidad, la ficha que trajo la pantalla, «pantalla · nada que leer», § 8-ter, la prueba en vivo con `meet-de-prueba.html`) | fase 3 |
+| El radar construido al lado de su maqueta (la 17-ter lo dejó para «el gate de fidelidad de la fase 4») y el estado «vigilancia» de Sesión ya arreglado | fase 4 |
+| La 18 (sugerencia local, sugerencia API, pantalla IA): se maqueta igual antes de construir, pero su mirada viaja al gate del MVP | fase 5 |
+
+La regla 10 sigue en pie en lo que el usuario no cambió: **ninguna de estas pantallas cuenta como
+vista** hasta ese gate, y el summary del sprint lo dice así.
+
 ## Registro de miradas
 
 | Fecha | Artefacto | Veredicto del usuario (línea textual) | Qué se construyó encima, después |
@@ -100,6 +196,14 @@ dice en vez de esconder: que **las secciones de un PDF son conjetura** y se cuen
 | 2026-09-21 | `sesion.html` · `permisos.html` · `honestidad.html` — estado «así se ve hoy · sprint 1» y el componente «todavía no» (mirada 12, sprint 001) | **Aprobada** — «Esta muy bien como indica que no todavia no existe en sesion permisos y honestidad» (abrió las tres y nombró las tres) | Fase 2b: las tres pantallas del cuaderno construidas |
 | 2026-09-21 | `idioma.html` (estado s1 nuevo) · `sesion.html` y `honestidad.html` al día (mirada 13, sprint 001) | **Aprobada** — «Me gustó mucho el diseño y cómo se van evidenciando los elementos construidos y lo que falta, muy bien lograda». *(Se repreguntó por la regla 10: la primera respuesta fue «Apruebo las tres pantallas… continúa», y un «apruebo» no es un «lo vi».)* | Fase 4: corpus, disparo y ficha |
 | 2026-09-21 | `corpus.html` (estado s1 nuevo) (mirada 14, sprint 001) | **Aprobada** — «Ya vi el diseño del corpus, vamos muy bien; ya están las secciones de las temáticas principales y lo que falta es muy interesante, por ejemplo lo de arrastrar los documentos» (nombra una de las tres filas de «todavía no»: llegó con el archivo abierto) | Fase 5: efímero en runtime, kit de evaluación, guía de prueba y manual |
+| 2026-09-26 | `banda.html` — el **modo solo audio** a 44 px: «hablando» y «sin auriculares» (mirada 16, sprint 002) | **Aprobada** — «Apruebo el diseño muy limpio icono azul a la izquierda indicando que se habla muy intuitivo y amplio margen para la pantalla de reunión» (nombra el glifo `i-voz` en `--halo` y el alto de 44 px: llegó con el archivo abierto) | Fase 2: la voz que sale (C15) — `habla/`, `⌘⇧V` y la banda cableada a 44 px |
+| 2026-09-26 | `banda.html` — **«solo audio · callado»**, el estado que la 16 no dibujó (mirada 16-bis, sprint 002) | **Aprobada con un cambio** — «Ya revisé solo audio · callado, está bien, pero creo que sí debería hacer evidente el estado; esto por ejemplo me parece diciente y apropiado: «callado», «esperando el siguiente turno»» | El cambio, aplicado en el acto: la línea dice **«Callado · esperando el siguiente turno»** y detrás la fuente de lo último leído. Fase 3: la pantalla (C8) |
+| 2026-09-26 | **Mirada 17** — `banda.html` (radar ámbar, radar coral y su ampliada) · `sesion.html` (sprint 2 · pista caída) · `permisos.html` (sprint 2 · la pantalla) — *algo falla o algo vigila* | **Aprobada, con una pregunta que se volvió frase** — «“radar · te graban” · “radar · te vigilan” · “… · ampliada” está espectacular y muy bien, pero esto me dejó loco: «MinutaBot» está en la lista de participantes; yo no quiero que haya un participante adicional en la reunión […], no quiero que las notas dependan de esto […]. “sprint 2 · pista caída” está perfecto, aviso importante para no enterarse al terminar la reunión. “sprint 2 · la pantalla” excelente la descripción de lo que se hace con los permisos, muy adecuado para el usuario. […] Yo que tengo leve daltonismo los puedo identificar rápidamente para determinar los inconvenientes. Por ahora veo bien que hayas puesto la tecla nueva que inventaste» (nombra cada botón por su rótulo: llegó con los archivos abiertos) | La **mirada 17-ter**: la frase que dice que el bot no es Angel Ghost. `⌘⇧R qué ve` queda **aprobada por ahora**. Fase 3: la pantalla (C8) |
+| 2026-09-26 | **Mirada 17-bis** — `banda.html` (la ficha con su motivo y su latencia, la ficha con sección conjeturada, el transcript con la duración) · `idioma.html` (sprint 2, y sin motor) · `corpus.html` (sprint 2) — *la app se explica a sí misma* | **Aprobada** — «“ficha” · “ficha · sección conjeturada” · “transcript” las veo muy bien, sin comentarios. “sprint 2” · “sprint 2 · sin motor de voz” muy bien, excelente aviso de ausencia de motor de voz, muy apropiado. “sprint 2” corpus muy bien, avisa cuáles documentos no se pudieron leer con sus secciones, muy adecuado» | Fase 3: los diez campos del contrato sin lector |
+| 2026-09-26 | **Mirada 17-ter** — `banda.html` (radar · te graban) · `kit.html` (§ 7, alerta del radar) — la frase **«Ese bot no es Angel Ghost, que nunca entra a la llamada»** | **Aprobada** — «Ammm, eso quiere decir que MinutaBot no es nuestro, es de otro; me queda más claro, pero sobre todo tranquilo: nunca diseñamos algo así. Sigue». *(Juzgó la frase, que iba citada en el mensaje; el estado visual ya lo había visto en la 17. No hay señal de que reabriera el archivo, y se registra tal cual: el estado vuelve a sus ojos en el gate de fidelidad de la fase 4, con la banda construida al lado de la maqueta.)* | Fase 4: el radar (C14) |
+| 2026-09-26 | **Mirada 17-quater** — `permisos.html` (sprint 2 · la pantalla, **corregido**) · `sesion.html` (sprint 2 · la pantalla) · `honestidad.html` (sprint 2) · `banda.html` (ficha · la trajo la pantalla · pantalla · nada que leer) · `kit.html` (§ 8-ter, «Los porqués») — *lo que la fase 3 necesita y la 17 no dibujó* | **Aprobada en 2, 3, 5 y 6 · la 1 con un cambio · la 4 sin respuesta · decisión 7 = B** — «1. Esta parte es la que no entiendo: “solo cuando cambia”; de resto está bien. 2. Sí se entienden. 3. Sí, me deja tranquilo: entiendo que leyó todo sin problema, que el último está en memoria y que pesa 1,4 MB. 5. Sí, de acuerdo y claro. 6. Todas están bien y se entienden. 7. B, pasar todas a ⌃⌥». *(Cita «solo cuando cambia» y el «1,4 MB»: llegó con los archivos abiertos. **La 4 no se contestó y no se da por vista**: vuelve en la 17-quinquies. Y en la 3, «leyó todo sin problema» no es lo que dice «8 de 8 piezas», que habla del botón rojo: la frase se reescribe y vuelve a sus ojos.)* | La **mirada 17-quinquies**. La UI de la fase 3 no se construye hasta su veredicto |
+| 2026-09-26 | **Mirada 17-quinquies** — `permisos.html` y `sesion.html` (sprint 2 · la pantalla) · `honestidad.html` (sprint 2) · `banda.html` (ficha · la trajo la pantalla · esperando, con las teclas `⌃⌥`) — *la segunda vuelta de la 17-quater* | **Fundida con la mirada de cierre de la fase 3, por decisión del usuario** — «Uyyy, no paro; así no vamos a avanzar nada» y, enseguida, «sigue». Se construye con las frases nuevas y con la fila 4 tal como se maquetó; las cinco filas vuelven a sus ojos **al cerrar la fase**, con la pantalla construida al lado de la maqueta. La fila 6 (el test de desbordes) se toma con la opción recomendada | Fase 3: las pantallas de la lectura de pantalla y los 7 campos |
+| 2026-09-26 | **Mirada de cierre de la fase 3** — `docs/fidelidad/S2-cuaderno.html` · `docs/fidelidad/S2-banda.html` (la pantalla construida al lado de la maqueta) · `kit.html` § 8-ter · la prueba en vivo con `meet-de-prueba.html` — *incluye las cinco filas de la 17-quinquies* | **Diferida al gate del MVP, por decisión del usuario** — «Estamos perdiendo demasiado tiempo en esas pruebas de texto; no están validando funcionalidad ni cosas serias, sino si se entienden o no los mensajes. Necesito terminar esto cuanto antes, y esto se puede probar y editar en los gates; y a propósito, solo vamos a hacer un gate cuando ya esté el MVP, entonces vamos a dejar estas pruebas de texto para el gate. No más de esto, vamos a avanzar». **No es una aprobación: nadie miró.** Lo construido queda vigilado por los gates automáticos (fidelidad 84 encuadres, diccionario fiel a la maqueta, maquetas que caben) y las siete filas viajan al gate del MVP | Fase 4: el radar (C14) |
 
 ## Decisiones de diseño declaradas antes del segundo artefacto
 

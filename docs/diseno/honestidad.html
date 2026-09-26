@@ -17,6 +17,7 @@
     <button data-estado="verificacion">verificación en verde</button>
     <button data-estado="al-cerrar">al cerrar: qué queda</button>
     <button data-estado="s1">así se ve hoy · sprint 1</button>
+    <button data-estado="s2">así se ve hoy · sprint 2</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -29,6 +30,7 @@
   <div class="n" data-para="al-cerrar"><b>Qué mirar:</b> el cambio que pediste. Dos columnas, una frente a otra: <b>lo tuyo queda</b> (lo que escribiste y lo que dijiste con tu voz, en texto y cifrado) y <b>lo del cliente muere</b> (su voz, su transcript, las capturas). El <b>audio nunca se guarda</b>, ni el tuyo: lo que queda de ti es texto. Conservar tus turnos es una casilla que enciendes tú; por defecto sigue apagada. Y abajo, la <b>bandeja</b>: lo único que no muere al instante, con su ventana y su borrado automático.</div>
   <div class="n" data-para="verificacion"><b>Qué mirar:</b> la prueba que corre en tu Mac, no una declaración. Cuatro comprobaciones con su resultado y su fecha; la de fuga inyectada dice cuándo se vio fallar. Si una se pone roja, aquí se ve.</div>
   <div class="n" data-para="s1"><b>Qué mirar (mirada 13):</b> la misma pantalla del sprint 1, con lo que cambió al llegar el audio. Ahora <b>sí vive algo en memoria</b> y se dice cuánto: dos anillos de treinta segundos y una ventana de doce turnos, contados, no estimados. El kill-switch dice <b>cuántas piezas cortó de cuántas hay</b>, y la cuenta subió de <b>3 de 7 a 6 de 7</b>: la única que falta es la lectura de pantalla, que llega en el sprint 2. Un «7 de 7» seguiría siendo la mentira cómoda.</div>
+  <div class="n" data-para="s2"><b>Qué mirar (mirada 17-quater):</b> dos cosas cambian, y las dos porque la pantalla ya se lee. <b>La fila del último cuadro deja de decir «todavía no»</b>: dice dónde vive —en memoria, solo el último— y cuánto ocupa, y el total de RAM de arriba lo cuenta. Y <b>la línea bajo el botón rojo dice «El botón corta 8 de 8 piezas: ninguna queda fuera»</b>. La frase de antes —«la otra todavía no existe»— era verdad con 6 de 7 y con 7 de 8; con 8 de 8 habría sido falsa, y es la pantalla que existe para no decir cosas falsas. <b>Mirada 17-quinquies:</b> empieza por «El botón corta» porque, sin eso, «8 de 8» se podía leer como «leyó todo bien».</div>
   <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
 </div>
 
@@ -47,7 +49,7 @@
     <div class="abajo">
       <span class="estado ok" data-en="activa verificacion al-cerrar"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando · 0 B</span><span lang="en">Listening · 0 B</span></span>
       <span class="estado err" data-en="kill"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span lang="es">Cortado · 0 B</span><span lang="en">Cut · 0 B</span></span>
-      <span class="estado halo" data-en="s1"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
+      <span class="estado halo" data-en="s1 s2"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
     </div>
   </nav>
 
@@ -170,7 +172,7 @@
       </div>
 
       <div class="franja warn" role="status">
-        <svg class="ic relleno"><use href="#i-reloj"/></svg>
+        <svg class="ic"><use href="#i-reloj"/></svg>
         <div>
           <strong><span lang="es">Y una tercera cosa, que no muere al instante: la bandeja</span><span lang="en">And a third thing that does not die at once: the tray</span></strong>
           <p><span lang="es">Las <b>frases</b> que la app te propuso esperan la ventana que elijas (3 h por defecto, o cero). No es la reunión: una lista de líneas cifrada que <b>se borra sola al vencer</b> aunque no abras la app. Las tres de la derecha ya murieron; esta no, todavía — y se dice aquí, no al pie.</span><span lang="en">The <b>sentences</b> the app suggested wait for the window you choose (3 h by default, or zero). Not the meeting: an encrypted list of lines that <b>deletes itself on expiry</b> even if you never open the app. The three on the right are already dead; this one is not, yet — said here, not in a footnote.</span></p>
@@ -253,6 +255,36 @@
           </div>
           <button class="kill" style="justify-content:center"><svg class="ic s relleno"><use href="#i-rayo"/></svg><span lang="es">Corta todo y vacía la memoria</span><span lang="en">Cut everything and wipe memory</span> <kbd>⌥⎋</kbd></button>
           <p class="mono" style="color:var(--ink-2)"><span lang="es">6 de 7 piezas: la otra todavía no existe.</span><span lang="en">6 of 7 pieces: the other one does not exist yet.</span></p>
+        </div>
+      </div>
+      <div class="tarjeta pendiente">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Lo que quedará cuando cierres</span><span lang="en">What will be left when you close</span></h2><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></div>
+        <p><span lang="es">Notas, acuerdos y fichas fijadas llegan más adelante. Hoy no queda nada porque hoy no se escribe nada.</span><span lang="en">Notes, agreements and pinned cards come later. Today nothing is left because today nothing is written.</span></p>
+      </div>
+    </div>
+    <div data-en="s2" style="display:flex;flex-direction:column;gap:14px">
+      <div class="grid-2" style="grid-template-columns:1.25fr 1fr">
+        <div class="tarjeta" style="padding-bottom:4px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Qué vive en la memoria ahora</span><span lang="en">What lives in memory now</span></h2><span class="mono" style="color:var(--ink-2)">RAM · <span lang="es">5,1 MB</span><span lang="en">5.1 MB</span></span></div>
+          <div style="margin:0 -4px">
+            <div class="buffer"><svg class="ic s"><use href="#i-mic"/></svg><span class="que"><span lang="es">Audio · micrófono</span><span lang="en">Audio · microphone</span></span><span class="donde"><span lang="es">ring buffer · últimos 30 s</span><span lang="en">ring buffer · last 30 s</span></span><span class="cuanto"><span lang="es">1,8 MB</span><span lang="en">1.8 MB</span></span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-sistema"/></svg><span class="que"><span lang="es">Audio · sistema</span><span lang="en">Audio · system</span></span><span class="donde"><span lang="es">ring buffer · últimos 30 s</span><span lang="en">ring buffer · last 30 s</span></span><span class="cuanto"><span lang="es">1,8 MB</span><span lang="en">1.8 MB</span></span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-ojo"/></svg><span class="que">Transcript</span><span class="donde"><span lang="es">ventana de 12 turnos</span><span lang="en">window of 12 turns</span></span><span class="cuanto">2 KB</span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-pantalla"/></svg><span class="que"><span lang="es">Último frame leído</span><span lang="en">Last frame read</span></span><span class="donde"><span lang="es">solo en memoria · el último</span><span lang="en">in memory only · the last one</span></span><span class="cuanto"><span lang="es">1,4 MB</span><span lang="en">1.4 MB</span></span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="contador cero">
+            <div class="cifra">0 <small>B</small></div>
+            <div class="etq"><svg class="ic s relleno" style="color:var(--ok)"><use href="#i-check-circle"/></svg> <span lang="es">salieron de tu equipo en esta reunión</span><span lang="en">left your machine in this meeting</span></div>
+          </div>
+          <div class="tarjeta">
+            <h2 class="seccion"><span lang="es">Modo</span><span lang="en">Mode</span></h2>
+            <span class="estado ok"><svg class="ic s relleno"><use href="#i-mac"/></svg><span lang="es">100 % local · API apagado</span><span lang="en">100 % local · API off</span></span>
+            <p><span lang="es">En esta versión la app no abre ninguna conexión: la única que existe la abre macOS cuando le pides instalar un modelo de voz.</span><span lang="en">In this version the app opens no connection: the only one there is belongs to macOS, when you ask it to install a speech model.</span></p>
+          </div>
+          <button class="kill" style="justify-content:center"><svg class="ic s relleno"><use href="#i-rayo"/></svg><span lang="es">Corta todo y vacía la memoria</span><span lang="en">Cut everything and wipe memory</span> <kbd>⌥⎋</kbd></button>
+          <p class="mono" style="color:var(--ink-2)"><span lang="es">El botón corta 8 de 8 piezas: ninguna queda fuera.</span><span lang="en">The button cuts 8 of 8 pieces: none is left out.</span></p>
         </div>
       </div>
       <div class="tarjeta pendiente">

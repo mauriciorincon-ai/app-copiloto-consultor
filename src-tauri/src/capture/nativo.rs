@@ -49,6 +49,13 @@ const UID_DEL_DISPOSITIVO: u32 = cuatro(b"uid ");
 /// y es una lectura, no una escritura.
 const FORMATO_DEL_DISPOSITIVO: u32 = cuatro(b"sfmt");
 const FORMATO_DEL_TAP: u32 = cuatro(b"tfmt");
+/// `kAudioFormatLinearPCM` y las dos banderas que hacen legible un búfer como `f32`:
+/// `kAudioFormatFlagIsFloat` (1 << 0) y `kAudioFormatFlagIsPacked` (1 << 3). Se comprueban al
+/// ABRIR, no en el callback: el callback corre en un hilo de tiempo real y ahí ya es tarde para
+/// negociar nada — lo único que puede hacer es devolver sin tocar el búfer.
+const PCM_LINEAL: u32 = cuatro(b"lpcm");
+const ES_FLOTANTE: u32 = 1 << 0;
+const ES_EMPAQUETADO: u32 = 1 << 3;
 const TIPO_DE_TRANSPORTE: u32 = cuatro(b"tran");
 const FUENTE_DE_DATOS: u32 = cuatro(b"ssrc");
 const AMBITO_SALIDA: u32 = cuatro(b"outp");
@@ -183,7 +190,8 @@ pub enum Salida {
     /// Un dispositivo externo (USB, Bluetooth, una interfaz). Puede ser un casco o un altavoz de
     /// mesa, y desde aquí **no se puede distinguir**: se dice el nombre y decide el usuario.
     Otra { nombre: String },
-    NoSeSabe { motivo: String },
+    /// No se sabe, con su porqué cerrado y —si lo hay— el nombre del dispositivo, que la frase cita.
+    NoSeSabe { motivo: super::PorQueNoSeSabe, nombre: Option<String> },
 }
 
 impl Salida {
@@ -200,11 +208,11 @@ impl Salida {
 /// Mira por dónde sale hoy el sonido.
 pub fn salida_de_audio() -> Salida {
     let Some(dispositivo) = leer_objeto(OBJETO_SISTEMA, SALIDA_POR_DEFECTO, AMBITO_GLOBAL) else {
-        return Salida::NoSeSabe { motivo: "este Mac no declara salida de audio por defecto".into() };
+        return Salida::NoSeSabe { motivo: super::PorQueNoSeSabe::SinSalida, nombre: None };
     };
     let nombre = leer_cadena(dispositivo, cuatro(b"lnam")).unwrap_or_else(|| "sin nombre".into());
     let Some(transporte) = leer_u32(dispositivo, TIPO_DE_TRANSPORTE, AMBITO_GLOBAL) else {
-        return Salida::NoSeSabe { motivo: format!("«{nombre}» no dice cómo está conectado") };
+        return Salida::NoSeSabe { motivo: super::PorQueNoSeSabe::SinConexion, nombre: Some(nombre) };
     };
     if transporte != TRANSPORTE_INTERNO {
         return Salida::Otra { nombre };
@@ -213,7 +221,7 @@ pub fn salida_de_audio() -> Salida {
         Some(f) if f == ALTAVOZ_INTERNO => Salida::Altavoces,
         Some(_) => Salida::Auriculares,
         // Conectado por dentro pero sin decir a qué: lo honesto es no elegir por el usuario.
-        None => Salida::NoSeSabe { motivo: format!("«{nombre}» no dice por dónde suena") },
+        None => Salida::NoSeSabe { motivo: super::PorQueNoSeSabe::SinFuente, nombre: Some(nombre) },
     }
 }
 
@@ -262,7 +270,11 @@ impl Grifo {
     }
 
     /// Abre el micrófono: el dispositivo de entrada por defecto del Mac.
-    pub fn del_microfono(anillo: Arc<Mutex<Anillo>>) -> Result<Self, String> {
+    pub fn del_microfono(anillo: Arc<Mutex<Anillo>>) -> Result<Self, super::NoAbrio> {
+        Self::abrir_el_microfono(anillo).map_err(no_abrio)
+    }
+
+    fn abrir_el_microfono(anillo: Arc<Mutex<Anillo>>) -> Result<Self, String> {
         let dispositivo = leer_objeto(OBJETO_SISTEMA, ENTRADA_POR_DEFECTO, AMBITO_GLOBAL)
             .ok_or("este Mac no tiene un dispositivo de entrada por defecto")?;
         let formato = leer_formato(dispositivo, FORMATO_DEL_DISPOSITIVO, AMBITO_ENTRADA)
@@ -275,7 +287,11 @@ impl Grifo {
     /// Excluirnos no es cortesía: en cuanto exista el modo solo audio (C15), la app hablará por los
     /// altavoces, y un tap que se oyera a sí mismo transcribiría su propia voz como si fuera el
     /// cliente.
-    pub fn del_sistema(anillo: Arc<Mutex<Anillo>>) -> Result<Self, String> {
+    pub fn del_sistema(anillo: Arc<Mutex<Anillo>>) -> Result<Self, super::NoAbrio> {
+        Self::abrir_el_sistema(anillo).map_err(no_abrio)
+    }
+
+    fn abrir_el_sistema(anillo: Arc<Mutex<Anillo>>) -> Result<Self, String> {
         let descripcion = describir_el_tap()?;
         let mut tap: ObjetoDeAudio = 0;
         let estado =
@@ -318,6 +334,16 @@ impl Grifo {
         let hz = formato.hz.round() as u32;
         if hz == 0 {
             return Err("el dispositivo no declara frecuencia de muestreo".into());
+        }
+        if !es_float32_empaquetado(&formato) {
+            // Nombrado, como todo error de este módulo: quien lea el log tiene que poder decidir
+            // qué hacer sin abrir el código.
+            return Err(format!(
+                "{FORMATO_ILEGIBLE}: formato {} · {} bits · banderas {:#x}",
+                cuatro_letras(formato.id),
+                formato.bits,
+                formato.banderas
+            ));
         }
         let entradas = Arc::new(std::sync::atomic::AtomicU64::new(0));
         let destino = Box::new(Destino {
@@ -398,8 +424,17 @@ unsafe extern "C" fn recibir(
         if b.datos.is_null() {
             continue;
         }
+        // El formato ya se validó al abrir; esto cubre lo que el formato no dice: que ESTE búfer
+        // traiga un número entero de muestras y empiece donde un `f32` puede empezar. Un
+        // `from_raw_parts` desalineado es comportamiento indefinido, no un número raro.
+        let tam = std::mem::size_of::<f32>();
+        if !(b.bytes as usize).is_multiple_of(tam)
+            || !(b.datos as usize).is_multiple_of(std::mem::align_of::<f32>())
+        {
+            continue;
+        }
         canales = b.canales.max(1);
-        let n = b.bytes as usize / std::mem::size_of::<f32>();
+        let n = b.bytes as usize / tam;
         bloques.push(std::slice::from_raw_parts(b.datos as *const f32, n));
     }
     if bloques.is_empty() {
@@ -466,6 +501,21 @@ fn leer_u32(objeto: ObjetoDeAudio, selector: u32, ambito: u32) -> Option<u32> {
     (estado == OK).then_some(valor)
 }
 
+/// **¿Se puede leer este búfer como `f32`?**
+///
+/// El callback reinterpreta los bytes del sistema como flotantes de 32 bits. Hasta el sprint 002 lo
+/// hacía a ciegas: si Core Audio hubiera negociado entero de 16 bits —cosa que puede hacer, y que
+/// depende del dispositivo— cada muestra se habría leído como un número flotante formado por los
+/// bytes de dos muestras enteras. No es un fallo ruidoso: es ruido, y el detector de voz lo habría
+/// tomado por sonido. Por eso esto se responde **al abrir el grifo**, con un error nombrado, y no
+/// dentro del hilo de tiempo real.
+fn es_float32_empaquetado(f: &Formato) -> bool {
+    f.id == PCM_LINEAL
+        && f.bits == 32
+        && f.banderas & ES_FLOTANTE != 0
+        && f.banderas & ES_EMPAQUETADO != 0
+}
+
 fn leer_formato(objeto: ObjetoDeAudio, selector: u32, ambito: u32) -> Option<Formato> {
     let d = direccion(selector, ambito);
     let mut valor = Formato::default();
@@ -483,15 +533,44 @@ fn leer_formato(objeto: ObjetoDeAudio, selector: u32, ambito: u32) -> Option<For
     (estado == OK).then_some(valor)
 }
 
-fn formato_de_error(que: &str, estado: Estado) -> String {
-    // Los errores de Core Audio son cuatro letras empaquetadas; enseñarlas ahorra media hora a
-    // quien lea el log («!obj», «nope», «who?»).
-    let letras: String = estado
+/// Core Audio empaqueta cuatro letras en un entero —tanto sus errores como sus identificadores de
+/// formato— y enseñarlas ahorra media hora a quien lea el log («!obj», «nope», «lpcm»).
+fn cuatro_letras(valor: u32) -> String {
+    valor
         .to_be_bytes()
         .iter()
         .map(|b| if b.is_ascii_graphic() { *b as char } else { '·' })
-        .collect();
-    format!("{que} (estado {estado} «{letras}»)")
+        .collect()
+}
+
+fn formato_de_error(que: &str, estado: Estado) -> String {
+    format!("{que} (estado {estado} «{}»)", cuatro_letras(estado as u32))
+}
+
+/// El principio del error de formato. Es una constante porque dos sitios la usan —quien escribe
+/// el error y [`no_abrio`], que lo clasifica— y una frase copiada dos veces se desincroniza sola.
+const FORMATO_ILEGIBLE: &str = "el audio no llega como flotante de 32 bits empaquetado y no se puede leer";
+
+/// `kAudioDevicePermissionsError`: macOS no deja usar el dispositivo porque otra app lo tiene.
+const OCUPADO: [u8; 4] = *b"!hog";
+
+/// **El porqué de un grifo que no abrió**, sacado del error que el propio módulo escribió.
+///
+/// Los errores de dentro siguen siendo frases —son lo que va al log y lo que un humano lee para
+/// depurar—, y aquí se clasifican una vez, a la salida. Las dos marcas que se buscan las escribe
+/// este mismo archivo ([`FORMATO_ILEGIBLE`] y [`formato_de_error`], que pone el código de cuatro
+/// letras entre comillas). El permiso NO se decide aquí: lo sabe `permisos`, y lo añade quien abre.
+fn no_abrio(detalle: String) -> super::NoAbrio {
+    use super::PorQueNoAbrio::*;
+    let ocupado = format!("«{}»", cuatro_letras(u32::from_be_bytes(OCUPADO)));
+    let porque = if detalle.starts_with(FORMATO_ILEGIBLE) {
+        FormatoIlegible
+    } else if detalle.contains(&ocupado) {
+        DispositivoOcupado
+    } else {
+        NoDejo
+    };
+    super::NoAbrio { porque, detalle }
 }
 
 /// Un `CATapDescription` vivo y el UID con el que referirse a él desde el dispositivo agregado.
@@ -705,15 +784,22 @@ mod tests {
     }
 
     /// Lo que se puede afirmar sin saber qué Mac corre esto: que la respuesta es una de las
-    /// cuatro, que nunca miente por omisión, y que cuando no sabe lo dice con una frase.
+    /// cuatro, que nunca miente por omisión, y que cuando no sabe dice por qué.
     #[test]
     fn la_salida_de_audio_siempre_contesta_algo_que_se_pueda_enseñar() {
         let s = salida_de_audio();
         println!("salida de audio de este Mac: {s:?}");
         match &s {
-            Salida::NoSeSabe { motivo } | Salida::Otra { nombre: motivo } => {
-                assert!(!motivo.is_empty(), "una salida sin nombre ni motivo no se puede enseñar")
+            Salida::Otra { nombre } => {
+                assert!(!nombre.is_empty(), "una salida externa sin nombre no se puede enseñar")
             }
+            // Los dos porqués que citan el dispositivo tienen que traer su nombre: la frase lo
+            // pone entre comillas, y sin él diría ««» no dice cómo está conectado».
+            Salida::NoSeSabe { motivo, nombre } => assert_eq!(
+                nombre.is_some(),
+                *motivo != super::super::PorQueNoSeSabe::SinSalida,
+                "{motivo:?} con nombre {nombre:?}"
+            ),
             _ => {}
         }
         // Y la pregunta que de verdad importa tiene tres respuestas, no dos.
@@ -725,7 +811,8 @@ mod tests {
         assert_eq!(Salida::Altavoces.puede_haber_eco(), Some(true));
         assert_eq!(Salida::Auriculares.puede_haber_eco(), Some(false));
         assert_eq!(Salida::Otra { nombre: "Altavoz de mesa".into() }.puede_haber_eco(), None);
-        assert_eq!(Salida::NoSeSabe { motivo: "x".into() }.puede_haber_eco(), None);
+        let no_se_sabe = Salida::NoSeSabe { motivo: super::super::PorQueNoSeSabe::SinSalida, nombre: None };
+        assert_eq!(no_se_sabe.puede_haber_eco(), None);
     }
 
     #[test]
@@ -733,5 +820,54 @@ mod tests {
         assert_eq!(ENTRADA_POR_DEFECTO, u32::from_be_bytes(*b"dIn "));
         assert_eq!(FORMATO_DEL_TAP, u32::from_be_bytes(*b"tfmt"));
         assert_eq!(AMBITO_ENTRADA, u32::from_be_bytes(*b"inpt"));
+        assert_eq!(PCM_LINEAL, u32::from_be_bytes(*b"lpcm"));
+    }
+
+    /// **Los porqués se sacan de los errores que escribe este mismo archivo** — y si alguien cambia
+    /// la frase de uno sin cambiar el clasificador, la pista caída volvería a «no dejó» y la
+    /// pantalla perdería la salida concreta. Este test es lo que lo impide.
+    #[test]
+    fn cada_error_del_grifo_cae_en_su_porque() {
+        use super::super::PorQueNoAbrio::*;
+        let ocupado = formato_de_error(
+            "no se pudo crear el tap del audio del sistema",
+            u32::from_be_bytes(OCUPADO) as Estado,
+        );
+        assert_eq!(no_abrio(ocupado).porque, DispositivoOcupado);
+        let ilegible = format!("{FORMATO_ILEGIBLE}: formato lpcm · 16 bits · banderas 0xc");
+        assert_eq!(no_abrio(ilegible).porque, FormatoIlegible);
+        let otro = formato_de_error("el sistema no dejó arrancar la captura", -50);
+        assert_eq!(no_abrio(otro.clone()).porque, NoDejo);
+        assert_eq!(no_abrio(otro.clone()).detalle, otro, "el detalle va al log intacto");
+    }
+
+    fn formato(id: u32, bits: u32, banderas: u32) -> Formato {
+        Formato { hz: 48_000.0, id, bits, banderas, canales: 2, ..Formato::default() }
+    }
+
+    /// **M10 del sprint 001.** El callback lee los bytes del sistema como `f32`. Si Core Audio
+    /// negocia otra cosa —entero de 16 bits, por ejemplo— cada muestra sale de los bytes de dos
+    /// muestras distintas: no es un fallo ruidoso, es ruido, y el detector de voz lo toma por
+    /// sonido. Antes se reinterpretaba a ciegas; ahora el grifo no abre.
+    #[test]
+    fn solo_se_abre_el_grifo_si_el_audio_llega_como_flotante_de_32_bits() {
+        let bueno = formato(PCM_LINEAL, 32, ES_FLOTANTE | ES_EMPAQUETADO);
+        assert!(es_float32_empaquetado(&bueno), "el formato que el Mac negocia de verdad");
+
+        for (nombre, malo) in [
+            ("entero de 16 bits", formato(PCM_LINEAL, 16, ES_EMPAQUETADO)),
+            ("flotante sin empaquetar", formato(PCM_LINEAL, 32, ES_FLOTANTE)),
+            ("entero de 32 bits", formato(PCM_LINEAL, 32, ES_EMPAQUETADO)),
+            ("comprimido (AAC)", formato(cuatro(b"aac "), 32, ES_FLOTANTE | ES_EMPAQUETADO)),
+        ] {
+            assert!(!es_float32_empaquetado(&malo), "{nombre} no se puede leer como f32");
+        }
+    }
+
+    #[test]
+    fn el_error_del_formato_enseña_las_cuatro_letras() {
+        assert_eq!(cuatro_letras(PCM_LINEAL), "lpcm");
+        // Un byte que no es imprimible no puede romper el mensaje del log.
+        assert_eq!(cuatro_letras(0), "····");
     }
 }

@@ -73,7 +73,12 @@ de revisar lo que el constructor daba por bueno.)*
 
 **Entrega de la Fase 1:** un reporte con hallazgos clasificados por severidad
 (**Crítico / Alto / Medio / Bajo**) y una recomendación explícita: **"listo para cierre"** o
-**"requiere ajustes"**. Valida que todo quede documentado en los archivos correspondientes
+**"requiere ajustes"**. **El reporte se guarda en el repo como
+`sprints/SPRINT_NNN-auditoria.md` y lleva TODOS los hallazgos, de todas las severidades, cada
+uno con `archivo:línea` (kit v1.28.0)** — jamás «14 medios y 7 bajos» como resumen por conteo:
+un hallazgo sin ubicación no se puede pagar ni heredar como deuda, y el Medio de hoy es el
+Crítico del sprint que viene *(Angel Ghost S1: los 21 medios/bajos llegaron al summary solo
+como cuenta; la planeadora no pudo curarlos ni verificar que la deuda declarada los cubría)*. Valida que todo quede documentado en los archivos correspondientes
 (bitácora, ADRs, deuda declarada). Cada hallazgo Crítico/Alto debe traer su **ajuste
 ejecutable**: archivo(s) y línea(s), cambio exacto propuesto, y el criterio observable de
 "ajuste verificado" — el formato que un modelo de menor capacidad puede seguir sin pensar
@@ -87,7 +92,12 @@ de más. Cierra recordando al usuario: *"aprueba la Fase 1 y fija el modelo de l
 2. **Espera la validación del usuario** del plan.
 3. Solo entonces implementa — siguiendo el plan de la Fase 1 al pie; cualquier desviación se
    declara antes de ejecutarla.
-4. Al terminar: registra en la bitácora y en el `SPRINT_NNN-summary.md` los hallazgos, los
+4. **Repite la casilla 4 de la Fase 1 («¿qué frases caducaron?») DESPUÉS del último ajuste
+   (kit v1.28.0):** los arreglos de la Fase 2 fabrican frases nuevas —un texto de estado, un
+   copy de vacío, una línea del manual— y la casilla corrida antes de ellos no las vio. Es el
+   mismo barrido por promesa aplazada, sobre el diff de la Fase 2 *(Angel Ghost S1: dos frases
+   nacieron en los pagos de la auditoría y las cazó el usuario en la guía)*.
+5. Al terminar: registra en la bitácora y en el `SPRINT_NNN-summary.md` los hallazgos, los
    pagos y la deuda aceptada. **Sin auditoría registrada en el summary, el cierre del sprint
    queda condicionado** (lo verifica el `/cierre-sprint` de la planeadora).
 

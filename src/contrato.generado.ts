@@ -11,7 +11,8 @@
  *     cd src-tauri && ACTUALIZA_CONTRATO=1 cargo test contrato
  */
 import type { Novedad, Aparicion } from "./ficha";
-import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelCorpus } from "./cuaderno";
+import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelDiccionario, EstadoDelCorpus, InformeDelCorte, LaVoz, EstadoDeLaPantalla } from "./cuaderno";
+import type { EnTuMac } from "./radar";
 import type { EstadoDelAcople } from "./acople";
 
 export const NOVEDAD_EMPIEZA: Novedad = {
@@ -125,12 +126,13 @@ export const REUNION_DETECTADA: Reunion = {
   };
 
 export const REUNION_NO_SE_PUEDE_SABER: Reunion = {
-    "motivo": "hay un navegador abierto pero no se pueden leer sus ventanas",
+    "motivo": "sin-accesibilidad",
     "que": "no-se-puede-saber"
   };
 
 export const PERMISOS: Permisos = {
     "accesibilidad": "no-se-sabe",
+    "audio": "concedido",
     "microfono": "concedido",
     "pantalla": "sin-conceder"
   };
@@ -141,24 +143,13 @@ export const ESTADO_DE_LA_ESCUCHA: EstadoDeEscucha = {
     "microfono": {
       "abierta": true,
       "bytes": 1920000,
-      "hablando": false,
-      "legible": "1,8 MB",
-      "motivo": null,
-      "muestrasRecibidas": 480000,
-      "segundos": 30.0
+      "motivo": null
     },
-    "motor": "apple-speechanalyzer",
-    "ramLegible": "1,8 MB",
     "sistema": {
       "abierta": false,
       "bytes": 0,
-      "hablando": false,
-      "legible": "0 B",
-      "motivo": "este Mac no deja abrir el audio del sistema",
-      "muestrasRecibidas": 0,
-      "segundos": 0.0
-    },
-    "turnosEnMemoria": 3
+      "motivo": "dispositivo-ocupado"
+    }
   };
 
 export const DISPONIBILIDAD_LISTO: Disponibilidad = {
@@ -166,8 +157,7 @@ export const DISPONIBILIDAD_LISTO: Disponibilidad = {
   };
 
 export const DISPONIBILIDAD_SIN_MOTOR: Disponibilidad = {
-    "estado": "sin-motor",
-    "motivo": "este Mac no trae el transcriptor"
+    "estado": "sin-motor"
   };
 
 export const SALIDA_DE_AUDIO: Salida = {
@@ -177,6 +167,19 @@ export const SALIDA_DE_AUDIO: Salida = {
 export const SALIDA_DE_AUDIO_OTRA: Salida = {
     "nombre": "AirPods Pro",
     "salida": "otra"
+  };
+
+export const SALIDA_DE_AUDIO_NO_SE_SABE: Salida = {
+    "motivo": "sin-conexion",
+    "nombre": "Altavoz USB",
+    "salida": "no-se-sabe"
+  };
+
+export const ESTADO_DEL_DICCIONARIO: EstadoDelDiccionario = {
+    "delCorpus": 12,
+    "enTuArchivo": 5,
+    "ruta": "~/Library/Application Support/com.aiapps.copiloto-consultor/diccionario.yaml",
+    "terminos": 17
   };
 
 export const ESTADO_DEL_CORPUS: EstadoDelCorpus = {
@@ -194,6 +197,167 @@ export const ESTADO_DEL_CORPUS: EstadoDelCorpus = {
     ],
     "secciones": 31,
     "sinUnidad": 1
+  };
+
+export const INFORME_DEL_CORTE: InformeDelCorte = {
+    "bytesEnRed": 0,
+    "piezas": [
+      [
+        "voz",
+        "cortada"
+      ],
+      [
+        "audio-del-microfono",
+        "cortada"
+      ],
+      [
+        "audio-del-sistema",
+        "cortada"
+      ],
+      [
+        "ultimo-frame",
+        "cortada"
+      ],
+      [
+        "transcript",
+        "cortada"
+      ],
+      [
+        "contador-de-red",
+        "cortada"
+      ],
+      [
+        "banda",
+        "cortada"
+      ],
+      [
+        "acople",
+        "cortada"
+      ]
+    ]
+  };
+
+export const LA_VOZ_APAGADA: LaVoz = {
+    "diciendo": false,
+    "encendida": false,
+    "puede": false
+  };
+
+export const LA_VOZ_DICIENDO: LaVoz = {
+    "diciendo": true,
+    "encendida": true,
+    "puede": true
+  };
+
+export const LA_VOZ_SIN_AURICULARES: LaVoz = {
+    "diciendo": false,
+    "encendida": true,
+    "puede": false
+  };
+
+export const PANTALLA_LEYENDO: EstadoDeLaPantalla = {
+    "bytesEnMemoria": 1440318,
+    "vista": "leyendo"
+  };
+
+export const PANTALLA_APAGADA: EstadoDeLaPantalla = {
+    "bytesEnMemoria": 0,
+    "vista": "apagada"
+  };
+
+export const PANTALLA_SIN_PERMISO: EstadoDeLaPantalla = {
+    "bytesEnMemoria": 0,
+    "vista": "sin-permiso"
+  };
+
+export const PANTALLA_ESPERANDO_LA_REUNION: EstadoDeLaPantalla = {
+    "bytesEnMemoria": 0,
+    "vista": "esperando-la-reunion"
+  };
+
+export const PANTALLA_NO_PUDO: EstadoDeLaPantalla = {
+    "bytesEnMemoria": 0,
+    "vista": "no-pudo"
+  };
+
+export const NOVEDAD_APARECE_POR_PANTALLA: Novedad = {
+    "acumuladas": [
+      {
+        "texto": "Sur del Valle: cuatro fuentes en 9 semanas",
+        "unidad": "caso"
+      }
+    ],
+    "clase": "ficha",
+    "fuente": {
+      "conjeturada": false,
+      "documento": "Páramo Azul · Propuesta",
+      "seccion": "§3.2 Alcance",
+      "unidad": "propuesta"
+    },
+    "hora": "14:02",
+    "linea": "Cubre perfilado y limpieza de ERP, POS y Excel de canal.",
+    "lineaLarga": "Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente se cotiza aparte.",
+    "motivo": "pantalla",
+    "ms": 1240,
+    "que": "aparece",
+    "titular": "Limpieza de datos: incluida, hasta tres fuentes"
+  };
+
+export const NOVEDAD_NADA_EN_PANTALLA: Novedad = {
+    "hora": "14:05",
+    "que": "nada-en-pantalla"
+  };
+
+export const NOVEDAD_RADAR: Novedad = {
+    "bots": [
+      "MinutaBot"
+    ],
+    "grabando": true,
+    "hora": "14:03",
+    "que": "radar"
+  };
+
+export const EN_TU_MAC_VIGILADO: EnTuMac = {
+    "catalogo": {
+      "fecha": "2026-09-26",
+      "version": 1
+    },
+    "programas": [
+      {
+        "alcance": {
+          "en": "Camera, full screen, open apps; can block programs",
+          "es": "Cámara, pantalla completa, apps abiertas; puede bloquear programas"
+        },
+        "categoria": "supervision",
+        "nivel": "invasivo",
+        "nombre": "ProctorLince",
+        "ve": {
+          "en": "sees your full screen and your camera",
+          "es": "ve tu pantalla completa y tu cámara"
+        }
+      },
+      {
+        "alcance": {
+          "en": "Can install, wipe and read configuration. Normal on company machines",
+          "es": "Puede instalar, borrar y leer configuración. Normal en equipos de empresa"
+        },
+        "categoria": "mdm",
+        "nivel": "sabelo",
+        "nombre": "MDM-Corp",
+        "ve": {
+          "en": "can install, wipe and read configuration",
+          "es": "puede instalar, borrar y leer la configuración"
+        }
+      }
+    ]
+  };
+
+export const EN_TU_MAC_LIMPIO: EnTuMac = {
+    "catalogo": {
+      "fecha": "2026-09-26",
+      "version": 1
+    },
+    "programas": []
   };
 
 export const ESTADO_DEL_ACOPLE: EstadoDelAcople = {

@@ -8,7 +8,7 @@
 //! librería de Swift no se compiló (`swiftc` ausente), este archivo no declara nada y
 //! [`motor`] devuelve el mudo con su motivo.
 
-use super::{Disponibilidad, Fallo, Motor, Mudo};
+use super::{Disponibilidad, Fallo, Motor, Mudo, PorQueNoHayMotor};
 
 /// Cuánto texto cabe en una transcripción de un turno. Treinta segundos de habla rápida rondan las
 /// 900 letras; ocho kilobytes son holgura de sobra sin ser una reserva absurda por turno.
@@ -44,12 +44,14 @@ fn traducir(codigo: i32) -> Disponibilidad {
         2 => Disponibilidad::Listo,
         1 => Disponibilidad::SinModelo,
         0 => Disponibilidad::IdiomaDesconocido,
-        -1 => Disponibilidad::SinMotor {
-            motivo: "este Mac no trae el transcriptor de macOS 26".into(),
-        },
+        -1 => Disponibilidad::SinMotor { motivo: PorQueNoHayMotor::SinTranscriptor },
         -2 => Disponibilidad::IdiomaDesconocido,
         -3 => Disponibilidad::SinModelo,
-        otro => Disponibilidad::SinMotor { motivo: format!("el motor devolvió {otro}") },
+        otro => {
+            // El código va al log; a la pantalla, el porqué cerrado.
+            println!("[stt] el motor devolvió {otro}, que la app no sabe leer");
+            Disponibilidad::SinMotor { motivo: PorQueNoHayMotor::NoContesta }
+        }
     }
 }
 
@@ -68,9 +70,7 @@ impl Motor for Apple {
             return Disponibilidad::IdiomaDesconocido;
         };
         if unsafe { puente::ag_stt_disponible() } != 1 {
-            return Disponibilidad::SinMotor {
-                motivo: "este Mac no trae el transcriptor de macOS 26".into(),
-            };
+            return Disponibilidad::SinMotor { motivo: PorQueNoHayMotor::SinTranscriptor };
         }
         traducir(unsafe { puente::ag_stt_estado(c.as_ptr()) })
     }
@@ -141,13 +141,11 @@ pub fn motor() -> Box<dyn Motor> {
         if unsafe { puente::ag_stt_disponible() } == 1 {
             return Box::new(a);
         }
-        Box::new(Mudo::por("este Mac no trae el transcriptor de macOS 26"))
+        Box::new(Mudo::por(PorQueNoHayMotor::SinTranscriptor))
     }
     #[cfg(not(all(target_os = "macos", puente_de_swift)))]
     {
-        Box::new(Mudo::por(
-            "la app se compiló sin el puente de transcripción (falta swiftc o no es macOS)",
-        ))
+        Box::new(Mudo::por(PorQueNoHayMotor::SinPuente))
     }
 }
 
@@ -163,7 +161,7 @@ mod tests {
         let m = motor();
         assert!(!m.nombre().is_empty());
         if let Disponibilidad::SinMotor { motivo } = m.disponibilidad("es-ES") {
-            assert!(!motivo.is_empty(), "un motivo vacío no explica nada");
+            assert!(!motivo.en_el_log().is_empty(), "un motivo vacío no explica nada");
         }
     }
 

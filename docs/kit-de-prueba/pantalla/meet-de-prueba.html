@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<!-- El título es lo que Angel Ghost busca para saber que hay una reunión de Meet: «Google Meet».
+     Datos 100 % sintéticos (regla 5): las diapositivas son las del kit de pantalla. -->
+<title>Google Meet — Páramo Azul (prueba sintética)</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #202124; color: #e8eaed; font: 14px/1.4 -apple-system, sans-serif; height: 100vh; display: flex; flex-direction: column; }
+  main { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; }
+  img { max-width: 96vw; max-height: 100%; }
+  footer { padding: 10px 16px; display: flex; gap: 12px; align-items: center; background: #171717; }
+  button { background: #3c4043; color: inherit; border: 0; border-radius: 6px; padding: 6px 12px; font: inherit; cursor: pointer; }
+</style>
+</head>
+<body>
+<main><img id="d" alt="diapositiva sintética del kit de pantalla"></main>
+<footer>
+  <button id="antes" type="button">‹ anterior</button>
+  <button id="despues" type="button">siguiente ›</button>
+  <span id="cual"></span>
+  <span style="margin-left:auto;opacity:.7">Kit de prueba de Angel Ghost · flechas ← → para cambiar de diapositiva</span>
+</footer>
+<script>
+  // Las cinco pantallas del kit (pantalla.json). Cambiar de una a otra es lo que el vigía tiene que
+  // ver como «algo nuevo»; la agenda no trae cifra ni término, y no debe traer ficha.
+  const DIAPOSITIVAS = ["tablero-margen.png", "cronograma-erp.png", "caso-cooperativa.png", "retencion-datos.png", "agenda.png"];
+  let i = 0;
+  const pinta = () => {
+    document.getElementById("d").src = DIAPOSITIVAS[i];
+    document.getElementById("cual").textContent = `${i + 1} de ${DIAPOSITIVAS.length} · ${DIAPOSITIVAS[i]}`;
+  };
+  const mueve = (n) => { i = (i + n + DIAPOSITIVAS.length) % DIAPOSITIVAS.length; pinta(); };
+  document.getElementById("antes").onclick = () => mueve(-1);
+  document.getElementById("despues").onclick = () => mueve(1);
+  addEventListener("keydown", (e) => { if (e.key === "ArrowRight") mueve(1); if (e.key === "ArrowLeft") mueve(-1); });
+  pinta();
+</script>
+</body>
+</html>

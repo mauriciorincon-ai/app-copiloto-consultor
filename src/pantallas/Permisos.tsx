@@ -6,17 +6,20 @@ import { abrirAjustesDe, type EstadoPermiso, type Permisos as EstadoDeLosPermiso
 /**
  * PERMISOS — «Permisos de macOS».
  *
- * Referencia: `docs/diseno/permisos.html`, estado **«así se ve hoy · sprint 1»** (mirada 12).
+ * Referencia: `docs/diseno/permisos.html`, estado **«así se ve hoy · sprint 2 · la pantalla»**
+ * (miradas 17 y 17-quater).
  *
  * **Se leen, no se piden.** El botón lleva al panel de Ajustes del Sistema: lo concede el usuario
  * allí. Es decisión de la maqueta —*«Tú los concedes en el sistema, no aquí»*— y además es lo
  * correcto: un permiso pedido en el primer arranque, antes de que la app haya demostrado nada, se
  * deniega, y un «no» de macOS es mucho más caro de deshacer que un «todavía no».
  *
- * Dos cosas que la maqueta no había escrito y el sistema obliga (§9-sexies): **«Audio del
- * sistema» y «Pantalla» son un solo permiso** —se dibujan como dos filas porque son dos usos
- * distintos, con una línea que lo dice—, y **la Accesibilidad sube a la lista principal**, porque
- * el acople se entrega en este sprint y es el único permiso que hoy cambia algo.
+ * **«Audio del sistema» y «Pantalla» son DOS permisos** (`kTCCServiceAudioCapture` y
+ * `kTCCServiceScreenCapture`), aunque Ajustes los enseñe en el mismo panel. Hasta el sprint 002 esta
+ * pantalla decía lo contrario —«un solo permiso: se conceden y se caen juntos»— y leía el de
+ * pantalla para las dos filas; la mirada 17-quater lo encontró falso comprobándolo en `tccd`. Cada
+ * fila lee ya el suyo. Y la tarjeta de la derecha deja de citar el texto del micrófono para decir lo
+ * que de verdad pasa con la pantalla: macOS pregunta con su propia frase y no admite otra.
  */
 
 function Chip({ estado }: { estado: EstadoPermiso }) {
@@ -52,7 +55,7 @@ function Permiso({
   nombre: string;
   para: string;
   estado: EstadoPermiso;
-  cual: "microfono" | "pantalla" | "accesibilidad";
+  cual: "microfono" | "audio" | "pantalla" | "accesibilidad";
 }) {
   const t = useT().cuaderno;
   const concedido = estado === "concedido";
@@ -96,8 +99,8 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
             icono="i-sistema"
             nombre={t.permSistema}
             para={t.permSistemaPara}
-            estado={permisos.pantalla}
-            cual="pantalla"
+            estado={permisos.audio}
+            cual="audio"
           />
           <Permiso
             icono="i-pantalla"
@@ -114,7 +117,7 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
             cual="accesibilidad"
           />
           <p className="mono" style={{ color: "var(--ink-2)" }}>
-            {t.unSoloPermiso}
+            {t.dosPermisos}
           </p>
         </div>
 
@@ -132,19 +135,17 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
             <Fila icono="i-nota" texto={t.escribirNotas} pendiente>
               <TodaviaNo />
             </Fila>
-            {/* Buscar a mano es `⌘⇧A`: no necesita micrófono ni pantalla, solo el corpus. */}
+            {/* Buscar a mano es `⌃⌥A`: no necesita micrófono ni pantalla, solo el corpus. */}
             <Fila icono="i-buscar" texto={t.buscarAMano}>
               <Funciona />
             </Fila>
           </div>
           <div className="tarjeta">
-            <h2 className="seccion">{t.queTextoVeras}</h2>
+            <h2 className="seccion">{t.antesDeQueMacos}</h2>
             <p style={{ fontFamily: "var(--font-evidencia)", fontSize: "14px", color: "var(--ink)" }}>
-              {t.textoMicrofono}
+              {t.textoPantalla}
             </p>
-            <p className="mono" style={{ color: "var(--ink-2)" }}>
-              {t.claveMicrofono}
-            </p>
+            <p style={{ fontSize: "11.5px", color: "var(--ink-2)" }}>{t.fraseDeMacos}</p>
           </div>
         </div>
       </div>

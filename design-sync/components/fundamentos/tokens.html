@@ -112,6 +112,13 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .banda.voz .cuerpo-b { align-items: center; padding: 0 14px; height: 100%; }
 .banda.voz .linea-b { font-size: 13px; -webkit-line-clamp: 1; white-space: nowrap; }
 .banda.voz .cab-b { display: none; }
+.banda.voz .linea-b { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+.banda.voz .linea-b .ic { flex: 0 0 auto; color: var(--halo); }
+.banda.voz .linea-b.warn { color: var(--warn); }
+.banda.voz .linea-b.warn .ic { color: var(--warn); }
+.banda.voz .linea-b .sep { color: var(--line-2); flex: 0 0 auto; }
+.banda.voz .linea-b .fuente-b { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.banda.voz .lado-b { flex-direction: row; align-items: center; gap: 12px; max-width: none; }
 .mq-nota .n { display: none; border-left: 3px solid #7dd3fc; padding: 8px 12px; background: #111418; }
 .mq-nota .n.activa { display: block; }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }

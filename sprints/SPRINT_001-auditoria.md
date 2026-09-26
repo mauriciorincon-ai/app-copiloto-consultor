@@ -24,7 +24,7 @@ bitácora o un comentario del código afirmando lo contrario de lo que el códig
 
 ---
 
-## CRÍTICO
+## CRÍTICO (1)
 
 ### C1 · La ficha automática nunca llega a la banda
 
@@ -57,7 +57,7 @@ líneas 98-121 sin cubrir — exactamente ese bloque.
 
 ---
 
-## ALTOS
+## ALTOS (10)
 
 | # | Hallazgo | Dónde |
 |---|---|---|
@@ -76,19 +76,38 @@ líneas 98-121 sin cubrir — exactamente ese bloque.
 
 ## MEDIOS (14) y BAJOS (7)
 
-Resumen de los que tocan una regla dura o una promesa de pantalla:
+> **Nota de 2026-09-24, escrita al abrir el sprint 002.** Esta sección se resumió al escribirla: los
+> quince hallazgos que no tocaban una regla dura se agruparon en una sola frase con un puntero —«ver
+> el detalle en la bitácora de ajustes»— **que estaba roto**. La bitácora tampoco los tenía, así que
+> su detalle no existe en ningún archivo de este repo. Se dejan aquí **uno por uno y marcados como
+> irrecuperables**, que es lo único honesto que se puede hacer con ellos, y sus superficies entran
+> en el alcance de la auditoría del sprint 002 para que lo que siga siendo cierto vuelva a salir
+> **con su `archivo:línea`**. El gate que impide que esto se repita es
+> `tests/unit/auditoria-con-sitio.test.ts`, y su primer rojo fue este documento.
 
-- **M1** `"csp": null` en `tauri.conf.json` — en una app cuya promesa mayor es «nada crudo sale del
-  equipo», el webview puede cargar de cualquier origen.
-- **M2** Sesión afirma `Funciona` en las dos pistas **sin leer `abierta`/`motivo`**: con el tap
-  caído, la app dice que funciona.
-- **M4** Tras `⌥⎋` **la banda no vuelve** hasta reiniciar la app, y el manual no lo advierte.
-- **M9** El gate de efímero en runtime **no mira `~/Library`** —donde escribe una app de macOS— y
-  solo compara archivos NUEVOS: una fuga que *añada* a un archivo existente es invisible.
-- **M10** `nativo.rs` reinterpreta los bytes del buffer como `f32` **sin validar el formato**.
-- **M11** «Qué puedes hacer ya, sin conceder nada» marca «Todavía no» en dos cosas que **ya se
-  pueden hacer**.
-- **M3, M5, M6, M7, M8, M12, M13, M14** y **B1–B7**: ver el detalle en la bitácora de ajustes.
+| # | Hallazgo | Dónde | Estado |
+|---|---|---|---|
+| **M1** | `"csp": null`: en una app cuya promesa mayor es «nada crudo sale del equipo», el webview puede cargar de cualquier origen | `src-tauri/tauri.conf.json:57` | deuda · se paga en el S2 fase 0 |
+| **M2** | Sesión afirma `Funciona` en las dos pistas **sin leer `abierta`/`motivo`**: con el tap caído, la app dice que funciona | `src/pantallas/Sesion.tsx:95-100` | deuda · S2 fase 0, tras la mirada 17 |
+| **M3** | **irrecuperable** — su detalle no llegó a este artefacto ni a la bitácora | — | re-auditar en el S2 |
+| **M4** | Tras `⌥⎋` **la banda no vuelve** hasta reiniciar la app, y el manual no lo advierte | `src-tauri/src/lib.rs:479` → `src-tauri/src/ventana/mod.rs:195` | deuda · S2 fase 0 |
+| **M5** | **irrecuperable** — su detalle no llegó a este artefacto ni a la bitácora | — | re-auditar en el S2 |
+| **M6** | **irrecuperable** — su detalle no llegó a este artefacto ni a la bitácora | — | re-auditar en el S2 |
+| **M7** | **irrecuperable** — su detalle no llegó a este artefacto ni a la bitácora | — | re-auditar en el S2 |
+| **M8** | **irrecuperable** — su detalle no llegó a este artefacto ni a la bitácora | — | re-auditar en el S2 |
+| **M9** | El gate de efímero en runtime **no mira `~/Library`** —donde escribe una app de macOS— y solo compara archivos NUEVOS: una fuga que *añada* a un archivo existente es invisible | `src-tauri/tests/contra-el-mac-de-verdad.rs:507-520` y `:624-628` | deuda · se paga en el S2 fase 0 |
+| **M10** | `nativo.rs` reinterpreta los bytes del buffer como `f32` **sin validar el formato** | `src-tauri/src/capture/nativo.rs:402-403` | deuda · se paga en el S2 fase 0 |
+| **M11** | «Qué puedes hacer ya, sin conceder nada» marcaba «Todavía no» en dos cosas que **ya se pueden hacer** | `src/pantallas/Permisos.tsx:122` | **pagado** en el bloque 2 de la fase 2 |
+| **M12** | **irrecuperable** — su detalle no llegó a este artefacto ni a la bitácora | — | re-auditar en el S2 |
+| **M13** | **irrecuperable** — su detalle no llegó a este artefacto ni a la bitácora | — | re-auditar en el S2 |
+| **M14** | **irrecuperable** — su detalle no llegó a este artefacto ni a la bitácora | — | re-auditar en el S2 |
+| **B1** | **irrecuperable** — su detalle no llegó a este artefacto ni a la bitácora | — | re-auditar en el S2 |
+| **B2** | **irrecuperable** — su detalle no llegó a este artefacto ni a la bitácora | — | re-auditar en el S2 |
+| **B3** | **irrecuperable** — su detalle no llegó a este artefacto ni a la bitácora | — | re-auditar en el S2 |
+| **B4** | **irrecuperable** — su detalle no llegó a este artefacto ni a la bitácora | — | re-auditar en el S2 |
+| **B5** | **irrecuperable** — su detalle no llegó a este artefacto ni a la bitácora | — | re-auditar en el S2 |
+| **B6** | **irrecuperable** — su detalle no llegó a este artefacto ni a la bitácora | — | re-auditar en el S2 |
+| **B7** | **irrecuperable** — su detalle no llegó a este artefacto ni a la bitácora | — | re-auditar en el S2 |
 
 ---
 

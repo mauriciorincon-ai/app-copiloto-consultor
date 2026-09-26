@@ -29,6 +29,22 @@ import process from "node:process";
 const RAIZ = resolve(".");
 const DISENO = join(RAIZ, "docs/diseno");
 const FIDELIDAD = join(RAIZ, "docs/fidelidad");
+
+/**
+ * Las filas de ABAJO que se dejan fuera de la comparación: la mordida del marco redondeado de
+ * la página de referencia, que no es del producto. **Medidas, no estimadas** — ver el comentario
+ * de la comparación, más abajo.
+ */
+/**
+ * **De qué sprint es esta evidencia.** Cada sprint escribe la suya y deja la del anterior tal cual,
+ * porque su summary la cita. Hasta la fase 3 del sprint 002 esto era un `s1-` escrito a mano: el
+ * sprint 2 pisó tres veces la evidencia del sprint 1 y la hoja «S1-cuaderno.html» que su summary
+ * enseña como contrapeso del gate diferido pasó a enseñar pantallas del sprint 2. Se cambia en el
+ * primer commit de cada sprint que capture.
+ */
+const SPRINT = "s2";
+
+const MARCO = 9;
 const PUERTO = 4180;
 
 /**
@@ -59,21 +75,38 @@ const ARTEFACTOS = [
       { id: "sin-verificar-2", maqueta: "banda.html", estado: "sin-verificar-2", alto: 200, url: "ventana=banda&estado=sin-verificar&verificado=0&ampliada=1" },
       { id: "transcript", maqueta: "banda.html", estado: "transcript", alto: 200, url: "ventana=banda&estado=ficha&transcript=1" },
       { id: "flotante", maqueta: "banda.html", estado: "flotante", alto: 88, url: "ventana=banda&estado=ficha&acoplada=0" },
+      // El modo solo audio (C15, sprint 002). 44 px: otra anatomía, no la misma banda con menos
+      // cosas — sin cabecera, y con el contador de red bajado a la línea.
+      { id: "voz", maqueta: "banda.html", estado: "voz", alto: 44, url: "ventana=banda&estado=voz" },
+      { id: "voz-espera", maqueta: "banda.html", estado: "voz-espera", alto: 44, url: "ventana=banda&estado=voz-espera" },
+      { id: "voz-sin", maqueta: "banda.html", estado: "voz-sin", alto: 44, url: "ventana=banda&estado=voz-sin" },
+      // La fase 3 del sprint 002: la ficha que se explica (17-bis) y la lectura de pantalla (17-quater).
+      { id: "ficha-pdf", maqueta: "banda.html", estado: "ficha-pdf", alto: 88, url: "ventana=banda&estado=ficha-pdf" },
+      { id: "ficha-pantalla", maqueta: "banda.html", estado: "ficha-pantalla", alto: 88, url: "ventana=banda&estado=ficha-pantalla" },
+      { id: "pantalla-nada", maqueta: "banda.html", estado: "pantalla-nada", alto: 88, url: "ventana=banda&estado=pantalla-nada" },
+      // El radar (C14, fase 4): ámbar, coral y el coral ampliado con sus dos botones.
+      { id: "radar", maqueta: "banda.html", estado: "radar", alto: 88, url: "ventana=banda&estado=radar" },
+      { id: "radar-invasivo", maqueta: "banda.html", estado: "radar-invasivo", alto: 88, url: "ventana=banda&estado=radar-invasivo" },
+      { id: "radar-invasivo-2", maqueta: "banda.html", estado: "radar-invasivo-2", alto: 200, url: "ventana=banda&estado=radar-invasivo&ampliada=1" },
     ],
   },
   {
     id: "cuaderno",
     titulo: "el cuaderno",
-    mirada: "las miradas 12 y 13",
+    mirada: "las miradas 17, 17-bis y 17-quater",
     selectorMaqueta: ".ventana",
     selectorProducto: "main.ventana",
     desbordes: ".ventana .contenido, .ventana .rail",
     encuadres: [
-      { id: "sesion", maqueta: "sesion.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=sesion" },
-      { id: "permisos", maqueta: "permisos.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=permisos" },
-      { id: "corpus", maqueta: "corpus.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=corpus" },
-      { id: "honestidad", maqueta: "honestidad.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=honestidad" },
-      { id: "idioma", maqueta: "idioma.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=idioma" },
+      // Desde la fase 3 del sprint 002 el producto se compara con los estados «así se ve hoy ·
+      // sprint 2». Los de «sprint 1» quedan en la maqueta como historia: ya no describen la app.
+      { id: "sesion", maqueta: "sesion.html", estado: "s2-pantalla", alto: 640, url: "ventana=principal&pantalla=sesion" },
+      { id: "permisos", maqueta: "permisos.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=permisos" },
+      { id: "corpus", maqueta: "corpus.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=corpus" },
+      { id: "honestidad", maqueta: "honestidad.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=honestidad" },
+      { id: "idioma", maqueta: "idioma.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=idioma" },
+      // El radar coral en Sesión (fase 4): «software invasivo en tu Mac», con las cinco filas.
+      { id: "vigilancia", maqueta: "sesion.html", estado: "vigilancia", alto: 640, url: "ventana=principal&pantalla=sesion&radar=vigilancia" },
     ],
   },
 ];
@@ -142,7 +175,7 @@ const diferencias = [];
 let hechas = 0;
 
 for (const art of ARTEFACTOS) {
-  const salida = join(FIDELIDAD, `s1-${art.id}`);
+  const salida = join(FIDELIDAD, `${SPRINT}-${art.id}`);
   rmSync(salida, { recursive: true, force: true });
   mkdirSync(join(salida, "maqueta"), { recursive: true });
   mkdirSync(join(salida, "producto"), { recursive: true });
@@ -248,7 +281,7 @@ for (const art of ARTEFACTOS) {
           diferencias.push({ artefacto: art.id, encuadre: `${e.id} · ${tm} · ${lg.id}`, medida: "falta un recorte" });
           continue;
         }
-        const r = await lienzo.evaluate(async ([uno, dos]) => {
+        const r = await lienzo.evaluate(async ([uno, dos, MARCO]) => {
           const carga = (b64) =>
             new Promise((ok, mal) => {
               const i = new Image();
@@ -269,18 +302,28 @@ for (const art of ARTEFACTOS) {
           };
           const [pa, pb] = [pinta(ia), pinta(ib)];
           let distintos = 0;
-          for (let i = 0; i < pa.length; i += 4) {
-            // Tolerancia por canal: el antialias de una misma fuente puede variar un punto.
-            if (
-              Math.abs(pa[i] - pb[i]) > 8 ||
-              Math.abs(pa[i + 1] - pb[i + 1]) > 8 ||
-              Math.abs(pa[i + 2] - pb[i + 2]) > 8
-            ) {
-              distintos++;
+          // **Las nueve filas de abajo no se comparan, y no es holgura: no son del producto.**
+          // El recorte de la maqueta sale de una página de referencia cuyo marco redondeado le
+          // muerde las esquinas inferiores. Es una cuña de 58 px repartida en nueve filas
+          // —2,2,2,4,4,6,8,12,18, medidas—, idéntica en un encuadre de 88 px y en uno de 44, y
+          // **siempre en las nueve últimas**. El contenido nunca llega ahí: la banda centra su
+          // línea, y a 44 px el texto vive entre las filas 15 y 28.
+          const alto = ia.height - MARCO;
+          for (let y = 0; y < alto; y++) {
+            for (let x = 0; x < ia.width; x++) {
+              const i = (ia.width * y + x) << 2;
+              // Tolerancia por canal: el antialias de una misma fuente puede variar un punto.
+              if (
+                Math.abs(pa[i] - pb[i]) > 8 ||
+                Math.abs(pa[i + 1] - pb[i + 1]) > 8 ||
+                Math.abs(pa[i + 2] - pb[i + 2]) > 8
+              ) {
+                distintos++;
+              }
             }
           }
-          return { porcentaje: (distintos / (pa.length / 4)) * 100 };
-        }, [a, b]);
+          return { distintos, porcentaje: (distintos / (ia.width * alto)) * 100 };
+        }, [a, b, MARCO]);
         diferencias.push({ artefacto: art.id, encuadre: `${e.id} · ${tm} · ${lg.id}`, ...r });
       }
     }
@@ -295,8 +338,8 @@ for (const art of ARTEFACTOS) {
         return `  <figure data-tema="${tm}" data-idioma="${lg.id}">
     <figcaption><b>${e.id}</b> · ${tm} · ${lg.id} · ${e.alto} px</figcaption>
     <div class="par">
-      <div><span class="et">maqueta</span><img src="s1-${art.id}/maqueta/${n}" alt="${e.id} en la maqueta, tema ${tm}, idioma ${lg.id}"></div>
-      <div><span class="et">producto</span><img src="s1-${art.id}/producto/${n}" alt="${e.id} en el producto, tema ${tm}, idioma ${lg.id}"></div>
+      <div><span class="et">maqueta</span><img src="${SPRINT}-${art.id}/maqueta/${n}" alt="${e.id} en la maqueta, tema ${tm}, idioma ${lg.id}"></div>
+      <div><span class="et">producto</span><img src="${SPRINT}-${art.id}/producto/${n}" alt="${e.id} en el producto, tema ${tm}, idioma ${lg.id}"></div>
     </div>
   </figure>`;
       }),
@@ -304,13 +347,13 @@ for (const art of ARTEFACTOS) {
   ).join("\n");
 
   writeFileSync(
-    join(FIDELIDAD, `S1-${art.id}.html`),
+    join(FIDELIDAD, `${SPRINT.toUpperCase()}-${art.id}.html`),
     `<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Angel Ghost · Gate de fidelidad S1 — ${art.titulo}</title>
+<title>Angel Ghost · Gate de fidelidad ${SPRINT.toUpperCase()} — ${art.titulo}</title>
 <style>
   body { margin: 0; padding: 22px; background: #0d0e10; color: #cfd3d8; font: 14px/1.6 "Avenir Next", system-ui, sans-serif; }
   h1 { font-family: Charter, Georgia, serif; font-size: 26px; color: #e5e7eb; margin: 0 0 6px; }
@@ -362,7 +405,7 @@ await navegador.close();
 parar();
 
 console.log(`\n✓ ${hechas} encuadres del producto y ${diferencias.length} comparaciones`);
-for (const art of ARTEFACTOS) console.log(`✓ hoja de contacto: docs/fidelidad/S1-${art.id}.html`);
+for (const art of ARTEFACTOS) console.log(`✓ hoja de contacto: docs/fidelidad/${SPRINT.toUpperCase()}-${art.id}.html`);
 
 console.log("\n── desbordes en el producto ─────────────────────────────────");
 if (desbordes.length === 0) console.log("   ninguno");
@@ -370,20 +413,44 @@ else desbordes.forEach((d) => console.log(`   ⚠ ${d}`));
 console.log("─────────────────────────────────────────────────────────────");
 
 console.log("── píxeles distintos: maqueta vs producto ───────────────────");
-// El suelo no es cero y la razón está medida: el artefacto de la maqueta vive dentro de una
-// página de referencia cuyo marco redondeado le muerde la última fila de píxeles. En la banda
-// son ~73 px sobre 103 000 (0,07 %), todos en `y = 85..87`, y son del ENCUADRE, no del producto.
-// El umbral se pone en el doble de eso: cualquier desplazamiento real de texto pasa del 2 % (lo
-// midió el transcript antes de arreglarlo), así que 0,15 % separa el artefacto del defecto sin
-// holgura de sobra. Un umbral generoso «por si acaso» es un gate que no puede fallar.
+// **El suelo tenía dos partes, y solo una era del producto. El sprint 002 las separó.**
+//
+// Hasta entonces este umbral era 0,15 % y su comentario justificaba el suelo con «~73 px de marco
+// redondeado sobre 103 000». Las dos mitades estaban mezcladas:
+//
+// 1. **La mordida del marco** — 58 px en las nueve filas de abajo, del ENCUADRE y no del producto.
+//    Es **constante**: los mismos 58 px en una banda de 88 px y en una de 44. Medida en porcentaje
+//    valía 0,056 % en la primera y **0,112 % en la segunda**, porque la mordida no cambia y el área
+//    sí. Al llegar el modo solo audio, los seis encuadres de 44 px aparecieron pegados al umbral y
+//    dos lo pasaron **sin que hubiera nada que arreglar en el producto**.
+// 2. **El antialias del texto**, que sí escala con la cantidad de tinta y por tanto con el área.
+//
+// La 1 ya no se mide: `MARCO` la deja fuera. La 2 se mide en **porcentaje**, que es su unidad
+// natural — medirla en píxeles absolutos tiene el defecto simétrico, y se comprobó: con un techo de
+// 120 px las nueve pantallas del cuaderno (960 × 640, mucha más tinta) se ponían en rojo a 0,03 %.
+//
+// Con el marco fuera, el suelo real es **0,072 %** (honestidad en inglés, la pantalla con más
+// texto) y un desplazamiento de verdad son **más del 2 %** — lo midió el transcript antes de
+// arreglarlo. El umbral se queda en 0,15 % y ahora quiere decir lo mismo a cualquier alto. Un
+// umbral generoso «por si acaso» es un gate que no puede fallar.
 const UMBRAL = 0.15; // %
 const fuera = diferencias.filter((d) => d.medida || d.porcentaje > UMBRAL);
-for (const d of diferencias.slice().sort((x, y) => (y.porcentaje ?? 100) - (x.porcentaje ?? 100)).slice(0, 8)) {
-  console.log(`   ${d.medida ? `medidas distintas: ${d.medida}` : `${d.porcentaje.toFixed(3)} %`}  ${d.artefacto} · ${d.encuadre}`);
+for (const d of diferencias.slice().sort((x, y) => (y.distintos ?? 1e9) - (x.distintos ?? 1e9)).slice(0, 8)) {
+  const cuanto = d.medida
+    ? `medidas distintas: ${d.medida}`
+    : `${d.porcentaje.toFixed(3)} %  (${String(d.distintos).padStart(5)} px)`;
+  console.log(`   ${cuanto}  ${d.artefacto} · ${d.encuadre}`);
 }
-console.log(`   … ${diferencias.length} encuadres comparados; umbral ${UMBRAL} %`);
+console.log(
+  `   … ${diferencias.length} encuadres comparados; umbral ${UMBRAL} % (sin las ${MARCO} filas del marco)`,
+);
 if (fuera.length === 0) console.log("   ✓ ninguno pasa del umbral");
-else fuera.forEach((d) => console.log(`   ⚠ ${d.artefacto} · ${d.encuadre}: ${d.medida ?? d.porcentaje.toFixed(3) + " %"}`));
+else
+  fuera.forEach((d) =>
+    console.log(
+      `   ⚠ ${d.artefacto} · ${d.encuadre}: ${d.medida ?? `${d.porcentaje.toFixed(3)} % (${d.distintos} px)`}`,
+    ),
+  );
 console.log("─────────────────────────────────────────────────────────────");
 
 console.log("── errores de página ────────────────────────────────────────");

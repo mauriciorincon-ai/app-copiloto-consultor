@@ -1,16 +1,26 @@
-import { act, render } from "@testing-library/react";
+import { act, fireEvent, render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Banda } from "@/componentes/Banda";
+import { Sesion } from "@/pantallas/Sesion";
 import { IdiomaContext } from "@/i18n";
-import { preguntar } from "@/puente";
+import { llamar, preguntar } from "@/puente";
 import { es } from "@/i18n/es";
 import {
   APARICION_DEL_ATAJO,
+  EN_TU_MAC_LIMPIO,
+  EN_TU_MAC_VIGILADO,
   ESTADO_DEL_CORPUS,
   NOVEDAD_APARECE_FICHA,
+  NOVEDAD_APARECE_POR_PANTALLA,
   NOVEDAD_APARECE_SIN_RESULTADO,
+  NOVEDAD_NADA_EN_PANTALLA,
+  NOVEDAD_RADAR,
   NOVEDAD_TURNO,
+  PANTALLA_APAGADA,
+  PANTALLA_LEYENDO,
+  ESTADO_DE_LA_ESCUCHA,
   REUNION_DETECTADA,
+  SALIDA_DE_AUDIO,
   TURNO_DEL_CLIENTE,
 } from "@/contrato.generado";
 
@@ -55,7 +65,12 @@ vi.mock("@/puente", () => ({
   // **Cada comando responde lo suyo.** Un doble que contesta lo mismo a todo le daba la aparición
   // del atajo a `estado_de_la_escucha`, y la banda reventaba leyendo pistas donde había una ficha:
   // el arnés mentía sobre la forma del puente.
-  preguntar: vi.fn((comando: string) => Promise.resolve(respuestas.get(comando) ?? null)),
+  // Un `Error` en `respuestas` hace que el comando FALLE: el doble tiene que saber rechazar, o no
+  // puede ver lo que pasa cuando el puente falla (la banda colgada en «buscando», fase 3 del S2).
+  preguntar: vi.fn((comando: string) => {
+    const r = respuestas.get(comando);
+    return r instanceof Error ? Promise.reject(r) : Promise.resolve(r ?? null);
+  }),
   llamar: vi.fn(() => Promise.resolve(true)),
 }));
 
@@ -69,12 +84,12 @@ async function emitir(evento: string, payload: unknown) {
 }
 
 /** La banda dentro de Tauri, con la suscripción ya montada. */
-async function laBanda() {
+async function laBanda(ampliada = true) {
   const pintada = render(
     <IdiomaContext.Provider value="es">
       {/* «esperando» es lo que la URL pide; dentro del producto manda la ficha, y eso es
           justamente lo que este test comprueba. */}
-      <Banda estado="esperando" ampliada />
+      <Banda estado="esperando" ampliada={ampliada} />
     </IdiomaContext.Provider>,
   );
   // Los efectos de montaje ya registraron las suscripciones; este giro de bucle deja que las
@@ -127,7 +142,7 @@ describe("la ficha, dentro del producto", () => {
   /** El camino del atajo era el ÚNICO que funcionaba en el binario del sprint, porque va por su
    *  propio evento y por `pedir_ficha`. Que siga funcionando se prueba aquí, con el payload que
    *  ese comando devuelve de verdad. */
-  it("⌘⇧A pide la ficha y la pinta", async () => {
+  it("⌃⌥A pide la ficha y la pinta", async () => {
     respuestas.set("pedir_ficha", APARICION_DEL_ATAJO);
     await laBanda();
 
@@ -138,6 +153,93 @@ describe("la ficha, dentro del producto", () => {
     if (APARICION_DEL_ATAJO.clase !== "ficha") throw new Error("la muestra dejó de ser ficha");
     expect(banda().textContent).toContain(APARICION_DEL_ATAJO.titular);
     expect(vi.mocked(preguntar)).toHaveBeenCalledWith("pedir_ficha");
+  });
+
+  /**
+   * **Por qué llegó y cuánto tardó** (mirada 17-bis). Se medían desde el sprint 001 y cruzaban la
+   * costura sin que nadie los pintara: dos de los diecisiete campos huérfanos.
+   */
+  it("la ficha dice por qué llegó y cuánto tardó", async () => {
+    await laBanda();
+    await emitir("escucha", NOVEDAD_APARECE_FICHA);
+    if (NOVEDAD_APARECE_FICHA.que !== "aparece") throw new Error("la muestra dejó de ser aparición");
+    const porQue = banda().querySelector(".por-que") as HTMLElement;
+    expect(porQue.textContent).toContain(
+      `${es.banda.motivos[NOVEDAD_APARECE_FICHA.motivo]} · 1,2 s`,
+    );
+    expect(porQue.querySelector("use")?.getAttribute("href")).toBe("#i-reloj");
+  });
+
+  /** La única ficha que llega sin que nadie diga nada lleva su propio símbolo (mirada 17-quater). */
+  it("la ficha que trajo la pantalla lleva la pantalla, no el reloj", async () => {
+    await laBanda();
+    await emitir("escucha", NOVEDAD_APARECE_POR_PANTALLA);
+    const porQue = banda().querySelector(".por-que") as HTMLElement;
+    expect(porQue.textContent).toContain(es.banda.motivos.pantalla);
+    expect(porQue.querySelector("use")?.getAttribute("href")).toBe("#i-pantalla");
+  });
+
+  /** La sección la conjeturó el lector de PDF: se dice en la línea del porqué, que no se corta. */
+  it("una sección conjeturada se marca en la ficha", async () => {
+    await laBanda();
+    if (NOVEDAD_APARECE_FICHA.que !== "aparece" || NOVEDAD_APARECE_FICHA.clase !== "ficha") {
+      throw new Error("la muestra dejó de ser ficha");
+    }
+    expect(banda().querySelector(".conjetura")).toBeNull();
+    await emitir("escucha", {
+      ...NOVEDAD_APARECE_FICHA,
+      fuente: { ...NOVEDAD_APARECE_FICHA.fuente, conjeturada: true },
+    });
+    expect(banda().querySelector(".por-que .conjetura")?.textContent).toContain(
+      es.banda.seccionConjeturada,
+    );
+  });
+
+  /**
+   * **`⌃⌥L` sin texto: la banda contesta igual**, porque alguien preguntó. Sin esto la tecla
+   * parecería rota. El payload es el que Rust emite (`NOVEDAD_NADA_EN_PANTALLA`).
+   */
+  it("la lectura pedida sin texto se contesta, y la siguiente ficha la sustituye", async () => {
+    await laBanda();
+    await emitir("escucha", NOVEDAD_NADA_EN_PANTALLA);
+    expect(banda().dataset.estado).toBe("pantalla-nada");
+    expect(banda().textContent).toContain(es.banda.leiLaPantalla);
+    expect(banda().textContent).toContain(`${es.banda.motivos.atajo} · 14:05`);
+
+    await emitir("escucha", NOVEDAD_APARECE_FICHA);
+    expect(banda().dataset.estado).toBe("ficha");
+  });
+
+  /** El transcript dice la hora **y cuánto duró** cada turno (mirada 17-bis): el tramo que Rust mide. */
+  it("el transcript enseña el tramo de cada turno", async () => {
+    respuestas.set("turnos_recientes", [TURNO_DEL_CLIENTE]);
+    render(
+      <IdiomaContext.Provider value="es">
+        <Banda estado="esperando" transcript />
+      </IdiomaContext.Provider>,
+    );
+    await act(async () => {});
+    await emitir("escucha", NOVEDAD_APARECE_FICHA);
+    const segundos = Math.round((TURNO_DEL_CLIENTE.hastaMs - TURNO_DEL_CLIENTE.desdeMs) / 1000);
+    expect(banda().querySelector(".transcript-b")?.textContent).toContain(
+      `${TURNO_DEL_CLIENTE.hora} · ${segundos} s`,
+    );
+  });
+
+  /**
+   * **⌃⌥A antes de que el cliente hable** —lo encontró la corrida en vivo—: Rust contesta «nada» y la
+   * banda vuelve a esperar; y si el puente falla, tampoco se queda buscando para siempre.
+   */
+  it("⌃⌥A sin nada que buscar no deja la banda en «buscando»", async () => {
+    await laBanda();
+    await emitir("ficha", null);
+    await act(async () => {});
+    expect(banda().dataset.estado).toBe("esperando");
+
+    respuestas.set("pedir_ficha", new Error("el puente falló"));
+    await emitir("ficha", null);
+    await act(async () => {});
+    expect(banda().dataset.estado).toBe("esperando");
   });
 
   it("tras el corte no queda ficha en pantalla", async () => {
@@ -208,5 +310,143 @@ describe("dentro del producto la banda no enseña la consultora de la maqueta", 
 
     expect(banda().textContent).toContain(TURNO_DEL_CLIENTE.texto);
     expect(banda().textContent).toContain(`${es.banda.cliente} ${TURNO_DEL_CLIENTE.hora}`);
+  });
+});
+
+/**
+ * **EL EVENTO «pantalla», DE PUNTA A PUNTA** (regla 19): Sesión pregunta el estado al montarse y
+ * después escucha el evento. El payload es el que Rust emite; el test comprueba que la fila cambia
+ * sola cuando la lectura se apaga, sin que nadie vuelva a preguntar.
+ */
+describe("la pantalla, dentro del producto", () => {
+  it("Sesión pinta lo que dice el evento «pantalla»", async () => {
+    respuestas.set("estado_de_la_pantalla", PANTALLA_LEYENDO);
+    render(
+      <IdiomaContext.Provider value="es">
+        <Sesion reunion={{ que: "ninguna" }} escucha={ESTADO_DE_LA_ESCUCHA} salida={SALIDA_DE_AUDIO} />
+      </IdiomaContext.Provider>,
+    );
+    await act(async () => {});
+    const interruptor = () => document.querySelector("[role=switch]") as HTMLElement;
+    expect(interruptor().getAttribute("aria-checked")).toBe("true");
+
+    await emitir("pantalla", PANTALLA_APAGADA);
+    expect(interruptor().getAttribute("aria-checked")).toBe("false");
+    expect(document.body.textContent).toContain(es.cuaderno.pantallaApagadaPor);
+  });
+});
+
+/**
+ * **EL RADAR, DE PUNTA A PUNTA** (C14, regla 19). Dos caminos, y los dos con el payload que Rust
+ * escribe: el ámbar llega como una `Novedad` del evento «escucha» —nace de la lectura de pantalla—
+ * y el coral por su propio evento, «radar», que también se pregunta al montarse porque el radar da
+ * su primera vuelta al arrancar la app, antes de que la banda escuche.
+ */
+describe("el radar, dentro del producto", () => {
+  const b = es.banda;
+
+  it("el ámbar llega por «escucha» con la frase entera, y la ficha siguiente lo sustituye", async () => {
+    respuestas.set("reunion_abierta", REUNION_DETECTADA);
+    await laBanda(false);
+    await emitir("escucha", NOVEDAD_RADAR);
+    expect(banda().dataset.estado).toBe("radar");
+    if (NOVEDAD_RADAR.que !== "radar") throw new Error("la muestra dejó de ser del radar");
+    expect(banda().textContent).toContain(b.radarGrabadaYBot);
+    expect(banda().textContent).toContain(
+      `${b.radarMuestraElAviso} ${b.radarY} «${NOVEDAD_RADAR.bots[0]}» ${b.radarEnLaLista} ${b.radarNoEsAngel} ${b.radarAvisoNoBloqueo}`,
+    );
+    expect(banda().textContent).toContain(`${b.radarLeidoDeTuPantalla} · ${NOVEDAD_RADAR.hora}`);
+
+    await emitir("escucha", NOVEDAD_APARECE_FICHA);
+    expect(banda().dataset.estado).toBe("ficha");
+  });
+
+  it("sin reunión detectada, el ámbar no se inventa el cliente: dice lo demás", async () => {
+    await laBanda(false);
+    await emitir("escucha", NOVEDAD_RADAR);
+    const texto = banda().textContent ?? "";
+    expect(texto).not.toContain(b.radarMuestraElAviso);
+    expect(texto).not.toMatch(/null|undefined/);
+    expect(texto).toContain(`${b.radarEnLaLista} ${b.radarNoEsAngel} ${b.radarAvisoNoBloqueo}`);
+  });
+
+  it("el coral llega por «radar»: dice qué ve el programa, calla el MDM y se va cuando el programa se cierra", async () => {
+    respuestas.set("radar_de_tu_mac", EN_TU_MAC_LIMPIO);
+    await laBanda(false);
+    expect(banda().dataset.estado).toBe("esperando");
+
+    await emitir("radar", EN_TU_MAC_VIGILADO);
+    expect(banda().dataset.estado).toBe("radar-invasivo");
+    const [proctor, mdm] = EN_TU_MAC_VIGILADO.programas;
+    expect(banda().textContent).toContain(b.radarTeMira);
+    expect(banda().textContent).toContain(`«${proctor!.nombre}» (${b.radarClases.supervision}): ${proctor!.ve.es}.`);
+    expect(banda().textContent).toContain(`${b.radarCatalogo} v${EN_TU_MAC_VIGILADO.catalogo.version}`);
+    // El MDM es «sábelo»: vive en Sesión, no salta a la banda.
+    expect(banda().textContent).not.toContain(mdm!.nombre);
+
+    await emitir("radar", EN_TU_MAC_LIMPIO);
+    expect(banda().dataset.estado).toBe("esperando");
+  });
+
+  it("el coral que ya estaba antes de montarse la banda también se ve", async () => {
+    respuestas.set("radar_de_tu_mac", EN_TU_MAC_VIGILADO);
+    await laBanda(false);
+    expect(banda().dataset.estado).toBe("radar-invasivo");
+  });
+
+  it("ampliada, el coral trae sus dos botones: «Ver qué alcanza a ver» abre Sesión", async () => {
+    respuestas.set("radar_de_tu_mac", EN_TU_MAC_VIGILADO);
+    await laBanda(true);
+    expect(banda().textContent).toContain(`${b.radarSigueProtegida} · 0 B ${b.radarEnRed} · ${b.radarNadaPersiste}`);
+    const ver = [...banda().querySelectorAll("button")].find((x) => x.textContent === b.radarVerQueVe);
+    expect(ver, "falta «Ver qué alcanza a ver»").toBeTruthy();
+    fireEvent.click(ver!);
+    expect(llamar).toHaveBeenCalledWith("abrir_lo_que_ve");
+  });
+
+  it("Sesión, antes de empezar: la pantalla entera es el aviso, y «No iniciar» lo da por visto", async () => {
+    respuestas.set("radar_de_tu_mac", EN_TU_MAC_VIGILADO);
+    render(
+      <IdiomaContext.Provider value="es">
+        <Sesion
+          reunion={{ que: "ninguna" }}
+          escucha={{ ...ESTADO_DE_LA_ESCUCHA, escuchando: false }}
+          salida={SALIDA_DE_AUDIO}
+        />
+      </IdiomaContext.Provider>,
+    );
+    await act(async () => {});
+    const c = es.cuaderno;
+    expect(document.body.textContent).toContain(c.vigilanciaTitulo);
+    // Antes de empezar, la pantalla entera es el aviso: no hay botón de «Iniciar sesión» aún.
+    expect(document.body.textContent).not.toContain(c.iniciarSesion);
+    const filas = [...document.querySelectorAll("table.tabla tbody tr")];
+    expect(filas.map((f) => f.textContent)).toEqual([
+      expect.stringContaining(EN_TU_MAC_VIGILADO.programas[0]!.alcance.es),
+      expect.stringContaining(c.sabelo),
+    ]);
+    expect(filas[1]!.className).toBe("apagada");
+    expect(filas[0]!.textContent).toContain(`v1 · ${EN_TU_MAC_VIGILADO.catalogo.fecha}`);
+
+    const no = [...document.querySelectorAll("button")].find((x) => x.textContent === c.noIniciar);
+    fireEvent.click(no!);
+    expect(document.body.textContent).not.toContain(c.vigilanciaTitulo);
+    expect(document.body.textContent).toContain(c.iniciarSesion);
+  });
+
+  it("Sesión, con la sesión en marcha: el aviso va arriba, sin botones de empezar, y lo demás sigue", async () => {
+    respuestas.set("radar_de_tu_mac", EN_TU_MAC_VIGILADO);
+    render(
+      <IdiomaContext.Provider value="es">
+        <Sesion reunion={{ que: "ninguna" }} escucha={ESTADO_DE_LA_ESCUCHA} salida={SALIDA_DE_AUDIO} />
+      </IdiomaContext.Provider>,
+    );
+    await act(async () => {});
+    const c = es.cuaderno;
+    const texto = document.body.textContent ?? "";
+    expect(texto).toContain(c.vigilanciaTitulo);
+    expect(texto).not.toContain(c.iniciarDeTodosModos);
+    expect(texto).toContain(c.iniciarSesion);
+    expect(texto.indexOf(c.vigilanciaTitulo)).toBeLessThan(texto.indexOf(c.iniciarSesion));
   });
 });

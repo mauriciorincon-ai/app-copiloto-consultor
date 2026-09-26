@@ -150,13 +150,20 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .banda .titular-b { font-family: var(--font-evidencia); font-size: 16px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .banda .linea-b { font-family: var(--font-evidencia); font-size: 13.5px; line-height: 1.35; color: var(--ink-2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
 .banda.ampliada .linea-b { -webkit-line-clamp: 2; }
-.banda .lado-b { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; max-width: 34%; }
+.banda .lado-b { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; max-width: 34%; }
 .banda .fuente-b { font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .banda .atajos-b { display: inline-flex; gap: 10px; }
 .banda .mas { padding: 0; }
 .banda.voz .cuerpo-b { align-items: center; padding: 0 14px; height: 100%; }
 .banda.voz .linea-b { font-size: 13px; -webkit-line-clamp: 1; white-space: nowrap; }
 .banda.voz .cab-b { display: none; }
+.banda.voz .linea-b { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+.banda.voz .linea-b .ic { flex: 0 0 auto; color: var(--halo); }
+.banda.voz .linea-b.warn { color: var(--warn); }
+.banda.voz .linea-b.warn .ic { color: var(--warn); }
+.banda.voz .linea-b .sep { color: var(--line-2); flex: 0 0 auto; }
+.banda.voz .linea-b .fuente-b { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.banda.voz .lado-b { flex-direction: row; align-items: center; gap: 12px; max-width: none; }
 .banda .marca-min { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-size: var(--t-meta); white-space: nowrap; flex: 0 0 auto; }
 .banda .marca-min.halo { color: var(--halo); }
 .banda .marca-min.warn { color: var(--warn); }
@@ -164,12 +171,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .banda .cliente-b.warn { color: var(--warn); }
 .banda .voz-b { font-family: var(--font-evidencia); font-style: italic; font-size: 15px; line-height: 1.4; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .banda .meta-b { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.banda .meta-b .conjetura { display: inline-flex; align-items: center; gap: 4px; margin-left: 4px; padding-left: 8px; border-left: var(--borde) solid var(--line-2); }
 .banda .oido { font-size: var(--t-meta); min-width: 0; }
 .banda .oido q { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .banda .aviso-b { display: flex; align-items: flex-start; gap: 8px; min-width: 0; font-size: var(--t-meta); line-height: 1.35; color: var(--warn); }
 .banda .aviso-b .ic { flex: 0 0 auto; margin-top: 1px; }
+.banda .aviso-b > span { min-width: 0; }
 .banda .aviso-b strong { display: block; font-size: var(--t-ui); font-weight: 600; color: var(--ink); }
 .banda .aviso-b .salida { display: block; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.banda .aviso-b.err { color: var(--err); }
 .banda.ampliada .lado-b { max-width: 40%; }
 .banda .transcript-b { display: flex; flex-direction: column; gap: 3px; width: 100%; min-width: 0; padding: 6px 8px; border: var(--borde) solid var(--line-2); border-radius: var(--r-ficha); background: var(--surface); }
 .banda .transcript-b .cab { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
@@ -257,7 +267,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -275,7 +285,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         <span class="lado-b" data-en="esperando">
           <span class="meta-b"><svg class="ic s"><use href="#i-reloj"></use></svg><span lang="es">Páramo Azul · 12 min</span><span lang="en">Páramo Azul · 12 min</span></span>
           <span class="atajos-b">
-            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
+            <span class="tecla"><kbd>⌃⌥A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
             <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
           </span>
         </span>
@@ -288,7 +298,39 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
         
 
+        <!-- ----------------------- ficha · la trajo la pantalla ----------------------- -->
+        <!-- Mirada 17-quater. El motivo nuevo, «en pantalla», con su propio símbolo: la pantalla y no
+             el reloj. Es la única ficha que llega sin que nadie diga nada, y eso tiene que verse. -->
+        
+        
+
+        <!-- ---------------------- pantalla · nada que leer ------------------------ -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
+        
+        
+
         <!-- ---------------------------- sin resultado ---------------------------- -->
+        
+        
+
+        <!-- ------------------------- radar · te graban --------------------------- -->
+        <!-- El copy sale del panel (mirada 1), traído a la anatomía de la banda. `i-rec` es un
+             anillo con un punto dentro y NO lleva `relleno`: rellenarlo se come el anillo. -->
+        
+        
+
+        <!-- ------------------------- radar · te vigilan -------------------------- -->
+        <!-- Coral, y con OTRO símbolo además del color: la equis rellena frente al punto de
+             grabación del ámbar. Regla 8 — el color no puede ser el único portador, y aquí los dos
+             estados son avisos: distinguirlos por «más rojo» no vale. -->
         
         
 
@@ -313,7 +355,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -337,7 +379,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         <span class="lado-b" data-en="buscando">
           <span class="atajos-b">
-            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
+            <span class="tecla"><kbd>⌃⌥A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
             <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
           </span>
         </span>
@@ -346,7 +388,39 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
         
 
+        <!-- ----------------------- ficha · la trajo la pantalla ----------------------- -->
+        <!-- Mirada 17-quater. El motivo nuevo, «en pantalla», con su propio símbolo: la pantalla y no
+             el reloj. Es la única ficha que llega sin que nadie diga nada, y eso tiene que verse. -->
+        
+        
+
+        <!-- ---------------------- pantalla · nada que leer ------------------------ -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
+        
+        
+
         <!-- ---------------------------- sin resultado ---------------------------- -->
+        
+        
+
+        <!-- ------------------------- radar · te graban --------------------------- -->
+        <!-- El copy sale del panel (mirada 1), traído a la anatomía de la banda. `i-rec` es un
+             anillo con un punto dentro y NO lleva `relleno`: rellenarlo se come el anillo. -->
+        
+        
+
+        <!-- ------------------------- radar · te vigilan -------------------------- -->
+        <!-- Coral, y con OTRO símbolo además del color: la equis rellena frente al punto de
+             grabación del ámbar. Regla 8 — el color no puede ser el único portador, y aquí los dos
+             estados son avisos: distinguirlos por «más rojo» no vale. -->
         
         
 
@@ -371,7 +445,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -396,14 +470,50 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         <span class="lado-b" data-en="ficha flotante">
           <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <!-- Mirada 17-bis: POR QUÉ disparó y CUÁNTO tardó. Los dos se miden desde el sprint 001 y
+               cruzaban la costura sin que nadie los pintara. El reloj, porque el número es tiempo; el
+               motivo va en palabras, las cinco de `Motivo::etiqueta()`. -->
+          <span class="meta-b por-que"><svg class="ic s"><use href="#i-reloj"></use></svg><span lang="es">pregunta · 1,2 s</span><span lang="en">question · 1.2 s</span></span>
           <span class="atajos-b">
-            <span class="tecla"><kbd>⌘⇧P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
-            <span class="tecla"><kbd>⌘⇧T</kbd> transcript</span>
+            <span class="tecla"><kbd>⌃⌥P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla"><kbd>⌃⌥T</kbd> transcript</span>
             <span class="tecla"><kbd>⌥⎋</kbd></span>
           </span>
         </span>
 
+        <!-- ----------------------- ficha · la trajo la pantalla ----------------------- -->
+        <!-- Mirada 17-quater. El motivo nuevo, «en pantalla», con su propio símbolo: la pantalla y no
+             el reloj. Es la única ficha que llega sin que nadie diga nada, y eso tiene que verse. -->
+        
+        
+
+        <!-- ---------------------- pantalla · nada que leer ------------------------ -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
+        
+        
+
         <!-- ---------------------------- sin resultado ---------------------------- -->
+        
+        
+
+        <!-- ------------------------- radar · te graban --------------------------- -->
+        <!-- El copy sale del panel (mirada 1), traído a la anatomía de la banda. `i-rec` es un
+             anillo con un punto dentro y NO lleva `relleno`: rellenarlo se come el anillo. -->
+        
+        
+
+        <!-- ------------------------- radar · te vigilan -------------------------- -->
+        <!-- Coral, y con OTRO símbolo además del color: la equis rellena frente al punto de
+             grabación del ámbar. Regla 8 — el color no puede ser el único portador, y aquí los dos
+             estados son avisos: distinguirlos por «más rojo» no vale. -->
         
         
 
@@ -428,7 +538,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -450,6 +560,25 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
         
 
+        <!-- ----------------------- ficha · la trajo la pantalla ----------------------- -->
+        <!-- Mirada 17-quater. El motivo nuevo, «en pantalla», con su propio símbolo: la pantalla y no
+             el reloj. Es la única ficha que llega sin que nadie diga nada, y eso tiene que verse. -->
+        
+        
+
+        <!-- ---------------------- pantalla · nada que leer ------------------------ -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
+        
+        
+
         <!-- ---------------------------- sin resultado ---------------------------- -->
         <span class="ficha-b" data-en="sin-resultado">
           <span class="titular-b"><span lang="es">Nada en tu corpus sobre «certificación ISO 27001»</span><span lang="en">Nothing in your corpus about “ISO 27001 certification”</span></span>
@@ -464,11 +593,24 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
             <span class="d"><span lang="es">marco · §5.1 Seguridad y manejo de datos</span><span lang="en">framework · §5.1 Data security and handling</span></span>
           </span>
           <span class="atajos-b">
-            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">otras palabras</span><span lang="en">other words</span></span>
-            <span class="tecla"><kbd>⌘⇧N</kbd> <span lang="es">anotar</span><span lang="en">note it</span></span>
+            <span class="tecla"><kbd>⌃⌥A</kbd> <span lang="es">otras palabras</span><span lang="en">other words</span></span>
+            <span class="tecla"><kbd>⌃⌥N</kbd> <span lang="es">anotar</span><span lang="en">note it</span></span>
             <span class="tecla"><kbd>⌥⎋</kbd></span>
           </span>
         </span>
+
+        <!-- ------------------------- radar · te graban --------------------------- -->
+        <!-- El copy sale del panel (mirada 1), traído a la anatomía de la banda. `i-rec` es un
+             anillo con un punto dentro y NO lleva `relleno`: rellenarlo se come el anillo. -->
+        
+        
+
+        <!-- ------------------------- radar · te vigilan -------------------------- -->
+        <!-- Coral, y con OTRO símbolo además del color: la equis rellena frente al punto de
+             grabación del ámbar. Regla 8 — el color no puede ser el único portador, y aquí los dos
+             estados son avisos: distinguirlos por «más rojo» no vale. -->
+        
+        
 
         <!-- ---------------------------- sin verificar ---------------------------- -->
         
@@ -514,7 +656,39 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
         
 
+        <!-- ----------------------- ficha · la trajo la pantalla ----------------------- -->
+        <!-- Mirada 17-quater. El motivo nuevo, «en pantalla», con su propio símbolo: la pantalla y no
+             el reloj. Es la única ficha que llega sin que nadie diga nada, y eso tiene que verse. -->
+        
+        
+
+        <!-- ---------------------- pantalla · nada que leer ------------------------ -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
+        
+        
+
         <!-- ---------------------------- sin resultado ---------------------------- -->
+        
+        
+
+        <!-- ------------------------- radar · te graban --------------------------- -->
+        <!-- El copy sale del panel (mirada 1), traído a la anatomía de la banda. `i-rec` es un
+             anillo con un punto dentro y NO lleva `relleno`: rellenarlo se come el anillo. -->
+        
+        
+
+        <!-- ------------------------- radar · te vigilan -------------------------- -->
+        <!-- Coral, y con OTRO símbolo además del color: la equis rellena frente al punto de
+             grabación del ámbar. Regla 8 — el color no puede ser el único portador, y aquí los dos
+             estados son avisos: distinguirlos por «más rojo» no vale. -->
         
         
 
@@ -531,7 +705,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         <span class="lado-b" data-en="sin-verificar">
           <span class="meta-b"><span lang="es">Verificada solo en Meet · macOS 26.6.2 · 2026-09-20</span><span lang="en">Verified only in Meet · macOS 26.6.2 · 2026-09-20</span></span>
           <span class="atajos-b">
-            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
+            <span class="tecla"><kbd>⌃⌥A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
             <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
           </span>
         </span>
@@ -551,7 +725,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
           <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
           <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
         </span>
-        <span class="cliente-b" data-en="ficha-2 sin-resultado-2 transcript">
+        <span class="cliente-b" data-en="ficha-2 sin-resultado-2 transcript radar-invasivo-2">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -584,14 +758,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
             <span class="cab">
               <svg class="ic s"><use href="#i-ojo"></use></svg>
               <span lang="es">en vivo · solo en memoria</span><span lang="en">live · in memory only</span>
-              <span class="tecla"><kbd>⌘⇧T</kbd> <span lang="es">ocultar</span><span lang="en">hide</span></span>
+              <span class="tecla"><kbd>⌃⌥T</kbd> <span lang="es">ocultar</span><span lang="en">hide</span></span>
             </span>
-            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:01</span></span><q><span lang="es">Y la limpieza de datos, ¿eso está dentro del alcance?</span><span lang="en">And the data cleansing, is that within scope?</span></q></span>
-            <span class="turno tu"><span class="quien"><svg class="ic s"><use href="#i-mic"></use></svg><span lang="es">tú</span><span lang="en">you</span><span class="hora">14:02</span></span><q><span lang="es">Sí, la limpieza de las tres fuentes que acordamos está incluida.</span><span lang="en">Yes, cleansing the three sources we agreed on is included.</span></q></span>
-            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:02</span></span><q><span lang="es">¿Y si sumamos el Excel de la fuerza comercial? Lo tenemos en Power BI.</span><span lang="en">What if we add the sales team’s Excel? We have it in Power BI.</span></q></span>
+            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:01 · 4 s</span></span><q><span lang="es">Y la limpieza de datos, ¿eso está dentro del alcance?</span><span lang="en">And the data cleansing, is that within scope?</span></q></span>
+            <span class="turno tu"><span class="quien"><svg class="ic s"><use href="#i-mic"></use></svg><span lang="es">tú</span><span lang="en">you</span><span class="hora">14:02 · 5 s</span></span><q><span lang="es">Sí, la limpieza de las tres fuentes que acordamos está incluida.</span><span lang="en">Yes, cleansing the three sources we agreed on is included.</span></q></span>
+            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:02 · 6 s</span></span><q><span lang="es">¿Y si sumamos el Excel de la fuerza comercial? Lo tenemos en Power BI.</span><span lang="en">What if we add the sales team’s Excel? We have it in Power BI.</span></q></span>
           </span>
           <span class="atajos-b">
-            <span class="tecla"><kbd>⌘⇧P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla"><kbd>⌃⌥P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
             <span class="tecla"><kbd>⌥⎋</kbd></span>
           </span>
         </span>
@@ -601,6 +775,10 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
 
         <!-- ----------------------- sin verificar · ampliada ----------------------- -->
+        <!-- ------------------- radar · te vigilan · ampliada -------------------- -->
+        
+        
+
         
         
 
@@ -624,7 +802,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -642,7 +820,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         <span class="lado-b" data-en="esperando">
           <span class="meta-b"><svg class="ic s"><use href="#i-reloj"></use></svg><span lang="es">Páramo Azul · 12 min</span><span lang="en">Páramo Azul · 12 min</span></span>
           <span class="atajos-b">
-            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
+            <span class="tecla"><kbd>⌃⌥A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
             <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
           </span>
         </span>
@@ -655,7 +833,39 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
         
 
+        <!-- ----------------------- ficha · la trajo la pantalla ----------------------- -->
+        <!-- Mirada 17-quater. El motivo nuevo, «en pantalla», con su propio símbolo: la pantalla y no
+             el reloj. Es la única ficha que llega sin que nadie diga nada, y eso tiene que verse. -->
+        
+        
+
+        <!-- ---------------------- pantalla · nada que leer ------------------------ -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
+        
+        
+
         <!-- ---------------------------- sin resultado ---------------------------- -->
+        
+        
+
+        <!-- ------------------------- radar · te graban --------------------------- -->
+        <!-- El copy sale del panel (mirada 1), traído a la anatomía de la banda. `i-rec` es un
+             anillo con un punto dentro y NO lleva `relleno`: rellenarlo se come el anillo. -->
+        
+        
+
+        <!-- ------------------------- radar · te vigilan -------------------------- -->
+        <!-- Coral, y con OTRO símbolo además del color: la equis rellena frente al punto de
+             grabación del ámbar. Regla 8 — el color no puede ser el único portador, y aquí los dos
+             estados son avisos: distinguirlos por «más rojo» no vale. -->
         
         
 
@@ -680,7 +890,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -704,7 +914,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         <span class="lado-b" data-en="buscando">
           <span class="atajos-b">
-            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
+            <span class="tecla"><kbd>⌃⌥A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
             <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
           </span>
         </span>
@@ -713,7 +923,39 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
         
 
+        <!-- ----------------------- ficha · la trajo la pantalla ----------------------- -->
+        <!-- Mirada 17-quater. El motivo nuevo, «en pantalla», con su propio símbolo: la pantalla y no
+             el reloj. Es la única ficha que llega sin que nadie diga nada, y eso tiene que verse. -->
+        
+        
+
+        <!-- ---------------------- pantalla · nada que leer ------------------------ -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
+        
+        
+
         <!-- ---------------------------- sin resultado ---------------------------- -->
+        
+        
+
+        <!-- ------------------------- radar · te graban --------------------------- -->
+        <!-- El copy sale del panel (mirada 1), traído a la anatomía de la banda. `i-rec` es un
+             anillo con un punto dentro y NO lleva `relleno`: rellenarlo se come el anillo. -->
+        
+        
+
+        <!-- ------------------------- radar · te vigilan -------------------------- -->
+        <!-- Coral, y con OTRO símbolo además del color: la equis rellena frente al punto de
+             grabación del ámbar. Regla 8 — el color no puede ser el único portador, y aquí los dos
+             estados son avisos: distinguirlos por «más rojo» no vale. -->
         
         
 
@@ -738,7 +980,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -763,14 +1005,50 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         <span class="lado-b" data-en="ficha flotante">
           <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <!-- Mirada 17-bis: POR QUÉ disparó y CUÁNTO tardó. Los dos se miden desde el sprint 001 y
+               cruzaban la costura sin que nadie los pintara. El reloj, porque el número es tiempo; el
+               motivo va en palabras, las cinco de `Motivo::etiqueta()`. -->
+          <span class="meta-b por-que"><svg class="ic s"><use href="#i-reloj"></use></svg><span lang="es">pregunta · 1,2 s</span><span lang="en">question · 1.2 s</span></span>
           <span class="atajos-b">
-            <span class="tecla"><kbd>⌘⇧P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
-            <span class="tecla"><kbd>⌘⇧T</kbd> transcript</span>
+            <span class="tecla"><kbd>⌃⌥P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla"><kbd>⌃⌥T</kbd> transcript</span>
             <span class="tecla"><kbd>⌥⎋</kbd></span>
           </span>
         </span>
 
+        <!-- ----------------------- ficha · la trajo la pantalla ----------------------- -->
+        <!-- Mirada 17-quater. El motivo nuevo, «en pantalla», con su propio símbolo: la pantalla y no
+             el reloj. Es la única ficha que llega sin que nadie diga nada, y eso tiene que verse. -->
+        
+        
+
+        <!-- ---------------------- pantalla · nada que leer ------------------------ -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
+        
+        
+
         <!-- ---------------------------- sin resultado ---------------------------- -->
+        
+        
+
+        <!-- ------------------------- radar · te graban --------------------------- -->
+        <!-- El copy sale del panel (mirada 1), traído a la anatomía de la banda. `i-rec` es un
+             anillo con un punto dentro y NO lleva `relleno`: rellenarlo se come el anillo. -->
+        
+        
+
+        <!-- ------------------------- radar · te vigilan -------------------------- -->
+        <!-- Coral, y con OTRO símbolo además del color: la equis rellena frente al punto de
+             grabación del ámbar. Regla 8 — el color no puede ser el único portador, y aquí los dos
+             estados son avisos: distinguirlos por «más rojo» no vale. -->
         
         
 
@@ -795,7 +1073,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -817,6 +1095,25 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
         
 
+        <!-- ----------------------- ficha · la trajo la pantalla ----------------------- -->
+        <!-- Mirada 17-quater. El motivo nuevo, «en pantalla», con su propio símbolo: la pantalla y no
+             el reloj. Es la única ficha que llega sin que nadie diga nada, y eso tiene que verse. -->
+        
+        
+
+        <!-- ---------------------- pantalla · nada que leer ------------------------ -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
+        
+        
+
         <!-- ---------------------------- sin resultado ---------------------------- -->
         <span class="ficha-b" data-en="sin-resultado">
           <span class="titular-b"><span lang="es">Nada en tu corpus sobre «certificación ISO 27001»</span><span lang="en">Nothing in your corpus about “ISO 27001 certification”</span></span>
@@ -831,11 +1128,24 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
             <span class="d"><span lang="es">marco · §5.1 Seguridad y manejo de datos</span><span lang="en">framework · §5.1 Data security and handling</span></span>
           </span>
           <span class="atajos-b">
-            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">otras palabras</span><span lang="en">other words</span></span>
-            <span class="tecla"><kbd>⌘⇧N</kbd> <span lang="es">anotar</span><span lang="en">note it</span></span>
+            <span class="tecla"><kbd>⌃⌥A</kbd> <span lang="es">otras palabras</span><span lang="en">other words</span></span>
+            <span class="tecla"><kbd>⌃⌥N</kbd> <span lang="es">anotar</span><span lang="en">note it</span></span>
             <span class="tecla"><kbd>⌥⎋</kbd></span>
           </span>
         </span>
+
+        <!-- ------------------------- radar · te graban --------------------------- -->
+        <!-- El copy sale del panel (mirada 1), traído a la anatomía de la banda. `i-rec` es un
+             anillo con un punto dentro y NO lleva `relleno`: rellenarlo se come el anillo. -->
+        
+        
+
+        <!-- ------------------------- radar · te vigilan -------------------------- -->
+        <!-- Coral, y con OTRO símbolo además del color: la equis rellena frente al punto de
+             grabación del ámbar. Regla 8 — el color no puede ser el único portador, y aquí los dos
+             estados son avisos: distinguirlos por «más rojo» no vale. -->
+        
+        
 
         <!-- ---------------------------- sin verificar ---------------------------- -->
         
@@ -881,7 +1191,39 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
         
 
+        <!-- ----------------------- ficha · la trajo la pantalla ----------------------- -->
+        <!-- Mirada 17-quater. El motivo nuevo, «en pantalla», con su propio símbolo: la pantalla y no
+             el reloj. Es la única ficha que llega sin que nadie diga nada, y eso tiene que verse. -->
+        
+        
+
+        <!-- ---------------------- pantalla · nada que leer ------------------------ -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
+        
+        
+
         <!-- ---------------------------- sin resultado ---------------------------- -->
+        
+        
+
+        <!-- ------------------------- radar · te graban --------------------------- -->
+        <!-- El copy sale del panel (mirada 1), traído a la anatomía de la banda. `i-rec` es un
+             anillo con un punto dentro y NO lleva `relleno`: rellenarlo se come el anillo. -->
+        
+        
+
+        <!-- ------------------------- radar · te vigilan -------------------------- -->
+        <!-- Coral, y con OTRO símbolo además del color: la equis rellena frente al punto de
+             grabación del ámbar. Regla 8 — el color no puede ser el único portador, y aquí los dos
+             estados son avisos: distinguirlos por «más rojo» no vale. -->
         
         
 
@@ -898,7 +1240,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         <span class="lado-b" data-en="sin-verificar">
           <span class="meta-b"><span lang="es">Verificada solo en Meet · macOS 26.6.2 · 2026-09-20</span><span lang="en">Verified only in Meet · macOS 26.6.2 · 2026-09-20</span></span>
           <span class="atajos-b">
-            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
+            <span class="tecla"><kbd>⌃⌥A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
             <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
           </span>
         </span>
@@ -918,7 +1260,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
           <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
           <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
         </span>
-        <span class="cliente-b" data-en="ficha-2 sin-resultado-2 transcript">
+        <span class="cliente-b" data-en="ficha-2 sin-resultado-2 transcript radar-invasivo-2">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -951,14 +1293,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
             <span class="cab">
               <svg class="ic s"><use href="#i-ojo"></use></svg>
               <span lang="es">en vivo · solo en memoria</span><span lang="en">live · in memory only</span>
-              <span class="tecla"><kbd>⌘⇧T</kbd> <span lang="es">ocultar</span><span lang="en">hide</span></span>
+              <span class="tecla"><kbd>⌃⌥T</kbd> <span lang="es">ocultar</span><span lang="en">hide</span></span>
             </span>
-            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:01</span></span><q><span lang="es">Y la limpieza de datos, ¿eso está dentro del alcance?</span><span lang="en">And the data cleansing, is that within scope?</span></q></span>
-            <span class="turno tu"><span class="quien"><svg class="ic s"><use href="#i-mic"></use></svg><span lang="es">tú</span><span lang="en">you</span><span class="hora">14:02</span></span><q><span lang="es">Sí, la limpieza de las tres fuentes que acordamos está incluida.</span><span lang="en">Yes, cleansing the three sources we agreed on is included.</span></q></span>
-            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:02</span></span><q><span lang="es">¿Y si sumamos el Excel de la fuerza comercial? Lo tenemos en Power BI.</span><span lang="en">What if we add the sales team’s Excel? We have it in Power BI.</span></q></span>
+            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:01 · 4 s</span></span><q><span lang="es">Y la limpieza de datos, ¿eso está dentro del alcance?</span><span lang="en">And the data cleansing, is that within scope?</span></q></span>
+            <span class="turno tu"><span class="quien"><svg class="ic s"><use href="#i-mic"></use></svg><span lang="es">tú</span><span lang="en">you</span><span class="hora">14:02 · 5 s</span></span><q><span lang="es">Sí, la limpieza de las tres fuentes que acordamos está incluida.</span><span lang="en">Yes, cleansing the three sources we agreed on is included.</span></q></span>
+            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:02 · 6 s</span></span><q><span lang="es">¿Y si sumamos el Excel de la fuerza comercial? Lo tenemos en Power BI.</span><span lang="en">What if we add the sales team’s Excel? We have it in Power BI.</span></q></span>
           </span>
           <span class="atajos-b">
-            <span class="tecla"><kbd>⌘⇧P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla"><kbd>⌃⌥P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
             <span class="tecla"><kbd>⌥⎋</kbd></span>
           </span>
         </span>
@@ -968,6 +1310,10 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
 
         <!-- ----------------------- sin verificar · ampliada ----------------------- -->
+        <!-- ------------------- radar · te vigilan · ampliada -------------------- -->
+        
+        
+
         
         
 

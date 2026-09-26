@@ -31,12 +31,13 @@
 
 use crate::capture::anillo::{Anillo, HZ};
 use crate::capture::Pista;
-use crate::disparo::{Contexto, Disparador};
+use crate::diccionario::Diccionario;
+use crate::disparo::{Contexto, Disparador, Motivo};
 use crate::ficha::{Aparicion, Respuesta};
 use crate::stt::{Disponibilidad, Fallo, Motor, Turno, Ventana};
 use crate::voz::{Suceso, Turnos, MARCO};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{Receiver, Sender};
+use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender};
 use std::sync::{Arc, Mutex};
 
 /// Cada cuánto mira el hilo de escucha si hay marcos nuevos. Cuarenta milisegundos son dos marcos:
@@ -44,6 +45,14 @@ use std::sync::{Arc, Mutex};
 /// 320 ms que ya cuesta decidirlo, y lo bastante poco para no despertar la CPU cien veces por
 /// segundo durante una reunión de una hora.
 const LATIDO_MS: u64 = 40;
+
+/// Cada cuánto se pregunta el hilo que transcribe si el cliente lleva demasiado rato callado.
+///
+/// El umbral del disparo por silencio son cuatro segundos, así que cuatrocientos milisegundos son
+/// un diez por ciento de retraso en el peor caso — imperceptible al lado de los 320 ms que ya
+/// cuesta decidir un fin de turno. Y el hilo sigue pasando el resto del tiempo **dormido en el
+/// canal**, igual que antes: esto no es un bucle nuevo, es el mismo con un despertador.
+const LATIDO_DEL_SILENCIO_MS: u64 = 400;
 
 /// Lo que pasa mientras se escucha. Sale de aquí hacia quien quiera enterarse — en la app, hacia
 /// la banda y la pantalla de Honestidad.
@@ -64,6 +73,14 @@ pub enum Novedad {
     /// El disparador decidió que había que buscar, y esto es lo que salió: una ficha del corpus
     /// del usuario, o la declaración de que no hay nada con su maniobra.
     Aparece(Box<Aparicion>),
+    /// **El usuario pidió leer la pantalla (`⌃⌥L`) y no había texto** —una cámara, un vídeo, una
+    /// pantalla en negro—. Se contesta igual, porque alguien preguntó: sin esto la tecla parecería
+    /// rota (mirada 17-quater, «pantalla · nada que leer»).
+    NadaEnPantalla { hora: String },
+    /// **El radar ámbar (C14)**: la pantalla de la reunión muestra el aviso de grabación, o hay un
+    /// bot de notas en la lista de participantes. Los bots van con el nombre del CATÁLOGO, no con
+    /// lo que Vision leyó: por esta costura no cruza texto de la pantalla.
+    Radar { grabando: bool, bots: Vec<String>, hora: String },
 }
 
 /// Lo que la pantalla de Honestidad enseña de una pista.
@@ -73,15 +90,26 @@ pub struct EstadoDePista {
     /// ¿Se pudo abrir el grifo? **Esto, y no el número de muestras, es lo que distingue una avería
     /// de un silencio.** Cuando nadie habla, macOS no entrega ni una muestra: cero no es un fallo.
     pub abierta: bool,
-    /// Si no se pudo abrir, por qué. En español, para enseñarlo tal cual.
-    pub motivo: Option<String>,
+    /// Si no se pudo abrir, **por qué, en un conjunto cerrado** (mirada 17-quater). Sesión lo pinta
+    /// con su frase y su salida; el detalle técnico se queda en el log.
+    pub motivo: Option<crate::capture::PorQueNoAbrio>,
     pub bytes: usize,
-    /// Los mismos bytes, escritos como los escribe la maqueta («1,8 MB»). Se formatean **aquí y no
-    /// en la interfaz** porque ya hay un formateador probado en `red`, y dos formateadores acaban
-    /// discrepando el día que uno redondee distinto.
-    pub legible: String,
+    // **`legible` salió del contrato en el sprint 002.** Mandaba los mismos bytes ya escritos
+    // («1,8 MB») con la razón de no tener dos formateadores; la fase 5 del sprint 001 descubrió que
+    // hacían falta dos, porque el separador decimal es interfaz y este venía siempre con coma
+    // —«1,8 MB» dentro de «What lives in memory now»—. Desde entonces la pantalla los formatea con
+    // el idioma puesto y **este campo cruzaba la costura sin que nadie lo leyera**: uno de los
+    // diecisiete huérfanos que el gate del contrato no puede ver, porque compara la forma y no si
+    // alguien mira.
+    //
+    // **Los tres de abajo se quedan en Rust y dejan de cruzar** (decisión del usuario en la mirada
+    // 17-quater: «4 fuera, 3 se ven»). `hablando` lo usa el modo solo audio para no hablar encima
+    // de nadie; los otros dos son para el log. Ninguno tenía sitio en una pantalla.
+    #[serde(skip)]
     pub segundos: f32,
+    #[serde(skip)]
     pub muestras_recibidas: u64,
+    #[serde(skip)]
     pub hablando: bool,
 }
 
@@ -92,11 +120,16 @@ pub struct EstadoDeEscucha {
     pub escuchando: bool,
     pub microfono: EstadoDePista,
     pub sistema: EstadoDePista,
+    /// Fuera del contrato por la misma decisión: Honestidad cuenta el transcript por sus bytes.
+    #[serde(skip)]
     pub turnos_en_memoria: usize,
     pub bytes_del_transcript: usize,
-    /// Lo que suman los tres búferes, para el «RAM · …» de la cabecera. Sumado, no estimado.
-    pub ram_legible: String,
-    /// Qué motor transcribe, y si puede. Lo enseña la pantalla de Idioma.
+    // `ram_legible` salió del contrato en el sprint 002, por lo mismo que `legible`: la cabecera
+    // «RAM · …» suma los tres búferes y los escribe **en la pantalla**, con el idioma puesto.
+    /// Qué motor transcribe. **No cruza**: Idioma lo lee de `que_sabe_transcribir`, que además dice
+    /// cuántos idiomas admite y por qué falta. Cruzaba dos veces el mismo dato y el gate de lectores,
+    /// que compara por nombre, daba por leída esta copia porque la otra sí lo estaba.
+    #[serde(skip)]
     pub motor: &'static str,
 }
 
@@ -105,7 +138,7 @@ struct PistaViva {
     anillo: Arc<Mutex<Anillo>>,
     /// Se conserva para que el grifo siga abierto: soltarlo lo cierra.
     _grifo: Option<crate::capture::nativo::Grifo>,
-    motivo: Option<String>,
+    no_abrio: Option<crate::capture::NoAbrio>,
     turnos: Turnos,
     /// Índice global de la primera muestra que esta pista vio.
     origen: u64,
@@ -135,16 +168,16 @@ impl PistaViva {
             Pista::Microfono => crate::capture::nativo::Grifo::del_microfono(anillo.clone()),
             Pista::Sistema => crate::capture::nativo::Grifo::del_sistema(anillo.clone()),
         };
-        let (grifo, motivo) = match abierto {
+        let (grifo, no_abrio) = match abierto {
             Ok(g) => (Some(g), None),
-            Err(e) => (None, Some(e)),
+            Err(e) => (None, Some(con_su_permiso(cual, e, &crate::permisos::leer()))),
         };
         let origen = anillo.lock().map(|a| a.totales()).unwrap_or(0);
         Self {
             cual,
             anillo,
             _grifo: grifo,
-            motivo,
+            no_abrio,
             turnos: Turnos::default(),
             origen,
             procesadas: 0,
@@ -174,14 +207,36 @@ impl PistaViva {
             .unwrap_or((0, 0.0));
         EstadoDePista {
             abierta: self._grifo.is_some(),
-            motivo: self.motivo.clone(),
+            motivo: self.no_abrio.as_ref().map(|n| n.porque),
             bytes,
-            legible: crate::red::formatear(bytes as u64),
             segundos,
             muestras_recibidas: self._grifo.as_ref().map(|g| g.muestras_recibidas()).unwrap_or(0),
             hablando: self.turnos.hablando(),
         }
     }
+}
+
+/// **Si una pista no abrió y su permiso no está concedido, el porqué es el permiso.**
+///
+/// El grifo solo ve el error de Core Audio, que sin permiso puede ser cualquier cosa —`!hog`
+/// incluido—; quien sabe del permiso es `permisos`. El permiso manda porque su salida es la que
+/// arregla las demás: con él negado, cerrar otra app no serviría de nada. «No se sabe» no cuenta
+/// como negado: si la pregunta a macOS no contesta, se queda el porqué del grifo.
+fn con_su_permiso(
+    cual: Pista,
+    mut e: crate::capture::NoAbrio,
+    permisos: &crate::permisos::Permisos,
+) -> crate::capture::NoAbrio {
+    use crate::capture::PorQueNoAbrio::{SinPermisoDelAudio, SinPermisoDelMicrofono};
+    use crate::permisos::Estado;
+    let (estado, sin) = match cual {
+        Pista::Microfono => (permisos.microfono, SinPermisoDelMicrofono),
+        Pista::Sistema => (permisos.audio, SinPermisoDelAudio),
+    };
+    if matches!(estado, Estado::SinConceder | Estado::Denegado) {
+        e.porque = sin;
+    }
+    e
 }
 
 /// LO QUE LA ESCUCHA NECESITA DEL CORPUS, y nada más.
@@ -232,6 +287,11 @@ pub struct Escucha {
     ventana: Arc<Mutex<Ventana>>,
     viva: Arc<AtomicBool>,
     motor: &'static str,
+    /// El reloj de la escucha y el buscador, para la ficha que pide la PANTALLA (C8): no nace de un
+    /// turno, pero tiene que pasar por el mismo disparador —la misma espera entre fichas— y medirse
+    /// con el mismo reloj que los turnos.
+    nacio: std::time::Instant,
+    buscador: Arc<dyn Buscador>,
 }
 
 impl Escucha {
@@ -244,6 +304,7 @@ impl Escucha {
         idioma_del_cliente: &str,
         motor: Box<dyn Motor>,
         buscador: Arc<dyn Buscador>,
+        diccionario: Arc<Diccionario>,
         avisar: impl Fn(Novedad) + Send + Sync + 'static,
     ) -> Self {
         // **El reloj de la escucha**: uno solo para las dos pistas, monótono, que no vuelve atrás
@@ -260,7 +321,7 @@ impl Escucha {
         let nombre_del_motor = motor.nombre();
 
         for p in pistas.lock().unwrap().iter() {
-            match &p.motivo {
+            match &p.no_abrio {
                 Some(m) => println!("[escucha] pista «{}» NO abierta: {m}", p.cual.etiqueta()),
                 None => println!("[escucha] pista «{}» abierta", p.cual.etiqueta()),
             }
@@ -290,34 +351,56 @@ impl Escucha {
         // Hilo 2 — transcribe lo que el primero le pasa. Lo que hace con cada encargo vive en
         // `atender`, fuera del hilo, para poder probar el caso que este sprint no probaba: que el
         // corte llegue justo en medio.
+        //
+        // **Y desde el sprint 002 no espera el encargo siguiente para siempre.** El quinto motivo
+        // del disparador —el silencio— es el único que no nace de un turno, así que necesitaba un
+        // bucle que tictaquee cuando nadie habla. Es este, con `recv_timeout`: el hilo que ya
+        // conoce al buscador y a la ventana, en vez del latido de los marcos, que no conoce a
+        // ninguno de los dos.
         {
-            let ventana = ventana.clone();
             let avisar = avisar.clone();
-            let disparador = disparador.clone();
-            let viva_aqui = viva.clone();
-            std::thread::spawn(move || {
-                for mut encargo in recibe {
-                    let Some((novedad, aparicion)) = atender(
-                        &mut encargo,
-                        &*motor,
-                        &*buscador,
-                        &ventana,
-                        &disparador,
-                        &viva_aqui,
-                    ) else {
-                        continue;
-                    };
-                    // El turno va PRIMERO y la ficha después: el transcript de la banda se pinta
-                    // en cuanto hay texto, sin esperar a una búsqueda que puede no llegar nunca.
-                    avisar(novedad);
-                    if let Some(a) = aparicion {
-                        avisar(Novedad::Aparece(Box::new(a)));
-                    }
-                }
-            });
+            let suyo = ElQueTranscribe {
+                motor,
+                buscador: buscador.clone(),
+                diccionario,
+                ventana: ventana.clone(),
+                disparador: disparador.clone(),
+                pistas: pistas.clone(),
+                viva: viva.clone(),
+                nacio,
+                espera: std::time::Duration::from_millis(LATIDO_DEL_SILENCIO_MS),
+            };
+            std::thread::spawn(move || while suyo.latir(&recibe, avisar.as_ref()) {});
         }
 
-        Self { disparador, pistas, ventana, viva, motor: nombre_del_motor }
+        Self { disparador, pistas, ventana, viva, motor: nombre_del_motor, nacio, buscador }
+    }
+
+    /// **LA PANTALLA PIDE FICHA** (C8). La pantalla que comparte el cliente cambió y trae una cifra o
+    /// uno de tus términos; `consulta` es lo que aporta.
+    ///
+    /// Pasa por el MISMO disparador que los turnos: si hace menos de seis segundos que salió una
+    /// ficha, o si esta pantalla ya trajo la suya, no hay otra. Y **solo devuelve fichas**: una
+    /// pantalla que no encuentra nada en tu corpus no interrumpe a nadie para decir «no tengo nada».
+    /// Ese aviso es la respuesta a una pregunta, y aquí nadie preguntó.
+    pub fn por_pantalla(&self, consulta: &str) -> Option<Aparicion> {
+        if !self.viva.load(Ordering::Relaxed) {
+            return None;
+        }
+        let empezo = std::time::Instant::now();
+        let ahora_ms = self.nacio.elapsed().as_millis() as usize;
+        let motivo = self.disparador.lock().ok()?.por_pantalla(consulta, ahora_ms)?;
+        let a = armar_y_anunciar(self.buscador.as_ref(), consulta, motivo, &la_hora(), empezo);
+        matches!(a.respuesta, Respuesta::Ficha(_)).then_some(a)
+    }
+
+    /// **La lectura que PIDIÓ el usuario** con su atajo. Como `⌃⌥A`: se salta la espera y responde
+    /// siempre, también con «no tengo nada», porque alguien preguntó.
+    pub fn pedida_por_pantalla(&self, consulta: &str) -> Option<Aparicion> {
+        let empezo = std::time::Instant::now();
+        let ahora_ms = self.nacio.elapsed().as_millis() as usize;
+        let motivo = self.disparador.lock().ok()?.a_mano(ahora_ms);
+        Some(armar_y_anunciar(self.buscador.as_ref(), consulta, motivo, &la_hora(), empezo))
     }
 
     pub fn estado(&self) -> EstadoDeEscucha {
@@ -329,9 +412,8 @@ impl Escucha {
                 .map(|p| p.estado())
                 .unwrap_or(EstadoDePista {
                     abierta: false,
-                    motivo: Some("esa pista no se abrió nunca".into()),
+                    motivo: Some(crate::capture::PorQueNoAbrio::NoDejo),
                     bytes: 0,
-                    legible: crate::red::formatear(0),
                     segundos: 0.0,
                     muestras_recibidas: 0,
                     hablando: false,
@@ -343,14 +425,12 @@ impl Escucha {
             .map(|v| (v.cuantos(), v.bytes()))
             .unwrap_or((0, 0));
         let (microfono, sistema) = (de(Pista::Microfono), de(Pista::Sistema));
-        let ram = (microfono.bytes + sistema.bytes + bytes) as u64;
         EstadoDeEscucha {
             escuchando: self.viva.load(Ordering::Relaxed),
             microfono,
             sistema,
             turnos_en_memoria: turnos,
             bytes_del_transcript: bytes,
-            ram_legible: crate::red::formatear(ram),
             motor: self.motor,
         }
     }
@@ -391,6 +471,83 @@ impl Escucha {
         if let Ok(mut d) = self.disparador.lock() {
             d.reiniciar();
         }
+    }
+}
+
+/// **LO QUE EL HILO QUE TRANSCRIBE TIENE EN LAS MANOS.**
+///
+/// Existe para que su latido viva **fuera** del hilo, que es la misma razón por la que `atender`
+/// vive fuera: lo que no se puede llamar desde un test no se puede probar. Y aquí eso no es una
+/// preferencia de estilo — es la deuda que este sprint paga: `Disparador::por_silencio` estuvo un
+/// sprint entero escrito y **probado** sin un solo llamador, así que probar solo al ayudante y
+/// dejar el cable a oscuras habría sido volver a dejar la misma deuda, esta vez con un test verde
+/// encima.
+struct ElQueTranscribe {
+    motor: Box<dyn Motor>,
+    buscador: Arc<dyn Buscador>,
+    /// La jerga del consultor, para corregir el turno **antes** de que nadie lo mire.
+    diccionario: Arc<Diccionario>,
+    ventana: Arc<Mutex<Ventana>>,
+    disparador: Arc<Mutex<Disparador>>,
+    /// Solo para una pregunta: ¿está el cliente hablando ahora mismo?
+    pistas: Arc<Mutex<Vec<PistaViva>>>,
+    viva: Arc<AtomicBool>,
+    /// El reloj de la escucha, el único que las dos pistas comparten.
+    nacio: std::time::Instant,
+    espera: std::time::Duration,
+}
+
+impl ElQueTranscribe {
+    /// **Un latido**: atiende el encargo que haya llegado y, si no llegó ninguno, mira el silencio.
+    /// Devuelve `false` cuando el canal se cerró y el hilo debe acabarse.
+    fn latir(&self, recibe: &Receiver<Encargo>, avisar: &dyn Fn(Novedad)) -> bool {
+        match recibe.recv_timeout(self.espera) {
+            Ok(mut encargo) => {
+                if let Some((novedad, aparicion)) = atender(
+                    &mut encargo,
+                    &*self.motor,
+                    &*self.buscador,
+                    &self.diccionario,
+                    &self.ventana,
+                    &self.disparador,
+                    &self.viva,
+                ) {
+                    // El turno va PRIMERO y la ficha después: el transcript de la banda se pinta en
+                    // cuanto hay texto, sin esperar a una búsqueda que puede no llegar nunca.
+                    avisar(novedad);
+                    if let Some(a) = aparicion {
+                        avisar(Novedad::Aparece(Box::new(a)));
+                    }
+                }
+                true
+            }
+            // Nadie habló en lo que dura la espera: el hueco donde vive el disparo por silencio.
+            Err(RecvTimeoutError::Timeout) => {
+                // **El corte llega también aquí.** Es la misma ventana del hallazgo A2: si el
+                // usuario pulsó la tecla, lo último que puede pasar es que la banda estrene una
+                // ficha de la reunión que acaba de cortar. El hilo se acaba un latido después, en
+                // cuanto el primero suelte el canal.
+                if self.viva.load(Ordering::Relaxed) {
+                    if let Some(a) = el_silencio_pide_ficha(
+                        &self.ventana,
+                        &self.disparador,
+                        &*self.buscador,
+                        self.nacio.elapsed().as_millis() as usize,
+                        self.cliente_hablando(),
+                    ) {
+                        avisar(Novedad::Aparece(Box::new(a)));
+                    }
+                }
+                true
+            }
+            Err(RecvTimeoutError::Disconnected) => false,
+        }
+    }
+
+    fn cliente_hablando(&self) -> bool {
+        self.pistas
+            .lock()
+            .is_ok_and(|l| l.iter().any(|p| p.cual == Pista::Sistema && p.turnos.hablando()))
     }
 }
 
@@ -522,6 +679,7 @@ fn atender(
     encargo: &mut Encargo,
     motor: &dyn Motor,
     buscador: &dyn Buscador,
+    diccionario: &Diccionario,
     ventana: &Mutex<Ventana>,
     disparador: &Mutex<Disparador>,
     viva: &AtomicBool,
@@ -530,7 +688,7 @@ fn atender(
         olvidar(encargo);
         return None;
     }
-    let mut novedad = transcribir(motor, encargo);
+    let mut novedad = transcribir(motor, diccionario, encargo);
     if !viva.load(Ordering::Relaxed) {
         olvidar(encargo);
         if let Novedad::Turno(t) = &mut novedad {
@@ -577,10 +735,70 @@ fn buscar_si_toca(
     let vocabulario = buscador.vocabulario();
     let ctx = Contexto { ahora_ms: turno.hasta_ms, vocabulario: &vocabulario };
     let motivo = disparador.mirar(turno, &ctx)?;
+    Some(armar_y_anunciar(buscador, &turno.texto, motivo, &turno.hora, encargo.cerro))
+}
 
-    let hallazgos = buscador.buscar(&turno.texto, crate::ficha::TOP);
-    let respuesta = crate::ficha::armar(&turno.texto, &hallazgos);
-    let ms = encargo.cerro.elapsed().as_millis() as u64;
+/// **EL SILENCIO COMO DISPARO** — el quinto motivo, que existía sin cablear desde el sprint 001.
+///
+/// La VISION nombra cinco —«una pregunta, un término tuyo, una cifra o un silencio disparan la
+/// ficha; y un atajo global»— y `Disparador::por_silencio` estaba escrito y probado desde la fase 4
+/// **sin un solo llamador fuera de sus tests**. El manual lo declaraba como limitación en vez de
+/// prometerlo, que fue lo honesto; esto es el pago.
+///
+/// **Qué ficha trae.** La de lo último que dijo el cliente, que es justo lo que no disparó solo: una
+/// frase sin pregunta, sin cifra y sin término del corpus. Si esa frase ya trajo su ficha, el
+/// silencio no trae una segunda igual — por eso `por_silencio` recibe el texto y no una cadena
+/// vacía.
+///
+/// **Por qué la voz del cliente no se copia.** Lo último que dijo ya vive en la ventana del
+/// transcript, que es el sitio que el kill-switch alcanza; la búsqueda se hace sobre una
+/// **referencia**, con el candado de la ventana puesto, para no dejar una segunda copia en un hilo
+/// al que `cortar()` no llega. El precio es que quien consulte el estado en ese instante espera lo
+/// que dure la búsqueda, y en esta app ese es el lado correcto del trato.
+fn el_silencio_pide_ficha(
+    ventana: &Mutex<Ventana>,
+    disparador: &Mutex<Disparador>,
+    buscador: &dyn Buscador,
+    ahora_ms: usize,
+    cliente_hablando: bool,
+) -> Option<Aparicion> {
+    // Mientras el cliente habla no hay silencio que valga, aunque su turno anterior cerrara hace
+    // rato: el que está en curso todavía no tiene fin, así que el reloj diría que lleva callado
+    // justo cuando no lo está.
+    if cliente_hablando {
+        return None;
+    }
+    let empezo = std::time::Instant::now();
+    // Los dos candados en este orden y en ningún otro: es el único sitio de la app donde se anidan.
+    let v = ventana.lock().ok()?;
+    let ultimo = v.ultimo_de(Pista::Sistema)?;
+    let vocabulario = buscador.vocabulario();
+    let ctx = Contexto { ahora_ms, vocabulario: &vocabulario };
+    let motivo =
+        disparador.lock().ok()?.por_silencio(&ultimo.texto, ultimo.hasta_ms, &ctx)?;
+    Some(armar_y_anunciar(buscador, &ultimo.texto, motivo, &ultimo.hora, empezo))
+}
+
+/// De un texto del cliente a la aparición, con su medida y su línea de log.
+///
+/// Lo comparten los dos caminos que disparan —el turno que acaba de cerrarse y el silencio que vino
+/// después— y por eso existe: dos copias de esto acabarían midiendo o anunciando distinto, y la
+/// medida es la que el presupuesto de 4 s del sprint acota.
+///
+/// `desde` es el instante desde el que se mide, y no es el mismo en los dos casos: para un turno es
+/// **cuándo cerró**, que es lo que el usuario percibe; para el silencio es cuándo se decidió
+/// buscar, porque el fin de turno de ese texto quedó cuatro segundos atrás y contarlos sería
+/// cargarle a la búsqueda una espera que es del diseño.
+fn armar_y_anunciar(
+    buscador: &dyn Buscador,
+    texto: &str,
+    motivo: Motivo,
+    hora: &str,
+    desde: std::time::Instant,
+) -> Aparicion {
+    let hallazgos = buscador.buscar(texto, crate::ficha::TOP);
+    let respuesta = crate::ficha::armar(texto, &hallazgos);
+    let ms = desde.elapsed().as_millis() as u64;
 
     // Metadata, jamás contenido: ni la pregunta ni la ficha pasan por el log.
     let que = match &respuesta {
@@ -589,7 +807,7 @@ fn buscar_si_toca(
     };
     println!("[ficha] {que} por «{}» en {ms} ms · {} candidatas", motivo.etiqueta(), hallazgos.len());
 
-    Some(Aparicion { respuesta, motivo, ms, hora: turno.hora.clone() })
+    Aparicion { respuesta, motivo, ms, hora: hora.to_string() }
 }
 
 /// Pisa el audio de un encargo que no se va a transcribir.
@@ -604,7 +822,7 @@ fn olvidar(encargo: &mut Encargo) {
     }
 }
 
-fn transcribir(motor: &dyn Motor, encargo: &Encargo) -> Novedad {
+fn transcribir(motor: &dyn Motor, diccionario: &Diccionario, encargo: &Encargo) -> Novedad {
     let Encargo { pista, idioma, desde_ms, hasta_ms, muestras, cerro: _ } = encargo;
     let (pista, desde_ms, hasta_ms) = (*pista, *desde_ms, *hasta_ms);
     let sin_texto = |motivo: String| Novedad::SinTexto { pista, desde_ms, hasta_ms, motivo };
@@ -621,6 +839,12 @@ fn transcribir(motor: &dyn Motor, encargo: &Encargo) -> Novedad {
             sin_texto("el motor no reconoció palabras en ese turno".into())
         }
         Ok(texto) => {
+            // **La corrección va AQUÍ y en ningún otro sitio**, que es donde el texto nace. Si
+            // viviera más adelante —en la banda, o justo antes de buscar— el disparador vería
+            // «power by» y no reconocería el término, el índice buscaría la errata, y la ventana del
+            // transcript guardaría una cosa mientras la ficha se armó con otra. Un turno tiene una
+            // sola forma, y esta es.
+            let texto = diccionario.corregir(&texto);
             Novedad::Turno(Turno { pista, desde_ms, hasta_ms, texto, hora: la_hora(), eco: false })
         }
         Err(Fallo::NoDisponible(d)) => sin_texto(explicar(&d, idioma)),
@@ -632,7 +856,7 @@ fn transcribir(motor: &dyn Motor, encargo: &Encargo) -> Novedad {
 ///
 /// Sin fecha a propósito: la banda enseña la hora de un turno que dura lo que dura la reunión, y
 /// un día concreto no le añade nada a nadie salvo precisión sobre cuándo ocurrió una conversación.
-fn la_hora() -> String {
+pub(crate) fn la_hora() -> String {
     let segundos_desde_epoca = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_secs())
@@ -674,7 +898,7 @@ pub fn explicar(d: &Disponibilidad, idioma: &str) -> String {
         Disponibilidad::IdiomaDesconocido => {
             format!("este Mac no sabe transcribir {idioma}")
         }
-        Disponibilidad::SinMotor { motivo } => motivo.clone(),
+        Disponibilidad::SinMotor { motivo } => motivo.en_el_log().into(),
     }
 }
 
@@ -700,7 +924,7 @@ mod tests {
             cual: Pista::Sistema,
             anillo: anillo.clone(),
             _grifo: None,
-            motivo: None,
+            no_abrio: None,
             turnos: Turnos::default(),
             origen: 0,
             procesadas: 0,
@@ -754,7 +978,7 @@ mod tests {
             cual: Pista::Sistema,
             anillo: anillo.clone(),
             _grifo: None,
-            motivo: None,
+            no_abrio: None,
             turnos: Turnos::default(),
             origen: 0,
             procesadas: 0,
@@ -821,12 +1045,38 @@ mod tests {
         p.origen + p.procesadas - p.sobrante.len() as u64
     }
 
+    /// **El permiso manda sobre el error del grifo** — y «no se sabe» no manda. Sin permiso, Core
+    /// Audio puede contestar cualquier cosa, `!hog` incluido; la salida útil es la del permiso.
+    #[test]
+    fn si_falta_el_permiso_el_porque_es_el_permiso() {
+        use crate::capture::{NoAbrio, PorQueNoAbrio::*};
+        use crate::permisos::{Estado, Permisos};
+        let con = |microfono, audio| Permisos {
+            microfono,
+            audio,
+            pantalla: Estado::Concedido,
+            accesibilidad: Estado::Concedido,
+        };
+        let ocupado = || NoAbrio::por(DispositivoOcupado, "estado «!hog»");
+        let sin_audio = con(Estado::Concedido, Estado::SinConceder);
+        assert_eq!(con_su_permiso(Pista::Sistema, ocupado(), &sin_audio).porque, SinPermisoDelAudio);
+        // El permiso de OTRA pista no cambia nada.
+        assert_eq!(con_su_permiso(Pista::Microfono, ocupado(), &sin_audio).porque, DispositivoOcupado);
+        let sin_micro = con(Estado::Denegado, Estado::Concedido);
+        assert_eq!(con_su_permiso(Pista::Microfono, ocupado(), &sin_micro).porque, SinPermisoDelMicrofono);
+        // «No se sabe» no es «no»: se queda el porqué del grifo.
+        let no_se_sabe = con(Estado::Concedido, Estado::NoSeSabe);
+        assert_eq!(con_su_permiso(Pista::Sistema, ocupado(), &no_se_sabe).porque, DispositivoOcupado);
+        // Y el detalle viaja intacto al log.
+        assert_eq!(con_su_permiso(Pista::Sistema, ocupado(), &sin_audio).detalle, "estado «!hog»");
+    }
+
     #[test]
     fn cada_motivo_se_explica_en_castellano_y_sin_codigos() {
         let casos = [
             Disponibilidad::SinModelo,
             Disponibilidad::IdiomaDesconocido,
-            Disponibilidad::SinMotor { motivo: "este Mac no trae el transcriptor".into() },
+            Disponibilidad::SinMotor { motivo: crate::stt::PorQueNoHayMotor::SinTranscriptor },
         ];
         for d in casos {
             let texto = explicar(&d, "es-ES");
@@ -897,6 +1147,7 @@ mod tests {
             &mut encargo,
             &Loro(None, trabajo.clone()),
             &SinCorpus,
+            &Diccionario::default(),
             &ventana,
             &disparador,
             &viva,
@@ -944,6 +1195,7 @@ mod tests {
             &mut encolado,
             &Loro(None, trabajo.clone()),
             &SinCorpus,
+            &Diccionario::default(),
             &ventana,
             &disparador,
             &viva,
@@ -964,6 +1216,7 @@ mod tests {
             &mut mientras_transcribia,
             &Loro(Some(viva.clone()), trabajo.clone()),
             &SinCorpus,
+            &Diccionario::default(),
             &ventana,
             &disparador,
             &viva,
@@ -976,9 +1229,10 @@ mod tests {
     /// se quedó atrás.
     #[test]
     fn un_turno_cuyo_audio_se_piso_no_se_confunde_con_uno_callado() {
-        let motor = crate::stt::Mudo::por("sin motor de prueba");
+        let motor = crate::stt::Mudo::por(crate::stt::PorQueNoHayMotor::SinPuente);
         let perdido = transcribir(
             &motor,
+            &Diccionario::default(),
             &Encargo {
                 pista: Pista::Sistema,
                 idioma: "es-ES".into(),
@@ -1039,6 +1293,14 @@ mod tests {
         fn vocabulario(&self) -> Vec<String> {
             self.0.vocabulario().to_vec()
         }
+    }
+
+    /// **El diccionario que no corrige nada.** Los tests de este módulo miden el camino del turno,
+    /// no la jerga; con la semilla puesta, cualquiera que metiera «power by» en un texto de prueba
+    /// vería cambiar el resultado por un motivo que no es el que está probando. El diccionario tiene
+    /// sus propios tests, que sí miden lo suyo.
+    fn sin_diccionario() -> Arc<Diccionario> {
+        Arc::new(Diccionario::default())
     }
 
     fn corpus_de_prueba() -> CorpusDePrueba {
@@ -1150,9 +1412,10 @@ mod tests {
 
     #[test]
     fn sin_motor_el_turno_sale_con_el_motivo_del_motor() {
-        let motor = crate::stt::Mudo::por("este Mac no trae el transcriptor de macOS 26");
+        let motor = crate::stt::Mudo::por(crate::stt::PorQueNoHayMotor::SinTranscriptor);
         let novedad = transcribir(
             &motor,
+            &Diccionario::default(),
             &Encargo {
                 pista: Pista::Sistema,
                 idioma: "es-ES".into(),
@@ -1166,5 +1429,201 @@ mod tests {
             Novedad::SinTexto { motivo, .. } => assert!(motivo.contains("macOS 26"), "«{motivo}»"),
             otro => panic!("{otro:?}"),
         }
+    }
+
+    /// **EL QUINTO MOTIVO, CABLEADO — el camino entero del silencio.** El cliente dice algo que por
+    /// sí solo no dispara, se calla, y la ficha llega sin que nadie más hable.
+    ///
+    /// Es la deuda del sprint 001: `por_silencio` estaba escrito y probado y **no tenía un solo
+    /// llamador fuera de sus tests**, así que la app no disparó por silencio en toda la vida del
+    /// sprint y el manual lo declaró como limitación. Se ve en rojo borrando la llamada a
+    /// `el_silencio_pide_ficha` del brazo del `Timeout` — que es exactamente el estado en que el
+    /// sprint 001 lo dejó.
+    #[test]
+    fn el_cliente_se_queda_callado_y_la_ficha_llega_sin_que_nadie_hable() {
+        use crate::corpus::seccion::Seccion;
+        let corpus = corpus_de_prueba();
+        corpus
+            .0
+            .indice_para_pruebas()
+            .meter("/c/marco.md", "Gobierno de datos · Marco", Some(crate::corpus::Unidad::Marco), false, &[
+                Seccion {
+                    titulo: Some("Traspaso en dos oleadas".into()),
+                    texto: "El traspaso desde un proveedor anterior se hace en dos oleadas, sin \
+                            cortar el servicio."
+                        .into(),
+                },
+            ])
+            .unwrap();
+
+        let ventana = Mutex::new(Ventana::nueva());
+        let disparador = Mutex::new(Disparador::nuevo());
+
+        // Lo que el cliente dijo, y que por sí solo NO dispara: no es pregunta, no trae cifra y no
+        // nombra nada del corpus. Si esto disparara, el test estaría probando otra cosa — así que
+        // se comprueba, no se supone.
+        let dicho = "Nosotros veníamos trabajando con el proveedor anterior";
+        let turno = turno_del_cliente(dicho, 3_000);
+        {
+            let mut d = disparador.lock().unwrap();
+            assert!(
+                buscar_si_toca(&mut d, &corpus, &turno, &encargo_cerrado_ahora()).is_none(),
+                "esa frase disparó sola: este test ya no prueba el silencio"
+            );
+        }
+        ventana.lock().unwrap().empujar(turno);
+
+        // Tres segundos callado todavía no son los cuatro que el disparador pide.
+        let antes = el_silencio_pide_ficha(&ventana, &disparador, &corpus, 3_000 + 3_000, false);
+        assert!(antes.is_none(), "disparó antes de que el silencio fuera largo");
+
+        // Y con el cliente hablando no hay silencio, aunque el reloj diga que su último turno cerró
+        // hace rato: el que está en curso no tiene fin todavía.
+        assert!(
+            el_silencio_pide_ficha(&ventana, &disparador, &corpus, 3_000 + 9_000, true).is_none(),
+            "disparó con el cliente hablando encima"
+        );
+
+        let a = el_silencio_pide_ficha(&ventana, &disparador, &corpus, 3_000 + 9_000, false)
+            .expect("el silencio no disparó: `por_silencio` se quedó otra vez sin llamador");
+        assert_eq!(a.motivo, Motivo::SilencioLargo);
+        let Respuesta::Ficha(f) = a.respuesta else {
+            panic!("el silencio disparó pero no trajo la sección que responde")
+        };
+        assert_eq!(f.fuente.seccion.as_deref(), Some("Traspaso en dos oleadas"));
+        assert!(a.ms < 4_000, "la ficha del silencio tardó {} ms", a.ms);
+
+        // Y no insiste: el latido siguiente mira el mismo turno y se calla. Sin pasarle el texto a
+        // `por_silencio` esto era una segunda ficha idéntica cada seis segundos.
+        assert!(
+            el_silencio_pide_ficha(&ventana, &disparador, &corpus, 3_000 + 30_000, false).is_none(),
+            "el silencio repitió la ficha que acababa de enseñar"
+        );
+    }
+
+    /// **EL CABLE, no el ayudante.** El latido de verdad: un canal real, un `recv_timeout` real que
+    /// vence sin que llegue ningún encargo, y la aparición saliendo por `avisar` — que es el camino
+    /// por el que la banda se enteraría.
+    ///
+    /// Este test existe porque el anterior no bastaba. `el_silencio_pide_ficha` probado y sin
+    /// llamador sería **la misma deuda del sprint 001 otra vez**, esta vez con un test verde encima
+    /// que la taparía. Se ve en rojo borrando la llamada a `el_silencio_pide_ficha` del brazo del
+    /// `Timeout`: el ayudante sigue probado, y este test se cae.
+    #[test]
+    fn el_latido_sin_encargos_saca_la_ficha_del_silencio_por_donde_la_banda_la_oye() {
+        use crate::corpus::seccion::Seccion;
+        let corpus = Arc::new(corpus_de_prueba());
+        corpus
+            .0
+            .indice_para_pruebas()
+            .meter("/c/marco.md", "Gobierno de datos · Marco", Some(crate::corpus::Unidad::Marco), false, &[
+                Seccion {
+                    titulo: Some("Traspaso en dos oleadas".into()),
+                    texto: "El traspaso desde un proveedor anterior se hace en dos oleadas.".into(),
+                },
+            ])
+            .unwrap();
+
+        let ventana = Arc::new(Mutex::new(Ventana::nueva()));
+        ventana
+            .lock()
+            .unwrap()
+            .empujar(turno_del_cliente("Nosotros veníamos trabajando con el proveedor anterior", 3_000));
+
+        let suyo = ElQueTranscribe {
+            motor: Box::new(crate::stt::Mudo::por(crate::stt::PorQueNoHayMotor::SinPuente)),
+            buscador: corpus,
+            diccionario: sin_diccionario(),
+            ventana,
+            disparador: Arc::new(Mutex::new(Disparador::nuevo())),
+            // Sin pistas abiertas nadie está hablando, que es lo que este test necesita.
+            pistas: Arc::new(Mutex::new(Vec::new())),
+            viva: Arc::new(AtomicBool::new(true)),
+            // La escucha lleva doce segundos en marcha: el turno cerró en el 3 000 y lleva nueve
+            // callado. Se finge hacia atrás para que el test no tenga que esperarlos.
+            nacio: std::time::Instant::now() - std::time::Duration::from_millis(12_000),
+            espera: std::time::Duration::from_millis(20),
+        };
+
+        let (manda, recibe) = std::sync::mpsc::channel::<Encargo>();
+        let dichas: Arc<Mutex<Vec<Novedad>>> = Arc::new(Mutex::new(Vec::new()));
+        let apuntar = {
+            let dichas = dichas.clone();
+            move |n: Novedad| dichas.lock().unwrap().push(n)
+        };
+
+        // El canal sigue abierto y vacío: exactamente la reunión en la que nadie habla.
+        assert!(suyo.latir(&recibe, &apuntar), "el latido se dio por acabado con el canal abierto");
+
+        let salio = dichas.lock().unwrap();
+        let [Novedad::Aparece(a)] = &salio[..] else {
+            panic!("el latido no sacó la ficha del silencio: {:?}", salio)
+        };
+        assert_eq!(a.motivo, Motivo::SilencioLargo);
+
+        // Y cuando el hilo que mira los marcos suelta el canal, este se da por acabado.
+        drop(manda);
+        assert!(!suyo.latir(&recibe, &apuntar), "el hilo se quedaría girando con el canal cerrado");
+    }
+
+    /// **Y el corte alcanza al latido.** Tras el kill-switch la banda no estrena una ficha de la
+    /// reunión que el usuario acaba de cortar: es la ventana del hallazgo A2, en el camino nuevo.
+    #[test]
+    fn tras_el_corte_el_silencio_ya_no_saca_ninguna_ficha() {
+        let ventana = Arc::new(Mutex::new(Ventana::nueva()));
+        ventana
+            .lock()
+            .unwrap()
+            .empujar(turno_del_cliente("Nosotros veníamos trabajando con el proveedor anterior", 3_000));
+
+        let suyo = ElQueTranscribe {
+            motor: Box::new(crate::stt::Mudo::por(crate::stt::PorQueNoHayMotor::SinPuente)),
+            buscador: Arc::new(corpus_de_prueba()),
+            diccionario: sin_diccionario(),
+            ventana,
+            disparador: Arc::new(Mutex::new(Disparador::nuevo())),
+            pistas: Arc::new(Mutex::new(Vec::new())),
+            viva: Arc::new(AtomicBool::new(false)),
+            nacio: std::time::Instant::now() - std::time::Duration::from_millis(12_000),
+            espera: std::time::Duration::from_millis(20),
+        };
+
+        let (_manda, recibe) = std::sync::mpsc::channel::<Encargo>();
+        let dichas: Arc<Mutex<Vec<Novedad>>> = Arc::new(Mutex::new(Vec::new()));
+        let apuntar = {
+            let dichas = dichas.clone();
+            move |n: Novedad| dichas.lock().unwrap().push(n)
+        };
+        suyo.latir(&recibe, &apuntar);
+        assert!(
+            dichas.lock().unwrap().is_empty(),
+            "la banda estrenó una ficha después del kill-switch"
+        );
+    }
+
+    /// Una reunión que arranca callada no estrena la banda con una ficha de la nada: sin nada dicho
+    /// no hay silencio que interpretar.
+    #[test]
+    fn una_reunion_que_arranca_callada_no_dispara_nada() {
+        let corpus = corpus_de_prueba();
+        let ventana = Mutex::new(Ventana::nueva());
+        let disparador = Mutex::new(Disparador::nuevo());
+        assert!(el_silencio_pide_ficha(&ventana, &disparador, &corpus, 600_000, false).is_none());
+    }
+
+    /// Y el silencio del **consultor** no dispara nada: la ficha existe para responder a lo que
+    /// preguntan del otro lado, y si la propia voz del usuario contara, la app le contestaría a él
+    /// cada vez que se queda pensando. El último turno de la ventana es del micrófono; el disparo
+    /// mira el del sistema, y no hay ninguno.
+    #[test]
+    fn el_silencio_del_consultor_no_dispara() {
+        let corpus = corpus_de_prueba();
+        let ventana = Mutex::new(Ventana::nueva());
+        let disparador = Mutex::new(Disparador::nuevo());
+        ventana.lock().unwrap().empujar(Turno {
+            pista: Pista::Microfono,
+            ..turno_del_cliente("Déjame mirar la propuesta que les mandamos", 3_000)
+        });
+        assert!(el_silencio_pide_ficha(&ventana, &disparador, &corpus, 3_000 + 9_000, false).is_none());
     }
 }

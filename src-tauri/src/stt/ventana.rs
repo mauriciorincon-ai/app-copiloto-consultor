@@ -53,10 +53,6 @@ impl Ventana {
         self.turnos.len()
     }
 
-    pub fn esta_vacia(&self) -> bool {
-        self.turnos.is_empty()
-    }
-
     /// Los bytes de texto vivos ahora mismo. Es lo que enseña la pantalla de Honestidad, contado y
     /// no estimado.
     pub fn bytes(&self) -> usize {
@@ -123,7 +119,7 @@ mod tests {
     #[test]
     fn una_ventana_recien_nacida_no_tiene_ultimo_de_nadie() {
         let v = Ventana::nueva();
-        assert!(v.esta_vacia());
+        assert_eq!(v.cuantos(), 0);
         assert_eq!(v.bytes(), 0);
         assert!(v.ultimo_de(Pista::Sistema).is_none());
         assert!(v.ultimos(3).is_empty());
@@ -144,7 +140,7 @@ mod tests {
             v.empujar(turno(Pista::Sistema, n));
         }
         v.vaciar();
-        assert!(v.esta_vacia());
+        assert_eq!(v.cuantos(), 0);
         assert_eq!(v.bytes(), 0);
     }
 

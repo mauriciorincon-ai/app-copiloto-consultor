@@ -1,0 +1,100 @@
+# KIT DEL RADAR — un Mac de consultor SINTÉTICO, sin nada que vigile (sprint 002, fase 4).
+#
+# Una ruta de ejecutable por línea, como las da el núcleo. Es un Mac inventado: la lista la
+# escribió una persona a partir de lo que suele correr en un Mac de trabajo, no se copió de ninguno.
+#
+# Qué mide: el radar coral tiene que dar CERO programas aquí (0 falsos positivos). Por eso, además
+# de lo normal, la lista trae a propósito NOMBRES PARECIDOS a los del catálogo, que un cotejo por
+# trozos confundiría:
+#   · Microsoft Teams y su ejecutable «MSTeams» — no es TeamViewer;
+#   · Cisco Secure Client — un VPN, no un acceso remoto;
+#   · «Screen Sharing», la app con la que TÚ miras la pantalla de otro — no es `screensharingd`,
+#     que es por donde otro mira la tuya;
+#   · `screencaptureui`, la captura de pantalla de macOS; Loom y OBS, que graban TU pantalla
+#     porque tú lo pides;
+#   · Safari y Google Chrome — no son navegadores de examen;
+#   · `ScreenTimeAgent`, el Tiempo de uso de Apple.
+# Lo usa `src-tauri/src/radar/procesos.rs` (test `el_kit_de_procesos_sinteticos`).
+
+/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow
+/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/WindowServer
+/System/Library/CoreServices/Finder.app/Contents/MacOS/Finder
+/System/Library/CoreServices/Dock.app/Contents/MacOS/Dock
+/System/Library/CoreServices/SystemUIServer.app/Contents/MacOS/SystemUIServer
+/System/Library/CoreServices/ControlCenter.app/Contents/MacOS/ControlCenter
+/System/Library/CoreServices/NotificationCenter.app/Contents/MacOS/NotificationCenter
+/System/Library/CoreServices/Spotlight.app/Contents/MacOS/Spotlight
+/System/Library/CoreServices/WindowManager.app/Contents/MacOS/WindowManager
+/System/Library/CoreServices/screencaptureui.app/Contents/MacOS/screencaptureui
+/usr/libexec/UserEventAgent
+/usr/libexec/universalaccessd
+/usr/libexec/ScreenTimeAgent
+/usr/libexec/trustd
+/usr/libexec/sharingd
+/usr/libexec/rapportd
+/usr/libexec/coreaudiod
+/usr/sbin/bluetoothd
+/usr/sbin/cfprefsd
+/usr/sbin/distnoted
+/usr/libexec/secd
+/usr/libexec/nsurlsessiond
+/usr/libexec/lsd
+/usr/libexec/runningboardd
+/usr/libexec/tccd
+/usr/libexec/logd
+/usr/libexec/backupd
+/usr/libexec/mdmclient
+/System/Library/Frameworks/CoreServices.framework/Frameworks/Metadata.framework/Versions/A/Support/mds
+/System/Library/Frameworks/CoreServices.framework/Frameworks/Metadata.framework/Versions/A/Support/mdworker_shared
+/System/Library/PrivateFrameworks/CloudDocsDaemon.framework/Versions/A/Support/bird
+/System/Library/CoreServices/Siri.app/Contents/MacOS/Siri
+/System/Applications/Mail.app/Contents/MacOS/Mail
+/System/Applications/Calendar.app/Contents/MacOS/Calendar
+/System/Applications/Notes.app/Contents/MacOS/Notes
+/System/Applications/Messages.app/Contents/MacOS/Messages
+/System/Applications/FaceTime.app/Contents/MacOS/FaceTime
+/System/Applications/Preview.app/Contents/MacOS/Preview
+/System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
+/System/Applications/Utilities/Activity Monitor.app/Contents/MacOS/Activity Monitor
+/System/Applications/Utilities/Screen Sharing.app/Contents/MacOS/Screen Sharing
+/System/Applications/Utilities/Screenshot.app/Contents/MacOS/Screenshot
+/Applications/Safari.app/Contents/MacOS/Safari
+/System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.WebContent.xpc/Contents/MacOS/com.apple.WebKit.WebContent
+/Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+/Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework/Versions/140.0.7339.80/Helpers/Google Chrome Helper.app/Contents/MacOS/Google Chrome Helper
+/Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework/Versions/140.0.7339.80/Helpers/Google Chrome Helper (Renderer).app/Contents/MacOS/Google Chrome Helper (Renderer)
+/Applications/Microsoft Teams.app/Contents/MacOS/MSTeams
+/Applications/Microsoft Teams.app/Contents/Helpers/Microsoft Teams WebView.app/Contents/MacOS/Microsoft Teams WebView
+/Applications/zoom.us.app/Contents/MacOS/zoom.us
+/Applications/zoom.us.app/Contents/Frameworks/CptHost.app/Contents/MacOS/CptHost
+/Applications/Slack.app/Contents/MacOS/Slack
+/Applications/Slack.app/Contents/Frameworks/Slack Helper.app/Contents/MacOS/Slack Helper
+/Applications/Microsoft Outlook.app/Contents/MacOS/Microsoft Outlook
+/Applications/Microsoft Excel.app/Contents/MacOS/Microsoft Excel
+/Applications/Microsoft PowerPoint.app/Contents/MacOS/Microsoft PowerPoint
+/Applications/Microsoft Word.app/Contents/MacOS/Microsoft Word
+/Applications/Microsoft OneNote.app/Contents/MacOS/Microsoft OneNote
+/Library/Application Support/Microsoft/MAU2.0/Microsoft AutoUpdate.app/Contents/MacOS/Microsoft AutoUpdate
+/Applications/OneDrive.app/Contents/MacOS/OneDrive
+/Applications/Google Drive.app/Contents/MacOS/Google Drive
+/Applications/Dropbox.app/Contents/MacOS/Dropbox
+/Applications/Notion.app/Contents/MacOS/Notion
+/Applications/Figma.app/Contents/MacOS/Figma
+/Applications/Visual Studio Code.app/Contents/MacOS/Electron
+/Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Renderer).app/Contents/MacOS/Code Helper (Renderer)
+/Applications/Docker.app/Contents/MacOS/Docker Desktop
+/Applications/1Password.app/Contents/MacOS/1Password
+/Applications/Spotify.app/Contents/MacOS/Spotify
+/Applications/Rectangle.app/Contents/MacOS/Rectangle
+/Applications/Loom.app/Contents/MacOS/Loom
+/Applications/OBS.app/Contents/MacOS/OBS
+/Applications/CleanShot X.app/Contents/MacOS/CleanShot X
+/Applications/Power BI Desktop.app/Contents/MacOS/Power BI Desktop
+/Applications/Cisco/Cisco Secure Client.app/Contents/MacOS/Cisco Secure Client
+/opt/cisco/secureclient/bin/vpnagentd
+/Applications/Angel Ghost.app/Contents/MacOS/angel-ghost
+/opt/homebrew/bin/node
+/opt/homebrew/bin/python3.13
+/bin/zsh
+/usr/bin/ssh-agent
+/usr/bin/login

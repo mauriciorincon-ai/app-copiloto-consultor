@@ -45,8 +45,34 @@ const PROTEGIDOS = [
   // El disparador guarda la última pregunta del CLIENTE para no repetir ficha, y la ficha se
   // arma con sus palabras. Los dos manejan contenido de terceros: ni disco ni red.
   "src-tauri/src/disparo",
+  // `diccionario` se añadió en el sprint 002, fase 1, y es el caso más interesante de la lista:
+  // **el diccionario PERSISTE** —es del consultor, como sus notas— y aun así el módulo está aquí.
+  // Recibe cada turno del cliente y devuelve el turno corregido, así que tiene el transcript en las
+  // manos; lo que hace es serializarse a un `String` y dejar que `lib.rs` escriba el archivo, que es
+  // la capa que no ve un solo turno. El plan del sprint decía «`diccionario/` puede tocar disco»;
+  // esto es más fuerte y cuesta lo mismo.
+  "src-tauri/src/diccionario",
+  // `habla` se añadió en el sprint 002, fase 2, y es el caso raro de la lista: lo que dice en voz
+  // alta es texto del CORPUS DEL USUARIO, no del cliente, así que por la frontera del ADR 002 no le
+  // tocaría. Está aquí por la API: `AVSpeechSynthesizer` trae `write(_:toBufferCallback:)`, que
+  // convierte lo que va a decir en **búferes de audio** — es decir, una manera de dejar en un
+  // archivo la evidencia del consultor leída en voz alta. Eso sería una grabación de la reunión con
+  // otro nombre. El módulo no la usa y desde aquí no puede empezar a usarla en silencio.
+  "src-tauri/src/habla",
   "src-tauri/src/ficha",
-  "src-tauri/src/screen",
+  // `pantalla` es la ranura que el sprint 001 reservó como `screen` y dejó vacía; el sprint 002, fase
+  // 3, la llenó con el nombre en español que usa el resto de la casa. Es el módulo de más superficie
+  // de la lista después de `escucha`: tiene en las manos cuadros de la ventana de la reunión y el
+  // texto que Vision leyó de ellos. El gate de abajo lo cazó en su primera corrida: la cabecera ya
+  // decía «MÓDULO PROTEGIDO» y la ranura seguía llamándose `screen`.
+  "src-tauri/src/pantalla",
+  // `radar` (sprint 002, fase 4): su mitad ámbar recibe las líneas que Vision leyó de la ventana de
+  // la reunión —nombres de participantes incluidos— para buscar el aviso de grabación y los bots.
+  // Texto de un tercero en las manos: ni disco ni red. Y además la regla dura 9 le prohíbe mirar
+  // fuera de este Mac, que vigila su propio gate (`tests/unit/radar-solo-este-mac.test.ts`).
+  // Su catálogo vive en `data/radar/` y entra con `include_str!` al compilar: no hay archivo que
+  // leer en tiempo de ejecución. Lo cazó la comprobación de abajo en su primera corrida.
+  "src-tauri/src/radar",
   "src-tauri/src/sesion",
   "src-tauri/nativo",
   "src/capture",
@@ -62,6 +88,13 @@ const PROHIBIDO = [
   // nada, que es la peor forma de pasar: verde por no saber mirar.
   /\bFileManager\b/, /\bURLSession\b/, /\bNSURLConnection\b/, /contentsOf:/, /\bwrite\(to:/,
   /\bNWConnection\b/, /\bCFSocket/, /\bNSFileHandle\b/, /\bUserDefaults\b/,
+  // La PANTALLA (sprint 002, fase 3): las maneras que tienen Apple de convertir un cuadro de la
+  // reunión en algo que sobreviva a la memoria. `CGImageDestination` y las representaciones de
+  // `NSBitmapImageRep` lo hacen imagen (PNG, JPEG, TIFF); `SCRecordingOutput` —macOS 15— graba la
+  // ventana capturada directamente a un vídeo en disco, y `AVAssetWriter` escribe cualquier vídeo.
+  // Ninguna se usa, y desde aquí ninguna puede empezar a usarse sin que se vea.
+  /\bCGImageDestination/, /\bNSBitmapImageRep\b/, /\bpngData\b/, /\bjpegData\b/,
+  /\btiffRepresentation\b/, /\bSCRecordingOutput\b/, /\bAVAssetWriter\b/,
   // La descarga del modelo de reconocimiento que hace macOS. Es legítima y necesaria, y por eso
   // NO se prohíbe a secas: se obliga a que la línea lleve su marca y su ADR. Una puerta a la red
   // en un módulo efímero puede existir; lo que no puede es existir sin que se vea.

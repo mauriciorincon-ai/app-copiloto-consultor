@@ -1,0 +1,44 @@
+# KIT DEL RADAR — lo que se AÑADE al Mac limpio para vigilarlo: un programa de cada fila del
+# catálogo coral (`data/radar/programas.json`), con la ruta donde suele instalarse.
+#
+# Qué mide: con esto encima de `mac-limpio.txt`, el radar tiene que encontrar TODAS las filas del
+# catálogo —ni una menos, ni una más— (test `el_kit_de_procesos_sinteticos`). Una fila nueva en el
+# catálogo sin su línea aquí pone ese test en rojo, a propósito: el 100 % se mide contra el catálogo
+# entero, no contra lo que el kit se acordó de traer.
+#
+# Las rutas son ilustrativas: el radar compara solo el último tramo, el nombre del ejecutable.
+
+/Applications/LockDown Browser.app/Contents/MacOS/LockDown Browser
+/Applications/Safe Exam Browser.app/Contents/MacOS/Safe Exam Browser
+/Applications/Examplify.app/Contents/MacOS/Examplify
+/Applications/Guardian Browser.app/Contents/MacOS/Guardian Browser
+/Applications/Inspera Integrity Browser.app/Contents/MacOS/Inspera Integrity Browser
+/Library/PrivilegedHelperTools/scthostp
+/usr/local/teramind/agent/bin/tmsysd
+/Applications/Workpuls.app/Contents/MacOS/Workpuls
+/Applications/Hubstaff.app/Contents/MacOS/Hubstaff
+/Applications/Time Doctor 2.app/Contents/MacOS/Time Doctor 2
+/Applications/DeskTime.app/Contents/MacOS/DeskTime
+/Library/Application Support/Controlio/Wemonc
+/Applications/TeamViewer.app/Contents/MacOS/TeamViewer_Service
+/Applications/AnyDesk.app/Contents/MacOS/AnyDesk
+/Library/PrivilegedHelperTools/ChromeRemoteDesktopHost.app/Contents/MacOS/remoting_me2me_host
+/Applications/Splashtop Streamer.app/Contents/Resources/SRStreamerDaemon
+/opt/connectwisecontrol-0a1b2c3d4e5f/ConnectWise Control Client.app/Contents/MacOS/ConnectWise Control Client
+/Applications/RustDesk.app/Contents/MacOS/RustDesk
+/Library/Application Support/LogMeIn/LogMeIn.app/Contents/MacOS/LogMeIn
+/private/var/folders/xy/abc123/T/Support-LogMeInRescue.app/Contents/MacOS/Support-LogMeInRescue
+/Applications/Jump Desktop Connect.app/Contents/MacOS/Jump Desktop Connect
+/Applications/Parsec.app/Contents/MacOS/Parsec
+/Applications/RemotePC.app/Contents/MacOS/RemotePC
+/Library/DWAgent/DWAgent.app/Contents/MacOS/DWAgent
+/Applications/ISL Light.app/Contents/MacOS/ISL Light
+/Applications/Supremo.app/Contents/MacOS/Supremo
+/Applications/ToDesk.app/Contents/MacOS/ToDesk
+/Applications/Parallels Access.app/Contents/MacOS/Parallels Access
+/Library/vnc/vncserver
+/System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/MacOS/ARDAgent
+/System/Library/CoreServices/RemoteManagement/ScreensharingAgent.bundle/Contents/MacOS/ScreensharingAgent
+/Library/Application Support/JAMF/Jamf.app/Contents/MacOS/JamfDaemon.app/Contents/MacOS/JamfDaemon
+/Library/Intune/Microsoft Intune Agent.app/Contents/MacOS/IntuneMdmAgent
+/opt/jc/bin/jumpcloud-agent

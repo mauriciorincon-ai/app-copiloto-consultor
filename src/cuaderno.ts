@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { escuchar, hayTauri, llamar, preguntar } from "./puente";
 import { useT } from "./i18n";
+import { INFORME_DEL_CORTE } from "./contrato.generado";
 
 /**
  * EL PUENTE DEL CUADERNO — lo que las pantallas de la ventana principal preguntan a lo nativo.
@@ -20,13 +21,37 @@ export type Proteccion = "Verificada" | "SinVerificar";
 
 export type Reunion =
   | { que: "ninguna" }
-  | { que: "detectada"; cliente: string; titulo: string | null; proteccion: Proteccion }
-  | { que: "no-se-puede-saber"; motivo: string };
+  | {
+      que: "detectada";
+      cliente: string;
+      titulo: string | null;
+      proteccion: Proteccion;
+    }
+  | { que: "no-se-puede-saber"; motivo: PorQueNoSeVe };
 
-export type EstadoPermiso = "sin-conceder" | "concedido" | "denegado" | "no-se-sabe";
+/**
+ * **Los porqués son conjuntos CERRADOS** (mirada 17-quater, `kit.html` §8-ter). Rust sabe el motivo
+ * y lo nombra; la frase la escribe el diseño, en los dos idiomas, y vive en `src/i18n/`. Hasta el
+ * sprint 002 cruzaban como prosa en español que la pantalla no podía traducir —y por eso no
+ * enseñaba—. El detalle técnico, con sus códigos de macOS, se queda en el log.
+ */
+export type PorQueNoSeVe = "sin-accesibilidad";
+export type PorQueNoAbrio =
+  | "sin-permiso-del-microfono"
+  | "sin-permiso-del-audio"
+  | "dispositivo-ocupado"
+  | "formato-ilegible"
+  | "no-dejo";
+export type PorQueNoSeSabe = "sin-salida" | "sin-conexion" | "sin-fuente";
+export type PorQueNoHayMotor = "sin-transcriptor" | "sin-puente" | "no-contesta";
+
+export type EstadoPermiso =
+  "sin-conceder" | "concedido" | "denegado" | "no-se-sabe";
 
 export type Permisos = {
   microfono: EstadoPermiso;
+  /** El audio del sistema: **otro permiso** que la pantalla, aunque Ajustes los enseñe juntos. */
+  audio: EstadoPermiso;
   pantalla: EstadoPermiso;
   accesibilidad: EstadoPermiso;
 };
@@ -38,12 +63,19 @@ export type Permisos = {
  * una muestra que no es bilingüe en una app que promete serlo en todo.
  */
 function reunionDeMuestra(titulo: string): Reunion {
-  return { que: "detectada", cliente: "Google Meet", titulo, proteccion: "Verificada" };
+  return {
+    que: "detectada",
+    cliente: "Google Meet",
+    titulo,
+    proteccion: "Verificada",
+  };
 }
 
+/** La muestra del estado «así se ve hoy · sprint 2 · la pantalla»: los cuatro concedidos. */
 const PERMISOS_DE_MUESTRA: Permisos = {
   microfono: "concedido",
-  pantalla: "sin-conceder",
+  audio: "concedido",
+  pantalla: "concedido",
   accesibilidad: "concedido",
 };
 
@@ -86,14 +118,37 @@ function usePreguntaAlVolver<T>(comando: string, deMuestra: T, vacio: T): T {
 
 export function useReunion(): Reunion {
   const t = useT().cuaderno;
-  return usePreguntaAlVolver<Reunion>("reunion_abierta", reunionDeMuestra(t.tituloDeMuestra), {
-    que: "ninguna",
-  });
+  return usePreguntaAlVolver<Reunion>(
+    "reunion_abierta",
+    reunionDeMuestra(t.tituloDeMuestra),
+    {
+      que: "ninguna",
+    },
+  );
+}
+
+/**
+ * Las piezas del kill-switch, **leídas** de lo nativo.
+ *
+ * Antes de que conteste no se enseña una cuenta inventada: se enseña la lista vacía, que la
+ * pantalla sabe leer como «todavía no lo sé». La muestra para la maqueta es la del contrato, que
+ * es la forma que Rust emite de verdad.
+ */
+export function usePiezasDelCorte(): InformeDelCorte {
+  return usePreguntaAlVolver<InformeDelCorte>(
+    "piezas_del_corte",
+    INFORME_DEL_CORTE,
+    {
+      piezas: [],
+      bytesEnRed: 0,
+    },
+  );
 }
 
 /** Lo que se sabe de los permisos antes de preguntar: nada. Y «no lo sé» **no es «no»**. */
 const PERMISOS_SIN_PREGUNTAR: Permisos = {
   microfono: "no-se-sabe",
+  audio: "no-se-sabe",
   pantalla: "no-se-sabe",
   accesibilidad: "no-se-sabe",
 };
@@ -139,35 +194,36 @@ export type Salida =
   | { salida: "altavoces" }
   | { salida: "auriculares" }
   | { salida: "otra"; nombre: string }
-  | { salida: "no-se-sabe"; motivo: string };
+  /** El nombre viaja aparte porque la frase lo cita y un nombre no se traduce. */
+  | { salida: "no-se-sabe"; motivo: PorQueNoSeSabe; nombre: string | null };
 
 /** En qué estado está el motor de transcripción para un idioma. */
 export type Disponibilidad =
   | { estado: "listo" }
   | { estado: "sin-modelo" }
   | { estado: "idioma-desconocido" }
-  | { estado: "sin-motor"; motivo: string };
+  // Sin motivo por idioma: es del sistema, no del idioma, y cruza una vez en `QueSabeTranscribir`.
+  | { estado: "sin-motor" };
 
 export type EstadoDePista = {
   /** **Esto, y no el número de muestras, distingue una avería de un silencio.** Cuando nadie
    *  habla, macOS no entrega ni una muestra: cero no es un fallo. */
   abierta: boolean;
-  motivo: string | null;
+  /** Si no abrió, por qué. Sesión lo pinta con su frase y su salida (la «pista caída», M2). */
+  motivo: PorQueNoAbrio | null;
   bytes: number;
-  legible: string;
-  segundos: number;
-  muestrasRecibidas: number;
-  hablando: boolean;
+  // `segundos`, `muestrasRecibidas` y `hablando` salieron del contrato en la fase 3 del sprint
+  // 002 (decisión del usuario en la mirada 17-quater: «4 fuera, 3 se ven»). Rust los conserva
+  // para el log y para el modo solo audio; ninguna pantalla tenía dónde enseñarlos.
 };
 
 export type EstadoDeEscucha = {
   escuchando: boolean;
   microfono: EstadoDePista;
   sistema: EstadoDePista;
-  turnosEnMemoria: number;
+  // `turnosEnMemoria` salió por la misma decisión: Honestidad cuenta el transcript por sus bytes.
   bytesDelTranscript: number;
-  ramLegible: string;
-  motor: string;
+  // `motor` salió del contrato en la fase 3: Idioma lo lee de `QueSabeTranscribir`, con su techo.
 };
 
 /**
@@ -175,6 +231,32 @@ export type EstadoDeEscucha = {
  * sistema es la contraparte. Regla dura de la casa — la atribución se resuelve por pista y jamás
  * por biometría.
  */
+/**
+ * El kill-switch, visto desde la interfaz.
+ *
+ * Las piezas y su suerte las decide `src-tauri/src/corte.rs` con un `match` sin comodín: quien
+ * añada una pieza y no la resuelva no compila. Aquí solo se leen — hasta el sprint 002 esta cuenta
+ * estaba escrita a mano en la pantalla de Honestidad, con un comentario que lo confesaba.
+ */
+export type PiezaDelCorte =
+  /** La voz que sale (C15, sprint 002). Es la primera que se corta: la única que se OYE. */
+  | "voz"
+  | "audio-del-microfono"
+  | "audio-del-sistema"
+  | "ultimo-frame"
+  | "transcript"
+  | "contador-de-red"
+  | "banda"
+  | "acople";
+
+/** `cortada` = existe y se corta · `aun-no-existe` = todavía no está construida, y se dice. */
+export type SuerteDelCorte = "cortada" | "aun-no-existe";
+
+export type InformeDelCorte = {
+  piezas: [PiezaDelCorte, SuerteDelCorte][];
+  bytesEnRed: number;
+};
+
 export type Pista = "microfono" | "sistema";
 
 export type Turno = {
@@ -192,7 +274,7 @@ export type QueSabeTranscribir = {
   motor: string;
   techo: number;
   idiomas: { codigo: string; disponibilidad: Disponibilidad }[];
-  motivo: string | null;
+  motivo: PorQueNoHayMotor | null;
 };
 
 /**
@@ -202,15 +284,24 @@ export type QueSabeTranscribir = {
  */
 const ESCUCHA_DE_MUESTRA: EstadoDeEscucha = {
   escuchando: true,
-  microfono: { abierta: true, motivo: null, bytes: 1_920_000, legible: "1,8 MB", segundos: 30, muestrasRecibidas: 480_000, hablando: false },
-  sistema: { abierta: true, motivo: null, bytes: 1_920_000, legible: "1,8 MB", segundos: 30, muestrasRecibidas: 480_000, hablando: false },
-  turnosEnMemoria: 12,
+  microfono: {
+    abierta: true,
+    motivo: null,
+    bytes: 1_920_000,
+  },
+  sistema: {
+    abierta: true,
+    motivo: null,
+    bytes: 1_920_000,
+  },
   bytesDelTranscript: 2_048,
-  ramLegible: "3,7 MB",
-  motor: "apple-speechanalyzer",
 };
 
-const SALIDA_DE_MUESTRA: Salida = { salida: "altavoces" };
+/**
+ * El estado «sprint 2 · la pantalla» de Sesión: unos auriculares externos, con su nombre. Es el
+ * caso que la mirada 17-quater dibujó —la app no sabe si es un casco o un altavoz, y lo dice—.
+ */
+const SALIDA_DE_MUESTRA: Salida = { salida: "otra", nombre: "AirPods Pro" };
 
 /**
  * La muestra de la maqueta: el modelo del consultor instalado y **el del cliente sin instalar**.
@@ -242,9 +333,11 @@ export function useEscucha(): EstadoDeEscucha {
     if (!hayTauri()) return;
     let vivo = true;
     const leer = () => {
-      void preguntar<EstadoDeEscucha | null>("estado_de_la_escucha").then((e) => {
-        if (vivo) setEstado(e ?? APAGADA);
-      });
+      void preguntar<EstadoDeEscucha | null>("estado_de_la_escucha").then(
+        (e) => {
+          if (vivo) setEstado(e ?? APAGADA);
+        },
+      );
     };
     leer();
     const bajas = [escuchar("escucha", leer), escuchar("corte", leer)];
@@ -261,21 +354,185 @@ export function useEscucha(): EstadoDeEscucha {
 /** Nadie está escuchando: ni pistas abiertas ni bytes. No es un error, es el estado de reposo. */
 const APAGADA: EstadoDeEscucha = {
   escuchando: false,
-  microfono: { abierta: false, motivo: null, bytes: 0, legible: "0 B", segundos: 0, muestrasRecibidas: 0, hablando: false },
-  sistema: { abierta: false, motivo: null, bytes: 0, legible: "0 B", segundos: 0, muestrasRecibidas: 0, hablando: false },
-  turnosEnMemoria: 0,
+  microfono: {
+    abierta: false,
+    motivo: null,
+    bytes: 0,
+  },
+  sistema: {
+    abierta: false,
+    motivo: null,
+    bytes: 0,
+  },
   bytesDelTranscript: 0,
-  ramLegible: "0 B",
-  motor: "—",
 };
 
+/**
+ * **EL MODO SOLO AUDIO (C15), visto desde la banda.**
+ *
+ * Tres booleanos y ninguna frase, y eso es deliberado en el lado de Rust: las frases son copy y el
+ * copy vive en `src/i18n/`, donde el gate del diccionario las compara una a una con
+ * `docs/diseno/banda.html`. Si la parte nativa mandara «Conecta auriculares», ese texto se podría
+ * cambiar sin que ninguna mirada lo viera.
+ *
+ * | Campo | Qué decide |
+ * |---|---|
+ * | `encendida` | la banda vive a 44 px en vez de 88 |
+ * | `puede` | cuál de los dos estados se pinta: «Diciéndote la ficha…» o «Conecta auriculares» |
+ * | `diciendo` | si está sonando ahora mismo |
+ */
+export type LaVoz = {
+  encendida: boolean;
+  puede: boolean;
+  diciendo: boolean;
+};
+
+/** La voz apagada, que es como nace la app — y como la pinta el arnés de capturas. */
+export const VOZ_APAGADA: LaVoz = {
+  encendida: false,
+  puede: false,
+  diciendo: false,
+};
+
+/**
+ * Cómo está la voz. Se pregunta al montarse y se escucha a partir de ahí: el evento llega cuando
+ * el usuario pulsa `⌃⌥V` o `⎋`, cuando empieza o acaba una ficha, y cuando el kill-switch la calla.
+ *
+ * **No se sondea.** El estado cambia unas cuantas veces por reunión y preguntarlo cada dos segundos
+ * sería despertar Core Audio —`salida_de_audio` lee el dispositivo por defecto— para casi nunca
+ * enterarse de nada.
+ */
+export function useVoz(): LaVoz {
+  const [voz, setVoz] = useState<LaVoz>(VOZ_APAGADA);
+  useEffect(() => {
+    if (!hayTauri()) return;
+    let vivo = true;
+    const leer = () => {
+      void preguntar<LaVoz>("estado_de_la_voz").then((v) => {
+        if (vivo) setVoz(v ?? VOZ_APAGADA);
+      });
+    };
+    leer();
+    const baja = escuchar<LaVoz>("voz", (v) => {
+      if (vivo) setVoz(v ?? VOZ_APAGADA);
+    });
+    return () => {
+      vivo = false;
+      baja();
+    };
+  }, []);
+  return voz;
+}
+
+/**
+ * La LECTURA DE PANTALLA (C8, sprint 002), tal y como la cuenta Rust (`pantalla::EstadoDeLaPantalla`).
+ *
+ * | Campo | Quién lo lee |
+ * |---|---|
+ * | `vista` | la fila «Pantalla — solo lee lo nuevo» de Sesión |
+ * | `bytesEnMemoria` | la fila de la pantalla en «Qué vive en la memoria ahora» de Honestidad |
+ */
+export type VistaDeLaPantalla =
+  "apagada" | "sin-permiso" | "esperando-la-reunion" | "leyendo" | "no-pudo";
+
+export type EstadoDeLaPantalla = {
+  vista: VistaDeLaPantalla;
+  bytesEnMemoria: number;
+};
+
+/** Sin sesión, la lectura espera a la reunión: es como nace la app y como la pinta el arnés. */
+export const PANTALLA_EN_ESPERA: EstadoDeLaPantalla = {
+  vista: "esperando-la-reunion",
+  bytesEnMemoria: 0,
+};
+
+/**
+ * Lo que la maqueta dibuja, **fuera de Tauri**: leyendo, con el último cuadro en memoria. Los bytes
+ * son los que hacen que Honestidad escriba «1,4 MB» y «RAM · 5,1 MB», como `honestidad.html` s2.
+ */
+const PANTALLA_DE_MUESTRA: EstadoDeLaPantalla = {
+  vista: "leyendo",
+  bytesEnMemoria: 1_468_006,
+};
+
+/**
+ * **El diccionario, en la pantalla de Idioma** (mirada 17-bis, opción a): de dónde salen sus
+ * términos y dónde está el archivo, que es la única puerta para editarlo.
+ */
+export type EstadoDelDiccionario = {
+  terminos: number;
+  delCorpus: number;
+  enTuArchivo: number;
+  ruta: string;
+};
+
+const DICCIONARIO_DE_MUESTRA: EstadoDelDiccionario = {
+  terminos: 17,
+  delCorpus: 12,
+  enTuArchivo: 5,
+  ruta: "~/Library/Application Support/com.aiapps.copiloto-consultor/diccionario.yaml",
+};
+
+/** `null` dentro del producto hasta que Rust conteste: una tabla con ceros diría algo falso. */
+export function useDiccionario(): EstadoDelDiccionario | null {
+  return usePreguntaAlVolver<EstadoDelDiccionario | null>(
+    "estado_del_diccionario",
+    DICCIONARIO_DE_MUESTRA,
+    null,
+  );
+}
+
+/**
+ * Qué hace la lectura de pantalla. Se pregunta al montarse y se escucha el evento `pantalla`, que
+ * llega cuando cambia la vista (se enciende, se apaga, aparece o desaparece la reunión). Tras el
+ * kill-switch se vuelve a preguntar: el corte la para sin emitir nada, y la fila no puede quedarse
+ * diciendo «leyendo» de una lectura que ya no existe.
+ */
+export function usePantalla(): EstadoDeLaPantalla {
+  const [estado, setEstado] = useState<EstadoDeLaPantalla>(() =>
+    hayTauri() ? PANTALLA_EN_ESPERA : PANTALLA_DE_MUESTRA,
+  );
+  useEffect(() => {
+    if (!hayTauri()) return;
+    let vivo = true;
+    const leer = () => {
+      void preguntar<EstadoDeLaPantalla>("estado_de_la_pantalla").then((e) => {
+        if (vivo) setEstado(e ?? PANTALLA_EN_ESPERA);
+      });
+    };
+    leer();
+    const baja = escuchar<EstadoDeLaPantalla>("pantalla", (e) => {
+      if (vivo) setEstado(e ?? PANTALLA_EN_ESPERA);
+    });
+    const bajaCorte = escuchar<unknown>("corte", leer);
+    return () => {
+      vivo = false;
+      baja();
+      bajaCorte();
+    };
+  }, []);
+  return estado;
+}
+
+/** El interruptor de Sesión: enciende o apaga la lectura automática. */
+export function lecturaAutomatica(
+  encendida: boolean,
+): Promise<EstadoDeLaPantalla | null> {
+  return preguntar<EstadoDeLaPantalla>("lectura_automatica", { encendida });
+}
+
+/** Lee la ventana de la reunión UNA vez, ahora — la lectura bajo demanda, sin región. */
+export function leerLaPantallaAhora(): Promise<boolean | null> {
+  return preguntar<boolean>("leer_la_pantalla_ahora");
+}
+
 export function useSalidaDeAudio(): Salida {
-  // El motivo va **vacío** a propósito: nadie lo pinta hoy, y escribir aquí una frase en español
-  // sería meter copy de una sola lengua en el camino de una pantalla — el hallazgo A6 otra vez. Si
-  // algún día se enseña, saldrá del diccionario. Lo vigila el barrido de copy cableado.
+  // Si la pregunta no llega, lo honesto es «no se sabe» sin nombre: la frase de Sesión para ese
+  // caso es la única que no cita un dispositivo.
   return usePreguntaAlVolver<Salida>("salida_de_audio", SALIDA_DE_MUESTRA, {
     salida: "no-se-sabe",
-    motivo: "",
+    motivo: "sin-salida",
+    nombre: null,
   });
 }
 
@@ -300,7 +557,8 @@ export const DEL_CLIENTE = "en-US";
 
 /* ----------------------------------------------------------------- el corpus (fase 4) ------ */
 
-export type UnidadDelCorpus = "propuesta" | "marco" | "caso" | "cliente" | "perfil";
+export type UnidadDelCorpus =
+  "propuesta" | "marco" | "caso" | "cliente" | "perfil";
 
 export type PorUnidad = { unidad: UnidadDelCorpus; documentos: number };
 
@@ -326,7 +584,7 @@ export type EstadoDelCorpus = {
 export const CORPUS_DE_MUESTRA: EstadoDelCorpus = {
   carpeta: "~/Documentos/Consultoría",
   documentos: 143,
-  secciones: 1_284,
+  secciones: 412,
   porUnidad: [
     { unidad: "propuesta", documentos: 31 },
     { unidad: "marco", documentos: 12 },
@@ -337,7 +595,7 @@ export const CORPUS_DE_MUESTRA: EstadoDelCorpus = {
   sinUnidad: 0,
   ilegibles: 4,
   conjeturados: 9,
-  dondeVive: "~/Library/…/Angel Ghost/corpus",
+  dondeVive: "~/Library/Application Support/com.aiapps.copiloto-consultor/corpus",
   bytesDelIndice: 19_293_798,
 };
 
@@ -355,7 +613,11 @@ export const CORPUS_VACIO: EstadoDelCorpus = {
 };
 
 export function useCorpus(): EstadoDelCorpus {
-  return usePreguntaAlVolver<EstadoDelCorpus>("estado_del_corpus", CORPUS_DE_MUESTRA, CORPUS_VACIO);
+  return usePreguntaAlVolver<EstadoDelCorpus>(
+    "estado_del_corpus",
+    CORPUS_DE_MUESTRA,
+    CORPUS_VACIO,
+  );
 }
 
 /**
@@ -368,7 +630,10 @@ export async function indexarCorpus(): Promise<void> {
   await preguntar("indexar_corpus", { carpeta });
 }
 
-export function empezarAEscuchar(idiomaDelConsultor: string, idiomaDelCliente: string) {
+export function empezarAEscuchar(
+  idiomaDelConsultor: string,
+  idiomaDelCliente: string,
+) {
   void llamar("empezar_a_escuchar", { idiomaDelConsultor, idiomaDelCliente });
 }
 
@@ -376,11 +641,15 @@ export function dejarDeEscuchar() {
   void llamar("dejar_de_escuchar");
 }
 
-export async function instalarIdioma(codigo: string): Promise<Disponibilidad | null> {
+export async function instalarIdioma(
+  codigo: string,
+): Promise<Disponibilidad | null> {
   return preguntar<Disponibilidad>("instalar_idioma", { codigo });
 }
 
-export function abrirAjustesDe(permiso: "microfono" | "pantalla" | "accesibilidad") {
+export function abrirAjustesDe(
+  permiso: "microfono" | "audio" | "pantalla" | "accesibilidad",
+) {
   void llamar("abrir_ajustes_de", { permiso });
 }
 

@@ -81,6 +81,13 @@ fn config_de<'a>(ventanas: &'a [WindowConfig], etiqueta: &str) -> Result<&'a Win
 /// borde inferior.
 ///
 /// No abre nada si el invariante de protección no se cumple.
+///
+/// **Y es idempotente desde el sprint 002, que es lo que hace posible que la banda VUELVA.** El
+/// kill-switch la cierra —es una de las siete piezas del corte— y hasta ahora no había manera de
+/// recuperarla sin reiniciar la app: `abrir_banda` estaba escrita, registrada como comando y sin un
+/// solo llamador (hallazgo M4). Volver a llamarla con la banda en pantalla habría sido un error,
+/// porque `build()` no admite una etiqueta repetida, así que la reposición se mira **ventana por
+/// ventana**: se abre la que falte y se deja en paz la que esté.
 pub fn abrir_banda<R: Runtime>(app: &AppHandle<R>, alto: u32) -> Result<(), String> {
     let ventanas = app.config().app.windows.clone();
     invariante_de_proteccion(&proteccion_declarada(&ventanas))?;
@@ -88,6 +95,12 @@ pub fn abrir_banda<R: Runtime>(app: &AppHandle<R>, alto: u32) -> Result<(), Stri
     let (ancho, x, y) = geometria(app, alto)?;
 
     for etiqueta in [RELLENO, BANDA] {
+        // Una por una y no «si falta alguna, las dos»: si alguna vez quedara el relleno sin su
+        // banda, lo que hay que reponer es la banda, y abrir un segundo relleno encima del que ya
+        // está sería dejar dos rectángulos opacos sobre la reunión.
+        if app.get_webview_window(etiqueta).is_some() {
+            continue;
+        }
         let cfg = config_de(&ventanas, etiqueta)?;
         let ventana = WebviewWindowBuilder::from_config(app, cfg)
             .map_err(|e| format!("«{etiqueta}»: {e}"))?

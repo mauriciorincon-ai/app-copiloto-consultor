@@ -287,7 +287,12 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .contenido { padding: var(--s-5) var(--s-6); overflow: auto; display: flex; flex-direction: column; gap: var(--s-4); }
 .titulo { display: flex; flex-direction: column; gap: 4px; }
 .titulo h1 { font-size: var(--t-h1); font-weight: 600; letter-spacing: -.01em; line-height: 1.2; }
-.titulo .sub { font-size: var(--t-ui); color: var(--ink-2); max-width: 60ch; }
+/* El subtítulo va en UNA línea desde la fase 3 del sprint 002. Con el tope de 60ch se partía en dos,
+   y las pantallas del sprint 2 —que ya dicen más— se salían 5-20 px del área que desplaza: la última
+   tarjeta quedaba pegada al borde, sin su margen. Lo cazó el gate de fidelidad midiendo el producto;
+   la maqueta tenía el mismo defecto y el recorrido de holguras no lo veía, porque medía la ventana y no
+   el área que desplaza. */
+.titulo .sub { font-size: var(--t-ui); color: var(--ink-2); }
 h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-weight: 400; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 8px; }
 
 /* Tarjeta */
@@ -424,7 +429,10 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .banda .titular-b { font-family: var(--font-evidencia); font-size: 16px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .banda .linea-b { font-family: var(--font-evidencia); font-size: 13.5px; line-height: 1.35; color: var(--ink-2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
 .banda.ampliada .linea-b { -webkit-line-clamp: 2; }
-.banda .lado-b { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; max-width: 34%; }
+/* Hueco de 3 px y no 4: desde la mirada 17-bis la ficha lleva TRES renglones a la derecha —fuente, por
+   qué y teclas— y con 4 px las teclas se salían 1,35 px por abajo y la banda les recortaba el borde
+   inferior. Lo encontró el recorrido de holguras de la fase 3 del sprint 002. */
+.banda .lado-b { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; max-width: 34%; }
 .banda .fuente-b { font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .banda .atajos-b { display: inline-flex; gap: 10px; }
 .banda .mas { padding: 0; }
@@ -433,6 +441,18 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .banda.voz .cuerpo-b { align-items: center; padding: 0 14px; height: 100%; }
 .banda.voz .linea-b { font-size: 13px; -webkit-line-clamp: 1; white-space: nowrap; }
 .banda.voz .cab-b { display: none; }
+/* Modo solo audio · el contenido de los 44 px (sprint 2, mirada 16).
+   El alto y las tres reglas de arriba se reservaron en el sprint 1; esto es lo que vive dentro.
+   Una sola línea, así que todo va en fila: el glifo dice de qué se trata, el texto lo dice con
+   palabras, y a la derecha las teclas y el contador de red — que NO puede desaparecer al cambiar
+   de alto, porque es una promesa dura de la app y no un adorno de la cabecera. */
+.banda.voz .linea-b { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+.banda.voz .linea-b .ic { flex: 0 0 auto; color: var(--halo); }
+.banda.voz .linea-b.warn { color: var(--warn); }
+.banda.voz .linea-b.warn .ic { color: var(--warn); }
+.banda.voz .linea-b .sep { color: var(--line-2); flex: 0 0 auto; }
+.banda.voz .linea-b .fuente-b { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.banda.voz .lado-b { flex-direction: row; align-items: center; gap: 12px; max-width: none; }
 
 /* Marca mínima a la izquierda */
 .banda .marca-min { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-size: var(--t-meta); white-space: nowrap; flex: 0 0 auto; }
@@ -456,6 +476,10 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 /* esperando — el vacío está diseñado: una frase en Charter, no un ícono gris */
 .banda .voz-b { font-family: var(--font-evidencia); font-style: italic; font-size: 15px; line-height: 1.4; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .banda .meta-b { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+/* Mirada 17-bis: la ficha dice POR QUÉ disparó y CUÁNTO tardó, y si su sección la conjeturó el
+   lector de PDF. La marca de conjetura no se tiñe de ámbar: no es un aviso, es una nota de
+   confianza — el medio círculo dice «a medias» y la palabra dice de qué. */
+.banda .meta-b .conjetura { display: inline-flex; align-items: center; gap: 4px; margin-left: 4px; padding-left: 8px; border-left: var(--borde) solid var(--line-2); }
 
 /* buscando · sin resultado — lo que se oyó, entre comillas, con su pista */
 .banda .oido { font-size: var(--t-meta); min-width: 0; }
@@ -464,8 +488,15 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 /* sin verificar — aviso en línea: símbolo + texto + color (los tres, siempre) */
 .banda .aviso-b { display: flex; align-items: flex-start; gap: 8px; min-width: 0; font-size: var(--t-meta); line-height: 1.35; color: var(--warn); }
 .banda .aviso-b .ic { flex: 0 0 auto; margin-top: 1px; }
+/* El texto del aviso tiene que poder encogerse, o la `.salida` no llega a cortarse con «…» y se
+   mete en el hueco de la derecha (sprint 002, fase 4: el ámbar con «Google Meet», +15 px). */
+.banda .aviso-b > span { min-width: 0; }
 .banda .aviso-b strong { display: block; font-size: var(--t-ui); font-weight: 600; color: var(--ink); }
 .banda .aviso-b .salida { display: block; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* El radar coral: el MISMO aviso en el otro color. La diferencia que de verdad lo distingue
+   no es esta línea —es el símbolo, la equis rellena frente al punto de grabación—, porque el
+   color no puede ser el único portador de un estado (regla 8). */
+.banda .aviso-b.err { color: var(--err); }
 
 /* transcript — ocupa la columna derecha de la banda AMPLIADA. Solo en memoria. */
 .banda.ampliada .lado-b { max-width: 40%; }

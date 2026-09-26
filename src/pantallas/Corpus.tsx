@@ -111,6 +111,19 @@ export function Corpus() {
               <h2 className="seccion" style={{ margin: "0 0 6px" }}>
                 {t.dondeVive}
               </h2>
+              {/* **Qué carpeta señalaste y cuántas secciones salieron de ella** (mirada 17-bis).
+                  La app la ENVIABA al indexar y no la leía de vuelta: si el usuario no recordaba
+                  cuál eligió, no había dónde mirarlo. */}
+              {corpus.carpeta && (
+                <div className="buffer">
+                  <Ic id="i-doc" s />
+                  <span className="que">{t.tuCarpeta}</span>
+                  <span className="donde mono">{corpus.carpeta}</span>
+                  <span className="cuanto">
+                    {new Intl.NumberFormat(idioma).format(corpus.secciones)} {t.secciones}
+                  </span>
+                </div>
+              )}
               <div className="buffer">
                 <Ic id="i-candado" s />
                 <span className="que">{t.soloTu}</span>
@@ -119,7 +132,12 @@ export function Corpus() {
               </div>
               <p
                 className="mono"
-                style={{ fontSize: "10.5px", color: "var(--ink-2)", marginTop: "5px" }}
+                style={{
+                  fontSize: "10.5px",
+                  color: "var(--ink-2)",
+                  marginTop: "5px",
+                  overflowWrap: "anywhere",
+                }}
               >
                 {corpus.dondeVive ?? "—"}
               </p>

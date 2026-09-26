@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vitest run --coverage",
-    "test:e2e": "playwright test --pass-with-no-tests",
+    "test:e2e": "playwright test",
     "prepare": "git config core.hooksPath githooks",
     "verify:ephemeral": "node scripts/verify-ephemeral.mjs",
     "fidelidad": "pnpm build && node scripts/capturar-fidelidad.mjs",
