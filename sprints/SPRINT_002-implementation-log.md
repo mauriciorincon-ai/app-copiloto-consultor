@@ -1752,7 +1752,8 @@ que dejó solo los cambios de este sprint; cuatro conflictos resueltos a mano. *
 1. **Honestidad dirá «8 de 8 piezas: la otra todavía no existe».** La cola de esa frase era verdad
    con 6 de 7 y con 7 de 8; con 8 de 8 es falsa. Su texto nuevo tiene que estar primero en la
    maqueta: va a la 17-quater.
-2. **Las teclas de Angel Ghost chocan con las de Zoom.** Zoom en Mac usa `⌘⇧A` (silenciar/activar
+2. **Las teclas de Angel Ghost chocan con las de Zoom** — según los atajos que Zoom documenta para
+   Mac; **sin verificar en vivo**, porque Zoom no está instalado en este Mac. Zoom usa `⌘⇧A` (silenciar/activar
    el micrófono), `⌘⇧V` (encender/apagar la cámara), `⌘⇧N` (cambiar de cámara), `⌘⇧T` (pausar la
    pantalla compartida), `⌘⇧R` (grabar) y `⌘⇧P` (pausar la grabación). Angel Ghost registra
    globalmente `⌘⇧A`, `⌘⇧V` y `⌘⇧T` —y la maqueta dibuja `⌘⇧N`, `⌘⇧P` y el `⌘⇧R` nuevo—: **mientras la
