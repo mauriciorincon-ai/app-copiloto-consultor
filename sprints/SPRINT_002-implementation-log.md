@@ -1559,3 +1559,51 @@ planeadora decide si lo sube al kit.
 Juzgó la frase, que iba citada en el mensaje. El estado visual ya lo había visto en la 17 y no hay
 señal de que reabriera el archivo: se registra tal cual (precedente: la 3-quinquies) y el estado vuelve
 a sus ojos en el gate de fidelidad de la fase 4. **«Sigue»** arranca la construcción de la fase 3.
+
+## Lo que la fase 3 necesita y la mirada 17 no dibujó — tres decisiones del usuario (2026-09-26)
+
+Al releer el código antes de construir aparecieron cuatro huecos, **uno de ellos una frase falsa**
+en un estado recién aprobado. Se preguntaron las tres decisiones de producto antes de tocar nada:
+
+| Pregunta | Decisión del usuario |
+|---|---|
+| ¿Una mirada corta **17-quater** con lo que falta, antes de construir esas pantallas? | **Sí** (la recomendada) |
+| La lectura **bajo demanda por región** exige una cuarta ventana, y `ventana/mod.rs` garantiza tres | **Atajo sin región** (la recomendada): una tecla lee UNA vez la ventana de la reunión |
+| Los **7 campos** sin lector que la 17 no dibujó | **4 salen del contrato, 3 se ven** (la recomendada) |
+
+**Los siete, repartidos.** Salen del contrato —Rust los sigue usando por dentro— los que ninguna
+pantalla necesita: `EstadoDePista.hablando`, `.segundos`, `.muestrasRecibidas` y
+`EstadoDeEscucha.turnosEnMemoria`. Se dibujan en la 17-quater los que le sirven al usuario:
+`Salida.nombre` («AirPods Pro»), `Salida.motivo` y `Reunion.motivo`.
+
+**Un error mío en la mirada 17, que se paga en la 17-quater:** el plan de la 17 le asignaba nueve
+campos y la maqueta pintó uno (`EstadoDePista.motivo`). Los otros quedaron en la lista de deuda con
+«fase 3» sin sitio en ninguna pantalla, y **no lo dije al presentarla**.
+
+### Dos frases falsas en Permisos — comprobadas en este Mac, no supuestas
+
+1. **«Qué texto verás en macOS» + `NSScreenCaptureUsageDescription`** (estado s2, aprobado en la 17).
+   **Esa clave no existe.** `tccd` conoce 40 claves `NS*UsageDescription` y ninguna es de pantalla;
+   el diálogo de macOS es siempre el genérico — *«Angel Ghost quiere hacer una captura del contenido
+   de la pantalla del sistema»* (`TCC.framework/…/Localizable.loctable`, clave
+   `REQUEST_ACCESS_SERVICE_kTCCServiceScreenCapture`). La descripción que el usuario elogió **sigue
+   valiendo**, pero la dice la app en Permisos, **antes** de pedirlo: macOS no le deja sitio.
+2. **«Audio del sistema y Pantalla son un solo permiso en macOS: se conceden y se caen juntos»**
+   (estado s1 del sprint 001, y el s2 lo heredó). **Falso**: son dos servicios de TCC,
+   `kTCCServiceScreenCapture` y `kTCCServiceAudioCapture`, con diálogos distintos —el del audio dice
+   *«quiere acceder al audio del sistema para grabarlo»*— y el tap del sistema (process tap,
+   `capture/nativo.rs`) usa el segundo, que tiene su propia clave (`NSAudioCaptureUsageDescription`,
+   ya en `Info.plist`). **Y el producto hereda el error:** `Permisos.tsx` pinta el audio del sistema
+   con el estado de la pantalla. Es un hallazgo del sprint 001 que ninguna auditoría vio, porque en
+   `tauri dev` los permisos son los de VS Code, que tiene los dos.
+
+### Desviación del plan, declarada
+
+- **El plan de la planeadora pide «su descripción es/en» para el permiso de pantalla**
+  (`SPRINT_002.md`, fase 3, punto 7). No se puede: macOS no la admite. La explicación que el riesgo
+  del plan pide («el onboarding explica qué se lee y qué muere») vive en la pantalla de Permisos.
+- **«Bajo demanda por región» pasa a «bajo demanda, sin región»**, por decisión del usuario: una
+  cuarta ventana rompía el invariante de las tres.
+- **El orden: primero el motor, después la 17-quater.** El copy de los motivos y de los estados de la
+  pantalla depende de lo que el código pueda distinguir, y hoy ya hubo dos frases escritas antes de
+  medir.
