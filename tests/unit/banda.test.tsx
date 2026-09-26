@@ -208,15 +208,21 @@ describe("la banda", () => {
   });
 
   /**
-   * **El estado callado no inventa una palabra**, y eso es justo lo que se está proponiendo en la
-   * mirada 16-bis: enseña la línea de la ficha que acaba de leerse —texto que la banda de 88 px ya
-   * dice desde la mirada 11— y, sin ficha todavía, lo que dice hoy la banda en reposo.
+   * **El estado callado SE DICE.** Es el cambio que pidió la mirada 16-bis: la primera propuesta
+   * enseñaba la línea de la ficha recién leída y se callaba el estado, y el veredicto fue «creo que
+   * sí debería hacer evidente el estado». Una banda que no dice en qué está obliga a mirarla para
+   * averiguarlo — lo contrario de un modo que existe para no mirar.
+   *
+   * Lo que se comprueba aquí y una captura no: que el verbo del estado «hablando» **no** se quedó
+   * puesto, que el del callado sí está, y que detrás sigue la fuente de lo último que se leyó.
    */
-  it("«callado» enseña la ficha que acaba de leerse, sin verbo y sin ⎋", () => {
+  it("«callado» dice el estado y de dónde salió lo último que leyó", () => {
     pinta({ estado: "voz-espera" });
     const linea = banda().querySelector(".linea-b") as HTMLElement;
     expect(linea.textContent).not.toContain(es.banda.diciendoLaFicha);
-    expect(linea.textContent).toContain(es.banda.muestra.linea);
+    expect(linea.textContent).toContain(es.banda.callado);
+    expect(linea.textContent).toContain(es.banda.esperandoElSiguienteTurno);
+    expect(linea.querySelector(".fuente-b")).not.toBeNull();
     const teclas = [...banda().querySelectorAll(".tecla")].map((k) => k.textContent?.trim());
     expect(teclas).toEqual([`⌘⇧V ${es.banda.volver}`]);
   });
@@ -228,7 +234,10 @@ describe("la banda", () => {
     expect(banda().querySelector(".linea-b")?.textContent).toContain(en.banda.conectaAuriculares);
     expect(banda().querySelector(".linea-b")?.textContent).toContain(en.banda.elClienteTeOiria);
     pinta({ estado: "voz-espera" }, "en");
-    expect(banda().querySelector(".linea-b")?.textContent).toContain(en.banda.muestra.linea);
+    expect(banda().querySelector(".linea-b")?.textContent).toContain(en.banda.callado);
+    expect(banda().querySelector(".linea-b")?.textContent).toContain(
+      en.banda.esperandoElSiguienteTurno,
+    );
   });
 
   it("habla inglés con las mismas clases", () => {

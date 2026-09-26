@@ -106,6 +106,30 @@ artefacto:
 No hubo que repreguntar: el veredicto llegó con la descripción de lo que vio, que es lo que la
 regla 10 pide.
 
+### Mirada 16-bis — veredicto del usuario (2026-09-26)
+
+> **«Ya revisé solo audio · callado, está bien, pero creo que sí debería hacer evidente el estado;
+> esto por ejemplo me parece diciente y apropiado: «callado», «esperando el siguiente turno»»**
+
+**Aprobada con un cambio, y el cambio corrige un error de criterio mío.** La propuesta enseñaba la
+línea de la ficha recién leída y presumía de «no inventar ni una palabra» — pero ese ahorro se pagaba
+con lo único que el estado tenía que comunicar: **que la app está encendida y callada**. Una banda
+que no dice en qué está obliga a mirarla para averiguarlo, que es exactamente lo contrario de un modo
+que existe para no tener que mirar.
+
+La línea queda **«Callado · esperando el siguiente turno»**, y detrás la fuente de lo último que se
+leyó. Es el mismo patrón **«estado · por qué»** que el usuario ya había aprobado en la mirada 16 con
+«Conecta auriculares · el cliente te oiría», así que el modo entero se lee igual en sus tres estados:
+
+| Estado | Lo que dice la línea |
+|---|---|
+| hablando | Diciéndote la ficha… · *de dónde sale* |
+| **callado** | **Callado · esperando el siguiente turno · *de dónde salió la última*** |
+| sin auriculares | Conecta auriculares · el cliente te oiría |
+
+Aplicado el mismo día en la maqueta, en el diccionario (`callado`, `esperandoElSiguienteTurno`, en los
+dos idiomas) y en el producto, con sus tests y el gate de fidelidad en verde.
+
 ## Registro de miradas
 
 | Fecha | Artefacto | Veredicto del usuario (línea textual) | Qué se construyó encima, después |
@@ -125,6 +149,7 @@ regla 10 pide.
 | 2026-09-21 | `idioma.html` (estado s1 nuevo) · `sesion.html` y `honestidad.html` al día (mirada 13, sprint 001) | **Aprobada** — «Me gustó mucho el diseño y cómo se van evidenciando los elementos construidos y lo que falta, muy bien lograda». *(Se repreguntó por la regla 10: la primera respuesta fue «Apruebo las tres pantallas… continúa», y un «apruebo» no es un «lo vi».)* | Fase 4: corpus, disparo y ficha |
 | 2026-09-21 | `corpus.html` (estado s1 nuevo) (mirada 14, sprint 001) | **Aprobada** — «Ya vi el diseño del corpus, vamos muy bien; ya están las secciones de las temáticas principales y lo que falta es muy interesante, por ejemplo lo de arrastrar los documentos» (nombra una de las tres filas de «todavía no»: llegó con el archivo abierto) | Fase 5: efímero en runtime, kit de evaluación, guía de prueba y manual |
 | 2026-09-26 | `banda.html` — el **modo solo audio** a 44 px: «hablando» y «sin auriculares» (mirada 16, sprint 002) | **Aprobada** — «Apruebo el diseño muy limpio icono azul a la izquierda indicando que se habla muy intuitivo y amplio margen para la pantalla de reunión» (nombra el glifo `i-voz` en `--halo` y el alto de 44 px: llegó con el archivo abierto) | Fase 2: la voz que sale (C15) — `habla/`, `⌘⇧V` y la banda cableada a 44 px |
+| 2026-09-26 | `banda.html` — **«solo audio · callado»**, el estado que la 16 no dibujó (mirada 16-bis, sprint 002) | **Aprobada con un cambio** — «Ya revisé solo audio · callado, está bien, pero creo que sí debería hacer evidente el estado; esto por ejemplo me parece diciente y apropiado: «callado», «esperando el siguiente turno»» | El cambio, aplicado en el acto: la línea dice **«Callado · esperando el siguiente turno»** y detrás la fuente de lo último leído. Fase 3: la pantalla (C8) |
 
 ## Decisiones de diseño declaradas antes del segundo artefacto
 

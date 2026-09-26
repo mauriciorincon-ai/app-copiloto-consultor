@@ -78,6 +78,14 @@ export const en: Diccionario = {
     diciendoLaFicha: "Reading you the card…",
     callar: "stop",
     volver: "back",
+    /**
+     * **El estado callado se DICE.** La primera propuesta de la mirada 16-bis enseñaba la línea
+     * de la ficha recién leída y se callaba el estado; el veredicto del usuario fue «creo que sí
+     * debería hacer evidente el estado». Es el mismo patrón «estado · por qué» de «Conecta
+     * auriculares · el cliente te oiría», que él ya había aprobado.
+     */
+    callado: "Silent",
+    esperandoElSiguienteTurno: "waiting for the next turn",
     conectaAuriculares: "Plug in headphones",
     elClienteTeOiria: "the client would hear you",
 

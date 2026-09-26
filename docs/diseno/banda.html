@@ -43,7 +43,7 @@
   <div class="n" data-para="transcript"><b>Qué mirar:</b> el transcript en vivo con ⌘⇧T, <b>oculto por defecto</b>. Ocupa la columna derecha de la banda ampliada y cada turno lleva su pista (sistema = cliente, mic = tú), <b>nunca un nombre</b>. Solo en memoria: al cerrar la sesión no queda nada de esto.</div>
   <div class="n" data-para="flotante"><b>Qué mirar:</b> el <b>fallback</b> sin el permiso de Accesibilidad. La banda no puede recortar la reunión, así que flota encima: mira el recuadro ámbar sobre el Dock. La cabecera lo dice con símbolo, texto y color — <b>«sin acople»</b>. Todo lo demás funciona igual.</div>
   <div class="n" data-para="voz"><b>Qué mirar:</b> el <b>modo solo audio</b> (C15), traído del panel a la anatomía de la banda. <b>44 px, una línea</b>: la ficha se <b>oye</b> en vez de leerse, así que la banda no repite el texto —para eso está el oído— sino <b>de dónde salió</b> y <b>cómo callarla</b>. Toda tu pantalla queda libre y la reunión se recorta 44 px en vez de 88.<br><b>Tres cosas que te toca juzgar.</b> (1) El <b>contador de red</b> se queda: a 44 px la cabecera desaparece por diseño, y con ella se iría el «0 B» — que es una promesa dura de esta app, no un adorno. Está metido en la línea, a la derecha. (2) La tecla es <b>⌘⇧V</b> y no ⌘⇧A: ⌘⇧A ya es «ayúdame con esto» desde el sprint 1 y está en el manual, así que la orden del sprint 2 pedía una tecla ocupada. El panel que ya aprobaste dibujaba ⌘⇧V. (3) La tecla <b>⎋</b> se dibuja con su glifo, y a 13 px se lee como un borrón — <b>igual que el ⌥⎋ de la banda de 88 px</b>, que ya aprobaste. Lo dejo como está por coherencia, pero si te molesta aquí te molesta en los dos sitios y es un cambio del sistema, no de esta pantalla.</div>
-  <div class="n" data-para="voz-espera"><b>Qué mirar (mirada 16-bis):</b> <b>el estado que la mirada 16 no dibujó</b>, y que apareció al construir el modo: el modo dura toda la reunión, así que la banda pasa <b>la mayor parte del tiempo a 44 px sin decir nada</b> — entre una ficha y la siguiente. La mirada 16 tenía «hablando» y «sin auriculares», y ninguno de los dos es esto.<br>Lo que se propone <b>no inventa ni una palabra</b>: es la MISMA línea del estado «hablando» sin el verbo, con la línea de la ficha que acaba de leerse y su fuente — texto que la banda de 88 px ya enseña y que ya pasó por la mirada 11. Si todavía no se ha oído nada, dice lo que dice hoy la banda en reposo: «Cuando el cliente pregunte, aquí aparece tu evidencia».<br><b>La pregunta es si con esto basta</b>, o si la banda callada debería decirlo con sus palabras («callado», «esperando el siguiente turno»), que sería copy nuevo.</div>
+  <div class="n" data-para="voz-espera"><b>Qué mirar (mirada 16-bis, aprobada con un cambio el 2026-09-26):</b> <b>el estado que la mirada 16 no dibujó</b>, y que apareció al construir el modo: el modo dura toda la reunión, así que la banda pasa <b>la mayor parte del tiempo a 44 px sin decir nada</b> — entre una ficha y la siguiente.<br>La primera propuesta enseñaba la línea de la ficha recién leída y <b>se callaba el estado</b>. El veredicto del usuario: <i>«creo que sí debería hacer evidente el estado»</i>. Así que el estado se dice, con el mismo patrón <b>«estado · por qué»</b> que él ya aprobó en «Conecta auriculares · el cliente te oiría»: <b>«Callado · esperando el siguiente turno»</b>, y detrás la fuente de lo último que se leyó — que es lo que dice QUÉ oíste hace un momento.<br>Si todavía no se ha oído nada, la línea se queda en el estado, sin fuente: no hay ninguna que citar.</div>
   <div class="n" data-para="voz-sin"><b>Qué mirar:</b> la salvaguarda, y es la razón de que este estado exista. <b>Sin auriculares la app no habla</b> — por los altavoces el cliente oiría tu propia ayuda y se rompería la promesa entera. No es un aviso que puedas ignorar: es una <b>condición</b>. Si los desconectas a mitad de una frase, calla.<br>Ámbar, <b>símbolo y texto</b>, los tres a la vez como manda el sistema. El símbolo son los auriculares tachados y no el triángulo genérico: dice <i>qué</i> falta, no solo que algo va mal.</div>
   <div class="mq-medida">escritorio de referencia 1180 × 720 · banda 88 px (asa → 200) · <b>44 px en modo solo audio</b> · datos sintéticos «Páramo Azul»</div>
 </div>
@@ -210,13 +210,16 @@
         </span>
 
         <!-- ---------------------------- voz-espera ------------------------------ -->
-        <!-- La misma `linea-b` del estado «voz», sin el verbo: el icono, la línea de la ficha que
-             acaba de leerse, y su fuente. No hay copy nuevo — la línea y la fuente salen de la
-             ficha, que la banda de 88 px ya enseña desde la mirada 11. -->
+        <!-- La misma `linea-b` del estado «voz» con OTRO verbo. El estado se dice: «Callado ·
+             esperando el siguiente turno» — el mismo patrón «estado · por qué» que el usuario ya
+             aprobó en «Conecta auriculares · el cliente te oiría». Detrás, la fuente de lo último
+             que se leyó, que es lo que dice QUÉ oíste hace un momento. -->
         <span class="ficha-b" data-en="voz-espera">
           <span class="linea-b">
             <svg class="ic s"><use href="#i-voz"/></svg>
-            <span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on.</span>
+            <span lang="es">Callado</span><span lang="en">Silent</span>
+            <span class="sep">·</span>
+            <span lang="es">esperando el siguiente turno</span><span lang="en">waiting for the next turn</span>
             <span class="sep">·</span>
             <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
           </span>

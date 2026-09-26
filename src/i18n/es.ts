@@ -116,6 +116,14 @@ export const es = {
     diciendoLaFicha: "Diciéndote la ficha…",
     callar: "callar",
     volver: "volver",
+    /**
+     * **El estado callado se DICE.** La primera propuesta de la mirada 16-bis enseñaba la línea
+     * de la ficha recién leída y se callaba el estado; el veredicto del usuario fue «creo que sí
+     * debería hacer evidente el estado». Es el mismo patrón «estado · por qué» de «Conecta
+     * auriculares · el cliente te oiría», que él ya había aprobado.
+     */
+    callado: "Callado",
+    esperandoElSiguienteTurno: "esperando el siguiente turno",
     conectaAuriculares: "Conecta auriculares",
     elClienteTeOiria: "el cliente te oiría",
 

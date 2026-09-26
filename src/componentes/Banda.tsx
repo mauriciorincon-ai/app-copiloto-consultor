@@ -607,12 +607,24 @@ function BandaDeVoz({
             <span className="ficha-b">
               <span className="linea-b">
                 <Ic id="i-voz" s />
-                {/* Diciendo: el verbo. Callado: **la línea de la ficha que acaba de leerse**, que
-                    es texto que la banda de 88 px ya enseña. Y sin ficha todavía, lo que dice hoy
-                    la banda en reposo — ninguna de las tres inventa una palabra. */}
-                <span>
-                  {voz.diciendo ? t.diciendoLaFicha : (aparicion?.linea ?? t.esperando)}
-                </span>
+                {/* **El mismo hueco, dos verbos.** Diciendo: «Diciéndote la ficha…». Callado: el
+                    estado, dicho — «Callado · esperando el siguiente turno»—, que es lo que el
+                    usuario pidió al mirar la 16-bis: *«creo que sí debería hacer evidente el
+                    estado»*. La primera propuesta enseñaba la línea de la ficha y se callaba el
+                    estado; una banda que no dice en qué está deja al usuario mirándola para
+                    averiguarlo, que es justo lo contrario de un modo que existe para no mirar. */}
+                {voz.diciendo ? (
+                  <span>{t.diciendoLaFicha}</span>
+                ) : (
+                  <>
+                    <span>{t.callado}</span>
+                    <span className="sep">·</span>
+                    <span>{t.esperandoElSiguienteTurno}</span>
+                  </>
+                )}
+                {/* Y detrás, de dónde salió lo ÚLTIMO que se leyó: es lo que convierte «callado» en
+                    una frase útil en vez de un cartel. Sin ficha todavía no hay nada que citar y no
+                    se cita nada. */}
                 {deDonde}
               </span>
             </span>

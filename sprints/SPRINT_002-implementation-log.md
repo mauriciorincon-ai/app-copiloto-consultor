@@ -1307,3 +1307,32 @@ sin modelos de voz en esta máquina: el WER no se pudo medir en ninguna pista
 La diferencia importa porque invita a generalizar mal: «la CI no tiene voz» habría hecho declarar
 como no verificable un puente que **sí** se verifica en cada PR. La nota de memoria del proyecto
 queda corregida con la distinción.
+
+## La mirada 16-bis — APROBADA CON UN CAMBIO (2026-09-26)
+
+> «Ya revisé solo audio · callado, está bien, pero creo que sí debería hacer evidente el estado; esto
+> por ejemplo me parece diciente y apropiado: «callado», «esperando el siguiente turno»»
+
+**El cambio corrige un error de criterio mío, y conviene escribirlo como tal.** Presenté la propuesta
+presumiendo de que «no inventa ni una palabra» — la línea de la ficha recién leída, texto que la banda
+de 88 px ya decía—. El ahorro era real y estaba pagado con lo único que ese estado tenía que
+comunicar: **que la app está encendida y callada**. Una banda que no dice en qué está obliga a mirarla
+para averiguarlo, que es lo contrario de un modo que existe para no tener que mirar.
+
+No inventar copy es una regla para que el producto no se desvíe de la maqueta, no una excusa para
+dejar un estado mudo. Cuando hace falta una palabra nueva, el camino es el que se acaba de recorrer:
+escribirla en la maqueta, enseñarla, y aplicarla.
+
+**Queda así**, con el mismo patrón «estado · por qué» que ya estaba aprobado:
+
+| Estado | La línea |
+|---|---|
+| hablando | `Diciéndote la ficha…` · *fuente* |
+| **callado** | **`Callado · esperando el siguiente turno`** · *fuente de la última* |
+| sin auriculares | `Conecta auriculares · el cliente te oiría` |
+
+Y sin ficha todavía, la línea se queda en el estado: no hay fuente que citar y no se cita ninguna.
+
+Dos cadenas nuevas en `src/i18n/` (`callado`, `esperandoElSiguienteTurno`), escritas **primero** en
+`banda.html` — el gate del diccionario las compara con la maqueta y no habrían pasado al revés. 52
+capturas sin desbordes, 72 encuadres de fidelidad por debajo del umbral, 171 tests verdes.
