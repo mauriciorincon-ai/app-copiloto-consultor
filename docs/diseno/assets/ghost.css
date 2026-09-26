@@ -459,6 +459,10 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 /* esperando — el vacío está diseñado: una frase en Charter, no un ícono gris */
 .banda .voz-b { font-family: var(--font-evidencia); font-style: italic; font-size: 15px; line-height: 1.4; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .banda .meta-b { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+/* Mirada 17-bis: la ficha dice POR QUÉ disparó y CUÁNTO tardó, y si su sección la conjeturó el
+   lector de PDF. La marca de conjetura no se tiñe de ámbar: no es un aviso, es una nota de
+   confianza — el medio círculo dice «a medias» y la palabra dice de qué. */
+.banda .meta-b .conjetura { display: inline-flex; align-items: center; gap: 4px; margin-left: 4px; padding-left: 8px; border-left: var(--borde) solid var(--line-2); }
 
 /* buscando · sin resultado — lo que se oyó, entre comillas, con su pista */
 .banda .oido { font-size: var(--t-meta); min-width: 0; }

@@ -171,6 +171,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .banda .cliente-b.warn { color: var(--warn); }
 .banda .voz-b { font-family: var(--font-evidencia); font-style: italic; font-size: 15px; line-height: 1.4; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .banda .meta-b { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.banda .meta-b .conjetura { display: inline-flex; align-items: center; gap: 4px; margin-left: 4px; padding-left: 8px; border-left: var(--borde) solid var(--line-2); }
 .banda .oido { font-size: var(--t-meta); min-width: 0; }
 .banda .oido q { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .banda .aviso-b { display: flex; align-items: flex-start; gap: 8px; min-width: 0; font-size: var(--t-meta); line-height: 1.35; color: var(--warn); }
@@ -265,7 +266,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante radar radar-invasivo">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf sin-resultado flotante radar radar-invasivo">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -293,6 +294,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
 
         <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
         
         
 
@@ -334,7 +344,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante radar radar-invasivo">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf sin-resultado flotante radar radar-invasivo">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -364,6 +374,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
 
         <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
         
         
 
@@ -405,7 +424,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante radar radar-invasivo">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf sin-resultado flotante radar radar-invasivo">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -430,12 +449,25 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         <span class="lado-b" data-en="ficha flotante">
           <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <!-- Mirada 17-bis: POR QUÉ disparó y CUÁNTO tardó. Los dos se miden desde el sprint 001 y
+               cruzaban la costura sin que nadie los pintara. El reloj, porque el número es tiempo; el
+               motivo va en palabras, las cinco de `Motivo::etiqueta()`. -->
+          <span class="meta-b por-que"><svg class="ic s"><use href="#i-reloj"></use></svg><span lang="es">pregunta · 1,2 s</span><span lang="en">question · 1.2 s</span></span>
           <span class="atajos-b">
             <span class="tecla"><kbd>⌘⇧P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
             <span class="tecla"><kbd>⌘⇧T</kbd> transcript</span>
             <span class="tecla"><kbd>⌥⎋</kbd></span>
           </span>
         </span>
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
+        
+        
 
         <!-- ---------------------------- sin resultado ---------------------------- -->
         
@@ -475,7 +507,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante radar radar-invasivo">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf sin-resultado flotante radar radar-invasivo">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -494,6 +526,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
 
         <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
         
         
 
@@ -571,6 +612,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
 
         <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
         
         
 
@@ -659,9 +709,9 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
               <span lang="es">en vivo · solo en memoria</span><span lang="en">live · in memory only</span>
               <span class="tecla"><kbd>⌘⇧T</kbd> <span lang="es">ocultar</span><span lang="en">hide</span></span>
             </span>
-            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:01</span></span><q><span lang="es">Y la limpieza de datos, ¿eso está dentro del alcance?</span><span lang="en">And the data cleansing, is that within scope?</span></q></span>
-            <span class="turno tu"><span class="quien"><svg class="ic s"><use href="#i-mic"></use></svg><span lang="es">tú</span><span lang="en">you</span><span class="hora">14:02</span></span><q><span lang="es">Sí, la limpieza de las tres fuentes que acordamos está incluida.</span><span lang="en">Yes, cleansing the three sources we agreed on is included.</span></q></span>
-            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:02</span></span><q><span lang="es">¿Y si sumamos el Excel de la fuerza comercial? Lo tenemos en Power BI.</span><span lang="en">What if we add the sales team’s Excel? We have it in Power BI.</span></q></span>
+            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:01 · 4 s</span></span><q><span lang="es">Y la limpieza de datos, ¿eso está dentro del alcance?</span><span lang="en">And the data cleansing, is that within scope?</span></q></span>
+            <span class="turno tu"><span class="quien"><svg class="ic s"><use href="#i-mic"></use></svg><span lang="es">tú</span><span lang="en">you</span><span class="hora">14:02 · 5 s</span></span><q><span lang="es">Sí, la limpieza de las tres fuentes que acordamos está incluida.</span><span lang="en">Yes, cleansing the three sources we agreed on is included.</span></q></span>
+            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:02 · 6 s</span></span><q><span lang="es">¿Y si sumamos el Excel de la fuerza comercial? Lo tenemos en Power BI.</span><span lang="en">What if we add the sales team’s Excel? We have it in Power BI.</span></q></span>
           </span>
           <span class="atajos-b">
             <span class="tecla"><kbd>⌘⇧P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
@@ -701,7 +751,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante radar radar-invasivo">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf sin-resultado flotante radar radar-invasivo">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -729,6 +779,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
 
         <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
         
         
 
@@ -770,7 +829,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante radar radar-invasivo">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf sin-resultado flotante radar radar-invasivo">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -800,6 +859,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
 
         <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
         
         
 
@@ -841,7 +909,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante radar radar-invasivo">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf sin-resultado flotante radar radar-invasivo">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -866,12 +934,25 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         <span class="lado-b" data-en="ficha flotante">
           <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <!-- Mirada 17-bis: POR QUÉ disparó y CUÁNTO tardó. Los dos se miden desde el sprint 001 y
+               cruzaban la costura sin que nadie los pintara. El reloj, porque el número es tiempo; el
+               motivo va en palabras, las cinco de `Motivo::etiqueta()`. -->
+          <span class="meta-b por-que"><svg class="ic s"><use href="#i-reloj"></use></svg><span lang="es">pregunta · 1,2 s</span><span lang="en">question · 1.2 s</span></span>
           <span class="atajos-b">
             <span class="tecla"><kbd>⌘⇧P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
             <span class="tecla"><kbd>⌘⇧T</kbd> transcript</span>
             <span class="tecla"><kbd>⌥⎋</kbd></span>
           </span>
         </span>
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
+        
+        
 
         <!-- ---------------------------- sin resultado ---------------------------- -->
         
@@ -911,7 +992,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante radar radar-invasivo">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf sin-resultado flotante radar radar-invasivo">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -930,6 +1011,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
 
         <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
         
         
 
@@ -1007,6 +1097,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
 
         <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
         
         
 
@@ -1095,9 +1194,9 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
               <span lang="es">en vivo · solo en memoria</span><span lang="en">live · in memory only</span>
               <span class="tecla"><kbd>⌘⇧T</kbd> <span lang="es">ocultar</span><span lang="en">hide</span></span>
             </span>
-            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:01</span></span><q><span lang="es">Y la limpieza de datos, ¿eso está dentro del alcance?</span><span lang="en">And the data cleansing, is that within scope?</span></q></span>
-            <span class="turno tu"><span class="quien"><svg class="ic s"><use href="#i-mic"></use></svg><span lang="es">tú</span><span lang="en">you</span><span class="hora">14:02</span></span><q><span lang="es">Sí, la limpieza de las tres fuentes que acordamos está incluida.</span><span lang="en">Yes, cleansing the three sources we agreed on is included.</span></q></span>
-            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:02</span></span><q><span lang="es">¿Y si sumamos el Excel de la fuerza comercial? Lo tenemos en Power BI.</span><span lang="en">What if we add the sales team’s Excel? We have it in Power BI.</span></q></span>
+            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:01 · 4 s</span></span><q><span lang="es">Y la limpieza de datos, ¿eso está dentro del alcance?</span><span lang="en">And the data cleansing, is that within scope?</span></q></span>
+            <span class="turno tu"><span class="quien"><svg class="ic s"><use href="#i-mic"></use></svg><span lang="es">tú</span><span lang="en">you</span><span class="hora">14:02 · 5 s</span></span><q><span lang="es">Sí, la limpieza de las tres fuentes que acordamos está incluida.</span><span lang="en">Yes, cleansing the three sources we agreed on is included.</span></q></span>
+            <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:02 · 6 s</span></span><q><span lang="es">¿Y si sumamos el Excel de la fuerza comercial? Lo tenemos en Power BI.</span><span lang="en">What if we add the sales team’s Excel? We have it in Power BI.</span></q></span>
           </span>
           <span class="atajos-b">
             <span class="tecla"><kbd>⌘⇧P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>

@@ -1394,3 +1394,69 @@ que hace `empezar_a_escuchar`—, así que el aviso termina en «Ciérrala y vue
 Un botón que duplica otro no es una salida, es ruido.
 
 Queda en **−1 px**, igual que el s1, en los dos idiomas.
+
+## Mirada 17-bis — maquetada: *la app se explica a sí misma*
+
+Los diez campos del contrato sin lector que no tenían mirada, cada uno con su sitio:
+
+| Campo | Dónde se pinta ahora | Artefacto · estado |
+|---|---|---|
+| `Aparicion.motivo` + `Aparicion.ms` | «🕐 pregunta · 1,2 s» bajo la fuente de la ficha | `banda.html` · ficha, ficha ampliada |
+| `Fuente.conjeturada` | «◐ sección conjeturada» en la misma línea | `banda.html` · **ficha · sección conjeturada** (nuevo) |
+| `Turno.hastaMs` | «14:01 · 4 s» — cuánto duró cada turno | `banda.html` · transcript |
+| `EstadoDeEscucha.motor` + `QueSabeTranscribir.motor` | «SpeechAnalyzer · macOS 26» en la franja del motor | `idioma.html` · **s2** (nuevo) |
+| `QueSabeTranscribir.techo` | «5 idiomas listos a la vez…», **mudado** a la franja del motor | ídem |
+| `QueSabeTranscribir.motivo` + `Disponibilidad.motivo` | la franja en ámbar con el porqué | `idioma.html` · **s2 · sin motor** (nuevo) |
+| `EstadoDelCorpus.carpeta` + `.secciones` | «Tu carpeta · ~/Documentos/Consultoría · 412 secciones» | `corpus.html` · **s2** (nuevo) |
+
+Y la **pregunta B**, aplicada en `idioma.html` · s2: la tabla de origen, la ruta **entera** del
+archivo, y la frase de la mirada 4.
+
+### Cinco decisiones que salieron de medir y de mirar
+
+1. **La marca de conjetura va en la línea de «por qué», no en la fuente.** La fuente se corta con
+   puntos suspensivos cuando es larga, y un aviso de confianza no puede ser lo primero que se corta.
+   Y **no se tiñe de ámbar**: no es un aviso, es una nota — el medio círculo dice «a medias».
+2. **La ficha de siempre no lleva la marca, y por eso hay un estado nuevo.** La ficha de muestra sale
+   de un DOCX con títulos de verdad (`conjeturada: false` en el contrato); ponerle la marca habría
+   mentido. La ficha conjeturada es otra, de un PDF: un caso, «Sur del Valle · Resultados».
+3. **El techo de idiomas se muda junto al motor.** Son dos campos de la misma estructura
+   (`QueSabeTranscribir`), y la tarjeta de las pistas era la más alta de su fila: moverlo pagaba los
+   píxeles que la tarjeta del diccionario necesitaba.
+4. **De la frase aprobada en la mirada 4 queda solo la mitad que es EXACTAMENTE verdad.** «Jamás
+   completa una frase ni adivina una palabra» sí; «solo sustituye lo que tú escribiste en él» no del
+   todo — los nombres de tu corpus entran solos. El inglés decía además «…a word it did not hear», que
+   el español nunca dijo: se alinea con el original.
+5. **«En tu archivo» y no «Añadidos por ti».** El primer día el archivo trae los cinco términos de la
+   semilla, que nadie añadió a mano.
+
+### Y una frase que ya era falsa
+
+El estado del sprint 1 de `corpus.html` dice que el índice vive en `~/Library/…/Angel Ghost/corpus`.
+**La carpeta real se llama como el identificador de la app**, `com.aiapps.copiloto-consultor` — el
+mismo error que la fase 0 encontró en el plan. El s2 la escribe entera. El s1 no se toca: está
+aprobado y es un registro de cómo se veía; la corrección está dicha en la nota del s2.
+
+### Todo cabe — medido, no mirado
+
+| Pantalla · estado | Holgura (es / en) |
+|---|---|
+| `idioma.html` · s2 | 11 px / 11 px |
+| `idioma.html` · s2 sin motor | 49 px / 49 px |
+| `corpus.html` · s2 | 1 px / 1 px |
+| `banda.html` · ficha conjeturada | cabe a 88 px |
+
+### El gate de fidelidad, en rojo a propósito
+
+```
+⚠ banda · ficha        × 4    3,4 %
+⚠ banda · ficha-2      × 4    1,9 %
+⚠ banda · flotante     × 4    3,4 %
+⚠ banda · transcript   × 4    2,5 %
+```
+
+**Dieciséis encuadres, y son exactamente los cuatro estados que la 17-bis tocó** — ni uno más: los
+nuevos estados de las pantallas del cuaderno no interfieren con los aprobados. Es el gate diciendo la
+verdad: la maqueta va por delante del producto hasta que la fase 3 construya lo que el usuario apruebe.
+El gate no corre en la CI (es `pnpm fidelidad`, del gate de fase), así que no bloquea el PR; se vuelve
+a correr al terminar la construcción y tiene que salir verde entonces.
