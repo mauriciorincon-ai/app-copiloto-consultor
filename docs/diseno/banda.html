@@ -22,6 +22,9 @@
     <button data-estado="sin-verificar-2">sin verificar · ampliada</button>
     <button data-estado="transcript">transcript</button>
     <button data-estado="flotante">sin acople · flota</button>
+    <button data-estado="radar">radar · te graban</button>
+    <button data-estado="radar-invasivo">radar · te vigilan</button>
+    <button data-estado="radar-invasivo-2">radar · te vigilan · ampliada</button>
     <button data-estado="voz">solo audio · hablando</button>
     <button data-estado="voz-espera">solo audio · callado</button>
     <button data-estado="voz-sin">solo audio · sin auriculares</button>
@@ -42,13 +45,16 @@
   <div class="n" data-para="sin-verificar-2"><b>Qué mirar:</b> el mismo aviso con el asa arriba: las <b>tres</b> salidas y los dos botones. Es la razón de que el asa exista — no es un lujo, es donde cabe lo que en 88 px no cabía.</div>
   <div class="n" data-para="transcript"><b>Qué mirar:</b> el transcript en vivo con ⌘⇧T, <b>oculto por defecto</b>. Ocupa la columna derecha de la banda ampliada y cada turno lleva su pista (sistema = cliente, mic = tú), <b>nunca un nombre</b>. Solo en memoria: al cerrar la sesión no queda nada de esto.</div>
   <div class="n" data-para="flotante"><b>Qué mirar:</b> el <b>fallback</b> sin el permiso de Accesibilidad. La banda no puede recortar la reunión, así que flota encima: mira el recuadro ámbar sobre el Dock. La cabecera lo dice con símbolo, texto y color — <b>«sin acople»</b>. Todo lo demás funciona igual.</div>
+  <div class="n" data-para="radar"><b>Qué mirar (mirada 17):</b> el radar <b>ámbar</b> — «sábelo». No es un fallo de la app ni una alarma: es información que estaba en la pantalla y que tú no ibas a leer mientras hablabas. El aviso de grabación de Meet y el bot de notas en la lista de participantes. <b>Fíjate en la última frase: «Aviso, no bloqueo».</b> La app no impide nada ni «expone» a nadie — el cliente tiene derecho a grabar su reunión y a traer su bot.<br>El texto es el que ya aprobaste en el panel (mirada 1), traído a la anatomía de la banda. Lo que es nuevo aquí es el <b>sitio</b>: 88 px, a la izquierda lo que dice, a la derecha de dónde lo sacó.</div>
+  <div class="n" data-para="radar-invasivo"><b>Qué mirar (mirada 17):</b> el radar <b>coral</b> — y la diferencia con el ámbar es la que tú marcaste en la mirada 3-bis: <i>«estamos solo protegiéndonos de software que quiera invadir nuestra independencia»</i>. El ámbar mira la <b>reunión</b>; el coral mira <b>tu propio Mac</b>. Proctoring, anti-cheat, agentes de monitoreo: programas que ven tu pantalla entera y tu cámara.<br><b>Mira el símbolo, no solo el color:</b> el ámbar lleva el punto de grabación y el coral una equis rellena. Son distinguibles sin ver el color.<br>A 88 px no caben botones —la banda es superficie de teclado—, así que en compacta el coral dice <b>qué alcanza a ver</b> y deja las acciones para la ampliada.</div>
+  <div class="n" data-para="radar-invasivo-2"><b>Qué mirar (mirada 17):</b> el mismo coral <b>con el asa subida</b>, que es donde la banda tiene botones. Dos, y ninguno apaga nada del otro equipo: <b>«Ver qué alcanza a ver»</b> abre el catálogo —qué puede leer ese programa, con su fuente— y <b>«Corta todo»</b> es el kill-switch de siempre. La app jamás toca la máquina de nadie: solo mira la tuya y te cuenta.<br>Y abajo, la línea que cierra el estado: <b>tu banda sigue protegida · 0 B en red · nada persiste</b>. Que alguien te vigile no cambia lo que esta app promete.</div>
   <div class="n" data-para="voz"><b>Qué mirar:</b> el <b>modo solo audio</b> (C15), traído del panel a la anatomía de la banda. <b>44 px, una línea</b>: la ficha se <b>oye</b> en vez de leerse, así que la banda no repite el texto —para eso está el oído— sino <b>de dónde salió</b> y <b>cómo callarla</b>. Toda tu pantalla queda libre y la reunión se recorta 44 px en vez de 88.<br><b>Tres cosas que te toca juzgar.</b> (1) El <b>contador de red</b> se queda: a 44 px la cabecera desaparece por diseño, y con ella se iría el «0 B» — que es una promesa dura de esta app, no un adorno. Está metido en la línea, a la derecha. (2) La tecla es <b>⌘⇧V</b> y no ⌘⇧A: ⌘⇧A ya es «ayúdame con esto» desde el sprint 1 y está en el manual, así que la orden del sprint 2 pedía una tecla ocupada. El panel que ya aprobaste dibujaba ⌘⇧V. (3) La tecla <b>⎋</b> se dibuja con su glifo, y a 13 px se lee como un borrón — <b>igual que el ⌥⎋ de la banda de 88 px</b>, que ya aprobaste. Lo dejo como está por coherencia, pero si te molesta aquí te molesta en los dos sitios y es un cambio del sistema, no de esta pantalla.</div>
   <div class="n" data-para="voz-espera"><b>Qué mirar (mirada 16-bis, aprobada con un cambio el 2026-09-26):</b> <b>el estado que la mirada 16 no dibujó</b>, y que apareció al construir el modo: el modo dura toda la reunión, así que la banda pasa <b>la mayor parte del tiempo a 44 px sin decir nada</b> — entre una ficha y la siguiente.<br>La primera propuesta enseñaba la línea de la ficha recién leída y <b>se callaba el estado</b>. El veredicto del usuario: <i>«creo que sí debería hacer evidente el estado»</i>. Así que el estado se dice, con el mismo patrón <b>«estado · por qué»</b> que él ya aprobó en «Conecta auriculares · el cliente te oiría»: <b>«Callado · esperando el siguiente turno»</b>, y detrás la fuente de lo último que se leyó — que es lo que dice QUÉ oíste hace un momento.<br>Si todavía no se ha oído nada, la línea se queda en el estado, sin fuente: no hay ninguna que citar.</div>
   <div class="n" data-para="voz-sin"><b>Qué mirar:</b> la salvaguarda, y es la razón de que este estado exista. <b>Sin auriculares la app no habla</b> — por los altavoces el cliente oiría tu propia ayuda y se rompería la promesa entera. No es un aviso que puedas ignorar: es una <b>condición</b>. Si los desconectas a mitad de una frase, calla.<br>Ámbar, <b>símbolo y texto</b>, los tres a la vez como manda el sistema. El símbolo son los auriculares tachados y no el triángulo genérico: dice <i>qué</i> falta, no solo que algo va mal.</div>
   <div class="mq-medida">escritorio de referencia 1180 × 720 · banda 88 px (asa → 200) · <b>44 px en modo solo audio</b> · datos sintéticos «Páramo Azul»</div>
 </div>
 
-<div class="mq-escritorio" data-acople-en="esperando:88 buscando:88 ficha:88 sin-resultado:88 sin-verificar:88 ficha-2:200 sin-resultado-2:200 sin-verificar-2:200 transcript:200 voz:44 voz-espera:44 voz-sin:44" aria-label="Escritorio de referencia a píxel real">
+<div class="mq-escritorio" data-acople-en="esperando:88 buscando:88 ficha:88 sin-resultado:88 sin-verificar:88 ficha-2:200 sin-resultado-2:200 sin-verificar-2:200 transcript:200 voz:44 voz-espera:44 voz-sin:44 radar:88 radar-invasivo:88 radar-invasivo-2:200" aria-label="Escritorio de referencia a píxel real">
   <div class="mq-menubar"><b></b><span>Google Chrome</span><span>Archivo</span><span>Editar</span><span>Ver</span><span class="der">14:02</span></div>
   <div class="mq-etiqueta">Google Meet — esto es lo que el cliente ve. La banda de abajo no aparece en su pantalla (verificado 2026-09-20).</div>
   <div class="mq-meet">
@@ -68,7 +74,7 @@
   <div class="mq-choque" data-en="flotante" style="left:calc(50% - 215px);width:430px;bottom:2px;height:56px"><span>sin permiso de acople: la banda queda encima del Dock</span></div>
 
   <!-- ===================== BANDA COMPACTA · 88 px ===================== -->
-  <div class="mq-pos banda-borde" data-en="esperando buscando ficha sin-resultado sin-verificar flotante">
+  <div class="mq-pos banda-borde" data-en="esperando buscando ficha sin-resultado sin-verificar flotante radar radar-invasivo">
     <section class="banda" data-captura aria-label="Angel Ghost">
 
       <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
@@ -83,7 +89,7 @@
           <span lang="es">sin acople</span><span lang="en">not docked</span>
         </span>
 
-        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante">
+        <span class="cliente-b" data-en="esperando buscando ficha sin-resultado flotante radar radar-invasivo">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         <span class="cliente-b warn" data-en="sin-verificar">
@@ -155,6 +161,47 @@
             <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">otras palabras</span><span lang="en">other words</span></span>
             <span class="tecla"><kbd>⌘⇧N</kbd> <span lang="es">anotar</span><span lang="en">note it</span></span>
             <span class="tecla"><kbd>⌥⎋</kbd></span>
+          </span>
+        </span>
+
+        <!-- ------------------------- radar · te graban --------------------------- -->
+        <!-- El copy sale del panel (mirada 1), traído a la anatomía de la banda. `i-rec` es un
+             anillo con un punto dentro y NO lleva `relleno`: rellenarlo se come el anillo. -->
+        <span class="ficha-b" data-en="radar">
+          <span class="aviso-b" role="status">
+            <svg class="ic"><use href="#i-rec"/></svg>
+            <span>
+              <strong><span lang="es">Reunión grabada · bot de notas presente</span><span lang="en">Meeting recorded · note-taking bot present</span></strong>
+              <span class="salida"><span lang="es">Meet muestra el aviso de grabación y «MinutaBot» está en la lista de participantes. Aviso, no bloqueo.</span><span lang="en">Meet shows the recording notice and “MinutaBot” is in the participant list. A notice, not a block.</span></span>
+            </span>
+          </span>
+        </span>
+        <span class="lado-b" data-en="radar">
+          <span class="meta-b"><svg class="ic s"><use href="#i-pantalla"/></svg><span lang="es">leído de tu pantalla · 14:03</span><span lang="en">read from your screen · 14:03</span></span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
+            <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
+          </span>
+        </span>
+
+        <!-- ------------------------- radar · te vigilan -------------------------- -->
+        <!-- Coral, y con OTRO símbolo además del color: la equis rellena frente al punto de
+             grabación del ámbar. Regla 8 — el color no puede ser el único portador, y aquí los dos
+             estados son avisos: distinguirlos por «más rojo» no vale. -->
+        <span class="ficha-b" data-en="radar-invasivo">
+          <span class="aviso-b err" role="alert">
+            <svg class="ic relleno"><use href="#i-x-circle"/></svg>
+            <span>
+              <strong><span lang="es">Te está mirando un programa de tu Mac</span><span lang="en">A program on your Mac is watching you</span></strong>
+              <span class="salida"><span lang="es">«ProctorLince» (supervisión de exámenes): ve tu pantalla completa y tu cámara.</span><span lang="en">“ProctorLince” (exam proctoring): sees your full screen and your camera.</span></span>
+            </span>
+          </span>
+        </span>
+        <span class="lado-b" data-en="radar-invasivo">
+          <span class="meta-b"><svg class="ic s"><use href="#i-radar"/></svg><span lang="es">catálogo v3 · en tu equipo, no en el del cliente</span><span lang="en">catalogue v3 · on your Mac, not the client’s</span></span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌘⇧R</kbd> <span lang="es">qué ve</span><span lang="en">what it sees</span></span>
+            <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
           </span>
         </span>
 
@@ -252,7 +299,7 @@
   </div>
 
   <!-- ===================== BANDA AMPLIADA · 200 px ===================== -->
-  <div class="mq-pos banda-borde" data-en="ficha-2 sin-resultado-2 sin-verificar-2 transcript">
+  <div class="mq-pos banda-borde" data-en="ficha-2 sin-resultado-2 sin-verificar-2 transcript radar-invasivo-2">
     <section class="banda ampliada" data-captura aria-label="Angel Ghost">
 
       <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
@@ -262,7 +309,7 @@
           <svg class="ic s relleno"><use href="#i-check-circle"/></svg>
           <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
         </span>
-        <span class="cliente-b" data-en="ficha-2 sin-resultado-2 transcript">
+        <span class="cliente-b" data-en="ficha-2 sin-resultado-2 transcript radar-invasivo-2">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         <span class="cliente-b warn" data-en="sin-verificar-2">
@@ -357,6 +404,27 @@
         </span>
 
         <!-- ----------------------- sin verificar · ampliada ----------------------- -->
+        <!-- ------------------- radar · te vigilan · ampliada -------------------- -->
+        <span class="ficha-b" data-en="radar-invasivo-2">
+          <div class="franja err" role="alert">
+            <svg class="ic relleno"><use href="#i-x-circle"/></svg>
+            <div>
+              <strong><span lang="es">Te está mirando un programa de tu Mac</span><span lang="en">A program on your Mac is watching you</span></strong>
+              <p><span lang="es">«ProctorLince» (supervisión de exámenes): ve tu pantalla completa y tu cámara.</span><span lang="en">“ProctorLince” (exam proctoring): sees your full screen and your camera.</span></p>
+            </div>
+          </div>
+          <span class="meta-b" style="margin-top:8px"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">tu banda sigue protegida · 0 B en red · nada persiste</span><span lang="en">your band stays protected · 0 B out · nothing persists</span></span>
+        </span>
+        <span class="lado-b" data-en="radar-invasivo-2">
+          <span class="acciones-b">
+            <button class="btn mini" type="button"><svg class="ic s"><use href="#i-radar"/></svg><span lang="es">Ver qué alcanza a ver</span><span lang="en">See what it can see</span></button>
+            <button class="btn mini" type="button"><svg class="ic s"><use href="#i-rayo"/></svg><span lang="es">Corta todo</span><span lang="en">Cut everything</span></button>
+          </span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
+          </span>
+        </span>
+
         <span class="ficha-b" data-en="sin-verificar-2">
           <div class="franja warn" role="status">
             <svg class="ic relleno"><use href="#i-alert"/></svg>

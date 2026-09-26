@@ -1356,3 +1356,41 @@ al módulo protegido) y la lista de correcciones (exige guardar las del turno). 
 
 Registrado en `docs/diseno/README.md` antes de tocar un artefacto, que es lo que exige el plan de
 miradas (kit v1.21.0).
+
+## Mirada 17 — maquetada: *algo falla o algo vigila*
+
+| Artefacto | Estado nuevo | De dónde sale |
+|---|---|---|
+| `banda.html` | **radar · te graban** (88 px, ámbar) | traslado del panel (mirada 1) a la anatomía de la banda |
+| `banda.html` | **radar · te vigilan** (88 px, coral) | ídem |
+| `banda.html` | **radar · te vigilan · ampliada** (200 px) | ídem, con los dos botones que a 88 px no caben |
+| `sesion.html` | **así se ve hoy · sprint 2 · pista caída** | nuevo: el M2 del sprint 001 |
+| `permisos.html` | **así se ve hoy · sprint 2 · la pantalla** | el s1 puesto al día, con el texto de macOS de la pantalla |
+
+**Dos de los cinco que el plan listaba ya existían.** «Vigilancia local» es el estado `vigilancia` de
+`sesion.html` y el consentimiento de pantalla es `solicitando` de `permisos.html`, los dos aprobados en
+la etapa de diseño. Lo que faltaba era traerlos al «así se ve hoy», no dibujarlos.
+
+**El coral no se distingue del ámbar solo por el color.** Lleva la equis rellena (`i-x-circle`) frente
+al punto de grabación (`i-rec`). Los dos estados son avisos, y distinguirlos por «más rojo» es
+exactamente lo que la regla 8 prohíbe. `.aviso-b.err` es la única línea de CSS nueva.
+
+### La pista caída no cabía — y el desborde enseñó dos frases falsas
+
+La primera versión se salía **118 px** de la ventana de 640. Al medir de dónde venía, aparecieron dos
+cosas que no eran de espacio sino de verdad:
+
+1. **«Escucha las dos pistas y las transcribe» es falso con una pista caída.** Pasa a «Escucha y
+   transcribe en tu Mac — **solo tu pista** · ⚠ A medias».
+2. **«El micrófono también lo oye: se marca como eco» también es falso en ese estado.** El eco se
+   decide comparando el turno del micrófono con los del sistema, y sin pista del sistema no hay con
+   qué comparar. Con altavoces, los turnos del cliente se colarían como tuyos **sin marca**. No cabía
+   en la pantalla, así que va a la nota de «Qué mirar» y al manual.
+
+Y una decisión de diseño que salió del mismo sitio: **la salida no es un botón nuevo.** Un
+«Reintentar» en la fila de la pista hacía saltar de línea todo en 349 px, y en la fila de la acción
+hacía saltar a «Iniciar sesión». Pero **«Iniciar sesión» ya vuelve a abrir las dos pistas** —es lo
+que hace `empezar_a_escuchar`—, así que el aviso termina en «Ciérrala y vuelve a «Iniciar sesión»».
+Un botón que duplica otro no es una salida, es ruido.
+
+Queda en **−1 px**, igual que el s1, en los dos idiomas.

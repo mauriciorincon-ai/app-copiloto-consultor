@@ -469,6 +469,10 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .banda .aviso-b .ic { flex: 0 0 auto; margin-top: 1px; }
 .banda .aviso-b strong { display: block; font-size: var(--t-ui); font-weight: 600; color: var(--ink); }
 .banda .aviso-b .salida { display: block; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* El radar coral: el MISMO aviso en el otro color. La diferencia que de verdad lo distingue
+   no es esta línea —es el símbolo, la equis rellena frente al punto de grabación—, porque el
+   color no puede ser el único portador de un estado (regla 8). */
+.banda .aviso-b.err { color: var(--err); }
 
 /* transcript — ocupa la columna derecha de la banda AMPLIADA. Solo en memoria. */
 .banda.ampliada .lado-b { max-width: 40%; }
