@@ -155,7 +155,7 @@ export function Sesion({
                 escucha.escuchando ? dejarDeEscuchar() : empezarAEscuchar(DEL_CONSULTOR, DEL_CLIENTE)
               }
             >
-              <Ic id="i-voz" s relleno />
+              <Ic id="i-voz" s />
               <span>{t.iniciarSesion}</span>
             </button>
             <span className="crece"></span>

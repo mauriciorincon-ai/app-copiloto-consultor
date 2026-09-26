@@ -810,3 +810,91 @@ que no toca la red.
 que el usuario lo va a usar*. Aquí hacía falta la pregunta de al lado — **¿lo viste correr en el sitio
 donde crees que corre?** Un test que sale temprano diciendo por qué está bien escrito; lo que faltaba
 era que alguien leyera lo que decía.
+
+---
+---
+
+# FASE 2 · El modo solo audio (C15) — **mirada 16 primero**
+
+## Lo que se maquetó, y lo que NO
+
+El plan aprobó la mirada 16 como **«banda de 44 px "voz" + "voz sin auriculares"»**, y eso es lo que
+hay: ni más ni menos. En el gate de la fase 1 quedaron **dos preguntas de diseño sin contestar** —a
+dónde van los tres estados de la banda que no caben en la mirada 17, y cómo enseña la pantalla de
+Idioma el diccionario— y el usuario respondió «continúa» sin tocarlas. **«Continúa» no aprueba
+diseño y tampoco reorganiza el plan de miradas** (kit v1.21.0), así que no se metió nada de eso por
+la puerta de atrás: la mirada 16 es exactamente la que él aprobó en el plan.
+
+El alto y el CSS estaban **reservados desde el sprint 001** (`--banda-h-voz`, `.banda.voz`, y la nota
+de medida del propio `banda.html` decía «44 px reservado para el modo solo audio»). Lo que nace aquí
+es el **contenido**, trasladado del panel —donde el estado ya estaba aprobado como píldora de
+260 × 56— a la anatomía de la banda.
+
+### Tres decisiones que van a la nota para que el usuario las juzgue
+
+1. **El contador de red se queda.** A 44 px la cabecera se oculta por diseño (`.banda.voz .cab-b {
+   display: none }`), y con ella se iría el «0 B» — que es una **promesa dura** de esta app (regla 2:
+   contador de salida a red visible por reunión), no un adorno de la cabecera. Baja a la línea.
+2. **La tecla es `⌘⇧V`, no `⌘⇧A`.** La orden del sprint pedía `⌘⇧A` para leer la ficha en voz alta, y
+   **`⌘⇧A` ya es «ayúdame con esto» desde el sprint 001**: está registrada en `lib.rs`, está en el
+   manual y está dibujada en la banda. El panel aprobado ya usaba `⌘⇧V` para la píldora de voz. Se
+   respeta el artefacto aprobado y se declara la desviación de la orden.
+3. **El glifo `⎋`** se lee como un borrón a 13 px — **igual que el `⌥⎋ corta` de la banda de 88 px**,
+   que ya está aprobado. Se deja por coherencia y se señala: si molesta aquí, molesta en los dos
+   sitios y es un cambio del sistema, no de esta pantalla.
+
+## La pasada de capturas encontró dos defectos que ningún número reportaba
+
+El arnés dijo **cero desbordes, cero errores de página, 48 capturas**. Y al leer las imágenes:
+
+1. **El glifo del altavoz no se dibujaba.** `i-voz` son cinco líneas verticales
+   (`<path d="M2 7v2M5 4.5v7…"/>`) sin área, y yo lo pedí con `relleno`, que es
+   `fill: currentColor; stroke: none`. Resultado: **nada**. El estado se quedaba en texto y color,
+   que es justo lo que la regla del daltonismo leve prohíbe.
+2. **Y el segundo es peor:** `i-auriculares-off` con `relleno` pierde el arco y la barra tachada y
+   deja dos rectángulos rellenos — unos auriculares **conectados**. El icono decía **lo contrario**
+   del estado que acompañaba.
+
+Ninguno de los dos da error en ninguna consola. Los encontró mirar la imagen.
+
+### Y el gate que salió de ahí encontró seis más, de sprints anteriores
+
+`tests/unit/iconos.test.ts` gana su hermano: **`relleno` solo vale sobre un símbolo que decide su
+propio `fill`.** Los símbolos del sprite son de dos familias y la diferencia no está en el nombre —
+`i-check-circle` o `i-alert` llevan sus propios `fill="currentColor"` y `stroke="var(--bg)"` en cada
+hijo, así que `relleno` no les hace nada; `i-voz`, `i-doc`, `i-candado`, `i-reloj` y
+`i-auriculares-off` no llevan atributos y heredan del CSS.
+
+Su rojo, con los ocho usos que había:
+
+```
+docs/diseno/banda.html:196       i-voz              ← mío
+docs/diseno/banda.html:213       i-auriculares-off  ← mío
+docs/diseno/honestidad.html:173  i-reloj
+docs/diseno/ia.html:82           i-doc
+docs/diseno/notas.html:259       i-candado
+docs/diseno/notas.html:265       i-reloj
+docs/diseno/sesion.html:240      i-voz
+src/pantallas/Sesion.tsx:158     i-voz              ← EN EL PRODUCTO
+```
+
+**El último es el que importa.** El botón «Iniciar sesión» de la pantalla de Sesión lleva desde el
+sprint 001 con un icono que no dibuja nada — y la maqueta **nunca lo pidió relleno** (`sesion.html:240`
+escribe `class="ic s"` a secas). El producto se desvió de la maqueta por su cuenta y el gate de
+fidelidad no podía verlo: compara píxeles contra una maqueta que en ese punto tenía el **mismo**
+defecto, porque su otro uso de `i-voz` también estaba relleno. Dos errores que se tapaban el uno al
+otro.
+
+Los ocho arreglados; el bundle de `design-sync/` regenerado (14 archivos).
+
+## Un defecto de copy que también salió de mirar
+
+En el estado «hablando», la tecla decía `⌘⇧V solo audio` — **estando ya dentro del modo**. Lo que esa
+tecla hace ahí es **salir**. Dice `volver` / `back`.
+
+## Estado
+
+**La mirada 16 está presentada, no aprobada.** Registrada en `docs/diseno/README.md` con fecha y como
+pendiente. No se construye una línea de `habla/` hasta que el usuario la mire y diga qué vio — que es
+lo que su propio mensaje de arranque pidió: *«los estados nuevos de la banda se MAQUETAN y se me
+muestran (mirada 16) antes de construirlos»*.

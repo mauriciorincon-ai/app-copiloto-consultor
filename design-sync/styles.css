@@ -433,6 +433,18 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .banda.voz .cuerpo-b { align-items: center; padding: 0 14px; height: 100%; }
 .banda.voz .linea-b { font-size: 13px; -webkit-line-clamp: 1; white-space: nowrap; }
 .banda.voz .cab-b { display: none; }
+/* Modo solo audio · el contenido de los 44 px (sprint 2, mirada 16).
+   El alto y las tres reglas de arriba se reservaron en el sprint 1; esto es lo que vive dentro.
+   Una sola línea, así que todo va en fila: el glifo dice de qué se trata, el texto lo dice con
+   palabras, y a la derecha las teclas y el contador de red — que NO puede desaparecer al cambiar
+   de alto, porque es una promesa dura de la app y no un adorno de la cabecera. */
+.banda.voz .linea-b { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+.banda.voz .linea-b .ic { flex: 0 0 auto; color: var(--halo); }
+.banda.voz .linea-b.warn { color: var(--warn); }
+.banda.voz .linea-b.warn .ic { color: var(--warn); }
+.banda.voz .linea-b .sep { color: var(--line-2); flex: 0 0 auto; }
+.banda.voz .linea-b .fuente-b { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.banda.voz .lado-b { flex-direction: row; align-items: center; gap: 12px; max-width: none; }
 
 /* Marca mínima a la izquierda */
 .banda .marca-min { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-size: var(--t-meta); white-space: nowrap; flex: 0 0 auto; }
