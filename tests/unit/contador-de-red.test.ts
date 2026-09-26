@@ -59,6 +59,10 @@ const SOCKETS_RUST: [RegExp, string][] = [
   [/\bhyper\s*::/, "hyper"],
   [/\bisahc\s*::/, "isahc"],
   [/\bsocket2\s*::/, "socket2"],
+  // Por `libc`, que el crate ya usa para hablar con el núcleo. Faltaba y se vio en la fase 4 del
+  // sprint 002: con un `libc::socket` plantado en el radar este gate seguía en verde. Es la puerta
+  // de más abajo de todas, y la que no necesita ninguna dependencia nueva para abrirse.
+  [/\blibc::(socket|connect|sendto|sendmsg|getaddrinfo|gethostbyname)\b/, "libc (socket, connect, DNS)"],
 ];
 
 /** Clientes HTTP y de red que no pueden aparecer como dependencia directa. */

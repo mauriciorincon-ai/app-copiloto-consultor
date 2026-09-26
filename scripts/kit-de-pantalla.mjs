@@ -60,6 +60,16 @@ const DIAPOSITIVAS = [
     titulo: "Agenda",
     cuerpo: ["Bienvenida", "Revisión de avances", "Preguntas"],
   },
+  // El radar ámbar (C14, sprint 002, fase 4): la misma reunión, pero GRABADA y con un bot de notas
+  // en la lista. El aviso y el nombre del bot salen del catálogo `data/radar/avisos.json`. Esta
+  // imagen no está en `pantalla.json`: la lee su propio test, `el_radar_ambar_lee_la_reunion_grabada`.
+  {
+    archivo: "reunion-grabada.png",
+    titulo: "Revisión de avances",
+    cuerpo: ["Tablero de margen: listo", "Piloto: 1 de 5 tiendas", "Pendiente: datos del ERP"],
+    aviso: "Esta reunión se está grabando",
+    participantes: ["Laura Méndez", "Laura's Notetaker (Otter.ai)", "Tú"],
+  },
 ];
 
 const PARTICIPANTES = ["Laura Méndez", "Andrés Quintero", "Tú"];
@@ -81,10 +91,11 @@ function html(d) {
     .tile span{position:absolute;left:10px;bottom:8px;font-size:13px}
     .abajo{position:absolute;bottom:0;left:0;right:0;height:72px;display:flex;align-items:center;gap:24px;padding:0 24px;font-size:14px;color:#bdc1c6}
     .boton{background:#3c4043;border-radius:20px;padding:8px 16px}
+    .rec{color:#f28b82;margin-right:18px}
   </style></head><body>
-    <div class="arriba">Revisión trimestral · Meet</div>
+    <div class="arriba">${d.aviso ? `<span class="rec">● ${d.aviso}</span>` : ""}Revisión trimestral · Meet</div>
     <div class="centro"><h1>${d.titulo}</h1><ul>${d.cuerpo.map((c) => `<li>${c}</li>`).join("")}</ul>${barras}</div>
-    <div class="lado">${PARTICIPANTES.map((p) => `<div class="tile"><span>${p}</span></div>`).join("")}</div>
+    <div class="lado">${(d.participantes ?? PARTICIPANTES).map((p) => `<div class="tile"><span>${p}</span></div>`).join("")}</div>
     <div class="abajo"><span>14:03</span><span>abc-defg-hij</span><span class="boton">Presentar ahora</span><span class="boton">Salir de la llamada</span></div>
   </body></html>`;
 }
@@ -94,7 +105,10 @@ const pg = await nav.newPage({
   viewport: { width: ANCHO, height: ALTO },
   deviceScaleFactor: 1,
 });
-for (const d of DIAPOSITIVAS) {
+// `--solo=archivo.png` regenera una sola imagen: las demás ya están versionadas, y volver a
+// fotografiarlas con otra versión del navegador las cambiaría sin que cambie nada de lo que miden.
+const solo = process.argv.find((a) => a.startsWith("--solo="))?.slice(7);
+for (const d of DIAPOSITIVAS.filter((x) => !solo || x.archivo === solo)) {
   await pg.setContent(html(d));
   writeFileSync(
     `docs/kit-de-prueba/pantalla/${d.archivo}`,

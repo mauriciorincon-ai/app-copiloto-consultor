@@ -1,4 +1,5 @@
-import { useT } from "../i18n";
+import { useState } from "react";
+import { useIdioma, useT } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { Fila, Funciona, TodaviaNo, PILA } from "../componentes/Ventana";
 import {
@@ -14,6 +15,7 @@ import {
   type Reunion,
   type Salida,
 } from "../cuaderno";
+import { invasivos, useRadarDeTuMac, type EnTuMac } from "../radar";
 
 /**
  * SESIÓN — «Antes de empezar».
@@ -34,24 +36,68 @@ export function Sesion({
   reunion,
   escucha,
   salida,
+  radarDeMuestra = false,
 }: {
   reunion: Reunion;
   escucha: EstadoDeEscucha;
   salida: Salida;
+  radarDeMuestra?: boolean;
 }) {
   const t = useT().cuaderno;
   const pantalla = usePantalla();
   const hayEco = salida.salida === "altavoces";
   const caida = (p: EstadoDePista) => escucha.escuchando && !p.abierta;
 
+  /**
+   * **EL RADAR CORAL EN SESIÓN** (C14, fase 4 del sprint 002) — «software invasivo en tu Mac».
+   *
+   * Antes de empezar, si algo vigila este Mac, **la pantalla entera es ese aviso**: es el único
+   * momento en que el consultor todavía puede decidir no empezar, y la maqueta lo dibuja así. Con
+   * la sesión en marcha, un programa que aparece después va ARRIBA, sin los botones de empezar, y
+   * lo demás sigue debajo —la maqueta no dibuja ese caso: queda declarado para el gate del MVP—.
+   *
+   * «No iniciar» y «Iniciar de todos modos» dan el aviso por visto **para esos programas**: si
+   * aparece otro, vuelve.
+   */
+  const radar = useRadarDeTuMac(radarDeMuestra);
+  const [visto, setVisto] = useState("");
+  const clave = invasivos(radar)
+    .map((p) => p.nombre)
+    .join("|");
+  const vigilado = clave !== "" && clave !== visto;
+
+  const titulo = (
+    <div className="titulo">
+      <h1>{t.sesionTitulo}</h1>
+      <p className="sub">{t.sesionSub}</p>
+    </div>
+  );
+
+  // La muestra de escucha de la maqueta está «escuchando» (es la de las pistas que funcionan); el
+  // estado «software invasivo en tu Mac» se dibuja antes de empezar, y así se fotografía.
+  const antesDeEmpezar = !escucha.escuchando || radarDeMuestra;
+  if (vigilado && antesDeEmpezar) {
+    return (
+      <>
+        {titulo}
+        <LaVigilancia
+          radar={radar}
+          iniciar={() => {
+            setVisto(clave);
+            empezarAEscuchar(DEL_CONSULTOR, DEL_CLIENTE);
+          }}
+          noIniciar={() => setVisto(clave)}
+        />
+      </>
+    );
+  }
+
   return (
     <>
-      <div className="titulo">
-        <h1>{t.sesionTitulo}</h1>
-        <p className="sub">{t.sesionSub}</p>
-      </div>
+      {titulo}
 
       <div style={PILA}>
+        {vigilado && <LaVigilancia radar={radar} />}
         <LaReunion reunion={reunion} />
 
         <div className="grid-2">
@@ -87,7 +133,7 @@ export function Sesion({
           <div className="tarjeta pendiente">
             <h2 className="seccion">{t.esteCliente}</h2>
             <div className="fila">
-              <span className="crece">{t.fichaNdaRadar}</span>
+              <span className="crece">{t.fichaYNda}</span>
               <TodaviaNo />
             </div>
             <p>{t.noSeInventa}</p>
@@ -434,6 +480,105 @@ export function LaEscucha({ mic, sistema }: { mic: boolean; sistema: boolean }) 
         <Ic id="i-alert" s />
         <span>{t.aMedias}</span>
       </span>
+    </div>
+  );
+}
+
+/**
+ * «Software invasivo corriendo en tu Mac» — `sesion.html`, estado «software invasivo en tu Mac».
+ * Los botones solo existen antes de empezar: con la sesión en marcha ya no hay nada que decidir.
+ */
+export function LaVigilancia({
+  radar,
+  iniciar,
+  noIniciar,
+}: {
+  radar: EnTuMac;
+  iniciar?: () => void;
+  noIniciar?: () => void;
+}) {
+  const t = useT().cuaderno;
+  const idioma = useIdioma();
+  return (
+    <div style={PILA}>
+      <div className="franja err" role="alert" style={{ padding: "14px 16px" }}>
+        <Ic id="i-x-circle" relleno />
+        <div>
+          <strong>{t.vigilanciaTitulo}</strong>
+          <p style={{ marginTop: "4px" }}>
+            {t.vigilanciaNoEs} <b>{t.vigilanciaTuEquipo}</b> {t.vigilanciaQueMiran}{" "}
+            <b>{t.vigilanciaSoloTuMac}</b>
+            {t.vigilanciaJamas}
+          </p>
+        </div>
+      </div>
+      <div className="tarjeta" style={{ padding: 0 }}>
+        <table className="tabla">
+          <thead>
+            <tr>
+              <th>{t.queEncontro}</th>
+              <th>{t.queAlcanzaAVer}</th>
+              <th>{t.nivel}</th>
+              <th>{t.catalogo}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {radar.programas.map((p) => {
+              const clase = t.radarClases[p.categoria];
+              const sabelo = p.nivel === "sabelo";
+              return (
+                <tr key={p.nombre} className={sabelo ? "apagada" : undefined}>
+                  <td>
+                    <b>{clase.titulo}</b>
+                    {clase.sufijo && ` ${clase.sufijo}`}
+                    <br />
+                    <span className="mono" style={sabelo ? undefined : { color: "var(--ink-2)" }}>
+                      {p.nombre}
+                    </span>
+                  </td>
+                  <td>{p.alcance[idioma]}</td>
+                  <td>
+                    {sabelo ? (
+                      <span className="estado warn">
+                        <Ic id="i-alert" s relleno />
+                        {t.sabelo}
+                      </span>
+                    ) : (
+                      <span className="estado err">
+                        <Ic id="i-x-circle" s relleno />
+                        {t.invasivo}
+                      </span>
+                    )}
+                  </td>
+                  <td className="mono">
+                    v{radar.catalogo.version} · {radar.catalogo.fecha}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <div className="grid-2">
+        <div className="franja ok" role="status">
+          <Ic id="i-check-circle" relleno />
+          <div>
+            <strong>{t.tuProteccionSigue}</strong>
+            <p>{t.panelProtegido}</p>
+          </div>
+        </div>
+        {iniciar && noIniciar && (
+          <div className="fila" style={{ alignItems: "flex-start" }}>
+            <button className="btn primario" onClick={iniciar}>
+              <Ic id="i-video" s />
+              <span>{t.iniciarDeTodosModos}</span>
+            </button>
+            <button className="btn" onClick={noIniciar}>
+              {t.noIniciar}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

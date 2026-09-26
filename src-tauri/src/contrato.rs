@@ -318,6 +318,52 @@ pub fn muestras() -> Vec<Muestra> {
         m("NOVEDAD_NADA_EN_PANTALLA", "Novedad", "./ficha", &Novedad::NadaEnPantalla {
             hora: "14:05".into(),
         }),
+        // ---- el radar (C14) ----------------------------------------------------------------
+        // El ámbar cruza por el evento «escucha», como las fichas: la banda lo pinta en su sitio.
+        m("NOVEDAD_RADAR", "Novedad", "./ficha", &Novedad::Radar {
+            grabando: true,
+            bots: vec!["MinutaBot".into()],
+            hora: "14:03".into(),
+        }),
+        // El coral cruza por su propio evento, «radar», y lo leen Sesión y la banda. Los nombres
+        // son los de la maqueta, que son de ejemplo: el catálogo de verdad vive en `data/radar/`.
+        m("EN_TU_MAC_VIGILADO", "EnTuMac", "./radar", &crate::radar::EnTuMac {
+            programas: vec![
+                crate::radar::Programa {
+                    nombre: "ProctorLince".into(),
+                    categoria: crate::radar::Categoria::Supervision,
+                    nivel: crate::radar::Nivel::Invasivo,
+                    ve: crate::radar::Bilingue {
+                        es: "ve tu pantalla completa y tu cámara".into(),
+                        en: "sees your full screen and your camera".into(),
+                    },
+                    alcance: crate::radar::Bilingue {
+                        es: "Cámara, pantalla completa, apps abiertas; puede bloquear programas".into(),
+                        en: "Camera, full screen, open apps; can block programs".into(),
+                    },
+                    fuente: "no cruza".into(),
+                },
+                crate::radar::Programa {
+                    nombre: "MDM-Corp".into(),
+                    categoria: crate::radar::Categoria::Mdm,
+                    nivel: crate::radar::Nivel::Sabelo,
+                    ve: crate::radar::Bilingue {
+                        es: "puede instalar, borrar y leer la configuración".into(),
+                        en: "can install, wipe and read configuration".into(),
+                    },
+                    alcance: crate::radar::Bilingue {
+                        es: "Puede instalar, borrar y leer configuración. Normal en equipos de empresa".into(),
+                        en: "Can install, wipe and read configuration. Normal on company machines".into(),
+                    },
+                    fuente: "no cruza".into(),
+                },
+            ],
+            catalogo: crate::radar::CatalogoDelRadar { version: 1, fecha: "2026-09-26".into() },
+        }),
+        m("EN_TU_MAC_LIMPIO", "EnTuMac", "./radar", &crate::radar::EnTuMac {
+            programas: vec![],
+            catalogo: crate::radar::CatalogoDelRadar { version: 1, fecha: "2026-09-26".into() },
+        }),
         // ---- el acople, que la banda dibuja en su cabecera --------------------------------
         m("ESTADO_DEL_ACOPLE", "EstadoDelAcople", "./acople", &crate::EstadoDelAcople {
             permiso: true,

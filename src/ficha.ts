@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { escuchar, hayTauri, preguntar } from "./puente";
 import { useT } from "./i18n";
 import type { Pista, Turno } from "./cuaderno";
+import { invasivos, type CatalogoDelRadar, type EnTuMac, type Programa } from "./radar";
 
 /**
  * LA FICHA EN LA BANDA — lo que la app encontró en el corpus del consultor.
@@ -96,7 +97,21 @@ export type Novedad =
   | { que: "ruido"; pista: Pista; duracionMs: number }
   | ({ que: "aparece" } & Aparicion)
   /** `⌃⌥L` leyó la pantalla y no había texto: la banda contesta igual, porque alguien preguntó. */
-  | { que: "nada-en-pantalla"; hora: string };
+  | { que: "nada-en-pantalla"; hora: string }
+  /**
+   * **El radar ámbar (C14)**: la pantalla de la reunión muestra el aviso de grabación, o hay un bot
+   * de notas en la lista de participantes. Los bots llegan con el nombre del catálogo.
+   */
+  | { que: "radar"; grabando: boolean; bots: string[]; hora: string };
+
+/**
+ * Lo que el radar pone en la banda: el ámbar («te graban», de la pantalla de la reunión) o el
+ * coral («te vigilan», de los procesos de tu Mac). Es lo último que pasó, así que manda sobre la
+ * ficha que hubiera; la siguiente ficha, a su vez, lo sustituye.
+ */
+export type RadarEnLaBanda =
+  | { que: "ambar"; grabando: boolean; bots: string[]; hora: string }
+  | { que: "coral"; programa: Programa; catalogo: CatalogoDelRadar };
 
 export type LoQueLaBandaEnseña = {
   aparicion: Aparicion | null;
@@ -107,6 +122,8 @@ export type LoQueLaBandaEnseña = {
    * —«Leí la pantalla: no hay texto que buscar.»—, porque alguien preguntó (mirada 17-quater).
    */
   nadaEnPantalla: string | null;
+  /** El radar, si lo último que pasó fue un aviso suyo. */
+  radar: RadarEnLaBanda | null;
 };
 
 /**
@@ -131,9 +148,31 @@ export function useFicha(
   const [nadaEnPantalla, setNada] = useState<string | null>(() =>
     !hayTauri() && paraLaMuestra === "pantalla-nada" ? m.hora3 : null,
   );
+  const [radar, setRadar] = useState<RadarEnLaBanda | null>(() =>
+    hayTauri() ? null : radarDeMuestra(m, paraLaMuestra),
+  );
+  // Los invasivos que ya se enseñaron. El evento llega cada vez que cambia CUALQUIER cosa de la
+  // lista —también un MDM—, y la banda solo tiene que avisar cuando cambian los invasivos.
+  const coralVisto = useRef("");
 
   useEffect(() => {
     if (!hayTauri()) return;
+    /**
+     * Un programa invasivo nuevo se enseña; si ya no queda ninguno, el coral se quita. Se pregunta
+     * también al montarse: el radar da su primera vuelta al arrancar la app, y la banda puede
+     * montarse después y perderse el evento.
+     */
+    const atenderElCoral = (e: EnTuMac | null) => {
+      if (!e) return;
+      const inv = invasivos(e);
+      const clave = inv.map((p) => p.nombre).join("|");
+      if (clave === coralVisto.current) return;
+      coralVisto.current = clave;
+      const primero = inv[0];
+      if (primero) setRadar({ que: "coral", programa: primero, catalogo: e.catalogo });
+      else setRadar((r) => (r?.que === "coral" ? null : r));
+    };
+    void preguntar<EnTuMac>("radar_de_tu_mac").then(atenderElCoral);
     const bajas = [
       escuchar<Novedad>("escucha", (n) => {
         // Un turno del cliente puede acabar en ficha o en nada, y hasta saberlo la banda dice
@@ -141,19 +180,30 @@ export function useFicha(
         if (n?.que === "turno" && n.pista === "sistema" && !n.eco) {
           setBuscando(true);
           setNada(null);
+          setRadar(null);
         }
         if (n?.que === "aparece") {
           setFicha(n);
           setBuscando(false);
           setNada(null);
+          setRadar(null);
         }
         // La lectura pedida no encontró texto. Se contesta encima de lo que hubiera: fue lo
         // último que el usuario pidió, y es lo que espera ver.
-        if (n?.que === "nada-en-pantalla") setNada(n.hora);
+        if (n?.que === "nada-en-pantalla") {
+          setNada(n.hora);
+          setRadar(null);
+        }
+        if (n?.que === "radar") {
+          setRadar({ que: "ambar", grabando: n.grabando, bots: n.bots, hora: n.hora });
+          setNada(null);
+        }
       }),
+      escuchar<EnTuMac>("radar", atenderElCoral),
       escuchar("ficha", () => {
         setBuscando(true);
         setNada(null);
+        setRadar(null);
         // `null` es «todavía no he oído nada del cliente»: la banda vuelve a lo que enseñaba. Y
         // pase lo que pase —también si el puente falla—, el «buscando» se cierra: una banda que se
         // queda buscando para siempre es la avería que la corrida en vivo encontró.
@@ -169,12 +219,34 @@ export function useFicha(
         setFicha(null);
         setBuscando(false);
         setNada(null);
+        setRadar(null);
       }),
     ];
     return () => bajas.forEach((b) => b());
   }, []);
 
-  return { aparicion: ficha, buscando, nadaEnPantalla };
+  return { aparicion: ficha, buscando, nadaEnPantalla, radar };
+}
+
+/** El radar de `banda.html`: «radar · te graban» y «radar · te vigilan», con MinutaBot y ProctorLince. */
+function radarDeMuestra(
+  m: ReturnType<typeof useT>["banda"]["muestra"],
+  estado: string,
+): RadarEnLaBanda | null {
+  if (estado === "radar") return { que: "ambar", grabando: true, bots: [m.radarBot], hora: m.radarHora };
+  if (estado === "radar-invasivo")
+    return {
+      que: "coral",
+      programa: {
+        nombre: m.radarPrograma,
+        categoria: "supervision",
+        nivel: "invasivo",
+        ve: { es: m.radarVe, en: m.radarVe },
+        alcance: { es: "", en: "" },
+      },
+      catalogo: { version: 1, fecha: "" },
+    };
+  return null;
 }
 
 /** Los datos «Páramo Azul» de la maqueta, con los textos del diccionario. */

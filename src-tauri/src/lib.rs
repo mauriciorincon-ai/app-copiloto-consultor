@@ -26,6 +26,7 @@ pub mod ficha;
 pub mod habla;
 pub mod pantalla;
 pub mod permisos;
+pub mod radar;
 pub mod red;
 pub mod relleno;
 pub mod sesion;
@@ -845,7 +846,9 @@ pub fn run() {
             estado_de_la_voz,
             estado_de_la_pantalla,
             lectura_automatica,
-            leer_la_pantalla_ahora
+            leer_la_pantalla_ahora,
+            radar_de_tu_mac,
+            abrir_lo_que_ve
         ])
         .setup(|app| {
             // El invariante se comprueba ANTES de abrir nada y aborta el arranque si falla:
@@ -859,6 +862,7 @@ pub fn run() {
             app.manage(LaEscucha::default());
             app.manage(ElCorpus::default());
             app.manage(LaPantalla::default());
+            app.manage(ElRadar::default());
             // La voz se pregunta al sistema aquí, una vez, y se deja dicho lo que hay: un Mac sin
             // voz para el idioma del usuario no puede usar el modo solo audio, y eso tiene que
             // verse en el arranque y no cuando el usuario pulse la tecla en mitad de una reunión.
@@ -874,6 +878,7 @@ pub fn run() {
             }
 
             registrar_el_kill_switch(app.handle());
+            arrancar_el_radar(app.handle());
 
             // El diccionario del consultor: se deja escrito con la semilla si no existía, para que
             // el usuario pueda ir a editarlo. Que falle no impide arrancar — la app funciona sin
@@ -1409,7 +1414,7 @@ fn arrancar_la_pantalla<R: tauri::Runtime>(
             "apagada"
         }
     );
-    let (al_leer, al_cambiar) = (app.clone(), app.clone());
+    let (al_leer, al_cambiar, al_avisar) = (app.clone(), app.clone(), app.clone());
     let entorno = pantalla::Entorno {
         ojo,
         lector,
@@ -1422,6 +1427,18 @@ fn arrancar_la_pantalla<R: tauri::Runtime>(
         al_cambiar: Box::new(move |e| {
             println!("[pantalla] {:?}", e.vista);
             let _ = al_cambiar.emit(EVENTO_PANTALLA, e);
+        }),
+        // El radar ámbar (C14) viaja por el mismo canal que las fichas: la banda lo pinta en el
+        // mismo sitio, y lo que llegue después lo sustituye.
+        al_avisar: Box::new(move |a| {
+            let _ = al_avisar.emit(
+                EVENTO_ESCUCHA,
+                escucha::Novedad::Radar {
+                    grabando: a.grabando,
+                    bots: a.bots.clone(),
+                    hora: escucha::la_hora(),
+                },
+            );
         }),
     };
     let lectura = pantalla::Lectura::arrancar(entorno, estado.encendida.load(Ordering::Relaxed));
@@ -1575,6 +1592,104 @@ fn leer_una_vez(la_pantalla: &LaPantalla) -> bool {
     hay
 }
 
+// ── EL RADAR (C14) ──────────────────────────────────────────────────────────────────────────────
+
+/// Lo último que el radar coral vio en este Mac. Sesión lo pide al montarse; después escucha el
+/// evento `radar`.
+#[derive(Default)]
+struct ElRadar(std::sync::Mutex<Option<radar::EnTuMac>>);
+
+const EVENTO_RADAR: &str = "radar";
+
+/// Cada cuánto se mira la lista de procesos. Una vuelta cuesta unos milisegundos (dos llamadas al
+/// núcleo por proceso); diez segundos es lo bastante a menudo para que un programa que se abre en
+/// mitad de la reunión se vea antes de que importe, y lo bastante poco para no notarse.
+const RADAR_CADA: std::time::Duration = std::time::Duration::from_secs(10);
+
+/// **El radar coral, en marcha desde que arranca la app** —no desde que empieza la sesión—: la
+/// pantalla de Sesión tiene que poder decir ANTES de empezar que algo vigila este Mac, que es
+/// cuando el usuario todavía puede decidir no empezar.
+///
+/// Avisa solo cuando cambia lo que hay. La primera vuelta avisa siempre, aunque no haya nada: así
+/// Sesión y la banda saben que el radar miró, y no confunden «nada» con «todavía no».
+fn arrancar_el_radar<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    let mango = app.clone();
+    std::thread::spawn(move || {
+        let mdm = radar::mdm::inscrito();
+        println!(
+            "[radar] catálogo v{} · MDM: {}",
+            radar::catalogo::rotulo().version,
+            match mdm {
+                Some(true) => "inscrito",
+                Some(false) => "no",
+                None => "no se pudo preguntar",
+            }
+        );
+        let mdm = mdm.unwrap_or(false);
+        let mut antes: Option<Vec<String>> = None;
+        loop {
+            let visto = radar::mirar_tu_mac(mdm);
+            let nombres = visto.nombres();
+            if antes.as_ref() != Some(&nombres) {
+                // Cuántos y de qué nivel. Son programas de TU Mac, no de nadie más, pero el log
+                // sigue siendo metadata: los nombres los enseña Sesión.
+                let invasivos = visto.programas.iter().filter(|p| p.nivel == radar::Nivel::Invasivo).count();
+                println!(
+                    "[radar] en tu Mac: {invasivos} invasivos · {} sábelo",
+                    visto.programas.len() - invasivos
+                );
+                if let Ok(mut g) = mango.state::<ElRadar>().0.lock() {
+                    *g = Some(visto.clone());
+                }
+                let _ = mango.emit(EVENTO_RADAR, &visto);
+                antes = Some(nombres);
+            }
+            std::thread::sleep(RADAR_CADA);
+        }
+    });
+}
+
+/// Lo que el radar vio en este Mac. Si el hilo todavía no dio su primera vuelta, se mira ahora
+/// —sin preguntar por el MDM, que cuesta lanzar un programa y lo trae la vuelta siguiente—.
+#[tauri::command]
+fn radar_de_tu_mac(estado: tauri::State<'_, ElRadar>) -> radar::EnTuMac {
+    estado
+        .0
+        .lock()
+        .ok()
+        .and_then(|g| g.clone())
+        .unwrap_or_else(|| radar::mirar_tu_mac(false))
+}
+
+/// `⌃⌥R` — «qué ve» (mirada 17). Abre el cuaderno en Sesión, donde está la tabla de lo que
+/// alcanza a ver cada programa, con su catálogo.
+fn el_atajo_del_radar() -> tauri_plugin_global_shortcut::Shortcut {
+    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
+    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyR)
+}
+
+/// El botón «Ver qué alcanza a ver» de la banda ampliada: lo mismo que `⌃⌥R`.
+#[tauri::command]
+fn abrir_lo_que_ve(app: tauri::AppHandle) {
+    ir_a_lo_que_ve(&app);
+}
+
+fn ir_a_lo_que_ve<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    let Some(v) = app.get_webview_window(ventana::PRINCIPAL) else {
+        return;
+    };
+    let navego = v.url().map_err(|e| e.to_string()).and_then(|mut url| {
+        url.set_query(Some("pantalla=sesion"));
+        v.navigate(url).map_err(|e| e.to_string())
+    });
+    let _ = v.show();
+    let _ = v.set_focus();
+    match navego {
+        Ok(()) => println!("[radar] el cuaderno se abre en Sesión"),
+        Err(e) => println!("[radar] no se pudo abrir Sesión en el cuaderno: {e}"),
+    }
+}
+
 fn atender_el_atajo<R: tauri::Runtime>(
     app: &tauri::AppHandle<R>,
     atajo: &tauri_plugin_global_shortcut::Shortcut,
@@ -1597,6 +1712,9 @@ fn atender_el_atajo<R: tauri::Runtime>(
     } else if *atajo == el_atajo_de_leer_la_pantalla() {
         println!("[pantalla] ⌃⌥L");
         leer_una_vez(&app.state::<LaPantalla>());
+    } else if *atajo == el_atajo_del_radar() {
+        println!("[radar] ⌃⌥R");
+        ir_a_lo_que_ve(app);
     } else if *atajo == el_atajo_de_callar() {
         let estado = app.state::<LaVozQueSale>();
         estado.voz.callar();
@@ -1639,6 +1757,13 @@ fn registrar_el_kill_switch<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
         Err(e) => println!(
             "[habla] NO se pudo registrar ⌃⌥V ({e}): el modo solo audio no se va a poder encender \
              — y hoy no tiene otra puerta, así que queda apagado"
+        ),
+    }
+    match app.global_shortcut().register(el_atajo_del_radar()) {
+        Ok(()) => println!("[radar] ⌃⌥R «qué ve» registrado"),
+        Err(e) => println!(
+            "[radar] NO se pudo registrar ⌃⌥R ({e}): lo que alcanza a ver cada programa sigue en \
+             Sesión y en el botón de la banda ampliada"
         ),
     }
     match app.global_shortcut().register(el_atajo_de_leer_la_pantalla()) {
@@ -1821,6 +1946,7 @@ mod pruebas_de_las_teclas {
             (el_atajo_de_ayuda(), Code::KeyA),
             (el_atajo_del_modo_de_voz(), Code::KeyV),
             (el_atajo_de_leer_la_pantalla(), Code::KeyL),
+            (el_atajo_del_radar(), Code::KeyR),
         ];
         for (atajo, tecla) in esperadas {
             assert_eq!(atajo, Shortcut::new(control_opcion, tecla), "{tecla:?} no es ⌃⌥");
@@ -1839,6 +1965,7 @@ mod pruebas_de_las_teclas {
             el_atajo_de_ayuda(),
             el_atajo_del_modo_de_voz(),
             el_atajo_de_leer_la_pantalla(),
+            el_atajo_del_radar(),
             el_atajo_de_callar(),
         ];
         for (i, a) in todas.iter().enumerate() {

@@ -161,6 +161,23 @@ para añadir términos (haría escribir al módulo protegido, que la enmienda 1 
 propósito) y la **lista de correcciones** tachado → resaltado (exige guardar las correcciones del
 turno). Las dos son decisiones de producto y su sitio es el sprint 003.
 
+### Cambio al plan de miradas del sprint 002 — una sola mirada humana, en el gate del MVP (2026-09-26)
+
+**Decidido por el usuario** al cerrar la fase 3 (su frase textual está en el registro, abajo). Desde
+ese momento, **las miradas de copy** —si una frase se entiende, si un rótulo es claro— **no paran la
+construcción**: se escriben en la maqueta, las vigilan los gates automáticos y se prueban y se editan
+**en el gate del MVP**, que es el único gate humano del ciclo. Lo que viaja allí, declarado para que
+no se pierda:
+
+| Qué | De dónde viene |
+|---|---|
+| Las siete filas de la mirada de cierre de la fase 3 (Sesión, Permisos, Honestidad, la ficha que trajo la pantalla, «pantalla · nada que leer», § 8-ter, la prueba en vivo con `meet-de-prueba.html`) | fase 3 |
+| El radar construido al lado de su maqueta (la 17-ter lo dejó para «el gate de fidelidad de la fase 4») y el estado «vigilancia» de Sesión ya arreglado | fase 4 |
+| La 18 (sugerencia local, sugerencia API, pantalla IA): se maqueta igual antes de construir, pero su mirada viaja al gate del MVP | fase 5 |
+
+La regla 10 sigue en pie en lo que el usuario no cambió: **ninguna de estas pantallas cuenta como
+vista** hasta ese gate, y el summary del sprint lo dice así.
+
 ## Registro de miradas
 
 | Fecha | Artefacto | Veredicto del usuario (línea textual) | Qué se construyó encima, después |
@@ -186,6 +203,7 @@ turno). Las dos son decisiones de producto y su sitio es el sprint 003.
 | 2026-09-26 | **Mirada 17-ter** — `banda.html` (radar · te graban) · `kit.html` (§ 7, alerta del radar) — la frase **«Ese bot no es Angel Ghost, que nunca entra a la llamada»** | **Aprobada** — «Ammm, eso quiere decir que MinutaBot no es nuestro, es de otro; me queda más claro, pero sobre todo tranquilo: nunca diseñamos algo así. Sigue». *(Juzgó la frase, que iba citada en el mensaje; el estado visual ya lo había visto en la 17. No hay señal de que reabriera el archivo, y se registra tal cual: el estado vuelve a sus ojos en el gate de fidelidad de la fase 4, con la banda construida al lado de la maqueta.)* | Fase 4: el radar (C14) |
 | 2026-09-26 | **Mirada 17-quater** — `permisos.html` (sprint 2 · la pantalla, **corregido**) · `sesion.html` (sprint 2 · la pantalla) · `honestidad.html` (sprint 2) · `banda.html` (ficha · la trajo la pantalla · pantalla · nada que leer) · `kit.html` (§ 8-ter, «Los porqués») — *lo que la fase 3 necesita y la 17 no dibujó* | **Aprobada en 2, 3, 5 y 6 · la 1 con un cambio · la 4 sin respuesta · decisión 7 = B** — «1. Esta parte es la que no entiendo: “solo cuando cambia”; de resto está bien. 2. Sí se entienden. 3. Sí, me deja tranquilo: entiendo que leyó todo sin problema, que el último está en memoria y que pesa 1,4 MB. 5. Sí, de acuerdo y claro. 6. Todas están bien y se entienden. 7. B, pasar todas a ⌃⌥». *(Cita «solo cuando cambia» y el «1,4 MB»: llegó con los archivos abiertos. **La 4 no se contestó y no se da por vista**: vuelve en la 17-quinquies. Y en la 3, «leyó todo sin problema» no es lo que dice «8 de 8 piezas», que habla del botón rojo: la frase se reescribe y vuelve a sus ojos.)* | La **mirada 17-quinquies**. La UI de la fase 3 no se construye hasta su veredicto |
 | 2026-09-26 | **Mirada 17-quinquies** — `permisos.html` y `sesion.html` (sprint 2 · la pantalla) · `honestidad.html` (sprint 2) · `banda.html` (ficha · la trajo la pantalla · esperando, con las teclas `⌃⌥`) — *la segunda vuelta de la 17-quater* | **Fundida con la mirada de cierre de la fase 3, por decisión del usuario** — «Uyyy, no paro; así no vamos a avanzar nada» y, enseguida, «sigue». Se construye con las frases nuevas y con la fila 4 tal como se maquetó; las cinco filas vuelven a sus ojos **al cerrar la fase**, con la pantalla construida al lado de la maqueta. La fila 6 (el test de desbordes) se toma con la opción recomendada | Fase 3: las pantallas de la lectura de pantalla y los 7 campos |
+| 2026-09-26 | **Mirada de cierre de la fase 3** — `docs/fidelidad/S2-cuaderno.html` · `docs/fidelidad/S2-banda.html` (la pantalla construida al lado de la maqueta) · `kit.html` § 8-ter · la prueba en vivo con `meet-de-prueba.html` — *incluye las cinco filas de la 17-quinquies* | **Diferida al gate del MVP, por decisión del usuario** — «Estamos perdiendo demasiado tiempo en esas pruebas de texto; no están validando funcionalidad ni cosas serias, sino si se entienden o no los mensajes. Necesito terminar esto cuanto antes, y esto se puede probar y editar en los gates; y a propósito, solo vamos a hacer un gate cuando ya esté el MVP, entonces vamos a dejar estas pruebas de texto para el gate. No más de esto, vamos a avanzar». **No es una aprobación: nadie miró.** Lo construido queda vigilado por los gates automáticos (fidelidad 84 encuadres, diccionario fiel a la maqueta, maquetas que caben) y las siete filas viajan al gate del MVP | Fase 4: el radar (C14) |
 
 ## Decisiones de diseño declaradas antes del segundo artefacto
 

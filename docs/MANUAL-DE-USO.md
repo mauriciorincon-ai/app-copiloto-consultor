@@ -182,6 +182,54 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
   - Mientras el cliente mueve el ratón sobre la diapositiva, la app espera: solo lee lo que se queda
     quieto.
 
+### El radar: quién graba y quién te vigila · Nuevo · Sprint 002
+
+- **Qué hace:** te avisa de dos cosas, con dos colores y dos símbolos distintos, **mirando solo tu
+  Mac y tu pantalla**:
+  - **Ámbar, «sábelo»** (el punto de grabación): la pantalla de la reunión muestra el **aviso de
+    grabación o de transcripción** de Meet, Zoom o Teams, o hay un **bot de notas** en la lista de
+    participantes. La banda dice, por ejemplo, «Reunión grabada · bot de notas presente» y de dónde lo
+    sacó: «leído de tu pantalla · 14:03». Ese bot es de otra persona: **Angel Ghost nunca entra a la
+    llamada**. El cliente tiene derecho a grabar y a traer su bot; la app **avisa, no bloquea**.
+  - **Coral, «invasivo»** (la equis rellena): un programa **de tu propio Mac** que mira tu pantalla,
+    tu cámara, tus teclas o tus procesos —supervisión de exámenes, monitoreo de empleados, acceso
+    remoto—. La banda dice cuál es y **qué alcanza a ver**: «Te está mirando un programa de tu Mac ·
+    «X» (acceso remoto): …».
+- **Cómo se usa:** no hay que hacer nada.
+  - El **coral** mira los programas de tu Mac desde que abres la app, cada diez segundos. Si encuentra
+    uno **antes de empezar**, *Sesión* entera es el aviso —«Software invasivo corriendo en tu Mac»—, con
+    una tabla de lo que encontró, **qué alcanza a ver** cada programa y la versión del catálogo; decides
+    tú: **«Iniciar de todos modos»** o **«No iniciar»**.
+  - Con la sesión en marcha, el coral salta en la banda. **`⌃⌥R`** («qué ve») abre *Sesión* con la
+    tabla; con la banda ampliada tienes además **«Ver qué alcanza a ver»** y **«Corta todo»** (el mismo
+    corte de `⌥⎋`).
+  - El **ámbar** llega con la lectura de pantalla: lo que ella ya lee de la ventana de la reunión es
+    lo que el radar revisa. El mismo aviso no se repite en cada diapositiva: sale una vez, y otra vez
+    solo si cambia (un bot nuevo, por ejemplo).
+  - Si tu Mac está **inscrito en un MDM** (la gestión de equipos de una empresa), *Sesión* lo lista
+    como «Sábelo» dentro de la tabla: es normal en un equipo de empresa y no salta a la banda.
+- **Lo que NO hace, y cómo se comprueba:** no toca la máquina de nadie, no abre conexiones, no
+  pregunta nada a internet y no cierra ni bloquea ningún programa. La lista de programas se le pide
+  al núcleo de tu Mac —la misma que ves en el Monitor de Actividad—, se compara en memoria y se
+  tira. El catálogo viaja **dentro de la app**, versionado y con la fuente de cada fila; se actualiza
+  con una versión nueva de la app, no por la red. Lo vigila un test que falla si el radar llama a
+  algo fuera de su lista (`tests/unit/radar-solo-este-mac.test.ts`).
+- **Medido:** en el kit de prueba, un Mac sintético con cien programas normales —y nombres
+  parecidos a propósito, como Microsoft Teams o la app «Compartir pantalla» con la que tú miras la de
+  otro— da **cero** avisos; el mismo Mac con un programa de cada fila del catálogo los encuentra
+  **todos**.
+- **Limitaciones conocidas:**
+  - El **ámbar necesita la lectura de pantalla encendida** y la ventana de la reunión visible: si
+    apagas «Leerla sola», el radar ámbar tampoco mira. El coral no depende de eso.
+  - Reconoce los programas **por el nombre de su ejecutable**. Un programa renombrado, o uno que no
+    está en el catálogo, no se ve. Las **extensiones del navegador** (algunas de supervisión de
+    exámenes lo son) no tienen proceso propio y no se ven.
+  - Un programa de acceso remoto **abierto** no significa que alguien esté conectado **ahora**: la
+    app avisa de que podría, no de que lo esté.
+  - Si hay dos bots de notas, la banda nombra el primero.
+  - El aviso de grabación se reconoce por sus frases en español e inglés, tal y como Meet, Zoom y
+    Teams las escriben hoy. Si cambian, el catálogo tiene que ponerse al día.
+
 ### El modo solo audio: la ficha, al oído · Nuevo · Sprint 002
 
 - **Qué hace:** te **lee la ficha en voz alta** mientras la banda se encoge a una sola línea, para
@@ -270,6 +318,7 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
 | `⌃⌥T` | muestra u oculta el transcript en la banda |
 | `⌃⌥V` | enciende o apaga el **modo solo audio**: te lee la ficha y la banda baja a una línea |
 | `⌃⌥L` | **lee la pantalla una vez, ahora** — también con la lectura automática apagada |
+| `⌃⌥R` | **qué ve**: abre *Sesión* con la tabla del radar — qué programa de tu Mac te mira y qué alcanza a ver |
 | `⎋` | calla la voz — **solo mientras el modo solo audio está encendido** |
 
 > **Por qué `⌃⌥` (Control + Opción) y no `⌘⇧`.** Hasta el sprint 2 las teclas eran `⌘⇧`, y según
@@ -314,7 +363,7 @@ detecta y lo marca, pero funciona mejor con auriculares.
 | Sprint | Features añadidas a este manual |
 |---|---|
 | 001 | la banda protegida · el acople · las dos pistas y la transcripción local · el corpus indexado · la ficha de evidencia y la sugerencia de cómo conducirse · el modelo de voz de un idioma · el corte y la pantalla de Honestidad · español e inglés |
-| 002 | el disparo por silencio · **tu diccionario técnico** · **el modo solo audio** · **la lectura de pantalla** y `⌃⌥L` · **los porqués** (la pista que no abrió, la salida de audio por su nombre, el motor que falta) · **por qué llegó la ficha y cuánto tardó** · las teclas pasan a `⌃⌥` |
+| 002 | el disparo por silencio · **tu diccionario técnico** · **el modo solo audio** · **la lectura de pantalla** y `⌃⌥L` · **los porqués** (la pista que no abrió, la salida de audio por su nombre, el motor que falta) · **por qué llegó la ficha y cuánto tardó** · las teclas pasan a `⌃⌥` · **el radar** (ámbar y coral) y `⌃⌥R` |
 
 > **Corregido tras la auditoría del sprint 001** (2026-09-22): tres frases de este manual habían
 > dejado de ser ciertas y se arreglaron con lo que el código hacía de verdad — el disparo por

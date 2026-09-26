@@ -12,6 +12,7 @@
  */
 import type { Novedad, Aparicion } from "./ficha";
 import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelDiccionario, EstadoDelCorpus, InformeDelCorte, LaVoz, EstadoDeLaPantalla } from "./cuaderno";
+import type { EnTuMac } from "./radar";
 import type { EstadoDelAcople } from "./acople";
 
 export const NOVEDAD_EMPIEZA: Novedad = {
@@ -305,6 +306,58 @@ export const NOVEDAD_APARECE_POR_PANTALLA: Novedad = {
 export const NOVEDAD_NADA_EN_PANTALLA: Novedad = {
     "hora": "14:05",
     "que": "nada-en-pantalla"
+  };
+
+export const NOVEDAD_RADAR: Novedad = {
+    "bots": [
+      "MinutaBot"
+    ],
+    "grabando": true,
+    "hora": "14:03",
+    "que": "radar"
+  };
+
+export const EN_TU_MAC_VIGILADO: EnTuMac = {
+    "catalogo": {
+      "fecha": "2026-09-26",
+      "version": 1
+    },
+    "programas": [
+      {
+        "alcance": {
+          "en": "Camera, full screen, open apps; can block programs",
+          "es": "Cámara, pantalla completa, apps abiertas; puede bloquear programas"
+        },
+        "categoria": "supervision",
+        "nivel": "invasivo",
+        "nombre": "ProctorLince",
+        "ve": {
+          "en": "sees your full screen and your camera",
+          "es": "ve tu pantalla completa y tu cámara"
+        }
+      },
+      {
+        "alcance": {
+          "en": "Can install, wipe and read configuration. Normal on company machines",
+          "es": "Puede instalar, borrar y leer configuración. Normal en equipos de empresa"
+        },
+        "categoria": "mdm",
+        "nivel": "sabelo",
+        "nombre": "MDM-Corp",
+        "ve": {
+          "en": "can install, wipe and read configuration",
+          "es": "puede instalar, borrar y leer la configuración"
+        }
+      }
+    ]
+  };
+
+export const EN_TU_MAC_LIMPIO: EnTuMac = {
+    "catalogo": {
+      "fecha": "2026-09-26",
+      "version": 1
+    },
+    "programas": []
   };
 
 export const ESTADO_DEL_ACOPLE: EstadoDelAcople = {

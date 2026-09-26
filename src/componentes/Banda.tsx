@@ -4,7 +4,8 @@ import { useAsa } from "../asa";
 import { useTurnos } from "../turnos";
 import { useFicha, type Acumulada, type Aparicion } from "../ficha";
 import { hayTauri } from "../puente";
-import { useCorpus, useEscucha, useReunion, useVoz, type LaVoz, type Turno } from "../cuaderno";
+import { cortarTodo, useCorpus, useEscucha, useReunion, useVoz, type LaVoz, type Turno } from "../cuaderno";
+import { abrirLoQueVe, type Programa } from "../radar";
 
 /**
  * LA BANDA — la forma principal de Angel Ghost durante una reunión.
@@ -35,7 +36,14 @@ export type EstadoBanda =
    */
   | "ficha-pdf"
   | "ficha-pantalla"
-  | "pantalla-nada";
+  | "pantalla-nada"
+  /**
+   * El radar (C14, fase 4 del sprint 002, miradas 17 y 17-ter): **ámbar** «te graban» —la pantalla
+   * de la reunión muestra el aviso de grabación o un bot de notas— y **coral** «te vigilan» —un
+   * programa de tu Mac—. Dentro de Tauri los decide el radar; fuera, la URL.
+   */
+  | "radar"
+  | "radar-invasivo";
 
 export type PropsBanda = {
   estado: EstadoBanda;
@@ -90,7 +98,7 @@ export function Banda({
   // La ficha viene del corpus del usuario. Fuera de Tauri es la de la maqueta, que es lo que
   // hace posible el gate de FIDELIDAD; dentro del producto es la de verdad, y si no hay ninguna
   // no se pinta ninguna.
-  const { aparicion, buscando, nadaEnPantalla } = useFicha(estado);
+  const { aparicion, buscando, nadaEnPantalla, radar } = useFicha(estado);
 
   // **Dentro del producto el estado de contenido lo decide la ficha, no la URL.** Tener las dos
   // cosas mandando a la vez fue un defecto real: la banda pedía «sin resultado» y la ficha traía
@@ -100,7 +108,12 @@ export function Banda({
     ? estado
     : estado === "sin-verificar"
       ? estado
-      : nadaEnPantalla !== null
+      : // El radar es lo último que pasó cuando está: cualquier cosa nueva lo quita (`useFicha`).
+        radar?.que === "ambar"
+        ? "radar"
+        : radar?.que === "coral"
+          ? "radar-invasivo"
+          : nadaEnPantalla !== null
         ? "pantalla-nada"
         : buscando
           ? "buscando"
@@ -175,6 +188,29 @@ export function Banda({
       </span>
     );
   };
+
+  /** ««MinutaBot»» con las comillas de cada idioma. */
+  const entreComillas = (x: string) => `${t.comillaAbre}${x}${t.comillaCierra}`;
+
+  /**
+   * La línea del ámbar, compuesta de las piezas de la maqueta: «Meet muestra el aviso de grabación
+   * y «MinutaBot» está en la lista de participantes. Ese bot no es Angel Ghost, que nunca entra a
+   * la llamada. Aviso, no bloqueo.» Si hay dos bots se nombra el primero —la frase es singular— y
+   * si no se sabe el cliente, se dice lo demás sin inventarlo.
+   */
+  const fraseDelAmbar = (grabando: boolean, bots: string[]) => {
+    const partes: string[] = [];
+    const [bot] = bots;
+    if (grabando && cliente)
+      partes.push(`${cliente} ${t.radarMuestraElAviso}${bot ? ` ${t.radarY}` : "."}`);
+    if (bot) partes.push(`${entreComillas(bot)} ${t.radarEnLaLista} ${t.radarNoEsAngel}`);
+    partes.push(t.radarAvisoNoBloqueo);
+    return partes.join(" ");
+  };
+
+  /** «ProctorLince» (supervisión de exámenes): ve tu pantalla completa y tu cámara. */
+  const fraseDelCoral = (p: Programa) =>
+    `${entreComillas(p.nombre)} (${t.radarClases[p.categoria]}): ${p.ve[idioma]}.`;
 
   const atajos = (
     <span className="atajos-b">
@@ -343,6 +379,103 @@ export function Banda({
                     : tc.sinReunion}
               </span>
               {atajos}
+            </span>
+          </>
+        )}
+
+        {estadoReal === "radar" && radar?.que === "ambar" && (
+          <>
+            {/* Ámbar, «sábelo» (mirada 17): no es un fallo ni una alarma. `i-rec` es un anillo con
+                un punto y NO lleva `relleno`: rellenarlo se come el anillo. */}
+            <span className="ficha-b">
+              <span className="aviso-b" role="status">
+                <Ic id="i-rec" />
+                <span>
+                  <strong>
+                    {radar.grabando && radar.bots.length > 0
+                      ? t.radarGrabadaYBot
+                      : radar.grabando
+                        ? t.radarGrabada
+                        : t.radarBot}
+                  </strong>
+                  <span className="salida">{fraseDelAmbar(radar.grabando, radar.bots)}</span>
+                </span>
+              </span>
+            </span>
+            <span className="lado-b">
+              <span className="meta-b">
+                <Ic id="i-pantalla" s />
+                {t.radarLeidoDeTuPantalla} · {radar.hora}
+              </span>
+              {atajos}
+            </span>
+          </>
+        )}
+
+        {estadoReal === "radar-invasivo" && radar?.que === "coral" && !grande && (
+          <>
+            {/* Coral, con OTRO símbolo además del color: la equis rellena frente al punto de
+                grabación del ámbar (regla 8). A 88 px no caben botones: dice qué alcanza a ver y
+                deja las acciones para la ampliada, y `⌃⌥R` para ir a verlo. */}
+            <span className="ficha-b">
+              <span className="aviso-b err" role="alert">
+                <Ic id="i-x-circle" relleno />
+                <span>
+                  <strong>{t.radarTeMira}</strong>
+                  <span className="salida">{fraseDelCoral(radar.programa)}</span>
+                </span>
+              </span>
+            </span>
+            <span className="lado-b">
+              <span className="meta-b">
+                <Ic id="i-radar" s />
+                {t.radarCatalogo} v{radar.catalogo.version} · {t.radarEnTuEquipo}
+              </span>
+              <span className="atajos-b">
+                <span className="tecla">
+                  <kbd>⌃⌥R</kbd> {t.radarQueVe}
+                </span>
+                <span className="tecla">
+                  <kbd>⌥⎋</kbd> {t.corta}
+                </span>
+              </span>
+            </span>
+          </>
+        )}
+
+        {estadoReal === "radar-invasivo" && radar?.que === "coral" && grande && (
+          <>
+            {/* Con el asa subida, que es donde la banda tiene botones. Ninguno apaga nada del otro
+                equipo: uno enseña qué alcanza a ver y el otro es el kill-switch de siempre. */}
+            <span className="ficha-b">
+              <div className="franja err" role="alert">
+                <Ic id="i-x-circle" relleno />
+                <div>
+                  <strong>{t.radarTeMira}</strong>
+                  <p>{fraseDelCoral(radar.programa)}</p>
+                </div>
+              </div>
+              <span className="meta-b" style={{ marginTop: "8px" }}>
+                <Ic id="i-check-circle" s relleno />
+                {t.radarSigueProtegida} · {RED} {t.radarEnRed} · {t.radarNadaPersiste}
+              </span>
+            </span>
+            <span className="lado-b">
+              <span className="acciones-b">
+                <button className="btn mini" type="button" onClick={abrirLoQueVe}>
+                  <Ic id="i-radar" s />
+                  {t.radarVerQueVe}
+                </button>
+                <button className="btn mini" type="button" onClick={() => void cortarTodo()}>
+                  <Ic id="i-rayo" s />
+                  {t.radarCortaTodo}
+                </button>
+              </span>
+              <span className="atajos-b">
+                <span className="tecla">
+                  <kbd>⌥⎋</kbd> {t.corta}
+                </span>
+              </span>
             </span>
           </>
         )}

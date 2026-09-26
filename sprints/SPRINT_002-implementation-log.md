@@ -2043,3 +2043,117 @@ pide conclusión propia `success` por check. Lo que fallaba:
 
 **Y la regla que me pongo, porque la de la casa ya existía y no la cumplí:** después de cada push, `gh pr
 checks` hasta que los tres terminen, antes de dar nada por cerrado.
+
+## Cambio al plan de miradas: una sola mirada humana, en el gate del MVP (2026-09-26)
+
+Al cerrar la fase 3 le presenté al usuario una matriz de siete filas, seis de ellas «¿se entiende esta
+frase?». Su respuesta: *«Estamos perdiendo demasiado tiempo en esas pruebas de texto; no están validando
+funcionalidad ni cosas serias, sino si se entienden o no los mensajes. Necesito terminar esto cuanto antes,
+y esto se puede probar y editar en los gates; y a propósito, solo vamos a hacer un gate cuando ya esté el
+MVP, entonces vamos a dejar estas pruebas de texto para el gate. No más de esto, vamos a avanzar».*
+
+**Desviación del plan de miradas, decidida por el usuario** (regla 10: el plan de miradas es suyo). Lo que
+viaja al gate del MVP está listado en `docs/diseno/README.md` («Cambio al plan de miradas del sprint 002 —
+una sola mirada humana»): las siete filas del cierre de la fase 3, el radar construido al lado de su
+maqueta, y la 18. **Nada de eso cuenta como visto**; lo vigilan los gates automáticos (fidelidad,
+diccionario fiel a la maqueta, maquetas que caben) y el summary lo dirá así. Memoria:
+`textos-al-gate-del-mvp`.
+
+## Fase 4 — el radar (C14), construido, medido y con sus rojos (2026-09-26)
+
+### Lo que se construyó
+
+| Pieza | Dónde | Qué hace |
+|---|---|---|
+| Módulo protegido | `src-tauri/src/radar/{mod,catalogo,procesos,avisos,mdm}.rs` | las dos mitades del radar; en `PROTEGIDOS` del efímero |
+| Catálogo coral | `data/radar/programas.json` | **35 filas con fuente**: 5 de supervisión de exámenes, 7 de monitoreo de empleados, 19 de acceso remoto, 3 agentes de MDM y la inscripción de macOS en un MDM. Cada una con sus ejecutables, qué alcanza a ver en es/en y su `nota` cuando algo se infirió |
+| Catálogo ámbar | `data/radar/avisos.json` | frases de aviso de grabación de Zoom, Meet y Teams, y 12 bots de notas por su nombre por defecto |
+| Coral | `procesos.rs` | la lista de procesos de ESTE Mac con `proc_listallpids` + `proc_pidpath` (sin root), cotejada por el **nombre entero del ejecutable**, sin mayúsculas, jamás por trozos |
+| MDM | `mdm.rs` | `/usr/bin/profiles status -type enrollment`, una vez al arrancar (0,13 s); la única llamada del radar que lanza un programa |
+| Ámbar | `avisos.rs` + `pantalla/mod.rs` | mira las MISMAS líneas que Vision ya leyó, antes de que se pisen; palabras enteras, sin tildes; avisa **una vez** de lo mismo |
+| Hilo del radar | `lib.rs` (`arrancar_el_radar`) | desde que arranca la app, cada 10 s; emite `radar` solo cuando cambia lo que hay |
+| Contrato (regla 19) | `contrato.rs` | `NOVEDAD_RADAR` (ámbar, por «escucha»), `EN_TU_MAC_VIGILADO` y `EN_TU_MAC_LIMPIO` (coral, por «radar»); tipos en `src/radar.ts` y `src/ficha.ts` |
+| Banda | `Banda.tsx` | ámbar, coral compacto (con `⌃⌥R qué ve`) y coral ampliado (con «Ver qué alcanza a ver» y «Corta todo») |
+| Sesión | `Sesion.tsx` (`LaVigilancia`) | antes de empezar, la pantalla entera es el aviso («Iniciar de todos modos» / «No iniciar»); con la sesión en marcha, el aviso va arriba sin botones |
+| `⌃⌥R` | `lib.rs` | abre el cuaderno en Sesión |
+| Kit | `docs/kit-de-prueba/radar/{mac-limpio,mac-vigilado}.txt` · `docs/kit-de-prueba/pantalla/reunion-grabada.png` | un Mac sintético con 100 procesos y nombres parecidos a propósito; y una reunión grabada con Otter.ai en la lista, leída por Vision |
+
+### Medido
+
+- **Kit coral:** 0 falsos positivos en los 100 procesos del Mac limpio; las **34** filas por proceso del
+  catálogo, todas, en el Mac vigilado.
+- **Kit ámbar, con el OCR de verdad:** la reunión grabada da aviso y el bot «Otter.ai»; las **cinco**
+  reuniones sin grabar del kit de la fase 3 dan **0** avisos.
+- **En vivo, en este Mac** (`pnpm tauri dev`): «catálogo v1 · MDM: no» y **«1 invasivos»** antes de
+  lanzar nada. **No es un falso positivo:** en este Mac corre el anfitrión de **Chrome Remote Desktop**
+  (`/Library/PrivilegedHelperTools/ChromeRemoteDesktopHost.app/…/remoting_me2me_host`), es decir, el
+  acceso remoto a este equipo está activado. Con un programa propio llamado `TeamViewer` corriendo, el
+  radar pasó a «2 invasivos» en menos de diez segundos; `⌃⌥R` respondió («el cuaderno se abre en Sesión»);
+  al cerrarlo volvió a «1». Las ventanas de la app están protegidas de la captura, así que lo que se vio
+  fue el log, no la pantalla: la banda y Sesión con esos datos las cubren los tests que cruzan la costura.
+- **Fidelidad:** 100 encuadres (los 84 de la fase 3 + 12 de la banda del radar + 4 de «vigilancia»),
+  ninguno sobre el umbral, ningún desborde. **Axe:** ámbar, coral y «vigilancia» sin hallazgos en los
+  dos temas.
+
+### Decisiones y desviaciones, declaradas
+
+1. **El catálogo es JSON, no YAML** (`data/radar/*.json`, el plan decía `*.yaml`): `serde_json` ya está
+   en el crate y un YAML con filas anidadas pedía una dependencia nueva o un parser propio. Mismo
+   contenido, versionado igual, y entra al binario con `include_str!`: el radar no lee un archivo en
+   marcha.
+2. **Anti-trampa de núcleo: la clase existe y no tiene filas.** En macOS no hay (Apple desaconseja las
+   extensiones de núcleo y en Apple silicon exigen bajar la seguridad al arrancar); está escrito en el
+   `_leeme` del catálogo con su fuente.
+3. **Fuera, a propósito:** las extensiones de navegador (Proctorio, Honorlock: sin proceso propio) y los
+   nombres demasiado genéricos para cotejarlos solos (`service` de RustDesk, `go-agent` de Addigy,
+   `hubd` de Workspace ONE). El manual lo dice en sus limitaciones.
+4. **Las frases del aviso de grabación de Meet y Teams son probables, no verificadas:** Google y
+   Microsoft describen el aviso pero no lo citan, y el de Teams lo puede reescribir el administrador.
+   Queda en el catálogo con su `nota`, y la prueba ⭐ «radar ámbar con el aviso real» del gate del MVP
+   es la que lo confirma.
+5. **La banda nombra al cliente como lo detecta la app** («Google Meet muestra el aviso…»). La maqueta
+   decía «Meet» y se alineó con el producto; si la línea no cabe, se corta con «…», que es su estilo
+   (arreglado: el texto del aviso no podía encogerse — `ghost.css`, `.aviso-b > span`).
+6. **Con la sesión en marcha, Sesión pone el aviso coral arriba y sigue con lo demás.** La maqueta
+   solo dibuja el «antes de empezar»; el caso en marcha va al gate del MVP.
+7. **«Ficha del cliente, NDA y radar» · Todavía no** dejó de ser cierto: pasa a «Ficha del cliente y
+   NDA» en los estados del sprint 2 de la maqueta y en el producto (el del sprint 1 queda como historia).
+
+### Hallazgos pagados en la fase
+
+| Hallazgo | Severidad | Dónde | Pago |
+|---|---|---|---|
+| «vigilancia» (Sesión) se cortaba 48 px (es) / 13 px (en) desde la Etapa de Diseño | Medio (fase 3) | `docs/diseno/sesion.html` | la frase de «nombres de ejemplo» era de la maqueta, no de la app: pasó a su nota. `maqueta-cabe` con la DEUDA vacía, verde |
+| El gate del contador de red no veía un `libc::socket` en ningún sitio del crate | Medio | `tests/unit/contador-de-red.test.ts` | añadida la familia `libc::{socket,connect,sendto,sendmsg,getaddrinfo,gethostbyname}`; rojo visto en `permisos.rs` |
+| La baja de un oyente de Tauri fallaba al arrancar y salía como «Unhandled rejection» (3 por arranque) | Bajo | `src/puente.ts` | ya estaba en los logs en vivo de fases anteriores (1, 3 y 5 veces) y nadie lo anotó. `soltar()` atrapa la promesa; test `puente-baja` con su rojo; el arranque en vivo quedó limpio |
+| El texto del aviso de la banda no podía encogerse y se metía 15 px en el hueco de la derecha | Bajo | `docs/diseno/assets/ghost.css` | `.banda .aviso-b > span { min-width: 0 }`; lo cazó el gate de fidelidad |
+
+### Los rojos (regla 15)
+
+| Gate / test | Cambio plantado | Resultado |
+|---|---|---|
+| `el_radar_ambar_avisa_una_vez_de_lo_mismo` | quitar `&& *aviso != ultimo_aviso` | ROJO (3 avisos) → verde |
+| `se_compara_el_ejecutable_entero_y_no_un_trozo` | cotejo por `contains` | ROJO → verde |
+| `un_trozo_de_palabra_no_es_un_bot_ni_un_aviso` | quitar los espacios de `rodear` | ROJO → verde |
+| `cada_fila_trae_su_fuente_y_sus_dos_idiomas` | fuente vacía en Hubstaff | ROJO → verde |
+| `dos_lecturas_con_las_lineas_en_otro_orden_dan_el_mismo_aviso` | quitar el orden del catálogo | ROJO → verde |
+| `el_kit_de_procesos_sinteticos` | quitar AnyDesk del Mac vigilado · añadir «MSTeams» a TeamViewer | ROJO las dos (el 100 % y el falso positivo) → verde |
+| `el_radar_ambar_lee_la_reunion_grabada` (integración, Vision) | quitar «esta reunión se está grabando» del catálogo | ROJO → verde. **Mi primera mutación con `sed` no se aplicó** (el JSON tiene una frase por línea) y su «verde» no medía nada; se repitió editando el JSON |
+| `radar-solo-este-mac` (regla 9) | `libc::socket` · `Command::new("ping")` · `extern "C"` propio · URL e IP · el radar fuera de `PROTEGIDOS` | ROJO las cinco → verde. **Su primera versión no podía fallar por las URLs**: quitaba todo lo que viniera tras `//`, y eso se comía `https://`. Corregido (solo las líneas que SON comentario) y cazó una URL de ejemplo en `mdm.rs` |
+| `verify:ephemeral` | `radar/` se declaró protegido sin estar en la lista | ROJO en su primera corrida → verde |
+| `contador-de-red` | `libc::socket` en `permisos.rs` | antes VERDE (el punto ciego) → ROJO → verde |
+| `la-ficha-llega-a-la-banda` (regla 19) | sin preguntar `radar_de_tu_mac` al montarse · la ficha no quita el radar · Sesión sin distinguir la sesión en marcha · el ámbar sin cliente | ROJO los cuatro → verde. **El cuarto empezó en VERDE**: ningún test cubría el ámbar sin reunión detectada («null muestra el aviso…»); se escribió el test y se vio rojo |
+| contrato (`typecheck`) | renombrar `ve` en el tipo de TS | ROJO (`contrato.generado.ts:334`) → verde |
+| `puente-baja` | volver a `void baja()` | **su primera versión pasaba con el defecto puesto**: `vi.fn` se engancha a la promesa para anotar su resultado y la da por atendida. Con una función corriente: ROJO → verde |
+| `vocabulario-vetado` | — | lo cazó solo: un comentario mío decía «trampas»; reescrito |
+
+### Mis errores de la fase
+
+- Tres gates o tests míos nacieron **sin poder fallar** (el de URLs del radar, el del puente, el ámbar sin
+  cliente) y una demo de rojo **no se aplicó** (el `sed` sobre el JSON). Los cuatro se vieron solo porque
+  a cada gate se le exigió el rojo: la regla funcionó, y es la razón de no saltársela.
+- Para parar la app usé `pkill -f vite`, demasiado amplio: podía alcanzar servidores de otros proyectos
+  del usuario. Se comprobó después que el de `app-big-d` (puerto 3000) seguía vivo; desde entonces, por
+  la ruta de este repo o por PID.
+- El puerto 3000 lo tenía otro proyecto del usuario: `playwright.config.ts` acepta ahora `PUERTO_E2E`
+  (3000 por defecto, la CI no cambia) en vez de tocar ese servidor.

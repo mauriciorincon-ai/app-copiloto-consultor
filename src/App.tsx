@@ -65,6 +65,9 @@ const ESTADOS: EstadoBanda[] = [
   "ficha-pdf",
   "ficha-pantalla",
   "pantalla-nada",
+  // El radar (fase 4): ámbar y coral. La ampliada del coral sale del alto de la ventana, como todas.
+  "radar",
+  "radar-invasivo",
 ];
 
 /**

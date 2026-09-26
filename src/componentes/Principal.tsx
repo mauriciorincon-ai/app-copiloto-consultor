@@ -43,7 +43,16 @@ export function Principal({ busqueda = globalThis.location?.search ?? "" }: { bu
 
   return (
     <Ventana seccion={seccion} ir={setSeccion} enSesion={reunion.que === "detectada"}>
-      {seccion === "sesion" && <Sesion reunion={reunion} escucha={escucha} salida={salida} />}
+      {seccion === "sesion" && (
+        <Sesion
+          reunion={reunion}
+          escucha={escucha}
+          salida={salida}
+          // Fuera de Tauri, el estado «software invasivo en tu Mac» de la maqueta: lo pide el arnés
+          // del gate de fidelidad por la URL. Dentro del producto lo decide el radar.
+          radarDeMuestra={new URLSearchParams(busqueda).get("radar") === "vigilancia"}
+        />
+      )}
       {seccion === "permisos" && <Permisos permisos={permisos} />}
       {seccion === "honestidad" && <Honestidad bytes={bytes} escucha={escucha} />}
       {seccion === "corpus" && <Corpus />}

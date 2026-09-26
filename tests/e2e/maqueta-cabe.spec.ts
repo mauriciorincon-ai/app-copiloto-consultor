@@ -30,9 +30,9 @@ import { resolve } from "node:path";
  * aparece un desborde nuevo no se puede colar, y si uno se paga y sigue aquí, también falla.
  */
 const DEUDA: Record<string, string> = {
-  "sesion.html · vigilancia · es":
-    "hallazgo medio de la fase 3 del sprint 002 (docs/diseno/sesion.html:155-202): la franja «Tu protección propia sigue en pie» y sus botones, 48 px por debajo del área que desplaza, desde la Etapa de Diseño. Pago: fase 4, antes de construir el radar, con su mirada",
-  "sesion.html · vigilancia · en": "el mismo hallazgo, en inglés: 13 px",
+  // Vacía desde la fase 4 del sprint 002: «vigilancia» (Sesión) se cortaba 48 px desde la Etapa de
+  // Diseño y se pagó al construir el radar — la frase de «nombres de ejemplo» era de la maqueta, no
+  // de la app, y pasó a su nota.
 };
 
 const DISENO = resolve("docs/diseno");

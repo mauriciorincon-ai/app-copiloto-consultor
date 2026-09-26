@@ -144,6 +144,37 @@ export const es = {
     seccionConjeturada: "sección conjeturada",
     leiLaPantalla: "Leí la pantalla: no hay texto que buscar.",
 
+    // ---- fase 4 del sprint 002: el radar (C14), mirada 17 y 17-ter ----------------------------
+    /** Ámbar, «sábelo»: lo que la pantalla de la reunión dice de quién graba. */
+    radarGrabadaYBot: "Reunión grabada · bot de notas presente",
+    radarGrabada: "Reunión grabada",
+    radarBot: "Bot de notas presente",
+    /** «Meet muestra el aviso de grabación y «MinutaBot» está en la lista de participantes. …» */
+    radarMuestraElAviso: "muestra el aviso de grabación",
+    radarY: "y",
+    radarEnLaLista: "está en la lista de participantes.",
+    radarNoEsAngel: "Ese bot no es Angel Ghost, que nunca entra a la llamada.",
+    radarAvisoNoBloqueo: "Aviso, no bloqueo.",
+    radarLeidoDeTuPantalla: "leído de tu pantalla",
+    /** Coral, «invasivo»: un programa de tu Mac que te mira. */
+    radarTeMira: "Te está mirando un programa de tu Mac",
+    radarCatalogo: "catálogo",
+    radarEnTuEquipo: "en tu equipo, no en el del cliente",
+    radarQueVe: "qué ve",
+    radarSigueProtegida: "tu banda sigue protegida",
+    radarEnRed: "en red",
+    radarNadaPersiste: "nada persiste",
+    radarVerQueVe: "Ver qué alcanza a ver",
+    radarCortaTodo: "Corta todo",
+    /** Cómo nombra la banda cada clase del catálogo, entre paréntesis detrás del programa. */
+    radarClases: {
+      supervision: "supervisión de exámenes",
+      "anti-trampa": "anti-trampa con acceso al sistema",
+      monitoreo: "monitoreo de empleados",
+      "acceso-remoto": "acceso remoto",
+      mdm: "gestión de dispositivos",
+    },
+
     /**
      * MUESTRA SINTÉTICA «Páramo Azul» — la misma de la maqueta, con datos 100 % inventados.
      *
@@ -195,6 +226,11 @@ export const es = {
       titularPantalla: "Tres canales, y no se sabe cuál deja margen",
       lineaPantalla: "Mayorista, tiendas de vereda y venta directa: la propuesta mide el margen de cada uno.",
       fuentePantalla: "Páramo Azul · Contexto",
+      /** El radar de la maqueta: «MinutaBot» y «ProctorLince» son inventados, como todo aquí. */
+      radarBot: "MinutaBot",
+      radarHora: "14:03",
+      radarPrograma: "ProctorLince",
+      radarVe: "ve tu pantalla completa y tu cámara",
     },
   },
   /**
@@ -260,7 +296,7 @@ export const es = {
     pistaPantalla: "Pantalla — solo lee lo nuevo",
     pistaAuriculares: "Auriculares conectados",
     esteCliente: "Este cliente",
-    fichaNdaRadar: "Ficha del cliente, NDA y radar",
+    fichaYNda: "Ficha del cliente y NDA",
     noSeInventa: "No se inventa nada mientras no exista: ni bandera, ni riesgo, ni catálogo.",
     queFuncionaHoy: "Qué funciona hoy",
     funcionaBanda: "La banda, abajo, protegida de la captura",
@@ -429,6 +465,40 @@ export const es = {
     jamasCompleta: "Jamás completa una frase ni adivina una palabra.",
     tuCarpeta: "Tu carpeta",
     secciones: "secciones",
+
+    // ---- fase 4 del sprint 002: el radar en Sesión, «software invasivo en tu Mac» ---------------
+    vigilanciaTitulo: "Software invasivo corriendo en tu Mac",
+    vigilanciaNoEs: "No es una grabación de la reunión: son programas que miran",
+    vigilanciaTuEquipo: "tu equipo",
+    vigilanciaQueMiran: "— tu pantalla, tu cámara, tus teclas o tus procesos. El radar mira",
+    vigilanciaSoloTuMac: "solo tu Mac",
+    vigilanciaJamas: ", jamás el computador de la contraparte. Es un aviso para que decidas, no un bloqueo.",
+    queEncontro: "qué encontró",
+    queAlcanzaAVer: "qué alcanza a ver",
+    nivel: "nivel",
+    catalogo: "catálogo",
+    invasivo: "Invasivo",
+    sabelo: "Sábelo",
+    tuProteccionSigue: "Tu protección propia sigue en pie",
+    panelProtegido: "Panel protegido de la captura · 0 B a la red · nada se escribe en disco.",
+    iniciarDeTodosModos: "Iniciar de todos modos",
+    noIniciar: "No iniciar",
+    /** Las clases del catálogo como las titula la tabla: la palabra en negrita y su añadido. */
+    radarClases: {
+      supervision: { titulo: "Supervisión de exámenes", sufijo: "(proctoring)" },
+      "anti-trampa": { titulo: "Anti-trampa con acceso al sistema", sufijo: "" },
+      monitoreo: { titulo: "Monitoreo de empleados", sufijo: "" },
+      "acceso-remoto": { titulo: "Acceso remoto activo", sufijo: "" },
+      mdm: { titulo: "Gestión de dispositivos", sufijo: "(MDM) de un tercero" },
+    },
+    /** Las cinco filas de la maqueta, con sus nombres de ejemplo. Solo fuera de Tauri. */
+    muestraRadar: {
+      supervision: { nombre: "ProctorLince (ejemplo)", alcance: "Cámara, pantalla completa, apps abiertas; puede bloquear programas" },
+      "anti-trampa": { nombre: "GuardKernel (ejemplo)", alcance: "Procesos y memoria de todo el equipo, desde el núcleo del sistema" },
+      monitoreo: { nombre: "VigilaAgente (ejemplo)", alcance: "Capturas cada pocos minutos, tiempo por app, a veces teclas" },
+      "acceso-remoto": { nombre: "RemotoYa (ejemplo)", alcance: "Alguien podría estar viendo tu pantalla ahora mismo" },
+      mdm: { nombre: "MDM-Corp (ejemplo)", alcance: "Puede instalar, borrar y leer configuración. Normal en equipos de empresa" },
+    },
   },
 };
 

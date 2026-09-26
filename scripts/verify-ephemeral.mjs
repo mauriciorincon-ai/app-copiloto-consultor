@@ -66,6 +66,13 @@ const PROTEGIDOS = [
   // texto que Vision leyó de ellos. El gate de abajo lo cazó en su primera corrida: la cabecera ya
   // decía «MÓDULO PROTEGIDO» y la ranura seguía llamándose `screen`.
   "src-tauri/src/pantalla",
+  // `radar` (sprint 002, fase 4): su mitad ámbar recibe las líneas que Vision leyó de la ventana de
+  // la reunión —nombres de participantes incluidos— para buscar el aviso de grabación y los bots.
+  // Texto de un tercero en las manos: ni disco ni red. Y además la regla dura 9 le prohíbe mirar
+  // fuera de este Mac, que vigila su propio gate (`tests/unit/radar-solo-este-mac.test.ts`).
+  // Su catálogo vive en `data/radar/` y entra con `include_str!` al compilar: no hay archivo que
+  // leer en tiempo de ejecución. Lo cazó la comprobación de abajo en su primera corrida.
+  "src-tauri/src/radar",
   "src-tauri/src/sesion",
   "src-tauri/nativo",
   "src/capture",

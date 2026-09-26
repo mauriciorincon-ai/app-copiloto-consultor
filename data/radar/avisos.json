@@ -1,0 +1,131 @@
+{
+  "_leeme": "Catálogo del radar ámbar (C14): frases con que Meet, Zoom y Teams avisan de que graban o transcriben, y nombres con que entran los bots de notas. Se comparan sin mayúsculas ni tildes y por palabras enteras. Investigado el 2026-09-26: Google y Microsoft describen el aviso pero NO lo citan, así que sus frases son probables y se confirman con una captura real en el gate del MVP (prueba ⭐ «radar ámbar con el aviso real»). Fuera a propósito: Tactiq y Bluedot, que no entran a la llamada, y «read ai» o «supernormal» a secas, que aparecen en texto normal.",
+  "version": 1,
+  "fecha": "2026-09-26",
+  "grabacion": [
+    {
+      "cliente": "Zoom",
+      "frases": [
+        "this meeting is being recorded",
+        "esta reunión se está grabando"
+      ],
+      "fuente": "https://devforum.zoom.us/t/meeting-recording-consent-message/84096",
+      "nota": "inglés verificado (fuente secundaria); español probable"
+    },
+    {
+      "cliente": "Google Meet",
+      "frases": [
+        "this call is being recorded",
+        "this meeting is being recorded",
+        "se está grabando esta llamada",
+        "se está grabando esta reunión",
+        "gemini is taking notes",
+        "gemini está tomando notas"
+      ],
+      "fuente": "https://support.google.com/meet/answer/9308681",
+      "nota": "Google dice que hay un aviso en pantalla pero no lo cita: probables todas"
+    },
+    {
+      "cliente": "Microsoft Teams",
+      "frases": [
+        "recording has started",
+        "recording and transcription have started",
+        "se inició la grabación",
+        "se ha iniciado la grabación"
+      ],
+      "fuente": "https://learn.microsoft.com/en-us/microsoftteams/recording-transcription-custom-message",
+      "nota": "el administrador puede reescribir el aviso; los textos por defecto son probables"
+    }
+  ],
+  "bots": [
+    {
+      "nombre": "Otter.ai",
+      "patrones": [
+        "otter.ai",
+        "otterpilot"
+      ],
+      "fuente": "https://help.otter.ai/hc/en-us/articles/13676313635607"
+    },
+    {
+      "nombre": "Fireflies.ai",
+      "patrones": [
+        "fireflies.ai"
+      ],
+      "fuente": "https://guide.fireflies.ai/articles/9554534786"
+    },
+    {
+      "nombre": "Read.ai",
+      "patrones": [
+        "read.ai meeting notes",
+        "meeting analytics from read"
+      ],
+      "fuente": "https://support.read.ai/hc/en-us/articles/20465026465299"
+    },
+    {
+      "nombre": "Fathom",
+      "patrones": [
+        "fathom notetaker"
+      ],
+      "fuente": "https://help.fathom.video/en/articles/3239617"
+    },
+    {
+      "nombre": "tl;dv",
+      "patrones": [
+        "tl;dv",
+        "tldv"
+      ],
+      "fuente": "https://intercom.help/tldv/en/articles/9070709"
+    },
+    {
+      "nombre": "Avoma",
+      "patrones": [
+        "avoma"
+      ],
+      "fuente": "https://help.avoma.com/remove-avoma-assistant-bot-from-a-meeting"
+    },
+    {
+      "nombre": "Krisp",
+      "patrones": [
+        "krisp bot"
+      ],
+      "fuente": "https://help.krisp.ai/hc/en-us/articles/12535172635804"
+    },
+    {
+      "nombre": "Notta",
+      "patrones": [
+        "notta bot"
+      ],
+      "fuente": "https://support.notta.ai/hc/en-us/articles/20903974921243"
+    },
+    {
+      "nombre": "Sembly",
+      "patrones": [
+        "sembly agent"
+      ],
+      "fuente": "https://helpdesk.sembly.ai/hc/en-us/articles/6629663505041"
+    },
+    {
+      "nombre": "Supernormal",
+      "patrones": [
+        "supernormal ai notetaker"
+      ],
+      "fuente": "https://help.supernormal.com/en/articles/8482137"
+    },
+    {
+      "nombre": "Gong",
+      "patrones": [
+        "gong recorder"
+      ],
+      "fuente": "https://www.gong.io/",
+      "nota": "probable: el nombre sale de guías de terceros; la ayuda de Gong no lo dice"
+    },
+    {
+      "nombre": "AI Notetaker",
+      "patrones": [
+        "ai notetaker"
+      ],
+      "fuente": "https://intercom.help/tldv/en/articles/9070709",
+      "nota": "el nombre por defecto de tl;dv y de otros sin marca; va el último para que gane el nombre del fabricante si también está"
+    }
+  ]
+}

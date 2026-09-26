@@ -77,6 +77,10 @@ pub enum Novedad {
     /// pantalla en negro—. Se contesta igual, porque alguien preguntó: sin esto la tecla parecería
     /// rota (mirada 17-quater, «pantalla · nada que leer»).
     NadaEnPantalla { hora: String },
+    /// **El radar ámbar (C14)**: la pantalla de la reunión muestra el aviso de grabación, o hay un
+    /// bot de notas en la lista de participantes. Los bots van con el nombre del CATÁLOGO, no con
+    /// lo que Vision leyó: por esta costura no cruza texto de la pantalla.
+    Radar { grabando: bool, bots: Vec<String>, hora: String },
 }
 
 /// Lo que la pantalla de Honestidad enseña de una pista.

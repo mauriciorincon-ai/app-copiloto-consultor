@@ -488,6 +488,9 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 /* sin verificar — aviso en línea: símbolo + texto + color (los tres, siempre) */
 .banda .aviso-b { display: flex; align-items: flex-start; gap: 8px; min-width: 0; font-size: var(--t-meta); line-height: 1.35; color: var(--warn); }
 .banda .aviso-b .ic { flex: 0 0 auto; margin-top: 1px; }
+/* El texto del aviso tiene que poder encogerse, o la `.salida` no llega a cortarse con «…» y se
+   mete en el hueco de la derecha (sprint 002, fase 4: el ámbar con «Google Meet», +15 px). */
+.banda .aviso-b > span { min-width: 0; }
 .banda .aviso-b strong { display: block; font-size: var(--t-ui); font-weight: 600; color: var(--ink); }
 .banda .aviso-b .salida { display: block; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* El radar coral: el MISMO aviso en el otro color. La diferencia que de verdad lo distingue

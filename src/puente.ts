@@ -41,11 +41,27 @@ export function escuchar<T>(evento: string, alOir: (dato: T) => void): () => voi
   let vivo = true;
   void import("@tauri-apps/api/event").then(async ({ listen }) => {
     const baja = await listen<T>(evento, (e) => alOir(e.payload));
-    if (vivo) apagar = baja;
-    else baja();
+    if (vivo) apagar = () => soltar(baja);
+    else soltar(baja);
   });
   return () => {
     vivo = false;
     apagar?.();
   };
+}
+
+/**
+ * **Darse de baja sin dejar una promesa rechazada suelta.**
+ *
+ * La baja de Tauri es asíncrona y **puede fallar**: si el componente se desmonta mientras `listen`
+ * todavía no contestó —React lo hace a propósito en desarrollo, montando dos veces—, Tauri ya no
+ * tiene al oyente en su tabla y su baja revienta con «`listeners[eventId].handlerId`». Nadie la
+ * esperaba, así que salía como «Unhandled rejection» en cada arranque: tres por arranque en los
+ * logs en vivo de las fases 1, 3 y 4 del sprint 002, y nadie lo había anotado hasta la corrida en
+ * vivo del radar. Un oyente que ya no está no hay que quitarlo: el fallo se atrapa y se sigue.
+ */
+function soltar(baja: () => unknown) {
+  void Promise.resolve()
+    .then(baja)
+    .catch(() => undefined);
 }

@@ -84,6 +84,10 @@ const ARTEFACTOS = [
       { id: "ficha-pdf", maqueta: "banda.html", estado: "ficha-pdf", alto: 88, url: "ventana=banda&estado=ficha-pdf" },
       { id: "ficha-pantalla", maqueta: "banda.html", estado: "ficha-pantalla", alto: 88, url: "ventana=banda&estado=ficha-pantalla" },
       { id: "pantalla-nada", maqueta: "banda.html", estado: "pantalla-nada", alto: 88, url: "ventana=banda&estado=pantalla-nada" },
+      // El radar (C14, fase 4): ámbar, coral y el coral ampliado con sus dos botones.
+      { id: "radar", maqueta: "banda.html", estado: "radar", alto: 88, url: "ventana=banda&estado=radar" },
+      { id: "radar-invasivo", maqueta: "banda.html", estado: "radar-invasivo", alto: 88, url: "ventana=banda&estado=radar-invasivo" },
+      { id: "radar-invasivo-2", maqueta: "banda.html", estado: "radar-invasivo-2", alto: 200, url: "ventana=banda&estado=radar-invasivo&ampliada=1" },
     ],
   },
   {
@@ -101,6 +105,8 @@ const ARTEFACTOS = [
       { id: "corpus", maqueta: "corpus.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=corpus" },
       { id: "honestidad", maqueta: "honestidad.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=honestidad" },
       { id: "idioma", maqueta: "idioma.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=idioma" },
+      // El radar coral en Sesión (fase 4): «software invasivo en tu Mac», con las cinco filas.
+      { id: "vigilancia", maqueta: "sesion.html", estado: "vigilancia", alto: 640, url: "ventana=principal&pantalla=sesion&radar=vigilancia" },
     ],
   },
 ];

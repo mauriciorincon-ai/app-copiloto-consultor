@@ -1609,6 +1609,56 @@ fn el_kit_de_pantalla_mide_la_lectura_y_su_refuerzo() {
 const NDCG_CON_PANTALLA_MINIMO: f64 = 0.68;
 const SOLAS_MINIMAS: usize = 4;
 
+/// **EL RADAR ÁMBAR, CON EL OCR DE VERDAD** (C14, sprint 002, fase 4).
+///
+/// Los tests del módulo prueban el cotejo con texto escrito a mano; esto prueba lo que de verdad
+/// llega en una reunión: **lo que Vision lee de una ventana de videollamada**, con su interfaz, sus
+/// nombres y su reloj alrededor. `reunion-grabada.png` lleva el aviso «Esta reunión se está
+/// grabando» y un bot en la lista («Laura's Notetaker (Otter.ai)», el nombre por defecto de Otter):
+/// el radar tiene que ver las dos cosas. Y las cinco pantallas del kit de la fase 3 —reuniones sin
+/// grabar, con participantes de verdad— no pueden dar **ningún** aviso.
+#[test]
+fn el_radar_ambar_lee_la_reunion_grabada() {
+    use app_copiloto_consultor_lib::pantalla::refuerzo::CONFIANZA_MINIMA;
+    use app_copiloto_consultor_lib::radar::avisos::en_el_texto;
+    let _turno = turno();
+    let (_, lector) = pantalla::apple::ojos();
+    let raiz = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba/pantalla");
+    let leer = |imagen: &str| {
+        lector
+            .leer(&cuadro_de(&format!("{raiz}/{imagen}")))
+            .map(|lineas| {
+                en_el_texto(
+                    lineas
+                        .iter()
+                        .filter(|l| l.confianza >= CONFIANZA_MINIMA)
+                        .map(|l| l.texto.as_str()),
+                )
+            })
+    };
+    let Ok(grabada) = leer("reunion-grabada.png") else {
+        println!("\n[radar ámbar] NO SE MIDIÓ: esta compilación no trae el puente de Swift");
+        return;
+    };
+    assert!(grabada.grabando, "Vision leyó la reunión grabada y el radar no vio el aviso");
+    assert_eq!(grabada.bots, vec!["Otter.ai".to_string()], "el bot de la lista");
+    let sin_grabar = [
+        "tablero-margen.png",
+        "cronograma-erp.png",
+        "caso-cooperativa.png",
+        "retencion-datos.png",
+        "agenda.png",
+    ];
+    for imagen in sin_grabar {
+        let a = leer(imagen).expect("Vision no leyó la imagen del kit");
+        assert!(a.vacio(), "«{imagen}» no está grabada y el radar dijo {a:?}");
+    }
+    println!(
+        "\n[radar ámbar] reunión grabada: aviso y bot «Otter.ai» vistos · {} reuniones sin grabar, 0 avisos",
+        sin_grabar.len()
+    );
+}
+
 /// **LA VENTANA DE LA REUNIÓN, CAPTURADA DE VERDAD** — el tercer filo de la regla 15 para la lectura
 /// de pantalla (sprint 002, fase 3).
 ///

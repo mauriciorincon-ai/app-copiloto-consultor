@@ -273,9 +273,11 @@ pub enum Resultado {
     NoSeVe(NoSeVe),
     Igual,
     Esperar,
-    /// Se leyó. `ms` es lo que tardó Vision; `lineas`, cuántas devolvió.
+    /// Se leyó. `ms` es lo que tardó Vision; `lineas`, cuántas devolvió; `aviso`, lo que el radar
+    /// ámbar vio en esas mismas líneas (C14) — el aviso de grabación y los bots de notas.
     Leido {
         refuerzo: Refuerzo,
+        aviso: crate::radar::Aviso,
         ms: u64,
         lineas: usize,
     },
@@ -320,6 +322,14 @@ pub fn una_vuelta(
             match lector.leer(cuadro) {
                 Ok(lineas) => {
                     let refuerzo = refuerzo::extraer(&lineas, vocabulario);
+                    // El radar ámbar mira las MISMAS líneas, antes de que se pisen: no captura
+                    // nada por su cuenta. Lo que Vision adivina no cuenta, igual que en el refuerzo.
+                    let aviso = crate::radar::avisos::en_el_texto(
+                        lineas
+                            .iter()
+                            .filter(|l| l.confianza >= refuerzo::CONFIANZA_MINIMA)
+                            .map(|l| l.texto.as_str()),
+                    );
                     let n = lineas.len();
                     // Las líneas son texto de un tercero: se pisan antes de soltarse.
                     for mut l in lineas {
@@ -328,6 +338,7 @@ pub fn una_vuelta(
                     }
                     Resultado::Leido {
                         refuerzo,
+                        aviso,
                         ms: reloj.elapsed().as_millis() as u64,
                         lineas: n,
                     }
@@ -409,6 +420,9 @@ pub struct Entorno {
     pub al_leer: AlLeer,
     /// Se llama cuando cambia lo que Sesión tiene que enseñar.
     pub al_cambiar: Box<dyn Fn(EstadoDeLaPantalla) + Send>,
+    /// Se llama cuando el radar ámbar ve algo NUEVO en la reunión: un aviso de grabación que no
+    /// estaba, un bot más. El mismo aviso en cada diapositiva no se repite.
+    pub al_avisar: Box<dyn Fn(&crate::radar::Aviso) + Send>,
 }
 
 /// Cada cuánto se vuelve a preguntar a qué ventana se mira. Preguntarlo en cada cuadro sería
@@ -460,6 +474,8 @@ impl Lectura {
             let mut objetivo: Option<Objetivo> = None;
             let mut objetivo_ms: Option<u64> = None;
             let mut antes = *vista.lock().unwrap();
+            // Lo último que el radar ámbar contó. Se olvida cuando la reunión deja de verse.
+            let mut ultimo_aviso = crate::radar::Aviso::default();
             while viva.load(Ordering::Relaxed) {
                 let ahora = nacio.elapsed().as_millis() as u64;
                 let forzar = pedida.swap(false, Ordering::Relaxed);
@@ -502,9 +518,22 @@ impl Lectura {
                 match &resultado {
                     Resultado::Leido {
                         refuerzo: nuevo,
+                        aviso,
                         ms,
                         lineas,
                     } => {
+                        // Se avisa de lo NUEVO: el aviso de grabación sigue en la esquina de Meet
+                        // en cada diapositiva, y la banda no puede repetirlo en cada una. Una
+                        // lectura que no lo ve —Vision también falla— no borra lo que ya se contó.
+                        if !aviso.vacio() && *aviso != ultimo_aviso {
+                            println!(
+                                "[radar] ámbar: grabación {} · {} bots",
+                                if aviso.grabando { "sí" } else { "no" },
+                                aviso.bots.len()
+                            );
+                            (entorno.al_avisar)(aviso);
+                            ultimo_aviso = aviso.clone();
+                        }
                         // Metadata, jamás contenido: cuántas líneas y cuánto tardó.
                         println!(
                             "[pantalla] leída en {ms} ms · {lineas} líneas · {} pistas",
@@ -528,6 +557,7 @@ impl Lectura {
                         // Sin ventana que mirar, lo que se leyó ya no está en pantalla.
                         refuerzo.lock().unwrap().olvidar();
                         vigia.olvidar();
+                        ultimo_aviso = crate::radar::Aviso::default();
                         if let Resultado::NoSeVe(NoSeVe::Fallo(m)) = &resultado {
                             println!("[pantalla] no se pudo mirar: {m}");
                         }
@@ -888,7 +918,48 @@ mod pruebas {
             vocabulario: Box::new(Vec::new),
             al_leer: Box::new(move |_r, origen| leidas.lock().unwrap().push(origen)),
             al_cambiar: Box::new(|_| {}),
+            al_avisar: Box::new(|_| {}),
         }
+    }
+
+    /// Una reunión de Meet con su aviso de grabación y un bot de notas en la lista, escritos con
+    /// las frases del catálogo del radar.
+    struct Grabada;
+
+    impl Lector for Grabada {
+        fn leer(&self, _c: &Cuadro) -> Result<Vec<LineaLeida>, String> {
+            let linea = |t: &str| LineaLeida { texto: t.into(), confianza: 0.9, alto: 0.03 };
+            Ok(vec![
+                linea(&crate::radar::catalogo::grabacion()[0].frases[0]),
+                linea(&crate::radar::catalogo::bots()[0].patrones[0]),
+                linea("Margen por canal: 23 %"),
+            ])
+        }
+    }
+
+    /// **El radar ámbar avisa UNA vez de lo mismo.** El aviso de grabación sigue en la esquina de
+    /// Meet en cada diapositiva; si la banda lo repitiera en cada una, taparía las fichas toda la
+    /// reunión. Dos lecturas más, pedidas con el atajo, no lo repiten.
+    #[test]
+    fn el_radar_ambar_avisa_una_vez_de_lo_mismo() {
+        let avisos = Arc::new(Mutex::new(Vec::<crate::radar::Aviso>::new()));
+        let (miradas, leidas) = (Arc::new(Mutex::new(0)), Arc::new(Mutex::new(Vec::new())));
+        let mut e = entorno(miradas, leidas.clone());
+        e.lector = Box::new(Grabada);
+        let a = avisos.clone();
+        e.al_avisar = Box::new(move |x| a.lock().unwrap().push(x.clone()));
+        let l = Lectura::arrancar(e, true);
+        assert!(esperar_a(|| !avisos.lock().unwrap().is_empty()), "no avisó de la grabación");
+        for _ in 0..2 {
+            let antes = leidas.lock().unwrap().len();
+            l.leer_ahora();
+            assert!(esperar_a(|| leidas.lock().unwrap().len() > antes));
+        }
+        let avisos = avisos.lock().unwrap();
+        assert_eq!(avisos.len(), 1, "el mismo aviso se repitió: {avisos:?}");
+        assert!(avisos[0].grabando);
+        assert_eq!(avisos[0].bots, vec![crate::radar::catalogo::bots()[0].nombre.clone()]);
+        l.cortar();
     }
 
     fn esperar_a(que: impl Fn() -> bool) -> bool {
