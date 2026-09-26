@@ -523,19 +523,22 @@ mod pruebas {
     /// Y lo contrario: si la pregunta ya tiene una respuesta clara, **la pantalla no la toca** —ni
     /// siquiera reordena—. Es lo que protege a las preguntas que no tienen nada que ver con lo que
     /// hay delante (la tabla de [`PESO_DE_LA_PANTALLA`]).
+    ///
+    /// **La primera versión de este test era decorativo**, y lo destapó su demo en rojo: con la
+    /// pantalla metida SIEMPRE en la consulta seguía en verde, porque su pantalla no tocaba ninguna
+    /// sección que la pregunta encontrara — con o sin desempate daba lo mismo. Esta la elige para que
+    /// SÍ lo cambiaría: con la pantalla dentro, «Etapas» sube de 0,9 a 7,2 puntos y se pone a la
+    /// sombra de «Precio» (9,5). La pregunta sola dice «Precio» con ventaja clara, y tiene que quedar
+    /// exactamente así — orden y puntajes—.
     #[test]
     fn con_una_respuesta_clara_la_pantalla_no_toca_nada() {
         let i = con_dos_documentos();
-        let pregunta = "cuánto cuesta y en cuántas semanas";
-        assert_eq!(
-            i.buscar(pregunta, 3).unwrap(),
-            i.buscar_con_pantalla(
-                pregunta,
-                "Adopción de datos · cuatro etapas · inventario",
-                3
-            )
-            .unwrap()
-        );
+        let pregunta = "¿el precio de las cuatro semanas?";
+        let pantalla = "Adopción de datos · cuatro etapas · inventario · etapas";
+        let sola = i.buscar(pregunta, 3).unwrap();
+        assert_eq!(sola[0].seccion.as_deref(), Some("Precio"));
+        assert!(sola[0].puntaje >= sola[1].puntaje * DESEMPATE, "el ejemplo tiene que ser una respuesta clara");
+        assert_eq!(sola, i.buscar_con_pantalla(pregunta, pantalla, 3).unwrap());
     }
 
     /// La pregunta manda sobre la pantalla: una diapositiva de otro tema no se lleva la respuesta

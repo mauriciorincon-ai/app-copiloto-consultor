@@ -1607,3 +1607,156 @@ campos y la maqueta pintó uno (`EstadoDePista.motivo`). Los otros quedaron en l
 - **El orden: primero el motor, después la 17-quater.** El copy de los motivos y de los estados de la
   pantalla depende de lo que el código pueda distinguir, y hoy ya hubo dos frases escritas antes de
   medir.
+
+## El motor de la pantalla (C8) — construido, medido y con sus rojos (2026-09-26)
+
+Commit `a98a7d7`. Lo que no depende de la 17-quater: la captura, la lectura, el refuerzo de la
+búsqueda, la ficha que pide la pantalla sola, el kill-switch y el kit.
+
+### Las piezas
+
+| Pieza | Dónde | Qué hace |
+|---|---|---|
+| El puente | `nativo/Pantalla.swift` | ScreenCaptureKit captura **una ventana** —la de la reunión que Sesión detectó— directamente en el búfer de Rust, en grises; Vision lee en es/en. El permiso se pregunta con `CGPreflightScreenCaptureAccess`: **jamás provoca el diálogo** |
+| La huella | `pantalla/huella.rs` | una miniatura de 32 × 32 por cada zona de una cuadrícula de 4 × 4, y cuántas celdas cambiaron de verdad |
+| El vigía | `pantalla/mod.rs` · `Vigia` | espera a que la pantalla se quede **quieta**, lee **como mucho una vez por segundo**, e ignora las zonas que no paran —el vídeo de los participantes— |
+| El refuerzo | `pantalla/refuerzo.rs` | de lo leído se queda con títulos, cifras y **tus** términos; tira la interfaz de la llamada y las horas |
+| La búsqueda | `corpus/indice.rs` · `buscar_con_pantalla` | la pantalla **solo desempata** (abajo) |
+| La ficha sin pregunta | `escucha::por_pantalla` · `Motivo::Pantalla` | una pantalla nueva con una cifra o un término tuyo pide ficha por el MISMO disparador (con su espera); **solo se enseña si hay ficha** |
+| Bajo demanda, sin región | `Lectura::leer_ahora` · comando `leer_la_pantalla_ahora` | lee UNA vez aunque la automática esté apagada. El atajo espera a la 17-quater |
+| El kill-switch | `corte.rs` · `Pieza::UltimoFrame` | **se corta de verdad: 8 de 8 piezas**. No bloquea `⌥⎋`: si el cuadro está en uso, lo pisa el vigía al terminar su vuelta |
+
+**Todo en el módulo protegido** `src-tauri/src/pantalla/` —la ranura `screen` que el sprint 001
+reservó, con el nombre en español de la casa—, y el gate del efímero **lo cazó en su primera
+corrida**: la cabecera decía «MÓDULO PROTEGIDO» y la lista seguía diciendo `screen`.
+
+### La huella se equivocó dos veces antes de acertar — y las dos las cazó un test
+
+1. **Un pHash de la ventana entera** (lo que decía el plan). El kit de pantalla lo tumbó en su
+   primera corrida: *«tablero-margen.png y cronograma-erp.png solo difieren en 8 bits»*, por debajo
+   del umbral de 10. En una videollamada la composición es casi toda interfaz, y el pHash tira el
+   detalle, que es justo el texto que cambia. **El vigía no habría visto un cambio de diapositiva.**
+2. **Un pHash por zona.** Veía el texto, y su propio test lo tumbó por el otro lado: *«un cursor
+   movió 34 bits de 64 en su zona»*. En una zona lisa el pHash compara casi-ceros contra una mediana
+   casi-cero.
+3. **Contar celdas cambiadas por zona.** Medido: un cursor, 2–5 celdas; el grano del vídeo, 0; dos
+   diapositivas del kit dentro de la misma ventana de Meet, **144 como mínimo**. Umbrales: cambio > 12,
+   quieta ≤ 6.
+
+**Desviación del plan, declarada:** la orden pedía pHash; lo que se entrega es una huella por zonas
+que se mide igual de barata (~2 ms) y que sí ve una diapositiva nueva. La razón está medida arriba.
+
+### La pantalla ayuda a lo que se ve y ESTORBA a lo demás — y por eso solo desempata
+
+El kit de pantalla empareja cinco ventanas sintéticas con una frase vaga que el cliente diría
+mirándolas. Pero el hallazgo de verdad salió de una comprobación que añadí después: **las treinta
+preguntas del kit v0, con cada una de las cinco pantallas delante.**
+
+| peso | cuándo entra la pantalla | kit de pantalla | kit v0, peor pantalla |
+|---|---|---|---|
+| 0,5 | siempre | 0,700 | **0,764** — bajo el mínimo de 0,80 |
+| 1,5 | siempre | 0,800 | **0,721** |
+| 1,5 | si la pregunta empata a 2,0 | 0,800 | 0,747 |
+| 1,0 | si empata a 1,25 | 0,700 | 0,807 |
+| **0,5** | **si empata a 1,1** | **0,700** | **0,819** |
+
+Con la pantalla siempre dentro, una diapositiva cualquiera arrastraba las preguntas que no tenían
+nada que ver con ella. Así que **la pantalla solo desempata**: se busca la pregunta sola; si su
+primera sección le saca un 10 % a la segunda, esa es la respuesta; si no, se repite la misma consulta
+con la pantalla dentro. Y la pregunta es **obligatoria** en esa consulta: la primera versión la hacía
+opcional y su test la tumbó —*«¿la tarifa es cerrada?»* con una diapositiva de adopción de datos
+delante devolvía el marco de adopción—.
+
+**Lo que la pantalla NO puede hacer, y el kit lo enseña:** «¿Y cuánto tiempo guardan los datos?»
+frente a la diapositiva de retención sale 0 con y sin pantalla. La sección dice «los extractos se
+borran a los treinta días»: **ni una palabra en común con la pregunta**, así que la pantalla no tiene
+nada que reordenar. Es la familia de los tres fallos semánticos conocidos del kit v0. **La pantalla
+sola, en cambio, sí trae esa ficha** —la de Retención—, sin que nadie hable.
+
+### El kit de pantalla v1, medido en este Mac
+
+```
+│ tablero-margen.png     11 líneas · 5 pistas · sin 1.00 → con 1.00 · sola «Contexto»
+│ cronograma-erp.png     11 líneas · 4 pistas · sin 0.50 → con 0.50 · sola «Supuestos»
+│ caso-cooperativa.png   11 líneas · 7 pistas · sin 0.63 → con 1.00 · sola «Resultados»
+│ retencion-datos.png    11 líneas · 7 pistas · sin 0.00 → con 0.00 · sola «Retención»
+│ agenda.png             11 líneas · 1 pistas · sin 1.00 → con 1.00 · sola ninguna
+│ nDCG@5 de la frase    sin pantalla 0.626 · con pantalla 0.700   (mínimo 0,68)
+│ ficha sin preguntar   4 de 4                                    (mínimo 4)
+│ kit v0 con la peor pantalla delante: nDCG@5 0.819               (mínimo 0,80)
+│ Vision                mediana 87 ms · peor 93 ms                (techo 1000 ms)
+│ huella                la menor distancia entre diapositivas: 144 celdas (umbral 12)
+```
+
+- **La ficha llega sin pregunta: 4 de 4**, y la agenda —sin cifras ni términos— no pide ninguna. Es
+  el criterio de fase de la orden («una cifra de una imagen sintética trae la ficha correcta sin
+  pregunta»), cumplido y medido.
+- **≤ 1 lectura/s es sostenible**: Vision tarda menos de 100 ms por pantalla, diez veces por debajo.
+- **Cero falsos positivos**: ni una de las cuatro preguntas sin respuesta del kit v0 consigue ficha
+  con ninguna de las cinco pantallas delante.
+- **De cuál de las dos mitades depende: de ninguna.** Vision viene con macOS y no descarga nada, así
+  que —a diferencia del WER— **este kit sí mide en la CI**. Lo que la CI NO mide es la captura:
+  ScreenCaptureKit necesita el permiso de grabación de pantalla, que el runner no tiene. Esa mitad es
+  del arranque en vivo y de la parada ⭐.
+- Las imágenes las genera `scripts/kit-de-pantalla.mjs` y se versionan: 100 % sintéticas, con la
+  interfaz de la videollamada dibujada a propósito, porque es el ruido que hay que aprender a tirar.
+
+### Los rojos (regla 15), uno por gate nuevo
+
+```
+ROJO 1 · el efímero prohíbe grabar la ventana a vídeo (patrones nuevos de Swift)
+  ✕ src-tauri/nativo/Pantalla.swift:202  /\bSCRecordingOutput\b/
+  → revertido: ✓ cero API de disco o red
+ROJO 2 · la pantalla NUNCA entra (desempate 0)
+  nDCG@5 con pantalla 0.626 bajo 0.68
+ROJO 2-bis · la pantalla SIEMPRE dentro (desempate imposible)
+  con una pantalla delante, el kit v0 bajó a 0.764
+ROJO 3 · la pantalla sola nunca pide ficha
+  la pantalla sola trajo 0 fichas correctas de 4
+ROJO 4 · sin máscara de vídeo
+  con vídeo en pantalla se leyó 0 veces en diez segundos
+ROJO 5 · apagada, pero mira igual
+  con la lectura apagada se capturó la pantalla (left: 2)
+ROJO 6 · el corte vuelve a declarar el cuadro como inexistente
+  left: (7, 1) · right: (8, 0)
+ROJO 7 · la costura: el campo cambia de nombre en un lado
+  src/contrato.generado.ts(253,5): error TS2353 … 'bytesEnMemoria' does not exist in type 'EstadoDeLaPantalla'
+```
+
+Y los que salieron solos, sin plantarlos: la huella de pHash (8 bits), el pHash por zona (34 bits),
+la pregunta opcional (el marco de adopción), el gate del efímero (la ranura `screen`), y el gate de
+campos sin lector **dos veces**: una por los campos nuevos sin lector —que es su trabajo— y otra con
+un **falso «ya tiene lector»**: `bytes` lo leía Honestidad en las pistas de audio. **Ese gate compara
+nombres, no tipos**; el campo se llama `bytesEnMemoria` y la limitación queda dicha aquí.
+
+**El ROJO 4 enseñó algo más que el gate:** sin la máscara, una pantalla con cámaras encendidas **no
+se leería nunca** —la zona del vídeo no se queda quieta y el vigía esperaría para siempre—. La
+máscara no era una optimización: sin ella la lectura no funciona en una reunión real.
+
+**Y un test mío era decorativo.** «Con una respuesta clara, la pantalla no toca nada» siguió en verde
+con la pantalla metida siempre en la consulta: su ejemplo no podía cambiar con o sin desempate. Se
+reescribió con un ejemplo que sí cambiaría (la pantalla sube «Etapas» de 0,9 a 7,2 puntos) y su rojo
+quedó registrado: `left: … puntaje: 0.91` · `right: … puntaje: 7.15`. Es la tercera pregunta de la
+regla 15 —¿puede fallar?—, contestada por la demo y no por el test.
+
+### Un accidente de formato, deshecho
+
+`cargo fmt` reformateó el crate entero —el código de la casa no está escrito con rustfmt ni la CI lo
+exige— y el diff pasó de ~1.000 líneas a 3.368. Se deshizo con una fusión a tres bandas
+(`git merge-file`: el original, más la diferencia entre «original formateado» y «mío formateado»),
+que dejó solo los cambios de este sprint; cuatro conflictos resueltos a mano. **No se vuelve a correr
+`cargo fmt` sobre el crate.**
+
+### Hallazgos que esto destapó y NO son de la pantalla — para la 17-quater y la fase de cierre
+
+1. **Honestidad dirá «8 de 8 piezas: la otra todavía no existe».** La cola de esa frase era verdad
+   con 6 de 7 y con 7 de 8; con 8 de 8 es falsa. Su texto nuevo tiene que estar primero en la
+   maqueta: va a la 17-quater.
+2. **Las teclas de Angel Ghost chocan con las de Zoom.** Zoom en Mac usa `⌘⇧A` (silenciar/activar
+   el micrófono), `⌘⇧V` (encender/apagar la cámara), `⌘⇧N` (cambiar de cámara), `⌘⇧T` (pausar la
+   pantalla compartida), `⌘⇧R` (grabar) y `⌘⇧P` (pausar la grabación). Angel Ghost registra
+   globalmente `⌘⇧A`, `⌘⇧V` y `⌘⇧T` —y la maqueta dibuja `⌘⇧N`, `⌘⇧P` y el `⌘⇧R` nuevo—: **mientras la
+   app esté abierta, en Zoom el consultor no podría silenciarse con su tecla de siempre**, y pulsarla
+   le traería una ficha. Meet (`⌘D`, `⌘E`) y Teams (`⌘⇧M`, `⌘⇧O`) no chocan. Zoom está en el
+   catálogo (`sin verificar`) y el usuario verificó Meet, por eso nadie lo vio. Es una decisión de
+   diseño —las teclas están en todas las maquetas— y va a la 17-quater como pregunta.
