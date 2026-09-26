@@ -102,7 +102,7 @@ const DEUDA: Record<string, string> = {
   // la de Honestidad— necesitan copy que la maqueta no tiene, y ese copy es la mirada 17-quater,
   // aprobada por el usuario antes de maquetarse (bitácora, fase 3).
   "EstadoDeLaPantalla.vista":
-    "la fila «Pantalla — solo cuando cambia» de Sesión, con su interruptor y el estado sin permiso · mirada 17-quater · fase 3",
+    "la fila «Pantalla — solo lee lo nuevo» de Sesión, con su interruptor y el estado sin permiso · mirada 17-quater · fase 3",
   "EstadoDeLaPantalla.bytesEnMemoria":
     "la fila de la pantalla en «Qué vive en la memoria ahora» de Honestidad · mirada 17-quater · fase 3",
 

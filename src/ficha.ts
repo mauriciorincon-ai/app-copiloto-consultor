@@ -76,7 +76,7 @@ export type Aparicion = Respuesta & {
  * llega es `{"que":"aparece", …los campos de la aparición}` y no `{"Aparece":{…}}`. Estuvo escrito
  * al revés todo el sprint y **la ficha automática no llegó nunca a la banda**: `n.Aparece` era
  * `undefined` en cada evento, la banda se quedaba en «esperando» toda la reunión y solo funcionaba
- * `⌘⇧A`, que va por otro camino. Ningún test podía verlo —todos corren fuera de Tauri, donde esta
+ * `⌃⌥A`, que va por otro camino. Ningún test podía verlo —todos corren fuera de Tauri, donde esta
  * suscripción no se monta— y la cobertura lo delataba desde dos fases antes con este bloque sin
  * cubrir. Lo encontró la auditoría del sprint (hallazgo C1).
  *
@@ -106,7 +106,7 @@ export type LoQueLaBandaEnseña = {
  * La última aparición, y si hay una búsqueda en marcha.
  *
  * Escucha tres caminos porque son tres: el turno del cliente abre el «buscando», la aparición
- * automática llega dentro del evento `escucha`, y la de `⌘⇧A` llega por su propio evento y hay
+ * automática llega dentro del evento `escucha`, y la de `⌃⌥A` llega por su propio evento y hay
  * que ir a buscarla — el atajo se salta la espera entre fichas, y hacerle esperar al evento
  * común le quitaría justo eso.
  *

@@ -173,7 +173,7 @@ export const en: Diccionario = {
     dosPistas: "The two tracks",
     pistaMic: "Microphone — you",
     pistaSistema: "System audio — the client",
-    pistaPantalla: "Screen — only when it changes",
+    pistaPantalla: "Screen — reads only what is new",
     pistaAuriculares: "Headphones connected",
     esteCliente: "This client",
     fichaNdaRadar: "Client file, NDA and radar",
@@ -195,7 +195,7 @@ export const en: Diccionario = {
     permSistema: "System audio",
     permSistemaPara: "What plays on your Mac: the client’s voice. No bot in the meeting.",
     permPantalla: "Screen",
-    permPantallaPara: "Reads figures and titles only when the screen changes. Images are not stored.",
+    permPantallaPara: "Reads figures and titles only if something is new, like another slide. Images are not stored.",
     permAcople: "Dock the meeting window",
     permAcoplePara:
       "So the band does not cover the call: the meeting shrinks and both live side by side. macOS calls it “Accessibility”.",

@@ -384,7 +384,7 @@ export const VOZ_APAGADA: LaVoz = {
 
 /**
  * Cómo está la voz. Se pregunta al montarse y se escucha a partir de ahí: el evento llega cuando
- * el usuario pulsa `⌘⇧V` o `⎋`, cuando empieza o acaba una ficha, y cuando el kill-switch la calla.
+ * el usuario pulsa `⌃⌥V` o `⎋`, cuando empieza o acaba una ficha, y cuando el kill-switch la calla.
  *
  * **No se sondea.** El estado cambia unas cuantas veces por reunión y preguntarlo cada dos segundos
  * sería despertar Core Audio —`salida_de_audio` lee el dispositivo por defecto— para casi nunca
@@ -417,7 +417,7 @@ export function useVoz(): LaVoz {
  *
  * | Campo | Quién lo lee |
  * |---|---|
- * | `vista` | la fila «Pantalla — solo cuando cambia» de Sesión |
+ * | `vista` | la fila «Pantalla — solo lee lo nuevo» de Sesión |
  * | `bytesEnMemoria` | la fila de la pantalla en «Qué vive en la memoria ahora» de Honestidad |
  */
 export type VistaDeLaPantalla =

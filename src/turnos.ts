@@ -44,7 +44,7 @@ export function useTurnos(): Turno[] {
 }
 
 /**
- * ¿Se enseña el transcript? Lo decide `⌘⇧T`, que registra la parte nativa.
+ * ¿Se enseña el transcript? Lo decide `⌃⌥T`, que registra la parte nativa.
  *
  * `inicial` existe para el arnés de capturas (`?transcript=1`), que tiene que poder fotografiar el
  * encuadre con el transcript abierto sin pulsar una tecla global.

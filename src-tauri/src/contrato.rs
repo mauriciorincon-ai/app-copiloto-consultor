@@ -153,7 +153,7 @@ pub fn muestras() -> Vec<Muestra> {
             "./ficha",
             &Novedad::Aparece(Box::new(aparicion(sin_resultado(), Motivo::Pregunta))),
         ),
-        // ---- `pedir_ficha`, el camino del atajo ⌘⇧A ---------------------------------------
+        // ---- `pedir_ficha`, el camino del atajo ⌃⌥A ---------------------------------------
         m(
             "APARICION_DEL_ATAJO",
             "Aparicion",

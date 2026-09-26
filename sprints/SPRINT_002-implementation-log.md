@@ -1794,3 +1794,83 @@ API pública; hay una privada, `TCCAccessPreflight` (la usa el ejemplo de Apple 
 circula, AudioCap). **Probada en este Mac: contesta** —0 = concedido— para audio, pantalla y
 micrófono. Se usará con respaldo: si el símbolo no está, la fila dice «no se sabe», nunca «concedido».
 Se declara aquí porque es una API privada en una app que se firma y se notariza fuera de la App Store.
+
+## Mirada 17-quater — veredicto, y su segunda vuelta (17-quinquies) (2026-09-26)
+
+**Veredicto, fila por fila** (la matriz de la regla del usuario: archivo · botón · qué mirar · qué
+respuesta espero):
+
+| Fila | Qué | Veredicto |
+|---|---|---|
+| 1 | Permisos · sprint 2 · la pantalla | **no se entendió «solo cuando cambia»**; lo demás, bien |
+| 2 | Sesión · sprint 2 · la pantalla | aprobada |
+| 3 | Honestidad · sprint 2 | aprobada — *«entiendo que leyó todo sin problema, que el último está en memoria y que pesa 1,4 MB»* |
+| 4 | banda · ficha · la trajo la pantalla | **sin respuesta** — no se da por vista |
+| 5 | banda · pantalla · nada que leer | aprobada |
+| 6 | kit · § 8-ter «Los porqués» | aprobada |
+| 7 | las teclas chocan con Zoom | **B: todas pasan a `⌃⌥`** |
+
+### Lo que no se entendió, reescrito — y medido antes de enseñarlo
+
+«Solo cuando cambia» no dice **qué** cambia. La frase nueva lo dice con un ejemplo. Cada candidata se
+midió en todos los estados de la maqueta, en los dos idiomas, porque la primera versión desbordaba:
+
+| Sitio | Candidata | Resultado |
+|---|---|---|
+| Sesión, fila de la pantalla | «Pantalla — solo cuando aparece algo nuevo» / «…cuando hay algo nuevo» | **2 renglones** (50 px): empujaba la tarjeta de abajo 13–27 px fuera de la ventana |
+| | «Pantalla — cada diapositiva nueva» | cabe, **y se descarta**: promete de menos. También lee una hoja de cálculo nueva, y quien comparte algo bajo NDA tiene que saber que se lee todo lo nuevo, no solo las diapositivas. Prometer de menos es la dirección peligrosa |
+| | **«Pantalla — solo lee lo nuevo»** / «Screen — reads only what is new» | **elegida**: 1 renglón en los 3 estados que la llevan |
+| Permisos, fila de la pantalla | «…solo cuando aparece algo nuevo, como otra diapositiva…» | 3 renglones: +18 px, y la ventana de s2 desbordaba 32 px |
+| | **«Lee cifras y títulos solo si hay algo nuevo, como otra diapositiva. Las imágenes no se guardan.»** | **elegida**: el mismo alto que la frase original en los 7 estados |
+| Permisos, «Antes de que macOS te pregunte» | con el ejemplo | +11 px fuera de la ventana |
+| | **«Angel Ghost solo lee lo nuevo de tu pantalla compartida, para reconocer cifras y títulos…»** | **elegida**: el ejemplo se queda en la fila del permiso, donde sí cabe |
+
+El conmutador del estado de diseño «consentimiento de pantalla» (`permisos.html:206`) decía lo mismo
+—«Solo cuando la pantalla cambia»— y pasa a «Solo cuando hay algo nuevo».
+
+**Y la fila 3 se aprobó con una lectura que la frase no dice.** «8 de 8 piezas: ninguna queda fuera»
+va debajo del botón rojo y habla de él: al pulsarlo corta y borra las 8 piezas. El usuario la leyó
+como «leyó todo sin problema». Una frase de Honestidad que se lee como otra cosa es un defecto
+de la frase, no del lector: pasa a **«El botón corta 8 de 8 piezas: ninguna queda fuera.»** y vuelve a
+sus ojos.
+
+### Decisión 7 = B: todas las teclas pasan de `⌘⇧` a `⌃⌥`
+
+- **Registradas en Rust** (`lib.rs`, las tres con `Modifiers::CONTROL | Modifiers::ALT`): `⌃⌥T`
+  transcript · `⌃⌥A` ayúdame · `⌃⌥V` modo solo audio.
+- **Dibujadas y todavía sin registrar**: `⌃⌥P` fijar · `⌃⌥N` anotar · `⌃⌥L` léela ahora · `⌃⌥R` qué ve ·
+  `⌃⌥↵` en notas.
+- **Se quedan** `⌥⎋` (el kill-switch) y `⎋` (callar la voz): no chocan con nada documentado, y el
+  kill-switch es un gesto de una mano aprobado en el sprint 001.
+- **Dónde**: 8 maquetas, `design-system.md`, el bundle `design-sync/` (5 archivos regenerados), el
+  manual, la guía, 7 archivos de `src/`, 5 de `src-tauri/` y 3 tests. **Los registros históricos no se
+  tocan** —bitácoras y summary del S1, la auditoría del S1 y los veredictos del README—: dicen lo que
+  era verdad cuando se escribieron.
+- **De regalo, un choque menos**: `⌘⇧T` reabre la última pestaña cerrada en Chrome, Safari y Firefox, y
+  Meet vive en el navegador. El manual, la guía (`d6`) y el log de arranque lo advertían; con `⌃⌥T` esa
+  advertencia era falsa y se quitó en los tres sitios.
+- **Con qué choca `⌃⌥`**, dicho en el manual: **VoiceOver**, cuyas órdenes empiezan por `⌃⌥`, y las apps
+  que ordenan ventanas con `⌃⌥` (Rectangle). En este Mac no hay ninguna instalada (`/Applications`
+  revisado).
+- **Sin verificar en vivo todavía**: que las teclas nuevas respondan con la app corriendo. Entra en la
+  corrida en vivo de la fase 3 (regla 15, tercer filo): los tests no pulsan teclas globales.
+
+### Un hallazgo que la medición destapó: «vigilancia» lleva seis días cortada
+
+Para medir las frases nuevas escribí un recorrido que abre **todos los estados de cada maqueta, en los
+dos idiomas**, y mide si algo se sale de la ventana. Encontró uno que no era mío:
+
+| Sev. | Sitio | Qué | Pago |
+|---|---|---|---|
+| **Medio** | `docs/diseno/sesion.html:155-202` · estado «vigilancia» (el radar coral antes de iniciar sesión) | En español, la franja **«Tu protección propia sigue en pie»** y sus dos botones quedan **46 px por debajo** de la ventana: se ven a medias. Medido en los 7 commits que tocaron el archivo, desde la Etapa de Diseño (`75c7784`, 2026-09-20): siempre 46 px. Ni mis pasadas de capturas ni la mirada lo vieron, porque la nota «Qué mirar» apunta a la tabla y la franja es lo último | **Fase 4**, antes de construir ese estado, con su mirada |
+| **Bajo** | `docs/diseno/banda.html` · estados con ficha (ficha, ficha-pdf, flotante, ficha-pantalla) | La columna derecha (fuente + teclas) acaba 1,6 px por debajo de la banda. Igual en `HEAD`. Ampliado al doble, el borde de las teclas se ve entero | **Fase 3**, en el gate de fidelidad: si la banda construida lo reproduce, se corrige en las dos |
+
+El tercer desborde que midió —el transcript, 79 px a la derecha— **no es un defecto**: esa línea
+corta con «…» a propósito (`text-overflow: ellipsis`).
+
+**Propuesta de gate** (va a la matriz de la 17-quinquies): convertir ese recorrido en un test
+—*ningún estado de ninguna maqueta se sale de su ventana*— con «vigilancia» como su rojo de nacimiento.
+
+**Gates tras los cambios**: `pnpm typecheck` · `pnpm lint` · `pnpm test` (24 archivos, 171 tests,
+incluido el gate de que cada frase de la app exista tal cual en la maqueta) · `verify-ephemeral`
+estático · `cargo clippy --all-targets -D warnings` · `cargo test` (285 + 18) — todo verde.

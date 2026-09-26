@@ -127,7 +127,7 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
                 {t.transcripcionEnVivo}
               </h2>
               {/* La maqueta lo dibuja como un interruptor, y aquí es un `span`, no un `label`.
-                  En este sprint la transcripción se abre **en la banda** con ⌘⇧T, no desde esta
+                  En este sprint la transcripción se abre **en la banda** con ⌃⌥T, no desde esta
                   pantalla: un `label` sin control al que asociarse sería un interruptor que no
                   conmuta nada — lo dice el lint de accesibilidad y tiene razón. Se pinta igual
                   (las reglas de `ghost.css` van por clase) y se lee como lo que es: un estado. */}
@@ -142,8 +142,8 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
             <p style={{ marginTop: "8px" }}>{t.naceOculta}</p>
             <div className="fila" style={{ marginTop: "10px", gap: "10px" }}>
               <span className="tecla">
-                <kbd>⌘</kbd>
-                <kbd>⇧</kbd>
+                <kbd>⌃</kbd>
+                <kbd>⌥</kbd>
                 <kbd>T</kbd>
               </span>
               <span style={{ fontSize: "12.5px", color: "var(--ink-2)" }}>{t.laMuestraCuando}</span>

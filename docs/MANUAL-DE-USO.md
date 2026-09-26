@@ -55,7 +55,7 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
 - **Qué hace:** oye tu micrófono (eres tú) y el audio de tu Mac (es el cliente) por separado, y
   convierte los dos a texto **dentro de tu equipo**. Ningún audio sale de tu Mac para convertirse
   en texto.
-- **Cómo se usa:** *Sesión* → «Iniciar sesión». Nada se enciende hasta que tú lo digas. `⌘⇧T`
+- **Cómo se usa:** *Sesión* → «Iniciar sesión». Nada se enciende hasta que tú lo digas. `⌃⌥T`
   muestra u oculta el transcript en la banda; nace oculto a propósito, porque leer lo que acaban
   de decir es la forma más rápida de dejar de escuchar.
 - **Limitaciones conocidas:**
@@ -89,7 +89,7 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
 - **Qué hace:** cuando el cliente pregunta algo, dice una cifra, nombra algo que está en tus
   documentos **o se queda callado después de hablar**, la app busca en tu corpus y pone en la banda
   un **titular de ocho palabras, una línea y la fuente exacta** — documento y sección.
-- **Cómo se usa:** sola. Y `⌘⇧A` («ayúdame con esto») la pide a mano cuando no acierte.
+- **Cómo se usa:** sola. Y `⌃⌥A` («ayúdame con esto») la pide a mano cuando no acierte.
 - **El silencio también pide ficha · nuevo en Sprint 002.** Si el cliente dice algo que no lleva
   pregunta ni cifra y se queda callado **cuatro segundos**, la app busca por su cuenta lo último que
   dijo — es el hueco en el que te toca hablar a ti. Dos cosas que hace bien y conviene saber:
@@ -137,12 +137,12 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
   que recuperes la pantalla completa de la reunión. Es lo que pediste en el diseño: *«que me hable
   de forma paralela por si quiero ver completamente la pantalla y no me interrumpa»*.
 - **Cómo se usa:**
-  1. `⌘⇧V` **enciende el modo**. La banda baja de 88 a 44 px, la ventana de la reunión se hace más
+  1. `⌃⌥V` **enciende el modo**. La banda baja de 88 a 44 px, la ventana de la reunión se hace más
      grande, y la app te lee la ficha que tengas delante: el titular, la línea y **de dónde sale**.
   2. A partir de ahí, cada vez que el cliente termine de hablar y aparezca una ficha nueva, te la
      lee sola. No hay que pulsar nada.
   3. `⎋` la **calla** en el acto, sin esperar a que termine la frase.
-  4. `⌘⇧V` otra vez **apaga el modo** y la banda vuelve a sus 88 px. Arrastrar el asa hacia arriba
+  4. `⌃⌥V` otra vez **apaga el modo** y la banda vuelve a sus 88 px. Arrastrar el asa hacia arriba
      hace lo mismo: el alto *es* el modo.
 - **Cuándo se calla sola, y por qué:**
   - **Si el sonido sale por los altavoces de tu Mac**, no habla y te lo dice en ámbar: «Conecta
@@ -213,16 +213,23 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
 | Tecla | Qué hace |
 |---|---|
 | `⌥⎋` | corta todo: audio, transcript, banda y relleno. Devuelve la ventana de la reunión |
-| `⌘⇧A` | «ayúdame con esto»: busca una ficha sobre lo último que dijo el cliente |
-| `⌘⇧T` | muestra u oculta el transcript en la banda |
-| `⌘⇧V` | enciende o apaga el **modo solo audio**: te lee la ficha y la banda baja a una línea |
+| `⌃⌥A` | «ayúdame con esto»: busca una ficha sobre lo último que dijo el cliente |
+| `⌃⌥T` | muestra u oculta el transcript en la banda |
+| `⌃⌥V` | enciende o apaga el **modo solo audio**: te lee la ficha y la banda baja a una línea |
 | `⎋` | calla la voz — **solo mientras el modo solo audio está encendido** |
 
-> **Ojo con `⌘⇧T`:** mientras Angel Ghost esté abierto, el navegador deja de reabrir con esa tecla
-> la última pestaña que cerraste. Si la usas mucho, dilo y se cambia.
+> **Por qué `⌃⌥` (Control + Opción) y no `⌘⇧`.** Hasta el sprint 2 las teclas eran `⌘⇧`, y según
+> la documentación de Zoom para Mac, en Zoom esas teclas silencian tu micrófono (`⌘⇧A`), apagan tu
+> cámara (`⌘⇧V`) y pausan la pantalla compartida (`⌘⇧T`). Mientras Angel Ghost estuviera abierto,
+> Zoom dejaba de recibirlas. Y `⌘⇧T` reabre la última pestaña cerrada en el navegador. Zoom, Meet y
+> Teams no documentan ninguna tecla `⌃⌥`. Lo de Zoom no se ha probado en vivo: no está instalado en
+> el Mac donde se construye la app.
+>
+> **Si usas VoiceOver**, sus órdenes también empiezan por `⌃⌥`. Con VoiceOver encendido, estas
+> teclas pueden chocar con las suyas. Lo mismo con apps que ordenan ventanas con `⌃⌥`, como Rectangle.
 >
 > **Y ojo con `⎋`:** mientras el modo solo audio está encendido, esa tecla es de la app y no le
-> llega a la reunión. Se devuelve en cuanto apagas el modo con `⌘⇧V`.
+> llega a la reunión. Se devuelve en cuanto apagas el modo con `⌃⌥V`.
 
 ## Preguntas frecuentes
 

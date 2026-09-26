@@ -50,7 +50,7 @@ pub enum Motivo {
     TerminoDelCorpus,
     /// Lleva callado desde que preguntó.
     SilencioLargo,
-    /// El usuario lo pidió con ⌘⇧A. Siempre gana: es la salida cuando lo demás falla.
+    /// El usuario lo pidió con ⌃⌥A. Siempre gana: es la salida cuando lo demás falla.
     Atajo,
     /// **La pantalla que comparte el cliente cambió** y trae una cifra o uno de tus términos. Nace en
     /// el sprint 002 con la lectura de pantalla (C8): la ficha llega sin que nadie pregunte.

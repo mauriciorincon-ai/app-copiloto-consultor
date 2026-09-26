@@ -966,19 +966,19 @@ fn el_atajo() -> tauri_plugin_global_shortcut::Shortcut {
     Shortcut::new(Some(Modifiers::ALT), Code::Escape)
 }
 
-/// `⌘⇧T` — enseñar u ocultar el transcript, tal y como lo dibuja `idioma.html`.
+/// `⌃⌥T` — enseñar u ocultar el transcript, tal y como lo dibuja `idioma.html`.
 ///
-/// **Y una advertencia que no se puede callar:** en Chrome, Safari y Firefox esta combinación
-/// vuelve a abrir la última pestaña cerrada. Registrarla globalmente se la quita al navegador
-/// mientras Angel Ghost esté abierto — y el navegador es donde vive la reunión de Meet. Se
-/// registra porque es lo que el diseño aprobó, se deja dicho aquí y en el log, y la decisión de
-/// cambiarla es del usuario (riesgo nº 7 del plan: atajo configurable).
+/// Hasta la mirada 17-quater del sprint 002 era `⌘⇧T`, y chocaba dos veces: en los navegadores
+/// reabre la última pestaña cerrada —y el navegador es donde vive la reunión de Meet— y en Zoom
+/// pausa la pantalla compartida. El usuario pasó TODAS las teclas de la app a `⌃⌥` (Control +
+/// Opción), que ni Zoom, ni Meet, ni Teams documentan. La que queda es VoiceOver, cuyas órdenes
+/// empiezan por `⌃⌥`: lo dice el manual.
 fn el_atajo_del_transcript() -> tauri_plugin_global_shortcut::Shortcut {
     use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
-    Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyT)
+    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyT)
 }
 
-/// `⌘⇧A` — «ayúdame con esto», el atajo que la maqueta dibuja en la banda.
+/// `⌃⌥A` — «ayúdame con esto», el atajo que la maqueta dibuja en la banda.
 ///
 /// Es la salida cuando el disparador automático no acierta, y por eso su camino es distinto: se
 /// salta la espera entre fichas y la regla de no repetir. Si el usuario lo pulsa dos veces
@@ -986,7 +986,7 @@ fn el_atajo_del_transcript() -> tauri_plugin_global_shortcut::Shortcut {
 /// justo en el momento en que decidió pedir ayuda a mano.
 fn el_atajo_de_ayuda() -> tauri_plugin_global_shortcut::Shortcut {
     use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
-    Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyA)
+    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyA)
 }
 
 /// El nombre del evento con el que la banda se entera de que hay que enseñar u ocultar el
@@ -996,7 +996,7 @@ const EVENTO_TRANSCRIPT: &str = "transcript";
 /// El nombre del evento con el que la banda recibe una ficha.
 const EVENTO_FICHA: &str = "ficha";
 
-/// La ficha a petición del usuario: `⌘⇧A`, o el botón de la banda ampliada.
+/// La ficha a petición del usuario: `⌃⌥A`, o el botón de la banda ampliada.
 ///
 /// Busca con **el último turno del cliente**, que es de lo que se estaba hablando. Sin turnos no
 /// hay con qué buscar, y eso se dice en vez de devolver una ficha vacía.
@@ -1006,7 +1006,7 @@ fn pedir_ficha(
     el_corpus: tauri::State<'_, ElCorpus>,
     la_pantalla: tauri::State<'_, LaPantalla>,
 ) -> Result<ficha::Aparicion, String> {
-    // El cuerpo vive en `ficha_vigente` desde el sprint 002: `⌘⇧V` necesita **la misma** ficha para
+    // El cuerpo vive en `ficha_vigente` desde el sprint 002: `⌃⌥V` necesita **la misma** ficha para
     // decirla que esta enseña, y dos búsquedas escritas por separado acabarían encontrando cosas
     // distintas para la misma pregunta.
     ficha_vigente(&escucha_viva, &el_corpus, &la_pantalla).ok_or_else(|| "todavía no he oído nada del cliente".into())
@@ -1071,7 +1071,7 @@ const EVENTO_VOZ: &str = "voz";
 
 /// **Dice la ficha en voz alta, si cabe decirla.**
 ///
-/// Es el único camino por el que la app habla, y lo usan los dos disparadores: el atajo `⌘⇧V` —que
+/// Es el único camino por el que la app habla, y lo usan los dos disparadores: el atajo `⌃⌥V` —que
 /// lee la ficha vigente al encender el modo— y la aparición automática al final de un turno del
 /// cliente. Tener un solo camino es lo que hace que las cinco razones para callarse valgan para los
 /// dos: dos copias de esta decisión acabarían callándose por motivos distintos.
@@ -1146,22 +1146,22 @@ fn fuente_hablada(f: &ficha::Fuente) -> String {
     }
 }
 
-/// `⌘⇧V` — **enciende o apaga el modo solo audio**, y con él la banda de 44 px.
+/// `⌃⌥V` — **enciende o apaga el modo solo audio**, y con él la banda de 44 px.
 ///
 /// Lo llaman la tecla global y nadie más. Al encender lee la ficha vigente, que es lo que el usuario
 /// espera de haber pulsado la tecla: si no dijera nada hasta el turno siguiente, parecería que no
 /// funcionó.
 ///
-/// **Por qué la tecla es `⌘⇧V` y no el `⌘⇧A` que pedía la orden del sprint:** `⌘⇧A` ya es «ayúdame
+/// **Por qué la tecla es `⌃⌥V` y no el `⌃⌥A` que pedía la orden del sprint:** `⌃⌥A` ya es «ayúdame
 /// con esto» desde el sprint 001 — está registrada [`el_atajo_de_ayuda`], dibujada en la banda y
-/// escrita en el manual. El panel que el usuario aprobó en la etapa de diseño ya usaba `⌘⇧V`.
+/// escrita en el manual. El panel que el usuario aprobó en la etapa de diseño ya usaba `⌃⌥V`.
 /// Desviación declarada en la bitácora.
 #[tauri::command]
 fn modo_solo_audio(app: tauri::AppHandle) -> habla::LaVoz {
     conmutar_el_modo(&app)
 }
 
-/// El trabajo de `⌘⇧V`, **hecho en Rust y no pedido a la banda por un evento**.
+/// El trabajo de `⌃⌥V`, **hecho en Rust y no pedido a la banda por un evento**.
 ///
 /// Los otros tres atajos emiten a la banda y la banda actúa, y aquí eso no sirve: este cambia el
 /// ALTO de la ventana, y el `⌥⎋` puede haberla cerrado. Un modo que se enciende solo si queda una
@@ -1193,7 +1193,7 @@ fn conmutar_el_modo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> habla::LaVo
         // quitaría a la reunión —en Meet es la tecla de salir de pantalla completa— y a todas las
         // demás apps del Mac, para una función que existe unos segundos por ficha.
         con_el_callar(app, true);
-        println!("[habla] ⌘⇧V: modo solo audio ENCENDIDO · banda a {} px", ventana::ALTO_VOZ);
+        println!("[habla] ⌃⌥V: modo solo audio ENCENDIDO · banda a {} px", ventana::ALTO_VOZ);
         // La ficha vigente se rearma igual que en `pedir_ficha`: con el último turno del cliente.
         // Si no se ha oído nada todavía, no hay nada que decir y el modo queda encendido, esperando.
         match ficha_vigente(&escucha_viva, &el_corpus, &app.state::<LaPantalla>()) {
@@ -1203,7 +1203,7 @@ fn conmutar_el_modo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> habla::LaVo
     } else {
         con_el_callar(app, false);
         estado.voz.callar();
-        println!("[habla] ⌘⇧V: modo solo audio APAGADO · banda a {} px", ventana::ALTO_COMPACTA);
+        println!("[habla] ⌃⌥V: modo solo audio APAGADO · banda a {} px", ventana::ALTO_COMPACTA);
     }
 
     let ahora = estado.estado();
@@ -1220,7 +1220,7 @@ fn estado_de_la_voz(estado: tauri::State<'_, LaVozQueSale>) -> habla::LaVoz {
 /// **La ficha vigente, rearmada con el último turno del cliente.**
 ///
 /// Es el cuerpo que `pedir_ficha` tenía dentro, sacado para que lo compartan los dos que lo
-/// necesitan: el atajo `⌘⇧A`, que la enseña, y el `⌘⇧V`, que la dice. Dos copias de esto acabarían
+/// necesitan: el atajo `⌃⌥A`, que la enseña, y el `⌃⌥V`, que la dice. Dos copias de esto acabarían
 /// buscando distinto, y entonces la banda y la voz enseñarían fichas diferentes de la misma
 /// pregunta — que es la peor manera posible de romper un modo que existe para no tener que mirar.
 fn ficha_vigente(
@@ -1236,7 +1236,7 @@ fn ficha_vigente(
             .find(|t| t.pista == capture::Pista::Sistema && !t.eco)
     })?;
     let empezo = std::time::Instant::now();
-    // Con la pantalla delante, igual que la ficha automática: `⌘⇧A` y el disparador no pueden
+    // Con la pantalla delante, igual que la ficha automática: `⌃⌥A` y el disparador no pueden
     // buscar distinto la misma pregunta.
     let buscador = ConPantalla {
         corpus: el_corpus.inner().clone(),
@@ -1249,13 +1249,13 @@ fn ficha_vigente(
     Some(ficha::Aparicion { respuesta, motivo: disparo::Motivo::Atajo, ms, hora: ultimo.hora })
 }
 
-/// `⌘⇧V` — **el modo solo audio**, tal y como lo dibuja la banda de 44 px.
+/// `⌃⌥V` — **el modo solo audio**, tal y como lo dibuja la banda de 44 px.
 ///
-/// No es `⌘⇧A`, que es lo que pedía la orden del sprint: `⌘⇧A` ya es «ayúdame con esto» desde el
-/// sprint 001 y el panel aprobado en la etapa de diseño ya escribía `⌘⇧V`. Desviación declarada.
+/// No es `⌃⌥A`, que es lo que pedía la orden del sprint: `⌃⌥A` ya es «ayúdame con esto» desde el
+/// sprint 001 y el panel aprobado en la etapa de diseño ya escribía `⌃⌥V`. Desviación declarada.
 fn el_atajo_del_modo_de_voz() -> tauri_plugin_global_shortcut::Shortcut {
     use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
-    Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyV)
+    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyV)
 }
 
 /// `⎋` — **cállate**. Solo está registrada mientras el modo solo audio está encendido.
@@ -1266,7 +1266,7 @@ fn el_atajo_de_callar() -> tauri_plugin_global_shortcut::Shortcut {
 
 /// **Coger y soltar `⎋`, SIEMPRE EN OTRO HILO. Y esto no es una precaución: es un cuelgue real.**
 ///
-/// `⌘⇧V` llega por el manejador de atajos globales, y **registrar un atajo desde dentro de ese
+/// `⌃⌥V` llega por el manejador de atajos globales, y **registrar un atajo desde dentro de ese
 /// manejador bloquea el plugin**: se queda esperando un candado que tiene cogido el propio hilo que
 /// lo llamó. Lo que se ve desde fuera es peor que un error — la app sigue viva, la ventana responde,
 /// y **ningún atajo vuelve a funcionar nunca**. Incluido `⌥⎋`.
@@ -1294,7 +1294,7 @@ fn con_el_callar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, coger: bool) {
                 ),
                 Err(e) => println!(
                     "[habla] NO se pudo registrar ⎋ ({e}): para callar la voz hay que apagar el \
-                     modo con ⌘⇧V"
+                     modo con ⌃⌥V"
                 ),
             }
         } else {
@@ -1414,7 +1414,7 @@ fn refuerzo_vigente(
 ///
 /// - Si la leyó el vigía solo y trae una cifra o uno de tus términos, se le pide ficha a la escucha
 ///   —que la pasa por su disparador, con su espera— y **solo si hay ficha** se enseña.
-/// - Si la pidió el usuario con su atajo, se responde siempre, como `⌘⇧A`.
+/// - Si la pidió el usuario con su atajo, se responde siempre, como `⌃⌥A`.
 ///
 /// El candado de la escucha se suelta ANTES de hablar y de avisar a la banda: `decir_la_ficha` lo
 /// intenta coger por su cuenta, y con él cogido aquí, la voz se callaría la ficha de la pantalla.
@@ -1523,10 +1523,10 @@ fn atender_el_atajo<R: tauri::Runtime>(
     if *atajo == el_atajo() {
         ejecutar_el_corte(app);
     } else if *atajo == el_atajo_del_transcript() {
-        println!("[transcript] ⌘⇧T");
+        println!("[transcript] ⌃⌥T");
         let _ = app.emit_to(ventana::BANDA, EVENTO_TRANSCRIPT, ());
     } else if *atajo == el_atajo_de_ayuda() {
-        println!("[ficha] ⌘⇧A");
+        println!("[ficha] ⌃⌥A");
         let _ = app.emit_to(ventana::BANDA, EVENTO_FICHA, ());
     } else if *atajo == el_atajo_del_modo_de_voz() {
         conmutar_el_modo(app);
@@ -1554,26 +1554,23 @@ fn registrar_el_kill_switch<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
         ),
     }
     match app.global_shortcut().register(el_atajo_del_transcript()) {
-        Ok(()) => println!(
-            "[transcript] ⌘⇧T registrado · OJO: mientras Angel Ghost esté abierto, el navegador \
-             deja de reabrir la última pestaña cerrada con esa tecla"
-        ),
+        Ok(()) => println!("[transcript] ⌃⌥T registrado"),
         Err(e) => println!(
-            "[transcript] NO se pudo registrar ⌘⇧T ({e}): el transcript no se va a poder abrir \
+            "[transcript] NO se pudo registrar ⌃⌥T ({e}): el transcript no se va a poder abrir \
              con la tecla"
         ),
     }
     match app.global_shortcut().register(el_atajo_de_ayuda()) {
-        Ok(()) => println!("[ficha] ⌘⇧A «ayúdame con esto» registrado"),
+        Ok(()) => println!("[ficha] ⌃⌥A «ayúdame con esto» registrado"),
         Err(e) => println!(
-            "[ficha] NO se pudo registrar ⌘⇧A ({e}): la ficha a petición sigue en el botón de la \
+            "[ficha] NO se pudo registrar ⌃⌥A ({e}): la ficha a petición sigue en el botón de la \
              banda ampliada, pero la tecla no va a responder"
         ),
     }
     match app.global_shortcut().register(el_atajo_del_modo_de_voz()) {
-        Ok(()) => println!("[habla] ⌘⇧V «modo solo audio» registrado"),
+        Ok(()) => println!("[habla] ⌃⌥V «modo solo audio» registrado"),
         Err(e) => println!(
-            "[habla] NO se pudo registrar ⌘⇧V ({e}): el modo solo audio no se va a poder encender \
+            "[habla] NO se pudo registrar ⌃⌥V ({e}): el modo solo audio no se va a poder encender \
              — y hoy no tiene otra puerta, así que queda apagado"
         ),
     }

@@ -232,7 +232,7 @@ export const es = {
     dosPistas: "Las dos pistas",
     pistaMic: "Micrófono — tú",
     pistaSistema: "Audio del sistema — el cliente",
-    pistaPantalla: "Pantalla — solo cuando cambia",
+    pistaPantalla: "Pantalla — solo lee lo nuevo",
     pistaAuriculares: "Auriculares conectados",
     esteCliente: "Este cliente",
     fichaNdaRadar: "Ficha del cliente, NDA y radar",
@@ -255,7 +255,7 @@ export const es = {
     permSistema: "Audio del sistema",
     permSistemaPara: "Lo que suena en tu Mac: la voz del cliente. Sin bot en la reunión.",
     permPantalla: "Pantalla",
-    permPantallaPara: "Lee cifras y títulos solo cuando la pantalla cambia. Las imágenes no se guardan.",
+    permPantallaPara: "Lee cifras y títulos solo si hay algo nuevo, como otra diapositiva. Las imágenes no se guardan.",
     permAcople: "Acoplar la ventana de la reunión",
     permAcoplePara:
       "Para que la banda no tape la llamada: la reunión se encoge y las dos conviven. macOS lo llama «Accesibilidad».",

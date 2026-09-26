@@ -984,7 +984,7 @@ const PRESUPUESTO_US: u64 = 4_000_000;
 //
 // Los dos errores no cuestan lo mismo, y por eso se miden por separado:
 //   · un **falso positivo** interrumpe al consultor con una ficha que nadie pidió;
-//   · un **falso negativo** es una ficha que no llega — molesta menos y se arregla con `⌘⇧A`.
+//   · un **falso negativo** es una ficha que no llega — molesta menos y se arregla con `⌃⌥A`.
 // De ahí que el umbral de precisión sea más alto que el de recall.
 
 /// Precisión mínima: **ni un falso positivo** sobre el kit. Medida 1.000 en la primera corrida.

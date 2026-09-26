@@ -185,7 +185,7 @@ describe("la banda", () => {
     expect(linea.querySelector("svg use")?.getAttribute("href")).toBe("#i-voz");
     expect(linea.querySelector(".fuente-b")).not.toBeNull();
     const teclas = [...banda().querySelectorAll(".tecla")].map((k) => k.textContent?.trim());
-    expect(teclas).toEqual([`⎋ ${es.banda.callar}`, `⌘⇧V ${es.banda.volver}`]);
+    expect(teclas).toEqual([`⎋ ${es.banda.callar}`, `⌃⌥V ${es.banda.volver}`]);
   });
 
   /**
@@ -204,7 +204,7 @@ describe("la banda", () => {
     expect(linea.textContent).toContain(es.banda.elClienteTeOiria);
     // No hay nada que callar: la tecla `⎋` ni siquiera está registrada en este estado.
     const teclas = [...banda().querySelectorAll(".tecla")].map((k) => k.textContent?.trim());
-    expect(teclas).toEqual([`⌘⇧V ${es.banda.volver}`]);
+    expect(teclas).toEqual([`⌃⌥V ${es.banda.volver}`]);
   });
 
   /**
@@ -224,7 +224,7 @@ describe("la banda", () => {
     expect(linea.textContent).toContain(es.banda.esperandoElSiguienteTurno);
     expect(linea.querySelector(".fuente-b")).not.toBeNull();
     const teclas = [...banda().querySelectorAll(".tecla")].map((k) => k.textContent?.trim());
-    expect(teclas).toEqual([`⌘⇧V ${es.banda.volver}`]);
+    expect(teclas).toEqual([`⌃⌥V ${es.banda.volver}`]);
   });
 
   it("el modo solo audio habla inglés, los tres estados", () => {

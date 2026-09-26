@@ -350,7 +350,7 @@ impl Escucha {
         matches!(a.respuesta, Respuesta::Ficha(_)).then_some(a)
     }
 
-    /// **La lectura que PIDIÓ el usuario** con su atajo. Como `⌘⇧A`: se salta la espera y responde
+    /// **La lectura que PIDIÓ el usuario** con su atajo. Como `⌃⌥A`: se salta la espera y responde
     /// siempre, también con «no tengo nada», porque alguien preguntó.
     pub fn pedida_por_pantalla(&self, consulta: &str) -> Option<Aparicion> {
         let empezo = std::time::Instant::now();

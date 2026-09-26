@@ -35,7 +35,7 @@ export type PropsBanda = {
   /** El asa arriba: 200 px en vez de 88. */
   ampliada?: boolean;
   /**
-   * El transcript en vivo (⌘⇧T), oculto por defecto. Vive en la columna derecha y por eso
+   * El transcript en vivo (⌃⌥T), oculto por defecto. Vive en la columna derecha y por eso
    * **solo existe en la banda ampliada**: en 88 px no caben tres turnos. Encenderlo desde la
    * banda compacta la amplía, que es lo mismo que haría el asa.
    */
@@ -165,7 +165,7 @@ export function Banda({
   const atajos = (
     <span className="atajos-b">
       <span className="tecla">
-        <kbd>⌘⇧A</kbd> {t.ayudame}
+        <kbd>⌃⌥A</kbd> {t.ayudame}
       </span>
       <span className="tecla">
         <kbd>⌥⎋</kbd> {t.corta}
@@ -176,10 +176,10 @@ export function Banda({
   const atajosDeFicha = (
     <span className="atajos-b">
       <span className="tecla">
-        <kbd>⌘⇧P</kbd> {t.fijar}
+        <kbd>⌃⌥P</kbd> {t.fijar}
       </span>
       <span className="tecla">
-        <kbd>⌘⇧T</kbd> {t.transcript}
+        <kbd>⌃⌥T</kbd> {t.transcript}
       </span>
       <span className="tecla">
         <kbd>⌥⎋</kbd>
@@ -218,7 +218,7 @@ export function Banda({
    * habría obligado a envolver la cabecera entera en una condición y a que cada estado supiera
    * de los dos altos. Se sale antes, con su propia sección, igual que la maqueta la dibuja aparte.
    *
-   * Dentro de Tauri manda la parte nativa (`⌘⇧V` cambia el alto de la VENTANA, y el webview solo
+   * Dentro de Tauri manda la parte nativa (`⌃⌥V` cambia el alto de la VENTANA, y el webview solo
    * obedece); fuera manda la URL, que es como el arnés de capturas fotografía los tres encuadres.
    */
   const enVoz = deLaMaqueta
@@ -349,7 +349,7 @@ export function Banda({
               {transcript ? (
                 <span className="atajos-b">
                   <span className="tecla">
-                    <kbd>⌘⇧P</kbd> {t.fijar}
+                    <kbd>⌃⌥P</kbd> {t.fijar}
                   </span>
                   <span className="tecla">
                     <kbd>⌥⎋</kbd>
@@ -400,11 +400,11 @@ export function Banda({
                   <span className="acciones-b">
                     <button className="btn mini" type="button">
                       <Ic id="i-buscar" s />
-                      {t.buscarOtras} <kbd className="tecla">⌘⇧A</kbd>
+                      {t.buscarOtras} <kbd className="tecla">⌃⌥A</kbd>
                     </button>
                     <button className="btn mini" type="button">
                       <Ic id="i-nota" s />
-                      {t.anotarDespues} <kbd className="tecla">⌘⇧N</kbd>
+                      {t.anotarDespues} <kbd className="tecla">⌃⌥N</kbd>
                     </button>
                   </span>
                   <span className="atajos-b">
@@ -427,10 +427,10 @@ export function Banda({
                   )}
                   <span className="atajos-b">
                     <span className="tecla">
-                      <kbd>⌘⇧A</kbd> {t.otrasPalabras}
+                      <kbd>⌃⌥A</kbd> {t.otrasPalabras}
                     </span>
                     <span className="tecla">
-                      <kbd>⌘⇧N</kbd> {t.anotar}
+                      <kbd>⌃⌥N</kbd> {t.anotar}
                     </span>
                     <span className="tecla">
                       <kbd>⌥⎋</kbd>
@@ -596,7 +596,7 @@ function BandaDeVoz({
             <span className="lado-b">
               <span className="atajos-b">
                 <span className="tecla">
-                  <kbd>⌘⇧V</kbd> {t.volver}
+                  <kbd>⌃⌥V</kbd> {t.volver}
                 </span>
               </span>
               {red}
@@ -638,7 +638,7 @@ function BandaDeVoz({
                   </span>
                 )}
                 <span className="tecla">
-                  <kbd>⌘⇧V</kbd> {t.volver}
+                  <kbd>⌃⌥V</kbd> {t.volver}
                 </span>
               </span>
               {red}
@@ -662,7 +662,7 @@ function Transcript({ turnos }: { turnos: Turno[] }) {
         <Ic id="i-ojo" s />
         {t.transcriptCab}
         <span className="tecla">
-          <kbd>⌘⇧T</kbd> {t.ocultar}
+          <kbd>⌃⌥T</kbd> {t.ocultar}
         </span>
       </span>
       {turnos.map((turno, i) => {

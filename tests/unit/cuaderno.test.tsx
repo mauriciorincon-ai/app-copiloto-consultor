@@ -122,7 +122,7 @@ describe("el cuaderno: lo que no existe se dice", () => {
     const tarjeta = screen
       .getByText(t.sinConcederNada)
       .closest(".tarjeta") as HTMLElement;
-    // Indexar el corpus (fase 4) y buscar a mano con ⌘⇧A: ninguna necesita permisos.
+    // Indexar el corpus (fase 4) y buscar a mano con ⌃⌥A: ninguna necesita permisos.
     expect(within(tarjeta).getAllByText(t.funciona)).toHaveLength(2);
     // Escribir notas y acuerdos es lo único que todavía no existe.
     expect(within(tarjeta).getAllByText(t.todaviaNo)).toHaveLength(1);

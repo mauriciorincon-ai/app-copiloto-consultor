@@ -132,7 +132,7 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
             <Fila icono="i-nota" texto={t.escribirNotas} pendiente>
               <TodaviaNo />
             </Fila>
-            {/* Buscar a mano es `⌘⇧A`: no necesita micrófono ni pantalla, solo el corpus. */}
+            {/* Buscar a mano es `⌃⌥A`: no necesita micrófono ni pantalla, solo el corpus. */}
             <Fila icono="i-buscar" texto={t.buscarAMano}>
               <Funciona />
             </Fila>

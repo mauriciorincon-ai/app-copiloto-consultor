@@ -127,7 +127,7 @@ describe("la ficha, dentro del producto", () => {
   /** El camino del atajo era el ÚNICO que funcionaba en el binario del sprint, porque va por su
    *  propio evento y por `pedir_ficha`. Que siga funcionando se prueba aquí, con el payload que
    *  ese comando devuelve de verdad. */
-  it("⌘⇧A pide la ficha y la pinta", async () => {
+  it("⌃⌥A pide la ficha y la pinta", async () => {
     respuestas.set("pedir_ficha", APARICION_DEL_ATAJO);
     await laBanda();
 
