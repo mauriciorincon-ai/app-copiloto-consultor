@@ -1272,3 +1272,38 @@ quedó **más estricto** que antes en los 72 encuadres, no más laxo.
 **Rojo 4, con la matemática nueva:** quitado el `·` del estado «voz» en el producto ⇒ **3,4 %** en los
 ocho encuadres del modo, veinte veces el umbral y cuarenta veces el suelo. Verde al revertir: 72
 encuadres, cero desbordes, cero errores de página.
+
+## La CI, con sus tres checks en verde — y una asimetría que conviene saber
+
+```
+build-escritorio   pass   9m12s
+e2e                pass   52s
+quality            pass   31s
+```
+
+**Conclusión propia por check** (regla 15, segunda pregunta): ninguno `skipped`, ninguno arrastrado
+por un `needs:` de otro.
+
+Y el paso de evidencia destapó algo que el sprint anterior no podía saber. El runner reparte las dos
+mitades del habla de forma **distinta**:
+
+```
+│ pregunta-es.wav  sin modelo de es-ES en esta máquina: no se mide
+│ mezcla-en.wav    sin modelo de en-US en esta máquina: no se mide
+sin modelos de voz en esta máquina: el WER no se pudo medir en ninguna pista
+…
+[habla] voz «apple-avspeechsynthesizer» · es-ES=true · en-US=true
+[habla] el puente encoló y calló · idioma es-ES — MEDIDO
+[habla] con esta salida la app se callaría: el sonido saldría por los altavoces y el cliente te oiría — MEDIDO
+```
+
+**`macos-latest` no trae modelos para RECONOCER, y sí trae voces para SINTETIZAR.** Así que:
+
+| | En la CI | Dónde se mide, entonces |
+|---|---|---|
+| WER, y las dos transcripciones del S1 | **no mide** | el Mac del desarrollador · `/release-check` y el gate ⭐ |
+| El puente de `habla/` y el candado | **MIDE, en cada PR** | aquí mismo |
+
+La diferencia importa porque invita a generalizar mal: «la CI no tiene voz» habría hecho declarar
+como no verificable un puente que **sí** se verifica en cada PR. La nota de memoria del proyecto
+queda corregida con la distinción.
