@@ -1550,3 +1550,12 @@ Guardado en la memoria del agente como preferencia permanente.
 lugar**. Con varias pantallas y varios botones en una mirada, la pregunta y el sitio separados
 reproducen el problema que la regla quería evitar: el usuario no sabe qué se espera de él. La
 planeadora decide si lo sube al kit.
+
+### Mirada 17-ter — APROBADA (2026-09-26)
+
+> «Ammm, eso quiere decir que MinutaBot no es nuestro, es de otro; me queda más claro, pero sobre todo
+> tranquilo: nunca diseñamos algo así. Sigue»
+
+Juzgó la frase, que iba citada en el mensaje. El estado visual ya lo había visto en la 17 y no hay
+señal de que reabriera el archivo: se registra tal cual (precedente: la 3-quinquies) y el estado vuelve
+a sus ojos en el gate de fidelidad de la fase 4. **«Sigue»** arranca la construcción de la fase 3.
