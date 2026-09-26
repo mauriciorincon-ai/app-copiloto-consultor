@@ -1181,3 +1181,94 @@ auriculares puestos y sin ellos— y está escrita como tal.
 El paso de evidencia de la CI (`--nocapture`) suma `la_voz_de_este_mac` y `la_app_nunca`: en el
 runner no hay voces ni dispositivo de audio, así que el puente no se cruza — **y el log lo dirá con
 todas las letras** en vez de salir `ok` a secas. Es la lección de la fase 1, aplicada al nacer.
+
+## El tercer filo: verlo correr EN EL MODO — y el cuelgue que solo aparece ahí
+
+253 tests de Rust verdes, 171 del webview verdes, clippy limpio. Se arrancó `pnpm tauri dev` y se
+pulsó `⌘⇧V`. **El registro se cortó en seco:**
+
+```
+[acople] reacople: permiso=true app=«—» ventanas=0
+[acople]   · no había nada acoplado que reajustar
+```
+
+Y nada más. Ni la línea de `⎋ registrada`, ni la de `modo solo audio ENCENDIDO`. La ventana seguía
+respondiendo, la app seguía viva — **y `⌥⎋` ya no hacía nada**. El kill-switch, muerto.
+
+**La causa:** `⌘⇧V` llega por el manejador de atajos globales, y **registrar un atajo desde dentro de
+ese manejador bloquea el plugin**: se queda esperando un candado que tiene cogido el propio hilo que
+lo llamó. Lo que se ve desde fuera es peor que un error — nada falla, nada se queja, y ningún atajo
+vuelve a funcionar en toda la sesión.
+
+**El arreglo** es una línea de diseño, no un parche: coger y soltar `⎋` ocurre **en otro hilo**
+(`con_el_callar`). El manejador vuelve, suelta el candado, y el registro pasa microsegundos después.
+
+**Lo que esto es, dicho con su nombre:** el tercer filo de la regla 15 —*¿lo viste correr EN EL MODO
+en que el usuario lo va a usar?*— donde el modo es «con el dedo en la tecla». Ninguna de las tres
+capas de tests podía verlo: el candado es del plugin, no del código de esta app, y solo existe
+cuando hay un manejador de atajos de verdad ejecutándose.
+
+### Y el modo, corriendo de verdad
+
+```
+[habla] voz «apple-avspeechsynthesizer» · ¿hay para es-ES? true · ¿para en-US? true
+[habla] ⌘⇧V «modo solo audio» registrado
+[ventanas] «banda»: 1470x88 en (0,868) escala 2
+[habla] ⌘⇧V: modo solo audio ENCENDIDO · banda a 44 px
+[habla] todavía no he oído nada del cliente: el modo queda a la espera
+[habla] ⎋ registrada MIENTRAS dure el modo · OJO: durante estos segundos la tecla no le llega a la reunión
+[habla] ⌘⇧V: modo solo audio APAGADO · banda a 88 px
+[habla] ⎋ devuelta al sistema
+[corte] el modo solo audio estaba encendido: callado y apagado
+[corte] ⌥⎋: 7 de 8 piezas cortadas · red 0 B
+[habla] ⎋ devuelta al sistema
+```
+
+Las cuatro cosas que había que ver corriendo: el modo enciende y apaga, la banda cambia de alto,
+`⎋` se coge y se devuelve, y **`⌥⎋` calla la voz antes que nada y apaga el modo**.
+
+## El gate de FIDELIDAD — y el defecto que tenía su umbral
+
+Los tres encuadres de 44 px entran en `capturar-fidelidad.mjs`, y la primera pasada salió en rojo:
+
+```
+6.089 %  banda · voz-espera · light · en
+1.555 %  banda · voz · light · es
+0.154 %  banda · voz-sin · light · es
+```
+
+**Los dos primeros eran defectos míos, en la maqueta.** Al escribir la mirada 16 acorté la fuente a
+«propuesta · §3.2 Alcance» y la línea a una frase más corta, en vez de usar las que el producto
+compone de verdad —la banda de 88 px ya escribía `<span class="unidad">propuesta</span> Páramo Azul ·
+§3.2 Alcance` desde la mirada 11—. La maqueta es el contrato de forma: corregida ella, los dos
+bajaron a 0,13 %.
+
+**El tercero no era un defecto de nadie, y ahí estaba lo interesante.** El suelo de este gate tenía
+dos partes mezcladas bajo un solo número:
+
+| Parte | Qué es | Cómo escala |
+|---|---|---|
+| **la mordida del marco** | 58 px en las nueve filas de abajo: el recorte de la maqueta sale de una página con marco redondeado | **constante** — los mismos 58 px a 88 px que a 44 |
+| **el antialias del texto** | la misma fuente pintada dos veces varía un punto | con la **tinta**, o sea con el área |
+
+Medir las dos en porcentaje hacía que la primera **subiera al encoger el artefacto**: 58 px son el
+0,056 % de una banda de 88 px y el **0,112 % de una de 44**. Por eso los seis encuadres del modo
+aparecieron pegados al umbral y dos lo pasaron sin que hubiera nada que arreglar.
+
+Se probó lo contrario —umbral en píxeles absolutos— y tiene el defecto simétrico, y se comprobó: con
+un techo de 120 px **las nueve pantallas del cuaderno se ponían en rojo a 0,03 %**, porque 960 × 640
+tiene mucha más tinta.
+
+**El arreglo separa las dos partes en vez de elegir una unidad:** la mordida **se deja fuera de la
+comparación** (`MARCO = 9` filas, con su medida escrita: 2,2,2,4,4,6,8,12,18 px) y lo que queda —el
+antialias— se sigue midiendo en porcentaje, que es su unidad. El umbral se queda en **0,15 %** y
+ahora quiere decir lo mismo a cualquier alto. El suelo real bajó de 0,084 % a **0,072 %**: el gate
+quedó **más estricto** que antes en los 72 encuadres, no más laxo.
+
+> **Lo que casi pasa, y conviene dejarlo escrito:** el camino fácil era subir el umbral a 0,2 %
+> «porque da falsos positivos en la banda pequeña». Habría funcionado, y habría aflojado el gate
+> para las nueve pantallas grandes, que son la mayoría — sin que nadie lo notara jamás.
+
+**Rojo 4, con la matemática nueva:** quitado el `·` del estado «voz» en el producto ⇒ **3,4 %** en los
+ocho encuadres del modo, veinte veces el umbral y cuarenta veces el suelo. Verde al revertir: 72
+encuadres, cero desbordes, cero errores de página.

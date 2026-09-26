@@ -29,6 +29,13 @@ import process from "node:process";
 const RAIZ = resolve(".");
 const DISENO = join(RAIZ, "docs/diseno");
 const FIDELIDAD = join(RAIZ, "docs/fidelidad");
+
+/**
+ * Las filas de ABAJO que se dejan fuera de la comparación: la mordida del marco redondeado de
+ * la página de referencia, que no es del producto. **Medidas, no estimadas** — ver el comentario
+ * de la comparación, más abajo.
+ */
+const MARCO = 9;
 const PUERTO = 4180;
 
 /**
@@ -59,6 +66,11 @@ const ARTEFACTOS = [
       { id: "sin-verificar-2", maqueta: "banda.html", estado: "sin-verificar-2", alto: 200, url: "ventana=banda&estado=sin-verificar&verificado=0&ampliada=1" },
       { id: "transcript", maqueta: "banda.html", estado: "transcript", alto: 200, url: "ventana=banda&estado=ficha&transcript=1" },
       { id: "flotante", maqueta: "banda.html", estado: "flotante", alto: 88, url: "ventana=banda&estado=ficha&acoplada=0" },
+      // El modo solo audio (C15, sprint 002). 44 px: otra anatomía, no la misma banda con menos
+      // cosas — sin cabecera, y con el contador de red bajado a la línea.
+      { id: "voz", maqueta: "banda.html", estado: "voz", alto: 44, url: "ventana=banda&estado=voz" },
+      { id: "voz-espera", maqueta: "banda.html", estado: "voz-espera", alto: 44, url: "ventana=banda&estado=voz-espera" },
+      { id: "voz-sin", maqueta: "banda.html", estado: "voz-sin", alto: 44, url: "ventana=banda&estado=voz-sin" },
     ],
   },
   {
@@ -248,7 +260,7 @@ for (const art of ARTEFACTOS) {
           diferencias.push({ artefacto: art.id, encuadre: `${e.id} · ${tm} · ${lg.id}`, medida: "falta un recorte" });
           continue;
         }
-        const r = await lienzo.evaluate(async ([uno, dos]) => {
+        const r = await lienzo.evaluate(async ([uno, dos, MARCO]) => {
           const carga = (b64) =>
             new Promise((ok, mal) => {
               const i = new Image();
@@ -269,18 +281,28 @@ for (const art of ARTEFACTOS) {
           };
           const [pa, pb] = [pinta(ia), pinta(ib)];
           let distintos = 0;
-          for (let i = 0; i < pa.length; i += 4) {
-            // Tolerancia por canal: el antialias de una misma fuente puede variar un punto.
-            if (
-              Math.abs(pa[i] - pb[i]) > 8 ||
-              Math.abs(pa[i + 1] - pb[i + 1]) > 8 ||
-              Math.abs(pa[i + 2] - pb[i + 2]) > 8
-            ) {
-              distintos++;
+          // **Las nueve filas de abajo no se comparan, y no es holgura: no son del producto.**
+          // El recorte de la maqueta sale de una página de referencia cuyo marco redondeado le
+          // muerde las esquinas inferiores. Es una cuña de 58 px repartida en nueve filas
+          // —2,2,2,4,4,6,8,12,18, medidas—, idéntica en un encuadre de 88 px y en uno de 44, y
+          // **siempre en las nueve últimas**. El contenido nunca llega ahí: la banda centra su
+          // línea, y a 44 px el texto vive entre las filas 15 y 28.
+          const alto = ia.height - MARCO;
+          for (let y = 0; y < alto; y++) {
+            for (let x = 0; x < ia.width; x++) {
+              const i = (ia.width * y + x) << 2;
+              // Tolerancia por canal: el antialias de una misma fuente puede variar un punto.
+              if (
+                Math.abs(pa[i] - pb[i]) > 8 ||
+                Math.abs(pa[i + 1] - pb[i + 1]) > 8 ||
+                Math.abs(pa[i + 2] - pb[i + 2]) > 8
+              ) {
+                distintos++;
+              }
             }
           }
-          return { porcentaje: (distintos / (pa.length / 4)) * 100 };
-        }, [a, b]);
+          return { distintos, porcentaje: (distintos / (ia.width * alto)) * 100 };
+        }, [a, b, MARCO]);
         diferencias.push({ artefacto: art.id, encuadre: `${e.id} · ${tm} · ${lg.id}`, ...r });
       }
     }
@@ -370,20 +392,44 @@ else desbordes.forEach((d) => console.log(`   ⚠ ${d}`));
 console.log("─────────────────────────────────────────────────────────────");
 
 console.log("── píxeles distintos: maqueta vs producto ───────────────────");
-// El suelo no es cero y la razón está medida: el artefacto de la maqueta vive dentro de una
-// página de referencia cuyo marco redondeado le muerde la última fila de píxeles. En la banda
-// son ~73 px sobre 103 000 (0,07 %), todos en `y = 85..87`, y son del ENCUADRE, no del producto.
-// El umbral se pone en el doble de eso: cualquier desplazamiento real de texto pasa del 2 % (lo
-// midió el transcript antes de arreglarlo), así que 0,15 % separa el artefacto del defecto sin
-// holgura de sobra. Un umbral generoso «por si acaso» es un gate que no puede fallar.
+// **El suelo tenía dos partes, y solo una era del producto. El sprint 002 las separó.**
+//
+// Hasta entonces este umbral era 0,15 % y su comentario justificaba el suelo con «~73 px de marco
+// redondeado sobre 103 000». Las dos mitades estaban mezcladas:
+//
+// 1. **La mordida del marco** — 58 px en las nueve filas de abajo, del ENCUADRE y no del producto.
+//    Es **constante**: los mismos 58 px en una banda de 88 px y en una de 44. Medida en porcentaje
+//    valía 0,056 % en la primera y **0,112 % en la segunda**, porque la mordida no cambia y el área
+//    sí. Al llegar el modo solo audio, los seis encuadres de 44 px aparecieron pegados al umbral y
+//    dos lo pasaron **sin que hubiera nada que arreglar en el producto**.
+// 2. **El antialias del texto**, que sí escala con la cantidad de tinta y por tanto con el área.
+//
+// La 1 ya no se mide: `MARCO` la deja fuera. La 2 se mide en **porcentaje**, que es su unidad
+// natural — medirla en píxeles absolutos tiene el defecto simétrico, y se comprobó: con un techo de
+// 120 px las nueve pantallas del cuaderno (960 × 640, mucha más tinta) se ponían en rojo a 0,03 %.
+//
+// Con el marco fuera, el suelo real es **0,072 %** (honestidad en inglés, la pantalla con más
+// texto) y un desplazamiento de verdad son **más del 2 %** — lo midió el transcript antes de
+// arreglarlo. El umbral se queda en 0,15 % y ahora quiere decir lo mismo a cualquier alto. Un
+// umbral generoso «por si acaso» es un gate que no puede fallar.
 const UMBRAL = 0.15; // %
 const fuera = diferencias.filter((d) => d.medida || d.porcentaje > UMBRAL);
-for (const d of diferencias.slice().sort((x, y) => (y.porcentaje ?? 100) - (x.porcentaje ?? 100)).slice(0, 8)) {
-  console.log(`   ${d.medida ? `medidas distintas: ${d.medida}` : `${d.porcentaje.toFixed(3)} %`}  ${d.artefacto} · ${d.encuadre}`);
+for (const d of diferencias.slice().sort((x, y) => (y.distintos ?? 1e9) - (x.distintos ?? 1e9)).slice(0, 8)) {
+  const cuanto = d.medida
+    ? `medidas distintas: ${d.medida}`
+    : `${d.porcentaje.toFixed(3)} %  (${String(d.distintos).padStart(5)} px)`;
+  console.log(`   ${cuanto}  ${d.artefacto} · ${d.encuadre}`);
 }
-console.log(`   … ${diferencias.length} encuadres comparados; umbral ${UMBRAL} %`);
+console.log(
+  `   … ${diferencias.length} encuadres comparados; umbral ${UMBRAL} % (sin las ${MARCO} filas del marco)`,
+);
 if (fuera.length === 0) console.log("   ✓ ninguno pasa del umbral");
-else fuera.forEach((d) => console.log(`   ⚠ ${d.artefacto} · ${d.encuadre}: ${d.medida ?? d.porcentaje.toFixed(3) + " %"}`));
+else
+  fuera.forEach((d) =>
+    console.log(
+      `   ⚠ ${d.artefacto} · ${d.encuadre}: ${d.medida ?? `${d.porcentaje.toFixed(3)} % (${d.distintos} px)`}`,
+    ),
+  );
 console.log("─────────────────────────────────────────────────────────────");
 
 console.log("── errores de página ────────────────────────────────────────");

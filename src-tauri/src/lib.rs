@@ -656,7 +656,7 @@ fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Inf
                     let voz = app.state::<LaVozQueSale>();
                     voz.voz.callar();
                     if voz.encendida.swap(false, Ordering::Relaxed) {
-                        soltar_el_callar(app);
+                        con_el_callar(app, false);
                         println!("[corte] el modo solo audio estaba encendido: callado y apagado");
                         let _ = app.emit_to(ventana::BANDA, EVENTO_VOZ, voz.estado());
                     }
@@ -1128,7 +1128,7 @@ fn conmutar_el_modo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> habla::LaVo
         // `⎋` se registra SOLO mientras el modo está encendido. Un Escape global permanente se lo
         // quitaría a la reunión —en Meet es la tecla de salir de pantalla completa— y a todas las
         // demás apps del Mac, para una función que existe unos segundos por ficha.
-        registrar_el_callar(app);
+        con_el_callar(app, true);
         println!("[habla] ⌘⇧V: modo solo audio ENCENDIDO · banda a {} px", ventana::ALTO_VOZ);
         // La ficha vigente se rearma igual que en `pedir_ficha`: con el último turno del cliente.
         // Si no se ha oído nada todavía, no hay nada que decir y el modo queda encendido, esperando.
@@ -1137,7 +1137,7 @@ fn conmutar_el_modo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> habla::LaVo
             None => println!("[habla] todavía no he oído nada del cliente: el modo queda a la espera"),
         }
     } else {
-        soltar_el_callar(app);
+        con_el_callar(app, false);
         estado.voz.callar();
         println!("[habla] ⌘⇧V: modo solo audio APAGADO · banda a {} px", ventana::ALTO_COMPACTA);
     }
@@ -1194,29 +1194,50 @@ fn el_atajo_de_callar() -> tauri_plugin_global_shortcut::Shortcut {
     Shortcut::new(None, Code::Escape)
 }
 
-/// Coge `⎋` al encender el modo. **Si no puede, lo dice**: el usuario pulsaría la tecla creyendo
-/// que calló a la app y la app seguiría hablándole encima del cliente.
-fn registrar_el_callar<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+/// **Coger y soltar `⎋`, SIEMPRE EN OTRO HILO. Y esto no es una precaución: es un cuelgue real.**
+///
+/// `⌘⇧V` llega por el manejador de atajos globales, y **registrar un atajo desde dentro de ese
+/// manejador bloquea el plugin**: se queda esperando un candado que tiene cogido el propio hilo que
+/// lo llamó. Lo que se ve desde fuera es peor que un error — la app sigue viva, la ventana responde,
+/// y **ningún atajo vuelve a funcionar nunca**. Incluido `⌥⎋`.
+///
+/// Se encontró corriendo la app, no probándola: los 253 tests de Rust y los 171 del webview estaban
+/// verdes, y el registro se cortaba justo entre `[acople] reacople` y la línea siguiente. Es el
+/// tercer filo de la regla 15 con nombre y apellido — *¿lo viste correr EN EL MODO en que el usuario
+/// lo va a usar?*— y el modo, aquí, es «con el dedo en la tecla».
+///
+/// Un hilo suelto basta y no hace falta nada más: el manejador vuelve, suelta el candado, y el
+/// registro ocurre unos microsegundos después. Nadie espera a nadie.
+fn con_el_callar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, coger: bool) {
     use tauri_plugin_global_shortcut::GlobalShortcutExt;
-    match app.global_shortcut().register(el_atajo_de_callar()) {
-        Ok(()) => println!(
-            "[habla] ⎋ registrada MIENTRAS dure el modo · OJO: durante estos segundos la tecla no \
-             le llega a la reunión"
-        ),
-        Err(e) => println!(
-            "[habla] NO se pudo registrar ⎋ ({e}): para callar la voz hay que apagar el modo con ⌘⇧V"
-        ),
-    }
-}
-
-/// Suelta `⎋` al apagar el modo. Que falle no rompe nada —la tecla seguiría cogida— pero se dice,
-/// porque a partir de ahí la reunión dejaría de recibir Escapes sin ninguna razón visible.
-fn soltar_el_callar<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
-    use tauri_plugin_global_shortcut::GlobalShortcutExt;
-    match app.global_shortcut().unregister(el_atajo_de_callar()) {
-        Ok(()) => println!("[habla] ⎋ devuelta al sistema"),
-        Err(e) => println!("[habla] ⎋ NO se pudo devolver ({e}): la reunión seguirá sin recibirla"),
-    }
+    let mango = app.clone();
+    std::thread::spawn(move || {
+        let atajo = el_atajo_de_callar();
+        let g = mango.global_shortcut();
+        if coger {
+            // **Si no puede, lo dice**: el usuario pulsaría la tecla creyendo que calló a la app, y
+            // la app seguiría hablándole encima del cliente.
+            match g.register(atajo) {
+                Ok(()) => println!(
+                    "[habla] ⎋ registrada MIENTRAS dure el modo · OJO: durante estos segundos la \
+                     tecla no le llega a la reunión"
+                ),
+                Err(e) => println!(
+                    "[habla] NO se pudo registrar ⎋ ({e}): para callar la voz hay que apagar el \
+                     modo con ⌘⇧V"
+                ),
+            }
+        } else {
+            // Que falle no rompe nada —la tecla seguiría cogida— pero se dice, porque a partir de
+            // ahí la reunión dejaría de recibir Escapes sin ninguna razón visible.
+            match g.unregister(atajo) {
+                Ok(()) => println!("[habla] ⎋ devuelta al sistema"),
+                Err(e) => {
+                    println!("[habla] ⎋ NO se pudo devolver ({e}): la reunión seguirá sin recibirla")
+                }
+            }
+        }
+    });
 }
 
 fn atender_el_atajo<R: tauri::Runtime>(
