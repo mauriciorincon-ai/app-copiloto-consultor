@@ -51,6 +51,31 @@ fn m<T: serde::Serialize>(
     }
 }
 
+/// La sugerencia de la maqueta (mirada 18), fundada en la ficha de «Páramo Azul · §3.2 Alcance».
+fn sugerencia() -> crate::sintesis::Sugerencia {
+    use crate::ficha::{Fuente, Respaldo};
+    let respaldo = vec![Respaldo {
+        titular: "Limpieza de datos: incluida, hasta tres fuentes".into(),
+        linea: "Una cuarta fuente es adicional y se cotiza aparte.".into(),
+        fuente: Fuente {
+            documento: "Páramo Azul".into(),
+            seccion: Some("§3.2 Alcance".into()),
+            unidad: Some(crate::corpus::Unidad::Propuesta),
+            conjeturada: false,
+        },
+    }];
+    let peticion = crate::sintesis::Peticion::nueva("¿Y si sumamos el Excel de la fuerza comercial?", &respaldo)
+        .expect("la muestra tiene turno y ficha");
+    let crudo = crate::sintesis::Crudo {
+        titular: "Tres fuentes dentro, la cuarta aparte".into(),
+        linea: "Confirma que las tres fuentes están dentro; una cuarta va como adicional con costo aparte.".into(),
+        fuente: "F1".into(),
+        confianza: "media".into(),
+    };
+    crate::sintesis::fundar(&crudo, &peticion, crate::sintesis::Quien::Sistema, "Modelo del sistema", 1_400)
+        .expect("la muestra cita su ficha")
+}
+
 /// Todo lo que el webview recibe de lo nativo, con una muestra de cada forma.
 ///
 /// **Los datos son sintéticos** («Páramo Azul», el mismo cliente inventado de la maqueta): este
@@ -92,6 +117,8 @@ pub fn muestras() -> Vec<Muestra> {
                 unidad: Some(crate::corpus::Unidad::Caso),
                 texto: "Sur del Valle: cuatro fuentes en 9 semanas".into(),
             }],
+            // No cruza la costura (`serde(skip)`): es lo que ve el modelo de la síntesis.
+            respaldo: vec![],
         }))
     };
 
@@ -363,6 +390,38 @@ pub fn muestras() -> Vec<Muestra> {
         m("EN_TU_MAC_LIMPIO", "EnTuMac", "./radar", &crate::radar::EnTuMac {
             programas: vec![],
             catalogo: crate::radar::CatalogoDelRadar { version: 1, fecha: "2026-09-26".into() },
+        }),
+        // ---- la síntesis (C7) ----------------------------------------------------------------
+        // La sugerencia cruza por «escucha», detrás de su ficha. Se construye con `fundar` porque
+        // es la ÚNICA manera: sus campos son privados (ADR 010, la regla dura que no compila).
+        m("NOVEDAD_SUGERENCIA", "Novedad", "./ficha", &Novedad::Sugerencia(Box::new(sugerencia()))),
+        m("ESTADO_DE_LA_IA_NADIE", "EstadoDeLaIa", "./ia", &crate::EstadoDeLaIa {
+            redactar: false,
+            quien: None,
+            sistema: Some(crate::sintesis::PorQueNoRedacta::AppleIntelligenceApagado),
+            api: crate::EstadoDelApi {
+                encendida: false,
+                externo: crate::sintesis::api::Externo::Claude,
+                hay_clave: false,
+            },
+            latencia_ms: None,
+            reunion_usd: 0.0,
+            mes_usd: 0.0,
+            tope_usd: 10.0,
+        }),
+        m("ESTADO_DE_LA_IA_CON_API", "EstadoDeLaIa", "./ia", &crate::EstadoDeLaIa {
+            redactar: true,
+            quien: Some(crate::sintesis::Quien::Api),
+            sistema: None,
+            api: crate::EstadoDelApi {
+                encendida: true,
+                externo: crate::sintesis::api::Externo::Gemini,
+                hay_clave: true,
+            },
+            latencia_ms: Some(1_400),
+            reunion_usd: 0.031,
+            mes_usd: 0.84,
+            tope_usd: 10.0,
         }),
         // ---- el acople, que la banda dibuja en su cabecera --------------------------------
         m("ESTADO_DEL_ACOPLE", "EstadoDelAcople", "./acople", &crate::EstadoDelAcople {

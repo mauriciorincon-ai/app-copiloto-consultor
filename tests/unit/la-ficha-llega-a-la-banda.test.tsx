@@ -2,6 +2,8 @@ import { act, fireEvent, render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Banda } from "@/componentes/Banda";
 import { Sesion } from "@/pantallas/Sesion";
+import { Ia } from "@/pantallas/Ia";
+import { Honestidad } from "@/pantallas/Honestidad";
 import { IdiomaContext } from "@/i18n";
 import { llamar, preguntar } from "@/puente";
 import { es } from "@/i18n/es";
@@ -9,6 +11,9 @@ import {
   APARICION_DEL_ATAJO,
   EN_TU_MAC_LIMPIO,
   EN_TU_MAC_VIGILADO,
+  ESTADO_DE_LA_IA_CON_API,
+  ESTADO_DE_LA_IA_NADIE,
+  NOVEDAD_SUGERENCIA,
   ESTADO_DEL_CORPUS,
   NOVEDAD_APARECE_FICHA,
   NOVEDAD_APARECE_POR_PANTALLA,
@@ -448,5 +453,109 @@ describe("el radar, dentro del producto", () => {
     expect(texto).not.toContain(c.iniciarDeTodosModos);
     expect(texto).toContain(c.iniciarSesion);
     expect(texto.indexOf(c.vigilanciaTitulo)).toBeLessThan(texto.indexOf(c.iniciarSesion));
+  });
+});
+
+/**
+ * **LA SUGERENCIA Y LA PANTALLA IA, DE PUNTA A PUNTA** (C7, regla 19). La sugerencia llega por
+ * «escucha» DESPUÉS de su ficha; el estado de IA se pregunta al montarse y se escucha por «ia». Los
+ * payloads son los que Rust escribe, y la sugerencia se fabricó con `fundar`, la única vía.
+ */
+describe("la sugerencia, dentro del producto", () => {
+  const b = es.banda;
+  const c = es.cuaderno;
+  if (NOVEDAD_SUGERENCIA.que !== "sugerencia") throw new Error("la muestra dejó de ser una sugerencia");
+  const sug = NOVEDAD_SUGERENCIA;
+
+  it("llega después de su ficha y se pinta debajo, sin quitarla", async () => {
+    await laBanda(false);
+    await emitir("escucha", NOVEDAD_APARECE_FICHA);
+    await emitir("escucha", NOVEDAD_SUGERENCIA);
+    expect(banda().dataset.estado).toBe("sugerencia-local");
+    // La ficha que la respalda sigue a la vista: su titular y su fuente.
+    expect(banda().textContent).toContain(sug.ficha.titular);
+    expect(banda().textContent).toContain(sug.ficha.fuente.documento);
+    expect(banda().textContent).toContain(sug.linea);
+    expect(banda().textContent).toContain(`${b.sugerenciaEnTuMac} · ${b.confianzas.media}`);
+  });
+
+  it("ampliada, el titular de la sugerencia va en el hueco de la derecha y la ficha entera a la izquierda", async () => {
+    await laBanda(true);
+    await emitir("escucha", NOVEDAD_APARECE_FICHA);
+    await emitir("escucha", NOVEDAD_SUGERENCIA);
+    const lado = banda().querySelector(".lado-b .sugerencia") as HTMLElement;
+    expect(lado.textContent).toContain(sug.titular);
+    if (NOVEDAD_APARECE_FICHA.clase !== "ficha") throw new Error("la muestra dejó de ser ficha");
+    expect(banda().querySelector(".ficha-b")?.textContent).toContain(NOVEDAD_APARECE_FICHA.lineaLarga);
+  });
+
+  it("una sugerencia de otra ficha —la que ya no está en pantalla— no se enseña", async () => {
+    await laBanda(false);
+    // La misma forma que emite Rust, con OTRA ficha en pantalla: otro titular y ninguna acumulada.
+    await emitir("escucha", { ...NOVEDAD_APARECE_FICHA, titular: "Otra ficha, otra pregunta", acumuladas: [] });
+    await emitir("escucha", NOVEDAD_SUGERENCIA);
+    expect(banda().dataset.estado).toBe("ficha");
+    expect(banda().textContent).not.toContain(sug.linea);
+  });
+
+  it("la ficha siguiente la quita, y el corte también", async () => {
+    await laBanda(false);
+    await emitir("escucha", NOVEDAD_APARECE_FICHA);
+    await emitir("escucha", NOVEDAD_SUGERENCIA);
+    // Otra ficha —aunque sea del mismo documento— y todavía sin sugerencia: la vieja no puede
+    // quedarse colgada debajo de ella. (La primera versión de este test pasaba a «sin resultado»,
+    // que por su clase nunca enseña sugerencia, y seguía en verde con el defecto puesto.)
+    await emitir("escucha", NOVEDAD_APARECE_FICHA);
+    expect(banda().dataset.estado).toBe("ficha");
+    expect(banda().textContent).not.toContain(sug.linea);
+    await emitir("escucha", NOVEDAD_APARECE_FICHA);
+    await emitir("escucha", NOVEDAD_SUGERENCIA);
+    await emitir("corte", {});
+    expect(banda().textContent).not.toContain(sug.linea);
+  });
+
+  it("IA dice quién redacta y por qué no, y cambia sola con el evento «ia»", async () => {
+    respuestas.set("estado_de_la_ia", ESTADO_DE_LA_IA_NADIE);
+    render(
+      <IdiomaContext.Provider value="es">
+        <Ia />
+      </IdiomaContext.Provider>,
+    );
+    await act(async () => {});
+    expect(document.body.textContent).toContain(c.nadie);
+    expect(document.body.textContent).toContain(c.porQueNoRedacta["apple-intelligence-apagado"]);
+    const redactar = [...document.querySelectorAll("[role=switch]")][0] as HTMLElement;
+    expect(redactar.getAttribute("aria-checked")).toBe("false");
+
+    await emitir("ia", ESTADO_DE_LA_IA_CON_API);
+    expect(document.body.textContent).toContain(c.enUso);
+    expect(document.body.textContent).toContain("USD 0,031");
+    expect(document.body.textContent).toContain("USD 0,84");
+    expect(document.body.textContent).not.toContain(c.porQueNoRedacta["apple-intelligence-apagado"]);
+    expect(redactar.getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("encender «Redactar sugerencias» se lo pide a Rust", async () => {
+    respuestas.set("estado_de_la_ia", ESTADO_DE_LA_IA_NADIE);
+    render(
+      <IdiomaContext.Provider value="es">
+        <Ia />
+      </IdiomaContext.Provider>,
+    );
+    await act(async () => {});
+    fireEvent.click([...document.querySelectorAll("[role=switch]")][0] as HTMLElement);
+    expect(preguntar).toHaveBeenCalledWith("redactar_sugerencias", { si: true });
+  });
+
+  it("Honestidad nombra el proveedor cuando el API está encendido", async () => {
+    respuestas.set("estado_de_la_ia", ESTADO_DE_LA_IA_CON_API);
+    render(
+      <IdiomaContext.Provider value="es">
+        <Honestidad bytes="1,2 KB" escucha={ESTADO_DE_LA_ESCUCHA} />
+      </IdiomaContext.Provider>,
+    );
+    await act(async () => {});
+    expect(document.body.textContent).toContain(`${c.modoApi} · Gemini`);
+    expect(document.body.textContent).not.toContain(c.modoLocal);
   });
 });

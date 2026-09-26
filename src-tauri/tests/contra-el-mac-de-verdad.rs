@@ -1609,6 +1609,88 @@ fn el_kit_de_pantalla_mide_la_lectura_y_su_refuerzo() {
 const NDCG_CON_PANTALLA_MINIMO: f64 = 0.68;
 const SOLAS_MINIMAS: usize = 4;
 
+/// **EL KIT DE SUGERENCIAS** (C7, sprint 002, fase 5) — las treinta preguntas del kit v0 por el
+/// camino entero de la síntesis: buscar, armar la ficha, pedir la sugerencia y `fundar`.
+///
+/// Mide, por proveedor: cuántas salen **fundadas** (citan una de las fichas que se le dieron),
+/// cuántas citan la **sección esperada**, por qué se descartó cada una que no salió, y la latencia
+/// —mediana y p95—, que es el presupuesto de la orden (≤4 s y ≤6 s).
+///
+/// **Quién mide:** `AG_SINTESIS=mock` fuerza el `mock` (el de la CI: prueba el contrato, no la
+/// prosa). Si no, el modelo del sistema **si está**; si no está, lo dice con su motivo y mide el
+/// `mock`, para que el contrato se pruebe igual. La calidad del modelo de verdad solo se afirma con
+/// sus números delante (ADR 010).
+#[test]
+fn el_kit_de_sugerencias_mide_grounding_y_latencia() {
+    use app_copiloto_consultor_lib::sintesis::{self, Proveedor};
+    use std::sync::Arc;
+    let _turno = turno();
+    let raiz = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba");
+    let kit: Kit = serde_json::from_str(
+        &std::fs::read_to_string(format!("{raiz}/preguntas.json")).expect("falta preguntas.json"),
+    )
+    .unwrap();
+    let mut corpus = Corpus::en_memoria().unwrap();
+    corpus.indexar(Path::new(&format!("{raiz}/corpus")), &|_| {}).expect("no se indexó el kit");
+
+    let sistema = sintesis::sistema::DelSistema;
+    let forzado_mock = std::env::var("AG_SINTESIS").as_deref() == Ok("mock");
+    let proveedor: Arc<dyn Proveedor> = match (forzado_mock, sistema.disponible()) {
+        (false, Ok(())) => Arc::new(sintesis::sistema::DelSistema),
+        (_, motivo) => {
+            if !forzado_mock {
+                println!("\n[kit de sugerencias] el modelo del sistema NO SE MIDIÓ: {motivo:?}. Se mide el mock.");
+            }
+            Arc::new(sintesis::mock::Mock)
+        }
+    };
+
+    let (mut pedidas, mut fundadas, mut en_su_seccion) = (0, 0, 0);
+    let mut descartes: BTreeMap<String, usize> = BTreeMap::new();
+    let mut ms = Vec::new();
+    for c in &kit.preguntas {
+        let hallazgos = corpus.buscar(&c.dice, 5).unwrap();
+        let Respuesta::Ficha(f) = armar(&c.dice, &hallazgos) else { continue };
+        let Some(peticion) = sintesis::Peticion::nueva(&c.dice, &f.respaldo) else { continue };
+        pedidas += 1;
+        let r = sintesis::sugerir(proveedor.clone(), &peticion, sintesis::TECHO);
+        ms.push(r.ms);
+        match r.sugerencia {
+            Ok(s) => {
+                fundadas += 1;
+                // La sección de la ficha citada, leída del JSON que viaja a la banda.
+                let v = serde_json::to_value(&s).unwrap();
+                if v["ficha"]["fuente"]["seccion"].as_str() == Some(c.espera.as_str()) {
+                    en_su_seccion += 1;
+                }
+            }
+            Err(d) => *descartes.entry(format!("{d:?}").split('(').next().unwrap().to_string()).or_default() += 1,
+        }
+    }
+    ms.sort_unstable();
+    let pct = |p: f64| ms[((ms.len() as f64 - 1.0) * p).round() as usize];
+    let (mediana, p95) = (pct(0.5), pct(0.95));
+    println!("\n╭─ kit de sugerencias ───────────────────────────────");
+    println!("│ proveedor        {} ({})", proveedor.nombre(), if forzado_mock { "forzado" } else { "el disponible" });
+    println!("│ pedidas          {pedidas} de {} preguntas (las otras no tienen ficha)", kit.preguntas.len());
+    println!("│ fundadas         {fundadas} de {pedidas}");
+    println!("│ en su sección    {en_su_seccion} de {pedidas}");
+    println!("│ descartadas      {descartes:?}");
+    println!("│ latencia         mediana {mediana} ms · p95 {p95} ms (presupuesto 4000 · 6000)");
+    println!("╰────────────────────────────────────────────────────");
+
+    // Medido en la primera corrida (bitácora, fase 5): 17 de las 30 llegan a ficha —las otras las
+    // rechaza el umbral de la ficha del sprint 001, que exige que la sección contenga lo buscado—.
+    // Menos que eso es una regresión del retriever o de la ficha, no de la síntesis.
+    assert!(pedidas >= 17, "solo {pedidas} preguntas llegaron a pedir sugerencia (medido: 17)");
+    assert!(mediana <= 4_000 && p95 <= 6_000, "fuera de presupuesto: mediana {mediana} · p95 {p95}");
+    if proveedor.quien() == sintesis::Quien::Mock {
+        // El mock cita siempre F1, la ficha que la banda enseña: todas fundadas, y su sección es la
+        // de la ficha, así que «en su sección» es el acierto del retriever, no del modelo.
+        assert_eq!(fundadas, pedidas, "el contrato descartó sugerencias del mock: {descartes:?}");
+    }
+}
+
 /// **EL RADAR ÁMBAR, CON EL OCR DE VERDAD** (C14, sprint 002, fase 4).
 ///
 /// Los tests del módulo prueban el cotejo con texto escrito a mano; esto prueba lo que de verdad
@@ -1746,4 +1828,25 @@ fn en_una_maquina_virtual() -> bool {
         )
     };
     r == 0 && valor == 1
+}
+
+/// **EL LLAVERO DE VERDAD** (C7, sprint 002, fase 5) — la clave del API vive en el Llavero del
+/// usuario y en ningún otro sitio. Guarda una clave de prueba, comprueba que se lee y la borra.
+///
+/// Bajo demanda porque toca el Llavero de quien lo corre: `cargo test --test contra-el-mac-de-verdad
+/// el_llavero -- --ignored`. **Se niega a correr si ya hay una clave de Groq guardada**: pisarla
+/// sería borrarle al usuario su clave de verdad.
+#[test]
+#[ignore = "toca el Llavero del usuario: se corre a mano"]
+fn el_llavero_guarda_lee_y_borra_la_clave() {
+    use app_copiloto_consultor_lib::sintesis::api::{borrar_clave, guardar_clave, hay_clave, Externo};
+    assert!(
+        !hay_clave(Externo::Groq),
+        "ya hay una clave de Groq en el Llavero: este test no la va a pisar"
+    );
+    guardar_clave(Externo::Groq, "gsk_prueba_de_angel_ghost").expect("el Llavero no guardó la clave");
+    assert!(hay_clave(Externo::Groq), "la clave recién guardada no se lee");
+    borrar_clave(Externo::Groq).expect("el Llavero no la borró");
+    assert!(!hay_clave(Externo::Groq), "la clave sigue ahí después de borrarla");
+    println!("\n[llavero] guardada, leída y borrada: el Llavero queda como estaba");
 }

@@ -68,6 +68,9 @@ const ESTADOS: EstadoBanda[] = [
   // El radar (fase 4): ámbar y coral. La ampliada del coral sale del alto de la ventana, como todas.
   "radar",
   "radar-invasivo",
+  // La sugerencia (fase 5): la ampliada sale del alto de la ventana, como todas.
+  "sugerencia-local",
+  "sugerencia-api",
 ];
 
 /**

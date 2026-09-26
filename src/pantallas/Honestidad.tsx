@@ -2,6 +2,7 @@ import { useIdioma, useT, type Idioma } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { TodaviaNo, PILA } from "../componentes/Ventana";
 import { cortarTodo, type EstadoDeEscucha, usePantalla, usePiezasDelCorte } from "../cuaderno";
+import { EXTERNOS, useIa } from "../ia";
 
 /**
  * HONESTIDAD — «Qué vive en la memoria ahora mismo y qué salió de tu equipo».
@@ -33,6 +34,7 @@ export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoD
   const idioma = useIdioma();
   const corte = usePiezasDelCorte();
   const pantalla = usePantalla();
+  const [ia] = useIa();
   const cortadas = corte.piezas.filter(([, suerte]) => suerte === "cortada").length;
   const [cifra, unidad = "B"] = bytes.split(" ");
   // Las cifras se formatean **aquí**, con el separador decimal del idioma. Lo nativo las mandaba
@@ -101,10 +103,21 @@ export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoD
             </div>
             <div className="tarjeta">
               <h2 className="seccion">{t.modo}</h2>
-              <span className="estado ok">
-                <Ic id="i-mac" s relleno />
-                <span>{t.modoLocal}</span>
-              </span>
+              {/* Con el API encendido por el usuario el modo lo dice, con el nombre del proveedor: la
+                  frase de abajo explica que solo sale texto anonimizado (ADR 011). */}
+              {ia.api.encendida ? (
+                <span className="estado halo">
+                  <Ic id="i-nube" s />
+                  <span>
+                    {t.modoApi} · {EXTERNOS.find((e) => e.id === ia.api.externo)?.nombre}
+                  </span>
+                </span>
+              ) : (
+                <span className="estado ok">
+                  <Ic id="i-mac" s relleno />
+                  <span>{t.modoLocal}</span>
+                </span>
+              )}
               <p>{t.modoDetalle}</p>
             </div>
             <button className="kill" style={{ justifyContent: "center" }} onClick={cortarTodo}>

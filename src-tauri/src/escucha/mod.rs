@@ -81,6 +81,9 @@ pub enum Novedad {
     /// bot de notas en la lista de participantes. Los bots van con el nombre del CATÁLOGO, no con
     /// lo que Vision leyó: por esta costura no cruza texto de la pantalla.
     Radar { grabando: bool, bots: Vec<String>, hora: String },
+    /// **La sugerencia (C7)**: una frase que el modelo redactó a partir de las fichas, fundada en una
+    /// de ellas. Llega DESPUÉS de la ficha, que no la espera. Solo existe si pasó `sintesis::fundar`.
+    Sugerencia(Box<crate::sintesis::Sugerencia>),
 }
 
 /// Lo que la pantalla de Honestidad enseña de una pista.

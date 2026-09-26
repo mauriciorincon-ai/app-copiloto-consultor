@@ -4,7 +4,17 @@ import { useAsa } from "../asa";
 import { useTurnos } from "../turnos";
 import { useFicha, type Acumulada, type Aparicion } from "../ficha";
 import { hayTauri } from "../puente";
-import { cortarTodo, useCorpus, useEscucha, useReunion, useVoz, type LaVoz, type Turno } from "../cuaderno";
+import {
+  cortarTodo,
+  useBytesALaRed,
+  useCorpus,
+  useEscucha,
+  useReunion,
+  useVoz,
+  type LaVoz,
+  type Turno,
+} from "../cuaderno";
+import type { Sugerencia } from "../ia";
 import { abrirLoQueVe, type Programa } from "../radar";
 
 /**
@@ -43,7 +53,13 @@ export type EstadoBanda =
    * programa de tu Mac—. Dentro de Tauri los decide el radar; fuera, la URL.
    */
   | "radar"
-  | "radar-invasivo";
+  | "radar-invasivo"
+  /**
+   * La sugerencia (C7, fase 5, mirada 18): la ficha sigue y la sugerencia va debajo. Dentro de Tauri
+   * lo decide la sugerencia que llegó —y quién la redactó—; fuera, la URL.
+   */
+  | "sugerencia-local"
+  | "sugerencia-api";
 
 export type PropsBanda = {
   estado: EstadoBanda;
@@ -98,7 +114,10 @@ export function Banda({
   // La ficha viene del corpus del usuario. Fuera de Tauri es la de la maqueta, que es lo que
   // hace posible el gate de FIDELIDAD; dentro del producto es la de verdad, y si no hay ninguna
   // no se pinta ninguna.
-  const { aparicion, buscando, nadaEnPantalla, radar } = useFicha(estado);
+  const { aparicion, buscando, nadaEnPantalla, radar, sugerencia } = useFicha(estado);
+  const bytesReales = useBytesALaRed();
+  /** El contador: fuera de Tauri, el de la maqueta; dentro, el de verdad, que el API puede mover. */
+  const bytes = deLaMaqueta ? (estado === "sugerencia-api" ? m.redApi : RED) : bytesReales;
 
   // **Dentro del producto el estado de contenido lo decide la ficha, no la URL.** Tener las dos
   // cosas mandando a la vez fue un defecto real: la banda pedía «sin resultado» y la ficha traía
@@ -117,7 +136,12 @@ export function Banda({
         ? "pantalla-nada"
         : buscando
           ? "buscando"
-          : aparicion?.clase === "ficha"
+          : // Con el transcript abierto manda el transcript: la sugerencia vuelve al cerrarlo.
+            aparicion?.clase === "ficha" && sugerencia && !transcript
+            ? sugerencia.quien === "api"
+              ? "sugerencia-api"
+              : "sugerencia-local"
+            : aparicion?.clase === "ficha"
             ? "ficha"
             : aparicion?.clase === "sinResultado"
               ? "sin-resultado"
@@ -188,6 +212,23 @@ export function Banda({
       </span>
     );
   };
+
+  /** «sugerencia · en tu Mac · confianza media» o «Claude Haiku · API · confianza media». */
+  const dondeYConfianza = (s: Sugerencia) =>
+    s.quien === "api"
+      ? `${s.nombre} · ${t.api} · ${t.confianzas[s.confianza]}`
+      : `${t.sugerenciaEnTuMac} · ${t.confianzas[s.confianza]}`;
+
+  /** El símbolo de la confianza: la palabra va al lado, y el color no es el único portador. */
+  const icConfianza = (c: Sugerencia["confianza"]) =>
+    c === "alta" ? "i-check-circle" : c === "baja" ? "i-alert" : "i-half";
+
+  const fuenteDe = (f: Sugerencia["ficha"]["fuente"]) => (
+    <span className="fuente-b">
+      {f.unidad && <span className="unidad">{t.unidades[f.unidad]}</span>}{" "}
+      {f.seccion ? `${f.documento} · ${f.seccion}` : f.documento}
+    </span>
+  );
 
   /** ««MinutaBot»» con las comillas de cada idioma. */
   const entreComillas = (x: string) => `${t.comillaAbre}${x}${t.comillaCierra}`;
@@ -341,9 +382,11 @@ export function Banda({
 
         {chipDelCliente()}
 
-        <span className="red cero mono">
+        {/* Con el API encendido por el usuario deja de ser cero, y va en el acento, no en rojo: fue
+            su decisión (panel, mirada 1; banda, mirada 18). */}
+        <span className={bytes === RED ? "red cero mono" : "red api mono"}>
           <Ic id="i-subir" s />
-          {RED}
+          {bytes}
         </span>
       </div>
 
@@ -382,6 +425,70 @@ export function Banda({
             </span>
           </>
         )}
+
+        {(estadoReal === "sugerencia-local" || estadoReal === "sugerencia-api") &&
+          sugerencia &&
+          aparicion?.clase === "ficha" &&
+          !grande && (
+            <>
+              {/* La ficha que la respalda sigue a la vista —su titular y su fuente—, y la sugerencia
+                  va debajo con el acento halo (mirada 18). */}
+              <span className="ficha-b">
+                <span className="titular-b">{sugerencia.ficha.titular}</span>
+                <span className="sugerencia-b">
+                  <Ic id="i-chispa" s />
+                  <span className="t">{sugerencia.linea}</span>
+                </span>
+              </span>
+              <span className="lado-b">
+                {fuenteDe(sugerencia.ficha.fuente)}
+                <span className="meta-b sugerida">
+                  <Ic id={sugerencia.quien === "api" ? "i-nube" : "i-mac"} s />
+                  {dondeYConfianza(sugerencia)}
+                </span>
+                {atajosDeFicha}
+              </span>
+            </>
+          )}
+
+        {(estadoReal === "sugerencia-local" || estadoReal === "sugerencia-api") &&
+          sugerencia &&
+          aparicion?.clase === "ficha" &&
+          grande && (
+            <>
+              {/* Ampliada: la ficha entera con sus acumuladas, y la sugerencia en el hueco de la
+                  derecha que el sprint 1 dejó reservado para ella. */}
+              <span className="ficha-b">
+                <span className="titular-b">{aparicion.titular}</span>
+                <span className="linea-b">{aparicion.lineaLarga}</span>
+                {lista(aparicion.acumuladas)}
+              </span>
+              <span className="lado-b">
+                <span className="sugerencia">
+                  <span className="cab">
+                    <Ic id={sugerencia.quien === "api" ? "i-nube" : "i-mac"} s />{" "}
+                    {sugerencia.quien === "api" ? `${sugerencia.nombre} · ${t.api}` : t.sugerenciaEnTuMac}
+                    <span className="conf">
+                      <Ic id={icConfianza(sugerencia.confianza)} s />
+                      {t.confianzas[sugerencia.confianza]}
+                    </span>
+                  </span>
+                  <span className="texto">
+                    <b>{sugerencia.titular}</b> {sugerencia.linea}
+                  </span>
+                </span>
+                {fuenteDe(sugerencia.ficha.fuente)}
+                <span className="atajos-b">
+                  <span className="tecla">
+                    <kbd>⌃⌥P</kbd> {t.fijar}
+                  </span>
+                  <span className="tecla">
+                    <kbd>⌥⎋</kbd>
+                  </span>
+                </span>
+              </span>
+            </>
+          )}
 
         {estadoReal === "radar" && radar?.que === "ambar" && (
           <>

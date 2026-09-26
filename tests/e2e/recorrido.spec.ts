@@ -15,7 +15,8 @@ import { test, expect, type Page } from "@playwright/test";
  * y el resumen del sprint lo dice sin adornos.
  */
 
-const PANTALLAS = ["sesion", "permisos", "corpus", "honestidad", "idioma"] as const;
+// IA se abrió en el sprint 002 (fase 5, C7). Notas es la única que sigue sin existir.
+const PANTALLAS = ["sesion", "permisos", "corpus", "honestidad", "idioma", "ia"] as const;
 
 async function abrir(pag: Page, busqueda: string) {
   await pag.goto(`/?${busqueda}`);
@@ -23,7 +24,7 @@ async function abrir(pag: Page, busqueda: string) {
 }
 
 test.describe("el cuaderno", () => {
-  test("las cinco pantallas se pintan y ninguna deja la ventana vacía", async ({ page }) => {
+  test("las seis pantallas se pintan y ninguna deja la ventana vacía", async ({ page }) => {
     for (const pantalla of PANTALLAS) {
       await abrir(page, `ventana=principal&pantalla=${pantalla}`);
       await expect(page.locator(".titulo h1")).toBeVisible();
@@ -31,13 +32,13 @@ test.describe("el cuaderno", () => {
     }
   });
 
-  test("el rail navega entre las cinco, y no ofrece las dos que no existen", async ({ page }) => {
+  test("el rail navega entre las seis, y no ofrece la que no existe", async ({ page }) => {
     await abrir(page, "ventana=principal&pantalla=sesion");
     const rail = page.locator("nav.rail");
     await expect(rail.locator("a")).toHaveCount(PANTALLAS.length);
     // Las secciones que aún no existen están en el rail pero no son enlaces: el usuario ve que
     // van a llegar sin que una de ellas le lleve a una pantalla en blanco.
-    await expect(rail.locator(".item.pendiente")).toHaveCount(2);
+    await expect(rail.locator(".item.pendiente")).toHaveCount(1);
 
     await rail.getByRole("link", { name: /corpus/i }).click();
     await expect(page.locator(".titulo h1")).toHaveText("Corpus");

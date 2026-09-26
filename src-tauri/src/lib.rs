@@ -30,6 +30,7 @@ pub mod radar;
 pub mod red;
 pub mod relleno;
 pub mod sesion;
+pub mod sintesis;
 pub mod stt;
 pub mod ventana;
 pub mod voz;
@@ -532,6 +533,16 @@ fn empezar_a_escuchar(
     if let Some(vieja) = guardada.take() {
         vieja.cortar();
     }
+    // Una reunión nueva: su costo y sus latencias empiezan de cero (el gasto del mes, no).
+    {
+        let s = app.state::<LaSintesis>();
+        if let Ok(mut u) = s.reunion_usd.lock() {
+            *u = 0.0;
+        };
+        if let Ok(mut l) = s.latencias.lock() {
+            l.clear();
+        };
+    }
     // Si la banda sigue en pantalla, esto no hace nada: `abrir_banda` es idempotente.
     let la_habian_cortado = app.get_webview_window(ventana::BANDA).is_none();
     match ventana::abrir_banda(&app, ventana::ALTO_COMPACTA) {
@@ -600,6 +611,7 @@ fn empezar_a_escuchar(
             // lo encendió.
             if let escucha::Novedad::Aparece(a) = &novedad {
                 decir_la_ficha(&mango, a);
+                sintetizar(&mango, a);
             }
             let _ = mango.emit(EVENTO_ESCUCHA, novedad);
         },
@@ -737,6 +749,16 @@ fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Inf
         }
     };
 
+    // Una sugerencia que se esté redactando ahora volverá DESPUÉS del corte: la época sube y, cuando
+    // vuelva, se tira sin enseñarla. La reunión, además, deja de sumar costo.
+    {
+        let s = app.state::<LaSintesis>();
+        s.epoca.fetch_add(1, Ordering::Relaxed);
+        if let Ok(mut u) = s.reunion_usd.lock() {
+            *u = 0.0;
+        };
+    }
+
     let mut piezas = Vec::new();
     for pieza in corte::TODAS {
         let suerte = corte::suerte_en_este_sprint(*pieza);
@@ -848,7 +870,12 @@ pub fn run() {
             lectura_automatica,
             leer_la_pantalla_ahora,
             radar_de_tu_mac,
-            abrir_lo_que_ve
+            abrir_lo_que_ve,
+            estado_de_la_ia,
+            redactar_sugerencias,
+            api_externa,
+            guardar_clave_del_api,
+            borrar_clave_del_api
         ])
         .setup(|app| {
             // El invariante se comprueba ANTES de abrir nada y aborta el arranque si falla:
@@ -863,6 +890,14 @@ pub fn run() {
             app.manage(ElCorpus::default());
             app.manage(LaPantalla::default());
             app.manage(ElRadar::default());
+            app.manage(LaSintesis::default());
+            {
+                let gasto = cargar_el_gasto(app.handle());
+                println!("[sintesis] gasto del mes {}: USD {:.3}", gasto.mes, gasto.usd);
+                if let Ok(mut g) = app.state::<LaSintesis>().mes.lock() {
+                    *g = gasto;
+                }
+            }
             // La voz se pregunta al sistema aquí, una vez, y se deja dicho lo que hay: un Mac sin
             // voz para el idioma del usuario no puede usar el modo solo audio, y eso tiene que
             // verse en el arranque y no cuando el usuario pulse la tecla en mitad de una reunión.
@@ -1048,6 +1083,7 @@ const EVENTO_FICHA: &str = "ficha";
 /// hay con qué buscar, y eso se dice en vez de devolver una ficha vacía.
 #[tauri::command]
 fn pedir_ficha(
+    app: tauri::AppHandle,
     escucha_viva: tauri::State<'_, LaEscucha>,
     el_corpus: tauri::State<'_, ElCorpus>,
     la_pantalla: tauri::State<'_, LaPantalla>,
@@ -1062,8 +1098,9 @@ fn pedir_ficha(
     // de que el cliente hablara dejaba la banda colgada. Ningún test lo vio porque su doble del
     // puente solo sabía resolver.
     let a = ficha_vigente(&escucha_viva, &el_corpus, &la_pantalla);
-    if a.is_none() {
-        println!("[ficha] ⌃⌥A sin turno del cliente: todavía no hay nada que buscar");
+    match &a {
+        None => println!("[ficha] ⌃⌥A sin turno del cliente: todavía no hay nada que buscar"),
+        Some(a) => sintetizar(&app, a),
     }
     a
 }
@@ -1509,6 +1546,9 @@ fn atender_la_pantalla<R: tauri::Runtime>(
     match aparicion {
         Some(a) => {
             decir_la_ficha(app, &a);
+            // Con `⌃⌥L` hay una pregunta —la del usuario— y la ficha sale con motivo «lo pediste»;
+            // la que trae la pantalla sola la descarta `sintetizar` por su motivo.
+            sintetizar(app, &a);
             let _ = app.emit(EVENTO_ESCUCHA, escucha::Novedad::Aparece(Box::new(a)));
         }
         None if origen == pantalla::Origen::Pedida => {
@@ -1590,6 +1630,336 @@ fn leer_una_vez(la_pantalla: &LaPantalla) -> bool {
         println!("[pantalla] lectura pedida sin sesión: no hay reunión que leer");
     }
     hay
+}
+
+// ── LA SÍNTESIS (C7) ────────────────────────────────────────────────────────────────────────────
+//
+// ADR 010 «síntesis, código primero» y ADR 011 «proveedores del modelo y minimización». Todo lo de
+// aquí es la capa que decide CUÁNDO y CON QUIÉN; lo que el modelo ve y lo que se acepta de él vive en
+// `sintesis/`, que es módulo protegido.
+
+/// El tope del mes para el proveedor externo (ADR 011). Al llegar, la app vuelve sola a lo local.
+const TOPE_DEL_MES_USD: f64 = 10.0;
+
+/// El archivo donde persiste **la cifra** del gasto del mes —no el texto de nada—. Es un metadato de
+/// costo, que la regla 1 de la casa permite guardar; nace con permisos de solo su dueño.
+const COSTO_DEL_MES: &str = "costo-del-mes.json";
+
+const EVENTO_IA: &str = "ia";
+
+#[derive(Debug, Clone, Copy)]
+struct ConfigDelApi {
+    encendida: bool,
+    externo: sintesis::api::Externo,
+}
+
+impl Default for ConfigDelApi {
+    fn default() -> Self {
+        Self { encendida: false, externo: sintesis::api::Externo::Claude }
+    }
+}
+
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
+struct GastoDelMes {
+    mes: String,
+    usd: f64,
+}
+
+#[derive(Default)]
+struct LaSintesis {
+    /// «Redactar sugerencias». **Nace apagado**: la app es entera sin ello (ADR 010).
+    redactar: AtomicBool,
+    api: std::sync::Mutex<ConfigDelApi>,
+    reunion_usd: std::sync::Mutex<f64>,
+    mes: std::sync::Mutex<GastoDelMes>,
+    /// Lo que tardaron las sugerencias de esta sesión, para la mediana que enseña IA.
+    latencias: std::sync::Mutex<Vec<u64>>,
+    /// Sube con cada corte: una sugerencia que vuelva de antes del corte se tira sin enseñarla.
+    epoca: std::sync::atomic::AtomicU64,
+    /// Una a la vez: si llega otra ficha mientras se redacta, esa se queda sin sugerencia.
+    en_marcha: AtomicBool,
+}
+
+/// Lo que la pantalla IA enseña.
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EstadoDeLaIa {
+    redactar: bool,
+    /// Quién redactaría ahora mismo. `None`: nadie puede.
+    quien: Option<sintesis::Quien>,
+    /// Por qué el modelo del sistema no puede. `None`: puede.
+    sistema: Option<sintesis::PorQueNoRedacta>,
+    api: EstadoDelApi,
+    /// La mediana de las sugerencias de esta sesión, en milisegundos.
+    latencia_ms: Option<u64>,
+    reunion_usd: f64,
+    mes_usd: f64,
+    tope_usd: f64,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EstadoDelApi {
+    encendida: bool,
+    externo: sintesis::api::Externo,
+    hay_clave: bool,
+}
+
+fn ruta_del_costo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
+    app.path().app_config_dir().unwrap_or_else(|_| std::env::temp_dir()).join(COSTO_DEL_MES)
+}
+
+/// «2026-09», en la hora del Mac. Sin traer una biblioteca de fechas para un año y un mes.
+fn mes_de_hoy() -> String {
+    // SEGURIDAD: `time` y `localtime_r` escriben en estructuras que viven en esta función.
+    unsafe {
+        let ahora = libc::time(std::ptr::null_mut());
+        let mut tm: libc::tm = std::mem::zeroed();
+        libc::localtime_r(&ahora, &mut tm);
+        format!("{}-{:02}", tm.tm_year + 1900, tm.tm_mon + 1)
+    }
+}
+
+/// El gasto del mes guardado; si es de otro mes, empieza en cero.
+fn cargar_el_gasto<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> GastoDelMes {
+    let hoy = mes_de_hoy();
+    std::fs::read_to_string(ruta_del_costo(app))
+        .ok()
+        .and_then(|t| serde_json::from_str::<GastoDelMes>(&t).ok())
+        .filter(|g| g.mes == hoy)
+        .unwrap_or(GastoDelMes { mes: hoy, usd: 0.0 })
+}
+
+fn guardar_el_gasto<R: tauri::Runtime>(app: &tauri::AppHandle<R>, gasto: &GastoDelMes) {
+    let ruta = ruta_del_costo(app);
+    let texto = serde_json::to_string(gasto).unwrap_or_default();
+    let _ = std::fs::remove_file(&ruta);
+    if let Some(padre) = ruta.parent() {
+        let _ = std::fs::create_dir_all(padre);
+    }
+    if let Err(e) = nacer_cerrado(&ruta, &texto) {
+        println!("[sintesis] no se pudo guardar el gasto del mes: {e}");
+    }
+}
+
+/// Los clientes del corpus, por su nombre: lo que la bóveda tapa antes de que nada salga (ADR 011).
+fn clientes_del_corpus(el_corpus: &ElCorpus) -> Vec<String> {
+    el_corpus
+        .0
+        .lock()
+        .ok()
+        .and_then(|g| {
+            g.as_ref().map(|c| {
+                c.documentos()
+                    .iter()
+                    .filter(|d| d.unidad == Some(corpus::Unidad::Cliente))
+                    .map(|d| d.nombre.clone())
+                    .collect()
+            })
+        })
+        .unwrap_or_default()
+}
+
+/// **Quién redacta ahora.** El que el usuario encendió manda: el API si lo encendió, tiene clave y
+/// no llegó al tope; si no, el modelo del sistema si está. `AG_SINTESIS=mock` fuerza el `mock`
+/// —el de la CI y el del kit—, dentro del adapter y no interceptando nada (ADR 011).
+fn proveedor_de_ahora(
+    s: &LaSintesis,
+    conocidos: Vec<String>,
+) -> Option<std::sync::Arc<dyn sintesis::Proveedor>> {
+    use sintesis::Proveedor;
+    if std::env::var("AG_SINTESIS").as_deref() == Ok("mock") {
+        return Some(std::sync::Arc::new(sintesis::mock::Mock));
+    }
+    let api = *s.api.lock().ok()?;
+    let bajo_el_tope = s.mes.lock().map(|g| g.usd < TOPE_DEL_MES_USD).unwrap_or(false);
+    if api.encendida && bajo_el_tope && sintesis::api::hay_clave(api.externo) {
+        return Some(std::sync::Arc::new(sintesis::api::Api { externo: api.externo, conocidos }));
+    }
+    let sistema = sintesis::sistema::DelSistema;
+    sistema.disponible().is_ok().then(|| std::sync::Arc::new(sistema) as std::sync::Arc<dyn sintesis::Proveedor>)
+}
+
+fn estado_de_la_ia_de<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> EstadoDeLaIa {
+    use sintesis::Proveedor;
+    let s = app.state::<LaSintesis>();
+    let api = s.api.lock().map(|a| *a).unwrap_or_default();
+    let hay_clave = sintesis::api::hay_clave(api.externo);
+    let sistema = sintesis::sistema::DelSistema.disponible().err();
+    let mes_usd = s.mes.lock().map(|g| g.usd).unwrap_or(0.0);
+    let quien = if std::env::var("AG_SINTESIS").as_deref() == Ok("mock") {
+        Some(sintesis::Quien::Mock)
+    } else if api.encendida && hay_clave && mes_usd < TOPE_DEL_MES_USD {
+        Some(sintesis::Quien::Api)
+    } else if sistema.is_none() {
+        Some(sintesis::Quien::Sistema)
+    } else {
+        None
+    };
+    let latencia_ms = s.latencias.lock().ok().and_then(|l| {
+        let mut l = l.clone();
+        l.sort_unstable();
+        l.get(l.len() / 2).copied()
+    });
+    EstadoDeLaIa {
+        redactar: s.redactar.load(Ordering::Relaxed),
+        quien,
+        sistema,
+        api: EstadoDelApi { encendida: api.encendida, externo: api.externo, hay_clave },
+        latencia_ms,
+        reunion_usd: s.reunion_usd.lock().map(|u| *u).unwrap_or(0.0),
+        mes_usd,
+        tope_usd: TOPE_DEL_MES_USD,
+    }
+}
+
+fn avisar_a_la_ia<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> EstadoDeLaIa {
+    let estado = estado_de_la_ia_de(app);
+    let _ = app.emit(EVENTO_IA, &estado);
+    estado
+}
+
+/// **Una ficha nueva, y quizá su sugerencia.** La ficha ya está en la banda cuando esto empieza:
+/// la sugerencia llega después, debajo, o no llega. Nada de aquí la retrasa.
+fn sintetizar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Aparicion) {
+    let s = app.state::<LaSintesis>();
+    if !s.redactar.load(Ordering::Relaxed) {
+        return;
+    }
+    let ficha::Respuesta::Ficha(f) = &a.respuesta else { return };
+    if f.respaldo.is_empty() {
+        return;
+    }
+    // Una ficha que trajo la PANTALLA no responde a ninguna pregunta del cliente: la sugerencia
+    // tomaría el último turno que hubiera, que puede ser de hace diez minutos y de otra cosa.
+    if a.motivo == disparo::Motivo::Pantalla {
+        return;
+    }
+    if s.en_marcha.swap(true, Ordering::Relaxed) {
+        println!("[sintesis] ya se redacta otra: esta ficha se queda sin sugerencia");
+        return;
+    }
+    let respaldo = f.respaldo.clone();
+    let epoca = s.epoca.load(Ordering::Relaxed);
+    let mango = app.clone();
+    std::thread::spawn(move || {
+        let s = mango.state::<LaSintesis>();
+        let turno = mango
+            .state::<LaEscucha>()
+            .0
+            .lock()
+            .ok()
+            .and_then(|g| g.as_ref().map(|e| e.ultimos_turnos(12)))
+            .and_then(|ts| ts.into_iter().rev().find(|t| t.pista == capture::Pista::Sistema && !t.eco))
+            .map(|t| t.texto);
+        let conocidos = clientes_del_corpus(&mango.state::<ElCorpus>());
+        let (Some(mut turno), Some(proveedor)) = (turno, proveedor_de_ahora(&s, conocidos)) else {
+            s.en_marcha.store(false, Ordering::Relaxed);
+            return;
+        };
+        let peticion = sintesis::Peticion::nueva(&turno, &respaldo);
+        // SEGURIDAD: ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
+        unsafe { turno.as_mut_vec() }.fill(0);
+        let Some(peticion) = peticion else {
+            s.en_marcha.store(false, Ordering::Relaxed);
+            return;
+        };
+        let quien = proveedor.quien();
+        let r = sintesis::sugerir(proveedor, &peticion, sintesis::TECHO);
+        drop(peticion);
+        if quien == sintesis::Quien::Api && r.respuesta.tokens_entrada + r.respuesta.tokens_salida > 0 {
+            let externo = s.api.lock().map(|a| a.externo).unwrap_or(sintesis::api::Externo::Claude);
+            let usd = externo.costo(r.respuesta.tokens_entrada, r.respuesta.tokens_salida);
+            if let Ok(mut u) = s.reunion_usd.lock() {
+                *u += usd;
+            }
+            let gasto = s.mes.lock().ok().map(|mut g| {
+                if g.mes != mes_de_hoy() {
+                    *g = GastoDelMes { mes: mes_de_hoy(), usd: 0.0 };
+                }
+                g.usd += usd;
+                g.clone()
+            });
+            if let Some(g) = gasto {
+                guardar_el_gasto(&mango, &g);
+            }
+        }
+        if let Ok(mut l) = s.latencias.lock() {
+            l.push(r.ms);
+        }
+        // Metadata, jamás contenido: quién, cuánto tardó, cuánto salió y si se aceptó.
+        let fuera = red::formatear(r.respuesta.bytes_fuera);
+        if s.epoca.load(Ordering::Relaxed) != epoca {
+            println!("[sintesis] llegó después del corte: se tira sin enseñarla");
+        } else {
+            match r.sugerencia {
+                Ok(sugerencia) => {
+                    println!("[sintesis] {quien:?} · {} ms · {fuera} fuera · confianza {:?}", r.ms, sugerencia.confianza());
+                    let _ = mango.emit(EVENTO_ESCUCHA, escucha::Novedad::Sugerencia(Box::new(sugerencia)));
+                }
+                Err(d) => println!("[sintesis] {quien:?} · {} ms · {fuera} fuera · descartada: {d:?}", r.ms),
+            }
+        }
+        s.en_marcha.store(false, Ordering::Relaxed);
+        avisar_a_la_ia(&mango);
+    });
+}
+
+#[tauri::command]
+fn estado_de_la_ia(app: tauri::AppHandle) -> EstadoDeLaIa {
+    estado_de_la_ia_de(&app)
+}
+
+/// «Redactar sugerencias (además de mostrar la ficha)».
+#[tauri::command]
+fn redactar_sugerencias(app: tauri::AppHandle, si: bool) -> EstadoDeLaIa {
+    app.state::<LaSintesis>().redactar.store(si, Ordering::Relaxed);
+    println!("[sintesis] redactar sugerencias: {}", if si { "encendido" } else { "apagado" });
+    avisar_a_la_ia(&app)
+}
+
+/// El proveedor externo: encenderlo exige su clave en el Llavero.
+#[tauri::command]
+fn api_externa(
+    app: tauri::AppHandle,
+    encendida: bool,
+    externo: sintesis::api::Externo,
+) -> Result<EstadoDeLaIa, String> {
+    if encendida && !sintesis::api::hay_clave(externo) {
+        return Err("sin-clave".into());
+    }
+    if let Ok(mut a) = app.state::<LaSintesis>().api.lock() {
+        *a = ConfigDelApi { encendida, externo };
+    }
+    println!("[sintesis] API externo {} · {}", if encendida { "encendido" } else { "apagado" }, externo.nombre());
+    Ok(avisar_a_la_ia(&app))
+}
+
+#[tauri::command]
+fn guardar_clave_del_api(
+    app: tauri::AppHandle,
+    externo: sintesis::api::Externo,
+    clave: String,
+) -> Result<EstadoDeLaIa, String> {
+    let mut clave = clave;
+    let r = sintesis::api::guardar_clave(externo, &clave);
+    // SEGURIDAD: ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
+    unsafe { clave.as_mut_vec() }.fill(0);
+    r?;
+    println!("[sintesis] clave de {} guardada en el Llavero", externo.nombre());
+    Ok(avisar_a_la_ia(&app))
+}
+
+#[tauri::command]
+fn borrar_clave_del_api(app: tauri::AppHandle, externo: sintesis::api::Externo) -> Result<EstadoDeLaIa, String> {
+    sintesis::api::borrar_clave(externo)?;
+    if let Ok(mut a) = app.state::<LaSintesis>().api.lock() {
+        if a.externo == externo {
+            a.encendida = false;
+        }
+    }
+    println!("[sintesis] clave de {} borrada del Llavero", externo.nombre());
+    Ok(avisar_a_la_ia(&app))
 }
 
 // ── EL RADAR (C14) ──────────────────────────────────────────────────────────────────────────────

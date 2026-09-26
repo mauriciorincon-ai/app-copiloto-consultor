@@ -73,6 +73,11 @@ const PROTEGIDOS = [
   // Su catálogo vive en `data/radar/` y entra con `include_str!` al compilar: no hay archivo que
   // leer en tiempo de ejecución. Lo cazó la comprobación de abajo en su primera corrida.
   "src-tauri/src/radar",
+  // `sintesis` (sprint 002, fase 5, C7): recibe el último turno del CLIENTE para redactar la
+  // sugerencia. Texto de un tercero: ni disco ni red desde Rust. La única salida es la del proveedor
+  // externo, opt-in, y va por el puente de Swift (`nativo/Red.swift`), declarada en su línea con el
+  // ADR 011.
+  "src-tauri/src/sintesis",
   "src-tauri/src/sesion",
   "src-tauri/nativo",
   "src/capture",

@@ -16,6 +16,9 @@ const EL_PUENTE: &[&str] = &[
     "nativo/Transcriptor.swift",
     "nativo/Habla.swift",
     "nativo/Pantalla.swift",
+    "nativo/Sintesis.swift",
+    "nativo/Red.swift",
+    "nativo/Llavero.swift",
 ];
 
 /// Compila el puente de Swift y lo deja listo para enlazar dentro del binario.
@@ -64,6 +67,9 @@ fn compilar_el_puente_de_swift() {
             println!("cargo:rustc-link-lib=framework=ScreenCaptureKit");
             println!("cargo:rustc-link-lib=framework=Vision");
             println!("cargo:rustc-link-lib=framework=CoreGraphics");
+            // La síntesis (C7, sprint 002, fase 5): el modelo del sistema.
+            println!("cargo:rustc-link-lib=framework=FoundationModels");
+            println!("cargo:rustc-link-lib=framework=Security");
             println!("cargo:rustc-cfg=puente_de_swift");
         }
         Ok(fallo) => {

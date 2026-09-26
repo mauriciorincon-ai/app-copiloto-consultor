@@ -13,6 +13,7 @@
 import type { Novedad, Aparicion } from "./ficha";
 import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelDiccionario, EstadoDelCorpus, InformeDelCorte, LaVoz, EstadoDeLaPantalla } from "./cuaderno";
 import type { EnTuMac } from "./radar";
+import type { EstadoDeLaIa } from "./ia";
 import type { EstadoDelAcople } from "./acople";
 
 export const NOVEDAD_EMPIEZA: Novedad = {
@@ -358,6 +359,54 @@ export const EN_TU_MAC_LIMPIO: EnTuMac = {
       "version": 1
     },
     "programas": []
+  };
+
+export const NOVEDAD_SUGERENCIA: Novedad = {
+    "confianza": "media",
+    "ficha": {
+      "fuente": {
+        "conjeturada": false,
+        "documento": "Páramo Azul",
+        "seccion": "§3.2 Alcance",
+        "unidad": "propuesta"
+      },
+      "titular": "Limpieza de datos: incluida, hasta tres fuentes"
+    },
+    "linea": "Confirma que las tres fuentes están dentro; una cuarta va como adicional con costo aparte.",
+    "nombre": "Modelo del sistema",
+    "que": "sugerencia",
+    "quien": "sistema",
+    "titular": "Tres fuentes dentro, la cuarta aparte"
+  };
+
+export const ESTADO_DE_LA_IA_NADIE: EstadoDeLaIa = {
+    "api": {
+      "encendida": false,
+      "externo": "claude",
+      "hayClave": false
+    },
+    "latenciaMs": null,
+    "mesUsd": 0.0,
+    "quien": null,
+    "redactar": false,
+    "reunionUsd": 0.0,
+    "sistema": "apple-intelligence-apagado",
+    "topeUsd": 10.0
+  };
+
+export const ESTADO_DE_LA_IA_CON_API: EstadoDeLaIa = {
+    "api": {
+      "encendida": true,
+      "externo": "gemini",
+      "hayClave": true
+    },
+    "latenciaMs": 1400,
+    "mesUsd": 0.84,
+    "quien": "api",
+    "redactar": true,
+    "reunionUsd": 0.031,
+    "sistema": null,
+    "topeUsd": 10.0
   };
 
 export const ESTADO_DEL_ACOPLE: EstadoDelAcople = {

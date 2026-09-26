@@ -416,8 +416,9 @@ describe("el cuaderno: lo que no existe se dice", () => {
   });
 
   /**
-   * La fase 4 abrió Corpus: pasa de fila apagada a enlace. Notas e IA siguen sin existir y el
-   * rail lo dice — un rail lleno de enlaces que no llevan a ninguna parte es peor que uno corto.
+   * La fase 4 del sprint 001 abrió Corpus y la fase 5 del sprint 002 abrió IA: pasan de fila apagada
+   * a enlace. Notas sigue sin existir y el rail lo dice — un rail lleno de enlaces que no llevan a
+   * ninguna parte es peor que uno corto.
    */
   it("el rail deja las secciones que aún no existen sin enlace", () => {
     const { container } = pinta("?pantalla=sesion");
@@ -429,8 +430,9 @@ describe("el cuaderno: lo que no existe se dice", () => {
       t.navCorpus,
       t.navHonestidad,
       t.navIdioma,
+      t.navIa,
     ]);
-    for (const nombre of [t.navNotas, t.navIa]) {
+    for (const nombre of [t.navNotas]) {
       const fila = within(rail)
         .getByText(nombre)
         .closest(".item") as HTMLElement;

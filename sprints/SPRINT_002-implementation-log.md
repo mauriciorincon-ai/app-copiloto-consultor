@@ -2157,3 +2157,83 @@ diccionario fiel a la maqueta, maquetas que caben) y el summary lo dirá así. M
   la ruta de este repo o por PID.
 - El puerto 3000 lo tenía otro proyecto del usuario: `playwright.config.ts` acepta ahora `PUERTO_E2E`
   (3000 por defecto, la CI no cambia) en vez de tocar ese servidor.
+
+## Fase 5 — la síntesis (C7), con su ADR primero (2026-09-26)
+
+### Lo primero, antes de una línea de código
+
+- **ADR 010 «síntesis, código primero»** (`decisions/010-sintesis-codigo-primero.md`), desde la
+  plantilla del kit, con las cinco secciones y la tabla de lo que se intentó con código llena: la
+  recuperación (nDCG@5 0,823), la ficha (recorta y cita, no redacta; 0 inventadas en la negativa) y la
+  maniobra resuelven **qué dice el corpus**; lo que no resuelve el código es **qué le digo al cliente
+  ahora**, relacionando su pregunta con varias fichas. Una celda la corregí antes de comitear: decía
+  que las plantillas se habían «probado a mano», y no lo hice; quedó como argumento, dicho así.
+- **ADR 011 «proveedores del modelo y minimización»**: un adapter, cuatro proveedores, una interfaz;
+  qué sale por el API y cómo se anonimiza (bóveda de Velo); el costo con precios fechados.
+- **La medición que decide el camino:** el modelo del sistema **no está disponible en este Mac**
+  —`appleIntelligenceNotEnabled`—, aunque el Mac es compatible (macOS lista el español). Activarlo es
+  una casilla de Ajustes que la orden asigna al usuario; se le pidió al empezar la fase. Hasta que lo
+  active, el camino (a) no tiene números, y **MLX (b) no se construyó**: la orden lo pide «si (a) no
+  está o no rinde», y (a) aún no se pudo medir. Queda como **desviación declarada**, a decidir con el
+  usuario: si activa Apple Intelligence y mide dentro del presupuesto, MLX no hace falta.
+
+### Lo que se construyó
+
+| Pieza | Dónde | Qué hace |
+|---|---|---|
+| Núcleo (protegido) | `src-tauri/src/sintesis/mod.rs` | `Peticion` (el turno y las tres fichas del top, con ids F1–F3), `fundar` (esquema + grounding), `sugerir` (el techo de 6 s en un hilo aparte) |
+| La regla dura que no compila | `Sugerencia` | campos privados; solo `fundar` la construye. Fabricarla a mano da **E0451** |
+| Proveedor `mock` | `sintesis/mock.rs` | de primera clase, por env (`AG_SINTESIS=mock`); el de la CI y el del kit |
+| (a) Modelo del sistema | `nativo/Sintesis.swift` + `sintesis/sistema.rs` | Foundation Models con **generación guiada por esquema dinámico** (la macro necesita Xcode; `swiftc` a secas no la trae) |
+| (c) Proveedor externo | `nativo/Red.swift` + `nativo/Llavero.swift` + `sintesis/api.rs` | Claude, Gemini y Groq en dos formatos; **sesión efímera**, solo https; clave en el Llavero; tapa, cuenta, envía, destapa |
+| La bóveda | `sintesis/anonimo.rs` | clientes del corpus, correos, teléfonos, números de 7+ dígitos y parejas de nombres propios → marcadores; en la duda, tapa de más |
+| La ficha lleva su respaldo | `ficha/mod.rs` (`respaldo`, `serde(skip)`) | las tres fichas del top con titular, línea y fuente: todo lo que el modelo ve del corpus |
+| Integración | `lib.rs` (`sintetizar`, `LaSintesis`, 5 comandos, evento `ia`) | la ficha sale primero; la sugerencia llega después por «escucha»; una a la vez; la **época** sube con ⌥⎋ y tira lo que vuelva después; gasto del mes en `costo-del-mes.json` (600, solo `{mes, usd}`, solo si se usa el API) |
+| Contrato (regla 19) | `contrato.rs` | `NOVEDAD_SUGERENCIA` (fabricada con `fundar`), `ESTADO_DE_LA_IA_NADIE`, `ESTADO_DE_LA_IA_CON_API` |
+| Banda | `Banda.tsx`, `ficha.ts` | la sugerencia debajo de la ficha que la respalda (compacta) o en el hueco derecho (ampliada); solo si cita la ficha que está en pantalla |
+| IA | `src/pantallas/Ia.tsx`, `src/ia.ts` | quién redacta y por qué no; el interruptor; el externo con su clave; el costo con el tope. IA se abrió en el menú |
+| Honestidad | `i18n` + `Honestidad.tsx` | la frase de la red reescrita; con el API encendido, el modo lo nombra |
+| Kit | `el_kit_de_sugerencias_mide_grounding_y_latencia` | las 30 preguntas del kit v0 por el camino entero |
+
+### Medido
+
+- **Kit de sugerencias, con el mock** (el modelo del sistema no está): 17 de 30 preguntas llegan a
+  ficha —las otras 13 las rechaza el umbral de la ficha del sprint 001—; **17 de 17 fundadas**; 16 de
+  17 citan la sección esperada (el acierto del retriever); latencia 0 ms. **El modelo real: sin medir**,
+  y el manual lo dice así.
+- **El Llavero de verdad** (test bajo demanda, que se niega a pisar una clave existente): guardó, leyó y
+  borró una clave de prueba; el Llavero quedó como estaba.
+- **En vivo:** la app arranca con «gasto del mes 2026-09: USD 0.000» y sin un error del webview. La
+  sugerencia en vivo necesita un turno del cliente (audio) y un proveedor: queda para el gate del MVP.
+- **Fidelidad:** 116 encuadres (los 100 anteriores + 12 de la banda con sugerencia + 4 de IA), ninguno
+  sobre el umbral, ningún desborde. **Axe:** IA y la banda con sugerencia, sin hallazgos. **e2e:** 87.
+
+### Decisiones y desviaciones, declaradas
+
+1. **MLX no se construyó** (arriba): depende de medir (a), que depende de Apple Intelligence.
+2. **Una puerta más a la red, declarada:** el gate del contador pasa de 2 a 3 puertas, la tercera es
+   `nativo/Red.swift`; y un test nuevo exige que esa sesión sea `.ephemeral`. La frase de Honestidad
+   («la app no abre ninguna conexión») era falsa desde este cambio y se reescribió en la maqueta y en
+   el producto en la misma fase; también dos respuestas del manual.
+3. **Sin crate de red en Rust:** la red y el Llavero van por el puente de Swift (URLSession, Security).
+4. **Las fichas que trae la pantalla sola no llevan sugerencia**: no responden a ninguna pregunta.
+5. **No entra todavía** (y la maqueta lo dice en su nota): el texto exacto que salió con lo reemplazado
+   tachado, la lista de peticiones y el kit en pantalla; y los interruptores no persisten entre
+   arranques.
+6. **`Sugerencia.ms` no cruza la costura**: la latencia se enseña como mediana en IA.
+7. **Precios fechados** (2026-09-26) en `sintesis/api.rs`; el costo enseñado es tokens × precio.
+
+### Los rojos (regla 15)
+
+| Gate / test | Cambio plantado | Resultado |
+|---|---|---|
+| `una_sugerencia_sin_fuente_dada_se_descarta` | aceptar cualquier fuente no vacía | ROJO → verde |
+| `pasado_el_techo_…` | `recv()` sin techo | ROJO (esperó 400 ms con techo de 100) → verde |
+| `los_nombres_plantados_…` + `lo_que_sale_al_api_…` | no tapar parejas de nombres propios · no tapar números largos | ROJO → verde |
+| la regla que no compila | fabricar `Sugerencia` a mano | **E0451** → verde. **Mi primer intento no medía nada**: `contrato.rs` es `#[cfg(test)]` y `cargo check` no lo compilaba; con `--tests`, sí |
+| `el_kit_de_sugerencias_…` (integración) | el mock cita «F9» | ROJO → verde |
+| banda «de otra ficha» | `esDeEstaFicha` siempre verdadero | ROJO → verde |
+| banda «la ficha siguiente la quita» | no limpiar al llegar otra ficha | **su primera versión pasaba con el defecto** (pasaba a «sin resultado», que nunca enseña sugerencia); arreglado → ROJO → verde |
+| `logs-de-la-sintesis` | `{turno}` plantado · la respuesta cruda en el log | ROJO los dos → verde |
+| contador de red | sesión `.default` · la puerta sin su ADR | ROJO los dos → verde |
+| `verify:ephemeral` + contador de red | mi comentario de cabecera nombraba la API de red | ROJO los dos (lo cazaron solos) → comentario reescrito |

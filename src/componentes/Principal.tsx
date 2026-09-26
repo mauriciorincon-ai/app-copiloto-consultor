@@ -5,6 +5,7 @@ import { Permisos } from "../pantallas/Permisos";
 import { Honestidad } from "../pantallas/Honestidad";
 import { Corpus } from "../pantallas/Corpus";
 import { Idioma } from "../pantallas/Idioma";
+import { Ia } from "../pantallas/Ia";
 import {
   useBytesALaRed,
   useEscucha,
@@ -25,7 +26,7 @@ import {
  * hacer clic — el mismo mecanismo que usa la banda, y muere igual cuando haya navegación de
  * verdad que recordar.
  */
-const SECCIONES: Seccion[] = ["sesion", "permisos", "corpus", "honestidad", "idioma"];
+const SECCIONES: Seccion[] = ["sesion", "permisos", "corpus", "honestidad", "idioma", "ia"];
 
 function seccionDeLaUrl(busqueda: string): Seccion {
   const pedida = new URLSearchParams(busqueda).get("pantalla");
@@ -57,6 +58,7 @@ export function Principal({ busqueda = globalThis.location?.search ?? "" }: { bu
       {seccion === "honestidad" && <Honestidad bytes={bytes} escucha={escucha} />}
       {seccion === "corpus" && <Corpus />}
       {seccion === "idioma" && <Idioma transcribe={transcribe} />}
+      {seccion === "ia" && <Ia />}
     </Ventana>
   );
 }

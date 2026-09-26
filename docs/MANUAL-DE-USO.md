@@ -230,6 +230,56 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
   - El aviso de grabación se reconoce por sus frases en español e inglés, tal y como Meet, Zoom y
     Teams las escriben hoy. Si cambian, el catálogo tiene que ponerse al día.
 
+### La sugerencia: qué decir, con su fuente · Nuevo · Sprint 002
+
+- **Qué hace:** cuando llega una ficha que responde a lo que dijo el cliente, la app **te propone qué
+  decir en una frase**, debajo de la ficha: «Confirma que las tres fuentes están dentro; una cuarta
+  va como adicional con costo aparte». Dice dónde se redactó («sugerencia · en tu Mac», o el nombre
+  del proveedor externo) y con qué **confianza** (alta, media o baja). **La ficha no se va**: su
+  titular y su fuente siguen a la vista, y con la banda ampliada la sugerencia ocupa el hueco de la
+  derecha.
+- **Cómo se usa:** en **IA** (la última pantalla del cuaderno), enciende **«Redactar sugerencias»**.
+  Nace apagado: la app funciona entera sin ello. Arriba, **quién redacta**: el modelo del sistema de
+  macOS, dentro de tu Mac, si lo tienes; y si nadie puede, **por qué** («Apple Intelligence está
+  apagado en Ajustes»).
+  - **El modelo del sistema** necesita **Apple Intelligence** activado en *Ajustes del Sistema →
+    Apple Intelligence y Siri*. Es gratis y no sale nada de tu Mac.
+  - **El proveedor externo** (Claude, Gemini o Groq) es opcional y es **tuyo**: pegas tu clave, la app
+    la guarda en tu **Llavero** —nunca en un archivo— y enciendes su interruptor. Sin clave no se
+    enciende.
+- **Lo que no hace, y cómo se comprueba:**
+  - **Nunca inventa la fuente.** El modelo recibe tu pregunta y las tres fichas del momento, cada una
+    con un número; tiene que decir de cuál sacó la sugerencia, y si cita una que no se le dio, la
+    sugerencia **se tira** y no la ves. Lo vigila `sintesis::pruebas::una_sugerencia_sin_fuente_dada_se_descarta`,
+    y el tipo que llega a la banda solo se puede fabricar pasando por esa comprobación (no compila de
+    otra forma).
+  - **No te hace esperar.** La ficha sale primero y sin esperar al modelo; la sugerencia llega
+    después. Si tarda más de **6 segundos**, no se enseña (`…pasado_el_techo_no_hay_sugerencia…`).
+  - **Al proveedor externo solo sale texto corto y anonimizado en tu Mac:** tu pregunta y las tres
+    fichas, con los nombres de tus clientes, los correos, los teléfonos, los números largos y los
+    nombres de personas cambiados por marcadores antes de salir; la respuesta vuelve con los nombres
+    puestos otra vez, en tu Mac. Nunca audio, pantalla ni documentos enteros: ese camino no existe
+    (`api::pruebas::lo_que_sale_al_api_no_lleva_los_nombres_plantados`). Cada byte que sale se
+    cuenta en *Honestidad* y en la banda.
+  - **Nada de la sugerencia va al log**: solo quién, cuánto tardó y cuánto salió
+    (`tests/unit/logs-de-la-sintesis.test.ts`).
+- **Costo:** el modelo del sistema cuesta cero. El externo se cobra en tu cuenta del proveedor; IA
+  enseña **esta reunión**, **este mes** y el **tope del mes (USD 10)**. Al llegar al tope, vuelve sola
+  a lo local; la reunión no se detiene. La cifra del mes es lo único que se guarda (un número, no el
+  texto de nada).
+- **Medido:** en el kit de prueba, de las 30 preguntas, 17 llegan a ficha; con el proveedor de
+  prueba, **17 de 17** sugerencias salen fundadas en una ficha. El modelo del sistema **todavía no se
+  ha medido en este Mac** porque Apple Intelligence está apagado: su calidad en español y su
+  latencia se escriben aquí cuando se midan, no antes.
+- **Limitaciones conocidas:**
+  - Las fichas que trae **la pantalla sola** no llevan sugerencia: no responden a ninguna pregunta.
+  - Un nombre de persona **suelto** («Andrea») que no esté en tu corpus no se reconoce al anonimizar;
+    dos palabras con mayúscula seguidas («Andrea Villalba») sí.
+  - El camino **MLX** (un modelo que descargas tú) todavía no existe; aparece en IA como «Todavía no».
+  - Los interruptores de IA vuelven a apagado al cerrar la app.
+  - El precio de cada proveedor está escrito en la app con su fecha (2026-09-26); si el proveedor lo
+    cambia, el costo que ves se desvía hasta la versión siguiente.
+
 ### El modo solo audio: la ficha, al oído · Nuevo · Sprint 002
 
 - **Qué hace:** te **lee la ficha en voz alta** mientras la banda se encoge a una sola línea, para
@@ -342,7 +392,8 @@ está comprobado y la app te lo dice en vez de prometértelo.
 
 **¿Sube mis documentos a algún sitio?**
 No. Los lee donde están y el índice se queda en tu Mac. El contador de *Honestidad* marca los bytes
-que salieron de tu equipo, y en esta versión son **0**.
+que salieron de tu equipo: **0** salvo que enciendas el proveedor externo en *IA*, y aun entonces
+solo salen tu pregunta y tres fichas cortas, anonimizadas —nunca un documento—.
 
 **¿Guarda lo que se habla en la reunión?**
 No. El audio vive treinta segundos en memoria y se va pisando; el texto, los últimos doce turnos.
@@ -350,9 +401,10 @@ Al cerrar no queda nada. Guardar **tus propios** turnos llega más adelante, y s
 enciendas.
 
 **¿Necesito internet?**
-Solo para la videollamada. La app transcribe y busca dentro de tu Mac. La única vez que toca la red
-es cuando tú le pides instalar el modelo de voz de un idioma —el botón **«Instalar»** de
-*Idioma*—: entonces macOS lo descarga, y no sale nada de aquí.
+Solo para la videollamada. La app transcribe, busca y —con el modelo del sistema— redacta dentro de
+tu Mac. Toca la red en dos casos, y los dos los enciendes tú: cuando le pides instalar el modelo de
+voz de un idioma —el botón **«Instalar»** de *Idioma*; entonces macOS lo descarga y no sale nada de
+aquí—, y si enciendes el **proveedor externo** en *IA*, con tu clave.
 
 **¿Por qué me pide auriculares?**
 Con los altavoces, tu micrófono oye también al cliente y las dos pistas se mezclan. La app lo
@@ -363,7 +415,7 @@ detecta y lo marca, pero funciona mejor con auriculares.
 | Sprint | Features añadidas a este manual |
 |---|---|
 | 001 | la banda protegida · el acople · las dos pistas y la transcripción local · el corpus indexado · la ficha de evidencia y la sugerencia de cómo conducirse · el modelo de voz de un idioma · el corte y la pantalla de Honestidad · español e inglés |
-| 002 | el disparo por silencio · **tu diccionario técnico** · **el modo solo audio** · **la lectura de pantalla** y `⌃⌥L` · **los porqués** (la pista que no abrió, la salida de audio por su nombre, el motor que falta) · **por qué llegó la ficha y cuánto tardó** · las teclas pasan a `⌃⌥` · **el radar** (ámbar y coral) y `⌃⌥R` |
+| 002 | el disparo por silencio · **tu diccionario técnico** · **el modo solo audio** · **la lectura de pantalla** y `⌃⌥L` · **los porqués** (la pista que no abrió, la salida de audio por su nombre, el motor que falta) · **por qué llegó la ficha y cuánto tardó** · las teclas pasan a `⌃⌥` · **el radar** (ámbar y coral) y `⌃⌥R` · **la sugerencia** y la pantalla **IA** |
 
 > **Corregido tras la auditoría del sprint 001** (2026-09-22): tres frases de este manual habían
 > dejado de ser ciertas y se arreglaron con lo que el código hacía de verdad — el disparo por

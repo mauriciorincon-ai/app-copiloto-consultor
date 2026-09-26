@@ -94,14 +94,19 @@ const SALIDAS_SWIFT: [RegExp, string][] = [
 const DECLARADA = /verify-ephemeral:allow\b.*ADR/;
 
 /**
- * **Cuántas puertas a la red tiene esta app.** Dos, y son las dos líneas con que macOS descarga su
- * propio modelo de reconocimiento a petición del usuario (ADR 006). No entra audio ni sale texto:
- * solo entra el modelo.
+ * **Cuántas puertas a la red tiene esta app.** Tres:
+ *
+ * - las dos líneas con que macOS descarga su propio modelo de reconocimiento a petición del usuario
+ *   (ADR 006) —no entra audio ni sale texto: solo entra el modelo—;
+ * - **y la tercera, desde el sprint 002 (fase 5):** la sesión de `nativo/Red.swift` por la que va
+ *   el proveedor externo de la síntesis (ADR 011). Nace apagada, necesita la clave del usuario, solo
+ *   lleva texto anonimizado en el Mac y es efímera (sin caché en disco).
  *
  * Es un número y no un «ninguna» porque es la verdad, y porque un número obliga a volver aquí —y a
- * la frase de la pantalla de Honestidad— el día que aparezca la tercera.
+ * la frase de la pantalla de Honestidad— el día que aparezca otra. **La tercera obligó**: la frase de
+ * Honestidad decía «la app no abre ninguna conexión» y se reescribió en la misma fase.
  */
-const PUERTAS_DECLARADAS = 2;
+const PUERTAS_DECLARADAS = 3;
 
 function archivos(ruta: string, ext: string[]): string[] {
   if (!existsSync(ruta)) return [];
@@ -190,6 +195,18 @@ describe("contador de red: la única puerta que hay está declarada y contada", 
       "cambió el número de puertas a la red del puente nativo: revisa el ADR 006 y, sobre todo, " +
         "lo que la pantalla de Honestidad afirma sobre la red",
     ).toBe(PUERTAS_DECLARADAS);
+  });
+
+  /**
+   * **La puerta de la síntesis es efímera** (ADR 011). Una sesión de red por defecto guarda las
+   * respuestas en la caché del disco, y la respuesta del proveedor lleva texto derivado del turno
+   * del cliente: sería un archivo que sobrevive a la reunión. La sesión tiene que nacer `.ephemeral`.
+   */
+  it("la puerta de la síntesis no deja caché en el disco", () => {
+    const red = readFileSync(join(NATIVO, "Red.swift"), "utf8");
+    const sesiones = red.split("\n").filter((l) => /\bURLSession\s*\(/.test(l));
+    expect(sesiones.length, "no se encontró la sesión: este test no mide nada").toBe(1);
+    expect(sesiones[0]).toMatch(/configuration:\s*\.ephemeral\b/);
   });
 
   it("el contador tiene un solo camino de entrada", () => {

@@ -176,10 +176,12 @@ export function useBytesALaRed(): string {
       });
     };
     leer();
-    const baja = escuchar("corte", leer);
+    // Desde el sprint 002 el contador puede moverse en mitad de la reunión: el API de la síntesis,
+    // si el usuario lo encendió, avisa con `ia` después de cada petición.
+    const bajas = [escuchar("corte", leer), escuchar("ia", leer)];
     return () => {
       vivo = false;
-      baja();
+      bajas.forEach((b) => b());
     };
   }, []);
   return bytes;

@@ -3,6 +3,7 @@ import { escuchar, hayTauri, preguntar } from "./puente";
 import { useT } from "./i18n";
 import type { Pista, Turno } from "./cuaderno";
 import { invasivos, type CatalogoDelRadar, type EnTuMac, type Programa } from "./radar";
+import type { Sugerencia } from "./ia";
 
 /**
  * LA FICHA EN LA BANDA — lo que la app encontró en el corpus del consultor.
@@ -102,7 +103,9 @@ export type Novedad =
    * **El radar ámbar (C14)**: la pantalla de la reunión muestra el aviso de grabación, o hay un bot
    * de notas en la lista de participantes. Los bots llegan con el nombre del catálogo.
    */
-  | { que: "radar"; grabando: boolean; bots: string[]; hora: string };
+  | { que: "radar"; grabando: boolean; bots: string[]; hora: string }
+  /** **La sugerencia (C7)**: llega DESPUÉS de su ficha, fundada en ella o en una de sus acumuladas. */
+  | ({ que: "sugerencia" } & Sugerencia);
 
 /**
  * Lo que el radar pone en la banda: el ámbar («te graban», de la pantalla de la reunión) o el
@@ -124,7 +127,19 @@ export type LoQueLaBandaEnseña = {
   nadaEnPantalla: string | null;
   /** El radar, si lo último que pasó fue un aviso suyo. */
   radar: RadarEnLaBanda | null;
+  /** La sugerencia de la ficha que está en pantalla, si el modelo la redactó a tiempo. */
+  sugerencia: Sugerencia | null;
 };
+
+/**
+ * ¿Es esta sugerencia de la ficha que está en pantalla? Llega segundos después, y en ese tiempo
+ * puede haber llegado otra ficha: una sugerencia que cita una ficha que ya no se ve **no se
+ * enseña**, porque el consultor leería una frase debajo de una evidencia que no la respalda.
+ */
+export function esDeEstaFicha(s: Sugerencia, a: Aparicion | null): boolean {
+  if (a?.clase !== "ficha") return false;
+  return s.ficha.titular === a.titular || a.acumuladas.some((x) => x.texto === s.ficha.titular);
+}
 
 /**
  * La última aparición, y si hay una búsqueda en marcha.
@@ -151,6 +166,11 @@ export function useFicha(
   const [radar, setRadar] = useState<RadarEnLaBanda | null>(() =>
     hayTauri() ? null : radarDeMuestra(m, paraLaMuestra),
   );
+  const [sugerencia, setSugerencia] = useState<Sugerencia | null>(() =>
+    hayTauri() ? null : sugerenciaDeMuestra(m, paraLaMuestra),
+  );
+  // La ficha que está en pantalla, para que la sugerencia que llegue sepa si es suya.
+  const fichaAhora = useRef<Aparicion | null>(null);
   // Los invasivos que ya se enseñaron. El evento llega cada vez que cambia CUALQUIER cosa de la
   // lista —también un MDM—, y la banda solo tiene que avisar cuando cambian los invasivos.
   const coralVisto = useRef("");
@@ -183,11 +203,14 @@ export function useFicha(
           setRadar(null);
         }
         if (n?.que === "aparece") {
+          fichaAhora.current = n;
           setFicha(n);
           setBuscando(false);
           setNada(null);
           setRadar(null);
+          setSugerencia(null);
         }
+        if (n?.que === "sugerencia" && esDeEstaFicha(n, fichaAhora.current)) setSugerencia(n);
         // La lectura pedida no encontró texto. Se contesta encima de lo que hubiera: fue lo
         // último que el usuario pidió, y es lo que espera ver.
         if (n?.que === "nada-en-pantalla") {
@@ -209,23 +232,49 @@ export function useFicha(
         // queda buscando para siempre es la avería que la corrida en vivo encontró.
         void preguntar<Aparicion>("pedir_ficha")
           .then((a) => {
-            if (a !== null) setFicha(a);
+            if (a !== null) {
+              fichaAhora.current = a;
+              setFicha(a);
+              setSugerencia(null);
+            }
           })
           .catch(() => undefined)
           .finally(() => setBuscando(false));
       }),
       // Tras el kill-switch no queda ficha en pantalla: la promesa es que no queda nada.
       escuchar("corte", () => {
+        fichaAhora.current = null;
         setFicha(null);
         setBuscando(false);
         setNada(null);
         setRadar(null);
+        setSugerencia(null);
       }),
     ];
     return () => bajas.forEach((b) => b());
   }, []);
 
-  return { aparicion: ficha, buscando, nadaEnPantalla, radar };
+  return { aparicion: ficha, buscando, nadaEnPantalla, radar, sugerencia };
+}
+
+/** La sugerencia de `banda.html` (mirada 18), fundada en la ficha de «Páramo Azul · §3.2 Alcance». */
+function sugerenciaDeMuestra(
+  m: ReturnType<typeof useT>["banda"]["muestra"],
+  estado: string,
+): Sugerencia | null {
+  if (estado !== "sugerencia-local" && estado !== "sugerencia-api") return null;
+  const api = estado === "sugerencia-api";
+  return {
+    titular: m.sugerenciaTitular,
+    linea: m.sugerenciaLinea,
+    confianza: "media",
+    ficha: {
+      titular: m.titular,
+      fuente: { documento: m.fuente, seccion: null, unidad: "propuesta", conjeturada: false },
+    },
+    quien: api ? "api" : "sistema",
+    nombre: api ? m.nombreApi : "",
+  };
 }
 
 /** El radar de `banda.html`: «radar · te graban» y «radar · te vigilan», con MinutaBot y ProctorLince. */

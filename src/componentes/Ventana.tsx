@@ -12,7 +12,7 @@ import { Ic } from "./Iconos";
  * app va a tenerlas; ponerlas navegables prometería una pantalla que no está. Es la misma
  * decisión que «todavía no» (design-system §9-sexies), aplicada a la navegación.
  */
-export type Seccion = "sesion" | "permisos" | "corpus" | "honestidad" | "idioma";
+export type Seccion = "sesion" | "permisos" | "corpus" | "honestidad" | "idioma" | "ia";
 
 /** Solo las claves del cuaderno que son UNA frase: las de los porqués son catálogos, no rótulos. */
 type Rotulo = {
@@ -26,7 +26,8 @@ const RAIL: { id: Seccion | null; icono: string; clave: Rotulo }[] = [
   { id: null, icono: "i-nota", clave: "navNotas" },
   { id: "honestidad", icono: "i-ram", clave: "navHonestidad" },
   { id: "idioma", icono: "i-globo", clave: "navIdioma" },
-  { id: null, icono: "i-chispa", clave: "navIa" },
+  // IA se encendió en el sprint 002 (fase 5, C7): quién redacta, qué sale y cuánto cuesta.
+  { id: "ia", icono: "i-chispa", clave: "navIa" },
 ];
 
 /** Cómo se llama una sección, con la misma palabra que usa el rail. */

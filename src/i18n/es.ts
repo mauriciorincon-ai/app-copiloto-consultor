@@ -174,6 +174,15 @@ export const es = {
       "acceso-remoto": "acceso remoto",
       mdm: "gestión de dispositivos",
     },
+    // ---- fase 5 del sprint 002: la sugerencia (C7), mirada 18 ----------------------------------
+    sugerenciaEnTuMac: "sugerencia · en tu Mac",
+    /** «Claude Haiku · API · confianza media». */
+    api: "API",
+    confianzas: {
+      alta: "confianza alta",
+      media: "confianza media",
+      baja: "confianza baja",
+    },
 
     /**
      * MUESTRA SINTÉTICA «Páramo Azul» — la misma de la maqueta, con datos 100 % inventados.
@@ -231,6 +240,11 @@ export const es = {
       radarHora: "14:03",
       radarPrograma: "ProctorLince",
       radarVe: "ve tu pantalla completa y tu cámara",
+      /** La sugerencia de la maqueta (mirada 18). */
+      sugerenciaTitular: "Tres fuentes dentro, la cuarta aparte",
+      sugerenciaLinea: "Confirma que las tres fuentes están dentro; una cuarta va como adicional con costo aparte.",
+      nombreApi: "Claude Haiku",
+      redApi: "1,2 KB",
     },
   },
   /**
@@ -350,7 +364,7 @@ export const es = {
      * `tests/unit/contador-de-red.test.ts` contando las puertas una a una.
      */
     modoDetalle:
-      "En esta versión la app no abre ninguna conexión: la única que existe la abre macOS cuando le pides instalar un modelo de voz.",
+      "La app abre una conexión solo si enciendes el API en IA, con tu clave, y solo con texto anonimizado. La otra la abre macOS cuando le pides instalar un modelo de voz.",
     piezasCola: "piezas: la otra todavía no existe.",
     loQueQuedara: "Lo que quedará cuando cierres",
     loQueQuedaraDetalle:
@@ -465,6 +479,46 @@ export const es = {
     jamasCompleta: "Jamás completa una frase ni adivina una palabra.",
     tuCarpeta: "Tu carpeta",
     secciones: "secciones",
+
+    // ---- fase 5 del sprint 002: la pantalla IA y el modo de Honestidad (C7, mirada 18) ----------
+    iaSub: "Local por defecto. El API es tuyo, opcional, y se ve lo que sale por él.",
+    quienRedacta: "Quién redacta la sugerencia",
+    enTuMac: "en tu Mac",
+    nadie: "nadie",
+    proveedor: "proveedor",
+    estadoColumna: "estado",
+    latencia: "latencia",
+    modeloDelSistema: "Modelo del sistema (macOS 26)",
+    apiExterno: "API externo",
+    enUso: "en uso",
+    respaldo: "respaldo",
+    noDisponible: "no disponible",
+    apagado: "apagado",
+    encendido: "encendido",
+    porQueNoRedacta: {
+      "apple-intelligence-apagado": "Apple Intelligence está apagado en Ajustes.",
+      "mac-no-compatible": "Este Mac no puede usar el modelo del sistema.",
+      "modelo-descargandose": "macOS todavía está descargando el modelo.",
+      "sin-puente": "Esta copia de la app se construyó sin el modelo del sistema.",
+      "sin-clave": "Sin clave: el API no se puede encender.",
+      "tope-del-mes": "Llegaste al tope del mes: vuelve sola a lo local.",
+    },
+    siFallaQuedan: "Si el modelo falla, quedan las fichas",
+    siFallaDetalle:
+      "La sugerencia es un acento. Buscar en tu corpus y mostrar la ficha con su fuente es código, no modelo: funciona aunque apagues esto entero.",
+    redactarSugerencias: "Redactar sugerencias (además de mostrar la ficha)",
+    proveedorExterno: "Proveedor externo",
+    tuClave: "Tu clave",
+    enTuLlavero: "se guarda en tu Llavero, nunca en un archivo",
+    guardarEnLlavero: "Guardar en el Llavero",
+    borrarLaClave: "Borrar la clave",
+    costo: "Costo",
+    estaReunion: "Esta reunión",
+    esteMes: "Este mes",
+    topeDelMes: "Tope del mes",
+    alLlegarAlTope: "Al llegar al tope vuelve sola al modelo local. No se detiene la reunión.",
+    /** Honestidad con el API encendido: «API encendido · Claude Haiku». */
+    modoApi: "API encendido",
 
     // ---- fase 4 del sprint 002: el radar en Sesión, «software invasivo en tu Mac» ---------------
     vigilanciaTitulo: "Software invasivo corriendo en tu Mac",

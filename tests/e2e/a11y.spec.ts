@@ -26,6 +26,9 @@ const PANTALLAS = [
   { que: "banda · radar ámbar", url: "ventana=banda&estado=radar" },
   { que: "banda · radar coral", url: "ventana=banda&estado=radar-invasivo" },
   { que: "sesión · software invasivo en tu Mac", url: "ventana=principal&pantalla=sesion&radar=vigilancia" },
+  // La síntesis (fase 5): la pantalla IA, con su formulario de clave, y la sugerencia en la banda.
+  { que: "ia", url: "ventana=principal&pantalla=ia" },
+  { que: "banda · sugerencia", url: "ventana=banda&estado=sugerencia-local" },
 ];
 
 test.use({ reducedMotion: "reduce" });

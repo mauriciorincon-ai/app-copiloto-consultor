@@ -149,6 +149,12 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .banda .ficha-b { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .banda .titular-b { font-family: var(--font-evidencia); font-size: 16px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .banda .linea-b { font-family: var(--font-evidencia); font-size: 13.5px; line-height: 1.35; color: var(--ink-2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+.banda .sugerencia-b { display: flex; align-items: baseline; gap: 6px; min-width: 0; margin-top: 3px; padding-left: 7px; border-left: 2px solid var(--halo); font-size: var(--t-ui); line-height: 1.35; color: var(--ink); }
+.banda .sugerencia-b .ic { flex: 0 0 auto; color: var(--halo); align-self: center; }
+.banda .sugerencia-b .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banda .meta-b.sugerida { color: var(--halo); }
+.banda .lado-b .sugerencia { align-self: stretch; }
+.banda .lado-b .sugerencia .texto { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .banda.ampliada .linea-b { -webkit-line-clamp: 2; }
 .banda .lado-b { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; max-width: 34%; }
 .banda .fuente-b { font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
@@ -267,12 +273,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
 
-        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
+             en rojo: fue su decisión (panel, mirada 1). -->
+        
       </div>
 
       <div class="cuerpo-b">
@@ -295,6 +304,13 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
 
         <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- ----------------------- sugerencia · en tu Mac / API ----------------------- -->
+        <!-- Mirada 18 (sprint 002, fase 5; su veredicto viaja al gate del MVP). La FICHA sigue ahí
+             —su titular y su fuente—: la sugerencia va debajo, con el acento halo y el borde
+             izquierdo del panel, y dice dónde se redactó y con qué confianza. -->
         
         
 
@@ -355,12 +371,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
 
-        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
+             en rojo: fue su decisión (panel, mirada 1). -->
+        
       </div>
 
       <div class="cuerpo-b">
@@ -385,6 +404,13 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
 
         <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- ----------------------- sugerencia · en tu Mac / API ----------------------- -->
+        <!-- Mirada 18 (sprint 002, fase 5; su veredicto viaja al gate del MVP). La FICHA sigue ahí
+             —su titular y su fuente—: la sugerencia va debajo, con el acento halo y el borde
+             izquierdo del panel, y dice dónde se redactó y con qué confianza. -->
         
         
 
@@ -445,12 +471,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
 
-        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
+             en rojo: fue su decisión (panel, mirada 1). -->
+        
       </div>
 
       <div class="cuerpo-b">
@@ -480,6 +509,13 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
             <span class="tecla"><kbd>⌥⎋</kbd></span>
           </span>
         </span>
+
+        <!-- ----------------------- sugerencia · en tu Mac / API ----------------------- -->
+        <!-- Mirada 18 (sprint 002, fase 5; su veredicto viaja al gate del MVP). La FICHA sigue ahí
+             —su titular y su fuente—: la sugerencia va debajo, con el acento halo y el borde
+             izquierdo del panel, y dice dónde se redactó y con qué confianza. -->
+        
+        
 
         <!-- ----------------------- ficha · la trajo la pantalla ----------------------- -->
         <!-- Mirada 17-quater. El motivo nuevo, «en pantalla», con su propio símbolo: la pantalla y no
@@ -538,12 +574,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
 
-        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
+             en rojo: fue su decisión (panel, mirada 1). -->
+        
       </div>
 
       <div class="cuerpo-b">
@@ -557,6 +596,13 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
 
         <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- ----------------------- sugerencia · en tu Mac / API ----------------------- -->
+        <!-- Mirada 18 (sprint 002, fase 5; su veredicto viaja al gate del MVP). La FICHA sigue ahí
+             —su titular y su fuente—: la sugerencia va debajo, con el acento halo y el borde
+             izquierdo del panel, y dice dónde se redactó y con qué confianza. -->
         
         
 
@@ -639,7 +685,10 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
           <span lang="es">Zoom · sin verificar</span><span lang="en">Zoom · not verified</span>
         </span>
 
-        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
+             en rojo: fue su decisión (panel, mirada 1). -->
+        
       </div>
 
       <div class="cuerpo-b">
@@ -653,6 +702,13 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
 
         <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- ----------------------- sugerencia · en tu Mac / API ----------------------- -->
+        <!-- Mirada 18 (sprint 002, fase 5; su veredicto viaja al gate del MVP). La FICHA sigue ahí
+             —su titular y su fuente—: la sugerencia va debajo, con el acento halo y el borde
+             izquierdo del panel, y dice dónde se redactó y con qué confianza. -->
         
         
 
@@ -725,7 +781,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
           <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
           <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
         </span>
-        <span class="cliente-b" data-en="ficha-2 sin-resultado-2 transcript radar-invasivo-2">
+        <span class="cliente-b" data-en="ficha-2 sin-resultado-2 transcript radar-invasivo-2 sugerencia-2">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -735,7 +791,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <div class="cuerpo-b">
 
         <!-- --------------------- ficha ampliada · transcript --------------------- -->
-        <span class="ficha-b" data-en="ficha-2 transcript">
+        <span class="ficha-b" data-en="ficha-2 transcript sugerencia-2">
           <span class="titular-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></span>
           <span class="linea-b"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional y se cotiza aparte.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on, priced separately.</span></span>
           <span class="mas-b">
@@ -750,6 +806,9 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
           </span>
         </span>
 
+        
+
+        <!-- La sugerencia ocupa el hueco de la derecha que el sprint 1 dejó reservado para ella. -->
         
 
         <span class="lado-b" data-en="transcript">
@@ -802,12 +861,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
 
-        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
+             en rojo: fue su decisión (panel, mirada 1). -->
+        
       </div>
 
       <div class="cuerpo-b">
@@ -830,6 +892,13 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
 
         <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- ----------------------- sugerencia · en tu Mac / API ----------------------- -->
+        <!-- Mirada 18 (sprint 002, fase 5; su veredicto viaja al gate del MVP). La FICHA sigue ahí
+             —su titular y su fuente—: la sugerencia va debajo, con el acento halo y el borde
+             izquierdo del panel, y dice dónde se redactó y con qué confianza. -->
         
         
 
@@ -890,12 +959,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
 
-        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
+             en rojo: fue su decisión (panel, mirada 1). -->
+        
       </div>
 
       <div class="cuerpo-b">
@@ -920,6 +992,13 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
 
         <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- ----------------------- sugerencia · en tu Mac / API ----------------------- -->
+        <!-- Mirada 18 (sprint 002, fase 5; su veredicto viaja al gate del MVP). La FICHA sigue ahí
+             —su titular y su fuente—: la sugerencia va debajo, con el acento halo y el borde
+             izquierdo del panel, y dice dónde se redactó y con qué confianza. -->
         
         
 
@@ -980,12 +1059,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
 
-        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
+             en rojo: fue su decisión (panel, mirada 1). -->
+        
       </div>
 
       <div class="cuerpo-b">
@@ -1015,6 +1097,13 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
             <span class="tecla"><kbd>⌥⎋</kbd></span>
           </span>
         </span>
+
+        <!-- ----------------------- sugerencia · en tu Mac / API ----------------------- -->
+        <!-- Mirada 18 (sprint 002, fase 5; su veredicto viaja al gate del MVP). La FICHA sigue ahí
+             —su titular y su fuente—: la sugerencia va debajo, con el acento halo y el borde
+             izquierdo del panel, y dice dónde se redactó y con qué confianza. -->
+        
+        
 
         <!-- ----------------------- ficha · la trajo la pantalla ----------------------- -->
         <!-- Mirada 17-quater. El motivo nuevo, «en pantalla», con su propio símbolo: la pantalla y no
@@ -1073,12 +1162,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
 
-        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
+             en rojo: fue su decisión (panel, mirada 1). -->
+        
       </div>
 
       <div class="cuerpo-b">
@@ -1092,6 +1184,13 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
 
         <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- ----------------------- sugerencia · en tu Mac / API ----------------------- -->
+        <!-- Mirada 18 (sprint 002, fase 5; su veredicto viaja al gate del MVP). La FICHA sigue ahí
+             —su titular y su fuente—: la sugerencia va debajo, con el acento halo y el borde
+             izquierdo del panel, y dice dónde se redactó y con qué confianza. -->
         
         
 
@@ -1174,7 +1273,10 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
           <span lang="es">Zoom · sin verificar</span><span lang="en">Zoom · not verified</span>
         </span>
 
-        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
+             en rojo: fue su decisión (panel, mirada 1). -->
+        
       </div>
 
       <div class="cuerpo-b">
@@ -1188,6 +1290,13 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
 
         <!-- --------------------------- ficha · flotante --------------------------- -->
+        
+        
+
+        <!-- ----------------------- sugerencia · en tu Mac / API ----------------------- -->
+        <!-- Mirada 18 (sprint 002, fase 5; su veredicto viaja al gate del MVP). La FICHA sigue ahí
+             —su titular y su fuente—: la sugerencia va debajo, con el acento halo y el borde
+             izquierdo del panel, y dice dónde se redactó y con qué confianza. -->
         
         
 
@@ -1260,7 +1369,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
           <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
           <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
         </span>
-        <span class="cliente-b" data-en="ficha-2 sin-resultado-2 transcript radar-invasivo-2">
+        <span class="cliente-b" data-en="ficha-2 sin-resultado-2 transcript radar-invasivo-2 sugerencia-2">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -1270,7 +1379,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <div class="cuerpo-b">
 
         <!-- --------------------- ficha ampliada · transcript --------------------- -->
-        <span class="ficha-b" data-en="ficha-2 transcript">
+        <span class="ficha-b" data-en="ficha-2 transcript sugerencia-2">
           <span class="titular-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></span>
           <span class="linea-b"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional y se cotiza aparte.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on, priced separately.</span></span>
           <span class="mas-b">
@@ -1285,6 +1394,9 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
           </span>
         </span>
 
+        
+
+        <!-- La sugerencia ocupa el hueco de la derecha que el sprint 1 dejó reservado para ella. -->
         
 
         <span class="lado-b" data-en="transcript">

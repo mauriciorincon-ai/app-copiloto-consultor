@@ -428,6 +428,14 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .banda .ficha-b { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .banda .titular-b { font-family: var(--font-evidencia); font-size: 16px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .banda .linea-b { font-family: var(--font-evidencia); font-size: 13.5px; line-height: 1.35; color: var(--ink-2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+/* La sugerencia en la banda compacta (sprint 002, fase 5, mirada 18): una línea con el acento halo y
+   el borde izquierdo de `.sugerencia`, debajo del titular de la ficha que la respalda. */
+.banda .sugerencia-b { display: flex; align-items: baseline; gap: 6px; min-width: 0; margin-top: 3px; padding-left: 7px; border-left: 2px solid var(--halo); font-size: var(--t-ui); line-height: 1.35; color: var(--ink); }
+.banda .sugerencia-b .ic { flex: 0 0 auto; color: var(--halo); align-self: center; }
+.banda .sugerencia-b .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banda .meta-b.sugerida { color: var(--halo); }
+.banda .lado-b .sugerencia { align-self: stretch; }
+.banda .lado-b .sugerencia .texto { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .banda.ampliada .linea-b { -webkit-line-clamp: 2; }
 /* Hueco de 3 px y no 4: desde la mirada 17-bis la ficha lleva TRES renglones a la derecha —fuente, por
    qué y teclas— y con 4 px las teclas se salían 1,35 px por abajo y la banda les recortaba el borde

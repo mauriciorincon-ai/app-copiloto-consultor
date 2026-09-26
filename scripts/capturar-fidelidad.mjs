@@ -88,6 +88,10 @@ const ARTEFACTOS = [
       { id: "radar", maqueta: "banda.html", estado: "radar", alto: 88, url: "ventana=banda&estado=radar" },
       { id: "radar-invasivo", maqueta: "banda.html", estado: "radar-invasivo", alto: 88, url: "ventana=banda&estado=radar-invasivo" },
       { id: "radar-invasivo-2", maqueta: "banda.html", estado: "radar-invasivo-2", alto: 200, url: "ventana=banda&estado=radar-invasivo&ampliada=1" },
+      // La sugerencia (C7, fase 5): en tu Mac, por el API, y ampliada.
+      { id: "sugerencia-local", maqueta: "banda.html", estado: "sugerencia-local", alto: 88, url: "ventana=banda&estado=sugerencia-local" },
+      { id: "sugerencia-api", maqueta: "banda.html", estado: "sugerencia-api", alto: 88, url: "ventana=banda&estado=sugerencia-api" },
+      { id: "sugerencia-2", maqueta: "banda.html", estado: "sugerencia-2", alto: 200, url: "ventana=banda&estado=sugerencia-local&ampliada=1" },
     ],
   },
   {
@@ -107,6 +111,8 @@ const ARTEFACTOS = [
       { id: "idioma", maqueta: "idioma.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=idioma" },
       // El radar coral en Sesión (fase 4): «software invasivo en tu Mac», con las cinco filas.
       { id: "vigilancia", maqueta: "sesion.html", estado: "vigilancia", alto: 640, url: "ventana=principal&pantalla=sesion&radar=vigilancia" },
+      // La pantalla IA (fase 5): «así se ve hoy · sprint 2».
+      { id: "ia", maqueta: "ia.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=ia" },
     ],
   },
 ];
