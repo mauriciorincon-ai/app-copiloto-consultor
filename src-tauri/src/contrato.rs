@@ -254,6 +254,22 @@ pub fn muestras() -> Vec<Muestra> {
                 .collect(),
             bytes_en_red: 0,
         }),
+        // ---- la voz que sale, el modo solo audio (C15) del sprint 002 ---------------------
+        // Las tres formas que la banda dibuja: apagada (banda a 88 px), diciendo la ficha, y
+        // encendida sin poder hablar. La cuarta combinación —encendida, puede, y callada— es el
+        // hueco que la mirada 16 no dibujó y que solo apareció al construir esto: está declarada en
+        // la bitácora y pendiente de la mirada 16-bis.
+        m("LA_VOZ_APAGADA", "LaVoz", "./cuaderno", &crate::habla::LaVoz::APAGADA),
+        m("LA_VOZ_DICIENDO", "LaVoz", "./cuaderno", &crate::habla::LaVoz {
+            encendida: true,
+            puede: true,
+            diciendo: true,
+        }),
+        m("LA_VOZ_SIN_AURICULARES", "LaVoz", "./cuaderno", &crate::habla::LaVoz {
+            encendida: true,
+            puede: false,
+            diciendo: false,
+        }),
         // ---- el acople, que la banda dibuja en su cabecera --------------------------------
         m("ESTADO_DEL_ACOPLE", "EstadoDelAcople", "./acople", &crate::EstadoDelAcople {
             permiso: true,

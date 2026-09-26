@@ -4,7 +4,16 @@ fn main() {
     compilar_el_puente_de_swift();
 }
 
-/// Compila `nativo/Transcriptor.swift` y lo deja listo para enlazar dentro del binario.
+/// **Los archivos de Swift que forman el puente.** Se compilan JUNTOS, en una sola librería y un
+/// solo módulo: los dos exportan símbolos de C y ninguno importa al otro, así que partirlos en dos
+/// librerías solo añadiría un `-l` más y una manera nueva de que falte la mitad.
+///
+/// - `Transcriptor.swift` — la voz que ENTRA (`SpeechAnalyzer`), sprint 001.
+/// - `Habla.swift` — la voz que SALE (`AVSpeechSynthesizer`), sprint 002.
+#[cfg(target_os = "macos")]
+const EL_PUENTE: &[&str] = &["nativo/Transcriptor.swift", "nativo/Habla.swift"];
+
+/// Compila el puente de Swift y lo deja listo para enlazar dentro del binario.
 ///
 /// **Por qué un puente y no una FFI directa.** `SpeechAnalyzer` (macOS 26) es un `actor` de Swift
 /// con secuencias asíncronas; no hay selectores de Objective-C que mandar como sí los hay para la
@@ -25,22 +34,16 @@ fn main() {
 fn compilar_el_puente_de_swift() {
     use std::process::Command;
 
-    println!("cargo:rerun-if-changed=nativo/Transcriptor.swift");
+    for archivo in EL_PUENTE {
+        println!("cargo:rerun-if-changed={archivo}");
+    }
 
     let salida = std::env::var("OUT_DIR").expect("OUT_DIR");
     let biblioteca = format!("{salida}/libagstt.a");
 
     let swiftc = Command::new("swiftc")
-        .args([
-            "-emit-library",
-            "-static",
-            "-O",
-            "-module-name",
-            "agstt",
-            "-o",
-            &biblioteca,
-            "nativo/Transcriptor.swift",
-        ])
+        .args(["-emit-library", "-static", "-O", "-module-name", "agstt", "-o", &biblioteca])
+        .args(EL_PUENTE)
         .output();
 
     match swiftc {
@@ -61,15 +64,16 @@ fn compilar_el_puente_de_swift() {
                 println!("cargo:warning={linea}");
             }
             panic!(
-                "swiftc está instalado y no pudo compilar nativo/Transcriptor.swift. El puente de \
-                 transcripción es parte del producto: un binario sin él sería una app que no \
-                 escucha y no lo dice. Arriba están las quejas del compilador."
+                "swiftc está instalado y no pudo compilar el puente ({}). El puente es parte del \
+                 producto: un binario sin él sería una app que no escucha, no habla, y no lo dice. \
+                 Arriba están las quejas del compilador.",
+                EL_PUENTE.join(" + ")
             );
         }
         Err(e) => {
             println!(
-                "cargo:warning=sin swiftc ({e}): la app compila, pero la transcripción local queda \
-                 apagada y lo dirá en la pantalla de Idioma"
+                "cargo:warning=sin swiftc ({e}): la app compila, pero la transcripción local y el \
+                 modo solo audio quedan apagados, y lo dirán en la pantalla de Idioma y en el log"
             );
         }
     }

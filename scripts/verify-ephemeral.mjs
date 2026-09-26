@@ -52,6 +52,13 @@ const PROTEGIDOS = [
   // la capa que no ve un solo turno. El plan del sprint decía «`diccionario/` puede tocar disco»;
   // esto es más fuerte y cuesta lo mismo.
   "src-tauri/src/diccionario",
+  // `habla` se añadió en el sprint 002, fase 2, y es el caso raro de la lista: lo que dice en voz
+  // alta es texto del CORPUS DEL USUARIO, no del cliente, así que por la frontera del ADR 002 no le
+  // tocaría. Está aquí por la API: `AVSpeechSynthesizer` trae `write(_:toBufferCallback:)`, que
+  // convierte lo que va a decir en **búferes de audio** — es decir, una manera de dejar en un
+  // archivo la evidencia del consultor leída en voz alta. Eso sería una grabación de la reunión con
+  // otro nombre. El módulo no la usa y desde aquí no puede empezar a usarla en silencio.
+  "src-tauri/src/habla",
   "src-tauri/src/ficha",
   "src-tauri/src/screen",
   "src-tauri/src/sesion",

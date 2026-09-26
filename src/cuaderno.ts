@@ -196,6 +196,8 @@ export type EstadoDeEscucha = {
  * estaba escrita a mano en la pantalla de Honestidad, con un comentario que lo confesaba.
  */
 export type PiezaDelCorte =
+  /** La voz que sale (C15, sprint 002). Es la primera que se corta: la única que se OYE. */
+  | "voz"
   | "audio-del-microfono"
   | "audio-del-sistema"
   | "ultimo-frame"
@@ -303,6 +305,59 @@ const APAGADA: EstadoDeEscucha = {
   bytesDelTranscript: 0,
   motor: "—",
 };
+
+/**
+ * **EL MODO SOLO AUDIO (C15), visto desde la banda.**
+ *
+ * Tres booleanos y ninguna frase, y eso es deliberado en el lado de Rust: las frases son copy y el
+ * copy vive en `src/i18n/`, donde el gate del diccionario las compara una a una con
+ * `docs/diseno/banda.html`. Si la parte nativa mandara «Conecta auriculares», ese texto se podría
+ * cambiar sin que ninguna mirada lo viera.
+ *
+ * | Campo | Qué decide |
+ * |---|---|
+ * | `encendida` | la banda vive a 44 px en vez de 88 |
+ * | `puede` | cuál de los dos estados se pinta: «Diciéndote la ficha…» o «Conecta auriculares» |
+ * | `diciendo` | si está sonando ahora mismo |
+ */
+export type LaVoz = {
+  encendida: boolean;
+  puede: boolean;
+  diciendo: boolean;
+};
+
+/** La voz apagada, que es como nace la app — y como la pinta el arnés de capturas. */
+export const VOZ_APAGADA: LaVoz = { encendida: false, puede: false, diciendo: false };
+
+/**
+ * Cómo está la voz. Se pregunta al montarse y se escucha a partir de ahí: el evento llega cuando
+ * el usuario pulsa `⌘⇧V` o `⎋`, cuando empieza o acaba una ficha, y cuando el kill-switch la calla.
+ *
+ * **No se sondea.** El estado cambia unas cuantas veces por reunión y preguntarlo cada dos segundos
+ * sería despertar Core Audio —`salida_de_audio` lee el dispositivo por defecto— para casi nunca
+ * enterarse de nada.
+ */
+export function useVoz(): LaVoz {
+  const [voz, setVoz] = useState<LaVoz>(VOZ_APAGADA);
+  useEffect(() => {
+    if (!hayTauri()) return;
+    let vivo = true;
+    const leer = () => {
+      void preguntar<LaVoz>("estado_de_la_voz").then((v) => {
+        if (vivo) setVoz(v ?? VOZ_APAGADA);
+      });
+    };
+    leer();
+    const baja = escuchar<LaVoz>("voz", (v) => {
+      if (vivo) setVoz(v ?? VOZ_APAGADA);
+    });
+    return () => {
+      vivo = false;
+      baja();
+    };
+  }, []);
+  return voz;
+}
 
 export function useSalidaDeAudio(): Salida {
   // El motivo va **vacío** a propósito: nadie lo pinta hoy, y escribir aquí una frase en español

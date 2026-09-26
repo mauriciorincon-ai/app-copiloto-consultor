@@ -1232,3 +1232,110 @@ fn el_wer_no_empeora_con_el_diccionario_y_mejora_donde_hay_jerga() {
         "el diccionario no bajó el WER en ningún audio con jerga: no está haciendo su trabajo"
     );
 }
+
+// =============================================================================================
+// la voz que SALE — el modo solo audio (C15), contra el Mac de verdad
+// =============================================================================================
+
+// Lo que ningún test unitario puede contestar: **¿existe el puente de Swift, y contesta?**
+// `habla::cabe_decirla` está probado con cinco booleanos inventados; esto pregunta los de verdad —
+// por dónde sale el sonido de ESTE Mac y qué voces tiene instaladas— y cruza la frontera de C.
+//
+// **Y escribe lo que midió.** Es la lección de la fase 1: sin `--nocapture` cargo se come la salida
+// de los tests que pasan, y un `ok` no distingue «midió» de «se saltó». El runner de la CI no tiene
+// ni voces ni dispositivo de audio, así que allí esto sale verde sin medir nada — y el log lo dirá.
+
+use app_copiloto_consultor_lib::capture::nativo::salida_de_audio;
+use app_copiloto_consultor_lib::habla::{self, Momento};
+
+#[test]
+fn la_voz_de_este_mac_contesta_y_dice_lo_que_hay() {
+    let v = habla::voz();
+    let salida = salida_de_audio();
+    let es = v.hay_para("es-ES");
+    let en = v.hay_para("en-US");
+    println!("[habla] voz «{}» · es-ES={es} · en-US={en}", v.nombre());
+    println!("[habla] salida de audio de este Mac: {salida:?} · ¿eco? {:?}", salida.puede_haber_eco());
+
+    if !es && !en {
+        println!(
+            "[habla] este Mac no tiene voz para ninguno de los dos idiomas: el modo solo audio \
+             quedaría apagado y lo diría. NO SE MIDIÓ el puente."
+        );
+        return;
+    }
+
+    // **El puente, de verdad: encolar y cancelar.** Se calla en el acto a propósito — una suite de
+    // tests que se pone a leer fichas en voz alta es una suite que alguien desactiva. Lo que se
+    // comprueba es que la bandera cruza la frontera de C en los dos sentidos, que es lo único que
+    // el lado de Rust puede afirmar sin un micrófono delante.
+    let idioma = if es { "es-ES" } else { "en-US" };
+    match v.decir(idioma, "Alcance incluido.") {
+        Ok(()) => {
+            assert!(v.hablando(), "se encoló una frase y el puente dice que no está hablando");
+            v.callar();
+            assert!(!v.hablando(), "se pidió callar y el puente sigue diciendo que habla");
+            println!("[habla] el puente encoló y calló · idioma {idioma} — MEDIDO");
+        }
+        Err(e) => {
+            // No se falla: un Mac sin dispositivo de salida es un entorno, no un defecto. Lo que no
+            // se permite es que pase en silencio.
+            println!("[habla] el sintetizador no pudo ({e}). NO SE MIDIÓ el puente.");
+        }
+    }
+}
+
+/// **EL CANDADO, contra el Mac de verdad: la app no habla por donde el cliente oye.**
+///
+/// El plan del sprint pedía «un test que demuestre que el disparador no se oye a sí mismo». Hay dos
+/// mitades, y esta es la que se puede afirmar con el Mac delante:
+///
+/// - **La mitad de arriba**, que es esta: la app **solo habla cuando macOS no dice que el sonido
+///   sale por los altavoces internos**. Si no sale por los altavoces, el micrófono no puede
+///   captarlo, y entonces no hay nada que oírse a sí mismo.
+/// - **La mitad de abajo**, ya construida en el sprint 001 y verificada aparte: el tap del audio
+///   del sistema nace con `initMonoGlobalTapButExcludeProcesses` y **nuestro propio PID**
+///   (`capture/nativo.rs`), así que la pista del cliente no puede traer nuestra voz aunque suene.
+///
+/// **Lo que este test NO puede afirmar, dicho aquí para que no se lea como más de lo que es:** con
+/// un dispositivo externo —unos AirPods, un USB— macOS no distingue un casco de un altavoz de mesa,
+/// la app habla igual (decisión declarada en `habla::cabe_decirla`) y **ahí sí podría oírse a sí
+/// misma**. El tap la excluye; el micrófono no. Esa parada es del gate ⭐, con auriculares puestos y
+/// sin ellos, y está escrita en la guía.
+#[test]
+fn la_app_nunca_habla_por_los_altavoces_internos() {
+    let salida = salida_de_audio();
+    println!("[habla] el candado, contra {salida:?}");
+
+    let con = |s: &app_copiloto_consultor_lib::capture::nativo::Salida| {
+        habla::cabe_decirla(&Momento {
+            modo_encendido: true,
+            salida: s,
+            hay_voz: true,
+            alguien_hablando: false,
+            ya_diciendo: false,
+        })
+    };
+
+    // Lo que se afirma pase lo que pase en este Mac: con los altavoces internos, jamás.
+    use app_copiloto_consultor_lib::capture::nativo::Salida;
+    assert_eq!(
+        con(&Salida::Altavoces),
+        Err(habla::Impedimento::TeOiriaElCliente),
+        "la app habló por los altavoces internos: el cliente la habría oído"
+    );
+
+    // Y lo que se mide en ESTE Mac, con el dispositivo que tenga puesto ahora mismo.
+    match con(&salida) {
+        Ok(()) => println!("[habla] con esta salida la app hablaría — MEDIDO"),
+        Err(i) => println!("[habla] con esta salida la app se callaría: {} — MEDIDO", i.como_frase()),
+    }
+    // El invariante que cierra el test: si hablaría, es porque macOS NO dijo «altavoces internos».
+    if con(&salida).is_ok() {
+        assert_ne!(
+            salida.puede_haber_eco(),
+            Some(true),
+            "la app hablaría con una salida que el propio Mac marca como capaz de hacer eco"
+        );
+    }
+}

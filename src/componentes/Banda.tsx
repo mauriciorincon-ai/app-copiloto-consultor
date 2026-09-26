@@ -4,7 +4,7 @@ import { useAsa } from "../asa";
 import { useTurnos } from "../turnos";
 import { useFicha, type Acumulada, type Aparicion } from "../ficha";
 import { hayTauri } from "../puente";
-import { useCorpus, useEscucha, useReunion, type Turno } from "../cuaderno";
+import { useCorpus, useEscucha, useReunion, useVoz, type LaVoz, type Turno } from "../cuaderno";
 
 /**
  * LA BANDA — la forma principal de Angel Ghost durante una reunión.
@@ -24,7 +24,11 @@ export type EstadoBanda =
   | "buscando"
   | "ficha"
   | "sin-resultado"
-  | "sin-verificar";
+  | "sin-verificar"
+  /** Los tres del modo solo audio (C15). Fuera de Tauri los pide el arnés de capturas por la URL. */
+  | "voz"
+  | "voz-espera"
+  | "voz-sin";
 
 export type PropsBanda = {
   estado: EstadoBanda;
@@ -100,6 +104,7 @@ export function Banda({
   // reunión con gente hablando parece una avería.
   const turnos = useTurnos();
   const asa = useAsa();
+  const voz = useVoz();
 
   /** «1 documento» y no «1 documentos»: el contador es visible y la app es bilingüe por regla. */
   const cuenta = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
@@ -204,6 +209,37 @@ export function Banda({
       ))}
     </span>
   );
+
+  /**
+   * **EL MODO SOLO AUDIO (C15) — y por qué sale por aquí y no por otro estado más.**
+   *
+   * La banda de 44 px no es «la banda con menos cosas»: es **otra anatomía**. No tiene cabecera
+   * —a ese alto no cabe— y todo su contenido es una línea. Meterla en el `cuerpo-b` de abajo
+   * habría obligado a envolver la cabecera entera en una condición y a que cada estado supiera
+   * de los dos altos. Se sale antes, con su propia sección, igual que la maqueta la dibuja aparte.
+   *
+   * Dentro de Tauri manda la parte nativa (`⌘⇧V` cambia el alto de la VENTANA, y el webview solo
+   * obedece); fuera manda la URL, que es como el arnés de capturas fotografía los tres encuadres.
+   */
+  const enVoz = deLaMaqueta
+    ? estado === "voz" || estado === "voz-espera" || estado === "voz-sin"
+    : voz.encendida;
+  if (enVoz) {
+    const comoEsta: LaVoz = deLaMaqueta
+      ? {
+          encendida: true,
+          puede: estado !== "voz-sin",
+          diciendo: estado === "voz",
+        }
+      : voz;
+    return (
+      <BandaDeVoz
+        voz={comoEsta}
+        aparicion={aparicion?.clase === "ficha" ? aparicion : null}
+        asa={asa}
+      />
+    );
+  }
 
   return (
     <section
@@ -457,6 +493,143 @@ export function Banda({
                   {atajos}
                 </>
               )}
+            </span>
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * **LA BANDA A 44 PX — el modo solo audio.**
+ *
+ * Nació de una frase del usuario en la mirada 3 de la etapa de diseño: *«quisiera tener un modo
+ * solo audio que me hable de forma paralela por si quiero ver completamente la pantalla y no me
+ * interrumpa»*. Las dos mitades están aquí: la voz la dice `habla/`, y **la pantalla la devuelve
+ * este alto** — que es lo que el usuario nombró al aprobar la mirada 16: *«amplio margen para la
+ * pantalla de reunión»*.
+ *
+ * Referencia visual: `docs/diseno/banda.html`, estados «voz» y «voz-sin» (mirada 16, aprobada el
+ * 2026-09-26) y «voz-espera» (mirada 16-bis, **pendiente**).
+ *
+ * **Los tres estados, y de dónde sale cada uno.** Rust manda tres booleanos y ninguna frase: el
+ * copy vive en `src/i18n/`, donde el gate del diccionario lo compara con la maqueta.
+ *
+ * | Lo que llega | Lo que se pinta |
+ * |---|---|
+ * | `puede: false` | «Conecta auriculares · el cliente te oiría», en ámbar y con el glifo tachado |
+ * | `diciendo: true` | «Diciéndote la ficha…» y de dónde sale |
+ * | el resto | **la línea de la ficha que acaba de leerse**, con su fuente |
+ *
+ * **El contador de red se queda, aunque la cabecera no.** A 44 px desaparece el `cab-b` entero, y
+ * con él se habría ido el «0 B». Es una promesa dura de la app (regla 2), no un adorno, así que
+ * baja a la línea. Es una de las tres decisiones que el usuario aprobó en la mirada 16.
+ */
+function BandaDeVoz({
+  voz,
+  aparicion,
+  asa,
+}: {
+  voz: LaVoz;
+  aparicion: (Aparicion & { clase: "ficha" }) | null;
+  asa: React.RefObject<HTMLSpanElement | null>;
+}) {
+  const t = useT().banda;
+  const estado = !voz.puede ? "voz-sin" : voz.diciendo ? "voz" : "voz-espera";
+
+  /** El contador, que a este alto vive en la línea y no en la cabecera. */
+  const red = (
+    <span className="red cero mono">
+      <Ic id="i-subir" s />
+      {RED}
+    </span>
+  );
+
+  /**
+   * De dónde sale la ficha. **Sin ficha no se escribe una fuente inventada**: se calla, que es lo
+   * mismo que hace la banda de 88 px desde el hallazgo A1 de la auditoría del sprint 001.
+   */
+  const deDonde = aparicion && (
+    <>
+      <span className="sep">·</span>
+      <span className="fuente-b">
+        {aparicion.fuente.unidad && (
+          <span className="unidad">{t.unidades[aparicion.fuente.unidad]}</span>
+        )}{" "}
+        {aparicion.fuente.seccion
+          ? `${aparicion.fuente.documento} · ${aparicion.fuente.seccion}`
+          : aparicion.fuente.documento}
+      </span>
+    </>
+  );
+
+  return (
+    // **El `aria-label` es el nombre del producto y nada más, y eso es una diferencia declarada
+    // con la maqueta.** `banda.html` escribe `aria-label="Angel Ghost · modo solo audio"`, que en
+    // la sala de diseño está bien porque el andamiaje es solo español; aquí sería **texto de
+    // accesibilidad sin traducir en una interfaz inglesa** — el hallazgo A6 de la auditoría del
+    // sprint 001, que fue exactamente eso. Quien use un lector de pantalla se entera del modo por
+    // la línea, que sí es bilingüe; y el estado, para los tests y el gate de fidelidad, viaja en
+    // `data-estado` como en la banda de 88 px.
+    <section className="banda voz" aria-label="Angel Ghost" data-estado={estado}>
+      {/* El asa sigue siendo la misma y sigue haciendo lo mismo: arrastrarla saca del modo,
+          porque el alto ES el modo. No hace falta una tecla distinta para lo que ya se hace
+          tirando de la banda. */}
+      <span className="asa" ref={asa} title="arrastra para volver a la banda de 88 px">
+        <i />
+      </span>
+
+      <div className="cuerpo-b">
+        {estado === "voz-sin" ? (
+          <>
+            <span className="ficha-b">
+              {/* Símbolo + texto + color, los tres (regla 8): el glifo de los auriculares
+                  tachados, la frase, y el ámbar. Ninguno solo. */}
+              <span className="linea-b warn">
+                <Ic id="i-auriculares-off" s />
+                <span>{t.conectaAuriculares}</span>
+                <span className="sep">·</span>
+                <span>{t.elClienteTeOiria}</span>
+              </span>
+            </span>
+            <span className="lado-b">
+              <span className="atajos-b">
+                <span className="tecla">
+                  <kbd>⌘⇧V</kbd> {t.volver}
+                </span>
+              </span>
+              {red}
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="ficha-b">
+              <span className="linea-b">
+                <Ic id="i-voz" s />
+                {/* Diciendo: el verbo. Callado: **la línea de la ficha que acaba de leerse**, que
+                    es texto que la banda de 88 px ya enseña. Y sin ficha todavía, lo que dice hoy
+                    la banda en reposo — ninguna de las tres inventa una palabra. */}
+                <span>
+                  {voz.diciendo ? t.diciendoLaFicha : (aparicion?.linea ?? t.esperando)}
+                </span>
+                {deDonde}
+              </span>
+            </span>
+            <span className="lado-b">
+              <span className="atajos-b">
+                {/* `⎋` solo aparece mientras suena, porque solo está registrada mientras suena:
+                    fuera de ese rato la tecla es de la reunión, no nuestra. */}
+                {voz.diciendo && (
+                  <span className="tecla">
+                    <kbd>⎋</kbd> {t.callar}
+                  </span>
+                )}
+                <span className="tecla">
+                  <kbd>⌘⇧V</kbd> {t.volver}
+                </span>
+              </span>
+              {red}
             </span>
           </>
         )}

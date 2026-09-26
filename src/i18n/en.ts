@@ -74,6 +74,13 @@ export const en: Diccionario = {
     corta: "cut",
     transcript: "transcript",
 
+    // ---- el modo solo audio (C15, sprint 002) ----
+    diciendoLaFicha: "Reading you the card…",
+    callar: "stop",
+    volver: "back",
+    conectaAuriculares: "Plug in headphones",
+    elClienteTeOiria: "the client would hear you",
+
     muestra: {
       oidoQuien: "client 14:02",
       oido: "And the data cleansing, is that within scope?",

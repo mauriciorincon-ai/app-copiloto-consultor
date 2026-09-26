@@ -106,6 +106,20 @@ export const es = {
     transcript: "transcript",
 
     /**
+     * ---- el modo solo audio (C15, sprint 002) ----
+     *
+     * Las cinco cadenas salen de `docs/diseno/banda.html`, estados «voz», «voz-espera» y
+     * «voz-sin», y el gate del diccionario las compara una a una con la maqueta. Rust **no manda
+     * ninguna**: manda tres booleanos. Si la parte nativa mandara «Conecta auriculares», ese texto
+     * se podría cambiar sin que ninguna mirada lo viera nunca.
+     */
+    diciendoLaFicha: "Diciéndote la ficha…",
+    callar: "callar",
+    volver: "volver",
+    conectaAuriculares: "Conecta auriculares",
+    elClienteTeOiria: "el cliente te oiría",
+
+    /**
      * MUESTRA SINTÉTICA «Páramo Azul» — la misma de la maqueta, con datos 100 % inventados.
      *
      * Vive aquí, y no en un módulo aparte, porque es texto bilingüe y el gate del diccionario lo

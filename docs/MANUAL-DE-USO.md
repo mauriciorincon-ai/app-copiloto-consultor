@@ -114,8 +114,10 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
 - **Cómo se usa:** `⌥⎋` corta todo en el acto — audio, transcript, la banda y su relleno — y
   devuelve la ventana de la reunión a su tamaño. También está el botón en *Honestidad*, por si el
   atajo está cogido por otra app.
-- **Limitaciones conocidas:** el corte alcanza **6 de las 7 piezas** previstas. La séptima —lo que
-  la app lea de tu pantalla— todavía no existe, y por eso no dice «7 de 7».
+- **Limitaciones conocidas:** el corte alcanza **7 de las 8 piezas** previstas. La octava —lo que
+  la app lea de tu pantalla— todavía no existe, y por eso no dice «8 de 8». *(Eran 7 hasta el
+  sprint 002: la voz del modo solo audio es una pieza más, y es la primera que se corta, porque es
+  la única que tu cliente podría oír.)*
 
 ### El modelo de voz de un idioma · desde Sprint 001
 
@@ -128,6 +130,40 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
   - Si tu Mac **no reconoce** ese idioma, o no trae motor de voz, no hay nada que instalar y la app
     lo dice con esas palabras en vez de ofrecerte un botón que no puede funcionar.
   - macOS permite **cinco idiomas listos a la vez**. Es un límite del sistema.
+
+### El modo solo audio: la ficha, al oído · Nuevo · Sprint 002
+
+- **Qué hace:** te **lee la ficha en voz alta** mientras la banda se encoge a una sola línea, para
+  que recuperes la pantalla completa de la reunión. Es lo que pediste en el diseño: *«que me hable
+  de forma paralela por si quiero ver completamente la pantalla y no me interrumpa»*.
+- **Cómo se usa:**
+  1. `⌘⇧V` **enciende el modo**. La banda baja de 88 a 44 px, la ventana de la reunión se hace más
+     grande, y la app te lee la ficha que tengas delante: el titular, la línea y **de dónde sale**.
+  2. A partir de ahí, cada vez que el cliente termine de hablar y aparezca una ficha nueva, te la
+     lee sola. No hay que pulsar nada.
+  3. `⎋` la **calla** en el acto, sin esperar a que termine la frase.
+  4. `⌘⇧V` otra vez **apaga el modo** y la banda vuelve a sus 88 px. Arrastrar el asa hacia arriba
+     hace lo mismo: el alto *es* el modo.
+- **Cuándo se calla sola, y por qué:**
+  - **Si el sonido sale por los altavoces de tu Mac**, no habla y te lo dice en ámbar: «Conecta
+    auriculares · el cliente te oiría». Es el candado del modo.
+  - **Mientras alguien esté hablando** en la reunión —el cliente o tú—. Nunca habla encima de nadie.
+  - **Mientras ya esté diciendo otra ficha.** No encola una detrás de otra.
+  - Y `⌥⎋` la calla y apaga el modo, como todo lo demás.
+- **Limitaciones conocidas:**
+  - **Con auriculares por Bluetooth o USB —unos AirPods, por ejemplo— la app habla, y no puede
+    estar segura de que sean auriculares.** macOS no distingue un casco de un altavoz de mesa
+    conectado por el mismo cable: solo sabe con certeza cuándo el sonido sale por el altavoz interno
+    del Mac. La app dibuja la línea ahí —igual que el aviso de eco de *Sesión*— y te lo dice aquí en
+    vez de prometerte lo que no puede saber. Si tu salida es un altavoz externo, **no enciendas el
+    modo**.
+  - **`⎋` deja de llegarle a la reunión mientras el modo está encendido.** En Google Meet es la
+    tecla que sale de pantalla completa. Se coge solo mientras dura el modo y se devuelve al
+    apagarlo.
+  - **Las fichas «no tengo nada sobre…» no se leen.** Su titular son las palabras del cliente, y
+    sacarlas por el altavoz sería leerte el transcript. La banda sí las pinta.
+  - **Si tu Mac no tiene voz para tu idioma**, el modo no se enciende y lo dice en el registro.
+  - Lee en **tu** idioma —el de tu pista—, porque la ficha sale de tus documentos.
 
 ### Español e inglés, en todo · desde Sprint 001
 
@@ -179,9 +215,14 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
 | `⌥⎋` | corta todo: audio, transcript, banda y relleno. Devuelve la ventana de la reunión |
 | `⌘⇧A` | «ayúdame con esto»: busca una ficha sobre lo último que dijo el cliente |
 | `⌘⇧T` | muestra u oculta el transcript en la banda |
+| `⌘⇧V` | enciende o apaga el **modo solo audio**: te lee la ficha y la banda baja a una línea |
+| `⎋` | calla la voz — **solo mientras el modo solo audio está encendido** |
 
 > **Ojo con `⌘⇧T`:** mientras Angel Ghost esté abierto, el navegador deja de reabrir con esa tecla
 > la última pestaña que cerraste. Si la usas mucho, dilo y se cambia.
+>
+> **Y ojo con `⎋`:** mientras el modo solo audio está encendido, esa tecla es de la app y no le
+> llega a la reunión. Se devuelve en cuanto apagas el modo con `⌘⇧V`.
 
 ## Preguntas frecuentes
 
@@ -212,7 +253,7 @@ detecta y lo marca, pero funciona mejor con auriculares.
 | Sprint | Features añadidas a este manual |
 |---|---|
 | 001 | la banda protegida · el acople · las dos pistas y la transcripción local · el corpus indexado · la ficha de evidencia y la sugerencia de cómo conducirse · el modelo de voz de un idioma · el corte y la pantalla de Honestidad · español e inglés |
-| 002 | el disparo por silencio · **tu diccionario técnico** |
+| 002 | el disparo por silencio · **tu diccionario técnico** · **el modo solo audio** |
 
 > **Corregido tras la auditoría del sprint 001** (2026-09-22): tres frases de este manual habían
 > dejado de ser ciertas y se arreglaron con lo que el código hacía de verdad — el disparo por

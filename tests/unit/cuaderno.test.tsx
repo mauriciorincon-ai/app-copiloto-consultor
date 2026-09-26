@@ -149,11 +149,17 @@ describe("el cuaderno: lo que no existe se dice", () => {
     expect(pendiente.querySelector(".cuanto")?.textContent).toBe("0 B");
   });
 
-  /** «7 de 7» con una pieza sin construir seguiría siendo la mentira cómoda. */
+  /**
+   * «8 de 8» con una pieza sin construir seguiría siendo la mentira cómoda.
+   *
+   * La cuenta subió de 7 a 8 en el sprint 002: la voz que sale es una pieza más, y es la primera
+   * que se corta porque es **la única que el cliente puede oír**. La que falta sigue siendo la
+   * lectura de pantalla, que llega con C8.
+   */
   it("honestidad: el kill-switch dice cuántas piezas corta de cuántas hay", () => {
     pinta("?pantalla=honestidad");
-    expect(screen.getByText(/6 de 7/)).toBeInTheDocument();
-    expect(screen.queryByText(/7 de 7/)).toBeNull();
+    expect(screen.getByText(/7 de 8/)).toBeInTheDocument();
+    expect(screen.queryByText(/8 de 8/)).toBeNull();
   });
 
   /**

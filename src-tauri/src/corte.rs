@@ -47,6 +47,13 @@ pub enum Pieza {
     UltimoFrame,
     /// La ventana de turnos transcritos: se sobrescriben las letras antes de soltarlas.
     Transcript,
+    /// **La voz que sale**: se corta lo que esté diciendo, se tira lo que quede en la cola y el modo
+    /// solo audio se apaga. Nace en el sprint 002 con C15.
+    ///
+    /// Es la pieza más visible de todas y la única que se OYE. Si el usuario pulsa la tecla delante
+    /// de su cliente y la app sigue leyéndole una ficha en voz alta, no hay informe que arregle eso:
+    /// el kill-switch habría fallado en el único sitio donde el cliente puede notarlo.
+    Voz,
 }
 
 /// Todas las piezas, en el orden en que se cortan: **primero lo que sigue entrando**.
@@ -55,6 +62,10 @@ pub enum Pieza {
 /// entrando sin nada en pantalla que lo dijera; vaciar un búfer que todavía recibe muestras lo
 /// deja con muestras nuevas un instante después. Se corta el grifo, luego se vacía el vaso.
 pub const TODAS: &[Pieza] = &[
+    // La voz va PRIMERA, antes incluso que los grifos, y es el único sitio donde el orden se decide
+    // por lo que el cliente percibe: es lo único de esta lista que se oye desde el otro lado de la
+    // llamada. Cerrar un grifo tarda milisegundos y no se nota; una frase a medio decir, sí.
+    Pieza::Voz,
     Pieza::AudioDelMicrofono,
     Pieza::AudioDelSistema,
     Pieza::UltimoFrame,
@@ -73,13 +84,14 @@ impl Pieza {
     /// que la lista y este `match` cuenten la misma historia.
     pub const fn orden(self) -> usize {
         match self {
-            Pieza::AudioDelMicrofono => 0,
-            Pieza::AudioDelSistema => 1,
-            Pieza::UltimoFrame => 2,
-            Pieza::Transcript => 3,
-            Pieza::ContadorDeRed => 4,
-            Pieza::Banda => 5,
-            Pieza::Acople => 6,
+            Pieza::Voz => 0,
+            Pieza::AudioDelMicrofono => 1,
+            Pieza::AudioDelSistema => 2,
+            Pieza::UltimoFrame => 3,
+            Pieza::Transcript => 4,
+            Pieza::ContadorDeRed => 5,
+            Pieza::Banda => 6,
+            Pieza::Acople => 7,
         }
     }
 }
@@ -126,7 +138,10 @@ pub fn suerte_en_este_sprint(pieza: Pieza) -> Suerte {
         | Pieza::Acople
         | Pieza::AudioDelMicrofono
         | Pieza::AudioDelSistema
-        | Pieza::Transcript => Suerte::Cortada,
+        | Pieza::Transcript
+        // La voz existe desde la fase 2 del sprint 002 y se corta de verdad: `stopSpeaking` tira la
+        // frase en curso y la cola entera, y el modo queda apagado.
+        | Pieza::Voz => Suerte::Cortada,
         // La lectura de pantalla es C8 y llega en el sprint 2. Mientras tanto se declara, que es
         // lo contrario de disimularse.
         Pieza::UltimoFrame => Suerte::AunNoExiste,
@@ -180,15 +195,17 @@ mod tests {
     }
 
     /// En este sprint se corta lo que existe, y lo que no existe **se dice**. Un kill-switch que
-    /// informara «7 de 7 cortadas» teniendo piezas sin construir sería una mentira cómoda.
+    /// informara «8 de 8 cortadas» teniendo piezas sin construir sería una mentira cómoda.
     ///
-    /// La cuenta cambió en la fase 3 (de 3 y 4 a 6 y 1) y **el compilador obligó a cambiarla**:
-    /// las pistas de audio y el transcript pasaron de declararse a cortarse de verdad.
+    /// La cuenta ha cambiado dos veces y **las dos las obligó el compilador**: en la fase 3 del
+    /// sprint 001, de 3 y 4 a 6 y 1, cuando las pistas de audio y el transcript pasaron de
+    /// declararse a cortarse de verdad; y en la fase 2 del sprint 002, a 7 y 1, con la voz que sale.
+    /// Ninguna de las dos veces hubo que acordarse de venir: no compilaba.
     #[test]
-    fn en_este_sprint_se_cortan_seis_y_la_septima_se_declara() {
+    fn en_este_sprint_se_cortan_siete_y_la_octava_se_declara() {
         let cortadas = TODAS.iter().filter(|p| suerte_en_este_sprint(**p) == Suerte::Cortada).count();
         let futuras = TODAS.iter().filter(|p| suerte_en_este_sprint(**p) == Suerte::AunNoExiste).count();
-        assert_eq!((cortadas, futuras), (6, 1));
+        assert_eq!((cortadas, futuras), (7, 1));
         assert_eq!(
             suerte_en_este_sprint(Pieza::UltimoFrame),
             Suerte::AunNoExiste,

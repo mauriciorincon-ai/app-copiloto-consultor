@@ -23,6 +23,7 @@ pub mod diccionario;
 pub mod disparo;
 pub mod escucha;
 pub mod ficha;
+pub mod habla;
 pub mod permisos;
 pub mod red;
 pub mod relleno;
@@ -199,7 +200,7 @@ fn ajustar_banda(app: tauri::AppHandle, alto: u32) -> Result<(), String> {
 /// cuadro convertiría el arrastre en un tirón y dejaría a la ventana de la reunión parpadeando.
 /// Durante el arrastre se mueve lo nuestro; al soltar, lo ajeno.
 #[tauri::command]
-fn asentar_banda(app: tauri::AppHandle, alto: u32) -> Result<(), String> {
+fn asentar_banda<R: tauri::Runtime>(app: tauri::AppHandle<R>, alto: u32) -> Result<(), String> {
     ventana::ajustar_banda(&app, alto)?;
     let franja = ventana::franja(&app, alto)?;
     let informe = acople::reacoplar(franja, &huella(&app));
@@ -469,6 +470,12 @@ fn empezar_a_escuchar(
         Ok(()) => {}
     }
     let mango = app.clone();
+    // **El modo solo audio lee en el idioma del CONSULTOR**, no del cliente: la ficha sale de los
+    // documentos del usuario, así que está escrita en su idioma. Se fija aquí, que es el único sitio
+    // donde la app se entera de cuál eligió.
+    if let Ok(mut i) = app.state::<LaVozQueSale>().idioma.lock() {
+        *i = idioma_del_consultor.clone();
+    }
     let buscador = std::sync::Arc::new(el_corpus.inner().clone());
     // Los nombres propios salen del corpus DEL USUARIO, jamás de la reunión: es lo que hace que el
     // diccionario no sea un transcript persistido con otro nombre.
@@ -503,6 +510,16 @@ fn empezar_a_escuchar(
                         println!("[ficha] {} ms — por encima del presupuesto de 4 s", a.ms);
                     }
                 _ => {}
+            }
+            // **EL OPT-IN AUTOMÁTICO DEL MODO SOLO AUDIO.** Aquí y en ningún otro sitio: este es el
+            // instante en que un turno del cliente acaba de traer una ficha, que es exactamente
+            // cuando el usuario pidió que se le hablara — *«que me hable de forma paralela»*.
+            //
+            // Es opt-in de verdad: `decir_la_ficha` empieza comprobando el interruptor, y con el
+            // modo apagado se va sin hacer nada y sin escribir una línea. La app no habla si nadie
+            // lo encendió.
+            if let escucha::Novedad::Aparece(a) = &novedad {
+                decir_la_ficha(&mango, a);
             }
             let _ = mango.emit(EVENTO_ESCUCHA, novedad);
         },
@@ -632,6 +649,18 @@ fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Inf
         let suerte = corte::suerte_en_este_sprint(*pieza);
         if suerte == corte::Suerte::Cortada {
             match pieza {
+                // **Lo primero, porque es lo único que el cliente oye.** Y el modo se apaga: si
+                // quedara encendido, el turno siguiente volvería a hablar solo, después de que el
+                // usuario acabara de cortar todo delante de alguien.
+                corte::Pieza::Voz => {
+                    let voz = app.state::<LaVozQueSale>();
+                    voz.voz.callar();
+                    if voz.encendida.swap(false, Ordering::Relaxed) {
+                        soltar_el_callar(app);
+                        println!("[corte] el modo solo audio estaba encendido: callado y apagado");
+                        let _ = app.emit_to(ventana::BANDA, EVENTO_VOZ, voz.estado());
+                    }
+                }
                 corte::Pieza::ContadorDeRed => red::reiniciar(),
                 corte::Pieza::Banda => ventana::cerrar_banda(app),
                 corte::Pieza::Acople => {
@@ -713,7 +742,9 @@ pub fn run() {
             indexar_corpus,
             estado_del_corpus,
             piezas_del_corte,
-            pedir_ficha
+            pedir_ficha,
+            modo_solo_audio,
+            estado_de_la_voz
         ])
         .setup(|app| {
             // El invariante se comprueba ANTES de abrir nada y aborta el arranque si falla:
@@ -726,6 +757,19 @@ pub fn run() {
             app.manage(FondoDelRelleno(acople::fondo_de_escritorio()));
             app.manage(LaEscucha::default());
             app.manage(ElCorpus::default());
+            // La voz se pregunta al sistema aquí, una vez, y se deja dicho lo que hay: un Mac sin
+            // voz para el idioma del usuario no puede usar el modo solo audio, y eso tiene que
+            // verse en el arranque y no cuando el usuario pulse la tecla en mitad de una reunión.
+            app.manage(LaVozQueSale::default());
+            {
+                let v = app.state::<LaVozQueSale>();
+                println!(
+                    "[habla] voz «{}» · ¿hay para es-ES? {} · ¿para en-US? {}",
+                    v.voz.nombre(),
+                    v.voz.hay_para("es-ES"),
+                    v.voz.hay_para("en-US")
+                );
+            }
 
             registrar_el_kill_switch(app.handle());
 
@@ -898,27 +942,281 @@ fn pedir_ficha(
     escucha_viva: tauri::State<'_, LaEscucha>,
     el_corpus: tauri::State<'_, ElCorpus>,
 ) -> Result<ficha::Aparicion, String> {
-    use escucha::Buscador;
-    let ultimo = escucha_viva
-        .0
-        .lock()
-        .map_err(|_| "la escucha quedó en mal estado")?
-        .as_ref()
-        .and_then(|e| {
-            e.ultimos_turnos(6)
-                .into_iter()
-                .rev()
-                .find(|t| t.pista == capture::Pista::Sistema && !t.eco)
-        })
-        .ok_or("todavía no he oído nada del cliente")?;
+    // El cuerpo vive en `ficha_vigente` desde el sprint 002: `⌘⇧V` necesita **la misma** ficha para
+    // decirla que esta enseña, y dos búsquedas escritas por separado acabarían encontrando cosas
+    // distintas para la misma pregunta.
+    ficha_vigente(&escucha_viva, &el_corpus).ok_or_else(|| "todavía no he oído nada del cliente".into())
+}
 
+// ---------------------------------------------------------------------------------------------
+// Fase 2 del sprint 002 — EL MODO SOLO AUDIO (C15): la voz que sale
+// ---------------------------------------------------------------------------------------------
+
+/// **EL MODO SOLO AUDIO, vivo mientras la app esté abierta.**
+///
+/// Nació en la mirada 3 de la etapa de diseño, con estas palabras del usuario: *«quisiera tener un
+/// modo solo audio que me hable de forma paralela por si quiero ver completamente la pantalla y no
+/// me interrumpa»*. Las dos mitades son los dos requisitos, y las dos están aquí: **hablar** (la voz
+/// del sistema) y **devolver la pantalla** (la banda baja a 44 px).
+///
+/// El estado es mínimo a propósito — un interruptor, una voz y un idioma— porque la ficha **no se
+/// guarda**. Se dice en el momento en que aparece y se suelta; guardarla habría obligado a añadir
+/// una pieza más al kill-switch para volver a vaciarla, y la que sí hay que añadir es otra: la voz
+/// tiene que **callarse** cuando el usuario pulsa `⌥⎋` delante de su cliente.
+struct LaVozQueSale {
+    voz: Box<dyn habla::Voz>,
+    encendida: AtomicBool,
+    /// En qué idioma se lee. **El del consultor**, no el del cliente: la ficha sale de los
+    /// documentos del usuario, así que está escrita en su idioma. Lo fija `empezar_a_escuchar`; hasta
+    /// entonces vale el de la interfaz por defecto.
+    idioma: std::sync::Mutex<String>,
+}
+
+impl Default for LaVozQueSale {
+    fn default() -> Self {
+        Self {
+            voz: habla::voz(),
+            encendida: AtomicBool::new(false),
+            idioma: std::sync::Mutex::new("es-ES".into()),
+        }
+    }
+}
+
+impl LaVozQueSale {
+    fn idioma(&self) -> String {
+        self.idioma.lock().map(|i| i.clone()).unwrap_or_else(|_| "es-ES".into())
+    }
+
+    /// Lo que la banda enseña. Se pregunta al sistema por dónde sale el sonido **cada vez**: los
+    /// auriculares se conectan y se quitan en mitad de una reunión, que es justo cuando importa.
+    fn estado(&self) -> habla::LaVoz {
+        let idioma = self.idioma();
+        habla::LaVoz {
+            encendida: self.encendida.load(Ordering::Relaxed),
+            puede: habla::puede_en_principio(
+                &capture::nativo::salida_de_audio(),
+                self.voz.hay_para(&idioma),
+            ),
+            diciendo: self.voz.hablando(),
+        }
+    }
+}
+
+/// El nombre del evento con el que la banda se entera de cómo está la voz.
+const EVENTO_VOZ: &str = "voz";
+
+/// **Dice la ficha en voz alta, si cabe decirla.**
+///
+/// Es el único camino por el que la app habla, y lo usan los dos disparadores: el atajo `⌘⇧V` —que
+/// lee la ficha vigente al encender el modo— y la aparición automática al final de un turno del
+/// cliente. Tener un solo camino es lo que hace que las cinco razones para callarse valgan para los
+/// dos: dos copias de esta decisión acabarían callándose por motivos distintos.
+///
+/// Al log va **el hecho, jamás la ficha**: cuántas letras y por qué se calló. El titular es
+/// contenido del corpus del usuario y un log es un archivo.
+fn decir_la_ficha<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Aparicion) {
+    let ficha::Respuesta::Ficha(f) = &a.respuesta else {
+        // Una «sin resultado» no se lee. No es una decisión de ahorro: su titular son **las
+        // palabras del cliente** («nada sobre "certificación ISO"»), y leérselas al usuario sería
+        // sacar el transcript del cliente por el altavoz. La banda la pinta; la voz se calla.
+        return;
+    };
+    let estado = app.state::<LaVozQueSale>();
+    let idioma = estado.idioma();
+
+    // `try_lock` y no `lock`, y la razón es un abrazo mortal real: este camino se llama DESDE los
+    // hilos de la escucha, y `empezar_a_escuchar` tiene el candado de `LaEscucha` cogido mientras
+    // los arranca. La ventana es de milisegundos y hace falta una ficha para entrar en ella, así que
+    // no ocurriría casi nunca — «casi nunca» es exactamente la clase de fallo que aparece en una
+    // reunión. Si el candado está ocupado se supone que **sí** hay alguien hablando, que es el lado
+    // que calla.
+    let alguien_hablando = match app.state::<LaEscucha>().0.try_lock() {
+        Ok(g) => g
+            .as_ref()
+            .map(|e| {
+                let s = e.estado();
+                s.microfono.hablando || s.sistema.hablando
+            })
+            .unwrap_or(false),
+        Err(_) => true,
+    };
+
+    let salida = capture::nativo::salida_de_audio();
+    let momento = habla::Momento {
+        modo_encendido: estado.encendida.load(Ordering::Relaxed),
+        salida: &salida,
+        hay_voz: estado.voz.hay_para(&idioma),
+        alguien_hablando,
+        ya_diciendo: estado.voz.hablando(),
+    };
+    if let Err(impedimento) = habla::cabe_decirla(&momento) {
+        // El modo apagado es el estado normal de la app: decirlo en cada ficha llenaría el log de
+        // una línea por turno sin informar de nada.
+        if impedimento != habla::Impedimento::ModoApagado {
+            println!("[habla] no se dice la ficha: {} · salida {salida:?}", impedimento.como_frase());
+            let _ = app.emit_to(ventana::BANDA, EVENTO_VOZ, estado.estado());
+        }
+        return;
+    }
+
+    let dicho = habla::a_voz(&f.titular, &f.linea, &fuente_hablada(&f.fuente));
+    match estado.voz.decir(&idioma, &dicho) {
+        Ok(()) => println!("[habla] diciendo la ficha · {} letras · {idioma}", dicho.chars().count()),
+        Err(e) => println!("[habla] el sintetizador no pudo: {e}"),
+    }
+    let _ = app.emit_to(ventana::BANDA, EVENTO_VOZ, estado.estado());
+}
+
+/// La fuente, tal y como se DICE — que no es como se escribe.
+///
+/// La banda pinta «propuesta · §3.2 Alcance», y el interpunto y el `§` leídos en voz alta son un
+/// ruido: `AVSpeechSynthesizer` dice «párrafo tres punto dos» o se los come, según la voz. Se
+/// cambian por palabras. Es el único sitio de la app donde la voz y la pantalla dicen lo mismo con
+/// letras distintas, y por eso está aquí y no en el módulo protegido: es copy hablado.
+fn fuente_hablada(f: &ficha::Fuente) -> String {
+    let seccion = f.seccion.as_deref().unwrap_or("").replace('§', "");
+    if seccion.trim().is_empty() {
+        f.documento.clone()
+    } else {
+        format!("{}, {}", f.documento, seccion.trim())
+    }
+}
+
+/// `⌘⇧V` — **enciende o apaga el modo solo audio**, y con él la banda de 44 px.
+///
+/// Lo llaman la tecla global y nadie más. Al encender lee la ficha vigente, que es lo que el usuario
+/// espera de haber pulsado la tecla: si no dijera nada hasta el turno siguiente, parecería que no
+/// funcionó.
+///
+/// **Por qué la tecla es `⌘⇧V` y no el `⌘⇧A` que pedía la orden del sprint:** `⌘⇧A` ya es «ayúdame
+/// con esto» desde el sprint 001 — está registrada [`el_atajo_de_ayuda`], dibujada en la banda y
+/// escrita en el manual. El panel que el usuario aprobó en la etapa de diseño ya usaba `⌘⇧V`.
+/// Desviación declarada en la bitácora.
+#[tauri::command]
+fn modo_solo_audio(app: tauri::AppHandle) -> habla::LaVoz {
+    conmutar_el_modo(&app)
+}
+
+/// El trabajo de `⌘⇧V`, **hecho en Rust y no pedido a la banda por un evento**.
+///
+/// Los otros tres atajos emiten a la banda y la banda actúa, y aquí eso no sirve: este cambia el
+/// ALTO de la ventana, y el `⌥⎋` puede haberla cerrado. Un modo que se enciende solo si queda una
+/// banda que lo pida no es un modo, es una casualidad.
+fn conmutar_el_modo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> habla::LaVoz {
+    let estado = app.state::<LaVozQueSale>();
+    let el_corpus = app.state::<ElCorpus>();
+    let escucha_viva = app.state::<LaEscucha>();
+    let encendida = !estado.encendida.load(Ordering::Relaxed);
+    estado.encendida.store(encendida, Ordering::Relaxed);
+
+    // **El alto de la banda ES el modo.** Lo que el usuario pidió no era una voz: era recuperar la
+    // pantalla mientras la app le habla, y eso son 44 px que vuelven a la reunión.
+    //
+    // Se usa `asentar_banda` y no `ajustar_banda`, que es la diferencia entre mover lo nuestro y
+    // mover lo ajeno: `ajustar_banda` deja la banda y su relleno en su sitio —juntos, porque un
+    // relleno que se quedara a 88 px dejaría una franja de escritorio a la vista de la captura— y
+    // `asentar_banda` además **rehace el acople**, que es lo único que le devuelve esos 44 px a la
+    // ventana de la reunión. Sin esa segunda mitad el modo bajaría la banda y el usuario no ganaría
+    // un píxel de pantalla, que es justo lo que pidió. Es una llamada por encendido, no por cuadro:
+    // el arrastre del asa aprendió lo caro que es hacerlo sesenta veces por segundo.
+    let alto = if encendida { ventana::ALTO_VOZ } else { ventana::ALTO_COMPACTA };
+    if let Err(e) = asentar_banda((*app).clone(), alto) {
+        println!("[habla] la banda no pudo ir a {alto} px: {e}");
+    }
+
+    if encendida {
+        // `⎋` se registra SOLO mientras el modo está encendido. Un Escape global permanente se lo
+        // quitaría a la reunión —en Meet es la tecla de salir de pantalla completa— y a todas las
+        // demás apps del Mac, para una función que existe unos segundos por ficha.
+        registrar_el_callar(app);
+        println!("[habla] ⌘⇧V: modo solo audio ENCENDIDO · banda a {} px", ventana::ALTO_VOZ);
+        // La ficha vigente se rearma igual que en `pedir_ficha`: con el último turno del cliente.
+        // Si no se ha oído nada todavía, no hay nada que decir y el modo queda encendido, esperando.
+        match ficha_vigente(&escucha_viva, &el_corpus) {
+            Some(a) => decir_la_ficha(app, &a),
+            None => println!("[habla] todavía no he oído nada del cliente: el modo queda a la espera"),
+        }
+    } else {
+        soltar_el_callar(app);
+        estado.voz.callar();
+        println!("[habla] ⌘⇧V: modo solo audio APAGADO · banda a {} px", ventana::ALTO_COMPACTA);
+    }
+
+    let ahora = estado.estado();
+    let _ = app.emit_to(ventana::BANDA, EVENTO_VOZ, ahora);
+    ahora
+}
+
+/// Cómo está la voz ahora mismo. Lo pregunta la banda al montarse; después escucha el evento.
+#[tauri::command]
+fn estado_de_la_voz(estado: tauri::State<'_, LaVozQueSale>) -> habla::LaVoz {
+    estado.estado()
+}
+
+/// **La ficha vigente, rearmada con el último turno del cliente.**
+///
+/// Es el cuerpo que `pedir_ficha` tenía dentro, sacado para que lo compartan los dos que lo
+/// necesitan: el atajo `⌘⇧A`, que la enseña, y el `⌘⇧V`, que la dice. Dos copias de esto acabarían
+/// buscando distinto, y entonces la banda y la voz enseñarían fichas diferentes de la misma
+/// pregunta — que es la peor manera posible de romper un modo que existe para no tener que mirar.
+fn ficha_vigente(
+    escucha_viva: &tauri::State<'_, LaEscucha>,
+    el_corpus: &tauri::State<'_, ElCorpus>,
+) -> Option<ficha::Aparicion> {
+    use escucha::Buscador;
+    let ultimo = escucha_viva.0.lock().ok()?.as_ref().and_then(|e| {
+        e.ultimos_turnos(6)
+            .into_iter()
+            .rev()
+            .find(|t| t.pista == capture::Pista::Sistema && !t.eco)
+    })?;
     let empezo = std::time::Instant::now();
     let buscador = el_corpus.inner().clone();
     let hallazgos = buscador.buscar(&ultimo.texto, ficha::TOP);
     let respuesta = ficha::armar(&ultimo.texto, &hallazgos);
     let ms = empezo.elapsed().as_millis() as u64;
     println!("[ficha] a petición del usuario en {ms} ms · {} candidatas", hallazgos.len());
-    Ok(ficha::Aparicion { respuesta, motivo: disparo::Motivo::Atajo, ms, hora: ultimo.hora })
+    Some(ficha::Aparicion { respuesta, motivo: disparo::Motivo::Atajo, ms, hora: ultimo.hora })
+}
+
+/// `⌘⇧V` — **el modo solo audio**, tal y como lo dibuja la banda de 44 px.
+///
+/// No es `⌘⇧A`, que es lo que pedía la orden del sprint: `⌘⇧A` ya es «ayúdame con esto» desde el
+/// sprint 001 y el panel aprobado en la etapa de diseño ya escribía `⌘⇧V`. Desviación declarada.
+fn el_atajo_del_modo_de_voz() -> tauri_plugin_global_shortcut::Shortcut {
+    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
+    Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyV)
+}
+
+/// `⎋` — **cállate**. Solo está registrada mientras el modo solo audio está encendido.
+fn el_atajo_de_callar() -> tauri_plugin_global_shortcut::Shortcut {
+    use tauri_plugin_global_shortcut::{Code, Shortcut};
+    Shortcut::new(None, Code::Escape)
+}
+
+/// Coge `⎋` al encender el modo. **Si no puede, lo dice**: el usuario pulsaría la tecla creyendo
+/// que calló a la app y la app seguiría hablándole encima del cliente.
+fn registrar_el_callar<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    use tauri_plugin_global_shortcut::GlobalShortcutExt;
+    match app.global_shortcut().register(el_atajo_de_callar()) {
+        Ok(()) => println!(
+            "[habla] ⎋ registrada MIENTRAS dure el modo · OJO: durante estos segundos la tecla no \
+             le llega a la reunión"
+        ),
+        Err(e) => println!(
+            "[habla] NO se pudo registrar ⎋ ({e}): para callar la voz hay que apagar el modo con ⌘⇧V"
+        ),
+    }
+}
+
+/// Suelta `⎋` al apagar el modo. Que falle no rompe nada —la tecla seguiría cogida— pero se dice,
+/// porque a partir de ahí la reunión dejaría de recibir Escapes sin ninguna razón visible.
+fn soltar_el_callar<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    use tauri_plugin_global_shortcut::GlobalShortcutExt;
+    match app.global_shortcut().unregister(el_atajo_de_callar()) {
+        Ok(()) => println!("[habla] ⎋ devuelta al sistema"),
+        Err(e) => println!("[habla] ⎋ NO se pudo devolver ({e}): la reunión seguirá sin recibirla"),
+    }
 }
 
 fn atender_el_atajo<R: tauri::Runtime>(
@@ -938,6 +1236,13 @@ fn atender_el_atajo<R: tauri::Runtime>(
     } else if *atajo == el_atajo_de_ayuda() {
         println!("[ficha] ⌘⇧A");
         let _ = app.emit_to(ventana::BANDA, EVENTO_FICHA, ());
+    } else if *atajo == el_atajo_del_modo_de_voz() {
+        conmutar_el_modo(app);
+    } else if *atajo == el_atajo_de_callar() {
+        let estado = app.state::<LaVozQueSale>();
+        estado.voz.callar();
+        println!("[habla] ⎋: callada a petición del usuario");
+        let _ = app.emit_to(ventana::BANDA, EVENTO_VOZ, estado.estado());
     }
 }
 
@@ -971,6 +1276,13 @@ fn registrar_el_kill_switch<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
         Err(e) => println!(
             "[ficha] NO se pudo registrar ⌘⇧A ({e}): la ficha a petición sigue en el botón de la \
              banda ampliada, pero la tecla no va a responder"
+        ),
+    }
+    match app.global_shortcut().register(el_atajo_del_modo_de_voz()) {
+        Ok(()) => println!("[habla] ⌘⇧V «modo solo audio» registrado"),
+        Err(e) => println!(
+            "[habla] NO se pudo registrar ⌘⇧V ({e}): el modo solo audio no se va a poder encender \
+             — y hoy no tiene otra puerta, así que queda apagado"
         ),
     }
 }

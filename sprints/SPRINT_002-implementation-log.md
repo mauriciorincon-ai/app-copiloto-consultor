@@ -990,3 +990,143 @@ Las opciones:
 
 Mientras no haya respuesta, `docs/MANUAL-DE-USO.md` es el único sitio donde el usuario se entera del
 archivo y de su formato — y eso ya está escrito, con sus números medidos y sus cuatro limitaciones.
+
+---
+
+# Fase 2 — El modo solo audio (C15)
+
+La voz que SALE. `voz/` ya era la voz que entra —VAD, turnos, eco—, así que el módulo nuevo se
+llama **`habla/`**: dos módulos con el mismo nombre para las dos direcciones del sonido es la clase
+de confusión que se descubre tarde. Desviación 1 del plan, ya declarada.
+
+## Lo que se construyó
+
+| Pieza | Dónde | Qué hace |
+|---|---|---|
+| El puente | `src-tauri/nativo/Habla.swift` | `AVSpeechSynthesizer` por C ABI: `ag_habla_voz` · `decir` · `callar` · `hablando` |
+| El motor | `src-tauri/src/habla/mod.rs` · `apple.rs` | el `trait Voz`, la **muda** de primera clase, y todo el `unsafe` en una sola puerta |
+| El candado | `habla::cabe_decirla` | **función pura** sobre cinco booleanos: las cinco maneras de callarse |
+| El contrato | `contrato.rs` → `contrato.generado.ts` | `LaVoz` con sus tres muestras, cruzando la costura |
+| El cableado | `lib.rs` | `⌘⇧V`, `⎋`, el opt-in automático, y el alto de la banda |
+| La banda | `src/componentes/Banda.tsx` (`BandaDeVoz`) | los tres estados de 44 px |
+| El corte | `corte.rs` | **`Pieza::Voz`**, la primera que se corta |
+
+`build.rs` pasa de compilar un archivo de Swift a compilar **una lista** (`EL_PUENTE`): los dos
+exportan símbolos de C, ninguno importa al otro, y partirlos en dos librerías solo añadiría una
+manera nueva de que falte la mitad.
+
+## Las cuatro decisiones que hubo que tomar, y por qué
+
+### 1. El candado con un dispositivo externo: **se habla**
+
+`Salida::puede_haber_eco()` tiene **tres** respuestas, no dos: `Some(true)` con los altavoces
+internos, `Some(false)` con auriculares por el conector, y **`None` con cualquier dispositivo
+externo** — porque desde Core Audio un USB o un Bluetooth puede ser un casco o un altavoz de mesa y
+no se distinguen. **Eso incluye los AirPods**, que es como la mayoría de la gente hace una
+videollamada (`capture/nativo.rs:216` — todo lo que no sea transporte interno cae en `Otra`).
+
+Las dos salidas eran malas: negarse con `None` deja C15 inservible para el caso normal —y una
+funcionalidad que nunca corre es peor que una limitación declarada—; hablar con `None` acepta que
+algún día el sonido salga por un altavoz de mesa. **Se habla**, por tres razones en orden de peso:
+
+1. **La app ya trazó esta línea y el usuario la aprobó.** El aviso de eco de Sesión se enciende SOLO
+   con los altavoces internos (`Sesion.tsx:38`), y esa pantalla pasó la mirada 13. Trazarla distinta
+   aquí sería que la misma app respondiera dos cosas a la misma pregunta.
+2. Un dispositivo externo en una videollamada **es un casco**, porque es lo que el consultor se pone
+   para no oírse. No es una certeza y no se escribe como tal en ningún sitio.
+3. Quien lo enciende es el usuario, con una tecla, sabiendo por dónde le suena el Mac.
+
+**Está en el manual como limitación, con la frase «si tu salida es un altavoz externo, no enciendas
+el modo», y cambiarla es UNA línea de `cabe_decirla`.** La frase precisa que lo cerraría —«no sé si
+"AirPods Pro" es un casco»— necesita `Salida.nombre`, que es uno de los campos del contrato sin
+lector y tiene su sitio pedido para la mirada 17.
+
+### 2. Las fichas «sin resultado» NO se leen
+
+Su titular son **las palabras del cliente** («nada sobre "certificación ISO 27001"»). Leérselas al
+usuario sería sacar el transcript del cliente por el altavoz, que es exactamente lo que la regla 1
+no permite que salga de la RAM — y por un camino que ninguna capa vigilaba. La banda sí las pinta.
+
+### 3. `⎋` se registra **solo mientras el modo está encendido**
+
+Un Escape global permanente se lo quita a la reunión —en Meet es la tecla de salir de pantalla
+completa— y a todas las demás apps del Mac, para una función que existe unos segundos por ficha. Se
+coge al encender y se devuelve al apagar, y las dos cosas se dicen en el log. Está en el manual con
+su ojo, igual que `⌘⇧T`.
+
+### 4. `habla/` es **módulo protegido**, aunque lo que dice sea del usuario
+
+Por la frontera del ADR 002 no le tocaría: la ficha sale del corpus del consultor, no del cliente.
+Está en `PROTEGIDOS` por la **API**: `AVSpeechSynthesizer` trae `write(_:toBufferCallback:)`, que
+convierte lo que va a decir en búferes de audio — una manera de dejar en un archivo la evidencia del
+consultor leída en voz alta. Eso sería una grabación de la reunión con otro nombre. El módulo no la
+usa, y desde aquí no puede empezar a usarla en silencio.
+
+## La pieza que el kill-switch no tenía
+
+`corte::Pieza::Voz`, y va **la primera de las ocho**. El orden de `TODAS` se decide por lo que sigue
+entrando —grifo antes que vaso—; esta es la única excepción, y se decide por lo que el cliente
+**percibe**: es lo único de la lista que se oye desde el otro lado de la llamada. Si el usuario pulsa
+`⌥⎋` delante de su cliente y la app sigue leyéndole una ficha en voz alta, no hay informe que
+arregle eso.
+
+No hubo que acordarse de venir a añadirla: `Pieza::orden` y `suerte_en_este_sprint` son dos `match`
+sin comodín y **no compilaba**. La cuenta pasa de «6 de 7» a **«7 de 8»** en Honestidad, en el test
+de `cuaderno.test.tsx` y en el manual. La que falta sigue siendo la lectura de pantalla.
+
+## El estado que la mirada 16 no dibujó — **mirada 16-bis, pendiente**
+
+Construir el modo hizo aparecer una pregunta que la maqueta no contestaba: **¿qué enseña la banda de
+44 px mientras el modo está encendido y CALLADO?** La mirada 16 tenía «hablando» y «sin auriculares»,
+y ninguno de los dos es eso.
+
+No es un caso raro: es **la mayor parte del tiempo**. El modo dura toda la reunión —bajarlo y
+subirlo por cada ficha obligaría a rehacer el acople en cada transición, que son varias idas y
+vueltas a otro proceso por la Accessibility API— así que entre una ficha y la siguiente la banda
+está a 44 px sin nada que decir.
+
+**Lo que se propone no inventa ni una palabra:** es la MISMA `linea-b` del estado «hablando» sin el
+verbo, con la línea de la ficha que acaba de leerse y su fuente — texto que la banda de 88 px ya
+enseña desde la mirada 11. Sin ficha todavía, dice lo que dice hoy la banda en reposo.
+
+Está **maquetado** (`banda.html`, estado `voz-espera`, con su nota de «Qué mirar») y **construido**,
+porque el contrato lo obligaba: `LaVoz` cruza la costura con tres campos y el gate de campos sin
+lector exige que los tres tengan quien los lea — dejar `diciendo` sin consumidor habría sido añadir
+un huérfano nuevo en el sprint que los está pagando. Se presenta en el gate de esta fase.
+
+## Los cuatro gates, y sus rojos
+
+| Gate | Qué impide | Demo en rojo |
+|---|---|---|
+| `habla` en `PROTEGIDOS` | que el módulo que dice la ficha aprenda a escribirla en disco | *(abajo)* |
+| `LaVoz` en el contrato (regla 19) | que Rust y TS lean el payload distinto, como el C1 del S1 | *(abajo)* |
+| `la_app_nunca_habla_por_los_altavoces_internos` | que la app hable por donde el cliente oye | *(abajo)* |
+| `Pieza::Voz` | que el kill-switch deje la voz hablando | el compilador: `orden` es un `match` sin comodín |
+
+## Lo que este sprint NO puede afirmar de la voz
+
+El plan pedía «un test que demuestre que **el disparador no se oye a sí mismo**». Hay dos mitades:
+
+- **La de arriba, probada:** la app solo habla cuando macOS no dice que el sonido sale por los
+  altavoces internos. Si no sale por ahí, el micrófono no puede captarlo.
+- **La de abajo, construida en el sprint 001 y verificada aparte:** el tap del sistema nace con
+  `initMonoGlobalTapButExcludeProcesses` y nuestro propio PID (`capture/nativo.rs:532`), así que la
+  pista del cliente no puede traer nuestra voz aunque suene.
+
+**Lo que queda fuera, dicho:** con un dispositivo externo la app habla y **sí podría oírse a sí
+misma por el micrófono**. El tap la excluye; el micrófono no. Esa parada es del gate ⭐ —con
+auriculares puestos y sin ellos— y está escrita como tal.
+
+## Medido en este Mac
+
+```
+[habla] voz «apple-avspeechsynthesizer» · es-ES=true · en-US=true
+[habla] salida de audio de este Mac: Altavoces · ¿eco? Some(true)
+[habla] el puente encoló y calló · idioma es-ES — MEDIDO
+[habla] el candado, contra Altavoces
+[habla] con esta salida la app se callaría: el sonido saldría por los altavoces y el cliente te oiría — MEDIDO
+```
+
+El paso de evidencia de la CI (`--nocapture`) suma `la_voz_de_este_mac` y `la_app_nunca`: en el
+runner no hay voces ni dispositivo de audio, así que el puente no se cruza — **y el log lo dirá con
+todas las letras** en vez de salir `ok` a secas. Es la lección de la fase 1, aplicada al nacer.

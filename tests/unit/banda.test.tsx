@@ -158,6 +158,79 @@ describe("la banda", () => {
     );
   });
 
+  /**
+   * **EL MODO SOLO AUDIO (C15) — los tres estados de 44 px.**
+   *
+   * Referencia: `docs/diseno/banda.html`, estados «voz» y «voz-sin» (mirada 16, aprobada el
+   * 2026-09-26) y «voz-espera» (mirada 16-bis, pendiente).
+   *
+   * Lo que estos tests afirman y una captura no: que a 44 px **desaparece la cabecera y NO
+   * desaparece el contador de red**. Es la primera de las tres decisiones que el usuario aprobó, y
+   * es la que se rompería sin darse cuenta: basta con que alguien mueva el «0 B» al `cab-b`, donde
+   * están los otros dos chips, para que una promesa dura de la app deje de verse en el modo en que
+   * el usuario **no está mirando la pantalla**.
+   */
+  it("a 44 px desaparece la cabecera y NO el contador de red", () => {
+    pinta({ estado: "voz" });
+    expect(banda().className).toBe("banda voz");
+    expect(banda().querySelector(".cab-b")).toBeNull();
+    // El «0 B» sobrevive a la cabecera, en la línea.
+    expect(banda().querySelector(".lado-b .red.cero")?.textContent).toContain("0 B");
+  });
+
+  it("«hablando» dice qué está diciendo y de dónde sale, con las dos teclas", () => {
+    pinta({ estado: "voz" });
+    const linea = banda().querySelector(".linea-b") as HTMLElement;
+    expect(linea.textContent).toContain(es.banda.diciendoLaFicha);
+    expect(linea.querySelector("svg use")?.getAttribute("href")).toBe("#i-voz");
+    expect(linea.querySelector(".fuente-b")).not.toBeNull();
+    const teclas = [...banda().querySelectorAll(".tecla")].map((k) => k.textContent?.trim());
+    expect(teclas).toEqual([`⎋ ${es.banda.callar}`, `⌘⇧V ${es.banda.volver}`]);
+  });
+
+  /**
+   * **El candado, dibujado.** Es el estado que existe porque el sonido de esta app saldría por
+   * donde el cliente oye. Los tres portadores de la regla 8 se comprueban de uno en uno: el glifo
+   * de los auriculares TACHADOS, la frase, y el ámbar. Que el icono diga lo contrario del estado
+   * ya pasó una vez en este mismo estado —`relleno` le comía la barra y dibujaba unos auriculares
+   * conectados— y no lo vio ningún número: lo vio mirar la imagen.
+   */
+  it("«sin auriculares» avisa con símbolo, texto y color, y NO ofrece callar", () => {
+    pinta({ estado: "voz-sin" });
+    const linea = banda().querySelector(".linea-b") as HTMLElement;
+    expect(linea.className).toContain("warn");
+    expect(linea.querySelector("svg use")?.getAttribute("href")).toBe("#i-auriculares-off");
+    expect(linea.textContent).toContain(es.banda.conectaAuriculares);
+    expect(linea.textContent).toContain(es.banda.elClienteTeOiria);
+    // No hay nada que callar: la tecla `⎋` ni siquiera está registrada en este estado.
+    const teclas = [...banda().querySelectorAll(".tecla")].map((k) => k.textContent?.trim());
+    expect(teclas).toEqual([`⌘⇧V ${es.banda.volver}`]);
+  });
+
+  /**
+   * **El estado callado no inventa una palabra**, y eso es justo lo que se está proponiendo en la
+   * mirada 16-bis: enseña la línea de la ficha que acaba de leerse —texto que la banda de 88 px ya
+   * dice desde la mirada 11— y, sin ficha todavía, lo que dice hoy la banda en reposo.
+   */
+  it("«callado» enseña la ficha que acaba de leerse, sin verbo y sin ⎋", () => {
+    pinta({ estado: "voz-espera" });
+    const linea = banda().querySelector(".linea-b") as HTMLElement;
+    expect(linea.textContent).not.toContain(es.banda.diciendoLaFicha);
+    expect(linea.textContent).toContain(es.banda.muestra.linea);
+    const teclas = [...banda().querySelectorAll(".tecla")].map((k) => k.textContent?.trim());
+    expect(teclas).toEqual([`⌘⇧V ${es.banda.volver}`]);
+  });
+
+  it("el modo solo audio habla inglés, los tres estados", () => {
+    pinta({ estado: "voz" }, "en");
+    expect(banda().querySelector(".linea-b")?.textContent).toContain(en.banda.diciendoLaFicha);
+    pinta({ estado: "voz-sin" }, "en");
+    expect(banda().querySelector(".linea-b")?.textContent).toContain(en.banda.conectaAuriculares);
+    expect(banda().querySelector(".linea-b")?.textContent).toContain(en.banda.elClienteTeOiria);
+    pinta({ estado: "voz-espera" }, "en");
+    expect(banda().querySelector(".linea-b")?.textContent).toContain(en.banda.muestra.linea);
+  });
+
   it("habla inglés con las mismas clases", () => {
     pinta({ estado: "sin-resultado" }, "en");
     expect(document.querySelector(".titular-b")?.textContent).toBe(

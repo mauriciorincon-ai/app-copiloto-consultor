@@ -11,7 +11,7 @@
  *     cd src-tauri && ACTUALIZA_CONTRATO=1 cargo test contrato
  */
 import type { Novedad, Aparicion } from "./ficha";
-import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelCorpus, InformeDelCorte } from "./cuaderno";
+import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelCorpus, InformeDelCorte, LaVoz } from "./cuaderno";
 import type { EstadoDelAcople } from "./acople";
 
 export const NOVEDAD_EMPIEZA: Novedad = {
@@ -197,6 +197,10 @@ export const INFORME_DEL_CORTE: InformeDelCorte = {
     "bytesEnRed": 0,
     "piezas": [
       [
+        "voz",
+        "cortada"
+      ],
+      [
         "audio-del-microfono",
         "cortada"
       ],
@@ -225,6 +229,24 @@ export const INFORME_DEL_CORTE: InformeDelCorte = {
         "cortada"
       ]
     ]
+  };
+
+export const LA_VOZ_APAGADA: LaVoz = {
+    "diciendo": false,
+    "encendida": false,
+    "puede": false
+  };
+
+export const LA_VOZ_DICIENDO: LaVoz = {
+    "diciendo": true,
+    "encendida": true,
+    "puede": true
+  };
+
+export const LA_VOZ_SIN_AURICULARES: LaVoz = {
+    "diciendo": false,
+    "encendida": true,
+    "puede": false
   };
 
 export const ESTADO_DEL_ACOPLE: EstadoDelAcople = {
