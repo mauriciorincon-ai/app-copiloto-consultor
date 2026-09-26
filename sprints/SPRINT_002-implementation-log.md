@@ -1336,3 +1336,23 @@ Y sin ficha todavía, la línea se queda en el estado: no hay fuente que citar y
 Dos cadenas nuevas en `src/i18n/` (`callado`, `esperandoElSiguienteTurno`), escritas **primero** en
 `banda.html` — el gate del diccionario las compara con la maqueta y no habrían pasado al revés. 52
 capturas sin desbordes, 72 encuadres de fidelidad por debajo del umbral, 171 tests verdes.
+
+---
+
+# Fase 3 — Leer la pantalla solo cuando cambia (C8)
+
+## Antes de nada: el plan de miradas cambia, y el usuario lo aprobó antes de maquetar
+
+**Pregunta A — aprobada la recomendación:** la mirada 17 se parte en **17** (*algo falla o algo
+vigila*) y **17-bis** (*la app se explica a sí misma*), las dos seguidas al empezar esta fase. Razón:
+los 19 campos del contrato sin lector son dos familias visuales distintas, y nueve ya caían en la 17
+mientras los otros diez no tenían mirada. Yendo las dos antes de la fase 3 —y no a la 18— los diez se
+pagan aquí y no se caen si la fase 5 se corta.
+
+**Pregunta B — aprobada la recomendación:** Idioma enseña del diccionario **la tabla de origen** y **la
+franja «corregir no es inventar»** —las dos se pueden pintar hoy con datos de verdad— más **una línea
+con la ruta del archivo**, que es el único copy nuevo. Fuera, declarados: el formulario (haría escribir
+al módulo protegido) y la lista de correcciones (exige guardar las del turno). Sprint 003.
+
+Registrado en `docs/diseno/README.md` antes de tocar un artefacto, que es lo que exige el plan de
+miradas (kit v1.21.0).

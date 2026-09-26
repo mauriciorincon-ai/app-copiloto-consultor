@@ -130,6 +130,34 @@ leyó. Es el mismo patrón **«estado · por qué»** que el usuario ya había a
 Aplicado el mismo día en la maqueta, en el diccionario (`callado`, `esperandoElSiguienteTurno`, en los
 dos idiomas) y en el producto, con sus tests y el gate de fidelidad en verde.
 
+### Cambio al plan de miradas del sprint 002 — aprobado ANTES de construir (2026-09-26)
+
+El plan del sprint declaró **tres** miradas (16, 17, 18). La 17 se parte en **dos sesiones seguidas**,
+las dos al empezar la fase 3. Propuesto y **aprobado por el usuario antes de maquetar la primera**,
+que es lo que la regla del plan de miradas exige (kit v1.21.0).
+
+**Por qué se parte.** Al construir la fase 2 aparecieron **19 campos del contrato sin lector** —datos
+que la parte nativa ya mide y manda a la pantalla, y que nadie pinta, porque pintarlos exige copy que
+la maqueta no tiene—. Nueve caían dentro de la 17; los otros **diez, no**, y no tenían mirada
+asignada. Eran dos familias visuales distintas metidas en una sesión:
+
+| Mirada | Familia | Qué se maqueta |
+|---|---|---|
+| **17** | *algo falla o algo vigila* | radar ámbar · radar coral (banda) · «vigilancia local» (Sesión) · **«pista caída»** (Sesión, M2) · el consentimiento de pantalla (Permisos) |
+| **17-bis** | *la app se explica a sí misma* | la **ficha** con su motivo, su latencia y la marca de sección conjeturada · el **transcript** con el tramo del turno · **Idioma**: motor, techo, motivo y la fila del **diccionario** · **Corpus**: carpeta y secciones |
+
+**Las dos van seguidas, en la misma sesión de mirada**, para no añadir una parada más. Y las dos van
+antes de la fase 3, no de la 5: si esperaran a la 18, los diez campos se caerían con la fase 5, que es
+la primera de la lista de cortes declarada en el plan.
+
+**Y de paso queda decidido qué enseña Idioma del diccionario** (la otra pregunta abierta). De las
+cuatro piezas que la mirada 4 aprobó en `idioma.html`, entran las **dos que se pueden pintar hoy con
+datos de verdad** —la tabla «de dónde salen» y la franja «corregir no es inventar»— más **una línea
+con la ruta del archivo**, que es el único copy nuevo. Quedan fuera, declaradas: el **formulario**
+para añadir términos (haría escribir al módulo protegido, que la enmienda 1 del ADR 002 prohíbe a
+propósito) y la **lista de correcciones** tachado → resaltado (exige guardar las correcciones del
+turno). Las dos son decisiones de producto y su sitio es el sprint 003.
+
 ## Registro de miradas
 
 | Fecha | Artefacto | Veredicto del usuario (línea textual) | Qué se construyó encima, después |
