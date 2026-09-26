@@ -11,7 +11,7 @@
  *     cd src-tauri && ACTUALIZA_CONTRATO=1 cargo test contrato
  */
 import type { Novedad, Aparicion } from "./ficha";
-import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelCorpus, InformeDelCorte, LaVoz, EstadoDeLaPantalla } from "./cuaderno";
+import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelDiccionario, EstadoDelCorpus, InformeDelCorte, LaVoz, EstadoDeLaPantalla } from "./cuaderno";
 import type { EstadoDelAcople } from "./acople";
 
 export const NOVEDAD_EMPIEZA: Novedad = {
@@ -125,12 +125,13 @@ export const REUNION_DETECTADA: Reunion = {
   };
 
 export const REUNION_NO_SE_PUEDE_SABER: Reunion = {
-    "motivo": "hay un navegador abierto pero no se pueden leer sus ventanas",
+    "motivo": "sin-accesibilidad",
     "que": "no-se-puede-saber"
   };
 
 export const PERMISOS: Permisos = {
     "accesibilidad": "no-se-sabe",
+    "audio": "concedido",
     "microfono": "concedido",
     "pantalla": "sin-conceder"
   };
@@ -141,21 +142,13 @@ export const ESTADO_DE_LA_ESCUCHA: EstadoDeEscucha = {
     "microfono": {
       "abierta": true,
       "bytes": 1920000,
-      "hablando": false,
-      "motivo": null,
-      "muestrasRecibidas": 480000,
-      "segundos": 30.0
+      "motivo": null
     },
-    "motor": "apple-speechanalyzer",
     "sistema": {
       "abierta": false,
       "bytes": 0,
-      "hablando": false,
-      "motivo": "este Mac no deja abrir el audio del sistema",
-      "muestrasRecibidas": 0,
-      "segundos": 0.0
-    },
-    "turnosEnMemoria": 3
+      "motivo": "dispositivo-ocupado"
+    }
   };
 
 export const DISPONIBILIDAD_LISTO: Disponibilidad = {
@@ -163,8 +156,7 @@ export const DISPONIBILIDAD_LISTO: Disponibilidad = {
   };
 
 export const DISPONIBILIDAD_SIN_MOTOR: Disponibilidad = {
-    "estado": "sin-motor",
-    "motivo": "este Mac no trae el transcriptor"
+    "estado": "sin-motor"
   };
 
 export const SALIDA_DE_AUDIO: Salida = {
@@ -174,6 +166,19 @@ export const SALIDA_DE_AUDIO: Salida = {
 export const SALIDA_DE_AUDIO_OTRA: Salida = {
     "nombre": "AirPods Pro",
     "salida": "otra"
+  };
+
+export const SALIDA_DE_AUDIO_NO_SE_SABE: Salida = {
+    "motivo": "sin-conexion",
+    "nombre": "Altavoz USB",
+    "salida": "no-se-sabe"
+  };
+
+export const ESTADO_DEL_DICCIONARIO: EstadoDelDiccionario = {
+    "delCorpus": 12,
+    "enTuArchivo": 5,
+    "ruta": "~/Library/Application Support/com.aiapps.copiloto-consultor/diccionario.yaml",
+    "terminos": 17
   };
 
 export const ESTADO_DEL_CORPUS: EstadoDelCorpus = {
@@ -295,6 +300,11 @@ export const NOVEDAD_APARECE_POR_PANTALLA: Novedad = {
     "ms": 1240,
     "que": "aparece",
     "titular": "Limpieza de datos: incluida, hasta tres fuentes"
+  };
+
+export const NOVEDAD_NADA_EN_PANTALLA: Novedad = {
+    "hora": "14:05",
+    "que": "nada-en-pantalla"
   };
 
 export const ESTADO_DEL_ACOPLE: EstadoDelAcople = {

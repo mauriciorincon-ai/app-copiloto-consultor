@@ -1,9 +1,33 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Cascara } from "@/App";
 import { Principal } from "@/componentes/Principal";
 import { SpriteIconos } from "@/componentes/Iconos";
 import { es } from "@/i18n/es";
+import {
+  LaEscucha,
+  LaPantalla,
+  LaPista,
+  LosAuriculares,
+  Sesion,
+} from "@/pantallas/Sesion";
+import { Permisos } from "@/pantallas/Permisos";
+import { Idioma, TuDiccionario } from "@/pantallas/Idioma";
+import { LaReunion } from "@/pantallas/Sesion";
+import {
+  ESTADO_DE_LA_ESCUCHA,
+  ESTADO_DEL_DICCIONARIO,
+  PANTALLA_APAGADA,
+  PANTALLA_ESPERANDO_LA_REUNION,
+  PANTALLA_LEYENDO,
+  PANTALLA_NO_PUDO,
+  PANTALLA_SIN_PERMISO,
+  PERMISOS,
+  REUNION_NO_SE_PUEDE_SABER,
+  SALIDA_DE_AUDIO_NO_SE_SABE,
+  SALIDA_DE_AUDIO_OTRA,
+} from "@/contrato.generado";
+import type { EstadoDeEscucha, EstadoDePista, Reunion, Salida } from "@/cuaderno";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn() }));
@@ -31,22 +55,52 @@ function pinta(busqueda: string) {
   );
 }
 
+const abierta: EstadoDePista = { abierta: true, motivo: null, bytes: 1_920_000 };
+const cerrada: EstadoDePista = { abierta: false, motivo: null, bytes: 0 };
+const escuchando: EstadoDeEscucha = {
+  escuchando: true,
+  microfono: abierta,
+  sistema: abierta,
+  bytesDelTranscript: 2_048,
+};
+
+/** Sesión con lo que el test quiera cambiar: la reunión, la escucha o la salida de audio. */
+function pintaSesion(cambios: { reunion?: Reunion; escucha?: EstadoDeEscucha; salida?: Salida }) {
+  document.documentElement.lang = "es";
+  return render(
+    <Cascara>
+      <SpriteIconos />
+      <Sesion
+        reunion={cambios.reunion ?? { que: "ninguna" }}
+        escucha={cambios.escucha ?? escuchando}
+        salida={cambios.salida ?? { salida: "auriculares" }}
+      />
+    </Cascara>,
+  );
+}
+
 describe("el cuaderno: lo que no existe se dice", () => {
+  // Un test pinta en inglés; sin esto, los que vienen detrás comprobarían el diccionario inglés
+  // creyendo comprobar el español.
+  beforeEach(() => {
+    document.documentElement.lang = "es";
+  });
+
   /**
-   * La fase 3 movió dos pistas de «todavía no» a «funciona», y ese movimiento es el que hay que
-   * vigilar: **la pantalla ni se adelanta ni se queda corta**. La de pantalla sigue pendiente
-   * (llega en el sprint 2) y la de auriculares dejó de ser una promesa para pasar a medir.
+   * **Sprint 002: ya no queda ninguna fila pendiente en «Las dos pistas».** La pantalla se lee
+   * (C8), y la fila de los auriculares dice el NOMBRE del dispositivo externo y lo único que la
+   * app no puede saber de él. Debajo de la pantalla, su interruptor y su tecla (mirada 17-quater).
    */
-  it("sesión: las pistas que ya escuchan dicen «funciona» y la que no, «todavía no»", () => {
+  it("sesión: las cuatro filas miden, y la pantalla trae su interruptor y su tecla", () => {
     pinta("?pantalla=sesion");
-    const pistas = screen
-      .getByText(t.dosPistas)
-      .closest(".tarjeta") as HTMLElement;
-    expect(within(pistas).getAllByText(t.funciona)).toHaveLength(2);
-    expect(within(pistas).getAllByText(t.todaviaNo)).toHaveLength(1);
-    expect(
-      within(pistas).getByText(t.pistaPantalla).closest(".fila")?.className,
-    ).toContain("pendiente");
+    const pistas = screen.getByText(t.dosPistas).closest(".tarjeta") as HTMLElement;
+    expect(within(pistas).getAllByText(t.funciona)).toHaveLength(3);
+    expect(within(pistas).queryByText(t.todaviaNo)).toBeNull();
+    expect(within(pistas).getByText("AirPods Pro")).toBeInTheDocument();
+    expect(within(pistas).getByText(t.siEsUnAltavoz)).toBeInTheDocument();
+    const interruptor = within(pistas).getByRole("switch", { name: t.leerlaSola });
+    expect(interruptor.getAttribute("aria-checked")).toBe("true");
+    expect(within(pistas).getByText("⌃⌥L")).toBeInTheDocument();
   });
 
   /**
@@ -54,12 +108,122 @@ describe("el cuaderno: lo que no existe se dice", () => {
    * reunión**, que es cuando el usuario todavía puede ponerse los auriculares.
    */
   it("sesión: con altavoces avisa del eco en vez de dar las dos pistas por limpias", () => {
-    pinta("?pantalla=sesion");
-    const pistas = screen
-      .getByText(t.dosPistas)
-      .closest(".tarjeta") as HTMLElement;
+    pintaSesion({ salida: { salida: "altavoces" } });
+    const pistas = screen.getByText(t.dosPistas).closest(".tarjeta") as HTMLElement;
     expect(within(pistas).getByText(t.altavocesInternos)).toBeInTheDocument();
     expect(within(pistas).getByText(t.avisoDelEco)).toBeInTheDocument();
+  });
+
+  /**
+   * **M2 del sprint 001, pagado: la pista que no abrió lo DICE.** Hasta el sprint 002 las dos
+   * decían «Funciona» pase lo que pase. Tres cosas cambian a la vez —símbolo, palabra y color—, el
+   * porqué va en su línea con su salida, y la fila «Escucha las dos pistas» deja de afirmar lo que
+   * ya no es verdad.
+   */
+  it("sesión: una pista que no abrió dice por qué, y la escucha pasa a «a medias»", () => {
+    pintaSesion({
+      escucha: {
+        ...escuchando,
+        sistema: { abierta: false, motivo: "dispositivo-ocupado", bytes: 0 },
+      },
+    });
+    const pistas = screen.getByText(t.dosPistas).closest(".tarjeta") as HTMLElement;
+    expect(within(pistas).getByText(t.noAbrio)).toBeInTheDocument();
+    expect(
+      within(pistas).getByText(t.porQueNoAbrio["dispositivo-ocupado"]),
+    ).toBeInTheDocument();
+    const hoy = screen.getByText(t.queFuncionaHoy).closest(".tarjeta") as HTMLElement;
+    expect(within(hoy).queryByText(t.funcionaEscucha)).toBeNull();
+    expect(within(hoy).getByText(t.soloTuPista)).toBeInTheDocument();
+    expect(within(hoy).getByText(t.aMedias)).toBeInTheDocument();
+  });
+
+  it("sesión: cada uno de los cinco porqués de una pista caída tiene su frase", () => {
+    for (const motivo of [
+      "sin-permiso-del-microfono",
+      "sin-permiso-del-audio",
+      "dispositivo-ocupado",
+      "formato-ilegible",
+      "no-dejo",
+    ] as const) {
+      const { unmount } = render(
+        <Cascara>
+          <LaPista
+            pista={{ abierta: false, motivo, bytes: 0 }}
+            caida
+            icono="i-mic"
+            texto={t.pistaMic}
+          />
+        </Cascara>,
+      );
+      expect(screen.getByText(t.porQueNoAbrio[motivo])).toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  /** Fuera de una sesión nada está abierto, y eso no es una avería: no se pinta «no abrió». */
+  it("sesión: sin sesión, una pista cerrada no se da por caída", () => {
+    pintaSesion({ escucha: { ...escuchando, escuchando: false, microfono: cerrada, sistema: cerrada } });
+    expect(screen.queryByText(t.noAbrio)).toBeNull();
+  });
+
+  it("sesión: con el micrófono caído, lo que queda es la pista del cliente", () => {
+    render(
+      <Cascara>
+        <LaEscucha mic={false} sistema />
+      </Cascara>,
+    );
+    expect(screen.getByText(t.soloLaDelCliente)).toBeInTheDocument();
+  });
+
+  /**
+   * La pantalla (C8), sus cinco vistas: cada una con su palabra, y las tres que no leen con su
+   * porqué. **Apagada, el interruptor dice apagado pero la tecla sigue**: es la salida para una
+   * NDA estricta.
+   */
+  it("sesión: la pantalla dice cada una de sus cinco vistas", () => {
+    const casos = [
+      { vista: "leyendo", chip: t.funciona, porque: null },
+      { vista: "esperando-la-reunion", chip: t.pantallaEspera, porque: null },
+      { vista: "apagada", chip: t.pantallaApagada, porque: t.pantallaApagadaPor },
+      { vista: "sin-permiso", chip: t.pantallaSinPermiso, porque: t.pantallaSinPermisoPor },
+      { vista: "no-pudo", chip: t.pantallaNoPudo, porque: t.pantallaNoPudoPor },
+    ] as const;
+    for (const { vista, chip, porque } of casos) {
+      const { unmount } = render(
+        <Cascara>
+          <LaPantalla pantalla={{ vista, bytesEnMemoria: 0 }} />
+        </Cascara>,
+      );
+      expect(screen.getByText(chip)).toBeInTheDocument();
+      if (porque) expect(screen.getByText(porque)).toBeInTheDocument();
+      expect(screen.getByRole("switch").getAttribute("aria-checked")).toBe(
+        vista === "apagada" ? "false" : "true",
+      );
+      expect(screen.getByText("⌃⌥L")).toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  /** «No se sabe» cita el dispositivo cuando lo hay: el nombre no se traduce, la frase sí. */
+  it("sesión: la salida que no se sabe dice por qué, con el nombre del dispositivo", () => {
+    render(
+      <Cascara>
+        <LosAuriculares salida={{ salida: "no-se-sabe", motivo: "sin-conexion", nombre: "Altavoz USB" }} />
+      </Cascara>,
+    );
+    expect(screen.getByText(t.noSeSabe)).toBeInTheDocument();
+    expect(
+      screen.getByText(`«Altavoz USB» ${t.porQueNoSeSabe["sin-conexion"]}`),
+    ).toBeInTheDocument();
+  });
+
+  /** Sin Accesibilidad no se ve si hay Meet: decir «sin reunión» afirmaría lo que no se sabe. */
+  it("sesión: sin poder mirar, no dice «sin reunión»", () => {
+    pintaSesion({ reunion: { que: "no-se-puede-saber", motivo: "sin-accesibilidad" } });
+    expect(screen.getByText(t.noSePuedeSaber)).toBeInTheDocument();
+    expect(screen.getByText(t.porQueNoSeVe["sin-accesibilidad"])).toBeInTheDocument();
+    expect(screen.queryByText(t.sinReunion)).toBeNull();
   });
 
   /**
@@ -91,17 +255,33 @@ describe("el cuaderno: lo que no existe se dice", () => {
   });
 
   /**
-   * «Audio del sistema» y «Pantalla» son UN permiso en macOS. Se dibujan como dos filas porque
-   * son dos usos distintos, pero **su estado tiene que ser el mismo siempre**: dos chips
-   * distintos mandarían al usuario a conceder algo que ya concedió.
+   * **«Audio del sistema» y «Pantalla» son DOS permisos** (`kTCCServiceAudioCapture` y
+   * `kTCCServiceScreenCapture`). Hasta el sprint 002 esta pantalla decía que eran uno y leía el de
+   * pantalla para las dos filas; este test afirmaba lo mismo («muestran el mismo estado») y pasaba
+   * en verde. Ahora cada fila lee el suyo, y con uno concedido y otro no, se ven distintos.
    */
-  it("permisos: audio del sistema y pantalla muestran el mismo estado, y se dice por qué", () => {
-    const { container } = pinta("?pantalla=permisos");
+  it("permisos: audio del sistema y pantalla son dos permisos, y cada fila lee el suyo", () => {
+    const { container } = render(
+      <Cascara>
+        <Permisos
+          permisos={{
+            microfono: "concedido",
+            audio: "concedido",
+            pantalla: "sin-conceder",
+            accesibilidad: "concedido",
+          }}
+        />
+      </Cascara>,
+    );
     const filas = [...container.querySelectorAll(".permiso")];
-    const chip = (i: number) =>
-      filas[i].querySelector(".accion .estado")?.textContent;
-    expect(chip(1)).toBe(chip(2));
-    expect(screen.getByText(t.unSoloPermiso)).toBeInTheDocument();
+    const chip = (i: number) => filas[i].querySelector(".accion .estado")?.textContent;
+    expect(chip(1)).toBe(t.concedido);
+    expect(chip(2)).toBe(t.sinConceder);
+    expect(screen.getByText(t.dosPermisos)).toBeInTheDocument();
+    // Y lo que de verdad pasa con la pantalla: macOS pregunta con su frase y no admite otra.
+    expect(screen.getByText(t.antesDeQueMacos)).toBeInTheDocument();
+    expect(screen.getByText(t.textoPantalla)).toBeInTheDocument();
+    expect(screen.getByText(t.fraseDeMacos)).toBeInTheDocument();
   });
 
   it("permisos: la accesibilidad está en la lista, porque el acople se entrega en este sprint", () => {
@@ -144,24 +324,22 @@ describe("el cuaderno: lo que no existe se dice", () => {
   });
 
   /**
-   * Tres búferes existen y uno no. El que no existe **sigue en la lista**: quitarlo escondería
-   * que la app va a leer la pantalla, y ponerlo en cero sin marca lo haría parecer vacío en vez
-   * de inexistente.
+   * **Los cuatro búferes existen** desde la fase 3 del sprint 002: el último cuadro leído de la
+   * pantalla dejó de ser «todavía no» y se cuenta, en su fila y en el total de RAM.
    */
-  it("honestidad: los búferes que existen traen cifras y el que no, su marca", () => {
+  it("honestidad: los cuatro búferes traen cifras, el último cuadro incluido", () => {
     const { container } = pinta("?pantalla=honestidad");
     const bufs = [...container.querySelectorAll(".buffer")];
     expect(bufs).toHaveLength(4);
-    const vivos = bufs.filter((b) => !b.className.includes("pendiente"));
-    expect(vivos).toHaveLength(3);
-    for (const b of vivos) {
+    expect(bufs.filter((b) => b.className.includes("pendiente"))).toHaveLength(0);
+    for (const b of bufs) {
       expect(b.querySelector(".cuanto")?.textContent).not.toBe("0 B");
     }
-    const pendiente = bufs.find((b) =>
-      b.className.includes("pendiente"),
-    ) as HTMLElement;
-    expect(within(pendiente).getByText(t.todaviaNo)).toBeInTheDocument();
-    expect(pendiente.querySelector(".cuanto")?.textContent).toBe("0 B");
+    const cuadro = within(container).getByText(t.bufFrame).closest(".buffer") as HTMLElement;
+    expect(within(cuadro).getByText(t.soloEnMemoriaElUltimo)).toBeInTheDocument();
+    expect(within(cuadro).getByText("1,4 MB")).toBeInTheDocument();
+    // Y el total lo cuenta: sin el cuadro serían 3,7 MB.
+    expect(screen.getByText(/RAM · 5,1 MB/)).toBeInTheDocument();
   });
 
   /**
@@ -173,37 +351,68 @@ describe("el cuaderno: lo que no existe se dice", () => {
    */
   it("honestidad: el kill-switch dice cuántas piezas corta de cuántas hay", () => {
     pinta("?pantalla=honestidad");
-    expect(screen.getByText(/8 de 8/)).toBeInTheDocument();
+    // «El botón corta»: sin sujeto, «8 de 8 piezas» se leyó como «leyó todo bien» (mirada 17-quater).
+    expect(
+      screen.getByText(`${t.botonCorta} 8 ${t.de} 8 ${t.piezasNingunaFuera}`),
+    ).toBeInTheDocument();
+  });
+
+  /** «de» vive en el diccionario: escrita en el componente, la interfaz inglesa decía «8 de 8 pieces». */
+  it("honestidad: la cuenta del kill-switch es bilingüe", () => {
+    document.documentElement.lang = "en";
+    render(
+      <Cascara>
+        <SpriteIconos />
+        <Principal busqueda="?pantalla=honestidad" />
+      </Cascara>,
+    );
+    expect(screen.getByText(/The button cuts 8 of 8 pieces/)).toBeInTheDocument();
+    expect(screen.queryByText(/8 de 8/)).toBeNull();
   });
 
   /**
-   * La pantalla de Idioma nace con la fase 3. Lo que se comprueba aquí no es su forma —de eso se
-   * ocupa el gate de fidelidad— sino que **no promete lo que no hay** ni niega lo que sí hay.
-   *
-   * **Eran tres pendientes y son dos.** El «Diccionario técnico» salió de la lista en el sprint 002,
-   * fase 1, porque se construyó: una pantalla que dice «todavía no» de algo que existe miente igual
-   * que una que promete lo que falta, y esta app no se permite ninguna de las dos. Se comprueban los
-   * dos que quedan **por su nombre** y no solo la cuenta: un conteo que cambia en silencio no dice
-   * cuál se fue.
+   * Idioma, en su estado «sprint 2» (mirada 17-bis): el motor **con nombre y techo**, la tarjeta
+   * del diccionario con sus dos filas y la ruta del archivo, y dos pendientes —por su nombre: un
+   * conteo que cambia en silencio no dice cuál se fue—.
    */
-  it("idioma: enseña lo que transcribe hoy y marca lo que todavía no", () => {
+  it("idioma: enseña el motor, el diccionario y lo que todavía no", () => {
     pinta("?pantalla=idioma");
     expect(screen.getByText(t.idiomaTitulo)).toBeInTheDocument();
     expect(screen.getByText(t.variosIdiomasPorPista)).toBeInTheDocument();
     expect(screen.getByText(t.conservarTusTurnos)).toBeInTheDocument();
-    expect(
-      screen.queryByText(/[Dd]iccionario técnico|[Tt]echnical dictionary/),
-    ).toBeNull();
     expect(screen.getAllByText(t.todaviaNo)).toHaveLength(2);
-    expect(screen.getByText(t.cincoIdiomas)).toBeInTheDocument();
+    expect(
+      screen.getByText(`SpeechAnalyzer · macOS 26 · 5 ${t.idiomasListos}`),
+    ).toBeInTheDocument();
+    // El diccionario técnico existe desde la fase 1, y se enseña con números de verdad.
+    const dicc = screen.getByText(t.tuDiccionario).closest(".tarjeta") as HTMLElement;
+    expect(within(dicc).getByText("17")).toBeInTheDocument();
+    expect(within(dicc).getByText(t.deTuCorpus)).toBeInTheDocument();
+    expect(within(dicc).getByText(/diccionario\.yaml$/)).toBeInTheDocument();
     // Las dos pistas con su idioma y el estado real de su modelo. **La del cliente no lo tiene**,
-    // que es el estado más probable en un Mac de verdad y el que la muestra dibuja desde la
-    // auditoría: uno en español no trae el modelo de inglés. Y por eso hay un botón.
+    // que es el estado más probable en un Mac de verdad: uno en español no trae el modelo de inglés.
     expect(screen.getByText(t.modeloInstalado)).toBeInTheDocument();
     expect(screen.getByText(t.sinModelo)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: new RegExp(t.instalarModelo) }),
     ).toBeInTheDocument();
+  });
+
+  /** Sin motor, la franja lo dice con su porqué —cerrado, y en los dos idiomas— y lo que sigue funcionando. */
+  it("idioma: sin motor de voz, dice por qué y qué sigue funcionando", () => {
+    for (const motivo of ["sin-transcriptor", "sin-puente", "no-contesta"] as const) {
+      const { unmount } = render(
+        <Cascara>
+          <Idioma transcribe={{ motor: "mudo", techo: 0, idiomas: [], motivo }} />
+        </Cascara>,
+      );
+      expect(screen.getByText(t.sinMotorTitulo)).toBeInTheDocument();
+      expect(
+        screen.getByText(`${t.porQueNoHayMotor[motivo]} ${t.laBandaSigue}`),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(t.transcribeTuMac)).toBeNull();
+      unmount();
+    }
   });
 
   /**
@@ -249,10 +458,94 @@ describe("el cuaderno: lo que no existe se dice", () => {
       "0 B",
     );
     expect(screen.getByText(t.soloTu)).toBeInTheDocument();
+    // Qué carpeta señaló el usuario y cuántas secciones salieron de ella (mirada 17-bis).
+    expect(screen.getByText(t.tuCarpeta)).toBeInTheDocument();
+    expect(screen.getByText(`412 ${t.secciones}`)).toBeInTheDocument();
   });
 
   it("la pantalla la elige la URL, y una desconocida cae en sesión", () => {
     pinta("?pantalla=inventada");
     expect(screen.getByText(t.sesionTitulo)).toBeInTheDocument();
+  });
+});
+
+/**
+ * **LO QUE RUST EMITE, PINTADO** (regla 19). Cada forma que la fase 3 del sprint 002 hizo cruzar —o
+ * cambió— se pinta aquí desde su muestra de `src/contrato.generado.ts`, que escribe Rust con el
+ * serde de producción: los porqués cerrados, la salida que cita su dispositivo, el permiso de audio
+ * aparte, las cinco vistas de la pantalla y el diccionario. Escribir los literales a mano repetiría
+ * el defecto que el gate nació para cazar: dos copias del contrato que coinciden hasta que no.
+ */
+describe("lo que Rust emite, pintado", () => {
+  beforeEach(() => {
+    document.documentElement.lang = "es";
+  });
+  const conCascara = (hijo: React.ReactNode) => render(<Cascara>{hijo}</Cascara>);
+
+  it("la pista caída de la muestra trae su porqué", () => {
+    if (ESTADO_DE_LA_ESCUCHA.sistema.motivo === null) throw new Error("la muestra dejó de traer motivo");
+    pintaSesion({ escucha: ESTADO_DE_LA_ESCUCHA });
+    expect(screen.getByText(t.porQueNoAbrio[ESTADO_DE_LA_ESCUCHA.sistema.motivo])).toBeInTheDocument();
+  });
+
+  it("la salida que no se sabe y la externa, con su nombre", () => {
+    const { unmount } = conCascara(<LosAuriculares salida={SALIDA_DE_AUDIO_NO_SE_SABE} />);
+    if (SALIDA_DE_AUDIO_NO_SE_SABE.salida !== "no-se-sabe") throw new Error("cambió la muestra");
+    expect(
+      screen.getByText(
+        `«${SALIDA_DE_AUDIO_NO_SE_SABE.nombre}» ${t.porQueNoSeSabe[SALIDA_DE_AUDIO_NO_SE_SABE.motivo]}`,
+      ),
+    ).toBeInTheDocument();
+    unmount();
+    conCascara(<LosAuriculares salida={SALIDA_DE_AUDIO_OTRA} />);
+    if (SALIDA_DE_AUDIO_OTRA.salida !== "otra") throw new Error("cambió la muestra");
+    expect(screen.getByText(SALIDA_DE_AUDIO_OTRA.nombre)).toBeInTheDocument();
+  });
+
+  it("la reunión que no se puede ver", () => {
+    conCascara(<LaReunion reunion={REUNION_NO_SE_PUEDE_SABER} />);
+    if (REUNION_NO_SE_PUEDE_SABER.que !== "no-se-puede-saber") throw new Error("cambió la muestra");
+    expect(screen.getByText(t.porQueNoSeVe[REUNION_NO_SE_PUEDE_SABER.motivo])).toBeInTheDocument();
+  });
+
+  it("los permisos de la muestra, cada uno en su fila", () => {
+    const { container } = conCascara(<Permisos permisos={PERMISOS} />);
+    const chips = [...container.querySelectorAll(".permiso .accion .estado")].map((c) => c.textContent);
+    const palabra = (e: string) => (e === "concedido" ? t.concedido : t.sinConceder);
+    expect(chips).toEqual([
+      palabra(PERMISOS.microfono),
+      palabra(PERMISOS.audio),
+      palabra(PERMISOS.pantalla),
+      palabra(PERMISOS.accesibilidad),
+    ]);
+  });
+
+  it("las cinco vistas de la pantalla, desde sus muestras", () => {
+    const palabra = {
+      leyendo: t.funciona,
+      "esperando-la-reunion": t.pantallaEspera,
+      apagada: t.pantallaApagada,
+      "sin-permiso": t.pantallaSinPermiso,
+      "no-pudo": t.pantallaNoPudo,
+    } as const;
+    for (const muestra of [
+      PANTALLA_LEYENDO,
+      PANTALLA_ESPERANDO_LA_REUNION,
+      PANTALLA_APAGADA,
+      PANTALLA_SIN_PERMISO,
+      PANTALLA_NO_PUDO,
+    ]) {
+      const { unmount } = conCascara(<LaPantalla pantalla={muestra} />);
+      expect(screen.getByText(palabra[muestra.vista])).toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  it("el diccionario de la muestra: el total, sus dos filas y la ruta", () => {
+    const { container } = conCascara(<TuDiccionario diccionario={ESTADO_DEL_DICCIONARIO} />);
+    const numeros = [...container.querySelectorAll(".num")].map((n) => Number(n.textContent));
+    expect(numeros).toEqual([ESTADO_DEL_DICCIONARIO.delCorpus, ESTADO_DEL_DICCIONARIO.enTuArchivo]);
+    expect(screen.getByText(String(ESTADO_DEL_DICCIONARIO.terminos))).toBeInTheDocument();
+    expect(screen.getByText(ESTADO_DEL_DICCIONARIO.ruta)).toBeInTheDocument();
   });
 });

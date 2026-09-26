@@ -73,6 +73,10 @@ pub enum Novedad {
     /// El disparador decidió que había que buscar, y esto es lo que salió: una ficha del corpus
     /// del usuario, o la declaración de que no hay nada con su maniobra.
     Aparece(Box<Aparicion>),
+    /// **El usuario pidió leer la pantalla (`⌃⌥L`) y no había texto** —una cámara, un vídeo, una
+    /// pantalla en negro—. Se contesta igual, porque alguien preguntó: sin esto la tecla parecería
+    /// rota (mirada 17-quater, «pantalla · nada que leer»).
+    NadaEnPantalla { hora: String },
 }
 
 /// Lo que la pantalla de Honestidad enseña de una pista.
@@ -82,8 +86,9 @@ pub struct EstadoDePista {
     /// ¿Se pudo abrir el grifo? **Esto, y no el número de muestras, es lo que distingue una avería
     /// de un silencio.** Cuando nadie habla, macOS no entrega ni una muestra: cero no es un fallo.
     pub abierta: bool,
-    /// Si no se pudo abrir, por qué. En español, para enseñarlo tal cual.
-    pub motivo: Option<String>,
+    /// Si no se pudo abrir, **por qué, en un conjunto cerrado** (mirada 17-quater). Sesión lo pinta
+    /// con su frase y su salida; el detalle técnico se queda en el log.
+    pub motivo: Option<crate::capture::PorQueNoAbrio>,
     pub bytes: usize,
     // **`legible` salió del contrato en el sprint 002.** Mandaba los mismos bytes ya escritos
     // («1,8 MB») con la razón de no tener dos formateadores; la fase 5 del sprint 001 descubrió que
@@ -92,8 +97,15 @@ pub struct EstadoDePista {
     // el idioma puesto y **este campo cruzaba la costura sin que nadie lo leyera**: uno de los
     // diecisiete huérfanos que el gate del contrato no puede ver, porque compara la forma y no si
     // alguien mira.
+    //
+    // **Los tres de abajo se quedan en Rust y dejan de cruzar** (decisión del usuario en la mirada
+    // 17-quater: «4 fuera, 3 se ven»). `hablando` lo usa el modo solo audio para no hablar encima
+    // de nadie; los otros dos son para el log. Ninguno tenía sitio en una pantalla.
+    #[serde(skip)]
     pub segundos: f32,
+    #[serde(skip)]
     pub muestras_recibidas: u64,
+    #[serde(skip)]
     pub hablando: bool,
 }
 
@@ -104,11 +116,16 @@ pub struct EstadoDeEscucha {
     pub escuchando: bool,
     pub microfono: EstadoDePista,
     pub sistema: EstadoDePista,
+    /// Fuera del contrato por la misma decisión: Honestidad cuenta el transcript por sus bytes.
+    #[serde(skip)]
     pub turnos_en_memoria: usize,
     pub bytes_del_transcript: usize,
     // `ram_legible` salió del contrato en el sprint 002, por lo mismo que `legible`: la cabecera
     // «RAM · …» suma los tres búferes y los escribe **en la pantalla**, con el idioma puesto.
-    /// Qué motor transcribe, y si puede. Lo enseña la pantalla de Idioma.
+    /// Qué motor transcribe. **No cruza**: Idioma lo lee de `que_sabe_transcribir`, que además dice
+    /// cuántos idiomas admite y por qué falta. Cruzaba dos veces el mismo dato y el gate de lectores,
+    /// que compara por nombre, daba por leída esta copia porque la otra sí lo estaba.
+    #[serde(skip)]
     pub motor: &'static str,
 }
 
@@ -117,7 +134,7 @@ struct PistaViva {
     anillo: Arc<Mutex<Anillo>>,
     /// Se conserva para que el grifo siga abierto: soltarlo lo cierra.
     _grifo: Option<crate::capture::nativo::Grifo>,
-    motivo: Option<String>,
+    no_abrio: Option<crate::capture::NoAbrio>,
     turnos: Turnos,
     /// Índice global de la primera muestra que esta pista vio.
     origen: u64,
@@ -147,16 +164,16 @@ impl PistaViva {
             Pista::Microfono => crate::capture::nativo::Grifo::del_microfono(anillo.clone()),
             Pista::Sistema => crate::capture::nativo::Grifo::del_sistema(anillo.clone()),
         };
-        let (grifo, motivo) = match abierto {
+        let (grifo, no_abrio) = match abierto {
             Ok(g) => (Some(g), None),
-            Err(e) => (None, Some(e)),
+            Err(e) => (None, Some(con_su_permiso(cual, e, &crate::permisos::leer()))),
         };
         let origen = anillo.lock().map(|a| a.totales()).unwrap_or(0);
         Self {
             cual,
             anillo,
             _grifo: grifo,
-            motivo,
+            no_abrio,
             turnos: Turnos::default(),
             origen,
             procesadas: 0,
@@ -186,13 +203,36 @@ impl PistaViva {
             .unwrap_or((0, 0.0));
         EstadoDePista {
             abierta: self._grifo.is_some(),
-            motivo: self.motivo.clone(),
+            motivo: self.no_abrio.as_ref().map(|n| n.porque),
             bytes,
             segundos,
             muestras_recibidas: self._grifo.as_ref().map(|g| g.muestras_recibidas()).unwrap_or(0),
             hablando: self.turnos.hablando(),
         }
     }
+}
+
+/// **Si una pista no abrió y su permiso no está concedido, el porqué es el permiso.**
+///
+/// El grifo solo ve el error de Core Audio, que sin permiso puede ser cualquier cosa —`!hog`
+/// incluido—; quien sabe del permiso es `permisos`. El permiso manda porque su salida es la que
+/// arregla las demás: con él negado, cerrar otra app no serviría de nada. «No se sabe» no cuenta
+/// como negado: si la pregunta a macOS no contesta, se queda el porqué del grifo.
+fn con_su_permiso(
+    cual: Pista,
+    mut e: crate::capture::NoAbrio,
+    permisos: &crate::permisos::Permisos,
+) -> crate::capture::NoAbrio {
+    use crate::capture::PorQueNoAbrio::{SinPermisoDelAudio, SinPermisoDelMicrofono};
+    use crate::permisos::Estado;
+    let (estado, sin) = match cual {
+        Pista::Microfono => (permisos.microfono, SinPermisoDelMicrofono),
+        Pista::Sistema => (permisos.audio, SinPermisoDelAudio),
+    };
+    if matches!(estado, Estado::SinConceder | Estado::Denegado) {
+        e.porque = sin;
+    }
+    e
 }
 
 /// LO QUE LA ESCUCHA NECESITA DEL CORPUS, y nada más.
@@ -277,7 +317,7 @@ impl Escucha {
         let nombre_del_motor = motor.nombre();
 
         for p in pistas.lock().unwrap().iter() {
-            match &p.motivo {
+            match &p.no_abrio {
                 Some(m) => println!("[escucha] pista «{}» NO abierta: {m}", p.cual.etiqueta()),
                 None => println!("[escucha] pista «{}» abierta", p.cual.etiqueta()),
             }
@@ -368,7 +408,7 @@ impl Escucha {
                 .map(|p| p.estado())
                 .unwrap_or(EstadoDePista {
                     abierta: false,
-                    motivo: Some("esa pista no se abrió nunca".into()),
+                    motivo: Some(crate::capture::PorQueNoAbrio::NoDejo),
                     bytes: 0,
                     segundos: 0.0,
                     muestras_recibidas: 0,
@@ -812,7 +852,7 @@ fn transcribir(motor: &dyn Motor, diccionario: &Diccionario, encargo: &Encargo) 
 ///
 /// Sin fecha a propósito: la banda enseña la hora de un turno que dura lo que dura la reunión, y
 /// un día concreto no le añade nada a nadie salvo precisión sobre cuándo ocurrió una conversación.
-fn la_hora() -> String {
+pub(crate) fn la_hora() -> String {
     let segundos_desde_epoca = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_secs())
@@ -854,7 +894,7 @@ pub fn explicar(d: &Disponibilidad, idioma: &str) -> String {
         Disponibilidad::IdiomaDesconocido => {
             format!("este Mac no sabe transcribir {idioma}")
         }
-        Disponibilidad::SinMotor { motivo } => motivo.clone(),
+        Disponibilidad::SinMotor { motivo } => motivo.en_el_log().into(),
     }
 }
 
@@ -880,7 +920,7 @@ mod tests {
             cual: Pista::Sistema,
             anillo: anillo.clone(),
             _grifo: None,
-            motivo: None,
+            no_abrio: None,
             turnos: Turnos::default(),
             origen: 0,
             procesadas: 0,
@@ -934,7 +974,7 @@ mod tests {
             cual: Pista::Sistema,
             anillo: anillo.clone(),
             _grifo: None,
-            motivo: None,
+            no_abrio: None,
             turnos: Turnos::default(),
             origen: 0,
             procesadas: 0,
@@ -1001,12 +1041,38 @@ mod tests {
         p.origen + p.procesadas - p.sobrante.len() as u64
     }
 
+    /// **El permiso manda sobre el error del grifo** — y «no se sabe» no manda. Sin permiso, Core
+    /// Audio puede contestar cualquier cosa, `!hog` incluido; la salida útil es la del permiso.
+    #[test]
+    fn si_falta_el_permiso_el_porque_es_el_permiso() {
+        use crate::capture::{NoAbrio, PorQueNoAbrio::*};
+        use crate::permisos::{Estado, Permisos};
+        let con = |microfono, audio| Permisos {
+            microfono,
+            audio,
+            pantalla: Estado::Concedido,
+            accesibilidad: Estado::Concedido,
+        };
+        let ocupado = || NoAbrio::por(DispositivoOcupado, "estado «!hog»");
+        let sin_audio = con(Estado::Concedido, Estado::SinConceder);
+        assert_eq!(con_su_permiso(Pista::Sistema, ocupado(), &sin_audio).porque, SinPermisoDelAudio);
+        // El permiso de OTRA pista no cambia nada.
+        assert_eq!(con_su_permiso(Pista::Microfono, ocupado(), &sin_audio).porque, DispositivoOcupado);
+        let sin_micro = con(Estado::Denegado, Estado::Concedido);
+        assert_eq!(con_su_permiso(Pista::Microfono, ocupado(), &sin_micro).porque, SinPermisoDelMicrofono);
+        // «No se sabe» no es «no»: se queda el porqué del grifo.
+        let no_se_sabe = con(Estado::Concedido, Estado::NoSeSabe);
+        assert_eq!(con_su_permiso(Pista::Sistema, ocupado(), &no_se_sabe).porque, DispositivoOcupado);
+        // Y el detalle viaja intacto al log.
+        assert_eq!(con_su_permiso(Pista::Sistema, ocupado(), &sin_audio).detalle, "estado «!hog»");
+    }
+
     #[test]
     fn cada_motivo_se_explica_en_castellano_y_sin_codigos() {
         let casos = [
             Disponibilidad::SinModelo,
             Disponibilidad::IdiomaDesconocido,
-            Disponibilidad::SinMotor { motivo: "este Mac no trae el transcriptor".into() },
+            Disponibilidad::SinMotor { motivo: crate::stt::PorQueNoHayMotor::SinTranscriptor },
         ];
         for d in casos {
             let texto = explicar(&d, "es-ES");
@@ -1159,7 +1225,7 @@ mod tests {
     /// se quedó atrás.
     #[test]
     fn un_turno_cuyo_audio_se_piso_no_se_confunde_con_uno_callado() {
-        let motor = crate::stt::Mudo::por("sin motor de prueba");
+        let motor = crate::stt::Mudo::por(crate::stt::PorQueNoHayMotor::SinPuente);
         let perdido = transcribir(
             &motor,
             &Diccionario::default(),
@@ -1342,7 +1408,7 @@ mod tests {
 
     #[test]
     fn sin_motor_el_turno_sale_con_el_motivo_del_motor() {
-        let motor = crate::stt::Mudo::por("este Mac no trae el transcriptor de macOS 26");
+        let motor = crate::stt::Mudo::por(crate::stt::PorQueNoHayMotor::SinTranscriptor);
         let novedad = transcribir(
             &motor,
             &Diccionario::default(),
@@ -1461,7 +1527,7 @@ mod tests {
             .empujar(turno_del_cliente("Nosotros veníamos trabajando con el proveedor anterior", 3_000));
 
         let suyo = ElQueTranscribe {
-            motor: Box::new(crate::stt::Mudo::por("aquí no transcribe nadie: no hay audio")),
+            motor: Box::new(crate::stt::Mudo::por(crate::stt::PorQueNoHayMotor::SinPuente)),
             buscador: corpus,
             diccionario: sin_diccionario(),
             ventana,
@@ -1507,7 +1573,7 @@ mod tests {
             .empujar(turno_del_cliente("Nosotros veníamos trabajando con el proveedor anterior", 3_000));
 
         let suyo = ElQueTranscribe {
-            motor: Box::new(crate::stt::Mudo::por("aquí no transcribe nadie")),
+            motor: Box::new(crate::stt::Mudo::por(crate::stt::PorQueNoHayMotor::SinPuente)),
             buscador: Arc::new(corpus_de_prueba()),
             diccionario: sin_diccionario(),
             ventana,

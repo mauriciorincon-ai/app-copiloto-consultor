@@ -45,66 +45,15 @@ const DISCRIMINANTES = new Set(["que", "clase", "estado", "salida"]);
  * es «cuando haya tiempo» sino la fase de su mirada.
  */
 const DEUDA: Record<string, string> = {
-  // ── Los que espera la mirada 17 (fase 3): el estado «pista caída» de Sesión, que es el M2 ──
-  "EstadoDePista.motivo":
-    "el «por qué» de una pista que no abrió. Lo pinta el estado «pista caída» (M2), que se maqueta en la mirada 17 · fase 3",
-  "EstadoDePista.hablando":
-    "quién está hablando ahora. Va con el mismo estado de Sesión · mirada 17 · fase 3",
-  "EstadoDePista.segundos":
-    "cuánto audio hay en el anillo. Honestidad dice «anillo de 30 s» como texto fijo; enseñar el real es copy nuevo · mirada 17 · fase 3",
-  "EstadoDePista.muestrasRecibidas":
-    "la prueba de que el grifo entrega de verdad. Mismo sitio y misma mirada · fase 3",
-  "EstadoDeEscucha.turnosEnMemoria":
-    "cuántos turnos viven en la ventana. Honestidad dice «ventana de 12 turnos» fijo · mirada 17 · fase 3",
-
-  // ── Los del motor, que la pantalla de Idioma describe en prosa y no como dato ──
-  "EstadoDeEscucha.motor":
-    "qué motor transcribe. `idioma.html` lo cuenta en prosa («el motor de voz de macOS») y no tiene sitio para el nombre · fase 3",
-  "QueSabeTranscribir.motor": "el mismo dato por el otro comando · fase 3",
-  "QueSabeTranscribir.techo":
-    "cuántos idiomas admite el motor a la vez · fase 3",
-  "QueSabeTranscribir.motivo":
-    "por qué no hay motor. Comparte sitio con el de la pista · fase 3",
-
-  // ── La ficha: dos datos que la banda mide y no enseña ──
-  "Aparicion.motivo":
-    "por qué disparó (pregunta · cifra · término tuyo · silencio · lo pediste). `Motivo::etiqueta()` existe y la banda no lo pinta: es copy nuevo · fase 3",
-  "Aparicion.ms":
-    "la latencia de fin de turno a ficha. Se MIDE y se registra en el log con su presupuesto de 4 s; enseñarla es copy nuevo · fase 3",
-  "Fuente.conjeturada":
-    "la sección la conjeturó el lector de PDF, nadie la escribió. Corpus cuenta cuántos documentos, la ficha no lo dice del suyo · fase 3",
-  "Turno.hastaMs":
-    "cuándo cerró el turno. La banda enseña la hora, no el tramo · fase 3",
-
-  // ── El corpus ──
-  "EstadoDelCorpus.carpeta":
-    "qué carpeta señaló el usuario. Corpus la ENVÍA al indexar y no la lee de vuelta: enseñarla es copy nuevo · fase 3",
-  "EstadoDelCorpus.secciones":
-    "el total de secciones indexadas. Corpus enseña documentos por unidad y bytes del índice · fase 3",
-
-  // ── La familia del «por qué»: cuatro razones honestas que la maqueta no tiene dónde poner ──
+  // ── Pagada entera en la fase 3 del sprint 002 ──
   //
-  // Las cuatro son la misma forma: un estado que no se pudo determinar **trae su motivo en español
-  // llano**, y la pantalla pinta el estado sin el motivo. Que el estado se vea ya es más de lo que
-  // hacen casi todas las apps; enseñar el porqué es lo que esta promete, y es copy nuevo.
-  "Reunion.motivo":
-    "por qué no se pudo saber si hay videollamada. Sesión pinta «sin reunión» y se calla el motivo · mirada 17 · fase 3",
-  "Salida.motivo":
-    "por qué no se sabe por dónde sale el sonido. Sesión decide el eco con `salida.salida` y no enseña esto · mirada 17 · fase 3",
-  "Salida.nombre":
-    "cómo se llama el dispositivo de salida («MacBook Pro Speakers»). Sesión dice la clase, no el nombre · mirada 17 · fase 3",
-  "Disponibilidad.motivo":
-    "por qué no hay motor de voz. Idioma pinta el estado «sin motor» (`Idioma.tsx:221`) y no el motivo que lo acompaña · mirada 17 · fase 3",
-
-  // ── La lectura de pantalla (C8), nacida en la fase 3 del sprint 002 ──
-  //
-  // El evento existe y cruza la costura con su muestra; las dos filas que lo pintan —la de Sesión y
-  // la de Honestidad— necesitan copy que la maqueta no tiene, y ese copy es la mirada 17-quater,
-  // aprobada por el usuario antes de maquetarse (bitácora, fase 3).
-  "EstadoDeLaPantalla.vista":
-    "la fila «Pantalla — solo lee lo nuevo» de Sesión, con su interruptor y el estado sin permiso · mirada 17-quater · fase 3",
-  "EstadoDeLaPantalla.bytesEnMemoria":
-    "la fila de la pantalla en «Qué vive en la memoria ahora» de Honestidad · mirada 17-quater · fase 3",
+  // Los veintiún campos que esta lista llevaba —las miradas 17, 17-bis y 17-quater— se pagaron así:
+  // diecisiete ganaron lector (Sesión, Idioma, Corpus, Honestidad y la banda) y **seis salieron del
+  // contrato**: los cuatro que el usuario decidió no enseñar («4 fuera, 3 se ven») y dos que
+  // cruzaban DOS VECES el mismo dato (`EstadoDeEscucha.motor` y `Disponibilidad.motivo`, que ya
+  // cruzan por `QueSabeTranscribir`). Esos dos los cazó una lectura a mano, no este gate: los daba
+  // por leídos porque compara por NOMBRE y otro tipo tenía un campo que se llamaba igual. Es la
+  // limitación que su propia bitácora declara, vista en acción.
 
   // ── Y uno que NO es deuda: lo lee el emisor ──
   "InformeDelCorte.bytesEnRed":

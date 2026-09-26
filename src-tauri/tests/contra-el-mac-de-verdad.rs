@@ -160,10 +160,11 @@ fn las_cifras_llegan_con_separadores_del_idioma() {
 
 use app_copiloto_consultor_lib::capture::anillo::Anillo;
 use app_copiloto_consultor_lib::capture::nativo::Grifo;
+use app_copiloto_consultor_lib::capture::NoAbrio;
 use std::sync::Arc;
 use std::time::Duration;
 
-fn escuchar(que: &str, abrir: impl FnOnce(Arc<Mutex<Anillo>>) -> Result<Grifo, String>) {
+fn escuchar(que: &str, abrir: impl FnOnce(Arc<Mutex<Anillo>>) -> Result<Grifo, NoAbrio>) {
     let _turno = turno();
     let anillo = Arc::new(Mutex::new(Anillo::de_la_app()));
     match abrir(anillo.clone()) {
@@ -179,12 +180,16 @@ fn escuchar(que: &str, abrir: impl FnOnce(Arc<Mutex<Anillo>>) -> Result<Grifo, S
             );
             assert!(grifo.hz_del_dispositivo >= 8_000, "una frecuencia de {} Hz no es audio", grifo.hz_del_dispositivo);
         }
-        Err(porque) => {
-            println!("{que}: NO se pudo abrir — {porque}");
+        Err(no) => {
+            // Desde el sprint 002 el grifo devuelve un porqué CERRADO —lo que Sesión enseña— y el
+            // detalle para el log. Lo que se exige es que el detalle explique, porque es lo único
+            // que tendrá quien depure un «no dejó».
+            println!("{que}: NO se pudo abrir — {no}");
+            let detalle = &no.detalle;
             assert!(
-                porque.len() > 20 && !porque.contains("None") && !porque.contains("Err("),
-                "el motivo «{porque}» no le dice nada a nadie: un grifo que no abre tiene que \
-                 explicarse, o la pantalla de Sesión no tendrá qué enseñar"
+                detalle.len() > 20 && !detalle.contains("None") && !detalle.contains("Err("),
+                "el detalle «{detalle}» no le dice nada a nadie: un grifo que no abre tiene que \
+                 explicarse en el log"
             );
         }
     }
@@ -240,11 +245,12 @@ fn una_frase_por_los_altavoces_acaba_siendo_texto() {
         "pistas · micrófono abierto={} · sistema abierto={} ({})",
         estado.microfono.abierta,
         estado.sistema.abierta,
-        estado.sistema.motivo.clone().unwrap_or_else(|| "sin motivo".into())
+        estado.sistema.motivo.map(|m| format!("{m:?}")).unwrap_or_else(|| "sin motivo".into())
     );
     if !estado.sistema.abierta {
-        let motivo = estado.sistema.motivo.unwrap_or_default();
-        assert!(motivo.len() > 20, "el tap no abrió y el motivo «{motivo}» no explica nada");
+        // Desde el sprint 002 el porqué es cerrado (mirada 17-quater): lo que se exige es que
+        // exista, porque la pantalla lo necesita para decir la frase y su salida.
+        assert!(estado.sistema.motivo.is_some(), "el tap no abrió y no dice por qué");
         return;
     }
 

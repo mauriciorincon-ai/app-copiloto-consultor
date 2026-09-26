@@ -35,6 +35,15 @@ const FIDELIDAD = join(RAIZ, "docs/fidelidad");
  * la página de referencia, que no es del producto. **Medidas, no estimadas** — ver el comentario
  * de la comparación, más abajo.
  */
+/**
+ * **De qué sprint es esta evidencia.** Cada sprint escribe la suya y deja la del anterior tal cual,
+ * porque su summary la cita. Hasta la fase 3 del sprint 002 esto era un `s1-` escrito a mano: el
+ * sprint 2 pisó tres veces la evidencia del sprint 1 y la hoja «S1-cuaderno.html» que su summary
+ * enseña como contrapeso del gate diferido pasó a enseñar pantallas del sprint 2. Se cambia en el
+ * primer commit de cada sprint que capture.
+ */
+const SPRINT = "s2";
+
 const MARCO = 9;
 const PUERTO = 4180;
 
@@ -71,21 +80,27 @@ const ARTEFACTOS = [
       { id: "voz", maqueta: "banda.html", estado: "voz", alto: 44, url: "ventana=banda&estado=voz" },
       { id: "voz-espera", maqueta: "banda.html", estado: "voz-espera", alto: 44, url: "ventana=banda&estado=voz-espera" },
       { id: "voz-sin", maqueta: "banda.html", estado: "voz-sin", alto: 44, url: "ventana=banda&estado=voz-sin" },
+      // La fase 3 del sprint 002: la ficha que se explica (17-bis) y la lectura de pantalla (17-quater).
+      { id: "ficha-pdf", maqueta: "banda.html", estado: "ficha-pdf", alto: 88, url: "ventana=banda&estado=ficha-pdf" },
+      { id: "ficha-pantalla", maqueta: "banda.html", estado: "ficha-pantalla", alto: 88, url: "ventana=banda&estado=ficha-pantalla" },
+      { id: "pantalla-nada", maqueta: "banda.html", estado: "pantalla-nada", alto: 88, url: "ventana=banda&estado=pantalla-nada" },
     ],
   },
   {
     id: "cuaderno",
     titulo: "el cuaderno",
-    mirada: "las miradas 12 y 13",
+    mirada: "las miradas 17, 17-bis y 17-quater",
     selectorMaqueta: ".ventana",
     selectorProducto: "main.ventana",
     desbordes: ".ventana .contenido, .ventana .rail",
     encuadres: [
-      { id: "sesion", maqueta: "sesion.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=sesion" },
-      { id: "permisos", maqueta: "permisos.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=permisos" },
-      { id: "corpus", maqueta: "corpus.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=corpus" },
-      { id: "honestidad", maqueta: "honestidad.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=honestidad" },
-      { id: "idioma", maqueta: "idioma.html", estado: "s1", alto: 640, url: "ventana=principal&pantalla=idioma" },
+      // Desde la fase 3 del sprint 002 el producto se compara con los estados «así se ve hoy ·
+      // sprint 2». Los de «sprint 1» quedan en la maqueta como historia: ya no describen la app.
+      { id: "sesion", maqueta: "sesion.html", estado: "s2-pantalla", alto: 640, url: "ventana=principal&pantalla=sesion" },
+      { id: "permisos", maqueta: "permisos.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=permisos" },
+      { id: "corpus", maqueta: "corpus.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=corpus" },
+      { id: "honestidad", maqueta: "honestidad.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=honestidad" },
+      { id: "idioma", maqueta: "idioma.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=idioma" },
     ],
   },
 ];
@@ -154,7 +169,7 @@ const diferencias = [];
 let hechas = 0;
 
 for (const art of ARTEFACTOS) {
-  const salida = join(FIDELIDAD, `s1-${art.id}`);
+  const salida = join(FIDELIDAD, `${SPRINT}-${art.id}`);
   rmSync(salida, { recursive: true, force: true });
   mkdirSync(join(salida, "maqueta"), { recursive: true });
   mkdirSync(join(salida, "producto"), { recursive: true });
@@ -317,8 +332,8 @@ for (const art of ARTEFACTOS) {
         return `  <figure data-tema="${tm}" data-idioma="${lg.id}">
     <figcaption><b>${e.id}</b> · ${tm} · ${lg.id} · ${e.alto} px</figcaption>
     <div class="par">
-      <div><span class="et">maqueta</span><img src="s1-${art.id}/maqueta/${n}" alt="${e.id} en la maqueta, tema ${tm}, idioma ${lg.id}"></div>
-      <div><span class="et">producto</span><img src="s1-${art.id}/producto/${n}" alt="${e.id} en el producto, tema ${tm}, idioma ${lg.id}"></div>
+      <div><span class="et">maqueta</span><img src="${SPRINT}-${art.id}/maqueta/${n}" alt="${e.id} en la maqueta, tema ${tm}, idioma ${lg.id}"></div>
+      <div><span class="et">producto</span><img src="${SPRINT}-${art.id}/producto/${n}" alt="${e.id} en el producto, tema ${tm}, idioma ${lg.id}"></div>
     </div>
   </figure>`;
       }),
@@ -326,13 +341,13 @@ for (const art of ARTEFACTOS) {
   ).join("\n");
 
   writeFileSync(
-    join(FIDELIDAD, `S1-${art.id}.html`),
+    join(FIDELIDAD, `${SPRINT.toUpperCase()}-${art.id}.html`),
     `<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Angel Ghost · Gate de fidelidad S1 — ${art.titulo}</title>
+<title>Angel Ghost · Gate de fidelidad ${SPRINT.toUpperCase()} — ${art.titulo}</title>
 <style>
   body { margin: 0; padding: 22px; background: #0d0e10; color: #cfd3d8; font: 14px/1.6 "Avenir Next", system-ui, sans-serif; }
   h1 { font-family: Charter, Georgia, serif; font-size: 26px; color: #e5e7eb; margin: 0 0 6px; }
@@ -384,7 +399,7 @@ await navegador.close();
 parar();
 
 console.log(`\n✓ ${hechas} encuadres del producto y ${diferencias.length} comparaciones`);
-for (const art of ARTEFACTOS) console.log(`✓ hoja de contacto: docs/fidelidad/S1-${art.id}.html`);
+for (const art of ARTEFACTOS) console.log(`✓ hoja de contacto: docs/fidelidad/${SPRINT.toUpperCase()}-${art.id}.html`);
 
 console.log("\n── desbordes en el producto ─────────────────────────────────");
 if (desbordes.length === 0) console.log("   ninguno");

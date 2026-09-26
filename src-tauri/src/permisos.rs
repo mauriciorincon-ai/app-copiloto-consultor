@@ -11,13 +11,18 @@
 //!    *nunca se preguntó* y *se denegó*; decir «denegado» cuando lo que hay es silencio manda al
 //!    usuario a buscar un permiso que nunca rechazó.
 //!
-//! Los tres permisos y de dónde sale cada respuesta:
+//! Los cuatro permisos y de dónde sale cada respuesta:
 //!
 //! | Permiso | API | Qué distingue |
 //! |---|---|---|
 //! | Micrófono | `AVCaptureDevice.authorizationStatusForMediaType:` | los cuatro estados |
-//! | Pantalla y audio del sistema | `CGPreflightScreenCaptureAccess()` | sí / no — **no distingue** denegado de sin preguntar |
+//! | Audio del sistema | `TCCAccessPreflight("kTCCServiceAudioCapture")` — **privada**, ver [`nativo::audio`] | sí / no |
+//! | Pantalla | `CGPreflightScreenCaptureAccess()` | sí / no — **no distingue** denegado de sin preguntar |
 //! | Accesibilidad (el acople) | `AXIsProcessTrusted` | sí / no |
+//!
+//! **Audio del sistema y pantalla son dos permisos**, aunque Ajustes los enseñe en el mismo panel
+//! («Grabación de pantalla y audio del sistema»). Hasta el sprint 002 la app leía el de pantalla y lo
+//! usaba para las dos filas; la mirada 17-quater lo encontró falso, comprobado en `tccd` de este Mac.
 
 use serde::Serialize;
 
@@ -46,12 +51,25 @@ impl Estado {
             _ => Estado::NoSeSabe,
         }
     }
+
+    /// De lo que contesta `TCCAccessPreflight`. **Solo el `0` es «concedido»**: los demás números
+    /// no están documentados, y tomarlos por «denegado» mandaría al usuario a revocar algo que quizá
+    /// nunca rechazó.
+    pub fn de_tcc(codigo: i32) -> Self {
+        if codigo == 0 {
+            Estado::Concedido
+        } else {
+            Estado::SinConceder
+        }
+    }
 }
 
-/// Los tres permisos que esta app llega a necesitar. Ni uno más.
+/// Los cuatro permisos que esta app llega a necesitar. Ni uno más.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 pub struct Permisos {
     pub microfono: Estado,
+    /// El audio del sistema: la pista del cliente.
+    pub audio: Estado,
     pub pantalla: Estado,
     pub accesibilidad: Estado,
 }
@@ -71,7 +89,7 @@ pub enum Cara {
 /// Los que la pantalla de permisos exige para escuchar. La accesibilidad no entra: es del acople,
 /// vive en su propia tarjeta y la app hace su trabajo entero sin ella.
 fn los_de_escuchar(p: &Permisos) -> [Estado; 2] {
-    [p.microfono, p.pantalla]
+    [p.microfono, p.audio]
 }
 
 /// Qué cara pone la pantalla de permisos.
@@ -91,7 +109,7 @@ pub fn cara(p: &Permisos) -> Cara {
 
 /// ¿Puede la app escuchar la reunión? Las dos pistas necesitan sus dos permisos.
 pub fn puede_escuchar(p: &Permisos) -> bool {
-    p.microfono == Estado::Concedido && p.pantalla == Estado::Concedido
+    p.microfono == Estado::Concedido && p.audio == Estado::Concedido
 }
 
 /// ¿Puede acoplar la ventana de la reunión?
@@ -107,6 +125,8 @@ pub fn ajustes_de(cual: &str) -> Option<&'static str> {
     match cual {
         "microfono" => Some("x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"),
         "pantalla" => Some("x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"),
+        // El mismo panel que la pantalla: Ajustes los enseña juntos aunque sean dos permisos.
+        "audio" => Some("x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"),
         "accesibilidad" => Some("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"),
         _ => None,
     }
@@ -160,6 +180,40 @@ mod nativo {
         }
     }
 
+    /// **El permiso del audio del sistema, con una API privada — y por qué.**
+    ///
+    /// `kTCCServiceAudioCapture` no tiene API pública para LEERLO sin provocar el diálogo. La
+    /// privada `TCCAccessPreflight` sí, y es la que usa el ejemplo de Apple de *process taps* que
+    /// circula (AudioCap). Probada en este Mac (bitácora, mirada 17-quater): contesta `0` para lo
+    /// concedido.
+    ///
+    /// Se busca con `dlsym` y no se enlaza: si una versión futura de macOS la quita, la app arranca
+    /// igual y la fila dice **«no se sabe»**. Y solo el `0` es «concedido»; cualquier otro número es
+    /// «sin conceder», nunca «denegado», por la regla 2 de este módulo. Es una API privada en una
+    /// app que se firma y se notariza fuera de la App Store: queda declarada aquí y en la bitácora.
+    pub fn audio() -> Estado {
+        use std::ffi::{c_int, c_void};
+        type Preflight = unsafe extern "C" fn(*const c_void, *const c_void) -> c_int;
+
+        let h = unsafe {
+            libc::dlopen(
+                c"/System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC".as_ptr(),
+                libc::RTLD_LAZY,
+            )
+        };
+        if h.is_null() {
+            return Estado::NoSeSabe;
+        }
+        let f = unsafe { libc::dlsym(h, c"TCCAccessPreflight".as_ptr()) };
+        if f.is_null() {
+            return Estado::NoSeSabe;
+        }
+        let preflight: Preflight = unsafe { std::mem::transmute::<*mut c_void, Preflight>(f) };
+        let servicio = objc2_foundation::NSString::from_str("kTCCServiceAudioCapture");
+        let puntero = &*servicio as *const objc2_foundation::NSString as *const c_void;
+        Estado::de_tcc(unsafe { preflight(puntero, std::ptr::null()) })
+    }
+
     pub fn accesibilidad() -> Estado {
         if crate::acople::hay_permiso() {
             Estado::Concedido
@@ -171,6 +225,7 @@ mod nativo {
     pub fn leer() -> Permisos {
         Permisos {
             microfono: microfono(),
+            audio: audio(),
             pantalla: pantalla(),
             accesibilidad: accesibilidad(),
         }
@@ -183,6 +238,7 @@ mod nativo {
     pub fn leer() -> Permisos {
         Permisos {
             microfono: Estado::NoSeSabe,
+            audio: Estado::NoSeSabe,
             pantalla: Estado::NoSeSabe,
             accesibilidad: Estado::NoSeSabe,
         }
@@ -195,8 +251,33 @@ pub use nativo::leer;
 mod tests {
     use super::*;
 
+    /// El audio del sistema va con la pantalla en los casos de antes: eran el mismo estado hasta el
+    /// sprint 002, y así los tests de siempre siguen diciendo lo que decían.
     fn p(m: Estado, pa: Estado, a: Estado) -> Permisos {
-        Permisos { microfono: m, pantalla: pa, accesibilidad: a }
+        Permisos { microfono: m, audio: pa, pantalla: pa, accesibilidad: a }
+    }
+
+    /// **Audio y pantalla son dos permisos, y escuchar depende del de audio.** Con la pantalla
+    /// negada la app escucha igual: lo que pierde es leerla.
+    #[test]
+    fn escuchar_depende_del_audio_y_no_de_la_pantalla() {
+        let sin_pantalla = Permisos {
+            microfono: Estado::Concedido,
+            audio: Estado::Concedido,
+            pantalla: Estado::SinConceder,
+            accesibilidad: Estado::Concedido,
+        };
+        assert!(puede_escuchar(&sin_pantalla));
+        let sin_audio = Permisos { audio: Estado::SinConceder, pantalla: Estado::Concedido, ..sin_pantalla };
+        assert!(!puede_escuchar(&sin_audio));
+    }
+
+    #[test]
+    fn de_tcc_solo_el_cero_es_concedido() {
+        assert_eq!(Estado::de_tcc(0), Estado::Concedido);
+        for otro in [1, 2, -1, 99] {
+            assert_eq!(Estado::de_tcc(otro), Estado::SinConceder, "{otro}");
+        }
     }
 
     #[test]
@@ -253,7 +334,7 @@ mod tests {
 
     #[test]
     fn cada_permiso_sabe_a_que_panel_de_ajustes_lleva() {
-        for cual in ["microfono", "pantalla", "accesibilidad"] {
+        for cual in ["microfono", "audio", "pantalla", "accesibilidad"] {
             let url = ajustes_de(cual).unwrap_or_else(|| panic!("«{cual}» no sabe adónde lleva"));
             assert!(url.starts_with("x-apple.systempreferences:"), "{url}");
         }

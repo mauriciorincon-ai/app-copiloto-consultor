@@ -278,7 +278,12 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .contenido { padding: var(--s-5) var(--s-6); overflow: auto; display: flex; flex-direction: column; gap: var(--s-4); }
 .titulo { display: flex; flex-direction: column; gap: 4px; }
 .titulo h1 { font-size: var(--t-h1); font-weight: 600; letter-spacing: -.01em; line-height: 1.2; }
-.titulo .sub { font-size: var(--t-ui); color: var(--ink-2); max-width: 60ch; }
+/* El subtítulo va en UNA línea desde la fase 3 del sprint 002. Con el tope de 60ch se partía en dos,
+   y las pantallas del sprint 2 —que ya dicen más— se salían 5-20 px del área que desplaza: la última
+   tarjeta quedaba pegada al borde, sin su margen. Lo cazó el gate de fidelidad midiendo el producto;
+   la maqueta tenía el mismo defecto y el recorrido de holguras no lo veía, porque medía la ventana y no
+   el área que desplaza. */
+.titulo .sub { font-size: var(--t-ui); color: var(--ink-2); }
 h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-weight: 400; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 8px; }
 
 /* Tarjeta */
@@ -415,7 +420,10 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .banda .titular-b { font-family: var(--font-evidencia); font-size: 16px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .banda .linea-b { font-family: var(--font-evidencia); font-size: 13.5px; line-height: 1.35; color: var(--ink-2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
 .banda.ampliada .linea-b { -webkit-line-clamp: 2; }
-.banda .lado-b { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; max-width: 34%; }
+/* Hueco de 3 px y no 4: desde la mirada 17-bis la ficha lleva TRES renglones a la derecha —fuente, por
+   qué y teclas— y con 4 px las teclas se salían 1,35 px por abajo y la banda les recortaba el borde
+   inferior. Lo encontró el recorrido de holguras de la fase 3 del sprint 002. */
+.banda .lado-b { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; max-width: 34%; }
 .banda .fuente-b { font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .banda .atajos-b { display: inline-flex; gap: 10px; }
 .banda .mas { padding: 0; }

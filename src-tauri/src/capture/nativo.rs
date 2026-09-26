@@ -190,7 +190,8 @@ pub enum Salida {
     /// Un dispositivo externo (USB, Bluetooth, una interfaz). Puede ser un casco o un altavoz de
     /// mesa, y desde aquí **no se puede distinguir**: se dice el nombre y decide el usuario.
     Otra { nombre: String },
-    NoSeSabe { motivo: String },
+    /// No se sabe, con su porqué cerrado y —si lo hay— el nombre del dispositivo, que la frase cita.
+    NoSeSabe { motivo: super::PorQueNoSeSabe, nombre: Option<String> },
 }
 
 impl Salida {
@@ -207,11 +208,11 @@ impl Salida {
 /// Mira por dónde sale hoy el sonido.
 pub fn salida_de_audio() -> Salida {
     let Some(dispositivo) = leer_objeto(OBJETO_SISTEMA, SALIDA_POR_DEFECTO, AMBITO_GLOBAL) else {
-        return Salida::NoSeSabe { motivo: "este Mac no declara salida de audio por defecto".into() };
+        return Salida::NoSeSabe { motivo: super::PorQueNoSeSabe::SinSalida, nombre: None };
     };
     let nombre = leer_cadena(dispositivo, cuatro(b"lnam")).unwrap_or_else(|| "sin nombre".into());
     let Some(transporte) = leer_u32(dispositivo, TIPO_DE_TRANSPORTE, AMBITO_GLOBAL) else {
-        return Salida::NoSeSabe { motivo: format!("«{nombre}» no dice cómo está conectado") };
+        return Salida::NoSeSabe { motivo: super::PorQueNoSeSabe::SinConexion, nombre: Some(nombre) };
     };
     if transporte != TRANSPORTE_INTERNO {
         return Salida::Otra { nombre };
@@ -220,7 +221,7 @@ pub fn salida_de_audio() -> Salida {
         Some(f) if f == ALTAVOZ_INTERNO => Salida::Altavoces,
         Some(_) => Salida::Auriculares,
         // Conectado por dentro pero sin decir a qué: lo honesto es no elegir por el usuario.
-        None => Salida::NoSeSabe { motivo: format!("«{nombre}» no dice por dónde suena") },
+        None => Salida::NoSeSabe { motivo: super::PorQueNoSeSabe::SinFuente, nombre: Some(nombre) },
     }
 }
 
@@ -269,7 +270,11 @@ impl Grifo {
     }
 
     /// Abre el micrófono: el dispositivo de entrada por defecto del Mac.
-    pub fn del_microfono(anillo: Arc<Mutex<Anillo>>) -> Result<Self, String> {
+    pub fn del_microfono(anillo: Arc<Mutex<Anillo>>) -> Result<Self, super::NoAbrio> {
+        Self::abrir_el_microfono(anillo).map_err(no_abrio)
+    }
+
+    fn abrir_el_microfono(anillo: Arc<Mutex<Anillo>>) -> Result<Self, String> {
         let dispositivo = leer_objeto(OBJETO_SISTEMA, ENTRADA_POR_DEFECTO, AMBITO_GLOBAL)
             .ok_or("este Mac no tiene un dispositivo de entrada por defecto")?;
         let formato = leer_formato(dispositivo, FORMATO_DEL_DISPOSITIVO, AMBITO_ENTRADA)
@@ -282,7 +287,11 @@ impl Grifo {
     /// Excluirnos no es cortesía: en cuanto exista el modo solo audio (C15), la app hablará por los
     /// altavoces, y un tap que se oyera a sí mismo transcribiría su propia voz como si fuera el
     /// cliente.
-    pub fn del_sistema(anillo: Arc<Mutex<Anillo>>) -> Result<Self, String> {
+    pub fn del_sistema(anillo: Arc<Mutex<Anillo>>) -> Result<Self, super::NoAbrio> {
+        Self::abrir_el_sistema(anillo).map_err(no_abrio)
+    }
+
+    fn abrir_el_sistema(anillo: Arc<Mutex<Anillo>>) -> Result<Self, String> {
         let descripcion = describir_el_tap()?;
         let mut tap: ObjetoDeAudio = 0;
         let estado =
@@ -330,8 +339,7 @@ impl Grifo {
             // Nombrado, como todo error de este módulo: quien lea el log tiene que poder decidir
             // qué hacer sin abrir el código.
             return Err(format!(
-                "el audio no llega como flotante de 32 bits empaquetado y no se puede leer: \
-                 formato {} · {} bits · banderas {:#x}",
+                "{FORMATO_ILEGIBLE}: formato {} · {} bits · banderas {:#x}",
                 cuatro_letras(formato.id),
                 formato.bits,
                 formato.banderas
@@ -537,6 +545,32 @@ fn cuatro_letras(valor: u32) -> String {
 
 fn formato_de_error(que: &str, estado: Estado) -> String {
     format!("{que} (estado {estado} «{}»)", cuatro_letras(estado as u32))
+}
+
+/// El principio del error de formato. Es una constante porque dos sitios la usan —quien escribe
+/// el error y [`no_abrio`], que lo clasifica— y una frase copiada dos veces se desincroniza sola.
+const FORMATO_ILEGIBLE: &str = "el audio no llega como flotante de 32 bits empaquetado y no se puede leer";
+
+/// `kAudioDevicePermissionsError`: macOS no deja usar el dispositivo porque otra app lo tiene.
+const OCUPADO: [u8; 4] = *b"!hog";
+
+/// **El porqué de un grifo que no abrió**, sacado del error que el propio módulo escribió.
+///
+/// Los errores de dentro siguen siendo frases —son lo que va al log y lo que un humano lee para
+/// depurar—, y aquí se clasifican una vez, a la salida. Las dos marcas que se buscan las escribe
+/// este mismo archivo ([`FORMATO_ILEGIBLE`] y [`formato_de_error`], que pone el código de cuatro
+/// letras entre comillas). El permiso NO se decide aquí: lo sabe `permisos`, y lo añade quien abre.
+fn no_abrio(detalle: String) -> super::NoAbrio {
+    use super::PorQueNoAbrio::*;
+    let ocupado = format!("«{}»", cuatro_letras(u32::from_be_bytes(OCUPADO)));
+    let porque = if detalle.starts_with(FORMATO_ILEGIBLE) {
+        FormatoIlegible
+    } else if detalle.contains(&ocupado) {
+        DispositivoOcupado
+    } else {
+        NoDejo
+    };
+    super::NoAbrio { porque, detalle }
 }
 
 /// Un `CATapDescription` vivo y el UID con el que referirse a él desde el dispositivo agregado.
@@ -750,15 +784,22 @@ mod tests {
     }
 
     /// Lo que se puede afirmar sin saber qué Mac corre esto: que la respuesta es una de las
-    /// cuatro, que nunca miente por omisión, y que cuando no sabe lo dice con una frase.
+    /// cuatro, que nunca miente por omisión, y que cuando no sabe dice por qué.
     #[test]
     fn la_salida_de_audio_siempre_contesta_algo_que_se_pueda_enseñar() {
         let s = salida_de_audio();
         println!("salida de audio de este Mac: {s:?}");
         match &s {
-            Salida::NoSeSabe { motivo } | Salida::Otra { nombre: motivo } => {
-                assert!(!motivo.is_empty(), "una salida sin nombre ni motivo no se puede enseñar")
+            Salida::Otra { nombre } => {
+                assert!(!nombre.is_empty(), "una salida externa sin nombre no se puede enseñar")
             }
+            // Los dos porqués que citan el dispositivo tienen que traer su nombre: la frase lo
+            // pone entre comillas, y sin él diría ««» no dice cómo está conectado».
+            Salida::NoSeSabe { motivo, nombre } => assert_eq!(
+                nombre.is_some(),
+                *motivo != super::super::PorQueNoSeSabe::SinSalida,
+                "{motivo:?} con nombre {nombre:?}"
+            ),
             _ => {}
         }
         // Y la pregunta que de verdad importa tiene tres respuestas, no dos.
@@ -770,7 +811,8 @@ mod tests {
         assert_eq!(Salida::Altavoces.puede_haber_eco(), Some(true));
         assert_eq!(Salida::Auriculares.puede_haber_eco(), Some(false));
         assert_eq!(Salida::Otra { nombre: "Altavoz de mesa".into() }.puede_haber_eco(), None);
-        assert_eq!(Salida::NoSeSabe { motivo: "x".into() }.puede_haber_eco(), None);
+        let no_se_sabe = Salida::NoSeSabe { motivo: super::super::PorQueNoSeSabe::SinSalida, nombre: None };
+        assert_eq!(no_se_sabe.puede_haber_eco(), None);
     }
 
     #[test]
@@ -779,6 +821,24 @@ mod tests {
         assert_eq!(FORMATO_DEL_TAP, u32::from_be_bytes(*b"tfmt"));
         assert_eq!(AMBITO_ENTRADA, u32::from_be_bytes(*b"inpt"));
         assert_eq!(PCM_LINEAL, u32::from_be_bytes(*b"lpcm"));
+    }
+
+    /// **Los porqués se sacan de los errores que escribe este mismo archivo** — y si alguien cambia
+    /// la frase de uno sin cambiar el clasificador, la pista caída volvería a «no dejó» y la
+    /// pantalla perdería la salida concreta. Este test es lo que lo impide.
+    #[test]
+    fn cada_error_del_grifo_cae_en_su_porque() {
+        use super::super::PorQueNoAbrio::*;
+        let ocupado = formato_de_error(
+            "no se pudo crear el tap del audio del sistema",
+            u32::from_be_bytes(OCUPADO) as Estado,
+        );
+        assert_eq!(no_abrio(ocupado).porque, DispositivoOcupado);
+        let ilegible = format!("{FORMATO_ILEGIBLE}: formato lpcm · 16 bits · banderas 0xc");
+        assert_eq!(no_abrio(ilegible).porque, FormatoIlegible);
+        let otro = formato_de_error("el sistema no dejó arrancar la captura", -50);
+        assert_eq!(no_abrio(otro.clone()).porque, NoDejo);
+        assert_eq!(no_abrio(otro.clone()).detalle, otro, "el detalle va al log intacto");
     }
 
     fn formato(id: u32, bits: u32, banderas: u32) -> Formato {

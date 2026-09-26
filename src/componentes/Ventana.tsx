@@ -14,7 +14,12 @@ import { Ic } from "./Iconos";
  */
 export type Seccion = "sesion" | "permisos" | "corpus" | "honestidad" | "idioma";
 
-const RAIL: { id: Seccion | null; icono: string; clave: keyof ReturnType<typeof useT>["cuaderno"] }[] = [
+/** Solo las claves del cuaderno que son UNA frase: las de los porqués son catálogos, no rótulos. */
+type Rotulo = {
+  [K in keyof ReturnType<typeof useT>["cuaderno"]]: ReturnType<typeof useT>["cuaderno"][K] extends string ? K : never;
+}[keyof ReturnType<typeof useT>["cuaderno"]];
+
+const RAIL: { id: Seccion | null; icono: string; clave: Rotulo }[] = [
   { id: "sesion", icono: "i-video", clave: "navSesion" },
   { id: "permisos", icono: "i-candado", clave: "navPermisos" },
   { id: "corpus", icono: "i-doc", clave: "navCorpus" },

@@ -94,12 +94,19 @@ export type Novedad =
       motivo: string;
     }
   | { que: "ruido"; pista: Pista; duracionMs: number }
-  | ({ que: "aparece" } & Aparicion);
+  | ({ que: "aparece" } & Aparicion)
+  /** `⌃⌥L` leyó la pantalla y no había texto: la banda contesta igual, porque alguien preguntó. */
+  | { que: "nada-en-pantalla"; hora: string };
 
 export type LoQueLaBandaEnseña = {
   aparicion: Aparicion | null;
   /** El cliente terminó de hablar y todavía no hay respuesta. Es el estado «buscando». */
   buscando: boolean;
+  /**
+   * `⌃⌥L` leyó la pantalla y no había texto: la hora a la que se pidió. La banda contesta igual
+   * —«Leí la pantalla: no hay texto que buscar.»—, porque alguien preguntó (mirada 17-quater).
+   */
+  nadaEnPantalla: string | null;
 };
 
 /**
@@ -121,6 +128,9 @@ export function useFicha(
     hayTauri() ? null : deMuestra(m, paraLaMuestra),
   );
   const [buscando, setBuscando] = useState(false);
+  const [nadaEnPantalla, setNada] = useState<string | null>(() =>
+    !hayTauri() && paraLaMuestra === "pantalla-nada" ? m.hora3 : null,
+  );
 
   useEffect(() => {
     if (!hayTauri()) return;
@@ -128,15 +138,22 @@ export function useFicha(
       escuchar<Novedad>("escucha", (n) => {
         // Un turno del cliente puede acabar en ficha o en nada, y hasta saberlo la banda dice
         // que está buscando. El eco no cuenta: es el consultor oyéndose a sí mismo.
-        if (n?.que === "turno" && n.pista === "sistema" && !n.eco)
+        if (n?.que === "turno" && n.pista === "sistema" && !n.eco) {
           setBuscando(true);
+          setNada(null);
+        }
         if (n?.que === "aparece") {
           setFicha(n);
           setBuscando(false);
+          setNada(null);
         }
+        // La lectura pedida no encontró texto. Se contesta encima de lo que hubiera: fue lo
+        // último que el usuario pidió, y es lo que espera ver.
+        if (n?.que === "nada-en-pantalla") setNada(n.hora);
       }),
       escuchar("ficha", () => {
         setBuscando(true);
+        setNada(null);
         void preguntar<Aparicion>("pedir_ficha").then((a) => {
           setBuscando(false);
           if (a !== null) setFicha(a);
@@ -146,12 +163,13 @@ export function useFicha(
       escuchar("corte", () => {
         setFicha(null);
         setBuscando(false);
+        setNada(null);
       }),
     ];
     return () => bajas.forEach((b) => b());
   }, []);
 
-  return { aparicion: ficha, buscando };
+  return { aparicion: ficha, buscando, nadaEnPantalla };
 }
 
 /** Los datos «Páramo Azul» de la maqueta, con los textos del diccionario. */
@@ -159,7 +177,8 @@ function deMuestra(
   m: ReturnType<typeof useT>["banda"]["muestra"],
   estado: string,
 ): Aparicion {
-  const comun = { motivo: "pregunta" as const, ms: 1_400, hora: m.hora1 };
+  // «pregunta · 1,2 s», como `banda.html` (mirada 17-bis).
+  const comun = { motivo: "pregunta" as const, ms: 1_200, hora: m.hora1 };
   if (estado === "sin-resultado") {
     return {
       clase: "sinResultado",
@@ -171,6 +190,34 @@ function deMuestra(
       ],
       maniobra: "credencial",
       ...comun,
+    };
+  }
+  // La ficha que sale de un PDF, con su sección conjeturada: «cifra · 0,9 s».
+  if (estado === "ficha-pdf") {
+    return {
+      clase: "ficha",
+      titular: m.titularPdf,
+      linea: m.lineaPdf,
+      lineaLarga: m.lineaPdf,
+      fuente: { documento: m.fuentePdf, seccion: null, unidad: "caso", conjeturada: true },
+      acumuladas: [],
+      motivo: "cifra",
+      ms: 900,
+      hora: m.hora1,
+    };
+  }
+  // La ficha que trajo la pantalla, sin que nadie preguntara: «en pantalla · 0,8 s».
+  if (estado === "ficha-pantalla") {
+    return {
+      clase: "ficha",
+      titular: m.titularPantalla,
+      linea: m.lineaPantalla,
+      lineaLarga: m.lineaPantalla,
+      fuente: { documento: m.fuentePantalla, seccion: null, unidad: "propuesta", conjeturada: false },
+      acumuladas: [],
+      motivo: "pantalla",
+      ms: 800,
+      hora: m.hora1,
     };
   }
   return {

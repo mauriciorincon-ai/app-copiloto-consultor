@@ -110,7 +110,17 @@ pub enum Reunion {
         proteccion: Proteccion,
     },
     /// Hay un navegador abierto pero no podemos mirar sus ventanas. **No es «no hay reunión».**
-    NoSePuedeSaber { motivo: String },
+    NoSePuedeSaber { motivo: PorQueNoSeVe },
+}
+
+/// **Por qué no se puede saber si hay reunión**, en un conjunto cerrado (mirada 17-quater, kit
+/// §8-ter). Hoy tiene un solo miembro, y es un enum igual: el día que aparezca un segundo, la
+/// pantalla no compila hasta que alguien le escriba su frase en los dos idiomas.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum PorQueNoSeVe {
+    /// Sin el permiso de Accesibilidad no se leen los títulos de las ventanas del navegador.
+    SinAccesibilidad,
 }
 
 fn del_catalogo(bundle: &str) -> Option<&'static Cliente> {
@@ -156,9 +166,7 @@ pub fn clasificar(vista: &Vista) -> Reunion {
 
     // Hay navegador, pero no podemos ver sus ventanas: no sabemos, y se dice.
     if !navegadores.is_empty() && !vista.titulos_legibles {
-        return Reunion::NoSePuedeSaber {
-            motivo: "sin permiso de Accesibilidad no se puede ver si tienes Meet abierto".into(),
-        };
+        return Reunion::NoSePuedeSaber { motivo: PorQueNoSeVe::SinAccesibilidad };
     }
 
     Reunion::Ninguna
@@ -344,7 +352,7 @@ mod tests {
         let Reunion::NoSePuedeSaber { motivo } = r else {
             panic!("sin permiso no se puede afirmar que no hay reunión")
         };
-        assert!(motivo.contains("Accesibilidad"), "motivo inútil: {motivo}");
+        assert_eq!(motivo, PorQueNoSeVe::SinAccesibilidad);
     }
 
     /// Sin navegadores abiertos, no poder leer títulos no cambia nada: no hay reunión y punto.

@@ -127,6 +127,23 @@ export const es = {
     conectaAuriculares: "Conecta auriculares",
     elClienteTeOiria: "el cliente te oiría",
 
+    // ---- fase 3 del sprint 002: por qué llegó la ficha, y la lectura que no encontró nada ----
+    /**
+     * **Los seis motivos del disparo** (`Motivo` en Rust), con su frase en los dos idiomas: la
+     * banda los pinta junto a la latencia («pregunta · 1,2 s»). Mirada 17-bis; «en pantalla» es de
+     * la 17-quater y lleva su propio símbolo.
+     */
+    motivos: {
+      pregunta: "pregunta",
+      cifra: "cifra",
+      terminoDelCorpus: "término tuyo",
+      silencioLargo: "silencio",
+      atajo: "lo pediste",
+      pantalla: "en pantalla",
+    },
+    seccionConjeturada: "sección conjeturada",
+    leiLaPantalla: "Leí la pantalla: no hay texto que buscar.",
+
     /**
      * MUESTRA SINTÉTICA «Páramo Azul» — la misma de la maqueta, con datos 100 % inventados.
      *
@@ -170,6 +187,14 @@ export const es = {
       turno3: "¿Y si sumamos el Excel de la fuerza comercial? Lo tenemos en Power BI.",
       hora1: "14:01",
       hora2: "14:02",
+      /** La hora de «lo pediste · 14:05», el estado «pantalla · nada que leer». */
+      hora3: "14:05",
+      titularPdf: "Cuatro fuentes integradas en 9 semanas",
+      lineaPdf: "El perfilado previo recortó a la mitad la limpieza; la cuarta fuente entró en la semana 6.",
+      fuentePdf: "Sur del Valle · Resultados",
+      titularPantalla: "Tres canales, y no se sabe cuál deja margen",
+      lineaPantalla: "Mayorista, tiendas de vereda y venta directa: la propuesta mide el margen de cada uno.",
+      fuentePantalla: "Páramo Azul · Contexto",
     },
   },
   /**
@@ -262,15 +287,12 @@ export const es = {
     concedido: "Concedido",
     sinConceder: "Sin conceder",
     concederEnMacos: "Conceder en macOS",
-    unSoloPermiso: "Audio del sistema y Pantalla son un solo permiso en macOS: se conceden y se caen juntos.",
     sinConcederNada: "Qué puedes hacer ya, sin conceder nada",
     indexar: "Indexar tu corpus",
     escribirNotas: "Escribir notas y acuerdos",
     buscarAMano: "Buscar tu evidencia a mano",
-    queTextoVeras: "Qué texto verás en macOS",
     textoMicrofono:
       "«Angel Ghost usa el micrófono para saber cuándo hablas tú. El audio vive solo en memoria y no se graba.»",
-    claveMicrofono: "NSMicrophoneUsageDescription · es / en",
 
     // ---- honestidad ----
     honestidadTitulo: "Honestidad",
@@ -344,6 +366,69 @@ export const es = {
     loQueFaltaDetalle:
       "Hoy cada pista escucha un idioma, y los turnos mueren los dos —el tuyo y el del cliente— al cerrar y con la tecla.",
     conservarTusTurnos: "Conservar lo que dijiste tú",
+    // ---- fase 3 del sprint 002: LOS PORQUÉS (mirada 17-quater, `kit.html` §8-ter) ----
+    /**
+     * Cada estado que no funciona dice por qué con una frase CERRADA. Rust manda la clave; la frase
+     * vive aquí, en los dos idiomas, y termina en una salida siempre que la haya. Las claves son las
+     * de los enums de Rust tal cual (`kebab-case`), para que un porqué nuevo sin frase no compile.
+     */
+    noAbrio: "No abrió",
+    porQueNoAbrio: {
+      "sin-permiso-del-microfono": "macOS no dio permiso al micrófono. Concédelo en Permisos y vuelve a «Iniciar sesión».",
+      "sin-permiso-del-audio": "macOS no dio permiso para el audio del sistema. Concédelo en Permisos y vuelve a «Iniciar sesión».",
+      "dispositivo-ocupado": "macOS no dejó crear el tap: otra app tiene el dispositivo. Ciérrala y vuelve a «Iniciar sesión».",
+      "formato-ilegible": "El dispositivo entrega un formato de audio que la app no sabe leer. Prueba con otro y vuelve a «Iniciar sesión».",
+      "no-dejo": "macOS no dejó abrir esta pista. Vuelve a «Iniciar sesión»; si se repite, reinicia el Mac.",
+    },
+    escuchaAMedias: "Escucha y transcribe en tu Mac —",
+    soloTuPista: "solo tu pista",
+    soloLaDelCliente: "solo la del cliente",
+    aMedias: "A medias",
+    pantallaEspera: "Espera la reunión",
+    pantallaApagada: "Apagada",
+    pantallaApagadaPor: "No la lee sola. Pídesela cuando quieras: ⌃⌥L.",
+    pantallaSinPermiso: "Sin permiso",
+    pantallaSinPermisoPor: "macOS no ha concedido la grabación de pantalla: la app no lee nada de ella. Concédela en Permisos.",
+    pantallaNoPudo: "No pudo",
+    pantallaNoPudoPor: "macOS no entregó la ventana de la reunión. La app lo vuelve a intentar sola.",
+    leerlaSola: "Leerla sola",
+    leelaAhora: "léela ahora",
+    siEsUnAltavoz: "Si es un altavoz, no uses el modo solo audio.",
+    noSeSabe: "No se sabe",
+    /** Las dos últimas citan el dispositivo: la pantalla antepone su nombre entre comillas. */
+    porQueNoSeSabe: {
+      "sin-salida": "Este Mac no dice por dónde sale el sonido.",
+      "sin-conexion": "no dice cómo está conectado.",
+      "sin-fuente": "no dice por dónde suena.",
+    },
+    noSePuedeSaber: "No se puede saber si hay reunión",
+    porQueNoSeVe: {
+      "sin-accesibilidad": "Sin el permiso de Accesibilidad la app no puede ver si tienes Meet abierto. Concédelo en Permisos.",
+    },
+    dosPermisos: "Audio del sistema y Pantalla son dos permisos de macOS, aunque Ajustes los enseña en el mismo panel.",
+    antesDeQueMacos: "Antes de que macOS te pregunte",
+    textoPantalla:
+      "«Angel Ghost solo lee lo nuevo de tu pantalla compartida, para reconocer cifras y títulos. Las imágenes viven en memoria y no se guardan ni salen de tu equipo.»",
+    fraseDeMacos:
+      "macOS pregunta con su propia frase y no deja poner otra: «Angel Ghost quiere hacer una captura del contenido de la pantalla del sistema».",
+    soloEnMemoriaElUltimo: "solo en memoria · el último",
+    botonCorta: "El botón corta",
+    de: "de",
+    piezasNingunaFuera: "piezas: ninguna queda fuera.",
+    idiomasListos: "idiomas listos a la vez, como mucho: lo impone macOS, no la app.",
+    sinMotorTitulo: "Sin motor de voz: nada se transcribe",
+    porQueNoHayMotor: {
+      "sin-transcriptor": "Este Mac no trae el transcriptor de macOS 26.",
+      "sin-puente": "Esta copia de la app se construyó sin el transcriptor.",
+      "no-contesta": "El transcriptor de macOS no contestó. Vuelve a abrir la app; si se repite, reinicia el Mac.",
+    },
+    laBandaSigue: "La banda sigue funcionando con ⌃⌥A y tu corpus; lo que no llega es la ficha automática.",
+    tuDiccionario: "Tu diccionario técnico",
+    deTuCorpus: "De tu corpus — nombres, productos, títulos",
+    enTuArchivo: "En tu archivo",
+    jamasCompleta: "Jamás completa una frase ni adivina una palabra.",
+    tuCarpeta: "Tu carpeta",
+    secciones: "secciones",
   },
 };
 

@@ -1,4 +1,4 @@
-import { useT } from "../i18n";
+import { useIdioma, useT } from "../i18n";
 import { Ic } from "./Iconos";
 import { useAsa } from "../asa";
 import { useTurnos } from "../turnos";
@@ -28,7 +28,14 @@ export type EstadoBanda =
   /** Los tres del modo solo audio (C15). Fuera de Tauri los pide el arnés de capturas por la URL. */
   | "voz"
   | "voz-espera"
-  | "voz-sin";
+  | "voz-sin"
+  /**
+   * Los tres de la lectura de pantalla y la ficha que se explica (sprint 002, miradas 17-bis y
+   * 17-quater). Dentro de Tauri los decide lo que llega; fuera, la URL, para el arnés de capturas.
+   */
+  | "ficha-pdf"
+  | "ficha-pantalla"
+  | "pantalla-nada";
 
 export type PropsBanda = {
   estado: EstadoBanda;
@@ -61,6 +68,7 @@ export function Banda({
 }: PropsBanda) {
   const t = useT().banda;
   const tc = useT().cuaderno;
+  const idioma = useIdioma();
   const m = t.muestra;
   const grande = ampliada || transcript;
   /**
@@ -82,23 +90,29 @@ export function Banda({
   // La ficha viene del corpus del usuario. Fuera de Tauri es la de la maqueta, que es lo que
   // hace posible el gate de FIDELIDAD; dentro del producto es la de verdad, y si no hay ninguna
   // no se pinta ninguna.
-  const { aparicion, buscando } = useFicha(estado);
+  const { aparicion, buscando, nadaEnPantalla } = useFicha(estado);
 
   // **Dentro del producto el estado de contenido lo decide la ficha, no la URL.** Tener las dos
   // cosas mandando a la vez fue un defecto real: la banda pedía «sin resultado» y la ficha traía
   // una ficha, así que no se pintaba nada. `sin-verificar` es la excepción y no es capricho: lo
   // decide la protección de la ventana, que no tiene nada que ver con el corpus.
-  const estadoReal: EstadoBanda = !hayTauri()
+  const pedido: EstadoBanda = !hayTauri()
     ? estado
     : estado === "sin-verificar"
       ? estado
-      : buscando
-        ? "buscando"
-        : aparicion?.clase === "ficha"
-          ? "ficha"
-          : aparicion?.clase === "sinResultado"
-            ? "sin-resultado"
-            : "esperando";
+      : nadaEnPantalla !== null
+        ? "pantalla-nada"
+        : buscando
+          ? "buscando"
+          : aparicion?.clase === "ficha"
+            ? "ficha"
+            : aparicion?.clase === "sinResultado"
+              ? "sin-resultado"
+              : "esperando";
+  // La ficha del PDF y la de la pantalla SON fichas: lo que cambia es su línea de «por qué», y eso
+  // lo dice la aparición. Se dibujan con la misma rama.
+  const estadoReal: EstadoBanda =
+    pedido === "ficha-pdf" || pedido === "ficha-pantalla" ? "ficha" : pedido;
   // Los turnos se piden SIEMPRE, no solo con el transcript abierto: el hueco entre abrirlo y
   // recibir la primera respuesta se vería como un transcript vacío, y un transcript vacío en una
   // reunión con gente hablando parece una avería.
@@ -191,10 +205,27 @@ export function Banda({
     <span className="fuente-b">
       {f.fuente.unidad && <span className="unidad">{t.unidades[f.fuente.unidad]}</span>}{" "}
       {f.fuente.seccion ? `${f.fuente.documento} · ${f.fuente.seccion}` : f.fuente.documento}
-      {/* Un PDF no trae títulos y los suyos son conjetura del lector. Aquí NO se marca: en 88 px
-          no cabe copy nuevo, y el sitio donde el usuario puede juzgar cómo se leyeron sus
-          documentos es la pantalla de Corpus, que lo cuenta. La sección se cita igual porque es
-          una línea que está de verdad en el documento — lo conjeturado es que fuera un título. */}
+    </span>
+  );
+
+  /**
+   * **Por qué llegó y cuánto tardó** (mirada 17-bis). Los dos se miden desde el sprint 001 y
+   * cruzaban la costura sin que nadie los pintara. El reloj, porque el número es tiempo; «en
+   * pantalla» lleva la pantalla, porque es la única ficha que llega sin que nadie diga nada
+   * (17-quater). **La sección conjeturada se marca aquí y no en la fuente**: la fuente se corta con
+   * puntos suspensivos cuando es larga, y un aviso de confianza no puede ser lo primero que se
+   * corta.
+   */
+  const porQue = (f: Aparicion & { clase: "ficha" }) => (
+    <span className="meta-b por-que">
+      <Ic id={f.motivo === "pantalla" ? "i-pantalla" : "i-reloj"} s />
+      {t.motivos[f.motivo]} · {segundos(f.ms, idioma)}
+      {f.fuente.conjeturada && (
+        <span className="conjetura">
+          <Ic id="i-half" s />
+          {t.seccionConjeturada}
+        </span>
+      )}
     </span>
   );
 
@@ -316,6 +347,21 @@ export function Banda({
           </>
         )}
 
+        {estadoReal === "pantalla-nada" && (
+          <>
+            {/* `⌃⌥L` leyó y no había texto —una cámara, un vídeo, una pantalla en negro—. Se
+                contesta igual, porque alguien preguntó: sin esta línea la tecla parecería rota. */}
+            <span className="ficha-b">
+              <span className="voz-b">{t.leiLaPantalla}</span>
+              <span className="meta-b">
+                <Ic id="i-pantalla" s />
+                {t.motivos.atajo} · {deLaMaqueta ? m.hora3 : nadaEnPantalla}
+              </span>
+            </span>
+            <span className="lado-b">{atajos}</span>
+          </>
+        )}
+
         {estadoReal === "buscando" && (
           <>
             <span className="ficha-b">
@@ -345,6 +391,7 @@ export function Banda({
             </span>
             <span className="lado-b">
               {fuente(aparicion)}
+              {!transcript && porQue(aparicion)}
               {transcript && <Transcript turnos={turnos} />}
               {transcript ? (
                 <span className="atajos-b">
@@ -650,6 +697,12 @@ function BandaDeVoz({
   );
 }
 
+/** Milisegundos a «1,2 s» / «1.2 s»: el separador decimal es interfaz, y la app es bilingüe. */
+function segundos(ms: number, idioma: string): string {
+  const s = new Intl.NumberFormat(idioma, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  return `${s.format(ms / 1000)} s`;
+}
+
 /**
  * El transcript en vivo. **Solo en memoria**: cada turno lleva su pista (sistema = cliente,
  * mic = tú), jamás un nombre — la atribución se resuelve por pista y nunca por biometría.
@@ -675,7 +728,14 @@ function Transcript({ turnos }: { turnos: Turno[] }) {
             <span className="quien">
               <Ic id={mio ? "i-mic" : "i-sistema"} s />
               {mio ? t.tu : t.cliente}
-              <span className="hora">{turno.hora}</span>
+              {/* La hora y **cuánto duró** el turno (mirada 17-bis): con el tramo se ve de un
+                  vistazo quién habló mucho y quién poco, sin leer. */}
+              {/* Una sola cadena y no cuatro nodos de texto: partida, el avance fraccional de la
+                  línea cambiaba y todo el texto citado se desplazaba una fracción de píxel —0,17 %
+                  de divergencia contra la maqueta, que la escribe de una pieza—. */}
+              <span className="hora">
+                {`${turno.hora} · ${Math.max(1, Math.round((turno.hastaMs - turno.desdeMs) / 1000))} s`}
+              </span>
             </span>
             <q>{turno.texto}</q>
           </span>

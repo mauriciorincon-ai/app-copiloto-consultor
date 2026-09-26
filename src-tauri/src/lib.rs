@@ -181,6 +181,34 @@ pub fn diccionario_de_la_sesion(
     std::sync::Arc::new(d)
 }
 
+/// **Lo que la pantalla de Idioma enseña del diccionario** (mirada 17-bis, opción a): de dónde
+/// salen sus términos y dónde está el archivo, que es la única puerta para editarlo.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EstadoDelDiccionario {
+    pub terminos: usize,
+    /// Los nombres propios que entraron solos, desde el corpus del usuario.
+    pub del_corpus: usize,
+    /// Los que el usuario escribió en su archivo (la semilla incluida, que también es suya).
+    pub en_tu_archivo: usize,
+    /// La ruta ENTERA, con `~` por la carpeta del usuario: abreviarla con «…» escondería justo la
+    /// carpeta que hay que encontrar.
+    pub ruta: String,
+}
+
+impl EstadoDelDiccionario {
+    pub fn de(d: &diccionario::Diccionario, ruta: &std::path::Path) -> Self {
+        let terminos = d.terminos().len();
+        let del_corpus = d.cuantos_del_corpus();
+        let ruta = ruta.display().to_string();
+        let ruta = match std::env::var("HOME") {
+            Ok(casa) if !casa.is_empty() && ruta.starts_with(&casa) => format!("~{}", &ruta[casa.len()..]),
+            _ => ruta,
+        };
+        Self { terminos, del_corpus, en_tu_archivo: terminos.saturating_sub(del_corpus), ruta }
+    }
+}
+
 /// La ruta del fondo de escritorio, leída **una vez, en el hilo principal** (`NSScreen` lo exige).
 /// Se guarda la RUTA y no la imagen: codificarla en base64 son megabytes vivos durante toda la
 /// sesión para pintar una franja de 88 px que el relleno pide una sola vez.
@@ -625,8 +653,8 @@ struct QueSabeTranscribir {
     motor: &'static str,
     techo: u32,
     idiomas: Vec<IdiomaDelMotor>,
-    /// Si no hay motor, por qué. En español, para enseñarlo tal cual.
-    motivo: Option<String>,
+    /// Si no hay motor, por qué — cerrado; Idioma lo pinta con su frase en los dos idiomas.
+    motivo: Option<stt::PorQueNoHayMotor>,
 }
 
 #[tauri::command]
@@ -663,9 +691,20 @@ async fn instalar_idioma(codigo: String) -> stt::Disponibilidad {
         d
     })
     .await
-    .unwrap_or(stt::Disponibilidad::SinMotor {
-        motivo: "la instalación se interrumpió".into(),
-    })
+    .unwrap_or(stt::Disponibilidad::SinMotor { motivo: stt::PorQueNoHayMotor::NoContesta })
+}
+
+/// El diccionario tal y como lo usaría una sesión que empezara ahora: el archivo del usuario más los
+/// nombres propios de su corpus. Se lee cada vez, porque el usuario edita el archivo con la app
+/// abierta y la pantalla tiene que enseñar lo que hay, no lo que había.
+#[tauri::command]
+fn estado_del_diccionario(
+    app: tauri::AppHandle,
+    el_corpus: tauri::State<'_, ElCorpus>,
+) -> EstadoDelDiccionario {
+    let ruta = ruta_del_diccionario(&app);
+    let d = diccionario_de_la_sesion(&ruta, &escucha::Buscador::vocabulario(el_corpus.inner()));
+    EstadoDelDiccionario::de(&d, &ruta)
 }
 
 /// Por dónde sale el sonido, y por tanto si el micrófono va a oír al cliente.
@@ -794,6 +833,7 @@ pub fn run() {
             estado_de_la_escucha,
             turnos_recientes,
             que_sabe_transcribir,
+            estado_del_diccionario,
             instalar_idioma,
             salida_de_audio,
             elegir_carpeta,
@@ -931,7 +971,7 @@ fn registrar_lo_que_ve() {
             sesion::VERSION_CATALOGO
         ),
         sesion::Reunion::Ninguna => println!("[sesion] ninguna videollamada del catálogo abierta"),
-        sesion::Reunion::NoSePuedeSaber { motivo } => println!("[sesion] no se puede saber: {motivo}"),
+        sesion::Reunion::NoSePuedeSaber { motivo } => println!("[sesion] no se puede saber: {motivo:?}"),
     }
     println!("[red] salida acumulada: {}", red::formatear(red::bytes()));
 
@@ -943,7 +983,7 @@ fn registrar_lo_que_ve() {
         que.motor,
         que.idiomas.len(),
         que.techo,
-        que.motivo.map(|m| format!(" · {m}")).unwrap_or_default()
+        que.motivo.map(|m| format!(" · {}", m.en_el_log())).unwrap_or_default()
     );
     let listos: Vec<&str> = que
         .idiomas
@@ -1444,7 +1484,9 @@ fn atender_la_pantalla<R: tauri::Runtime>(
             let _ = app.emit(EVENTO_ESCUCHA, escucha::Novedad::Aparece(Box::new(a)));
         }
         None if origen == pantalla::Origen::Pedida => {
-            println!("[pantalla] leída a petición: nada legible que buscar")
+            println!("[pantalla] leída a petición: nada legible que buscar");
+            let hora = escucha::la_hora();
+            let _ = app.emit(EVENTO_ESCUCHA, escucha::Novedad::NadaEnPantalla { hora });
         }
         None => {}
     }
@@ -1494,11 +1536,22 @@ fn lectura_automatica(
     estado
 }
 
+/// `⌃⌥L` — leer la pantalla una vez, ahora. La tecla que Sesión dibuja al lado de «Leerla sola».
+fn el_atajo_de_leer_la_pantalla() -> tauri_plugin_global_shortcut::Shortcut {
+    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
+    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyL)
+}
+
 /// **La lectura bajo demanda, sin región** (decisión del usuario, 2026-09-26): lee UNA vez la
 /// ventana de la reunión, ahora, aunque la automática esté apagada. Es la salida para una NDA
 /// estricta: nada se lee salvo cuando el consultor lo pide.
 #[tauri::command]
 fn leer_la_pantalla_ahora(la_pantalla: tauri::State<'_, LaPantalla>) -> bool {
+    leer_una_vez(&la_pantalla)
+}
+
+/// Lo que hacen el comando y la tecla: los dos caminos, una sola decisión.
+fn leer_una_vez(la_pantalla: &LaPantalla) -> bool {
     let hay = la_pantalla
         .lectura
         .lock()
@@ -1530,6 +1583,9 @@ fn atender_el_atajo<R: tauri::Runtime>(
         let _ = app.emit_to(ventana::BANDA, EVENTO_FICHA, ());
     } else if *atajo == el_atajo_del_modo_de_voz() {
         conmutar_el_modo(app);
+    } else if *atajo == el_atajo_de_leer_la_pantalla() {
+        println!("[pantalla] ⌃⌥L");
+        leer_una_vez(&app.state::<LaPantalla>());
     } else if *atajo == el_atajo_de_callar() {
         let estado = app.state::<LaVozQueSale>();
         estado.voz.callar();
@@ -1572,6 +1628,13 @@ fn registrar_el_kill_switch<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
         Err(e) => println!(
             "[habla] NO se pudo registrar ⌃⌥V ({e}): el modo solo audio no se va a poder encender \
              — y hoy no tiene otra puerta, así que queda apagado"
+        ),
+    }
+    match app.global_shortcut().register(el_atajo_de_leer_la_pantalla()) {
+        Ok(()) => println!("[pantalla] ⌃⌥L «léela ahora» registrado"),
+        Err(e) => println!(
+            "[pantalla] NO se pudo registrar ⌃⌥L ({e}): la lectura a petición no va a responder \
+             a la tecla; la automática sigue en el interruptor de Sesión"
         ),
     }
 }
@@ -1724,5 +1787,74 @@ mod pruebas_del_diccionario_en_disco {
         let d = diccionario_de_la_sesion(&temporal("ausente"), &["Páramo".into()]);
         assert_eq!(d.corregir("con power by"), "con Power BI");
         assert_eq!(d.cuantos_del_corpus(), 1, "los nombres del corpus entran igual");
+    }
+}
+
+#[cfg(test)]
+mod pruebas_de_las_teclas {
+    use super::*;
+    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
+
+    /// **La decisión 7 de la mirada 17-quater, fijada: ninguna tecla de la app vuelve a `⌘⇧`.**
+    ///
+    /// Según la documentación de Zoom para Mac, `⌘⇧A` silencia el micrófono, `⌘⇧V` apaga la cámara
+    /// y `⌘⇧T` pausa la pantalla compartida; y en los navegadores `⌘⇧T` reabre la última pestaña.
+    /// Una tecla global se la quita a todos ellos mientras la app esté abierta. El usuario eligió
+    /// `⌃⌥` para todas. Se quedan fuera, a propósito, `⌥⎋` (el kill-switch, aprobado en el sprint
+    /// 001) y `⎋` (callar la voz, que solo existe mientras suena).
+    #[test]
+    fn las_teclas_de_la_app_son_control_opcion() {
+        let control_opcion = Some(Modifiers::CONTROL | Modifiers::ALT);
+        let esperadas = [
+            (el_atajo_del_transcript(), Code::KeyT),
+            (el_atajo_de_ayuda(), Code::KeyA),
+            (el_atajo_del_modo_de_voz(), Code::KeyV),
+            (el_atajo_de_leer_la_pantalla(), Code::KeyL),
+        ];
+        for (atajo, tecla) in esperadas {
+            assert_eq!(atajo, Shortcut::new(control_opcion, tecla), "{tecla:?} no es ⌃⌥");
+        }
+        assert_eq!(el_atajo(), Shortcut::new(Some(Modifiers::ALT), Code::Escape));
+        assert_eq!(el_atajo_de_callar(), Shortcut::new(None, Code::Escape));
+    }
+
+    /// Dos teclas iguales harían que una de las dos no respondiera nunca, y el registro no lo
+    /// diría: el segundo `register` fallaría con un aviso en el log y nada más.
+    #[test]
+    fn ninguna_tecla_se_repite() {
+        let todas = [
+            el_atajo(),
+            el_atajo_del_transcript(),
+            el_atajo_de_ayuda(),
+            el_atajo_del_modo_de_voz(),
+            el_atajo_de_leer_la_pantalla(),
+            el_atajo_de_callar(),
+        ];
+        for (i, a) in todas.iter().enumerate() {
+            for b in &todas[i + 1..] {
+                assert_ne!(a, b, "dos atajos comparten tecla");
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod pruebas_del_estado_del_diccionario {
+    use super::*;
+
+    /// Lo que Idioma enseña cuadra: el total es la suma de las dos filas, y la ruta nunca llega con
+    /// la carpeta del usuario escrita entera (es un dato personal que no hace falta enseñar).
+    #[test]
+    fn las_dos_filas_suman_el_total_y_la_ruta_empieza_por_la_casa() {
+        let casa = std::env::var("HOME").unwrap_or_default();
+        let ruta = PathBuf::from(&casa).join("Library/Application Support/x/diccionario.yaml");
+        let mut d = diccionario::Diccionario::semilla();
+        d.con_nombres_del_corpus(&["Páramo Azul".into(), "Sur del Valle".into()]);
+        let e = EstadoDelDiccionario::de(&d, &ruta);
+        assert_eq!(e.terminos, e.del_corpus + e.en_tu_archivo);
+        assert!(e.del_corpus >= 1, "los nombres del corpus no entraron: {e:?}");
+        if !casa.is_empty() {
+            assert!(e.ruta.starts_with("~/Library/"), "{}", e.ruta);
+        }
     }
 }

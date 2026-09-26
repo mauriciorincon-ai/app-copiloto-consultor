@@ -1874,3 +1874,114 @@ corta con «…» a propósito (`text-overflow: ellipsis`).
 **Gates tras los cambios**: `pnpm typecheck` · `pnpm lint` · `pnpm test` (24 archivos, 171 tests,
 incluido el gate de que cada frase de la app exista tal cual en la maqueta) · `verify-ephemeral`
 estático · `cargo clippy --all-targets -D warnings` · `cargo test` (285 + 18) — todo verde.
+
+### Desviación del plan de miradas, pedida por el usuario
+
+La 17-quinquies no se hace como parada propia. Respuesta del usuario a la matriz: *«Uyyy, no paro;
+así no vamos a avanzar nada»*, y luego *«sigue»*. Sus cinco filas se juntan con la **mirada de cierre de la
+fase 3**, donde la pantalla construida se enseña al lado de la maqueta. La fila 6 se toma con la opción
+recomendada: el test de desbordes entra en la fase 3.
+
+**El riesgo, declarado:** la fila 4 («ficha · la trajo la pantalla») se construye sin veredicto. Si al
+cerrar la fase no le sirve, se rehace. Es un estado pequeño (un icono y un rótulo), así que el coste de
+equivocarse es bajo.
+
+**Y la regla nueva para las siguientes** (memoria `menos-paradas`): las segundas vueltas de una mirada
+—copy retocado por su propio veredicto, filas sin respuesta— no abren parada; se aplican, se registran y
+se ven en el cierre de fase. Solo para lo que cambia QUÉ se construye.
+
+## Fase 3 — las pantallas: construidas contra las miradas 17, 17-bis y 17-quater (2026-09-26)
+
+### Lo que se construyó
+
+| Dónde | Qué | Mirada |
+|---|---|---|
+| **Rust — los porqués, cerrados** | `capture::PorQueNoAbrio` (5) y `NoAbrio {porque, detalle}` — el grifo clasifica su error **una vez, a la salida** (`no_abrio`, con las dos marcas que el propio archivo escribe: `FORMATO_ILEGIBLE` y `«!hog»`); `escucha::con_su_permiso` hace que **el permiso mande** sobre el error de Core Audio (y «no se sabe» no manda) · `capture::PorQueNoSeSabe` (3) con el `nombre` aparte · `sesion::PorQueNoSeVe` (1) · `stt::PorQueNoHayMotor` (3) con `en_el_log()` para el registro | 17-quater §8-ter |
+| **Rust — el permiso de audio, aparte** | `permisos::Permisos.audio` con `TCCAccessPreflight("kTCCServiceAudioCapture")` por `dlsym` (privada; sin el símbolo → «no se sabe»; solo el `0` es «concedido»). `puede_escuchar` depende de micrófono + **audio**, no de pantalla. `ajustes_de("audio")` abre el panel de pantalla (Ajustes los enseña juntos) | 17-quater |
+| **Rust — ⌃⌥L** | `el_atajo_de_leer_la_pantalla` registrado al arrancar; `leer_una_vez` es la misma decisión para el comando y la tecla. Y la respuesta cuando no hay texto: **`Novedad::NadaEnPantalla {hora}`** por el evento `escucha` | 17-quater |
+| **Rust — el diccionario en Idioma** | comando `estado_del_diccionario` → `EstadoDelDiccionario {terminos, delCorpus, enTuArchivo, ruta}` (ruta con `~`) | 17-bis (a) |
+| **Contrato** | muestras nuevas: `SALIDA_DE_AUDIO_NO_SE_SABE`, `ESTADO_DEL_DICCIONARIO`, `NOVEDAD_NADA_EN_PANTALLA`; `Permisos.audio`; los cuatro porqués como claves. **Seis campos dejan de cruzar**: los cuatro que el usuario sacó («4 fuera, 3 se ven») y **dos que cruzaban DOS VECES el mismo dato** —`EstadoDeEscucha.motor` y `Disponibilidad.motivo`, que ya cruzan por `QueSabeTranscribir`— | — |
+| **Sesión** | la pista caída con su porqué y su salida (**M2 del sprint 001, pagado**); «Escucha las dos pistas» → «… — **solo tu pista** / **solo la del cliente** · A medias» o «No abrió»; la fila de la pantalla con sus cinco vistas, su porqué y el interruptor «Leerla sola» (un `button role="switch"`) + `⌃⌥L léela ahora`; los auriculares con el nombre del dispositivo, o «No se sabe» con su porqué; «No se puede saber si hay reunión» en vez de «sin reunión» | 17 · 17-quater |
+| **Permisos** | cuatro filas, cada una con **su** permiso; «son dos permisos de macOS, aunque Ajustes los enseña en el mismo panel»; la tarjeta «Antes de que macOS te pregunte». **Fuera del producto la frase falsa «un solo permiso»**, que seguía pintándose | 17-quater |
+| **Honestidad** | el último cuadro, vivo (`solo en memoria · el último` + bytes) y contado en la RAM; «**El botón corta** 8 de 8 piezas: ninguna queda fuera.» | 17-quater · 17-quinquies |
+| **Idioma** | la franja con el motor **con nombre y techo** («SpeechAnalyzer · macOS 26 · 5 idiomas…») o la de «Sin motor de voz» con su porqué; la tarjeta del diccionario (total, de tu corpus, en tu archivo, la ruta entera, «Jamás completa…») | 17-bis |
+| **Corpus** | «Tu carpeta · 412 secciones» | 17-bis |
+| **Banda** | la línea «por qué · latencia» (reloj, o **la pantalla** si la trajo la pantalla), la marca «sección conjeturada», el tramo de cada turno en el transcript («14:01 · 4 s»), y el estado «pantalla · nada que leer» | 17-bis · 17-quater |
+
+**Copy que la maqueta no tenía y se escribió primero en ella** (`kit.html` §8-ter, se ve en la mirada de
+cierre): «Escucha y transcribe en tu Mac — **solo la del cliente**» (el micrófono caído) · «Esta copia de la
+app se construyó sin el transcriptor.» · «El transcriptor de macOS no contestó. Vuelve a abrir la app; si se
+repite, reinicia el Mac.»
+
+### Tres defectos que el gate de fidelidad y el recorrido nuevo encontraron —dos eran míos, en la maqueta
+
+1. **Las maquetas «sprint 2» que hice en las miradas 17 a 17-quater se salían 5-20 px del área que
+   desplaza** (Sesión 20, Permisos 15, Corpus 20, Idioma 10): la última tarjeta quedaba pegada al borde.
+   Lo destapó el gate de fidelidad midiendo el producto —idéntico a la maqueta, luego el defecto era de
+   la maqueta—. Mi recorrido de holguras no lo había visto porque medía el borde de la ventana y no el
+   área que desplaza. **Arreglo en `ghost.css`**: `.titulo .sub` sin el tope de 60ch, en una línea; libera
+   ~19 px en todas las pantallas y todas caben (0-1 px).
+2. **La ficha de tres renglones a la derecha se salía 1,35 px de la banda** desde la 17-bis (fuente + por
+   qué + teclas): la banda recortaba el borde inferior de las teclas. `.lado-b` pasa de 4 a 3 px de hueco.
+3. **Honestidad decía «8 de 8 pieces» en inglés**: la «de» estaba escrita en el componente, fuera del
+   diccionario. El barrido de copy cableado no la ve —busca cadenas de dos palabras—. Ahora `t.de`, con
+   test bilingüe.
+
+Y uno menor del propio producto: el transcript divergía 0,17 % porque la hora y el tramo se pintaban
+como cuatro nodos de texto; en una cadena, 0 %.
+
+**El chip del rail «Meet detectado · 0 B» faltaba en los estados «sprint 2» de cuatro maquetas** (lo olvidé
+al maquetar): era la divergencia común de ~0,7 % en todo el cuaderno. Añadido a su `data-en`.
+
+### El gate nuevo (fila 6 de la 17-quater): ningún estado de ninguna maqueta se sale de su ventana
+
+`tests/e2e/maqueta-cabe.spec.ts` — recorre **164 casos** (cada estado de cada maqueta con marco, en los
+dos idiomas) y mide **las dos cosas**: el área que desplaza (≤ 1 px, la tolerancia del gate de fidelidad)
+y lo que se sale del marco (salvo lo que un contenedor de dentro recorta a propósito, como el «…» del
+transcript). Su deuda —«vigilancia», es 48 px y en 13 px— falla en los dos sentidos.
+
+**Rojos (regla 15), vistos en esta sesión:**
+
+| Gate | Defecto plantado | Resultado |
+|---|---|---|
+| `maqueta-cabe` | quitar la deuda de «vigilancia · en» | ROJO: «el área que desplaza +13 px» |
+| `maqueta-cabe` | devolver a `.titulo .sub` su tope de 60ch | ROJO: corpus, idioma y permisos s2, en los dos idiomas |
+| `maqueta-cabe` | una deuda que ya cabe (`sesion · s1 · es`) | ROJO: «DEUDA declara desbordes que ya caben» |
+| `las_teclas_de_la_app_son_control_opcion` | `⌃⌥A` → `⌘⇧A` | ROJO |
+| `ninguna_tecla_se_repite` | `⌃⌥L` → `⌃⌥A` | ROJO |
+| `cada_error_del_grifo_cae_en_su_porque` | el clasificador busca «hog!» en vez de «!hog» | ROJO |
+| `si_falta_el_permiso_el_porque_es_el_permiso` | solo «Denegado» cuenta como sin permiso | ROJO |
+| `las_dos_filas_suman_el_total…` | «en tu archivo» = total | ROJO |
+| test bilingüe de Honestidad | «de» escrita en el componente | ROJO |
+| M2 (pista caída) | `LaPista` ignora `caida` | ROJO en 3 tests |
+| ⌃⌥L sin texto | la banda no escucha `nada-en-pantalla` | ROJO |
+| dos permisos | la fila de audio lee el de pantalla | ROJO en 2 tests |
+
+Todos restaurados y en verde tras verlos. El gate de contrato se vio en rojo de paso (Rust ya emitía
+`"sin-accesibilidad"` y el archivo generado decía la frase vieja) y el de lectores también («DEUDA
+declara 21 campos que YA tienen lector»).
+
+**Gates al cerrar este tramo:** `typecheck` · `lint` · `pnpm test` (24 archivos, **192** tests) ·
+`verify-ephemeral` estático · `cargo clippy -D warnings` · `cargo test` (**292 + 18**) · `pnpm fidelidad`
+(**84 encuadres, ninguno sobre el umbral** — antes, 16 en rojo) · Playwright (**67** pasan; el gate de
+maquetas se salta en el proyecto «banda» a propósito: con una vez basta).
+
+### Lo que falta para cerrar la fase 3
+
+- **La corrida en vivo** (regla 15, tercer filo): `pnpm tauri dev` con una ventana «Google Meet», las
+  cuatro teclas `⌃⌥` de verdad, la lectura de pantalla y su log, y la fila de audio leyendo `tccd`.
+- El manual: la lectura de pantalla, las teclas, Sesión y Permisos.
+- La mirada de cierre (con la 17-quinquies dentro) y el resumen de fase.
+
+### Un hallazgo más, al comitear: el sprint 2 llevaba tres commits pisando la evidencia del sprint 1
+
+`scripts/capturar-fidelidad.mjs` escribía siempre en `docs/fidelidad/s1-*` y `S1-*.html` —un `s1-`
+escrito a mano—. El summary del sprint 001 cita `docs/fidelidad/S1-cuaderno.html` como contrapeso del
+gate ⭐ diferido («60 encuadres…»), y desde los commits `562918c`, `0979e3b` y `473b3cb` de este sprint esa
+hoja enseñaba pantallas del sprint 2: **un puntero del cierre del S1 que ya no enseñaba lo que dice**.
+
+| Sev. | Sitio | Pago |
+|---|---|---|
+| **Medio** | `scripts/capturar-fidelidad.mjs:163` (el prefijo) · `sprints/SPRINT_001-summary.md:184` (el puntero afectado) | **Pagado aquí**: el prefijo es la constante `SPRINT` (`"s2"`); la evidencia del S1 se restauró **tal cual estaba en su merge** (`7625683`: 40 + 20 encuadres por lado, y sus dos hojas), y la del S2 vive en `docs/fidelidad/s2-*` y `S2-*.html` |
+
+Se cambia `SPRINT` en el primer commit de cada sprint que capture; queda dicho en el propio script.

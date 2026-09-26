@@ -27,13 +27,31 @@ export type Reunion =
       titulo: string | null;
       proteccion: Proteccion;
     }
-  | { que: "no-se-puede-saber"; motivo: string };
+  | { que: "no-se-puede-saber"; motivo: PorQueNoSeVe };
+
+/**
+ * **Los porqués son conjuntos CERRADOS** (mirada 17-quater, `kit.html` §8-ter). Rust sabe el motivo
+ * y lo nombra; la frase la escribe el diseño, en los dos idiomas, y vive en `src/i18n/`. Hasta el
+ * sprint 002 cruzaban como prosa en español que la pantalla no podía traducir —y por eso no
+ * enseñaba—. El detalle técnico, con sus códigos de macOS, se queda en el log.
+ */
+export type PorQueNoSeVe = "sin-accesibilidad";
+export type PorQueNoAbrio =
+  | "sin-permiso-del-microfono"
+  | "sin-permiso-del-audio"
+  | "dispositivo-ocupado"
+  | "formato-ilegible"
+  | "no-dejo";
+export type PorQueNoSeSabe = "sin-salida" | "sin-conexion" | "sin-fuente";
+export type PorQueNoHayMotor = "sin-transcriptor" | "sin-puente" | "no-contesta";
 
 export type EstadoPermiso =
   "sin-conceder" | "concedido" | "denegado" | "no-se-sabe";
 
 export type Permisos = {
   microfono: EstadoPermiso;
+  /** El audio del sistema: **otro permiso** que la pantalla, aunque Ajustes los enseñe juntos. */
+  audio: EstadoPermiso;
   pantalla: EstadoPermiso;
   accesibilidad: EstadoPermiso;
 };
@@ -53,9 +71,11 @@ function reunionDeMuestra(titulo: string): Reunion {
   };
 }
 
+/** La muestra del estado «así se ve hoy · sprint 2 · la pantalla»: los cuatro concedidos. */
 const PERMISOS_DE_MUESTRA: Permisos = {
   microfono: "concedido",
-  pantalla: "sin-conceder",
+  audio: "concedido",
+  pantalla: "concedido",
   accesibilidad: "concedido",
 };
 
@@ -128,6 +148,7 @@ export function usePiezasDelCorte(): InformeDelCorte {
 /** Lo que se sabe de los permisos antes de preguntar: nada. Y «no lo sé» **no es «no»**. */
 const PERMISOS_SIN_PREGUNTAR: Permisos = {
   microfono: "no-se-sabe",
+  audio: "no-se-sabe",
   pantalla: "no-se-sabe",
   accesibilidad: "no-se-sabe",
 };
@@ -173,33 +194,36 @@ export type Salida =
   | { salida: "altavoces" }
   | { salida: "auriculares" }
   | { salida: "otra"; nombre: string }
-  | { salida: "no-se-sabe"; motivo: string };
+  /** El nombre viaja aparte porque la frase lo cita y un nombre no se traduce. */
+  | { salida: "no-se-sabe"; motivo: PorQueNoSeSabe; nombre: string | null };
 
 /** En qué estado está el motor de transcripción para un idioma. */
 export type Disponibilidad =
   | { estado: "listo" }
   | { estado: "sin-modelo" }
   | { estado: "idioma-desconocido" }
-  | { estado: "sin-motor"; motivo: string };
+  // Sin motivo por idioma: es del sistema, no del idioma, y cruza una vez en `QueSabeTranscribir`.
+  | { estado: "sin-motor" };
 
 export type EstadoDePista = {
   /** **Esto, y no el número de muestras, distingue una avería de un silencio.** Cuando nadie
    *  habla, macOS no entrega ni una muestra: cero no es un fallo. */
   abierta: boolean;
-  motivo: string | null;
+  /** Si no abrió, por qué. Sesión lo pinta con su frase y su salida (la «pista caída», M2). */
+  motivo: PorQueNoAbrio | null;
   bytes: number;
-  segundos: number;
-  muestrasRecibidas: number;
-  hablando: boolean;
+  // `segundos`, `muestrasRecibidas` y `hablando` salieron del contrato en la fase 3 del sprint
+  // 002 (decisión del usuario en la mirada 17-quater: «4 fuera, 3 se ven»). Rust los conserva
+  // para el log y para el modo solo audio; ninguna pantalla tenía dónde enseñarlos.
 };
 
 export type EstadoDeEscucha = {
   escuchando: boolean;
   microfono: EstadoDePista;
   sistema: EstadoDePista;
-  turnosEnMemoria: number;
+  // `turnosEnMemoria` salió por la misma decisión: Honestidad cuenta el transcript por sus bytes.
   bytesDelTranscript: number;
-  motor: string;
+  // `motor` salió del contrato en la fase 3: Idioma lo lee de `QueSabeTranscribir`, con su techo.
 };
 
 /**
@@ -250,7 +274,7 @@ export type QueSabeTranscribir = {
   motor: string;
   techo: number;
   idiomas: { codigo: string; disponibilidad: Disponibilidad }[];
-  motivo: string | null;
+  motivo: PorQueNoHayMotor | null;
 };
 
 /**
@@ -264,24 +288,20 @@ const ESCUCHA_DE_MUESTRA: EstadoDeEscucha = {
     abierta: true,
     motivo: null,
     bytes: 1_920_000,
-    segundos: 30,
-    muestrasRecibidas: 480_000,
-    hablando: false,
   },
   sistema: {
     abierta: true,
     motivo: null,
     bytes: 1_920_000,
-    segundos: 30,
-    muestrasRecibidas: 480_000,
-    hablando: false,
   },
-  turnosEnMemoria: 12,
   bytesDelTranscript: 2_048,
-  motor: "apple-speechanalyzer",
 };
 
-const SALIDA_DE_MUESTRA: Salida = { salida: "altavoces" };
+/**
+ * El estado «sprint 2 · la pantalla» de Sesión: unos auriculares externos, con su nombre. Es el
+ * caso que la mirada 17-quater dibujó —la app no sabe si es un casco o un altavoz, y lo dice—.
+ */
+const SALIDA_DE_MUESTRA: Salida = { salida: "otra", nombre: "AirPods Pro" };
 
 /**
  * La muestra de la maqueta: el modelo del consultor instalado y **el del cliente sin instalar**.
@@ -338,21 +358,13 @@ const APAGADA: EstadoDeEscucha = {
     abierta: false,
     motivo: null,
     bytes: 0,
-    segundos: 0,
-    muestrasRecibidas: 0,
-    hablando: false,
   },
   sistema: {
     abierta: false,
     motivo: null,
     bytes: 0,
-    segundos: 0,
-    muestrasRecibidas: 0,
-    hablando: false,
   },
-  turnosEnMemoria: 0,
   bytesDelTranscript: 0,
-  motor: "—",
 };
 
 /**
@@ -435,13 +447,51 @@ export const PANTALLA_EN_ESPERA: EstadoDeLaPantalla = {
 };
 
 /**
+ * Lo que la maqueta dibuja, **fuera de Tauri**: leyendo, con el último cuadro en memoria. Los bytes
+ * son los que hacen que Honestidad escriba «1,4 MB» y «RAM · 5,1 MB», como `honestidad.html` s2.
+ */
+const PANTALLA_DE_MUESTRA: EstadoDeLaPantalla = {
+  vista: "leyendo",
+  bytesEnMemoria: 1_468_006,
+};
+
+/**
+ * **El diccionario, en la pantalla de Idioma** (mirada 17-bis, opción a): de dónde salen sus
+ * términos y dónde está el archivo, que es la única puerta para editarlo.
+ */
+export type EstadoDelDiccionario = {
+  terminos: number;
+  delCorpus: number;
+  enTuArchivo: number;
+  ruta: string;
+};
+
+const DICCIONARIO_DE_MUESTRA: EstadoDelDiccionario = {
+  terminos: 17,
+  delCorpus: 12,
+  enTuArchivo: 5,
+  ruta: "~/Library/Application Support/com.aiapps.copiloto-consultor/diccionario.yaml",
+};
+
+/** `null` dentro del producto hasta que Rust conteste: una tabla con ceros diría algo falso. */
+export function useDiccionario(): EstadoDelDiccionario | null {
+  return usePreguntaAlVolver<EstadoDelDiccionario | null>(
+    "estado_del_diccionario",
+    DICCIONARIO_DE_MUESTRA,
+    null,
+  );
+}
+
+/**
  * Qué hace la lectura de pantalla. Se pregunta al montarse y se escucha el evento `pantalla`, que
  * llega cuando cambia la vista (se enciende, se apaga, aparece o desaparece la reunión). Tras el
  * kill-switch se vuelve a preguntar: el corte la para sin emitir nada, y la fila no puede quedarse
  * diciendo «leyendo» de una lectura que ya no existe.
  */
 export function usePantalla(): EstadoDeLaPantalla {
-  const [estado, setEstado] = useState<EstadoDeLaPantalla>(PANTALLA_EN_ESPERA);
+  const [estado, setEstado] = useState<EstadoDeLaPantalla>(() =>
+    hayTauri() ? PANTALLA_EN_ESPERA : PANTALLA_DE_MUESTRA,
+  );
   useEffect(() => {
     if (!hayTauri()) return;
     let vivo = true;
@@ -477,12 +527,12 @@ export function leerLaPantallaAhora(): Promise<boolean | null> {
 }
 
 export function useSalidaDeAudio(): Salida {
-  // El motivo va **vacío** a propósito: nadie lo pinta hoy, y escribir aquí una frase en español
-  // sería meter copy de una sola lengua en el camino de una pantalla — el hallazgo A6 otra vez. Si
-  // algún día se enseña, saldrá del diccionario. Lo vigila el barrido de copy cableado.
+  // Si la pregunta no llega, lo honesto es «no se sabe» sin nombre: la frase de Sesión para ese
+  // caso es la única que no cita un dispositivo.
   return usePreguntaAlVolver<Salida>("salida_de_audio", SALIDA_DE_MUESTRA, {
     salida: "no-se-sabe",
-    motivo: "",
+    motivo: "sin-salida",
+    nombre: null,
   });
 }
 
@@ -534,7 +584,7 @@ export type EstadoDelCorpus = {
 export const CORPUS_DE_MUESTRA: EstadoDelCorpus = {
   carpeta: "~/Documentos/Consultoría",
   documentos: 143,
-  secciones: 1_284,
+  secciones: 412,
   porUnidad: [
     { unidad: "propuesta", documentos: 31 },
     { unidad: "marco", documentos: 12 },
@@ -545,7 +595,7 @@ export const CORPUS_DE_MUESTRA: EstadoDelCorpus = {
   sinUnidad: 0,
   ilegibles: 4,
   conjeturados: 9,
-  dondeVive: "~/Library/…/Angel Ghost/corpus",
+  dondeVive: "~/Library/Application Support/com.aiapps.copiloto-consultor/corpus",
   bytesDelIndice: 19_293_798,
 };
 
@@ -598,7 +648,7 @@ export async function instalarIdioma(
 }
 
 export function abrirAjustesDe(
-  permiso: "microfono" | "pantalla" | "accesibilidad",
+  permiso: "microfono" | "audio" | "pantalla" | "accesibilidad",
 ) {
   void llamar("abrir_ajustes_de", { permiso });
 }

@@ -61,8 +61,9 @@ export function useTranscriptVisible(inicial = false): boolean {
 /** Los tres turnos que dibuja `banda.html`, con los textos del diccionario. */
 function deMuestra(m: ReturnType<typeof useT>["banda"]): Turno[] {
   return [
-    { pista: "sistema", desdeMs: 0, hastaMs: 2_000, texto: m.muestra.turno1, hora: m.muestra.hora1, eco: false },
-    { pista: "microfono", desdeMs: 2_400, hastaMs: 5_000, texto: m.muestra.turno2, hora: m.muestra.hora2, eco: false },
-    { pista: "sistema", desdeMs: 5_400, hastaMs: 8_000, texto: m.muestra.turno3, hora: m.muestra.hora2, eco: false },
+    // Los tramos son los de `banda.html` («14:01 · 4 s», «14:02 · 5 s», «14:02 · 6 s», mirada 17-bis).
+    { pista: "sistema", desdeMs: 0, hastaMs: 4_000, texto: m.muestra.turno1, hora: m.muestra.hora1, eco: false },
+    { pista: "microfono", desdeMs: 4_400, hastaMs: 9_400, texto: m.muestra.turno2, hora: m.muestra.hora2, eco: false },
+    { pista: "sistema", desdeMs: 9_800, hastaMs: 15_800, texto: m.muestra.turno3, hora: m.muestra.hora2, eco: false },
   ];
 }

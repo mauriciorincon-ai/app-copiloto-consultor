@@ -1,12 +1,17 @@
 import { useIdioma, useT, type Idioma } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { TodaviaNo, PILA } from "../componentes/Ventana";
-import { cortarTodo, type EstadoDeEscucha, usePiezasDelCorte } from "../cuaderno";
+import { cortarTodo, type EstadoDeEscucha, usePantalla, usePiezasDelCorte } from "../cuaderno";
 
 /**
  * HONESTIDAD — «Qué vive en la memoria ahora mismo y qué salió de tu equipo».
  *
- * Referencia: `docs/diseno/honestidad.html`, estado **«así se ve hoy · sprint 1»** (miradas 12 y 13).
+ * Referencia: `docs/diseno/honestidad.html`, estado **«así se ve hoy · sprint 2»** (mirada 17-quater).
+ *
+ * **La fila del último cuadro dejó de decir «todavía no»** en el sprint 002: la pantalla ya se lee
+ * (C8), y lo que queda en memoria —el último cuadro y lo que se sacó de él— se cuenta aquí y en el
+ * total de RAM. Y la cola del kill-switch cambia con la cuenta: «la otra todavía no existe» era
+ * verdad con 6 de 7 y con 7 de 8, y con 8 de 8 habría sido falsa.
  *
  * Tras la fase 3 **sí vive algo en memoria**, y esta pantalla lo dice contado: dos anillos de
  * treinta segundos y una ventana de doce turnos, leídos de lo nativo y formateados allí. Escribir
@@ -27,6 +32,7 @@ export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoD
   const t = useT().cuaderno;
   const idioma = useIdioma();
   const corte = usePiezasDelCorte();
+  const pantalla = usePantalla();
   const cortadas = corte.piezas.filter(([, suerte]) => suerte === "cortada").length;
   const [cifra, unidad = "B"] = bytes.split(" ");
   // Las cifras se formatean **aquí**, con el separador decimal del idioma. Lo nativo las mandaba
@@ -34,7 +40,11 @@ export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoD
   // now»: la app promete ser bilingüe en TODO y un separador decimal es interfaz. Desde la fase 5
   // del sprint 001 se formatean aquí, y en el sprint 002 **esos dos campos salieron del contrato**:
   // llevaban una fase entera cruzando la costura sin que nadie los leyera.
-  const ram = escucha.microfono.bytes + escucha.sistema.bytes + escucha.bytesDelTranscript;
+  const ram =
+    escucha.microfono.bytes +
+    escucha.sistema.bytes +
+    escucha.bytesDelTranscript +
+    pantalla.bytesEnMemoria;
 
   /** Un búfer que ya existe: se dice dónde vive y cuánto ocupa. */
   const buffer = (icono: string, que: string, donde: string, cuanto: string) => (
@@ -46,17 +56,6 @@ export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoD
     </div>
   );
 
-  /** Un búfer que todavía no existe. Ni verde ni escondido. */
-  const pendiente = (icono: string, que: string) => (
-    <div className="buffer pendiente" key={que}>
-      <Ic id={icono} s />
-      <span className="que">{que}</span>
-      <span className="donde">
-        <TodaviaNo />
-      </span>
-      <span className="cuanto">0 B</span>
-    </div>
-  );
 
   return (
     <>
@@ -83,7 +82,7 @@ export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoD
               {buffer("i-mic", t.bufMic, t.ringBuffer30, formatear(escucha.microfono.bytes, idioma))}
               {buffer("i-sistema", t.bufSistema, t.ringBuffer30, formatear(escucha.sistema.bytes, idioma))}
               {buffer("i-ojo", t.bufTranscript, t.ventana12, formatear(escucha.bytesDelTranscript, idioma))}
-              {pendiente("i-pantalla", t.bufFrame)}
+              {buffer("i-pantalla", t.bufFrame, t.soloEnMemoriaElUltimo, formatear(pantalla.bytesEnMemoria, idioma))}
             </div>
           </div>
 
@@ -113,7 +112,12 @@ export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoD
               <span>{t.funcionaCorte}</span> <kbd>⌥⎋</kbd>
             </button>
             <p className="mono" style={{ color: "var(--ink-2)" }}>
-              {cortadas} de {corte.piezas.length} {t.piezasCola}
+              {/* «El botón corta»: sin sujeto, «8 de 8 piezas» se leyó como «leyó todo bien»
+                  (mirada 17-quater). Y «de» sale del diccionario: escrito aquí, la interfaz inglesa
+                  decía «8 de 8 pieces». */}
+              {cortadas === corte.piezas.length
+                ? `${t.botonCorta} ${cortadas} ${t.de} ${corte.piezas.length} ${t.piezasNingunaFuera}`
+                : `${cortadas} ${t.de} ${corte.piezas.length} ${t.piezasCola}`}
             </p>
           </div>
         </div>

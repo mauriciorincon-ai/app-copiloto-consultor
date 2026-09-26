@@ -73,8 +73,38 @@ pub enum Disponibilidad {
     SinModelo,
     /// El motor no conoce ese idioma. No hay nada que instalar.
     IdiomaDesconocido,
-    /// No hay motor en este Mac. El motivo es del sistema, no del idioma.
-    SinMotor { motivo: String },
+    /// No hay motor en este Mac. El motivo es del sistema, no del idioma — y por eso **no cruza con
+    /// cada idioma**: Idioma lo pinta una vez, en su franja, desde `QueSabeTranscribir::motivo`.
+    SinMotor {
+        #[serde(skip)]
+        motivo: PorQueNoHayMotor,
+    },
+}
+
+/// **Por qué no hay motor de voz**, en un conjunto cerrado (mirada 17-quater). Antes era una frase
+/// libre en español que la pantalla de Idioma no podía traducir y por eso no enseñaba.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum PorQueNoHayMotor {
+    /// Este Mac no trae el transcriptor de macOS 26 (`SpeechAnalyzer`).
+    SinTranscriptor,
+    /// La app se compiló sin el puente de Swift: falta `swiftc`, o no es macOS.
+    SinPuente,
+    /// El motor contestó algo que no sabemos leer, o la instalación se interrumpió.
+    NoContesta,
+}
+
+impl PorQueNoHayMotor {
+    /// La frase para el LOG, en español. La de la pantalla la escribe `src/i18n/`.
+    pub fn en_el_log(self) -> &'static str {
+        match self {
+            PorQueNoHayMotor::SinTranscriptor => "este Mac no trae el transcriptor de macOS 26",
+            PorQueNoHayMotor::SinPuente => {
+                "la app se compiló sin el puente de transcripción (falta swiftc o no es macOS)"
+            }
+            PorQueNoHayMotor::NoContesta => "el motor contestó algo que la app no sabe leer",
+        }
+    }
 }
 
 /// Por qué no se pudo transcribir un turno.
@@ -110,12 +140,12 @@ pub trait Motor: Send + Sync {
 /// aplica desde hace varios ciclos. Lo importante es lo que NO hace: no devuelve texto inventado,
 /// no devuelve cadena vacía como si hubiera oído silencio. Devuelve el motivo.
 pub struct Mudo {
-    motivo: String,
+    motivo: PorQueNoHayMotor,
 }
 
 impl Mudo {
-    pub fn por(motivo: impl Into<String>) -> Self {
-        Self { motivo: motivo.into() }
+    pub fn por(motivo: PorQueNoHayMotor) -> Self {
+        Self { motivo }
     }
 }
 
@@ -124,7 +154,7 @@ impl Motor for Mudo {
         "mudo"
     }
     fn disponibilidad(&self, _idioma: &str) -> Disponibilidad {
-        Disponibilidad::SinMotor { motivo: self.motivo.clone() }
+        Disponibilidad::SinMotor { motivo: self.motivo }
     }
     fn instalar(&self, idioma: &str) -> Disponibilidad {
         self.disponibilidad(idioma)
@@ -151,11 +181,11 @@ mod tests {
 
     #[test]
     fn el_motor_mudo_no_inventa_silencio() {
-        let m = Mudo::por("no hay macOS 26 en esta máquina");
+        let m = Mudo::por(PorQueNoHayMotor::SinTranscriptor);
         let fallo = m.transcribir("es-ES", &[0.1; 16_000], 16_000).unwrap_err();
         match fallo {
             Fallo::NoDisponible(Disponibilidad::SinMotor { motivo }) => {
-                assert!(motivo.contains("macOS 26"));
+                assert_eq!(motivo, PorQueNoHayMotor::SinTranscriptor);
             }
             otro => panic!("devolvió {otro:?} en vez del motivo"),
         }
@@ -166,7 +196,7 @@ mod tests {
     /// doler en el tipo, no en la vista.
     #[test]
     fn un_motor_ausente_no_puede_confundirse_con_un_turno_callado() {
-        let m = Mudo::por("sin puente");
+        let m = Mudo::por(PorQueNoHayMotor::SinPuente);
         assert!(m.transcribir("es-ES", &[0.0; 100], 16_000).is_err());
     }
 
@@ -174,7 +204,7 @@ mod tests {
     /// vacía son la verdad; cualquier otra cosa sería una pantalla de Idioma con botones muertos.
     #[test]
     fn el_motor_mudo_no_ofrece_idiomas_que_no_tiene() {
-        let m = Mudo::por("sin puente");
+        let m = Mudo::por(PorQueNoHayMotor::SinPuente);
         assert_eq!(m.techo_de_idiomas(), 0);
         assert!(m.idiomas().is_empty());
     }

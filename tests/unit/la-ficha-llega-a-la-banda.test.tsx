@@ -1,6 +1,7 @@
 import { act, render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Banda } from "@/componentes/Banda";
+import { Sesion } from "@/pantallas/Sesion";
 import { IdiomaContext } from "@/i18n";
 import { preguntar } from "@/puente";
 import { es } from "@/i18n/es";
@@ -8,9 +9,15 @@ import {
   APARICION_DEL_ATAJO,
   ESTADO_DEL_CORPUS,
   NOVEDAD_APARECE_FICHA,
+  NOVEDAD_APARECE_POR_PANTALLA,
   NOVEDAD_APARECE_SIN_RESULTADO,
+  NOVEDAD_NADA_EN_PANTALLA,
   NOVEDAD_TURNO,
+  PANTALLA_APAGADA,
+  PANTALLA_LEYENDO,
+  ESTADO_DE_LA_ESCUCHA,
   REUNION_DETECTADA,
+  SALIDA_DE_AUDIO,
   TURNO_DEL_CLIENTE,
 } from "@/contrato.generado";
 
@@ -140,6 +147,77 @@ describe("la ficha, dentro del producto", () => {
     expect(vi.mocked(preguntar)).toHaveBeenCalledWith("pedir_ficha");
   });
 
+  /**
+   * **Por qué llegó y cuánto tardó** (mirada 17-bis). Se medían desde el sprint 001 y cruzaban la
+   * costura sin que nadie los pintara: dos de los diecisiete campos huérfanos.
+   */
+  it("la ficha dice por qué llegó y cuánto tardó", async () => {
+    await laBanda();
+    await emitir("escucha", NOVEDAD_APARECE_FICHA);
+    if (NOVEDAD_APARECE_FICHA.que !== "aparece") throw new Error("la muestra dejó de ser aparición");
+    const porQue = banda().querySelector(".por-que") as HTMLElement;
+    expect(porQue.textContent).toContain(
+      `${es.banda.motivos[NOVEDAD_APARECE_FICHA.motivo]} · 1,2 s`,
+    );
+    expect(porQue.querySelector("use")?.getAttribute("href")).toBe("#i-reloj");
+  });
+
+  /** La única ficha que llega sin que nadie diga nada lleva su propio símbolo (mirada 17-quater). */
+  it("la ficha que trajo la pantalla lleva la pantalla, no el reloj", async () => {
+    await laBanda();
+    await emitir("escucha", NOVEDAD_APARECE_POR_PANTALLA);
+    const porQue = banda().querySelector(".por-que") as HTMLElement;
+    expect(porQue.textContent).toContain(es.banda.motivos.pantalla);
+    expect(porQue.querySelector("use")?.getAttribute("href")).toBe("#i-pantalla");
+  });
+
+  /** La sección la conjeturó el lector de PDF: se dice en la línea del porqué, que no se corta. */
+  it("una sección conjeturada se marca en la ficha", async () => {
+    await laBanda();
+    if (NOVEDAD_APARECE_FICHA.que !== "aparece" || NOVEDAD_APARECE_FICHA.clase !== "ficha") {
+      throw new Error("la muestra dejó de ser ficha");
+    }
+    expect(banda().querySelector(".conjetura")).toBeNull();
+    await emitir("escucha", {
+      ...NOVEDAD_APARECE_FICHA,
+      fuente: { ...NOVEDAD_APARECE_FICHA.fuente, conjeturada: true },
+    });
+    expect(banda().querySelector(".por-que .conjetura")?.textContent).toContain(
+      es.banda.seccionConjeturada,
+    );
+  });
+
+  /**
+   * **`⌃⌥L` sin texto: la banda contesta igual**, porque alguien preguntó. Sin esto la tecla
+   * parecería rota. El payload es el que Rust emite (`NOVEDAD_NADA_EN_PANTALLA`).
+   */
+  it("la lectura pedida sin texto se contesta, y la siguiente ficha la sustituye", async () => {
+    await laBanda();
+    await emitir("escucha", NOVEDAD_NADA_EN_PANTALLA);
+    expect(banda().dataset.estado).toBe("pantalla-nada");
+    expect(banda().textContent).toContain(es.banda.leiLaPantalla);
+    expect(banda().textContent).toContain(`${es.banda.motivos.atajo} · 14:05`);
+
+    await emitir("escucha", NOVEDAD_APARECE_FICHA);
+    expect(banda().dataset.estado).toBe("ficha");
+  });
+
+  /** El transcript dice la hora **y cuánto duró** cada turno (mirada 17-bis): el tramo que Rust mide. */
+  it("el transcript enseña el tramo de cada turno", async () => {
+    respuestas.set("turnos_recientes", [TURNO_DEL_CLIENTE]);
+    render(
+      <IdiomaContext.Provider value="es">
+        <Banda estado="esperando" transcript />
+      </IdiomaContext.Provider>,
+    );
+    await act(async () => {});
+    await emitir("escucha", NOVEDAD_APARECE_FICHA);
+    const segundos = Math.round((TURNO_DEL_CLIENTE.hastaMs - TURNO_DEL_CLIENTE.desdeMs) / 1000);
+    expect(banda().querySelector(".transcript-b")?.textContent).toContain(
+      `${TURNO_DEL_CLIENTE.hora} · ${segundos} s`,
+    );
+  });
+
   it("tras el corte no queda ficha en pantalla", async () => {
     await laBanda();
     await emitir("escucha", NOVEDAD_APARECE_FICHA);
@@ -208,5 +286,28 @@ describe("dentro del producto la banda no enseña la consultora de la maqueta", 
 
     expect(banda().textContent).toContain(TURNO_DEL_CLIENTE.texto);
     expect(banda().textContent).toContain(`${es.banda.cliente} ${TURNO_DEL_CLIENTE.hora}`);
+  });
+});
+
+/**
+ * **EL EVENTO «pantalla», DE PUNTA A PUNTA** (regla 19): Sesión pregunta el estado al montarse y
+ * después escucha el evento. El payload es el que Rust emite; el test comprueba que la fila cambia
+ * sola cuando la lectura se apaga, sin que nadie vuelva a preguntar.
+ */
+describe("la pantalla, dentro del producto", () => {
+  it("Sesión pinta lo que dice el evento «pantalla»", async () => {
+    respuestas.set("estado_de_la_pantalla", PANTALLA_LEYENDO);
+    render(
+      <IdiomaContext.Provider value="es">
+        <Sesion reunion={{ que: "ninguna" }} escucha={ESTADO_DE_LA_ESCUCHA} salida={SALIDA_DE_AUDIO} />
+      </IdiomaContext.Provider>,
+    );
+    await act(async () => {});
+    const interruptor = () => document.querySelector("[role=switch]") as HTMLElement;
+    expect(interruptor().getAttribute("aria-checked")).toBe("true");
+
+    await emitir("pantalla", PANTALLA_APAGADA);
+    expect(interruptor().getAttribute("aria-checked")).toBe("false");
+    expect(document.body.textContent).toContain(es.cuaderno.pantallaApagadaPor);
   });
 });

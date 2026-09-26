@@ -278,7 +278,10 @@ mod pruebas {
     /// Sesión vale también aquí.
     #[test]
     fn sin_saber_por_donde_suena_se_habla_y_el_log_lo_dice() {
-        let a_ciegas = Salida::NoSeSabe { motivo: "no dice por dónde suena".into() };
+        let a_ciegas = Salida::NoSeSabe {
+            motivo: crate::capture::PorQueNoSeSabe::SinFuente,
+            nombre: Some("Altavoz USB".into()),
+        };
         assert_eq!(cabe_decirla(&momento(&a_ciegas)), Ok(()));
     }
 

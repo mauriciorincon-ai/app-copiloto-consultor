@@ -178,9 +178,7 @@ pub fn muestras() -> Vec<Muestra> {
             "REUNION_NO_SE_PUEDE_SABER",
             "Reunion",
             "./cuaderno",
-            &Reunion::NoSePuedeSaber {
-                motivo: "hay un navegador abierto pero no se pueden leer sus ventanas".into(),
-            },
+            &Reunion::NoSePuedeSaber { motivo: crate::sesion::PorQueNoSeVe::SinAccesibilidad },
         ),
         // ---- permisos, escucha, idioma, salida de audio -----------------------------------
         m(
@@ -189,6 +187,7 @@ pub fn muestras() -> Vec<Muestra> {
             "./cuaderno",
             &Permisos {
                 microfono: Estado::Concedido,
+                audio: Estado::Concedido,
                 pantalla: Estado::SinConceder,
                 accesibilidad: Estado::NoSeSabe,
             },
@@ -202,7 +201,7 @@ pub fn muestras() -> Vec<Muestra> {
                 microfono: pista_abierta(),
                 sistema: EstadoDePista {
                     abierta: false,
-                    motivo: Some("este Mac no deja abrir el audio del sistema".into()),
+                    motivo: Some(crate::capture::PorQueNoAbrio::DispositivoOcupado),
                     bytes: 0,
                     segundos: 0.0,
                     muestras_recibidas: 0,
@@ -218,7 +217,7 @@ pub fn muestras() -> Vec<Muestra> {
             "DISPONIBILIDAD_SIN_MOTOR",
             "Disponibilidad",
             "./cuaderno",
-            &Disponibilidad::SinMotor { motivo: "este Mac no trae el transcriptor".into() },
+            &Disponibilidad::SinMotor { motivo: crate::stt::PorQueNoHayMotor::SinTranscriptor },
         ),
         m("SALIDA_DE_AUDIO", "Salida", "./cuaderno", &Salida::Altavoces),
         m(
@@ -227,6 +226,23 @@ pub fn muestras() -> Vec<Muestra> {
             "./cuaderno",
             &Salida::Otra { nombre: "AirPods Pro".into() },
         ),
+        // El porqué cerrado cita el dispositivo: el nombre viaja aparte porque no se traduce.
+        m(
+            "SALIDA_DE_AUDIO_NO_SE_SABE",
+            "Salida",
+            "./cuaderno",
+            &Salida::NoSeSabe {
+                motivo: crate::capture::PorQueNoSeSabe::SinConexion,
+                nombre: Some("Altavoz USB".into()),
+            },
+        ),
+        // ---- el diccionario, en la pantalla de Idioma (mirada 17-bis) ------------------------
+        m("ESTADO_DEL_DICCIONARIO", "EstadoDelDiccionario", "./cuaderno", &crate::EstadoDelDiccionario {
+            terminos: 17,
+            del_corpus: 12,
+            en_tu_archivo: 5,
+            ruta: "~/Library/Application Support/com.aiapps.copiloto-consultor/diccionario.yaml".into(),
+        }),
         // ---- el corpus -------------------------------------------------------------------
         m(
             "ESTADO_DEL_CORPUS",
@@ -298,6 +314,10 @@ pub fn muestras() -> Vec<Muestra> {
             ficha(),
             Motivo::Pantalla,
         )))),
+        // `⌃⌥L` sin texto en la pantalla: la banda contesta igual, por el mismo evento.
+        m("NOVEDAD_NADA_EN_PANTALLA", "Novedad", "./ficha", &Novedad::NadaEnPantalla {
+            hora: "14:05".into(),
+        }),
         // ---- el acople, que la banda dibuja en su cabecera --------------------------------
         m("ESTADO_DEL_ACOPLE", "EstadoDelAcople", "./acople", &crate::EstadoDelAcople {
             permiso: true,

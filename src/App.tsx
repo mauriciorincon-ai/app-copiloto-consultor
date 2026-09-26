@@ -60,6 +60,11 @@ const ESTADOS: EstadoBanda[] = [
   "voz",
   "voz-espera",
   "voz-sin",
+  // Los tres de la fase 3 del sprint 002: la ficha del PDF, la que trajo la pantalla y la lectura
+  // que no encontró texto. Mismo papel que los de arriba: el arnés de capturas fuera de Tauri.
+  "ficha-pdf",
+  "ficha-pantalla",
+  "pantalla-nada",
 ];
 
 /**
