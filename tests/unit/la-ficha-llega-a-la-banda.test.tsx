@@ -62,7 +62,12 @@ vi.mock("@/puente", () => ({
   // **Cada comando responde lo suyo.** Un doble que contesta lo mismo a todo le daba la aparición
   // del atajo a `estado_de_la_escucha`, y la banda reventaba leyendo pistas donde había una ficha:
   // el arnés mentía sobre la forma del puente.
-  preguntar: vi.fn((comando: string) => Promise.resolve(respuestas.get(comando) ?? null)),
+  // Un `Error` en `respuestas` hace que el comando FALLE: el doble tiene que saber rechazar, o no
+  // puede ver lo que pasa cuando el puente falla (la banda colgada en «buscando», fase 3 del S2).
+  preguntar: vi.fn((comando: string) => {
+    const r = respuestas.get(comando);
+    return r instanceof Error ? Promise.reject(r) : Promise.resolve(r ?? null);
+  }),
   llamar: vi.fn(() => Promise.resolve(true)),
 }));
 
@@ -216,6 +221,22 @@ describe("la ficha, dentro del producto", () => {
     expect(banda().querySelector(".transcript-b")?.textContent).toContain(
       `${TURNO_DEL_CLIENTE.hora} · ${segundos} s`,
     );
+  });
+
+  /**
+   * **⌃⌥A antes de que el cliente hable** —lo encontró la corrida en vivo—: Rust contesta «nada» y la
+   * banda vuelve a esperar; y si el puente falla, tampoco se queda buscando para siempre.
+   */
+  it("⌃⌥A sin nada que buscar no deja la banda en «buscando»", async () => {
+    await laBanda();
+    await emitir("ficha", null);
+    await act(async () => {});
+    expect(banda().dataset.estado).toBe("esperando");
+
+    respuestas.set("pedir_ficha", new Error("el puente falló"));
+    await emitir("ficha", null);
+    await act(async () => {});
+    expect(banda().dataset.estado).toBe("esperando");
   });
 
   it("tras el corte no queda ficha en pantalla", async () => {

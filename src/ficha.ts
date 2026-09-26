@@ -154,10 +154,15 @@ export function useFicha(
       escuchar("ficha", () => {
         setBuscando(true);
         setNada(null);
-        void preguntar<Aparicion>("pedir_ficha").then((a) => {
-          setBuscando(false);
-          if (a !== null) setFicha(a);
-        });
+        // `null` es «todavía no he oído nada del cliente»: la banda vuelve a lo que enseñaba. Y
+        // pase lo que pase —también si el puente falla—, el «buscando» se cierra: una banda que se
+        // queda buscando para siempre es la avería que la corrida en vivo encontró.
+        void preguntar<Aparicion>("pedir_ficha")
+          .then((a) => {
+            if (a !== null) setFicha(a);
+          })
+          .catch(() => undefined)
+          .finally(() => setBuscando(false));
       }),
       // Tras el kill-switch no queda ficha en pantalla: la promesa es que no queda nada.
       escuchar("corte", () => {

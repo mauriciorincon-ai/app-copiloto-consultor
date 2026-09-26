@@ -23,6 +23,8 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
    pegada al borde inferior de la pantalla, y el relleno que la tapa cuando compartes pantalla.
 2. **Concede los permisos.** Ve a *Permisos*. La app te lleva al sitio exacto de Ajustes del
    Sistema para cada uno. **Puedes usarla sin conceder ninguno**: lo que no funcione te lo dirá.
+   **Audio del sistema y Pantalla son dos permisos distintos**, aunque Ajustes los enseñe en el mismo
+   panel («Grabación de pantalla y audio del sistema»): cada fila de *Permisos* dice el suyo.
 3. **Señala tu carpeta de documentos.** Ve a *Corpus* → «Señalar una carpeta». La app lee tus PDF,
    Word y Markdown **donde están** — no los copia ni los sube a ninguna parte.
 4. **Ponte los auriculares** y entra a tu reunión. En *Sesión*, pulsa «Iniciar sesión».
@@ -66,6 +68,16 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
   - macOS solo deja tener **cinco idiomas de voz listos a la vez**. Es un límite del sistema.
   - Si no hablas, los contadores de audio se quedan quietos. **Eso es correcto**: cuando nadie
     habla, macOS no entrega una sola muestra.
+- **Si una pista no abre, *Sesión* te dice por qué · nuevo en Sprint 002.** Con la sesión en marcha,
+  la fila de la pista que no abrió cambia de símbolo, de palabra («No abrió») y de color, y debajo
+  dice el motivo y qué hacer: falta el permiso del micrófono o del audio del sistema, otra app tiene
+  el dispositivo, el dispositivo entrega un formato que la app no sabe leer, o macOS no dejó abrirla.
+  Y la fila «Escucha las dos pistas» pasa a **«A medias»** diciendo cuál queda. Hasta el sprint 002
+  esta pantalla decía «Funciona» en las dos pistas pasara lo que pasara, y te habrías enterado al
+  terminar la reunión, al ver que faltaba medio transcript.
+- **Los auriculares por su nombre · nuevo en Sprint 002.** Si el sonido sale por un aparato externo
+  (unos AirPods, un altavoz USB), *Sesión* dice su nombre. La app **no puede saber** si es un casco o
+  un altavoz: si es un altavoz, no uses el modo solo audio.
 
 ### Tu corpus, indexado · desde Sprint 001
 
@@ -90,6 +102,11 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
   documentos **o se queda callado después de hablar**, la app busca en tu corpus y pone en la banda
   un **titular de ocho palabras, una línea y la fuente exacta** — documento y sección.
 - **Cómo se usa:** sola. Y `⌃⌥A` («ayúdame con esto») la pide a mano cuando no acierte.
+- **Dice por qué llegó y cuánto tardó · nuevo en Sprint 002.** Debajo de la fuente, una línea corta:
+  «pregunta · 1,2 s», «cifra · 0,9 s», «término tuyo», «silencio», «lo pediste» o **«en pantalla»**
+  —esta con el símbolo de la pantalla, porque es la única ficha que llega sin que nadie diga nada—.
+  Si la sección salió de un PDF, donde la app **conjetura** los títulos por la forma del texto, lo
+  dice ahí mismo: «sección conjeturada».
 - **El silencio también pide ficha · nuevo en Sprint 002.** Si el cliente dice algo que no lleva
   pregunta ni cifra y se queda callado **cuatro segundos**, la app busca por su cuenta lo último que
   dijo — es el hueco en el que te toca hablar a ti. Dos cosas que hace bien y conviene saber:
@@ -109,15 +126,18 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
 
 ### Nada se graba, y se puede comprobar · desde Sprint 001
 
-- **Qué hace:** el audio y lo que se dijo viven **solo en memoria** y mueren al cerrar. La pantalla
-  de *Honestidad* enseña cuánto ocupan ahora mismo y cuántos bytes han salido de tu equipo.
+- **Qué hace:** el audio, lo que se dijo y **el último cuadro leído de la pantalla** viven **solo en
+  memoria** y mueren al cerrar. La pantalla de *Honestidad* enseña cuánto ocupa cada uno ahora mismo y
+  cuántos bytes han salido de tu equipo.
 - **Cómo se usa:** `⌥⎋` corta todo en el acto — audio, transcript, la banda y su relleno — y
   devuelve la ventana de la reunión a su tamaño. También está el botón en *Honestidad*, por si el
   atajo está cogido por otra app.
-- **Limitaciones conocidas:** el corte alcanza **7 de las 8 piezas** previstas. La octava —lo que
-  la app lea de tu pantalla— todavía no existe, y por eso no dice «8 de 8». *(Eran 7 hasta el
-  sprint 002: la voz del modo solo audio es una pieza más, y es la primera que se corta, porque es
-  la única que tu cliente podría oír.)*
+- **El corte alcanza las 8 piezas · desde Sprint 002.** *Honestidad* lo dice debajo del botón rojo:
+  «El botón corta 8 de 8 piezas: ninguna queda fuera.» La última en llegar fue la lectura de pantalla;
+  y la voz del modo solo audio es la primera que se corta, porque es la única que tu cliente podría
+  oír.
+- **Limitaciones conocidas:** el botón corta lo que vive en memoria **ahora**; lo que ya salió por
+  los altavoces o lo que ya viste en la banda, obviamente, no se puede deshacer.
 
 ### El modelo de voz de un idioma · desde Sprint 001
 
@@ -130,6 +150,37 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
   - Si tu Mac **no reconoce** ese idioma, o no trae motor de voz, no hay nada que instalar y la app
     lo dice con esas palabras en vez de ofrecerte un botón que no puede funcionar.
   - macOS permite **cinco idiomas listos a la vez**. Es un límite del sistema.
+
+### Lee la pantalla de la reunión · Nuevo · Sprint 002
+
+- **Qué hace:** mira la ventana de la reunión —Zoom, Teams o la pestaña de Meet— y **solo lee lo
+  nuevo**: cuando aparece otra diapositiva, otra hoja, otro documento, espera a que se quede quieto y
+  lo lee **una vez**. Si trae una cifra o uno de tus términos, **te trae la ficha sin que nadie
+  pregunte**. Y cuando el cliente pregunta algo que dos fichas responderían igual de bien, lo que se
+  ve en pantalla **desempata**.
+- **Cómo se usa:** sola, desde que pulsas «Iniciar sesión». En *Sesión*, debajo de la fila de la
+  pantalla:
+  - el interruptor **«Leerla sola»** la apaga: entonces no mira nada y olvida lo que había leído;
+  - **`⌃⌥L`** la lee **una vez, ahora**, aunque esté apagada. Si no hay texto —una cámara, un vídeo, una
+    pantalla en negro— la banda te contesta «Leí la pantalla: no hay texto que buscar.»
+
+  **Con una NDA estricta:** apaga «Leerla sola» y usa solo `⌃⌥L` cuando tú quieras.
+- **Lo que queda y lo que no:** la imagen **no se guarda nunca**. En memoria vive solo **el último
+  cuadro** y las palabras que se sacaron de él; *Honestidad* dice cuánto ocupa, y el corte (`⌥⎋`) lo
+  borra con lo demás. Nada de esto sale de tu Mac: la lectura la hace macOS dentro de tu equipo.
+- **Medido:** en el kit de prueba (cinco pantallas sintéticas), **cuatro de cuatro** traen su ficha sin
+  pregunta y la agenda —que no trae ni cifra ni término— no trae ninguna. Cada lectura tarda **menos de
+  una décima de segundo**, y como mucho hay una por segundo.
+- **Limitaciones conocidas:**
+  - Necesita el permiso de **Pantalla**. Sin él, *Sesión* lo dice («Sin permiso») y la app funciona
+    igual, sin leerla.
+  - Lee **la ventana de la reunión**, no tu pantalla entera, y solo si **está visible**. Si la
+    reunión está detrás de otra ventana, no hay nada que leer.
+  - **El vídeo de los participantes no cuenta como «algo nuevo»**: se mueve todo el rato y no trae
+    texto. Si alguien comparte un vídeo, la app espera a que se quede quieto.
+  - Lee español e inglés. Una diapositiva en otro idioma se lee peor.
+  - Mientras el cliente mueve el ratón sobre la diapositiva, la app espera: solo lee lo que se queda
+    quieto.
 
 ### El modo solo audio: la ficha, al oído · Nuevo · Sprint 002
 
@@ -179,6 +230,8 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
 - **Cómo se usa:** sin hacer nada. Viene con la jerga de datos ya puesta (Power BI · DAX · Microsoft
   Fabric · Semantic Model · Lakehouse) y **los nombres de tus clientes salen solos de tu corpus** —
   si tienes una ficha de «Páramo Azul», la app ya sabe escribirlo bien.
+- **Dónde verlo · nuevo en la fase 3 del Sprint 002:** *Idioma* enseña cuántos términos tiene, cuántos
+  salieron de tu corpus y cuántos de tu archivo, y la ruta entera del archivo.
 - **Y si quieres añadir lo tuyo:** el archivo es
   `~/Library/Application Support/com.aiapps.copiloto-consultor/diccionario.yaml`, y puedes editarlo
   con cualquier editor de texto. Una línea por término:
@@ -216,6 +269,7 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
 | `⌃⌥A` | «ayúdame con esto»: busca una ficha sobre lo último que dijo el cliente |
 | `⌃⌥T` | muestra u oculta el transcript en la banda |
 | `⌃⌥V` | enciende o apaga el **modo solo audio**: te lee la ficha y la banda baja a una línea |
+| `⌃⌥L` | **lee la pantalla una vez, ahora** — también con la lectura automática apagada |
 | `⎋` | calla la voz — **solo mientras el modo solo audio está encendido** |
 
 > **Por qué `⌃⌥` (Control + Opción) y no `⌘⇧`.** Hasta el sprint 2 las teclas eran `⌘⇧`, y según
@@ -260,7 +314,7 @@ detecta y lo marca, pero funciona mejor con auriculares.
 | Sprint | Features añadidas a este manual |
 |---|---|
 | 001 | la banda protegida · el acople · las dos pistas y la transcripción local · el corpus indexado · la ficha de evidencia y la sugerencia de cómo conducirse · el modelo de voz de un idioma · el corte y la pantalla de Honestidad · español e inglés |
-| 002 | el disparo por silencio · **tu diccionario técnico** · **el modo solo audio** |
+| 002 | el disparo por silencio · **tu diccionario técnico** · **el modo solo audio** · **la lectura de pantalla** y `⌃⌥L` · **los porqués** (la pista que no abrió, la salida de audio por su nombre, el motor que falta) · **por qué llegó la ficha y cuánto tardó** · las teclas pasan a `⌃⌥` |
 
 > **Corregido tras la auditoría del sprint 001** (2026-09-22): tres frases de este manual habían
 > dejado de ser ciertas y se arreglaron con lo que el código hacía de verdad — el disparo por

@@ -1985,3 +1985,61 @@ hoja enseñaba pantallas del sprint 2: **un puntero del cierre del S1 que ya no 
 | **Medio** | `scripts/capturar-fidelidad.mjs:163` (el prefijo) · `sprints/SPRINT_001-summary.md:184` (el puntero afectado) | **Pagado aquí**: el prefijo es la constante `SPRINT` (`"s2"`); la evidencia del S1 se restauró **tal cual estaba en su merge** (`7625683`: 40 + 20 encuadres por lado, y sus dos hojas), y la del S2 vive en `docs/fidelidad/s2-*` y `S2-*.html` |
 
 Se cambia `SPRINT` en el primer commit de cada sprint que capture; queda dicho en el propio script.
+
+## La corrida en vivo de la fase 3 (regla 15, tercer filo) — lo que se vio, y lo que no se pudo
+
+`pnpm tauri dev`, con el log en el scratchpad. **Lo que se vio correr en el modo:**
+
+- **Las cinco teclas se registran con `⌃⌥`** sin que el sistema se quede con ninguna: `⌥⎋`, `⌃⌥T`,
+  `⌃⌥A`, `⌃⌥V`, `⌃⌥L`.
+- **Las cuatro `⌃⌥` responden pulsadas de verdad** —eventos de teclado del sistema (`CGEvent` desde un
+  ejecutable de Swift en el scratchpad), que llegan por el mismo camino que un dedo—: `[pantalla] ⌃⌥L`
+  → «lectura pedida sin sesión: no hay reunión que leer»; `[transcript] ⌃⌥T` (dos veces: abrir y
+  cerrar); `[ficha] ⌃⌥A`; `⌃⌥V` enciende el modo solo audio (banda a 44 px, `⎋` registrada) y lo apaga
+  (88 px, `⎋` devuelta).
+- **El permiso de audio del sistema se lee con la API privada DENTRO del binario de la app**:
+  `[permisos] micrófono=Concedido audio=Concedido pantalla=Concedido accesibilidad=Concedido`. (La línea
+  del log no decía el de audio: se añadió.)
+
+**El defecto que la corrida encontró, y ningún test podía ver:**
+
+| Sev. | Sitio | Qué | Pago |
+|---|---|---|---|
+| **Medio** | `src-tauri/src/lib.rs` (`pedir_ficha`) · `src/ficha.ts` (su llamada) | `⌃⌥A` pulsada **antes de que el cliente hable**: Rust devolvía `Err("todavía no he oído nada del cliente")`, la promesa del webview se rechazaba sin que nadie la atendiera (`[Unhandled rejection]` en el log de Vite) y **la banda se quedaba en «Buscando en tu corpus…» para siempre**. El doble del puente de los tests solo sabía resolver | **Pagado**: Rust contesta `None` (una respuesta, no un error) y lo dice en el log; la banda cierra el «buscando» pase lo que pase (`.finally`). El doble del puente aprende a rechazar. Test nuevo, **visto en rojo** sin el `.finally` |
+
+**Lo que NO se pudo ver, dicho con su causa:** la lectura de pantalla **capturando una ventana viva**.
+
+- Se abrió `meet-de-prueba.html` (nueva en el kit) en Safari. Para comprobar su título usé AppleScript
+  hacia Safari, y **macOS le pidió al usuario un permiso de automatización** —«UserNotificationCenter»
+  apareció al frente en el log del acople—; se cortó a los 120 s sin respuesta. **Error mío**: el
+  diálogo apareció en su pantalla. No se volvió a usar AppleScript: las teclas y las ventanas se
+  miraron con `CGEvent` y `CGWindowList`, que no piden nada.
+- Para iniciar la sesión había que pulsar «Iniciar sesión». Las ventanas de la app **no aparecen en el
+  árbol de accesibilidad** (0 ventanas) y el clic simulado se hace solo si, en ese punto, la ventana más
+  alta es la de la app — y **todas las ventanas figuraban fuera de pantalla**: el editor estaba a
+  pantalla completa en su propio escritorio. No se movió el escritorio del usuario para hacer un clic.
+- Test nuevo, bajo demanda: `la_ventana_de_meet_se_captura_y_se_lee` (`contra-el-mac-de-verdad.rs`,
+  `#[ignore]`). Captura la ventana con ScreenCaptureKit y la lee con Vision, que es exactamente lo que
+  la app hace en una reunión. **Su primera versión salía en verde sin haber capturado nada** («no hay
+  ventana»): un test bajo demanda que pasa sin medir es decorado; ahora **falla** diciendo qué montar. Con
+  `AG_OBJETIVO=<bundle>` mide otra ventana visible e imprime solo cuentas. Corrido contra Safari y
+  contra el editor: **ninguna ventana visible** — la causa más probable es la pantalla del Mac bloqueada
+  o dormida, que para macOS deja todas las ventanas «fuera de pantalla».
+
+**Queda para la mirada de cierre de la fase**, con el usuario delante: abrir
+`docs/kit-de-prueba/pantalla/meet-de-prueba.html`, «Iniciar sesión», pasar de diapositiva y pulsar
+`⌃⌥L`; y el test bajo demanda con la ventana visible.
+
+## La CI llevaba tres corridas en rojo, y no la miré después de cada push
+
+**Error de proceso, mío:** tras `69e4bbb`, `efff753` y `cf98f07` no comprobé `gh pr checks`. Las tres
+corridas (`36261161272`, `36264957461`, `36268511010`) salieron en rojo, y la regla 15 —segundo filo—
+pide conclusión propia `success` por check. Lo que fallaba:
+
+| Job | Qué | Causa | Arreglo |
+|---|---|---|---|
+| `build-escritorio` (las tres) | `el_kit_de_pantalla_mide_la_lectura_y_su_refuerzo`: «una lectura tardó 1006 / 1109 / 1140 ms» | el runner de macOS es una **máquina virtual** (GPU paravirtual, sin Neural Engine): Vision tarda ~1 s donde este Mac tarda <100 ms. Y la aserción mezclaba dos cosas: el plan pide **como mucho una lectura por segundo** —lo garantiza el limitador `RITMO_MS`—, no que cada lectura dure menos de un segundo | el techo de duración **se exige en un Mac de verdad** (`kern.hv_vmm_present`); en una máquina virtual se mide y se imprime con todas las letras. **Rojo visto** en este Mac con el umbral plantado a 10 ms («una lectura tardó 95 ms») |
+| `e2e` (la última) | el gate nuevo de maquetas: 15 desbordes | el runner de `e2e` es **Linux**, sin Avenir Next, Charter ni Menlo: todo envuelve distinto | el gate **corre en `build-escritorio`** (macOS), paso propio; en `e2e` se salta diciendo por qué y dónde corre |
+
+**Y la regla que me pongo, porque la de la casa ya existía y no la cumplí:** después de cada push, `gh pr
+checks` hasta que los tres terminen, antes de dar nada por cerrado.

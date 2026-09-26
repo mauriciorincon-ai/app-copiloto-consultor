@@ -87,6 +87,14 @@ jobs:
       - name: el kit, con su salida (porque «ok» no dice si midio)
         working-directory: src-tauri
         run: cargo test --locked --test contra-el-mac-de-verdad -- --nocapture el_kit el_wer la_voz_de_este_mac la_app_nunca
+      # GATE de las maquetas (sprint 002, fase 3): ningun estado de ninguna maqueta se sale de su
+      # ventana. Va AQUI y no en `e2e` porque las maquetas usan las fuentes de macOS (Avenir Next,
+      # Charter, Menlo): en el runner de Linux todo envuelve distinto y daba desbordes que en un Mac
+      # no existen. En `e2e` se salta diciendolo; aqui tiene conclusion propia.
+      - name: las maquetas caben en su ventana (con las fuentes de macOS)
+        run: |
+          pnpm exec playwright install chromium
+          pnpm exec playwright test tests/e2e/maqueta-cabe.spec.ts --project=ventana-principal
       # Gate de NO PERSISTENCIA (estandar 4-T, captura de terceros): si la app capta audio o
       # pantalla de terceros, `pnpm verify:ephemeral` debe existir y pasar. Sin el script el
       # gate NO se salta en silencio: falla (un gate saltado se ve igual que uno verde).

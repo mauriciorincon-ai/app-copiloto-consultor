@@ -48,6 +48,14 @@ test("ningún estado de ninguna maqueta se sale de su ventana", async ({
     info.project.name !== "ventana-principal",
     "se corre una vez, no una por proyecto",
   );
+  // **Y se mide con las fuentes de macOS.** Las maquetas usan Avenir Next, Charter y Menlo, que un
+  // runner de Linux no tiene: allí todo envuelve distinto y el gate dio 15 desbordes que en un Mac
+  // no existen (su primera corrida en CI). Corre en el job `build-escritorio`, que es macOS, con su
+  // propia conclusión.
+  test.skip(
+    process.platform !== "darwin",
+    "las maquetas se miden con las fuentes de macOS: corre en build-escritorio",
+  );
   test.setTimeout(300_000);
 
   const desbordes = new Map<string, string>();

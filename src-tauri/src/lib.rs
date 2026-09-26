@@ -959,8 +959,9 @@ fn arrancar_el_acople<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
 fn registrar_lo_que_ve() {
     let p = permisos::leer();
     println!(
-        "[permisos] micrófono={:?} pantalla={:?} accesibilidad={:?} · cara={:?}",
+        "[permisos] micrófono={:?} audio={:?} pantalla={:?} accesibilidad={:?} · cara={:?}",
         p.microfono,
+        p.audio,
         p.pantalla,
         p.accesibilidad,
         permisos::cara(&p)
@@ -1045,11 +1046,21 @@ fn pedir_ficha(
     escucha_viva: tauri::State<'_, LaEscucha>,
     el_corpus: tauri::State<'_, ElCorpus>,
     la_pantalla: tauri::State<'_, LaPantalla>,
-) -> Result<ficha::Aparicion, String> {
+) -> Option<ficha::Aparicion> {
     // El cuerpo vive en `ficha_vigente` desde el sprint 002: `⌃⌥V` necesita **la misma** ficha para
     // decirla que esta enseña, y dos búsquedas escritas por separado acabarían encontrando cosas
     // distintas para la misma pregunta.
-    ficha_vigente(&escucha_viva, &el_corpus, &la_pantalla).ok_or_else(|| "todavía no he oído nada del cliente".into())
+    //
+    // **«Todavía no he oído nada» es una respuesta, no un error** (corrida en vivo de la fase 3 del
+    // sprint 002). Devuelto como `Err`, la promesa del webview se rechazaba sin que nadie la
+    // atendiera y la banda se quedaba en «Buscando en tu corpus…» para siempre: `⌃⌥A` pulsada antes
+    // de que el cliente hablara dejaba la banda colgada. Ningún test lo vio porque su doble del
+    // puente solo sabía resolver.
+    let a = ficha_vigente(&escucha_viva, &el_corpus, &la_pantalla);
+    if a.is_none() {
+        println!("[ficha] ⌃⌥A sin turno del cliente: todavía no hay nada que buscar");
+    }
+    a
 }
 
 // ---------------------------------------------------------------------------------------------
