@@ -84,9 +84,12 @@ jobs:
       # no deja saber si el kit midio algo. Esto vuelve a correrlos (la compilacion ya esta en
       # cache) solo para que sus numeros queden escritos. No anade ninguna forma nueva de fallar:
       # falla si y solo si fallan ellos, que ya los corrio el paso de arriba.
+      # `el_radar` (sprint 002, fase 4): el ambar con el OCR de verdad sale antes diciendo «NO SE
+      # MIDIO» si la compilacion no trae el puente de Swift; su primera corrida en CI paso `ok` sin
+      # que el log dijera cual de las dos cosas habia pasado.
       - name: el kit, con su salida (porque «ok» no dice si midio)
         working-directory: src-tauri
-        run: cargo test --locked --test contra-el-mac-de-verdad -- --nocapture el_kit el_wer la_voz_de_este_mac la_app_nunca
+        run: cargo test --locked --test contra-el-mac-de-verdad -- --nocapture el_kit el_wer la_voz_de_este_mac la_app_nunca el_radar
       # GATE de las maquetas (sprint 002, fase 3): ningun estado de ninguna maqueta se sale de su
       # ventana. Va AQUI y no en `e2e` porque las maquetas usan las fuentes de macOS (Avenir Next,
       # Charter, Menlo): en el runner de Linux todo envuelve distinto y daba desbordes que en un Mac
