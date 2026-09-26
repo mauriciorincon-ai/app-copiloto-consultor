@@ -98,21 +98,51 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+.estado { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px 2px 6px; border-radius: var(--r-chip); border: var(--borde) solid transparent; font-size: var(--t-meta); font-weight: 500; line-height: 1.3; white-space: nowrap; }
+.estado.ok { color: var(--ok);   background: var(--ok-tint);   border-color: var(--ok); }
+.estado.warn { color: var(--warn); background: var(--warn-tint); border-color: var(--warn); }
+.estado.err { color: var(--err);  background: var(--err-tint);  border-color: var(--err); }
+.estado.mute { color: var(--mute); background: transparent;      border-color: var(--line); }
+.estado.halo { color: var(--halo); background: var(--halo-tint); border-color: var(--halo); }
+.estado.pendiente {
+  color: var(--mute);
+  background: transparent;
+  border-color: var(--line-2);
+  border-style: dashed;
+}
 .pendiente .ic { opacity: .75; }
 .franja .ic { margin-top: 1px; }
+.franja.warn { border-color: var(--warn); background: var(--warn-tint); }
 .franja.warn .ic { color: var(--warn); }
+.franja.err { border-color: var(--err);  background: var(--err-tint); }
 .franja.err .ic { color: var(--err); }
+.franja.ok { border-color: var(--ok);   background: var(--ok-tint); }
 .franja.ok .ic { color: var(--ok); }
 .barra .pistas .pista.off .ic { opacity: .75; }
+.pie .cliente.ok { color: var(--ok); }
+.pie .cliente.warn { color: var(--warn); }
 .rail .marca .ic { color: var(--halo); }
+.fila { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .fila > .ic { flex: 0 0 auto; }
+.fila .crece { flex: 1 1 auto; min-width: 0; }
+.campo input.mono { font-family: var(--font-mono); font-size: var(--t-mono); }
+.conm .etq { display: inline-flex; align-items: center; gap: 5px; }
+.conm.on .etq { color: var(--ok); }
+.conm.off .etq { color: var(--mute); }
+.tabla td.mono, .tabla th.num, .tabla td.num { font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; }
 .permiso .ic { width: 20px; height: 20px; color: var(--ink-2); }
 .bandera .ic { width: 18px; height: 18px; margin-top: 1px; grid-column: 1; }
 .bandera > :not(.ic) { grid-column: 2; }
+.bandera .regla { color: var(--ink); }
+.contador .etq { font-size: var(--t-meta); color: var(--ink-2); }
 .buffer .ic { color: var(--ink-2); }
 .banda.voz .linea-b .ic { flex: 0 0 auto; color: var(--halo); }
+.banda.voz .linea-b.warn { color: var(--warn); }
 .banda.voz .linea-b.warn .ic { color: var(--warn); }
+.banda .marca-min.warn { color: var(--warn); }
+.banda .cliente-b.warn { color: var(--warn); }
 .banda .aviso-b .ic { flex: 0 0 auto; margin-top: 1px; }
+.banda .aviso-b.err { color: var(--err); }
 .banda .maniobra-b .ic { flex: 0 0 auto; align-self: center; color: var(--ink-2); }
 .propuesta > .ic { margin-top: 2px; color: var(--halo); }
 .propuesta.aceptada > .ic { color: var(--ok); }
@@ -124,10 +154,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
 .mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
 @media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
-.prohibido { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; font-size: var(--t-ui); color: var(--ink-2); }
-.prohibido li { list-style: none; display: grid; grid-template-columns: 16px 1fr; gap: 8px; }
+.k-sec > p.regla { font-size: var(--t-ui); color: var(--ink-2); max-width: 78ch; }
+.k-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+.k-grid.ancha { grid-template-columns: 1fr; }
+.k-item { display: flex; flex-direction: column; gap: 6px; }
+.k-item > .etq { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.k-marco { padding: 12px; border: 1px dashed var(--line-2); border-radius: var(--r-ficha); }
+.k-marco.panelito { width: 100%; max-width: 380px; }
+.k-grid.fichas { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
 .prohibido li .ic { color: var(--err); }
-.prohibido li b { color: var(--ink); font-weight: 600; }
 /* marco de exhibición del bundle */
   body { margin: 0; padding: var(--s-6); }
   .ds-cab { width: 100%; max-width: 1180px; margin: 0 auto var(--s-5); }
@@ -149,50 +184,122 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 </head>
 <body>
 <svg style="display:none" aria-hidden="true">
+<symbol id="i-reloj" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5V8l2.5 1.5"/></symbol>
+<symbol id="i-pantalla" viewBox="0 0 16 16"><rect x="1.5" y="2.5" width="13" height="9" rx="1.5"/><path d="M5.5 14h5M8 11.5V14"/></symbol>
+<symbol id="i-check-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor" stroke="none"/><path d="M5 8.2l2 2 4-4.4" stroke="var(--bg)" stroke-width="1.9" fill="none"/></symbol>
+<symbol id="i-ring" viewBox="0 0 16 16"><circle cx="8" cy="8" r="4"/></symbol>
 <symbol id="i-x-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor" stroke="none"/><path d="M5.6 5.6l4.8 4.8M10.4 5.6l-4.8 4.8" stroke="var(--bg)" stroke-width="1.8" fill="none"/></symbol>
+<symbol id="i-alert" viewBox="0 0 16 16"><path d="M8 2.2 14.3 13H1.7z" fill="currentColor" stroke="none"/><path d="M8 6v3.4M8 11.6v.2" stroke="var(--bg)" stroke-width="1.8" fill="none"/></symbol>
+<symbol id="i-auriculares" viewBox="0 0 16 16"><path d="M2.5 10V8a5.5 5.5 0 0 1 11 0v2"/><rect x="1.5" y="9" width="3" height="4.5" rx="1"/><rect x="11.5" y="9" width="3" height="4.5" rx="1"/></symbol>
 </svg>
   <div class="ds-cab">
     <h1>Anti-patrones</h1>
-    <p class="ds-regla"><span lang="es">lo que este sistema jamás hace (design-system.md §8)</span><span lang="en">what this system never does (design-system.md §8)</span></p>
+    <p class="ds-regla"><span lang="es">cada estado que no funciona dice por qué, con una frase cerrada en los dos idiomas</span><span lang="en">every state that does not work says why, with a closed sentence in both languages</span></p>
     <p>Angel Ghost · Fundamentos — derivado de <code>docs/diseno</code> y <code>design-system.md</code>. Los dos temas, las dos lenguas (se muestra <code>es</code>).</p>
   </div>
   <div class="ds-temas">
     <section class="tema oscuro">
       <span class="ds-t">tema oscuro · primario</span>
       <div class="ds-pieza">
-        <ul class="prohibido">
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Modales, sonidos, robar el foco</span><span lang="en">Modals, sounds, stealing focus</span></b> — <span lang="es">el panel es pasivo; nada exige respuesta.</span><span lang="en">the panel is passive; nothing demands an answer.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Spinners, pulsos, animaciones que desplazan</span><span lang="en">Spinners, pulses, animations that move things</span></b> — <span lang="es">solo un fade de 150 ms; reduced-motion lo apaga.</span><span lang="en">only a 150 ms fade; reduced-motion turns it off.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Color como único portador</span><span lang="en">Color as the only carrier</span></b> — <span lang="es">todo estado lleva símbolo + texto.</span><span lang="en">every state carries symbol + text.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Emojis como iconografía</span><span lang="en">Emojis as iconography</span></b> — <span lang="es">solo el sprite SVG propio.</span><span lang="en">only the in-house SVG sprite.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Blur, «glass», transparencias</span><span lang="en">Blur, “glass”, transparency</span></b> — <span lang="es">el panel es opaco: un cuaderno, no un overlay.</span><span lang="en">the panel is opaque: a notebook, not an overlay.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Gradientes decorativos, sombras pesadas</span><span lang="en">Decorative gradients, heavy shadows</span></b> — <span lang="es">una sombra para el panel, un asiento para la ficha.</span><span lang="en">one shadow for the panel, one seat for the card.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Texto en --ink-3</span><span lang="en">Text in --ink-3</span></b> — <span lang="es">no alcanza AA; solo separadores (fallará en lint).</span><span lang="en">fails AA; separators only (lint will fail).</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Vocabulario de ocultamiento</span><span lang="en">Concealment vocabulary</span></b> — <span lang="es">la app protege una ventana y lo dice así; barrido en pnpm test.</span><span lang="en">the app protects a window and says so; swept in pnpm test.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Nombres de personas en el transcript</span><span lang="en">People’s names in the transcript</span></b> — <span lang="es">solo pistas: cliente / tú. Cero biometría.</span><span lang="en">tracks only: client / you. Zero biometrics.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Un guion para leer en voz alta</span><span lang="en">A script to read aloud</span></b> — <span lang="es">la voz lee la ficha, no libretos: más asistencia, menos juicio propio.</span><span lang="en">the voice reads the card, not scripts: more assistance, less own judgment.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Hablar por los parlantes</span><span lang="en">Speaking through the speakers</span></b> — <span lang="es">sin auriculares no habla: el cliente la oiría.</span><span lang="en">without headphones it stays silent: the client would hear it.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Rojo vs. verde como única distinción</span><span lang="en">Red vs. green as the only distinction</span></b> — <span lang="es">pares seguros: verde-azulado · ámbar · coral.</span><span lang="en">safe pairs: teal · amber · coral.</span></span></li>
-  </ul>
+        <p class="regla"><span lang="es"><b>Un porqué es una frase cerrada, no un texto libre.</b> La app sabe el motivo y lo nombra; la frase la escribe el diseño, en los dos idiomas, y termina en una salida siempre que la haya. El detalle técnico —un código de macOS— va al registro, nunca a la pantalla.</span><span lang="en"><b>A why is a closed sentence, not free text.</b> The app knows the reason and names it; the design writes the sentence, in both languages, and it ends in a way out whenever there is one. The technical detail —a macOS code— goes to the log, never to the screen.</span></p>
+  <div class="k-grid">
+    <div class="k-item"><span class="etq"><span lang="es">por qué apareció la ficha (banda)</span><span lang="en">why the card appeared (band)</span></span>
+      <div class="k-marco">
+        <p class="mono" style="font-size:11px;color:var(--ink-2);line-height:1.8"><svg class="ic s" style="vertical-align:-3px"><use href="#i-reloj"></use></svg> <span lang="es">pregunta</span><span lang="en">question</span> · <span lang="es">cifra</span><span lang="en">figure</span> · <span lang="es">término tuyo</span><span lang="en">your term</span> · <span lang="es">silencio</span><span lang="en">silence</span> · <span lang="es">lo pediste</span><span lang="en">you asked</span> · <b style="color:var(--ink)"><span lang="es">en pantalla</span><span lang="en">on screen</span></b></p>
+        <p style="font-size:11.5px;color:var(--ink-2);margin-top:8px"><span lang="es">«En pantalla» es nuevo: la ficha llegó porque la pantalla que comparte el cliente trae una cifra o uno de tus términos, sin que nadie preguntara.</span><span lang="en">“On screen” is new: the card came because the screen the client shares shows a figure or one of your terms, without anyone asking.</span></p>
+      </div>
+    </div>
+    <div class="k-item"><span class="etq"><span lang="es">la pantalla (Sesión)</span><span lang="en">the screen (Session)</span></span>
+      <div class="k-marco">
+        <div class="fila"><svg class="ic s"><use href="#i-pantalla"></use></svg><span class="crece"><span lang="es">Pantalla — solo cuando cambia</span><span lang="en">Screen — only when it changes</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span lang="es">Funciona</span><span lang="en">Works</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">Espera la reunión</span><span lang="en">Waiting for the meeting</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">Apagada</span><span lang="en">Off</span></span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">No la lee sola. Pídesela cuando quieras: ⌘⇧L.</span><span lang="en">It does not read it on its own. Ask for it whenever you want: ⌘⇧L.</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado err"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span lang="es">Sin permiso</span><span lang="en">No permission</span></span><span style="font-size:11.5px;color:var(--err)"><span lang="es">macOS no ha concedido la grabación de pantalla: la app no lee nada de ella. Concédela en Permisos.</span><span lang="en">macOS has not granted screen recording: the app reads nothing from it. Grant it in Permissions.</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado warn"><svg class="ic s"><use href="#i-alert"></use></svg><span lang="es">No pudo</span><span lang="en">Could not</span></span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">macOS no entregó la ventana de la reunión. La app lo vuelve a intentar sola.</span><span lang="en">macOS did not hand over the meeting window. The app tries again on its own.</span></span></div>
+      </div>
+    </div>
+    <div class="k-item"><span class="etq"><span lang="es">la pista que no abrió (Sesión)</span><span lang="en">the track that did not open (Session)</span></span>
+      <div class="k-marco" style="display:flex;flex-direction:column;gap:6px;font-size:11.5px;color:var(--err)">
+        <p><span lang="es">macOS no dio permiso al micrófono. Concédelo en Permisos y vuelve a «Iniciar sesión».</span><span lang="en">macOS did not grant the microphone. Grant it in Permissions and press “Start session” again.</span></p>
+        <p><span lang="es">macOS no dio permiso para el audio del sistema. Concédelo en Permisos y vuelve a «Iniciar sesión».</span><span lang="en">macOS did not grant system audio. Grant it in Permissions and press “Start session” again.</span></p>
+        <p><span lang="es">macOS no dejó crear el tap: otra app tiene el dispositivo. Ciérrala y vuelve a «Iniciar sesión».</span><span lang="en">macOS would not create the tap: another app holds the device. Close it and press “Start session” again.</span></p>
+        <p><span lang="es">El dispositivo entrega un formato de audio que la app no sabe leer. Prueba con otro y vuelve a «Iniciar sesión».</span><span lang="en">The device delivers an audio format the app cannot read. Try another one and press “Start session” again.</span></p>
+        <p><span lang="es">macOS no dejó abrir esta pista. Vuelve a «Iniciar sesión»; si se repite, reinicia el Mac.</span><span lang="en">macOS would not open this track. Press “Start session” again; if it repeats, restart the Mac.</span></p>
+      </div>
+    </div>
+    <div class="k-item"><span class="etq"><span lang="es">la salida de audio (Sesión)</span><span lang="en">audio output (Session)</span></span>
+      <div class="k-marco">
+        <div class="fila"><svg class="ic s"><use href="#i-auriculares"></use></svg><span class="crece"><span lang="es">Auriculares conectados</span><span lang="en">Headphones connected</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-auriculares"></use></svg>AirPods Pro</span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">Si es un altavoz, no uses el modo solo audio.</span><span lang="en">If it is a speaker, do not use audio-only mode.</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">No se sabe</span><span lang="en">Unknown</span></span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">Este Mac no dice por dónde sale el sonido.</span><span lang="en">This Mac does not say where the sound goes out.</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">No se sabe</span><span lang="en">Unknown</span></span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">«Altavoz USB» no dice cómo está conectado.</span><span lang="en">“Altavoz USB” does not say how it is connected.</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">No se sabe</span><span lang="en">Unknown</span></span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">«Altavoz USB» no dice por dónde suena.</span><span lang="en">“Altavoz USB” does not say where it plays.</span></span></div>
+      </div>
+    </div>
+    <div class="k-item"><span class="etq"><span lang="es">la reunión que no se puede ver (Sesión)</span><span lang="en">the meeting that cannot be seen (Session)</span></span>
+      <div class="k-marco">
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">No se puede saber si hay reunión</span><span lang="en">Cannot tell whether there is a meeting</span></span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">Sin el permiso de Accesibilidad la app no puede ver si tienes Meet abierto. Concédelo en Permisos.</span><span lang="en">Without the Accessibility permission the app cannot see whether you have Meet open. Grant it in Permissions.</span></span></div>
+      </div>
+    </div>
+    <div class="k-item"><span class="etq"><span lang="es">la lectura que pediste y no encontró texto (banda)</span><span lang="en">the read you asked for that found no text (band)</span></span>
+      <div class="k-marco">
+        <p style="font-size:var(--t-ui)"><span lang="es">Leí la pantalla: no hay texto que buscar.</span><span lang="en">I read the screen: there is no text to search.</span></p>
+      </div>
+    </div>
+  </div>
       </div>
     </section>
     <section class="tema claro">
       <span class="ds-t">tema claro · papel</span>
       <div class="ds-pieza">
-        <ul class="prohibido">
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Modales, sonidos, robar el foco</span><span lang="en">Modals, sounds, stealing focus</span></b> — <span lang="es">el panel es pasivo; nada exige respuesta.</span><span lang="en">the panel is passive; nothing demands an answer.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Spinners, pulsos, animaciones que desplazan</span><span lang="en">Spinners, pulses, animations that move things</span></b> — <span lang="es">solo un fade de 150 ms; reduced-motion lo apaga.</span><span lang="en">only a 150 ms fade; reduced-motion turns it off.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Color como único portador</span><span lang="en">Color as the only carrier</span></b> — <span lang="es">todo estado lleva símbolo + texto.</span><span lang="en">every state carries symbol + text.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Emojis como iconografía</span><span lang="en">Emojis as iconography</span></b> — <span lang="es">solo el sprite SVG propio.</span><span lang="en">only the in-house SVG sprite.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Blur, «glass», transparencias</span><span lang="en">Blur, “glass”, transparency</span></b> — <span lang="es">el panel es opaco: un cuaderno, no un overlay.</span><span lang="en">the panel is opaque: a notebook, not an overlay.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Gradientes decorativos, sombras pesadas</span><span lang="en">Decorative gradients, heavy shadows</span></b> — <span lang="es">una sombra para el panel, un asiento para la ficha.</span><span lang="en">one shadow for the panel, one seat for the card.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Texto en --ink-3</span><span lang="en">Text in --ink-3</span></b> — <span lang="es">no alcanza AA; solo separadores (fallará en lint).</span><span lang="en">fails AA; separators only (lint will fail).</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Vocabulario de ocultamiento</span><span lang="en">Concealment vocabulary</span></b> — <span lang="es">la app protege una ventana y lo dice así; barrido en pnpm test.</span><span lang="en">the app protects a window and says so; swept in pnpm test.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Nombres de personas en el transcript</span><span lang="en">People’s names in the transcript</span></b> — <span lang="es">solo pistas: cliente / tú. Cero biometría.</span><span lang="en">tracks only: client / you. Zero biometrics.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Un guion para leer en voz alta</span><span lang="en">A script to read aloud</span></b> — <span lang="es">la voz lee la ficha, no libretos: más asistencia, menos juicio propio.</span><span lang="en">the voice reads the card, not scripts: more assistance, less own judgment.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Hablar por los parlantes</span><span lang="en">Speaking through the speakers</span></b> — <span lang="es">sin auriculares no habla: el cliente la oiría.</span><span lang="en">without headphones it stays silent: the client would hear it.</span></span></li>
-    <li><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span><b><span lang="es">Rojo vs. verde como única distinción</span><span lang="en">Red vs. green as the only distinction</span></b> — <span lang="es">pares seguros: verde-azulado · ámbar · coral.</span><span lang="en">safe pairs: teal · amber · coral.</span></span></li>
-  </ul>
+        <p class="regla"><span lang="es"><b>Un porqué es una frase cerrada, no un texto libre.</b> La app sabe el motivo y lo nombra; la frase la escribe el diseño, en los dos idiomas, y termina en una salida siempre que la haya. El detalle técnico —un código de macOS— va al registro, nunca a la pantalla.</span><span lang="en"><b>A why is a closed sentence, not free text.</b> The app knows the reason and names it; the design writes the sentence, in both languages, and it ends in a way out whenever there is one. The technical detail —a macOS code— goes to the log, never to the screen.</span></p>
+  <div class="k-grid">
+    <div class="k-item"><span class="etq"><span lang="es">por qué apareció la ficha (banda)</span><span lang="en">why the card appeared (band)</span></span>
+      <div class="k-marco">
+        <p class="mono" style="font-size:11px;color:var(--ink-2);line-height:1.8"><svg class="ic s" style="vertical-align:-3px"><use href="#i-reloj"></use></svg> <span lang="es">pregunta</span><span lang="en">question</span> · <span lang="es">cifra</span><span lang="en">figure</span> · <span lang="es">término tuyo</span><span lang="en">your term</span> · <span lang="es">silencio</span><span lang="en">silence</span> · <span lang="es">lo pediste</span><span lang="en">you asked</span> · <b style="color:var(--ink)"><span lang="es">en pantalla</span><span lang="en">on screen</span></b></p>
+        <p style="font-size:11.5px;color:var(--ink-2);margin-top:8px"><span lang="es">«En pantalla» es nuevo: la ficha llegó porque la pantalla que comparte el cliente trae una cifra o uno de tus términos, sin que nadie preguntara.</span><span lang="en">“On screen” is new: the card came because the screen the client shares shows a figure or one of your terms, without anyone asking.</span></p>
+      </div>
+    </div>
+    <div class="k-item"><span class="etq"><span lang="es">la pantalla (Sesión)</span><span lang="en">the screen (Session)</span></span>
+      <div class="k-marco">
+        <div class="fila"><svg class="ic s"><use href="#i-pantalla"></use></svg><span class="crece"><span lang="es">Pantalla — solo cuando cambia</span><span lang="en">Screen — only when it changes</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span lang="es">Funciona</span><span lang="en">Works</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">Espera la reunión</span><span lang="en">Waiting for the meeting</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">Apagada</span><span lang="en">Off</span></span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">No la lee sola. Pídesela cuando quieras: ⌘⇧L.</span><span lang="en">It does not read it on its own. Ask for it whenever you want: ⌘⇧L.</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado err"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span lang="es">Sin permiso</span><span lang="en">No permission</span></span><span style="font-size:11.5px;color:var(--err)"><span lang="es">macOS no ha concedido la grabación de pantalla: la app no lee nada de ella. Concédela en Permisos.</span><span lang="en">macOS has not granted screen recording: the app reads nothing from it. Grant it in Permissions.</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado warn"><svg class="ic s"><use href="#i-alert"></use></svg><span lang="es">No pudo</span><span lang="en">Could not</span></span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">macOS no entregó la ventana de la reunión. La app lo vuelve a intentar sola.</span><span lang="en">macOS did not hand over the meeting window. The app tries again on its own.</span></span></div>
+      </div>
+    </div>
+    <div class="k-item"><span class="etq"><span lang="es">la pista que no abrió (Sesión)</span><span lang="en">the track that did not open (Session)</span></span>
+      <div class="k-marco" style="display:flex;flex-direction:column;gap:6px;font-size:11.5px;color:var(--err)">
+        <p><span lang="es">macOS no dio permiso al micrófono. Concédelo en Permisos y vuelve a «Iniciar sesión».</span><span lang="en">macOS did not grant the microphone. Grant it in Permissions and press “Start session” again.</span></p>
+        <p><span lang="es">macOS no dio permiso para el audio del sistema. Concédelo en Permisos y vuelve a «Iniciar sesión».</span><span lang="en">macOS did not grant system audio. Grant it in Permissions and press “Start session” again.</span></p>
+        <p><span lang="es">macOS no dejó crear el tap: otra app tiene el dispositivo. Ciérrala y vuelve a «Iniciar sesión».</span><span lang="en">macOS would not create the tap: another app holds the device. Close it and press “Start session” again.</span></p>
+        <p><span lang="es">El dispositivo entrega un formato de audio que la app no sabe leer. Prueba con otro y vuelve a «Iniciar sesión».</span><span lang="en">The device delivers an audio format the app cannot read. Try another one and press “Start session” again.</span></p>
+        <p><span lang="es">macOS no dejó abrir esta pista. Vuelve a «Iniciar sesión»; si se repite, reinicia el Mac.</span><span lang="en">macOS would not open this track. Press “Start session” again; if it repeats, restart the Mac.</span></p>
+      </div>
+    </div>
+    <div class="k-item"><span class="etq"><span lang="es">la salida de audio (Sesión)</span><span lang="en">audio output (Session)</span></span>
+      <div class="k-marco">
+        <div class="fila"><svg class="ic s"><use href="#i-auriculares"></use></svg><span class="crece"><span lang="es">Auriculares conectados</span><span lang="en">Headphones connected</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-auriculares"></use></svg>AirPods Pro</span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">Si es un altavoz, no uses el modo solo audio.</span><span lang="en">If it is a speaker, do not use audio-only mode.</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">No se sabe</span><span lang="en">Unknown</span></span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">Este Mac no dice por dónde sale el sonido.</span><span lang="en">This Mac does not say where the sound goes out.</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">No se sabe</span><span lang="en">Unknown</span></span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">«Altavoz USB» no dice cómo está conectado.</span><span lang="en">“Altavoz USB” does not say how it is connected.</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">No se sabe</span><span lang="en">Unknown</span></span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">«Altavoz USB» no dice por dónde suena.</span><span lang="en">“Altavoz USB” does not say where it plays.</span></span></div>
+      </div>
+    </div>
+    <div class="k-item"><span class="etq"><span lang="es">la reunión que no se puede ver (Sesión)</span><span lang="en">the meeting that cannot be seen (Session)</span></span>
+      <div class="k-marco">
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">No se puede saber si hay reunión</span><span lang="en">Cannot tell whether there is a meeting</span></span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">Sin el permiso de Accesibilidad la app no puede ver si tienes Meet abierto. Concédelo en Permisos.</span><span lang="en">Without the Accessibility permission the app cannot see whether you have Meet open. Grant it in Permissions.</span></span></div>
+      </div>
+    </div>
+    <div class="k-item"><span class="etq"><span lang="es">la lectura que pediste y no encontró texto (banda)</span><span lang="en">the read you asked for that found no text (band)</span></span>
+      <div class="k-marco">
+        <p style="font-size:var(--t-ui)"><span lang="es">Leí la pantalla: no hay texto que buscar.</span><span lang="en">I read the screen: there is no text to search.</span></p>
+      </div>
+    </div>
+  </div>
       </div>
     </section>
   </div>

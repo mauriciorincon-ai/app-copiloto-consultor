@@ -1761,3 +1761,36 @@ que dejó solo los cambios de este sprint; cuatro conflictos resueltos a mano. *
    le traería una ficha. Meet (`⌘D`, `⌘E`) y Teams (`⌘⇧M`, `⌘⇧O`) no chocan. Zoom está en el
    catálogo (`sin verificar`) y el usuario verificó Meet, por eso nadie lo vio. Es una decisión de
    diseño —las teclas están en todas las maquetas— y va a la 17-quater como pregunta.
+
+## Mirada 17-quater — maquetada: *lo que la fase 3 necesita y la 17 no dibujó*
+
+| Artefacto | Qué | Cabe |
+|---|---|---|
+| `permisos.html` · sprint 2 | **las dos frases falsas, corregidas**: «dos permisos de macOS, aunque Ajustes los enseña en el mismo panel» · «Antes de que macOS te pregunte», con la frase genérica de macOS escrita tal cual | 6 px |
+| `sesion.html` · **sprint 2 · la pantalla** (nuevo) | la fila de la pantalla con su interruptor «Leerla sola» y `⌘⇧L léela ahora`; los auriculares con **el nombre** del dispositivo externo | 1 px (es) · 20 px (en) |
+| `honestidad.html` · **sprint 2** (nuevo) | la fila del último cuadro, viva (solo en memoria · el último · 1,4 MB) y **«8 de 8 piezas: ninguna queda fuera»** | 136 px |
+| `banda.html` · **ficha · la trajo la pantalla** (nuevo) | el motivo «en pantalla» con **otro símbolo** (la pantalla, no el reloj) | cabe a 88 px |
+| `banda.html` · **pantalla · nada que leer** (nuevo) | la respuesta a `⌘⇧L` cuando no hay texto: «Leí la pantalla: no hay texto que buscar.» | cabe a 88 px |
+| `kit.html` · **§ 8-ter «Los porqués»** (nuevo) | **todas** las frases cerradas juntas, en los dos idiomas: los seis motivos de la ficha, los cinco estados de la pantalla, las cinco pistas que no abren, la salida de audio, la reunión que no se puede ver y la lectura sin texto | — |
+
+**Por qué un catálogo en el kit y no veinte estados.** Rust sabía el porqué de cada fallo y lo decía
+en español libre; la interfaz es bilingüe y una frase libre no se traduce. Así que los porqués pasan
+a ser un **conjunto cerrado**, y el sitio natural de un conjunto cerrado de frases es el design
+system: se leen de una vez, y es la fuente que el gate del diccionario usa. Las pantallas llevan un
+estado representativo cada una.
+
+**Dos decisiones de redacción:**
+
+- **La pista que no abre ya no enseña el código de macOS** («estado 560947818 «!hog»»). Va al
+  registro. En pantalla, cinco frases cerradas que terminan en una salida.
+- **Los AirPods**: la primera versión decía «Angel Ghost no sabe si «AirPods Pro» es un casco o un
+  altavoz. Si es un altavoz…» y se salía 15 px de la ventana. Queda «Si es un altavoz, no uses el modo
+  solo audio.» bajo el chip con el nombre: el nombre ya dice de qué dispositivo se habla, y la frase
+  dice lo único que importa.
+
+**Y el permiso de audio del sistema se pregunta a macOS de verdad.** Para que cada fila de Permisos
+diga lo suyo hace falta saber el estado de `kTCCServiceAudioCapture` sin provocar el diálogo. No hay
+API pública; hay una privada, `TCCAccessPreflight` (la usa el ejemplo de Apple de process taps que
+circula, AudioCap). **Probada en este Mac: contesta** —0 = concedido— para audio, pantalla y
+micrófono. Se usará con respaldo: si el símbolo no está, la fila dice «no se sabe», nunca «concedido».
+Se declara aquí porque es una API privada en una app que se firma y se notariza fuera de la App Store.

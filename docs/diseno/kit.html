@@ -241,6 +241,62 @@
   </div>
 </section>
 
+<!-- ============ 8-ter · LOS PORQUÉS ============ -->
+<!-- Mirada 17-quater (sprint 002, fase 3). Rust sabe POR QUÉ algo no funciona y lo decía en español
+     libre; la interfaz es bilingüe, y una frase libre no se traduce. Así que los porqués pasan a ser
+     un conjunto CERRADO, cada uno con su frase en los dos idiomas, y viven aquí todos juntos: es el
+     sitio donde se leen de una vez y el que el gate del diccionario usa como fuente. -->
+<section class="k-sec">
+  <h2>8-ter · <span lang="es">Los porqués</span><span lang="en">The whys</span> <small><span lang="es">cada estado que no funciona dice por qué, con una frase cerrada en los dos idiomas</span><span lang="en">every state that does not work says why, with a closed sentence in both languages</span></small></h2>
+  <p class="regla"><span lang="es"><b>Un porqué es una frase cerrada, no un texto libre.</b> La app sabe el motivo y lo nombra; la frase la escribe el diseño, en los dos idiomas, y termina en una salida siempre que la haya. El detalle técnico —un código de macOS— va al registro, nunca a la pantalla.</span><span lang="en"><b>A why is a closed sentence, not free text.</b> The app knows the reason and names it; the design writes the sentence, in both languages, and it ends in a way out whenever there is one. The technical detail —a macOS code— goes to the log, never to the screen.</span></p>
+  <div class="k-grid">
+    <div class="k-item"><span class="etq"><span lang="es">por qué apareció la ficha (banda)</span><span lang="en">why the card appeared (band)</span></span>
+      <div class="k-marco">
+        <p class="mono" style="font-size:11px;color:var(--ink-2);line-height:1.8"><svg class="ic s" style="vertical-align:-3px"><use href="#i-reloj"/></svg> <span lang="es">pregunta</span><span lang="en">question</span> · <span lang="es">cifra</span><span lang="en">figure</span> · <span lang="es">término tuyo</span><span lang="en">your term</span> · <span lang="es">silencio</span><span lang="en">silence</span> · <span lang="es">lo pediste</span><span lang="en">you asked</span> · <b style="color:var(--ink)"><span lang="es">en pantalla</span><span lang="en">on screen</span></b></p>
+        <p style="font-size:11.5px;color:var(--ink-2);margin-top:8px"><span lang="es">«En pantalla» es nuevo: la ficha llegó porque la pantalla que comparte el cliente trae una cifra o uno de tus términos, sin que nadie preguntara.</span><span lang="en">“On screen” is new: the card came because the screen the client shares shows a figure or one of your terms, without anyone asking.</span></p>
+      </div>
+    </div>
+    <div class="k-item"><span class="etq"><span lang="es">la pantalla (Sesión)</span><span lang="en">the screen (Session)</span></span>
+      <div class="k-marco">
+        <div class="fila"><svg class="ic s"><use href="#i-pantalla"/></svg><span class="crece"><span lang="es">Pantalla — solo cuando cambia</span><span lang="en">Screen — only when it changes</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Funciona</span><span lang="en">Works</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Espera la reunión</span><span lang="en">Waiting for the meeting</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Apagada</span><span lang="en">Off</span></span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">No la lee sola. Pídesela cuando quieras: ⌘⇧L.</span><span lang="en">It does not read it on its own. Ask for it whenever you want: ⌘⇧L.</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado err"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span lang="es">Sin permiso</span><span lang="en">No permission</span></span><span style="font-size:11.5px;color:var(--err)"><span lang="es">macOS no ha concedido la grabación de pantalla: la app no lee nada de ella. Concédela en Permisos.</span><span lang="en">macOS has not granted screen recording: the app reads nothing from it. Grant it in Permissions.</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado warn"><svg class="ic s"><use href="#i-alert"/></svg><span lang="es">No pudo</span><span lang="en">Could not</span></span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">macOS no entregó la ventana de la reunión. La app lo vuelve a intentar sola.</span><span lang="en">macOS did not hand over the meeting window. The app tries again on its own.</span></span></div>
+      </div>
+    </div>
+    <div class="k-item"><span class="etq"><span lang="es">la pista que no abrió (Sesión)</span><span lang="en">the track that did not open (Session)</span></span>
+      <div class="k-marco" style="display:flex;flex-direction:column;gap:6px;font-size:11.5px;color:var(--err)">
+        <p><span lang="es">macOS no dio permiso al micrófono. Concédelo en Permisos y vuelve a «Iniciar sesión».</span><span lang="en">macOS did not grant the microphone. Grant it in Permissions and press “Start session” again.</span></p>
+        <p><span lang="es">macOS no dio permiso para el audio del sistema. Concédelo en Permisos y vuelve a «Iniciar sesión».</span><span lang="en">macOS did not grant system audio. Grant it in Permissions and press “Start session” again.</span></p>
+        <p><span lang="es">macOS no dejó crear el tap: otra app tiene el dispositivo. Ciérrala y vuelve a «Iniciar sesión».</span><span lang="en">macOS would not create the tap: another app holds the device. Close it and press “Start session” again.</span></p>
+        <p><span lang="es">El dispositivo entrega un formato de audio que la app no sabe leer. Prueba con otro y vuelve a «Iniciar sesión».</span><span lang="en">The device delivers an audio format the app cannot read. Try another one and press “Start session” again.</span></p>
+        <p><span lang="es">macOS no dejó abrir esta pista. Vuelve a «Iniciar sesión»; si se repite, reinicia el Mac.</span><span lang="en">macOS would not open this track. Press “Start session” again; if it repeats, restart the Mac.</span></p>
+      </div>
+    </div>
+    <div class="k-item"><span class="etq"><span lang="es">la salida de audio (Sesión)</span><span lang="en">audio output (Session)</span></span>
+      <div class="k-marco">
+        <div class="fila"><svg class="ic s"><use href="#i-auriculares"/></svg><span class="crece"><span lang="es">Auriculares conectados</span><span lang="en">Headphones connected</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-auriculares"/></svg>AirPods Pro</span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">Si es un altavoz, no uses el modo solo audio.</span><span lang="en">If it is a speaker, do not use audio-only mode.</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">No se sabe</span><span lang="en">Unknown</span></span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">Este Mac no dice por dónde sale el sonido.</span><span lang="en">This Mac does not say where the sound goes out.</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">No se sabe</span><span lang="en">Unknown</span></span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">«Altavoz USB» no dice cómo está conectado.</span><span lang="en">“Altavoz USB” does not say how it is connected.</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">No se sabe</span><span lang="en">Unknown</span></span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">«Altavoz USB» no dice por dónde suena.</span><span lang="en">“Altavoz USB” does not say where it plays.</span></span></div>
+      </div>
+    </div>
+    <div class="k-item"><span class="etq"><span lang="es">la reunión que no se puede ver (Sesión)</span><span lang="en">the meeting that cannot be seen (Session)</span></span>
+      <div class="k-marco">
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:8px"><span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">No se puede saber si hay reunión</span><span lang="en">Cannot tell whether there is a meeting</span></span><span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">Sin el permiso de Accesibilidad la app no puede ver si tienes Meet abierto. Concédelo en Permisos.</span><span lang="en">Without the Accessibility permission the app cannot see whether you have Meet open. Grant it in Permissions.</span></span></div>
+      </div>
+    </div>
+    <div class="k-item"><span class="etq"><span lang="es">la lectura que pediste y no encontró texto (banda)</span><span lang="en">the read you asked for that found no text (band)</span></span>
+      <div class="k-marco">
+        <p style="font-size:var(--t-ui)"><span lang="es">Leí la pantalla: no hay texto que buscar.</span><span lang="en">I read the screen: there is no text to search.</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ============ 9 · PROHIBIDOS ============ -->
 <section class="k-sec">
   <h2>9 · <span lang="es">Prohibidos</span><span lang="en">Forbidden</span> <small><span lang="es">lo que este sistema jamás hace (design-system.md §8)</span><span lang="en">what this system never does (design-system.md §8)</span></small></h2>
