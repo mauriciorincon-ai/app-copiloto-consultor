@@ -892,9 +892,101 @@ Los ocho arreglados; el bundle de `design-sync/` regenerado (14 archivos).
 En el estado «hablando», la tecla decía `⌘⇧V solo audio` — **estando ya dentro del modo**. Lo que esa
 tecla hace ahí es **salir**. Dice `volver` / `back`.
 
-## Estado
+## La mirada 16 — APROBADA (2026-09-26)
 
-**La mirada 16 está presentada, no aprobada.** Registrada en `docs/diseno/README.md` con fecha y como
-pendiente. No se construye una línea de `habla/` hasta que el usuario la mire y diga qué vio — que es
-lo que su propio mensaje de arranque pidió: *«los estados nuevos de la banda se MAQUETAN y se me
-muestran (mirada 16) antes de construirlos»*.
+> «Apruebo el diseño muy limpio icono azul a la izquierda indicando que se habla muy intuitivo y
+> amplio margen para la pantalla de reunión»
+
+Llegó con el artefacto abierto y se registra por eso: nombra **el glifo azul a la izquierda** —`i-voz`
+en `--halo`, que es el símbolo que la regla 8 exige junto al texto— y **el margen para la pantalla de
+la reunión**, que es exactamente lo que compra bajar la banda de 88 px a 44 px. Ninguna de las dos se
+puede describir sin haberlo visto, así que no hubo que repreguntar.
+
+Con ella quedan aprobados los **tres criterios declarados** en las notas del artefacto: el contador de
+red se queda en la línea, la tecla es `⌘⇧V` (desviación de la orden, declarada arriba) y el glifo `⎋`
+se deja como el `⌥⎋` ya aprobado. Registrada en `docs/diseno/README.md` con su fila y su sección.
+
+**Lo que desbloquea:** la construcción de la fase 2 — `nativo/Habla.swift`, `src/habla/`, `⌘⇧V`, el
+candado de los auriculares y la banda cableada a 44 px en `Banda.tsx` y `src/asa.ts`.
+
+## Las dos preguntas de diseño que siguen abiertas
+
+No las contesta ningún «continúa» y no bloquean la fase 2, pero **sí** bloquean la mirada 17 (fase 3),
+que es donde se pagan diecinueve campos del contrato sin lector. Se especifican aquí para que la
+respuesta quede en el repo y no solo en el chat.
+
+### Pregunta A — ¿dónde se miran los tres estados de la ficha que la mirada 17 no cubre?
+
+La mirada 17, tal como el plan la aprobó, cubre: **radar ámbar** · **radar coral** · «vigilancia
+local» en Sesión · **«pista caída»** (M2) · el consentimiento de pantalla en Permisos. Son la familia
+de *«algo va mal o algo vigila»*.
+
+Los tres de abajo son otra familia —*«la ficha se explica a sí misma»*— y viven todos en la banda, con
+la ficha dentro. Tienen su dato midiéndose ya en Rust y cruzando la costura; lo único que falta es
+**copy que la maqueta no tiene**, y por la regla 10 ese copy no puede nacer sin una mirada:
+
+| Campo | Archivo:línea de la declaración | Qué enseñaría | Qué existe ya |
+|---|---|---|---|
+| `Aparicion.motivo` | `src/ficha.ts:64` | **por qué** disparó: pregunta · cifra · término tuyo · silencio · lo pediste | `Motivo::etiqueta()` (`disparo/mod.rs:59`) ya da las cinco etiquetas — **solo en español**: el inglés también es copy nuevo |
+| `Aparicion.ms` | `src/ficha.ts:66` | la **latencia** de fin de turno a ficha, contra su presupuesto de 4 s | se mide y se escribe en el log en cada aparición |
+| `Fuente.conjeturada` | `src/ficha.ts:27` | que la **sección** la conjeturó el lector de PDF, nadie la escribió | `corpus/` ya lo marca documento a documento y Corpus lo cuenta en bloque |
+
+Las tres opciones, con lo que cuesta cada una:
+
+- **(a) entran en la mirada 17** — una sesión de mirada en vez de dos, y los tres campos se pagan en
+  la fase 3 como el resto. Coste: la mirada 17 pasa de 5 estados a 8 y mezcla dos familias visuales,
+  que es exactamente lo que el plan de miradas separó a propósito.
+- **(b) esperan a la mirada 18** (fase 5, la sugerencia y la pantalla IA) — donde la banda vuelve a
+  abrirse para dibujar «sugerencia local» y «sugerencia API». Coste: si la fase 5 se corta —y es la
+  primera de la lista de cortes—, los tres se caen con ella y la deuda pasa al sprint 003.
+- **(c) mirada propia, 16-bis, corta** — solo la banda con la ficha explicándose, antes de la fase 3.
+  Coste: una parada más; beneficio: la fase 3 puede pagarlos y no dependen de la fase 5.
+
+**Y la misma respuesta resuelve siete campos más**, que están en la misma situación —dato vivo, sitio
+sin copy— y que hoy la lista de deuda manda a «fase 3» sin nombrar su mirada:
+
+| Dónde | Campos |
+|---|---|
+| Pantalla de **Idioma** | `EstadoDeEscucha.motor` · `QueSabeTranscribir.motor` · `.techo` · `.motivo` |
+| Pantalla de **Corpus** | `EstadoDelCorpus.carpeta` · `.secciones` |
+| **Transcript** de la banda | `Turno.hastaMs` |
+
+La lista completa y su estado viven en `tests/unit/contrato-con-lectores.test.ts` (constante `DEUDA`),
+que falla en los dos sentidos: si aparece un huérfano nuevo y si una deuda sobrevive a su pago.
+
+### Pregunta B — ¿qué enseña la pantalla de Idioma del diccionario que la fase 1 construyó?
+
+Aquí el punto de partida es mejor de lo que parecía: **`idioma.html` ya tiene un estado «diccionario
+técnico» aprobado en la mirada 4** («Idioma muy completo, incluso mejor de lo que pensaba»). Dibuja
+cuatro piezas (`docs/diseno/idioma.html:169-205`):
+
+1. **«Corregido por tu diccionario»** + la cuenta + tres ejemplos tachado → resaltado;
+2. **«De dónde salen los 312»** — tabla: *de tu corpus* / *añadidos por ti*;
+3. **«Añadir un término»** — un formulario de dos campos dentro de la app;
+4. **«Corregir no es inventar»** — la franja que promete que solo sustituye lo que el usuario escribió.
+
+Lo que la fase 1 construyó **no encaja entero** con eso, y ahí está la pregunta:
+
+- la pieza **2 encaja tal cual** y es fidelidad, no mirada: el motor sabe cuántos términos tiene y
+  cuántos vinieron del corpus (`con_nombres_del_corpus`, ≥5 caracteres), así que la tabla se puede
+  pintar con datos de verdad hoy;
+- la pieza **3 no existe**: los términos se añaden **editando un archivo**
+  (`~/Library/Application Support/com.aiapps.copiloto-consultor/diccionario.yaml`, permisos 600). Un
+  formulario haría escribir al módulo protegido, que es lo que la enmienda 1 del ADR 002 prohíbe a
+  propósito. Enseñar **la ruta del archivo** y cómo se edita es **copy nuevo** → mirada;
+- la pieza **1** necesita que las correcciones del turno se guarden para poder enseñarlas; hoy
+  `corregir(&self, …)` devuelve el texto y no lleva registro. Enseñarlas **en vivo** sí es posible y
+  muere con la sesión, pero es una decisión de producto, no un detalle;
+- la pieza **4** se puede pintar ya: es verdad literal del motor.
+
+Las opciones:
+
+- **(a) mínimo honesto ahora** — la tabla de origen (pieza 2) + la franja (pieza 4) + una línea con la
+  ruta del archivo; la fila «diccionario técnico» sale de «lo que todavía no existe», donde la fase 1
+  ya la quitó. Es lo más cerca de la maqueta aprobada que se puede estar sin inventar.
+- **(b) mínimo + las correcciones en vivo** (pieza 1) durante la sesión, sin guardar nada.
+- **(c) esperar** y que Idioma entre completa en la mirada 17, con el formulario o con la decisión
+  explícita de que el archivo es la única puerta.
+
+Mientras no haya respuesta, `docs/MANUAL-DE-USO.md` es el único sitio donde el usuario se entera del
+archivo y de su formato — y eso ya está escrito, con sus números medidos y sus cuatro limitaciones.

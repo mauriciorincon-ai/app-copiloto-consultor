@@ -82,6 +82,30 @@ dice en vez de esconder: que **las secciones de un PDF son conjetura** y se cuen
 índice vive en la carpeta de datos de la app **y solo su dueño puede leerlo**, y el techo de
 2 000 documentos por carpeta.
 
+### Mirada 16 — veredicto del usuario (2026-09-26)
+
+> **«Apruebo el diseño muy limpio icono azul a la izquierda indicando que se habla muy intuitivo y
+> amplio margen para la pantalla de reunión»**
+
+**Aprobada.** Las dos cosas que nombra son las dos que esta mirada tenía que decidir, y ninguna se
+puede ver sin abrir el archivo: el **glifo azul a la izquierda** es `i-voz` pintado con `--halo`
+(`#9ecbff` en oscuro, `#1d5c9c` en claro) —el mismo acento único del resto del sistema— y es el
+símbolo que la regla 8 exige al lado del texto; y el **margen para la pantalla de la reunión** es
+justamente lo que compra bajar la banda de 88 px a 44 px, que era el motivo de existir del modo.
+
+Quedan aprobados, con ella, los **tres criterios declarados** en las notas de «Qué mirar» del
+artefacto:
+
+1. **el contador de red se queda** en la línea, aunque a 44 px la cabecera desaparezca — es una
+   promesa dura (regla 2), no un adorno;
+2. **la tecla es `⌘⇧V`**, no el `⌘⇧A` que pedía la orden del sprint: `⌘⇧A` ya es «ayúdame con
+   esto» desde el sprint 001. Desviación declarada en la bitácora;
+3. **el glifo `⎋` se deja como está** — se lee como un borrón a 13 px igual que el `⌥⎋ corta` ya
+   aprobado de la banda de 88 px; si molesta, molesta en los dos sitios y es un cambio del sistema.
+
+No hubo que repreguntar: el veredicto llegó con la descripción de lo que vio, que es lo que la
+regla 10 pide.
+
 ## Registro de miradas
 
 | Fecha | Artefacto | Veredicto del usuario (línea textual) | Qué se construyó encima, después |
@@ -100,7 +124,7 @@ dice en vez de esconder: que **las secciones de un PDF son conjetura** y se cuen
 | 2026-09-21 | `sesion.html` · `permisos.html` · `honestidad.html` — estado «así se ve hoy · sprint 1» y el componente «todavía no» (mirada 12, sprint 001) | **Aprobada** — «Esta muy bien como indica que no todavia no existe en sesion permisos y honestidad» (abrió las tres y nombró las tres) | Fase 2b: las tres pantallas del cuaderno construidas |
 | 2026-09-21 | `idioma.html` (estado s1 nuevo) · `sesion.html` y `honestidad.html` al día (mirada 13, sprint 001) | **Aprobada** — «Me gustó mucho el diseño y cómo se van evidenciando los elementos construidos y lo que falta, muy bien lograda». *(Se repreguntó por la regla 10: la primera respuesta fue «Apruebo las tres pantallas… continúa», y un «apruebo» no es un «lo vi».)* | Fase 4: corpus, disparo y ficha |
 | 2026-09-21 | `corpus.html` (estado s1 nuevo) (mirada 14, sprint 001) | **Aprobada** — «Ya vi el diseño del corpus, vamos muy bien; ya están las secciones de las temáticas principales y lo que falta es muy interesante, por ejemplo lo de arrastrar los documentos» (nombra una de las tres filas de «todavía no»: llegó con el archivo abierto) | Fase 5: efímero en runtime, kit de evaluación, guía de prueba y manual |
-| 2026-09-26 | `banda.html` — el **modo solo audio** a 44 px: «hablando» y «sin auriculares» (mirada 16, sprint 002) | **presentada, pendiente del veredicto del usuario** | Fase 2: la voz que sale (C15) — no se construye hasta que la mirada pase |
+| 2026-09-26 | `banda.html` — el **modo solo audio** a 44 px: «hablando» y «sin auriculares» (mirada 16, sprint 002) | **Aprobada** — «Apruebo el diseño muy limpio icono azul a la izquierda indicando que se habla muy intuitivo y amplio margen para la pantalla de reunión» (nombra el glifo `i-voz` en `--halo` y el alto de 44 px: llegó con el archivo abierto) | Fase 2: la voz que sale (C15) — `habla/`, `⌘⇧V` y la banda cableada a 44 px |
 
 ## Decisiones de diseño declaradas antes del segundo artefacto
 
