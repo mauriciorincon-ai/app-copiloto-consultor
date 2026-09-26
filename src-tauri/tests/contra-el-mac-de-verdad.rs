@@ -1339,3 +1339,251 @@ fn la_app_nunca_habla_por_los_altavoces_internos() {
         );
     }
 }
+
+// =============================================================================================
+// el KIT DE PANTALLA (C8, sprint 002): Vision de verdad sobre pantallas sintéticas
+// =============================================================================================
+//
+// **Qué mide y qué no.** Mide la mitad de la lectura de pantalla que no necesita una reunión: la
+// huella entre diapositivas de verdad, Vision leyendo en español, lo que el refuerzo se queda, y si
+// eso mejora la búsqueda. NO mide la captura —ScreenCaptureKit necesita el permiso de grabación de
+// pantalla, que la integración continua no tiene—; esa mitad es de la parada ⭐ y del arranque en
+// vivo, y se dice aquí para que un verde de este test no se lea como «la pantalla funciona».
+//
+// **Y de cuál de las dos mitades del habla depende: de ninguna.** Vision viene con macOS y no se
+// descarga nada, así que —a diferencia del WER— este test SÍ mide en el runner de la CI.
+
+use app_copiloto_consultor_lib::corpus::Corpus as ElCorpusDelKit;
+use app_copiloto_consultor_lib::pantalla::{self, huella, Cuadro};
+
+#[derive(serde::Deserialize)]
+struct KitDePantalla {
+    casos: Vec<CasoDePantalla>,
+}
+
+#[derive(serde::Deserialize)]
+struct CasoDePantalla {
+    imagen: String,
+    dice: String,
+    espera: String,
+    sola: Option<Vec<String>>,
+}
+
+/// Una imagen del kit, en grises, como la dejaría la captura en el búfer de Rust.
+fn cuadro_de(ruta: &str) -> Cuadro {
+    let archivo =
+        std::fs::File::open(ruta).unwrap_or_else(|e| panic!("no se pudo abrir {ruta}: {e}"));
+    let mut decodificador = png::Decoder::new(archivo);
+    decodificador
+        .set_transformations(png::Transformations::EXPAND | png::Transformations::STRIP_16);
+    let mut lector = decodificador.read_info().expect("PNG ilegible");
+    let mut bytes = vec![0; lector.output_buffer_size()];
+    let info = lector.next_frame(&mut bytes).expect("PNG sin cuadro");
+    let canales = info.color_type.samples();
+    let (ancho, alto) = (info.width as usize, info.height as usize);
+    let gris = bytes[..ancho * alto * canales]
+        .chunks(canales)
+        .map(|p| {
+            if canales >= 3 {
+                ((p[0] as u32 * 299 + p[1] as u32 * 587 + p[2] as u32 * 114) / 1000) as u8
+            } else {
+                p[0]
+            }
+        })
+        .collect();
+    Cuadro { ancho, alto, gris }
+}
+
+#[test]
+fn el_kit_de_pantalla_mide_la_lectura_y_su_refuerzo() {
+    let _turno = turno();
+    let (_, lector) = pantalla::apple::ojos();
+    let raiz = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba");
+    let kit: KitDePantalla = serde_json::from_str(
+        &std::fs::read_to_string(format!("{raiz}/pantalla.json")).expect("falta pantalla.json"),
+    )
+    .expect("pantalla.json no se pudo leer");
+    let preguntas: Kit = serde_json::from_str(
+        &std::fs::read_to_string(format!("{raiz}/preguntas.json")).expect("falta preguntas.json"),
+    )
+    .unwrap();
+    let mut corpus = ElCorpusDelKit::en_memoria().unwrap();
+    corpus
+        .indexar(Path::new(&format!("{raiz}/corpus")), &|_| {})
+        .expect("no se indexó el kit");
+    let vocabulario = corpus.vocabulario().to_vec();
+
+    // ---- la huella, entre pantallas DE VERDAD: comparten toda la interfaz de la videollamada, y
+    // aun así una diapositiva nueva tiene que contar como cambio.
+    let cuadros: Vec<(String, Cuadro)> = kit
+        .casos
+        .iter()
+        .map(|c| {
+            (
+                c.imagen.clone(),
+                cuadro_de(&format!("{raiz}/pantalla/{}", c.imagen)),
+            )
+        })
+        .collect();
+    let mut menor = u32::MAX;
+    for (i, (a, ca)) in cuadros.iter().enumerate() {
+        for (b, cb) in &cuadros[i + 1..] {
+            let d = huella::Huella::de(ca).mayor_distancia(&huella::Huella::de(cb));
+            menor = menor.min(d);
+            assert!(
+                d > pantalla::CAMBIO,
+                "«{a}» y «{b}» solo difieren en {d} celdas: el vigía no vería el cambio"
+            );
+        }
+    }
+
+    if lector.leer(&cuadros[0].1).is_err() {
+        println!("\n[kit de pantalla] NO SE MIDIÓ la lectura: esta compilación no trae el puente de Swift");
+        return;
+    }
+
+    let (mut sin, mut con) = (0.0, 0.0);
+    let mut filas = Vec::new();
+    let mut tiempos = Vec::new();
+    let mut solas_bien = 0;
+    let mut solas_esperadas = 0;
+    let mut falsos = Vec::new();
+    let mut peor_v0 = f64::MAX;
+    for (caso, (_, cuadro)) in kit.casos.iter().zip(&cuadros) {
+        let reloj = Instant::now();
+        let lineas = lector
+            .leer(cuadro)
+            .expect("Vision no leyó la imagen del kit");
+        tiempos.push(reloj.elapsed().as_millis() as u64);
+        let refuerzo = pantalla::refuerzo::extraer(&lineas, &vocabulario);
+        let contexto = refuerzo.consulta();
+
+        let puestos = |h: Vec<app_copiloto_consultor_lib::corpus::Hallazgo>| -> Vec<String> {
+            h.into_iter()
+                .map(|h| h.seccion.unwrap_or_default())
+                .collect()
+        };
+        let n_sin = ndcg_5(
+            &puestos(corpus.buscar(&caso.dice, 5).unwrap()),
+            &caso.espera,
+        );
+        let top_con = puestos(
+            corpus
+                .buscar_con_pantalla(&caso.dice, &contexto, 5)
+                .unwrap(),
+        );
+        let n_con = ndcg_5(&top_con, &caso.espera);
+        sin += n_sin;
+        con += n_con;
+
+        // La pantalla sola: ¿pide ficha, y trae la correcta?
+        let sola = if refuerzo.dispara() {
+            let h = corpus.buscar_con_pantalla("", &contexto, 3).unwrap();
+            match armar(&contexto, &h) {
+                Respuesta::Ficha(f) => f.fuente.seccion.clone(),
+                Respuesta::SinResultado { .. } => None,
+            }
+        } else {
+            None
+        };
+        match (&caso.sola, &sola) {
+            (Some(validas), Some(s)) => {
+                solas_esperadas += 1;
+                if validas.contains(s) {
+                    solas_bien += 1;
+                }
+            }
+            (Some(_), None) => solas_esperadas += 1,
+            (None, Some(s)) => {
+                falsos.push(format!("«{}» pidió ficha sola y trajo «{s}»", caso.imagen))
+            }
+            (None, None) => {}
+        }
+
+        // Las treinta del kit v0, con ESTA pantalla delante: una diapositiva cualquiera no puede
+        // estropear las preguntas que no tienen nada que ver con ella.
+        let mut suma = 0.0;
+        for c in &preguntas.preguntas {
+            suma += ndcg_5(
+                &puestos(corpus.buscar_con_pantalla(&c.dice, &contexto, 5).unwrap()),
+                &c.espera,
+            );
+        }
+        peor_v0 = peor_v0.min(suma / preguntas.preguntas.len() as f64);
+
+        // La negativa, con esta pantalla delante: lo que no está en el corpus sigue sin estar.
+        for dice in &preguntas.sin_respuesta {
+            let h = corpus.buscar_con_pantalla(dice, &contexto, 3).unwrap();
+            if let Respuesta::Ficha(f) = armar(dice, &h) {
+                falsos.push(format!(
+                    "con «{}» delante, «{dice}» citó «{}»",
+                    caso.imagen, f.fuente.documento
+                ));
+            }
+        }
+
+        filas.push(format!(
+            "│ {:<22} {:>2} líneas · {} pistas · sin {n_sin:.2} → con {n_con:.2} · sola {:?}",
+            caso.imagen,
+            lineas.len(),
+            refuerzo.titulos.len() + refuerzo.cifras.len() + refuerzo.terminos.len(),
+            sola
+        ));
+    }
+    let n = kit.casos.len() as f64;
+    let (sin, con) = (sin / n, con / n);
+    tiempos.sort_unstable();
+    let peor = *tiempos.last().unwrap();
+
+    println!("\n╭─ kit de pantalla v1 ───────────────────────────────");
+    for f in &filas {
+        println!("{f}");
+    }
+    println!("├────────────────────────────────────────────────────");
+    println!("│ nDCG@5 de la frase    sin pantalla {sin:.3} · con pantalla {con:.3}");
+    println!("│ ficha sin preguntar   {solas_bien} de {solas_esperadas}");
+    println!("│ kit v0 (30 preguntas) con la peor pantalla delante: nDCG@5 {peor_v0:.3} (mínimo {NDCG_MINIMO:.2})");
+    println!(
+        "│ Vision                mediana {} ms · peor {peor} ms (techo {} ms)",
+        tiempos[tiempos.len() / 2],
+        pantalla::RITMO_MS
+    );
+    println!(
+        "│ huella                la menor distancia entre diapositivas: {menor} celdas (umbral {})",
+        pantalla::CAMBIO
+    );
+    println!("╰────────────────────────────────────────────────────");
+
+    assert!(
+        falsos.is_empty(),
+        "la pantalla trajo lo que no debía:\n{}",
+        falsos.join("\n")
+    );
+    assert!(
+        con >= sin,
+        "la pantalla EMPEORÓ la búsqueda: {sin:.3} → {con:.3}"
+    );
+    assert!(
+        con >= NDCG_CON_PANTALLA_MINIMO,
+        "nDCG@5 con pantalla {con:.3} bajo {NDCG_CON_PANTALLA_MINIMO}"
+    );
+    assert!(
+        solas_bien >= SOLAS_MINIMAS,
+        "la pantalla sola trajo {solas_bien} fichas correctas de {solas_esperadas}"
+    );
+    assert!(
+        peor < pantalla::RITMO_MS,
+        "una lectura tardó {peor} ms: ≤1 lectura/s no es sostenible"
+    );
+    assert!(
+        peor_v0 >= NDCG_MINIMO,
+        "con una pantalla delante, el kit v0 bajó a {peor_v0:.3}"
+    );
+}
+
+/// Umbrales del kit de pantalla, **fijados con la primera medición** como el del kit v0 (bitácora
+/// del sprint 002, fase 3). Medido 0,700 con la pantalla y 0,626 sin ella; el mínimo, dos centésimas
+/// por debajo. Y las fichas que la pantalla trae sola: medidas 4 de 4, y como es una cuenta y no una
+/// media, no lleva margen — perder una es una regresión.
+const NDCG_CON_PANTALLA_MINIMO: f64 = 0.68;
+const SOLAS_MINIMAS: usize = 4;

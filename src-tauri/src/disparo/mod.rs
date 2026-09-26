@@ -52,6 +52,9 @@ pub enum Motivo {
     SilencioLargo,
     /// El usuario lo pidió con ⌘⇧A. Siempre gana: es la salida cuando lo demás falla.
     Atajo,
+    /// **La pantalla que comparte el cliente cambió** y trae una cifra o uno de tus términos. Nace en
+    /// el sprint 002 con la lectura de pantalla (C8): la ficha llega sin que nadie pregunte.
+    Pantalla,
 }
 
 impl Motivo {
@@ -63,6 +66,7 @@ impl Motivo {
             Motivo::TerminoDelCorpus => "término tuyo",
             Motivo::SilencioLargo => "silencio",
             Motivo::Atajo => "lo pediste",
+            Motivo::Pantalla => "en pantalla",
         }
     }
 }
@@ -133,6 +137,16 @@ impl Disparador {
         self.aceptar(texto, ctx.ahora_ms, Motivo::SilencioLargo)
     }
 
+    /// **La pantalla nueva pide ficha.** Pasa por la misma guardia que un turno —la espera entre
+    /// fichas y la negativa a repetir—, así que una diapositiva que se queda veinte minutos en
+    /// pantalla trae UNA ficha, no una cada vez que alguien mueve el ratón. `texto` es lo que la
+    /// pantalla aporta a la consulta, y es lo que se compara para no repetir.
+    ///
+    /// El reloj es el de la sesión en milisegundos, el mismo que usan los turnos.
+    pub fn por_pantalla(&mut self, texto: &str, ahora_ms: usize) -> Option<Motivo> {
+        self.aceptar(texto, ahora_ms, Motivo::Pantalla)
+    }
+
     fn aceptar(&mut self, texto: &str, ahora_ms: usize, motivo: Motivo) -> Option<Motivo> {
         if let Some(antes) = self.ultimo_ms {
             // **El reloj puede VOLVER ATRÁS.** `ahora_ms` es el reloj de la pista, y cuando su
@@ -197,7 +211,7 @@ impl Disparador {
     }
 }
 
-fn normalizar(texto: &str) -> String {
+pub(crate) fn normalizar(texto: &str) -> String {
     texto
         .chars()
         .flat_map(|c| c.to_lowercase())

@@ -5,13 +5,18 @@ fn main() {
 }
 
 /// **Los archivos de Swift que forman el puente.** Se compilan JUNTOS, en una sola librería y un
-/// solo módulo: los dos exportan símbolos de C y ninguno importa al otro, así que partirlos en dos
-/// librerías solo añadiría un `-l` más y una manera nueva de que falte la mitad.
+/// solo módulo: los tres exportan símbolos de C y ninguno importa a otro, así que partirlos en
+/// varias librerías solo añadiría `-l` de más y maneras nuevas de que falte un trozo.
 ///
 /// - `Transcriptor.swift` — la voz que ENTRA (`SpeechAnalyzer`), sprint 001.
 /// - `Habla.swift` — la voz que SALE (`AVSpeechSynthesizer`), sprint 002.
+/// - `Pantalla.swift` — la pantalla que se LEE (`ScreenCaptureKit` + `Vision`), sprint 002.
 #[cfg(target_os = "macos")]
-const EL_PUENTE: &[&str] = &["nativo/Transcriptor.swift", "nativo/Habla.swift"];
+const EL_PUENTE: &[&str] = &[
+    "nativo/Transcriptor.swift",
+    "nativo/Habla.swift",
+    "nativo/Pantalla.swift",
+];
 
 /// Compila el puente de Swift y lo deja listo para enlazar dentro del binario.
 ///
@@ -24,8 +29,8 @@ const EL_PUENTE: &[&str] = &["nativo/Transcriptor.swift", "nativo/Habla.swift"];
 /// **Los dos fallos posibles se tratan distinto, y esa asimetría es el gate.**
 ///
 /// - `swiftc` **no está** (un Mac sin herramientas de desarrollo): se avisa y se sigue. La app
-///   compila, arranca y funciona; lo único que pierde es la transcripción, y lo dice en la
-///   pantalla de Idioma con ese motivo exacto.
+///   compila, arranca y funciona; lo que pierde es la transcripción, la voz y la lectura de
+///   pantalla, y lo dice en Idioma y en Sesión con ese motivo exacto.
 /// - `swiftc` **está y falla**: se rompe la compilación. Ese es el caso peligroso —un error en el
 ///   Swift, una API que cambió— y el único desenlace inaceptable sería un binario verde sin
 ///   transcripción y sin nadie enterado. Es la misma lección que el kill-switch: lo que no existe
@@ -56,6 +61,9 @@ fn compilar_el_puente_de_swift() {
             println!("cargo:rustc-link-arg=-Wl,-rpath,/usr/lib/swift");
             println!("cargo:rustc-link-lib=framework=Speech");
             println!("cargo:rustc-link-lib=framework=AVFoundation");
+            println!("cargo:rustc-link-lib=framework=ScreenCaptureKit");
+            println!("cargo:rustc-link-lib=framework=Vision");
+            println!("cargo:rustc-link-lib=framework=CoreGraphics");
             println!("cargo:rustc-cfg=puente_de_swift");
         }
         Ok(fallo) => {

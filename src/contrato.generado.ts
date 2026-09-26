@@ -11,7 +11,7 @@
  *     cd src-tauri && ACTUALIZA_CONTRATO=1 cargo test contrato
  */
 import type { Novedad, Aparicion } from "./ficha";
-import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelCorpus, InformeDelCorte, LaVoz } from "./cuaderno";
+import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelCorpus, InformeDelCorte, LaVoz, EstadoDeLaPantalla } from "./cuaderno";
 import type { EstadoDelAcople } from "./acople";
 
 export const NOVEDAD_EMPIEZA: Novedad = {
@@ -210,7 +210,7 @@ export const INFORME_DEL_CORTE: InformeDelCorte = {
       ],
       [
         "ultimo-frame",
-        "aun-no-existe"
+        "cortada"
       ],
       [
         "transcript",
@@ -247,6 +247,54 @@ export const LA_VOZ_SIN_AURICULARES: LaVoz = {
     "diciendo": false,
     "encendida": true,
     "puede": false
+  };
+
+export const PANTALLA_LEYENDO: EstadoDeLaPantalla = {
+    "bytesEnMemoria": 1440318,
+    "vista": "leyendo"
+  };
+
+export const PANTALLA_APAGADA: EstadoDeLaPantalla = {
+    "bytesEnMemoria": 0,
+    "vista": "apagada"
+  };
+
+export const PANTALLA_SIN_PERMISO: EstadoDeLaPantalla = {
+    "bytesEnMemoria": 0,
+    "vista": "sin-permiso"
+  };
+
+export const PANTALLA_ESPERANDO_LA_REUNION: EstadoDeLaPantalla = {
+    "bytesEnMemoria": 0,
+    "vista": "esperando-la-reunion"
+  };
+
+export const PANTALLA_NO_PUDO: EstadoDeLaPantalla = {
+    "bytesEnMemoria": 0,
+    "vista": "no-pudo"
+  };
+
+export const NOVEDAD_APARECE_POR_PANTALLA: Novedad = {
+    "acumuladas": [
+      {
+        "texto": "Sur del Valle: cuatro fuentes en 9 semanas",
+        "unidad": "caso"
+      }
+    ],
+    "clase": "ficha",
+    "fuente": {
+      "conjeturada": false,
+      "documento": "Páramo Azul · Propuesta",
+      "seccion": "§3.2 Alcance",
+      "unidad": "propuesta"
+    },
+    "hora": "14:02",
+    "linea": "Cubre perfilado y limpieza de ERP, POS y Excel de canal.",
+    "lineaLarga": "Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente se cotiza aparte.",
+    "motivo": "pantalla",
+    "ms": 1240,
+    "que": "aparece",
+    "titular": "Limpieza de datos: incluida, hasta tres fuentes"
   };
 
 export const ESTADO_DEL_ACOPLE: EstadoDelAcople = {

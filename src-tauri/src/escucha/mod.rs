@@ -243,6 +243,11 @@ pub struct Escucha {
     ventana: Arc<Mutex<Ventana>>,
     viva: Arc<AtomicBool>,
     motor: &'static str,
+    /// El reloj de la escucha y el buscador, para la ficha que pide la PANTALLA (C8): no nace de un
+    /// turno, pero tiene que pasar por el mismo disparador —la misma espera entre fichas— y medirse
+    /// con el mismo reloj que los turnos.
+    nacio: std::time::Instant,
+    buscador: Arc<dyn Buscador>,
 }
 
 impl Escucha {
@@ -312,7 +317,7 @@ impl Escucha {
             let avisar = avisar.clone();
             let suyo = ElQueTranscribe {
                 motor,
-                buscador,
+                buscador: buscador.clone(),
                 diccionario,
                 ventana: ventana.clone(),
                 disparador: disparador.clone(),
@@ -324,7 +329,34 @@ impl Escucha {
             std::thread::spawn(move || while suyo.latir(&recibe, avisar.as_ref()) {});
         }
 
-        Self { disparador, pistas, ventana, viva, motor: nombre_del_motor }
+        Self { disparador, pistas, ventana, viva, motor: nombre_del_motor, nacio, buscador }
+    }
+
+    /// **LA PANTALLA PIDE FICHA** (C8). La pantalla que comparte el cliente cambió y trae una cifra o
+    /// uno de tus términos; `consulta` es lo que aporta.
+    ///
+    /// Pasa por el MISMO disparador que los turnos: si hace menos de seis segundos que salió una
+    /// ficha, o si esta pantalla ya trajo la suya, no hay otra. Y **solo devuelve fichas**: una
+    /// pantalla que no encuentra nada en tu corpus no interrumpe a nadie para decir «no tengo nada».
+    /// Ese aviso es la respuesta a una pregunta, y aquí nadie preguntó.
+    pub fn por_pantalla(&self, consulta: &str) -> Option<Aparicion> {
+        if !self.viva.load(Ordering::Relaxed) {
+            return None;
+        }
+        let empezo = std::time::Instant::now();
+        let ahora_ms = self.nacio.elapsed().as_millis() as usize;
+        let motivo = self.disparador.lock().ok()?.por_pantalla(consulta, ahora_ms)?;
+        let a = armar_y_anunciar(self.buscador.as_ref(), consulta, motivo, &la_hora(), empezo);
+        matches!(a.respuesta, Respuesta::Ficha(_)).then_some(a)
+    }
+
+    /// **La lectura que PIDIÓ el usuario** con su atajo. Como `⌘⇧A`: se salta la espera y responde
+    /// siempre, también con «no tengo nada», porque alguien preguntó.
+    pub fn pedida_por_pantalla(&self, consulta: &str) -> Option<Aparicion> {
+        let empezo = std::time::Instant::now();
+        let ahora_ms = self.nacio.elapsed().as_millis() as usize;
+        let motivo = self.disparador.lock().ok()?.a_mano(ahora_ms);
+        Some(armar_y_anunciar(self.buscador.as_ref(), consulta, motivo, &la_hora(), empezo))
     }
 
     pub fn estado(&self) -> EstadoDeEscucha {

@@ -21,10 +21,16 @@ export type Proteccion = "Verificada" | "SinVerificar";
 
 export type Reunion =
   | { que: "ninguna" }
-  | { que: "detectada"; cliente: string; titulo: string | null; proteccion: Proteccion }
+  | {
+      que: "detectada";
+      cliente: string;
+      titulo: string | null;
+      proteccion: Proteccion;
+    }
   | { que: "no-se-puede-saber"; motivo: string };
 
-export type EstadoPermiso = "sin-conceder" | "concedido" | "denegado" | "no-se-sabe";
+export type EstadoPermiso =
+  "sin-conceder" | "concedido" | "denegado" | "no-se-sabe";
 
 export type Permisos = {
   microfono: EstadoPermiso;
@@ -39,7 +45,12 @@ export type Permisos = {
  * una muestra que no es bilingüe en una app que promete serlo en todo.
  */
 function reunionDeMuestra(titulo: string): Reunion {
-  return { que: "detectada", cliente: "Google Meet", titulo, proteccion: "Verificada" };
+  return {
+    que: "detectada",
+    cliente: "Google Meet",
+    titulo,
+    proteccion: "Verificada",
+  };
 }
 
 const PERMISOS_DE_MUESTRA: Permisos = {
@@ -87,9 +98,13 @@ function usePreguntaAlVolver<T>(comando: string, deMuestra: T, vacio: T): T {
 
 export function useReunion(): Reunion {
   const t = useT().cuaderno;
-  return usePreguntaAlVolver<Reunion>("reunion_abierta", reunionDeMuestra(t.tituloDeMuestra), {
-    que: "ninguna",
-  });
+  return usePreguntaAlVolver<Reunion>(
+    "reunion_abierta",
+    reunionDeMuestra(t.tituloDeMuestra),
+    {
+      que: "ninguna",
+    },
+  );
 }
 
 /**
@@ -100,10 +115,14 @@ export function useReunion(): Reunion {
  * es la forma que Rust emite de verdad.
  */
 export function usePiezasDelCorte(): InformeDelCorte {
-  return usePreguntaAlVolver<InformeDelCorte>("piezas_del_corte", INFORME_DEL_CORTE, {
-    piezas: [],
-    bytesEnRed: 0,
-  });
+  return usePreguntaAlVolver<InformeDelCorte>(
+    "piezas_del_corte",
+    INFORME_DEL_CORTE,
+    {
+      piezas: [],
+      bytesEnRed: 0,
+    },
+  );
 }
 
 /** Lo que se sabe de los permisos antes de preguntar: nada. Y «no lo sé» **no es «no»**. */
@@ -241,8 +260,22 @@ export type QueSabeTranscribir = {
  */
 const ESCUCHA_DE_MUESTRA: EstadoDeEscucha = {
   escuchando: true,
-  microfono: { abierta: true, motivo: null, bytes: 1_920_000, segundos: 30, muestrasRecibidas: 480_000, hablando: false },
-  sistema: { abierta: true, motivo: null, bytes: 1_920_000, segundos: 30, muestrasRecibidas: 480_000, hablando: false },
+  microfono: {
+    abierta: true,
+    motivo: null,
+    bytes: 1_920_000,
+    segundos: 30,
+    muestrasRecibidas: 480_000,
+    hablando: false,
+  },
+  sistema: {
+    abierta: true,
+    motivo: null,
+    bytes: 1_920_000,
+    segundos: 30,
+    muestrasRecibidas: 480_000,
+    hablando: false,
+  },
   turnosEnMemoria: 12,
   bytesDelTranscript: 2_048,
   motor: "apple-speechanalyzer",
@@ -280,9 +313,11 @@ export function useEscucha(): EstadoDeEscucha {
     if (!hayTauri()) return;
     let vivo = true;
     const leer = () => {
-      void preguntar<EstadoDeEscucha | null>("estado_de_la_escucha").then((e) => {
-        if (vivo) setEstado(e ?? APAGADA);
-      });
+      void preguntar<EstadoDeEscucha | null>("estado_de_la_escucha").then(
+        (e) => {
+          if (vivo) setEstado(e ?? APAGADA);
+        },
+      );
     };
     leer();
     const bajas = [escuchar("escucha", leer), escuchar("corte", leer)];
@@ -299,8 +334,22 @@ export function useEscucha(): EstadoDeEscucha {
 /** Nadie está escuchando: ni pistas abiertas ni bytes. No es un error, es el estado de reposo. */
 const APAGADA: EstadoDeEscucha = {
   escuchando: false,
-  microfono: { abierta: false, motivo: null, bytes: 0, segundos: 0, muestrasRecibidas: 0, hablando: false },
-  sistema: { abierta: false, motivo: null, bytes: 0, segundos: 0, muestrasRecibidas: 0, hablando: false },
+  microfono: {
+    abierta: false,
+    motivo: null,
+    bytes: 0,
+    segundos: 0,
+    muestrasRecibidas: 0,
+    hablando: false,
+  },
+  sistema: {
+    abierta: false,
+    motivo: null,
+    bytes: 0,
+    segundos: 0,
+    muestrasRecibidas: 0,
+    hablando: false,
+  },
   turnosEnMemoria: 0,
   bytesDelTranscript: 0,
   motor: "—",
@@ -327,7 +376,11 @@ export type LaVoz = {
 };
 
 /** La voz apagada, que es como nace la app — y como la pinta el arnés de capturas. */
-export const VOZ_APAGADA: LaVoz = { encendida: false, puede: false, diciendo: false };
+export const VOZ_APAGADA: LaVoz = {
+  encendida: false,
+  puede: false,
+  diciendo: false,
+};
 
 /**
  * Cómo está la voz. Se pregunta al montarse y se escucha a partir de ahí: el evento llega cuando
@@ -357,6 +410,70 @@ export function useVoz(): LaVoz {
     };
   }, []);
   return voz;
+}
+
+/**
+ * La LECTURA DE PANTALLA (C8, sprint 002), tal y como la cuenta Rust (`pantalla::EstadoDeLaPantalla`).
+ *
+ * | Campo | Quién lo lee |
+ * |---|---|
+ * | `vista` | la fila «Pantalla — solo cuando cambia» de Sesión |
+ * | `bytesEnMemoria` | la fila de la pantalla en «Qué vive en la memoria ahora» de Honestidad |
+ */
+export type VistaDeLaPantalla =
+  "apagada" | "sin-permiso" | "esperando-la-reunion" | "leyendo" | "no-pudo";
+
+export type EstadoDeLaPantalla = {
+  vista: VistaDeLaPantalla;
+  bytesEnMemoria: number;
+};
+
+/** Sin sesión, la lectura espera a la reunión: es como nace la app y como la pinta el arnés. */
+export const PANTALLA_EN_ESPERA: EstadoDeLaPantalla = {
+  vista: "esperando-la-reunion",
+  bytesEnMemoria: 0,
+};
+
+/**
+ * Qué hace la lectura de pantalla. Se pregunta al montarse y se escucha el evento `pantalla`, que
+ * llega cuando cambia la vista (se enciende, se apaga, aparece o desaparece la reunión). Tras el
+ * kill-switch se vuelve a preguntar: el corte la para sin emitir nada, y la fila no puede quedarse
+ * diciendo «leyendo» de una lectura que ya no existe.
+ */
+export function usePantalla(): EstadoDeLaPantalla {
+  const [estado, setEstado] = useState<EstadoDeLaPantalla>(PANTALLA_EN_ESPERA);
+  useEffect(() => {
+    if (!hayTauri()) return;
+    let vivo = true;
+    const leer = () => {
+      void preguntar<EstadoDeLaPantalla>("estado_de_la_pantalla").then((e) => {
+        if (vivo) setEstado(e ?? PANTALLA_EN_ESPERA);
+      });
+    };
+    leer();
+    const baja = escuchar<EstadoDeLaPantalla>("pantalla", (e) => {
+      if (vivo) setEstado(e ?? PANTALLA_EN_ESPERA);
+    });
+    const bajaCorte = escuchar<unknown>("corte", leer);
+    return () => {
+      vivo = false;
+      baja();
+      bajaCorte();
+    };
+  }, []);
+  return estado;
+}
+
+/** El interruptor de Sesión: enciende o apaga la lectura automática. */
+export function lecturaAutomatica(
+  encendida: boolean,
+): Promise<EstadoDeLaPantalla | null> {
+  return preguntar<EstadoDeLaPantalla>("lectura_automatica", { encendida });
+}
+
+/** Lee la ventana de la reunión UNA vez, ahora — la lectura bajo demanda, sin región. */
+export function leerLaPantallaAhora(): Promise<boolean | null> {
+  return preguntar<boolean>("leer_la_pantalla_ahora");
 }
 
 export function useSalidaDeAudio(): Salida {
@@ -390,7 +507,8 @@ export const DEL_CLIENTE = "en-US";
 
 /* ----------------------------------------------------------------- el corpus (fase 4) ------ */
 
-export type UnidadDelCorpus = "propuesta" | "marco" | "caso" | "cliente" | "perfil";
+export type UnidadDelCorpus =
+  "propuesta" | "marco" | "caso" | "cliente" | "perfil";
 
 export type PorUnidad = { unidad: UnidadDelCorpus; documentos: number };
 
@@ -445,7 +563,11 @@ export const CORPUS_VACIO: EstadoDelCorpus = {
 };
 
 export function useCorpus(): EstadoDelCorpus {
-  return usePreguntaAlVolver<EstadoDelCorpus>("estado_del_corpus", CORPUS_DE_MUESTRA, CORPUS_VACIO);
+  return usePreguntaAlVolver<EstadoDelCorpus>(
+    "estado_del_corpus",
+    CORPUS_DE_MUESTRA,
+    CORPUS_VACIO,
+  );
 }
 
 /**
@@ -458,7 +580,10 @@ export async function indexarCorpus(): Promise<void> {
   await preguntar("indexar_corpus", { carpeta });
 }
 
-export function empezarAEscuchar(idiomaDelConsultor: string, idiomaDelCliente: string) {
+export function empezarAEscuchar(
+  idiomaDelConsultor: string,
+  idiomaDelCliente: string,
+) {
   void llamar("empezar_a_escuchar", { idiomaDelConsultor, idiomaDelCliente });
 }
 
@@ -466,11 +591,15 @@ export function dejarDeEscuchar() {
   void llamar("dejar_de_escuchar");
 }
 
-export async function instalarIdioma(codigo: string): Promise<Disponibilidad | null> {
+export async function instalarIdioma(
+  codigo: string,
+): Promise<Disponibilidad | null> {
   return preguntar<Disponibilidad>("instalar_idioma", { codigo });
 }
 
-export function abrirAjustesDe(permiso: "microfono" | "pantalla" | "accesibilidad") {
+export function abrirAjustesDe(
+  permiso: "microfono" | "pantalla" | "accesibilidad",
+) {
   void llamar("abrir_ajustes_de", { permiso });
 }
 

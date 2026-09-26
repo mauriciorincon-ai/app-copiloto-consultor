@@ -39,6 +39,35 @@ use super::unidad::Unidad;
 /// Cuánto más pesa una palabra que está en el título de la sección.
 const PESO_DEL_TITULO: f32 = 3.0;
 
+/// **Cuánto pesa lo que hay en la pantalla**, cuando la pantalla entra a desempatar.
+///
+/// **Y cuándo entra: [`DESEMPATE`].** Los dos números salieron de medir, y la medida enseñó algo que
+/// la intuición no: la pantalla **ayuda a lo que se ve y estorba a lo demás**. Con la pantalla
+/// siempre dentro de la consulta, las treinta preguntas del kit v0 —que no tienen nada que ver con la
+/// diapositiva que haya delante— bajaban de 0,823 a 0,764 con peso 0,5 y a 0,721 con peso 1,5.
+/// Así que la pantalla **solo desempata**: si la pregunta sola ya tiene una sección que le saca
+/// ventaja a la segunda, manda la pregunta.
+///
+/// La tabla, con el kit de pantalla (cinco frases vagas frente a su pantalla) y el kit v0 con la
+/// PEOR de las cinco pantallas delante (mínimo 0,80):
+///
+/// | peso | desempate | kit de pantalla | kit v0, peor pantalla |
+/// |------|-----------|-----------------|-----------------------|
+/// | 0,5  | siempre   | 0,700           | 0,764 (bajo el mínimo) |
+/// | 1,5  | siempre   | 0,800           | 0,721 (bajo el mínimo) |
+/// | 1,5  | 2,0       | 0,800           | 0,747 (bajo el mínimo) |
+/// | 1,0  | 1,25      | 0,700           | 0,807                 |
+/// | **0,5** | **1,1** | **0,700**      | **0,819**             |
+///
+/// Se elige la fila que más ayuda sin que ninguna pantalla deje el kit v0 bajo su mínimo, y entre
+/// las que empatan, la que menos lo toca. Sin pantalla, 0,823 como siempre (lo vigila un test).
+pub const PESO_DE_LA_PANTALLA: f32 = 0.5;
+
+/// **La pantalla solo desempata.** Si la primera sección de la pregunta sola le saca al menos un
+/// 10 % a la segunda, la pregunta ya tiene respuesta y la pantalla no la toca. Ver la tabla de
+/// [`PESO_DE_LA_PANTALLA`].
+pub const DESEMPATE: f32 = 1.1;
+
 /// Memoria del escritor. Por debajo de 15 MB tantivy se queja; más no hace falta para un corpus
 /// de documentos de oficina.
 const MEMORIA: usize = 15_000_000;
@@ -215,9 +244,43 @@ impl Indice {
 
     /// La búsqueda. `texto` es lo que dijo el cliente, tal cual salió del transcriptor.
     pub fn buscar(&self, texto: &str, cuantos: usize) -> Result<Vec<Hallazgo>, String> {
+        self.buscar_con_pantalla(texto, "", cuantos)
+    }
+
+    /// **La búsqueda con la pantalla como contexto** (C8, sprint 002).
+    ///
+    /// Primero se busca la pregunta sola. Si tiene una respuesta clara ([`DESEMPATE`]), esa es la
+    /// respuesta. Si no, se repite la MISMA consulta con la pantalla dentro: la pregunta como
+    /// cláusula obligatoria y la pantalla como opcional ([`PESO_DE_LA_PANTALLA`]). Así la pantalla
+    /// **solo reordena lo que la pregunta ya encontró**, nunca trae algo que la pregunta no pidiera,
+    /// y no estropea las preguntas que no tienen nada que ver con lo que hay delante. No es una
+    /// segunda búsqueda de la pantalla que luego haya que mezclar con una regla inventada: es la de
+    /// la pregunta, desempatada.
+    ///
+    /// Con `pantalla` vacío es exactamente la búsqueda de siempre —la misma consulta, el mismo
+    /// orden—, y eso lo vigila un test: el refuerzo no puede cambiar nada cuando no hay pantalla.
+    pub fn buscar_con_pantalla(
+        &self,
+        texto: &str,
+        pantalla: &str,
+        cuantos: usize,
+    ) -> Result<Vec<Hallazgo>, String> {
+        use tantivy::query::{BooleanQuery, BoostQuery, Occur, Query};
+
         let consulta = super::consulta::limpiar(texto);
-        if consulta.is_empty() {
+        let de_la_pantalla = super::consulta::limpiar(pantalla);
+        if consulta.is_empty() && de_la_pantalla.is_empty() {
             return Ok(Vec::new());
+        }
+        if !consulta.is_empty() && !de_la_pantalla.is_empty() {
+            let sola = self.buscar_con_pantalla(texto, "", cuantos.max(2))?;
+            let clara = match (sola.first(), sola.get(1)) {
+                (Some(a), Some(b)) => a.puntaje >= b.puntaje * DESEMPATE,
+                _ => true,
+            };
+            if clara {
+                return Ok(sola.into_iter().take(cuantos).collect());
+            }
         }
         let c = &self.campos;
         let mut qp = QueryParser::for_index(
@@ -226,7 +289,31 @@ impl Indice {
         );
         qp.set_field_boost(c.titulo_es, PESO_DEL_TITULO);
         qp.set_field_boost(c.titulo_en, PESO_DEL_TITULO);
-        let q = qp.parse_query(&consulta).map_err(|e| e.to_string())?;
+        let q: Box<dyn Query> = match (consulta.is_empty(), de_la_pantalla.is_empty()) {
+            (false, true) => qp.parse_query(&consulta).map_err(|e| e.to_string())?,
+            // Solo pantalla: es la ficha que la pantalla pide por sí sola. Sin nada con qué
+            // compararla, el peso relativo no significa nada y no se aplica.
+            (true, false) => qp.parse_query(&de_la_pantalla).map_err(|e| e.to_string())?,
+            // La pregunta es OBLIGATORIA y la pantalla opcional: la pantalla solo reordena lo que
+            // la pregunta ya encontró, jamás trae una sección que no tenga nada que ver con lo
+            // preguntado. La primera versión las ponía a las dos como opcionales y su propio test
+            // lo tumbó: «¿la tarifa es cerrada?» con una diapositiva de adopción de datos delante
+            // devolvía el marco de adopción — la pantalla, con medio peso, pesaba más que la
+            // pregunta porque traía tres palabras en el título de su sección.
+            _ => Box::new(BooleanQuery::new(vec![
+                (
+                    Occur::Must,
+                    qp.parse_query(&consulta).map_err(|e| e.to_string())?,
+                ),
+                (
+                    Occur::Should,
+                    Box::new(BoostQuery::new(
+                        qp.parse_query(&de_la_pantalla).map_err(|e| e.to_string())?,
+                        PESO_DE_LA_PANTALLA,
+                    )),
+                ),
+            ])),
+        };
 
         let buscador = self.lector.searcher();
         let top = buscador
@@ -382,6 +469,93 @@ mod pruebas {
         ])
         .unwrap();
         assert_eq!(i.secciones(), antes);
+    }
+
+    /// El refuerzo de la pantalla no puede cambiar NADA cuando no hay pantalla: ni el orden ni los
+    /// puntajes. Si lo hiciera, el kit del sprint 001 dejaría de medir lo que medía.
+    #[test]
+    fn sin_pantalla_la_busqueda_es_la_de_siempre() {
+        let i = con_dos_documentos();
+        for pregunta in [
+            "cuánto cuesta y en cuántas semanas",
+            "cuántos canales miden",
+            "etapas",
+        ] {
+            assert_eq!(
+                i.buscar(pregunta, 3).unwrap(),
+                i.buscar_con_pantalla(pregunta, "", 3).unwrap()
+            );
+        }
+    }
+
+    /// **Para qué sirve la pantalla**: una pregunta que vale LO MISMO para dos secciones se inclina
+    /// hacia la que el cliente tiene delante. Las dos secciones son simétricas a propósito —mismo
+    /// largo, misma palabra—, para que el empate sea de verdad y no dependa de cómo normaliza BM25.
+    #[test]
+    fn la_pantalla_desempata_hacia_lo_que_se_ve() {
+        let i = Indice::en_memoria().unwrap();
+        i.meter(
+            "/p.md",
+            "Propuesta",
+            None,
+            false,
+            &[s("Plazo", "Son cuatro semanas de trabajo con el cliente.")],
+        )
+        .unwrap();
+        i.meter(
+            "/m.md",
+            "Método",
+            None,
+            false,
+            &[s("Etapas", "Son cuatro etapas de trabajo con el cliente.")],
+        )
+        .unwrap();
+        let pregunta = "¿y lo de las cuatro?";
+        let hacia = |pantalla: &str| {
+            i.buscar_con_pantalla(pregunta, pantalla, 3).unwrap()[0]
+                .seccion
+                .clone()
+        };
+        assert_eq!(hacia("Etapas del método"), Some("Etapas".into()));
+        assert_eq!(hacia("Plazo en semanas"), Some("Plazo".into()));
+    }
+
+    /// Y lo contrario: si la pregunta ya tiene una respuesta clara, **la pantalla no la toca** —ni
+    /// siquiera reordena—. Es lo que protege a las preguntas que no tienen nada que ver con lo que
+    /// hay delante (la tabla de [`PESO_DE_LA_PANTALLA`]).
+    #[test]
+    fn con_una_respuesta_clara_la_pantalla_no_toca_nada() {
+        let i = con_dos_documentos();
+        let pregunta = "cuánto cuesta y en cuántas semanas";
+        assert_eq!(
+            i.buscar(pregunta, 3).unwrap(),
+            i.buscar_con_pantalla(
+                pregunta,
+                "Adopción de datos · cuatro etapas · inventario",
+                3
+            )
+            .unwrap()
+        );
+    }
+
+    /// La pregunta manda sobre la pantalla: una diapositiva de otro tema no se lleva la respuesta
+    /// de una pregunta clara. Es lo que [`PESO_DE_LA_PANTALLA`] < 1 protege.
+    #[test]
+    fn la_pregunta_manda_sobre_la_pantalla() {
+        let i = con_dos_documentos();
+        let h = i
+            .buscar_con_pantalla("¿la tarifa es cerrada?", "Adopción de datos · etapas", 3)
+            .unwrap();
+        assert_eq!(h[0].seccion.as_deref(), Some("Precio"));
+    }
+
+    /// Solo pantalla: es la ficha que la pantalla pide por sí sola.
+    #[test]
+    fn la_pantalla_sola_tambien_busca() {
+        let h = con_dos_documentos()
+            .buscar_con_pantalla("", "Tarifa cerrada por semanas", 3)
+            .unwrap();
+        assert_eq!(h[0].seccion.as_deref(), Some("Precio"));
     }
 
     #[test]

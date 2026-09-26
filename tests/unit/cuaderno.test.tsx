@@ -39,12 +39,14 @@ describe("el cuaderno: lo que no existe se dice", () => {
    */
   it("sesión: las pistas que ya escuchan dicen «funciona» y la que no, «todavía no»", () => {
     pinta("?pantalla=sesion");
-    const pistas = screen.getByText(t.dosPistas).closest(".tarjeta") as HTMLElement;
+    const pistas = screen
+      .getByText(t.dosPistas)
+      .closest(".tarjeta") as HTMLElement;
     expect(within(pistas).getAllByText(t.funciona)).toHaveLength(2);
     expect(within(pistas).getAllByText(t.todaviaNo)).toHaveLength(1);
-    expect(within(pistas).getByText(t.pistaPantalla).closest(".fila")?.className).toContain(
-      "pendiente",
-    );
+    expect(
+      within(pistas).getByText(t.pistaPantalla).closest(".fila")?.className,
+    ).toContain("pendiente");
   });
 
   /**
@@ -53,7 +55,9 @@ describe("el cuaderno: lo que no existe se dice", () => {
    */
   it("sesión: con altavoces avisa del eco en vez de dar las dos pistas por limpias", () => {
     pinta("?pantalla=sesion");
-    const pistas = screen.getByText(t.dosPistas).closest(".tarjeta") as HTMLElement;
+    const pistas = screen
+      .getByText(t.dosPistas)
+      .closest(".tarjeta") as HTMLElement;
     expect(within(pistas).getByText(t.altavocesInternos)).toBeInTheDocument();
     expect(within(pistas).getByText(t.avisoDelEco)).toBeInTheDocument();
   });
@@ -65,17 +69,23 @@ describe("el cuaderno: lo que no existe se dice", () => {
    */
   it("sesión enseña lo que sí funciona hoy, y ya no queda nada pendiente en esa tarjeta", () => {
     pinta("?pantalla=sesion");
-    const hoy = screen.getByText(t.queFuncionaHoy).closest(".tarjeta") as HTMLElement;
+    const hoy = screen
+      .getByText(t.queFuncionaHoy)
+      .closest(".tarjeta") as HTMLElement;
     expect(within(hoy).getAllByText(t.funciona)).toHaveLength(3);
     expect(within(hoy).getByText("⌥⎋")).toBeInTheDocument();
     expect(within(hoy).queryByText(t.todaviaNo)).toBeNull();
     // Y «Iniciar sesión» dejó de ser una promesa: es un botón que se puede pulsar.
-    expect(screen.getByRole("button", { name: new RegExp(t.iniciarSesion) })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: new RegExp(t.iniciarSesion) }),
+    ).toBeInTheDocument();
   });
 
   it("sesión no inventa la ficha del cliente: la declara ausente con su motivo", () => {
     pinta("?pantalla=sesion");
-    const cliente = screen.getByText(t.esteCliente).closest(".tarjeta") as HTMLElement;
+    const cliente = screen
+      .getByText(t.esteCliente)
+      .closest(".tarjeta") as HTMLElement;
     expect(cliente.className).toContain("pendiente");
     expect(within(cliente).getByText(t.noSeInventa)).toBeInTheDocument();
   });
@@ -88,7 +98,8 @@ describe("el cuaderno: lo que no existe se dice", () => {
   it("permisos: audio del sistema y pantalla muestran el mismo estado, y se dice por qué", () => {
     const { container } = pinta("?pantalla=permisos");
     const filas = [...container.querySelectorAll(".permiso")];
-    const chip = (i: number) => filas[i].querySelector(".accion .estado")?.textContent;
+    const chip = (i: number) =>
+      filas[i].querySelector(".accion .estado")?.textContent;
     expect(chip(1)).toBe(chip(2));
     expect(screen.getByText(t.unSoloPermiso)).toBeInTheDocument();
   });
@@ -108,14 +119,16 @@ describe("el cuaderno: lo que no existe se dice", () => {
    */
   it("permisos: lo que ya se puede hacer sin permisos dice «funciona», y solo lo que falta «todavía no»", () => {
     pinta("?pantalla=permisos");
-    const tarjeta = screen.getByText(t.sinConcederNada).closest(".tarjeta") as HTMLElement;
+    const tarjeta = screen
+      .getByText(t.sinConcederNada)
+      .closest(".tarjeta") as HTMLElement;
     // Indexar el corpus (fase 4) y buscar a mano con ⌘⇧A: ninguna necesita permisos.
     expect(within(tarjeta).getAllByText(t.funciona)).toHaveLength(2);
     // Escribir notas y acuerdos es lo único que todavía no existe.
     expect(within(tarjeta).getAllByText(t.todaviaNo)).toHaveLength(1);
-    expect(within(tarjeta).getByText(t.escribirNotas).closest(".fila")?.className).toContain(
-      "pendiente",
-    );
+    expect(
+      within(tarjeta).getByText(t.escribirNotas).closest(".fila")?.className,
+    ).toContain("pendiente");
   });
 
   /**
@@ -144,22 +157,23 @@ describe("el cuaderno: lo que no existe se dice", () => {
     for (const b of vivos) {
       expect(b.querySelector(".cuanto")?.textContent).not.toBe("0 B");
     }
-    const pendiente = bufs.find((b) => b.className.includes("pendiente")) as HTMLElement;
+    const pendiente = bufs.find((b) =>
+      b.className.includes("pendiente"),
+    ) as HTMLElement;
     expect(within(pendiente).getByText(t.todaviaNo)).toBeInTheDocument();
     expect(pendiente.querySelector(".cuanto")?.textContent).toBe("0 B");
   });
 
   /**
-   * «8 de 8» con una pieza sin construir seguiría siendo la mentira cómoda.
+   * «8 de 8» con una pieza sin construir sería la mentira cómoda — y desde la fase 3 del sprint 002
+   * ya no falta ninguna: la lectura de pantalla (C8) era la última, y se corta de verdad.
    *
-   * La cuenta subió de 7 a 8 en el sprint 002: la voz que sale es una pieza más, y es la primera
-   * que se corta porque es **la única que el cliente puede oír**. La que falta sigue siendo la
-   * lectura de pantalla, que llega con C8.
+   * La cuenta la da Rust (`corte::TODAS` con su `match` sin comodín), no esta pantalla: el test lee
+   * la muestra del contrato, que es lo que Rust emite.
    */
   it("honestidad: el kill-switch dice cuántas piezas corta de cuántas hay", () => {
     pinta("?pantalla=honestidad");
-    expect(screen.getByText(/7 de 8/)).toBeInTheDocument();
-    expect(screen.queryByText(/8 de 8/)).toBeNull();
+    expect(screen.getByText(/8 de 8/)).toBeInTheDocument();
   });
 
   /**
@@ -177,7 +191,9 @@ describe("el cuaderno: lo que no existe se dice", () => {
     expect(screen.getByText(t.idiomaTitulo)).toBeInTheDocument();
     expect(screen.getByText(t.variosIdiomasPorPista)).toBeInTheDocument();
     expect(screen.getByText(t.conservarTusTurnos)).toBeInTheDocument();
-    expect(screen.queryByText(/[Dd]iccionario técnico|[Tt]echnical dictionary/)).toBeNull();
+    expect(
+      screen.queryByText(/[Dd]iccionario técnico|[Tt]echnical dictionary/),
+    ).toBeNull();
     expect(screen.getAllByText(t.todaviaNo)).toHaveLength(2);
     expect(screen.getByText(t.cincoIdiomas)).toBeInTheDocument();
     // Las dos pistas con su idioma y el estado real de su modelo. **La del cliente no lo tiene**,
@@ -185,7 +201,9 @@ describe("el cuaderno: lo que no existe se dice", () => {
     // auditoría: uno en español no trae el modelo de inglés. Y por eso hay un botón.
     expect(screen.getByText(t.modeloInstalado)).toBeInTheDocument();
     expect(screen.getByText(t.sinModelo)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: new RegExp(t.instalarModelo) })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: new RegExp(t.instalarModelo) }),
+    ).toBeInTheDocument();
   });
 
   /**
@@ -196,9 +214,17 @@ describe("el cuaderno: lo que no existe se dice", () => {
     const { container } = pinta("?pantalla=sesion");
     const rail = container.querySelector("nav.rail") as HTMLElement;
     const enlaces = [...rail.querySelectorAll("a")].map((a) => a.textContent);
-    expect(enlaces).toEqual([t.navSesion, t.navPermisos, t.navCorpus, t.navHonestidad, t.navIdioma]);
+    expect(enlaces).toEqual([
+      t.navSesion,
+      t.navPermisos,
+      t.navCorpus,
+      t.navHonestidad,
+      t.navIdioma,
+    ]);
     for (const nombre of [t.navNotas, t.navIa]) {
-      const fila = within(rail).getByText(nombre).closest(".item") as HTMLElement;
+      const fila = within(rail)
+        .getByText(nombre)
+        .closest(".item") as HTMLElement;
       expect(fila.className).toContain("pendiente");
       expect(fila.tagName).not.toBe("A");
     }
@@ -211,13 +237,17 @@ describe("el cuaderno: lo que no existe se dice", () => {
   it("corpus: enseña lo que indexó hoy y marca lo que todavía no", () => {
     const { container } = pinta("?pantalla=corpus");
     // «Corpus» aparece dos veces —en el rail y en el título—, así que se busca el del título.
-    expect(container.querySelector('.titulo h1')?.textContent).toBe(t.corpusTitulo);
+    expect(container.querySelector(".titulo h1")?.textContent).toBe(
+      t.corpusTitulo,
+    );
     expect(screen.getAllByText(t.todaviaNo)).toHaveLength(3);
     // Las cinco unidades más la sexta respuesta: lo que no encaja en ninguna.
     expect(container.querySelectorAll(".unidad-chip")).toHaveLength(6);
     expect(screen.getByText(t.sinUnidad)).toBeInTheDocument();
     // El tamaño del índice no puede estar escrito en la interfaz: se mide.
-    expect(container.querySelector(".buffer .cuanto")?.textContent).not.toBe("0 B");
+    expect(container.querySelector(".buffer .cuanto")?.textContent).not.toBe(
+      "0 B",
+    );
     expect(screen.getByText(t.soloTu)).toBeInTheDocument();
   });
 

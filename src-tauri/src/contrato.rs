@@ -270,6 +270,34 @@ pub fn muestras() -> Vec<Muestra> {
             puede: false,
             diciendo: false,
         }),
+        // ---- la lectura de pantalla (C8) del sprint 002 --------------------------------------
+        // El evento «pantalla» y el comando `estado_de_la_pantalla`: la vista es la fila de Sesión y
+        // los bytes en memoria, la de Honestidad. Las cinco vistas, porque las cinco se pintan.
+        m("PANTALLA_LEYENDO", "EstadoDeLaPantalla", "./cuaderno", &crate::pantalla::EstadoDeLaPantalla {
+            vista: crate::pantalla::Vista::Leyendo,
+            bytes_en_memoria: 1_440_318,
+        }),
+        m("PANTALLA_APAGADA", "EstadoDeLaPantalla", "./cuaderno", &crate::pantalla::EstadoDeLaPantalla {
+            vista: crate::pantalla::Vista::Apagada,
+            bytes_en_memoria: 0,
+        }),
+        m("PANTALLA_SIN_PERMISO", "EstadoDeLaPantalla", "./cuaderno", &crate::pantalla::EstadoDeLaPantalla {
+            vista: crate::pantalla::Vista::SinPermiso,
+            bytes_en_memoria: 0,
+        }),
+        m("PANTALLA_ESPERANDO_LA_REUNION", "EstadoDeLaPantalla", "./cuaderno", &crate::pantalla::EstadoDeLaPantalla {
+            vista: crate::pantalla::Vista::EsperandoLaReunion,
+            bytes_en_memoria: 0,
+        }),
+        m("PANTALLA_NO_PUDO", "EstadoDeLaPantalla", "./cuaderno", &crate::pantalla::EstadoDeLaPantalla {
+            vista: crate::pantalla::Vista::NoPudo,
+            bytes_en_memoria: 0,
+        }),
+        // La ficha que pide la pantalla sola: el motivo nuevo cruza con el MISMO evento «escucha».
+        m("NOVEDAD_APARECE_POR_PANTALLA", "Novedad", "./ficha", &Novedad::Aparece(Box::new(aparicion(
+            ficha(),
+            Motivo::Pantalla,
+        )))),
         // ---- el acople, que la banda dibuja en su cabecera --------------------------------
         m("ESTADO_DEL_ACOPLE", "EstadoDelAcople", "./acople", &crate::EstadoDelAcople {
             permiso: true,

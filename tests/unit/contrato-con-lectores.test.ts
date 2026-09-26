@@ -61,8 +61,10 @@ const DEUDA: Record<string, string> = {
   "EstadoDeEscucha.motor":
     "qué motor transcribe. `idioma.html` lo cuenta en prosa («el motor de voz de macOS») y no tiene sitio para el nombre · fase 3",
   "QueSabeTranscribir.motor": "el mismo dato por el otro comando · fase 3",
-  "QueSabeTranscribir.techo": "cuántos idiomas admite el motor a la vez · fase 3",
-  "QueSabeTranscribir.motivo": "por qué no hay motor. Comparte sitio con el de la pista · fase 3",
+  "QueSabeTranscribir.techo":
+    "cuántos idiomas admite el motor a la vez · fase 3",
+  "QueSabeTranscribir.motivo":
+    "por qué no hay motor. Comparte sitio con el de la pista · fase 3",
 
   // ── La ficha: dos datos que la banda mide y no enseña ──
   "Aparicion.motivo":
@@ -94,13 +96,25 @@ const DEUDA: Record<string, string> = {
   "Disponibilidad.motivo":
     "por qué no hay motor de voz. Idioma pinta el estado «sin motor» (`Idioma.tsx:221`) y no el motivo que lo acompaña · mirada 17 · fase 3",
 
+  // ── La lectura de pantalla (C8), nacida en la fase 3 del sprint 002 ──
+  //
+  // El evento existe y cruza la costura con su muestra; las dos filas que lo pintan —la de Sesión y
+  // la de Honestidad— necesitan copy que la maqueta no tiene, y ese copy es la mirada 17-quater,
+  // aprobada por el usuario antes de maquetarse (bitácora, fase 3).
+  "EstadoDeLaPantalla.vista":
+    "la fila «Pantalla — solo cuando cambia» de Sesión, con su interruptor y el estado sin permiso · mirada 17-quater · fase 3",
+  "EstadoDeLaPantalla.bytesEnMemoria":
+    "la fila de la pantalla en «Qué vive en la memoria ahora» de Honestidad · mirada 17-quater · fase 3",
+
   // ── Y uno que NO es deuda: lo lee el emisor ──
   "InformeDelCorte.bytesEnRed":
     "lo lee RUST, no el webview: `ejecutar_el_corte` lo escribe en el log del corte. Cruza porque la forma tiene que cuadrar en las dos orillas, y el webview ya tiene el contador por su cuenta. No se paga: se declara",
 };
 
 /** Cada `export type X = … { … }`, con las variantes de una unión incluidas. */
-function tipos(texto: string): { tipo: string; desde: number; cuerpo: string }[] {
+function tipos(
+  texto: string,
+): { tipo: string; desde: number; cuerpo: string }[] {
   const salida: { tipo: string; desde: number; cuerpo: string }[] = [];
   for (const m of texto.matchAll(/export type (\w+)\s*=/g)) {
     let i = (m.index ?? 0) + m[0].length;
@@ -137,7 +151,8 @@ function campos(): Map<string, string> {
       if (NO_CRUZAN.has(tipo)) continue;
       cuerpo.split("\n").forEach((linea, k) => {
         const t = linea.trim();
-        if (t.startsWith("*") || t.startsWith("//") || t.startsWith("/*")) return;
+        if (t.startsWith("*") || t.startsWith("//") || t.startsWith("/*"))
+          return;
         for (const c of linea.matchAll(/[{;,]?\s*([a-zA-Z]\w*)\??:/g)) {
           if (DISCRIMINANTES.has(c[1])) continue;
           const clave = `${tipo}.${c[1]}`;
@@ -150,11 +165,15 @@ function campos(): Map<string, string> {
 }
 
 function fuentes(ruta = "src"): string[] {
-  if (statSync(ruta).isFile()) return /\.tsx?$/.test(ruta) && ruta !== FIXTURE ? [ruta] : [];
+  if (statSync(ruta).isFile())
+    return /\.tsx?$/.test(ruta) && ruta !== FIXTURE ? [ruta] : [];
   return readdirSync(ruta).flatMap((n) => fuentes(join(ruta, n)));
 }
 
-const CODIGO = fuentes().map((f) => ({ f, lineas: readFileSync(f, "utf8").split("\n") }));
+const CODIGO = fuentes().map((f) => ({
+  f,
+  lineas: readFileSync(f, "utf8").split("\n"),
+}));
 
 /**
  * Un LECTOR es un acceso a propiedad (`estado.bytes`) o una desestructuración que declara
@@ -164,19 +183,24 @@ const CODIGO = fuentes().map((f) => ({ f, lineas: readFileSync(f, "utf8").split(
  */
 function lector(campo: string): string | null {
   const acceso = new RegExp(`\\.${campo}\\b`);
-  const desestructura = new RegExp(`(?:const|let)\\s*\\{[^}]*\\b${campo}\\b[^}]*\\}\\s*=`);
+  const desestructura = new RegExp(
+    `(?:const|let)\\s*\\{[^}]*\\b${campo}\\b[^}]*\\}\\s*=`,
+  );
   for (const { f, lineas } of CODIGO) {
     for (let i = 0; i < lineas.length; i++) {
       const t = lineas[i].trim();
       if (t.startsWith("*") || t.startsWith("//")) continue;
-      if (acceso.test(lineas[i]) || desestructura.test(lineas[i])) return `${f}:${i + 1}`;
+      if (acceso.test(lineas[i]) || desestructura.test(lineas[i]))
+        return `${f}:${i + 1}`;
     }
   }
   return null;
 }
 
 const DECLARADOS = campos();
-const HUERFANOS = [...DECLARADOS.keys()].filter((c) => !lector(c.split(".")[1])).sort();
+const HUERFANOS = [...DECLARADOS.keys()]
+  .filter((c) => !lector(c.split(".")[1]))
+  .sort();
 
 describe("todo campo del contrato tiene un lector, o está declarado como deuda con su sitio", () => {
   it("hay contrato que revisar (un gate sobre cero campos no es un gate)", () => {
@@ -210,6 +234,9 @@ describe("todo campo del contrato tiene un lector, o está declarado como deuda 
     const mudas = Object.entries(DEUDA)
       .filter(([, razon]) => !/fase \d|No se paga/.test(razon))
       .map(([c]) => c);
-    expect(mudas, `deuda sin fase de pago asignada: ${mudas.join(" · ")}`).toEqual([]);
+    expect(
+      mudas,
+      `deuda sin fase de pago asignada: ${mudas.join(" · ")}`,
+    ).toEqual([]);
   });
 });

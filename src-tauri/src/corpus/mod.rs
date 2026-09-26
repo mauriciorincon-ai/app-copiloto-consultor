@@ -202,6 +202,16 @@ impl Corpus {
         self.indice.buscar(texto, cuantos)
     }
 
+    /// La búsqueda con **lo que hay en la pantalla** como contexto. Ver [`Indice::buscar_con_pantalla`].
+    pub fn buscar_con_pantalla(
+        &self,
+        texto: &str,
+        pantalla: &str,
+        cuantos: usize,
+    ) -> Result<Vec<Hallazgo>, String> {
+        self.indice.buscar_con_pantalla(texto, pantalla, cuantos)
+    }
+
     pub fn documentos(&self) -> &[Documento] {
         &self.documentos
     }

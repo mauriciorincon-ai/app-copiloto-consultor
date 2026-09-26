@@ -24,6 +24,7 @@ pub mod disparo;
 pub mod escucha;
 pub mod ficha;
 pub mod habla;
+pub mod pantalla;
 pub mod permisos;
 pub mod red;
 pub mod relleno;
@@ -360,6 +361,50 @@ impl escucha::Buscador for ElCorpus {
     }
 }
 
+/// **EL CORPUS CON LA PANTALLA DELANTE** (C8): el buscador que usa la sesión.
+///
+/// Es el mismo corpus, y a cada búsqueda le añade como contexto lo que la pantalla que comparte el
+/// cliente aporta ahora mismo (`pantalla::Refuerzo`), con menos peso que la pregunta y sin poder
+/// traer nada que la pregunta no pidiera (`corpus::Indice::buscar_con_pantalla`). Sin lectura de
+/// pantalla —apagada, sin permiso, sin reunión— el refuerzo está vacío y la búsqueda es
+/// exactamente la de siempre; lo vigila un test del índice.
+///
+/// La copia del texto de la pantalla que se hace para buscar **se pisa al terminar**: es texto de
+/// un tercero, y vive lo que dura la búsqueda.
+#[derive(Clone)]
+struct ConPantalla {
+    corpus: ElCorpus,
+    pantalla: std::sync::Arc<std::sync::Mutex<pantalla::Refuerzo>>,
+}
+
+impl escucha::Buscador for ConPantalla {
+    fn buscar(&self, texto: &str, cuantos: usize) -> Vec<corpus::Hallazgo> {
+        let mut contexto = self
+            .pantalla
+            .lock()
+            .map(|r| r.consulta())
+            .unwrap_or_default();
+        let hallazgos = self
+            .corpus
+            .0
+            .lock()
+            .ok()
+            .and_then(|g| {
+                g.as_ref().map(|c| {
+                    c.buscar_con_pantalla(texto, &contexto, cuantos)
+                        .unwrap_or_default()
+                })
+            })
+            .unwrap_or_default();
+        // SEGURIDAD: ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
+        unsafe { contexto.as_mut_vec() }.fill(0);
+        hallazgos
+    }
+    fn vocabulario(&self) -> Vec<String> {
+        escucha::Buscador::vocabulario(&self.corpus)
+    }
+}
+
 /// Dónde vive el índice: en la carpeta de datos de la app, **jamás en el repo ni al lado de los
 /// documentos del usuario**. La pantalla de corpus enseña esta ruta, porque quien confía su
 /// carpeta a una app tiene derecho a saber dónde acabó el derivado.
@@ -476,7 +521,13 @@ fn empezar_a_escuchar(
     if let Ok(mut i) = app.state::<LaVozQueSale>().idioma.lock() {
         *i = idioma_del_consultor.clone();
     }
-    let buscador = std::sync::Arc::new(el_corpus.inner().clone());
+    // La lectura de pantalla arranca ANTES que la escucha, porque el buscador de la escucha lleva
+    // dentro lo que la pantalla aporta: si arrancara después, los primeros turnos buscarían sin ella.
+    let refuerzo = arrancar_la_pantalla(&app, el_corpus.inner().clone());
+    let buscador = std::sync::Arc::new(ConPantalla {
+        corpus: el_corpus.inner().clone(),
+        pantalla: refuerzo,
+    });
     // Los nombres propios salen del corpus DEL USUARIO, jamás de la reunión: es lo que hace que el
     // diccionario no sea un transcript persistido con otro nombre.
     let jerga = diccionario_de_la_sesion(
@@ -530,13 +581,15 @@ fn empezar_a_escuchar(
 }
 
 #[tauri::command]
-fn dejar_de_escuchar(estado: tauri::State<'_, LaEscucha>) {
+fn dejar_de_escuchar(app: tauri::AppHandle, estado: tauri::State<'_, LaEscucha>) {
     if let Ok(mut g) = estado.0.lock() {
         if let Some(e) = g.take() {
             e.cortar();
             println!("[escucha] parada a petición del usuario");
         }
     }
+    // Sin sesión no se mira la pantalla: la lectura vive lo que vive la escucha.
+    parar_la_pantalla(&app);
 }
 
 /// Qué vive en memoria ahora mismo por culpa de la escucha. Lo pide la pantalla de Honestidad.
@@ -670,7 +723,12 @@ fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Inf
                 corte::Pieza::AudioDelMicrofono
                 | corte::Pieza::AudioDelSistema
                 | corte::Pieza::Transcript => {}
-                corte::Pieza::UltimoFrame => {}
+                // El cuadro de la reunión y lo leído de él: se pisan y el vigía se para.
+                corte::Pieza::UltimoFrame => {
+                    if parar_la_pantalla(app) {
+                        println!("[corte] la lectura de pantalla estaba en marcha: parada, cuadro y texto pisados");
+                    }
+                }
             }
         }
         piezas.push((*pieza, suerte));
@@ -744,7 +802,10 @@ pub fn run() {
             piezas_del_corte,
             pedir_ficha,
             modo_solo_audio,
-            estado_de_la_voz
+            estado_de_la_voz,
+            estado_de_la_pantalla,
+            lectura_automatica,
+            leer_la_pantalla_ahora
         ])
         .setup(|app| {
             // El invariante se comprueba ANTES de abrir nada y aborta el arranque si falla:
@@ -757,6 +818,7 @@ pub fn run() {
             app.manage(FondoDelRelleno(acople::fondo_de_escritorio()));
             app.manage(LaEscucha::default());
             app.manage(ElCorpus::default());
+            app.manage(LaPantalla::default());
             // La voz se pregunta al sistema aquí, una vez, y se deja dicho lo que hay: un Mac sin
             // voz para el idioma del usuario no puede usar el modo solo audio, y eso tiene que
             // verse en el arranque y no cuando el usuario pulse la tecla en mitad de una reunión.
@@ -813,6 +875,7 @@ pub fn run() {
                 e.cortar();
                 println!("[escucha] cerrada al salir");
             }
+            parar_la_pantalla(mango);
             registrar_acople(mango, "soltar al salir", &acople::soltar(&huella(mango)));
         }
     });
@@ -941,11 +1004,12 @@ const EVENTO_FICHA: &str = "ficha";
 fn pedir_ficha(
     escucha_viva: tauri::State<'_, LaEscucha>,
     el_corpus: tauri::State<'_, ElCorpus>,
+    la_pantalla: tauri::State<'_, LaPantalla>,
 ) -> Result<ficha::Aparicion, String> {
     // El cuerpo vive en `ficha_vigente` desde el sprint 002: `⌘⇧V` necesita **la misma** ficha para
     // decirla que esta enseña, y dos búsquedas escritas por separado acabarían encontrando cosas
     // distintas para la misma pregunta.
-    ficha_vigente(&escucha_viva, &el_corpus).ok_or_else(|| "todavía no he oído nada del cliente".into())
+    ficha_vigente(&escucha_viva, &el_corpus, &la_pantalla).ok_or_else(|| "todavía no he oído nada del cliente".into())
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1132,7 +1196,7 @@ fn conmutar_el_modo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> habla::LaVo
         println!("[habla] ⌘⇧V: modo solo audio ENCENDIDO · banda a {} px", ventana::ALTO_VOZ);
         // La ficha vigente se rearma igual que en `pedir_ficha`: con el último turno del cliente.
         // Si no se ha oído nada todavía, no hay nada que decir y el modo queda encendido, esperando.
-        match ficha_vigente(&escucha_viva, &el_corpus) {
+        match ficha_vigente(&escucha_viva, &el_corpus, &app.state::<LaPantalla>()) {
             Some(a) => decir_la_ficha(app, &a),
             None => println!("[habla] todavía no he oído nada del cliente: el modo queda a la espera"),
         }
@@ -1162,6 +1226,7 @@ fn estado_de_la_voz(estado: tauri::State<'_, LaVozQueSale>) -> habla::LaVoz {
 fn ficha_vigente(
     escucha_viva: &tauri::State<'_, LaEscucha>,
     el_corpus: &tauri::State<'_, ElCorpus>,
+    la_pantalla: &LaPantalla,
 ) -> Option<ficha::Aparicion> {
     use escucha::Buscador;
     let ultimo = escucha_viva.0.lock().ok()?.as_ref().and_then(|e| {
@@ -1171,7 +1236,12 @@ fn ficha_vigente(
             .find(|t| t.pista == capture::Pista::Sistema && !t.eco)
     })?;
     let empezo = std::time::Instant::now();
-    let buscador = el_corpus.inner().clone();
+    // Con la pantalla delante, igual que la ficha automática: `⌘⇧A` y el disparador no pueden
+    // buscar distinto la misma pregunta.
+    let buscador = ConPantalla {
+        corpus: el_corpus.inner().clone(),
+        pantalla: refuerzo_vigente(la_pantalla),
+    };
     let hallazgos = buscador.buscar(&ultimo.texto, ficha::TOP);
     let respuesta = ficha::armar(&ultimo.texto, &hallazgos);
     let ms = empezo.elapsed().as_millis() as u64;
@@ -1238,6 +1308,207 @@ fn con_el_callar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, coger: bool) {
             }
         }
     });
+}
+
+// ---------------------------------------------------------------------------------------------
+// Fase 3 del sprint 002 — LEER LA PANTALLA SOLO CUANDO CAMBIA (C8)
+// ---------------------------------------------------------------------------------------------
+
+/// **LA LECTURA DE PANTALLA**, viva lo que viva la sesión.
+///
+/// El interruptor (`encendida`) vive fuera de la lectura y **sobrevive a las sesiones** mientras la
+/// app esté abierta: si el usuario la apagó en una reunión con una NDA estricta, la siguiente sesión
+/// no la vuelve a encender a sus espaldas. No se guarda en disco —es una preferencia de esta
+/// sesión de la app, no del usuario— y arranca encendida, que es lo que la maqueta dibuja.
+struct LaPantalla {
+    lectura: std::sync::Mutex<Option<pantalla::Lectura>>,
+    encendida: AtomicBool,
+}
+
+impl Default for LaPantalla {
+    fn default() -> Self {
+        Self {
+            lectura: std::sync::Mutex::new(None),
+            encendida: AtomicBool::new(true),
+        }
+    }
+}
+
+/// El nombre del evento con el que Sesión y Honestidad se enteran de lo que hace la lectura.
+const EVENTO_PANTALLA: &str = "pantalla";
+
+/// Arranca la lectura de pantalla de una sesión y devuelve **lo que aporta a la búsqueda**, que el
+/// buscador de la escucha lleva dentro.
+///
+/// La lectura no conoce ni la escucha ni el corpus: recibe funciones. Lo que hace con cada pantalla
+/// nueva lo decide [`atender_la_pantalla`], aquí fuera.
+fn arrancar_la_pantalla<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+    el_corpus: ElCorpus,
+) -> std::sync::Arc<std::sync::Mutex<pantalla::Refuerzo>> {
+    parar_la_pantalla(app);
+    let estado = app.state::<LaPantalla>();
+    let (ojo, lector) = pantalla::apple::ojos();
+    println!(
+        "[pantalla] ojos «{}» · lectura automática {}",
+        ojo.nombre(),
+        if estado.encendida.load(Ordering::Relaxed) {
+            "encendida"
+        } else {
+            "apagada"
+        }
+    );
+    let (al_leer, al_cambiar) = (app.clone(), app.clone());
+    let entorno = pantalla::Entorno {
+        ojo,
+        lector,
+        objetivo: Box::new(|| {
+            sesion::objetivo_de(&sesion::mirar())
+                .map(|(bundle, senales)| pantalla::Objetivo { bundle, senales })
+        }),
+        vocabulario: Box::new(move || escucha::Buscador::vocabulario(&el_corpus)),
+        al_leer: Box::new(move |r, origen| atender_la_pantalla(&al_leer, r, origen)),
+        al_cambiar: Box::new(move |e| {
+            println!("[pantalla] {:?}", e.vista);
+            let _ = al_cambiar.emit(EVENTO_PANTALLA, e);
+        }),
+    };
+    let lectura = pantalla::Lectura::arrancar(entorno, estado.encendida.load(Ordering::Relaxed));
+    let refuerzo = lectura.refuerzo();
+    if let Ok(mut g) = estado.lectura.lock() {
+        *g = Some(lectura);
+    }
+    refuerzo
+}
+
+/// Para la lectura, si la había. Devuelve si había una.
+fn parar_la_pantalla<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> bool {
+    let vieja = app
+        .state::<LaPantalla>()
+        .lectura
+        .lock()
+        .ok()
+        .and_then(|mut g| g.take());
+    match vieja {
+        Some(l) => {
+            l.cortar();
+            true
+        }
+        None => false,
+    }
+}
+
+/// Lo que la pantalla aporta ahora mismo, o un refuerzo vacío si no hay lectura.
+fn refuerzo_vigente(
+    la_pantalla: &LaPantalla,
+) -> std::sync::Arc<std::sync::Mutex<pantalla::Refuerzo>> {
+    la_pantalla
+        .lectura
+        .lock()
+        .ok()
+        .and_then(|g| g.as_ref().map(|l| l.refuerzo()))
+        .unwrap_or_default()
+}
+
+/// **Una pantalla nueva, y qué se hace con ella.**
+///
+/// - Si la leyó el vigía solo y trae una cifra o uno de tus términos, se le pide ficha a la escucha
+///   —que la pasa por su disparador, con su espera— y **solo si hay ficha** se enseña.
+/// - Si la pidió el usuario con su atajo, se responde siempre, como `⌘⇧A`.
+///
+/// El candado de la escucha se suelta ANTES de hablar y de avisar a la banda: `decir_la_ficha` lo
+/// intenta coger por su cuenta, y con él cogido aquí, la voz se callaría la ficha de la pantalla.
+fn atender_la_pantalla<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+    refuerzo: &pantalla::Refuerzo,
+    origen: pantalla::Origen,
+) {
+    let mut consulta = refuerzo.consulta();
+    let aparicion = {
+        let escucha = app.state::<LaEscucha>();
+        let guardada = escucha.0.lock();
+        guardada.ok().and_then(|g| {
+            g.as_ref().and_then(|e| match origen {
+                pantalla::Origen::Sola if refuerzo.dispara() => e.por_pantalla(&consulta),
+                pantalla::Origen::Sola => None,
+                pantalla::Origen::Pedida if consulta.trim().is_empty() => None,
+                pantalla::Origen::Pedida => e.pedida_por_pantalla(&consulta),
+            })
+        })
+    };
+    // SEGURIDAD: ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
+    unsafe { consulta.as_mut_vec() }.fill(0);
+    match aparicion {
+        Some(a) => {
+            decir_la_ficha(app, &a);
+            let _ = app.emit(EVENTO_ESCUCHA, escucha::Novedad::Aparece(Box::new(a)));
+        }
+        None if origen == pantalla::Origen::Pedida => {
+            println!("[pantalla] leída a petición: nada legible que buscar")
+        }
+        None => {}
+    }
+}
+
+/// Qué hace la lectura de pantalla ahora mismo. Lo piden Sesión y Honestidad al montarse; después
+/// escuchan el evento `pantalla`.
+#[tauri::command]
+fn estado_de_la_pantalla(
+    la_pantalla: tauri::State<'_, LaPantalla>,
+) -> pantalla::EstadoDeLaPantalla {
+    la_pantalla
+        .lectura
+        .lock()
+        .ok()
+        .and_then(|g| g.as_ref().map(|l| l.estado()))
+        .unwrap_or(pantalla::EstadoDeLaPantalla {
+            vista: if la_pantalla.encendida.load(Ordering::Relaxed) {
+                pantalla::Vista::EsperandoLaReunion
+            } else {
+                pantalla::Vista::Apagada
+            },
+            bytes_en_memoria: 0,
+        })
+}
+
+/// **El interruptor de Sesión.** Apagada, la lectura no captura ni un cuadro y olvida lo que había
+/// leído; el atajo sigue leyendo cuando el usuario lo pide.
+#[tauri::command]
+fn lectura_automatica(
+    app: tauri::AppHandle,
+    la_pantalla: tauri::State<'_, LaPantalla>,
+    encendida: bool,
+) -> pantalla::EstadoDeLaPantalla {
+    la_pantalla.encendida.store(encendida, Ordering::Relaxed);
+    if let Ok(g) = la_pantalla.lectura.lock() {
+        if let Some(l) = g.as_ref() {
+            l.encender(encendida);
+        }
+    }
+    println!(
+        "[pantalla] lectura automática {}",
+        if encendida { "ENCENDIDA" } else { "APAGADA" }
+    );
+    let estado = estado_de_la_pantalla(la_pantalla);
+    let _ = app.emit(EVENTO_PANTALLA, estado);
+    estado
+}
+
+/// **La lectura bajo demanda, sin región** (decisión del usuario, 2026-09-26): lee UNA vez la
+/// ventana de la reunión, ahora, aunque la automática esté apagada. Es la salida para una NDA
+/// estricta: nada se lee salvo cuando el consultor lo pide.
+#[tauri::command]
+fn leer_la_pantalla_ahora(la_pantalla: tauri::State<'_, LaPantalla>) -> bool {
+    let hay = la_pantalla
+        .lectura
+        .lock()
+        .ok()
+        .and_then(|g| g.as_ref().map(|l| l.leer_ahora()))
+        .is_some();
+    if !hay {
+        println!("[pantalla] lectura pedida sin sesión: no hay reunión que leer");
+    }
+    hay
 }
 
 fn atender_el_atajo<R: tauri::Runtime>(

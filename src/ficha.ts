@@ -17,7 +17,14 @@ import type { Pista, Turno } from "./cuaderno";
 
 export type Unidad = "propuesta" | "marco" | "caso" | "cliente" | "perfil";
 
-export type MotivoDelDisparo = "pregunta" | "cifra" | "terminoDelCorpus" | "silencioLargo" | "atajo";
+export type MotivoDelDisparo =
+  | "pregunta"
+  | "cifra"
+  | "terminoDelCorpus"
+  | "silencioLargo"
+  | "atajo"
+  /** La pantalla que comparte el cliente cambió y trae una cifra o uno de tus términos (C8). */
+  | "pantalla";
 
 export type Fuente = {
   documento: string;
@@ -43,12 +50,7 @@ export type Ficha = {
  * el diccionario, donde el gate que exige que toda cadena esté en la maqueta puede vigilarlo.
  */
 export type IdDeManiobra =
-  | "credencial"
-  | "cifra"
-  | "plazo"
-  | "referencia"
-  | "contrato"
-  | "generica";
+  "credencial" | "cifra" | "plazo" | "referencia" | "contrato" | "generica";
 
 export type SinResultado = {
   clase: "sinResultado";
@@ -84,7 +86,13 @@ export type Aparicion = Respuesta & {
 export type Novedad =
   | { que: "empieza"; pista: Pista }
   | ({ que: "turno" } & Turno)
-  | { que: "sin-texto"; pista: Pista; desdeMs: number; hastaMs: number; motivo: string }
+  | {
+      que: "sin-texto";
+      pista: Pista;
+      desdeMs: number;
+      hastaMs: number;
+      motivo: string;
+    }
   | { que: "ruido"; pista: Pista; duracionMs: number }
   | ({ que: "aparece" } & Aparicion);
 
@@ -105,7 +113,9 @@ export type LoQueLaBandaEnseña = {
  * `paraLaMuestra` solo pinta **fuera de Tauri**: es el estado que el arnés de capturas pide por
  * URL, y lo que sostiene el gate de FIDELIDAD. Dentro del producto no se mira.
  */
-export function useFicha(paraLaMuestra: "ficha" | "sin-resultado" | string): LoQueLaBandaEnseña {
+export function useFicha(
+  paraLaMuestra: "ficha" | "sin-resultado" | string,
+): LoQueLaBandaEnseña {
   const m = useT().banda.muestra;
   const [ficha, setFicha] = useState<Aparicion | null>(() =>
     hayTauri() ? null : deMuestra(m, paraLaMuestra),
@@ -118,7 +128,8 @@ export function useFicha(paraLaMuestra: "ficha" | "sin-resultado" | string): LoQ
       escuchar<Novedad>("escucha", (n) => {
         // Un turno del cliente puede acabar en ficha o en nada, y hasta saberlo la banda dice
         // que está buscando. El eco no cuenta: es el consultor oyéndose a sí mismo.
-        if (n?.que === "turno" && n.pista === "sistema" && !n.eco) setBuscando(true);
+        if (n?.que === "turno" && n.pista === "sistema" && !n.eco)
+          setBuscando(true);
         if (n?.que === "aparece") {
           setFicha(n);
           setBuscando(false);
@@ -144,7 +155,10 @@ export function useFicha(paraLaMuestra: "ficha" | "sin-resultado" | string): LoQ
 }
 
 /** Los datos «Páramo Azul» de la maqueta, con los textos del diccionario. */
-function deMuestra(m: ReturnType<typeof useT>["banda"]["muestra"], estado: string): Aparicion {
+function deMuestra(
+  m: ReturnType<typeof useT>["banda"]["muestra"],
+  estado: string,
+): Aparicion {
   const comun = { motivo: "pregunta" as const, ms: 1_400, hora: m.hora1 };
   if (estado === "sin-resultado") {
     return {
@@ -168,7 +182,12 @@ function deMuestra(m: ReturnType<typeof useT>["banda"]["muestra"], estado: strin
     // clave funcionaba en español por casualidad —«propuesta» es las dos cosas— y dejaba la
     // unidad vacía en inglés. Lo cazó el gate de fidelidad: ocho encuadres en inglés y ninguno
     // en español.
-    fuente: { documento: m.fuente, seccion: null, unidad: "propuesta", conjeturada: false },
+    fuente: {
+      documento: m.fuente,
+      seccion: null,
+      unidad: "propuesta",
+      conjeturada: false,
+    },
     acumuladas: [
       { unidad: "marco", texto: m.acumulada1 },
       { unidad: "caso", texto: m.acumulada2 },

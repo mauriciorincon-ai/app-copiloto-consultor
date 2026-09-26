@@ -60,7 +60,12 @@ const PROTEGIDOS = [
   // otro nombre. El módulo no la usa y desde aquí no puede empezar a usarla en silencio.
   "src-tauri/src/habla",
   "src-tauri/src/ficha",
-  "src-tauri/src/screen",
+  // `pantalla` es la ranura que el sprint 001 reservó como `screen` y dejó vacía; el sprint 002, fase
+  // 3, la llenó con el nombre en español que usa el resto de la casa. Es el módulo de más superficie
+  // de la lista después de `escucha`: tiene en las manos cuadros de la ventana de la reunión y el
+  // texto que Vision leyó de ellos. El gate de abajo lo cazó en su primera corrida: la cabecera ya
+  // decía «MÓDULO PROTEGIDO» y la ranura seguía llamándose `screen`.
+  "src-tauri/src/pantalla",
   "src-tauri/src/sesion",
   "src-tauri/nativo",
   "src/capture",
@@ -76,6 +81,13 @@ const PROHIBIDO = [
   // nada, que es la peor forma de pasar: verde por no saber mirar.
   /\bFileManager\b/, /\bURLSession\b/, /\bNSURLConnection\b/, /contentsOf:/, /\bwrite\(to:/,
   /\bNWConnection\b/, /\bCFSocket/, /\bNSFileHandle\b/, /\bUserDefaults\b/,
+  // La PANTALLA (sprint 002, fase 3): las maneras que tienen Apple de convertir un cuadro de la
+  // reunión en algo que sobreviva a la memoria. `CGImageDestination` y las representaciones de
+  // `NSBitmapImageRep` lo hacen imagen (PNG, JPEG, TIFF); `SCRecordingOutput` —macOS 15— graba la
+  // ventana capturada directamente a un vídeo en disco, y `AVAssetWriter` escribe cualquier vídeo.
+  // Ninguna se usa, y desde aquí ninguna puede empezar a usarse sin que se vea.
+  /\bCGImageDestination/, /\bNSBitmapImageRep\b/, /\bpngData\b/, /\bjpegData\b/,
+  /\btiffRepresentation\b/, /\bSCRecordingOutput\b/, /\bAVAssetWriter\b/,
   // La descarga del modelo de reconocimiento que hace macOS. Es legítima y necesaria, y por eso
   // NO se prohíbe a secas: se obliga a que la línea lleve su marca y su ADR. Una puerta a la red
   // en un módulo efímero puede existir; lo que no puede es existir sin que se vea.

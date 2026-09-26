@@ -13,8 +13,8 @@
 //!
 //! No pasó, y no pasó por cómo está escrito este archivo: al añadir las pistas en la fase 3, el
 //! compilador no dejó compilar hasta resolverlas. La cuenta pasó de tres piezas cortadas a seis, y
-//! la única que sigue declarada como inexistente es la lectura de pantalla, que llega en el
-//! sprint 2 con su propia funcionalidad.
+//! la lectura de pantalla fue la última declarada como inexistente, hasta que llegó con C8 en la
+//! fase 3 del sprint 002. Desde entonces se cortan las ocho.
 //!
 //! Por eso el corte no es una lista de acciones sino una lista de **piezas** ([`Pieza`]), y cada
 //! una tiene que estar en uno de dos sitios: cortada, o declarada como que aún no existe.
@@ -43,7 +43,8 @@ pub enum Pieza {
     AudioDelMicrofono,
     /// Búfer circular del audio del sistema: el tap se destruye y el anillo se pisa.
     AudioDelSistema,
-    /// El último fotograma leído de la pantalla. **Todavía no existe: llega con C8, en el sprint 2.**
+    /// El último fotograma leído de la pantalla y el texto que se sacó de él. Nace en el sprint 002
+    /// con C8: se para el vigía y los dos se pisan con ceros.
     UltimoFrame,
     /// La ventana de turnos transcritos: se sobrescriben las letras antes de soltarlas.
     Transcript,
@@ -141,10 +142,11 @@ pub fn suerte_en_este_sprint(pieza: Pieza) -> Suerte {
         | Pieza::Transcript
         // La voz existe desde la fase 2 del sprint 002 y se corta de verdad: `stopSpeaking` tira la
         // frase en curso y la cola entera, y el modo queda apagado.
-        | Pieza::Voz => Suerte::Cortada,
-        // La lectura de pantalla es C8 y llega en el sprint 2. Mientras tanto se declara, que es
-        // lo contrario de disimularse.
-        Pieza::UltimoFrame => Suerte::AunNoExiste,
+        | Pieza::Voz
+        // La lectura de pantalla existe desde la fase 3 del sprint 002 (C8): se para el vigía y se
+        // pisan el cuadro de la reunión y el texto leído de él. Fue la última en llegar, y hasta
+        // entonces se declaró como inexistente en vez de disimularse.
+        | Pieza::UltimoFrame => Suerte::Cortada,
     }
 }
 
@@ -197,19 +199,15 @@ mod tests {
     /// En este sprint se corta lo que existe, y lo que no existe **se dice**. Un kill-switch que
     /// informara «8 de 8 cortadas» teniendo piezas sin construir sería una mentira cómoda.
     ///
-    /// La cuenta ha cambiado dos veces y **las dos las obligó el compilador**: en la fase 3 del
+    /// La cuenta ha cambiado tres veces y **las tres las obligó el compilador**: en la fase 3 del
     /// sprint 001, de 3 y 4 a 6 y 1, cuando las pistas de audio y el transcript pasaron de
-    /// declararse a cortarse de verdad; y en la fase 2 del sprint 002, a 7 y 1, con la voz que sale.
-    /// Ninguna de las dos veces hubo que acordarse de venir: no compilaba.
+    /// declararse a cortarse de verdad; en la fase 2 del sprint 002, a 7 y 1, con la voz que sale; y
+    /// en la fase 3 del sprint 002, a **8 y 0**, con la lectura de pantalla. Es la primera vez que
+    /// el kill-switch corta todas sus piezas, y la primera en que `AunNoExiste` no le toca a nadie.
     #[test]
-    fn en_este_sprint_se_cortan_siete_y_la_octava_se_declara() {
+    fn en_este_sprint_se_cortan_las_ocho() {
         let cortadas = TODAS.iter().filter(|p| suerte_en_este_sprint(**p) == Suerte::Cortada).count();
         let futuras = TODAS.iter().filter(|p| suerte_en_este_sprint(**p) == Suerte::AunNoExiste).count();
-        assert_eq!((cortadas, futuras), (7, 1));
-        assert_eq!(
-            suerte_en_este_sprint(Pieza::UltimoFrame),
-            Suerte::AunNoExiste,
-            "la única pieza que este sprint no puede cortar es la lectura de pantalla"
-        );
+        assert_eq!((cortadas, futuras), (8, 0));
     }
 }
