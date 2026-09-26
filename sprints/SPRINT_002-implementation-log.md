@@ -1098,10 +1098,61 @@ un huérfano nuevo en el sprint que los está pagando. Se presenta en el gate de
 
 | Gate | Qué impide | Demo en rojo |
 |---|---|---|
-| `habla` en `PROTEGIDOS` | que el módulo que dice la ficha aprenda a escribirla en disco | *(abajo)* |
-| `LaVoz` en el contrato (regla 19) | que Rust y TS lean el payload distinto, como el C1 del S1 | *(abajo)* |
-| `la_app_nunca_habla_por_los_altavoces_internos` | que la app hable por donde el cliente oye | *(abajo)* |
+| `habla` en `PROTEGIDOS` | que el módulo que dice la ficha aprenda a escribirla en disco | ✅ abajo |
+| `LaVoz` en el contrato (regla 19) | que Rust y TS lean el payload distinto, como el C1 del S1 | ✅ abajo, **por los dos lados** |
+| `la_app_nunca_habla_por_los_altavoces_internos` | que la app hable por donde el cliente oye | ✅ abajo |
 | `Pieza::Voz` | que el kill-switch deje la voz hablando | el compilador: `orden` es un `match` sin comodín |
+
+### Rojo 1 — `habla/` no puede escribir en disco
+
+Plantada una función que guarda en un archivo lo que se va a decir:
+
+```
+✕ src-tauri/src/habla/mod.rs:223  /std::fs\b/       →  pub fn a_voz_plantada(t: &str) { std::fs::write("/tmp/ficha-dicha.txt", t).ok(); }
+✕ src-tauri/src/habla/mod.rs:223  /\bfs::write\b/  →  pub fn a_voz_plantada(t: &str) { std::fs::write("/tmp/ficha-dicha.txt", t).ok(); }
+✕ 2 uso(s) de disco/red en módulos efímeros. Regla dura 1 (estándar 4-T).
+```
+
+Verde al revertir. **Los 21 archivos inspeccionados se nombran en la salida**, así que también se ve
+que el módulo entró en la lista y no solo que el barrido corrió.
+
+### Rojo 2 — la costura, por los dos lados
+
+`LaVoz.diciendo` renombrado a `hablando` **solo en Rust**:
+
+```
+test contrato::tests::el_contrato_del_repo_es_el_que_rust_emite ... FAILED
+  Regenéralo con `ACTUALIZA_CONTRATO=1 cargo test contrato` y mira qué cambió: si un campo se
+  renombró, la interfaz que lo leía dejó de leerlo.
+```
+
+Y al regenerarlo —que es lo que haría quien intentara «arreglarlo» sin mirar—, el otro lado:
+
+```
+src/contrato.generado.ts(236,5): error TS2353: '"hablando"' does not exist in type 'LaVoz'.
+src/contrato.generado.ts(242,5): error TS2353: …
+src/contrato.generado.ts(248,5): error TS2353: …
+```
+
+**Esto es el C1 del sprint 001, reproducido en dos minutos y atajado en los dos sitios.** Aquel
+defecto —Rust etiquetando por dentro y el webview leyendo por fuera— pasó 153 tests verdes y lo cazó
+un auditor. Este no llega al commit.
+
+### Rojo 3 — el candado
+
+La comprobación de la salida sustituida por `if false`:
+
+```
+test habla::pruebas::con_los_altavoces_internos_se_calla_y_dice_por_que ... FAILED
+test habla::pruebas::el_impedimento_que_se_cuenta_es_el_mas_grave ... FAILED
+thread 'la_app_nunca_habla_por_los_altavoces_internos' panicked at contra-el-mac-de-verdad.rs:1322:
+  la app habló por los altavoces internos: el cliente la habría oído
+```
+
+Tres tests en rojo, y el tercero **contra el Mac de verdad**, que es el que mide la salida real. Los
+otros dos siguieron verdes a propósito: `con_un_dispositivo_externo_se_habla` y
+`sin_saber_por_donde_suena_se_habla` afirman lo que la decisión 1 declara, y un candado abierto no
+los contradice. Verde los veinte al revertir.
 
 ## Lo que este sprint NO puede afirmar de la voz
 
