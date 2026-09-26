@@ -1460,3 +1460,93 @@ nuevos estados de las pantallas del cuaderno no interfieren con los aprobados. E
 verdad: la maqueta va por delante del producto hasta que la fase 3 construya lo que el usuario apruebe.
 El gate no corre en la CI (es `pnpm fidelidad`, del gate de fase), así que no bloquea el PR; se vuelve
 a correr al terminar la construcción y tiene que salir verde entonces.
+
+---
+
+## Miradas 17 y 17-bis — APROBADAS; la 17 con una pregunta que se volvió frase (2026-09-26)
+
+El usuario recorrió los seis archivos y nombró **cada estado por el rótulo de su botón**: llegó con
+ellos abiertos. Veredicto textual en `docs/diseno/README.md`.
+
+| Estado | Lo que dijo |
+|---|---|
+| radar · te graban · te vigilan · ampliada | «espectacular y muy bien» — **con la pregunta de «MinutaBot»**, abajo |
+| Sesión · pista caída | «perfecto, aviso importante para no enterarse al terminar la reunión» |
+| Permisos · la pantalla | «excelente la descripción de lo que se hace con los permisos» |
+| ficha · conjeturada · transcript | «muy bien, sin comentarios» |
+| Idioma · sprint 2 · sin motor | «excelente aviso de ausencia de motor de voz» |
+| Corpus · sprint 2 | «avisa cuáles documentos no se pudieron leer, con sus secciones» |
+
+**La regla 8, confirmada por quien la necesita:** «yo que tengo leve daltonismo los puedo identificar
+rápidamente». Es la primera vez que el ámbar y el coral se ven juntos en la banda, y la apuesta de la
+maqueta —distinguirlos por el símbolo, no por «más rojo»— queda validada por el usuario, no por mí.
+
+### «MinutaBot»: la pregunta, y por qué la respuesta es una frase en la banda
+
+> «esto me dejó loco: «MinutaBot» está en la lista de participantes; yo no quiero que haya un
+> participante adicional en la reunión […], no quiero que las notas dependan de esto. Digamos que el
+> cliente no quiere que MinutaBot esté aunque se le confirme que no hace más que tomar notas: no me
+> puedo quedar sin poder extraer notas»
+
+**La respuesta de producto no cambia: ya era así.** «MinutaBot» es el ejemplo sintético de un bot de
+notas **de otra persona** que el radar ve en la lista de participantes. Angel Ghost nunca entra a la
+llamada —escucha desde el Mac del consultor, por las dos pistas— y sus notas salen de ahí, no de ningún
+bot. La nota «Qué mirar» ya lo insinuaba («el cliente tiene derecho a traer su bot»), **pero la banda
+no lo decía**, y la banda es lo único que el consultor lee en mitad de la reunión.
+
+**Es la misma clase de defecto que la 16-bis**: un estado que se deja leer de dos maneras. Se paga
+igual, escribiéndolo en la maqueta y enseñándolo:
+
+> **«Ese bot no es Angel Ghost, que nunca entra a la llamada.»**
+> *That bot isn’t Angel Ghost, which never joins the call.*
+
+Dos decisiones de redacción:
+
+- **No dice «lo trajo el cliente».** El radar no puede saber quién invitó al bot —puede haberlo
+  invitado un colega del consultor, o él mismo—. Lo único **siempre cierto** es que no es Angel Ghost.
+- **Se añade, no se sustituye.** «Aviso, no bloqueo» viene de la mirada 1 y se queda.
+
+La misma frase entra en `kit.html` (§ 7, el catálogo del radar), para que el componente y la banda no
+digan cosas distintas; `design-sync/` regenerado. **Cabe, medido:** 867 px de ~897 en español y
+807 en inglés, a 88 px sobre la banda de 1178 de la maqueta (en el Mac del usuario la banda mide
+1470). Capturas leídas como imagen en oscuro/es y claro/en.
+
+**Mirada 17-ter, añadida en la 17** (precedente: la 3-bis se añadió en la 3). Va **antes de la
+fase 4**, que es la que construye el radar, así que no frena la fase 3.
+
+**Y la otra mitad de la pregunta — las notas.** Son la C9 completa, sprint 003 «El cuaderno y el
+cierre» (`SPRINT_002.md:44-45` de la planeadora), y su maqueta está aprobada desde las miradas 4, 4-bis
+y 4-ter (`notas.html`): la bandeja con cuenta atrás, «Guardar / No» por propuesta, «Descartar todas», y
+en el archivo cifrado «Exportar a texto». Lo que el usuario añade —«siempre vaciando todas las notas en
+raw al seleccionar las que necesito»— es la regla 1 tal como la decidió en la mirada 3: lo elegido
+queda; lo crudo muere.
+
+### `⌘⇧R qué ve`: aprobada «por ahora»
+
+> «Por ahora veo bien que hayas puesto la tecla nueva que inventaste»
+
+Coste declarado en la presentación: en los navegadores `⌘⇧R` es la recarga forzada (Chrome, Firefox)
+o el lector (Safari), y cogerla globalmente se la quita a la reunión, como ya pasa con `⌘⇧T`.
+**Propuesta para la fase 4, que no cambia el dibujo:** registrarla **solo mientras el coral esté en
+pantalla**, con el mismo patrón que `⎋` en el modo solo audio (decisión 3 de la fase 2). El coste
+desaparece en toda reunión sin alerta coral, que es casi todas.
+
+### La regla nueva del usuario: cada mirada, en una matriz
+
+> «Una regla: necesito que cada vez que me mandes a mirar algo me digas qué exactamente debo mirar,
+> concreto y corto, y en el mismo lugar donde están; una matriz es ideal, pero específica: no te leo
+> la mente qué estás esperando»
+
+**Qué falló en mi mensaje de la 17:** los sitios iban en una tabla y las seis preguntas en una lista
+debajo. El usuario tenía que cruzarlas —qué pregunta va con qué botón— y adivinar qué respuesta
+esperaba yo.
+
+**Desde ahora, toda mirada se presenta como una matriz** donde cada fila lleva, junta:
+**archivo · botón · qué mirar exactamente · qué respuesta espero**. Nada de preguntas sueltas debajo.
+Guardado en la memoria del agente como preferencia permanente.
+
+**Para las «Sugerencias de mejora al método» del summary:** la regla 10 fija la **primera línea**
+(pregunta simple + lugar), pero no dice que **lo que hay que juzgar viaje en la misma fila que el
+lugar**. Con varias pantallas y varios botones en una mirada, la pregunta y el sitio separados
+reproducen el problema que la regla quería evitar: el usuario no sabe qué se espera de él. La
+planeadora decide si lo sube al kit.
