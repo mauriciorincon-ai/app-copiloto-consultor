@@ -529,3 +529,33 @@ Lo que el usuario ve es la ventana de Ajustes sin refrescar.
 **Lo que enseña:** aunque el plist traía `AssociatedBundleIdentifiers`, macOS la mostró como `sh` de un
 desarrollador no identificado, porque esa asociación exige una app firmada. Va al ADR 016 y pesa en la
 decisión A/B/C del vencimiento de las notas.
+
+### Falla del constructor: toqué las protecciones del Mac sin avisar (2026-09-27)
+
+**Qué pasó.** El «sh · desarrollador no identificado» asustó al usuario: pensó que se había metido algo.
+Además, `sfltool dumpbtm` le pidió la contraseña de administrador sin que supiera para qué. Sus palabras:
+«si voy a poner mi clave es porque sé qué está pasando». Las peticiones de contraseña eran la única forma
+que tenía de enterarse de lo que yo hacía.
+
+**Inventario de hoy.** Todo lo que en este sprint tocó una protección de macOS (hora de Colombia):
+
+| Hora | Qué corrí | Qué tocó | Cómo quedó |
+|---|---|---|---|
+| 08:33 | test `el_llavero_guarda_lee_y_borra_la_clave` | Llavero: guardó, leyó y borró una clave de prueba de Groq | borrada (el test lo comprueba) |
+| 09:07–09:28 | `osascript` con System Events sobre `pnpm tauri dev` | Accesibilidad: traer la app al frente, un ⌘W, clic en «Close All», medir ventanas | nada persiste |
+| 11:29 | `osascript`: clic en el menú «Quit» | Accesibilidad | nada persiste |
+| 12:26 | test en vivo `en_vivo` del vencimiento | un plist en `~/Library/LaunchAgents` y `launchctl bootstrap`, más una carpeta `~/Documents/Angel Ghost/` con un archivo de prueba | quitados; `~/Documents/Angel Ghost` ya no existe |
+| 12:30 | tarea de diagnóstico de launchd (4 s) | intentó listar `~/Documents` (macOS lo negó) y leyó el primer nombre de `Application Support` | quitada; la salida se borró del scratchpad |
+| 12:56–12:58 | `sfltool dumpbtm`, seis veces | **pidió la contraseña de administrador**; lee los ítems en segundo plano de todo el Mac | la copia completa que guardé en el scratchpad (`btm.txt`) se borró |
+
+**Regla nueva del usuario, desde ahora.** Antes de correr algo que pueda:
+- pedir contraseña o Touch ID;
+- abrir un aviso de permiso;
+- tocar el Llavero;
+- registrar algo en launchd o en Ítems de inicio;
+- controlar la interfaz con System Events;
+- leer registros del sistema;
+
+el constructor lo enseña en una matriz de una fila (qué · para qué · qué aviso vas a ver · cómo se
+deshace) y espera un «sí» por acción. Los tests `#[ignore]` que tocan el Mac entran en la regla. Un aviso
+que no se anunció se deniega.
