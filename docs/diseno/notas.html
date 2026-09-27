@@ -25,6 +25,10 @@
     <button data-estado="s3-vacio">sprint 3 · sin reuniones</button>
     <button data-estado="s3-borrar">sprint 3 · borrar</button>
     <button data-estado="s3-no-exporto">sprint 3 · no se exportó</button>
+    <button data-estado="s3-propuestas">sprint 3 · durante, con propuestas</button>
+    <button data-estado="s3-cerrar-bandeja">sprint 3 · al cerrar, con propuestas</button>
+    <button data-estado="s3-cerrar-cero">sprint 3 · al cerrar, ventana cero</button>
+    <button data-estado="s3-vencida">sprint 3 · bandeja vencida</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -45,6 +49,10 @@
   <div class="n" data-para="s3-vacio"><b>Qué mirar (cierre de la fase 1 — forma):</b> el archivo el primer día, sin ninguna reunión guardada: dónde vivirán y con qué llave, y la retención que ya puedes elegir.</div>
   <div class="n" data-para="s3-borrar"><b>Qué mirar (cierre de la fase 1 — forma):</b> «Borrar ahora» <b>pregunta antes</b>, como exportar. La maqueta aprobada borraba al primer clic, y un clic de más se llevaba una reunión para siempre.</div>
   <div class="n" data-para="s3-no-exporto"><b>Qué mirar (cierre de la fase 1 — forma):</b> si no desbloqueas (Touch ID cancelado), no se exporta nada y se dice: tus notas siguen cifradas y en su sitio.</div>
+  <div class="n" data-para="s3-propuestas"><b>Qué mirar (mirada 20 — forma, decisión de diseño no escrita):</b> «durante» con las propuestas dentro. En la maqueta aprobada, tu nota y las propuestas eran dos estados; en la app son una sola pantalla, así que las propuestas van <b>debajo, a lo ancho</b>, las más nuevas primero, con «Guardar» y «No» en cada una y ⌃⌥↵ para la última; arriba a la derecha, cuántas guardaste. Debajo, la lista entera de lo que sabe reconocer, en una frase: son las reglas, y no hay más. La franja verde se acorta a una línea para dejarles sitio.</div>
+  <div class="n" data-para="s3-cerrar-bandeja"><b>Qué mirar (mirada 20 — forma):</b> «al cerrar» cuando quedan propuestas sin decidir. Las dos columnas no cambian. Debajo entra una franja: cuántas quedan sin decidir, <b>la ventana, que eliges aquí mismo</b> (3 h de fábrica), qué les pasa, y que <b>las que guardaste van en tu archivo</b>. Es el único sitio donde eliges la ventana antes de que exista la bandeja.</div>
+  <div class="n" data-para="s3-cerrar-cero"><b>Qué mirar (mirada 20 — forma):</b> lo mismo con la ventana en <b>«al cerrar»</b>, que es el cero: no hay bandeja. La franja deja de avisar y dice lo que pasará al pulsar «Guardar cifrado y cerrar»: las cuatro sin decidir mueren ahí, con lo demás, y no se escribe nada.</div>
+  <div class="n" data-para="s3-vencida"><b>Qué mirar (mirada 20 — forma):</b> la bandeja al llegar a cero, si la estabas mirando. La cuenta se apaga, dice a qué hora venció y qué pasó con cada cosa, y «Esperan tu decisión» se queda vacía. A la derecha, la bandeja entra en «Ya murió», en 0 B, junto a lo que murió al cerrar. Si no la estabas mirando, no hay aviso: la bandeja sencillamente ya no está.</div>
   <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
 </div>
 
@@ -74,6 +82,9 @@
       <span class="estado halo" data-en="s3-vacio"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
       <span class="estado halo" data-en="s3-borrar"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
       <span class="estado halo" data-en="s3-no-exporto"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
+      <span class="estado halo" data-en="s3-propuestas"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
+      <span class="estado halo" data-en="s3-cerrar-bandeja s3-cerrar-cero"><svg class="ic s"><use href="#i-reloj"/></svg><span lang="es">Cerrando…</span><span lang="en">Closing…</span></span>
+      <span class="estado mute" data-en="s3-vencida"><svg class="ic s"><use href="#i-reloj"/></svg><span lang="es">Bandeja · vencida</span><span lang="en">Tray · expired</span></span>
     </div>
   </nav>
 
@@ -673,6 +684,132 @@
             <tr class="apagada"><td class="mono">sur-del-valle-2026-07-02.ghost</td><td class="mono">02 jul</td><td class="num">31 KB</td><td class="num">10 d</td></tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- ===== sprint 3 · propuestas y bandeja (mirada 20, decisiones de diseño no escritas) ===== -->
+    <div data-en="s3-propuestas" style="display:flex;flex-direction:column;gap:9px">
+      <div class="grid-2" style="grid-template-columns:1.3fr 1fr;gap:12px;align-items:stretch">
+        <div class="tarjeta" style="display:flex;flex-direction:column;gap:8px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Tu nota</span><span lang="en">Your note</span></h2><span class="estado ok"><svg class="ic s"><use href="#i-ojo-off"/></svg><span lang="es">el cliente no la ve</span><span lang="en">the client can’t see it</span></span><span class="tecla"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>N</kbd></span></div>
+          <div class="nota-campo" role="textbox" aria-multiline="true" style="min-height:0;flex:1 1 auto">
+            <p><span lang="es">Piden la cuarta fuente (Excel de logística). Recordarles que va como adicional — está en §3.2.</span><span lang="en">They are asking for the fourth source (logistics Excel). Remind them it is an add-on — it is in §3.2.</span></p>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="tarjeta" style="padding-bottom:8px">
+            <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Fichas que fijaste</span><span lang="en">Cards you pinned</span></h2><span class="tecla"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>P</kbd></span></div>
+            <div class="mas"><svg class="ic s"><use href="#i-pin-lleno"/></svg><span class="titulos crece"><span lang="es">Limpieza de datos: hasta tres fuentes</span><span lang="en">Data cleansing: up to three sources</span></span><span class="n">§3.2</span></div>
+            <div class="mas"><svg class="ic s"><use href="#i-pin-lleno"/></svg><span class="titulos crece"><span lang="es">Sur del Valle: 11 semanas reales</span><span lang="en">Sur del Valle: 11 weeks actual</span></span><span class="n"><span lang="es">caso</span><span lang="en">case</span></span></div>
+          </div>
+          <div class="tarjeta" style="padding-bottom:8px">
+            <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Acuerdos</span><span lang="en">Agreements</span></h2>
+            <div class="mas"><svg class="ic s"><use href="#i-check-circle"/></svg><span class="titulos crece"><span lang="es">Cuarta fuente: cotización aparte</span><span lang="en">Fourth source: quoted separately</span></span></div>
+            <div role="textbox" class="acuerdo-campo muestra"><span lang="es">Escribe el acuerdo y pulsa ↵</span><span lang="en">Type the agreement and press ↵</span></div>
+            <p style="font-size:11.5px;color:var(--ink-2);margin-top:4px"><span lang="es">Los marcas tú. La app no decide qué fue un acuerdo.</span><span lang="en">You mark them. The app does not decide what counted as an agreement.</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="tarjeta" style="display:flex;flex-direction:column;gap:4px">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Te propongo guardar esto</span><span lang="en">I suggest saving this</span></h2><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">1 guardada</span><span lang="en">1 saved</span></span><span class="tecla"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>↵</kbd></span></div>
+        <div class="propuesta">
+          <svg class="ic"><use href="#i-reloj"/></svg>
+          <span class="que"><span lang="es">Fecha real del tablero: 12 semanas desde la firma.</span><span lang="en">Real dashboard date: 12 weeks from signature.</span></span>
+          <span class="de"><span class="origen"><span lang="es">lo dijiste tú · 14:16</span><span lang="en">you said it · 14:16</span></span><span lang="es">· cifra y fecha</span><span lang="en">· figure and date</span></span>
+          <span class="acciones"><button class="btn mini primario"><span lang="es">Guardar</span><span lang="en">Save</span></button><button class="btn mini"><span lang="es">No</span><span lang="en">No</span></button></span>
+        </div>
+        <div class="propuesta">
+          <svg class="ic"><use href="#i-alert"/></svg>
+          <span class="que"><span lang="es">Dijeron «cuatro fuentes»; tu ficha fijada dice «tres».</span><span lang="en">They said “four sources”; your pinned card says “three”.</span></span>
+          <span class="de"><span class="origen"><span lang="es">choca con una ficha que fijaste</span><span lang="en">clashes with a card you pinned</span></span><span lang="es">· §3.2</span><span lang="en">· §3.2</span></span>
+          <span class="acciones"><button class="btn mini primario"><span lang="es">Guardar</span><span lang="en">Save</span></button><button class="btn mini"><span lang="es">No</span><span lang="en">No</span></button></span>
+        </div>
+        <p style="font-size:11.5px;color:var(--ink-2)"><span lang="es">Son reglas, y esta es la lista entera: cifras, plazos y fechas · tus compromisos · lo que choca con una ficha que fijaste · nombres que no están en tu corpus · preguntas que te hicieron.</span><span lang="en">These are rules, and this is the whole list: figures, terms and dates · your commitments · anything clashing with a card you pinned · names missing from your corpus · questions you were asked.</span></p>
+      </div>
+      <div class="franja ok" role="status">
+        <svg class="ic relleno"><use href="#i-check-circle"/></svg>
+        <div>
+          <strong><span lang="es">Solo sobrevive lo tuyo: tu nota, tus fichas fijadas, tus acuerdos y las propuestas que guardes</span><span lang="en">Only what is yours survives: your note, your pinned cards, your agreements and the suggestions you save</span></strong>
+        </div>
+      </div>
+    </div>
+
+    <div data-en="s3-cerrar-bandeja s3-cerrar-cero" style="display:flex;flex-direction:column;gap:12px">
+      <div class="grid-2" style="gap:12px;align-items:start">
+        <div class="tarjeta" style="padding-bottom:8px">
+          <h2 class="seccion" style="margin:0 0 6px"><span lang="es">Se va a guardar</span><span lang="en">Will be saved</span></h2>
+          <div class="buffer"><svg class="ic s"><use href="#i-nota"/></svg><span class="que"><span lang="es">Tus notas</span><span lang="en">Your notes</span></span><span class="donde"><span lang="es">3 párrafos</span><span lang="en">3 paragraphs</span></span><span class="cuanto">2 KB</span></div>
+          <div class="buffer"><svg class="ic s"><use href="#i-pin-lleno"/></svg><span class="que"><span lang="es">Fichas fijadas</span><span lang="en">Pinned cards</span></span><span class="donde"><span lang="es">2 · titular y fuente</span><span lang="en">2 · headline and source</span></span><span class="cuanto">1 KB</span></div>
+          <div class="buffer"><svg class="ic s"><use href="#i-check-circle"/></svg><span class="que"><span lang="es">Acuerdos</span><span lang="en">Agreements</span></span><span class="donde"><span lang="es">2 · marcados por ti</span><span lang="en">2 · marked by you</span></span><span class="cuanto">1 KB</span></div>
+          <label class="conm off" style="margin:8px 2px 2px"><span class="track"></span><span class="etq"><span lang="es">Conservar mis turnos</span><span lang="en">Keep my turns</span></span></label>
+          <p style="font-size:11.5px;color:var(--ink-2);margin-top:4px"><span lang="es">Nace apagado, y así está: esta reunión no guardó tus turnos. Si lo enciendes, se guardan desde la próxima. <b>El audio no se guarda nunca</b>, tampoco el tuyo: lo que queda de ti es texto.</span><span lang="en">It ships off, and it is off: this meeting did not keep your turns. Turn it on and they are kept from the next one. <b>Audio is never saved</b>, not even yours: what remains of you is text.</span></p>
+        </div>
+        <div class="tarjeta" style="padding-bottom:8px">
+          <h2 class="seccion" style="margin:0 0 6px"><span lang="es">Muere al cerrar</span><span lang="en">Dies on close</span></h2>
+          <div class="buffer muerto"><svg class="ic s"><use href="#i-sistema"/></svg><span class="que"><span lang="es">Voz del cliente</span><span lang="en">Client's voice</span></span><span class="donde"><span lang="es">sin interruptor que lo cambie</span><span lang="en">no switch can change this</span></span><span class="cuanto">0 B</span></div>
+          <div class="buffer muerto"><svg class="ic s"><use href="#i-ojo"/></svg><span class="que"><span lang="es">Sus turnos del transcript</span><span lang="en">Their turns in the transcript</span></span><span class="donde"><span lang="es">63 turnos</span><span lang="en">63 turns</span></span><span class="cuanto">0 B</span></div>
+          <div class="buffer muerto"><svg class="ic s"><use href="#i-pantalla"/></svg><span class="que"><span lang="es">Lo leído de la pantalla</span><span lang="en">What was read off the screen</span></span><span class="donde"><span lang="es">9 lecturas</span><span lang="en">9 reads</span></span><span class="cuanto">0 B</span></div>
+          <div class="buffer muerto"><svg class="ic s"><use href="#i-mic"/></svg><span class="que"><span lang="es">Tu propio audio</span><span lang="en">Your own audio</span></span><span class="donde"><span lang="es">también muere</span><span lang="en">dies too</span></span><span class="cuanto">0 B</span></div>
+        </div>
+      </div>
+      <div class="franja warn" role="status" data-en="s3-cerrar-bandeja">
+        <svg class="ic"><use href="#i-reloj"/></svg>
+        <div>
+          <strong><span lang="es">4 propuestas sin decidir esperarán en la bandeja</span><span lang="en">4 undecided suggestions will wait in the tray</span></strong>
+          <div class="ventanas" style="margin:6px 0 4px">
+            <button class="op"><span lang="es">al cerrar</span><span lang="en">on close</span></button>
+            <button class="op">1 h</button>
+            <button class="op on"><svg class="ic s relleno"><use href="#i-check-circle"/></svg>3 h</button>
+            <button class="op"><span lang="es">fin del día</span><span lang="en">end of day</span></button>
+            <button class="op">24 h</button>
+          </div>
+          <p><span lang="es">Las 3 que guardaste van en tu archivo. Estas, cifradas y fuera de Documentos, se borran solas al llegar a cero, aunque no abras la app.</span><span lang="en">The 3 you saved go in your file. These, encrypted and outside Documents, delete themselves at zero, even if you never open the app.</span></p>
+        </div>
+      </div>
+      <div class="franja mute" role="status" data-en="s3-cerrar-cero">
+        <svg class="ic"><use href="#i-reloj"/></svg>
+        <div>
+          <strong><span lang="es">4 propuestas sin decidir mueren al cerrar</span><span lang="en">4 undecided suggestions die on close</span></strong>
+          <div class="ventanas" style="margin:6px 0 4px">
+            <button class="op on"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">al cerrar</span><span lang="en">on close</span></button>
+            <button class="op">1 h</button>
+            <button class="op">3 h</button>
+            <button class="op"><span lang="es">fin del día</span><span lang="en">end of day</span></button>
+            <button class="op">24 h</button>
+          </div>
+          <p><span lang="es">Elegiste «al cerrar»: no hay bandeja y no se escribe nada. Las 3 que guardaste van en tu archivo.</span><span lang="en">You chose “on close”: there is no tray and nothing is written. The 3 you saved go in your file.</span></p>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <span class="mono" style="color:var(--ink-2);font-size:11.5px">2026-09-20 · 47 min → reunion-2026-09-20-1402.ghost</span>
+        <div class="fila" style="gap:8px">
+          <span class="crece"></span>
+          <button class="btn"><span lang="es">Cerrar sin guardar</span><span lang="en">Close without saving</span></button>
+          <button class="btn primario"><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Guardar cifrado y cerrar</span><span lang="en">Save encrypted and close</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div data-en="s3-vencida" style="display:flex;flex-direction:column;gap:10px">
+      <div class="cuenta vencida" role="status">
+        <svg class="ic"><use href="#i-reloj"/></svg>
+        <span class="reloj">0:00:00</span>
+        <span class="txt"><span lang="es"><b>La bandeja venció a las 17:32 y se borró sola.</b> Las 4 propuestas que no decidiste murieron; las 3 que guardaste están en tu archivo.</span><span lang="en"><b>The tray expired at 17:32 and deleted itself.</b> The 4 suggestions you did not decide died; the 3 you saved are in your file.</span></span>
+      </div>
+      <div class="grid-2" style="grid-template-columns:1.5fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta" style="display:flex;flex-direction:column;gap:8px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Esperan tu decisión</span><span lang="en">Waiting on you</span></h2><span class="mono" style="color:var(--ink-2);font-size:11px">0 · 0 B</span></div>
+          <p style="font-size:12.5px;color:var(--ink-2)"><span lang="es">Nada. Lo que guardaste sigue en la reunión del 20 sep, cifrado, con su retención.</span><span lang="en">Nothing. What you saved stays in the 20 Sep meeting, encrypted, with its retention.</span></p>
+          <div class="fila"><span class="crece"></span><button class="btn"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Ir a tus reuniones</span><span lang="en">Go to your meetings</span></button></div>
+        </div>
+        <div class="tarjeta" style="padding-bottom:6px">
+          <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Ya murió</span><span lang="en">Already dead</span></h2>
+          <div class="buffer muerto"><svg class="ic s"><use href="#i-mic"/></svg><span class="que"><span lang="es">Audio · las dos pistas</span><span lang="en">Audio · both tracks</span></span><span class="cuanto">0 B</span></div>
+          <div class="buffer muerto"><svg class="ic s"><use href="#i-ojo"/></svg><span class="que"><span lang="es">Transcript del cliente</span><span lang="en">Client transcript</span></span><span class="cuanto">0 B</span></div>
+          <div class="buffer muerto"><svg class="ic s"><use href="#i-pantalla"/></svg><span class="que"><span lang="es">Lecturas de pantalla</span><span lang="en">Screen reads</span></span><span class="cuanto">0 B</span></div>
+          <div class="buffer muerto"><svg class="ic s"><use href="#i-reloj"/></svg><span class="que"><span lang="es">La bandeja · 4 propuestas</span><span lang="en">The tray · 4 suggestions</span></span><span class="cuanto">0 B</span></div>
+          <p style="font-size:11px;color:var(--ink-2);margin-top:6px"><span lang="es">Las tres primeras murieron al cerrar; la bandeja, al vencer. Ninguna tiene copia.</span><span lang="en">The first three died on close; the tray, on expiry. None has a copy.</span></p>
+        </div>
       </div>
     </div>
 

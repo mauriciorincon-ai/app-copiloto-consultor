@@ -184,6 +184,9 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .franja.err .ic { color: var(--err); }
 .franja.ok   { border-color: var(--ok);   background: var(--ok-tint); }
 .franja.ok .ic { color: var(--ok); }
+/* Mirada 20: una franja que informa sin avisar de nada (la bandeja en cero: no hay nada que vigilar). */
+.franja.mute { border-color: var(--line-2); background: var(--surface-2); }
+.franja.mute .ic { color: var(--ink-2); }
 .franja ul { margin: 4px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 10px; color: var(--ink-2); }
 .franja ul li::before { content: "·"; margin-right: 6px; color: var(--ink-2); }
 .franja ul li:first-child::before { content: none; }
@@ -196,6 +199,8 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 /* Una tecla de algo que todavía no existe (fijar, anotar): se ve, apagada y a trazos, y el lector
    de pantalla oye «todavía no» (auditoría del S2, M12). */
 .tecla.pendiente { color: var(--mute); }
+/* Mirada 20: la ficha que fijaste con ⌃⌥P, donde estaba la tecla. Mide lo mismo que una tecla. */
+.tecla.fijada { color: var(--ok); }
 .tecla.pendiente kbd { color: var(--mute); border-style: dashed; }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 
@@ -489,6 +494,12 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
    --------------------------------------------------------------------------- */
 .banda .cliente-b { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; }
 .banda .cliente-b.warn { color: var(--warn); }
+/* Mirada 20 (sprint 3): la propuesta de nota, pasiva, en la línea de estado. Empuja el contador de
+   red a la derecha en vez de él; nunca pasa de una línea. */
+.banda .propuesta-b { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 60%; margin-left: auto; color: var(--halo); font-size: var(--t-meta); white-space: nowrap; }
+.banda .propuesta-b .que-b { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.banda .propuesta-b .tecla { flex: 0 0 auto; }
+.banda .propuesta-b:not([hidden]) + .red { margin-left: 12px; }
 
 /* esperando — el vacío está diseñado: una frase en Charter, no un ícono gris */
 .banda .voz-b { font-family: var(--font-evidencia); font-style: italic; font-size: 15px; line-height: 1.4; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -590,6 +601,10 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .cuenta .reloj { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 19px; line-height: 1.1; color: var(--halo); }
 .cuenta .txt { font-size: var(--t-meta); color: var(--ink-2); line-height: 1.4; }
 .cuenta .txt b { color: var(--ink); }
+/* Mirada 20: la bandeja al llegar a cero. La cuenta se apaga: sin acento, porque ya no hay nada que
+   decidir. */
+.cuenta.vencida { border-color: var(--line-2); background: var(--surface-2); }
+.cuenta.vencida .ic, .cuenta.vencida .reloj { color: var(--ink-2); }
 .ventanas { display: flex; flex-wrap: wrap; gap: 5px; }
 .ventanas .op { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: var(--r-chip); border: var(--borde) solid var(--line-2); background: var(--surface-2); color: var(--ink-2); font-family: var(--font-mono); font-size: var(--t-mono); }
 .ventanas .op.on { border-color: var(--halo); background: var(--halo-tint); color: var(--halo); }

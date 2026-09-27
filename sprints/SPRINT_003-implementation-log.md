@@ -382,3 +382,55 @@ Su alcance exacto se decide en la **mirada 22** (cierre de la fase 3).
 - el archivo `.ghost` con 600 en `~/Documents/Angel Ghost/`;
 - el cuaderno en negro en Meet;
 - ⌃⌥N con el cursor al final.
+
+---
+
+## Fase 2 — Propuestas y bandeja (arranque, 2026-09-27)
+
+**El «continúa» del usuario llegó sin veredicto.** Tras el compact, el usuario escribió «continua» sin
+comentar ninguna fila de la matriz del cierre de la fase 1 ni la decisión sobre ⌃⌥P. Por la regla 10,
+«continúa» avanza el proceso pero no aprueba nada visual. Se repregunta y **no se construye nada encima
+de esas siete pantallas** hasta tener el veredicto. Es el rojo del gate de mirada, visto otra vez.
+
+**Desviación del plan de miradas, declarada.** El plan aprobado dice que la mirada 20 viaja en el cierre
+de la fase 1. No viajó: aquel mensaje llevó la matriz de las siete pantallas y dejó la mirada 20
+condicionada a la decisión sobre ⌃⌥P. Se corrige ahora, **antes de construir ninguna pantalla de la
+fase 2**, así que el orden «mirar antes de construir» se conserva. La decisión sobre ⌃⌥P entra como una
+fila más, maquetada, para que se decida con el archivo abierto y sin otra vuelta.
+
+**ADR 016 «las propuestas y la bandeja»**, escrito antes de la fase:
+- cinco reglas publicadas en un catálogo es/en: `cifra`, `compromiso` (solo tus turnos), `choque`,
+  `nombre` y `pregunta` (solo los del cliente);
+- de tus turnos, la frase; del cliente, jamás el turno, sino un hecho en una línea con un fragmento de
+  ≤ 8 palabras;
+- ⌃⌥↵ guarda la última, como la maqueta aprobada;
+- la bandeja va en Application Support, **no en Documentos**, porque la papelera de iCloud guarda 30 días;
+- el vencimiento va por capas: al arrancar, un reloj al próximo vencimiento, y launchd con `/bin/sh` al
+  minuto de cada vencimiento, que lee la lista y no la escribe;
+- que la tarea no corrió se **mide**, no se adivina;
+- ⌥⎋ se lleva las propuestas sin decidir (11 piezas);
+- «el modelo local redacta mejor la propuesta» no se construye (cero LLM nuevo) y va al bloque de textos.
+
+**La mirada 20, maquetada** (FORMA, decisiones de diseño no escritas):
+
+| Archivo | Estado | Qué decide |
+|---|---|---|
+| `banda.html` | sprint 3 · te propongo guardar | la propuesta pasiva, en la línea de estado, con ⌃⌥↵ |
+| `banda.html` | sprint 3 · fijada | la señal al fijar con ⌃⌥P (decisión del usuario) |
+| `notas.html` | sprint 3 · durante, con propuestas | nota y propuestas en una sola pantalla |
+| `notas.html` | sprint 3 · al cerrar, con propuestas | la ventana se elige al cerrar; 3 h de fábrica |
+| `notas.html` | sprint 3 · al cerrar, ventana cero | «al cerrar»: no hay bandeja |
+| `notas.html` | sprint 3 · bandeja vencida | la bandeja al llegar a cero |
+
+**Lo que las maquetas destaparon al medirlas:**
+- «durante, con propuestas» se salía 73 px. Las propuestas pasan a lo ancho, debajo de la nota; la franja
+  verde, a una línea.
+- La señal «fijada» medía 2 px más que una tecla. Ahora es `.tecla.fijada`.
+- Al cerrar, «Conservar mis turnos» se había caído al hacer sitio. Vuelve, y «las que guardaste» pasa a
+  la franja de la bandeja.
+- El contador «0 B» se iba a la izquierda cuando la propuesta estaba oculta, porque la regla CSS contaba
+  al hermano oculto. Ahora es `:not([hidden])`.
+
+**Pruebas:** `maqueta-cabe` en verde, e2e 127 con axe, vitest 276 y el espejo de `design-sync/`
+regenerado. El CSS nuevo (`.propuesta-b`, `.franja.mute`, `.cuenta.vencida`, `.tecla.fijada`) entra
+en `design-system.md` cuando la mirada lo apruebe.

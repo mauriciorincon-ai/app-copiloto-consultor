@@ -122,6 +122,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .franja.warn .ic { color: var(--warn); }
 .franja.err .ic { color: var(--err); }
 .franja.ok .ic { color: var(--ok); }
+.franja.mute .ic { color: var(--ink-2); }
 .tecla.pendiente { color: var(--mute); }
 .tecla.pendiente kbd { color: var(--mute); border-style: dashed; }
 .barra .pistas .pista.off .ic { opacity: .75; }
@@ -149,6 +150,7 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .puerta.si > .ic { color: var(--ok); }
 .puerta.no > .ic { color: var(--err); }
 .cuenta .ic { flex: 0 0 auto; color: var(--halo); }
+.cuenta.vencida .ic, .cuenta.vencida .reloj { color: var(--ink-2); }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
 .mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
 @media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
