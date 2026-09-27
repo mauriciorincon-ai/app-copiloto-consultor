@@ -2585,8 +2585,9 @@ y dos la guía v4 (B33, B34). Detalle, sitio y ajuste de cada una en `SPRINT_002
   `design-system.md`, las descripciones de `banda.json` y `relleno.json`, tres maquetas (permisos,
   banda, honestidad) y comentarios. La frase de Honestidad (B41) cambió de largo: fidelidad **116
   encuadres, ninguno sobre el umbral**, y la captura de Honestidad leída como imagen, sin desborde.
-- **La hermana de B41 en el summary:** la casilla 12 del release-check decía «nada más» y omitía
-  `acople.json` (600, solo mientras la banda está acoplada). Corregida.
+- **Las hermanas en el summary:** la casilla 12 del release-check decía «nada más» y omitía
+  `acople.json` (600, solo mientras la banda está acoplada) —hermana de B41—, y una fila de la deuda
+  repetía «IA enseña cuántos datos se taparon» —hermana de B37—. Las dos, corregidas.
 - **Una cifra del summary que no cuadraba:** vitest es **257**, no 258 (el árbol comiteado antes de esta
   pasada también da 257). Corregida; `cargo test --lib` pasa a **340** con el test de B25.
 - Gates: `typecheck`, `lint`, vitest 257, `cargo test --lib` 340 + 1 ignorado, `clippy --all-targets

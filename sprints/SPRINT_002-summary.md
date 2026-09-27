@@ -200,6 +200,10 @@ Los que importan; el detalle, con sus rojos, está en la bitácora.
    del método.
 8. **Una guía de prueba se relee contra la arquitectura al heredarla:** la d3 del S1 pedía algo que el
    diseño prohíbe, y nadie la había corrido.
+9. **La segunda pasada de la casilla 4 sigue cada ajuste hasta sus frases hermanas, y el summary es una
+   de ellas.** De sus 25 hallazgos, once los había creado un arreglo de la Fase 2; y dos hermanas más
+   vivían en este mismo summary (la casilla 12 y una fila de la deuda), que se escribe después de la
+   auditoría y nadie audita.
 
 ## Deuda técnica aceptada
 
@@ -207,7 +211,7 @@ Los que importan; el detalle, con sus rojos, está en la bitácora.
 |---|---|---|
 | `lru` 0.16.4 *unsound* vía tantivy 0.26.2 | la última versión de tantivy lo fija; no hay subida posible | cuando tantivy suba de `lru` (vigilado por `cargo audit`) |
 | MLX | Apple Intelligence cumple; MLX solo hacía falta sin él (ADR 011) | roadmap (Macs sin Apple Intelligence) |
-| El texto exacto que salió al API, legible en IA | IA enseña cuántos datos se taparon, no el texto (ADR 011, enmendado) | sprint 003 |
+| El texto exacto que salió al API, legible en IA | IA no enseña ni el texto ni cuántos datos se taparon: la bóveda los cuenta y solo lo leen los tests (ADR 011, enmendado; B37) | sprint 003 |
 | Los interruptores de IA y el idioma elegido por pista no persisten entre arranques | declarado en el manual; hoy viven en memoria | sprint 003 (preferencias) |
 | La decisión sobre los embeddings | el S2 no la tomó; nDCG@5 0,82 sin ellos | sprint 003 (ADR 008) |
 | La maniobra a medida, siguientes pasos (la unidad que falta, la ficha del cliente, lo comprometido) | el puente es el primero; el §10 nombra los demás | sprint 003 |
