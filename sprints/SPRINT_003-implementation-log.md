@@ -513,3 +513,19 @@ hora.
 | guardar conserva el vencimiento de la reunión | volver a sellar con 0 | «guardar la lleva a su reunión y no la quita» |
 
 cargo lib: **426**.
+
+**El «sh» de Ítems de inicio (2026-09-27).** El usuario encontró en Ajustes del Sistema → Ítems de inicio
+un «sh · Item from unidentified developer» y preguntó si era nuestro. **Sí:** era la tarea de la prueba en
+vivo (y la de diagnóstico, que duró 4 s).
+
+Las dos se quitaron al terminar, y se comprobó:
+- ningún plist de la app en `~/Library/LaunchAgents`;
+- nada cargado en `launchctl list`;
+- ninguna entrada `sh` ni `aiapps` en el registro de ítems en segundo plano de macOS
+  (`sfltool dumpbtm`, 304 líneas leídas).
+
+Lo que el usuario ve es la ventana de Ajustes sin refrescar.
+
+**Lo que enseña:** aunque el plist traía `AssociatedBundleIdentifiers`, macOS la mostró como `sh` de un
+desarrollador no identificado, porque esa asociación exige una app firmada. Va al ADR 016 y pesa en la
+decisión A/B/C del vencimiento de las notas.

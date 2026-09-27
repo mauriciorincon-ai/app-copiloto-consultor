@@ -205,6 +205,13 @@ Una tarea de diagnóstico lo confirma: desde launchd, `/bin/sh` recibe `ls: ~/Do
 permitted`, y `~/Library/Application Support` lo lee sin problema. Es la protección de Documentos de
 macOS (TCC): el permiso es de la app, no de `sh`.
 
+**Y cómo la ve el usuario:** la tarea de prueba apareció en Ajustes del Sistema → General → Ítems de
+inicio como **«sh · Item from unidentified developer»**, aunque su plist traía
+`AssociatedBundleIdentifiers` de la app. Esa asociación solo la respeta macOS con una app firmada, y en
+desarrollo no lo está. Con la app firmada y notarizada debería verse como Angel Ghost, pero **no está
+verificado** hasta tener una compilación firmada. El usuario la vio y preguntó si era nuestra: una app
+cuya promesa es la privacidad no puede aparecer como un `sh` anónimo.
+
 **Consecuencia:** tal como está, launchd cumple la promesa para **la bandeja** (Application Support)
 y **no** para **las notas** (Documentos). Con las notas en Documentos, lo vencido se borra al abrir la
 app y cada hora mientras corre, que es lo que el manual ya dice. **La decisión de cómo se cierra la
