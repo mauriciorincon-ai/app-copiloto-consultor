@@ -359,7 +359,7 @@ describe("el cuaderno: lo que no existe se dice", () => {
     pinta("?pantalla=honestidad");
     // «El botón corta»: sin sujeto, «8 de 8 piezas» se leyó como «leyó todo bien» (mirada 17-quater).
     expect(
-      screen.getByText(`${t.botonCorta} 9 ${t.de} 9 ${t.piezasNingunaFuera}`),
+      screen.getByText(`${t.botonCorta} 10 ${t.de} 10 ${t.piezasNingunaFuera}`),
     ).toBeInTheDocument();
   });
 
@@ -372,8 +372,8 @@ describe("el cuaderno: lo que no existe se dice", () => {
         <Principal busqueda="?pantalla=honestidad" />
       </Cascara>,
     );
-    expect(screen.getByText(/The button cuts 9 of 9 pieces/)).toBeInTheDocument();
-    expect(screen.queryByText(/9 de 9/)).toBeNull();
+    expect(screen.getByText(/The button cuts 10 of 10 pieces/)).toBeInTheDocument();
+    expect(screen.queryByText(/10 de 10/)).toBeNull();
   });
 
   /**

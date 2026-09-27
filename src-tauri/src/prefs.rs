@@ -43,6 +43,47 @@ impl Default for IdiomasDePista {
     }
 }
 
+/// Cuánto viven tus notas guardadas (ADR 015 §6). Una elección para todas las reuniones; cada
+/// archivo se estampa con la suya al guardarse. «Nunca» no está: eso es «Cerrar sin guardar».
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum Retencion {
+    #[serde(rename = "7d")]
+    Dias7,
+    #[serde(rename = "30d")]
+    Dias30,
+    /// La de fábrica, como la maqueta («se borra solo en 90 días»). Mirada 19.
+    #[default]
+    #[serde(rename = "90d")]
+    Dias90,
+    #[serde(rename = "1a")]
+    Anio,
+    #[serde(rename = "siempre")]
+    Siempre,
+}
+
+impl Retencion {
+    pub const TODAS: [Retencion; 5] =
+        [Retencion::Dias7, Retencion::Dias30, Retencion::Dias90, Retencion::Anio, Retencion::Siempre];
+
+    /// Cuánto vive, en segundos. `None` es «siempre».
+    pub fn segundos(self) -> Option<i64> {
+        const DIA: i64 = 86_400;
+        match self {
+            Retencion::Dias7 => Some(7 * DIA),
+            Retencion::Dias30 => Some(30 * DIA),
+            Retencion::Dias90 => Some(90 * DIA),
+            Retencion::Anio => Some(365 * DIA),
+            Retencion::Siempre => None,
+        }
+    }
+
+    /// El vencimiento de algo guardado `ahora` (segundos Unix). 0 es «siempre», como en la cabecera
+    /// del archivo (`notas::cifrado`).
+    pub fn vence(self, ahora: i64) -> i64 {
+        self.segundos().map_or(0, |s| ahora + s)
+    }
+}
+
 /// Lo que se recuerda. Los valores de fábrica son los de siempre: nada cambia para quien no toca
 /// nada.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -57,6 +98,14 @@ pub struct Preferencias {
     pub externo: Externo,
     /// La lectura automática de la pantalla (C8). De fábrica, encendida.
     pub lectura_automatica: bool,
+    /// Cuánto viven tus notas guardadas (ADR 015 §6).
+    pub retencion: Retencion,
+    /// «Conservar mis turnos»: tus turnos, en texto, entran al archivo de la reunión. De fábrica,
+    /// apagado (regla dura 1).
+    pub conservar_mis_turnos: bool,
+    /// La carpeta de tus notas, **solo si elegiste otra** porque macOS negó Documentos. `None` es
+    /// `~/Documents/Angel Ghost/` (ADR 015 §2).
+    pub carpeta_de_notas: Option<String>,
 }
 
 impl Default for Preferencias {
@@ -67,6 +116,9 @@ impl Default for Preferencias {
             api_encendida: false,
             externo: Externo::Claude,
             lectura_automatica: true,
+            retencion: Retencion::default(),
+            conservar_mis_turnos: false,
+            carpeta_de_notas: None,
         }
     }
 }
@@ -151,6 +203,9 @@ mod tests {
             api_encendida: true,
             externo: Externo::Groq,
             lectura_automatica: false,
+            retencion: Retencion::Anio,
+            conservar_mis_turnos: true,
+            carpeta_de_notas: Some("/Users/quien/Notas de reuniones".into()),
         };
         guardar(&ruta, &elegidas).unwrap();
         assert_eq!(leer(&ruta), elegidas);
@@ -162,6 +217,20 @@ mod tests {
         let p = leer(&carpeta("ausente").join(ARCHIVO));
         assert_eq!(p, Preferencias::default());
         assert_eq!((p.idiomas.cliente.as_str(), p.redactar, p.lectura_automatica), ("es-ES", false, true));
+    }
+
+    /// La retención de fábrica es la de la maqueta (90 días) y cada una vence lo que dice. «Siempre»
+    /// es el 0 de la cabecera del archivo.
+    #[test]
+    fn la_retencion_vence_lo_que_dice() {
+        assert_eq!(Preferencias::default().retencion, Retencion::Dias90);
+        assert!(!Preferencias::default().conservar_mis_turnos, "tus turnos nacen apagados");
+        let ahora = 1_800_000_000;
+        assert_eq!(Retencion::Dias7.vence(ahora), ahora + 7 * 86_400);
+        assert_eq!(Retencion::Anio.vence(ahora), ahora + 365 * 86_400);
+        assert_eq!(Retencion::Siempre.vence(ahora), 0);
+        let texto = a_texto(&Preferencias { retencion: Retencion::Dias30, ..Preferencias::default() });
+        assert!(texto.contains(r#""retencion": "30d""#), "{texto}");
     }
 
     /// Un archivo de un sprint anterior al que le falta un campo se sigue leyendo: lo que falta

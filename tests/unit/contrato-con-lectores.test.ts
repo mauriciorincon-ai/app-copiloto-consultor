@@ -30,7 +30,8 @@ import { describe, expect, it } from "vitest";
  */
 // Con los tres del sprint 002 (auditoría del S2, M6): la sugerencia, el estado de la IA, el radar y
 // el acople vivían en archivos que este gate no leía, y para sus 32 campos no podía fallar.
-const DECLARACIONES = ["src/cuaderno.ts", "src/ficha.ts", "src/radar.ts", "src/ia.ts", "src/acople.ts"];
+// `notas.ts` desde la fase 1 del sprint 003 (C9): tus notas cruzan por cuatro comandos.
+const DECLARACIONES = ["src/cuaderno.ts", "src/ficha.ts", "src/radar.ts", "src/ia.ts", "src/acople.ts", "src/notas.ts"];
 const FIXTURE = "src/contrato.generado.ts";
 
 /**
@@ -85,6 +86,33 @@ const DEUDA: Record<string, string> = {
   "LoQueSalio.caracteres": "«Esto es todo lo que salió: N caracteres» · fase 1 (tras la mirada 19)",
   "LoQueSalio.tapadas": "la columna «anonimizados» · fase 1 (tras la mirada 19)",
   "LoQueSalio.usd": "la columna USD · fase 1 (tras la mirada 19)",
+  // Tus notas (C9, sprint 003): la forma entró en la fase 1 antes que su pantalla, que espera la
+  // mirada 19. Se pagan en la misma fase, al construir Notas.
+  "VistaDelCuaderno.nota": "el campo «Tu nota» de Notas · durante · fase 1 (tras la mirada 19)",
+  "VistaDelCuaderno.acuerdos": "la tarjeta «Acuerdos» de Notas · durante · fase 1 (tras la mirada 19)",
+  "VistaDelCuaderno.fijadas": "«Fichas que fijaste» de Notas · durante · fase 1 (tras la mirada 19)",
+  "VistaDelCuaderno.resumen": "«Se va a guardar» de Notas · al cerrar · fase 1 (tras la mirada 19)",
+  "VistaDelCuaderno.conservarMisTurnos": "la casilla «Conservar mis turnos» de Notas · al cerrar · fase 1 (tras la mirada 19)",
+  "VistaDelCuaderno.retencion": "«Cuánto viven tus notas» de Notas · el archivo · fase 1 (tras la mirada 19)",
+  "ResumenDelCuaderno.parrafos": "«Tus notas · N párrafos» de Notas · al cerrar · fase 1 (tras la mirada 19)",
+  "ResumenDelCuaderno.acuerdos": "«Acuerdos · N» de Notas · al cerrar · fase 1 (tras la mirada 19)",
+  "ResumenDelCuaderno.fijadas": "«Fichas fijadas · N» de Notas · al cerrar · fase 1 (tras la mirada 19)",
+  "ResumenDelCuaderno.turnos": "«Tus turnos, en texto · N» de Notas · al cerrar · fase 1 (tras la mirada 19)",
+  "ResumenDelCuaderno.bytesNota": "el tamaño de «Tus notas» · al cerrar · fase 1 (tras la mirada 19)",
+  "ResumenDelCuaderno.bytesAcuerdos": "el tamaño de «Acuerdos» · al cerrar · fase 1 (tras la mirada 19)",
+  "ResumenDelCuaderno.bytesFijadas": "el tamaño de «Fichas fijadas» · al cerrar · fase 1 (tras la mirada 19)",
+  "ResumenDelCuaderno.bytesTurnos": "el tamaño de «Tus turnos» · al cerrar · fase 1 (tras la mirada 19)",
+  "ReunionGuardada.archivo": "la columna «archivo» de «Reuniones guardadas» · fase 1 (tras la mirada 19)",
+  "ReunionGuardada.guardada": "la columna «fecha» de «Reuniones guardadas» · fase 1 (tras la mirada 19)",
+  "ReunionGuardada.vence": "la columna «se borra en» y «Retención» del archivo · fase 1 (tras la mirada 19)",
+  "Guardada.archivo": "«→ paramo-azul-2026-09-20.ghost» al guardar · fase 1 (tras la mirada 19)",
+  "Guardada.vence": "«se borra solo en N días» al guardar · fase 1 (tras la mirada 19)",
+  "ContenidoDeReunion.empezo": "la cabecera de una reunión abierta · fase 1 (tras la mirada 19)",
+  "ContenidoDeReunion.minutos": "«· 47 min» en la cabecera de una reunión abierta · fase 1 (tras la mirada 19)",
+  "ContenidoDeReunion.nota": "la nota de una reunión abierta · fase 1 (tras la mirada 19)",
+  "ContenidoDeReunion.acuerdos": "los acuerdos de una reunión abierta · fase 1 (tras la mirada 19)",
+  "ContenidoDeReunion.fijadas": "las fichas fijadas de una reunión abierta · fase 1 (tras la mirada 19)",
+  "ContenidoDeReunion.misTurnos": "tus turnos de una reunión abierta · fase 1 (tras la mirada 19)",
   "Trozo.marcador": "«Lo último que salió» · fase 1 (tras la mirada 19)",
   "Trozo.original": "lo reemplazado, tachado · fase 1 (tras la mirada 19)",
 };

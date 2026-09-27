@@ -108,6 +108,29 @@ pub fn hay(servicio: Servicio, cuenta: &str) -> bool {
     }
 }
 
+/// ¿Hay secreto? Como [`hay`], pero **distingue «no hay» de «el Llavero no contestó»**. Quien vaya a
+/// crear un secreto si falta tiene que usar esta: con [`hay`], un Llavero bloqueado se lee como «no
+/// hay», y crear uno nuevo encima borraría el que había. Para la llave de las notas eso es perder
+/// todas las reuniones guardadas (ADR 015 §4).
+pub fn existe(servicio: Servicio, cuenta: &str) -> Result<bool, String> {
+    #[cfg(all(target_os = "macos", puente_de_swift))]
+    {
+        let s = std::ffi::CString::new(servicio.nombre()).map_err(|e| e.to_string())?;
+        let c = std::ffi::CString::new(cuenta).map_err(|e| e.to_string())?;
+        // SEGURIDAD: dos textos terminados en cero que viven hasta que la llamada vuelve.
+        match unsafe { puente::ag_llavero_hay(s.as_ptr(), c.as_ptr()) } {
+            1 => Ok(true),
+            0 => Ok(false),
+            r => Err(format!("el Llavero no contestó ({r})")),
+        }
+    }
+    #[cfg(not(all(target_os = "macos", puente_de_swift)))]
+    {
+        let _ = (servicio, cuenta);
+        Err("el Llavero solo existe en macOS con el puente".into())
+    }
+}
+
 /// Borra un secreto (bien también si no había).
 pub fn borrar(servicio: Servicio, cuenta: &str) -> Result<(), String> {
     #[cfg(all(target_os = "macos", puente_de_swift))]

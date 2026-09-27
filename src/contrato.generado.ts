@@ -15,6 +15,7 @@ import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida,
 import type { EnTuMac } from "./radar";
 import type { EstadoDeLaIa, PorQueNoRedacta, LoQueSalio } from "./ia";
 import type { EstadoDelAcople } from "./acople";
+import type { VistaDelCuaderno, ReunionGuardada, Guardada, ContenidoDeReunion } from "./notas";
 
 export const NOVEDAD_EMPIEZA: Novedad = {
     "que": "empieza"
@@ -218,6 +219,10 @@ export const INFORME_DEL_CORTE: InformeDelCorte = {
       ],
       [
         "transcript",
+        "cortada"
+      ],
+      [
+        "tus-turnos",
         "cortada"
       ],
       [
@@ -460,6 +465,79 @@ export const LO_QUE_SALIO: LoQueSalio = {
 export const IDIOMAS_DE_PISTA: IdiomasDePista = {
     "cliente": "en-US",
     "consultor": "es-ES"
+  };
+
+export const VISTA_DEL_CUADERNO: VistaDelCuaderno = {
+    "abierta": true,
+    "acuerdos": [
+      "Cuarta fuente: cotización aparte"
+    ],
+    "conservarMisTurnos": false,
+    "fijadas": [
+      {
+        "documento": "Propuesta Páramo Azul",
+        "seccion": "§3.2",
+        "titular": "Limpieza de datos: hasta tres fuentes",
+        "unidad": "propuesta"
+      }
+    ],
+    "nota": "Piden la cuarta fuente (Excel de logística).\nFecha real: 12 semanas desde la firma.",
+    "resumen": {
+      "acuerdos": 1,
+      "bytesAcuerdos": 33,
+      "bytesFijadas": 64,
+      "bytesNota": 84,
+      "bytesTurnos": 0,
+      "fijadas": 1,
+      "parrafos": 2,
+      "turnos": 0
+    },
+    "retencion": "90d"
+  };
+
+export const REUNION_GUARDADA: ReunionGuardada = {
+    "archivo": "paramo-azul-2026-09-20.ghost",
+    "bytes": 22528,
+    "guardada": 1789900000,
+    "vence": 1797676000
+  };
+
+export const REUNION_GUARDADA_PARA_SIEMPRE: ReunionGuardada = {
+    "archivo": "reunion-2026-09-27-1402.ghost",
+    "bytes": 3104,
+    "guardada": 1790500000,
+    "vence": 0
+  };
+
+export const REUNION_GUARDADA_AHORA: Guardada = {
+    "archivo": "paramo-azul-2026-09-20.ghost",
+    "bytes": 22528,
+    "vence": 1797676000
+  };
+
+export const CONTENIDO_DE_REUNION: ContenidoDeReunion = {
+    "acuerdos": [
+      "Cuarta fuente: cotización aparte"
+    ],
+    "cliente": "Páramo Azul",
+    "empezo": "2026-09-20 14:02",
+    "fijadas": [
+      {
+        "documento": "Propuesta Páramo Azul",
+        "seccion": "§3.2",
+        "titular": "Limpieza de datos: hasta tres fuentes",
+        "unidad": "propuesta"
+      }
+    ],
+    "minutos": 47,
+    "misTurnos": [
+      {
+        "hora": "14:05",
+        "texto": "Te envío la cotización el lunes."
+      }
+    ],
+    "nota": "Piden la cuarta fuente.",
+    "version": 1
   };
 
 export const QUE_SABE_TRANSCRIBIR: QueSabeTranscribir = {

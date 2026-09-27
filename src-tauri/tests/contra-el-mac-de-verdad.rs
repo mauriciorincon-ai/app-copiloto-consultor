@@ -459,6 +459,24 @@ use app_copiloto_consultor_lib::disparo::{Contexto, Disparador};
 use app_copiloto_consultor_lib::stt::Turno;
 use app_copiloto_consultor_lib::voz::turno::{Suceso, Turnos};
 use app_copiloto_consultor_lib::voz::vad::PorEnergia;
+use app_copiloto_consultor_lib::carpeta::{Carpeta, Llaves};
+use app_copiloto_consultor_lib::notas::{self, cifrado::Llave, Cuaderno, Encabezado, FichaFijada};
+
+/// La llave de las notas de la sesión del efímero: en memoria, para no tocar el Llavero del usuario.
+/// Es la misma llave con que el test descifra después lo que se escribió.
+struct LlaveDeLaPrueba(String);
+
+impl Llaves for LlaveDeLaPrueba {
+    fn existe(&self) -> Result<bool, String> {
+        Ok(true)
+    }
+    fn leer(&self) -> Result<Llave, String> {
+        Llave::de_hex(&self.0).ok_or_else(|| "la llave de la prueba no es una llave".into())
+    }
+    fn crear(&self, _: &Llave) -> Result<(), String> {
+        Ok(())
+    }
+}
 
 /// La frase que solo dice el cliente. No se parece a nada del corpus ni del código, para que
 /// encontrarla en un archivo signifique una sola cosa.
@@ -467,7 +485,7 @@ const CANARIA: &str = "quetzalcoatlus-de-bolsillo-7731";
 /// Lo único que una sesión puede dejar escrito, y por qué.
 ///
 /// **Cada entrada de aquí es una promesa que se afloja**, así que se añaden de a una, nombradas, y el
-/// summary del sprint las lista. Dos, al día del sprint 002.
+/// summary del sprint las lista. Tres, al día del sprint 003.
 struct Permitido {
     /// El índice del corpus: documentos DEL USUARIO, que la regla del efímero sí deja persistir.
     indice: PathBuf,
@@ -476,11 +494,16 @@ struct Permitido {
     /// es que sus entradas salen de dos sitios y de ninguno más: su archivo y los nombres de su
     /// corpus. Nunca de la reunión — la canaria de abajo lo comprueba archivo por archivo.
     diccionario: PathBuf,
+    /// **La carpeta de tus notas** (sprint 003, fase 1, ADR 015): lo tuyo de la reunión, cifrado. Es
+    /// lo único de la reunión que la regla del efímero deja persistir, y lo que la hace inocua está
+    /// comprobado abajo **con el archivo descifrado**: la canaria del cliente no está dentro. Mirarla
+    /// sobre los bytes cifrados no probaría nada.
+    notas: PathBuf,
 }
 
 impl Permitido {
     fn cubre(&self, ruta: &Path) -> bool {
-        ruta.starts_with(&self.indice) || ruta == self.diccionario
+        ruta.starts_with(&self.indice) || ruta == self.diccionario || ruta.starts_with(&self.notas)
     }
 }
 
@@ -595,7 +618,7 @@ fn donde_se_mira(casa: &Path) -> Vec<PathBuf> {
 }
 
 /// La sesión. Devuelve lo que se dijo, para poder afirmar que de verdad pasó por dentro.
-fn una_sesion_completa(casa: &Path, corpus_en: &Path) -> (Vec<String>, Vec<&'static str>) {
+fn una_sesion_completa(casa: &Path, corpus_en: &Path, llave: &dyn Llaves) -> (Vec<String>, Vec<&'static str>) {
     let mut dicho = Vec::new();
     let mut ejercido = Vec::new();
 
@@ -718,7 +741,41 @@ fn una_sesion_completa(casa: &Path, corpus_en: &Path) -> (Vec<String>, Vec<&'sta
         }
     }
 
-    // 7 · El kill-switch sobre lo que guardó la última pregunta del cliente.
+    // 7 · **Tus notas** (sprint 003, fase 1). El cuaderno recibe lo que recibe en la app —tu nota, un
+    //     acuerdo, la ficha que la banda enseña para fijarla, y los turnos transcritos con «Conservar
+    //     mis turnos» encendido—, y **entre esos turnos van dos con la canaria**: el del cliente y el
+    //     mismo oído por tus altavoces (eco). Ninguno de los dos puede acabar en el archivo.
+    let mut cuaderno = Cuaderno::nuevo(true);
+    cuaderno.escribir("Revisar la cuarta fuente antes del viernes.");
+    cuaderno.acordar("Cuarta fuente: cotización aparte");
+    cuaderno.ver(FichaFijada {
+        titular: "Alcance".into(),
+        documento: "Propuesta Páramo Azul".into(),
+        seccion: Some("Alcance".into()),
+        unidad: Some(Unidad::Propuesta),
+    });
+    cuaderno.fijar_la_vigente();
+    let mio = Turno {
+        pista: Pista::Microfono,
+        desde_ms: 2_500,
+        hasta_ms: 4_000,
+        texto: "Te envío la cotización el lunes.".into(),
+        hora: "14:03".into(),
+        eco: false,
+    };
+    assert!(cuaderno.oir(&mio), "tu propio turno no entró al cuaderno: el paso no midió nada");
+    assert!(!cuaderno.oir(&turno), "el turno del cliente entró al cuaderno");
+    let eco = Turno { pista: Pista::Microfono, eco: true, ..turno.clone() };
+    assert!(!cuaderno.oir(&eco), "el eco —la voz del cliente por tus altavoces— entró al cuaderno");
+    let contenido = cuaderno.contenido(Encabezado { empezo: "2026-09-27 14:02".into(), minutos: 3, cliente: None });
+    let base = notas::nombre_del_archivo(None, &notas::Fecha { anio: 2026, mes: 9, dia: 27, hora: 14, minuto: 2 });
+    Carpeta::en(casa.join(app_copiloto_consultor_lib::carpeta::CARPETA))
+        .guardar(llave, &contenido, &base, 0)
+        .expect("las notas de la sesión no se pudieron guardar");
+    println!("[sesión] notas guardadas y cifradas");
+    ejercido.push("notas");
+
+    // 8 · El kill-switch sobre lo que guardó la última pregunta del cliente.
     disparador.reiniciar();
     (dicho, ejercido)
 }
@@ -744,8 +801,12 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     let _ = std::fs::remove_dir_all(&casa);
     std::fs::create_dir_all(&casa).unwrap();
     let fuente = corpus_para_el_efimero();
-    let permitido =
-        Permitido { indice: casa.join("corpus"), diccionario: casa.join("diccionario.yaml") };
+    let permitido = Permitido {
+        indice: casa.join("corpus"),
+        diccionario: casa.join("diccionario.yaml"),
+        notas: casa.join(app_copiloto_consultor_lib::carpeta::CARPETA),
+    };
+    let llave = LlaveDeLaPrueba(Llave::nueva().a_hex());
 
     // El inventario se toma DESPUÉS de crear los fixtures: lo que se mide es lo que deja la
     // sesión, no lo que deja el test preparándola.
@@ -753,11 +814,12 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     let antes: BTreeMap<PathBuf, Huella> = sitios.iter().flat_map(|s| inventario(s)).collect();
     println!("[efímero] {} archivos antes, en {} sitios", antes.len(), sitios.len());
 
-    let (dicho, ejercido) = una_sesion_completa(&casa, &fuente);
+    let (dicho, ejercido) = una_sesion_completa(&casa, &fuente, &llave);
     // Lo que el sprint 002 añadió tiene que haber corrido DENTRO del inventario: la pantalla y la
     // síntesis corren en cualquier Mac con el puente (la CI incluida); la voz, solo donde hay voces.
     assert!(ejercido.contains(&"ocr"), "la lectura de pantalla no se ejerció: el inventario no la midió");
     assert!(ejercido.contains(&"sintesis"), "la síntesis no se ejerció: el inventario no la midió");
+    assert!(ejercido.contains(&"notas"), "las notas no se guardaron: el inventario no las midió");
 
     let despues: BTreeMap<PathBuf, Huella> = sitios.iter().flat_map(|s| inventario(s)).collect();
 
@@ -800,16 +862,31 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     );
     assert!(!tocados.is_empty(), "no se escribió NI el índice: la sesión no llegó a correr");
 
-    // Y la canaria: lo que dijo el cliente no puede estar dentro de lo que sí se escribió.
+    // Y la canaria: lo que dijo el cliente no puede estar dentro de lo que sí se escribió. **Los
+    // archivos de notas se miran DESCIFRADOS**: sobre los bytes cifrados, la canaria no aparecería
+    // nunca, estuviera dentro o no.
+    let mut notas_descifradas = 0;
     for (ruta, ..) in &tocados {
         let Ok(bytes) = std::fs::read(ruta) else { continue };
-        let texto = String::from_utf8_lossy(&bytes);
+        let claro = if ruta.starts_with(&permitido.notas) {
+            let abierto = notas::cifrado::abrir(&llave.leer().unwrap(), &bytes)
+                .unwrap_or_else(|e| panic!("las notas de la sesión no se abren con su llave ({e}): {}", ruta.display()));
+            notas_descifradas += 1;
+            abierto
+        } else {
+            bytes
+        };
+        let texto = String::from_utf8_lossy(&claro);
         assert!(
             !texto.contains(CANARIA),
             "la frase del cliente acabó dentro de {}",
             ruta.display()
         );
+        if ruta.starts_with(&permitido.notas) {
+            assert!(texto.contains("cotización el lunes"), "el archivo de notas no trae tu turno: no se miró el de verdad");
+        }
     }
+    assert_eq!(notas_descifradas, 1, "tenía que haber un archivo de notas, descifrado y revisado");
     assert!(dicho.iter().any(|d| d.contains(CANARIA)), "la canaria no llegó a recorrer la sesión");
 
     let _ = std::fs::remove_dir_all(&casa);
@@ -848,7 +925,7 @@ fn sesion_para_el_log() {
     std::fs::create_dir_all(&casa).unwrap();
     let fuente = corpus_para_el_efimero();
 
-    let (dicho, _) = una_sesion_completa(&casa, &fuente);
+    let (dicho, _) = una_sesion_completa(&casa, &fuente, &LlaveDeLaPrueba(Llave::nueva().a_hex()));
     assert!(dicho.iter().any(|d| d.contains(CANARIA)), "la canaria no llegó a recorrer la sesión");
 
     let _ = std::fs::remove_dir_all(&casa);

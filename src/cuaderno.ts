@@ -270,6 +270,8 @@ export type PiezaDelCorte =
   | "audio-del-sistema"
   | "ultimo-frame"
   | "transcript"
+  /** Del cuaderno, lo que salió de la captura: tus turnos y la ficha vigente (sprint 003, ADR 015). */
+  | "tus-turnos"
   | "contador-de-red"
   | "banda"
   | "acople";

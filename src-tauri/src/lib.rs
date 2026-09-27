@@ -14,8 +14,10 @@
 pub mod acople;
 pub mod almacen;
 pub mod capture;
+pub mod carpeta;
 pub mod corpus;
 pub mod corte;
+pub mod desbloqueo;
 /// El contrato con la interfaz, y el gate que lo compara. Solo se compila en `cargo test`: su
 /// trabajo es escribir `src/contrato.generado.ts`, no viajar en el binario del usuario.
 #[cfg(test)]
@@ -26,12 +28,14 @@ pub mod escucha;
 pub mod ficha;
 pub mod habla;
 pub mod llavero;
+pub mod notas;
 pub mod pantalla;
 pub mod permisos;
 pub mod prefs;
 pub mod radar;
 pub mod red;
 pub mod relleno;
+pub mod reunion;
 pub mod sesion;
 pub mod sintesis;
 pub mod stt;
@@ -498,6 +502,9 @@ fn empezar_a_escuchar(
     // `⌥⎋`: una reunión heredaba los bytes de la anterior (auditoría del S2, B18).
     red::reiniciar();
     println!("[red] reunión nueva: el contador vuelve a 0 B");
+    // La reunión se abre aquí: el cuaderno se protege de la captura hasta que la guardes o la
+    // descartes, y si la anterior seguía abierta con algo tuyo, se guarda antes (ADR 015 §7 y §10).
+    reunion::al_empezar(&app);
     {
         let s = app.state::<LaSintesis>();
         if let Ok(mut u) = s.reunion_usd.lock() {
@@ -577,6 +584,12 @@ fn empezar_a_escuchar(
             if let escucha::Novedad::Aparece(a) = &novedad {
                 decir_la_ficha(&mango, a);
                 sintetizar(&mango, a);
+                // Para ⌃⌥P: la ficha que la banda enseña. No es tuya hasta que la fijas.
+                reunion::ver(&mango, a);
+            }
+            // «Conservar mis turnos»: el cuaderno decide si el turno es tuyo (micrófono, sin eco).
+            if let escucha::Novedad::Turno(t) = &novedad {
+                reunion::oir(&mango, t);
             }
             let _ = mango.emit(EVENTO_ESCUCHA, novedad);
         },
@@ -599,6 +612,8 @@ fn dejar_de_escuchar(app: tauri::AppHandle, estado: tauri::State<'_, LaEscucha>)
     // Lo que salió al API era de esta reunión: IA dice «se borra al cerrar», y se borra (B37).
     app.state::<LaSintesis>().registro.vaciar();
     avisar_a_la_ia(&app);
+    // La reunión sigue abierta —«al cerrar»— hasta que la guardes o la descartes.
+    reunion::al_terminar(&app);
 }
 
 /// Qué vive en memoria ahora mismo por culpa de la escucha. Lo pide la pantalla de Honestidad.
@@ -748,6 +763,9 @@ fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Inf
                 corte::Pieza::Acople => {
                     registrar_acople(app, "kill-switch", &acople::soltar(&huella(app)))
                 }
+                // Del cuaderno, lo que salió de la captura: tus turnos y la ficha que la banda
+                // enseñaba. Tu nota, tus acuerdos y tus fijadas se quedan (ADR 015 §7).
+                corte::Pieza::TusTurnos => reunion::cortar(app),
                 // Ya cortadas arriba, todas a la vez.
                 corte::Pieza::AudioDelMicrofono
                 | corte::Pieza::AudioDelSistema
@@ -863,6 +881,9 @@ pub fn run() {
                 aplicar_las_preferencias(app.handle(), &p);
                 app.manage(LasPreferencias { ruta, actuales: std::sync::Mutex::new(p) });
             }
+            // El cuaderno de la reunión (C9, ADR 015), y el barrido de lo que venció.
+            app.manage(reunion::ElCuaderno::default());
+            reunion::arrancar_el_barrido(app.handle());
             {
                 let gasto = cargar_el_gasto(app.handle());
                 println!("[sintesis] gasto del mes {}: USD {:.3}", gasto.mes, gasto.usd);
@@ -929,6 +950,8 @@ pub fn run() {
             }
             parar_la_pantalla(mango);
             registrar_acople(mango, "soltar al salir", &acople::soltar(&huella(mango)));
+            // Lo tuyo sin guardar, se guarda: perderlo por salir es peor (ADR 015 §7).
+            reunion::al_salir(mango);
         }
     });
 }

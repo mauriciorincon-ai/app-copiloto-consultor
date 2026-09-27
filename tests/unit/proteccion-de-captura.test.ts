@@ -13,8 +13,11 @@ import { describe, expect, it } from "vitest";
  *
  * Dos aserciones, por dos caminos distintos:
  *  1. `tauri.conf.json` declara **exactamente una** ventana protegida, y es la banda.
- *  2. **Ningún `.rs` enciende el flag por código.** El flag vive solo en la configuración y las
- *     ventanas se construyen con `from_config`: así no hay nada que heredar en un constructor.
+ *  2. **Ningún `.rs` enciende el flag por código, salvo UNA llamada** (sprint 003, ADR 015 §10):
+ *     la de `proteger_el_cuaderno`, que protege la ventana principal mientras la reunión está
+ *     abierta y solo sabe tocar esa. La protección fija vive en la configuración y las ventanas se
+ *     construyen con `from_config`: así no hay nada que heredar en un constructor. Una segunda
+ *     llamada en cualquier sitio —o esta fuera de su función— es rojo.
  *
  * ¿Puede fallar? Sí, por los dos lados, y se demostró: ver la bitácora del sprint.
  * (El lado Rust tiene su propio test del invariante en `src-tauri/src/ventana/mod.rs`; este mira
@@ -23,6 +26,11 @@ import { describe, expect, it } from "vitest";
 const CONFIG = "src-tauri/tauri.conf.json";
 const FUENTES_RUST = "src-tauri/src";
 const BANDA = "banda";
+/** El único sitio que enciende el flag en marcha: el cuaderno con la reunión abierta (ADR 015 §10). */
+const CUADERNO = {
+  archivo: "src-tauri/src/ventana/mod.rs",
+  firma: "pub fn proteger_el_cuaderno",
+};
 
 /**
  * Lo que se busca es la LLAMADA que enciende el flag: `content_protected(…)` o
@@ -40,7 +48,7 @@ function rust(ruta: string): string[] {
   return readdirSync(ruta).flatMap((n) => rust(join(ruta, n)));
 }
 
-describe("protección de captura: exactamente una ventana, y es la banda", () => {
+describe("protección de captura: la banda en la configuración, el cuaderno en marcha y en un solo sitio", () => {
   const config = JSON.parse(readFileSync(CONFIG, "utf8")) as {
     app?: { windows?: Ventana[] };
   };
@@ -69,17 +77,25 @@ describe("protección de captura: exactamente una ventana, y es la banda", () =>
     );
   });
 
-  it("ningún archivo de `src-tauri/src` enciende el flag por código", () => {
+  it("el flag se enciende por código en UN solo sitio: el cuaderno, dentro de `proteger_el_cuaderno`", () => {
     const hallazgos: string[] = [];
+    let permitidas = 0;
     for (const f of rust(FUENTES_RUST)) {
-      readFileSync(f, "utf8").split("\n").forEach((linea, i) => {
+      const lineas = readFileSync(f, "utf8").split("\n");
+      // El cuerpo de la única función que puede encenderlo: de su firma a la llave que la cierra.
+      const desde = relative(".", f) === CUADERNO.archivo ? lineas.findIndex((l) => l.startsWith(CUADERNO.firma)) : -1;
+      const hasta = desde < 0 ? -1 : lineas.findIndex((l, i) => i > desde && l === "}");
+      lineas.forEach((linea, i) => {
         if (linea.includes("proteccion:cita")) return; // línea que CITA el nombre sin encenderlo
-        if (ENCENDIDO.test(linea)) hallazgos.push(`${relative(".", f)}:${i + 1}  ${linea.trim().slice(0, 100)}`);
+        if (!ENCENDIDO.test(linea)) return;
+        if (i > desde && i < hasta) permitidas++;
+        else hallazgos.push(`${relative(".", f)}:${i + 1}  ${linea.trim().slice(0, 100)}`);
       });
     }
     expect(
       hallazgos,
-      `el flag tiene que vivir solo en ${CONFIG}; encendido por código en:\n${hallazgos.join("\n")}`,
+      `la protección fija vive en ${CONFIG} y la de en marcha, solo en ${CUADERNO.firma}; encendido por código en:\n${hallazgos.join("\n")}`,
     ).toEqual([]);
+    expect(permitidas, "la llamada de `proteger_el_cuaderno` desapareció o se duplicó").toBe(1);
   });
 });

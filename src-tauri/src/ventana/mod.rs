@@ -2,15 +2,17 @@
 //!
 //! | Ventana | Qué es | Protegida de la captura |
 //! |---|---|---|
-//! | `principal` | 960 × 640, las pantallas del cuaderno | no |
-//! | `banda` | ancho de pantalla × 88 (asa → 200), pegada al borde inferior | **sí, y es la única** |
-//! | `relleno` | la misma geometría, SIN contenido, justo debajo de la banda | no, **a propósito** |
+//! | `principal` | 960 × 640, las pantallas del cuaderno | **con la reunión abierta** (desde el S3) |
+//! | `banda` | ancho de pantalla × 88 (asa → 200), pegada al borde inferior | **sí, siempre** |
+//! | `relleno` | la misma geometría, SIN contenido, justo debajo de la banda | no, **jamás, a propósito** |
 //!
-//! **La regla que gobierna este módulo: el flag de protección vive SOLO en `tauri.conf.json`.**
-//! Aquí no se escribe `content_protected` en ninguna parte y las ventanas se construyen con
-//! `from_config`, que lo aplica. Así el riesgo nº 1 del sprint —copiar el constructor de la banda
-//! para hacer el relleno y que el relleno herede el flag— deja de existir por construcción: no hay
-//! nada que heredar en el constructor.
+//! **La regla que gobierna este módulo: la protección FIJA vive SOLO en `tauri.conf.json`** (la
+//! banda sí, las otras dos no), y las ventanas se construyen con `from_config`, que la aplica. Así el
+//! riesgo nº 1 del sprint 001 —copiar el constructor de la banda para hacer el relleno y que el
+//! relleno herede el flag— deja de existir por construcción: no hay nada que heredar en el
+//! constructor. **La parte que cambia en marcha es una sola** (sprint 003, ADR 015 §10): el cuaderno,
+//! mientras la reunión está abierta, y pasa por una sola función, [`proteger_el_cuaderno`], que solo
+//! sabe tocar la principal.
 //!
 //! Y el invariante no se confía a la revisión de código: [`invariante_de_proteccion`] lo comprueba
 //! **antes de abrir nada**. Si alguna vez deja de cumplirse, la banda no se abre. Una banda que se
@@ -58,6 +60,57 @@ pub fn invariante_de_proteccion(ventanas: &[(&str, bool)]) -> Result<(), String>
             varias.len(),
             varias.join(", ")
         )),
+    }
+}
+
+/// **La parte que cambia en marcha (sprint 003, ADR 015 §10): el cuaderno.** Desde que empieza una
+/// sesión hasta que su reunión se guarda o se descarta —⌥⎋ incluido: tus notas siguen ahí—, la
+/// ventana principal toma el flag de la banda. Qué debe estar protegido, ventana por ventana:
+/// la banda siempre, el cuaderno con la reunión abierta, el relleno jamás.
+pub fn debe_estar_protegida(etiqueta: &str, reunion_abierta: bool) -> bool {
+    match etiqueta {
+        BANDA => true,
+        PRINCIPAL => reunion_abierta,
+        _ => false,
+    }
+}
+
+/// Lo que [`proteger_el_cuaderno`] cambia: una ventana, la principal, y nada más. Separado para que
+/// el test lo aplique sobre el `tauri.conf.json` de verdad y compruebe el invariante en marcha.
+pub fn lo_que_cambia(reunion_abierta: bool) -> [(&'static str, bool); 1] {
+    [(PRINCIPAL, reunion_abierta)]
+}
+
+/// El invariante en marcha: cada ventana, como dice [`debe_estar_protegida`].
+pub fn invariante_en_marcha(ventanas: &[(&str, bool)], reunion_abierta: bool) -> Result<(), String> {
+    for (etiqueta, protegida) in ventanas {
+        let debe = debe_estar_protegida(etiqueta, reunion_abierta);
+        if *protegida != debe {
+            return Err(match (*etiqueta, debe) {
+                (RELLENO, _) => "el relleno está protegido: la franja volvería a enseñar lo que hay detrás".into(),
+                (BANDA, _) => "la banda no está protegida: el cliente la vería".into(),
+                (PRINCIPAL, true) => "hay una reunión abierta y el cuaderno no está protegido: tu nota se vería al compartir".into(),
+                (PRINCIPAL, false) => "sin reunión abierta, el cuaderno sigue protegido: se vería negro al compartirlo".into(),
+                (otra, _) => format!("«{otra}» no debería existir"),
+            });
+        }
+    }
+    Ok(())
+}
+
+/// Pone o quita el flag del cuaderno. **Solo sabe tocar la principal**: el riesgo nº 1 del sprint 001
+/// —un relleno protegido— sigue sin camino.
+pub fn proteger_el_cuaderno<R: Runtime>(app: &AppHandle<R>, reunion_abierta: bool) {
+    for (etiqueta, protegida) in lo_que_cambia(reunion_abierta) {
+        if let Some(v) = app.get_webview_window(etiqueta) {
+            match v.set_content_protected(protegida) {
+                Ok(()) => println!(
+                    "[ventanas] «{etiqueta}» {}",
+                    if protegida { "protegida mientras la reunión está abierta" } else { "sin proteger: la reunión se cerró" }
+                ),
+                Err(e) => println!("[ventanas] «{etiqueta}»: no se pudo cambiar su protección ({e})"),
+            }
+        }
     }
 }
 
@@ -277,6 +330,39 @@ mod tests {
     /// (tres ventanas antes y después), y sobre la principal sí. Con bordes, ⌘W cerraría la banda
     /// sola y dejaría el relleno —un rectángulo opaco— encima de la reunión. Se quitan juntas, con
     /// ⌥⎋ (`cerrar_banda`).
+    /// El cuaderno, protegido con la reunión abierta: aplicado sobre el `tauri.conf.json` de verdad,
+    /// con reunión y sin ella, el invariante en marcha se cumple. Si `lo_que_cambia` tocara el
+    /// relleno, o se olvidara del cuaderno, cae aquí con su nombre.
+    #[test]
+    fn el_cuaderno_se_protege_con_la_reunion_abierta_y_el_relleno_jamas() {
+        let json: serde_json::Value =
+            serde_json::from_str(include_str!("../../tauri.conf.json")).expect("tauri.conf.json ilegible");
+        let declaradas: Vec<(String, bool)> = json["app"]["windows"]
+            .as_array()
+            .expect("sin ventanas")
+            .iter()
+            .map(|v| (v["label"].as_str().unwrap().to_string(), v["contentProtected"].as_bool().unwrap_or(false)))
+            .collect();
+        for abierta in [true, false] {
+            let mut en_marcha = declaradas.clone();
+            for (etiqueta, protegida) in lo_que_cambia(abierta) {
+                en_marcha.iter_mut().filter(|(l, _)| l == etiqueta).for_each(|(_, p)| *p = protegida);
+            }
+            let prestadas: Vec<(&str, bool)> = en_marcha.iter().map(|(l, p)| (l.as_str(), *p)).collect();
+            invariante_en_marcha(&prestadas, abierta).unwrap_or_else(|e| panic!("reunión abierta={abierta}: {e}"));
+        }
+    }
+
+    #[test]
+    fn el_invariante_en_marcha_nombra_cada_fallo() {
+        let ok = [(PRINCIPAL, true), (RELLENO, false), (BANDA, true)];
+        assert!(invariante_en_marcha(&ok, true).is_ok());
+        assert!(invariante_en_marcha(&[(RELLENO, true)], true).unwrap_err().contains("relleno"));
+        assert!(invariante_en_marcha(&[(PRINCIPAL, false)], true).unwrap_err().contains("tu nota se vería"));
+        assert!(invariante_en_marcha(&[(PRINCIPAL, true)], false).unwrap_err().contains("negro"));
+        assert!(invariante_en_marcha(&[(BANDA, false)], false).unwrap_err().contains("la vería"));
+    }
+
     #[test]
     fn la_banda_y_su_relleno_no_tienen_bordes() {
         let json: serde_json::Value =

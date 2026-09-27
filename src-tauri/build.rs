@@ -67,6 +67,8 @@ const EL_PUENTE: &[&str] = &[
     "nativo/Sintesis.swift",
     "nativo/Red.swift",
     "nativo/Llavero.swift",
+    // El desbloqueo de las notas guardadas (sprint 003, fase 1, ADR 015 §5).
+    "nativo/Desbloqueo.swift",
 ];
 
 /// Compila el puente de Swift y lo deja listo para enlazar dentro del binario.
@@ -118,6 +120,8 @@ fn compilar_el_puente_de_swift() {
             // La síntesis (C7, sprint 002, fase 5): el modelo del sistema.
             println!("cargo:rustc-link-lib=framework=FoundationModels");
             println!("cargo:rustc-link-lib=framework=Security");
+            // Touch ID o la contraseña del Mac, para abrir tus notas guardadas (ADR 015 §5).
+            println!("cargo:rustc-link-lib=framework=LocalAuthentication");
             println!("cargo:rustc-cfg=puente_de_swift");
         }
         Ok(fallo) => {

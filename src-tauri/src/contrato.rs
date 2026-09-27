@@ -38,6 +38,16 @@ pub struct Muestra {
     pub valor: Value,
 }
 
+/// La ficha fijada de las muestras de notas: la de la maqueta (`notas.html`, «durante»).
+fn ficha_fijada() -> crate::notas::FichaFijada {
+    crate::notas::FichaFijada {
+        titular: "Limpieza de datos: hasta tres fuentes".into(),
+        documento: "Propuesta Páramo Azul".into(),
+        seccion: Some("§3.2".into()),
+        unidad: Some(crate::corpus::Unidad::Propuesta),
+    }
+}
+
 fn m<T: serde::Serialize>(
     nombre: &'static str,
     tipo: &'static str,
@@ -455,6 +465,63 @@ pub fn muestras() -> Vec<Muestra> {
         m("IDIOMAS_DE_PISTA", "IdiomasDePista", "./cuaderno", &crate::prefs::IdiomasDePista {
             consultor: "es-ES".into(),
             cliente: "en-US".into(),
+        }),
+        // ---- tus notas (C9, sprint 003, fase 1, ADR 015) -------------------------------------
+        // Cuatro comandos que la pantalla de Notas lee: el cuaderno de ahora, la lista de reuniones
+        // guardadas, lo que devuelve guardar y una reunión abierta. Con datos de la maqueta.
+        m("VISTA_DEL_CUADERNO", "VistaDelCuaderno", "./notas", &{
+            let mut c = crate::notas::Cuaderno::nuevo(false);
+            c.escribir("Piden la cuarta fuente (Excel de logística).\nFecha real: 12 semanas desde la firma.");
+            c.acordar("Cuarta fuente: cotización aparte");
+            c.ver(ficha_fijada());
+            c.fijar_la_vigente();
+            crate::reunion::VistaDelCuaderno {
+                nota: c.nota().to_string(),
+                acuerdos: c.acuerdos().to_vec(),
+                fijadas: c.fijadas().to_vec(),
+                resumen: c.resumen(),
+                conservar_mis_turnos: false,
+                abierta: true,
+                retencion: crate::prefs::Retencion::Dias90,
+            }
+        }),
+        // `reuniones_guardadas` devuelve una lista; se ata el elemento, con vencimiento y sin él.
+        m("REUNION_GUARDADA", "ReunionGuardada", "./notas", &crate::carpeta::Reunion {
+            archivo: "paramo-azul-2026-09-20.ghost".into(),
+            bytes: 22_528,
+            guardada: 1_789_900_000,
+            vence: 1_797_676_000,
+        }),
+        m("REUNION_GUARDADA_PARA_SIEMPRE", "ReunionGuardada", "./notas", &crate::carpeta::Reunion {
+            archivo: "reunion-2026-09-27-1402.ghost".into(),
+            bytes: 3_104,
+            guardada: 1_790_500_000,
+            vence: 0,
+        }),
+        m("REUNION_GUARDADA_AHORA", "Guardada", "./notas", &crate::carpeta::Guardada {
+            archivo: "paramo-azul-2026-09-20.ghost".into(),
+            bytes: 22_528,
+            vence: 1_797_676_000,
+        }),
+        m("CONTENIDO_DE_REUNION", "ContenidoDeReunion", "./notas", &{
+            let mut c = crate::notas::Cuaderno::nuevo(true);
+            c.escribir("Piden la cuarta fuente.");
+            c.acordar("Cuarta fuente: cotización aparte");
+            c.ver(ficha_fijada());
+            c.fijar_la_vigente();
+            c.oir(&crate::stt::Turno {
+                pista: crate::capture::Pista::Microfono,
+                desde_ms: 0,
+                hasta_ms: 3_000,
+                texto: "Te envío la cotización el lunes.".into(),
+                hora: "14:05".into(),
+                eco: false,
+            });
+            c.contenido(crate::notas::Encabezado {
+                empezo: "2026-09-20 14:02".into(),
+                minutos: 47,
+                cliente: Some("Páramo Azul".into()),
+            })
         }),
         m("QUE_SABE_TRANSCRIBIR", "QueSabeTranscribir", "./cuaderno", &crate::QueSabeTranscribir {
             motor: "apple-speechanalyzer",

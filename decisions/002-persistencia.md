@@ -130,3 +130,27 @@ test en rojo:
 **Qué entra en el inventario del efímero:** nada nuevo en esta enmienda. `preferencias.json` se
 escribe cuando el usuario cambia algo, no durante una sesión; la sesión completa del gate en marcha
 no lo toca, y si algún día un camino de la sesión lo escribiera, el gate lo denunciaría como intruso.
+
+---
+
+## Enmienda 3 — las notas: el módulo que decide no escribe (sprint 003, fase 1, 2026-09-27)
+
+La tabla de la decisión decía `notas/ — Sí`. **Deja de ser así**, por la misma razón que el
+diccionario en la enmienda 1: el cuaderno recibe los turnos del micrófono para «Conservar mis turnos»,
+y entre ellos llegan los marcados como **eco** —el micrófono oyendo al cliente por los altavoces—,
+que son la voz del cliente. El módulo que tiene eso en las manos no puede tener manera de escribirlo.
+
+| Quién | Qué hace | Puede tocar disco |
+|---|---|---|
+| `notas/` | el cuaderno en memoria, el filtro de tus turnos (micrófono, sin eco), el contenido del archivo y el cifrado | **No** — está en `PROTEGIDOS` |
+| `carpeta.rs` | pide la llave al Llavero, escribe con `almacen`, lista, abre, exporta, borra y barre lo vencido | Sí — recibe el contenido ya armado; no ve un turno |
+| `reunion.rs` | cuándo empieza y se cierra una reunión, ⌃⌥P, la protección del cuaderno, guardar al salir | Sí, a través de `carpeta.rs` |
+
+**Lo que entra en el inventario del efímero: la carpeta de tus notas**, la tercera entrada de
+`Permitido` en `contra-el-mac-de-verdad.rs`. La sesión completa del gate en marcha escribe notas de
+verdad —con tu turno, el del cliente y su eco llevando la canaria— y el test **descifra** el archivo
+con su llave antes de buscar la canaria. Las dos demos en rojo están en la bitácora: sin la línea en
+`Permitido`, el archivo se denuncia como intruso; con la canaria plantada en la nota, solo el test que
+descifra la ve (la comprobación vieja, sobre los bytes cifrados, pasa en verde sin haber mirado nada).
+
+El detalle —formato, llave, desbloqueo, retención— es el ADR 015.

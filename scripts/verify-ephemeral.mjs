@@ -79,6 +79,11 @@ const PROTEGIDOS = [
   // ADR 011.
   "src-tauri/src/sintesis",
   "src-tauri/src/sesion",
+  // `notas` (sprint 003, fase 1, ADR 015): tus notas SÍ persisten, y el módulo está aquí igual. Recibe
+  // los turnos del micrófono para «Conservar mis turnos», y entre ellos llegan los marcados como eco
+  // —el micrófono oyendo al cliente por los altavoces—, que son la voz del cliente. Decide qué es tuyo,
+  // lo cifra y entrega bytes; los escribe `carpeta.rs`, que no ve un turno. El patrón del diccionario.
+  "src-tauri/src/notas",
   "src-tauri/nativo",
   "src/capture",
 ];

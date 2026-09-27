@@ -22,7 +22,7 @@ import { EXTERNOS, useIa } from "../ia";
  * El cero de la red no se mantiene por disciplina: la única puerta es la del proveedor externo de
  * IA —apagada salvo que el usuario la encienda—, y cada byte que sale por ella pasa por el
  * contador que esta pantalla lee. Y la cuenta del kill-switch la da Rust: un `match` sin comodín en
- * `corte.rs` no deja compilar una pieza nueva sin resolverla (hoy son nueve).
+ * `corte.rs` no deja compilar una pieza nueva sin resolverla (hoy son diez).
  */
 
 // Las piezas del kill-switch ya NO se escriben aquí: se preguntan. Hasta el sprint 002 eran dos

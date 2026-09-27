@@ -178,3 +178,86 @@ Lo hizo un subagente de solo lectura. **Resultado: 72 revisadas.**
 - **CI de `752dca9`:** quality, e2e y build-escritorio en success, cada uno con su conclusión propia.
 - **Pasos 1–3 del punto seguro, hechos:** los bugs 8, 9 y 10 de la tabla de arriba. El 10 no estaba en la lista: apareció al comprobar el 9 contra el código.
 - **Gates locales:** vitest 264 · cargo --lib 357 · clippy limpio · lint · typecheck · `verify:ephemeral` estático.
+
+---
+
+## Fase 1 — Lo tuyo queda (en curso, 2026-09-27)
+
+**La mirada 19 viajó en el cierre de la fase 0.** El usuario respondió «continúa» sin comentar las maquetas. Eso pasa el gate de FASE, no el de MIRADA (regla 10). Así que se repreguntó «¿qué viste al abrirlo?» y se avanzó **solo con lo que no depende de esa mirada**. La pantalla de Notas, la elección de retención, el aviso de exportar, la vista de «lo que salió» (B37), ⌃⌥N y ⌃⌥P esperan su veredicto.
+
+### Primero el ADR: `decisions/015-las-notas-y-su-cifrado.md`
+
+Tiene diez puntos:
+1. qué entra y qué no;
+2. dónde y con qué nombre;
+3. el formato `.ghost` v1;
+4. la llave;
+5. qué se desbloquea;
+6. la retención;
+7. qué pasa al cerrar, al salir y con ⌥⎋;
+8. dónde vive el código;
+9. qué va al log;
+10. el cuaderno protegido.
+
+Más la **enmienda 3 del ADR 002**: `notas/` no toca disco y `carpeta.rs` sí, y la carpeta de notas es la tercera entrada de `Permitido`.
+
+### Lo construido
+
+| Pieza | Qué es | Tests |
+|---|---|---|
+| `src-tauri/src/notas/mod.rs` | el cuaderno en memoria. **Módulo protegido** (entra en `PROTEGIDOS`) | 8 |
+| `src-tauri/src/notas/cifrado.rs` | `.ghost` v1: XChaCha20-Poly1305 (`chacha20poly1305` 0.11, RustCrypto, `zeroize`). La cabecera va en claro con el vencimiento y está autenticada | 8 |
+| `src-tauri/src/carpeta.rs` | la capa que escribe: llave, guardado con nombre libre, lista sin llave, abrir, borrar, barrer, exportar a Markdown 600, línea de log | 10 |
+| `src-tauri/src/llavero.rs` · `existe` | consulta de tres estados: sí · no · el Llavero no contestó | — |
+| `src-tauri/nativo/Desbloqueo.swift` + `src-tauri/src/desbloqueo.rs` | LocalAuthentication `deviceOwnerAuthentication`, una vez por sesión de la app | 3 |
+| `src-tauri/src/ventana/mod.rs` | `proteger_el_cuaderno`, `lo_que_cambia`, `invariante_en_marcha` | 2 |
+| `src-tauri/src/reunion.rs` | el ciclo de la reunión cableado en `lib.rs`: al empezar, al parar, ⌥⎋, al salir, turnos y fichas, y el barrido cada hora | 4 |
+| `src-tauri/src/prefs.rs` | `retencion` (90 d de fábrica, mirada 19), `conservar_mis_turnos` (apagado) y `carpeta_de_notas` | 1 nuevo |
+| `corte.rs` | pieza nueva `TusTurnos` (**10 de 10**). Maqueta de Honestidad y tests, a 10 | 1 |
+| contrato | `VISTA_DEL_CUADERNO`, `REUNION_GUARDADA` (×2), `REUNION_GUARDADA_AHORA`, `CONTENIDO_DE_REUNION` → `src/notas.ts` (solo tipos) | gate de lectores: **25 campos en DEUDA «fase 1 (tras la mirada 19)»**; los paga la pantalla de Notas |
+
+Detalle del cuaderno en memoria:
+- tus turnos entran solo si son del micrófono, sin eco y con la casilla encendida;
+- de las fichas, solo las que fijas;
+- ⌥⎋ se lleva tus turnos y la ficha vigente; la nota, los acuerdos y las fijadas se quedan;
+- el nombre del archivo es el de la maqueta.
+
+### Cada gate nuevo, con su rojo
+
+Todos se vieron en rojo con el defecto plantado y volvieron a verde al restaurarlo.
+
+| Gate | Defecto plantado | Rojo |
+|---|---|---|
+| el eco no entra | `oir` sin mirar `eco` | «un turno con eco es la voz del cliente y entró al archivo» |
+| la cabecera está autenticada | cifrar sin datos asociados | `alargarle_la_vida_por_fuera_lo_deja_sin_abrir`: «pero el archivo ya no abre» |
+| no se reemplaza una llave que existe | `existe().unwrap_or(false)` | el guardado se hizo con una llave nueva encima (`Ok` en vez de error) |
+| 600 desde el nacimiento | `fs::write` en vez de `almacen::escribir` | «el archivo de la reunión lo puede leer otra cuenta» |
+| desbloqueo una vez por sesión | sin recordarlo | «se volvió a pedir Touch ID dentro de la misma sesión de la app» |
+| el cuaderno protegido y el relleno jamás | `lo_que_cambia` sobre el relleno | «tu nota se vería al compartir» |
+| una sola llamada que enciende el flag (TS) | 1) otra llamada en `abrir_banda` 2) quitar la del cuaderno | 1) la nombra por `archivo:línea` 2) «desapareció o se duplicó» |
+| si guardar falla, la nota se queda | cerrar antes de escribir | «la nota se perdió al fallar» |
+| `notas/` protegido (estático) | `std::fs::write` en `notas/mod.rs` | dos hallazgos con `archivo:línea` |
+| efímero en marcha, la carpeta de notas | sin la línea en `Permitido` | «dejó rastro en 1 archivo(s) … `Angel Ghost/reunion-2026-09-27-1402.ghost`» |
+| efímero en marcha, **la canaria en el archivo descifrado** | la canaria dentro de la nota | «la frase del cliente acabó dentro de … `.ghost`». **Y con la comprobación de antes, que miraba los bytes cifrados, la misma fuga pasa en VERDE**: es la prueba de que descifrar era necesario |
+
+**`cargo audit`:** 0 vulnerabilidades. Siguen los 9 avisos de antes; la dependencia nueva no añade ninguno.
+
+**Rendimiento:** abrir una reunión de 100 000 letras tarda muy por debajo de 500 ms (`abrir_una_reunion_tarda_menos_de_medio_segundo`).
+
+### Decisiones del constructor, declaradas en el ADR 015
+
+El usuario las puede revocar:
+1. **El cuaderno sigue protegido hasta que la reunión se guarda o se descarta**, no solo mientras hay sesión. ⌥⎋ se pulsa muchas veces justo antes de compartir pantalla, y las notas sobreviven al corte. Es tu decisión, llevada al lado seguro.
+2. **Una reunión sin nada tuyo se cierra al parar**: no hay pregunta ni archivo, y el cuaderno se suelta.
+3. **Empezar otra sesión con la anterior abierta la guarda antes**, y **salir de la app con notas sin guardar las guarda**. Lo único que las tira es «Cerrar sin guardar». Si la app se cae, se pierden, y está declarado.
+4. **Las fichas que salieron solas no se guardan**: su lista es la huella de lo que dijo el cliente. Solo las fijadas, como en la maqueta de «al cerrar».
+5. **El vencimiento va en claro en la cabecera y autenticado**: barrer no necesita la llave, y alargarle la vida por fuera inutiliza el archivo.
+
+### Falta de la fase 1, tras el veredicto de la mirada 19
+- la pantalla `Notas.tsx` (durante · al cerrar · el archivo · exportar), con los comandos y las capabilities (los 25 campos de DEUDA se pagan aquí);
+- ⌃⌥N y ⌃⌥P registrados, y la banda sin «todavía no» en ⌃⌥P;
+- Honestidad: «Lo que quedará cuando cierres» en vivo, y «Tus notas siguen ahí» tras el corte;
+- la vista B37 en IA;
+- el manual;
+- `NSDocumentsFolderUsageDescription` es/en;
+- las pruebas en vivo en `pnpm tauri dev`: Touch ID, guardado en `~/Documents/Angel Ghost/` y cuaderno en negro en Meet.

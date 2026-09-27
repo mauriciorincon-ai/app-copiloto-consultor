@@ -49,6 +49,11 @@ pub enum Pieza {
     UltimoFrame,
     /// La ventana de turnos transcritos: se sobrescriben las letras antes de soltarlas.
     Transcript,
+    /// **Del cuaderno, lo que salió de la captura** (sprint 003, ADR 015 §7): tus turnos en texto
+    /// («Conservar mis turnos») y la ficha que la banda enseñaba, que eligió el disparador por las
+    /// palabras del cliente. **Tu nota, tus acuerdos y tus fijadas se quedan**: la maqueta lo dice
+    /// —«Tus notas siguen ahí»— y es lo único tuyo que la reunión produce.
+    TusTurnos,
     /// **La voz que sale**: se corta lo que esté diciendo, se tira lo que quede en la cola y el modo
     /// solo audio se apaga. Nace en el sprint 002 con C15.
     ///
@@ -79,6 +84,7 @@ pub const TODAS: &[Pieza] = &[
     Pieza::AudioDelSistema,
     Pieza::UltimoFrame,
     Pieza::Transcript,
+    Pieza::TusTurnos,
     Pieza::ContadorDeRed,
     Pieza::Banda,
     Pieza::Acople,
@@ -99,9 +105,10 @@ impl Pieza {
             Pieza::AudioDelSistema => 3,
             Pieza::UltimoFrame => 4,
             Pieza::Transcript => 5,
-            Pieza::ContadorDeRed => 6,
-            Pieza::Banda => 7,
-            Pieza::Acople => 8,
+            Pieza::TusTurnos => 6,
+            Pieza::ContadorDeRed => 7,
+            Pieza::Banda => 8,
+            Pieza::Acople => 9,
         }
     }
 }
@@ -160,7 +167,9 @@ pub fn suerte_en_este_sprint(pieza: Pieza) -> Suerte {
         // entonces se declaró como inexistente en vez de disimularse.
         | Pieza::UltimoFrame
         // La sugerencia en camino, desde la auditoría del S2: la época sube.
-        | Pieza::Sugerencia => Suerte::Cortada,
+        | Pieza::Sugerencia
+        // Del cuaderno, tus turnos y la ficha vigente: desde la fase 1 del sprint 003.
+        | Pieza::TusTurnos => Suerte::Cortada,
     }
 }
 
@@ -213,15 +222,16 @@ mod tests {
     /// En este sprint se corta lo que existe, y lo que no existe **se dice**. Un kill-switch que
     /// informara «8 de 8 cortadas» teniendo piezas sin construir sería una mentira cómoda.
     ///
-    /// La cuenta ha cambiado tres veces y **las tres las obligó el compilador**: en la fase 3 del
+    /// La cuenta ha cambiado cada vez que llegó una pieza, y **siempre la obligó el compilador**: en la fase 3 del
     /// sprint 001, de 3 y 4 a 6 y 1, cuando las pistas de audio y el transcript pasaron de
     /// declararse a cortarse de verdad; en la fase 2 del sprint 002, a 7 y 1, con la voz que sale; y
     /// en la fase 3 del sprint 002, a **8 y 0**, con la lectura de pantalla; y en la auditoría del
-    /// sprint 002, a **9 y 0**, con la sugerencia en camino (M2), que el corte no alcanzaba.
+    /// sprint 002, a **9 y 0**, con la sugerencia en camino (M2), que el corte no alcanzaba; y en la
+    /// fase 1 del sprint 003, a **10 y 0**, con tus turnos del cuaderno (ADR 015 §7).
     #[test]
-    fn en_este_sprint_se_cortan_las_nueve() {
+    fn en_este_sprint_se_cortan_las_diez() {
         let cortadas = TODAS.iter().filter(|p| suerte_en_este_sprint(**p) == Suerte::Cortada).count();
         let futuras = TODAS.iter().filter(|p| suerte_en_este_sprint(**p) == Suerte::AunNoExiste).count();
-        assert_eq!((cortadas, futuras), (9, 0));
+        assert_eq!((cortadas, futuras), (10, 0));
     }
 }
