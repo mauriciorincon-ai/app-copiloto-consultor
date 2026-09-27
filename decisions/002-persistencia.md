@@ -191,3 +191,16 @@ memoria mientras la app esté abierta.
 
 **Lo que entra en el inventario del efímero:** nada nuevo. `prefs.json` se escribe cuando respondes, no
 durante una sesión; la sesión completa del gate en marcha no lo toca.
+
+## Enmienda 6 — el socket de la puerta local (sprint 003, fase 4, 2026-09-27)
+
+`puerta.sock`, en la carpeta privada de la app (700), en 600 (ADR 018 §1). **No lleva contenido**: es
+un punto de encuentro del sistema de archivos, no un archivo con datos; lo que pasa por él vive en
+memoria y muere con la conexión. **Solo existe con la puerta abierta**: al cerrarla se borra, y si la
+app se cayó con ella abierta, se borra al arrancar. El token que la abre vive en el Llavero, nunca en
+disco, y sale de él al cerrarla.
+
+**Lo que entra en el inventario del efímero:** nada. La puerta **se cierra al empezar una sesión** (ADR
+018 §5, lo vigila `empezar_cierra_la_puerta_antes_que_nada`), así que durante una sesión el socket no
+existe. `Permitido` no lo lleva a propósito: si alguna vez apareciera en el inventario de una sesión, es
+que la puerta siguió abierta en una reunión, y el gate en marcha lo tiene que delatar.

@@ -87,6 +87,19 @@ fn m<T: serde::Serialize>(
     }
 }
 
+/// La puerta como nace: cerrada, sin `ghost` compilado al lado y sin nada en el registro.
+fn puerta_cerrada() -> crate::puerta::VistaDeLaPuerta {
+    crate::puerta::VistaDeLaPuerta { abierta: false, cerro: None, no_abre: None, ghost: None, registro: Vec::new() }
+}
+
+fn entrada(hora: &str, orden: &str, resultado: crate::puerta::Resultado) -> crate::puerta::Entrada {
+    crate::puerta::Entrada { hora: hora.into(), orden: orden.into(), resultado }
+}
+
+fn denegado(motivo: crate::puerta::Motivo) -> crate::puerta::Resultado {
+    crate::puerta::Resultado::Denegado { motivo }
+}
+
 /// La sugerencia de la maqueta (mirada 18), fundada en la ficha de «Páramo Azul · §3.2 Alcance».
 fn sugerencia() -> crate::sintesis::Sugerencia {
     use crate::ficha::{Fuente, Respaldo};
@@ -615,6 +628,40 @@ pub fn muestras() -> Vec<Muestra> {
         m("NDA_NO_LO_PROHIBE", "Nda", "./jurisdiccion", &crate::jurisdiccion::Nda::NoLoProhibe),
         m("NDA_LO_PROHIBE", "Nda", "./jurisdiccion", &crate::jurisdiccion::Nda::LoProhibe),
         m("ESCUCHA_SOLO_NOTAS", "EstadoDeEscucha", "./cuaderno", &crate::escucha::EstadoDeEscucha::solo_notas()),
+        // La puerta local (C16, ADR 018): cerrada, abierta con lo que hizo tu agente y cerrada sola por una
+        // reunión. El registro, de la más reciente a la más antigua, con las tres formas de un resultado.
+        m("VISTA_DE_LA_PUERTA_CERRADA", "VistaDeLaPuerta", "./puerta", &puerta_cerrada()),
+        m("VISTA_DE_LA_PUERTA_ABIERTA", "VistaDeLaPuerta", "./puerta", &crate::puerta::VistaDeLaPuerta {
+            abierta: true,
+            ghost: Some("/Users/ana/app-copiloto-consultor/src-tauri/target/debug/ghost".into()),
+            registro: vec![
+                entrada("11:12", "ghost notas abrir", crate::puerta::Resultado::Fallo),
+                entrada("11:09", "ghost ia --encender-api", denegado(crate::puerta::Motivo::ElApiEsTuyo)),
+                entrada("11:04", "ghost corpus reindexar", crate::puerta::Resultado::Hecho { cuenta: Some(28) }),
+            ],
+            ..puerta_cerrada()
+        }),
+        m("VISTA_DE_LA_PUERTA_EN_REUNION", "VistaDeLaPuerta", "./puerta", &crate::puerta::VistaDeLaPuerta {
+            cerro: Some(crate::puerta::Cierre::EnReunion),
+            ghost: Some("/Users/ana/app-copiloto-consultor/src-tauri/target/debug/ghost".into()),
+            registro: vec![
+                entrada("14:02", "ghost corpus buscar", denegado(crate::puerta::Motivo::EnReunion)),
+                entrada("13:58", "ghost corpus buscar", crate::puerta::Resultado::Hecho { cuenta: Some(3) }),
+            ],
+            ..puerta_cerrada()
+        }),
+        m("VISTA_DE_LA_PUERTA_SIN_GHOST", "VistaDeLaPuerta", "./puerta", &crate::puerta::VistaDeLaPuerta {
+            abierta: true,
+            ..puerta_cerrada()
+        }),
+        m("PUERTA_CERRADA_A_MANO", "Cierre", "./puerta", &crate::puerta::Cierre::ATuMano),
+        m("PUERTA_NO_ABRE_EN_REUNION", "NoAbre", "./puerta", &crate::puerta::NoAbre::EnReunion),
+        m("PUERTA_NO_ABRE_RUTA_LARGA", "NoAbre", "./puerta", &crate::puerta::NoAbre::RutaLarga),
+        m("PUERTA_NO_ABRE_LLAVERO", "NoAbre", "./puerta", &crate::puerta::NoAbre::Llavero),
+        m("PUERTA_NO_ABRE_SOCKET", "NoAbre", "./puerta", &crate::puerta::NoAbre::Socket),
+        m("PUERTA_LLAVE_ERRADA", "Motivo", "./puerta", &crate::puerta::Motivo::LlaveErrada),
+        m("PUERTA_NO_DELEGABLE", "Motivo", "./puerta", &crate::puerta::Motivo::NoDelegable),
+        m("PUERTA_ORDEN_DESCONOCIDA", "Motivo", "./puerta", &crate::puerta::Motivo::OrdenDesconocida),
         // `reuniones_guardadas` devuelve una lista; se ata el elemento, con vencimiento y sin él.
         m("REUNION_GUARDADA", "ReunionGuardada", "./notas", &crate::carpeta::Reunion {
             archivo: "paramo-azul-2026-09-20.ghost".into(),

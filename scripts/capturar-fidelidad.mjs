@@ -146,6 +146,11 @@ const ARTEFACTOS = [
       // IA desde la fase 1 del sprint 003 (B37, mirada 19): «quién redacta» con su botón, y lo que salió.
       { id: "ia", maqueta: "ia.html", estado: "s3-quien", alto: 640, url: "ventana=principal&pantalla=ia" },
       { id: "ia-salio", maqueta: "ia.html", estado: "s3-salio", alto: 640, url: "ventana=principal&pantalla=ia&vista=salio" },
+      // La puerta local (C16, fase 4 del sprint 003, ADR 018): cerrada, abierta con su registro, y cerrada
+      // sola por una reunión.
+      { id: "ia-puerta", maqueta: "ia.html", estado: "s3-puerta", alto: 640, url: "ventana=principal&pantalla=ia&vista=puerta" },
+      { id: "ia-puerta-abierta", maqueta: "ia.html", estado: "s3-puerta-abierta", alto: 640, url: "ventana=principal&pantalla=ia&vista=puerta&puerta=abierta" },
+      { id: "ia-puerta-reunion", maqueta: "ia.html", estado: "s3-puerta-reunion", alto: 640, url: "ventana=principal&pantalla=ia&vista=puerta&puerta=en-reunion" },
     ],
   },
 ];

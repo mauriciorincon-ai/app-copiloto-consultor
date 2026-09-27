@@ -566,6 +566,25 @@ queda nada que decir. Su fila «A medias» se queda en la tarjeta de las pistas,
 bajo-medio en verde con ✓; medio y medio-alto en ámbar con ⚠ (medio-alto con el borde en error); sin
 verificar en gris con ◯.
 
+## 9-nonies · La puerta local, construida (sprint 003, fase 4, 2026-09-27)
+
+> **Maquetado, no visto** (misma decisión del usuario que §9-septies). ADR 018. Registro:
+> `docs/diseno/README.md`.
+
+La puerta se abre **como «lo que salió»** (§9-sexies, mirada 19): un botón en la pantalla de hoy lleva
+a la vista de la Etapa de Diseño («Claude Code»), con un botón para volver. Tres ajustes para que la
+vista quepa en los 640 px con su franja y su registro (`maqueta-cabe` midió +120 px):
+
+| Pieza | Dónde | Regla |
+|---|---|---|
+| «Puerta local · cerrada / abierta» | `btn mini` con `i-llave`, a la derecha de «Redactar sugerencias» | la entrada; dice el estado de la puerta en su palabra |
+| la fila del título | tarjeta de cabecera: «← Quién redacta» · «Puerta local para tu agente» · el conmutador con `i-llave` | el botón de volver entra en la fila del título: no hay fila aparte |
+| el subtítulo de la pantalla | `.titulo .sub` | en la vista de la puerta dice lo que la puerta es, y la tarjeta no lo repite |
+| el comando | fila `mono` + «Copiar», solo con la puerta abierta | la ruta entre comillas y `--help`; debajo, qué va a preguntar macOS |
+| `.puerta` | las dos columnas | el relleno pasa de 5 px a 3 px por lado, y cada «por qué» cabe en una línea |
+| el registro | «Qué hizo tu agente», `.mas` | lo más reciente arriba; tres a la vista y el resto se desplaza (`max-height: 74px`); lo denegado lleva su motivo antes de la marca |
+| `franja.warn` | entre la cabecera y las columnas | «Se cerró sola: hay una reunión», o «No se abrió» y por qué |
+
 ## 10 · Deuda de diseño declarada
 
 | Qué | Por qué | Cuándo se paga |
@@ -592,4 +611,5 @@ verificar en gris con ◯.
 | 1.8.0 | 2026-09-20 | sprint 001, fase 1a: **§9-quinquies — los seis estados de CONTENIDO de la banda** · tokens de alto (`--banda-h*`) · acciones como teclas · el asa con un trabajo · transcript a la derecha |
 | 1.12.0 | 2026-09-27 | sprint 003, fase 2: **§9-septies — las propuestas y la bandeja, construidas** (`propuesta-b`, `tecla.fijada`, `franja.mute`, `cuenta.vencida`, los chips dentro de una franja) — maquetado, no visto |
 | 1.13.0 | 2026-09-27 | sprint 003, fase 3: **§9-octies — el marco en la mano, construido** (`selector`, `bandera .pendiente`, `aviso-legal`, `pregunta-nda`, `clausula`, la banda en solo notas) · Sesión vuelve al diseño de la Etapa de Diseño — maquetado, no visto |
+| 1.14.0 | 2026-09-27 | sprint 003, fase 4: **§9-nonies — la puerta local, construida** (la entrada en IA, la fila del título con «volver», el subtítulo de la vista, el comando, `.puerta` a 3 px, el registro que se desplaza, la franja de «se cerró sola») — maquetado, no visto |
 | 1.9.0 | 2026-09-20 | mirada 11: **la maniobra** — catálogo versionado de seis maneras de responder + «lo más cercano que sí tienes», los dos deterministas; `maniobra-b` y `cercano-b`; estado «sin resultado · ampliada» |

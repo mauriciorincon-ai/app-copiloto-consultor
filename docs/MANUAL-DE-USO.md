@@ -466,6 +466,45 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - El precio de cada proveedor está escrito en la app con su fecha (2026-09-26); si el proveedor lo
     cambia, el costo que ves se desvía hasta la versión siguiente.
 
+### La puerta local: que Claude Code opere la app · Nuevo · Sprint 003
+
+- **Qué hace:** deja que **Claude Code**, en tu propio Mac y en tu sesión, opere la app por un
+  comando, `ghost`: buscar en tu corpus, reindexarlo, correr el kit de evaluación con tus preguntas,
+  leer y cambiar algunas preferencias y abrir tus notas guardadas. **Nace cerrada**, la abres tú, y
+  **en reunión se cierra sola** y lo deniega todo: un agente no toca jamás lo que está vivo en memoria.
+  No sale a la red —es un canal local del Mac, que solo alcanza tu usuario— y el contador sigue en 0 B.
+- **Cómo se usa:**
+  1. Compila `ghost` una vez, junto a la app: `pnpm ghost` en la carpeta del proyecto.
+  2. En *IA*, **«Puerta local · cerrada»** (en la fila de «Redactar sugerencias») → se abre la vista de
+     la puerta → el conmutador **«cerrada»** la abre.
+  3. La vista enseña el comando, con **«Copiar»**: la ruta de `ghost` y `--help`. Pégaselo a Claude
+     Code; `ghost --help` le explica lo que puede pedir.
+  4. **La primera vez que Claude Code use la puerta, macOS te pregunta** si `ghost` puede usar la
+     información guardada en «Angel Ghost · puerta» de tu llavero, con la contraseña de tu Mac. Esa es
+     la llave: si no la das, no entra. Se vuelve a preguntar **una vez cada vez que abres la puerta**.
+  5. **«Qué hizo tu agente»** lista cada orden, **también las denegadas**, con su hora y su motivo, sin
+     el contenido: dice «ghost corpus buscar», no qué buscó.
+  6. Para cerrarla, el mismo conmutador. Se cierra también al salir de la app.
+- **Lo que puede pedir** (`ghost --help`): `corpus buscar <texto>` · `corpus reindexar` ·
+  `kit <preguntas.json>` (por ejemplo, `docs/kit-de-prueba/preguntas.json`) · `prefs leer` ·
+  `prefs cambiar <clave> <valor>`, solo con `idioma-consultor`, `idioma-cliente`, `retencion`,
+  `ventana-de-la-bandeja` y `lectura-automatica` · `notas listar` · `notas abrir <archivo>`, que te
+  pide **Touch ID o tu contraseña en el Mac** (una vez por sesión de la app, como abrir en *Notas*).
+- **Lo que no puede nunca:** nada en reunión (si la app escucha, si hay una reunión en solo notas, si ve
+  una videollamada abierta **o si no puede saberlo**); encender el API externo; cambiar «Redactar
+  sugerencias», el proveedor externo, «Conservar mis turnos» ni lo que respondiste de una NDA; abrirse
+  sola; tocar otra máquina. Todo eso se deniega y queda en el registro.
+- **Si se cerró sola:** *IA* lo dice en ámbar, «Se cerró sola: hay una reunión». Vuelve a abrirla tú
+  cuando termine; no se abre sola.
+- **Limitaciones conocidas:**
+  - `ghost` **no se instala en tu PATH** ni viaja dentro de la app: vive junto a la app que compilaste,
+    y la vista de la puerta te da su ruta. Llega con la app firmada.
+  - Busca, reindexa y mide sobre **el corpus que la app tiene indexado en esta sesión**: si acabas de
+    abrir la app, señala antes tu carpeta en *Corpus*. Añadir carpetas se hace a mano, en *Corpus*.
+  - El kit mide **la búsqueda** (nDCG@5 y lo que no encuentra); no compara modelos.
+  - El registro guarda las últimas 50 órdenes de esta sesión de la app; se ven tres y el resto se
+    desplaza. Al salir, se borra.
+
 ### El modo solo audio: la ficha, al oído · Nuevo · Sprint 002
 
 - **Qué hace:** te **lee la ficha en voz alta** mientras la banda se encoge a una sola línea, para
@@ -609,7 +648,7 @@ detecta y lo marca, pero funciona mejor con auriculares.
 |---|---|
 | 001 | la banda protegida · el acople · las dos pistas y la transcripción local · el corpus indexado · la ficha de evidencia y la sugerencia de cómo conducirse · el modelo de voz de un idioma · el corte y la pantalla de Honestidad · español e inglés |
 | 002 | el disparo por silencio · **tu diccionario técnico** · **el modo solo audio** · **la lectura de pantalla** y `⌃⌥L` · **los porqués** (la pista que no abrió, la salida de audio por su nombre, el motor que falta) · **por qué llegó la ficha y cuánto tardó** · las teclas pasan a `⌃⌥` · **el radar** (ámbar y coral) y `⌃⌥R` · **la sugerencia** y la pantalla **IA** |
-| 003 | **tus notas** (el cuaderno de la reunión, el archivo cifrado por reunión, la retención, exportar y borrar) · `⌃⌥N` y `⌃⌥P` · **el cuaderno protegido** mientras la reunión está abierta · **lo que salió al API**, en *IA* · **las propuestas por reglas y la bandeja** con su cuenta atrás y su borrado con la app cerrada · `⌃⌥↵` · la señal «fijada» · el corte pasa a 11 piezas · las preferencias se recuerdan · tus notas pasan a la **carpeta privada de la app**, con «Mostrar en Finder», y se borran solas al vencer aunque no abras la app · **el marco en la mano**: «Este cliente», su bandera de jurisdicción, el chequeo de NDA, la cláusula de encargo y el **modo solo notas** |
+| 003 | **tus notas** (el cuaderno de la reunión, el archivo cifrado por reunión, la retención, exportar y borrar) · `⌃⌥N` y `⌃⌥P` · **el cuaderno protegido** mientras la reunión está abierta · **lo que salió al API**, en *IA* · **las propuestas por reglas y la bandeja** con su cuenta atrás y su borrado con la app cerrada · `⌃⌥↵` · la señal «fijada» · el corte pasa a 11 piezas · las preferencias se recuerdan · tus notas pasan a la **carpeta privada de la app**, con «Mostrar en Finder», y se borran solas al vencer aunque no abras la app · **el marco en la mano**: «Este cliente», su bandera de jurisdicción, el chequeo de NDA, la cláusula de encargo y el **modo solo notas** · **la puerta local para Claude Code** (`ghost`), en *IA* |
 
 > **Corregido tras la auditoría del sprint 001** (2026-09-22): tres frases de este manual habían
 > dejado de ser ciertas y se arreglaron con lo que el código hacía de verdad — el disparo por

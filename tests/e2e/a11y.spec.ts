@@ -30,6 +30,9 @@ const PANTALLAS = [
   { que: "ia", url: "ventana=principal&pantalla=ia" },
   // Sprint 003, fase 1: lo que salió al API (B37) y las cuatro vistas de Notas (C9).
   { que: "ia · lo que salió", url: "ventana=principal&pantalla=ia&vista=salio" },
+  { que: "ia · la puerta", url: "ventana=principal&pantalla=ia&vista=puerta" },
+  { que: "ia · la puerta abierta", url: "ventana=principal&pantalla=ia&vista=puerta&puerta=abierta" },
+  { que: "ia · la puerta se cerró sola", url: "ventana=principal&pantalla=ia&vista=puerta&puerta=en-reunion" },
   { que: "notas · durante", url: "ventana=principal&pantalla=notas&estado=durante" },
   { que: "notas · al cerrar", url: "ventana=principal&pantalla=notas&estado=al-cerrar" },
   { que: "notas · el archivo", url: "ventana=principal&pantalla=notas&estado=archivo" },

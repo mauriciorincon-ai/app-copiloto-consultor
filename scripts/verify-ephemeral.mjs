@@ -92,6 +92,11 @@ const PROTEGIDOS = [
   // red. Está aquí para que no pueda empezar a necesitarlos en silencio: traer el catálogo de un
   // servidor rompería la regla dura 2.
   "src-tauri/src/jurisdiccion",
+  // `puerta` (sprint 003, fase 4, ADR 018): la puerta local para tu agente. Por ella pasa lo que tu agente
+  // pide y lo que la app le devuelve —fichas de tu corpus, tus notas abiertas—, y un registro que jamás
+  // lleva contenido. Ni disco ni red: las únicas líneas que tocan el socket (crearlo en 600, borrarlo,
+  // escribir la respuesta) llevan su marca y el ADR 018 en la misma línea.
+  "src-tauri/src/puerta",
   "src-tauri/nativo",
   "src/capture",
 ];

@@ -63,6 +63,9 @@
     "allow-decidir-en-la-bandeja",
     "allow-decidir-toda-la-bandeja",
     "allow-cambiar-la-ventana",
-    "allow-estado-de-la-bandeja"
+    "allow-estado-de-la-bandeja",
+    "allow-la-puerta",
+    "allow-abrir-la-puerta",
+    "allow-cerrar-la-puerta"
   ]
 }

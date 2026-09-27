@@ -4,6 +4,9 @@ version = "0.1.0"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
+# Desde el sprint 003 hay dos binarios: la app y `ghost`, la puerta local del lado de tu agente
+# (ADR 018 §8). `tauri dev` y `cargo run` arrancan la app.
+default-run = "app-copiloto-consultor"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

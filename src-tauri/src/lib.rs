@@ -36,6 +36,7 @@ pub mod pantalla;
 pub mod permisos;
 pub mod prefs;
 pub mod propuestas;
+pub mod puerta;
 pub mod radar;
 pub mod red;
 pub mod relleno;
@@ -521,6 +522,9 @@ fn empezar(
     // los mandaba el webview desde su caché, y la casilla 6 lo cazó: después de reiniciar, Sesión
     // mandaba los de fábrica si el usuario no había pasado antes por Idioma. Sin parámetros, el
     // webview ya no tiene cómo mandar unos viejos.
+    // **La puerta local se cierra primero** (ADR 018 §5): un agente no toca jamás una reunión, y la
+    // reunión empieza aquí.
+    cerrar_la_puerta_al_empezar(&app);
     let prefs::IdiomasDePista { consultor: idioma_del_consultor, cliente: idioma_del_cliente } =
         idiomas_guardados(&app.state::<LasPreferencias>());
     let mut guardada = estado.0.lock().map_err(|_| "la escucha quedó en mal estado")?;
@@ -938,7 +942,10 @@ pub fn run() {
             decidir_en_la_bandeja,
             decidir_toda_la_bandeja,
             cambiar_la_ventana,
-            estado_de_la_bandeja
+            estado_de_la_bandeja,
+            la_puerta,
+            abrir_la_puerta,
+            cerrar_la_puerta
         ])
         .setup(|app| {
             // El invariante se comprueba ANTES de abrir nada y aborta el arranque si falla:
@@ -962,6 +969,10 @@ pub fn run() {
                 aplicar_las_preferencias(app.handle(), &p);
                 app.manage(LasPreferencias { ruta, actuales: std::sync::Mutex::new(p) });
             }
+            // La puerta local nace cerrada en cada arranque (ADR 018 §5): no se recuerda. Si la vez
+            // anterior la app se cayó con ella abierta, quedan su socket y su token: se borran.
+            app.manage(LaPuerta::default());
+            puerta::socket::limpiar_lo_que_quedo(&reunion::carpeta_de_la_app(app.handle()), &puerta::DelLlavero);
             // El cuaderno de la reunión (C9, ADR 015), y el barrido de lo que venció.
             app.manage(reunion::ElCuaderno::default());
             reunion::arrancar_el_barrido(app.handle());
@@ -1033,6 +1044,8 @@ pub fn run() {
             registrar_acople(mango, "soltar al salir", &acople::soltar(&huella(mango)));
             // Lo tuyo sin guardar, se guarda: perderlo por salir es peor (ADR 015 §7).
             reunion::al_salir(mango);
+            // La puerta se cierra al salir: su token sale del Llavero y su socket del disco.
+            mango.state::<LaPuerta>().0.cerrar(puerta::Cierre::ATuMano);
         }
     });
 }
@@ -2539,6 +2552,202 @@ fn estado_de_la_bandeja(app: tauri::AppHandle) -> reunion::EstadoDeLaBandeja {
     reunion::estado_de_la_bandeja(&app)
 }
 
+// ── LA PUERTA LOCAL PARA TU AGENTE (C16, ADR 018) ───────────────────────────────────────────────
+//
+// La política, el socket y la línea de órdenes viven en `puerta/`, módulo protegido. Aquí está lo que
+// la puerta puede hacer con la app —la misma búsqueda, el mismo reindexado, las mismas preferencias
+// y el mismo desbloqueo que usa la pantalla— y los tres comandos de IA, solo de la ventana principal.
+
+/// La puerta. `Arc` porque el hilo que atiende la lleva consigo.
+#[derive(Default)]
+struct LaPuerta(std::sync::Arc<puerta::socket::Puerta>);
+
+/// El nombre del evento con que IA se entera de que la puerta cambió. Solo a la ventana principal.
+const EVENTO_PUERTA: &str = "puerta";
+
+/// Lo que la puerta ve de la app.
+struct LaAppParaLaPuerta(tauri::AppHandle);
+
+impl puerta::Operaciones for LaAppParaLaPuerta {
+    fn en_reunion(&self) -> bool {
+        en_reunion(&self.0)
+    }
+    fn hacer(&self, orden: &puerta::Orden) -> Result<puerta::Hecho, String> {
+        hacer_por_la_puerta(&self.0, orden)
+    }
+    fn hora(&self) -> String {
+        hora_de_ahora()
+    }
+    fn avisar(&self) {
+        let _ = self.0.emit_to(ventana::PRINCIPAL, EVENTO_PUERTA, vista_de_la_puerta(&self.0));
+    }
+}
+
+/// **¿Hay reunión?** Escuchando, una reunión en solo notas, una videollamada detectada **o no se
+/// puede saber** (ADR 018 §5): lo que no se sabe se trata como reunión. Un candado envenenado, también.
+fn en_reunion<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> bool {
+    let escuchando = app.state::<LaEscucha>().0.lock().map(|g| g.is_some()).unwrap_or(true);
+    let cuaderno = app.try_state::<reunion::ElCuaderno>().is_some_and(|c| c.abierta());
+    escuchando || cuaderno || !matches!(sesion::ahora(), sesion::Reunion::Ninguna)
+}
+
+/// «11:04», la hora del Mac.
+fn hora_de_ahora() -> String {
+    // SEGURIDAD: `time` y `localtime_r` escriben en estructuras que viven en esta función.
+    unsafe {
+        let ahora = libc::time(std::ptr::null_mut());
+        let mut tm: libc::tm = std::mem::zeroed();
+        libc::localtime_r(&ahora, &mut tm);
+        format!("{:02}:{:02}", tm.tm_hour, tm.tm_min)
+    }
+}
+
+const SIN_CORPUS: &str = "no hay corpus indexado en esta sesión de la app: señala tu carpeta en Corpus";
+
+fn a_json<T: serde::Serialize>(v: &T) -> Result<serde_json::Value, String> {
+    serde_json::to_value(v).map_err(|e| e.to_string())
+}
+
+/// Hace una orden que la política ya dejó pasar. Lo mismo que hace la pantalla, por el mismo camino.
+fn hacer_por_la_puerta(app: &tauri::AppHandle, orden: &puerta::Orden) -> Result<puerta::Hecho, String> {
+    use puerta::{Hecho, Orden};
+    let el_corpus = app.state::<ElCorpus>();
+    match orden {
+        Orden::Buscar { texto } => {
+            let g = el_corpus.0.lock().map_err(|_| "el corpus quedó en mal estado")?;
+            let c = g.as_ref().ok_or(SIN_CORPUS)?;
+            let respuesta = ficha::armar(texto, &c.buscar(texto, ficha::TOP)?);
+            let cuenta = match &respuesta {
+                ficha::Respuesta::Ficha(f) => 1 + f.acumuladas.len() as u32,
+                ficha::Respuesta::SinResultado { .. } => 0,
+            };
+            Ok(Hecho { datos: a_json(&respuesta)?, cuenta: Some(cuenta) })
+        }
+        Orden::Reindexar {} => {
+            let carpeta = el_corpus
+                .0
+                .lock()
+                .map_err(|_| "el corpus quedó en mal estado")?
+                .as_ref()
+                .and_then(|c| c.estado().carpeta)
+                .ok_or(SIN_CORPUS)?;
+            let informe = indexar_corpus(app.clone(), app.state::<ElCorpus>(), carpeta)?;
+            Ok(Hecho { cuenta: Some(informe.documentos as u32), datos: a_json(&informe)? })
+        }
+        Orden::Kit { kit } => {
+            let g = el_corpus.0.lock().map_err(|_| "el corpus quedó en mal estado")?;
+            let informe = corpus::evaluar::evaluar(g.as_ref().ok_or(SIN_CORPUS)?, kit)?;
+            Ok(Hecho { cuenta: Some(informe.preguntas as u32), datos: a_json(&informe)? })
+        }
+        Orden::LeerPrefs {} => Ok(Hecho { datos: a_json(&preferencias_de_ahora(app))?, cuenta: None }),
+        Orden::CambiarPref { clave, valor } => {
+            cambiar_por_la_puerta(app, clave, valor)?;
+            Ok(Hecho { datos: a_json(&preferencias_de_ahora(app))?, cuenta: None })
+        }
+        Orden::ListarNotas {} => {
+            let lista = reunion::lista(app);
+            Ok(Hecho { cuenta: Some(lista.reuniones.len() as u32), datos: a_json(&lista)? })
+        }
+        Orden::AbrirNota { archivo } => {
+            let idioma = if idiomas_guardados(&app.state::<LasPreferencias>()).consultor.starts_with("en") {
+                "en"
+            } else {
+                "es"
+            };
+            Ok(Hecho { datos: a_json(&reunion::abrir(app, archivo, idioma)?)?, cuenta: None })
+        }
+        // La política lo deniega antes de llegar aquí (`puerta::decidir`); si llegara, tampoco.
+        Orden::EncenderApi {} => Err("la puerta no enciende el API".into()),
+    }
+}
+
+fn preferencias_de_ahora(app: &tauri::AppHandle) -> prefs::Preferencias {
+    app.state::<LasPreferencias>().actuales.lock().map(|p| p.clone()).unwrap_or_default()
+}
+
+/// Una preferencia de la lista blanca, por el mismo camino que la pantalla que la cambia.
+fn cambiar_por_la_puerta(app: &tauri::AppHandle, clave: &str, valor: &str) -> Result<(), String> {
+    use puerta::Clave;
+    let delegables: Vec<&str> = Clave::TODAS.into_iter().filter(|c| c.delegable()).map(Clave::nombre).collect();
+    let Some(c) = Clave::de(clave).filter(|c| c.delegable()) else {
+        return Err(format!("no hay preferencia «{clave}» que la puerta pueda cambiar: {}", delegables.join(" · ")));
+    };
+    fn de_la_lista<T: serde::de::DeserializeOwned>(v: &str) -> Result<T, serde_json::Error> {
+        serde_json::from_value(serde_json::Value::String(v.to_string()))
+    }
+    match c {
+        Clave::IdiomaConsultor => fijar_idioma_de_pista(app.clone(), "consultor".into(), valor.into()).map(|_| ()),
+        Clave::IdiomaCliente => fijar_idioma_de_pista(app.clone(), "cliente".into(), valor.into()).map(|_| ()),
+        Clave::Retencion => {
+            let r: prefs::Retencion = de_la_lista(valor).map_err(|_| format!("«{valor}» no es una retención: 7d · 30d · 90d · 1a · siempre"))?;
+            reunion::fijar_retencion(app, r);
+            Ok(())
+        }
+        Clave::VentanaDeLaBandeja => {
+            let v: bandeja::Ventana = de_la_lista(valor).map_err(|_| format!("«{valor}» no es una ventana: 0 · 1h · 3h · fin · 24h"))?;
+            reunion::fijar_ventana(app, v);
+            Ok(())
+        }
+        Clave::LecturaAutomatica => {
+            let encendida = match valor {
+                "true" | "si" | "sí" | "on" => true,
+                "false" | "no" | "off" => false,
+                _ => return Err(format!("«{valor}» no es sí ni no: true · false")),
+            };
+            lectura_automatica(app.clone(), app.state::<LaPantalla>(), encendida);
+            Ok(())
+        }
+        // `filter(delegable)` los dejó fuera arriba, y la política los deniega antes.
+        Clave::Redactar | Clave::Api | Clave::Proveedor | Clave::ConservarMisTurnos | Clave::Nda => {
+            Err("eso lo decides tú".into())
+        }
+    }
+}
+
+/// La ruta de `ghost`, si está compilado junto a la app (`pnpm ghost`). En H1 no se instala en el PATH.
+fn ruta_de_ghost() -> Option<String> {
+    let g = std::env::current_exe().ok()?.with_file_name("ghost");
+    g.is_file().then(|| g.to_string_lossy().into_owned())
+}
+
+fn vista_de_la_puerta<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> puerta::VistaDeLaPuerta {
+    app.state::<LaPuerta>().0.vista(ruta_de_ghost())
+}
+
+/// IA pregunta por la puerta: abierta o cerrada, por qué, dónde está `ghost` y qué hizo tu agente.
+#[tauri::command]
+fn la_puerta(app: tauri::AppHandle) -> puerta::VistaDeLaPuerta {
+    vista_de_la_puerta(&app)
+}
+
+/// **El único sitio donde la puerta se abre**: el conmutador de IA, a mano (ADR 018 §5). Lo vigila
+/// `pruebas_de_la_puerta_local`.
+#[tauri::command]
+fn abrir_la_puerta(app: tauri::AppHandle) -> puerta::VistaDeLaPuerta {
+    let carpeta = reunion::carpeta_de_la_app(&app);
+    if let Err(e) = almacen::carpeta_privada(&carpeta) {
+        println!("[puerta] la carpeta de la app no quedó en 700: {e}");
+    }
+    let ops = std::sync::Arc::new(LaAppParaLaPuerta(app.clone()));
+    let _ = app.state::<LaPuerta>().0.abrir(&carpeta, std::sync::Arc::new(puerta::DelLlavero), ops);
+    vista_de_la_puerta(&app)
+}
+
+#[tauri::command]
+fn cerrar_la_puerta(app: tauri::AppHandle) -> puerta::VistaDeLaPuerta {
+    app.state::<LaPuerta>().0.cerrar(puerta::Cierre::ATuMano);
+    let vista = vista_de_la_puerta(&app);
+    let _ = app.emit_to(ventana::PRINCIPAL, EVENTO_PUERTA, vista.clone());
+    vista
+}
+
+/// «Iniciar sesión» y «Solo notas» cierran la puerta **antes** de abrir nada de la reunión.
+fn cerrar_la_puerta_al_empezar<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    if app.state::<LaPuerta>().0.cerrar(puerta::Cierre::EnReunion) {
+        let _ = app.emit_to(ventana::PRINCIPAL, EVENTO_PUERTA, vista_de_la_puerta(app));
+    }
+}
+
 /// `⌃⌥↵` — guardar la última propuesta, la que la banda enseña (ADR 016 §3).
 fn el_atajo_de_guardar_la_propuesta() -> tauri_plugin_global_shortcut::Shortcut {
     use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
@@ -3082,5 +3291,45 @@ mod pruebas_de_la_puerta_de_la_captura {
         assert!(cuerpo[puerta..p].contains("return Ok("), "la puerta no devuelve: solo notas seguiría hasta la captura");
         assert_eq!(fuente.matches(pantalla).count(), 1, "otro sitio arranca la pantalla, sin pasar por la puerta");
         assert_eq!(fuente.matches(pistas).count(), 1, "otro sitio arranca las pistas, sin pasar por la puerta");
+    }
+}
+
+#[cfg(test)]
+mod pruebas_de_la_puerta_local {
+    /// **La puerta nace cerrada y se abre en un solo sitio**: el conmutador de IA (ADR 018 §5). Ni el
+    /// arranque, ni las preferencias, ni otro comando la abren. `abrir_la_puerta` necesita la app entera;
+    /// lo que se vigila es el código. Las agujas se arman con `concat!` para no contarse a sí mismas.
+    ///
+    /// ¿Puede fallar? Sí: con la puerta abierta en `setup`, es rojo (bitácora).
+    #[test]
+    fn la_puerta_solo_se_abre_desde_su_conmutador() {
+        let fuente = include_str!("lib.rs");
+        let abrir = concat!("LaPuerta>().0.", "abrir(");
+        assert_eq!(fuente.matches(abrir).count(), 1, "otro sitio abre la puerta local");
+        let desde = fuente.find("\nfn abrir_la_puerta(").expect("el comando que la abre");
+        let cuerpo = &fuente[desde..];
+        let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
+        assert!(cuerpo.contains(abrir), "la puerta se abre fuera de su conmutador");
+    }
+
+    /// **«Iniciar sesión» y «Solo notas» la cierran antes que nada de la reunión**: antes de abrir el
+    /// cuaderno, antes de la pantalla y antes de las pistas.
+    ///
+    /// ¿Puede fallar? Sí: con el cierre después de `reunion::al_empezar`, es rojo (bitácora).
+    #[test]
+    fn empezar_cierra_la_puerta_antes_que_nada() {
+        let fuente = include_str!("lib.rs");
+        let desde = fuente.find("\nfn empezar(").expect("la función que arranca la reunión");
+        let cuerpo = &fuente[desde..];
+        let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
+        let cierre = cuerpo.find(concat!("cerrar_la_puerta_", "al_empezar(&app)")).expect("empezar ya no cierra la puerta");
+        for despues in [
+            concat!("reunion::al_", "empezar(&app)"),
+            concat!("arrancar_la_", "pantalla(&"),
+            concat!("escucha::Escucha::", "arrancar("),
+        ] {
+            let d = cuerpo.find(despues).unwrap_or_else(|| panic!("empezar ya no llama a {despues}"));
+            assert!(cierre < d, "{despues} va antes de cerrar la puerta: el agente alcanzaría la reunión");
+        }
     }
 }

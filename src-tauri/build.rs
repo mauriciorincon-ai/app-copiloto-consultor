@@ -68,6 +68,10 @@ const COMANDOS: &[&str] = &[
         "decidir_toda_la_bandeja",
         "cambiar_la_ventana",
         "estado_de_la_bandeja",
+        // Sprint 003, fase 4: la puerta local para tu agente (ADR 018 §7). Solo la ventana principal.
+        "la_puerta",
+        "abrir_la_puerta",
+        "cerrar_la_puerta",
 ];
 
 fn main() {

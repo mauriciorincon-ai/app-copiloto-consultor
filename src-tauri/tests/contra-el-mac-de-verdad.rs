@@ -1081,29 +1081,9 @@ const FALLOS_SEMANTICOS_CONOCIDOS: usize = 3;
 /// una ficha sobre algo que no se tiene es el fallo que esta app existe para no cometer.
 const RECHAZO_MINIMO: f64 = 1.0;
 
-#[derive(serde::Deserialize)]
-struct Kit {
-    preguntas: Vec<Caso>,
-    #[serde(rename = "sinRespuesta")]
-    sin_respuesta: Vec<String>,
-}
-
-#[derive(serde::Deserialize)]
-struct Caso {
-    dice: String,
-    espera: String,
-}
-
-/// nDCG@5 con relevancia binaria: la sección esperada vale 1 y todo lo demás 0. Con un solo
-/// documento relevante, el ideal es 1.0 y el descuento sale del puesto en el que aparece.
-fn ndcg_5(puestos: &[String], espera: &str) -> f64 {
-    puestos
-        .iter()
-        .take(5)
-        .position(|s| s == espera)
-        .map(|i| 1.0 / ((i + 2) as f64).log2())
-        .unwrap_or(0.0)
-}
+// El kit y el nDCG@5 viven en el producto desde el sprint 003 (`corpus::evaluar`, ADR 018 §4): la
+// puerta local corre las preguntas del usuario con el mismo código con que este test corre las del kit.
+use app_copiloto_consultor_lib::corpus::evaluar::{evaluar, ndcg_5, Kit};
 
 #[test]
 fn el_kit_de_evaluacion_mide_el_retriever_y_su_negativa() {
@@ -1126,44 +1106,22 @@ fn el_kit_de_evaluacion_mide_el_retriever_y_su_negativa() {
         app_copiloto_consultor_lib::jurisdiccion::LaBandera::Conocida { .. }
     ));
 
-    // ---- nDCG@5 sobre las treinta que SÍ están, y la LATENCIA de cada una
-    let mut suma = 0.0;
-    let mut fallos = Vec::new();
-    let mut latencias = Vec::new();
-    for c in &kit.preguntas {
-        // Se cronometra lo mismo que cronometra el producto —buscar y armar la ficha—, y se
-        // cronometra **por pregunta**, no el total: una media esconde los picos, y el presupuesto
-        // del sprint es sobre el turno que el usuario está esperando, no sobre el promedio del día.
-        let reloj = Instant::now();
-        let hallazgos = corpus.buscar(&c.dice, 5).unwrap();
-        let _ = armar(&c.dice, &hallazgos);
-        latencias.push(reloj.elapsed().as_micros() as u64);
-        let puestos: Vec<String> =
-            hallazgos.into_iter().map(|h| h.seccion.unwrap_or_default()).collect();
-        let n = ndcg_5(&puestos, &c.espera);
-        suma += n;
-        if n == 0.0 {
-            fallos.push(format!("  «{}» → esperaba «{}», trajo {:?}", c.dice, c.espera, puestos));
-        }
-    }
-    let ndcg = suma / kit.preguntas.len() as f64;
-    latencias.sort_unstable();
+    // ---- nDCG@5 sobre las treinta que SÍ están, la LATENCIA de cada una, y la negativa sobre las que
+    // NO están: lo mismo que mide la puerta local con las preguntas del usuario.
+    let informe = evaluar(&corpus, &kit).expect("el kit no se pudo evaluar");
+    let ndcg = informe.ndcg5;
+    let rechazo = informe.rechazo.expect("el kit trae preguntas sin respuesta");
+    let rechazadas = kit.sin_respuesta.len() - informe.aproximadas.len();
+    let latencias = &informe.latencias_us;
     let percentil = |p: f64| latencias[((latencias.len() as f64 - 1.0) * p).round() as usize];
     let (mediana, p90, peor) = (percentil(0.5), percentil(0.9), *latencias.last().unwrap());
-
-    // ---- y la negativa sobre las que NO están
-    let mut rechazadas = 0;
-    let mut aproximadas = Vec::new();
-    for dice in &kit.sin_respuesta {
-        let hallazgos = corpus.buscar(dice, 3).unwrap();
-        match armar(dice, &hallazgos) {
-            Respuesta::SinResultado { .. } => rechazadas += 1,
-            Respuesta::Ficha(f) => {
-                aproximadas.push(format!("  «{dice}» → citó «{}»", f.fuente.documento))
-            }
-        }
-    }
-    let rechazo = rechazadas as f64 / kit.sin_respuesta.len() as f64;
+    let fallos: Vec<String> = informe
+        .fallos
+        .iter()
+        .map(|f| format!("  «{}» → esperaba «{}», trajo {:?}", f.dice, f.espera, f.trajo))
+        .collect();
+    let aproximadas: Vec<String> =
+        informe.aproximadas.iter().map(|a| format!("  «{}» → citó «{}»", a.dice, a.cito)).collect();
 
     println!("\n╭─ kit de evaluación v0 ─────────────────────────────");
     println!("│ nDCG@5          {ndcg:.3}   (mínimo {NDCG_MINIMO:.2})");

@@ -578,7 +578,7 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .idiomas .lg .ic { flex: 0 0 auto; }
 
 /* Puerta local (C16, mirada 4): qué puede y qué no puede un agente del propio Mac */
-.puerta { display: grid; grid-template-columns: 16px 1fr; gap: 1px 9px; padding: 5px 2px; align-items: start; border-bottom: var(--borde) solid var(--line); }
+.puerta { display: grid; grid-template-columns: 16px 1fr; gap: 1px 9px; padding: 3px 2px; align-items: start; border-bottom: var(--borde) solid var(--line); }
 .puerta:last-child { border-bottom: 0; }
 .puerta > .ic { margin-top: 2px; }
 .puerta.si > .ic { color: var(--ok); }

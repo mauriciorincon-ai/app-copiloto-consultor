@@ -814,6 +814,113 @@ app queda para el cierre de la fase, con su fila y el «sí» del usuario.
   Sesión, «la NDA lo prohíbe», la cláusula, la pregunta y la banda en solo notas;
 - lint, typecheck, `verify:ephemeral` y `design-sync` (0 escritos tras regenerar), limpios.
 
+### Cierre de la fase 3 (2026-09-27)
+
+CI de `cf5d08e` en verde con conclusión propia en los tres checks (run 36348321819: quality ·
+e2e · build-escritorio). El usuario respondió **«continúa»**, sin «sí» a la prueba en vivo: por la
+regla 22 **no se corrió**. Queda pendiente y se vuelve a ofrecer al cierre de la fase 4, junto con la
+de la puerta.
+
+---
+
+## Fase 4 — La puerta local para tu agente (2026-09-27)
+
+**Primero el ADR 018 «la puerta local»** (`decisions/018-la-puerta-local.md`), escrito antes que el
+código: socket Unix en la carpeta privada de la app solo mientras está abierta · token por apertura en
+el Llavero, comparado en tiempo constante · una línea de ida y una de vuelta · lista cerrada de
+órdenes · nada en reunión (se deniega y la puerta se cierra sola; vigía cada 2 s; «Iniciar sesión» y
+«Solo notas» la cierran) · API, «Redactar», proveedor, «Conservar mis turnos» y NDA, denegados ·
+registro sin contenido · solo la ventana principal · gate `puerta-solo-local` · las pruebas jamás tocan
+el Llavero de verdad.
+
+**Por el criterio del usuario, la mirada 22 no abre parada**: la vista de la puerta es forma nueva y
+queda «maquetado, no visto». **Lo que sí toca su Mac** —el diálogo del Llavero la primera vez que
+`ghost` lee el token— va en una fila de la regla 22 al cierre de la fase, antes de probarlo en vivo.
+
+**Lo construido:**
+- **`puerta/`** (**módulo protegido**, en `verify:ephemeral`):
+  - `mod.rs`, la política pura: la lista cerrada de órdenes (`Orden`), qué preferencias se delegan
+    (`Clave::delegable`), `decidir` (la reunión primero), el token de 32 bytes comparado en tiempo
+    constante, y `resolver`, que comprueba la llave **antes** que nada —sin llave no se dice ni si hay
+    reunión— y devuelve la respuesta y la línea del registro **sin contenido**.
+  - `socket.rs`: el socket Unix en la carpeta de la app, en 600, solo mientras está abierta. **Un hilo
+    por apertura** que atiende sin bloquearse y, entre conexiones, vigila la reunión cada 2 s; al cerrar
+    la puerta se va solo en su siguiente vuelta. Una orden a medias no la cuelga. `limpiar_lo_que_quedo`
+    borra, al arrancar, el socket y el token de una caída; mira el socket primero para no preguntarle
+    nada al Llavero en el arranque normal. Las tres líneas que tocan disco o escriben en el socket
+    llevan su marca y el ADR 018.
+  - `cli.rs`: la línea de órdenes de `ghost`, en español con alias en inglés, y la ayuda en el idioma
+    del Mac.
+- **`src/bin/ghost.rs`**: el cliente fino. **Mira el socket antes de tocar el Llavero**: con la puerta
+  cerrada no hay diálogo de macOS. `--version` y `--help` no tocan ninguno de los dos. Salida en JSON
+  y códigos 0 · 1 · 2 · 3 · 64. `default-run` en `Cargo.toml` para que `tauri dev` siga arrancando la
+  app; `pnpm ghost` lo compila.
+- **`corpus::evaluar`**: el nDCG@5 y el rechazo salen del test de integración y pasan a producto; el
+  test y la puerta miden con el mismo código (el kit v0 sigue dando lo mismo).
+- **`lib.rs`**: lo que la puerta puede hacer, por los mismos caminos que la pantalla (búsqueda,
+  reindexado, kit, preferencias, lista y apertura de notas con su desbloqueo); `en_reunion` (escuchando,
+  solo notas, videollamada detectada **o no se puede saber**); los tres comandos, solo de la ventana
+  principal; el evento `puerta`, solo a la ventana principal. «Iniciar sesión» y «Solo notas» **cierran
+  la puerta antes que nada** de la reunión. Al salir se cierra; al arrancar se limpia lo de una caída.
+- **Contrato** (regla 19): `VistaDeLaPuerta` cerrada, abierta (con lo hecho, lo denegado y lo fallido),
+  cerrada sola por una reunión y sin `ghost`; `Cierre`, `NoAbre` y `Motivo` con una muestra por forma.
+- **La pantalla, desde la maqueta**: la entrada «Puerta local · cerrada» junto a «Redactar
+  sugerencias»; la vista de la Etapa de Diseño con «← Quién redacta» en la fila del título, el
+  conmutador, el comando con «Copiar» y lo que va a preguntar macOS, la franja de «se cerró sola» o
+  de «no se abrió», las dos columnas y «Qué hizo tu agente» con el motivo de lo denegado.
+- **La maqueta se midió antes que el código** (`maqueta-cabe`): la primera versión se salía de 11 a
+  120 px. Tres pasos la metieron: los «por qué» a una línea (y a la verdad de lo que hace la puerta),
+  el comando solo con la puerta abierta, y «volver» en la fila del título con la descripción en el
+  subtítulo; el relleno de `.puerta` pasa de 5 a 3 px.
+
+**Decisiones del constructor, declaradas en el ADR 018** (para el gate):
+- **Un token por apertura**: la entrada del Llavero se crea de nuevo cada vez, así que **macOS pregunta
+  una vez por apertura** la primera vez que `ghost` la lee (con la contraseña del Mac). Abrir es un
+  gesto en la app; dejar entrar al agente es otro, en un diálogo del sistema que se ve.
+- **«No se puede saber si hay reunión» cuenta como reunión** (un navegador abierto sin Accesibilidad).
+- El registro guarda 50 órdenes y se ven tres; el resto se desplaza.
+- Fuera: `ghost` en el PATH o dentro del `.app` (llega con la firma), añadir carpetas, comparar
+  modelos, el diccionario por la puerta y un servidor MCP.
+
+**Cada gate nuevo, con su rojo** (verde al restaurar; los trece en la misma corrida):
+
+| Gate | Defecto plantado | Rojo |
+|---|---|---|
+| en reunión todo se deniega (política) | sin la pregunta de la reunión en `decidir` | `en_reunion_todo_se_deniega` |
+| la llave errada no pasa | `Token::es` devuelve siempre `true` | `una_llave_errada_se_deniega_antes_que_nada` |
+| el registro no lleva contenido | «ghost corpus buscar {texto}» | `el_registro_no_lleva_contenido` (la canaria aparece) |
+| el vigía cierra la puerta al empezar una reunión | el vigía no mira la reunión | `el_vigia_la_cierra_al_empezar_una_reunion` |
+| una orden en reunión cierra la puerta | sin el cierre tras la denegación | `una_orden_en_reunion_se_deniega_y_cierra_la_puerta` |
+| la puerta solo se abre desde su conmutador | abrirla en `setup` | «otro sitio abre la puerta local» |
+| «Iniciar sesión» la cierra antes que nada | sin el cierre en `empezar` | «empezar ya no cierra la puerta» |
+| `ghost`: puerta antes que Llavero | leer el Llavero antes de mirar el socket | `puerta_antes_que_el_llavero` |
+| `puerta-solo-local`: nada sale del Mac | un `TcpStream` en `puerta/socket.rs` | «TCP o UDP» en `socket.rs` |
+| `puerta-solo-local`: sockets Unix solo en la puerta | un `UnixStream` en `lib.rs` | «sockets Unix fuera de la puerta: lib.rs» |
+| `puerta/` sin disco ni red | `std::fs::write` en `decidir` | `verify:ephemeral`: «2 uso(s) de disco/red» |
+| el conmutador cierra lo abierto | el conmutador siempre abre | «abierta, el conmutador la cierra» |
+| la franja de la reunión solo con la puerta cerrada | la franja aunque esté abierta | «abierta no enseña la franja…» |
+| una orden que no está en la lista se deniega | — (en rojo al nacer) | serde no rechaza campos de más en las variantes sin campos aunque lleven `deny_unknown_fields`: `{"que":"reindexar","carpeta":"/"}` pasaba. Las variantes pasaron a `Reindexar {}` |
+
+**Ruido registrado:** la primera corrida completa de `cargo test` dio rojo en
+`una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus` por tres archivos del temporal
+del sistema (`c.txt`, `g.txt` y la caché de compilación de node) que escribían **otros procesos**: corrían
+a la vez vitest, los e2e y la fidelidad. Sola, pasa. Es la misma clase de ruido que la de la decisión A:
+el inventario mira el temporal entero.
+
+**Lo que NO se corrió, y por qué (regla 22):** nada de esta fase tocó el Mac. Las pruebas de la puerta
+usan un doble del Llavero y un socket en una carpeta temporal; las de `ghost` corren con una casa vacía,
+donde no hay socket y `ghost` dice «cerrada» sin tocar el Llavero. **Que `ghost` lea el Llavero de verdad
+y que la puerta atienda a la app viva** va a la prueba en vivo, con su fila y el «sí» del usuario.
+
+**Pruebas, local:**
+- cargo lib **462** · integración: `contra-el-mac-de-verdad` 22 (3 `#[ignore]` que tocan el Mac, sin
+  correr) · `puerta` **12** · `ghost` **5** · clippy 0;
+- vitest **299** (+14: 10 de `puerta.test.tsx`, 4 del gate `puerta-solo-local`) · e2e **207** (eran 195:
+  los 3 estados nuevos en axe) · fidelidad **216 encuadres** (eran 204), ninguno sobre el umbral; leídas
+  como imagen la puerta cerrada, abierta y cerrada sola, y la entrada en «Quién redacta»;
+- lint, typecheck, `verify:ephemeral` (ahora con `puerta/`) y `design-sync` (regenerado por `.puerta`),
+  limpios.
+
 ---
 
 ## Para la planeadora al cierre del sprint (va al summary, «Sugerencias de mejora al método»)

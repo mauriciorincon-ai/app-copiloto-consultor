@@ -30,7 +30,8 @@ import { describe, expect, it } from "vitest";
  */
 // Con los tres del sprint 002 (auditoría del S2, M6): la sugerencia, el estado de la IA, el radar y
 // el acople vivían en archivos que este gate no leía, y para sus 32 campos no podía fallar.
-// `notas.ts` desde la fase 1 del sprint 003 (C9): tus notas cruzan por cuatro comandos.
+// `notas.ts` desde la fase 1 del sprint 003 (C9): tus notas cruzan por cuatro comandos. `puerta.ts`
+// desde la fase 4 (C16): la vista de la puerta cruza por tres comandos y un evento.
 const DECLARACIONES = [
   "src/cuaderno.ts",
   "src/ficha.ts",
@@ -39,6 +40,7 @@ const DECLARACIONES = [
   "src/acople.ts",
   "src/notas.ts",
   "src/jurisdiccion.ts",
+  "src/puerta.ts",
 ];
 const FIXTURE = "src/contrato.generado.ts";
 

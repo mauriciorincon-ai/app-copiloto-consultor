@@ -12,6 +12,7 @@
 //! Se llena en la fase 4 del sprint 001 (ingesta → chunking por sección → BM25 con tantivy).
 
 pub mod consulta;
+pub mod evaluar;
 pub mod indice;
 pub mod leer;
 pub mod seccion;

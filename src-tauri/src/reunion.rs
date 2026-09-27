@@ -358,7 +358,8 @@ pub fn la_bandeja_de<R: Runtime>(app: &AppHandle<R>) -> Bandeja {
     Bandeja::en(carpeta_de_la_app(app).join(bandeja::CARPETA))
 }
 
-fn carpeta_de_la_app<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
+/// `~/Library/Application Support/<app>/`, en 700: la de las notas, la bandeja y la puerta local.
+pub fn carpeta_de_la_app<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
     app.path().app_data_dir().unwrap_or_else(|_| std::env::temp_dir().join(vencimiento::APP))
 }
 

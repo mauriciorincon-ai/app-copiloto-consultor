@@ -79,11 +79,17 @@ export function Principal({ busqueda = globalThis.location?.search ?? "" }: { bu
         ? { texto: `${tn.bandejaChip} ${duracion(quedan, tn)[1]}`, vencida: false }
         : null;
 
+  // La puerta local abierta y la puerta cerrada a mano no conviven con una reunión (ADR 018 §5): fuera de
+  // Tauri, esos dos estados de `ia.html` enseñan el rail sin sesión; «se cerró sola», con la reunión.
+  const q = new URLSearchParams(busqueda);
+  const sinReunionDeMuestra = !hayTauri() && q.get("vista") === "puerta" && q.get("puerta") !== "en-reunion";
+  const enSesion = reunion.que === "detectada" && !sinReunionDeMuestra;
+
   return (
     <Ventana
       seccion={seccion}
       ir={setSeccion}
-      enSesion={reunion.que === "detectada"}
+      enSesion={enSesion}
       cerrando={cerrando}
       bandeja={chipDeLaBandeja}
       cliente={reunion.que === "detectada" ? reunion.cliente : undefined}

@@ -16,7 +16,8 @@
     "verify:ephemeral": "node scripts/verify-ephemeral.mjs",
     "fidelidad": "pnpm build && node scripts/capturar-fidelidad.mjs",
     "capturas": "node scripts/capturar-maqueta.mjs",
-    "verify:ephemeral:runtime": "cd src-tauri && cargo test --test contra-el-mac-de-verdad una_sesion_completa -- --nocapture"
+    "verify:ephemeral:runtime": "cd src-tauri && cargo test --test contra-el-mac-de-verdad una_sesion_completa -- --nocapture",
+    "ghost": "cargo build --manifest-path src-tauri/Cargo.toml --bin ghost"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

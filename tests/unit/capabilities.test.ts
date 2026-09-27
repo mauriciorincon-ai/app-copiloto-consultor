@@ -107,6 +107,7 @@ describe("cada ventana puede solo lo suyo", () => {
       "ia",
       "notas",
       "jurisdiccion",
+      "puerta",
       "componentes/Relleno",
     ]
       .map((m) =>

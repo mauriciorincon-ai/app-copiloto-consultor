@@ -17,6 +17,7 @@ import type { EstadoDeLaIa, PorQueNoRedacta, LoQueSalio } from "./ia";
 import type { EstadoDelAcople } from "./acople";
 import type { VistaDelCuaderno, LineaDePropuesta, Propuesta, Regla, Ventana, VistaDeLaBandeja, EstadoDeLaBandeja, ReunionGuardada, Guardada, ListaDeReuniones } from "./notas";
 import type { VistaDelCliente, LaBandera, Nda } from "./jurisdiccion";
+import type { VistaDeLaPuerta, Cierre, NoAbre, Motivo } from "./puerta";
 
 export const NOVEDAD_EMPIEZA: Novedad = {
     "que": "empieza"
@@ -825,6 +826,95 @@ export const ESCUCHA_SOLO_NOTAS: EstadoDeEscucha = {
     },
     "soloNotas": true
   };
+
+export const VISTA_DE_LA_PUERTA_CERRADA: VistaDeLaPuerta = {
+    "abierta": false,
+    "cerro": null,
+    "ghost": null,
+    "noAbre": null,
+    "registro": []
+  };
+
+export const VISTA_DE_LA_PUERTA_ABIERTA: VistaDeLaPuerta = {
+    "abierta": true,
+    "cerro": null,
+    "ghost": "/Users/ana/app-copiloto-consultor/src-tauri/target/debug/ghost",
+    "noAbre": null,
+    "registro": [
+      {
+        "hora": "11:12",
+        "orden": "ghost notas abrir",
+        "resultado": {
+          "que": "fallo"
+        }
+      },
+      {
+        "hora": "11:09",
+        "orden": "ghost ia --encender-api",
+        "resultado": {
+          "motivo": "el-api-es-tuyo",
+          "que": "denegado"
+        }
+      },
+      {
+        "hora": "11:04",
+        "orden": "ghost corpus reindexar",
+        "resultado": {
+          "cuenta": 28,
+          "que": "hecho"
+        }
+      }
+    ]
+  };
+
+export const VISTA_DE_LA_PUERTA_EN_REUNION: VistaDeLaPuerta = {
+    "abierta": false,
+    "cerro": "en-reunion",
+    "ghost": "/Users/ana/app-copiloto-consultor/src-tauri/target/debug/ghost",
+    "noAbre": null,
+    "registro": [
+      {
+        "hora": "14:02",
+        "orden": "ghost corpus buscar",
+        "resultado": {
+          "motivo": "en-reunion",
+          "que": "denegado"
+        }
+      },
+      {
+        "hora": "13:58",
+        "orden": "ghost corpus buscar",
+        "resultado": {
+          "cuenta": 3,
+          "que": "hecho"
+        }
+      }
+    ]
+  };
+
+export const VISTA_DE_LA_PUERTA_SIN_GHOST: VistaDeLaPuerta = {
+    "abierta": true,
+    "cerro": null,
+    "ghost": null,
+    "noAbre": null,
+    "registro": []
+  };
+
+export const PUERTA_CERRADA_A_MANO: Cierre = "a-tu-mano";
+
+export const PUERTA_NO_ABRE_EN_REUNION: NoAbre = "en-reunion";
+
+export const PUERTA_NO_ABRE_RUTA_LARGA: NoAbre = "ruta-larga";
+
+export const PUERTA_NO_ABRE_LLAVERO: NoAbre = "llavero";
+
+export const PUERTA_NO_ABRE_SOCKET: NoAbre = "socket";
+
+export const PUERTA_LLAVE_ERRADA: Motivo = "llave-errada";
+
+export const PUERTA_NO_DELEGABLE: Motivo = "no-delegable";
+
+export const PUERTA_ORDEN_DESCONOCIDA: Motivo = "orden-desconocida";
 
 export const REUNION_GUARDADA: ReunionGuardada = {
     "archivo": "paramo-azul-2026-09-20.ghost",
