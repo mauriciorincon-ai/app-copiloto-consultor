@@ -38,6 +38,9 @@ const COMANDOS: &[&str] = &[
         "api_externa",
         "guardar_clave_del_api",
         "borrar_clave_del_api",
+        "idiomas_de_pista",
+        "fijar_idioma_de_pista",
+        "lo_que_salio_al_api",
 ];
 
 fn main() {

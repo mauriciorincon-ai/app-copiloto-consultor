@@ -42,7 +42,7 @@ const FIDELIDAD = join(RAIZ, "docs/fidelidad");
  * enseña como contrapeso del gate diferido pasó a enseñar pantallas del sprint 2. Se cambia en el
  * primer commit de cada sprint que capture.
  */
-const SPRINT = "s2";
+const SPRINT = "s3";
 
 const MARCO = 9;
 const PUERTO = 4180;

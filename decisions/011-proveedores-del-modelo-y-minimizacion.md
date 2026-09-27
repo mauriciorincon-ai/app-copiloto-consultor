@@ -47,8 +47,13 @@ no está o no rinde, y (a) rinde (medido en la fase 6: mediana ~0,8 s): queda en
    (`URLSession` efímera), y `sintesis/api.rs` arma la petición y la cuenta.
 4. **Registrar sin contenido:** proveedor, bytes, ms y costo al log. **Pendiente, sprint 003:** el
    texto exacto que salió, visible en la pantalla IA y solo en memoria, para que el usuario lo pueda
-   leer. Hoy IA no enseña ni el texto ni cuántos datos se taparon: la bóveda los cuenta
-   (`Boveda::tapadas`) y solo lo leen los tests. *(Enmienda B4.)*
+   leer. **Desde el sprint 003 (fase 0), cada petición deja en un registro de la reunión el texto
+   exacto que salió**, trozo a trozo, con lo que la bóveda reemplazó en el Mac al lado de cada
+   marcador y la cuenta de lo tapado (`sintesis::api::Registro` y `LoQueSalio`). Solo en memoria: lo
+   vacían `⌥⎋` y el final de la sesión, y lo pide únicamente la ventana principal por comando
+   (`lo_que_salio_al_api`), nunca un evento. La vista en IA llega en la fase 1 del sprint 003, tras
+   la mirada 19, porque dónde cabe en una pantalla que ya ocupa sus 640 px es una decisión de forma.
+   *(Enmienda B4; pago de B37.)*
 
 ### Costo
 

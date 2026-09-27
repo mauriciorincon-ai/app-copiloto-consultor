@@ -98,3 +98,35 @@ apretaba después; lo delató la traza del propio gate del efímero («el archiv
 en 600»). Funcionaba y estaba mal: entre las dos llamadas hay una ventana, corta pero real, en la que
 la jerga del consultor es legible por cualquier cuenta del Mac. Ahora se crea con `create_new` y su
 modo, y **hay un test que comprueba que no hubo reparación** — no solo que el modo final sea el bueno.
+
+---
+
+## Enmienda 2 — las preferencias y un solo escritor (sprint 003, fase 0, 2026-09-27)
+
+**Lo que cambia.** La tabla de arriba reservaba `prefs/` para el sprint 3: «lo que el usuario
+escribe y elige». Ahora existe, como `src-tauri/src/prefs.rs` y un archivo:
+`preferencias.json`, en la carpeta de configuración de la app, al lado del diccionario y del gasto
+del mes.
+
+| Qué se recuerda | Qué NO, a propósito |
+|---|---|
+| el idioma de cada pista · «redactar sugerencias» · el proveedor externo y si está encendido · la lectura automática de la pantalla | la puerta local (nace cerrada en cada arranque, ADR 018) · el modo solo audio (lo enciende una tecla en la reunión) · nada de ninguna reunión |
+
+**El API no se enciende solo si su clave ya no está:** el archivo dice «encendido», pero al arrancar
+se comprueba el Llavero, y borrar la clave en «Acceso a Llaveros» manda sobre lo que el archivo
+recuerde.
+
+**Un solo escritor para todo lo que persiste: `src-tauri/src/almacen.rs`.** Hasta el sprint 002 cada
+archivo tenía su ayudante privado (el diccionario, el gasto, la huella del acople). El sprint 003
+añade preferencias, notas cifradas, la bandeja y la lista de vencimientos, y cinco copias de la misma
+regla eran cinco oportunidades de olvidarla en una. Las tres reglas viven ahora en un sitio, con su
+test en rojo:
+
+1. el archivo **nace** en 600 (`create_new` con su modo, sin ventana en 644);
+2. **nunca desaparece a medias**: temporal, `sync_all` y renombrado atómico;
+3. su carpeta es solo del dueño (700), y se repara si estaba floja — **solo la carpeta del archivo**:
+   sus padres (`~/Documents`, por ejemplo) no son de esta app.
+
+**Qué entra en el inventario del efímero:** nada nuevo en esta enmienda. `preferencias.json` se
+escribe cuando el usuario cambia algo, no durante una sesión; la sesión completa del gate en marcha
+no lo toca, y si algún día un camino de la sesión lo escribiera, el gate lo denunciaría como intruso.

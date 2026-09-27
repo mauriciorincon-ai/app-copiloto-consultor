@@ -231,6 +231,15 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    mirada real con todos los gates de palabra cumplidos; 3ª ocurrencia de la clase. Es la
    regla 15-hermana del lado humano: una mirada satisfecha sin mirada es un gate que nunca
    ejecutó.)*
+   **Dos clases de mirada (kit v1.31.0, método v1.33.0):** la de **FORMA** (qué se construye:
+   estado nuevo, pantalla, estructura) abre parada antes de construir encima. La de **TEXTO**
+   (si un copy se entiende) **no bloquea**: maquetas igual, registras «maquetado, no visto» y su
+   veredicto viaja al gate humano del MVP; mientras, la vigilan los gates automáticos
+   (diccionario fiel a la maqueta, fidelidad, maquetas que caben). Toda mirada va en **matriz
+   de una fila** (archivo · botón/estado · qué mirar · respuesta esperada), nunca preguntas
+   sueltas. **Las segundas vueltas no abren parada**: copy retocado por su propio veredicto y
+   filas sin respuesta se aplican, se registran y se ven al cierre de fase. *(Este repo, S2:
+   el usuario cortó las paradas de copy — «así no vamos a avanzar nada».)*
 11. **Guía de prueba viva y ACUMULATIVA (`docs/GUIA-DE-PRUEBA.html`, OBLIGATORIA en todo sprint
    con UI — reglas duras del pipeline, G-Metodo 2026-07-12 ×2).** HTML visual y **AUTOCONTENIDO**
    (cero CDNs; casillas con `localStorage` bajo **prefijo versionado por sprint** — cambia en
@@ -351,6 +360,11 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    con el perfil con que la app se DISTRIBUYE, y el summary lo dice *(este repo, S1: el
    `catch_unwind` que protegía el parseo de PDF pasaba todos sus tests en debug y era letra
    muerta en release, donde `panic = "abort"` lo anula)*.
+   **Y `gh pr checks` DESPUÉS DE CADA PUSH (kit v1.31.0), no al cierre de la fase:** un rojo
+   que nadie mira es un gate que no ejecutó para ti *(este repo, S2: tres corridas en rojo sin
+   mirar en una fase; desde entonces cada push termina leyendo sus checks)*. **Y una métrica
+   del kit que la CI NO puede medir se declara `manual` con su corrida local registrada**, o
+   no se declara: el WER vivió dos sprints «en CI» sin que el runner tuviera modelos de voz.
 16. **El bundle publicable del design system es un ARTEFACTO DEL REPO (kit v1.17.0).** `design-sync/`
    se versiona aquí como **espejo 1:1** de lo publicado en Claude Design, y la jerarquía es fija:
    `design-system.md` (fuente de verdad) → `design-sync/` (bundle, deriva) → el proyecto remoto
@@ -440,6 +454,18 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    `tests/unit/auditoria-con-sitio.test.ts`, que exige que cada encabezado de severidad declare
    su cuenta y que la cuenta cuadre con sus filas *(origen: el S1 resumió quince hallazgos en una
    frase con un puntero roto y desaparecieron)*.
+
+21. **IA de construcción por suscripción (estándar 7-S, kit v1.30.0 — en el kit es su regla 21).**
+    Si un agente o un lote de esta app usa la **suscripción del usuario** como proveedor de modelo
+    (binario oficial de Claude Code en modo no interactivo): solo el binario sin modificar y la
+    sesión propia del usuario · el token **jamás** entra a variables de entorno, trazas ni al repo
+    · la invocación corre en un **directorio temporal limpio con MCP vacío** (esta constitución NO
+    entra al prompt del agente) · los lotes se corren **fuera de CI**, pequeños y espaciados ·
+    existe un **ADR de cumplimiento** con la lectura de los términos vigentes, re-leídos antes de
+    cada release, y un **interruptor a proveedor por clave** · prohibido exponer el patrón a
+    terceros. **Hoy no aplica:** la app no invoca a Claude Code. La puerta local (C16, sprint 003)
+    es lo contrario —Claude Code, en la sesión del usuario, llama a la app por `ghost`— y se rige
+    por la regla dura 9 y su ADR.
 
 ## Estándares (los 6+1, gates en CI)
 
@@ -565,3 +591,12 @@ pr: <link>
 ## Idioma
 
 Español en conversación y bitácoras. Inglés en código, commits, nombres y ADRs.
+
+**La app es BILINGÜE español/inglés en TODO desde el primer sprint (kit v1.29.0 — en el kit es su
+regla 20; aquí se cita por nombre porque la 20 de esta casa es la del artefacto de auditoría;
+estándares 2.14.0 apartado 6-B).** Interfaz, contenido, informes, documentos generados, demo y
+ficha técnica. El dato nace como mapa de idioma `{ es, en }` (nunca un campo en un idioma más una
+traducción aparte); **redactado, no traducido** (la traducción automática de contenido de producto
+está prohibida); las pruebas de texto, capturas y e2e con texto corren en AMBOS idiomas; conmutador
+visible desde la maqueta de la Etapa de Diseño. En esta app lo dice además la regla dura de
+producto 7.

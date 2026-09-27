@@ -43,7 +43,7 @@ const LEIDOS_POR_CLAVE: Record<string, string> = {
 };
 
 /** Tipos que viven SOLO en la interfaz: no cruzan la costura y no les toca esta regla. */
-const NO_CRUZAN = new Set(["LoQueLaBandaEnseña", "RadarEnLaBanda", "IdiomasDePista"]);
+const NO_CRUZAN = new Set(["LoQueLaBandaEnseña", "RadarEnLaBanda"]);
 
 /** Los campos que eligen la variante de una unión. Se leen comparándolos, no accediendo. */
 const DISCRIMINANTES = new Set(["que", "clase", "estado", "salida"]);
@@ -70,6 +70,21 @@ const DEUDA: Record<string, string> = {
   //
   // `InformeDelCorte.bytesEnRed` se declaraba aquí como «lo lee Rust, no se paga»: un tercer estado
   // que la regla 20 no tiene. Lo que lee solo Rust no cruza: `#[serde(skip)]`, y la lista queda vacía.
+
+  // ── Sprint 003, fase 0: B37 cruza, y su vista espera a la mirada 19 ──
+  //
+  // La pantalla IA del S2 ya ocupa sus 640 px, y la fase 4 le suma la puerta local: dónde va «Lo
+  // último que salió» es una decisión de FORMA (regla 10), y se construye DESPUÉS de su veredicto.
+  // `hora`, `externo` y `Trozo.texto` no están aquí aunque tampoco tienen lector todavía: el gate
+  // compara por NOMBRE y otros tipos tienen campos que se llaman igual (su limitación declarada). Los
+  // lee la misma vista de la fase 1, y la auditoría del sprint lo comprueba a mano.
+  "LoQueSalio.sobre": "la columna «por qué salió» · fase 1 (tras la mirada 19)",
+  "LoQueSalio.trozos": "«Lo último que salió», con lo reemplazado tachado · fase 1 (tras la mirada 19)",
+  "LoQueSalio.caracteres": "«Esto es todo lo que salió: N caracteres» · fase 1 (tras la mirada 19)",
+  "LoQueSalio.tapadas": "la columna «anonimizados» · fase 1 (tras la mirada 19)",
+  "LoQueSalio.usd": "la columna USD · fase 1 (tras la mirada 19)",
+  "Trozo.marcador": "«Lo último que salió» · fase 1 (tras la mirada 19)",
+  "Trozo.original": "lo reemplazado, tachado · fase 1 (tras la mirada 19)",
 };
 
 /** Cada `export type X = … { … }`, con las variantes de una unión incluidas. */

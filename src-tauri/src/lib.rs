@@ -12,6 +12,7 @@
 //! Todo lo demás vive en la raíz del crate. El sprint 001 va llenando estos módulos por fases.
 
 pub mod acople;
+pub mod almacen;
 pub mod capture;
 pub mod corpus;
 pub mod corte;
@@ -24,8 +25,10 @@ pub mod disparo;
 pub mod escucha;
 pub mod ficha;
 pub mod habla;
+pub mod llavero;
 pub mod pantalla;
 pub mod permisos;
+pub mod prefs;
 pub mod radar;
 pub mod red;
 pub mod relleno;
@@ -67,11 +70,6 @@ fn huella<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
 /// acople — es del usuario y él lo edita a mano.
 const DICCIONARIO: &str = "diccionario.yaml";
 
-/// Permisos del archivo: **solo su dueño**. Es la regla 17-bis — un derivado no nace menos privado
-/// que su fuente, y este desciende de los documentos del usuario.
-#[cfg(unix)]
-const PERMISOS_DEL_DICCIONARIO: u32 = 0o600;
-
 fn ruta_del_diccionario<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
     app.path()
         .app_config_dir()
@@ -96,56 +94,21 @@ pub fn asegurar_el_diccionario(ruta: &std::path::Path) -> Result<(), String> {
         println!("[diccionario] archivo nuevo con la semilla en {}", ruta.display());
     }
     if cerrar_permisos(ruta)? {
-        println!("[diccionario] lo encontró abierto y lo dejó en {PERMISOS_DEL_DICCIONARIO:o}");
+        println!("[diccionario] lo encontró abierto y lo dejó en {:o}", almacen::ARCHIVO);
     }
     Ok(())
 }
 
-/// Crea el archivo **ya con sus permisos puestos**, no con los que le toquen y un apretón después.
-///
-/// La primera versión usaba `std::fs::write` y el propio gate del efímero lo delató en su traza:
-/// «el archivo estaba en 644; se dejó en 600». Funcionaba, y aun así estaba mal: la regla 17-bis dice
-/// que un derivado **nace** con permisos restrictivos, y entre el `write` y el `set_permissions` hay
-/// una ventana —corta, pero real— en la que el archivo con la jerga del consultor es legible por
-/// cualquier cuenta del Mac. Un `create_new` con su modo no tiene esa ventana, y encima falla si
-/// alguien creó el archivo entre el `exists()` y aquí.
-#[cfg(unix)]
+/// Crea el archivo **ya con sus permisos puestos** (`almacen`, que desde el sprint 003 es el único
+/// escritor de la app). La primera versión usaba `std::fs::write` y el propio gate del efímero lo
+/// delató en su traza: «el archivo estaba en 644; se dejó en 600».
 fn nacer_cerrado(ruta: &std::path::Path, contenido: &str) -> Result<(), String> {
-    use std::io::Write;
-    use std::os::unix::fs::OpenOptionsExt;
-    let mut f = std::fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .mode(PERMISOS_DEL_DICCIONARIO)
-        .open(ruta)
-        .map_err(|e| format!("no se pudo crear el diccionario: {e}"))?;
-    f.write_all(contenido.as_bytes())
-        .map_err(|e| format!("no se pudo escribir el diccionario: {e}"))
+    almacen::nacer_cerrado(ruta, contenido.as_bytes())
 }
 
-#[cfg(not(unix))]
-fn nacer_cerrado(ruta: &std::path::Path, contenido: &str) -> Result<(), String> {
-    std::fs::write(ruta, contenido).map_err(|e| format!("no se pudo escribir el diccionario: {e}"))
-}
-
-/// Aprieta los permisos si los encuentra flojos. **Devuelve si hubo que repararlos**, y eso no es
-/// un detalle de estilo: es lo que permite probar que el archivo nace cerrado en vez de nacer
-/// abierto y cerrarse un instante después.
-#[cfg(unix)]
+/// Aprieta los permisos si los encuentra flojos, y **devuelve si hubo que repararlos**.
 fn cerrar_permisos(ruta: &std::path::Path) -> Result<bool, String> {
-    use std::os::unix::fs::PermissionsExt;
-    let md = std::fs::metadata(ruta).map_err(|e| e.to_string())?;
-    if md.permissions().mode() & 0o777 == PERMISOS_DEL_DICCIONARIO {
-        return Ok(false);
-    }
-    std::fs::set_permissions(ruta, std::fs::Permissions::from_mode(PERMISOS_DEL_DICCIONARIO))
-        .map_err(|e| format!("no se pudieron cerrar los permisos del diccionario: {e}"))?;
-    Ok(true)
-}
-
-#[cfg(not(unix))]
-fn cerrar_permisos(_ruta: &std::path::Path) -> Result<bool, String> {
-    Ok(false)
+    almacen::cerrar_permisos(ruta, almacen::ARCHIVO)
 }
 
 /// El diccionario de **esta** sesión: lo que el usuario escribió en su archivo más los nombres
@@ -539,6 +502,7 @@ fn empezar_a_escuchar(
         if let Ok(mut l) = s.latencias.lock() {
             l.clear();
         };
+        s.registro.vaciar();
     }
     // Si la banda sigue en pantalla, esto no hace nada: `abrir_banda` es idempotente.
     let la_habian_cortado = app.get_webview_window(ventana::BANDA).is_none();
@@ -628,6 +592,9 @@ fn dejar_de_escuchar(app: tauri::AppHandle, estado: tauri::State<'_, LaEscucha>)
     }
     // Sin sesión no se mira la pantalla: la lectura vive lo que vive la escucha.
     parar_la_pantalla(&app);
+    // Lo que salió al API era de esta reunión: IA dice «se borra al cerrar», y se borra (B37).
+    app.state::<LaSintesis>().registro.vaciar();
+    avisar_a_la_ia(&app);
 }
 
 /// Qué vive en memoria ahora mismo por culpa de la escucha. Lo pide la pantalla de Honestidad.
@@ -771,13 +738,7 @@ fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Inf
                 // La sugerencia en camino: la época sube. Lo que vuelva de antes del corte se tira
                 // sin enseñarlo, y una petición al API que aún no haya salido ya no sale. La
                 // reunión, además, deja de sumar costo.
-                corte::Pieza::Sugerencia => {
-                    let s = app.state::<LaSintesis>();
-                    s.epoca.fetch_add(1, Ordering::SeqCst);
-                    if let Ok(mut u) = s.reunion_usd.lock() {
-                        *u = 0.0;
-                    };
-                }
+                corte::Pieza::Sugerencia => cortar_la_sugerencia(&app.state::<LaSintesis>()),
                 corte::Pieza::ContadorDeRed => red::reiniciar(),
                 corte::Pieza::Banda => ventana::cerrar_banda(app),
                 corte::Pieza::Acople => {
@@ -871,7 +832,10 @@ pub fn run() {
             redactar_sugerencias,
             api_externa,
             guardar_clave_del_api,
-            borrar_clave_del_api
+            borrar_clave_del_api,
+            idiomas_de_pista,
+            fijar_idioma_de_pista,
+            lo_que_salio_al_api
         ])
         .setup(|app| {
             // El invariante se comprueba ANTES de abrir nada y aborta el arranque si falla:
@@ -887,6 +851,14 @@ pub fn run() {
             app.manage(LaPantalla::default());
             app.manage(ElRadar::default());
             app.manage(LaSintesis::default());
+            // Lo que el usuario eligió la vez anterior (ADR 002, enmienda 2): antes de que ninguna
+            // pantalla pregunte, para que ninguna enseñe los valores de fábrica un instante.
+            {
+                let ruta = ruta_de_las_preferencias(app.handle());
+                let p = prefs::leer(&ruta);
+                aplicar_las_preferencias(app.handle(), &p);
+                app.manage(LasPreferencias { ruta, actuales: std::sync::Mutex::new(p) });
+            }
             {
                 let gasto = cargar_el_gasto(app.handle());
                 println!("[sintesis] gasto del mes {}: USD {:.3}", gasto.mes, gasto.usd);
@@ -1604,6 +1576,7 @@ fn lectura_automatica(
         "[pantalla] lectura automática {}",
         if encendida { "ENCENDIDA" } else { "APAGADA" }
     );
+    recordar(&app, |p| p.lectura_automatica = encendida);
     let estado = estado_de_la_pantalla(la_pantalla);
     let _ = app.emit(EVENTO_PANTALLA, estado);
     estado
@@ -1635,6 +1608,81 @@ fn leer_una_vez(la_pantalla: &LaPantalla) -> bool {
         println!("[pantalla] lectura pedida sin sesión: no hay reunión que leer");
     }
     hay
+}
+
+// ── LAS PREFERENCIAS (ADR 002, enmienda 2) ──────────────────────────────────────────────────────
+//
+// Lo que se elige una vez y se recuerda: `prefs.rs` dice qué y en qué formato; aquí se decide CUÁNDO
+// se aplica (al arrancar, antes de que ninguna pantalla pregunte) y cuándo se guarda (cada vez que el
+// usuario cambia algo, no al salir: una caída no se lleva lo que eligió).
+
+struct LasPreferencias {
+    ruta: PathBuf,
+    actuales: std::sync::Mutex<prefs::Preferencias>,
+}
+
+fn ruta_de_las_preferencias<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
+    app.path().app_config_dir().unwrap_or_else(|_| std::env::temp_dir()).join(prefs::ARCHIVO)
+}
+
+/// Pone el estado de la app como lo dejó el usuario. **El API no se enciende solo si su clave ya no
+/// está**: borrarla en «Acceso a Llaveros» también es una elección, y la de más peso.
+fn aplicar_las_preferencias<R: tauri::Runtime>(app: &tauri::AppHandle<R>, p: &prefs::Preferencias) {
+    let s = app.state::<LaSintesis>();
+    s.redactar.store(p.redactar, Ordering::Relaxed);
+    let encendida = p.api_encendida && sintesis::api::hay_clave(p.externo);
+    if p.api_encendida && !encendida {
+        println!("[prefs] el API estaba encendido pero ya no hay clave de {}: se queda apagado", p.externo.nombre());
+    }
+    if let Ok(mut a) = s.api.lock() {
+        *a = ConfigDelApi { encendida, externo: p.externo };
+    }
+    app.state::<LaPantalla>().encendida.store(p.lectura_automatica, Ordering::Relaxed);
+    println!(
+        "[prefs] idiomas {} / {} · redactar {} · API {} ({}) · lectura automática {}",
+        p.idiomas.consultor,
+        p.idiomas.cliente,
+        p.redactar,
+        encendida,
+        p.externo.nombre(),
+        p.lectura_automatica
+    );
+}
+
+/// Cambia una preferencia y la guarda **ya**. Que no se pueda guardar no deshace la elección —la
+/// app sigue con ella hasta cerrarse— pero se dice.
+fn recordar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, cambio: impl FnOnce(&mut prefs::Preferencias)) {
+    let Some(lp) = app.try_state::<LasPreferencias>() else { return };
+    let Ok(mut p) = lp.actuales.lock() else { return };
+    cambio(&mut p);
+    if let Err(e) = prefs::guardar(&lp.ruta, &p) {
+        println!("[prefs] no se pudieron guardar: {e}");
+    }
+}
+
+/// El idioma de cada pista, como lo dejó el usuario. Lo lee el cuaderno al abrirse.
+#[tauri::command]
+fn idiomas_de_pista(lp: tauri::State<'_, LasPreferencias>) -> prefs::IdiomasDePista {
+    lp.actuales.lock().map(|p| p.idiomas.clone()).unwrap_or_default()
+}
+
+/// Idioma elige el de una pista. Solo `consultor` o `cliente`, y solo un código de idioma.
+#[tauri::command]
+fn fijar_idioma_de_pista(
+    app: tauri::AppHandle,
+    pista: String,
+    idioma: String,
+) -> Result<prefs::IdiomasDePista, String> {
+    if !prefs::es_un_idioma(&idioma) {
+        return Err(format!("«{idioma}» no es un código de idioma"));
+    }
+    match pista.as_str() {
+        "consultor" => recordar(&app, |p| p.idiomas.consultor = idioma.clone()),
+        "cliente" => recordar(&app, |p| p.idiomas.cliente = idioma.clone()),
+        _ => return Err(format!("no hay pista «{pista}»")),
+    }
+    println!("[prefs] la pista «{pista}» escucha en {idioma}");
+    Ok(idiomas_de_pista(app.state::<LasPreferencias>()))
 }
 
 // ── LA SÍNTESIS (C7) ────────────────────────────────────────────────────────────────────────────
@@ -1684,6 +1732,20 @@ struct LaSintesis {
     epoca: std::sync::Arc<std::sync::atomic::AtomicU64>,
     /// Una a la vez: si llega otra ficha mientras se redacta, esa se queda sin sugerencia.
     en_marcha: AtomicBool,
+    /// Lo que salió al API en esta reunión, para que IA lo enseñe (auditoría del S2, B37). Solo en
+    /// memoria: lo vacían el corte, el final de la sesión y la sesión siguiente.
+    registro: sintesis::api::Registro,
+}
+
+/// **Lo que el corte le hace a la síntesis** (la pieza `Sugerencia`): la época sube —lo que vuelva
+/// de antes se tira y lo que no salió ya no sale—, la reunión deja de sumar costo, y lo que salió al
+/// API se olvida (B37). Fuera del bucle del corte para poder probarlo sin la app entera.
+fn cortar_la_sugerencia(s: &LaSintesis) {
+    s.epoca.fetch_add(1, Ordering::SeqCst);
+    if let Ok(mut u) = s.reunion_usd.lock() {
+        *u = 0.0;
+    };
+    s.registro.vaciar();
 }
 
 /// Lo que la pantalla IA enseña.
@@ -1753,14 +1815,7 @@ fn guardar_el_gasto<R: tauri::Runtime>(app: &tauri::AppHandle<R>, gasto: &GastoD
 }
 
 fn escribir_el_gasto(ruta: &std::path::Path, gasto: &GastoDelMes) -> Result<(), String> {
-    let texto = serde_json::to_string(gasto).unwrap_or_default();
-    if let Some(padre) = ruta.parent() {
-        let _ = std::fs::create_dir_all(padre);
-    }
-    let temporal = ruta.with_extension("json.tmp");
-    let _ = std::fs::remove_file(&temporal);
-    nacer_cerrado(&temporal, &texto)?;
-    std::fs::rename(&temporal, ruta).map_err(|e| format!("no se pudo renombrar: {e}"))
+    almacen::escribir(ruta, serde_json::to_string(gasto).unwrap_or_default().as_bytes())
 }
 
 /// Los clientes del corpus, por su nombre: lo que la bóveda tapa antes de que nada salga (ADR 011).
@@ -1781,6 +1836,7 @@ fn clientes_del_corpus(el_corpus: &ElCorpus) -> Vec<String> {
 fn proveedor_de_ahora(
     s: &LaSintesis,
     conocidos: Vec<String>,
+    sobre: String,
 ) -> Option<std::sync::Arc<dyn sintesis::Proveedor>> {
     use sintesis::Proveedor;
     if std::env::var("AG_SINTESIS").as_deref() == Ok("mock") {
@@ -1799,6 +1855,8 @@ fn proveedor_de_ahora(
         return Some(std::sync::Arc::new(sintesis::api::Api {
             externo: api.externo,
             conocidos,
+            registro: s.registro.clone(),
+            sobre,
             vigencia: sintesis::api::Vigencia::desde_ahora(&s.epoca),
         }));
     }
@@ -1886,7 +1944,8 @@ fn sintetizar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Aparicion
             .and_then(|ts| ts.into_iter().rev().find(|t| t.pista == capture::Pista::Sistema && !t.eco))
             .map(|t| t.texto);
         let conocidos = clientes_del_corpus(&mango.state::<ElCorpus>());
-        let (Some(mut turno), Some(proveedor)) = (turno, proveedor_de_ahora(&s, conocidos)) else {
+        let sobre = respaldo.first().map(|r| r.titular.clone()).unwrap_or_default();
+        let (Some(mut turno), Some(proveedor)) = (turno, proveedor_de_ahora(&s, conocidos, sobre)) else {
             s.en_marcha.store(false, Ordering::Relaxed);
             return;
         };
@@ -1948,6 +2007,9 @@ fn cobrar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, respuesta: &sintesis::Re
     if let Ok(mut u) = s.reunion_usd.lock() {
         *u += usd;
     }
+    if let Some(id) = respuesta.salida {
+        s.registro.cobrar(id, usd);
+    }
     let gasto = s.mes.lock().ok().map(|mut g| {
         gasto_vigente(&mut g, &mes_de_hoy());
         g.usd += usd;
@@ -1963,11 +2025,20 @@ fn estado_de_la_ia(app: tauri::AppHandle) -> EstadoDeLaIa {
     estado_de_la_ia_de(&app)
 }
 
+/// **Lo que salió al API en esta reunión, texto incluido** (B37). Por comando y solo para la
+/// ventana principal: el evento `ia` avisa de que hay algo nuevo, pero el texto no viaja a todas las
+/// ventanas (el precedente es B11: el turno del cliente dejó de cruzar en los eventos).
+#[tauri::command]
+fn lo_que_salio_al_api(app: tauri::AppHandle) -> Vec<sintesis::api::LoQueSalio> {
+    app.state::<LaSintesis>().registro.todas()
+}
+
 /// «Redactar sugerencias (además de mostrar la ficha)».
 #[tauri::command]
 fn redactar_sugerencias(app: tauri::AppHandle, si: bool) -> EstadoDeLaIa {
     app.state::<LaSintesis>().redactar.store(si, Ordering::Relaxed);
     println!("[sintesis] redactar sugerencias: {}", if si { "encendido" } else { "apagado" });
+    recordar(&app, |p| p.redactar = si);
     avisar_a_la_ia(&app)
 }
 
@@ -1985,6 +2056,10 @@ fn api_externa(
         *a = ConfigDelApi { encendida, externo };
     }
     println!("[sintesis] API externo {} · {}", if encendida { "encendido" } else { "apagado" }, externo.nombre());
+    recordar(&app, |p| {
+        p.api_encendida = encendida;
+        p.externo = externo;
+    });
     Ok(avisar_a_la_ia(&app))
 }
 
@@ -2499,6 +2574,24 @@ mod pruebas_del_asa_y_la_voz {
     fn sin_voz_el_modo_no_se_enciende() {
         assert!(puede_encender_el_modo(true));
         assert!(!puede_encender_el_modo(false));
+    }
+}
+
+#[cfg(test)]
+mod pruebas_de_lo_que_salio {
+    use super::*;
+
+    /// **El corte olvida lo que salió al API** (B37): «se borra al cerrar» y también con `⌥⎋`. ¿Puede
+    /// fallar? Sí: sin `registro.vaciar()` en `cortar_la_sugerencia`, es rojo (bitácora).
+    #[test]
+    fn el_corte_olvida_lo_que_salio() {
+        let s = LaSintesis::default();
+        let b = sintesis::anonimo::Boveda::nueva(&[]);
+        s.registro.anotar(sintesis::api::LoQueSalio::de("texto", &b, sintesis::api::Externo::Claude, "Alcance"));
+        let antes = s.epoca.load(Ordering::SeqCst);
+        cortar_la_sugerencia(&s);
+        assert_eq!(s.registro.cuantas(), 0, "lo que salió sobrevivió al corte");
+        assert_eq!(s.epoca.load(Ordering::SeqCst), antes + 1);
     }
 }
 

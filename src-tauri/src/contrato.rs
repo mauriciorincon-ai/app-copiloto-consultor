@@ -438,6 +438,24 @@ pub fn muestras() -> Vec<Muestra> {
         m("ESTADO_DEL_ACOPLE", "EstadoDelAcople", "./acople", &crate::EstadoDelAcople { acoplada: true }),
         // Lo que el motor de este Mac sabe hacer (auditoría del S2, M7): con motor, y sin él por cada
         // uno de sus tres porqués, que son grafías kebab de varias palabras.
+        // ---- lo que salió al API (auditoría del S2, B37) ----------------------------------------
+        // Construida con la bóveda de verdad sobre un texto con un cliente y una persona: los
+        // trozos, los marcadores y la cuenta son los que el serializador real escribe.
+        m("LO_QUE_SALIO", "LoQueSalio", "./ia", &{
+            let mut b = crate::sintesis::anonimo::Boveda::nueva(&["Páramo Azul".to_string()]);
+            let tapado = b.tapar("El alcance de Páramo Azul incluye tres fuentes. Andrea Villalba pregunta por una cuarta.");
+            let mut s = crate::sintesis::api::LoQueSalio::de(&tapado, &b, crate::sintesis::api::Externo::Claude, "Alcance");
+            s.hora = "14:22".into();
+            s.usd = Some(0.004);
+            s
+        }),
+        // ---- las preferencias que se recuerdan (sprint 003, ADR 002 enmienda 2) -----------------
+        // El idioma de cada pista cruza a la ventana principal al abrirse: lo que el usuario eligió
+        // la vez anterior. El cliente en inglés, para que la muestra no sea la de fábrica.
+        m("IDIOMAS_DE_PISTA", "IdiomasDePista", "./cuaderno", &crate::prefs::IdiomasDePista {
+            consultor: "es-ES".into(),
+            cliente: "en-US".into(),
+        }),
         m("QUE_SABE_TRANSCRIBIR", "QueSabeTranscribir", "./cuaderno", &crate::QueSabeTranscribir {
             motor: "apple-speechanalyzer",
             techo: 5,

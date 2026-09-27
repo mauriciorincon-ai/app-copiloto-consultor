@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-fijar-idioma-de-pista"
+description = "Enables the fijar_idioma_de_pista command without any pre-configured scope."
+commands.allow = ["fijar_idioma_de_pista"]
+
+[[permission]]
+identifier = "deny-fijar-idioma-de-pista"
+description = "Denies the fijar_idioma_de_pista command without any pre-configured scope."
+commands.deny = ["fijar_idioma_de_pista"]

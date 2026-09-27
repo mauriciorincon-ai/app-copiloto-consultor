@@ -18,6 +18,8 @@
     <button data-estado="evaluacion">kit de evaluación</button>
     <button data-estado="claude-code">Claude Code</button>
     <button data-estado="s2">así se ve hoy · sprint 2</button>
+    <button data-estado="s3-quien">sprint 3 · quién redacta</button>
+    <button data-estado="s3-salio">sprint 3 · lo que salió</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -31,6 +33,8 @@
   <div class="n" data-para="evaluacion"><b>Qué mirar:</b> la regla «código primero» convertida en tabla medida. El modelo aporta 3 aciertos de 40 y cuesta 2,3 segundos. Y la fila incómoda está ahí: <b>1 de 40 se inventó una cifra</b>, en los dos modelos.</div>
   <div class="n" data-para="s2"><b>Qué mirar (mirada 18 — su veredicto viaja al gate del MVP):</b> la pantalla que se construye en el sprint 2, armada con piezas que ya aprobaste arriba. Quién redacta, <b>con el motivo cuando nadie puede</b> —aquí, Apple Intelligence apagado en Ajustes—; el contador; la casilla de redactar, <b>apagada</b>; y el proveedor externo con tu clave en el Llavero y su costo con el tope del mes. Lo que no entra todavía y queda declarado: el texto exacto que salió con lo reemplazado tachado, la lista de peticiones y el kit de evaluación en pantalla (sus números están en la bitácora del sprint).</div>
   <div class="n" data-para="claude-code"><b>Qué mirar:</b> lo que pediste — que Claude Code pueda operar la app desde tu propio Mac. La puerta es <b>local</b> y nace <b>cerrada</b>. Mira sobre todo las dos columnas: qué puede hacer y qué <b>no puede hacer nunca</b>. Y la regla que lo sostiene todo: <b>en reunión la puerta se cierra sola</b> — un agente no toca jamás lo que está vivo en memoria. Abajo, el registro de lo que hizo.</div>
+  <div class="n" data-para="s3-quien"><b>Qué mirar (mirada 19 — forma, decisión de diseño no escrita):</b> la pantalla de hoy no tiene sitio para «lo que salió» —ocupa sus 640 px—, así que no se le añade debajo: aparece un botón <b>«Ver lo que salió · N»</b> en la tarjeta del proveedor externo, solo cuando algo salió en esta reunión.</div>
+  <div class="n" data-para="s3-salio"><b>Qué mirar (mirada 19 — forma):</b> la vista que abre ese botón es el estado «API encendido» que ya aprobaste —el texto exacto, con lo reemplazado <b>tachado</b>, el contador y la tabla de peticiones—, con un botón para volver. El texto que sale es el que se envía de verdad: la pregunta del cliente y las fichas, con los datos tapados. En la fase 4, la puerta local para Claude Code se abre del mismo modo (mirada 22).</div>
   <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
 </div>
 
@@ -54,6 +58,8 @@
       <!-- «así se ve hoy · sprint 2»: el chip del producto es el mismo en todas las pantallas —la
            reunión detectada y su contador—, como en Sesión. -->
       <span class="estado halo" data-en="s2"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
+      <span class="estado halo" data-en="s3-quien"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 12,4 KB</span><span lang="en">Meet detected · 12.4 KB</span></span>
+      <span class="estado halo" data-en="s3-salio"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 12,4 KB</span><span lang="en">Meet detected · 12.4 KB</span></span>
       <span class="estado ok" data-en="evaluacion"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Evaluado</span><span lang="en">Evaluated</span></span>
     </div>
   </nav>
@@ -260,6 +266,93 @@
           </table>
           <p style="font-size:11.5px;color:var(--ink-2);margin-top:6px"><span lang="es">Al llegar al tope vuelve sola al modelo local. No se detiene la reunión.</span><span lang="en">On reaching the cap it falls back to the local model on its own. The meeting is not interrupted.</span></p>
         </div>
+      </div>
+    </div>
+
+    <!-- ===== sprint 3 · quién redacta, con lo que salió (mirada 19, decisión de diseño no escrita) ===== -->
+    <div data-en="s3-quien" style="display:flex;flex-direction:column;gap:12px">
+      <div class="grid-2" style="grid-template-columns:1.25fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta" style="padding-bottom:8px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Quién redacta la sugerencia</span><span lang="en">Who writes the suggestion</span></h2><span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"/></svg><span lang="es">nadie</span><span lang="en">nobody</span></span></div>
+          <table class="tabla">
+            <thead><tr><th><span lang="es">proveedor</span><span lang="en">provider</span></th><th><span lang="es">estado</span><span lang="en">state</span></th><th class="num"><span lang="es">latencia</span><span lang="en">latency</span></th></tr></thead>
+            <tbody>
+              <tr><td><span lang="es">Modelo del sistema (macOS 26)</span><span lang="en">System model (macOS 26)</span></td><td><span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"/></svg><span lang="es">no disponible</span><span lang="en">not available</span></span></td><td class="num">—</td></tr>
+              <tr class="apagada"><td>MLX · Qwen 3 4B</td><td><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">Todavía no</span><span lang="en">Not yet</span></span></td><td class="num">—</td></tr>
+              <tr class="apagada"><td><span lang="es">API externo</span><span lang="en">External API</span></td><td><span lang="es">apagado</span><span lang="en">off</span></td><td class="num">—</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:11.5px;color:var(--ink-2);margin-top:6px"><span lang="es">Apple Intelligence está apagado en Ajustes.</span><span lang="en">Apple Intelligence is off in Settings.</span></p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="contador cero">
+            <span class="cifra">0 <small>B</small></span>
+            <span class="etq"><span lang="es">salieron de tu equipo en esta reunión</span><span lang="en">left your machine in this meeting</span></span>
+          </div>
+          <div class="franja ok" role="status">
+            <svg class="ic relleno"><use href="#i-check-circle"/></svg>
+            <div>
+              <strong><span lang="es">Si el modelo falla, quedan las fichas</span><span lang="en">If the model fails, the cards remain</span></strong>
+              <p><span lang="es">La sugerencia es un acento. Buscar en tu corpus y mostrar la ficha con su fuente es código, no modelo: funciona aunque apagues esto entero.</span><span lang="en">The suggestion is an accent. Searching your corpus and showing the card with its source is code, not a model: it works even with all of this turned off.</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <label class="conm off" style="padding:2px"><span class="track"></span><span class="etq"><span lang="es">Redactar sugerencias (además de mostrar la ficha)</span><span lang="en">Draft suggestions (on top of showing the card)</span></span></label>
+      <div class="grid-2" style="grid-template-columns:1.25fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Proveedor externo</span><span lang="en">External provider</span></h2><label class="conm off"><span class="track"></span><span class="etq"><span lang="es">apagado</span><span lang="en">off</span></span></label></div>
+          <div class="fila" style="gap:6px;margin-top:8px">
+            <button class="btn mini" aria-pressed="true"><svg class="ic s relleno" style="color:var(--halo)"><use href="#i-check-circle"/></svg>Claude</button>
+            <button class="btn mini" aria-pressed="false">Gemini</button>
+            <button class="btn mini" aria-pressed="false">Groq</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <label class="campo"><span lang="es">Tu clave</span><span lang="en">Your key</span><input class="mono" placeholder="sk-…"><span class="ayuda"><span lang="es">se guarda en tu Llavero, nunca en un archivo</span><span lang="en">stored in your Keychain, never in a file</span></span></label>
+            <div class="fila" style="gap:8px"><button class="btn mini" disabled><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Guardar en el Llavero</span><span lang="en">Save to Keychain</span></button><button class="btn mini"><span lang="es">Borrar la clave</span><span lang="en">Delete the key</span></button><span class="crece"></span><button class="btn mini"><svg class="ic s"><use href="#i-nube"/></svg><span lang="es">Ver lo que salió · 3</span><span lang="en">See what left · 3</span></button></div>
+          </div>
+        </div>
+        <div class="tarjeta" style="padding-bottom:6px">
+          <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Costo</span><span lang="en">Cost</span></h2>
+          <table class="tabla">
+            <tbody>
+              <tr><td><span lang="es">Esta reunión</span><span lang="en">This meeting</span></td><td class="num"><span lang="es">USD 0,00</span><span lang="en">USD 0.00</span></td></tr>
+              <tr><td><span lang="es">Este mes</span><span lang="en">This month</span></td><td class="num"><span lang="es">USD 0,00</span><span lang="en">USD 0.00</span></td></tr>
+              <tr><td><span lang="es">Tope del mes</span><span lang="en">Monthly cap</span></td><td class="num"><span lang="es">USD 10,00</span><span lang="en">USD 10.00</span></td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:11.5px;color:var(--ink-2);margin-top:6px"><span lang="es">Al llegar al tope vuelve sola al modelo local. No se detiene la reunión.</span><span lang="en">On reaching the cap it falls back to the local model on its own. The meeting is not interrupted.</span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== sprint 3 · lo que salió (mirada 19, decisión de diseño no escrita) ===== -->
+    <div data-en="s3-salio" style="display:flex;flex-direction:column;gap:10px">
+      <div class="fila"><button class="btn mini"><svg class="ic s" style="transform:rotate(180deg)"><use href="#i-flecha"/></svg><span lang="es">Quién redacta</span><span lang="en">Who writes</span></button><span class="crece"></span><span class="mono" style="color:var(--ink-2)"><span lang="es">se borra al cerrar</span><span lang="en">cleared on close</span></span></div>
+      <div class="grid-2" style="grid-template-columns:1.2fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Lo último que salió</span><span lang="en">The last thing that left</span></h2><span class="mono" style="color:var(--ink-2)">14:22</span></div>
+          <div class="diccionario" style="margin-top:8px;font-family:var(--font-evidencia);font-size:13.5px;line-height:1.6">
+            <p>Client: <span lang="es">¿El alcance de </span><span lang="en">Does the scope for </span><del>Páramo Azul</del><mark>[CLIENTE_1]</mark><span lang="es"> incluye la limpieza de datos? </span><span lang="en"> include data cleansing? </span><del>Andrea Villalba</del><mark>[PERSONA_1]</mark><span lang="es"> pregunta por una cuarta fuente.</span><span lang="en"> asks about a fourth source.</span></p>
+          </div>
+          <p style="font-size:11.5px;color:var(--ink-2);margin-top:10px"><span lang="es">Esto es <b>todo</b> lo que salió: 412 caracteres. Tachado, lo que se reemplazó en tu Mac antes de enviarlo.</span><span lang="en">This is <b>everything</b> that left: 412 characters. Struck through, what was replaced on your Mac before sending.</span></p>
+        </div>
+        <div class="contador api">
+          <span class="cifra">12,4 <small>KB</small></span>
+          <span class="etq"><span lang="es">salieron · 3 peticiones · Claude API</span><span lang="en">left · 3 requests · Claude API</span></span>
+        </div>
+      </div>
+      <div class="tarjeta" style="padding-bottom:6px">
+        <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Las 3 peticiones de esta reunión</span><span lang="en">The 3 requests in this meeting</span></h2>
+        <table class="tabla">
+          <thead><tr><th><span lang="es">hora</span><span lang="en">time</span></th><th><span lang="es">por qué salió</span><span lang="en">why it left</span></th><th class="num"><span lang="es">caracteres</span><span lang="en">characters</span></th><th class="num"><span lang="es">anonimizados</span><span lang="en">anonymised</span></th><th class="num">USD</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">14:22</td><td><span lang="es">redactar sugerencia · alcance</span><span lang="en">draft suggestion · scope</span></td><td class="num">412</td><td class="num">2</td><td class="num">0,004</td></tr>
+            <tr><td class="mono">14:16</td><td><span lang="es">redactar sugerencia · plazos</span><span lang="en">draft suggestion · timelines</span></td><td class="num">377</td><td class="num">3</td><td class="num">0,003</td></tr>
+            <tr><td class="mono">14:09</td><td><span lang="es">redactar sugerencia · caso previo</span><span lang="en">draft suggestion · past case</span></td><td class="num">501</td><td class="num">1</td><td class="num">—</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:11.5px;color:var(--ink-2);margin-top:6px"><span lang="es">Este registro vive en memoria como todo lo demás: al cerrar la reunión desaparece. Lo que persiste del costo es la cifra del mes, no el texto.</span><span lang="en">This log lives in memory like everything else: it disappears when the meeting closes. What persists of the cost is the monthly figure, not the text.</span></p>
       </div>
     </div>
 

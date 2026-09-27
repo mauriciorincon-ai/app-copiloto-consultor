@@ -17,6 +17,9 @@
     <button data-estado="propuestas">te propongo guardar</button>
     <button data-estado="al-cerrar">al cerrar</button>
     <button data-estado="archivo">el archivo cifrado</button>
+    <button data-estado="s3-durante">sprint 3 · durante</button>
+    <button data-estado="s3-archivo">sprint 3 · el archivo</button>
+    <button data-estado="s3-exportar">sprint 3 · exportar</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -29,6 +32,9 @@
   <div class="n" data-para="propuestas"><b>Qué mirar:</b> la respuesta a «soy malo tomando notas». No tienes que tomarlas: la app <b>propone</b> y tú aceptas con una tecla. Fíjate en tres cosas: <b>proponer no es guardar</b> (nada entra sin tu sí), cada propuesta <b>dice de dónde salió</b>, y lo que no aceptes <b>muere con lo demás</b>. Abajo, la lista de lo que sabe reconocer: son reglas, no un modelo adivinando.</div>
   <div class="n" data-para="al-cerrar"><b>Qué mirar:</b> el cierre como estado de cuentas, no como un «¿guardar?». Izquierda, lo que queda —incluidos <b>tus turnos</b>, la casilla que pediste, encendida por ti—. Derecha, lo que muere, y que <b>esa columna no tiene casilla</b>. Tu audio muere también: lo que queda de ti es texto.</div>
   <div class="n" data-para="archivo"><b>Qué mirar:</b> el archivo como objeto tuyo: dónde está, con qué llave, cuánto vive. La retención <b>se cumple sola</b>, aunque no abras la app. Y la advertencia honesta: exportar a texto quita el cifrado.</div>
+  <div class="n" data-para="s3-durante"><b>Qué mirar (mirada 19 — forma, decisión de diseño no escrita):</b> lo que el sprint 3 construye de «durante». Tres cambios sobre la maqueta aprobada: <b>los acuerdos no tienen tecla</b> (⌃⌥A ya es «ayúdame»): se escriben en su campo y ↵; <b>tu nota es un campo de verdad</b>, y ⌃⌥N te trae aquí desde la reunión con el cursor al final; y un aviso arriba, porque desde este sprint <b>el cuaderno tampoco se ve al compartir pantalla</b> mientras escuchas. Las propuestas llegan en la fase 2 (mirada 20).</div>
+  <div class="n" data-para="s3-archivo"><b>Qué mirar (mirada 19 — forma):</b> la retención deja de ser un botón «Cambiar retención» por archivo y pasa a ser <b>una elección tuya para todas las reuniones</b>: 7 d · 30 d · <b>90 d</b> (de fábrica, como la maqueta) · 1 año · siempre. Cada reunión que guardas vive eso; «Borrar ahora» sigue por archivo.</div>
+  <div class="n" data-para="s3-exportar"><b>Qué mirar (mirada 19 — forma):</b> «se avisa antes, cada vez», dibujado: al pulsar «Exportar a texto» el aviso se convierte en la pregunta, con dos botones. Solo después se abre el diálogo para elegir dónde.</div>
   <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
 </div>
 
@@ -50,6 +56,9 @@
       <span class="estado halo" data-en="propuestas"><svg class="ic s"><use href="#i-chispa"/></svg><span lang="es">7 propuestas</span><span lang="en">7 suggestions</span></span>
       <span class="estado halo" data-en="al-cerrar"><svg class="ic s"><use href="#i-reloj"/></svg><span lang="es">Cerrando…</span><span lang="en">Closing…</span></span>
       <span class="estado mute" data-en="archivo"><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Fuera de reunión</span><span lang="en">Out of meeting</span></span>
+      <span class="estado halo" data-en="s3-durante"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
+      <span class="estado mute" data-en="s3-archivo"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Sin sesión · 0 B</span><span lang="en">No session · 0 B</span></span>
+      <span class="estado mute" data-en="s3-exportar"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Sin sesión · 0 B</span><span lang="en">No session · 0 B</span></span>
     </div>
   </nav>
 
@@ -287,6 +296,152 @@
               <strong><span lang="es">La retención se cumple sola</span><span lang="en">Retention enforces itself</span></strong>
               <p><span lang="es">A los 90 días el archivo se borra aunque no abras la app. No hay copia en otro sitio que sobreviva a ese borrado.</span><span lang="en">After 90 days the file is deleted even if you never open the app. No copy elsewhere survives that deletion.</span></p>
             </div>
+          </div>
+        </div>
+      </div>
+      <div class="tarjeta" style="padding-bottom:6px">
+        <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Reuniones guardadas</span><span lang="en">Saved meetings</span></h2>
+        <table class="tabla">
+          <thead><tr><th><span lang="es">archivo</span><span lang="en">file</span></th><th><span lang="es">fecha</span><span lang="en">date</span></th><th class="num"><span lang="es">tamaño</span><span lang="en">size</span></th><th class="num"><span lang="es">se borra en</span><span lang="en">deletes in</span></th></tr></thead>
+          <tbody>
+            <tr><td class="mono">paramo-azul-2026-09-20.ghost</td><td class="mono">20 sep</td><td class="num">22 KB</td><td class="num">90 d</td></tr>
+            <tr><td class="mono">paramo-azul-2026-09-06.ghost</td><td class="mono">06 sep</td><td class="num">17 KB</td><td class="num">76 d</td></tr>
+            <tr class="apagada"><td class="mono">sur-del-valle-2026-07-02.ghost</td><td class="mono">02 jul</td><td class="num">31 KB</td><td class="num">10 d</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== sprint 3 · durante (mirada 19, decisión de diseño no escrita) ===== -->
+    <div data-en="s3-durante" style="display:flex;flex-direction:column;gap:12px">
+      <div class="grid-2" style="grid-template-columns:1.3fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta" style="display:flex;flex-direction:column;gap:8px;min-height:300px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Tu nota</span><span lang="en">Your note</span></h2><span class="estado ok"><svg class="ic s"><use href="#i-ojo-off"/></svg><span lang="es">el cliente no la ve</span><span lang="en">the client can’t see it</span></span><span class="tecla"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>N</kbd></span></div>
+          <div class="crece" role="textbox" aria-multiline="true" style="font-family:var(--font-evidencia);font-size:14.5px;line-height:1.6;color:var(--ink);background:var(--surface-2);border:var(--borde) solid var(--line-2);border-radius:var(--r-chip);padding:8px 10px;min-height:170px">
+            <p style="margin-bottom:8px"><span lang="es">Piden la cuarta fuente (Excel de logística). Recordarles que va como adicional — está en §3.2.</span><span lang="en">They are asking for the fourth source (logistics Excel). Remind them it is an add-on — it is in §3.2.</span></p>
+            <p><span lang="es">Andrea insiste en tener el tablero para el cierre de trimestre. Fecha real: 12 semanas desde la firma.</span><span lang="en">Andrea wants the dashboard by quarter close. Real date: 12 weeks from signature.</span></p>
+          </div>
+          <p style="font-size:11.5px;color:var(--ink-2)"><span lang="es">⌃⌥N te trae aquí desde la reunión, con el cursor al final. Mientras escuchas, esta ventana no se ve al compartir pantalla.</span><span lang="en">⌃⌥N brings you here from the meeting, cursor at the end. While listening, this window can’t be seen when you share your screen.</span></p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="tarjeta" style="padding-bottom:8px">
+            <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Fichas que fijaste</span><span lang="en">Cards you pinned</span></h2><span class="tecla"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>P</kbd></span></div>
+            <div class="mas"><svg class="ic s"><use href="#i-pin-lleno"/></svg><span class="titulos crece"><span lang="es">Limpieza de datos: hasta tres fuentes</span><span lang="en">Data cleansing: up to three sources</span></span><span class="n">§3.2</span></div>
+            <div class="mas"><svg class="ic s"><use href="#i-pin-lleno"/></svg><span class="titulos crece"><span lang="es">Sur del Valle: 11 semanas reales</span><span lang="en">Sur del Valle: 11 weeks actual</span></span><span class="n"><span lang="es">caso</span><span lang="en">case</span></span></div>
+          </div>
+          <div class="tarjeta" style="padding-bottom:8px">
+            <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Acuerdos</span><span lang="en">Agreements</span></h2>
+            <div class="mas"><svg class="ic s"><use href="#i-check-circle"/></svg><span class="titulos crece"><span lang="es">Cuarta fuente: cotización aparte</span><span lang="en">Fourth source: quoted separately</span></span></div>
+            <div role="textbox" style="margin-top:6px;font-size:var(--t-ui);color:var(--ink-2);background:var(--surface-2);border:var(--borde) solid var(--line-2);border-radius:var(--r-chip);padding:6px 9px"><span lang="es">Escribe el acuerdo y pulsa ↵</span><span lang="en">Type the agreement and press ↵</span></div>
+            <p style="font-size:11.5px;color:var(--ink-2);margin-top:4px"><span lang="es">Los marcas tú. La app no decide qué fue un acuerdo.</span><span lang="en">You mark them. The app does not decide what counted as an agreement.</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="franja ok" role="status">
+        <svg class="ic relleno"><use href="#i-check-circle"/></svg>
+        <div>
+          <strong><span lang="es">Esto es lo único que va a sobrevivir a la reunión</span><span lang="en">This is the only thing that will survive the meeting</span></strong>
+          <p><span lang="es">Lo que escribes aquí, las fichas que fijas y los acuerdos que marcas. Todo lo demás —las dos voces, el transcript, lo que se leyó de la pantalla— vive en memoria y muere al cerrar.</span><span lang="en">What you write here, the cards you pin and the agreements you mark. Everything else —both voices, the transcript, what was read off the screen— lives in memory and dies on close.</span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== sprint 3 · archivo (mirada 19, decisión de diseño no escrita) ===== -->
+    <div data-en="s3-archivo" style="display:flex;flex-direction:column;gap:12px">
+      <div class="grid-2" style="grid-template-columns:1.25fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta" style="padding-bottom:6px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0">paramo-azul-2026-09-20.ghost</h2><span class="estado ok"><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">cifrado</span><span lang="en">encrypted</span></span></div>
+          <table class="tabla">
+            <tbody>
+              <tr><td><span lang="es">Dónde</span><span lang="en">Where</span></td><td class="mono">~/Documentos/Angel Ghost/</td></tr>
+              <tr><td><span lang="es">Tamaño</span><span lang="en">Size</span></td><td class="mono">22 KB</td></tr>
+              <tr><td><span lang="es">Llave</span><span lang="en">Key</span></td><td><span lang="es">en tu Llavero, ligada a este Mac</span><span lang="en">in your Keychain, tied to this Mac</span></td></tr>
+              <tr><td><span lang="es">Retención</span><span lang="en">Retention</span></td><td><span class="estado warn"><svg class="ic s"><use href="#i-reloj"/></svg><span lang="es">se borra solo en 90 días</span><span lang="en">self-deletes in 90 days</span></span></td></tr>
+              <tr><td><span lang="es">Del cliente</span><span lang="en">From the client</span></td><td><span lang="es">nada. Ni su voz, ni sus turnos, ni su pantalla</span><span lang="en">nothing. Not their voice, their turns, or their screen</span></td></tr>
+            </tbody>
+          </table>
+          <div class="fila" style="gap:8px;margin-top:10px">
+            <button class="btn"><svg class="ic s"><use href="#i-doc"/></svg><span lang="es">Exportar a texto</span><span lang="en">Export to text</span></button>
+            <span class="crece"></span>
+            <button class="btn"><svg class="ic s"><use href="#i-basura"/></svg><span lang="es">Borrar ahora</span><span lang="en">Delete now</span></button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="franja warn" role="status">
+            <svg class="ic relleno"><use href="#i-alert"/></svg>
+            <div>
+              <strong><span lang="es">Exportar a texto quita el cifrado</span><span lang="en">Exporting to text removes the encryption</span></strong>
+              <p><span lang="es">El archivo exportado es tuyo y se lee en cualquier parte — por eso mismo ya no lo protege nadie. Se avisa antes, cada vez.</span><span lang="en">The exported file is yours and opens anywhere — which is exactly why nothing protects it any more. You are warned each time.</span></p>
+            </div>
+          </div>
+          <div class="tarjeta" style="padding:10px 14px">
+            <h2 class="seccion" style="margin:0 0 6px"><span lang="es">Cuánto viven tus notas</span><span lang="en">How long your notes live</span></h2>
+            <div class="ventanas">
+              <span class="op">7 d</span>
+              <span class="op">30 d</span>
+              <span class="op on"><svg class="ic s relleno"><use href="#i-check-circle"/></svg>90 d</span>
+              <span class="op"><span lang="es">1 año</span><span lang="en">1 year</span></span>
+              <span class="op"><span lang="es">siempre</span><span lang="en">always</span></span>
+            </div>
+            <p style="font-size:11.5px;color:var(--ink-2);margin-top:8px"><span lang="es">Cada reunión que guardas vive eso, y se borra sola al vencer aunque no abras la app.</span><span lang="en">Every meeting you save lives that long, and deletes itself when it expires even if you never open the app.</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="tarjeta" style="padding-bottom:6px">
+        <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Reuniones guardadas</span><span lang="en">Saved meetings</span></h2>
+        <table class="tabla">
+          <thead><tr><th><span lang="es">archivo</span><span lang="en">file</span></th><th><span lang="es">fecha</span><span lang="en">date</span></th><th class="num"><span lang="es">tamaño</span><span lang="en">size</span></th><th class="num"><span lang="es">se borra en</span><span lang="en">deletes in</span></th></tr></thead>
+          <tbody>
+            <tr><td class="mono">paramo-azul-2026-09-20.ghost</td><td class="mono">20 sep</td><td class="num">22 KB</td><td class="num">90 d</td></tr>
+            <tr><td class="mono">paramo-azul-2026-09-06.ghost</td><td class="mono">06 sep</td><td class="num">17 KB</td><td class="num">76 d</td></tr>
+            <tr class="apagada"><td class="mono">sur-del-valle-2026-07-02.ghost</td><td class="mono">02 jul</td><td class="num">31 KB</td><td class="num">10 d</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== sprint 3 · exportar (mirada 19, decisión de diseño no escrita) ===== -->
+    <div data-en="s3-exportar" style="display:flex;flex-direction:column;gap:12px">
+      <div class="grid-2" style="grid-template-columns:1.25fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta" style="padding-bottom:6px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0">paramo-azul-2026-09-20.ghost</h2><span class="estado ok"><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">cifrado</span><span lang="en">encrypted</span></span></div>
+          <table class="tabla">
+            <tbody>
+              <tr><td><span lang="es">Dónde</span><span lang="en">Where</span></td><td class="mono">~/Documentos/Angel Ghost/</td></tr>
+              <tr><td><span lang="es">Tamaño</span><span lang="en">Size</span></td><td class="mono">22 KB</td></tr>
+              <tr><td><span lang="es">Llave</span><span lang="en">Key</span></td><td><span lang="es">en tu Llavero, ligada a este Mac</span><span lang="en">in your Keychain, tied to this Mac</span></td></tr>
+              <tr><td><span lang="es">Retención</span><span lang="en">Retention</span></td><td><span class="estado warn"><svg class="ic s"><use href="#i-reloj"/></svg><span lang="es">se borra solo en 90 días</span><span lang="en">self-deletes in 90 days</span></span></td></tr>
+              <tr><td><span lang="es">Del cliente</span><span lang="en">From the client</span></td><td><span lang="es">nada. Ni su voz, ni sus turnos, ni su pantalla</span><span lang="en">nothing. Not their voice, their turns, or their screen</span></td></tr>
+            </tbody>
+          </table>
+          <div class="fila" style="gap:8px;margin-top:10px">
+            <button class="btn"><svg class="ic s"><use href="#i-doc"/></svg><span lang="es">Exportar a texto</span><span lang="en">Export to text</span></button>
+            <span class="crece"></span>
+            <button class="btn"><svg class="ic s"><use href="#i-basura"/></svg><span lang="es">Borrar ahora</span><span lang="en">Delete now</span></button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="franja warn" role="alertdialog" aria-label="Exportar a texto">
+            <svg class="ic relleno"><use href="#i-alert"/></svg>
+            <div>
+              <strong><span lang="es">¿Exportar sin cifrado?</span><span lang="en">Export without encryption?</span></strong>
+              <p><span lang="es">El archivo exportado es tuyo y se lee en cualquier parte — por eso mismo ya no lo protege nadie.</span><span lang="en">The exported file is yours and opens anywhere — which is exactly why nothing protects it any more.</span></p>
+              <div class="fila" style="gap:8px;margin-top:8px">
+                <button class="btn mini"><svg class="ic s"><use href="#i-doc"/></svg><span lang="es">Exportar sin cifrado</span><span lang="en">Export without encryption</span></button>
+                <button class="btn mini"><span lang="es">Cancelar</span><span lang="en">Cancel</span></button>
+              </div>
+            </div>
+          </div>
+          <div class="tarjeta" style="padding:10px 14px">
+            <h2 class="seccion" style="margin:0 0 6px"><span lang="es">Cuánto viven tus notas</span><span lang="en">How long your notes live</span></h2>
+            <div class="ventanas">
+              <span class="op">7 d</span>
+              <span class="op">30 d</span>
+              <span class="op on"><svg class="ic s relleno"><use href="#i-check-circle"/></svg>90 d</span>
+              <span class="op"><span lang="es">1 año</span><span lang="en">1 year</span></span>
+              <span class="op"><span lang="es">siempre</span><span lang="en">always</span></span>
+            </div>
+            <p style="font-size:11.5px;color:var(--ink-2);margin-top:8px"><span lang="es">Cada reunión que guardas vive eso, y se borra sola al vencer aunque no abras la app.</span><span lang="en">Every meeting you save lives that long, and deletes itself when it expires even if you never open the app.</span></p>
           </div>
         </div>
       </div>

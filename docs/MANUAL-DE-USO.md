@@ -71,8 +71,10 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     lee peor. Te avisa antes de empezar, cuando todavía puedes ponértelos.
   - Cada pista escucha **un** idioma, y **se elige en *Idioma***: el código de cada pista (es-ES,
     en-US…) es un selector. Las dos nacen en **español**; si tu cliente habla inglés, cámbiala antes
-    de «Iniciar sesión». La elección vive en memoria: al cerrar la app vuelven a español. Marcar
-    varios idiomas en la misma pista llega más adelante.
+    de «Iniciar sesión». **La elección se recuerda** · desde Sprint 003: la próxima vez que abras
+    la app, cada pista sigue en el idioma que dejaste (lo prueba `lo_que_se_elige_sobrevive_al_reinicio`,
+    en `prefs.rs`). Marcar varios idiomas en la misma pista no está en este MVP: es de la etapa
+    siguiente (H2).
   - macOS solo deja tener **cinco idiomas de voz listos a la vez**. Es un límite del sistema.
   - Si no hablas, los contadores de audio se quedan quietos. **Eso es correcto**: cuando nadie
     habla, macOS no entrega una sola muestra.
@@ -312,7 +314,9 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     cliente pregunta en inglés y tu propuesta está en español, la sugerencia sale en español.
   - A veces la sugerencia es fiel a su ficha pero **no contesta la pregunta** (cita otra de las tres
     fichas del momento). No es falsa; es poco útil. La confianza suele decirlo.
-  - Los interruptores de IA vuelven a apagado al cerrar la app.
+  - Los interruptores de IA **se recuerdan** · desde Sprint 003: «Redactar sugerencias» y el
+    proveedor externo quedan como los dejaste. Con una excepción, a propósito: si borraste la clave
+    del proveedor en «Acceso a Llaveros», el API **no** se enciende solo al abrir la app.
   - El precio de cada proveedor está escrito en la app con su fecha (2026-09-26); si el proveedor lo
     cambia, el costo que ves se desvía hasta la versión siguiente.
 

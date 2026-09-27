@@ -70,6 +70,12 @@ de revisar lo que el constructor daba por bueno.)*
    pieza.* *(Origen: Velo S2 — el reporte del tratamiento existía entero y probado **sin un solo
    llamador**: 6 de 9 campos huérfanos, invisible para 542 unitarias verdes. Esta comprobación
    lo habría encontrado en segundos.)*
+6. **LA GUÍA HEREDADA SE RELEE CONTRA LA ARQUITECTURA (kit v1.31.0).** Cada prueba heredada de
+   `docs/GUIA-DE-PRUEBA.html` (origen `SN`) se contrasta con lo que el diseño y los ADR permiten
+   HOY: una prueba que pide lo que el producto prohíbe, o un estado que ya no existe, es un
+   hallazgo (se reescribe con su origen `Mejorado en SN`, jamás se borra en silencio). *(Angel
+   Ghost S2: dos pruebas del S1 no podían pasar nunca —la pregunta del cliente dicha por el
+   micrófono; «nada en tu corpus» para una pregunta con ficha— y nadie las había corrido.)*
 
 **Entrega de la Fase 1:** un reporte con hallazgos clasificados por severidad
 (**Crítico / Alto / Medio / Bajo**) y una recomendación explícita: **"listo para cierre"** o
@@ -84,11 +90,24 @@ ejecutable**: archivo(s) y línea(s), cambio exacto propuesto, y el criterio obs
 "ajuste verificado" — el formato que un modelo de menor capacidad puede seguir sin pensar
 de más. Cierra recordando al usuario: *"aprueba la Fase 1 y fija el modelo de la Fase 2 con
 `/model` (un modelo menor basta si sigue este plan)"*.
+6. **NINGÚN NÚMERO DE ENTIDADES CABLEADO (kit v1.29.0 — comprobación mecánica).** Lee en el
+   brief y la VISION de la planeadora qué entidades se declaran **extensibles solo con datos**
+   (p. ej. «N plataformas», «N idiomas», «N capas»). Para cada una, busca en el núcleo y en las
+   vistas literales y arreglos fijos que asuman la cardinalidad de hoy (`3`, `[a, b, c]`,
+   `primera/segunda/tercera`, columnas fijas en una vista lado a lado, tipos con tres campos con
+   nombre). Un literal donde el dato dice N es hallazgo **Alto**; un parámetro de vista
+   («tres a la vez en ancho») es aceptable solo si vive como constante declarada con su razón y
+   la vista pagina más allá. *(Origen: big-d — el usuario descartó el nombre «Terna» porque
+   «podría suscitar un error estructural».)*
+
 
 ## FASE 2 — Correcciones (SOLO tras aprobación del usuario)
 
-1. Propón el **plan de ajustes para los hallazgos Crítico/Alto** (los Medio/Bajo se declaran
-   como deuda con pago asignado, salvo que el usuario pida incluirlos).
+1. Propón el **plan de ajustes para TODOS los hallazgos — críticos, altos, medios y bajos (kit
+   v1.31.0, directiva del usuario 2026-09-26: «los hallazgos se deben resolver al finalizar el
+   sprint… resolver todos, hasta los bajos»).** La deuda solo recoge lo que es IMPOSIBLE pagar en
+   el sprint, con su razón y su `archivo:línea`; **«no reproducible» no cierra un hallazgo**: si
+   no se puede reproducir, se re-audita su superficie hasta ubicarlo o descartarlo con evidencia.
 2. **Espera la validación del usuario** del plan.
 3. Solo entonces implementa — siguiendo el plan de la Fase 1 al pie; cualquier desviación se
    declara antes de ejecutarla.
@@ -96,7 +115,11 @@ de más. Cierra recordando al usuario: *"aprueba la Fase 1 y fija el modelo de l
    (kit v1.28.0):** los arreglos de la Fase 2 fabrican frases nuevas —un texto de estado, un
    copy de vacío, una línea del manual— y la casilla corrida antes de ellos no las vio. Es el
    mismo barrido por promesa aplazada, sobre el diff de la Fase 2 *(Angel Ghost S1: dos frases
-   nacieron en los pagos de la auditoría y las cazó el usuario en la guía)*.
+   nacieron en los pagos de la auditoría y las cazó el usuario en la guía)*. **La segunda pasada
+   sigue cada ajuste hasta sus frases HERMANAS y nombra el summary entre las superficies (kit
+   v1.31.0):** el summary se escribe después de la auditoría y nadie lo audita *(Angel Ghost S2:
+   de 25 frases cazadas en la segunda pasada, once las fabricó la Fase 2 y dos vivían en el
+   propio summary)*.
 5. Al terminar: registra en la bitácora y en el `SPRINT_NNN-summary.md` los hallazgos, los
    pagos y la deuda aceptada. **Sin auditoría registrada en el summary, el cierre del sprint
    queda condicionado** (lo verifica el `/cierre-sprint` de la planeadora).

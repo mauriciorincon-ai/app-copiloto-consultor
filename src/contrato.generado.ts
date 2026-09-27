@@ -11,9 +11,9 @@
  *     cd src-tauri && ACTUALIZA_CONTRATO=1 cargo test contrato
  */
 import type { Novedad, Aparicion } from "./ficha";
-import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelDiccionario, EstadoDelCorpus, InformeDelCorte, LaVoz, EstadoDeLaPantalla, QueSabeTranscribir } from "./cuaderno";
+import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelDiccionario, EstadoDelCorpus, InformeDelCorte, LaVoz, EstadoDeLaPantalla, IdiomasDePista, QueSabeTranscribir } from "./cuaderno";
 import type { EnTuMac } from "./radar";
-import type { EstadoDeLaIa, PorQueNoRedacta } from "./ia";
+import type { EstadoDeLaIa, PorQueNoRedacta, LoQueSalio } from "./ia";
 import type { EstadoDelAcople } from "./acople";
 
 export const NOVEDAD_EMPIEZA: Novedad = {
@@ -422,6 +422,44 @@ export const POR_QUE_NO_REDACTA_TOPE: PorQueNoRedacta = "tope-del-mes";
 
 export const ESTADO_DEL_ACOPLE: EstadoDelAcople = {
     "acoplada": true
+  };
+
+export const LO_QUE_SALIO: LoQueSalio = {
+    "caracteres": 84,
+    "externo": "claude",
+    "hora": "14:22",
+    "sobre": "Alcance",
+    "tapadas": 2,
+    "trozos": [
+      {
+        "que": "texto",
+        "texto": "El alcance de "
+      },
+      {
+        "marcador": "[CLIENTE_1]",
+        "original": "Páramo Azul",
+        "que": "tapado"
+      },
+      {
+        "que": "texto",
+        "texto": " incluye tres fuentes. "
+      },
+      {
+        "marcador": "[PERSONA_1]",
+        "original": "Andrea Villalba",
+        "que": "tapado"
+      },
+      {
+        "que": "texto",
+        "texto": " pregunta por una cuarta."
+      }
+    ],
+    "usd": 0.004
+  };
+
+export const IDIOMAS_DE_PISTA: IdiomasDePista = {
+    "cliente": "en-US",
+    "consultor": "es-ES"
   };
 
 export const QUE_SABE_TRANSCRIBIR: QueSabeTranscribir = {

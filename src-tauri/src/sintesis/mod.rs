@@ -246,6 +246,9 @@ pub struct Respuesta {
     pub bytes_fuera: u64,
     pub tokens_entrada: u64,
     pub tokens_salida: u64,
+    /// Cuál de las peticiones de la reunión fue, si salió al API (B37): para ponerle su costo al
+    /// volver. `None` en los proveedores locales.
+    pub salida: Option<u64>,
 }
 
 /// Por qué un proveedor no puede redactar ahora mismo. Cerrado: IA lo dice en dos idiomas.

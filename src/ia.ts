@@ -61,6 +61,51 @@ const DE_MUESTRA: EstadoDeLaIa = {
   topeUsd: 10,
 };
 
+/**
+ * **Lo que salió al API en esta reunión** (auditoría del S2, B37): el texto exacto, trozo a trozo,
+ * con lo que la bóveda reemplazó **en tu Mac** al lado de cada marcador. Solo en memoria: lo vacían el
+ * corte y el final de la sesión, y se pide por comando desde esta ventana —el texto no viaja en
+ * ningún evento—.
+ */
+export type Trozo =
+  | { que: "texto"; texto: string }
+  | { que: "tapado"; marcador: string; original: string };
+
+export type LoQueSalio = {
+  hora: string;
+  externo: Externo;
+  /** El titular de la ficha que provocó la petición. */
+  sobre: string;
+  trozos: Trozo[];
+  caracteres: number;
+  tapadas: number;
+  /** `null` hasta que el proveedor contesta (o si no contestó). */
+  usd: number | null;
+};
+
+/** Las peticiones de la reunión, de la más nueva a la más vieja. Se vuelve a pedir con cada `ia`. */
+export function useLoQueSalio(): LoQueSalio[] {
+  const [salio, setSalio] = useState<LoQueSalio[]>([]);
+  useEffect(() => {
+    if (!hayTauri()) return;
+    let vivo = true;
+    const pedir = () => {
+      void preguntar<LoQueSalio[]>("lo_que_salio_al_api").then((s) => {
+        if (vivo) setSalio(s ?? []);
+      });
+    };
+    pedir();
+    const baja = escuchar<unknown>("ia", pedir);
+    const bajaCorte = escuchar<unknown>("corte", pedir);
+    return () => {
+      vivo = false;
+      baja();
+      bajaCorte();
+    };
+  }, []);
+  return salio;
+}
+
 /** Los nombres de los tres proveedores externos, como la app los enseña. */
 export const EXTERNOS: { id: Externo; nombre: string }[] = [
   { id: "claude", nombre: "Claude" },

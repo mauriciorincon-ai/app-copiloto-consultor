@@ -553,25 +553,46 @@ export function useQueSabeTranscribir(): QueSabeTranscribir {
  * un valor que dos pantallas copian por su cuenta un día dice dos cosas distintas. Hasta la
  * auditoría del S2 eran dos constantes, y la del cliente era `en-US` sin forma de cambiarla: con un
  * cliente que habla español no llegaba un solo turno útil (A4). Nacen las dos en español —el corpus y
- * los clientes del usuario lo son— y **viven en memoria**: al cerrar la app vuelven a español, como
- * los interruptores de IA (declarado en el manual).
+ * los clientes del usuario lo son— y **se recuerdan** (sprint 003, ADR 002 enmienda 2): Rust las
+ * guarda en `preferencias.json` y el cuaderno las pide al abrirse.
  */
 export type IdiomasDePista = { consultor: string; cliente: string };
 let idiomasDePista: IdiomasDePista = { consultor: "es-ES", cliente: "es-ES" };
 const oyentesDeIdioma = new Set<() => void>();
+/** Se piden a Rust una vez, al primer lector; si el usuario elige antes de que lleguen, manda él. */
+let pedidos = false;
+let elegidoAntes = false;
+
+function avisarDelIdioma() {
+  oyentesDeIdioma.forEach((f) => f());
+}
+
+function pedirLosGuardados() {
+  if (pedidos || !hayTauri()) return;
+  pedidos = true;
+  void preguntar<IdiomasDePista>("idiomas_de_pista").then((guardados) => {
+    if (!guardados || elegidoAntes) return;
+    idiomasDePista = guardados;
+    avisarDelIdioma();
+  });
+}
 
 export function idiomasDeLasPistas(): IdiomasDePista {
   return idiomasDePista;
 }
 
+/** Elige el idioma de una pista: se ve ya y Rust lo guarda para la próxima vez. */
 export function fijarIdiomaDePista(pista: keyof IdiomasDePista, codigo: string) {
+  elegidoAntes = true;
   idiomasDePista = { ...idiomasDePista, [pista]: codigo };
-  oyentesDeIdioma.forEach((f) => f());
+  avisarDelIdioma();
+  void llamar("fijar_idioma_de_pista", { pista, idioma: codigo });
 }
 
 export function useIdiomasDePista(): IdiomasDePista {
   return useSyncExternalStore(
     (f) => {
+      pedirLosGuardados();
       oyentesDeIdioma.add(f);
       return () => oyentesDeIdioma.delete(f);
     },

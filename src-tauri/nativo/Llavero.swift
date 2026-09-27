@@ -1,15 +1,15 @@
-// La clave del API del usuario, en SU Llavero de macOS — jamás en un archivo (regla de la casa y
-// ADR 011). El Llavero la cifra con la cuenta del usuario; la app la lee solo en el instante de
-// enviar una petición y no la guarda en ningún otro sitio. Para saber SI hay clave —lo que la
-// pantalla IA pregunta cada vez que se pinta— se piden los atributos, nunca el secreto
-// (`ag_llavero_hay`; auditoría del S2, B1).
+// Los secretos de la app, en el Llavero de macOS del usuario — jamás en un archivo (regla de la
+// casa, ADR 011 y ADR 015). Tres servicios, uno por dueño: «Angel Ghost · API» (las claves de los
+// proveedores externos), «Angel Ghost · notas» (la llave de tus notas cifradas) y «Angel Ghost ·
+// puerta» (el token de la puerta local). Todos con `WhenUnlockedThisDeviceOnly`: el secreto solo se
+// lee con la sesión abierta y no viaja a otro Mac, ni por copia de seguridad ni por iCloud. Para
+// saber SI hay secreto se piden los atributos, nunca el secreto (`ag_llavero_hay`; auditoría del
+// S2, B1).
 
 import Foundation
 import Security
 
-private let servicio = "Angel Ghost · API"
-
-private func consulta(_ cuenta: String) -> [String: Any] {
+private func consulta(_ servicio: String, _ cuenta: String) -> [String: Any] {
   [
     kSecClass as String: kSecClassGenericPassword,
     kSecAttrService as String: servicio,
@@ -17,23 +17,27 @@ private func consulta(_ cuenta: String) -> [String: Any] {
   ]
 }
 
-/// Guarda (o reemplaza) la clave de un proveedor. 0 = bien; si no, el `OSStatus`.
+/// Guarda (o reemplaza) un secreto. 0 = bien; si no, el `OSStatus`.
 @_cdecl("ag_llavero_guardar")
-public func agLlaveroGuardar(_ cuenta: UnsafePointer<CChar>, _ clave: UnsafePointer<CChar>) -> Int32 {
+public func agLlaveroGuardar(
+  _ servicio: UnsafePointer<CChar>, _ cuenta: UnsafePointer<CChar>, _ clave: UnsafePointer<CChar>
+) -> Int32 {
+  let s = String(cString: servicio)
   let c = String(cString: cuenta)
-  SecItemDelete(consulta(c) as CFDictionary)
-  var q = consulta(c)
+  SecItemDelete(consulta(s, c) as CFDictionary)
+  var q = consulta(s, c)
   q[kSecValueData as String] = Data(String(cString: clave).utf8)
   q[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
   return SecItemAdd(q as CFDictionary, nil)
 }
 
-/// Lee la clave: los bytes escritos en `salida`, 0 si no hay, o un negativo.
+/// Lee un secreto: los bytes escritos en `salida`, 0 si no hay, o un negativo.
 @_cdecl("ag_llavero_leer")
 public func agLlaveroLeer(
-  _ cuenta: UnsafePointer<CChar>, _ salida: UnsafeMutablePointer<UInt8>, _ capacidad: Int32
+  _ servicio: UnsafePointer<CChar>, _ cuenta: UnsafePointer<CChar>,
+  _ salida: UnsafeMutablePointer<UInt8>, _ capacidad: Int32
 ) -> Int32 {
-  var q = consulta(String(cString: cuenta))
+  var q = consulta(String(cString: servicio), String(cString: cuenta))
   q[kSecReturnData as String] = true
   q[kSecMatchLimit as String] = kSecMatchLimitOne
   var resultado: AnyObject?
@@ -45,11 +49,11 @@ public func agLlaveroLeer(
   return Int32(datos.count)
 }
 
-/// ¿Hay clave para este proveedor? 1 = sí, 0 = no, negativo = el Llavero no contestó. Pide solo
-/// los atributos: el secreto no sale del Llavero para contestar esto.
+/// ¿Hay secreto? 1 = sí, 0 = no, negativo = el Llavero no contestó. Pide solo los atributos: el
+/// secreto no sale del Llavero para contestar esto.
 @_cdecl("ag_llavero_hay")
-public func agLlaveroHay(_ cuenta: UnsafePointer<CChar>) -> Int32 {
-  var q = consulta(String(cString: cuenta))
+public func agLlaveroHay(_ servicio: UnsafePointer<CChar>, _ cuenta: UnsafePointer<CChar>) -> Int32 {
+  var q = consulta(String(cString: servicio), String(cString: cuenta))
   q[kSecReturnAttributes as String] = true
   q[kSecMatchLimit as String] = kSecMatchLimitOne
   var resultado: AnyObject?
@@ -58,9 +62,9 @@ public func agLlaveroHay(_ cuenta: UnsafePointer<CChar>) -> Int32 {
   return estado == errSecSuccess ? 1 : -1
 }
 
-/// Borra la clave de un proveedor. 0 = bien (también si no había).
+/// Borra un secreto. 0 = bien (también si no había).
 @_cdecl("ag_llavero_borrar")
-public func agLlaveroBorrar(_ cuenta: UnsafePointer<CChar>) -> Int32 {
-  let estado = SecItemDelete(consulta(String(cString: cuenta)) as CFDictionary)
+public func agLlaveroBorrar(_ servicio: UnsafePointer<CChar>, _ cuenta: UnsafePointer<CChar>) -> Int32 {
+  let estado = SecItemDelete(consulta(String(cString: servicio), String(cString: cuenta)) as CFDictionary)
   return estado == errSecItemNotFound ? 0 : estado
 }
