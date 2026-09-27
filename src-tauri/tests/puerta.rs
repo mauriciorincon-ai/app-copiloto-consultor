@@ -254,3 +254,55 @@ fn la_carpeta_de_ghost_es_la_de_tauri() {
         PathBuf::from("/Users/ana/Library/Application Support/com.aiapps.copiloto-consultor")
     );
 }
+
+/// **EL KIT POR LA PUERTA** (kit v2, sprint 003): `ghost kit docs/kit-de-prueba/preguntas.json` mide lo
+/// mismo que la CI. Las treinta preguntas del kit cruzan el socket en una sola línea —dentro del tope
+/// de 1 MiB—, la app las corre con el mismo `corpus::evaluar` que el test del retriever, y el informe
+/// vuelve entero por la otra línea. Lo que se prueba aquí es el camino, no la nota: si una pregunta se
+/// perdiera en la ida o un campo en la vuelta, el nDCG@5 por la puerta no sería el de la CI.
+#[test]
+fn el_kit_por_la_puerta_mide_lo_mismo_que_la_ci() {
+    use app_copiloto_consultor_lib::corpus::evaluar::{evaluar, Kit};
+    use app_copiloto_consultor_lib::corpus::Corpus;
+
+    /// La app, con el corpus del kit indexado: hace el kit como `hacer_por_la_puerta` en `lib.rs`.
+    struct ConElKit(Corpus);
+    impl Operaciones for ConElKit {
+        fn en_reunion(&self) -> bool {
+            false
+        }
+        fn hacer(&self, orden: &Orden) -> Result<Hecho, String> {
+            let Orden::Kit { kit } = orden else { return Err("solo el kit".into()) };
+            let informe = evaluar(&self.0, kit)?;
+            Ok(Hecho { cuenta: Some(informe.preguntas as u32), datos: serde_json::to_value(&informe).map_err(|e| e.to_string())? })
+        }
+        fn hora(&self) -> String {
+            "11:20".into()
+        }
+        fn avisar(&self) {}
+    }
+
+    let raiz = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba");
+    // Como `ghost`: el archivo lo lee el cliente, no la app (ADR 018 §4).
+    let texto = std::fs::read_to_string(format!("{raiz}/preguntas.json")).expect("falta preguntas.json");
+    let kit: Kit = serde_json::from_str(&texto).expect("preguntas.json no tiene la forma del kit");
+    let mut corpus = Corpus::en_memoria().unwrap();
+    corpus.indexar(Path::new(&format!("{raiz}/corpus")), &|_| {}).expect("no se indexó el kit");
+    let directo = evaluar(&corpus, &kit).expect("el kit no se pudo evaluar");
+
+    let d = carpeta("kit");
+    let (puerta, llave) = (Arc::new(Puerta::default()), Arc::new(LlaveDePrueba::default()));
+    puerta.abrir(&d, llave.clone(), Arc::new(ConElKit(corpus))).expect("la puerta no se abrió");
+    let r = pedir(&ruta_en(&d), &llave.token(), &Orden::Kit { kit: kit.clone() }, Duration::from_secs(30)).unwrap();
+    puerta.cerrar(Cierre::ATuMano);
+    let _ = std::fs::remove_dir_all(&d);
+
+    let Respuesta::Hecho { datos } = r else { panic!("la puerta no hizo el kit: {r:?}") };
+    let por_la_puerta = &datos["ndcg5"];
+    println!("[kit por la puerta] nDCG@5 {por_la_puerta} · directo {:.3} · preguntas {}", directo.ndcg5, directo.preguntas);
+    assert_eq!(datos["preguntas"], serde_json::json!(kit.preguntas.len()), "se perdieron preguntas en el camino");
+    assert_eq!(por_la_puerta.as_f64(), Some(directo.ndcg5), "por la puerta no mide lo mismo que la CI");
+    assert_eq!(datos["rechazo"].as_f64(), directo.rechazo, "el rechazo no volvió igual");
+    let fallos = datos["fallos"].as_array().map(Vec::len).unwrap_or(usize::MAX);
+    assert_eq!(fallos, directo.fallos.len(), "los fallos no volvieron enteros");
+}

@@ -1266,6 +1266,235 @@ fn el_kit_mide_el_disparador_turno_a_turno() {
     assert!(recall >= RECALL_MINIMO, "recall {recall:.3}: se está quedando callado cuando debería buscar");
 }
 
+// ═══════════════════════════════════════════ el KIT v2: propuestas y jurisdicciones (sprint 003)
+//
+// Lo que el sprint 003 añadió al producto se mide igual que el retriever y el disparador: un archivo
+// del kit con lo que TIENE que pasar, escrito antes de mirar lo que pasa, y un umbral. Las dos cosas
+// son código (cero modelos), así que no hay ruido que tolerar: el umbral es el 100 %.
+//
+// **Las propuestas** (`reunion-con-acuerdos.json`, ADR 016): una reunión inventada con Páramo Azul,
+// turno a turno, con la regla y el dueño de cada propuesta. Además de acertar, mide lo que el ADR 016
+// §2 promete y ninguna pantalla deja ver: del cliente, JAMÁS el turno —un fragmento de como mucho ocho
+// palabras, o de una pregunta solo sus palabras clave— y cada turno resuelto muy por debajo del
+// segundo que pide el DoD.
+//
+// **Las jurisdicciones** (`jurisdicciones.json`, ADR 017): la línea de la ficha del cliente y la
+// bandera que sale del catálogo, con los casos que el catálogo tiene que resolver sin adivinar.
+
+use app_copiloto_consultor_lib::jurisdiccion::{self, LaBandera};
+use app_copiloto_consultor_lib::propuestas::{self, De, Fijada, Regla};
+
+#[derive(serde::Deserialize)]
+struct KitDeLaReunion {
+    fijadas: Vec<FijadaDelKit>,
+    turnos: Vec<TurnoDeLaReunion>,
+}
+
+#[derive(serde::Deserialize)]
+struct FijadaDelKit {
+    titular: String,
+    linea: String,
+    seccion: Option<String>,
+}
+
+#[derive(serde::Deserialize)]
+struct TurnoDeLaReunion {
+    dice: String,
+    pista: String,
+    #[serde(default)]
+    eco: bool,
+    espera: Vec<Esperada>,
+    porque: String,
+}
+
+#[derive(serde::Deserialize, PartialEq, Eq, Hash, Clone, Copy, Debug)]
+#[serde(rename_all = "lowercase")]
+enum ReglaDelKit {
+    Cifra,
+    Compromiso,
+    Choque,
+    Nombre,
+    Pregunta,
+}
+
+#[derive(serde::Deserialize, PartialEq, Eq, Hash, Clone, Copy, Debug)]
+#[serde(rename_all = "lowercase")]
+enum DeDelKit {
+    Tuyo,
+    Cliente,
+}
+
+#[derive(serde::Deserialize, PartialEq, Eq, Hash, Clone, Copy, Debug)]
+struct Esperada {
+    regla: ReglaDelKit,
+    de: DeDelKit,
+}
+
+fn del_kit(regla: Regla, de: De) -> Esperada {
+    Esperada {
+        regla: match regla {
+            Regla::Cifra => ReglaDelKit::Cifra,
+            Regla::Compromiso => ReglaDelKit::Compromiso,
+            Regla::Choque => ReglaDelKit::Choque,
+            Regla::Nombre => ReglaDelKit::Nombre,
+            Regla::Pregunta => ReglaDelKit::Pregunta,
+        },
+        de: match de {
+            De::Tuyo => DeDelKit::Tuyo,
+            De::Cliente => DeDelKit::Cliente,
+        },
+    }
+}
+
+/// El turno más lento puede tardar esto como mucho. El DoD pide que la propuesta llegue en ≤ 1 s tras
+/// el turno; las reglas son comparaciones de palabras y se resuelven en microsegundos, así que el
+/// umbral deja todo el segundo para la transcripción y el evento.
+const TOPE_POR_TURNO: std::time::Duration = std::time::Duration::from_millis(50);
+
+#[test]
+fn el_kit_mide_las_propuestas_turno_a_turno() {
+    let _turno = turno();
+    let raiz = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba");
+    let kit: KitDeLaReunion = serde_json::from_str(
+        &std::fs::read_to_string(format!("{raiz}/reunion-con-acuerdos.json")).expect("falta reunion-con-acuerdos.json"),
+    )
+    .expect("reunion-con-acuerdos.json no se pudo leer");
+
+    // La regla «nombre» pregunta si tu corpus conoce el nombre: se le da el del kit.
+    let mut corpus = Corpus::en_memoria().unwrap();
+    corpus.indexar(Path::new(&format!("{raiz}/corpus")), &|_| {}).expect("no se indexó el kit");
+    let fijadas: Vec<Fijada> = kit
+        .fijadas
+        .iter()
+        .map(|f| Fijada { titular: f.titular.clone(), linea: f.linea.clone(), seccion: f.seccion.clone() })
+        .collect();
+    let conoce = |nombre: &str| corpus.conoce(nombre);
+    let ctx = propuestas::Contexto { fijadas: &fijadas, conoce: &conoce };
+
+    let (mut ciertas, mut sobran, mut faltan, mut fugas) = (0usize, Vec::new(), Vec::new(), Vec::new());
+    let mut mas_lento = std::time::Duration::ZERO;
+    for t in &kit.turnos {
+        let turno = app_copiloto_consultor_lib::stt::Turno {
+            pista: if t.pista == "microfono" { Pista::Microfono } else { Pista::Sistema },
+            desde_ms: 0,
+            hasta_ms: 2_000,
+            texto: t.dice.clone(),
+            hora: "14:16".into(),
+            eco: t.eco,
+        };
+        let antes = std::time::Instant::now();
+        let dadas = propuestas::proponer(&turno, &ctx);
+        mas_lento = mas_lento.max(antes.elapsed());
+
+        let dadas_kit: Vec<Esperada> = dadas.iter().map(|p| del_kit(p.regla, p.de)).collect();
+        for e in &t.espera {
+            if dadas_kit.contains(e) {
+                ciertas += 1;
+            } else {
+                faltan.push(format!("  «{}» — falta {:?} de {:?} ({})", t.dice, e.regla, e.de, t.porque));
+            }
+        }
+        for d in &dadas_kit {
+            if !t.espera.contains(d) {
+                sobran.push(format!("  «{}» — sobra {:?} de {:?} ({})", t.dice, d.regla, d.de, t.porque));
+            }
+        }
+        // ADR 016 §2: del cliente, jamás el turno.
+        for p in dadas.iter().filter(|p| p.de == De::Cliente) {
+            let palabras = p.texto.split_whitespace().filter(|w| *w != "·").count();
+            let entero = sin_signos(&p.texto) == sin_signos(&t.dice);
+            if entero || palabras > propuestas::TOPE_DEL_FRAGMENTO {
+                fugas.push(format!("  «{}» → guardaría «{}»", t.dice, p.texto));
+            }
+        }
+    }
+
+    let dadas = ciertas + sobran.len();
+    let esperadas = ciertas + faltan.len();
+    let precision = if dadas == 0 { 1.0 } else { ciertas as f64 / dadas as f64 };
+    let recall = if esperadas == 0 { 1.0 } else { ciertas as f64 / esperadas as f64 };
+
+    println!("\n╭─ las propuestas sobre el kit ──────────────────────");
+    println!("│ turnos          {}", kit.turnos.len());
+    println!("│ propuestas      {esperadas} esperadas · {dadas} dadas · {ciertas} ciertas");
+    println!("│ precisión       {precision:.3}   (mínimo 1,00)");
+    println!("│ recall          {recall:.3}   (mínimo 1,00)");
+    println!("│ turno más lento {} µs   (tope {} ms)", mas_lento.as_micros(), TOPE_POR_TURNO.as_millis());
+    println!("╰────────────────────────────────────────────────────");
+    if !sobran.is_empty() {
+        println!("propuso y no debía:\n{}", sobran.join("\n"));
+    }
+    if !faltan.is_empty() {
+        println!("no propuso y debía:\n{}", faltan.join("\n"));
+    }
+
+    assert!(fugas.is_empty(), "del cliente se guardaría el turno, o más de ocho palabras:\n{}", fugas.join("\n"));
+    assert_eq!(precision, 1.0, "las reglas proponen lo que no deben");
+    assert_eq!(recall, 1.0, "las reglas se callan lo que deben proponer");
+    assert!(mas_lento <= TOPE_POR_TURNO, "un turno tardó {} µs en resolverse", mas_lento.as_micros());
+}
+
+/// Para comparar un fragmento con su turno: minúsculas, sin signos, un espacio entre palabras.
+fn sin_signos(texto: &str) -> String {
+    texto
+        .to_lowercase()
+        .chars()
+        .map(|c| if c.is_alphanumeric() { c } else { ' ' })
+        .collect::<String>()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+#[derive(serde::Deserialize)]
+struct KitDeJurisdicciones {
+    casos: Vec<CasoDeJurisdiccion>,
+}
+
+#[derive(serde::Deserialize)]
+struct CasoDeJurisdiccion {
+    linea: Option<String>,
+    espera: String,
+    porque: String,
+}
+
+#[test]
+fn el_kit_mide_las_jurisdicciones_contra_el_catalogo() {
+    let raiz = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba");
+    let kit: KitDeJurisdicciones = serde_json::from_str(
+        &std::fs::read_to_string(format!("{raiz}/jurisdicciones.json")).expect("falta jurisdicciones.json"),
+    )
+    .expect("jurisdicciones.json no se pudo leer");
+
+    let catalogo = jurisdiccion::catalogo();
+    let mut fallos = Vec::new();
+    for c in &kit.casos {
+        let escrita = c.linea.as_deref().and_then(jurisdiccion::de_la_linea);
+        let dio = match jurisdiccion::bandera(escrita.as_deref()) {
+            LaBandera::Conocida { bandera } => {
+                let fila = catalogo.filas.iter().find(|f| f.nombre == bandera.nombre).expect("bandera sin fila");
+                // Lo que el informe no verificó se enseña: la bandera lleva su pendiente.
+                if fila.pendiente.is_some() != bandera.pendiente.is_some() {
+                    fallos.push(format!("  {:?} — la bandera de «{}» perdió su «sin verificar»", c.linea, fila.id));
+                }
+                fila.id.clone()
+            }
+            LaBandera::FueraDelCatalogo { .. } => "fuera".into(),
+            LaBandera::SinIndicar => "sin-indicar".into(),
+        };
+        if dio != c.espera {
+            fallos.push(format!("  {:?} — dio «{dio}», se esperaba «{}» ({})", c.linea, c.espera, c.porque));
+        }
+    }
+
+    println!("\n╭─ las jurisdicciones sobre el kit ──────────────────");
+    println!("│ casos           {}", kit.casos.len());
+    println!("│ aciertos        {}", kit.casos.len() - fallos.len());
+    println!("│ catálogo        v{} · consultado {}", catalogo.version, catalogo.consultado);
+    println!("╰────────────────────────────────────────────────────");
+    assert!(fallos.is_empty(), "el catálogo no resuelve lo que el kit pide:\n{}", fallos.join("\n"));
+}
+
 // ═══════════════════════════════════════════ el WER, CON Y SIN DICCIONARIO (sprint 002, fase 1)
 //
 // **La deuda del sprint 001, pagada.** El kit de prueba prometía dos cosas que no entregó: un audio

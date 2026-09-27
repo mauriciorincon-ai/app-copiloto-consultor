@@ -939,6 +939,196 @@ diciendo «cerrada» con el socket y el token todavía ahí un instante.
 solo se pondría rojo si la puerta pasara por el camino que sí se cuenta. Lo que hace estructural «la
 puerta no sale a la red» es `puerta-solo-local`, y ese sí tiene su rojo (el `TcpStream` plantado).
 
+### Cierre de la fase 4 (2026-09-27)
+
+CI de `7ecb325` en verde con conclusión propia en los tres checks (run 36355065725: quality 54 s ·
+e2e 1 min 57 s · build-escritorio 12 min 48 s). Se ofrecieron juntas, en tres filas de la regla 22, la
+prueba en vivo pendiente de la fase 3 y la de la puerta.
+
+- **El usuario respondió «continúa»**, sin «sí» a ninguna fila: **no se corrió nada** que toque su Mac.
+  La prueba en vivo queda pendiente y vuelve a ofrecerse antes del merge, porque la regla 15 (tercer
+  filo: ¿lo viste correr en el modo en que el usuario lo va a usar?) la pide para cerrar el sprint.
+- **La decisión de la contraseña del Llavero una vez por apertura** no tuvo respuesta. Queda como se
+  construyó y se recomendó. Vuelve a enseñarse en la fila 2 de la prueba en vivo.
+
+---
+
+## Fase 5 — Cierres de ciclo y Acto 1 (2026-09-27)
+
+### El kit de prueba v2, medido en la CI
+- **`reunion-con-acuerdos.json`**: 20 turnos inventados (es/en) con la regla y el dueño de cada
+  propuesta, más los casos en que no debe proponer nada. `el_kit_mide_las_propuestas_turno_a_turno`
+  exige precisión y recall de 1,00, que **del cliente jamás se guarde el turno** (≤ 8 palabras) y que
+  el turno más lento baje de 50 ms. **Medido: 15 de 15; el turno más lento, 520–630 µs.**
+- **`jurisdicciones.json`**: 17 líneas «Jurisdicción:» con su bandera esperada (varias → la más
+  estricta; «sin verificar» se enseña; fuera del catálogo, sin adivinar).
+  `el_kit_mide_las_jurisdicciones_contra_el_catalogo`: **17 de 17.**
+- **El kit por la puerta** (`tests/puerta.rs`, `el_kit_por_la_puerta_mide_lo_mismo_que_la_ci`): las 30
+  preguntas cruzan el socket y el informe vuelve entero. **nDCG@5 0,823 por la puerta, igual que el
+  directo.**
+- **`nda-de-ejemplo.md`** (dos versiones de la cláusula de registro: una lo permite y otra lo prohíbe)
+  y **`carta-de-encargo-de-ejemplo.md`**, sintéticos, es/en, «no es asesoría legal».
+- **`pantalla/meet-en-negro.html`**, nueva, y **`meet-de-prueba.html`** sin «Páramo Azul» en el título y
+  con el pie en puntos. Las dos las pedía la casilla 6: la app lee la ventana entera, y el título y el
+  «5 de 6» le daban a la agenda un término y una cifra.
+- **El WER sigue `manual`**: el runner no trae modelos de voz. `LEEME.md` pasa a v2, con la tabla de lo
+  que mide la CI y lo que no.
+
+| Gate nuevo | Defecto plantado | Rojo |
+|---|---|---|
+| propuestas: el compromiso es solo tuyo | la regla de compromisos también para el cliente | «sobra Compromiso de Cliente» en «Quedamos en eso, te lo mando firmado» |
+| propuestas: del cliente jamás el turno | del cliente, la frase entera | «del cliente se guardaría el turno» (7 turnos) |
+| jurisdicciones: la más estricta | `find_map` (la primera) | «EE. UU. y California» → `us`; «Colombia y Chile» → `co`; «España, Francia» → `es` |
+| jurisdicciones: lo no verificado se dice | `pendiente: None` | «la bandera de «co» perdió su «sin verificar»» (6 casos) |
+| el kit por la puerta | tope de línea de 1 MiB a 1 KiB | «la orden no llegó entera» |
+
+### La guía v5
+Generada desde la v4 por un script (scratchpad), para heredar las 72 **enteras**:
+- **101 pruebas.** 29 nuevas en cinco bloques: **D** «este cliente», **K** «tus notas durante la
+  reunión», **M** «tu archivo cifrado», **N** «la puerta local» y **O** «la bandeja que vence sola».
+  **33 «Mejorado en S3»**: las 10 falsas y las 10 caducadas de la casilla 6, más 13 con el punto de
+  partida o la redacción cambiados. Las 39 restantes, heredadas con su chip.
+- **Bloques re-letrados** en el orden en que pasan en una reunión, para que el ⭐⭐ se camine de arriba
+  abajo: D→E, E→F, F→G, G→H, H→I, I→J, J→L, K→P.
+- **⭐⭐: 9 paradas y ~20 min, por primera vez dentro del techo** (v4: 9 paradas y ~25 min).
+  - La preparación son 2 min: kit, idiomas, «Este cliente», Redactar.
+  - Las paradas: a2 · e3 · h2 · i1 · **k1** (el cuaderno negro al compartir) · l2 · **m1** (el archivo
+    cifrado con lo tuyo y nada del cliente) · **n7** (la puerta se cierra sola al empezar la sesión) ·
+    **o1** (la bandeja vence con la app cerrada).
+  - Salen cuatro, cada una con su razón escrita en la cabecera. La carpeta del corpus pasa a la
+    preparación. La pantalla que trae su ficha, el ámbar del radar y el corte a mitad de frase ya los
+    verifica la CI por otro camino: `el_kit_de_pantalla…`, `el_radar_ambar_lee_la_reunion_grabada` y
+    `el_corte_alcanza_al_turno_que_ya_estaba_en_vuelo`.
+  - **Deja fuera 75 ⭐**, declaradas.
+- **⭐: 84** (S1 33 · S2 28 · S3 23), ~145 min, ofrecido sin fecha.
+- **Bloque T «Textos diferidos»**: 19 filas en matriz (abre · encuadre · qué mirar · qué respuesta
+  espero), sobre los comparativos `docs/fidelidad/S3-*.html`. Es separable y dura ~10 min. Lleva:
+  - las siete filas del cierre de la fase 3 del S2, con las cinco de la 17-quinquies;
+  - el radar;
+  - la mirada 18;
+  - y lo «maquetado, no visto» del S3.
+- **Caja «Los avisos de macOS que vas a ver»**, con cada aviso y su texto. Si aparece uno que no está
+  en la lista, se deniega (regla 22).
+- Namespace `ag-s3-`. Leída como imagen a 1100 px (claro) y 390 px (oscuro): sin desborde horizontal.
+  La tabla de textos se rehízo de 7 a 4 columnas porque en 680 px quedaba ilegible.
+
+**`guia-cuadra` crece de 4 a 9 comprobaciones.** Cada una con su rojo, y verde al restaurar:
+
+| Comprobación | Defecto plantado | Rojo |
+|---|---|---|
+| el ⭐⭐ cabe en ~20 min y la cabecera dice lo mismo | una parada de 4 → 7 min y la cabecera a 23 | «el ⭐⭐ pasa del techo» |
+| cada parada dice sus minutos | «~4 min» en el texto con `data-min="4"` → «~3 min» | «cada parada dice los minutos de su atributo» |
+| el desglose S1 · S2 · S3 | una prueba S3 marcada `s2` | «el desglose del ⭐ por sprint…» |
+| las filas de textos | una fila borrada | «Textos diferidos: 19 filas» ≠ 18 |
+| el chip dice su origen | una heredada con «Nuevo · S2» | «chips que no dicen su origen» |
+| el namespace es el del sprint | `ag-s2-` | la misma |
+
+### El manual, el README y lo que el repo decía de sí mismo
+- **Manual**, barrido por promesa aplazada. Cuatro frases:
+  - «Todavía no se pueden arrastrar documentos…» → H2;
+  - MLX «todavía no existe» → «no está en este MVP: queda en el roadmap del H2»;
+  - «varios idiomas por pista llega más adelante» → H2;
+  - «todavía no hay dónde pintarlo» → reescrita sin promesa.
+
+  **Y una limitación que no decía:** la carpeta del corpus se vuelve a señalar en cada arranque. Es
+  verdad en el código: `ElCorpus` nace vacío y nada la recuerda.
+- **`README.md`** era la plantilla de Tauri: ahora dice qué es la app, en español y en inglés, sin
+  ninguna URL de producto. Promete la invisibilidad **graduada** (Meet, verificada; Zoom y Teams, no;
+  regla 6).
+- **`.env.example`** hablaba de Vercel y Sentry: ahora dice que no hacen falta variables, que los
+  secretos viven en el Llavero, y cuáles existen para desarrollo.
+
+### La auditoría del `CLAUDE.md` contra el código (método v1.24.0)
+La hizo un subagente de solo lectura. El constructor verificó en el código cada dato antes de
+corregir: VAD por energía (`voz/vad.rs`), fin de turno de 320 ms (`voz/turno.rs:27`), huella por
+zonas (`pantalla/huella.rs`), el *tap* de Core Audio 14.2+ (ADR 007), `Permitido` (índice, diccionario,
+notas, bandeja, lista), VISION v1.5.0 y 30 funcionalidades, y `deploy-check` §11/§12.
+
+| # | Dónde | Decía | Queda |
+|---|---|---|---|
+| 1 | Qué es | «nada se graba ni persiste; quedan solo las notas» | nada **de terceros**; queda lo tuyo |
+| 2 | Qué es | VISION v1.2.0 · 25 funcionalidades | v1.5.0 · 30 (20 · 4 · 6) |
+| 3 | regla dura 1 (a) | lint en `capture/`, `stt/`, `screen/` | los módulos `PROTEGIDOS` (`screen/` no existe: es `pantalla/`) |
+| 4 | regla dura 1 (c) | `verify:ephemeral` tras una sesión, fuera de las notas | estático + `:runtime`, contra `Permitido`, con la canaria descifrada |
+| 5 | regla dura 1, qué persiste | todo «cifrado»; «fichas mostradas»; sin diccionario, NDA, acople, vencimientos, plist, Llavero ni socket | cifrado lo tuyo; en claro 600 el resto, pieza por pieza; secretos en el Llavero; el socket, transitorio |
+| 6 | regla dura 3 | Apple → MLX → API | hoy: sistema → API (Claude/Gemini/Groq); MLX, H2; `mock` |
+| 7 | regla dura 9 | «lint de sockets salientes fuera del adapter LLM» | `contador-de-red` (puertas y programas declarados) + `puerta-solo-local` |
+| 8 | Stack | Tailwind | cargado sin utilidades: clases canon y tokens de la maqueta; binario sin firmar hasta G-Release |
+| 9 | Stack | tap 14.4+ · ScreenCaptureKit audio · pHash · `tracing` | Core Audio (ADR 007) · huella por zonas · `println!` con metadatos (ADR 003) |
+| 10 | Stack | respaldo Parakeet/Whisper · Silero · prosodia | sin respaldo (deuda ADR 006) · VAD por energía · 320 ms de silencio |
+| 11 | Stack | dHash/pHash | huella por zonas |
+| 12 | Stack | embeddings + RRF | BM25 (tantivy) por sección; embeddings H2 (ADR 008) |
+| 13 | Stack | Azure · Zod · prompt caching · conmutable por env | `sintesis/` sistema → API + `mock`; esquema cerrado + `fundar()`; tope por mes |
+| 14 | Adaptaciones | fidelidad con `pnpm tauri dev` | `pnpm fidelidad` (desde `dist/`); la protección, en el ⭐ |
+| 15 | Adaptaciones | «tracing + logger en la UI» | ADR 003: `println!` sin contenido, sin logger en la UI |
+| 16 | regla 2 | añadir `--coverage` · `eslint.config.mjs` | ya está; `eslint.config.js`; motores en Rust sin umbral |
+| 17 | regla 3 | `engine/` · `lib/` | motores en `src-tauri/src/` |
+| 18 | regla 4 | Zod → BD | sin BD; esquema cerrado + `fundar()` |
+| 19 | regla 5b | el barrido de tokens vetados | **no existía** → construido (abajo) |
+| 20 | regla 6 | `lighthouse` · preview | `quality` · `e2e` · `build-escritorio`; sin preview |
+| 21 | regla 7 | `.env.local` y Vercel | solo el Llavero |
+| 22 | Estándares | `perf-budget.json` | no existe: latencia y peso del binario |
+| 23 | Workflow | `/deploy-check` → summary | `/release-check` en esta app |
+| 24 | Idioma | inglés en código y ADRs | español desde el S1, commits en inglés: se registra como realidad y va a la planeadora (K6) |
+| 25 | § Estructura (plantilla web) | `src/app` · `engine/` · `lib/ia/` · `types/` | el árbol real |
+| 26 | § Patrones de dominio | `[DOMAIN …]` sin llenar | doce patrones, cada uno con su archivo |
+| 27 | regla 5a · regla 13 | SSR · `/conoce` | no aplican a escritorio; se anota el gate real y el brochure por su orden |
+
+Sin deriva: las dos casas, las reglas duras 2, 4, 5, 6, 7 y 8, `captura_terceros`, y las reglas 9, 11,
+12, 15, 16, 18, 19, 20, 21 y 22.
+
+**El barrido de tokens vetados (regla 5b), que debía nacer en el S1.** `tests/unit/tokens-vetados.test.ts`
+lee la lista de `design-system.md` §7.2 y además caza cualquier `color: var(--ink-3)`. `design-system.md`
+pasa a **1.14.1**: su frontmatter se había quedado en 1.13.0 con el changelog en 1.14.0.
+
+| Gate | Defecto plantado | Rojo |
+|---|---|---|
+| ningún texto usa un token vetado | `style={{ color: "var(--ink-3)" }}` en Honestidad | `Honestidad.tsx:124` |
+| (la clase) | `className="text-ink-3"` en IA | `Ia.tsx:164` |
+
+### `docs/BLUEPRINT.html` y `design-sync/`
+- **BLUEPRINT**, perfil escritorio y sin ninguna URL (K3). Lo escribió un subagente leyendo el código;
+  el constructor lo leyó entero.
+  - Trae un diagrama SVG en el archivo, nueve tablas pieza por pieza, los permisos de macOS, el costo
+    real (US$0 fijo; como mucho US$10 al mes con el API), los puntos únicos de falla, «qué ve quién
+    sin sesión», el H2 marcado como futuro y **lo que el blueprint no afirma**.
+  - Una corrección: decía «las nueve piezas» del corte, y son once.
+- **`design-sync/`**: tres tarjetas nuevas sacadas de los estados de la maqueta.
+  - «La banda — propuesta, fijada y solo notas», «La bandeja» y «La puerta local». La bandera ya
+    estaba, y se regeneró con el §5 del kit.
+  - El generador gana el tipo «por estados», y quita los enlaces del rail, que el gate del espejo
+    rechazaba (rojo real al nacer, de dos tarjetas).
+  - Leídas como imagen, en los dos temas. 19 archivos; el espejo pasa 51 de 51.
+
+### Lo que encontraron el BLUEPRINT y la auditoría del `CLAUDE.md`, para el auditor independiente
+No se pagan sin clasificar: van a la `/audita-sprint` como candidatos, para que el auditor los
+confirme o los descarte con el diff delante.
+1. `acople/mod.rs:186` escribe `acople.json` con `fs::write` y lo cierra a 600 después. Salta el
+   escritor único y nace menos privado que su fuente por un instante (regla 17-bis a).
+2. dependabot no cubre Cargo: las dependencias de Rust se actualizan a mano.
+3. `capabilities/default.json` dice que la app no escribe archivos por un diálogo, y exportar sí lo hace.
+4. La enmienda 5 del ADR 002 dice `prefs.json`; el archivo es `preferencias.json`.
+5. Si macOS rechaza proteger el cuaderno, solo se anota en la consola: la pantalla no lo dice.
+6. La regla dura 2 dice «bajo proveedor con no-retención», y ningún ADR registra la política de cada
+   proveedor.
+7. `NSSpeechRecognitionUsageDescription` está declarada y Permisos no enseña ese permiso.
+8. `zod` está en `dependencies` y nada lo importa.
+9. La banda en «sin verificar» tiene un «Solo notas» apagado con «Todavía no», y el modo ya existe.
+   El comentario de `Banda.tsx:830` dice que no existe. Además ese estado solo llega por la URL.
+10. La fila MLX de IA dice «Todavía no», cuando es H2.
+11. La carpeta del corpus no se recuerda al reiniciar (el manual ya lo dice).
+12. `src/capture` en `PROTEGIDOS` no existe.
+13. El mensaje del hook de `.claude/settings.json` nombra «Vercel env vars».
+
+**Pruebas, local:**
+- cargo lib **462** · integración `contra-el-mac-de-verdad` **24** (+2 del kit v2; 3 `#[ignore]` sin
+  correr, regla 22) · `puerta` **13** (+1) · `ghost` 5 · clippy 0;
+- vitest **315** (+16: 5 de `guia-cuadra`, 2 de `tokens-vetados` y 9 del espejo de `design-sync`
+  por las tres tarjetas nuevas);
+- lint, typecheck y `verify:ephemeral`, limpios.
+
+La UI no cambió: la fidelidad y los e2e quedan como en la fase 4.
+
 ---
 
 ## Para la planeadora al cierre del sprint (va al summary, «Sugerencias de mejora al método»)

@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "comentario": "Kit de las JURISDICCIONES, sprint 003 (ADR 017). La línea que escribirías en la ficha de un cliente y la bandera que la app tiene que sacar de data/jurisdicciones/catalogo.json: el id de su fila, «fuera» (fuera del catálogo: la app lo dice y no adivina) o «sin-indicar». Con varias en una línea manda la más estricta, y «sin verificar» cuenta como la más estricta. Datos 100 % sintéticos.",
+  "casos": [
+    {
+      "linea": "Jurisdicción: Colombia",
+      "espera": "co",
+      "porque": "la del cliente del kit"
+    },
+    {
+      "linea": "Jurisdiction: Colombia",
+      "espera": "co",
+      "porque": "la clave en inglés"
+    },
+    {
+      "linea": "Jurisdicción: **México**",
+      "espera": "mx",
+      "porque": "con negrita de markdown y tilde"
+    },
+    {
+      "linea": "Jurisdicción: Estados Unidos",
+      "espera": "us",
+      "porque": "federal: consentimiento de una parte"
+    },
+    {
+      "linea": "Jurisdicción: EE. UU. y California",
+      "espera": "us-ca",
+      "porque": "el estado manda sobre el país: California pide el de todas las partes"
+    },
+    {
+      "linea": "Jurisdicción: Colombia y Chile",
+      "espera": "cl",
+      "porque": "dos países: el de más riesgo"
+    },
+    {
+      "linea": "Jurisdicción: España, Francia",
+      "espera": "fr",
+      "porque": "separadas por coma"
+    },
+    {
+      "linea": "Jurisdiction: Washington state",
+      "espera": "us-wa",
+      "porque": "el estado de Washington, no la capital"
+    },
+    {
+      "linea": "Jurisdicción: Pensilvania",
+      "espera": "us-pa",
+      "porque": "el nombre en español"
+    },
+    {
+      "linea": "Jurisdicción: Unión Europea",
+      "espera": "ue",
+      "porque": "la UE entera"
+    },
+    {
+      "linea": "Jurisdiction: European Union",
+      "espera": "ue",
+      "porque": "la UE en inglés"
+    },
+    {
+      "linea": "Jurisdicción: Missouri",
+      "espera": "us-mo",
+      "porque": "el informe no lo verificó: la bandera lo dice"
+    },
+    {
+      "linea": "Jurisdicción: Hawaii y Colombia",
+      "espera": "us-hi",
+      "porque": "«sin verificar» cuenta como la más estricta"
+    },
+    {
+      "linea": "Jurisdicción: Brasil",
+      "espera": "fuera",
+      "porque": "no está en el catálogo: se dice, no se adivina"
+    },
+    {
+      "linea": "Jurisdicción:",
+      "espera": "sin-indicar",
+      "porque": "la línea está vacía"
+    },
+    {
+      "linea": "Juris: Colombia",
+      "espera": "sin-indicar",
+      "porque": "no es la línea de la jurisdicción"
+    },
+    {
+      "linea": null,
+      "espera": "sin-indicar",
+      "porque": "la ficha no trae la línea"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.13.0  # 1.13.0: «Este cliente», la NDA y solo notas CONSTRUIDOS (sprint 003, fase 3 — maquetado, no visto). 1.12.0: las propuestas y la bandeja CONSTRUIDAS (sprint 003, fase 2 — maquetado, no visto; se valida en el gate del MVP). 1.11.0: cómo ENVEJECE «todavía no» — el estado del sprint se pone al día, y lo que se libera se agrupa (sprint 001, fase 3). 1.10.0: «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2). 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
+version: 1.14.1  # 1.14.1: el barrido de tokens vetados de §7.2 por fin existe (cierre del ciclo H1). 1.14.0: la puerta local CONSTRUIDA (sprint 003, fase 4 — maquetado, no visto). 1.13.0: «Este cliente», la NDA y solo notas CONSTRUIDOS (sprint 003, fase 3 — maquetado, no visto). 1.12.0: las propuestas y la bandeja CONSTRUIDAS (sprint 003, fase 2 — maquetado, no visto; se valida en el gate del MVP). 1.11.0: cómo ENVEJECE «todavía no» — el estado del sprint se pone al día, y lo que se libera se agrupa (sprint 001, fase 3). 1.10.0: «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2). 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
 fecha: 2026-09-21
 estado: aprobado   # G-Diseño aprobado el 2026-09-20 («sí apruebo la pantalla completa»)
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
@@ -245,11 +245,13 @@ pasada de capturas leída como imagen, no un test.
 2 temas × 2 idiomas) → 0 textos bajo AA (peor 5.25 claro / 6.14 oscuro); kit 4 combinaciones
 × 313 textos → 0 bajo AA (peor 4.95 claro / 5.08 oscuro).
 
-### 7.2 Tokens VETADOS como texto (fallarán en lint cuando exista `src/`)
+### 7.2 Tokens VETADOS como texto (fallan en test: `tests/unit/tokens-vetados.test.ts`)
 
-`--ink-3` (y su futura clase `text-ink-3`) — solo separadores y ornamento. El barrido de
-clases prohibidas sobre `src/` (regla 5b del CLAUDE.md) nace en el S1 con esta lista:
-`text-ink-3`, `text-line`, `text-line-2`, `text-surface*`. Demo en rojo en el mismo commit.
+`--ink-3` (y su clase `text-ink-3`) — solo separadores y ornamento. El barrido de clases
+prohibidas sobre `src/` (regla 5b del CLAUDE.md) lee su lista de aquí: `text-ink-3`, `text-line`,
+`text-line-2`, `text-surface*`, y además cualquier `color` que apunte a `var(--ink-3)`. **Debía nacer en
+el S1 y no nació**: lo encontró la auditoría del `CLAUDE.md` del cierre del ciclo H1 (sprint 003), que
+lo construyó con su rojo. Hasta entonces nadie había escrito texto en `--ink-3`, pero nada lo impedía.
 
 ### 7.3 Reglas
 
@@ -612,4 +614,5 @@ vista quepa en los 640 px con su franja y su registro (`maqueta-cabe` midió +12
 | 1.12.0 | 2026-09-27 | sprint 003, fase 2: **§9-septies — las propuestas y la bandeja, construidas** (`propuesta-b`, `tecla.fijada`, `franja.mute`, `cuenta.vencida`, los chips dentro de una franja) — maquetado, no visto |
 | 1.13.0 | 2026-09-27 | sprint 003, fase 3: **§9-octies — el marco en la mano, construido** (`selector`, `bandera .pendiente`, `aviso-legal`, `pregunta-nda`, `clausula`, la banda en solo notas) · Sesión vuelve al diseño de la Etapa de Diseño — maquetado, no visto |
 | 1.14.0 | 2026-09-27 | sprint 003, fase 4: **§9-nonies — la puerta local, construida** (la entrada en IA, la fila del título con «volver», el subtítulo de la vista, el comando, `.puerta` a 3 px, el registro que se desplaza, la franja de «se cerró sola») — maquetado, no visto |
+| 1.14.1 | 2026-09-27 | cierre del ciclo H1 (sprint 003, fase 5): **§7.2 — el barrido de tokens vetados existe** (`tests/unit/tokens-vetados.test.ts`, que lee la lista de aquí); el frontmatter, que se había quedado en 1.13.0, se pone al día |
 | 1.9.0 | 2026-09-20 | mirada 11: **la maniobra** — catálogo versionado de seis maneras de responder + «lo más cercano que sí tienes», los dos deterministas; `maniobra-b` y `cercano-b`; estado «sin resultado · ampliada» |

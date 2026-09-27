@@ -243,6 +243,60 @@ const TARJETAS = [
   { grupo: "Componentes", nombre: "Píldora de voz", archivo: "componentes/pildora-de-voz.html", kit: 9 },
   { grupo: "Componentes · S1", nombre: "La banda — seis estados", archivo: "s1/la-banda.html", banda: true },
   { grupo: "Componentes · S1", nombre: "«Todavía no»", archivo: "s1/todavia-no.html", pendiente: true },
+  // Sprint 003 (cierre del ciclo H1): lo que el sprint añadió al sistema, sacado de SUS estados de la
+  // maqueta. Maquetado y construido, no visto: se publica después del ⭐⭐ (regla 10, /design-sync).
+  {
+    grupo: "Componentes · S3",
+    nombre: "La banda — propuesta, fijada y solo notas",
+    archivo: "s3/la-banda.html",
+    estados: {
+      pagina: "banda.html",
+      selector: "section.banda",
+      marco: true,
+      piezas: [
+        ["s3-propuesta", "te propongo guardar"],
+        ["s3-fijada", "fijada"],
+        ["s3-solo-notas", "solo notas"],
+      ],
+      regla:
+        "<span lang=\"es\">La propuesta es pasiva y de una línea: no toca la ficha, no suena y no se lee en voz alta (§9-septies)</span>" +
+        "<span lang=\"en\">A proposal is passive and one line long: it does not touch the card, make a sound or get read aloud (§9-septies)</span>",
+    },
+  },
+  {
+    grupo: "Componentes · S3",
+    nombre: "La bandeja",
+    archivo: "s3/la-bandeja.html",
+    estados: {
+      pagina: "notas.html",
+      selector: "main.ventana",
+      piezas: [
+        ["s3-bandeja", "la bandeja, con su cuenta atrás"],
+        ["s3-bandeja-llave", "con llave: de una sesión anterior"],
+        ["s3-vencida", "vencida"],
+      ],
+      regla:
+        "<span lang=\"es\">Una ventana, no un archivo: al llegar a cero se borra sola, aunque no abras la app (§9-septies)</span>" +
+        "<span lang=\"en\">A window, not a file: at zero it deletes itself, even if you never open the app (§9-septies)</span>",
+    },
+  },
+  {
+    grupo: "Componentes · S3",
+    nombre: "La puerta local",
+    archivo: "s3/la-puerta-local.html",
+    estados: {
+      pagina: "ia.html",
+      selector: "main.ventana",
+      piezas: [
+        ["s3-puerta", "cerrada"],
+        ["s3-puerta-abierta", "abierta"],
+        ["s3-puerta-reunion", "se cerró sola: hay una reunión"],
+      ],
+      regla:
+        "<span lang=\"es\">La abres tú, a mano; en reunión se cierra sola; lo denegado también se registra (§9-nonies)</span>" +
+        "<span lang=\"en\">You open it, by hand; in a meeting it closes itself; what is denied is logged too (§9-nonies)</span>",
+    },
+  },
 ];
 
 /**
@@ -306,6 +360,22 @@ function fragmentos(t) {
       piezas,
     };
   }
+  if (t.estados) {
+    const piezas = t.estados.piezas.map(([estado, etiqueta]) => {
+      const doc = documento(t.estados.pagina);
+      fijarEstado(doc, estado);
+      limpiar(doc);
+      const el = doc.querySelector(t.estados.selector);
+      if (!el) throw new Error(`${t.estados.pagina} no dibuja el estado «${estado}»`);
+      // El rail de la maqueta enlaza las otras páginas de la sala; en una tarjeta que se publica sola,
+      // un enlace a otro archivo es un recurso de fuera (lo vigila el gate del espejo).
+      for (const enlace of el.querySelectorAll("a[href]")) {
+        if (!enlace.getAttribute("href").startsWith("#")) enlace.removeAttribute("href");
+      }
+      return { etiqueta, nota: "", html: el.outerHTML };
+    });
+    return { regla: t.estados.regla, piezas };
+  }
   throw new Error(`la tarjeta «${t.nombre}» no dice de dónde sale`);
 }
 
@@ -341,7 +411,7 @@ function tarjeta(t, hojas, mapaIconos) {
         `      <div class="ds-pieza">\n` +
         (p.etiqueta ? `        <span class="ds-et">${p.etiqueta}</span>\n` : "") +
         (p.nota ? `        <span class="ds-nota">${p.nota}</span>\n` : "") +
-        (t.banda ? `        <div class="ds-marco-banda">${p.html}</div>\n` : `        ${p.html}\n`) +
+        (t.banda || t.estados?.marco ? `        <div class="ds-marco-banda">${p.html}</div>\n` : `        ${p.html}\n`) +
         `      </div>`,
     )
     .join("\n");

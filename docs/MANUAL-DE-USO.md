@@ -64,7 +64,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   en texto.
 - **Cómo se usa:** *Sesión* → «Iniciar sesión». Nada se enciende hasta que tú lo digas. `⌃⌥T`
   muestra u oculta el transcript. Aparece **junto a la ficha** que haya en la banda (es su columna
-  derecha: sin ficha, todavía no hay dónde pintarlo) y, si la banda está compacta, la agranda como
+  derecha: sin ficha no hay dónde pintarlo) y, si la banda está compacta, la agranda como
   el asa; al ocultarlo vuelve a su alto. Nace oculto a propósito, porque leer lo que acaban de
   decir es la forma más rápida de dejar de escuchar.
 - **Limitaciones conocidas:**
@@ -106,8 +106,10 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - **Un PDF no trae títulos**, trae líneas: la app conjetura dónde empieza cada sección por la
     forma del texto, y te dice de cuántos documentos hizo esa conjetura para que puedas juzgarlo.
   - Hasta **2 000 documentos** por carpeta.
-  - Todavía no se pueden arrastrar documentos sobre la ventana, ni releer solo lo que cambie: hoy
-    se vuelve a recorrer la carpeta entera.
+  - **La carpeta se vuelve a señalar cada vez que abres la app**: la app no la recuerda al cerrarse,
+    y hasta que la señalas no hay fichas (tampoco para la puerta local).
+  - Arrastrar documentos sobre la ventana y releer solo lo que cambió no están en este MVP: quedan
+    para el H2. Hoy se vuelve a recorrer la carpeta entera.
   - El índice vive en la carpeta de datos de la app, **y solo tu cuenta del Mac puede leerlo**.
 
 ### La ficha en el momento justo · desde Sprint 001
@@ -454,8 +456,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - Las fichas que trae **la pantalla sola** no llevan sugerencia: no responden a ninguna pregunta.
   - Un nombre de persona **suelto** («Andrea») que no esté en tu corpus no se reconoce al anonimizar;
     dos palabras con mayúscula seguidas («Andrea Villalba») sí.
-  - El camino **MLX** (un modelo que descargas tú) todavía no existe; aparece en IA como «Todavía no».
-    Sin Apple Intelligence, la sugerencia local no está.
+  - El camino **MLX** (un modelo que descargas tú) no está en este MVP: queda en el roadmap del H2, y
+    en IA su fila lo dice con «Todavía no». Sin Apple Intelligence, la sugerencia local no está.
   - La sugerencia se escribe **en el idioma de la ficha que cita**, no en el de la pregunta: si tu
     cliente pregunta en inglés y tu propuesta está en español, la sugerencia sale en español.
   - A veces la sugerencia es fiel a su ficha pero **no contesta la pregunta** (cita otra de las tres
@@ -585,7 +587,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - **Cada pista escucha un idioma.** Si en mitad de una frase castellana el cliente dice tres
     palabras en inglés, el diccionario arregla la jerga que reconozca, pero **una frase entera en el
     otro idioma no se transcribe bien** — está medido y está dicho en la pantalla de *Idioma*. Marcar
-    varios idiomas por pista llega más adelante.
+    varios idiomas por pista queda para el H2.
 
 ## Atajos de teclado
 

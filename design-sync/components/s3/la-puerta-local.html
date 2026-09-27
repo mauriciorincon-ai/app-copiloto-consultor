@@ -1,0 +1,907 @@
+<!-- @dsCard group="Componentes · S3" name="La puerta local" -->
+<!doctype html>
+<html lang="es" data-lang="es">
+<head>
+<meta charset="utf-8">
+<title>La puerta local — Angel Ghost</title>
+<style>
+:root {
+  /* ---- Tipografía (D4): nativa de macOS, sin embeber bytes ---- */
+  --font-evidencia: "Charter", "Iowan Old Style", Georgia, serif;     /* lo que dice TU corpus */
+  --font-ui: "Avenir Next", "Helvetica Neue", system-ui, sans-serif;   /* la interfaz */
+  --font-mono: "Menlo", "SF Mono", ui-monospace, monospace;            /* lo medible */
+
+  /* ---- Escala tipográfica ---- */
+  --t-titular: 17px;   /* ficha: titular ≤ 8 palabras */
+  --t-linea: 14px;     /* ficha: una línea */
+  --t-ui: 13px;        /* interfaz general */
+  --t-meta: 12px;      /* estado, fuente, etiquetas */
+  --t-mono: 11.5px;    /* contador, atajos, fuente de ficha */
+  --t-h1: 22px;        /* título de pantalla (ventana principal) */
+  --t-h2: 15px;
+
+  /* ---- Espacio (múltiplos de 4) ---- */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+
+  /* ---- Radios y trazos ---- */
+  --r-chip: 5px; --r-ficha: 8px; --r-panel: 10px; --r-tecla: 4px;
+  --borde: 1px;
+
+  /* ---- Motion (D10): casi ninguno ---- */
+  --dur: 150ms; --ease: cubic-bezier(.2,.6,.2,1);
+
+  /* ---- Tamaños de ventana (D1, D6) ---- */
+  --panel-w: 380px; --panel-h: 220px; --panel-h-transcript: 420px; --panel-h-max: 360px;
+  --principal-w: 960px; --principal-h: 640px;
+  /* La banda ocupa el ancho de la pantalla; solo su ALTO es una medida. Estas tres son la
+     fuente única: las usa el CSS de abajo y las lee la ventana nativa (test en `src-tauri/`). */
+  --banda-h: 88px; --banda-h-ampliada: 200px; --banda-h-voz: 44px;
+}
+:root, .tema.oscuro {
+  color-scheme: dark;
+  --bg: #1a1917;          /* ventana */
+  --surface: #242320;     /* ficha, tarjetas */
+  --surface-2: #2e2d29;   /* chips, teclas, hover */
+  --line: #3b3a35;        /* bordes */
+  --line-2: #4a4841;      /* bordes en foco/hover */
+  --ink: #ece7dc;         /* texto principal — marfil */
+  --ink-2: #b9b3a6;       /* texto secundario (AA sobre bg y surface) */
+  --ink-3: #7c776c;       /* SOLO ORNAMENTO (líneas, separadores). Jamás texto — vetado */
+  --halo: #9ecbff;        /* acento único: foco, fijado, interactivo */
+  --halo-tint: rgba(158,203,255,.14);
+  --ok: #62d3b4;          /* activo / verificado / verde */
+  --ok-tint: rgba(98,211,180,.15);
+  --warn: #f0b64a;        /* atención / sin verificar / aviso */
+  --warn-tint: rgba(240,182,74,.15);
+  --err: #ff8577;         /* error / cortado / revocado */
+  --err-tint: rgba(255,133,119,.15);
+  --mute: #9a958a;        /* inactivo (texto AA sobre bg) */
+  --sombra-panel: 0 10px 30px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.04) inset;
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.25);
+}
+.tema.claro {
+  color-scheme: light;
+  --bg: #f5f2ea;
+  --surface: #fffdf8;
+  --surface-2: #ece8de;
+  --line: #d6d1c4;
+  --line-2: #bdb7a8;
+  --ink: #1f1e1a;
+  --ink-2: #5a5650;
+  --ink-3: #a19b8e;       /* SOLO ORNAMENTO — vetado como texto */
+  --halo: #1d5c9c;
+  --halo-tint: rgba(29,92,156,.12);
+  --ok: #0f6350;
+  --ok-tint: rgba(21,122,98,.13);
+  --warn: #7a4f00;
+  --warn-tint: rgba(198,131,0,.16);
+  --err: #a32a22;
+  --err-tint: rgba(184,50,42,.12);
+  --mute: #6d685f;
+  --sombra-panel: 0 10px 28px rgba(40,30,10,.18), 0 0 0 1px rgba(0,0,0,.04);
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.05);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { font-family: var(--font-ui); font-size: var(--t-ui); color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+body { margin: 0; line-height: 1.45; }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--halo); outline-offset: 2px; border-radius: var(--r-chip); }
+.mono { font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+[hidden] { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+html[data-lang="es"] [lang="en"] { display: none !important; }
+html[data-lang="en"] [lang="es"] { display: none !important; }
+.ic { display: inline-block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; }
+.ic.s { width: 13px; height: 13px; vertical-align: -2px; }
+.ic.relleno { fill: currentColor; stroke: none; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+.estado { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px 2px 6px; border-radius: var(--r-chip); border: var(--borde) solid transparent; font-size: var(--t-meta); font-weight: 500; line-height: 1.3; white-space: nowrap; }
+.estado.ok { color: var(--ok);   background: var(--ok-tint);   border-color: var(--ok); }
+.estado.warn { color: var(--warn); background: var(--warn-tint); border-color: var(--warn); }
+.estado.err { color: var(--err);  background: var(--err-tint);  border-color: var(--err); }
+.estado.mute { color: var(--mute); background: transparent;      border-color: var(--line); }
+.estado.halo { color: var(--halo); background: var(--halo-tint); border-color: var(--halo); }
+.estado.pendiente {
+  color: var(--mute);
+  background: transparent;
+  border-color: var(--line-2);
+  border-style: dashed;
+}
+.pendiente .ic { opacity: .75; }
+.tarjeta.pendiente {
+  border-style: dashed;
+  border-color: var(--line-2);
+  background: transparent;
+}
+.tarjeta.pendiente .seccion { color: var(--mute); }
+.franja { display: grid; grid-template-columns: 16px 1fr; gap: 5px 10px; padding: 9px 11px; border-radius: var(--r-ficha); border: var(--borde) solid; font-size: var(--t-meta); line-height: 1.4; }
+.franja .ic { margin-top: 1px; }
+.franja strong { display: block; font-weight: 600; font-size: var(--t-ui); color: var(--ink); }
+.franja p { color: var(--ink-2); }
+.franja.warn { border-color: var(--warn); background: var(--warn-tint); }
+.franja.warn .ic { color: var(--warn); }
+.franja.err { border-color: var(--err);  background: var(--err-tint); }
+.franja.err .ic { color: var(--err); }
+.franja.ok { border-color: var(--ok);   background: var(--ok-tint); }
+.franja.ok .ic { color: var(--ok); }
+.franja.mute { border-color: var(--line-2); background: var(--surface-2); }
+.franja.mute .ic { color: var(--ink-2); }
+.franja ul { margin: 4px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 10px; color: var(--ink-2); }
+.franja ul li::before { content: "·"; margin-right: 6px; color: var(--ink-2); }
+.franja ul li:first-child::before { content: none; }
+.franja ul.vertical { flex-direction: column; gap: 1px; }
+.franja ul.vertical li::before { content: "→"; margin-right: 6px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: var(--r-chip); border: var(--borde) solid var(--line-2); background: var(--surface-2); color: var(--ink); font-size: var(--t-meta); font-weight: 500; transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease); }
+.btn:hover { border-color: var(--halo); }
+.btn.primario { border-color: var(--halo); background: var(--halo-tint); color: var(--halo); }
+.btn.mini { padding: 2px 7px; font-size: var(--t-mono); }
+.barra .pistas .pista.off { color: var(--mute); }
+.barra .pistas .pista.off .ic { opacity: .75; }
+.mas { display: flex; align-items: center; gap: 8px; padding: 2px 4px; font-size: var(--t-meta); color: var(--ink-2); }
+.mas .n { font-family: var(--font-mono); font-size: var(--t-mono); }
+.mas .titulos { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-evidencia); }
+.pie .cliente.ok { color: var(--ok); }
+.pie .cliente.warn { color: var(--warn); }
+.ventana { width: var(--principal-w); height: var(--principal-h); display: grid; grid-template-columns: 200px 1fr; background: var(--bg); color: var(--ink); border: var(--borde) solid var(--line); border-radius: var(--r-panel); box-shadow: var(--sombra-panel); overflow: hidden; }
+.rail { display: flex; flex-direction: column; border-right: var(--borde) solid var(--line); background: var(--surface); padding: var(--s-4) var(--s-3); gap: var(--s-1); }
+.rail .marca { display: flex; align-items: center; gap: 8px; padding: 2px 6px 14px; font-family: var(--font-evidencia); font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+.rail .marca .ic { color: var(--halo); }
+.rail .marca small { display: block; font-family: var(--font-mono); font-size: 10px; font-weight: 400; color: var(--ink-2); letter-spacing: .04em; }
+.rail a, .rail .item { display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: var(--r-chip); color: var(--ink-2); text-decoration: none; font-size: var(--t-ui); border-left: 2px solid transparent; }
+.rail a:hover { background: var(--surface-2); color: var(--ink); }
+.rail a[aria-current="page"], .rail .item.activo { color: var(--ink); background: var(--surface-2); border-left-color: var(--halo); }
+.rail .abajo { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: var(--borde) solid var(--line); }
+.contenido { padding: var(--s-5) var(--s-6); overflow: auto; display: flex; flex-direction: column; gap: var(--s-4); }
+.titulo { display: flex; flex-direction: column; gap: 4px; }
+.titulo h1 { font-size: var(--t-h1); font-weight: 600; letter-spacing: -.01em; line-height: 1.2; }
+.titulo .sub { font-size: var(--t-ui); color: var(--ink-2); }
+h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-weight: 400; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 8px; }
+.tarjeta { background: var(--surface); border: var(--borde) solid var(--line); border-radius: var(--r-ficha); padding: var(--s-3) var(--s-4); display: flex; flex-direction: column; gap: 9px; }
+.tarjeta h3 { font-size: var(--t-h2); font-weight: 600; }
+.tarjeta p { color: var(--ink-2); font-size: var(--t-ui); }
+.fila { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fila > .ic { flex: 0 0 auto; }
+.fila .crece { flex: 1 1 auto; min-width: 0; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); align-items: start; }
+.campo input.mono { font-family: var(--font-mono); font-size: var(--t-mono); }
+.conm { display: inline-flex; align-items: center; gap: 8px; font-size: var(--t-ui); color: var(--ink); cursor: pointer; }
+.conm .track { position: relative; width: 34px; height: 20px; border-radius: 10px; background: var(--surface-2); border: var(--borde) solid var(--line-2); transition: background var(--dur) var(--ease); }
+.conm .track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--ink-2); transition: transform var(--dur) var(--ease), background var(--dur) var(--ease); }
+.conm.on .track { background: var(--ok-tint); border-color: var(--ok); }
+.conm.on .track::after { transform: translateX(14px); background: var(--ok); }
+.conm .etq { display: inline-flex; align-items: center; gap: 5px; }
+.conm.on .etq { color: var(--ok); }
+.conm.off .etq { color: var(--mute); }
+.tabla td.mono, .tabla th.num, .tabla td.num { font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; }
+.permiso .ic { width: 20px; height: 20px; color: var(--ink-2); }
+.bandera .ic { width: 18px; height: 18px; margin-top: 1px; grid-column: 1; }
+.bandera > :not(.ic) { grid-column: 2; }
+.contador .etq { font-size: var(--t-meta); color: var(--ink-2); }
+.buffer .ic { color: var(--ink-2); }
+.banda .sugerencia-b .ic { flex: 0 0 auto; color: var(--halo); align-self: center; }
+.banda .mas { padding: 0; }
+.banda.voz .linea-b .ic { flex: 0 0 auto; color: var(--halo); }
+.banda.voz .linea-b.warn { color: var(--warn); }
+.banda.voz .linea-b.warn .ic { color: var(--warn); }
+.banda .marca-min.halo { color: var(--halo); }
+.banda .marca-min.warn { color: var(--warn); }
+.banda .cliente-b.warn { color: var(--warn); }
+.banda .aviso-b .ic { flex: 0 0 auto; margin-top: 1px; }
+.banda .aviso-b.err { color: var(--err); }
+.banda .maniobra-b .ic { flex: 0 0 auto; align-self: center; color: var(--ink-2); }
+.propuesta > .ic { margin-top: 2px; color: var(--halo); }
+.propuesta.aceptada > .ic { color: var(--ok); }
+.idiomas .lg.on { border-color: var(--halo); background: var(--halo-tint); color: var(--halo); }
+.idiomas .lg .ic { flex: 0 0 auto; }
+.puerta { display: grid; grid-template-columns: 16px 1fr; gap: 1px 9px; padding: 3px 2px; align-items: start; border-bottom: var(--borde) solid var(--line); }
+.puerta:last-child { border-bottom: 0; }
+.puerta > .ic { margin-top: 2px; }
+.puerta.si > .ic { color: var(--ok); }
+.puerta.no > .ic { color: var(--err); }
+.puerta .qué { font-size: 12.5px; color: var(--ink); line-height: 1.35; }
+.puerta .por { grid-column: 2; font-size: 11px; color: var(--ink-2); line-height: 1.35; }
+.cuenta .ic { flex: 0 0 auto; color: var(--halo); }
+.cuenta.vencida .ic, .cuenta.vencida .reloj { color: var(--ink-2); }
+.ventanas .op.on { border-color: var(--halo); background: var(--halo-tint); color: var(--halo); }
+.franja .ventanas .op { background: var(--surface); }
+.franja .ventanas .op.on { background: linear-gradient(var(--halo-tint), var(--halo-tint)), var(--surface); }
+.franja .ventanas .op .ic { color: inherit; }
+.aviso-legal, .tarjeta p.aviso-legal { font-size: 11px; color: var(--ink-2); }
+.pregunta-nda .ic { color: var(--halo); flex: 0 0 auto; }
+.tarjeta p.clausula { font-family: var(--font-evidencia); font-size: 12.5px; line-height: 1.45; color: var(--ink); }
+.mq-nota .n { display: none; border-left: 3px solid #7dd3fc; padding: 8px 12px; background: #111418; }
+.mq-nota .n.activa { display: block; }
+.mq-meet .titulo { height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 12px; font-size: 12px; color: #8a919b; border-bottom: 1px solid #2c3037; }
+.mq-meet .titulo i { width: 10px; height: 10px; border-radius: 50%; background: #3e434b; display: inline-block; }
+.mq-tabla-pos .si { color: #62d3b4; }
+.mq-tabla-pos .no { color: #ff8577; }
+.mq-tabla-pos .mas { color: #f0b64a; }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
+.mq-relleno .mini { position: relative; height: 158px; border: 1px solid #3a3e46; border-radius: 8px; overflow: hidden; background: linear-gradient(150deg, #2b3550 0%, #3a3350 55%, #4a3a44 100%); }
+.mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
+@media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
+.k-item > .etq { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.escala .n { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); width: 150px; flex: 0 0 auto; }
+.prohibido li .ic { color: var(--err); }
+.rail-demo .rail { height: 100%; }
+/* marco de exhibición del bundle */
+  body { margin: 0; padding: var(--s-6); }
+  .ds-cab { width: 100%; max-width: 1180px; margin: 0 auto var(--s-5); }
+  .ds-cab h1 { font-family: var(--font-ui); font-size: var(--t-h1); font-weight: 600; margin: 0 0 var(--s-2); }
+  .ds-cab p { font-family: var(--font-ui); font-size: var(--t-ui); color: var(--ink-2); margin: 0; line-height: 1.5; max-width: 82ch; }
+  .ds-cab p.ds-regla { color: var(--ink); margin-bottom: var(--s-2); }
+  .ds-cab code { font-family: var(--font-mono); font-size: var(--t-mono); }
+  /* 1180 px o lo que haya: la banda ocupa el ancho de la PANTALLA, y en un marco estrecho su
+     ellipsis recorta la fuente y la fecha como si fuera un defecto del componente. */
+  .ds-temas { width: 100%; max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--s-6); }
+  .tema { padding: var(--s-5); border: var(--borde) solid var(--line); border-radius: var(--r-panel); background: var(--bg); color: var(--ink); }
+  .tema > .ds-t { display: block; margin: 0 0 var(--s-4); font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+  .ds-pieza + .ds-pieza { margin-top: var(--s-6); }
+  .ds-pieza > .ds-et { display: block; margin: 0 0 var(--s-2); font-family: var(--font-ui); font-size: var(--t-meta); font-weight: 600; color: var(--ink); }
+  .ds-pieza > .ds-nota { display: block; margin: 0 0 var(--s-3); font-family: var(--font-ui); font-size: var(--t-meta); color: var(--ink-2); line-height: 1.5; max-width: 72ch; }
+  .ds-marco-banda { border: var(--borde) solid var(--line); border-radius: var(--r-ficha); overflow: hidden; }
+  @media (max-width: 720px) { body { padding: var(--s-4); } }
+</style>
+</head>
+<body>
+<svg style="display:none" aria-hidden="true">
+<symbol id="i-ojo-off" viewBox="0 0 16 16"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8zM2 2l12 12"/></symbol>
+<symbol id="i-video" viewBox="0 0 16 16"><rect x="1.5" y="4" width="9" height="8" rx="1.5"/><path d="M10.5 7l4-2.5v7l-4-2.5"/></symbol>
+<symbol id="i-candado" viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="7.5" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></symbol>
+<symbol id="i-doc" viewBox="0 0 16 16"><path d="M4 1.5h5l3.5 3.5v9.5H4z"/><path d="M9 1.5V5h3.5M6 8.5h4M6 11h4"/></symbol>
+<symbol id="i-nota" viewBox="0 0 16 16"><path d="M2.5 3.5h11v9h-11zM5 6.5h6M5 9h4"/></symbol>
+<symbol id="i-ram" viewBox="0 0 16 16"><rect x="1.5" y="4.5" width="13" height="7" rx="1"/><path d="M4 11.5v2M7 11.5v2M10 11.5v2M13 11.5v2M4 6.5h2M8 6.5h2"/></symbol>
+<symbol id="i-globo" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M1.5 8h13M8 1.5c2 2 2 11 0 13M8 1.5c-2 2-2 11 0 13"/></symbol>
+<symbol id="i-chispa" viewBox="0 0 16 16"><path d="M8 1.5 9.6 6.4 14.5 8l-4.9 1.6L8 14.5 6.4 9.6 1.5 8l4.9-1.6z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-ring" viewBox="0 0 16 16"><circle cx="8" cy="8" r="4"/></symbol>
+<symbol id="i-flecha" viewBox="0 0 16 16"><path d="M2.5 8h11M9.5 4l4 4-4 4"/></symbol>
+<symbol id="i-llave" viewBox="0 0 16 16"><circle cx="5.5" cy="10.5" r="3"/><path d="M7.7 8.3 14 2M11.5 4.5l2 2M9.5 6.5l2 2"/></symbol>
+<symbol id="i-check-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor" stroke="none"/><path d="M5 8.2l2 2 4-4.4" stroke="var(--bg)" stroke-width="1.9" fill="none"/></symbol>
+<symbol id="i-x-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor" stroke="none"/><path d="M5.6 5.6l4.8 4.8M10.4 5.6l-4.8 4.8" stroke="var(--bg)" stroke-width="1.8" fill="none"/></symbol>
+<symbol id="i-alert" viewBox="0 0 16 16"><path d="M8 2.2 14.3 13H1.7z" fill="currentColor" stroke="none"/><path d="M8 6v3.4M8 11.6v.2" stroke="var(--bg)" stroke-width="1.8" fill="none"/></symbol>
+</svg>
+  <div class="ds-cab">
+    <h1>La puerta local</h1>
+    <p class="ds-regla"><span lang="es">La abres tú, a mano; en reunión se cierra sola; lo denegado también se registra (§9-nonies)</span><span lang="en">You open it, by hand; in a meeting it closes itself; what is denied is logged too (§9-nonies)</span></p>
+    <p>Angel Ghost · Componentes · S3 — derivado de <code>docs/diseno</code> y <code>design-system.md</code>. Los dos temas, las dos lenguas (se muestra <code>es</code>).</p>
+  </div>
+  <div class="ds-temas">
+    <section class="tema oscuro">
+      <span class="ds-t">tema oscuro · primario</span>
+      <div class="ds-pieza">
+        <span class="ds-et">cerrada</span>
+        <main class="ventana" data-captura="">
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"></use></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a><svg class="ic s"><use href="#i-candado"></use></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a><svg class="ic s"><use href="#i-doc"></use></svg>Corpus</a>
+    <a><svg class="ic s"><use href="#i-nota"></use></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a><svg class="ic s"><use href="#i-ram"></use></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a><svg class="ic s"><use href="#i-globo"></use></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a aria-current="page"><svg class="ic s"><use href="#i-chispa"></use></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      
+      
+      
+      
+      <!-- «así se ve hoy · sprint 2»: el chip del producto es el mismo en todas las pantallas —la
+           reunión detectada y su contador—, como en Sesión. -->
+      
+      
+      
+      <!-- La puerta: sin reunión mientras está abierta; con «Meet detectado» cuando se cerró sola. -->
+      <span class="estado mute" data-en="s3-puerta s3-puerta-abierta"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">Sin sesión · 0 B</span><span lang="en">No session · 0 B</span></span>
+      
+      
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">IA</span><span lang="en">AI</span></h1>
+      
+      <!-- En la vista de la puerta, el subtítulo es lo que la puerta es: así la tarjeta no lo repite. -->
+      <p class="sub" data-en="s3-puerta s3-puerta-abierta s3-puerta-reunion"><span lang="es">Un <b>comando local</b> para que Claude Code opere la app desde este mismo Mac, con una llave de tu Llavero.</span><span lang="en">A <b>local command</b> so Claude Code can operate the app from this same Mac, with a key from your Keychain.</span></p>
+    </div>
+
+    <!-- ===== local ===== -->
+    
+
+    <!-- ===== API apagado ===== -->
+    
+
+    <!-- ===== API encendido ===== -->
+    
+
+    <!-- ===== kit de evaluación ===== -->
+    
+
+    <!-- ===== así se ve hoy · sprint 2 ===== -->
+    
+
+    <!-- ===== sprint 3 · quién redacta, con lo que salió (mirada 19, decisión de diseño no escrita) ===== -->
+    
+
+    <!-- ===== sprint 3 · lo que salió (mirada 19, decisión de diseño no escrita) ===== -->
+    
+
+    <!-- ===== sprint 3 · la puerta local (mirada 22, forma «maquetado, no visto») ===== -->
+    <div data-en="s3-puerta s3-puerta-abierta s3-puerta-reunion" style="display:flex;flex-direction:column;gap:10px">
+      <div class="tarjeta" style="padding:10px 14px">
+        <div class="fila" style="gap:10px"><button class="btn mini"><svg class="ic s" style="transform:rotate(180deg)"><use href="#i-flecha"></use></svg><span lang="es">Quién redacta</span><span lang="en">Who writes</span></button><h2 class="seccion crece" style="margin:0"><span lang="es">Puerta local para tu agente</span><span lang="en">Local door for your agent</span></h2><label class="conm off" data-en="s3-puerta s3-puerta-reunion"><span class="track"></span><span class="etq"><svg class="ic s"><use href="#i-llave"></use></svg><span lang="es">cerrada</span><span lang="en">closed</span></span></label></div>
+                
+        
+      </div>
+      
+      <div class="grid-2" style="gap:12px;align-items:start">
+        <div class="tarjeta" style="padding-bottom:4px">
+          <h2 class="seccion" style="margin:0 0 2px"><span lang="es">Lo que puede hacer</span><span lang="en">What it can do</span></h2>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Buscar en tu corpus y devolver fichas</span><span lang="en">Search your corpus, return cards</span></span><span class="por"><span lang="es">lo mismo que hace la app, con tus documentos</span><span lang="en">the same the app does, with your documents</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Reindexar tu corpus</span><span lang="en">Reindex your corpus</span></span><span class="por"><span lang="es">relee tu carpeta y reintenta los ilegibles</span><span lang="en">re-reads your folder, retries unreadable files</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Correr el kit de evaluación</span><span lang="en">Run the evaluation kit</span></span><span class="por"><span lang="es">tus preguntas, tu corpus: nDCG y lo que falta</span><span lang="en">your questions vs your corpus: nDCG and gaps</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Leer y cambiar preferencias</span><span lang="en">Read and change preferences</span></span><span class="por"><span lang="es">idiomas, retención, bandeja, lectura de pantalla</span><span lang="en">languages, retention, tray, screen reading</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Abrir tus notas guardadas</span><span lang="en">Open your saved notes</span></span><span class="por"><span lang="es">cifradas: te pide desbloquear una vez por sesión</span><span lang="en">encrypted: it asks you to unlock once per session</span></span></div>
+        </div>
+        <div class="tarjeta" style="padding-bottom:4px">
+          <h2 class="seccion" style="margin:0 0 2px"><span lang="es">Lo que no puede hacer nunca</span><span lang="en">What it can never do</span></h2>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Tocar una reunión en curso</span><span lang="en">Touch a meeting in progress</span></span><span class="por"><span lang="es"><b>en reunión la puerta se cierra sola</b></span><span lang="en"><b>in a meeting the door closes itself</b></span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Encender el API ni decidir por ti</span><span lang="en">Turn on the API or decide for you</span></span><span class="por"><span lang="es">API, redactar, tus turnos y NDA: los decides tú</span><span lang="en">API, drafting, your turns and NDA: your call</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Sacar nada a la red</span><span lang="en">Send anything to the network</span></span><span class="por"><span lang="es">solo escucha a este Mac; el contador sigue igual</span><span lang="en">it listens only to this Mac; the counter stays</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Abrirse sola</span><span lang="en">Open itself</span></span><span class="por"><span lang="es">la abres aquí, a mano; se cierra al salir</span><span lang="en">you open it here, by hand; it closes on exit</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Tocar una máquina que no sea la tuya</span><span lang="en">Touch a machine that is not yours</span></span><span class="por"><span lang="es">la regla de la casa, también para tu agente</span><span lang="en">the house rule, for your agent too</span></span></div>
+        </div>
+      </div>
+      <div class="tarjeta" style="padding-bottom:6px">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Qué hizo tu agente</span><span lang="en">What your agent did</span></h2><span class="mono" style="color:var(--ink-2);font-size:11px"><span lang="es">lo denegado también se registra</span><span lang="en">denials are logged too</span></span></div>
+        <p data-en="s3-puerta" style="font-size:12px;color:var(--ink-2);padding:4px"><span lang="es">Tu agente no ha pedido nada en esta sesión de la app.</span><span lang="en">Your agent has not asked for anything in this app session.</span></p>
+        
+        
+      </div>
+    </div>
+
+    <!-- ===== Claude Code opera la app (C16) ===== -->
+    
+
+  </div>
+
+</main>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">abierta</span>
+        <main class="ventana" data-captura="">
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"></use></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a><svg class="ic s"><use href="#i-candado"></use></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a><svg class="ic s"><use href="#i-doc"></use></svg>Corpus</a>
+    <a><svg class="ic s"><use href="#i-nota"></use></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a><svg class="ic s"><use href="#i-ram"></use></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a><svg class="ic s"><use href="#i-globo"></use></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a aria-current="page"><svg class="ic s"><use href="#i-chispa"></use></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      
+      
+      
+      
+      <!-- «así se ve hoy · sprint 2»: el chip del producto es el mismo en todas las pantallas —la
+           reunión detectada y su contador—, como en Sesión. -->
+      
+      
+      
+      <!-- La puerta: sin reunión mientras está abierta; con «Meet detectado» cuando se cerró sola. -->
+      <span class="estado mute" data-en="s3-puerta s3-puerta-abierta"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">Sin sesión · 0 B</span><span lang="en">No session · 0 B</span></span>
+      
+      
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">IA</span><span lang="en">AI</span></h1>
+      
+      <!-- En la vista de la puerta, el subtítulo es lo que la puerta es: así la tarjeta no lo repite. -->
+      <p class="sub" data-en="s3-puerta s3-puerta-abierta s3-puerta-reunion"><span lang="es">Un <b>comando local</b> para que Claude Code opere la app desde este mismo Mac, con una llave de tu Llavero.</span><span lang="en">A <b>local command</b> so Claude Code can operate the app from this same Mac, with a key from your Keychain.</span></p>
+    </div>
+
+    <!-- ===== local ===== -->
+    
+
+    <!-- ===== API apagado ===== -->
+    
+
+    <!-- ===== API encendido ===== -->
+    
+
+    <!-- ===== kit de evaluación ===== -->
+    
+
+    <!-- ===== así se ve hoy · sprint 2 ===== -->
+    
+
+    <!-- ===== sprint 3 · quién redacta, con lo que salió (mirada 19, decisión de diseño no escrita) ===== -->
+    
+
+    <!-- ===== sprint 3 · lo que salió (mirada 19, decisión de diseño no escrita) ===== -->
+    
+
+    <!-- ===== sprint 3 · la puerta local (mirada 22, forma «maquetado, no visto») ===== -->
+    <div data-en="s3-puerta s3-puerta-abierta s3-puerta-reunion" style="display:flex;flex-direction:column;gap:10px">
+      <div class="tarjeta" style="padding:10px 14px">
+        <div class="fila" style="gap:10px"><button class="btn mini"><svg class="ic s" style="transform:rotate(180deg)"><use href="#i-flecha"></use></svg><span lang="es">Quién redacta</span><span lang="en">Who writes</span></button><h2 class="seccion crece" style="margin:0"><span lang="es">Puerta local para tu agente</span><span lang="en">Local door for your agent</span></h2><label class="conm on" data-en="s3-puerta-abierta"><span class="track"></span><span class="etq"><svg class="ic s"><use href="#i-llave"></use></svg><span lang="es">abierta</span><span lang="en">open</span></span></label></div>
+                <div class="fila" data-en="s3-puerta-abierta" style="gap:8px;margin-top:6px"><span class="mono crece" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'/Users/ana/app-copiloto-consultor/src-tauri/target/debug/ghost' --help</span><button class="btn mini"><span lang="es">Copiar</span><span lang="en">Copy</span></button></div>
+        <p data-en="s3-puerta-abierta" style="font-size:11.5px;color:var(--ink-2);margin-top:4px"><span lang="es">Dáselo a Claude Code. La primera vez, macOS te pregunta si ghost puede usar tu llave del Llavero.</span><span lang="en">Give it to Claude Code. The first time, macOS asks whether ghost may use your Keychain key.</span></p>
+      </div>
+      
+      <div class="grid-2" style="gap:12px;align-items:start">
+        <div class="tarjeta" style="padding-bottom:4px">
+          <h2 class="seccion" style="margin:0 0 2px"><span lang="es">Lo que puede hacer</span><span lang="en">What it can do</span></h2>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Buscar en tu corpus y devolver fichas</span><span lang="en">Search your corpus, return cards</span></span><span class="por"><span lang="es">lo mismo que hace la app, con tus documentos</span><span lang="en">the same the app does, with your documents</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Reindexar tu corpus</span><span lang="en">Reindex your corpus</span></span><span class="por"><span lang="es">relee tu carpeta y reintenta los ilegibles</span><span lang="en">re-reads your folder, retries unreadable files</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Correr el kit de evaluación</span><span lang="en">Run the evaluation kit</span></span><span class="por"><span lang="es">tus preguntas, tu corpus: nDCG y lo que falta</span><span lang="en">your questions vs your corpus: nDCG and gaps</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Leer y cambiar preferencias</span><span lang="en">Read and change preferences</span></span><span class="por"><span lang="es">idiomas, retención, bandeja, lectura de pantalla</span><span lang="en">languages, retention, tray, screen reading</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Abrir tus notas guardadas</span><span lang="en">Open your saved notes</span></span><span class="por"><span lang="es">cifradas: te pide desbloquear una vez por sesión</span><span lang="en">encrypted: it asks you to unlock once per session</span></span></div>
+        </div>
+        <div class="tarjeta" style="padding-bottom:4px">
+          <h2 class="seccion" style="margin:0 0 2px"><span lang="es">Lo que no puede hacer nunca</span><span lang="en">What it can never do</span></h2>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Tocar una reunión en curso</span><span lang="en">Touch a meeting in progress</span></span><span class="por"><span lang="es"><b>en reunión la puerta se cierra sola</b></span><span lang="en"><b>in a meeting the door closes itself</b></span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Encender el API ni decidir por ti</span><span lang="en">Turn on the API or decide for you</span></span><span class="por"><span lang="es">API, redactar, tus turnos y NDA: los decides tú</span><span lang="en">API, drafting, your turns and NDA: your call</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Sacar nada a la red</span><span lang="en">Send anything to the network</span></span><span class="por"><span lang="es">solo escucha a este Mac; el contador sigue igual</span><span lang="en">it listens only to this Mac; the counter stays</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Abrirse sola</span><span lang="en">Open itself</span></span><span class="por"><span lang="es">la abres aquí, a mano; se cierra al salir</span><span lang="en">you open it here, by hand; it closes on exit</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Tocar una máquina que no sea la tuya</span><span lang="en">Touch a machine that is not yours</span></span><span class="por"><span lang="es">la regla de la casa, también para tu agente</span><span lang="en">the house rule, for your agent too</span></span></div>
+        </div>
+      </div>
+      <div class="tarjeta" style="padding-bottom:6px">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Qué hizo tu agente</span><span lang="en">What your agent did</span></h2><span class="mono" style="color:var(--ink-2);font-size:11px"><span lang="es">lo denegado también se registra</span><span lang="en">denials are logged too</span></span></div>
+        
+        <div data-en="s3-puerta-abierta" style="max-height:74px;overflow-y:auto">
+          <div class="mas"><span class="n">11:12</span><span class="titulos crece" style="font-family:var(--font-mono);font-size:var(--t-mono)">ghost notas abrir</span><span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"></use></svg><span lang="es">falló</span><span lang="en">failed</span></span></div>
+          <div class="mas"><span class="n">11:09</span><span class="titulos crece" style="font-family:var(--font-mono);font-size:var(--t-mono)">ghost ia --encender-api</span><span style="font-size:11px"><span lang="es">el API es tuyo</span><span lang="en">the API is yours</span></span><span class="estado err"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span lang="es">denegado</span><span lang="en">denied</span></span></div>
+          <div class="mas"><span class="n">11:04</span><span class="titulos crece" style="font-family:var(--font-mono);font-size:var(--t-mono)">ghost corpus reindexar</span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg>28</span></div>
+        </div>
+        
+      </div>
+    </div>
+
+    <!-- ===== Claude Code opera la app (C16) ===== -->
+    
+
+  </div>
+
+</main>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">se cerró sola: hay una reunión</span>
+        <main class="ventana" data-captura="">
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"></use></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a><svg class="ic s"><use href="#i-candado"></use></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a><svg class="ic s"><use href="#i-doc"></use></svg>Corpus</a>
+    <a><svg class="ic s"><use href="#i-nota"></use></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a><svg class="ic s"><use href="#i-ram"></use></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a><svg class="ic s"><use href="#i-globo"></use></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a aria-current="page"><svg class="ic s"><use href="#i-chispa"></use></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      
+      
+      
+      
+      <!-- «así se ve hoy · sprint 2»: el chip del producto es el mismo en todas las pantallas —la
+           reunión detectada y su contador—, como en Sesión. -->
+      
+      
+      
+      <!-- La puerta: sin reunión mientras está abierta; con «Meet detectado» cuando se cerró sola. -->
+      
+      <span class="estado halo" data-en="s3-puerta-reunion"><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
+      
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">IA</span><span lang="en">AI</span></h1>
+      
+      <!-- En la vista de la puerta, el subtítulo es lo que la puerta es: así la tarjeta no lo repite. -->
+      <p class="sub" data-en="s3-puerta s3-puerta-abierta s3-puerta-reunion"><span lang="es">Un <b>comando local</b> para que Claude Code opere la app desde este mismo Mac, con una llave de tu Llavero.</span><span lang="en">A <b>local command</b> so Claude Code can operate the app from this same Mac, with a key from your Keychain.</span></p>
+    </div>
+
+    <!-- ===== local ===== -->
+    
+
+    <!-- ===== API apagado ===== -->
+    
+
+    <!-- ===== API encendido ===== -->
+    
+
+    <!-- ===== kit de evaluación ===== -->
+    
+
+    <!-- ===== así se ve hoy · sprint 2 ===== -->
+    
+
+    <!-- ===== sprint 3 · quién redacta, con lo que salió (mirada 19, decisión de diseño no escrita) ===== -->
+    
+
+    <!-- ===== sprint 3 · lo que salió (mirada 19, decisión de diseño no escrita) ===== -->
+    
+
+    <!-- ===== sprint 3 · la puerta local (mirada 22, forma «maquetado, no visto») ===== -->
+    <div data-en="s3-puerta s3-puerta-abierta s3-puerta-reunion" style="display:flex;flex-direction:column;gap:10px">
+      <div class="tarjeta" style="padding:10px 14px">
+        <div class="fila" style="gap:10px"><button class="btn mini"><svg class="ic s" style="transform:rotate(180deg)"><use href="#i-flecha"></use></svg><span lang="es">Quién redacta</span><span lang="en">Who writes</span></button><h2 class="seccion crece" style="margin:0"><span lang="es">Puerta local para tu agente</span><span lang="en">Local door for your agent</span></h2><label class="conm off" data-en="s3-puerta s3-puerta-reunion"><span class="track"></span><span class="etq"><svg class="ic s"><use href="#i-llave"></use></svg><span lang="es">cerrada</span><span lang="en">closed</span></span></label></div>
+                
+        
+      </div>
+      <div class="franja warn" role="status" data-en="s3-puerta-reunion">
+        <svg class="ic relleno"><use href="#i-alert"></use></svg>
+        <div>
+          <strong><span lang="es">Se cerró sola: hay una reunión</span><span lang="en">It closed itself: there is a meeting</span></strong>
+          <p><span lang="es">Tu agente no toca lo que está vivo en memoria. Vuelve a abrirla aquí cuando termine.</span><span lang="en">Your agent does not touch what is live in memory. Open it again here when it ends.</span></p>
+        </div>
+      </div>
+      <div class="grid-2" style="gap:12px;align-items:start">
+        <div class="tarjeta" style="padding-bottom:4px">
+          <h2 class="seccion" style="margin:0 0 2px"><span lang="es">Lo que puede hacer</span><span lang="en">What it can do</span></h2>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Buscar en tu corpus y devolver fichas</span><span lang="en">Search your corpus, return cards</span></span><span class="por"><span lang="es">lo mismo que hace la app, con tus documentos</span><span lang="en">the same the app does, with your documents</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Reindexar tu corpus</span><span lang="en">Reindex your corpus</span></span><span class="por"><span lang="es">relee tu carpeta y reintenta los ilegibles</span><span lang="en">re-reads your folder, retries unreadable files</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Correr el kit de evaluación</span><span lang="en">Run the evaluation kit</span></span><span class="por"><span lang="es">tus preguntas, tu corpus: nDCG y lo que falta</span><span lang="en">your questions vs your corpus: nDCG and gaps</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Leer y cambiar preferencias</span><span lang="en">Read and change preferences</span></span><span class="por"><span lang="es">idiomas, retención, bandeja, lectura de pantalla</span><span lang="en">languages, retention, tray, screen reading</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Abrir tus notas guardadas</span><span lang="en">Open your saved notes</span></span><span class="por"><span lang="es">cifradas: te pide desbloquear una vez por sesión</span><span lang="en">encrypted: it asks you to unlock once per session</span></span></div>
+        </div>
+        <div class="tarjeta" style="padding-bottom:4px">
+          <h2 class="seccion" style="margin:0 0 2px"><span lang="es">Lo que no puede hacer nunca</span><span lang="en">What it can never do</span></h2>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Tocar una reunión en curso</span><span lang="en">Touch a meeting in progress</span></span><span class="por"><span lang="es"><b>en reunión la puerta se cierra sola</b></span><span lang="en"><b>in a meeting the door closes itself</b></span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Encender el API ni decidir por ti</span><span lang="en">Turn on the API or decide for you</span></span><span class="por"><span lang="es">API, redactar, tus turnos y NDA: los decides tú</span><span lang="en">API, drafting, your turns and NDA: your call</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Sacar nada a la red</span><span lang="en">Send anything to the network</span></span><span class="por"><span lang="es">solo escucha a este Mac; el contador sigue igual</span><span lang="en">it listens only to this Mac; the counter stays</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Abrirse sola</span><span lang="en">Open itself</span></span><span class="por"><span lang="es">la abres aquí, a mano; se cierra al salir</span><span lang="en">you open it here, by hand; it closes on exit</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Tocar una máquina que no sea la tuya</span><span lang="en">Touch a machine that is not yours</span></span><span class="por"><span lang="es">la regla de la casa, también para tu agente</span><span lang="en">the house rule, for your agent too</span></span></div>
+        </div>
+      </div>
+      <div class="tarjeta" style="padding-bottom:6px">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Qué hizo tu agente</span><span lang="en">What your agent did</span></h2><span class="mono" style="color:var(--ink-2);font-size:11px"><span lang="es">lo denegado también se registra</span><span lang="en">denials are logged too</span></span></div>
+        
+        
+        <div data-en="s3-puerta-reunion" style="max-height:74px;overflow-y:auto">
+          <div class="mas"><span class="n">14:02</span><span class="titulos crece" style="font-family:var(--font-mono);font-size:var(--t-mono)">ghost corpus buscar</span><span style="font-size:11px"><span lang="es">en reunión</span><span lang="en">in a meeting</span></span><span class="estado err"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span lang="es">denegado</span><span lang="en">denied</span></span></div>
+          <div class="mas"><span class="n">13:58</span><span class="titulos crece" style="font-family:var(--font-mono);font-size:var(--t-mono)">ghost corpus buscar</span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg>3</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Claude Code opera la app (C16) ===== -->
+    
+
+  </div>
+
+</main>
+      </div>
+    </section>
+    <section class="tema claro">
+      <span class="ds-t">tema claro · papel</span>
+      <div class="ds-pieza">
+        <span class="ds-et">cerrada</span>
+        <main class="ventana" data-captura="">
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"></use></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a><svg class="ic s"><use href="#i-candado"></use></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a><svg class="ic s"><use href="#i-doc"></use></svg>Corpus</a>
+    <a><svg class="ic s"><use href="#i-nota"></use></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a><svg class="ic s"><use href="#i-ram"></use></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a><svg class="ic s"><use href="#i-globo"></use></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a aria-current="page"><svg class="ic s"><use href="#i-chispa"></use></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      
+      
+      
+      
+      <!-- «así se ve hoy · sprint 2»: el chip del producto es el mismo en todas las pantallas —la
+           reunión detectada y su contador—, como en Sesión. -->
+      
+      
+      
+      <!-- La puerta: sin reunión mientras está abierta; con «Meet detectado» cuando se cerró sola. -->
+      <span class="estado mute" data-en="s3-puerta s3-puerta-abierta"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">Sin sesión · 0 B</span><span lang="en">No session · 0 B</span></span>
+      
+      
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">IA</span><span lang="en">AI</span></h1>
+      
+      <!-- En la vista de la puerta, el subtítulo es lo que la puerta es: así la tarjeta no lo repite. -->
+      <p class="sub" data-en="s3-puerta s3-puerta-abierta s3-puerta-reunion"><span lang="es">Un <b>comando local</b> para que Claude Code opere la app desde este mismo Mac, con una llave de tu Llavero.</span><span lang="en">A <b>local command</b> so Claude Code can operate the app from this same Mac, with a key from your Keychain.</span></p>
+    </div>
+
+    <!-- ===== local ===== -->
+    
+
+    <!-- ===== API apagado ===== -->
+    
+
+    <!-- ===== API encendido ===== -->
+    
+
+    <!-- ===== kit de evaluación ===== -->
+    
+
+    <!-- ===== así se ve hoy · sprint 2 ===== -->
+    
+
+    <!-- ===== sprint 3 · quién redacta, con lo que salió (mirada 19, decisión de diseño no escrita) ===== -->
+    
+
+    <!-- ===== sprint 3 · lo que salió (mirada 19, decisión de diseño no escrita) ===== -->
+    
+
+    <!-- ===== sprint 3 · la puerta local (mirada 22, forma «maquetado, no visto») ===== -->
+    <div data-en="s3-puerta s3-puerta-abierta s3-puerta-reunion" style="display:flex;flex-direction:column;gap:10px">
+      <div class="tarjeta" style="padding:10px 14px">
+        <div class="fila" style="gap:10px"><button class="btn mini"><svg class="ic s" style="transform:rotate(180deg)"><use href="#i-flecha"></use></svg><span lang="es">Quién redacta</span><span lang="en">Who writes</span></button><h2 class="seccion crece" style="margin:0"><span lang="es">Puerta local para tu agente</span><span lang="en">Local door for your agent</span></h2><label class="conm off" data-en="s3-puerta s3-puerta-reunion"><span class="track"></span><span class="etq"><svg class="ic s"><use href="#i-llave"></use></svg><span lang="es">cerrada</span><span lang="en">closed</span></span></label></div>
+                
+        
+      </div>
+      
+      <div class="grid-2" style="gap:12px;align-items:start">
+        <div class="tarjeta" style="padding-bottom:4px">
+          <h2 class="seccion" style="margin:0 0 2px"><span lang="es">Lo que puede hacer</span><span lang="en">What it can do</span></h2>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Buscar en tu corpus y devolver fichas</span><span lang="en">Search your corpus, return cards</span></span><span class="por"><span lang="es">lo mismo que hace la app, con tus documentos</span><span lang="en">the same the app does, with your documents</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Reindexar tu corpus</span><span lang="en">Reindex your corpus</span></span><span class="por"><span lang="es">relee tu carpeta y reintenta los ilegibles</span><span lang="en">re-reads your folder, retries unreadable files</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Correr el kit de evaluación</span><span lang="en">Run the evaluation kit</span></span><span class="por"><span lang="es">tus preguntas, tu corpus: nDCG y lo que falta</span><span lang="en">your questions vs your corpus: nDCG and gaps</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Leer y cambiar preferencias</span><span lang="en">Read and change preferences</span></span><span class="por"><span lang="es">idiomas, retención, bandeja, lectura de pantalla</span><span lang="en">languages, retention, tray, screen reading</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Abrir tus notas guardadas</span><span lang="en">Open your saved notes</span></span><span class="por"><span lang="es">cifradas: te pide desbloquear una vez por sesión</span><span lang="en">encrypted: it asks you to unlock once per session</span></span></div>
+        </div>
+        <div class="tarjeta" style="padding-bottom:4px">
+          <h2 class="seccion" style="margin:0 0 2px"><span lang="es">Lo que no puede hacer nunca</span><span lang="en">What it can never do</span></h2>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Tocar una reunión en curso</span><span lang="en">Touch a meeting in progress</span></span><span class="por"><span lang="es"><b>en reunión la puerta se cierra sola</b></span><span lang="en"><b>in a meeting the door closes itself</b></span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Encender el API ni decidir por ti</span><span lang="en">Turn on the API or decide for you</span></span><span class="por"><span lang="es">API, redactar, tus turnos y NDA: los decides tú</span><span lang="en">API, drafting, your turns and NDA: your call</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Sacar nada a la red</span><span lang="en">Send anything to the network</span></span><span class="por"><span lang="es">solo escucha a este Mac; el contador sigue igual</span><span lang="en">it listens only to this Mac; the counter stays</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Abrirse sola</span><span lang="en">Open itself</span></span><span class="por"><span lang="es">la abres aquí, a mano; se cierra al salir</span><span lang="en">you open it here, by hand; it closes on exit</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Tocar una máquina que no sea la tuya</span><span lang="en">Touch a machine that is not yours</span></span><span class="por"><span lang="es">la regla de la casa, también para tu agente</span><span lang="en">the house rule, for your agent too</span></span></div>
+        </div>
+      </div>
+      <div class="tarjeta" style="padding-bottom:6px">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Qué hizo tu agente</span><span lang="en">What your agent did</span></h2><span class="mono" style="color:var(--ink-2);font-size:11px"><span lang="es">lo denegado también se registra</span><span lang="en">denials are logged too</span></span></div>
+        <p data-en="s3-puerta" style="font-size:12px;color:var(--ink-2);padding:4px"><span lang="es">Tu agente no ha pedido nada en esta sesión de la app.</span><span lang="en">Your agent has not asked for anything in this app session.</span></p>
+        
+        
+      </div>
+    </div>
+
+    <!-- ===== Claude Code opera la app (C16) ===== -->
+    
+
+  </div>
+
+</main>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">abierta</span>
+        <main class="ventana" data-captura="">
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"></use></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a><svg class="ic s"><use href="#i-candado"></use></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a><svg class="ic s"><use href="#i-doc"></use></svg>Corpus</a>
+    <a><svg class="ic s"><use href="#i-nota"></use></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a><svg class="ic s"><use href="#i-ram"></use></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a><svg class="ic s"><use href="#i-globo"></use></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a aria-current="page"><svg class="ic s"><use href="#i-chispa"></use></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      
+      
+      
+      
+      <!-- «así se ve hoy · sprint 2»: el chip del producto es el mismo en todas las pantallas —la
+           reunión detectada y su contador—, como en Sesión. -->
+      
+      
+      
+      <!-- La puerta: sin reunión mientras está abierta; con «Meet detectado» cuando se cerró sola. -->
+      <span class="estado mute" data-en="s3-puerta s3-puerta-abierta"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">Sin sesión · 0 B</span><span lang="en">No session · 0 B</span></span>
+      
+      
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">IA</span><span lang="en">AI</span></h1>
+      
+      <!-- En la vista de la puerta, el subtítulo es lo que la puerta es: así la tarjeta no lo repite. -->
+      <p class="sub" data-en="s3-puerta s3-puerta-abierta s3-puerta-reunion"><span lang="es">Un <b>comando local</b> para que Claude Code opere la app desde este mismo Mac, con una llave de tu Llavero.</span><span lang="en">A <b>local command</b> so Claude Code can operate the app from this same Mac, with a key from your Keychain.</span></p>
+    </div>
+
+    <!-- ===== local ===== -->
+    
+
+    <!-- ===== API apagado ===== -->
+    
+
+    <!-- ===== API encendido ===== -->
+    
+
+    <!-- ===== kit de evaluación ===== -->
+    
+
+    <!-- ===== así se ve hoy · sprint 2 ===== -->
+    
+
+    <!-- ===== sprint 3 · quién redacta, con lo que salió (mirada 19, decisión de diseño no escrita) ===== -->
+    
+
+    <!-- ===== sprint 3 · lo que salió (mirada 19, decisión de diseño no escrita) ===== -->
+    
+
+    <!-- ===== sprint 3 · la puerta local (mirada 22, forma «maquetado, no visto») ===== -->
+    <div data-en="s3-puerta s3-puerta-abierta s3-puerta-reunion" style="display:flex;flex-direction:column;gap:10px">
+      <div class="tarjeta" style="padding:10px 14px">
+        <div class="fila" style="gap:10px"><button class="btn mini"><svg class="ic s" style="transform:rotate(180deg)"><use href="#i-flecha"></use></svg><span lang="es">Quién redacta</span><span lang="en">Who writes</span></button><h2 class="seccion crece" style="margin:0"><span lang="es">Puerta local para tu agente</span><span lang="en">Local door for your agent</span></h2><label class="conm on" data-en="s3-puerta-abierta"><span class="track"></span><span class="etq"><svg class="ic s"><use href="#i-llave"></use></svg><span lang="es">abierta</span><span lang="en">open</span></span></label></div>
+                <div class="fila" data-en="s3-puerta-abierta" style="gap:8px;margin-top:6px"><span class="mono crece" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'/Users/ana/app-copiloto-consultor/src-tauri/target/debug/ghost' --help</span><button class="btn mini"><span lang="es">Copiar</span><span lang="en">Copy</span></button></div>
+        <p data-en="s3-puerta-abierta" style="font-size:11.5px;color:var(--ink-2);margin-top:4px"><span lang="es">Dáselo a Claude Code. La primera vez, macOS te pregunta si ghost puede usar tu llave del Llavero.</span><span lang="en">Give it to Claude Code. The first time, macOS asks whether ghost may use your Keychain key.</span></p>
+      </div>
+      
+      <div class="grid-2" style="gap:12px;align-items:start">
+        <div class="tarjeta" style="padding-bottom:4px">
+          <h2 class="seccion" style="margin:0 0 2px"><span lang="es">Lo que puede hacer</span><span lang="en">What it can do</span></h2>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Buscar en tu corpus y devolver fichas</span><span lang="en">Search your corpus, return cards</span></span><span class="por"><span lang="es">lo mismo que hace la app, con tus documentos</span><span lang="en">the same the app does, with your documents</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Reindexar tu corpus</span><span lang="en">Reindex your corpus</span></span><span class="por"><span lang="es">relee tu carpeta y reintenta los ilegibles</span><span lang="en">re-reads your folder, retries unreadable files</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Correr el kit de evaluación</span><span lang="en">Run the evaluation kit</span></span><span class="por"><span lang="es">tus preguntas, tu corpus: nDCG y lo que falta</span><span lang="en">your questions vs your corpus: nDCG and gaps</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Leer y cambiar preferencias</span><span lang="en">Read and change preferences</span></span><span class="por"><span lang="es">idiomas, retención, bandeja, lectura de pantalla</span><span lang="en">languages, retention, tray, screen reading</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Abrir tus notas guardadas</span><span lang="en">Open your saved notes</span></span><span class="por"><span lang="es">cifradas: te pide desbloquear una vez por sesión</span><span lang="en">encrypted: it asks you to unlock once per session</span></span></div>
+        </div>
+        <div class="tarjeta" style="padding-bottom:4px">
+          <h2 class="seccion" style="margin:0 0 2px"><span lang="es">Lo que no puede hacer nunca</span><span lang="en">What it can never do</span></h2>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Tocar una reunión en curso</span><span lang="en">Touch a meeting in progress</span></span><span class="por"><span lang="es"><b>en reunión la puerta se cierra sola</b></span><span lang="en"><b>in a meeting the door closes itself</b></span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Encender el API ni decidir por ti</span><span lang="en">Turn on the API or decide for you</span></span><span class="por"><span lang="es">API, redactar, tus turnos y NDA: los decides tú</span><span lang="en">API, drafting, your turns and NDA: your call</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Sacar nada a la red</span><span lang="en">Send anything to the network</span></span><span class="por"><span lang="es">solo escucha a este Mac; el contador sigue igual</span><span lang="en">it listens only to this Mac; the counter stays</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Abrirse sola</span><span lang="en">Open itself</span></span><span class="por"><span lang="es">la abres aquí, a mano; se cierra al salir</span><span lang="en">you open it here, by hand; it closes on exit</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Tocar una máquina que no sea la tuya</span><span lang="en">Touch a machine that is not yours</span></span><span class="por"><span lang="es">la regla de la casa, también para tu agente</span><span lang="en">the house rule, for your agent too</span></span></div>
+        </div>
+      </div>
+      <div class="tarjeta" style="padding-bottom:6px">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Qué hizo tu agente</span><span lang="en">What your agent did</span></h2><span class="mono" style="color:var(--ink-2);font-size:11px"><span lang="es">lo denegado también se registra</span><span lang="en">denials are logged too</span></span></div>
+        
+        <div data-en="s3-puerta-abierta" style="max-height:74px;overflow-y:auto">
+          <div class="mas"><span class="n">11:12</span><span class="titulos crece" style="font-family:var(--font-mono);font-size:var(--t-mono)">ghost notas abrir</span><span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"></use></svg><span lang="es">falló</span><span lang="en">failed</span></span></div>
+          <div class="mas"><span class="n">11:09</span><span class="titulos crece" style="font-family:var(--font-mono);font-size:var(--t-mono)">ghost ia --encender-api</span><span style="font-size:11px"><span lang="es">el API es tuyo</span><span lang="en">the API is yours</span></span><span class="estado err"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span lang="es">denegado</span><span lang="en">denied</span></span></div>
+          <div class="mas"><span class="n">11:04</span><span class="titulos crece" style="font-family:var(--font-mono);font-size:var(--t-mono)">ghost corpus reindexar</span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg>28</span></div>
+        </div>
+        
+      </div>
+    </div>
+
+    <!-- ===== Claude Code opera la app (C16) ===== -->
+    
+
+  </div>
+
+</main>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">se cerró sola: hay una reunión</span>
+        <main class="ventana" data-captura="">
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"></use></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a><svg class="ic s"><use href="#i-candado"></use></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a><svg class="ic s"><use href="#i-doc"></use></svg>Corpus</a>
+    <a><svg class="ic s"><use href="#i-nota"></use></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a><svg class="ic s"><use href="#i-ram"></use></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a><svg class="ic s"><use href="#i-globo"></use></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a aria-current="page"><svg class="ic s"><use href="#i-chispa"></use></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      
+      
+      
+      
+      <!-- «así se ve hoy · sprint 2»: el chip del producto es el mismo en todas las pantallas —la
+           reunión detectada y su contador—, como en Sesión. -->
+      
+      
+      
+      <!-- La puerta: sin reunión mientras está abierta; con «Meet detectado» cuando se cerró sola. -->
+      
+      <span class="estado halo" data-en="s3-puerta-reunion"><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
+      
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">IA</span><span lang="en">AI</span></h1>
+      
+      <!-- En la vista de la puerta, el subtítulo es lo que la puerta es: así la tarjeta no lo repite. -->
+      <p class="sub" data-en="s3-puerta s3-puerta-abierta s3-puerta-reunion"><span lang="es">Un <b>comando local</b> para que Claude Code opere la app desde este mismo Mac, con una llave de tu Llavero.</span><span lang="en">A <b>local command</b> so Claude Code can operate the app from this same Mac, with a key from your Keychain.</span></p>
+    </div>
+
+    <!-- ===== local ===== -->
+    
+
+    <!-- ===== API apagado ===== -->
+    
+
+    <!-- ===== API encendido ===== -->
+    
+
+    <!-- ===== kit de evaluación ===== -->
+    
+
+    <!-- ===== así se ve hoy · sprint 2 ===== -->
+    
+
+    <!-- ===== sprint 3 · quién redacta, con lo que salió (mirada 19, decisión de diseño no escrita) ===== -->
+    
+
+    <!-- ===== sprint 3 · lo que salió (mirada 19, decisión de diseño no escrita) ===== -->
+    
+
+    <!-- ===== sprint 3 · la puerta local (mirada 22, forma «maquetado, no visto») ===== -->
+    <div data-en="s3-puerta s3-puerta-abierta s3-puerta-reunion" style="display:flex;flex-direction:column;gap:10px">
+      <div class="tarjeta" style="padding:10px 14px">
+        <div class="fila" style="gap:10px"><button class="btn mini"><svg class="ic s" style="transform:rotate(180deg)"><use href="#i-flecha"></use></svg><span lang="es">Quién redacta</span><span lang="en">Who writes</span></button><h2 class="seccion crece" style="margin:0"><span lang="es">Puerta local para tu agente</span><span lang="en">Local door for your agent</span></h2><label class="conm off" data-en="s3-puerta s3-puerta-reunion"><span class="track"></span><span class="etq"><svg class="ic s"><use href="#i-llave"></use></svg><span lang="es">cerrada</span><span lang="en">closed</span></span></label></div>
+                
+        
+      </div>
+      <div class="franja warn" role="status" data-en="s3-puerta-reunion">
+        <svg class="ic relleno"><use href="#i-alert"></use></svg>
+        <div>
+          <strong><span lang="es">Se cerró sola: hay una reunión</span><span lang="en">It closed itself: there is a meeting</span></strong>
+          <p><span lang="es">Tu agente no toca lo que está vivo en memoria. Vuelve a abrirla aquí cuando termine.</span><span lang="en">Your agent does not touch what is live in memory. Open it again here when it ends.</span></p>
+        </div>
+      </div>
+      <div class="grid-2" style="gap:12px;align-items:start">
+        <div class="tarjeta" style="padding-bottom:4px">
+          <h2 class="seccion" style="margin:0 0 2px"><span lang="es">Lo que puede hacer</span><span lang="en">What it can do</span></h2>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Buscar en tu corpus y devolver fichas</span><span lang="en">Search your corpus, return cards</span></span><span class="por"><span lang="es">lo mismo que hace la app, con tus documentos</span><span lang="en">the same the app does, with your documents</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Reindexar tu corpus</span><span lang="en">Reindex your corpus</span></span><span class="por"><span lang="es">relee tu carpeta y reintenta los ilegibles</span><span lang="en">re-reads your folder, retries unreadable files</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Correr el kit de evaluación</span><span lang="en">Run the evaluation kit</span></span><span class="por"><span lang="es">tus preguntas, tu corpus: nDCG y lo que falta</span><span lang="en">your questions vs your corpus: nDCG and gaps</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Leer y cambiar preferencias</span><span lang="en">Read and change preferences</span></span><span class="por"><span lang="es">idiomas, retención, bandeja, lectura de pantalla</span><span lang="en">languages, retention, tray, screen reading</span></span></div>
+          <div class="puerta si"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="qué"><span lang="es">Abrir tus notas guardadas</span><span lang="en">Open your saved notes</span></span><span class="por"><span lang="es">cifradas: te pide desbloquear una vez por sesión</span><span lang="en">encrypted: it asks you to unlock once per session</span></span></div>
+        </div>
+        <div class="tarjeta" style="padding-bottom:4px">
+          <h2 class="seccion" style="margin:0 0 2px"><span lang="es">Lo que no puede hacer nunca</span><span lang="en">What it can never do</span></h2>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Tocar una reunión en curso</span><span lang="en">Touch a meeting in progress</span></span><span class="por"><span lang="es"><b>en reunión la puerta se cierra sola</b></span><span lang="en"><b>in a meeting the door closes itself</b></span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Encender el API ni decidir por ti</span><span lang="en">Turn on the API or decide for you</span></span><span class="por"><span lang="es">API, redactar, tus turnos y NDA: los decides tú</span><span lang="en">API, drafting, your turns and NDA: your call</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Sacar nada a la red</span><span lang="en">Send anything to the network</span></span><span class="por"><span lang="es">solo escucha a este Mac; el contador sigue igual</span><span lang="en">it listens only to this Mac; the counter stays</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Abrirse sola</span><span lang="en">Open itself</span></span><span class="por"><span lang="es">la abres aquí, a mano; se cierra al salir</span><span lang="en">you open it here, by hand; it closes on exit</span></span></div>
+          <div class="puerta no"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span class="qué"><span lang="es">Tocar una máquina que no sea la tuya</span><span lang="en">Touch a machine that is not yours</span></span><span class="por"><span lang="es">la regla de la casa, también para tu agente</span><span lang="en">the house rule, for your agent too</span></span></div>
+        </div>
+      </div>
+      <div class="tarjeta" style="padding-bottom:6px">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Qué hizo tu agente</span><span lang="en">What your agent did</span></h2><span class="mono" style="color:var(--ink-2);font-size:11px"><span lang="es">lo denegado también se registra</span><span lang="en">denials are logged too</span></span></div>
+        
+        
+        <div data-en="s3-puerta-reunion" style="max-height:74px;overflow-y:auto">
+          <div class="mas"><span class="n">14:02</span><span class="titulos crece" style="font-family:var(--font-mono);font-size:var(--t-mono)">ghost corpus buscar</span><span style="font-size:11px"><span lang="es">en reunión</span><span lang="en">in a meeting</span></span><span class="estado err"><svg class="ic s relleno"><use href="#i-x-circle"></use></svg><span lang="es">denegado</span><span lang="en">denied</span></span></div>
+          <div class="mas"><span class="n">13:58</span><span class="titulos crece" style="font-family:var(--font-mono);font-size:var(--t-mono)">ghost corpus buscar</span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg>3</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Claude Code opera la app (C16) ===== -->
+    
+
+  </div>
+
+</main>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
