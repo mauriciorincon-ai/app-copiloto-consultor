@@ -2327,3 +2327,24 @@ revertir.
 También en esta vuelta, del mismo tipo que la frase de la sugerencia: el manual decía de la
 instalación del modelo de voz «es la única vez que la app toca la red», falsa desde que existe el
 proveedor externo. Ahora dice «la única vez que la transcripción toca la red» y nombra la otra puerta.
+
+### El reduced-motion, ampliado a lo que el sprint 002 pinta
+
+`tests/e2e/reduced-motion.spec.ts` cubría los cinco encuadres del S1: **ningún estado nuevo del S2**
+(radar ámbar y coral, sugerencia, banda de voz, IA) se comprobaba visible con «reducir movimiento».
+Ahora son 10 encuadres × 2 modos + la forma del árbol, en los dos proyectos: **42 pruebas** (el e2e
+entero pasa de 87 a **107**).
+
+**Su primera versión dio 12 rojos, y no por movimiento:** mis selectores (`.aviso-b`,
+`.sugerencia-b`, `.voz-b`) no existen en esas muestras, que se pintan con la banda ampliada (`.franja.err`,
+`.lado-b .sugerencia`, `.linea-b`). Se vio porque fallaban igual con `reduce` que con `no-preference`.
+Corregidos, la demo de verdad: la sugerencia a opacidad 0 **solo** con `prefers-reduced-motion: reduce`
+→ ROJO en los dos proyectos solo en «reduce» → verde al revertir.
+
+### `/release-check`, lo que se corre en local
+
+- `pnpm audit --audit-level high`: limpio. `cargo audit`: **sin vulnerabilidades, 9 avisos**; el que el
+  plan pedía vigilar, `lru` 0.16.4 *unsound* (RUSTSEC-2026-0253), llega por **tantivy 0.26.2, que es la
+  última versión** y lo fija: no se puede pagar aquí. Deuda con disparador («cuando tantivy suba»).
+- `pnpm tauri build`: **ejecutable 12,06 MB** (S1: 11,05; +1,01 MB por pantalla, radar, voz, síntesis y
+  el puente) · `.app` 12 MB · `.dmg` **5,34 MB** (S1: 4,88).
