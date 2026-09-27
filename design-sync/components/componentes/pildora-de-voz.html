@@ -214,6 +214,9 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .puerta.no > .ic { color: var(--err); }
 .cuenta .ic { flex: 0 0 auto; color: var(--halo); }
 .ventanas .op.on { border-color: var(--halo); background: var(--halo-tint); color: var(--halo); }
+.tabla .elegir { appearance: none; -webkit-appearance: none; background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.tabla .elegir:hover { text-decoration: underline dotted; }
+.tabla .elegir:focus-visible { outline: 2px solid var(--halo); outline-offset: 2px; }
 .mq-meet .titulo { height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 12px; font-size: 12px; color: #8a919b; border-bottom: 1px solid #2c3037; }
 .mq-meet .titulo i { width: 10px; height: 10px; border-radius: 50%; background: #3e434b; display: inline-block; }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }

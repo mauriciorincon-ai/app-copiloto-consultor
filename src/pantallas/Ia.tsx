@@ -3,6 +3,7 @@ import { useIdioma, useT } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { TodaviaNo, PILA } from "../componentes/Ventana";
 import { useBytesALaRed } from "../cuaderno";
+import { hayTauri } from "../puente";
 import {
   EXTERNOS,
   apiExterna,
@@ -11,7 +12,9 @@ import {
   guardarClave,
   redactarSugerencias,
   useIa,
+  useLoQueSalio,
   type EstadoDeLaIa,
+  type LoQueSalio,
   type Externo,
   type PorQueNoRedacta,
 } from "../ia";
@@ -19,16 +22,21 @@ import {
 /**
  * IA — quién redacta la sugerencia, qué sale y cuánto cuesta (C7, sprint 002, fase 5).
  *
- * Referencia: `docs/diseno/ia.html`, estado **«así se ve hoy · sprint 2»** (mirada 18; su veredicto
- * viaja al gate del MVP), armado con piezas que la Etapa de Diseño ya aprobó. ADR 010 y 011.
+ * Referencia: `docs/diseno/ia.html`, estados **«sprint 3 · quién redacta»** y **«sprint 3 · lo que
+ * salió»** (mirada 19, aprobada el 2026-09-27): el de «así se ve hoy · sprint 2» (mirada 18) con un
+ * botón «Ver lo que salió · N» en la tarjeta del proveedor externo, que abre el estado «API encendido»
+ * de la Etapa de Diseño (B37). ADR 010 y 011.
  *
  * Todo nace apagado: redactar sugerencias y el proveedor externo. Encender el externo exige su clave
  * en el Llavero, y la pantalla dice por qué no se puede cuando no se puede.
  */
-export function Ia() {
+export function Ia({ busqueda = "" }: { busqueda?: string }) {
   const t = useT().cuaderno;
   const idioma = useIdioma();
   const [ia, setIa] = useIa();
+  const salio = useLoQueSalio();
+  // «Lo que salió» se abre desde su botón; fuera de Tauri, desde la URL (el arnés de fidelidad).
+  const [viendo, setViendo] = useState(new URLSearchParams(busqueda).get("vista") === "salio");
   const bytes = useBytesALaRed();
   const [cifra, unidad = "B"] = bytes.split(" ");
   const [clave, setClave] = useState("");
@@ -59,6 +67,19 @@ export function Ia() {
   // a Claude y encender pedía la clave equivocada (auditoría del S2, M3). `api_externa` con el API
   // apagado guarda la elección sin exigir clave.
   const elegir = (externo: Externo) => aplicar(apiExterna(ia.api.encendida, externo));
+
+  if (viendo && salio.length > 0) {
+    return (
+      <>
+        <div className="titulo">
+          <h1>{t.navIa}</h1>
+          <p className="sub">{t.iaSub}</p>
+        </div>
+        {/* Fuera de Tauri, la cifra de la maqueta: la de las tres peticiones de muestra. */}
+        <LoQueSalioAlApi salio={salio} bytes={hayTauri() ? bytes : "12,4 KB"} volver={() => setViendo(false)} />
+      </>
+    );
+  }
 
   return (
     <>
@@ -223,6 +244,18 @@ export function Ia() {
                 <button type="button" className="btn mini" onClick={() => aplicar(borrarClave(ia.api.externo))}>
                   <span>{t.borrarLaClave}</span>
                 </button>
+                {/* Solo cuando algo salió en esta reunión (B37, mirada 19). */}
+                {salio.length > 0 && (
+                  <>
+                    <span className="crece" />
+                    <button type="button" className="btn mini" onClick={() => setViendo(true)}>
+                      <Ic id="i-nube" s />
+                      <span>
+                        {t.verLoQueSalio} · {salio.length}
+                      </span>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -310,5 +343,108 @@ function Interruptor({
       <span className="track"></span>
       <span className="etq">{etiqueta}</span>
     </button>
+  );
+}
+
+/**
+ * **LO QUE SALIÓ AL API** (B37, sprint 003): el texto exacto de la última petición —con lo que se tapó
+ * en tu Mac tachado y su marcador al lado—, cuántos caracteres fueron, y la tabla de las peticiones de
+ * esta reunión. Todo sale del registro en memoria de Rust (`sintesis::api::Registro`): muere con ⌥⎋ y
+ * al cerrar la reunión, y aquí solo se enseña.
+ */
+function LoQueSalioAlApi({ salio, bytes, volver }: { salio: LoQueSalio[]; bytes: string; volver: () => void }) {
+  const t = useT().cuaderno;
+  const idioma = useIdioma();
+  const ultima = salio[0];
+  const [cifra, unidad = "B"] = bytes.split(" ");
+  const nombre = EXTERNOS.find((e) => e.id === ultima.externo)?.nombre ?? "";
+  const usd = (v: number | null) =>
+    v === null ? "—" : new Intl.NumberFormat(idioma, { minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(v);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+      <div className="fila">
+        <button type="button" className="btn mini" onClick={volver}>
+          <span style={{ display: "inline-flex", transform: "rotate(180deg)" }}>
+            <Ic id="i-flecha" s />
+          </span>
+          <span>{t.volverQuienRedacta}</span>
+        </button>
+        <span className="crece" />
+        <span className="mono" style={{ color: "var(--ink-2)" }}>
+          {t.seBorraAlCerrar}
+        </span>
+      </div>
+      <div className="grid-2" style={{ gridTemplateColumns: "1.2fr 1fr", gap: "12px", alignItems: "start" }}>
+        <div className="tarjeta">
+          <div className="fila">
+            <h2 className="seccion crece" style={{ margin: 0 }}>
+              {t.loUltimoQueSalio}
+            </h2>
+            <span className="mono" style={{ color: "var(--ink-2)" }}>
+              {ultima.hora}
+            </span>
+          </div>
+          <div
+            className="diccionario"
+            style={{ marginTop: "8px", fontFamily: "var(--font-evidencia)", fontSize: "13.5px", lineHeight: 1.6 }}
+          >
+            <p>
+              {ultima.trozos.map((tr, i) =>
+                tr.que === "texto" ? (
+                  <span key={i}>{tr.texto}</span>
+                ) : (
+                  <span key={i}>
+                    <del>{tr.original}</del>
+                    <mark>{tr.marcador}</mark>
+                  </span>
+                ),
+              )}
+            </p>
+          </div>
+          <p style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "10px" }}>
+            {t.estoEs} <b>{t.todoLoQueSalio}</b> {t.loQueSalioN} {ultima.caracteres} {t.caracteresTachado}
+          </p>
+        </div>
+        <div className="contador api">
+          <span className="cifra">
+            {cifra} <small>{unidad}</small>
+          </span>
+          <span className="etq">
+            {t.salieron} · {salio.length} {t.peticiones} · {nombre} API
+          </span>
+        </div>
+      </div>
+      <div className="tarjeta" style={{ paddingBottom: "6px" }}>
+        <h2 className="seccion" style={{ margin: "0 0 4px" }}>
+          {t.las} {salio.length} {t.peticionesDeEstaReunion}
+        </h2>
+        <table className="tabla">
+          <thead>
+            <tr>
+              <th>{t.colHora}</th>
+              <th>{t.colPorQue}</th>
+              <th className="num">{t.colCaracteres}</th>
+              <th className="num">{t.colAnonimizados}</th>
+              <th className="num">USD</th>
+            </tr>
+          </thead>
+          <tbody>
+            {salio.map((p, i) => (
+              <tr key={`${p.hora}-${i}`}>
+                <td className="mono">{p.hora}</td>
+                <td>
+                  {t.redactarSugerencia} · {p.sobre}
+                </td>
+                <td className="num">{p.caracteres}</td>
+                <td className="num">{p.tapadas}</td>
+                <td className="num">{usd(p.usd)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "6px" }}>{t.registroEnMemoria}</p>
+      </div>
+    </div>
   );
 }

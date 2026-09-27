@@ -74,47 +74,13 @@ const DEUDA: Record<string, string> = {
   // `InformeDelCorte.bytesEnRed` se declaraba aquí como «lo lee Rust, no se paga»: un tercer estado
   // que la regla 20 no tiene. Lo que lee solo Rust no cruza: `#[serde(skip)]`, y la lista queda vacía.
 
-  // ── Sprint 003, fase 0: B37 cruza, y su vista espera a la mirada 19 ──
+  // ── Sprint 003, fase 0: B37 cruzó antes que su vista; pagada en la fase 1 ──
   //
-  // La pantalla IA del S2 ya ocupa sus 640 px, y la fase 4 le suma la puerta local: dónde va «Lo
-  // último que salió» es una decisión de FORMA (regla 10), y se construye DESPUÉS de su veredicto.
-  // `hora`, `externo` y `Trozo.texto` no están aquí aunque tampoco tienen lector todavía: el gate
-  // compara por NOMBRE y otros tipos tienen campos que se llaman igual (su limitación declarada). Los
-  // lee la misma vista de la fase 1, y la auditoría del sprint lo comprueba a mano.
-  "LoQueSalio.sobre": "la columna «por qué salió» · fase 1 (tras la mirada 19)",
-  "LoQueSalio.trozos": "«Lo último que salió», con lo reemplazado tachado · fase 1 (tras la mirada 19)",
-  "LoQueSalio.caracteres": "«Esto es todo lo que salió: N caracteres» · fase 1 (tras la mirada 19)",
-  "LoQueSalio.tapadas": "la columna «anonimizados» · fase 1 (tras la mirada 19)",
-  "LoQueSalio.usd": "la columna USD · fase 1 (tras la mirada 19)",
-  // Tus notas (C9, sprint 003): la forma entró en la fase 1 antes que su pantalla, que espera la
-  // mirada 19. Se pagan en la misma fase, al construir Notas.
-  "VistaDelCuaderno.nota": "el campo «Tu nota» de Notas · durante · fase 1 (tras la mirada 19)",
-  "VistaDelCuaderno.acuerdos": "la tarjeta «Acuerdos» de Notas · durante · fase 1 (tras la mirada 19)",
-  "VistaDelCuaderno.fijadas": "«Fichas que fijaste» de Notas · durante · fase 1 (tras la mirada 19)",
-  "VistaDelCuaderno.resumen": "«Se va a guardar» de Notas · al cerrar · fase 1 (tras la mirada 19)",
-  "VistaDelCuaderno.conservarMisTurnos": "la casilla «Conservar mis turnos» de Notas · al cerrar · fase 1 (tras la mirada 19)",
-  "VistaDelCuaderno.retencion": "«Cuánto viven tus notas» de Notas · el archivo · fase 1 (tras la mirada 19)",
-  "ResumenDelCuaderno.parrafos": "«Tus notas · N párrafos» de Notas · al cerrar · fase 1 (tras la mirada 19)",
-  "ResumenDelCuaderno.acuerdos": "«Acuerdos · N» de Notas · al cerrar · fase 1 (tras la mirada 19)",
-  "ResumenDelCuaderno.fijadas": "«Fichas fijadas · N» de Notas · al cerrar · fase 1 (tras la mirada 19)",
-  "ResumenDelCuaderno.turnos": "«Tus turnos, en texto · N» de Notas · al cerrar · fase 1 (tras la mirada 19)",
-  "ResumenDelCuaderno.bytesNota": "el tamaño de «Tus notas» · al cerrar · fase 1 (tras la mirada 19)",
-  "ResumenDelCuaderno.bytesAcuerdos": "el tamaño de «Acuerdos» · al cerrar · fase 1 (tras la mirada 19)",
-  "ResumenDelCuaderno.bytesFijadas": "el tamaño de «Fichas fijadas» · al cerrar · fase 1 (tras la mirada 19)",
-  "ResumenDelCuaderno.bytesTurnos": "el tamaño de «Tus turnos» · al cerrar · fase 1 (tras la mirada 19)",
-  "ReunionGuardada.archivo": "la columna «archivo» de «Reuniones guardadas» · fase 1 (tras la mirada 19)",
-  "ReunionGuardada.guardada": "la columna «fecha» de «Reuniones guardadas» · fase 1 (tras la mirada 19)",
-  "ReunionGuardada.vence": "la columna «se borra en» y «Retención» del archivo · fase 1 (tras la mirada 19)",
-  "Guardada.archivo": "«→ paramo-azul-2026-09-20.ghost» al guardar · fase 1 (tras la mirada 19)",
-  "Guardada.vence": "«se borra solo en N días» al guardar · fase 1 (tras la mirada 19)",
-  "ContenidoDeReunion.empezo": "la cabecera de una reunión abierta · fase 1 (tras la mirada 19)",
-  "ContenidoDeReunion.minutos": "«· 47 min» en la cabecera de una reunión abierta · fase 1 (tras la mirada 19)",
-  "ContenidoDeReunion.nota": "la nota de una reunión abierta · fase 1 (tras la mirada 19)",
-  "ContenidoDeReunion.acuerdos": "los acuerdos de una reunión abierta · fase 1 (tras la mirada 19)",
-  "ContenidoDeReunion.fijadas": "las fichas fijadas de una reunión abierta · fase 1 (tras la mirada 19)",
-  "ContenidoDeReunion.misTurnos": "tus turnos de una reunión abierta · fase 1 (tras la mirada 19)",
-  "Trozo.marcador": "«Lo último que salió» · fase 1 (tras la mirada 19)",
-  "Trozo.original": "lo reemplazado, tachado · fase 1 (tras la mirada 19)",
+  // Siete campos esperaron aquí a la mirada 19 y los pagó la vista «Lo que salió» de IA. Los
+  // veinticinco de las notas, que entraron en la fase 1 antes que su pantalla, los pagó la pantalla de
+  // Notas en la misma fase; y los de `ContenidoDeReunion` salieron del contrato: el contenido
+  // descifrado de una reunión no cruza al webview (la maqueta no tiene «abrir»). `hora`, `externo` y
+  // `Trozo.texto` los lee la misma vista, aunque el gate no pueda distinguirlos por su nombre.
 };
 
 /** Cada `export type X = … { … }`, con las variantes de una unión incluidas. */

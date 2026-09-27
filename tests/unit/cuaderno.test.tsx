@@ -429,7 +429,7 @@ describe("el cuaderno: lo que no existe se dice", () => {
    * a enlace. Notas sigue sin existir y el rail lo dice — un rail lleno de enlaces que no llevan a
    * ninguna parte es peor que uno corto.
    */
-  it("el rail deja las secciones que aún no existen sin enlace", () => {
+  it("el rail enlaza las siete secciones: Notas fue la última en encenderse (sprint 003)", () => {
     const { container } = pinta("?pantalla=sesion");
     const rail = container.querySelector("nav.rail") as HTMLElement;
     const enlaces = [...rail.querySelectorAll("a")].map((a) => a.textContent);
@@ -437,17 +437,12 @@ describe("el cuaderno: lo que no existe se dice", () => {
       t.navSesion,
       t.navPermisos,
       t.navCorpus,
+      t.navNotas,
       t.navHonestidad,
       t.navIdioma,
       t.navIa,
     ]);
-    for (const nombre of [t.navNotas]) {
-      const fila = within(rail)
-        .getByText(nombre)
-        .closest(".item") as HTMLElement;
-      expect(fila.className).toContain("pendiente");
-      expect(fila.tagName).not.toBe("A");
-    }
+    expect(rail.querySelector(".item.pendiente"), "queda una sección apagada en el rail").toBeNull();
   });
 
   /**

@@ -9,7 +9,7 @@
 //! notas sobreviven al corte, y el cuaderno sigue protegido (ADR 015 §10).
 
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::Mutex;
 use std::time::Instant;
 
@@ -38,6 +38,10 @@ pub struct ElCuaderno {
     empezo: Mutex<Option<(notas::Fecha, Instant)>>,
     /// Cuándo dejaste de escuchar. Los minutos cuentan la sesión, no lo que tardes en guardar.
     termino: Mutex<Option<Instant>>,
+    /// **Lo que muere, contado** («Muere al cerrar»): cuántos turnos dijo el cliente y cuántas veces
+    /// se leyó la pantalla en esta reunión. Solo el número: el contenido nunca pasa por aquí.
+    turnos_del_cliente: AtomicU32,
+    lecturas: AtomicU32,
     pub desbloqueo: Desbloqueo,
 }
 
@@ -52,7 +56,35 @@ pub struct VistaDelCuaderno {
     pub conservar_mis_turnos: bool,
     /// Hay una reunión abierta (sesión en marcha, o parada y sin guardar ni descartar).
     pub abierta: bool,
+    /// La sesión sigue escuchando: Notas enseña «durante»; parada, «al cerrar».
+    pub escuchando: bool,
+    /// Lo que se escribiría al guardar ahora: «2026-09-27 · 47 min → reunion-2026-09-27-1402.ghost».
+    pub previsto: Option<Previsto>,
+    /// «Muere al cerrar»: cuántos turnos dijo el cliente y cuántas lecturas de pantalla hubo.
+    pub turnos_del_cliente: u32,
+    pub lecturas: u32,
     pub retencion: prefs::Retencion,
+}
+
+/// La línea de «al cerrar» que dice qué archivo va a nacer.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Previsto {
+    /// «2026-09-27».
+    pub fecha: String,
+    pub minutos: u32,
+    pub cliente: Option<String>,
+    pub archivo: String,
+}
+
+/// Las reuniones guardadas y dónde viven.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListaDeReuniones {
+    /// `None` es la de fábrica, `~/Documents/Angel Ghost/` —la interfaz la nombra en su idioma, como
+    /// Finder—; `Some` es la que elegiste, con `~` en vez de tu carpeta de usuario.
+    pub carpeta: Option<String>,
+    pub reuniones: Vec<Reunion>,
 }
 
 impl ElCuaderno {
@@ -78,6 +110,8 @@ impl ElCuaderno {
 
     fn abrir(&self, conservar_mis_turnos: bool, fecha: notas::Fecha) {
         self.con(|c| c.conservar_mis_turnos(conservar_mis_turnos));
+        self.turnos_del_cliente.store(0, Ordering::Relaxed);
+        self.lecturas.store(0, Ordering::Relaxed);
         if let Ok(mut e) = self.empezo.lock() {
             *e = Some((fecha, Instant::now()));
         }
@@ -111,6 +145,38 @@ impl ElCuaderno {
         self.abierta.swap(false, Ordering::Relaxed)
     }
 
+    fn escuchando(&self) -> bool {
+        self.abierta()
+            && self.empezo.lock().map(|e| e.is_some()).unwrap_or(false)
+            && self.termino.lock().map(|t| t.is_none()).unwrap_or(false)
+    }
+
+    /// La fecha y los minutos de la reunión: los de la sesión, o los de ahora si no hubo sesión.
+    fn cuando(&self) -> (notas::Fecha, u32) {
+        let empezo = self.empezo.lock().ok().and_then(|e| *e);
+        let termino = self.termino.lock().ok().and_then(|t| *t).unwrap_or_else(Instant::now);
+        match empezo {
+            Some((f, desde)) => (f, (termino.saturating_duration_since(desde).as_secs() / 60) as u32),
+            None => (fecha_de_ahora(), 0),
+        }
+    }
+
+    /// Lo que se escribiría al guardar ahora. `None` sin nada tuyo: no habría archivo.
+    fn previsto(&self, carpeta: &Carpeta) -> Option<Previsto> {
+        if self.vacio() {
+            return None;
+        }
+        let (fecha, minutos) = self.cuando();
+        let cliente: Option<String> = None;
+        let base = notas::nombre_del_archivo(cliente.as_deref(), &fecha);
+        Some(Previsto {
+            fecha: format!("{}-{:02}-{:02}", fecha.anio, fecha.mes, fecha.dia),
+            minutos,
+            archivo: carpeta.nombre_para(&base).unwrap_or_else(|| format!("{base}.{}", carpeta::EXTENSION)),
+            cliente,
+        })
+    }
+
     /// Guarda en `carpeta`. `Ok(None)` si no había nada tuyo. **Si falla, el cuaderno se queda
     /// entero y la reunión abierta**: la nota no se pierde por un error de disco o de Llavero.
     fn guardar_en(
@@ -124,14 +190,7 @@ impl ElCuaderno {
             self.cerrar();
             return Ok(None);
         }
-        let (fecha, minutos) = {
-            let empezo = self.empezo.lock().ok().and_then(|e| *e);
-            let termino = self.termino.lock().ok().and_then(|t| *t).unwrap_or_else(Instant::now);
-            match empezo {
-                Some((f, desde)) => (f, (termino.saturating_duration_since(desde).as_secs() / 60) as u32),
-                None => (fecha_de_ahora(), 0),
-            }
-        };
+        let (fecha, minutos) = self.cuando();
         // El cliente llega en la fase 3 («Este cliente»). Hasta entonces, ninguno: la app no lo adivina.
         let cliente: Option<String> = None;
         let encabezado = Encabezado { empezo: fecha.como_texto(), minutos, cliente: cliente.clone() };
@@ -170,7 +229,10 @@ fn avisar<R: Runtime>(app: &AppHandle<R>) {
 pub fn vista<R: Runtime>(app: &AppHandle<R>) -> Option<VistaDelCuaderno> {
     let el = app.try_state::<ElCuaderno>()?;
     let retencion = preferencias(app).retencion;
-    let abierta = el.abierta();
+    let (abierta, escuchando) = (el.abierta(), el.escuchando());
+    let previsto = el.previsto(&carpeta(app));
+    let (turnos_del_cliente, lecturas) =
+        (el.turnos_del_cliente.load(Ordering::Relaxed), el.lecturas.load(Ordering::Relaxed));
     el.con(|c| VistaDelCuaderno {
         nota: c.nota().to_string(),
         acuerdos: c.acuerdos().to_vec(),
@@ -178,8 +240,19 @@ pub fn vista<R: Runtime>(app: &AppHandle<R>) -> Option<VistaDelCuaderno> {
         resumen: c.resumen(),
         conservar_mis_turnos: c.conserva_mis_turnos(),
         abierta,
+        escuchando,
+        previsto,
+        turnos_del_cliente,
+        lecturas,
         retencion,
     })
+}
+
+/// Una lectura de la pantalla en esta reunión: se cuenta para «Muere al cerrar».
+pub fn contar_una_lectura<R: Runtime>(app: &AppHandle<R>) {
+    if let Some(el) = app.try_state::<ElCuaderno>() {
+        el.lecturas.fetch_add(1, Ordering::Relaxed);
+    }
 }
 
 /// Empieza una sesión. Si la reunión anterior seguía abierta con algo tuyo dentro, **se guarda
@@ -275,9 +348,13 @@ pub fn ver<R: Runtime>(app: &AppHandle<R>, aparicion: &crate::ficha::Aparicion) 
     });
 }
 
-/// Un turno recién transcrito: el cuaderno decide si es tuyo (`notas::Cuaderno::oir`).
+/// Un turno recién transcrito: el cuaderno decide si es tuyo (`notas::Cuaderno::oir`). Los del
+/// cliente solo se CUENTAN, para «Muere al cerrar».
 pub fn oir<R: Runtime>(app: &AppHandle<R>, turno: &crate::stt::Turno) {
     let Some(el) = app.try_state::<ElCuaderno>() else { return };
+    if turno.pista == crate::capture::Pista::Sistema && !turno.texto.trim().is_empty() {
+        el.turnos_del_cliente.fetch_add(1, Ordering::Relaxed);
+    }
     el.con(|c| c.oir(turno));
 }
 
@@ -315,8 +392,33 @@ pub fn conservar_mis_turnos<R: Runtime>(app: &AppHandle<R>, si: bool) {
     crate::recordar(app, |p| p.conservar_mis_turnos = si);
 }
 
-pub fn lista<R: Runtime>(app: &AppHandle<R>) -> Vec<Reunion> {
-    carpeta(app).lista()
+pub fn lista<R: Runtime>(app: &AppHandle<R>) -> ListaDeReuniones {
+    let carpeta_elegida = preferencias(app).carpeta_de_notas.map(|c| con_virgulilla(&c));
+    ListaDeReuniones { carpeta: carpeta_elegida, reuniones: carpeta(app).lista() }
+}
+
+/// `/Users/quien/Notas` → `~/Notas`: tu carpeta de usuario no hace falta en pantalla.
+fn con_virgulilla(ruta: &str) -> String {
+    match std::env::var("HOME") {
+        Ok(casa) if !casa.is_empty() && ruta.starts_with(&casa) => format!("~{}", &ruta[casa.len()..]),
+        _ => ruta.to_string(),
+    }
+}
+
+/// ⌃⌥N y «Anotar para después»: el cuaderno al frente, en Notas, con el cursor al final de tu nota.
+pub fn ir_a_notas<R: Runtime>(app: &AppHandle<R>) {
+    let Some(v) = app.get_webview_window(ventana::PRINCIPAL) else { return };
+    let navego = v.url().map_err(|e| e.to_string()).and_then(|mut url| {
+        url.set_query(Some("pantalla=notas&foco=nota"));
+        v.navigate(url).map_err(|e| e.to_string())
+    });
+    let _ = v.unminimize();
+    let _ = v.show();
+    let _ = v.set_focus();
+    match navego {
+        Ok(()) => println!("[notas] ⌃⌥N · el cuaderno al frente, en tu nota"),
+        Err(e) => println!("[notas] ⌃⌥N · no se pudo abrir Notas en el cuaderno: {e}"),
+    }
 }
 
 /// Abre una reunión guardada: pide el desbloqueo una vez por sesión de la app (ADR 015 §5).

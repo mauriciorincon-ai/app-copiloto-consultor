@@ -13,7 +13,7 @@ import { useBytesALaRed } from "../cuaderno";
  * app va a tenerlas; ponerlas navegables prometería una pantalla que no está. Es la misma
  * decisión que «todavía no» (design-system §9-sexies), aplicada a la navegación.
  */
-export type Seccion = "sesion" | "permisos" | "corpus" | "honestidad" | "idioma" | "ia";
+export type Seccion = "sesion" | "permisos" | "corpus" | "notas" | "honestidad" | "idioma" | "ia";
 
 /** Solo las claves del cuaderno que son UNA frase: las de los porqués son catálogos, no rótulos. */
 type Rotulo = {
@@ -24,7 +24,8 @@ const RAIL: { id: Seccion | null; icono: string; clave: Rotulo }[] = [
   { id: "sesion", icono: "i-video", clave: "navSesion" },
   { id: "permisos", icono: "i-candado", clave: "navPermisos" },
   { id: "corpus", icono: "i-doc", clave: "navCorpus" },
-  { id: null, icono: "i-nota", clave: "navNotas" },
+  // Notas se encendió en el sprint 003 (fase 1, C9): lo tuyo, lo único que sobrevive a la reunión.
+  { id: "notas", icono: "i-nota", clave: "navNotas" },
   { id: "honestidad", icono: "i-ram", clave: "navHonestidad" },
   { id: "idioma", icono: "i-globo", clave: "navIdioma" },
   // IA se encendió en el sprint 002 (fase 5, C7): quién redacta, qué sale y cuánto cuesta.
@@ -42,6 +43,7 @@ export function Ventana({
   ir,
   enSesion = false,
   cliente = "Meet",
+  cerrando = false,
   children,
 }: {
   seccion: Seccion;
@@ -50,12 +52,15 @@ export function Ventana({
   enSesion?: boolean;
   /** El cliente de videollamada detectado: el chip lo nombra (decía «Meet» con Zoom o Teams). */
   cliente?: string;
+  /** Una reunión parada espera que la guardes o la descartes: el chip dice «Cerrando…». */
+  cerrando?: boolean;
   children: ReactNode;
 }) {
   // La cifra es la del contador, no una constante: con el API encendido, el chip decía «0 B»
   // mientras salían bytes (auditoría del S2, M11 y B17).
   const bytes = useBytesALaRed();
   const t = useT().cuaderno;
+  const tn = useT().notas;
 
   return (
     <main className="ventana">
@@ -99,7 +104,12 @@ export function Ventana({
         })}
 
         <div className="abajo">
-          {enSesion ? (
+          {cerrando ? (
+            <span className="estado halo">
+              <Ic id="i-reloj" s />
+              <span>{tn.cerrando}</span>
+            </span>
+          ) : enSesion ? (
             <span className="estado halo">
               <Ic id="i-video" s />
               <span>

@@ -149,13 +149,64 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 - **Cómo se usa:** `⌥⎋` corta todo en el acto — audio, transcript, la banda y su relleno — y
   devuelve la ventana de la reunión a su tamaño. También está el botón en *Honestidad*, por si el
   atajo está cogido por otra app.
-- **El corte alcanza las 9 piezas · desde Sprint 002.** *Honestidad* lo dice debajo del botón rojo:
-  «El botón corta 9 de 9 piezas: ninguna queda fuera.» La lectura de pantalla llegó en este sprint, y
-  la última en sumarse fue **la sugerencia en camino**: si el modelo está redactando cuando cortas, lo
-  que vuelva se tira y, con el proveedor externo, una petición que aún no haya salido ya no sale. La
-  voz del modo solo audio es la primera que se corta, porque es la única que tu cliente podría oír.
+- **El corte alcanza las 10 piezas · desde Sprint 003.** *Honestidad* lo dice debajo del botón rojo:
+  «El botón corta 10 de 10 piezas: ninguna queda fuera.» En el sprint 2 llegaron la lectura de
+  pantalla y **la sugerencia en camino**: si el modelo está redactando cuando cortas, lo que vuelva se
+  tira y, con el proveedor externo, una petición que no haya salido ya no sale. En el sprint 3, **tus
+  turnos en texto**: el corte se los lleva, igual que al resto de la captura. **Tus notas, tus
+  acuerdos y tus fichas fijadas se quedan** —*Honestidad* dice «Tus notas siguen ahí»—. La voz del
+  modo solo audio es la primera que se corta, porque es la única que tu cliente podría oír.
 - **Limitaciones conocidas:** el botón corta lo que vive en memoria **ahora**; lo que ya salió por
   los altavoces o lo que ya viste en la banda, obviamente, no se puede deshacer.
+
+### Tus notas: lo único que queda · Nuevo · Sprint 003
+
+- **Qué hace:** mientras escuchas, *Notas* es tu cuaderno de la reunión: **tu nota** (un campo para
+  escribir lo que quieras), **tus acuerdos** (los escribes tú; la app no decide qué fue un acuerdo) y
+  **las fichas que fijaste**. Al terminar, se guardan en **un archivo por reunión, cifrado**, en
+  `Documentos/Angel Ghost/`. Es lo único de la reunión que llega al día siguiente: del cliente no se
+  guarda nada —ni su voz, ni sus turnos, ni lo que se leyó de su pantalla—.
+- **Cómo se usa:**
+  1. Durante la sesión, `⌃⌥N` te trae el cuaderno a *Notas* con el cursor al final de tu nota. Escribe
+     y sigue: se va guardando en memoria a cada letra.
+  2. Un acuerdo: escríbelo en su campo y pulsa ↵.
+  3. `⌃⌥P` fija la ficha que estás viendo en la banda (su titular y su fuente, no el documento). En
+     la banda, «Anotar para después» hace lo mismo que `⌃⌥N`: te lleva a tu nota para que lo escribas
+     con tus palabras —la pregunta del cliente no se copia—.
+  4. Al parar la sesión, *Notas* te enseña **qué se va a guardar y qué muere**, contado, y el nombre
+     del archivo que va a nacer. «Guardar cifrado y cerrar» o «Cerrar sin guardar».
+  5. Sin reunión abierta, *Notas* es **el archivo**: tus reuniones guardadas, dónde viven, con qué
+     llave y cuándo se borran. **«Cuánto viven tus notas»** es una sola elección para todas: 7 días,
+     30 días, **90 días** (de fábrica), 1 año o siempre. Cada reunión se guarda con la que haya al
+     guardarla.
+  6. **«Exportar a texto»** te pregunta antes —porque el archivo exportado ya no está cifrado—, después
+     te pide Touch ID o la contraseña del Mac, y después dónde. **«Borrar ahora»** también pregunta
+     antes: no hay copia en otro sitio.
+- **«Conservar mis turnos»**: si lo enciendes (nace apagado), lo que **tú** dices, en texto, entra
+  también en el archivo de las reuniones siguientes. Nunca el audio, ni el tuyo. Y nunca un turno de
+  tu micrófono marcado como eco: con altavoces, ese turno es la voz del cliente.
+- **El cuaderno, protegido:** desde que empiezas a escuchar hasta que guardas o descartas la reunión,
+  la ventana del cuaderno se ve **negra** para quien vea tu pantalla compartida, como la banda (en
+  Meet está comprobado; en Zoom y Teams, sin verificar). Así tu nota no se ve si compartes la
+  pantalla entera por descuido.
+- **La llave:** vive en el Llavero de tu Mac («Angel Ghost · notas»), **ligada a este Mac**. Guardar no
+  te pide nada; abrir o exportar una reunión guardada te pide Touch ID o tu contraseña, una vez cada
+  vez que abres la app.
+- **Limitaciones conocidas:**
+  - **Si borras el Llavero o cambias de Mac, tus reuniones guardadas no se pueden abrir.** No hay
+    recuperación: cualquier recuperación sería una segunda llave.
+  - **Si Documentos está en iCloud**, viaja una copia del archivo cifrado; nadie puede abrirla fuera
+    de este Mac, porque la llave no viaja.
+  - **El nombre del archivo va en claro** (`reunion-2026-09-27-1402.ghost`): dice qué día, no qué se
+    habló.
+  - **Si la app se cae, lo no guardado se pierde**: vive en memoria a propósito. Si sales de la app con
+    notas sin guardar, se guardan solas; y si empiezas otra sesión con la anterior abierta, también.
+  - **Hoy la app borra lo vencido al abrirse y cada hora mientras está abierta.** Con la app cerrada,
+    el borrado a su hora lo hará macOS; eso llega en la fase 2 de este sprint.
+  - Si macOS no deja escribir en Documentos, la app lo dice, **no pierde la nota** y te deja elegir
+    otra carpeta.
+  - Hasta que llegue «Este cliente», el archivo se llama `reunion-<fecha>-<hora>` y no lleva el nombre
+    del cliente.
 
 ### El modelo de voz de un idioma · desde Sprint 001
 
@@ -294,6 +345,12 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     puestos otra vez, en tu Mac. Nunca audio, pantalla ni documentos enteros: ese camino no existe
     (`api::pruebas::lo_que_sale_al_api_no_lleva_los_nombres_plantados`). Cada byte que sale se
     cuenta en *Honestidad* y en la banda.
+  - **Puedes ver exactamente lo que salió · desde Sprint 003.** En *IA*, cuando algo salió en esta
+    reunión, aparece **«Ver lo que salió · N»** en la tarjeta del proveedor externo. Abre el texto
+    exacto de la última petición —con lo que se tapó en tu Mac **tachado** y su marcador al lado—,
+    cuántos caracteres fueron, y la tabla de las peticiones de la reunión (hora, por qué salió,
+    caracteres, datos tapados y USD). Ese registro vive en memoria: se borra con `⌥⎋` y al terminar la
+    sesión. «← Quién redacta» te devuelve.
   - **Nada de la sugerencia va al log**: solo quién, cuánto tardó y cuánto salió
     (`tests/unit/logs-de-la-sintesis.test.ts`).
 - **Costo:** el modelo del sistema cuesta cero. El externo se cobra en tu cuenta del proveedor; IA
@@ -415,6 +472,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 | `⌃⌥V` | enciende o apaga el **modo solo audio**: te lee la ficha y la banda baja a una línea |
 | `⌃⌥L` | **lee la pantalla una vez, ahora** — también con la lectura automática apagada |
 | `⌃⌥R` | **qué ve**: abre *Sesión* con la tabla del radar — qué programa de tu Mac te mira y qué alcanza a ver |
+| `⌃⌥N` | **anotar**: el cuaderno al frente, en *Notas*, con el cursor al final de tu nota |
+| `⌃⌥P` | **fijar** la ficha que ves en la banda: queda en tus notas, con su titular y su fuente |
 | `⎋` | calla la voz — **solo mientras el modo solo audio está encendido** |
 
 > **Por qué `⌃⌥` (Control + Opción) y no `⌘⇧`.** Hasta el sprint 2 las teclas eran `⌘⇧`, y según
@@ -443,8 +502,9 @@ solo salen la última frase de tu cliente y tres fichas cortas, anonimizadas —
 
 **¿Guarda lo que se habla en la reunión?**
 No. El audio vive treinta segundos en memoria y se va pisando; el texto, los últimos doce turnos.
-Al cerrar no queda nada. Guardar **tus propios** turnos llega más adelante, y será algo que tú
-enciendas.
+Al cerrar, de lo que se habló no queda nada. Lo que sí queda es **lo tuyo**, si lo guardas: tu nota,
+tus acuerdos, tus fichas fijadas y —solo si enciendes «Conservar mis turnos»— lo que dijiste **tú**,
+en texto. Cifrado, en un archivo por reunión.
 
 **¿Necesito internet?**
 Solo para la videollamada. La app transcribe, busca y —con el modelo del sistema— redacta dentro de
@@ -462,6 +522,7 @@ detecta y lo marca, pero funciona mejor con auriculares.
 |---|---|
 | 001 | la banda protegida · el acople · las dos pistas y la transcripción local · el corpus indexado · la ficha de evidencia y la sugerencia de cómo conducirse · el modelo de voz de un idioma · el corte y la pantalla de Honestidad · español e inglés |
 | 002 | el disparo por silencio · **tu diccionario técnico** · **el modo solo audio** · **la lectura de pantalla** y `⌃⌥L` · **los porqués** (la pista que no abrió, la salida de audio por su nombre, el motor que falta) · **por qué llegó la ficha y cuánto tardó** · las teclas pasan a `⌃⌥` · **el radar** (ámbar y coral) y `⌃⌥R` · **la sugerencia** y la pantalla **IA** |
+| 003 | **tus notas** (el cuaderno de la reunión, el archivo cifrado por reunión, la retención, exportar y borrar) · `⌃⌥N` y `⌃⌥P` · **el cuaderno protegido** mientras la reunión está abierta · **lo que salió al API**, en *IA* · el corte pasa a 10 piezas · las preferencias se recuerdan |
 
 > **Corregido tras la auditoría del sprint 001** (2026-09-22): tres frases de este manual habían
 > dejado de ser ciertas y se arreglaron con lo que el código hacía de verdad — el disparo por

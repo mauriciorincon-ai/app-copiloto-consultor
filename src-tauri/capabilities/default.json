@@ -37,6 +37,18 @@
     "allow-borrar-clave-del-api",
     "allow-idiomas-de-pista",
     "allow-fijar-idioma-de-pista",
-    "allow-lo-que-salio-al-api"
+    "allow-lo-que-salio-al-api",
+    "allow-cuaderno-de-la-reunion",
+    "allow-escribir-nota",
+    "allow-anotar-acuerdo",
+    "allow-conservar-mis-turnos",
+    "allow-guardar-la-reunion",
+    "allow-cerrar-sin-guardar",
+    "allow-reuniones-guardadas",
+    "allow-exportar-reunion",
+    "allow-borrar-reunion",
+    "allow-fijar-retencion",
+    "allow-elegir-carpeta-de-notas",
+    "allow-ir-a-notas"
   ]
 }

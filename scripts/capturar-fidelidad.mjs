@@ -107,12 +107,21 @@ const ARTEFACTOS = [
       { id: "sesion", maqueta: "sesion.html", estado: "s2-pantalla", alto: 640, url: "ventana=principal&pantalla=sesion" },
       { id: "permisos", maqueta: "permisos.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=permisos" },
       { id: "corpus", maqueta: "corpus.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=corpus" },
-      { id: "honestidad", maqueta: "honestidad.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=honestidad" },
+      // Desde la fase 1 del sprint 003 Honestidad se compara con «así se ve hoy · sprint 3»: la
+      // tarjeta de lo que quedará volvió, y el corte tiene diez piezas.
+      { id: "honestidad", maqueta: "honestidad.html", estado: "s3", alto: 640, url: "ventana=principal&pantalla=honestidad" },
+      // Notas (C9, sprint 003, fase 1): las cuatro vistas que el usuario recorre.
+      { id: "notas-durante", maqueta: "notas.html", estado: "s3-durante", alto: 640, url: "ventana=principal&pantalla=notas&estado=durante" },
+      { id: "notas-al-cerrar", maqueta: "notas.html", estado: "s3-al-cerrar", alto: 640, url: "ventana=principal&pantalla=notas&estado=al-cerrar" },
+      { id: "notas-archivo", maqueta: "notas.html", estado: "s3-archivo", alto: 640, url: "ventana=principal&pantalla=notas&estado=archivo" },
+      { id: "notas-exportar", maqueta: "notas.html", estado: "s3-exportar", alto: 640, url: "ventana=principal&pantalla=notas&estado=exportar" },
       { id: "idioma", maqueta: "idioma.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=idioma" },
       // El radar coral en Sesión (fase 4): «software invasivo en tu Mac», con las cinco filas.
       { id: "vigilancia", maqueta: "sesion.html", estado: "vigilancia", alto: 640, url: "ventana=principal&pantalla=sesion&radar=vigilancia" },
       // La pantalla IA (fase 5): «así se ve hoy · sprint 2».
-      { id: "ia", maqueta: "ia.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=ia" },
+      // IA desde la fase 1 del sprint 003 (B37, mirada 19): «quién redacta» con su botón, y lo que salió.
+      { id: "ia", maqueta: "ia.html", estado: "s3-quien", alto: 640, url: "ventana=principal&pantalla=ia" },
+      { id: "ia-salio", maqueta: "ia.html", estado: "s3-salio", alto: 640, url: "ventana=principal&pantalla=ia&vista=salio" },
     ],
   },
 ];

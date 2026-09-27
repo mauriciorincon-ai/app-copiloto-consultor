@@ -28,6 +28,12 @@ const PANTALLAS = [
   { que: "sesión · software invasivo en tu Mac", url: "ventana=principal&pantalla=sesion&radar=vigilancia" },
   // La síntesis (fase 5): la pantalla IA, con su formulario de clave, y la sugerencia en la banda.
   { que: "ia", url: "ventana=principal&pantalla=ia" },
+  // Sprint 003, fase 1: lo que salió al API (B37) y las cuatro vistas de Notas (C9).
+  { que: "ia · lo que salió", url: "ventana=principal&pantalla=ia&vista=salio" },
+  { que: "notas · durante", url: "ventana=principal&pantalla=notas&estado=durante" },
+  { que: "notas · al cerrar", url: "ventana=principal&pantalla=notas&estado=al-cerrar" },
+  { que: "notas · el archivo", url: "ventana=principal&pantalla=notas&estado=archivo" },
+  { que: "notas · exportar", url: "ventana=principal&pantalla=notas&estado=exportar" },
   { que: "banda · sugerencia", url: "ventana=banda&estado=sugerencia-local" },
 ];
 

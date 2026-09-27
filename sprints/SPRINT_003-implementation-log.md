@@ -268,3 +268,80 @@ El usuario las puede revocar:
 ### El permiso de Documentos (hecho mientras corría la CI de `c517af3`)
 - `NSDocumentsFolderUsageDescription` en el `Info.plist`, `en.lproj` y `es.lproj`. El gate `lo-que-macos-dira.test.ts` gana la clave. **Rojo:** con la clave en el gate y sin los textos, caen tres tests («falta NSDocumentsFolderUsageDescription … macOS mata la app al pedir ese permiso»).
 - **Mirada de TEXTO**, maquetada y no vista: va al bloque de textos del ⭐⭐. Dice: «Angel Ghost guarda en Documentos/Angel Ghost las notas que decides guardar, cifradas con una llave que no sale de este Mac. Nada del otro lado de la llamada se guarda.» / «Angel Ghost keeps the notes you choose to save in Documents/Angel Ghost, encrypted with a key that never leaves this Mac. Nothing from the other side of the call is saved.»
+
+### Mirada 19 — VEREDICTO (2026-09-27), registrado antes de construir encima
+
+Palabras del usuario, fila por fila:
+
+| # | Archivo · estado | Veredicto |
+|---|---|---|
+| 1 | `notas.html` · sprint 3 · durante | **aprobada** — «Muy bien el campo para escribir» |
+| 2 | `notas.html` · sprint 3 · el archivo | **aprobada** — «Excelentes opciones de retención y muy claros» |
+| 3 | `notas.html` · sprint 3 · exportar | **aprobada** — «Muy claro también el botón de cifrado y todos los componentes que muestran el cifrado» |
+| 4 | `ia.html` · sprint 3 · quién redacta | **aprobada** — «Está muy bueno y claro proveedores y demás», con una pregunta: *«no veo la opción que tú tomes el control si te necesito en algún momento, ya vives aquí, ¿no puedes tomar el control?»* |
+| 5 | `ia.html` · sprint 3 · lo que salió | **aprobada** — «Está bien el quién redacta» |
+
+**La pregunta de la fila 4 es la puerta local (C16, fase 4), y no cambia la mirada 19.** Se le contestó:
+- ya está dibujada en `ia.html` «Claude Code», un estado de la Etapa de Diseño;
+- puede buscar, reindexar, correr el kit, leer y cambiar preferencias, y abrir notas con Touch ID;
+- nace cerrada, **se cierra sola en reunión** (regla dura 9), nunca enciende el API y deja registro;
+- no maneja la pantalla.
+
+Su alcance exacto se decide en la **mirada 22** (cierre de la fase 3).
+
+### La pantalla, tras la mirada 19
+
+**Construido:**
+- **`src/pantallas/Notas.tsx`**, con tres vistas: «durante», «al cerrar» y «el archivo», este último con las preguntas de exportar y de borrar. La vista la decide el cuaderno; fuera de Tauri, la URL. Mientras Rust no contesta, no se pinta ninguna vista.
+- **`src/notas.ts`**: los hooks `useCuaderno` y `useReuniones` y las acciones, más las muestras de la maqueta.
+- **Rust:**
+  - doce comandos, cada uno de una línea en `lib.rs`, con la lógica en `reunion.rs`;
+  - ⌃⌥N (`ir_a_notas`: el cuaderno al frente, en tu nota) y ⌃⌥P (fijar), registrados;
+  - contadores de lo que muere (turnos del cliente y lecturas, solo el número);
+  - las fichas de pantalla y de ⌃⌥A también se fijan;
+  - `VistaDelCuaderno` gana `escuchando`, `previsto`, `turnosDelCliente` y `lecturas`, y entra `ListaDeReuniones`. `ContenidoDeReunion` sale del contrato: la maqueta no tiene «abrir» dentro de la app.
+- **Rail:** Notas encendida, y el chip dice «Cerrando…» mientras una reunión espera cierre.
+- **Honestidad:** vuelve la tarjeta de la Etapa de Diseño, sin cifras. Tras ⌥⎋ con notas: «Tus notas siguen ahí».
+- **Banda:** ⌃⌥P y ⌃⌥N dejan de estar «pendiente», en el producto y en la maqueta, y «Anotar para después» hace lo mismo que ⌃⌥N. La pregunta del cliente no se copia (regla dura 1).
+- **IA (B37, filas 4 y 5):** «Ver lo que salió · N» en la tarjeta del proveedor, solo si algo salió, y la vista con el texto exacto, `<del>` y el marcador, el contador y la tabla, con «← Quién redacta».
+- **Manual:** sección «Tus notas», el corte a 10 piezas, la pregunta frecuente de los turnos, los atajos ⌃⌥N y ⌃⌥P, «Ver lo que salió» y el historial.
+
+**Cada gate nuevo, con su rojo.** Todos volvieron a verde al restaurar.
+
+| Gate | Defecto plantado | Rojo |
+|---|---|---|
+| exportar pregunta antes | exportar al primer clic | «exportar pregunta antes, y solo el segundo botón exporta» |
+| sin parpadeo mientras Rust no contesta | pintar «el archivo» con el cuaderno en `null` | «mientras Rust no contesta no se pinta ninguna vista» |
+| el botón de «lo que salió» solo si algo salió | el botón siempre | «sin nada que enseñar no hay botón» |
+| lo reemplazado va tachado | `<s>` en vez de `<del>` | «el botón la cuenta y abre el texto exacto, con lo reemplazado tachado» |
+
+**Gates que se pusieron al día, porque el producto cambió de verdad:**
+- `banda-sin-promesas` pasa a siete teclas;
+- el rail tiene siete enlaces (unitario y e2e);
+- `capabilities` lee `notas.ts`;
+- la DEUDA del contrato, pagada entera: 25 campos de notas y 7 de B37;
+- `proteccion-de-captura` admite una sola llamada que enciende el flag.
+
+**Hallazgos durante la construcción, pagados:**
+- **Un doble del puente que mentía.** Al darse de baja borraba todos los oyentes del evento. Lo delató un test que no veía el aviso «cuaderno». Se arregló el doble.
+- **Un parpadeo del producto.** Notas pintaba «el archivo» un instante antes de «durante». Se arregló la pantalla.
+- **El campo de la nota no casaba con la fidelidad** (1,5 %). En la maqueta, los párrafos tomaban el tamaño y el color de `.tarjeta p` y no los 14,5 px de su caja. El campo real toma lo que se vio y se aprobó.
+- **Honestidad:** el icono de la papelera se quedaba solo en su línea, en la maqueta y en el producto (`flex-wrap: nowrap`). El chip del rail no estaba declarado para el estado del sprint 3. Tras el corte, la maqueta enseñaba la memoria llena y ahora dice 0 B. La franja «Tus notas siguen ahí» se queda en su titular para no salirse 13 px.
+- **«Borrar ahora» pregunta antes.** La maqueta aprobada borraba al primer clic. Es una forma nueva y va a la matriz del cierre.
+
+**Pruebas:**
+- **Unitarias:** `notas.test.tsx`, 10; `lo-que-salio.test.tsx`, 2.
+- **Fidelidad:** **136 encuadres**, 20 nuevos (Notas ×4 vistas, «lo que salió», Honestidad s3), ninguno sobre 0,15 %, sin desbordes ni errores de página.
+- **e2e:** 127, con axe en las cinco vistas nuevas. `maqueta-cabe` en verde.
+- **Totales:** vitest 276 · cargo 393 · clippy · lint · typecheck · efímero estático.
+
+**En vivo (`pnpm tauri dev`):**
+- Arranca con «⌃⌥N «anotar» registrado» y «⌃⌥P «fijar» registrado», y el barrido de lo vencido corre sin errores. Se cerró desde el menú: «soltar al salir … ventanas=0».
+- **Lo que necesita al usuario queda para las paradas del ⭐⭐:**
+  - Touch ID al exportar;
+  - el permiso de Documentos la primera vez;
+  - el archivo `.ghost` con 600 en `~/Documents/Angel Ghost/`;
+  - el cuaderno en negro en Meet;
+  - ⌃⌥N con el cursor al final.
+
+**Una frase que la fase 2 tiene que hacer verdad.** La pantalla dice, desde la maqueta aprobada: «se borra sola al vencer aunque no abras la app». Hoy borra al abrir la app y cada hora mientras está abierta; con la app cerrada, lo hará launchd, en la fase 2. El manual lo dice así, como limitación. Si la fase 2 no llegara, la frase sería falsa, y la casilla 4 de la auditoría la tiene que mirar.

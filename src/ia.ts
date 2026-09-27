@@ -1,3 +1,4 @@
+import { useT } from "./i18n";
 import { useEffect, useState } from "react";
 import { escuchar, hayTauri, preguntar } from "./puente";
 import type { Fuente } from "./ficha";
@@ -83,9 +84,37 @@ export type LoQueSalio = {
   usd: number | null;
 };
 
+/**
+ * Las tres peticiones de la maqueta (`ia.html`, «sprint 3 · lo que salió»), **fuera de Tauri**: lo que
+ * hace posible comparar la vista con la maqueta. Dentro del producto, lo que Rust anotó de verdad.
+ */
+export function useSalioDeMuestra(): LoQueSalio[] {
+  const m = useT().cuaderno.muestraSalio;
+  return [
+    {
+      hora: "14:22",
+      externo: "claude",
+      sobre: m.sobre1,
+      trozos: [
+        { que: "texto", texto: `Client: ${m.t1} ` },
+        { que: "tapado", marcador: "[CLIENTE_1]", original: "Páramo Azul" },
+        { que: "texto", texto: ` ${m.t2} ` },
+        { que: "tapado", marcador: "[PERSONA_1]", original: "Andrea Villalba" },
+        { que: "texto", texto: ` ${m.t3}` },
+      ],
+      caracteres: 412,
+      tapadas: 2,
+      usd: 0.004,
+    },
+    { hora: "14:16", externo: "claude", sobre: m.sobre2, trozos: [], caracteres: 377, tapadas: 3, usd: 0.003 },
+    { hora: "14:09", externo: "claude", sobre: m.sobre3, trozos: [], caracteres: 501, tapadas: 1, usd: null },
+  ];
+}
+
 /** Las peticiones de la reunión, de la más nueva a la más vieja. Se vuelve a pedir con cada `ia`. */
 export function useLoQueSalio(): LoQueSalio[] {
-  const [salio, setSalio] = useState<LoQueSalio[]>([]);
+  const muestra = useSalioDeMuestra();
+  const [salio, setSalio] = useState<LoQueSalio[]>(() => (hayTauri() ? [] : muestra));
   useEffect(() => {
     if (!hayTauri()) return;
     let vivo = true;

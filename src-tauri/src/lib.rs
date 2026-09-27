@@ -857,7 +857,19 @@ pub fn run() {
             borrar_clave_del_api,
             idiomas_de_pista,
             fijar_idioma_de_pista,
-            lo_que_salio_al_api
+            lo_que_salio_al_api,
+            cuaderno_de_la_reunion,
+            escribir_nota,
+            anotar_acuerdo,
+            conservar_mis_turnos,
+            guardar_la_reunion,
+            cerrar_sin_guardar,
+            reuniones_guardadas,
+            exportar_reunion,
+            borrar_reunion,
+            fijar_retencion,
+            elegir_carpeta_de_notas,
+            ir_a_notas
         ])
         .setup(|app| {
             // El invariante se comprueba ANTES de abrir nada y aborta el arranque si falla:
@@ -1095,7 +1107,11 @@ fn pedir_ficha(
     let a = ficha_vigente(&escucha_viva, &el_corpus, &la_pantalla);
     match &a {
         None => println!("[ficha] ⌃⌥A sin turno del cliente: todavía no hay nada que buscar"),
-        Some(a) => sintetizar(&app, a),
+        Some(a) => {
+            sintetizar(&app, a);
+            // La ficha de ⌃⌥A también se fija con ⌃⌥P: es la que la banda enseña ahora.
+            reunion::ver(&app, a);
+        }
     }
     a
 }
@@ -1532,6 +1548,8 @@ fn atender_la_pantalla<R: tauri::Runtime>(
     refuerzo: &pantalla::Refuerzo,
     origen: pantalla::Origen,
 ) {
+    // Para «Muere al cerrar»: una lectura más en esta reunión. Solo el número.
+    reunion::contar_una_lectura(app);
     let mut consulta = refuerzo.consulta();
     let aparicion = {
         let escucha = app.state::<LaEscucha>();
@@ -1553,6 +1571,7 @@ fn atender_la_pantalla<R: tauri::Runtime>(
             // **Sin sugerencia**, ni con `⌃⌥L`: una ficha de la pantalla no responde a ninguna
             // pregunta del cliente, y la sugerencia tomaría su último turno, que puede ser de hace
             // minutos y de otra cosa (auditoría del S2, B5).
+            reunion::ver(app, &a);
             let _ = app.emit(EVENTO_ESCUCHA, escucha::Novedad::Aparece(Box::new(a)));
         }
         None if origen == pantalla::Origen::Pedida => {
@@ -2213,6 +2232,97 @@ fn el_atajo_del_radar() -> tauri_plugin_global_shortcut::Shortcut {
     Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyR)
 }
 
+// ---------------------------------------------------------------------------------------------
+// Sprint 003, fase 1 — TUS NOTAS (C9, ADR 015). La lógica vive en `reunion.rs`; aquí, los comandos
+// que la pantalla de Notas llama, cada uno de una línea.
+// ---------------------------------------------------------------------------------------------
+
+/// El cuaderno de la reunión de ahora, para Notas (durante · al cerrar).
+#[tauri::command]
+fn cuaderno_de_la_reunion(app: tauri::AppHandle) -> Option<reunion::VistaDelCuaderno> {
+    reunion::vista(&app)
+}
+
+/// Tu nota entera, tal como está en el campo.
+#[tauri::command]
+fn escribir_nota(app: tauri::AppHandle, texto: String) {
+    reunion::escribir(&app, &texto);
+}
+
+/// Un acuerdo que escribiste y confirmaste con ↵.
+#[tauri::command]
+fn anotar_acuerdo(app: tauri::AppHandle, texto: String) -> bool {
+    reunion::acordar(&app, &texto)
+}
+
+/// «Conservar mis turnos», que además se recuerda para las reuniones siguientes.
+#[tauri::command]
+fn conservar_mis_turnos(app: tauri::AppHandle, si: bool) {
+    reunion::conservar_mis_turnos(&app, si);
+}
+
+/// «Guardar cifrado y cerrar».
+#[tauri::command]
+fn guardar_la_reunion(app: tauri::AppHandle) -> Result<Option<carpeta::Guardada>, String> {
+    reunion::guardar(&app)
+}
+
+/// «Cerrar sin guardar».
+#[tauri::command]
+fn cerrar_sin_guardar(app: tauri::AppHandle) {
+    reunion::descartar(&app);
+}
+
+/// Las reuniones guardadas, sin abrir ninguna: la lista solo lee cabeceras.
+#[tauri::command]
+fn reuniones_guardadas(app: tauri::AppHandle) -> reunion::ListaDeReuniones {
+    reunion::lista(&app)
+}
+
+/// «Exportar sin cifrado»: pide el desbloqueo y después dónde. `false` si cancelaste el diálogo.
+/// Síncrono a propósito, como `elegir_carpeta`: corre en el pool de Tauri y esperar al usuario no
+/// congela la ventana.
+#[tauri::command]
+fn exportar_reunion(app: tauri::AppHandle, archivo: String, idioma: String) -> Result<bool, String> {
+    reunion::exportar(&app, &archivo, &idioma)
+}
+
+/// «Borrar ahora».
+#[tauri::command]
+fn borrar_reunion(app: tauri::AppHandle, archivo: String) -> Result<(), String> {
+    reunion::borrar(&app, &archivo)
+}
+
+/// «Cuánto viven tus notas».
+#[tauri::command]
+fn fijar_retencion(app: tauri::AppHandle, retencion: prefs::Retencion) {
+    reunion::fijar_retencion(&app, retencion);
+}
+
+/// Si macOS negó Documentos: otra carpeta para tus notas.
+#[tauri::command]
+fn elegir_carpeta_de_notas(app: tauri::AppHandle) -> Option<String> {
+    reunion::elegir_otra_carpeta(&app)
+}
+
+/// «Anotar para después» en la banda: lo mismo que `⌃⌥N`.
+#[tauri::command]
+fn ir_a_notas(app: tauri::AppHandle) {
+    reunion::ir_a_notas(&app);
+}
+
+/// `⌃⌥N` — el cuaderno al frente, en tu nota.
+fn el_atajo_de_anotar() -> tauri_plugin_global_shortcut::Shortcut {
+    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
+    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyN)
+}
+
+/// `⌃⌥P` — fijar la ficha que la banda enseña.
+fn el_atajo_de_fijar() -> tauri_plugin_global_shortcut::Shortcut {
+    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
+    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyP)
+}
+
 /// El botón «Ver qué alcanza a ver» de la banda ampliada: lo mismo que `⌃⌥R`.
 #[tauri::command]
 fn abrir_lo_que_ve(app: tauri::AppHandle) {
@@ -2260,6 +2370,10 @@ fn atender_el_atajo<R: tauri::Runtime>(
     } else if *atajo == el_atajo_del_radar() {
         println!("[radar] ⌃⌥R");
         ir_a_lo_que_ve(app);
+    } else if *atajo == el_atajo_de_anotar() {
+        reunion::ir_a_notas(app);
+    } else if *atajo == el_atajo_de_fijar() {
+        reunion::fijar(app);
     } else if *atajo == el_atajo_de_callar() {
         let estado = app.state::<LaVozQueSale>();
         estado.voz.callar();
@@ -2316,6 +2430,20 @@ fn registrar_el_kill_switch<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
         Err(e) => println!(
             "[pantalla] NO se pudo registrar ⌃⌥L ({e}): la lectura a petición no va a responder \
              a la tecla; la automática sigue en el interruptor de Sesión"
+        ),
+    }
+    match app.global_shortcut().register(el_atajo_de_anotar()) {
+        Ok(()) => println!("[notas] ⌃⌥N «anotar» registrado"),
+        Err(e) => println!(
+            "[notas] NO se pudo registrar ⌃⌥N ({e}): tu nota sigue en Notas, en el cuaderno, pero \
+             la tecla no te va a llevar"
+        ),
+    }
+    match app.global_shortcut().register(el_atajo_de_fijar()) {
+        Ok(()) => println!("[notas] ⌃⌥P «fijar» registrado"),
+        Err(e) => println!(
+            "[notas] NO se pudo registrar ⌃⌥P ({e}): la ficha de la banda no se va a poder fijar \
+             con la tecla"
         ),
     }
 }
@@ -2492,6 +2620,8 @@ mod pruebas_de_las_teclas {
             (el_atajo_del_modo_de_voz(), Code::KeyV),
             (el_atajo_de_leer_la_pantalla(), Code::KeyL),
             (el_atajo_del_radar(), Code::KeyR),
+            (el_atajo_de_anotar(), Code::KeyN),
+            (el_atajo_de_fijar(), Code::KeyP),
         ];
         for (atajo, tecla) in esperadas {
             assert_eq!(atajo, Shortcut::new(control_opcion, tecla), "{tecla:?} no es ⌃⌥");
@@ -2512,6 +2642,8 @@ mod pruebas_de_las_teclas {
             el_atajo_de_leer_la_pantalla(),
             el_atajo_del_radar(),
             el_atajo_de_callar(),
+            el_atajo_de_anotar(),
+            el_atajo_de_fijar(),
         ];
         for (i, a) in todas.iter().enumerate() {
             for b in &todas[i + 1..] {

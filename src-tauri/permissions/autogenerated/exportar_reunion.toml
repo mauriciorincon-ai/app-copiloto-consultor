@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-exportar-reunion"
+description = "Enables the exportar_reunion command without any pre-configured scope."
+commands.allow = ["exportar_reunion"]
+
+[[permission]]
+identifier = "deny-exportar-reunion"
+description = "Denies the exportar_reunion command without any pre-configured scope."
+commands.deny = ["exportar_reunion"]

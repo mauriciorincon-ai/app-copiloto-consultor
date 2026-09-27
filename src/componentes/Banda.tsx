@@ -16,6 +16,7 @@ import {
 } from "../cuaderno";
 import type { Sugerencia } from "../ia";
 import { abrirLoQueVe, type Programa } from "../radar";
+import { irANotas } from "../notas";
 
 /**
  * LA BANDA — la forma principal de Angel Ghost durante una reunión.
@@ -267,9 +268,8 @@ export function Banda({
 
   const atajosDeFicha = (
     <span className="atajos-b">
-      <span className="tecla pendiente">
+      <span className="tecla">
         <kbd>⌃⌥P</kbd> {t.fijar}
-        <span className="sr"> · {tc.todaviaNo}</span>
       </span>
       <span className="tecla">
         <kbd>⌃⌥T</kbd> {t.transcript}
@@ -482,9 +482,8 @@ export function Banda({
                 </span>
                 {fuenteDe(sugerencia.ficha.fuente)}
                 <span className="atajos-b">
-                  <span className="tecla pendiente">
+                  <span className="tecla">
                     <kbd>⌃⌥P</kbd> {t.fijar}
-                    <span className="sr"> · {tc.todaviaNo}</span>
                   </span>
                   <span className="tecla">
                     <kbd>⌥⎋</kbd>
@@ -639,9 +638,8 @@ export function Banda({
               {transcript && <Transcript turnos={turnos} />}
               {transcript ? (
                 <span className="atajos-b">
-                  <span className="tecla pendiente">
+                  <span className="tecla">
                     <kbd>⌃⌥P</kbd> {t.fijar}
-                    <span className="sr"> · {tc.todaviaNo}</span>
                   </span>
                   <span className="tecla">
                     <kbd>⌥⎋</kbd>
@@ -702,8 +700,9 @@ export function Banda({
                       <Ic id="i-buscar" s />
                       {t.buscarOtras} <kbd className="tecla">⌃⌥A</kbd>
                     </button>
-                    {/* Anotar llega con las notas (sprint 003): se ve, y se ve apagado. */}
-                    <button className="btn mini" type="button" disabled title={tc.todaviaNo}>
+                    {/* Lo mismo que ⌃⌥N: el cuaderno al frente, en tu nota, para escribirlo con tus
+                        palabras. La pregunta del cliente NO se copia: es su transcript (regla dura 1). */}
+                    <button className="btn mini" type="button" onClick={irANotas}>
                       <Ic id="i-nota" s />
                       {t.anotarDespues} <kbd className="tecla">⌃⌥N</kbd>
                     </button>
@@ -730,9 +729,8 @@ export function Banda({
                     <span className="tecla">
                       <kbd>⌃⌥A</kbd> {t.otrasPalabras}
                     </span>
-                    <span className="tecla pendiente">
+                    <span className="tecla">
                       <kbd>⌃⌥N</kbd> {t.anotar}
-                      <span className="sr"> · {tc.todaviaNo}</span>
                     </span>
                     <span className="tecla">
                       <kbd>⌥⎋</kbd>

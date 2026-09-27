@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-reuniones-guardadas"
+description = "Enables the reuniones_guardadas command without any pre-configured scope."
+commands.allow = ["reuniones_guardadas"]
+
+[[permission]]
+identifier = "deny-reuniones-guardadas"
+description = "Denies the reuniones_guardadas command without any pre-configured scope."
+commands.deny = ["reuniones_guardadas"]

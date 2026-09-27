@@ -1,13 +1,18 @@
 import { useIdioma, useT, type Idioma } from "../i18n";
 import { Ic } from "../componentes/Iconos";
-import { TodaviaNo, PILA } from "../componentes/Ventana";
+import { useEffect, useState } from "react";
+import { PILA } from "../componentes/Ventana";
 import { cortarTodo, type EstadoDeEscucha, usePantalla, usePiezasDelCorte } from "../cuaderno";
 import { EXTERNOS, useIa } from "../ia";
+import { useCuaderno, useMuestraDelCuaderno, useReuniones } from "../notas";
+import { escuchar } from "../puente";
 
 /**
  * HONESTIDAD — «Qué vive en la memoria ahora mismo y qué salió de tu equipo».
  *
- * Referencia: `docs/diseno/honestidad.html`, estado **«así se ve hoy · sprint 2»** (mirada 17-quater).
+ * Referencia: `docs/diseno/honestidad.html`, estado **«así se ve hoy · sprint 3»**: el del sprint 2
+ * (mirada 17-quater) con «Lo que quedará cuando cierres» de vuelta a la tarjeta que aprobó la Etapa de
+ * Diseño —dónde vive, qué es tuyo y qué muere—, y tras ⌥⎋ con notas, «Tus notas siguen ahí».
  *
  * **La fila del último cuadro dejó de decir «todavía no»** en el sprint 002: la pantalla ya se lee
  * (C8), y lo que queda en memoria —el último cuadro y lo que se sacó de él— se cuenta aquí y en el
@@ -36,6 +41,13 @@ export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoD
   const corte = usePiezasDelCorte();
   const pantalla = usePantalla();
   const [ia] = useIa();
+  const tn = useT().notas;
+  const [lista] = useReuniones();
+  const [cuaderno] = useCuaderno(useMuestraDelCuaderno("archivo"));
+  // Tras ⌥⎋ con una reunión abierta —es decir, con algo tuyo escrito—, la franja de la Etapa de
+  // Diseño: el corte no toca tus notas.
+  const [cortado, setCortado] = useState(false);
+  useEffect(() => escuchar("corte", () => setCortado(true)), []);
   const cortadas = corte.piezas.filter(([, suerte]) => suerte === "cortada").length;
   const [cifra, unidad = "B"] = bytes.split(" ");
   // Las cifras se formatean **aquí**, con el separador decimal del idioma. Lo nativo las mandaba
@@ -68,6 +80,15 @@ export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoD
       </div>
 
       <div style={PILA}>
+        {cortado && cuaderno?.abierta && (
+          <div className="franja ok" role="status">
+            <Ic id="i-check-circle" relleno />
+            <div>
+              {/* Solo el titular: con el detalle, la pantalla se salía 13 px de su ventana. */}
+              <strong>{tn.siguenAhi}</strong>
+            </div>
+          </div>
+        )}
         <div className="grid-2" style={{ gridTemplateColumns: "1.25fr 1fr" }}>
           <div className="tarjeta" style={{ paddingBottom: "4px" }}>
             <div className="fila">
@@ -142,14 +163,30 @@ export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoD
           </div>
         </div>
 
-        <div className="tarjeta pendiente">
+        <div className="tarjeta">
           <div className="fila">
             <h2 className="seccion crece" style={{ margin: 0 }}>
               {t.loQueQuedara}
             </h2>
-            <TodaviaNo />
+            <span className="mono" style={{ color: "var(--ink-2)" }}>
+              {lista.carpeta ?? tn.carpetaDeFabrica}
+            </span>
           </div>
-          <p>{t.loQueQuedaraDetalle}</p>
+          {/* Sin salto: con la frase larga, el icono se quedaba solo en su línea (se vio en la
+              fidelidad del sprint 003, en la maqueta y en el producto a la vez). */}
+          <div className="fila" style={{ flexWrap: "nowrap" }}>
+            <Ic id="i-nota" s color="var(--ok)" />
+            <span className="crece">
+              <b>{tn.tuyo}</b> {tn.tuyoDetalle}
+            </span>
+          </div>
+          <div className="fila" style={{ flexWrap: "nowrap" }}>
+            <Ic id="i-basura" s color="var(--mute)" />
+            <span className="crece" style={{ color: "var(--ink-2)" }}>
+              <b>{tn.deCliente}</b> {tn.delClienteDetalle} <b>{tn.mueren}</b>
+              {tn.yElAudio}
+            </span>
+          </div>
         </div>
       </div>
     </>

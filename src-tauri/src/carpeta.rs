@@ -128,10 +128,14 @@ impl Carpeta {
     }
 
     fn nombre_libre(&self, base: &str) -> Result<String, String> {
+        self.nombre_para(base).ok_or_else(|| "no queda un nombre libre para esta reunión".into())
+    }
+
+    /// El nombre que tendría una reunión guardada ahora con esta `base`: el primero libre.
+    pub fn nombre_para(&self, base: &str) -> Option<String> {
         (1..1000)
             .map(|n| if n == 1 { format!("{base}.{EXTENSION}") } else { format!("{base}-{n}.{EXTENSION}") })
             .find(|nombre| nombre_valido(nombre) && !self.raiz.join(nombre).exists())
-            .ok_or_else(|| "no queda un nombre libre para esta reunión".into())
     }
 
     /// Las reuniones guardadas, la más reciente primero. Solo se lee la cabecera: **sin la llave**.

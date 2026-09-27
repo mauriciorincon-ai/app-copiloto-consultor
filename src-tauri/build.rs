@@ -41,6 +41,18 @@ const COMANDOS: &[&str] = &[
         "idiomas_de_pista",
         "fijar_idioma_de_pista",
         "lo_que_salio_al_api",
+        "cuaderno_de_la_reunion",
+        "escribir_nota",
+        "anotar_acuerdo",
+        "conservar_mis_turnos",
+        "guardar_la_reunion",
+        "cerrar_sin_guardar",
+        "reuniones_guardadas",
+        "exportar_reunion",
+        "borrar_reunion",
+        "fijar_retencion",
+        "elegir_carpeta_de_notas",
+        "ir_a_notas",
 ];
 
 fn main() {

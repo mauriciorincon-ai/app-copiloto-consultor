@@ -467,8 +467,10 @@ pub fn muestras() -> Vec<Muestra> {
             cliente: "en-US".into(),
         }),
         // ---- tus notas (C9, sprint 003, fase 1, ADR 015) -------------------------------------
-        // Cuatro comandos que la pantalla de Notas lee: el cuaderno de ahora, la lista de reuniones
-        // guardadas, lo que devuelve guardar y una reunión abierta. Con datos de la maqueta.
+        // Tres comandos que la pantalla de Notas lee: el cuaderno de ahora (durante · al cerrar), la
+        // lista de reuniones guardadas y lo que devuelve guardar. Con datos de la maqueta. El contenido
+        // descifrado de una reunión NO cruza: la maqueta no tiene «abrir» dentro de la app —se lee
+        // exportándola, con su aviso—, y lo que no cruza no se declara.
         m("VISTA_DEL_CUADERNO", "VistaDelCuaderno", "./notas", &{
             let mut c = crate::notas::Cuaderno::nuevo(false);
             c.escribir("Piden la cuarta fuente (Excel de logística).\nFecha real: 12 semanas desde la firma.");
@@ -482,6 +484,15 @@ pub fn muestras() -> Vec<Muestra> {
                 resumen: c.resumen(),
                 conservar_mis_turnos: false,
                 abierta: true,
+                escuchando: false,
+                previsto: Some(crate::reunion::Previsto {
+                    fecha: "2026-09-20".into(),
+                    minutos: 47,
+                    cliente: None,
+                    archivo: "reunion-2026-09-20-1402.ghost".into(),
+                }),
+                turnos_del_cliente: 63,
+                lecturas: 9,
                 retencion: crate::prefs::Retencion::Dias90,
             }
         }),
@@ -503,25 +514,13 @@ pub fn muestras() -> Vec<Muestra> {
             bytes: 22_528,
             vence: 1_797_676_000,
         }),
-        m("CONTENIDO_DE_REUNION", "ContenidoDeReunion", "./notas", &{
-            let mut c = crate::notas::Cuaderno::nuevo(true);
-            c.escribir("Piden la cuarta fuente.");
-            c.acordar("Cuarta fuente: cotización aparte");
-            c.ver(ficha_fijada());
-            c.fijar_la_vigente();
-            c.oir(&crate::stt::Turno {
-                pista: crate::capture::Pista::Microfono,
-                desde_ms: 0,
-                hasta_ms: 3_000,
-                texto: "Te envío la cotización el lunes.".into(),
-                hora: "14:05".into(),
-                eco: false,
-            });
-            c.contenido(crate::notas::Encabezado {
-                empezo: "2026-09-20 14:02".into(),
-                minutos: 47,
-                cliente: Some("Páramo Azul".into()),
-            })
+        m("LISTA_DE_REUNIONES", "ListaDeReuniones", "./notas", &crate::reunion::ListaDeReuniones {
+            carpeta: None,
+            reuniones: Vec::new(),
+        }),
+        m("LISTA_EN_OTRA_CARPETA", "ListaDeReuniones", "./notas", &crate::reunion::ListaDeReuniones {
+            carpeta: Some("~/Notas de reuniones".into()),
+            reuniones: Vec::new(),
         }),
         m("QUE_SABE_TRANSCRIBIR", "QueSabeTranscribir", "./cuaderno", &crate::QueSabeTranscribir {
             motor: "apple-speechanalyzer",

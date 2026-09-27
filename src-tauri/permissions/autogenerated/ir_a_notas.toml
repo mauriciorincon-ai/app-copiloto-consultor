@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-ir-a-notas"
+description = "Enables the ir_a_notas command without any pre-configured scope."
+commands.allow = ["ir_a_notas"]
+
+[[permission]]
+identifier = "deny-ir-a-notas"
+description = "Denies the ir_a_notas command without any pre-configured scope."
+commands.deny = ["ir_a_notas"]

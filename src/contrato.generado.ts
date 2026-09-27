@@ -15,7 +15,7 @@ import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida,
 import type { EnTuMac } from "./radar";
 import type { EstadoDeLaIa, PorQueNoRedacta, LoQueSalio } from "./ia";
 import type { EstadoDelAcople } from "./acople";
-import type { VistaDelCuaderno, ReunionGuardada, Guardada, ContenidoDeReunion } from "./notas";
+import type { VistaDelCuaderno, ReunionGuardada, Guardada, ListaDeReuniones } from "./notas";
 
 export const NOVEDAD_EMPIEZA: Novedad = {
     "que": "empieza"
@@ -473,6 +473,7 @@ export const VISTA_DEL_CUADERNO: VistaDelCuaderno = {
       "Cuarta fuente: cotización aparte"
     ],
     "conservarMisTurnos": false,
+    "escuchando": false,
     "fijadas": [
       {
         "documento": "Propuesta Páramo Azul",
@@ -481,7 +482,14 @@ export const VISTA_DEL_CUADERNO: VistaDelCuaderno = {
         "unidad": "propuesta"
       }
     ],
+    "lecturas": 9,
     "nota": "Piden la cuarta fuente (Excel de logística).\nFecha real: 12 semanas desde la firma.",
+    "previsto": {
+      "archivo": "reunion-2026-09-20-1402.ghost",
+      "cliente": null,
+      "fecha": "2026-09-20",
+      "minutos": 47
+    },
     "resumen": {
       "acuerdos": 1,
       "bytesAcuerdos": 33,
@@ -492,7 +500,8 @@ export const VISTA_DEL_CUADERNO: VistaDelCuaderno = {
       "parrafos": 2,
       "turnos": 0
     },
-    "retencion": "90d"
+    "retencion": "90d",
+    "turnosDelCliente": 63
   };
 
 export const REUNION_GUARDADA: ReunionGuardada = {
@@ -515,29 +524,14 @@ export const REUNION_GUARDADA_AHORA: Guardada = {
     "vence": 1797676000
   };
 
-export const CONTENIDO_DE_REUNION: ContenidoDeReunion = {
-    "acuerdos": [
-      "Cuarta fuente: cotización aparte"
-    ],
-    "cliente": "Páramo Azul",
-    "empezo": "2026-09-20 14:02",
-    "fijadas": [
-      {
-        "documento": "Propuesta Páramo Azul",
-        "seccion": "§3.2",
-        "titular": "Limpieza de datos: hasta tres fuentes",
-        "unidad": "propuesta"
-      }
-    ],
-    "minutos": 47,
-    "misTurnos": [
-      {
-        "hora": "14:05",
-        "texto": "Te envío la cotización el lunes."
-      }
-    ],
-    "nota": "Piden la cuarta fuente.",
-    "version": 1
+export const LISTA_DE_REUNIONES: ListaDeReuniones = {
+    "carpeta": null,
+    "reuniones": []
+  };
+
+export const LISTA_EN_OTRA_CARPETA: ListaDeReuniones = {
+    "carpeta": "~/Notas de reuniones",
+    "reuniones": []
   };
 
 export const QUE_SABE_TRANSCRIBIR: QueSabeTranscribir = {
