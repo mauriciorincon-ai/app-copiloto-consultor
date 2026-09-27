@@ -620,3 +620,12 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .tabla .elegir { appearance: none; -webkit-appearance: none; background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
 .tabla .elegir:hover { text-decoration: underline dotted; }
 .tabla .elegir:focus-visible { outline: 2px solid var(--halo); outline-offset: 2px; }
+
+/* Sprint 003, fase 3 — «Este cliente» (ADR 017): el selector, lo que el informe no verificó, el aviso
+   legal y la cláusula. */
+.selector { font: inherit; font-size: var(--t-meta); font-weight: 500; color: var(--ink); background: var(--surface-2); border: var(--borde) solid var(--line-2); border-radius: var(--r-chip); padding: 2px 6px; max-width: 180px; }
+.bandera .pendiente { font-size: 11px; color: var(--ink-2); }
+.aviso-legal, .tarjeta p.aviso-legal { font-size: 11px; color: var(--ink-2); }
+.pregunta-nda { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: var(--borde) solid var(--line-2); border-left: 3px solid var(--halo); background: var(--surface); border-radius: var(--r-chip); font-size: var(--t-meta); font-weight: 600; color: var(--ink); }
+.pregunta-nda .ic { color: var(--halo); flex: 0 0 auto; }
+.tarjeta p.clausula { font-family: var(--font-evidencia); font-size: 12.5px; line-height: 1.45; color: var(--ink); }

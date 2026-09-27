@@ -110,7 +110,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
   border-color: var(--line-2);
   border-style: dashed;
 }
+.pendiente { color: var(--mute); }
 .pendiente .ic { opacity: .75; }
+.tarjeta.pendiente {
+  border-style: dashed;
+  border-color: var(--line-2);
+  background: transparent;
+}
+.tarjeta.pendiente .seccion { color: var(--mute); }
 .franja .ic { margin-top: 1px; }
 .franja.warn { border-color: var(--warn); background: var(--warn-tint); }
 .franja.warn .ic { color: var(--warn); }
@@ -119,6 +126,13 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .franja.ok .ic { color: var(--ok); }
 .franja.mute { border-color: var(--line-2); background: var(--surface-2); }
 .franja.mute .ic { color: var(--ink-2); }
+.tecla.pendiente { color: var(--mute); }
+.tecla.pendiente kbd { color: var(--mute); border-style: dashed; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: var(--r-chip); border: var(--borde) solid var(--line-2); background: var(--surface-2); color: var(--ink); font-size: var(--t-meta); font-weight: 500; transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease); }
+.btn:hover { border-color: var(--halo); }
+.btn.primario { border-color: var(--halo); background: var(--halo-tint); color: var(--halo); }
+.btn.mini { padding: 2px 7px; font-size: var(--t-mono); }
 .barra .pistas .pista.off .ic { opacity: .75; }
 .ficha .fuente { display: flex; align-items: center; gap: 6px; margin-top: 1px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; }
 .ficha .fuente .unidad { padding: 0 5px; border-radius: 3px; background: var(--surface-2); color: var(--ink-2); font-family: var(--font-ui); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; line-height: 15px; }
@@ -127,7 +141,12 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .pie .cliente.ok { color: var(--ok); }
 .pie .cliente.warn { color: var(--warn); }
 .rail .marca .ic { color: var(--halo); }
+.fila { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .fila > .ic { flex: 0 0 auto; }
+.fila .crece { flex: 1 1 auto; min-width: 0; }
+.conm .etq { display: inline-flex; align-items: center; gap: 5px; }
+.conm.on .etq { color: var(--ok); }
+.conm.off .etq { color: var(--mute); }
 .permiso .ic { width: 20px; height: 20px; color: var(--ink-2); }
 .bandera { display: grid; grid-template-columns: 20px 1fr; gap: 3px 10px; padding: 10px 12px; border: var(--borde) solid var(--line); border-radius: var(--r-ficha); background: var(--surface); font-size: var(--t-meta); }
 .bandera .ic { width: 18px; height: 18px; margin-top: 1px; grid-column: 1; }
@@ -140,6 +159,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .bandera.riesgo-medio { border-left: 3px solid var(--warn); }
 .bandera.riesgo-alto { border-left: 3px solid var(--err); }
 .bandera.desconocida { border-left: 3px solid var(--line-2); }
+.contador .etq { font-size: var(--t-meta); color: var(--ink-2); }
 .buffer .ic { color: var(--ink-2); }
 .buffer .donde { grid-column: 2; color: var(--ink-2); font-size: 11.5px; }
 .banda .sugerencia-b .ic { flex: 0 0 auto; color: var(--halo); align-self: center; }
@@ -159,12 +179,20 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .cuenta .ic { flex: 0 0 auto; color: var(--halo); }
 .cuenta.vencida .ic, .cuenta.vencida .reloj { color: var(--ink-2); }
 .franja .ventanas .op .ic { color: inherit; }
+.selector { font: inherit; font-size: var(--t-meta); font-weight: 500; color: var(--ink); background: var(--surface-2); border: var(--borde) solid var(--line-2); border-radius: var(--r-chip); padding: 2px 6px; max-width: 180px; }
+.bandera .pendiente { font-size: 11px; color: var(--ink-2); }
+.pregunta-nda .ic { color: var(--halo); flex: 0 0 auto; }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
+.mq-relleno .mini { position: relative; height: 158px; border: 1px solid #3a3e46; border-radius: 8px; overflow: hidden; background: linear-gradient(150deg, #2b3550 0%, #3a3350 55%, #4a3a44 100%); }
 .mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
 @media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
 .k-sec > p.regla { font-size: var(--t-ui); color: var(--ink-2); max-width: 78ch; }
 .k-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
 .k-grid.ancha { grid-template-columns: 1fr; }
+.k-item { display: flex; flex-direction: column; gap: 6px; }
+.k-item > .etq { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.k-marco { padding: 12px; border: 1px dashed var(--line-2); border-radius: var(--r-ficha); }
+.k-marco.panelito { width: 100%; max-width: 380px; }
 .k-grid.fichas { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
 .prohibido li .ic { color: var(--err); }
 /* marco de exhibición del bundle */
@@ -208,6 +236,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
     <div class="bandera riesgo-medio"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde"><span lang="es">Unión Europea (GDPR)</span><span lang="en">European Union (GDPR)</span> <span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"></use></svg><span lang="es">riesgo medio</span><span lang="en">medium risk</span></span></div><div class="regla"><span lang="es">Es tratamiento aunque sea efímero; deber de información (art. 13).</span><span lang="en">It is processing even if ephemeral; duty to inform (art. 13).</span></div><div class="implica"><span lang="es">Informa a nivel de encargo; sin emociones, sin audio a la nube.</span><span lang="en">Inform at engagement level; no emotions, no audio to the cloud.</span></div><div class="fuente">GDPR art. 4(2), 13 · EDPB 1/2024 · 2026-09-17</div></div>
     <div class="bandera desconocida"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde"><span lang="es">Jurisdicción no indicada</span><span lang="en">Jurisdiction not set</span> <span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">sin bandera</span><span lang="en">no flag</span></span></div><div class="regla"><span lang="es">Indica dónde está la contraparte en la ficha del cliente.</span><span lang="en">Set where the other party is in the client file.</span></div><div class="implica"><span lang="es">Mientras tanto, la app funciona igual.</span><span lang="en">Meanwhile, the app works the same.</span></div><div class="fuente">—</div></div>
   </div>
+  <!-- Sprint 003, fase 3 (ADR 017; maquetado, no visto): las dos variantes que el catálogo añadió —la
+       jurisdicción que no trae, y la fila que el informe no pudo verificar— y la cláusula copiada. -->
+  <div class="k-grid">
+    <div class="bandera desconocida"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde"><span lang="es">«Bolivia» no está en el catálogo v1</span><span lang="en">“Bolivia” is not in the catalog v1</span> <span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">sin bandera</span><span lang="en">no flag</span></span></div><div class="regla"><span lang="es">Escríbela como la nombra el catálogo, o consulta a un abogado.</span><span lang="en">Write it the way the catalog names it, or check with a lawyer.</span></div><div class="implica"><span lang="es">Mientras tanto, la app funciona igual.</span><span lang="en">Meanwhile, the app works the same.</span></div><div class="fuente">—</div></div>
+    <div class="bandera desconocida"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde"><span lang="es">EE. UU. · Missouri</span><span lang="en">USA · Missouri</span> <span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">sin verificar</span><span lang="en">unverified</span></span></div><div class="regla"><span lang="es">El informe lo nombra entre los de regla mixta, sin verificar su estatuto.</span><span lang="en">The report lists it as mixed, without verifying its statute.</span></div><div class="implica"><span lang="es">Consúltalo con un abogado antes de la reunión: la app no afirma nada aquí.</span><span lang="en">Check with a lawyer before the meeting: the app asserts nothing here.</span></div><div class="fuente">RCFP Reporter’s Recording Guide · 2026-09-17</div><div class="pendiente"><span lang="es">Sin verificar: su estatuto no está en el informe</span><span lang="en">Unverified: its statute is not in the report</span></div></div>
+    <div class="bandera riesgo-medio"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde"><span lang="es">Unión Europea (GDPR)</span><span lang="en">European Union (GDPR)</span> <span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"></use></svg><span lang="es">riesgo medio</span><span lang="en">medium risk</span></span> <span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span lang="es">riesgo bajo</span><span lang="en">low risk</span></span></div><div class="regla"><span lang="es">Los cinco riesgos del catálogo: bajo, bajo-medio, medio, medio-alto y sin verificar.</span><span lang="en">The catalog’s five risks: low, low-medium, medium, medium-high and unverified.</span></div><div class="fuente">—</div></div>
+    <div class="k-item"><span class="etq"><span lang="es">el selector «Este cliente»: Sin elegir · Páramo Azul · Sur del Valle</span><span lang="en">the “This client” selector: Not chosen · Páramo Azul · Sur del Valle</span></span><div class="k-marco fila"><select class="selector" aria-label="Este cliente"><option>Sin elegir</option><option selected="">Páramo Azul</option><option>Sur del Valle</option></select></div></div>
+    <div class="k-item"><span class="etq"><span lang="es">cláusula de encargo, recién copiada</span><span lang="en">engagement clause, just copied</span></span><div class="k-marco fila"><button class="btn mini"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span lang="es">Copiada</span><span lang="en">Copied</span></button></div></div>
+  </div>
       </div>
     </section>
     <section class="tema claro">
@@ -218,6 +255,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
     <div class="bandera riesgo-alto"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde"><span lang="es">EE. UU. · Florida (todas las partes)</span><span lang="en">USA · Florida (all-party)</span> <span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"></use></svg><span lang="es">riesgo medio-alto</span><span lang="en">medium-high risk</span></span></div><div class="regla"><span lang="es">Exige consentimiento de todas las partes; sin precedente para transcripción local.</span><span lang="en">Requires all-party consent; no precedent for local transcription.</span></div><div class="implica"><span lang="es">Sugerido: aviso de una línea al cliente o modo solo notas.</span><span lang="en">Suggested: one-line notice to the client or notes-only mode.</span></div><div class="fuente">Fla. Stat. § 934.03 · 2026-09-17</div></div>
     <div class="bandera riesgo-medio"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde"><span lang="es">Unión Europea (GDPR)</span><span lang="en">European Union (GDPR)</span> <span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"></use></svg><span lang="es">riesgo medio</span><span lang="en">medium risk</span></span></div><div class="regla"><span lang="es">Es tratamiento aunque sea efímero; deber de información (art. 13).</span><span lang="en">It is processing even if ephemeral; duty to inform (art. 13).</span></div><div class="implica"><span lang="es">Informa a nivel de encargo; sin emociones, sin audio a la nube.</span><span lang="en">Inform at engagement level; no emotions, no audio to the cloud.</span></div><div class="fuente">GDPR art. 4(2), 13 · EDPB 1/2024 · 2026-09-17</div></div>
     <div class="bandera desconocida"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde"><span lang="es">Jurisdicción no indicada</span><span lang="en">Jurisdiction not set</span> <span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">sin bandera</span><span lang="en">no flag</span></span></div><div class="regla"><span lang="es">Indica dónde está la contraparte en la ficha del cliente.</span><span lang="en">Set where the other party is in the client file.</span></div><div class="implica"><span lang="es">Mientras tanto, la app funciona igual.</span><span lang="en">Meanwhile, the app works the same.</span></div><div class="fuente">—</div></div>
+  </div>
+  <!-- Sprint 003, fase 3 (ADR 017; maquetado, no visto): las dos variantes que el catálogo añadió —la
+       jurisdicción que no trae, y la fila que el informe no pudo verificar— y la cláusula copiada. -->
+  <div class="k-grid">
+    <div class="bandera desconocida"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde"><span lang="es">«Bolivia» no está en el catálogo v1</span><span lang="en">“Bolivia” is not in the catalog v1</span> <span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">sin bandera</span><span lang="en">no flag</span></span></div><div class="regla"><span lang="es">Escríbela como la nombra el catálogo, o consulta a un abogado.</span><span lang="en">Write it the way the catalog names it, or check with a lawyer.</span></div><div class="implica"><span lang="es">Mientras tanto, la app funciona igual.</span><span lang="en">Meanwhile, the app works the same.</span></div><div class="fuente">—</div></div>
+    <div class="bandera desconocida"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde"><span lang="es">EE. UU. · Missouri</span><span lang="en">USA · Missouri</span> <span class="estado mute"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">sin verificar</span><span lang="en">unverified</span></span></div><div class="regla"><span lang="es">El informe lo nombra entre los de regla mixta, sin verificar su estatuto.</span><span lang="en">The report lists it as mixed, without verifying its statute.</span></div><div class="implica"><span lang="es">Consúltalo con un abogado antes de la reunión: la app no afirma nada aquí.</span><span lang="en">Check with a lawyer before the meeting: the app asserts nothing here.</span></div><div class="fuente">RCFP Reporter’s Recording Guide · 2026-09-17</div><div class="pendiente"><span lang="es">Sin verificar: su estatuto no está en el informe</span><span lang="en">Unverified: its statute is not in the report</span></div></div>
+    <div class="bandera riesgo-medio"><svg class="ic"><use href="#i-globo"></use></svg><div class="donde"><span lang="es">Unión Europea (GDPR)</span><span lang="en">European Union (GDPR)</span> <span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"></use></svg><span lang="es">riesgo medio</span><span lang="en">medium risk</span></span> <span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span lang="es">riesgo bajo</span><span lang="en">low risk</span></span></div><div class="regla"><span lang="es">Los cinco riesgos del catálogo: bajo, bajo-medio, medio, medio-alto y sin verificar.</span><span lang="en">The catalog’s five risks: low, low-medium, medium, medium-high and unverified.</span></div><div class="fuente">—</div></div>
+    <div class="k-item"><span class="etq"><span lang="es">el selector «Este cliente»: Sin elegir · Páramo Azul · Sur del Valle</span><span lang="en">the “This client” selector: Not chosen · Páramo Azul · Sur del Valle</span></span><div class="k-marco fila"><select class="selector" aria-label="Este cliente"><option>Sin elegir</option><option selected="">Páramo Azul</option><option>Sur del Valle</option></select></div></div>
+    <div class="k-item"><span class="etq"><span lang="es">cláusula de encargo, recién copiada</span><span lang="en">engagement clause, just copied</span></span><div class="k-marco fila"><button class="btn mini"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span lang="es">Copiada</span><span lang="en">Copied</span></button></div></div>
   </div>
       </div>
     </section>

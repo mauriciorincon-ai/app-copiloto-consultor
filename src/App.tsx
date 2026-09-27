@@ -74,6 +74,8 @@ const ESTADOS: EstadoBanda[] = [
   // Las propuestas (sprint 003, fase 2, mirada 20): la línea pasiva y la señal «fijada».
   "ficha-propuesta",
   "ficha-fijada",
+  // Solo notas (sprint 003, fase 3): la banda en reposo, sin escucha.
+  "solo-notas",
 ];
 
 /**

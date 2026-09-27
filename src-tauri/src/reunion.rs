@@ -79,6 +79,11 @@ pub struct ElCuaderno {
     bandeja: Mutex<Option<BandejaAbierta>>,
     /// Al arrancar se midió que la tarea de borrado no corrió con la app cerrada (ADR 016 §5).
     no_corrio: AtomicBool,
+    /// **«Este cliente»** (ADR 017 §3): el que elegiste en Sesión. Nombra el archivo de la reunión y
+    /// elige la bandera y la NDA. Vive en memoria, mientras la app esté abierta: no se guarda.
+    cliente: Mutex<Option<String>>,
+    /// La reunión va en **modo solo notas** (ADR 017 §5): sin captura. La banda y Sesión lo dicen.
+    solo_notas: AtomicBool,
 }
 
 /// Lo que la pantalla de Notas enseña del cuaderno de ahora.
@@ -219,6 +224,10 @@ impl ElCuaderno {
         self.abierta.swap(false, Ordering::Relaxed)
     }
 
+    fn cliente(&self) -> Option<String> {
+        self.cliente.lock().ok().and_then(|c| c.clone())
+    }
+
     fn escuchando(&self) -> bool {
         self.abierta()
             && self.empezo.lock().map(|e| e.is_some()).unwrap_or(false)
@@ -241,7 +250,7 @@ impl ElCuaderno {
             return None;
         }
         let (fecha, minutos) = self.cuando();
-        let cliente: Option<String> = None;
+        let cliente = self.cliente();
         let base = notas::nombre_del_archivo(cliente.as_deref(), &fecha);
         Some(Previsto {
             fecha: format!("{}-{:02}-{:02}", fecha.anio, fecha.mes, fecha.dia),
@@ -271,8 +280,8 @@ impl ElCuaderno {
             return Ok(Cierre::default());
         }
         let (fecha, minutos) = self.cuando();
-        // El cliente llega en la fase 3 («Este cliente»). Hasta entonces, ninguno: la app no lo adivina.
-        let cliente: Option<String> = None;
+        // «Este cliente» (ADR 017 §3): el que elegiste; sin elegir, ninguno. La app no lo adivina.
+        let cliente = self.cliente();
         let encabezado = Encabezado { empezo: fecha.como_texto(), minutos, cliente: cliente.clone() };
         let (contenido, resumen, vacio, pendientes): (Contenido, Resumen, bool, Vec<Propuesta>) = self
             .con(|c| {
@@ -416,10 +425,43 @@ pub fn al_empezar<R: Runtime>(app: &AppHandle<R>) {
 /// que proteger, y dejar el cuaderno negro al compartir hasta la próxima sesión no protegería nada.
 pub fn al_terminar<R: Runtime>(app: &AppHandle<R>) {
     let Some(el) = app.try_state::<ElCuaderno>() else { return };
+    el.solo_notas.store(false, Ordering::Relaxed);
     if el.terminar() {
         ventana::proteger_el_cuaderno(app, false);
     }
     avisar(app);
+}
+
+/// **«Este cliente»** (ADR 017 §3): el que elegiste, o ninguno.
+pub fn elegir_cliente<R: Runtime>(app: &AppHandle<R>, nombre: Option<String>) {
+    let Some(el) = app.try_state::<ElCuaderno>() else { return };
+    if let Ok(mut c) = el.cliente.lock() {
+        *c = nombre;
+    }
+    // Al log, el hecho: el nombre de tu cliente no va a un archivo que no pediste.
+    println!("[cliente] {}", if el.cliente().is_some() { "elegido" } else { "sin elegir" });
+    avisar(app);
+}
+
+pub fn cliente<R: Runtime>(app: &AppHandle<R>) -> Option<String> {
+    app.try_state::<ElCuaderno>().and_then(|el| el.cliente())
+}
+
+/// La reunión que empieza va, o no, en modo solo notas. Lo apaga `al_terminar`.
+pub fn marcar_solo_notas<R: Runtime>(app: &AppHandle<R>, si: bool) {
+    if let Some(el) = app.try_state::<ElCuaderno>() {
+        el.solo_notas.store(si, Ordering::Relaxed);
+    }
+}
+
+pub fn solo_notas<R: Runtime>(app: &AppHandle<R>) -> bool {
+    app.try_state::<ElCuaderno>().is_some_and(|el| el.abierta() && el.solo_notas.load(Ordering::Relaxed))
+}
+
+/// Con qué busca `⌃⌥A` en solo notas: **la última línea de tu nota** (ADR 017 §5). `None` sin nota.
+pub fn ultima_linea_de_la_nota<R: Runtime>(app: &AppHandle<R>) -> Option<String> {
+    let el = app.try_state::<ElCuaderno>()?;
+    el.con(|c| notas::ultima_linea(c.nota()).map(str::to_string)).flatten()
 }
 
 /// ⌥⎋, pieza `TusTurnos`: tus turnos y la ficha vigente mueren; tus notas, tus acuerdos y tus
@@ -1071,6 +1113,23 @@ mod pruebas {
         assert!(lista.contains(&(b.raiz().join(&g.archivo), CIERRE + 3 * 3_600)), "la bandeja no está en la lista de launchd: {lista:?}");
         let _ = std::fs::remove_dir_all(c.raiz());
         let _ = std::fs::remove_dir_all(b.raiz());
+    }
+
+    /// **«Este cliente» nombra el archivo** (ADR 017 §3, que el ADR 015 §2 esperaba) y entra en su
+    /// encabezado. ¿Puede fallar? Sí: con el cliente de antes —ninguno—, el archivo se llama
+    /// `reunion-2026-09-27-1402.ghost` y es rojo (bitácora).
+    #[test]
+    fn el_cliente_elegido_nombra_el_archivo() {
+        let (c, b, llaves) = (carpeta("cliente"), bandeja("cliente"), EnMemoria::default());
+        let el = ElCuaderno::default();
+        *el.cliente.lock().unwrap() = Some("Páramo Azul".into());
+        el.abrir(false, HOY);
+        el.con(|cu| cu.escribir("Piden la cuarta fuente."));
+        assert_eq!(el.previsto(&c).unwrap().archivo, "paramo-azul-2026-09-27.ghost");
+        let g = el.guardar_en(&c, &b, &llaves, prefs::Retencion::Dias90, None, CIERRE).unwrap().guardada.unwrap().0;
+        assert_eq!(g.archivo, "paramo-azul-2026-09-27.ghost");
+        assert_eq!(c.abrir(&llaves, &g.archivo).unwrap().encabezado.cliente.as_deref(), Some("Páramo Azul"));
+        let _ = std::fs::remove_dir_all(c.raiz());
     }
 
     /// Con la ventana «al cerrar», las que no decidiste mueren y **no se escribe nada** en la bandeja.

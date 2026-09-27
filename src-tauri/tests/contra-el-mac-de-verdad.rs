@@ -1117,6 +1117,14 @@ fn el_kit_de_evaluacion_mide_el_retriever_y_su_negativa() {
     let mut corpus = Corpus::en_memoria().unwrap();
     corpus.indexar(Path::new(&format!("{raiz}/corpus")), &|_| {}).expect("no se indexó el kit");
     assert_eq!(corpus.estado().documentos, 6, "el corpus del kit cambió de tamaño");
+    // La ficha del kit dice dónde está su cliente (ADR 017 §2), y el catálogo la reconoce: es la bandera
+    // que la parada del gate corto enseña al elegir Páramo Azul en Sesión.
+    let escrita = corpus.jurisdiccion_de("Páramo Azul");
+    assert_eq!(escrita, Some("Colombia"), "la ficha del kit perdió su línea «Jurisdicción:»");
+    assert!(matches!(
+        app_copiloto_consultor_lib::jurisdiccion::bandera(escrita),
+        app_copiloto_consultor_lib::jurisdiccion::LaBandera::Conocida { .. }
+    ));
 
     // ---- nDCG@5 sobre las treinta que SÍ están, y la LATENCIA de cada una
     let mut suma = 0.0;

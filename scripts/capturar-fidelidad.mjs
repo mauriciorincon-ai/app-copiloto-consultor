@@ -95,6 +95,8 @@ const ARTEFACTOS = [
       // Las propuestas (sprint 003, fase 2, mirada 20): la línea pasiva y la señal «fijada».
       { id: "propuesta", maqueta: "banda.html", estado: "s3-propuesta", alto: 88, url: "ventana=banda&estado=ficha-propuesta" },
       { id: "fijada", maqueta: "banda.html", estado: "s3-fijada", alto: 88, url: "ventana=banda&estado=ficha-fijada" },
+      // Solo notas (sprint 003, fase 3): la cabecera ámbar y la frase de reposo que manda a tu nota.
+      { id: "solo-notas", maqueta: "banda.html", estado: "s3-solo-notas", alto: 88, url: "ventana=banda&estado=solo-notas" },
     ],
   },
   {
@@ -107,7 +109,16 @@ const ARTEFACTOS = [
     encuadres: [
       // Desde la fase 3 del sprint 002 el producto se compara con los estados «así se ve hoy ·
       // sprint 2». Los de «sprint 1» quedan en la maqueta como historia: ya no describen la app.
-      { id: "sesion", maqueta: "sesion.html", estado: "s2-pantalla", alto: 640, url: "ventana=principal&pantalla=sesion" },
+      // Desde la fase 3 del sprint 003 Sesión se compara con «sprint 3 · este cliente»: vuelve al diseño
+      // de la Etapa de Diseño, con «Este cliente» vivo (ADR 017). «sprint 2» queda como historia.
+      { id: "sesion", maqueta: "sesion.html", estado: "s3", alto: 640, url: "ventana=principal&pantalla=sesion" },
+      { id: "sesion-en-marcha", maqueta: "sesion.html", estado: "s3-en-marcha", alto: 640, url: "ventana=principal&pantalla=sesion&estado=en-marcha" },
+      { id: "sesion-pregunta", maqueta: "sesion.html", estado: "s3-pregunta", alto: 640, url: "ventana=principal&pantalla=sesion&estado=pregunta" },
+      { id: "sesion-sin-bandera", maqueta: "sesion.html", estado: "s3-sin-bandera", alto: 640, url: "ventana=principal&pantalla=sesion&estado=sin-bandera" },
+      { id: "sesion-clausula", maqueta: "sesion.html", estado: "s3-clausula", alto: 640, url: "ventana=principal&pantalla=sesion&estado=clausula" },
+      // El estado de la Etapa de Diseño «NDA prohíbe transcribir», aprobado en G-Diseño: por fin tiene producto.
+      { id: "sesion-nda", maqueta: "sesion.html", estado: "nda", alto: 640, url: "ventana=principal&pantalla=sesion&estado=nda" },
+      { id: "sesion-solo-notas", maqueta: "sesion.html", estado: "s3-solo-notas", alto: 640, url: "ventana=principal&pantalla=sesion&estado=solo-notas" },
       { id: "permisos", maqueta: "permisos.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=permisos" },
       { id: "corpus", maqueta: "corpus.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=corpus" },
       // Desde la fase 1 del sprint 003 Honestidad se compara con «así se ve hoy · sprint 3»: la

@@ -87,6 +87,11 @@ const PROTEGIDOS = [
   // `propuestas` (sprint 003, fase 2, ADR 016): lee cada turno, también los del cliente, para
   // proponerte qué guardar. Devuelve propuestas y nada más; las sella `bandeja.rs`, que solo ve líneas.
   "src-tauri/src/propuestas",
+  // `jurisdiccion` (sprint 003, fase 3, ADR 017): no toca nada de la reunión —solo el catálogo, que
+  // entra al compilar, y la línea «Jurisdicción:» de tu ficha—, y por eso mismo no necesita ni disco ni
+  // red. Está aquí para que no pueda empezar a necesitarlos en silencio: traer el catálogo de un
+  // servidor rompería la regla dura 2.
+  "src-tauri/src/jurisdiccion",
   "src-tauri/nativo",
   "src/capture",
 ];

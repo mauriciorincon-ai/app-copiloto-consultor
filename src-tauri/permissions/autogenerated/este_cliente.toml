@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-este-cliente"
+description = "Enables the este_cliente command without any pre-configured scope."
+commands.allow = ["este_cliente"]
+
+[[permission]]
+identifier = "deny-este-cliente"
+description = "Denies the este_cliente command without any pre-configured scope."
+commands.deny = ["este_cliente"]

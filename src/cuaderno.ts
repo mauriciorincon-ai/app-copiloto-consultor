@@ -242,6 +242,8 @@ export type EstadoDePista = {
 
 export type EstadoDeEscucha = {
   escuchando: boolean;
+  /** La reunión va en modo solo notas (ADR 017 §5): hay reunión y nada se captura. */
+  soloNotas: boolean;
   microfono: EstadoDePista;
   sistema: EstadoDePista;
   // `turnosEnMemoria` salió por la misma decisión: Honestidad cuenta el transcript por sus bytes.
@@ -312,6 +314,7 @@ export type QueSabeTranscribir = {
  */
 const ESCUCHA_DE_MUESTRA: EstadoDeEscucha = {
   escuchando: true,
+  soloNotas: false,
   microfono: {
     abierta: true,
     motivo: null,
@@ -368,7 +371,8 @@ export function useEscucha(): EstadoDeEscucha {
       );
     };
     leer();
-    const bajas = [escuchar("escucha", leer), escuchar("corte", leer)];
+    // «modo»: empezó o terminó una reunión, normal o solo notas (ADR 017 §5).
+    const bajas = [escuchar("escucha", leer), escuchar("corte", leer), escuchar("modo", leer)];
     globalThis.addEventListener("focus", leer);
     return () => {
       vivo = false;
@@ -382,6 +386,7 @@ export function useEscucha(): EstadoDeEscucha {
 /** Nadie está escuchando: ni pistas abiertas ni bytes. No es un error, es el estado de reposo. */
 const APAGADA: EstadoDeEscucha = {
   escuchando: false,
+  soloNotas: false,
   microfono: {
     abierta: false,
     motivo: null,

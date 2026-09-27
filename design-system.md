@@ -1,7 +1,7 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.12.0  # 1.12.0: las propuestas y la bandeja CONSTRUIDAS (sprint 003, fase 2 — maquetado, no visto; se valida en el gate del MVP). 1.11.0: cómo ENVEJECE «todavía no» — el estado del sprint se pone al día, y lo que se libera se agrupa (sprint 001, fase 3). 1.10.0: «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2). 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
+version: 1.13.0  # 1.13.0: «Este cliente», la NDA y solo notas CONSTRUIDOS (sprint 003, fase 3 — maquetado, no visto). 1.12.0: las propuestas y la bandeja CONSTRUIDAS (sprint 003, fase 2 — maquetado, no visto; se valida en el gate del MVP). 1.11.0: cómo ENVEJECE «todavía no» — el estado del sprint se pone al día, y lo que se libera se agrupa (sprint 001, fase 3). 1.10.0: «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2). 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
 fecha: 2026-09-21
 estado: aprobado   # G-Diseño aprobado el 2026-09-20 («sí apruebo la pantalla completa»)
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
@@ -542,6 +542,30 @@ que saltó («· cifra y fecha»), o la sección de la ficha con que choca. El c
 **La bandeja con llave.** Una bandeja de otra sesión de la app enseña su cuenta atrás sin abrirla;
 **lo que dice** pide Touch ID, como abrir una reunión, y la ventana no se cambia hasta abrirla.
 
+## 9-octies · El marco en la mano, construido (sprint 003, fase 3, 2026-09-27)
+
+> **Maquetado, no visto** (misma decisión del usuario que §9-septies). ADR 017. Registro:
+> `docs/diseno/README.md`.
+
+**Sesión vuelve al diseño de la Etapa de Diseño** («reunión detectada»): la reunión, las dos pistas y
+«Este cliente» lado a lado, y los botones en su fila. La tarjeta «Qué funciona hoy» de los sprints 1 y
+2 se retira: era el andamio de un producto a medias (§9-sexies, «todavía no»), y con el H1 entero no le
+queda nada que decir. Su fila «A medias» se queda en la tarjeta de las pistas, solo cuando una cae.
+
+| Clase | Dónde | Regla |
+|---|---|---|
+| `.selector` | «Este cliente» | un `<select>` nativo con la forma de un chip: los clientes del corpus y «Sin elegir» |
+| `.bandera .pendiente` | bajo las normas de la bandera | lo que el informe **no pudo verificar**, con su gap: «Sin verificar: …». Lo no verificado se dice, no se calla |
+| `.bandera.desconocida` | sin jurisdicción, fuera del catálogo o sin estatuto | gris, con `i-ring` y la palabra: no se adivina la más parecida |
+| `.aviso-legal` | junto a «Cláusula de encargo» | «No es asesoría legal», siempre que hay tarjeta |
+| `.pregunta-nda` | la fila de los botones, a lo ancho | la pregunta de la NDA se contesta justo antes de «Iniciar sesión»; borde izquierdo en halo |
+| `.tarjeta p.clausula` | «Cláusula para tu carta de encargo» | las dos versiones lado a lado, en la tipografía de la evidencia; se copia la del idioma de la carta |
+| `.banda .marca-min.warn` + `i-nota` | la cabecera de la banda en solo notas | «Solo notas · sin transcripción»: ámbar, como la barra de `kit.html` §6 |
+
+**El riesgo de la bandera, en cinco palabras y tres colores** (símbolo + texto + color, §4): bajo y
+bajo-medio en verde con ✓; medio y medio-alto en ámbar con ⚠ (medio-alto con el borde en error); sin
+verificar en gris con ◯.
+
 ## 10 · Deuda de diseño declarada
 
 | Qué | Por qué | Cuándo se paga |
@@ -567,4 +591,5 @@ que saltó («· cifra y fecha»), o la sección de la ficha con que choca. El c
 | 1.7.0 | 2026-09-20 | mirada 4-ter: **bandeja de propuestas con cuenta atrás** (§9-quater) · G-Diseño aprobado |
 | 1.8.0 | 2026-09-20 | sprint 001, fase 1a: **§9-quinquies — los seis estados de CONTENIDO de la banda** · tokens de alto (`--banda-h*`) · acciones como teclas · el asa con un trabajo · transcript a la derecha |
 | 1.12.0 | 2026-09-27 | sprint 003, fase 2: **§9-septies — las propuestas y la bandeja, construidas** (`propuesta-b`, `tecla.fijada`, `franja.mute`, `cuenta.vencida`, los chips dentro de una franja) — maquetado, no visto |
+| 1.13.0 | 2026-09-27 | sprint 003, fase 3: **§9-octies — el marco en la mano, construido** (`selector`, `bandera .pendiente`, `aviso-legal`, `pregunta-nda`, `clausula`, la banda en solo notas) · Sesión vuelve al diseño de la Etapa de Diseño — maquetado, no visto |
 | 1.9.0 | 2026-09-20 | mirada 11: **la maniobra** — catálogo versionado de seis maneras de responder + «lo más cercano que sí tienes», los dos deterministas; `maniobra-b` y `cercano-b`; estado «sin resultado · ampliada» |

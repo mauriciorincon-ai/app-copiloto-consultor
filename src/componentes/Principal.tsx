@@ -17,6 +17,7 @@ import {
   type VistaDeNotas,
 } from "../notas";
 import { useT } from "../i18n";
+import { escuchaDeMuestra, estadoDeSesion } from "../jurisdiccion";
 import { hayTauri } from "../puente";
 import {
   useBytesALaRed,
@@ -90,11 +91,14 @@ export function Principal({ busqueda = globalThis.location?.search ?? "" }: { bu
       {seccion === "sesion" && (
         <Sesion
           reunion={reunion}
-          escucha={escucha}
+          // Fuera de Tauri, la escucha del estado de `sesion.html` que pide la URL: antes de empezar,
+          // en marcha o en solo notas (ADR 017). Dentro, la de verdad.
+          escucha={hayTauri() ? escucha : escuchaDeMuestra(estadoDeSesion(busqueda), escucha)}
           salida={salida}
           // Fuera de Tauri, el estado «software invasivo en tu Mac» de la maqueta: lo pide el arnés
           // del gate de fidelidad por la URL. Dentro del producto lo decide el radar.
           radarDeMuestra={new URLSearchParams(busqueda).get("radar") === "vigilancia"}
+          busqueda={busqueda}
         />
       )}
       {seccion === "permisos" && <Permisos permisos={permisos} />}

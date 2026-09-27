@@ -224,6 +224,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .cuenta .ic { flex: 0 0 auto; color: var(--halo); }
 .cuenta.vencida .ic, .cuenta.vencida .reloj { color: var(--ink-2); }
 .franja .ventanas .op .ic { color: inherit; }
+.pregunta-nda .ic { color: var(--halo); flex: 0 0 auto; }
 .mq-pos.banda-borde .banda { border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
 .mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
@@ -277,13 +278,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i><span class="sr"><span lang="es">arrastra para ajustar las dos a la vez</span><span lang="en">drag to resize both at once</span></span></span>
 
       <div class="cab-b">
-        <span class="marca-min">
+        <span class="marca-min" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
           <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
           <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
         </span>
         
+        
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -291,7 +293,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         <!-- Mirada 20 (sprint 3, fase 2): la propuesta de nota, pasiva, en la línea de estado. No toca
              la ficha: ni la tapa ni la mueve. -->
         
-        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada s3-solo-notas" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
         <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
              en rojo: fue su decisión (panel, mirada 1). -->
         
@@ -311,6 +313,10 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
             <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
           </span>
         </span>
+
+        <!-- ---------------------- solo notas, en reposo (sprint 3) ---------------------- -->
+        
+        
 
         <!-- ------------------------------ buscando ------------------------------- -->
         
@@ -381,13 +387,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i><span class="sr"><span lang="es">arrastra para ajustar las dos a la vez</span><span lang="en">drag to resize both at once</span></span></span>
 
       <div class="cab-b">
-        <span class="marca-min">
+        <span class="marca-min" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
           <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
           <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
         </span>
         
+        
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -395,7 +402,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         <!-- Mirada 20 (sprint 3, fase 2): la propuesta de nota, pasiva, en la línea de estado. No toca
              la ficha: ni la tapa ni la mueve. -->
         
-        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada s3-solo-notas" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
         <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
              en rojo: fue su decisión (panel, mirada 1). -->
         
@@ -404,6 +411,10 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <div class="cuerpo-b">
 
         <!-- ------------------------------ esperando ------------------------------ -->
+        
+        
+
+        <!-- ---------------------- solo notas, en reposo (sprint 3) ---------------------- -->
         
         
 
@@ -487,13 +498,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i><span class="sr"><span lang="es">arrastra para ajustar las dos a la vez</span><span lang="en">drag to resize both at once</span></span></span>
 
       <div class="cab-b">
-        <span class="marca-min">
+        <span class="marca-min" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
           <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
           <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
         </span>
         
+        
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -501,7 +513,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         <!-- Mirada 20 (sprint 3, fase 2): la propuesta de nota, pasiva, en la línea de estado. No toca
              la ficha: ni la tapa ni la mueve. -->
         
-        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada s3-solo-notas" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
         <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
              en rojo: fue su decisión (panel, mirada 1). -->
         
@@ -510,6 +522,10 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <div class="cuerpo-b">
 
         <!-- ------------------------------ esperando ------------------------------ -->
+        
+        
+
+        <!-- ---------------------- solo notas, en reposo (sprint 3) ---------------------- -->
         
         
 
@@ -596,13 +612,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i><span class="sr"><span lang="es">arrastra para ajustar las dos a la vez</span><span lang="en">drag to resize both at once</span></span></span>
 
       <div class="cab-b">
-        <span class="marca-min">
+        <span class="marca-min" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
           <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
           <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
         </span>
         
+        
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -610,7 +627,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         <!-- Mirada 20 (sprint 3, fase 2): la propuesta de nota, pasiva, en la línea de estado. No toca
              la ficha: ni la tapa ni la mueve. -->
         
-        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada s3-solo-notas" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
         <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
              en rojo: fue su decisión (panel, mirada 1). -->
         
@@ -619,6 +636,10 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <div class="cuerpo-b">
 
         <!-- ------------------------------ esperando ------------------------------ -->
+        
+        
+
+        <!-- ---------------------- solo notas, en reposo (sprint 3) ---------------------- -->
         
         
 
@@ -707,10 +728,11 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i><span class="sr"><span lang="es">arrastra para ajustar las dos a la vez</span><span lang="en">drag to resize both at once</span></span></span>
 
       <div class="cab-b">
-        <span class="marca-min">
+        <span class="marca-min" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
           <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
           <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
         </span>
+        
         
 
         
@@ -722,7 +744,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         <!-- Mirada 20 (sprint 3, fase 2): la propuesta de nota, pasiva, en la línea de estado. No toca
              la ficha: ni la tapa ni la mueve. -->
         
-        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada s3-solo-notas" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
         <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
              en rojo: fue su decisión (panel, mirada 1). -->
         
@@ -731,6 +753,10 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <div class="cuerpo-b">
 
         <!-- ------------------------------ esperando ------------------------------ -->
+        
+        
+
+        <!-- ---------------------- solo notas, en reposo (sprint 3) ---------------------- -->
         
         
 
@@ -895,13 +921,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i><span class="sr"><span lang="es">arrastra para ajustar las dos a la vez</span><span lang="en">drag to resize both at once</span></span></span>
 
       <div class="cab-b">
-        <span class="marca-min">
+        <span class="marca-min" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
           <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
           <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
         </span>
         
+        
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -909,7 +936,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         <!-- Mirada 20 (sprint 3, fase 2): la propuesta de nota, pasiva, en la línea de estado. No toca
              la ficha: ni la tapa ni la mueve. -->
         
-        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada s3-solo-notas" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
         <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
              en rojo: fue su decisión (panel, mirada 1). -->
         
@@ -929,6 +956,10 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
             <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
           </span>
         </span>
+
+        <!-- ---------------------- solo notas, en reposo (sprint 3) ---------------------- -->
+        
+        
 
         <!-- ------------------------------ buscando ------------------------------- -->
         
@@ -999,13 +1030,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i><span class="sr"><span lang="es">arrastra para ajustar las dos a la vez</span><span lang="en">drag to resize both at once</span></span></span>
 
       <div class="cab-b">
-        <span class="marca-min">
+        <span class="marca-min" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
           <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
           <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
         </span>
         
+        
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -1013,7 +1045,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         <!-- Mirada 20 (sprint 3, fase 2): la propuesta de nota, pasiva, en la línea de estado. No toca
              la ficha: ni la tapa ni la mueve. -->
         
-        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada s3-solo-notas" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
         <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
              en rojo: fue su decisión (panel, mirada 1). -->
         
@@ -1022,6 +1054,10 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <div class="cuerpo-b">
 
         <!-- ------------------------------ esperando ------------------------------ -->
+        
+        
+
+        <!-- ---------------------- solo notas, en reposo (sprint 3) ---------------------- -->
         
         
 
@@ -1105,13 +1141,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i><span class="sr"><span lang="es">arrastra para ajustar las dos a la vez</span><span lang="en">drag to resize both at once</span></span></span>
 
       <div class="cab-b">
-        <span class="marca-min">
+        <span class="marca-min" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
           <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
           <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
         </span>
         
+        
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -1119,7 +1156,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         <!-- Mirada 20 (sprint 3, fase 2): la propuesta de nota, pasiva, en la línea de estado. No toca
              la ficha: ni la tapa ni la mueve. -->
         
-        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada s3-solo-notas" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
         <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
              en rojo: fue su decisión (panel, mirada 1). -->
         
@@ -1128,6 +1165,10 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <div class="cuerpo-b">
 
         <!-- ------------------------------ esperando ------------------------------ -->
+        
+        
+
+        <!-- ---------------------- solo notas, en reposo (sprint 3) ---------------------- -->
         
         
 
@@ -1214,13 +1255,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i><span class="sr"><span lang="es">arrastra para ajustar las dos a la vez</span><span lang="en">drag to resize both at once</span></span></span>
 
       <div class="cab-b">
-        <span class="marca-min">
+        <span class="marca-min" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
           <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
           <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
         </span>
         
+        
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         
@@ -1228,7 +1270,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         <!-- Mirada 20 (sprint 3, fase 2): la propuesta de nota, pasiva, en la línea de estado. No toca
              la ficha: ni la tapa ni la mueve. -->
         
-        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada s3-solo-notas" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
         <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
              en rojo: fue su decisión (panel, mirada 1). -->
         
@@ -1237,6 +1279,10 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <div class="cuerpo-b">
 
         <!-- ------------------------------ esperando ------------------------------ -->
+        
+        
+
+        <!-- ---------------------- solo notas, en reposo (sprint 3) ---------------------- -->
         
         
 
@@ -1325,10 +1371,11 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i><span class="sr"><span lang="es">arrastra para ajustar las dos a la vez</span><span lang="en">drag to resize both at once</span></span></span>
 
       <div class="cab-b">
-        <span class="marca-min">
+        <span class="marca-min" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
           <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
           <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
         </span>
+        
         
 
         
@@ -1340,7 +1387,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         <!-- Mirada 20 (sprint 3, fase 2): la propuesta de nota, pasiva, en la línea de estado. No toca
              la ficha: ni la tapa ni la mueve. -->
         
-        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada s3-solo-notas" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
         <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
              en rojo: fue su decisión (panel, mirada 1). -->
         
@@ -1349,6 +1396,10 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
       <div class="cuerpo-b">
 
         <!-- ------------------------------ esperando ------------------------------ -->
+        
+        
+
+        <!-- ---------------------- solo notas, en reposo (sprint 3) ---------------------- -->
         
         
 

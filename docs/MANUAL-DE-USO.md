@@ -84,7 +84,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   la fila de la pista que no abrió cambia de símbolo, de palabra («No abrió») y de color, y debajo
   dice el motivo y qué hacer: falta el permiso del micrófono o del audio del sistema, otra app tiene
   el dispositivo, el dispositivo entrega un formato que la app no sabe leer, o macOS no dejó abrirla.
-  Y la fila «Escucha las dos pistas» pasa a **«A medias»** diciendo cuál queda. Hasta el sprint 002
+  Y debajo aparece la fila **«A medias»**, que dice cuál queda (desde el sprint 3 solo aparece cuando
+  una pista cae). Hasta el sprint 002
   esta pantalla decía «Funciona» en las dos pistas pasara lo que pasara, y te habrías enterado al
   terminar la reunión, al ver que faltaba medio transcript.
 - **Los auriculares por su nombre · nuevo en Sprint 002.** Si el sonido sale por un aparato por USB
@@ -211,8 +212,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - **Tus notas vencidas se borran solas, aunque no abras la app:** las borra la misma tarea de macOS
     que la bandeja (abajo), en el minuto siguiente a su vencimiento. Las que guardaste para «siempre»
     no vencen. Mientras tengas notas con fecha, esa tarea aparece en Ítems de inicio.
-  - Hasta que llegue «Este cliente», el archivo se llama `reunion-<fecha>-<hora>` y no lleva el nombre
-    del cliente.
+  - Si eliges el cliente en *Sesión* («Este cliente», abajo), el archivo lleva su nombre
+    (`paramo-azul-2026-09-27.ghost`); si no, se llama `reunion-<fecha>-<hora>`.
 
 ### La app te propone qué guardar, y la bandeja · Nuevo · Sprint 003
 
@@ -252,6 +253,46 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - Como mucho hay 30 propuestas esperando; al llegar a 30, las nuevas no entran y *Notas* lo dice.
   - Con el modelo local encendido, la app **no** redacta mejor las propuestas: en este ciclo son solo
     reglas.
+
+### El marco en la mano: tu cliente, su jurisdicción y su NDA · Nuevo · Sprint 003
+
+- **Qué hace:** antes de empezar, *Sesión* te enseña **qué regla aplica a este cliente**, con sus
+  normas y su fecha; te pregunta **si su NDA prohíbe grabar o transcribir**, y si lo prohíbe te
+  propone el **modo solo notas**; y te da una **cláusula modelo** para tu carta de encargo, en español y
+  en inglés. **Nunca te bloquea** y **no es asesoría legal**: lo dice siempre.
+- **Cómo se usa:**
+  1. En la ficha de tu cliente (en tu corpus), escribe una línea con dónde está la contraparte:
+     `Jurisdicción: Colombia` (o `Jurisdiction: Florida`). Vuelve a indexar la carpeta.
+  2. En *Sesión*, **«Este cliente»** → elige el cliente. Aparece su **bandera**: el país o el estado,
+     su riesgo (con símbolo, texto y color), la regla, lo que implica, las normas y la fecha en que se
+     consultaron (2026-09-17). Si algo de esa fila no se pudo verificar, lo dice debajo: «Sin
+     verificar: …».
+  3. **«Revisar»** junto a la NDA: la app pregunta «¿La NDA de este cliente prohíbe grabar o transcribir
+     por cualquier medio?». Tu respuesta se guarda para ese cliente.
+  4. Si respondes **«Sí, lo prohíbe»**, *Sesión* te propone **«Iniciar en modo solo notas»**, y te deja
+     volver a revisar la NDA si te equivocaste.
+  5. **«Cláusula de encargo»** enseña la cláusula en los dos idiomas, lado a lado, con un «Copiar» cada
+     una: copia la del idioma de tu carta, no la de la app.
+- **El modo solo notas:** también lo puedes elegir tú, con **«Solo notas»** junto a «Iniciar sesión».
+  La reunión se abre —tu cuaderno, protegido, y la banda— y **nada la escucha, la transcribe ni la
+  lee**: ni micrófono, ni audio del sistema, ni pantalla, ni el radar ámbar. Siguen tus notas y acuerdos
+  (`⌃⌥N`), fijar (`⌃⌥P`), el radar coral y `⌥⎋`. **`⌃⌥A` busca en tu corpus con la última línea de tu
+  nota.** La banda lo dice en ámbar: «Solo notas · sin transcripción». Se termina como cualquier
+  sesión.
+- **El archivo de la reunión** lleva el nombre del cliente que elegiste. La elección vive mientras la
+  app está abierta: no se guarda en disco.
+- **Limitaciones conocidas:**
+  - **No es asesoría legal.** El catálogo sale de una investigación con fuentes, fechada el 2026-09-17,
+    con 17 puntos que no se pudieron verificar y que la app no afirma. Antes de usar la app con clientes
+    en estados de EE. UU. de consentimiento de todas las partes, en Alemania, Francia, Chile o
+    Argentina, o bajo una NDA que prohíba transcribir, consulta a un abogado.
+  - El catálogo trae **27 jurisdicciones**: Colombia, EE. UU. (federal y estados de una parte), 14
+    estados de todas las partes o mixtos, 3 sin estatuto verificado, la Unión Europea, Alemania,
+    Francia, España, México, Chile, Perú y Argentina. Si la ficha dice otra, la app lo dice («no está en
+    el catálogo v1») y no adivina.
+  - Si la línea nombra varias («Colombia y California»), la bandera es la de **la más estricta**.
+  - El catálogo se actualiza con una versión nueva de la app, nunca por la red.
+  - La plantilla del aviso de una línea al cliente y el registro de que le informaste quedan para H2.
 
 ### El modelo de voz de un idioma · desde Sprint 001
 
@@ -512,7 +553,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 | Tecla | Qué hace |
 |---|---|
 | `⌥⎋` | corta todo: audio, transcript, banda y relleno. Devuelve la ventana de la reunión |
-| `⌃⌥A` | «ayúdame con esto»: busca una ficha sobre lo último que dijo el cliente |
+| `⌃⌥A` | «ayúdame con esto»: busca una ficha sobre lo último que dijo el cliente; **en solo notas, con la última línea de tu nota** |
 | `⌃⌥T` | muestra u oculta el transcript junto a la ficha; con la banda compacta, la agranda |
 | `⌃⌥V` | enciende o apaga el **modo solo audio**: te lee la ficha y la banda baja a una línea |
 | `⌃⌥L` | **lee la pantalla una vez, ahora** — también con la lectura automática apagada |
@@ -568,7 +609,7 @@ detecta y lo marca, pero funciona mejor con auriculares.
 |---|---|
 | 001 | la banda protegida · el acople · las dos pistas y la transcripción local · el corpus indexado · la ficha de evidencia y la sugerencia de cómo conducirse · el modelo de voz de un idioma · el corte y la pantalla de Honestidad · español e inglés |
 | 002 | el disparo por silencio · **tu diccionario técnico** · **el modo solo audio** · **la lectura de pantalla** y `⌃⌥L` · **los porqués** (la pista que no abrió, la salida de audio por su nombre, el motor que falta) · **por qué llegó la ficha y cuánto tardó** · las teclas pasan a `⌃⌥` · **el radar** (ámbar y coral) y `⌃⌥R` · **la sugerencia** y la pantalla **IA** |
-| 003 | **tus notas** (el cuaderno de la reunión, el archivo cifrado por reunión, la retención, exportar y borrar) · `⌃⌥N` y `⌃⌥P` · **el cuaderno protegido** mientras la reunión está abierta · **lo que salió al API**, en *IA* · **las propuestas por reglas y la bandeja** con su cuenta atrás y su borrado con la app cerrada · `⌃⌥↵` · la señal «fijada» · el corte pasa a 11 piezas · las preferencias se recuerdan · tus notas pasan a la **carpeta privada de la app**, con «Mostrar en Finder», y se borran solas al vencer aunque no abras la app |
+| 003 | **tus notas** (el cuaderno de la reunión, el archivo cifrado por reunión, la retención, exportar y borrar) · `⌃⌥N` y `⌃⌥P` · **el cuaderno protegido** mientras la reunión está abierta · **lo que salió al API**, en *IA* · **las propuestas por reglas y la bandeja** con su cuenta atrás y su borrado con la app cerrada · `⌃⌥↵` · la señal «fijada» · el corte pasa a 11 piezas · las preferencias se recuerdan · tus notas pasan a la **carpeta privada de la app**, con «Mostrar en Finder», y se borran solas al vencer aunque no abras la app · **el marco en la mano**: «Este cliente», su bandera de jurisdicción, el chequeo de NDA, la cláusula de encargo y el **modo solo notas** |
 
 > **Corregido tras la auditoría del sprint 001** (2026-09-22): tres frases de este manual habían
 > dejado de ser ciertas y se arreglaron con lo que el código hacía de verdad — el disparo por

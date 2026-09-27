@@ -68,7 +68,9 @@ export type EstadoBanda =
    * la URL, para el arnés de capturas.
    */
   | "ficha-propuesta"
-  | "ficha-fijada";
+  | "ficha-fijada"
+  /** La reunión en modo solo notas (sprint 003, fase 3, ADR 017 §5): la banda en reposo, sin escucha. */
+  | "solo-notas";
 
 export type PropsBanda = {
   estado: EstadoBanda;
@@ -162,7 +164,12 @@ export function Banda({
   const estadoReal: EstadoBanda =
     pedido === "ficha-pdf" || pedido === "ficha-pantalla" || pedido === "ficha-propuesta" || pedido === "ficha-fijada"
       ? "ficha"
-      : pedido;
+      : pedido === "solo-notas"
+        ? "esperando"
+        : pedido;
+  // **Solo notas** (ADR 017 §5): nada escucha, y la banda lo dice. Dentro de Tauri lo decide Rust;
+  // fuera, la URL.
+  const soloNotas = deLaMaqueta ? estado === "solo-notas" : escucha.soloNotas;
   // La propuesta de la maqueta: la tuya, la del plan («Fecha real del tablero…»).
   const propuestaDeMuestra: Propuesta | null =
     deLaMaqueta && estado === "ficha-propuesta"
@@ -393,7 +400,13 @@ export function Banda({
         {/* «Escuchando» solo cuando se está escuchando de verdad, y con las pistas que de verdad
             se abrieron. Antes lo decía siempre — también durante la media hora en que la banda
             está abierta y el usuario todavía no ha pulsado «Iniciar sesión». */}
-        {(deLaMaqueta || escucha.escuchando) && (
+        {soloNotas && (
+          <span className="marca-min warn">
+            <Ic id="i-nota" s />
+            {t.soloNotasCab}
+          </span>
+        )}
+        {!soloNotas && (deLaMaqueta || escucha.escuchando) && (
           <span className="marca-min">
             <Ic id="i-check-circle" s relleno />
             {deLaMaqueta
@@ -439,7 +452,7 @@ export function Banda({
         {estadoReal === "esperando" && (
           <>
             <span className="ficha-b">
-              <span className="voz-b">{t.esperando}</span>
+              <span className="voz-b">{soloNotas ? t.esperandoSoloNotas : t.esperando}</span>
               {/* El corpus se compone con los números que el índice tiene, no con los de la
                   maqueta. Con los datos de muestra sale la misma línea que `banda.html` dibuja —
                   143 documentos y cinco unidades—, así que el encuadre del gate no se mueve. */}

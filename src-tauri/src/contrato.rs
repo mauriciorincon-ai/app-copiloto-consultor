@@ -261,6 +261,7 @@ pub fn muestras() -> Vec<Muestra> {
             "./cuaderno",
             &EstadoDeEscucha {
                 escuchando: true,
+                solo_notas: false,
                 microfono: pista_abierta(),
                 sistema: EstadoDePista {
                     abierta: false,
@@ -589,6 +590,31 @@ pub fn muestras() -> Vec<Muestra> {
             vence: None,
             no_corrio: true,
         }),
+        // «Este cliente», la bandera y la NDA (ADR 017). Las banderas salen del catálogo de verdad:
+        // si una fila cambia, la muestra cambia con ella y la pantalla se entera en el contrato.
+        m("VISTA_DEL_CLIENTE", "VistaDelCliente", "./jurisdiccion", &crate::jurisdiccion::VistaDelCliente {
+            clientes: vec!["Páramo Azul".into(), "Sur del Valle".into()],
+            elegido: Some("Páramo Azul".into()),
+            bandera: Some(crate::jurisdiccion::bandera(Some("Colombia"))),
+            nda: crate::jurisdiccion::Nda::SinRevisar,
+            clausula: crate::jurisdiccion::clausula().clone(),
+        }),
+        m("VISTA_DEL_CLIENTE_SIN_ELEGIR", "VistaDelCliente", "./jurisdiccion", &crate::jurisdiccion::VistaDelCliente {
+            clientes: vec!["Páramo Azul".into(), "Sur del Valle".into()],
+            elegido: None,
+            bandera: None,
+            nda: crate::jurisdiccion::Nda::SinRevisar,
+            clausula: crate::jurisdiccion::clausula().clone(),
+        }),
+        m("BANDERA_CONOCIDA", "LaBandera", "./jurisdiccion", &crate::jurisdiccion::bandera(Some("Colombia"))),
+        m("BANDERA_CON_PENDIENTE", "LaBandera", "./jurisdiccion", &crate::jurisdiccion::bandera(Some("California"))),
+        m("BANDERA_SIN_VERIFICAR", "LaBandera", "./jurisdiccion", &crate::jurisdiccion::bandera(Some("Missouri"))),
+        m("BANDERA_FUERA_DEL_CATALOGO", "LaBandera", "./jurisdiccion", &crate::jurisdiccion::bandera(Some("Bolivia"))),
+        m("BANDERA_SIN_INDICAR", "LaBandera", "./jurisdiccion", &crate::jurisdiccion::bandera(None)),
+        m("NDA_SIN_REVISAR", "Nda", "./jurisdiccion", &crate::jurisdiccion::Nda::SinRevisar),
+        m("NDA_NO_LO_PROHIBE", "Nda", "./jurisdiccion", &crate::jurisdiccion::Nda::NoLoProhibe),
+        m("NDA_LO_PROHIBE", "Nda", "./jurisdiccion", &crate::jurisdiccion::Nda::LoProhibe),
+        m("ESCUCHA_SOLO_NOTAS", "EstadoDeEscucha", "./cuaderno", &crate::escucha::EstadoDeEscucha::solo_notas()),
         // `reuniones_guardadas` devuelve una lista; se ata el elemento, con vencimiento y sin él.
         m("REUNION_GUARDADA", "ReunionGuardada", "./notas", &crate::carpeta::Reunion {
             archivo: "paramo-azul-2026-09-20.ghost".into(),

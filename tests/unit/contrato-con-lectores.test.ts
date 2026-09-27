@@ -31,7 +31,15 @@ import { describe, expect, it } from "vitest";
 // Con los tres del sprint 002 (auditoría del S2, M6): la sugerencia, el estado de la IA, el radar y
 // el acople vivían en archivos que este gate no leía, y para sus 32 campos no podía fallar.
 // `notas.ts` desde la fase 1 del sprint 003 (C9): tus notas cruzan por cuatro comandos.
-const DECLARACIONES = ["src/cuaderno.ts", "src/ficha.ts", "src/radar.ts", "src/ia.ts", "src/acople.ts", "src/notas.ts"];
+const DECLARACIONES = [
+  "src/cuaderno.ts",
+  "src/ficha.ts",
+  "src/radar.ts",
+  "src/ia.ts",
+  "src/acople.ts",
+  "src/notas.ts",
+  "src/jurisdiccion.ts",
+];
 const FIXTURE = "src/contrato.generado.ts";
 
 /**

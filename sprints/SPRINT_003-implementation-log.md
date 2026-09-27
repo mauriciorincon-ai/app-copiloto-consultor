@@ -742,6 +742,78 @@ corrida pasó. El gate hizo lo que debe: ve archivos nuevos y no sabe de quién 
   Honestidad;
 - clippy 0, lint, typecheck, `design-sync` sin cambios (0 escritos).
 
+## Fase 3 — El marco en la mano: jurisdicción, cláusula y NDA (2026-09-27)
+
+**Primero el ADR 017 «jurisdicciones y NDA»**, escrito antes que el código y puesto al día con lo que
+cambió al construir (varias jurisdicciones en una línea → la más estricta; el aviso corto; la pregunta
+en la fila de los botones). Y la **enmienda 5 del ADR 002**: `prefs.json` gana `ndas`.
+
+**Por el criterio del usuario («solo muéstrame lo importante»), la mirada 21 no abre parada**: «Este
+cliente» es forma nueva y queda «maquetado, no visto» para el gate del MVP.
+
+**Lo construido:**
+- **El catálogo** `data/jurisdicciones/catalogo.json` (v1, dentro del binario): **27 filas** sacadas del
+  informe legal-ético —las diez de la matriz que no son «EE. UU. todas las partes», los 14 estados de
+  §2.b y Missouri, Hawaii y Maine sin estatuto—, cada una en español y en inglés, con su riesgo, su
+  regla, lo que implica, sus normas y URL y «consultado 2026-09-17». **10 filas llevan lo que el informe
+  no verificó**, con su gap; la pantalla lo enseña. Y la **cláusula modelo**, redactada desde §1.c, A6 y
+  §7.b, en los dos idiomas.
+- **`jurisdiccion/`** (puro, **protegido** en `verify:ephemeral`): lee la línea «Jurisdicción:» de la
+  ficha, la compara sin tildes ni mayúsculas con los alias, y da una de tres banderas: conocida, fuera
+  del catálogo (sin adivinar) o sin indicar. Con varias en una línea, la más estricta; «sin verificar»
+  cuenta como la más estricta.
+- **`corpus/`** guarda esa línea de cada ficha de cliente, solo en memoria (`jurisdiccion_de`).
+- **«Este cliente»** vive en memoria (`reunion.rs`): **nombra el archivo** de la reunión
+  (`paramo-azul-2026-09-27.ghost`, lo que el ADR 015 §2 esperaba) y entra en su encabezado.
+- **La NDA**: `responder_nda` / `revisar_nda`, guardada por cliente en `prefs.json`. Al log va la
+  respuesta, jamás el nombre.
+- **Solo notas** (`modo.rs`, puro): `empezar_a_escuchar` y el nuevo `empezar_solo_notas` pasan por un
+  solo `empezar(modo)`, con **la puerta de la captura** antes de arrancar pantalla y pistas; en solo
+  notas se devuelve ahí. `EstadoDeEscucha.soloNotas` le dice a la banda y a Sesión que la reunión va sin
+  captura. **`⌃⌥A` busca con la última línea de tu nota** (`notas::ultima_linea`). El radar ámbar vive
+  dentro de la lectura de pantalla, así que en solo notas tampoco arranca; el coral, sí.
+- **Comandos** (5), solo en la ventana principal: `este_cliente`, `elegir_cliente` (solo uno del
+  corpus), `responder_nda`, `revisar_nda`, `empezar_solo_notas`.
+- **La pantalla**, desde la maqueta: Sesión **vuelve al diseño aprobado de la Etapa de Diseño** —la
+  reunión, las pistas y «Este cliente» lado a lado; los botones en su fila— y retira «Qué funciona hoy».
+  La fila «A medias» de la mirada 17 se queda, en la tarjeta de las pistas, solo cuando una pista cae.
+  «Este cliente»: selector, bandera, NDA, «No es asesoría legal» y «Cláusula de encargo». La pregunta
+  de la NDA ocupa la fila de los botones. La cláusula, las dos versiones lado a lado con su «Copiar».
+  El estado de la Etapa de Diseño «NDA prohíbe transcribir» por fin tiene producto. Solo notas en
+  marcha. La banda: «Solo notas · sin transcripción» y su frase de reposo.
+- **La ficha del kit** gana `Jurisdicción: Colombia`, y el test del kit exige que la bandera salga.
+- **Contrato** (regla 19): `VistaDelCliente`, `LaBandera` (cinco muestras, una por forma y las dos que
+  llevan pendiente), `Nda` (tres) y la escucha en solo notas, todas con el catálogo de verdad.
+
+**Cada gate nuevo, con su rojo** (verde al restaurar):
+
+| Gate | Defecto plantado | Rojo |
+|---|---|---|
+| ningún alias se repite | — (se puso en rojo solo al nacer) | «oregón» y «oregon» eran el mismo alias plegado: se quitaron los alias con tilde |
+| con varias, la más estricta | `find_map` (la primera) en vez de `max_by_key(riesgo)` | «el estado manda sobre el país»: `Bajo` en vez de `MedioAlto` |
+| la jurisdicción solo sale de fichas de cliente | leer la línea de todo documento | «un documento que no es de un cliente tiene jurisdicción» |
+| solo notas no abre la captura (puro) | `SoloNotas => true` | `solo_notas_no_abre_la_captura` |
+| la captura arranca después de la puerta | `arrancar_la_pantalla` plantada antes de la puerta | «la pantalla arranca antes de la puerta: en solo notas se leería la reunión» |
+| el cliente elegido nombra el archivo | el cliente de antes (ninguno) | `reunion-2026-09-27-1402.ghost` en vez de `paramo-azul-…` |
+| «Revisar» pregunta antes de guardar · «Solo notas» no escucha | «Revisar» responde sin preguntar · «Solo notas» llama a `empezar_a_escuchar` | 3 casos de `este-cliente.test.tsx` |
+| `jurisdiccion/` sin disco ni red | `std::fs::write` plantado | `verify:ephemeral`: «2 uso(s) de disco/red» |
+
+**La maqueta se midió antes que el código** (`maqueta-cabe`): la primera versión de «Este cliente» se
+salía de 50 a 215 px. Tres pasos la metieron en los 640 px: volver al diseño de la Etapa de Diseño (sin
+«Qué funciona hoy»), acortar el aviso y la cláusula a una fila, y llevar la pregunta de la NDA a la fila
+de los botones. Ensanchar la columna derecha se probó y se deshizo: empujaba las pistas a dos líneas.
+
+**Lo que NO se corrió, y por qué (regla 22):** nada de esta fase toca el Mac. La prueba en vivo con la
+app queda para el cierre de la fase, con su fila y el «sí» del usuario.
+
+**Pruebas, local:**
+- cargo lib **443** · integración 22 (3 `#[ignore]`: pantalla, Llavero y launchd, que tocan el Mac) ·
+  clippy 0 (una variante grande de `LaBandera`, en caja);
+- vitest **285** (+9: 7 de `este-cliente.test.tsx`, 2 de Sesión) · e2e **195** (eran 167: los 7 estados
+  nuevos en axe) · fidelidad **204 encuadres** (eran 176), ninguno sobre el umbral; leídas como imagen
+  Sesión, «la NDA lo prohíbe», la cláusula, la pregunta y la banda en solo notas;
+- lint, typecheck, `verify:ephemeral` y `design-sync` (0 escritos tras regenerar), limpios.
+
 ---
 
 ## Para la planeadora al cierre del sprint (va al summary, «Sugerencias de mejora al método»)

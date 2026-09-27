@@ -61,6 +61,7 @@ const abierta: EstadoDePista = { abierta: true, motivo: null, bytes: 1_920_000 }
 const cerrada: EstadoDePista = { abierta: false, motivo: null, bytes: 0 };
 const escuchando: EstadoDeEscucha = {
   escuchando: true,
+  soloNotas: false,
   microfono: abierta,
   sistema: abierta,
   bytesDelTranscript: 2_048,
@@ -134,10 +135,15 @@ describe("el cuaderno: lo que no existe se dice", () => {
     expect(
       within(pistas).getByText(t.porQueNoAbrio["dispositivo-ocupado"]),
     ).toBeInTheDocument();
-    const hoy = screen.getByText(t.queFuncionaHoy).closest(".tarjeta") as HTMLElement;
-    expect(within(hoy).queryByText(t.funcionaEscucha)).toBeNull();
-    expect(within(hoy).getByText(t.soloTuPista)).toBeInTheDocument();
-    expect(within(hoy).getByText(t.aMedias)).toBeInTheDocument();
+    // Desde el sprint 3 la fila vive en la tarjeta de las pistas, y solo cuando una cae.
+    expect(within(pistas).queryByText(t.funcionaEscucha)).toBeNull();
+    expect(within(pistas).getByText(t.soloTuPista)).toBeInTheDocument();
+    expect(within(pistas).getByText(t.aMedias)).toBeInTheDocument();
+  });
+
+  it("sesión: con las dos pistas abiertas no hay fila de «a medias» que decir", () => {
+    pintaSesion({ escucha: escuchando });
+    expect(screen.queryByText(t.aMedias)).toBeNull();
   });
 
   it("sesión: cada uno de los cinco porqués de una pista caída tiene su frase", () => {
@@ -229,33 +235,41 @@ describe("el cuaderno: lo que no existe se dice", () => {
   });
 
   /**
-   * La tarjeta que impide que la pantalla mienta por omisión: el sprint 001 SÍ entrega la banda
-   * protegida, el acople y el kill-switch, y una pantalla llena de «todavía no» se leería como
-   * que no hay nada.
+   * **Sprint 3: la pantalla vuelve al diseño aprobado de la Etapa de Diseño** («reunión detectada»).
+   * «Qué funciona hoy» era el andamio de los sprints 1 y 2, y con el H1 entero no queda nada en
+   * «todavía no». Antes de empezar: «Iniciar sesión» y «Solo notas», y la promesa con ⌥⎋.
    */
-  it("sesión enseña lo que sí funciona hoy, y ya no queda nada pendiente en esa tarjeta", () => {
+  it("sesión, antes de empezar: «Iniciar sesión», «Solo notas» y ni un «todavía no»", () => {
     pinta("?pantalla=sesion");
-    const hoy = screen
-      .getByText(t.queFuncionaHoy)
-      .closest(".tarjeta") as HTMLElement;
-    expect(within(hoy).getAllByText(t.funciona)).toHaveLength(3);
-    expect(within(hoy).getByText("⌥⎋")).toBeInTheDocument();
-    expect(within(hoy).queryByText(t.todaviaNo)).toBeNull();
-    // Y el botón es de verdad, y dice lo que hace: la muestra está escuchando, así que la termina
-    // (decía «Iniciar sesión» también cuando paraba — auditoría del S2, B16).
-    expect(
-      screen.getByRole("button", { name: new RegExp(t.terminarSesion) }),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: new RegExp(t.iniciarSesion) })).toBeNull();
+    expect(screen.getByRole("button", { name: new RegExp(t.iniciarSesion) })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: new RegExp(es.cliente.soloNotas) })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: new RegExp(t.terminarSesion) })).toBeNull();
+    expect(screen.getByText("⌥⎋")).toBeInTheDocument();
+    expect(screen.queryByText(t.todaviaNo)).toBeNull();
   });
 
-  it("sesión no inventa la ficha del cliente: la declara ausente con su motivo", () => {
+  /** En marcha, el botón dice lo que hace (auditoría del S2, B16) y «Solo notas» ya no está. */
+  it("sesión, en marcha: «Terminar sesión» y nada más", () => {
+    pinta("?pantalla=sesion&estado=en-marcha");
+    expect(screen.getByRole("button", { name: new RegExp(t.terminarSesion) })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: new RegExp(t.iniciarSesion) })).toBeNull();
+    expect(screen.queryByRole("button", { name: new RegExp(es.cliente.soloNotas) })).toBeNull();
+  });
+
+  /**
+   * «Este cliente» deja de estar pendiente (ADR 017): la bandera de su ficha con sus normas y su
+   * fecha, **lo que el informe no pudo verificar** y, siempre, que no es asesoría legal.
+   */
+  it("sesión: «Este cliente» enseña la bandera de su ficha, lo no verificado y el aviso legal", () => {
     pinta("?pantalla=sesion");
-    const cliente = screen
-      .getByText(t.esteCliente)
-      .closest(".tarjeta") as HTMLElement;
-    expect(cliente.className).toContain("pendiente");
-    expect(within(cliente).getByText(t.noSeInventa)).toBeInTheDocument();
+    const cliente = screen.getByText(t.esteCliente).closest(".tarjeta") as HTMLElement;
+    expect(cliente.className).not.toContain("pendiente");
+    expect(within(cliente).getByText("Colombia")).toBeInTheDocument();
+    expect(within(cliente).getByText(es.cliente.riesgo["bajo-medio"])).toBeInTheDocument();
+    expect(within(cliente).getByText("CSJ AP1465-2018 · Ley 1581 art. 3 · 2026-09-17")).toBeInTheDocument();
+    expect(within(cliente).getByText(/G-1/)).toBeInTheDocument();
+    expect(within(cliente).getByText(es.cliente.noEsAsesoria)).toBeInTheDocument();
+    expect(within(cliente).getByText(es.cliente.ndaSinRevisar)).toBeInTheDocument();
   });
 
   /**

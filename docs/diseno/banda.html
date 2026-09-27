@@ -36,6 +36,7 @@
     <button data-estado="voz-sin">solo audio · sin auriculares</button>
     <button data-estado="s3-propuesta">sprint 3 · te propongo guardar</button>
     <button data-estado="s3-fijada">sprint 3 · fijada</button>
+    <button data-estado="s3-solo-notas">sprint 3 · solo notas</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -65,6 +66,7 @@
   <div class="n" data-para="voz-espera"><b>Qué mirar (mirada 16-bis, aprobada con un cambio el 2026-09-26):</b> <b>el estado que la mirada 16 no dibujó</b>, y que apareció al construir el modo: el modo dura toda la reunión, así que la banda pasa <b>la mayor parte del tiempo a 44 px sin decir nada</b> — entre una ficha y la siguiente.<br>La primera propuesta enseñaba la línea de la ficha recién leída y <b>se callaba el estado</b>. El veredicto del usuario: <i>«creo que sí debería hacer evidente el estado»</i>. Así que el estado se dice, con el mismo patrón <b>«estado · por qué»</b> que él ya aprobó en «Conecta auriculares · el cliente te oiría»: <b>«Callado · esperando el siguiente turno»</b>, y detrás la fuente de lo último que se leyó — que es lo que dice QUÉ oíste hace un momento.<br>Si todavía no se ha oído nada, la línea se queda en el estado, sin fuente: no hay ninguna que citar.</div>
   <div class="n" data-para="voz-sin"><b>Qué mirar:</b> la salvaguarda, y es la razón de que este estado exista. <b>Sin auriculares la app no habla</b> — por los altavoces el cliente oiría tu propia ayuda y se rompería la promesa entera. No es un aviso que puedas ignorar: es una <b>condición</b>. Si los desconectas a mitad de una frase, calla.<br>Ámbar, <b>símbolo y texto</b>, los tres a la vez como manda el sistema. El símbolo son los auriculares tachados y no el triángulo genérico: dice <i>qué</i> falta, no solo que algo va mal.</div>
   <div class="n" data-para="s3-propuesta"><b>Qué mirar (mirada 20 — forma, decisión de diseño no escrita):</b> la propuesta de nota en la banda, <b>pasiva y en una línea</b>. Va arriba, en la línea de estado, y <b>no toca la ficha</b>: ni la tapa, ni la mueve, ni suena, ni se lee en voz alta. Dice qué te propone guardar y la tecla que lo guarda, <b>⌃⌥↵</b>, la de la maqueta aprobada de Notas. Si no haces nada, la propuesta te espera en Notas y, al cerrar, en la bandeja.</div>
+  <div class="n" data-para="s3-solo-notas"><b>Qué mirar (sprint 3, fase 3 — forma, «maquetado, no visto»; ADR 017 §5):</b> la reunión en <b>modo solo notas</b>: nada escucha ni transcribe. La cabecera lo dice en ámbar con la nota —símbolo, texto y color (regla 8)—, como la barra de <code>kit.html</code> §6. Y la banda en reposo cambia su frase: aquí no hay cliente que pregunte, así que la evidencia llega cuando escribes en tu nota y pulsas <kbd>⌃⌥A</kbd>.</div>
   <div class="n" data-para="s3-fijada"><b>Qué mirar (mirada 20 — forma, una decisión tuya):</b> la señal al fijar con ⌃⌥P. Hoy no hay ninguna: la ficha se fija y lo compruebas en Notas. Esta es la propuesta: donde estaba «⌃⌥P fijar», un <b>«fijada»</b> en verde con la chincheta llena, mientras esa ficha siga en la banda. Si no la quieres, se queda como hoy.</div>
   <div class="mq-medida">escritorio de referencia 1180 × 720 · banda 88 px (asa → 200) · <b>44 px en modo solo audio</b> · datos sintéticos «Páramo Azul»</div>
 </div>
@@ -83,28 +85,32 @@
   </div>
   <div class="mq-dock" data-en="flotante"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
 
-  <div class="mq-corte" data-en="esperando buscando ficha sin-resultado sin-verificar sugerencia-local sugerencia-api s3-propuesta s3-fijada" style="bottom:104px"><span>aquí se recorta la reunión</span></div>
+  <div class="mq-corte" data-en="esperando buscando ficha sin-resultado sin-verificar sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas" style="bottom:104px"><span>aquí se recorta la reunión</span></div>
   <div class="mq-corte" data-en="ficha-2 sin-resultado-2 sin-verificar-2 transcript sugerencia-2" style="bottom:216px"><span>aquí se recorta la reunión</span></div>
   <div class="mq-corte" data-en="voz voz-espera voz-sin" style="bottom:60px"><span>aquí se recorta la reunión</span></div>
   <div class="mq-choque" data-en="flotante" style="left:calc(50% - 215px);width:430px;bottom:2px;height:56px"><span>sin permiso de acople: la banda queda encima del Dock</span></div>
 
   <!-- ===================== BANDA COMPACTA · 88 px ===================== -->
-  <div class="mq-pos banda-borde" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
+  <div class="mq-pos banda-borde" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
     <section class="banda" data-captura aria-label="Angel Ghost">
 
       <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i><span class="sr"><span lang="es">arrastra para ajustar las dos a la vez</span><span lang="en">drag to resize both at once</span></span></span>
 
       <div class="cab-b">
-        <span class="marca-min">
+        <span class="marca-min" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
           <svg class="ic s relleno"><use href="#i-check-circle"/></svg>
           <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        <span class="marca-min warn" data-en="s3-solo-notas">
+          <svg class="ic s"><use href="#i-nota"/></svg>
+          <span lang="es">Solo notas · sin transcripción</span><span lang="en">Notes only · no transcription</span>
         </span>
         <span class="cliente-b warn" data-en="flotante" title="sin el permiso de Accesibilidad la banda no puede recortar la reunión">
           <svg class="ic s relleno"><use href="#i-alert"/></svg>
           <span lang="es">sin acople</span><span lang="en">not docked</span>
         </span>
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
+        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
         </span>
         <span class="cliente-b warn" data-en="sin-verificar">
@@ -119,7 +125,7 @@
           <span class="que-b"><span lang="es">Te propongo guardar: «Fecha real del tablero: 12 semanas desde la firma»</span><span lang="en">I suggest saving: “Real dashboard date: 12 weeks from signature”</span></span>
           <span class="tecla"><kbd>⌃⌥↵</kbd></span>
         </span>
-        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"/></svg>0 B</span>
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada s3-solo-notas" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"/></svg>0 B</span>
         <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
              en rojo: fue su decisión (panel, mirada 1). -->
         <span class="red api mono" data-en="sugerencia-api" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"/></svg>1,2 KB</span>
@@ -133,6 +139,19 @@
           <span class="meta-b"><svg class="ic s"><use href="#i-doc"/></svg><span lang="es">143 documentos · 5 unidades</span><span lang="en">143 documents · 5 units</span></span>
         </span>
         <span class="lado-b" data-en="esperando">
+          <span class="meta-b"><svg class="ic s"><use href="#i-reloj"/></svg><span lang="es">Páramo Azul · 12 min</span><span lang="en">Páramo Azul · 12 min</span></span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌃⌥A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>
+            <span class="tecla"><kbd>⌥⎋</kbd> <span lang="es">corta</span><span lang="en">cut</span></span>
+          </span>
+        </span>
+
+        <!-- ---------------------- solo notas, en reposo (sprint 3) ---------------------- -->
+        <span class="ficha-b" data-en="s3-solo-notas">
+          <span class="voz-b"><span lang="es">Escribe en tu nota y pulsa ⌃⌥A: aquí aparece tu evidencia.</span><span lang="en">Write in your note and press ⌃⌥A: your evidence shows up here.</span></span>
+          <span class="meta-b"><svg class="ic s"><use href="#i-doc"/></svg><span lang="es">143 documentos · 5 unidades</span><span lang="en">143 documents · 5 units</span></span>
+        </span>
+        <span class="lado-b" data-en="s3-solo-notas">
           <span class="meta-b"><svg class="ic s"><use href="#i-reloj"/></svg><span lang="es">Páramo Azul · 12 min</span><span lang="en">Páramo Azul · 12 min</span></span>
           <span class="atajos-b">
             <span class="tecla"><kbd>⌃⌥A</kbd> <span lang="es">ayúdame</span><span lang="en">help me</span></span>

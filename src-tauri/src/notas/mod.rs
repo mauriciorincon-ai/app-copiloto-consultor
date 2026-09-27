@@ -466,6 +466,14 @@ impl Fecha {
     }
 }
 
+/// **La última línea de tu nota**, con la que `⌃⌥A` busca en modo solo notas (ADR 017 §5): la última
+/// que no esté en blanco, sin viñeta delante. `None` si la nota está vacía.
+pub fn ultima_linea(nota: &str) -> Option<&str> {
+    nota.lines()
+        .map(|l| l.trim().trim_start_matches(['-', '*', '•']).trim())
+        .rfind(|l| !l.is_empty())
+}
+
 /// El nombre del archivo, sin la extensión: `paramo-azul-2026-09-20`, o
 /// `reunion-2026-09-27-1402` si no se eligió cliente. Lo que dibuja la maqueta.
 pub fn nombre_del_archivo(cliente: Option<&str>, f: &Fecha) -> String {
@@ -507,6 +515,14 @@ pub fn slug(texto: &str) -> String {
 
 #[cfg(test)]
 mod pruebas {
+    /// ⌃⌥A en solo notas busca con esto: la última línea con algo, sin su viñeta.
+    #[test]
+    fn la_ultima_linea_de_la_nota() {
+        assert_eq!(ultima_linea("Piden la cuarta fuente.\n- ETL con tres fuentes\n\n  "), Some("ETL con tres fuentes"));
+        assert_eq!(ultima_linea("una sola"), Some("una sola"));
+        assert_eq!(ultima_linea("   \n\n"), None);
+    }
+
     use super::*;
 
     fn turno(pista: Pista, eco: bool, texto: &str) -> Turno {

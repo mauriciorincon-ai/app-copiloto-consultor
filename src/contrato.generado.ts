@@ -16,6 +16,7 @@ import type { EnTuMac } from "./radar";
 import type { EstadoDeLaIa, PorQueNoRedacta, LoQueSalio } from "./ia";
 import type { EstadoDelAcople } from "./acople";
 import type { VistaDelCuaderno, LineaDePropuesta, Propuesta, Regla, Ventana, VistaDeLaBandeja, EstadoDeLaBandeja, ReunionGuardada, Guardada, ListaDeReuniones } from "./notas";
+import type { VistaDelCliente, LaBandera, Nda } from "./jurisdiccion";
 
 export const NOVEDAD_EMPIEZA: Novedad = {
     "que": "empieza"
@@ -140,7 +141,8 @@ export const ESTADO_DE_LA_ESCUCHA: EstadoDeEscucha = {
       "abierta": false,
       "bytes": 0,
       "motivo": "dispositivo-ocupado"
-    }
+    },
+    "soloNotas": false
   };
 
 export const DISPONIBILIDAD_LISTO: Disponibilidad = {
@@ -654,6 +656,174 @@ export const ESTADO_DE_LA_BANDEJA: EstadoDeLaBandeja = {
 export const SIN_BANDEJA_Y_LA_TAREA_NO_CORRIO: EstadoDeLaBandeja = {
     "noCorrio": true,
     "vence": null
+  };
+
+export const VISTA_DEL_CLIENTE: VistaDelCliente = {
+    "bandera": {
+      "bandera": {
+        "consultado": "2026-09-17",
+        "implica": {
+          "en": "Handle it at the engagement level: contract clause + NDA check.",
+          "es": "Resuélvelo en el encargo: cláusula del contrato + chequeo de NDA."
+        },
+        "nombre": {
+          "en": "Colombia",
+          "es": "Colombia"
+        },
+        "normas": [
+          "CSJ AP1465-2018",
+          "Ley 1581 art. 3"
+        ],
+        "pendiente": {
+          "en": "CSJ AP1465-2018 was read in a secondary source (G-1)",
+          "es": "la CSJ AP1465-2018 se leyó en una fuente secundaria (G-1)"
+        },
+        "regla": {
+          "en": "Listening as a participant is lawful; ephemeral transcription is probably “processing”.",
+          "es": "Escuchar como participante es lícito; la transcripción efímera probablemente es «tratamiento»."
+        },
+        "riesgo": "bajo-medio"
+      },
+      "que": "conocida"
+    },
+    "clausula": {
+      "en": "Local AI assistance. During meetings under this engagement, the Consultant may use, on their own computer, an artificial intelligence assistant that listens to and transcribes the conversation only in that computer’s memory, to search the Consultant’s own documents. The assistant does not record audio or keep transcripts or screenshots, does not identify anyone by their voice and does not infer emotions. By default nothing leaves the computer; if the Consultant turns on an external provider, only text fragments with no data that identifies anyone are sent to it, under no-retention terms. Only the notes the Consultant writes are kept, encrypted and under the Consultant’s responsibility. If the Client prefers it not be used in a meeting, saying so is enough.",
+      "es": "Asistencia de IA local. Durante las reuniones de este encargo, el Consultor puede usar en su propio equipo un asistente de inteligencia artificial que escucha y transcribe la conversación solo en la memoria del equipo, para buscar en sus propios documentos. El asistente no graba audio ni guarda transcripciones o capturas de pantalla, no identifica a nadie por su voz y no infiere emociones. Por defecto nada sale del equipo; si el Consultor activa un proveedor externo, solo le envía fragmentos de texto sin datos que identifiquen a nadie, bajo condiciones de no retención. Se conservan únicamente las notas que el Consultor escribe, cifradas y bajo su responsabilidad. Si el Cliente prefiere que no se use en una reunión, basta con decirlo."
+    },
+    "clientes": [
+      "Páramo Azul",
+      "Sur del Valle"
+    ],
+    "elegido": "Páramo Azul",
+    "nda": "sin-revisar"
+  };
+
+export const VISTA_DEL_CLIENTE_SIN_ELEGIR: VistaDelCliente = {
+    "bandera": null,
+    "clausula": {
+      "en": "Local AI assistance. During meetings under this engagement, the Consultant may use, on their own computer, an artificial intelligence assistant that listens to and transcribes the conversation only in that computer’s memory, to search the Consultant’s own documents. The assistant does not record audio or keep transcripts or screenshots, does not identify anyone by their voice and does not infer emotions. By default nothing leaves the computer; if the Consultant turns on an external provider, only text fragments with no data that identifies anyone are sent to it, under no-retention terms. Only the notes the Consultant writes are kept, encrypted and under the Consultant’s responsibility. If the Client prefers it not be used in a meeting, saying so is enough.",
+      "es": "Asistencia de IA local. Durante las reuniones de este encargo, el Consultor puede usar en su propio equipo un asistente de inteligencia artificial que escucha y transcribe la conversación solo en la memoria del equipo, para buscar en sus propios documentos. El asistente no graba audio ni guarda transcripciones o capturas de pantalla, no identifica a nadie por su voz y no infiere emociones. Por defecto nada sale del equipo; si el Consultor activa un proveedor externo, solo le envía fragmentos de texto sin datos que identifiquen a nadie, bajo condiciones de no retención. Se conservan únicamente las notas que el Consultor escribe, cifradas y bajo su responsabilidad. Si el Cliente prefiere que no se use en una reunión, basta con decirlo."
+    },
+    "clientes": [
+      "Páramo Azul",
+      "Sur del Valle"
+    ],
+    "elegido": null,
+    "nda": "sin-revisar"
+  };
+
+export const BANDERA_CONOCIDA: LaBandera = {
+    "bandera": {
+      "consultado": "2026-09-17",
+      "implica": {
+        "en": "Handle it at the engagement level: contract clause + NDA check.",
+        "es": "Resuélvelo en el encargo: cláusula del contrato + chequeo de NDA."
+      },
+      "nombre": {
+        "en": "Colombia",
+        "es": "Colombia"
+      },
+      "normas": [
+        "CSJ AP1465-2018",
+        "Ley 1581 art. 3"
+      ],
+      "pendiente": {
+        "en": "CSJ AP1465-2018 was read in a secondary source (G-1)",
+        "es": "la CSJ AP1465-2018 se leyó en una fuente secundaria (G-1)"
+      },
+      "regla": {
+        "en": "Listening as a participant is lawful; ephemeral transcription is probably “processing”.",
+        "es": "Escuchar como participante es lícito; la transcripción efímera probablemente es «tratamiento»."
+      },
+      "riesgo": "bajo-medio"
+    },
+    "que": "conocida"
+  };
+
+export const BANDERA_CON_PENDIENTE: LaBandera = {
+    "bandera": {
+      "consultado": "2026-09-17",
+      "implica": {
+        "en": "Suggested: one-line notice to the client or notes-only mode.",
+        "es": "Sugerido: aviso de una línea al cliente o modo solo notas."
+      },
+      "nombre": {
+        "en": "USA · California (all-party)",
+        "es": "EE. UU. · California (todas las partes)"
+      },
+      "normas": [
+        "Cal. Penal Code § 632(a)"
+      ],
+      "pendiente": {
+        "en": "there is no precedent on a participant who transcribes without recording (G-6)",
+        "es": "no hay precedente sobre quien participa y transcribe sin grabar (G-6)"
+      },
+      "regla": {
+        "en": "Requires all parties and punishes “eavesdrop upon or record” with a device, not just recording.",
+        "es": "Exige a todas las partes y castiga «escuchar o grabar» con un aparato, no solo grabar."
+      },
+      "riesgo": "medio-alto"
+    },
+    "que": "conocida"
+  };
+
+export const BANDERA_SIN_VERIFICAR: LaBandera = {
+    "bandera": {
+      "consultado": "2026-09-17",
+      "implica": {
+        "en": "Check with a lawyer before the meeting: the app asserts nothing here.",
+        "es": "Consúltalo con un abogado antes de la reunión: la app no afirma nada aquí."
+      },
+      "nombre": {
+        "en": "USA · Missouri",
+        "es": "EE. UU. · Missouri"
+      },
+      "normas": [
+        "RCFP Reporter’s Recording Guide"
+      ],
+      "pendiente": {
+        "en": "its statute is not in the report",
+        "es": "su estatuto no está en el informe"
+      },
+      "regla": {
+        "en": "The report lists it as mixed, without verifying its statute.",
+        "es": "El informe lo nombra entre los de regla mixta, sin verificar su estatuto."
+      },
+      "riesgo": "sin-verificar"
+    },
+    "que": "conocida"
+  };
+
+export const BANDERA_FUERA_DEL_CATALOGO: LaBandera = {
+    "escrita": "Bolivia",
+    "que": "fuera-del-catalogo",
+    "version": 1
+  };
+
+export const BANDERA_SIN_INDICAR: LaBandera = {
+    "que": "sin-indicar"
+  };
+
+export const NDA_SIN_REVISAR: Nda = "sin-revisar";
+
+export const NDA_NO_LO_PROHIBE: Nda = "no-lo-prohibe";
+
+export const NDA_LO_PROHIBE: Nda = "lo-prohibe";
+
+export const ESCUCHA_SOLO_NOTAS: EstadoDeEscucha = {
+    "bytesDelTranscript": 0,
+    "escuchando": false,
+    "microfono": {
+      "abierta": false,
+      "bytes": 0,
+      "motivo": null
+    },
+    "sistema": {
+      "abierta": false,
+      "bytes": 0,
+      "motivo": null
+    },
+    "soloNotas": true
   };
 
 export const REUNION_GUARDADA: ReunionGuardada = {

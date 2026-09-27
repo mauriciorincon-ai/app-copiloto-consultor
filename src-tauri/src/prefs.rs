@@ -105,6 +105,10 @@ pub struct Preferencias {
     pub conservar_mis_turnos: bool,
     /// Cuánto esperan en la bandeja las propuestas que no decidiste (ADR 016 §4). De fábrica, 3 h.
     pub ventana_de_la_bandeja: crate::bandeja::Ventana,
+    /// Lo que respondiste de la NDA de cada cliente (ADR 017 §4), por su nombre. «Sin revisar» es no
+    /// estar aquí. La NDA no cambia de una reunión a otra, por eso se guarda; con quién te reúnes hoy,
+    /// no.
+    pub ndas: std::collections::BTreeMap<String, crate::jurisdiccion::Nda>,
 }
 
 impl Default for Preferencias {
@@ -118,6 +122,7 @@ impl Default for Preferencias {
             retencion: Retencion::default(),
             conservar_mis_turnos: false,
             ventana_de_la_bandeja: crate::bandeja::Ventana::default(),
+            ndas: std::collections::BTreeMap::new(),
         }
     }
 }
@@ -205,6 +210,7 @@ mod tests {
             retencion: Retencion::Anio,
             conservar_mis_turnos: true,
             ventana_de_la_bandeja: crate::bandeja::Ventana::FinDelDia,
+            ndas: [("Páramo Azul".to_string(), crate::jurisdiccion::Nda::LoProhibe)].into(),
         };
         guardar(&ruta, &elegidas).unwrap();
         assert_eq!(leer(&ruta), elegidas);

@@ -28,7 +28,9 @@ pub mod disparo;
 pub mod escucha;
 pub mod ficha;
 pub mod habla;
+pub mod jurisdiccion;
 pub mod llavero;
+pub mod modo;
 pub mod notas;
 pub mod pantalla;
 pub mod permisos;
@@ -490,6 +492,31 @@ fn empezar_a_escuchar(
     estado: tauri::State<'_, LaEscucha>,
     el_corpus: tauri::State<'_, ElCorpus>,
 ) -> Result<escucha::EstadoDeEscucha, String> {
+    empezar(app, &estado, &el_corpus, modo::Modo::Normal)
+}
+
+/// **«Solo notas»** (ADR 017 §5): la reunión se abre —el cuaderno protegido y la banda— y **no se
+/// captura nada**: ni micrófono, ni audio del sistema, ni transcripción, ni pantalla, ni radar ámbar.
+/// Se llega desde Sesión, por la NDA de tu cliente o porque lo decides tú.
+#[tauri::command]
+fn empezar_solo_notas(
+    app: tauri::AppHandle,
+    estado: tauri::State<'_, LaEscucha>,
+    el_corpus: tauri::State<'_, ElCorpus>,
+) -> Result<escucha::EstadoDeEscucha, String> {
+    empezar(app, &estado, &el_corpus, modo::Modo::SoloNotas)
+}
+
+/// El nombre del evento con el que la banda y Sesión se enteran de que la reunión empezó o terminó, y
+/// en qué modo.
+const EVENTO_MODO: &str = "modo";
+
+fn empezar(
+    app: tauri::AppHandle,
+    estado: &tauri::State<'_, LaEscucha>,
+    el_corpus: &tauri::State<'_, ElCorpus>,
+    modo: modo::Modo,
+) -> Result<escucha::EstadoDeEscucha, String> {
     // **Los idiomas salen de las preferencias, que son la única fuente** (sprint 003). En la fase 0
     // los mandaba el webview desde su caché, y la casilla 6 lo cazó: después de reiniciar, Sesión
     // mandaba los de fábrica si el usuario no había pasado antes por Idioma. Sin parámetros, el
@@ -528,6 +555,16 @@ fn empezar_a_escuchar(
         // por donde se verificó en vivo: sin ella, «vuelve» sería una afirmación sin testigo.
         Ok(()) if la_habian_cortado => println!("[ventanas] la banda estaba cortada: vuelve"),
         Ok(()) => {}
+    }
+    // **LA PUERTA DE LA CAPTURA** (ADR 017 §5). Todo lo que oye o mira la reunión —la pantalla, las
+    // pistas, la transcripción— arranca DESPUÉS de esta línea, y en solo notas no se llega. Un test de
+    // esta fuente vigila el orden (`pruebas_de_la_puerta_de_la_captura`).
+    reunion::marcar_solo_notas(&app, !modo::abre_la_captura(modo));
+    if !modo::abre_la_captura(modo) {
+        parar_la_pantalla(&app);
+        println!("[sesión] modo solo notas: ni pistas, ni transcripción, ni pantalla");
+        let _ = app.emit(EVENTO_MODO, modo);
+        return Ok(escucha::EstadoDeEscucha::solo_notas());
     }
     let mango = app.clone();
     // **El modo solo audio lee en el idioma del CONSULTOR**, no del cliente: la ficha sale de los
@@ -608,6 +645,7 @@ fn empezar_a_escuchar(
     );
     let informe = nueva.estado();
     *guardada = Some(nueva);
+    let _ = app.emit(EVENTO_MODO, modo);
     Ok(informe)
 }
 
@@ -626,12 +664,15 @@ fn dejar_de_escuchar(app: tauri::AppHandle, estado: tauri::State<'_, LaEscucha>)
     avisar_a_la_ia(&app);
     // La reunión sigue abierta —«al cerrar»— hasta que la guardes o la descartes.
     reunion::al_terminar(&app);
+    let _ = app.emit(EVENTO_MODO, ());
 }
 
-/// Qué vive en memoria ahora mismo por culpa de la escucha. Lo pide la pantalla de Honestidad.
+/// Qué vive en memoria ahora mismo por culpa de la escucha. Lo pide la pantalla de Honestidad. En solo
+/// notas no hay escucha, y lo dice: la reunión está abierta y nada se captura.
 #[tauri::command]
-fn estado_de_la_escucha(estado: tauri::State<'_, LaEscucha>) -> Option<escucha::EstadoDeEscucha> {
-    estado.0.lock().ok()?.as_ref().map(|e| e.estado())
+fn estado_de_la_escucha(app: tauri::AppHandle, estado: tauri::State<'_, LaEscucha>) -> Option<escucha::EstadoDeEscucha> {
+    let viva = estado.0.lock().ok()?.as_ref().map(|e| e.estado());
+    viva.or_else(|| reunion::solo_notas(&app).then(escucha::EstadoDeEscucha::solo_notas))
 }
 
 /// Los últimos turnos, para el transcript de la banda.
@@ -883,6 +924,11 @@ pub fn run() {
             borrar_reunion,
             fijar_retencion,
             mostrar_las_notas_en_finder,
+            este_cliente,
+            elegir_cliente,
+            responder_nda,
+            revisar_nda,
+            empezar_solo_notas,
             ir_a_notas,
             guardar_propuesta,
             descartar_propuesta,
@@ -1127,7 +1173,7 @@ fn pedir_ficha(
     // atendiera y la banda se quedaba en «Buscando en tu corpus…» para siempre: `⌃⌥A` pulsada antes
     // de que el cliente hablara dejaba la banda colgada. Ningún test lo vio porque su doble del
     // puente solo sabía resolver.
-    let a = ficha_vigente(&escucha_viva, &el_corpus, &la_pantalla);
+    let a = ficha_vigente(&escucha_viva, &el_corpus, &la_pantalla).or_else(|| ficha_de_la_nota(&app, &el_corpus));
     match &a {
         None => println!("[ficha] ⌃⌥A sin turno del cliente: todavía no hay nada que buscar"),
         Some(a) => {
@@ -1383,6 +1429,23 @@ fn ficha_vigente(
     let ms = empezo.elapsed().as_millis() as u64;
     println!("[ficha] a petición del usuario en {ms} ms · {} candidatas", hallazgos.len());
     Some(ficha::Aparicion { respuesta, motivo: disparo::Motivo::Atajo, ms, hora: ultimo.hora })
+}
+
+/// **`⌃⌥A` en solo notas** (ADR 017 §5): no hay turno del cliente con que buscar, así que busca con la
+/// última línea de tu nota. Fuera de solo notas no hace nada: ahí `⌃⌥A` sigue siendo «lo último que
+/// dijo el cliente», y sin turno se dice que todavía no hay nada que buscar.
+fn ficha_de_la_nota(app: &tauri::AppHandle, el_corpus: &tauri::State<'_, ElCorpus>) -> Option<ficha::Aparicion> {
+    use escucha::Buscador;
+    if !reunion::solo_notas(app) {
+        return None;
+    }
+    let linea = reunion::ultima_linea_de_la_nota(app)?;
+    let empezo = std::time::Instant::now();
+    let hallazgos = el_corpus.inner().buscar(&linea, ficha::TOP);
+    let respuesta = ficha::armar(&linea, &hallazgos);
+    let ms = empezo.elapsed().as_millis() as u64;
+    println!("[ficha] ⌃⌥A en solo notas, con tu nota, en {ms} ms · {} candidatas", hallazgos.len());
+    Some(ficha::Aparicion { respuesta, motivo: disparo::Motivo::Atajo, ms, hora: escucha::la_hora() })
 }
 
 /// `⌃⌥V` — **el modo solo audio**, tal y como lo dibuja la banda de 44 px.
@@ -2335,6 +2398,89 @@ fn ir_a_notas(app: tauri::AppHandle) {
 }
 
 // ---------------------------------------------------------------------------------------------
+// Sprint 003, fase 3 — EL MARCO EN LA MANO: «Este cliente», su NDA y solo notas (ADR 017).
+// ---------------------------------------------------------------------------------------------
+
+/// «Este cliente», como Sesión lo pinta: los clientes del corpus, el elegido, su bandera, su NDA y la
+/// cláusula modelo.
+fn vista_del_cliente(app: &tauri::AppHandle, el_corpus: &ElCorpus) -> jurisdiccion::VistaDelCliente {
+    let elegido = reunion::cliente(app);
+    let (clientes, escrita) = el_corpus
+        .0
+        .lock()
+        .ok()
+        .and_then(|g| {
+            g.as_ref().map(|c| {
+                let escrita = elegido.as_deref().and_then(|e| c.jurisdiccion_de(e)).map(str::to_string);
+                (corpus::clientes(c.documentos()), escrita)
+            })
+        })
+        .unwrap_or_default();
+    let nda = elegido
+        .as_ref()
+        .and_then(|e| app.state::<LasPreferencias>().actuales.lock().ok().and_then(|p| p.ndas.get(e).copied()))
+        .unwrap_or(jurisdiccion::Nda::SinRevisar);
+    jurisdiccion::VistaDelCliente {
+        clientes,
+        bandera: elegido.as_ref().map(|_| jurisdiccion::bandera(escrita.as_deref())),
+        elegido,
+        nda,
+        clausula: jurisdiccion::clausula().clone(),
+    }
+}
+
+#[tauri::command]
+fn este_cliente(app: tauri::AppHandle, el_corpus: tauri::State<'_, ElCorpus>) -> jurisdiccion::VistaDelCliente {
+    vista_del_cliente(&app, &el_corpus)
+}
+
+/// Elige el cliente de esta reunión, o ninguno. Solo uno del corpus: un nombre que no está ahí no se
+/// elige (lo que llega de la pantalla no inventa clientes).
+#[tauri::command]
+fn elegir_cliente(
+    app: tauri::AppHandle,
+    el_corpus: tauri::State<'_, ElCorpus>,
+    nombre: Option<String>,
+) -> Result<jurisdiccion::VistaDelCliente, String> {
+    if let Some(n) = &nombre {
+        if !clientes_del_corpus(&el_corpus).contains(n) {
+            return Err("ese cliente no está en tu corpus".into());
+        }
+    }
+    reunion::elegir_cliente(&app, nombre);
+    Ok(vista_del_cliente(&app, &el_corpus))
+}
+
+/// La respuesta al chequeo de NDA del cliente elegido: «Sí, lo prohíbe» o «No lo prohíbe». Se guarda.
+#[tauri::command]
+fn responder_nda(
+    app: tauri::AppHandle,
+    el_corpus: tauri::State<'_, ElCorpus>,
+    prohibe: bool,
+) -> Result<jurisdiccion::VistaDelCliente, String> {
+    let elegido = reunion::cliente(&app).ok_or("elige primero el cliente")?;
+    let nda = if prohibe { jurisdiccion::Nda::LoProhibe } else { jurisdiccion::Nda::NoLoProhibe };
+    recordar(&app, |p| {
+        p.ndas.insert(elegido, nda);
+    });
+    // Al log, la respuesta; el nombre del cliente, no.
+    println!("[nda] respuesta guardada: {}", if prohibe { "lo prohíbe" } else { "no lo prohíbe" });
+    Ok(vista_del_cliente(&app, &el_corpus))
+}
+
+/// «Revisar» y «Volver a revisar la NDA»: la respuesta se borra y la pregunta vuelve.
+#[tauri::command]
+fn revisar_nda(app: tauri::AppHandle, el_corpus: tauri::State<'_, ElCorpus>) -> jurisdiccion::VistaDelCliente {
+    if let Some(elegido) = reunion::cliente(&app) {
+        recordar(&app, |p| {
+            p.ndas.remove(&elegido);
+        });
+        println!("[nda] respuesta borrada: vuelve la pregunta");
+    }
+    vista_del_cliente(&app, &el_corpus)
+}
+
+// ---------------------------------------------------------------------------------------------
 // Sprint 003, fase 2 — LAS PROPUESTAS Y LA BANDEJA (ADR 016). La lógica vive en `reunion.rs`.
 // ---------------------------------------------------------------------------------------------
 
@@ -2909,5 +3055,32 @@ mod pruebas_del_informe_del_corte {
         let bucle = cuerpo.find("for pieza in corte::TODAS").expect("el bucle de las piezas");
         assert!(lee < bucle, "el contador se lee después de que el corte lo ponga a cero");
         assert_eq!(cuerpo.matches("red::bytes()").count(), 1, "y se lee una sola vez");
+    }
+}
+
+#[cfg(test)]
+mod pruebas_de_la_puerta_de_la_captura {
+    /// **En solo notas no arranca ninguna captura** (ADR 017 §5). `empezar` necesita la app entera y no
+    /// se puede llamar en un test; lo que se vigila es lo mismo que en el informe del corte, el orden:
+    /// la pantalla y las pistas arrancan DESPUÉS de la puerta del modo, y nadie más las arranca.
+    ///
+    /// ¿Puede fallar? Sí: con `arrancar_la_pantalla` antes de la puerta, es rojo (bitácora). Las agujas
+    /// se arman con `concat!` para que este test no se cuente a sí mismo.
+    #[test]
+    fn la_captura_arranca_despues_de_la_puerta_y_solo_desde_empezar() {
+        let fuente = include_str!("lib.rs");
+        let pantalla = concat!("arrancar_la_", "pantalla(&");
+        let pistas = concat!("escucha::Escucha::", "arrancar(");
+        let desde = fuente.find("\nfn empezar(").expect("la función que arranca la reunión");
+        let cuerpo = &fuente[desde..];
+        let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
+        let puerta = cuerpo.find("if !modo::abre_la_captura(modo)").expect("la puerta del modo");
+        let p = cuerpo.find(pantalla).expect("empezar arranca la pantalla");
+        let e = cuerpo.find(pistas).expect("empezar arranca las pistas");
+        assert!(puerta < p, "la pantalla arranca antes de la puerta: en solo notas se leería la reunión");
+        assert!(puerta < e, "las pistas arrancan antes de la puerta: en solo notas se escucharía");
+        assert!(cuerpo[puerta..p].contains("return Ok("), "la puerta no devuelve: solo notas seguiría hasta la captura");
+        assert_eq!(fuente.matches(pantalla).count(), 1, "otro sitio arranca la pantalla, sin pasar por la puerta");
+        assert_eq!(fuente.matches(pistas).count(), 1, "otro sitio arranca las pistas, sin pasar por la puerta");
     }
 }

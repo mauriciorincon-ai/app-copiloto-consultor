@@ -45,6 +45,14 @@ const PANTALLAS = [
   { que: "honestidad · la tarea no corrió", url: "ventana=principal&pantalla=honestidad&estado=no-corrio" },
   { que: "banda · te propongo guardar", url: "ventana=banda&estado=ficha-propuesta" },
   { que: "banda · fijada", url: "ventana=banda&estado=ficha-fijada" },
+  // El marco en la mano (sprint 003, fase 3, ADR 017): «Este cliente», la NDA, la cláusula y solo notas.
+  { que: "sesión · en marcha", url: "ventana=principal&pantalla=sesion&estado=en-marcha" },
+  { que: "sesión · la pregunta de la NDA", url: "ventana=principal&pantalla=sesion&estado=pregunta" },
+  { que: "sesión · sin jurisdicción", url: "ventana=principal&pantalla=sesion&estado=sin-bandera" },
+  { que: "sesión · la cláusula", url: "ventana=principal&pantalla=sesion&estado=clausula" },
+  { que: "sesión · la NDA lo prohíbe", url: "ventana=principal&pantalla=sesion&estado=nda" },
+  { que: "sesión · en solo notas", url: "ventana=principal&pantalla=sesion&estado=solo-notas" },
+  { que: "banda · solo notas", url: "ventana=banda&estado=solo-notas" },
   { que: "banda · sugerencia", url: "ventana=banda&estado=sugerencia-local" },
 ];
 
