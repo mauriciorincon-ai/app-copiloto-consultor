@@ -47,7 +47,31 @@ export function Cascara({ children }: { children?: ReactNode }) {
   return <IdiomaContext.Provider value={idioma}>{children}</IdiomaContext.Provider>;
 }
 
-const ESTADOS: EstadoBanda[] = ["esperando", "buscando", "ficha", "sin-resultado", "sin-verificar"];
+const ESTADOS: EstadoBanda[] = [
+  "esperando",
+  "buscando",
+  "ficha",
+  "sin-resultado",
+  "sin-verificar",
+  // Los tres del modo solo audio (C15, sprint 002). Dentro de Tauri **no mandan**: el modo lo
+  // decide `⌃⌥V`, que cambia el alto de la VENTANA, y la banda obedece a `estado_de_la_voz`. Estos
+  // tres existen para que el gate de FIDELIDAD pueda fotografiar los encuadres de 44 px fuera de
+  // Tauri, que es donde el arnés corre — igual que los cinco de arriba desde la fase 1.
+  "voz",
+  "voz-espera",
+  "voz-sin",
+  // Los tres de la fase 3 del sprint 002: la ficha del PDF, la que trajo la pantalla y la lectura
+  // que no encontró texto. Mismo papel que los de arriba: el arnés de capturas fuera de Tauri.
+  "ficha-pdf",
+  "ficha-pantalla",
+  "pantalla-nada",
+  // El radar (fase 4): ámbar y coral. La ampliada del coral sale del alto de la ventana, como todas.
+  "radar",
+  "radar-invasivo",
+  // La sugerencia (fase 5): la ampliada sale del alto de la ventana, como todas.
+  "sugerencia-local",
+  "sugerencia-api",
+];
 
 /**
  * Qué estado muestra la banda mientras no hay ni audio ni corpus.
@@ -85,8 +109,8 @@ function acopleDesdeLaUrl(busqueda: string): boolean | undefined {
 export function Enrutador({ busqueda = globalThis.location?.search ?? "" }: { busqueda?: string }) {
   const ventana = ventanaActual(busqueda);
   const alto = useAltoDeVentana();
-  const acoplada = useAcoplada(acopleDesdeLaUrl(busqueda));
-  // `⌘⇧T` conmuta el transcript desde la parte nativa. El parámetro de URL sigue existiendo para
+  const acoplada = useAcoplada(acopleDesdeLaUrl(busqueda), ventana === "banda");
+  // `⌃⌥T` conmuta el transcript desde la parte nativa. El parámetro de URL sigue existiendo para
   // que el arnés de capturas pueda fotografiar el encuadre abierto sin pulsar una tecla global.
   const transcript = useTranscriptVisible(
     new URLSearchParams(busqueda).get("transcript") === "1",

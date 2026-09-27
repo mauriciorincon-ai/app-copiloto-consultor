@@ -1,10 +1,72 @@
+/// **Los comandos de la app, declarados** (auditoría del S2, M5). Sin esta lista, Tauri deja que
+/// CUALQUIER ventana llame a cualquier comando: la banda —la que pinta texto de terceros encima de la
+/// reunión— podía guardar la clave del API, y el relleno —que no puede tener contenido— también.
+/// Con ella, cada ventana solo puede lo que su capability (`capabilities/*.json`) le permite, y un
+/// permiso mal escrito rompe la compilación. Tiene que ser la misma lista que `generate_handler!`:
+/// lo vigila `tests/unit/capabilities.test.ts`.
+const COMANDOS: &[&str] = &[
+        "ajustar_banda",
+        "asentar_banda",
+        "estado_del_acople",
+        "fondo_del_relleno",
+        "reunion_abierta",
+        "permisos_de_macos",
+        "abrir_ajustes_de",
+        "bytes_a_la_red",
+        "cortar_todo",
+        "empezar_a_escuchar",
+        "dejar_de_escuchar",
+        "estado_de_la_escucha",
+        "turnos_recientes",
+        "que_sabe_transcribir",
+        "estado_del_diccionario",
+        "instalar_idioma",
+        "salida_de_audio",
+        "elegir_carpeta",
+        "indexar_corpus",
+        "estado_del_corpus",
+        "piezas_del_corte",
+        "pedir_ficha",
+        "estado_de_la_voz",
+        "estado_de_la_pantalla",
+        "lectura_automatica",
+        "leer_la_pantalla_ahora",
+        "radar_de_tu_mac",
+        "abrir_lo_que_ve",
+        "estado_de_la_ia",
+        "redactar_sugerencias",
+        "api_externa",
+        "guardar_clave_del_api",
+        "borrar_clave_del_api",
+];
+
 fn main() {
-    tauri_build::build();
+    tauri_build::try_build(
+        tauri_build::Attributes::new().app_manifest(tauri_build::AppManifest::new().commands(COMANDOS)),
+    )
+    .expect("tauri-build no pudo generar el manifiesto de comandos");
     #[cfg(target_os = "macos")]
     compilar_el_puente_de_swift();
 }
 
-/// Compila `nativo/Transcriptor.swift` y lo deja listo para enlazar dentro del binario.
+/// **Los archivos de Swift que forman el puente.** Se compilan JUNTOS, en una sola librería y un
+/// solo módulo: los tres exportan símbolos de C y ninguno importa a otro, así que partirlos en
+/// varias librerías solo añadiría `-l` de más y maneras nuevas de que falte un trozo.
+///
+/// - `Transcriptor.swift` — la voz que ENTRA (`SpeechAnalyzer`), sprint 001.
+/// - `Habla.swift` — la voz que SALE (`AVSpeechSynthesizer`), sprint 002.
+/// - `Pantalla.swift` — la pantalla que se LEE (`ScreenCaptureKit` + `Vision`), sprint 002.
+#[cfg(target_os = "macos")]
+const EL_PUENTE: &[&str] = &[
+    "nativo/Transcriptor.swift",
+    "nativo/Habla.swift",
+    "nativo/Pantalla.swift",
+    "nativo/Sintesis.swift",
+    "nativo/Red.swift",
+    "nativo/Llavero.swift",
+];
+
+/// Compila el puente de Swift y lo deja listo para enlazar dentro del binario.
 ///
 /// **Por qué un puente y no una FFI directa.** `SpeechAnalyzer` (macOS 26) es un `actor` de Swift
 /// con secuencias asíncronas; no hay selectores de Objective-C que mandar como sí los hay para la
@@ -15,8 +77,8 @@ fn main() {
 /// **Los dos fallos posibles se tratan distinto, y esa asimetría es el gate.**
 ///
 /// - `swiftc` **no está** (un Mac sin herramientas de desarrollo): se avisa y se sigue. La app
-///   compila, arranca y funciona; lo único que pierde es la transcripción, y lo dice en la
-///   pantalla de Idioma con ese motivo exacto.
+///   compila, arranca y funciona; lo que pierde es la transcripción, la voz y la lectura de
+///   pantalla, y lo dice en Idioma y en Sesión con ese motivo exacto.
 /// - `swiftc` **está y falla**: se rompe la compilación. Ese es el caso peligroso —un error en el
 ///   Swift, una API que cambió— y el único desenlace inaceptable sería un binario verde sin
 ///   transcripción y sin nadie enterado. Es la misma lección que el kill-switch: lo que no existe
@@ -25,22 +87,16 @@ fn main() {
 fn compilar_el_puente_de_swift() {
     use std::process::Command;
 
-    println!("cargo:rerun-if-changed=nativo/Transcriptor.swift");
+    for archivo in EL_PUENTE {
+        println!("cargo:rerun-if-changed={archivo}");
+    }
 
     let salida = std::env::var("OUT_DIR").expect("OUT_DIR");
     let biblioteca = format!("{salida}/libagstt.a");
 
     let swiftc = Command::new("swiftc")
-        .args([
-            "-emit-library",
-            "-static",
-            "-O",
-            "-module-name",
-            "agstt",
-            "-o",
-            &biblioteca,
-            "nativo/Transcriptor.swift",
-        ])
+        .args(["-emit-library", "-static", "-O", "-module-name", "agstt", "-o", &biblioteca])
+        .args(EL_PUENTE)
         .output();
 
     match swiftc {
@@ -53,6 +109,12 @@ fn compilar_el_puente_de_swift() {
             println!("cargo:rustc-link-arg=-Wl,-rpath,/usr/lib/swift");
             println!("cargo:rustc-link-lib=framework=Speech");
             println!("cargo:rustc-link-lib=framework=AVFoundation");
+            println!("cargo:rustc-link-lib=framework=ScreenCaptureKit");
+            println!("cargo:rustc-link-lib=framework=Vision");
+            println!("cargo:rustc-link-lib=framework=CoreGraphics");
+            // La síntesis (C7, sprint 002, fase 5): el modelo del sistema.
+            println!("cargo:rustc-link-lib=framework=FoundationModels");
+            println!("cargo:rustc-link-lib=framework=Security");
             println!("cargo:rustc-cfg=puente_de_swift");
         }
         Ok(fallo) => {
@@ -61,15 +123,16 @@ fn compilar_el_puente_de_swift() {
                 println!("cargo:warning={linea}");
             }
             panic!(
-                "swiftc está instalado y no pudo compilar nativo/Transcriptor.swift. El puente de \
-                 transcripción es parte del producto: un binario sin él sería una app que no \
-                 escucha y no lo dice. Arriba están las quejas del compilador."
+                "swiftc está instalado y no pudo compilar el puente ({}). El puente es parte del \
+                 producto: un binario sin él sería una app que no escucha, no habla, y no lo dice. \
+                 Arriba están las quejas del compilador.",
+                EL_PUENTE.join(" + ")
             );
         }
         Err(e) => {
             println!(
-                "cargo:warning=sin swiftc ({e}): la app compila, pero la transcripción local queda \
-                 apagada y lo dirá en la pantalla de Idioma"
+                "cargo:warning=sin swiftc ({e}): la app compila, pero la transcripción local y el \
+                 modo solo audio quedan apagados, y lo dirán en la pantalla de Idioma y en el log"
             );
         }
     }

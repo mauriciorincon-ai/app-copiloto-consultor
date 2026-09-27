@@ -5,9 +5,9 @@
 //!
 //! **Todo lo que la ficha dice es texto del usuario.** El titular sale del título de su sección o
 //! de la primera frase de su documento; la línea, de la frase de esa sección que más responde a
-//! lo preguntado. La app **no redacta**: recorta y cita. Es la diferencia entre esta app y la
-//! categoría con la que se la va a confundir, y es también lo que hace que este sprint pueda
-//! entregar la ficha con cero LLM.
+//! lo preguntado. La ficha **no se redacta**: recorta y cita. Es la diferencia entre esta app y la
+//! categoría con la que se la va a confundir. Lo único redactado es la sugerencia (`sintesis/`,
+//! ADR 010), que va aparte, debajo de la ficha, y solo puede decir lo que su ficha dice.
 //!
 //! **Cuándo NO hay ficha.** BM25 siempre devuelve algo: sobre un corpus de propuestas, cualquier
 //! pregunta encuentra la sección «menos mala». Enseñarla como respuesta sería el fallo más caro
@@ -58,6 +58,19 @@ pub struct Ficha {
     pub linea_larga: String,
     pub fuente: Fuente,
     pub acumuladas: Vec<Acumulada>,
+    /// **Las fichas del top, enteras, para la síntesis (C7)**: la mejor y las acumuladas, cada una
+    /// con su titular, su línea y su fuente. Es TODO lo que el modelo ve del corpus, y se queda en
+    /// Rust —la banda ya pinta lo suyo con los campos de arriba—.
+    #[serde(skip)]
+    pub respaldo: Vec<Respaldo>,
+}
+
+/// Una ficha del top tal como se le da al modelo: texto del usuario, recortado, con su fuente.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Respaldo {
+    pub titular: String,
+    pub linea: String,
+    pub fuente: Fuente,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize)]
@@ -108,11 +121,27 @@ pub fn armar(pregunta: &str, hallazgos: &[Hallazgo]) -> Respuesta {
 
     match hallazgos.iter().find(|h| responde(h)) {
         Some(mejor) => {
-            let acumuladas = hallazgos
+            let otras: Vec<&Hallazgo> = hallazgos
                 .iter()
                 .filter(|h| h.ruta != mejor.ruta || h.seccion != mejor.seccion)
                 .take(TOP - 1)
+                .collect();
+            let acumuladas = otras
+                .iter()
                 .map(|h| Acumulada { unidad: h.unidad, texto: recortar(&titular_de(h), PALABRAS_DEL_TITULAR) })
+                .collect();
+            let respaldo = std::iter::once(mejor)
+                .chain(otras.iter().copied())
+                .map(|h| Respaldo {
+                    titular: recortar(&titular_de(h), PALABRAS_DEL_TITULAR),
+                    linea: recortar(&linea_de(h, &terminos), 30),
+                    fuente: Fuente {
+                        documento: h.documento.clone(),
+                        seccion: h.seccion.clone(),
+                        unidad: h.unidad,
+                        conjeturada: h.conjeturado,
+                    },
+                })
                 .collect();
             Respuesta::Ficha(Box::new(Ficha {
                 titular: recortar(&titular_de(mejor), PALABRAS_DEL_TITULAR),
@@ -125,6 +154,7 @@ pub fn armar(pregunta: &str, hallazgos: &[Hallazgo]) -> Respuesta {
                     conjeturada: mejor.conjeturado,
                 },
                 acumuladas,
+                respaldo,
             }))
         }
         None => {
@@ -138,7 +168,8 @@ pub fn armar(pregunta: &str, hallazgos: &[Hallazgo]) -> Respuesta {
                         texto: recortar(&titular_de(h), PALABRAS_DEL_TITULAR),
                     })
                     .collect(),
-                maniobra: maniobra::elegir(pregunta).id.to_string(),
+                // Con algo cercano en el corpus, la genérica se vuelve el puente (M15).
+                maniobra: maniobra::elegir_con(pregunta, !hallazgos.is_empty()).id.to_string(),
             }
         }
     }

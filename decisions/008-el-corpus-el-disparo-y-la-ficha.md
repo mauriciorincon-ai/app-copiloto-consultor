@@ -86,7 +86,7 @@ que la promesa, pero cierto.
 | Alternativa | Por qué no |
 |---|---|
 | **BM25 a mano** en vez de `tantivy` | habría que escribir también tokenización, stemming de dos idiomas y persistencia. Medido antes de comprometerlo: `tantivy` cuesta 193 nodos y 16,7 s de compilación en frío, asumible |
-| **Embeddings + RRF** ya en el S1 | la regla del código primero: BM25 es determinista y explicable. Los embeddings entran en el S2 **si el kit de evaluación demuestra** que BM25 no basta — y ahora habrá con qué demostrarlo |
+| **Embeddings + RRF** ya en el S1 | la regla del código primero: BM25 es determinista y explicable. Los embeddings entran **si el kit de evaluación demuestra** que BM25 no basta. El sprint 002 no lo decidió —el kit v0 da nDCG@5 0,82 sin ellos y el refuerzo de pantalla subió la frase de 0,63 a 0,70—: **la decisión pasa al sprint 003**, con esas cifras como punto de partida |
 | **Una librería de Word** para el `.docx` | un `.docx` es un zip con XML: se abre con `zip` + `quick-xml`. Menos superficie, y ningún escritor de `.docx` enlazado en una app que jamás escribe `.docx` |
 | **Detectar el idioma** del documento y usar un solo stemmer | falla en los corpus mezclados, que son exactamente los de este usuario |
 | **Un LLM** para clasificar la unidad o redactar el titular | cero LLM en este sprint, y no hace falta: el titular **se recorta del documento del usuario**, no se redacta |
@@ -106,8 +106,11 @@ que la promesa, pero cierto.
 
 ## Deuda declarada
 
-La **maniobra genérica** —la sexta, la que sale cuando ninguna marca aparece— sigue siendo la del
-catálogo fijo, y es la que más se va a disparar. El usuario ya lo señaló en la mirada 11: *«no
-quiero que invente una respuesta, quiero que le sugiera cómo abordar la situación muy a medida de
-la situación»*. El camino determinista está escrito en `design-system.md` §10 y es trabajo del
-sprint 2.
+~~La **maniobra genérica** deja solo al consultor~~ — **pagada en la auditoría del sprint 002
+(M15).** El usuario lo señaló en la mirada 11: *«no quiero que invente una respuesta, quiero que le
+sugiera cómo abordar la situación muy a medida de la situación»*. Se construyó por el camino
+determinista de `design-system.md` §10: si ninguna marca elige maniobra pero el corpus trajo algo
+cercano, la maniobra es el **puente** —«Lo más cercano que sí tienes es «…»: ofrécelo y pregunta
+para qué lo necesitan.», con el nombre de esa sección—; la genérica queda para cuando no hay nada
+cerca (`src-tauri/src/ficha/maniobra.rs`, `elegir_con`). Lo que el §10 nombra además —la unidad que
+falta, la ficha del cliente, lo comprometido en la reunión— son pasos siguientes del mismo camino.

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useT } from "../i18n";
 import { Ic } from "./Iconos";
+import { useBytesALaRed } from "../cuaderno";
 
 /**
  * LA VENTANA DEL CUADERNO (960 × 640) — el marco de las pantallas de la ventana principal.
@@ -12,16 +13,22 @@ import { Ic } from "./Iconos";
  * app va a tenerlas; ponerlas navegables prometería una pantalla que no está. Es la misma
  * decisión que «todavía no» (design-system §9-sexies), aplicada a la navegación.
  */
-export type Seccion = "sesion" | "permisos" | "corpus" | "honestidad" | "idioma";
+export type Seccion = "sesion" | "permisos" | "corpus" | "honestidad" | "idioma" | "ia";
 
-const RAIL: { id: Seccion | null; icono: string; clave: keyof ReturnType<typeof useT>["cuaderno"] }[] = [
+/** Solo las claves del cuaderno que son UNA frase: las de los porqués son catálogos, no rótulos. */
+type Rotulo = {
+  [K in keyof ReturnType<typeof useT>["cuaderno"]]: ReturnType<typeof useT>["cuaderno"][K] extends string ? K : never;
+}[keyof ReturnType<typeof useT>["cuaderno"]];
+
+const RAIL: { id: Seccion | null; icono: string; clave: Rotulo }[] = [
   { id: "sesion", icono: "i-video", clave: "navSesion" },
   { id: "permisos", icono: "i-candado", clave: "navPermisos" },
   { id: "corpus", icono: "i-doc", clave: "navCorpus" },
   { id: null, icono: "i-nota", clave: "navNotas" },
   { id: "honestidad", icono: "i-ram", clave: "navHonestidad" },
   { id: "idioma", icono: "i-globo", clave: "navIdioma" },
-  { id: null, icono: "i-chispa", clave: "navIa" },
+  // IA se encendió en el sprint 002 (fase 5, C7): quién redacta, qué sale y cuánto cuesta.
+  { id: "ia", icono: "i-chispa", clave: "navIa" },
 ];
 
 /** Cómo se llama una sección, con la misma palabra que usa el rail. */
@@ -34,14 +41,20 @@ export function Ventana({
   seccion,
   ir,
   enSesion = false,
+  cliente = "Meet",
   children,
 }: {
   seccion: Seccion;
   ir: (s: Seccion) => void;
   /** Hay una reunión detectada: el chip de abajo lo dice. */
   enSesion?: boolean;
+  /** El cliente de videollamada detectado: el chip lo nombra (decía «Meet» con Zoom o Teams). */
+  cliente?: string;
   children: ReactNode;
 }) {
+  // La cifra es la del contador, no una constante: con el API encendido, el chip decía «0 B»
+  // mientras salían bytes (auditoría del S2, M11 y B17).
+  const bytes = useBytesALaRed();
   const t = useT().cuaderno;
 
   return (
@@ -89,12 +102,17 @@ export function Ventana({
           {enSesion ? (
             <span className="estado halo">
               <Ic id="i-video" s />
-              <span>{t.meetDetectado}</span>
+              <span>
+                {/* El nombre corto, como la maqueta: «Meet», «Teams», «Zoom». */}
+                {cliente.replace(/^(Google|Microsoft)\s+/, "")} {t.detectado} · {bytes}
+              </span>
             </span>
           ) : (
             <span className="estado mute">
               <Ic id="i-ring" s />
-              <span>{t.sinSesion}</span>
+              <span>
+                {t.sinSesion} · {bytes}
+              </span>
             </span>
           )}
         </div>

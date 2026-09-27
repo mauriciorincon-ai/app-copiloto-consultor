@@ -5,6 +5,7 @@ import { Permisos } from "../pantallas/Permisos";
 import { Honestidad } from "../pantallas/Honestidad";
 import { Corpus } from "../pantallas/Corpus";
 import { Idioma } from "../pantallas/Idioma";
+import { Ia } from "../pantallas/Ia";
 import {
   useBytesALaRed,
   useEscucha,
@@ -25,7 +26,7 @@ import {
  * hacer clic — el mismo mecanismo que usa la banda, y muere igual cuando haya navegación de
  * verdad que recordar.
  */
-const SECCIONES: Seccion[] = ["sesion", "permisos", "corpus", "honestidad", "idioma"];
+const SECCIONES: Seccion[] = ["sesion", "permisos", "corpus", "honestidad", "idioma", "ia"];
 
 function seccionDeLaUrl(busqueda: string): Seccion {
   const pedida = new URLSearchParams(busqueda).get("pantalla");
@@ -42,12 +43,27 @@ export function Principal({ busqueda = globalThis.location?.search ?? "" }: { bu
   const transcribe = useQueSabeTranscribir();
 
   return (
-    <Ventana seccion={seccion} ir={setSeccion} enSesion={reunion.que === "detectada"}>
-      {seccion === "sesion" && <Sesion reunion={reunion} escucha={escucha} salida={salida} />}
+    <Ventana
+      seccion={seccion}
+      ir={setSeccion}
+      enSesion={reunion.que === "detectada"}
+      cliente={reunion.que === "detectada" ? reunion.cliente : undefined}
+    >
+      {seccion === "sesion" && (
+        <Sesion
+          reunion={reunion}
+          escucha={escucha}
+          salida={salida}
+          // Fuera de Tauri, el estado «software invasivo en tu Mac» de la maqueta: lo pide el arnés
+          // del gate de fidelidad por la URL. Dentro del producto lo decide el radar.
+          radarDeMuestra={new URLSearchParams(busqueda).get("radar") === "vigilancia"}
+        />
+      )}
       {seccion === "permisos" && <Permisos permisos={permisos} />}
       {seccion === "honestidad" && <Honestidad bytes={bytes} escucha={escucha} />}
       {seccion === "corpus" && <Corpus />}
       {seccion === "idioma" && <Idioma transcribe={transcribe} />}
+      {seccion === "ia" && <Ia />}
     </Ventana>
   );
 }

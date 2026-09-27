@@ -4,8 +4,8 @@ import { llamar } from "./puente";
 /**
  * EL ASA de la banda.
  *
- * Arrastrarla cambia el alto de la banda **y el de su relleno** —y, cuando exista el acople,
- * también el de la ventana de la reunión—. Por eso no lo hace el webview con `setSize`: si el
+ * Arrastrarla cambia el alto de la banda **y el de su relleno** —y, al soltarla, el acople rehace
+ * la ventana de la reunión—. Por eso no lo hace el webview con `setSize`: si el
  * relleno pudiera quedarse atrás aunque fuera un instante, la franja descubierta mostraría lo que
  * hay detrás. La geometría vive en un solo sitio, en Rust (`ajustar_banda`).
  *

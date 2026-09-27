@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-cortar-todo"
+description = "Enables the cortar_todo command without any pre-configured scope."
+commands.allow = ["cortar_todo"]
+
+[[permission]]
+identifier = "deny-cortar-todo"
+description = "Denies the cortar_todo command without any pre-configured scope."
+commands.deny = ["cortar_todo"]

@@ -60,9 +60,11 @@ ningún campo. La API los daría; no se piden.
 
 ### La devolución, por tres caminos
 
-1. **Al cerrar la banda** — `cerrar_banda`.
+1. **Al cortar (`⌥⎋`)** — la pieza `Acople` del kill-switch (`lib.rs`, `corte::Pieza::Acople`),
+   que es también la única forma de cerrar la banda sin salir de la app: el comando `cerrar_banda`
+   no tenía quien lo llamara y salió en la auditoría del S2 (B8).
 2. **Al salir de la app** — `RunEvent::Exit`, que cubre ⌘Q, el menú y el cierre de la última
-   ventana, por donde `cerrar_banda` no pasa.
+   ventana, por donde el corte no pasa.
 3. **Al arrancar la vez siguiente** — la **huella** en disco, que es lo único que cubre la caída y
    el force quit. Probada en vivo: matar el proceso dejó dos ventanas encogidas y el arranque
    siguiente devolvió a su tamaño exacto la que seguía existiendo.

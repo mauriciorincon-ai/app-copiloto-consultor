@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-dejar-de-escuchar"
+description = "Enables the dejar_de_escuchar command without any pre-configured scope."
+commands.allow = ["dejar_de_escuchar"]
+
+[[permission]]
+identifier = "deny-dejar-de-escuchar"
+description = "Denies the dejar_de_escuchar command without any pre-configured scope."
+commands.deny = ["dejar_de_escuchar"]

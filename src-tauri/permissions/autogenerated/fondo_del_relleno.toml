@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-fondo-del-relleno"
+description = "Enables the fondo_del_relleno command without any pre-configured scope."
+commands.allow = ["fondo_del_relleno"]
+
+[[permission]]
+identifier = "deny-fondo-del-relleno"
+description = "Denies the fondo_del_relleno command without any pre-configured scope."
+commands.deny = ["fondo_del_relleno"]

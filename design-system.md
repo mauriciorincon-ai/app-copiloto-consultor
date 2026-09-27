@@ -170,14 +170,14 @@ en luminosidad. Jamás rojo vs. verde como única distinción; jamás el color s
 
 | # | Componente | Clases | Estados | Reglas de uso |
 |---|---|---|---|---|
-| 1 | **Ficha de evidencia** (C6 · B1) | `.ficha` `.titular` `.linea` `.fuente` `.unidad` `.pin` | `nueva` · `fijada` · `compacta` (bajo sugerencia) · colapsadas (`.mas`) · con sugerencia · confianza baja | titular ≤ 8 palabras (2 renglones máx.) · línea 2 renglones máx. · fuente = `UNIDAD` + documento · sección · pin ⌘⇧P. Máximo 3 fichas; 2ª y 3ª colapsadas. Se reemplazan por relevancia, nunca se reordenan mientras el consultor habla |
+| 1 | **Ficha de evidencia** (C6 · B1) | `.ficha` `.titular` `.linea` `.fuente` `.unidad` `.pin` | `nueva` · `fijada` · `compacta` (bajo sugerencia) · colapsadas (`.mas`) · con sugerencia · confianza baja | titular ≤ 8 palabras (2 renglones máx.) · línea 2 renglones máx. · fuente = `UNIDAD` + documento · sección · pin ⌃⌥P. Máximo 3 fichas; 2ª y 3ª colapsadas. Se reemplazan por relevancia, nunca se reordenan mientras el consultor habla |
 | 2 | **Contador de red** (B2) | `.red` (barra) · `.contador` (grande) | `cero` (local, `--ok`) · `api` (bytes en `--halo`) | 0 B en verde; con API los bytes van en el acento (decisión del usuario), **nunca en ámbar ni coral**. El nº de peticiones y «solo texto anonimizado» viven en la versión grande (Honestidad, Ajustes de IA) |
 | 3 | **Estado de permiso** (C12) | `.permiso` | sin conceder · `concedido` · `revocado` (a mitad) · `solicitando` | siempre explica **para qué** en una línea; sin conceder la app sigue usable; revocado dice qué se detuvo y qué sigue |
 | 4 | **Bandera de jurisdicción** (C11) | `.bandera` | `riesgo-bajo` · `riesgo-medio` · `riesgo-alto` · `desconocida` | dónde · regla · implicación · **fuente + fecha** en Menlo. «Nunca bloquea», «no es asesoría legal» — literal en la pantalla |
 | 5 | **Estado de sesión** (C12 · C2 · C1) | `.barra` `.estado` `.pistas` `.pista.off` `.pie .cliente` | fuera de reunión · detectada · activa · solo notas · tras kill-switch | la barra del panel y el chip del rail son el mismo componente; la pista apagada usa glifo tachado; el pie dice cliente + protección (`Meet · protegido` ✓ / `Zoom · sin verificar` ⚠, literal del spike) |
 | 6 | **Alerta del radar** (C14) | `.franja.warn` · `.franja.ok` | grabación · bot de notas · agente de monitoreo local · protección propia (verde) | aviso, no bloqueo; solo lo que se lee en **tu** pantalla o corre en **tu** Mac; catálogo con versión y fuente; jamás nombra a personas |
 | 6-bis | **Alerta del radar · nivel invasivo** (C14) | `.franja.err` | supervisión de exámenes · anti-trampa con acceso al núcleo · monitoreo de empleados · acceso remoto activo · MDM (este en ámbar) | **dos niveles con símbolo y palabra**: ámbar «sábelo» (legítimo y visible: grabación, bot de notas) · coral «invasivo» (un programa del propio equipo que mira pantalla, cámara, teclas o procesos). Cada alerta declara **qué alcanza a ver**, no solo su nombre. Catálogo versionado con fuente, sin consultar la red |
-| 7 | **Píldora de voz** (C15) | `.pildora` | en silencio · `hablando` (halo) · `sin-auriculares` (ámbar, **no habla**) | lee **la misma ficha** que el panel mostraría, nunca un guion. Tres salvaguardas de diseño, no advertencias: (a) sin auriculares no habla —el cliente la oiría—; (b) mientras habla, el disparador se silencia para que su voz no entre por el micrófono; (c) por defecto solo habla si se la pide (⌘⇧A), jamás mientras alguien habla |
+| 7 | **Píldora de voz** (C15) | `.pildora` | en silencio · `hablando` (halo) · `sin-auriculares` (ámbar, **no habla**) | lee **la misma ficha** que el panel mostraría, nunca un guion. Tres salvaguardas de diseño, no advertencias: (a) sin auriculares no habla —el cliente la oiría—; (b) mientras habla, el disparador se silencia para que su voz no entre por el micrófono; (c) por defecto solo habla si se la pide (⌃⌥A), jamás mientras alguien habla |
 
 **Además** (exhibidos en el panel y el kit): `.sugerencia` (C7: borde izquierdo halo + tinte;
 cabecera origen + confianza; fallback = la ficha) · `.franja` (`warn`/`err`/`ok`; lista `→`
@@ -392,7 +392,7 @@ deterministas**:
 1. **Lo más cercano que SÍ tiene.** La búsqueda no encontró nada por encima del umbral, pero sabe
    qué quedó justo debajo. Sale del corpus del usuario con su fuente exacta, y la app dice sin
    adornos que **ninguno responde la pregunta**. Es recuperación, no redacción.
-2. **Una manera de responder**, de un **catálogo versionado** de seis maniobras escritas por
+2. **Una manera de responder**, de un **catálogo versionado** de siete maniobras escritas por
    personas, elegida por **reglas léxicas** sobre lo que preguntó el cliente — el mismo mecanismo
    determinista del disparo.
 
@@ -403,6 +403,7 @@ deterministas**:
 | `cuándo · plazo · semanas · entrega` | Da el plazo del caso más parecido y confírmalo por escrito. | anclar en un caso real es defendible; una fecha inventada, no |
 | `quién más · referencia · han trabajado con` | Ofrece una referencia del sector sin nombrar al cliente aún. | nombrar clientes sin permiso es un problema, no una venta |
 | `contrato · cláusula · penalidad · NDA` | No opines de contrato en vivo: anótalo y respóndelo por escrito. | lo contractual no se improvisa en una llamada |
+| *cualquier otra, con algo cercano en tu corpus* | Lo más cercano que sí tienes es «…»: ofrécelo y pregunta para qué lo necesitan. | no te quedas en blanco: tu propio documento abre la conversación |
 | *cualquier otra* | Devuelve la pregunta: ¿para qué lo necesitan? | la pregunta real suele ser otra — y da tiempo |
 
 **Las maniobras hablan de cómo conducirse, jamás del negocio del usuario** — por eso pueden ser
@@ -410,8 +411,9 @@ fijas. Y no pueden parecer salida de un modelo: **sin acento `halo` y sin `i-chi
 este sistema marcan la síntesis de la IA), en **Avenir** —la voz de la app— nunca en **Charter**,
 que es la voz de la evidencia. Clase canon: `maniobra-b`; el vecino de la derecha, `cercano-b`.
 
-Cuando exista la síntesis con modelo (sprint 2), la maniobra **no desaparece**: es su fallback
-permanente, como manda la regla del código primero.
+La síntesis con modelo llegó en el sprint 2 y no toca la maniobra: la sugerencia solo acompaña a una
+ficha, así que cuando no hay ficha la maniobra es lo que queda. El fallback permanente de la
+sugerencia es la ficha, como manda la regla del código primero.
 
 **Lo que esta extensión NO redecide:** el relleno de la franja (ya elegido: fondo de escritorio,
 negro a una tecla), el modo solo audio de 44 px (C15, fuera del sprint 001) y la sugerencia
@@ -507,12 +509,13 @@ cuatro todavía no existen»**, no «7 de 7».
 
 ### Dos cosas que la maqueta no había escrito y el sistema obliga
 
-1. **«Audio del sistema» y «Pantalla» son UN SOLO permiso en macOS** («Grabación de pantalla y
-   audio del sistema»): se conceden y se caen juntos. Se siguen dibujando como dos filas —son dos
-   usos distintos y el usuario los entiende así— con una línea que lo dice.
+1. **«Audio del sistema» y «Pantalla» son DOS permisos en macOS** (`kTCCServiceAudioCapture` y
+   `kTCCServiceScreenCapture`), aunque Ajustes los enseñe en el mismo panel («Grabación de pantalla
+   y audio del sistema»). Se dibujan como dos filas, cada una con el suyo, y una línea lo dice.
+   Hasta el sprint 002 aquí decía que eran uno solo; la mirada 17-quater lo desmintió en `tccd`.
 2. **La Accesibilidad sube a la lista principal de permisos.** En la maqueta vivía en su propio
-   estado porque era opcional y futura; el acople se entrega en el sprint 001 y es **el único
-   permiso que hoy cambia algo**.
+   estado porque era opcional y futura; el acople se entrega en el sprint 001, y en el sprint 002
+   el mismo permiso encuentra la pestaña de Meet para leer su pantalla.
 
 ## 10 · Deuda de diseño declarada
 
@@ -522,7 +525,7 @@ cuatro todavía no existen»**, no «7 de 7».
 | El pie del panel abrevia «corta» (kill-switch) | 380 px | el `kbd` ⌥⎋ y el tooltip completan; en Sesión y Honestidad va el texto entero |
 | Simulación deutan del arnés (capturas `--cvd`) | herramienta de la etapa, no gate | corregida en la Fase 2; se vuelve gate visual del S1 |
 | La píldora de voz no muestra el texto de la ficha | ocuparía la pantalla que el modo existe para liberar | si el usuario lo pide, un estado «píldora expandida» en el S2 |
-| **La maniobra genérica deja solo al consultor** — «devuelve la pregunta: ¿para qué lo necesitan?» | es la única de las seis que no se apoya en nada: cuando ni las reglas léxicas ni el corpus dan material, la app se queda sin qué decir | **sprint 2.** Requisito del usuario (mirada 11): *no inventar una respuesta, pero sugerir cómo abordar la situación* **a medida de la situación**. Camino determinista disponible sin LLM: construir la maniobra con lo que la app **sí sabe** —la unidad que falta, la sección más cercana del corpus, la ficha del cliente, la jurisdicción, lo ya comprometido en esta reunión— en vez de elegir una frase de catálogo. El catálogo queda como último recurso, no como respuesta normal |
+| ~~**La maniobra genérica deja solo al consultor**~~ — **pagada en la auditoría del S2 (M15)** | es la única que no se apoyaba en nada | **sprint 2, pagada.** Requisito del usuario (mirada 11): *no inventar una respuesta, pero sugerir cómo abordar la situación* **a medida de la situación**. Se construyó por el camino determinista: sin marca y con algo cercano en el corpus, la maniobra es el **puente** —«Lo más cercano que sí tienes es «…»: ofrécelo y pregunta para qué lo necesitan.», con el nombre de esa sección—; la genérica queda para cuando no hay nada cerca (`src-tauri/src/ficha/maniobra.rs`). La unidad que falta, la ficha del cliente y lo comprometido en la reunión quedan como siguientes pasos del mismo camino |
 
 ## Registro de cambios
 

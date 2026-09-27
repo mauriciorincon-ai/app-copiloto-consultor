@@ -345,6 +345,12 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    anota cuál regla lo cubría *(hoja-de-vida S7: un gate nuevo resultó inalcanzable por una
    regla previa y solo se descubrió al exigirle el rojo)*. Las tres preguntas, juntas: ¿lo
    viste **fallar**? · ¿lo viste **correr**? · ¿**puede** fallar?
+   **Y el MODO incluye el PERFIL DE COMPILACIÓN (kit v1.28.0):** un test que solo corre en
+   `debug` no prueba `release`. Todo gate que dependa del comportamiento del binario (pánicos
+   atrapados, optimizaciones, `panic = "abort"`, features de compilación) corre al menos una vez
+   con el perfil con que la app se DISTRIBUYE, y el summary lo dice *(este repo, S1: el
+   `catch_unwind` que protegía el parseo de PDF pasaba todos sus tests en debug y era letra
+   muerta en release, donde `panic = "abort"` lo anula)*.
 16. **El bundle publicable del design system es un ARTEFACTO DEL REPO (kit v1.17.0).** `design-sync/`
    se versiona aquí como **espejo 1:1** de lo publicado en Claude Design, y la jerarquía es fija:
    `design-system.md` (fuente de verdad) → `design-sync/` (bundle, deriva) → el proyecto remoto
@@ -408,6 +414,32 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    CI pasa VERDE porque **ninguna puerta compara el resultado contra la INTENCIÓN del PR**:
    leer la salida del install ES el gate. `pnpm peers check` corre en quality (es lo único que
    ve un peer insatisfecho). Overrides: en `pnpm-workspace.yaml`, jamás en `package.json`.
+
+19. **Todo puente entre dos lenguajes exige su GATE DE CONTRATO, en el mismo sprint que lo cruza
+   (kit v1.28.0).** Donde un dato cambia de lenguaje o de runtime —Rust→TS por eventos de Tauri,
+   Swift→Rust por FFI, worker→UI por `postMessage`, servidor→cliente por JSON— la suite tiene que
+   atravesar la costura: **el lado que EMITE escribe un fixture con su serializador real** (no un
+   literal copiado a mano), **el lado que LEE lo declara con su tipo** (generado, o validado con
+   Zod contra ese fixture), y **al menos un test cruza la suscripción de punta a punta** (emitir →
+   recibir → render). Un contrato tipado en cada orilla y ninguna prueba entre ellas no es un
+   contrato: son dos suposiciones que coinciden hasta que no. *(Origen: este repo, S1 — Rust
+   serializaba el enum etiquetado por dentro y el webview lo leía etiquetado por fuera; la ficha
+   automática nunca llegó a la banda y ninguno de los 153 tests verdes lo vio; lo cazó el auditor
+   independiente. Tres defectos de la misma clase en un sprint.)* En esta app el gate vive en
+   `src-tauri/src/contrato.rs` → `src/contrato.generado.ts`; **todo evento nuevo entra por ahí**.
+   Y lo que NO cubre, declarado: compara la FORMA, no si alguien LEE — 17 campos quedaron sin
+   consumidor con el gate verde, así que la casilla de «campos sin consumidor» de
+   `/audita-sprint` sigue haciendo falta. Patrón completo en la planeadora:
+   `wiki/patterns/gate-de-contrato-entre-lenguajes.md` (RO).
+
+20. **El artefacto de auditoría se cuadra solo (este repo, S2 2026-09-24 — petición del usuario).**
+   `sprints/SPRINT_NNN-auditoria.md` lleva **todos** los hallazgos, de todas las severidades, cada
+   uno con su `archivo:línea` **y** su estado (pagado · deuda con sprint de pago). Jamás «14
+   medios y 7 bajos» como resumen por conteo: un hallazgo sin sitio no se puede pagar ni heredar,
+   y **el usuario los paga todos, hasta los bajos**. Lo vigila
+   `tests/unit/auditoria-con-sitio.test.ts`, que exige que cada encabezado de severidad declare
+   su cuenta y que la cuenta cuadre con sus filas *(origen: el S1 resumió quince hallazgos en una
+   frase con un puntero roto y desaparecieron)*.
 
 ## Estándares (los 6+1, gates en CI)
 
@@ -511,6 +543,12 @@ pr: <link>
 ## Qué se construyó   [features/pantallas/componentes]
 ## DoD — checklist    [los 6+1 estándares, uno a uno, con evidencia breve]
 ## Métricas técnicas  [cumplidas vs. no, del SPRINT_NNN.md]
+## Gate ⭐ — diferimiento y contrapesos  [kit v1.28.0 — sección FIJA; sin ella el diferimiento no es válido]
+| Contrapeso | Evidencia (archivo, cuenta medida, corrida) |
+|---|---|
+| Pasada de capturas del builder | [N encuadres leídos como imagen · ruta · fecha] |
+| e2e de `reduced-motion` | [N pruebas · archivo del spec · corrida en CI] |
+[+ «⭐ diferido: N pruebas al acumulado del ciclo (S1: n₁ · S2: n₂…)» o «⭐ OBLIGATORIO corrido: parada a parada»]
 ## Decisiones no anticipadas  [ADR-NNN: resumen]
 ## Bugs + resoluciones
 ## Qué salió bien / qué generó fricción

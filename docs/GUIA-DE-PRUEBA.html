@@ -61,9 +61,9 @@
      la prueba A6 de habla pedía ver subir un mínimo corrido dentro de la misma sesión — un
      imposible del instrumento que solo el gate humano detectó.
 
-  AL ABRIR EL SPRINT SIGUIENTE: cambiar el NS del script (hoy `ag-s1-cierre-`) a `ag-s2-`, pasar los
-  chips «Nuevo · S1» a «S1» a secas —salvo lo que el sprint nuevo toque, que pasa a «Mejorado en
-  S2»— y añadir los bloques nuevos SIN resumir los de aquí. Esta app no tiene URL de preview y no
+  AL ABRIR EL SPRINT SIGUIENTE: cambiar el NS del script (hoy `ag-s2-`) a `ag-s3-`, pasar los
+  chips «Nuevo · S2» y «Mejorado en S2» a «S2» a secas —salvo lo que el sprint nuevo toque, que pasa a «Mejorado en
+  S3»— y añadir los bloques nuevos SIN resumir los de aquí. Esta app no tiene URL de preview y no
   va a tenerla: es de escritorio, y la caja de arriba dice cómo se arranca en su lugar.
 -->
 <style>
@@ -158,43 +158,44 @@
 <body>
 <div class="pagina">
   <header>
-    <p class="eyebrow">Angel Ghost · Guía de prueba viva y acumulativa · Sprint 001 · 2026-09-23 · <strong>v3, al cerrar el sprint</strong></p>
+    <p class="eyebrow">Angel Ghost · Guía de prueba viva y acumulativa · Sprint 002 · 2026-09-26 · <strong>v4</strong></p>
     <h1>Guía de prueba</h1>
     <p class="suave">Todas las pruebas vigentes de la app — las nuevas de este sprint, las que
       cambiaron y las heredadas (regresión). Filtra por origen para correr todo o solo lo que
       cambió. Las casillas se guardan solas en este navegador.</p>
     <div class="url-caja" style="border-color:var(--pendiente)">
       <p class="eyebrow" style="margin:0 0 6px">Qué cambió en esta versión</p>
-      <p class="chica" style="margin:0"><strong>v3 — dos pruebas que faltaban: la banda en Zoom y en
-        Teams.</strong> La promesa de que el cliente no ve la banda estaba probada <strong>solo en
-        Google Meet</strong>, y el plan del sprint la pedía en los tres clientes. Son pruebas ⭐ (una
-        persona, una llamada de verdad) y llevan su anotación de versión: esta app promete
-        invisibilidad <strong>graduada</strong> —por cliente y por versión de macOS—, así que lo que
-        no se probó, no se afirma.</p>
-      <p class="chica" style="margin:8px 0 0"><strong>Y lo de v2, que sigue vigente: la auditoría del sprint encontró que el resultado
-        principal no funcionaba</strong> —la ficha no llegaba nunca a la banda— y otros diez
-        hallazgos altos. Esta guía trae <strong>seis pruebas nuevas y tres reescritas</strong> que
-        vienen de ahí, marcadas «auditoría», y son las primeras que conviene correr: cada una
-        vigila un defecto que ya ocurrió. El reporte entero está en
-        <code>sprints/SPRINT_001-auditoria.md</code>.</p>
-      <p class="chica suave" style="margin:8px 0 0">Las casillas que marcaste en la versión
-        anterior <strong>no se conservan a propósito</strong>: seis pruebas dicen ahora otra cosa, y
+      <p class="chica" style="margin:0"><strong>v4 — el sprint 002: la app mira la pantalla, avisa de
+        quién graba o vigila, te lee la ficha al oído, escribe bien tu jerga y, si lo enciendes, te
+        propone qué decir.</strong> <strong>31 pruebas nuevas</strong> —26 en cinco bloques nuevos (E a I) y
+        5 en bloques de antes—, y <strong>13 de las 41 heredadas reescritas</strong> («Mejorado en S2»): las
+        teclas pasaron de ⌘⇧ a ⌃⌥, el corte alcanza ahora 9 piezas, y Permisos separa el audio del sistema de
+        la pantalla.</p>
+      <p class="chica" style="margin:8px 0 0"><strong>Dos pruebas heredadas no podían pasar tal como
+        estaban escritas</strong>, y las encontró esta reescritura: pedían decir la pregunta del cliente
+        <em>tú</em>, por el micrófono —y tu voz, a propósito, no pide fichas—, y una esperaba «nada en tu
+        corpus» de una pregunta que el corpus del kit sí responde. Ahora el cliente es tu Mac hablando
+        (<code>say</code> en Terminal) y la pregunta sin respuesta es una que de verdad no la tiene.</p>
+      <p class="chica suave" style="margin:8px 0 0">Las casillas de la v3 <strong>no se conservan a
+        propósito</strong> (namespace nuevo, <code>ag-s2-</code>): trece pruebas dicen ahora otra cosa, y
         una casilla heredada sobre una prueba que cambió se lee como aprobada sin haberla corrido.</p>
     </div>
-    <p class="chica"><strong>Gate corto ⭐⭐: 9 paradas · ~22 min — es el que el cierre de ciclo
-      exige.</strong> Es un recorrido: se camina de arriba abajo, en el orden del documento, y
-      cada parada deja la app lista para la siguiente. Solo entra lo que únicamente una persona
-      puede juzgar; si la integración continua lo verifica por otro camino, se queda fuera aunque
-      esté en el ⭐. La novena parada nace de la auditoría: <strong>cortar con ⌥⎋ mientras todavía
-      estás hablando</strong>, que es el único instante en que el kill-switch podía fallar y solo se
-      provoca con la voz. <strong>Deja fuera 24 pruebas ⭐</strong> —instalar un modelo de idioma, el
-      comportamiento sin permisos, el aviso del eco, la restauración tras un cierre brusco, leer el
-      log con tus ojos, entre otras—: ninguna se borra, siguen enteras en el filtro ⭐ para cuando
-      quieras la confianza completa.</p>
-    <p class="chica"><strong>Gate mínimo ⭐: 33 pruebas · ~55 min.</strong> Es lo que ninguna
+    <p class="chica"><strong>Gate corto ⭐⭐: 9 paradas · ~25 min — es el que el cierre de ciclo
+      exige.</strong> Es un recorrido: se camina de arriba abajo, en el orden del documento, y cada
+      parada deja la app lista para la siguiente — por eso lo nuevo del sprint 002 va <em>antes</em>
+      del corte, que es el final natural de una reunión. Solo entra lo que únicamente una persona puede
+      juzgar: la banda que el cliente no ve, la ficha que llega a tiempo, la pantalla que trae su
+      ficha sola, el ámbar de una reunión grabada, <strong>una sugerencia que no diga nada que su ficha
+      no diga</strong>, la voz en tus auriculares y el corte, también a mitad de frase. <strong>Pasa del
+      techo de ~20 min en unos cinco</strong>: el ciclo sumó cuatro funciones que solo se juzgan
+      mirando u oyendo, y para caber habría que sacar una de ellas. <strong>Deja fuera 52 pruebas
+      ⭐</strong> —instalar un modelo de idioma, el comportamiento sin permisos, el eco, el coral de tu
+      Mac, el proveedor externo con tu clave, el diccionario, entre otras—: ninguna se borra, siguen
+      enteras en el filtro ⭐.</p>
+    <p class="chica"><strong>Gate mínimo ⭐: 61 pruebas · ~107 min.</strong> Es lo que ninguna
       automatización puede verificar: hardware de verdad, voz de verdad, una videollamada de
-      verdad, y el juicio humano sobre lo que se ve. Lo que la CI ya respalda queda fuera del
-      mínimo y se corre en los pases completos.</p>
+      verdad, y el juicio humano sobre lo que se ve y se oye. Lo que la CI ya respalda queda fuera del
+      mínimo y se corre en los pases completos. Se puede correr por bloques.</p>
     <div class="url-caja">
       <p class="eyebrow" style="margin:0 0 6px">Cómo se arranca</p>
       <code>pnpm tauri dev</code>
@@ -205,8 +206,12 @@
       <p class="chica suave" style="margin:8px 0 0"><strong>Cada bloque abre con "Empieza en:"</strong> —
         dónde estar antes de empezar: una pantalla del cuaderno, la banda, o la reunión.</p>
       <p class="chica suave" style="margin:8px 0 0"><strong>Qué hace falta tener a mano:</strong>
-        auriculares, una reunión de Google Meet (basta una sala tuya, sin invitados) y la carpeta
-        <code>docs/kit-de-prueba/corpus/</code> de este mismo repo.</p>
+        <strong>macOS 26 o posterior</strong> (la app no arranca en versiones anteriores), auriculares,
+        una reunión de Google Meet (basta una sala tuya, sin invitados), la carpeta
+        <code>docs/kit-de-prueba/corpus/</code> de este mismo repo, <strong>Terminal</strong> (el
+        cliente de prueba habla con <code>say</code>), la página
+        <code>docs/kit-de-prueba/pantalla/meet-de-prueba.html</code> abierta en Chrome, y
+        <strong>Apple Intelligence</strong> activado para el bloque G.</p>
     </div>
   </header>
 
@@ -217,7 +222,7 @@
     </div>
     <div class="filtros" role="group" aria-label="Filtrar pruebas por origen">
       <button type="button" data-filtro="todo" class="activo">Todo</button>
-      <button type="button" data-filtro="cambios">Lo que cambió en S1</button>
+      <button type="button" data-filtro="cambios">Lo que cambió en S2</button>
       <button type="button" data-filtro="minimo">Gate mínimo ⭐</button>
       <button type="button" data-filtro="corto">Gate corto ⭐⭐</button>
     </div>
@@ -228,33 +233,32 @@
     <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la banda, encima de todo</code> ·
       ~6 min · la promesa central de la app — si esto falla, lo demás da igual</p>
     <ul class="pasos">
-      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="a1"><label for="a1">Arranca con <code>pnpm tauri dev</code>. <strong>Aparecen tres ventanas:</strong> el cuaderno (960×640), una banda apaisada pegada al borde inferior de la pantalla, y nada más visible — el relleno queda justo debajo de la banda y no se distingue de ella.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="a1"><label for="a1">Arranca con <code>pnpm tauri dev</code>. <strong>Aparecen tres ventanas:</strong> el cuaderno (960×640), una banda apaisada pegada al borde inferior de la pantalla, y nada más visible — el relleno queda justo debajo de la banda y no se distingue de ella.
+        <span class="origen origen-heredada">S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="heredada" data-minimo data-corto><input type="checkbox" id="a2"><label for="a2">Con la app arrancada, abre Google Meet, entra a una sala y <strong>comparte la pantalla completa</strong>. Mírate en la miniatura de tu propia compartición, o pide a alguien que mire. <strong>La franja de abajo NO muestra la banda: muestra tu fondo de escritorio.</strong> Ésta es la promesa entera de la app.
+        <span class="origen origen-heredada">S1</span>
         <span class="minimo">⭐ mínimo</span>
         <span class="minimo">⭐⭐ Parada 1 de 9</span></label></li>
-      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="a2"><label for="a2">Abre Google Meet, entra a una sala y <strong>comparte la pantalla completa</strong>. Mírate en la miniatura de tu propia compartición, o pide a alguien que mire. <strong>La franja de abajo NO muestra la banda: muestra tu fondo de escritorio.</strong> Ésta es la promesa entera de la app.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
-        <span class="minimo">⭐ mínimo</span>
-        <span class="minimo">⭐⭐ Parada 2 de 9</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="a3"><label for="a3">Con la pantalla todavía compartida, mira la franja con atención: <strong>no se ve el escritorio de verdad</strong> (ni iconos, ni ventanas por detrás), sino un trozo de tu fondo de pantalla. Si se vieran ventanas ajenas asomando, el relleno no está haciendo su trabajo.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="a3"><label for="a3">Con la pantalla todavía compartida, mira la franja con atención: <strong>no se ve el escritorio de verdad</strong> (ni iconos, ni ventanas por detrás), sino un trozo de tu fondo de pantalla. Si se vieran ventanas ajenas asomando, el relleno no está haciendo su trabajo.
+        <span class="origen origen-heredada">S1</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="a3b"><label for="a3b">Ahora repite las dos pruebas anteriores en <strong>Zoom</strong>: entra a una reunión y comparte la pantalla completa. La franja de abajo tiene que mostrar el relleno, <strong>no la banda</strong>.
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="a3b"><label for="a3b">Ahora repite las dos pruebas anteriores en <strong>Zoom</strong>: entra a una reunión y comparte la pantalla completa. La franja de abajo tiene que mostrar el relleno, <strong>no la banda</strong>.
         <p class="chica suave" style="margin:6px 0 0">La app <strong>no promete lo mismo en todos los clientes</strong>: en Sesión, Zoom sale en ámbar como «sin verificar», y esta prueba es la única que puede cambiarlo. Anota la <strong>versión de Zoom y la de macOS</strong> con las que lo probaste — la promesa vale para lo que probaste, no para el nombre del programa.</p>
-        <span class="origen origen-nuevo">Nuevo · S1 · cierre</span>
+        <span class="origen origen-heredada">S1 · cierre</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="a3c"><label for="a3c">Y lo mismo en <strong>Microsoft Teams</strong>: reunión, compartir pantalla completa, mirar la franja. El relleno, <strong>no la banda</strong>.
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="a3c"><label for="a3c">Y lo mismo en <strong>Microsoft Teams</strong>: reunión, compartir pantalla completa, mirar la franja. El relleno, <strong>no la banda</strong>.
         <p class="chica suave" style="margin:6px 0 0">Tres clientes, tres verificaciones: lo que vale en Meet no se hereda. Anota versión de Teams y de macOS. Si en alguno <strong>sí</strong> se ve la banda, no es un fallo que se arregle callando: la app tiene que decirlo en Sesión antes de que compartas.</p>
-        <span class="origen origen-nuevo">Nuevo · S1 · cierre</span>
+        <span class="origen origen-heredada">S1 · cierre</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="a4"><label for="a4">Arrastra el <strong>asa</strong> de la banda hacia arriba. La banda crece a 200 px <strong>y el relleno crece con ella</strong> — no se separan ni un píxel, ni durante el arrastre.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="a4"><label for="a4">Arrastra el <strong>asa</strong> de la banda hacia arriba. La banda crece a 200 px <strong>y el relleno crece con ella</strong> — no se separan ni un píxel, ni durante el arrastre.
+        <span class="origen origen-heredada">S1</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="a5"><label for="a5">Con Chrome abierto en la reunión: la ventana de Chrome <strong>se ha recortado por abajo</strong> para dejarle sitio a la banda, como dos aplicaciones pegadas. Si no concediste Accesibilidad, la banda flota encima y la propia banda lo dice con «sin acople».
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="a5"><label for="a5">Con Chrome abierto en la reunión: la ventana de Chrome <strong>se ha recortado por abajo</strong> para dejarle sitio a la banda, como dos aplicaciones pegadas. Si no concediste Accesibilidad, la banda flota encima y la propia banda lo dice con «sin acople».
+        <span class="origen origen-heredada">S1</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="a6"><label for="a6">Cierra la banda. <strong>Chrome recupera su tamaño anterior</strong>, exactamente el que tenía.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="a6"><label for="a6">Cierra la banda. <strong>Chrome recupera su tamaño anterior</strong>, exactamente el que tenía.
+        <span class="origen origen-heredada">S1</span>
         <span class="minimo">⭐ mínimo</span></label></li>
     </ul>
     <div class="reportame"><p><strong>Repórtame sí o sí:</strong> que la franja muestre la banda al compartir pantalla (es el fallo que anula la app entera), que el relleno deje ver ventanas ajenas, o que Chrome no recupere su tamaño.</p></div>
@@ -262,31 +266,34 @@
   </section>
 
   <section class="bloque">
-    <div class="bloque-cabeza"><span class="letra">B</span><h2>El cuaderno: cinco pantallas que no mienten</h2></div>
+    <div class="bloque-cabeza"><span class="letra">B</span><h2>El cuaderno: seis pantallas que no mienten</h2></div>
     <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la ventana del cuaderno (la grande)</code> ·
       ~7 min · que lo que aún no existe se diga, en vez de pintarse en verde</p>
     <ul class="pasos">
-      <li data-origen="nuevo"><input type="checkbox" id="b1"><label for="b1">Recorre el rail de la izquierda. <strong>Cinco secciones se abren</strong> (Sesión, Permisos, Corpus, Honestidad, Idioma) y <strong>dos no</strong> (Notas, IA): están apagadas y sin enlace, no llevan a ninguna parte porque todavía no existen.
-        <span class="origen origen-nuevo">Nuevo · S1</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="b2"><label for="b2">En <strong>Sesión</strong>, con Meet abierto: dice qué cliente detectó y si su protección está verificada. Cierra Chrome y vuelve a la ventana: <strong>el estado cambia solo</strong> a «sin reunión».
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+      <li data-origen="mejorado"><input type="checkbox" id="b1"><label for="b1">Recorre el rail de la izquierda. <strong>Seis secciones se abren</strong> (Sesión, Permisos, Corpus, Honestidad, Idioma, IA) y <strong>una no</strong> (Notas): está apagada y sin enlace, no lleva a ninguna parte porque todavía no existe.
+        <p class="chica suave" style="margin:6px 0 0">En el S1 eran cinco y dos: IA se abrió en este sprint.</p>
+        <span class="origen origen-mejorado">Mejorado en S2</span></label></li>
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="b2"><label for="b2">En <strong>Sesión</strong>, con Meet abierto: dice qué cliente detectó y si su protección está verificada. Cierra Chrome y vuelve a la ventana: <strong>el estado cambia solo</strong> a «sin reunión».
+        <span class="origen origen-heredada">S1</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo"><input type="checkbox" id="b3"><label for="b3">En <strong>Permisos</strong>: «Audio del sistema» y «Pantalla» muestran <strong>exactamente el mismo estado</strong> — son un solo permiso en macOS y la pantalla lo explica. Si mostraran estados distintos, te mandaría a conceder algo ya concedido.
-        <span class="origen origen-nuevo">Nuevo · S1</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="b4"><label for="b4">Revoca el permiso de micrófono en Ajustes del Sistema y vuelve a la app. <strong>La pantalla se pone al día sola</strong> al recuperar el foco, sin reiniciar nada.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+      <li data-origen="mejorado"><input type="checkbox" id="b3"><label for="b3">En <strong>Permisos</strong>: «Audio del sistema» y «Pantalla» son <strong>dos filas con su propio estado</strong>, aunque Ajustes los enseñe en el mismo panel («Grabación de pantalla y audio del sistema»). Concede solo uno y comprueba que cada fila dice el suyo.
+        <p class="chica suave" style="margin:6px 0 0">En el S1 la app los trataba como un solo permiso y los pintaba con el mismo estado; este sprint comprobó en vivo que macOS los separa.</p>
+        <span class="origen origen-mejorado">Mejorado en S2</span></label></li>
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="b4"><label for="b4">Revoca el permiso de micrófono en Ajustes del Sistema y vuelve a la app. <strong>La pantalla se pone al día sola</strong> al recuperar el foco, sin reiniciar nada.
+        <span class="origen origen-heredada">S1</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="b5"><label for="b5">Cambia el idioma del sistema a inglés y reabre la app. <strong>Las cinco pantallas están enteras en inglés</strong>, incluidos los textos de permisos que enseña macOS. Ni una frase en español.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+      <li data-origen="mejorado" data-minimo><input type="checkbox" id="b5"><label for="b5">Cambia el idioma del sistema a inglés y reabre la app. <strong>Las seis pantallas están enteras en inglés</strong>, incluidos los textos de permisos que enseña macOS. Ni una frase en español.
+        <p class="chica suave" style="margin:6px 0 0">Una pantalla más que en el S1 (IA), y los textos nuevos del radar, la pantalla y la sugerencia.</p>
+        <span class="origen origen-mejorado">Mejorado en S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo"><input type="checkbox" id="b6"><label for="b6">Cambia a tema claro y recórrelas otra vez. <strong>Todo estado sigue teniendo símbolo y texto</strong>, no solo color.
-        <span class="origen origen-nuevo">Nuevo · S1</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="b7"><label for="b7"><strong>Recién arrancada, sin reunión abierta y sin carpeta señalada</strong>, mira la banda de abajo. Dice <strong>«Sin reunión abierta»</strong> y <strong>«0 documentos · 0 unidades»</strong>, y <strong>NO dice «Escuchando · 2 pistas» ni «Meet · protegido»</strong>.
-        <p class="chica suave" style="margin:6px 0 0">Hasta la auditoría decía las cuatro cosas siempre: los datos de la consultora inventada de la maqueta —143 documentos, «Páramo Azul · 12 min», «protegido» aunque fuera Zoom— dentro de tu app. Si vuelves a verlos sin tener nada, el defecto volvió.</p>
-        <span class="origen origen-nuevo">Nuevo · S1 · auditoría</span>
+      <li data-origen="heredada"><input type="checkbox" id="b6"><label for="b6">Cambia a tema claro y recórrelas otra vez. <strong>Todo estado sigue teniendo símbolo y texto</strong>, no solo color.
+        <span class="origen origen-heredada">S1</span></label></li>
+      <li data-origen="mejorado" data-minimo><input type="checkbox" id="b7"><label for="b7"><strong>Recién arrancada, sin reunión abierta y sin carpeta señalada</strong>, mira la banda de abajo. Dice <strong>«Sin reunión abierta»</strong> y <strong>«0 documentos · 0 unidades»</strong>, y <strong>NO dice «Escuchando · 2 pistas» ni «Meet · protegido»</strong>. <em>Si el radar encontró en tu Mac un programa que mira tu pantalla, la banda enseña ese aviso coral en su lugar: es el bloque F.</em>
+        <p class="chica suave" style="margin:6px 0 0">Hasta la auditoría del S1 decía las cuatro cosas siempre: los datos de la consultora inventada de la maqueta —143 documentos, «Páramo Azul · 12 min», «protegido» aunque fuera Zoom— dentro de tu app. Si vuelves a verlos sin tener nada, el defecto volvió.</p>
+        <span class="origen origen-mejorado">Mejorado en S2 · auditoría del S1</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="b8"><label for="b8">Con la sesión corriendo y el cliente hablando, mira la banda cuando esté <strong>buscando</strong>: la frase entre comillas que enseña es <strong>lo último que dijo el cliente de verdad</strong>, con su hora. Si aparece «Y la limpieza de datos, ¿eso está dentro del alcance?» sin que nadie lo haya dicho, es la frase inventada de la maqueta puesta en boca de tu cliente — el peor hallazgo de la auditoría.
-        <span class="origen origen-nuevo">Nuevo · S1 · auditoría</span>
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="b8"><label for="b8">Con la sesión corriendo y el cliente hablando, mira la banda cuando esté <strong>buscando</strong>: la frase entre comillas que enseña es <strong>lo último que dijo el cliente de verdad</strong>, con su hora. Si aparece «Y la limpieza de datos, ¿eso está dentro del alcance?» sin que nadie lo haya dicho, es la frase inventada de la maqueta puesta en boca de tu cliente — el peor hallazgo de la auditoría.
+        <span class="origen origen-heredada">S1 · auditoría</span>
         <span class="minimo">⭐ mínimo</span></label></li>
     </ul>
     <div class="reportame"><p><strong>Repórtame sí o sí:</strong> cualquier pantalla que pinte en verde algo que no exista, una frase en español dentro de la interfaz en inglés, o un estado que solo se distinga por el color.</p></div>
@@ -297,18 +304,18 @@
     <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la pantalla de Corpus</code> ·
       ~5 min · que lea lo tuyo sin copiarlo, y que diga lo que no pudo leer</p>
     <ul class="pasos">
-      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="c1"><label for="c1">Pulsa <strong>«Señalar una carpeta»</strong> y elige <code>docs/kit-de-prueba/corpus/</code> de este repo. Se abre el panel de macOS. Al aceptar, la pantalla se llena: <strong>6 documentos repartidos en las cinco unidades</strong>.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+      <li data-origen="heredada" data-minimo data-corto><input type="checkbox" id="c1"><label for="c1">Pulsa <strong>«Señalar una carpeta»</strong> y elige <code>docs/kit-de-prueba/corpus/</code> de este repo. Se abre el panel de macOS. Al aceptar, la pantalla se llena: <strong>6 documentos repartidos en las cinco unidades</strong>.
+        <span class="origen origen-heredada">S1</span>
         <span class="minimo">⭐ mínimo</span>
-        <span class="minimo">⭐⭐ Parada 3 de 9</span></label></li>
-      <li data-origen="nuevo"><input type="checkbox" id="c2"><label for="c2">Abre la carpeta que señalaste en el Finder. <strong>No hay archivos nuevos dentro</strong>: la app leyó donde estaban y no copió nada.
-        <span class="origen origen-nuevo">Nuevo · S1</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="c3"><label for="c3">Mira la tarjeta «Dónde vive el índice»: dice la ruta, el tamaño, y <strong>700</strong> — solo tu cuenta puede leerlo. Compruébalo en Terminal si quieres: <code>ls -ld ~/Library/Application\ Support/*/corpus</code>.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐⭐ Parada 2 de 9</span></label></li>
+      <li data-origen="heredada"><input type="checkbox" id="c2"><label for="c2">Abre la carpeta que señalaste en el Finder. <strong>No hay archivos nuevos dentro</strong>: la app leyó donde estaban y no copió nada.
+        <span class="origen origen-heredada">S1</span></label></li>
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="c3"><label for="c3">Mira la tarjeta «Dónde vive el índice»: dice la ruta, el tamaño, y <strong>700</strong> — solo tu cuenta puede leerlo. Compruébalo en Terminal si quieres: <code>ls -ld ~/Library/Application\ Support/*/corpus</code>.
+        <span class="origen origen-heredada">S1</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-minimo><input type="checkbox" id="c4"><label for="c4">Señala ahora una carpeta con un PDF escaneado dentro (o cualquier PDF sin texto). <strong>Aparece contado como «sin leer» con su motivo</strong>, y los demás documentos se indexan igual — uno ilegible no detiene a los otros.
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="c4"><label for="c4">Señala ahora una carpeta con un PDF escaneado dentro (o cualquier PDF sin texto). <strong>Aparece contado como «sin leer» con su motivo</strong>, y los demás documentos se indexan igual — uno ilegible no detiene a los otros.
         <p class="chica suave" style="margin:6px 0 0"><strong>Y hazlo también sobre la app compilada de verdad</strong> (<code>pnpm tauri build</code> y abre el <code>.app</code>): hasta la auditoría, en el binario que se distribuye <strong>un PDF roto cerraba la app</strong> —el perfil de release no desenredaba el pánico de la librería de PDF— y el test que lo cubría corría en modo depuración. Si la app se cierra, el defecto volvió.</p>
-        <span class="origen origen-mejorado">Mejorado en S1 · auditoría</span>
+        <span class="origen origen-heredada">S1 · auditoría</span>
         <span class="minimo">⭐ mínimo</span></label></li>
     </ul>
     <div class="kit"><p><strong>Kit de prueba:</strong> la carpeta <code>docs/kit-de-prueba/corpus/</code> de este repo — seis documentos sintéticos del cliente inventado «Páramo Azul», uno por cada unidad del modelo. Las preguntas que aparecen en los pasos salen de <code>docs/kit-de-prueba/preguntas.json</code>, que es el mismo juego de treinta con el que la CI mide el buscador.</p></div>
@@ -318,36 +325,48 @@
   <section class="bloque">
     <div class="bloque-cabeza"><span class="letra">D</span><h2>Oír y responder: las dos pistas y la ficha</h2></div>
     <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>una reunión de Meet, con auriculares puestos</code> ·
-      ~10 min · el camino entero: alguien pregunta, aparece una ficha de lo tuyo</p>
+      ~12 min · el camino entero: alguien pregunta, aparece una ficha de lo tuyo</p>
+    <p class="chica" style="margin:0 0 10px"><strong>El cliente, para probar, es tu Mac hablando:</strong> en Terminal, <code>say -v Paulina "¿Y la limpieza de datos, eso está dentro del alcance?"</code>. Lo que suena por tu Mac es la pista del cliente; lo que dices tú por el micrófono es la tuya, y <strong>tu propia voz no pide fichas</strong> (la app te contestaría a ti a mitad de frase). Si Paulina no está instalada, quita <code>-v Paulina</code>.</p>
     <ul class="pasos">
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="d1"><label for="d1"><strong>Ponte los auriculares.</strong> En Sesión, la fila «Auriculares conectados» lo confirma. Quítatelos: <strong>avisa de que el micrófono va a oír al cliente</strong> y que esos turnos se marcarán como eco. Vuelve a ponértelos.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="d1"><label for="d1"><strong>Ponte los auriculares.</strong> En Sesión, la fila «Auriculares conectados» lo confirma. Quítatelos: <strong>avisa de que el micrófono va a oír al cliente</strong> y que esos turnos se marcarán como eco. Vuelve a ponértelos.
+        <span class="origen origen-heredada">S1</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="d2"><label for="d2">Pulsa <strong>«Iniciar sesión»</strong>. En Honestidad, los dos anillos de audio empiezan a contar bytes. <strong>Si no hablas, se quedan quietos — eso es correcto</strong>, no es una avería: cuando nadie habla, macOS no entrega una sola muestra.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
-        <span class="minimo">⭐ mínimo</span>
-        <span class="minimo">⭐⭐ Parada 4 de 9</span></label></li>
-      <li data-origen="mejorado" data-minimo data-corto><input type="checkbox" id="d3"><label for="d3">Di en voz alta, por el micrófono: <strong>«¿Y la limpieza de datos, eso está dentro del alcance?»</strong> Espera. <strong>En menos de cuatro segundos la banda enseña una ficha</strong> con su titular, una línea y la fuente — «propuesta · Páramo Azul… · Alcance».
-        <p class="chica suave" style="margin:6px 0 0"><strong>Esto es lo que la auditoría encontró roto y esta versión arregla, así que es la prueba que más importa de la guía.</strong> Hasta el arreglo, la banda se quedaba en «esperando» toda la reunión: Rust mandaba la ficha y el webview la leía con otra forma. Si aquí no aparece nada, el defecto volvió.</p>
-        <span class="origen origen-mejorado">Mejorado en S1 · auditoría</span>
-        <span class="minimo">⭐ mínimo</span>
-        <span class="minimo">⭐⭐ Parada 5 de 9</span></label></li>
-      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="d4"><label for="d4">Ahora di algo que el corpus <strong>no tiene</strong>: «¿Ustedes tienen certificación ISO 27001?». La banda dice <strong>«Nada en tu corpus sobre…»</strong> con los términos que de verdad buscó, y debajo una sugerencia de cómo conducirse. <strong>No inventa una respuesta.</strong>
-        <span class="origen origen-nuevo">Nuevo · S1</span>
-        <span class="minimo">⭐ mínimo</span>
-        <span class="minimo">⭐⭐ Parada 6 de 9</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="d5"><label for="d5">Pulsa <strong>⌘⇧A</strong> («ayúdame con esto») sin decir nada nuevo. Vuelve a buscar sobre lo último que oyó del cliente, sin esperar.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="d2"><label for="d2">Pulsa <strong>«Iniciar sesión»</strong>. En Honestidad, los dos anillos de audio empiezan a contar bytes. <strong>Si no hablas, se quedan quietos — eso es correcto</strong>, no es una avería: cuando nadie habla, macOS no entrega una sola muestra.
+        <span class="origen origen-heredada">S1</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="d6"><label for="d6">Pulsa <strong>⌘⇧T</strong>. Se abre el transcript en la banda, con los turnos separados por quién habló. <strong>Ojo:</strong> mientras Angel Ghost esté abierto, esa tecla deja de reabrir la última pestaña cerrada en el navegador. Pulsa ⌘⇧T otra vez para cerrarlo.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+      <li data-origen="mejorado" data-minimo data-corto><input type="checkbox" id="d3"><label for="d3">Con la sesión iniciada (Sesión → «Iniciar sesión»), haz que el cliente pregunte: <code>say -v Paulina "¿Y la limpieza de datos, eso está dentro del alcance?"</code>. <strong>En menos de cuatro segundos la banda enseña una ficha</strong> con su titular, una línea y la fuente — «propuesta · Páramo Azul… · Alcance» — y debajo de la fuente <strong>por qué llegó y cuánto tardó</strong>: «pregunta · 1,2 s», por ejemplo.
+        <p class="chica suave" style="margin:6px 0 0"><strong>Reescrita en el S2: la versión anterior pedía decir la pregunta tú, por el micrófono, y así no podía pasar nunca</strong> — tu voz no pide fichas. La línea de «por qué llegó» es nueva de este sprint. Es la prueba que la auditoría del S1 encontró rota (la ficha no llegaba a la banda): si aquí no aparece nada, el defecto volvió.</p>
+        <span class="origen origen-mejorado">Mejorado en S2</span>
         <span class="minimo">⭐ mínimo</span>
-        <span class="minimo">⭐⭐ Parada 7 de 9</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="d7"><label for="d7">Amplía la banda con el asa mientras hay una ficha. <strong>Aparecen las otras dos secciones más cercanas</strong> y la línea larga de la ficha.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐⭐ Parada 3 de 9</span></label></li>
+      <li data-origen="mejorado" data-minimo><input type="checkbox" id="d4"><label for="d4">Ahora haz que el cliente pregunte algo que el corpus <strong>no tiene</strong>: <code>say -v Paulina "¿Tienen oficina en Medellín?"</code>. La banda dice <strong>«Nada en tu corpus sobre…»</strong> con los términos que de verdad buscó, y debajo una sugerencia de cómo conducirse; si tu corpus tiene algo cercano, <strong>te lo nombra</strong>: «Lo más cercano que sí tienes es «…»: ofrécelo y pregunta para qué lo necesitan.» <strong>No inventa una respuesta.</strong>
+        <p class="chica suave" style="margin:6px 0 0">La versión anterior usaba «¿Tienen certificación ISO 27001?», que el corpus del kit <strong>sí</strong> responde (la ficha de Seguridad dice que no hay certificación vigente): esperaba «nada» de una pregunta con ficha. Y la pedía por el micrófono.</p>
+        <span class="origen origen-mejorado">Mejorado en S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="d8"><label for="d8">Quítate los auriculares y habla otra vez. El mismo turno llega por las dos pistas y <strong>el que entró por el micrófono queda marcado como eco</strong> — no se borra, se marca. No se dispara una segunda ficha por la misma pregunta.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+      <li data-origen="mejorado" data-minimo><input type="checkbox" id="d5"><label for="d5">Pulsa <strong>⌃⌥A</strong> («ayúdame con esto») sin que nadie diga nada nuevo. Vuelve a buscar sobre lo último que oyó del cliente, sin esperar.
+        <p class="chica suave" style="margin:6px 0 0">En el S1 la tecla era ⌘⇧A, que en Zoom silencia tu micrófono. Desde el S2 todas las teclas son ⌃⌥.</p>
+        <span class="origen origen-mejorado">Mejorado en S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="mejorado" data-minimo><input type="checkbox" id="d6"><label for="d6">Pulsa <strong>⌃⌥T</strong>. Se abre el transcript en la banda, con los turnos separados por quién habló: di tú algo por el micrófono y haz hablar al cliente con <code>say</code>, y mira que cada uno sale por su lado. Pulsa ⌃⌥T otra vez para cerrarlo.
+        <p class="chica suave" style="margin:6px 0 0">En el S1 la tecla era ⌘⇧T.</p>
+        <span class="origen origen-mejorado">Mejorado en S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="d7"><label for="d7">Amplía la banda con el asa mientras hay una ficha. <strong>Aparecen las otras dos secciones más cercanas</strong> y la línea larga de la ficha.
+        <span class="origen origen-heredada">S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="mejorado" data-minimo><input type="checkbox" id="d8"><label for="d8">Quítate los auriculares y haz hablar al cliente con <code>say</code>. El mismo turno llega por las dos pistas —tu micrófono oye el altavoz— y <strong>el que entró por el micrófono queda marcado como eco</strong>: no se borra, se marca. No se dispara una segunda ficha por la misma pregunta. Vuelve a ponerte los auriculares.
+        <p class="chica suave" style="margin:6px 0 0">La versión anterior decía «habla otra vez»: tu voz solo entra por el micrófono y no produce eco. El eco es el cliente saliendo por tus altavoces.</p>
+        <span class="origen origen-mejorado">Mejorado en S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="d9"><label for="d9">Con la sesión parada, quita el permiso del micrófono en Ajustes del Sistema y pulsa «Iniciar sesión». En <strong>Sesión</strong>, la fila del micrófono cambia de símbolo, de palabra (<strong>«No abrió»</strong>) y de color, y debajo dice <strong>el motivo y qué hacer</strong>. La fila «Escucha las dos pistas» pasa a <strong>«A medias»</strong> diciendo cuál queda. Devuelve el permiso.
+        <p class="chica suave" style="margin:6px 0 0">Hasta este sprint la pantalla decía «Funciona» en las dos pistas pasara lo que pasara (M2 de la auditoría del S1).</p>
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="d10"><label for="d10">Con unos auriculares Bluetooth o USB conectados, mira Sesión: <strong>dice su nombre</strong> («AirPods de…»). Y dice también que la app no puede saber si es un casco o un altavoz.
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="d11"><label for="d11">Haz que el cliente diga algo sin pregunta ni cifra y se calle: <code>say -v Paulina "Nos preocupa la calidad de los datos del canal directo"</code>. <strong>Unos cuatro segundos después</strong> la banda trae una ficha y su línea dice <strong>«silencio»</strong>. Si vuelves a callar, <strong>no repite</strong> la misma ficha.
+        <span class="origen origen-nuevo">Nuevo · S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
     </ul>
     <div class="kit"><p><strong>Kit de prueba:</strong> la carpeta <code>docs/kit-de-prueba/corpus/</code> de este repo — seis documentos sintéticos del cliente inventado «Páramo Azul», uno por cada unidad del modelo. Las preguntas que aparecen en los pasos salen de <code>docs/kit-de-prueba/preguntas.json</code>, que es el mismo juego de treinta con el que la CI mide el buscador.</p></div>
@@ -355,62 +374,200 @@
   </section>
 
   <section class="bloque">
-    <div class="bloque-cabeza"><span class="letra">E</span><h2>Que no quede nada: el corte y el cierre</h2></div>
-    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la pantalla de Honestidad, con la sesión corriendo</code> ·
-      ~6 min · la otra mitad de la promesa: que se pueda comprobar que no queda nada</p>
+    <div class="bloque-cabeza"><span class="letra">E</span><h2>La pantalla de la reunión: leer solo lo nuevo</h2></div>
+    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>Chrome con <code>docs/kit-de-prueba/pantalla/meet-de-prueba.html</code> abierta y visible, y la sesión iniciada</code> ·
+      ~8 min · lo que el cliente enseña trae su ficha sin que nadie pregunte</p>
     <ul class="pasos">
-      <li data-origen="nuevo"><input type="checkbox" id="e1"><label for="e1">Con la sesión corriendo, mira Honestidad: <strong>los tres búferes con sus cifras</strong> y el cuarto («último fotograma») marcado como que todavía no existe. El contador de red dice <strong>0 B</strong>.
-        <span class="origen origen-nuevo">Nuevo · S1</span></label></li>
-      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="e2"><label for="e2">Pulsa <strong>⌥⎋</strong>. En el acto: la banda y su relleno desaparecen, Chrome recupera su tamaño, y en Honestidad <strong>los tres búferes vuelven a 0 B</strong>. Dice «6 de 7 piezas» porque la séptima aún no existe.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="e1"><label for="e1">Abre <code>docs/kit-de-prueba/pantalla/meet-de-prueba.html</code> en Chrome (su título dice «Google Meet», que es lo que la app busca) y déjala a la vista, sin nada encima. Enseña la diapositiva del <strong>tablero de margen</strong>. <strong>Sin que nadie diga nada</strong>, en uno o dos segundos la banda trae una ficha, y su línea de por qué llegó dice <strong>«en pantalla»</strong> con el símbolo de la pantalla.
+        <span class="origen origen-nuevo">Nuevo · S2</span>
         <span class="minimo">⭐ mínimo</span>
-        <span class="minimo">⭐⭐ Parada 8 de 9</span></label></li>
-      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="e2b"><label for="e2b"><strong>Y ahora el caso de verdad:</strong> empieza a decir una frase larga y pulsa <strong>⌥⎋ sin haber terminado de hablar</strong>. Espera cinco segundos mirando la banda y Honestidad. <strong>No aparece nada</strong>: ni un turno nuevo en el transcript, ni una ficha, ni bytes que vuelvan a subir.
-        <p class="chica suave" style="margin:6px 0 0">Hasta la auditoría, el audio que ya iba camino del transcriptor se transcribía <em>después</em> del corte y repoblaba la ventana que se acababa de vaciar. Es el único momento en que el kill-switch puede fallar, y solo se puede provocar hablando.</p>
-        <span class="origen origen-nuevo">Nuevo · S1 · auditoría</span>
-        <span class="minimo">⭐ mínimo</span>
-        <span class="minimo">⭐⭐ Parada 9 de 9</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="e3"><label for="e3">Repítelo con el <strong>botón</strong> de Honestidad en vez de la tecla. Hace exactamente lo mismo — el atajo puede estar cogido por otra app y la app tiene que seguir siendo usable.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+        <span class="minimo">⭐⭐ Parada 4 de 9</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="e2"><label for="e2">Pasa las diapositivas con la flecha →. Cada una que trae una cifra o un término tuyo trae su ficha; <strong>la agenda no trae ninguna</strong> (no tiene ni cifra ni término). Quédate en una diapositiva y mueve el ratón encima: <strong>no vuelve a leer</strong> hasta que se queda quieta.
+        <span class="origen origen-nuevo">Nuevo · S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="e4"><label for="e4">Cierra la app entera con <strong>⌘Q</strong> mientras la sesión corre. Vuelve a abrirla: <strong>no hay nada de la reunión anterior</strong>, ni turnos ni audio. Y Chrome quedó con su tamaño correcto.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="e3"><label for="e3">En Sesión, apaga <strong>«Leerla sola»</strong> y pasa de diapositiva: <strong>no pasa nada</strong>. Pulsa <strong>⌃⌥L</strong>: la lee una vez, ahora, y trae su ficha. Vuelve a encender «Leerla sola».
+        <span class="origen origen-nuevo">Nuevo · S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="e5"><label for="e5">Fuerza un cierre brusco (Monitor de Actividad → forzar salida) con la banda acoplada. Al volver a arrancar, <strong>Chrome recupera su tamaño</strong>: la restauración no depende de un cierre limpio.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="e4"><label for="e4">Tapa la reunión con otra ventana, o pon una diapositiva en negro, y pulsa <strong>⌃⌥L</strong>: la banda contesta <strong>«Leí la pantalla: no hay texto que buscar.»</strong> No se inventa nada.
+        <span class="origen origen-nuevo">Nuevo · S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo"><input type="checkbox" id="e6"><label for="e6">En Terminal, tras una sesión completa: <code>ls -lt ~/Documents ~/Desktop ~/Downloads | head</code>. <strong>Ningún archivo nuevo</strong> con la fecha de hoy que venga de la app.
-        <span class="origen origen-nuevo">Nuevo · S1</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="e7"><label for="e7">Mira la <strong>consola donde arrancaste <code>pnpm tauri dev</code></strong> después de una sesión con conversación. Hay líneas como <code>[escucha] turno de «sistema» · 2 340 ms · 47 letras</code>: <strong>cuántas letras, jamás cuáles</strong>. Lee unas cuantas y confirma que no hay ni una frase de la reunión.
-        <p class="chica suave" style="margin:6px 0 0">Un log es la otra salida por la que el texto de un tercero se escapa —a la consola, al Console.app, al mensaje donde alguien pega una traza—. Hasta la auditoría, el término plantado solo se buscaba en los archivos del disco; ahora también en el log, pero leerlo con tus ojos sigue siendo distinto.</p>
-        <span class="origen origen-nuevo">Nuevo · S1 · auditoría</span>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="e5"><label for="e5">Quita el permiso de <strong>Pantalla</strong> en Ajustes del Sistema: Sesión dice <strong>«Sin permiso»</strong> en la fila de la pantalla y todo lo demás sigue funcionando. Devuélvelo.
+        <span class="origen origen-nuevo">Nuevo · S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo"><input type="checkbox" id="e6"><label for="e6">Con la sesión corriendo, en <strong>Honestidad</strong>: el búfer del último cuadro tiene tamaño. Tras <strong>⌥⎋</strong> vuelve a 0 B. En la carpeta del repo y en tus carpetas <strong>no aparece ninguna imagen</strong>.
+        <span class="origen origen-nuevo">Nuevo · S2</span></label></li>
     </ul>
-    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> cualquier cifra que no vuelva a cero tras ⌥⎋, cualquier archivo nuevo en tus carpetas, o Chrome sin recuperar su tamaño tras un cierre brusco.</p></div>
-    <div class="diferido"><p><strong>Diferido:</strong> el cuarto búfer —el último fotograma de pantalla— no existe todavía: la lectura de pantalla llega en el sprint 2. Por eso el corte dice «6 de 7» y no «7 de 7», que sería la mentira cómoda.</p></div>
+    <div class="kit"><p><strong>Kit de prueba:</strong> <code>docs/kit-de-prueba/pantalla/</code> — cinco diapositivas sintéticas (tablero de margen, cronograma, caso, retención, agenda) y la de la reunión grabada, que usa el bloque F. <code>meet-de-prueba.html</code> las enseña como si fuera una reunión: es la misma página con la que se probó en vivo la captura.</p></div>
+    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> una imagen guardada en cualquier sitio, una ficha que llegue con la agenda en pantalla, o que siga leyendo con «Leerla sola» apagado.</p></div>
   </section>
 
   <section class="bloque">
-    <div class="bloque-cabeza"><span class="letra">F</span><h2>El idioma y los modelos de voz</h2></div>
+    <div class="bloque-cabeza"><span class="letra">F</span><h2>El radar: quién graba y quién te vigila</h2></div>
+    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la pantalla de Sesión, con la sesión parada</code> ·
+      ~7 min · avisar de lo que mira tu Mac y tu pantalla, sin tocar la máquina de nadie</p>
+    <ul class="pasos">
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="f1"><label for="f1">Si tu Mac tiene corriendo un programa del catálogo —supervisión, monitoreo, acceso remoto—, <strong>Sesión entera es el aviso</strong>: «Software invasivo corriendo en tu Mac», una tabla con cada programa y <strong>qué alcanza a ver</strong>, la versión del catálogo, y dos botones: <strong>«Iniciar de todos modos»</strong> y <strong>«No iniciar»</strong>. <em>En el Mac donde se construyó la app lo encontró de verdad: el servicio de Escritorio remoto de Chrome.</em> Si no tienes ninguno, Sesión no dice nada de esto — y eso también es correcto.
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="f2"><label for="f2">Con la sesión iniciada y <code>docs/kit-de-prueba/pantalla/meet-de-prueba.html</code> a la vista, pasa hasta la <strong>sexta diapositiva</strong> (la reunión grabada). La banda pinta el <strong>ámbar «sábelo»</strong> con el punto de grabación: <strong>«Reunión grabada · bot de notas presente»</strong> y de dónde lo sacó, «leído de tu pantalla · hh:mm». Vuelve a otra diapositiva y regresa: <strong>el aviso no se repite</strong> si nada cambió.
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span>
+        <span class="minimo">⭐⭐ Parada 5 de 9</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="f3"><label for="f3">En una reunión de Meet, Zoom o Teams de verdad donde puedas grabar: <strong>empieza a grabar</strong> (o a transcribir). La banda pinta el ámbar con el aviso de grabación. <em>Si no sale, apunta el texto exacto que enseña el cliente de videollamada: el catálogo reconoce las frases de hoy y puede que tu versión diga otra cosa.</em>
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="f4"><label for="f4">Con un aviso coral en la banda, pulsa <strong>⌃⌥R</strong> («qué ve»): se abre Sesión con la tabla. Amplía la banda con el asa: aparecen <strong>«Ver qué alcanza a ver»</strong> y <strong>«Corta todo»</strong>, que corta lo mismo que ⌥⎋.
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo"><input type="checkbox" id="f5"><label for="f5">Abre el Monitor de Red de tu Mac (o Little Snitch, si lo usas) mientras el radar mira: <strong>ninguna conexión nueva</strong> sale de la app por el radar. Lo vigila también un test que falla si el radar llama a algo fuera de su lista.
+        <span class="origen origen-nuevo">Nuevo · S2</span></label></li>
+    </ul>
+    <div class="kit"><p><strong>Kit de prueba:</strong> la sexta diapositiva de <code>meet-de-prueba.html</code> es <code>docs/kit-de-prueba/pantalla/reunion-grabada.png</code>: una reunión sintética con el aviso «Esta reunión se está grabando» y un bot de Otter en la lista. El catálogo de programas y de frases vive en <code>data/radar/</code>, con la fuente de cada fila.</p></div>
+    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> un aviso coral de un programa que no mira nada (Teams, la app «Compartir pantalla»), un ámbar sin grabación ni bot, o cualquier conexión de red atribuible al radar.</p></div>
+  </section>
+
+  <section class="bloque">
+    <div class="bloque-cabeza"><span class="letra">G</span><h2>La sugerencia y la pantalla IA</h2></div>
+    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la pantalla de IA, con Apple Intelligence activado en Ajustes</code> ·
+      ~8 min · una frase de qué decir, que solo dice lo que dice su ficha</p>
+    <ul class="pasos">
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="g1"><label for="g1">Abre <strong>IA</strong>. Arriba dice <strong>quién redacta</strong>: «Modelo del sistema · en tu Mac». Apaga Apple Intelligence en Ajustes y vuelve: dice <strong>por qué nadie puede redactar</strong> («Apple Intelligence está apagado en Ajustes»). Vuelve a activarlo.
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="g2"><label for="g2">Enciende <strong>«Redactar sugerencias»</strong> y haz que el cliente vuelva a preguntar: <code>say -v Paulina "¿Y la limpieza de datos, eso está dentro del alcance?"</code>. Primero llega la ficha; <strong>en un segundo más o menos</strong>, debajo, <strong>«sugerencia · en tu Mac»</strong> con su confianza y una frase. <strong>Compárala con la ficha: no puede decir nada —ni una cifra, ni un «no»— que la ficha no diga.</strong> La ficha no se va.
+        <p class="chica suave" style="margin:6px 0 0">Al medir el modelo de verdad, una sugerencia citó bien y dijo «el taller de cierre va aparte» cuando la propuesta lo incluye. Desde entonces la app tira toda sugerencia que diga algo que su ficha no dice. Si ves una así, es el defecto que más importa de este bloque.</p>
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span>
+        <span class="minimo">⭐⭐ Parada 6 de 9</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="g3"><label for="g3">Haz tres preguntas más del kit, una a una: «¿Cuántas rondas de revisión incluye?», «¿Cómo miden la calidad de los datos?», «¿El taller de cierre va aparte?». Para cada una: <strong>¿la sugerencia ayuda, estorba o no aparece?</strong> Que no aparezca es correcto cuando el modelo dijo algo que la ficha no respalda: te queda la ficha.
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="g4"><label for="g4">Amplía la banda con el asa mientras hay una sugerencia: <strong>ocupa el hueco de la derecha</strong> y la ficha sigue a la vista con su fuente.
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo"><input type="checkbox" id="g5"><label for="g5">Con la sugerencia local, el contador de red de la banda y de Honestidad sigue en <strong>0 B</strong>. En la consola de <code>pnpm tauri dev</code>, las líneas <code>[sintesis]</code> dicen quién, cuánto tardó y cuánto salió — <strong>ni una palabra de la sugerencia ni de la pregunta</strong>.
+        <span class="origen origen-nuevo">Nuevo · S2</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="g6"><label for="g6"><em>Solo si tienes una clave de Claude, Gemini o Groq:</em> en IA, pégala y enciende el proveedor externo. La banda cambia el origen de la sugerencia al nombre del proveedor y <strong>el contador de red deja de ser 0 B</strong> y cambia de color; IA enseña <strong>esta reunión</strong>, <strong>este mes</strong> y el <strong>tope de USD 10</strong>; Honestidad dice que el modo API está encendido. Pulsa <strong>«Borrar la clave»</strong>: el interruptor se apaga y en Llavero (Acceso a Llaveros) ya no está «Angel Ghost · API».
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+    </ul>
+    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> una sugerencia con una cifra, un nombre o un «no» que su ficha no tiene; una sugerencia que llegue antes que su ficha o la tape; o un byte en el contador sin haber encendido el proveedor externo.</p></div>
+    <div class="diferido"><p><strong>Diferido:</strong> el camino MLX (un modelo que descargas tú) no se construyó: con Apple Intelligence la sugerencia cumple el presupuesto con holgura, y MLX solo hacía falta sin él. Sin Apple Intelligence, la sugerencia local no está y IA lo dice.</p></div>
+  </section>
+
+  <section class="bloque">
+    <div class="bloque-cabeza"><span class="letra">H</span><h2>El modo solo audio: la ficha, al oído</h2></div>
+    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la banda, con una ficha a la vista y auriculares puestos</code> ·
+      ~6 min · que te hable sin que el cliente lo oiga, y que se calle cuando debe</p>
+    <ul class="pasos">
+      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="h1"><label for="h1">Con los auriculares puestos y una ficha en la banda, pulsa <strong>⌃⌥V</strong>. La banda <strong>baja a una sola línea</strong>, la ventana de la reunión se hace más grande, y <strong>oyes la ficha</strong>: el titular, la línea y de dónde sale. En la consola de <code>pnpm tauri dev</code> aparece <code>[habla] empezó a sonar a los N ms</code>: <strong>apunta ese número</strong> (el presupuesto es 1000).
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span>
+        <span class="minimo">⭐⭐ Parada 7 de 9</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="h2"><label for="h2">Con el modo encendido, haz hablar al cliente con <code>say</code>. Mientras suena <strong>no te habla encima</strong>; cuando termina y llega una ficha nueva, <strong>te la lee sola</strong>.
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="h3"><label for="h3">Mientras te lee, pulsa <strong>⎋</strong>: <strong>se calla en el acto</strong>. Con el modo encendido, ⎋ no le llega a la reunión (en Meet no sale de pantalla completa); al apagar el modo con ⌃⌥V, vuelve a llegarle.
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="h4"><label for="h4">Desconecta los auriculares para que el sonido salga por el <strong>altavoz del Mac</strong> —o por un monitor por HDMI o DisplayPort, o por AirPlay—: no habla, y la banda dice en ámbar <strong>«Conecta auriculares · el cliente te oiría»</strong>.
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="h5"><label for="h5">Haz que el cliente pregunte algo que el corpus no tiene: la banda pinta «Nada en tu corpus sobre…» y <strong>no lo lee en voz alta</strong> (serían las palabras del cliente).
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="h6"><label for="h6">Arrastra el asa hacia arriba: <strong>el modo se apaga</strong> y la banda vuelve a su alto. Enciéndelo otra vez y pulsa ⌥⎋: se calla y el modo se apaga con todo lo demás.
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+    </ul>
+    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> oír la voz por el altavoz del Mac, que hable encima de alguien, o que ⎋ siga sin llegarle a la reunión después de apagar el modo.</p></div>
+  </section>
+
+  <section class="bloque">
+    <div class="bloque-cabeza"><span class="letra">I</span><h2>Tu diccionario técnico</h2></div>
+    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la pantalla de Idioma, con la carpeta del kit señalada en Corpus</code> ·
+      ~5 min · que tu jerga se escriba bien, sin modelo y sin red</p>
+    <ul class="pasos">
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="i1"><label for="i1">Idioma enseña la tarjeta del diccionario: <strong>cuántos términos</strong>, cuántos salieron de tu corpus, cuántos de tu archivo, y la <strong>ruta entera</strong> del archivo.
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="i2"><label for="i2">Con la sesión iniciada y el transcript abierto (⌃⌥T), haz hablar al cliente: <code>say -v Paulina "Nosotros ya tenemos el Semantic Model en Power BI, pero el Lakehouse todavía no está"</code>. En el transcript sale <strong>«Power BI»</strong>, <strong>«Semantic Model»</strong> y <strong>«Lakehouse»</strong>, no «power by» ni «lake house».
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="i3"><label for="i3">Abre el archivo de la ruta con cualquier editor, añade una línea <code>Contabilidad Regulatoria:</code>, guarda y empieza una sesión nueva: Idioma cuenta un término más. Haz que el cliente lo diga y sale bien escrito. <strong>En el archivo no hay ningún nombre de cliente</strong>: esos salen del corpus cada vez.
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+    </ul>
+    <div class="kit"><p><strong>Kit de prueba:</strong> <code>docs/kit-de-prueba/audio/</code> trae la misma frase como audio (<code>mezcla-es.wav</code>) con su transcripción de referencia: es con la que se mide cuánto mejora el diccionario, en un Mac con los modelos de voz instalados (la CI no los tiene y no lo mide).</p></div>
+    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> una palabra que estaba bien y el diccionario estropea, o un nombre de cliente dentro del archivo.</p></div>
+  </section>
+
+  <section class="bloque">
+    <div class="bloque-cabeza"><span class="letra">J</span><h2>Que no quede nada: el corte y el cierre</h2></div>
+    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la pantalla de Honestidad, con la sesión corriendo</code> ·
+      ~6 min · la otra mitad de la promesa: que se pueda comprobar que no queda nada</p>
+    <ul class="pasos">
+      <li data-origen="mejorado"><input type="checkbox" id="j1"><label for="j1">Con la sesión corriendo, mira Honestidad: <strong>los búferes con sus cifras, incluido el último cuadro leído de la pantalla</strong>. El contador de red dice <strong>0 B</strong> (con el proveedor externo de IA apagado).
+        <p class="chica suave" style="margin:6px 0 0">En el S1 el último cuadro de pantalla aún no existía y la pantalla lo decía.</p>
+        <span class="origen origen-mejorado">Mejorado en S2</span></label></li>
+      <li data-origen="mejorado" data-minimo data-corto><input type="checkbox" id="j2"><label for="j2">Pulsa <strong>⌥⎋</strong>. En el acto: la banda y su relleno desaparecen, la voz del modo solo audio se calla, Chrome recupera su tamaño, y en Honestidad <strong>los búferes vuelven a 0 B</strong>. Debajo del botón rojo: <strong>«El botón corta 9 de 9 piezas: ninguna queda fuera.»</strong>
+        <p class="chica suave" style="margin:6px 0 0">En el S1 decía «6 de 7»: faltaba la lectura de pantalla. Este sprint añadió tres piezas —el cuadro de pantalla, la voz y la sugerencia en camino— y las tres se cortan.</p>
+        <span class="origen origen-mejorado">Mejorado en S2</span>
+        <span class="minimo">⭐ mínimo</span>
+        <span class="minimo">⭐⭐ Parada 8 de 9</span></label></li>
+      <li data-origen="heredada" data-minimo data-corto><input type="checkbox" id="j2b"><label for="j2b"><strong>Y ahora el caso de verdad:</strong> empieza a decir una frase larga y pulsa <strong>⌥⎋ sin haber terminado de hablar</strong>. Espera cinco segundos mirando la banda y Honestidad. <strong>No aparece nada</strong>: ni un turno nuevo en el transcript, ni una ficha, ni bytes que vuelvan a subir.
+        <p class="chica suave" style="margin:6px 0 0">Hasta la auditoría, el audio que ya iba camino del transcriptor se transcribía <em>después</em> del corte y repoblaba la ventana que se acababa de vaciar. Es el único momento en que el kill-switch puede fallar, y solo se puede provocar hablando.</p>
+        <span class="origen origen-heredada">S1 · auditoría</span>
+        <span class="minimo">⭐ mínimo</span>
+        <span class="minimo">⭐⭐ Parada 9 de 9</span></label></li>
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="j3"><label for="j3">Repítelo con el <strong>botón</strong> de Honestidad en vez de la tecla. Hace exactamente lo mismo — el atajo puede estar cogido por otra app y la app tiene que seguir siendo usable.
+        <span class="origen origen-heredada">S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="j3b"><label for="j3b">Tras el corte, pulsa <strong>«Iniciar sesión»</strong> otra vez. <strong>La banda vuelve</strong> con su relleno, sin reiniciar la app. El acople no: la ventana de la reunión se queda con su tamaño hasta que tú lo pidas.
+        <p class="chica suave" style="margin:6px 0 0">En el S1 la banda no volvía hasta reiniciar la app (M4 de la auditoría).</p>
+        <span class="origen origen-nuevo">Nuevo · S2</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="j4"><label for="j4">Cierra la app entera con <strong>⌘Q</strong> mientras la sesión corre. Vuelve a abrirla: <strong>no hay nada de la reunión anterior</strong>, ni turnos ni audio. Y Chrome quedó con su tamaño correcto.
+        <span class="origen origen-heredada">S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="j5"><label for="j5">Fuerza un cierre brusco (Monitor de Actividad → forzar salida) con la banda acoplada. Al volver a arrancar, <strong>Chrome recupera su tamaño</strong>: la restauración no depende de un cierre limpio.
+        <span class="origen origen-heredada">S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="heredada"><input type="checkbox" id="j6"><label for="j6">En Terminal, tras una sesión completa: <code>ls -lt ~/Documents ~/Desktop ~/Downloads | head</code>. <strong>Ningún archivo nuevo</strong> con la fecha de hoy que venga de la app.
+        <span class="origen origen-heredada">S1</span></label></li>
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="j7"><label for="j7">Mira la <strong>consola donde arrancaste <code>pnpm tauri dev</code></strong> después de una sesión con conversación. Hay líneas como <code>[escucha] turno de «sistema» · 2 340 ms · 47 letras</code>: <strong>cuántas letras, jamás cuáles</strong>. Lee unas cuantas y confirma que no hay ni una frase de la reunión.
+        <p class="chica suave" style="margin:6px 0 0">Un log es la otra salida por la que el texto de un tercero se escapa —a la consola, al Console.app, al mensaje donde alguien pega una traza—. Hasta la auditoría, el término plantado solo se buscaba en los archivos del disco; ahora también en el log, pero leerlo con tus ojos sigue siendo distinto.</p>
+        <span class="origen origen-heredada">S1 · auditoría</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+    </ul>
+    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> cualquier cifra que no vuelva a cero tras ⌥⎋, cualquier archivo nuevo en tus carpetas, o Chrome sin recuperar su tamaño tras un cierre brusco.</p></div>
+  </section>
+
+  <section class="bloque">
+    <div class="bloque-cabeza"><span class="letra">K</span><h2>El idioma y los modelos de voz</h2></div>
     <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la pantalla de Idioma</code> ·
       ~4 min · lo único que hace entrar datos por la red, y que se diga</p>
     <ul class="pasos">
-      <li data-origen="nuevo"><input type="checkbox" id="f1"><label for="f1">Mira las dos pistas con su idioma y el estado real de su modelo. <strong>Si un modelo no está instalado, lo dice</strong> en vez de fallar en silencio cuando alguien hable.
-        <span class="origen origen-nuevo">Nuevo · S1</span></label></li>
-      <li data-origen="mejorado" data-minimo><input type="checkbox" id="f2"><label for="f2">Con un idioma sin modelo, la fila lo dice en ámbar y ofrece <strong>«Instalar»</strong>. Púlsalo: el botón pasa a <strong>«instalando…»</strong> y no se puede volver a pulsar; cuando macOS termina, la fila dice <strong>«modelo instalado»</strong>. Es la única vez que la app toca la red, y en la dirección contraria: entra el modelo, no sale nada. El contador sigue en <strong>0 B</strong>.
-        <p class="chica suave" style="margin:6px 0 0"><strong>Este botón no existía.</strong> La auditoría encontró que el comando que instala el modelo no tenía un solo llamador: en un Mac sin el modelo del cliente —lo normal, si tu sistema está en español— la transcripción del cliente era inalcanzable desde dentro de la app, y la pantalla solo decía «sin modelo».</p>
-        <span class="origen origen-mejorado">Mejorado en S1 · auditoría</span>
+      <li data-origen="heredada"><input type="checkbox" id="k1"><label for="k1">Mira las dos pistas con su idioma y el estado real de su modelo. <strong>Si un modelo no está instalado, lo dice</strong> en vez de fallar en silencio cuando alguien hable.
+        <span class="origen origen-heredada">S1</span></label></li>
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="k1b"><label for="k1b">El código de cada pista (<code>es-ES</code>, <code>en-US</code>…) <strong>se elige</strong>: tiene un subrayado a trazos. Las dos nacen en <strong>español</strong>. Cambia la del cliente a <code>en-US</code>, vuelve a Sesión, pulsa «Iniciar sesión» y en la consola aparece <code>[escucha] pista «sistema» abierta · en-US</code>. Cierra la app y ábrela: <strong>vuelven a español</strong> (la elección vive en memoria, y el manual lo dice).
+        <p class="chica suave" style="margin:6px 0 0">Hasta la auditoría del S2 la pista del cliente estaba fijada en inglés, sin forma de cambiarla: con un cliente que habla español no llegaba un solo turno útil.</p>
+        <span class="origen origen-nuevo">Nuevo · S2 · auditoría</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo"><input type="checkbox" id="f3"><label for="f3">Comprueba el aviso del techo: <strong>cinco idiomas listos a la vez, como mucho</strong>. Es un límite de macOS, no de la app, y la pantalla lo dice así.
-        <span class="origen origen-nuevo">Nuevo · S1</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="f4"><label for="f4">En una reunión en inglés, con el idioma del cliente en <code>en-US</code>: los turnos del cliente <strong>se transcriben en inglés</strong> y los tuyos en español, cada pista por su lado.
-        <span class="origen origen-nuevo">Nuevo · S1</span>
+      <li data-origen="mejorado" data-minimo><input type="checkbox" id="k2"><label for="k2">Elige para el cliente un idioma cuyo modelo tu Mac no traiga (en un Mac en español, suele ser <code>en-US</code>): la fila lo dice en ámbar y ofrece <strong>«Instalar»</strong>. Púlsalo: el botón pasa a <strong>«instalando…»</strong> y no se puede volver a pulsar; cuando macOS termina, la fila dice <strong>«modelo instalado»</strong>. Es la única vez que la transcripción toca la red, y en la dirección contraria: entra el modelo, no sale nada. El contador sigue en <strong>0 B</strong>.
+        <p class="chica suave" style="margin:6px 0 0">Decía «la única vez que la app toca la red»: desde este sprint hay otra puerta, el proveedor externo de IA, apagada salvo que la enciendas (bloque G).</p>
+        <span class="origen origen-mejorado">Mejorado en S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="f5"><label for="f5"><strong>Y una que es una pregunta para ti, no una comprobación.</strong> Con un idioma sin modelo, esta pantalla mide 653 px y la ventana 640: <strong>se desplaza 15 px</strong> — la última línea del párrafo de abajo. Baja con la rueda o con el teclado y dime si te molesta. La alternativa era recortar la frase de «Transcribe tu Mac» que dice cuál es la única vez que la app toca la red, y recortar honestidad para que un gate quede en verde es justo lo que esta auditoría vino a arreglar. En cuanto el modelo está instalado, la pantalla vuelve a caber.
-        <span class="origen origen-nuevo">Nuevo · S1 · auditoría</span>
+      <li data-origen="heredada"><input type="checkbox" id="k3"><label for="k3">Comprueba el aviso del techo: <strong>cinco idiomas listos a la vez, como mucho</strong>. Es un límite de macOS, no de la app, y la pantalla lo dice así.
+        <span class="origen origen-heredada">S1</span></label></li>
+      <li data-origen="heredada" data-minimo><input type="checkbox" id="k4"><label for="k4">En una reunión en inglés, con el idioma del cliente en <code>en-US</code>: los turnos del cliente <strong>se transcriben en inglés</strong> y los tuyos en español, cada pista por su lado.
+        <span class="origen origen-heredada">S1</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="mejorado" data-minimo><input type="checkbox" id="k5"><label for="k5"><strong>Una pregunta para ti, no una comprobación.</strong> Con un idioma sin modelo, baja hasta el final de esta pantalla. En el S1 <strong>se desplazaba 15 px</strong> —la última línea del párrafo de abajo— y este sprint le añadió la tarjeta del diccionario: dime si se desplaza y si te molesta.
+        <span class="origen origen-mejorado">Mejorado en S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
     </ul>
-    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> que el contador de red se mueva de 0 B por algo que no sea la descarga de un modelo que tú pediste.</p></div>
+    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> que el contador de red se mueva de 0 B por algo que no sea la descarga de un modelo que tú pediste o el proveedor externo de IA que tú encendiste.</p></div>
   </section>
 
   <footer>
@@ -421,6 +578,15 @@
     <details class="chica">
       <summary>Historial de la guía</summary>
       <ul>
+        <li><strong>S2 · v4 · 2026-09-26:</strong> 72 pruebas. <strong>31 nuevas</strong>: 26 en cinco
+          bloques —la pantalla de la reunión (E), el radar (F), la sugerencia y la pantalla IA (G), el
+          modo solo audio (H) y el diccionario técnico (I)— y cinco en bloques viejos: la pista que no
+          abre, los auriculares por su nombre, la ficha por silencio, la banda que vuelve tras el
+          corte y el idioma que se elige por pista. <strong>13 heredadas reescritas</strong>; dos de ellas no podían pasar (la pregunta
+          del cliente dicha por tu micrófono, y «nada en tu corpus» para una pregunta con ficha). Los
+          bloques del corte y del idioma pasan a ser J y K para que el ⭐⭐ se camine hasta el final.
+          Gate mínimo ⭐ de 61; corto ⭐⭐ de 9 paradas (~25 min, cinco sobre el techo, declarado).
+          <strong>Ninguna eliminada.</strong> Namespace nuevo (<code>ag-s2-</code>).</li>
         <li><strong>S1 · v3 · 2026-09-23 (al cerrar el sprint):</strong> 41 pruebas.
           <strong>Dos nuevas</strong>, las dos ⭐: la banda que no se ve al compartir pantalla en
           <strong>Zoom</strong> y en <strong>Teams</strong> — la promesa estaba probada solo en Meet y
@@ -448,12 +614,12 @@
 <script>
   (function () {
     // NS VERSIONADO POR SPRINT (regla dura): al publicar la guía de un sprint nuevo se cambia
-    // `ag-s1-` — así una regresión sin correr no aparece marcada por el sprint anterior.
+    // `ag-s2-` — así una regresión sin correr no aparece marcada por el sprint anterior.
     // Cambia con CADA versión de la guía, no solo con cada sprint: esta es la de después
     // de la auditoría, y seis pruebas cambiaron. Con el namespace viejo, las casillas que el
     // usuario marcó antes de los arreglos seguirían marcadas sobre pruebas que ahora dicen otra
     // cosa — una regresión sin correr apareciendo como aprobada.
-    var NS = "ag-s1-cierre-";
+    var NS = "ag-s2-";
     var casillas = Array.prototype.slice.call(document.querySelectorAll('input[type="checkbox"]'));
     var barra = document.getElementById("barra-avance");
     var contador = document.getElementById("contador");

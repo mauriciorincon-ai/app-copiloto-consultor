@@ -21,6 +21,14 @@ const PANTALLAS = [
   { que: "banda · ficha", url: "ventana=banda&estado=ficha" },
   { que: "banda · sin resultado", url: "ventana=banda&estado=sin-resultado" },
   { que: "banda · sin verificar", url: "ventana=banda&estado=sin-verificar&verificado=0" },
+  // El radar (sprint 002, fase 4): ámbar y coral son avisos con color propio, y el coral lleva
+  // botones. En el navegador la ventana es alta, así que el coral sale ampliado —con sus botones—.
+  { que: "banda · radar ámbar", url: "ventana=banda&estado=radar" },
+  { que: "banda · radar coral", url: "ventana=banda&estado=radar-invasivo" },
+  { que: "sesión · software invasivo en tu Mac", url: "ventana=principal&pantalla=sesion&radar=vigilancia" },
+  // La síntesis (fase 5): la pantalla IA, con su formulario de clave, y la sugerencia en la banda.
+  { que: "ia", url: "ventana=principal&pantalla=ia" },
+  { que: "banda · sugerencia", url: "ventana=banda&estado=sugerencia-local" },
 ];
 
 test.use({ reducedMotion: "reduce" });

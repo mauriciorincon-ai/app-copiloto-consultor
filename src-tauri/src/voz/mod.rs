@@ -3,8 +3,7 @@
 //!
 //! Este módulo es la mitad determinista del sprint que más se parece a magia y menos lo es. No
 //! reconoce palabras (eso es `stt`), no sabe de quién es la voz (eso lo sabe `capture` por el
-//! origen de la muestra, jamás por la señal) y no decide qué enseñar (eso será el disparador de
-//! la fase 4). Hace una sola cosa: partir un flujo continuo de audio en **turnos**, y avisar en
+//! origen de la muestra, jamás por la señal) y no decide qué enseñar (eso es `disparo/`). Hace una sola cosa: partir un flujo continuo de audio en **turnos**, y avisar en
 //! cuanto uno se cierra.
 //!
 //! **Por qué es la primera pieza y no la última.** Todo el presupuesto del sprint —≤4 s desde que

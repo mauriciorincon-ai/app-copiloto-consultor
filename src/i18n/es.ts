@@ -53,9 +53,9 @@ export const es = {
      * EL CATÁLOGO DE MANIOBRAS, bilingüe.
      *
      * Rust dice **cuál** maniobra (`credencial`, `cifra`, …) y el texto vive aquí, porque la
-     * maniobra es voz de la app y la app es bilingüe por regla dura. Las seis están en
-     * `docs/diseno/banda.html` —la maqueta es el primer diccionario— y en `design-system.md`,
-     * donde el usuario las aprobó en la mirada 11.
+     * maniobra es voz de la app y la app es bilingüe por regla dura. Las siete están en
+     * `docs/diseno/banda.html` —la maqueta es el primer diccionario— y en `design-system.md`: seis
+     * aprobadas en la mirada 11 y el puente, construido en la auditoría del S2 (M15).
      */
     /** Las comillas del idioma: la maqueta escribe «…» en español y “…” en inglés. */
     comillaAbre: "«",
@@ -75,7 +75,11 @@ export const es = {
       referencia: "Ofrece una referencia del sector sin nombrar al cliente aún.",
       contrato: "No opines de contrato en vivo: anótalo y respóndelo por escrito.",
       generica: "Devuelve la pregunta: ¿para qué lo necesitan?",
+      /** El puente (M15): la banda pone entre las dos partes el nombre de lo más cercano. */
+      puente: "Lo más cercano que sí tienes es «…»: ofrécelo y pregunta para qué lo necesitan.",
     },
+    puenteAntes: "Lo más cercano que sí tienes es",
+    puenteDespues: ": ofrécelo y pregunta para qué lo necesitan.",
     cercano: "lo más cercano",
     cercanoLargo: "lo más cercano que sí tienes · ninguno responde la pregunta",
     buscarOtras: "Buscar con otras palabras",
@@ -89,7 +93,7 @@ export const es = {
     sinVerificarCuando: "Verificada solo en Meet · macOS 26.6.2 · 2026-09-20",
     sinVerificarVentana: "Comparte una ventana, no la pantalla",
     sinVerificarMonitor: "O usa un segundo monitor",
-    sinVerificarNotas: "O pasa a modo solo notas",
+    sinVerificarNotas: "O corta la banda con ⌥⎋ mientras compartes",
     yaVerifique: "Ya lo verifiqué en Zoom",
     soloNotas: "Modo solo notas",
 
@@ -104,6 +108,85 @@ export const es = {
     ayudame: "ayúdame",
     corta: "corta",
     transcript: "transcript",
+
+    /**
+     * ---- el modo solo audio (C15, sprint 002) ----
+     *
+     * Las siete cadenas salen de `docs/diseno/banda.html`, estados «voz», «voz-espera» y
+     * «voz-sin», y el gate del diccionario las compara una a una con la maqueta. Rust **no manda
+     * ninguna**: manda tres booleanos. Si la parte nativa mandara «Conecta auriculares», ese texto
+     * se podría cambiar sin que ninguna mirada lo viera nunca.
+     */
+    diciendoLaFicha: "Diciéndote la ficha…",
+    callar: "callar",
+    volver: "volver",
+    /**
+     * **El estado callado se DICE.** La primera propuesta de la mirada 16-bis enseñaba la línea
+     * de la ficha recién leída y se callaba el estado; el veredicto del usuario fue «creo que sí
+     * debería hacer evidente el estado». Es el mismo patrón «estado · por qué» de «Conecta
+     * auriculares · el cliente te oiría», que él ya había aprobado.
+     */
+    callado: "Callado",
+    esperandoElSiguienteTurno: "esperando el siguiente turno",
+    conectaAuriculares: "Conecta auriculares",
+    elClienteTeOiria: "el cliente te oiría",
+
+    // ---- fase 3 del sprint 002: por qué llegó la ficha, y la lectura que no encontró nada ----
+    /**
+     * **Los seis motivos del disparo** (`Motivo` en Rust), con su frase en los dos idiomas: la
+     * banda los pinta junto a la latencia («pregunta · 1,2 s»). Mirada 17-bis; «en pantalla» es de
+     * la 17-quater y lleva su propio símbolo.
+     */
+    motivos: {
+      pregunta: "pregunta",
+      cifra: "cifra",
+      terminoDelCorpus: "término tuyo",
+      silencioLargo: "silencio",
+      atajo: "lo pediste",
+      pantalla: "en pantalla",
+    },
+    seccionConjeturada: "sección conjeturada",
+    leiLaPantalla: "Leí la pantalla: no hay texto que buscar.",
+
+    // ---- fase 4 del sprint 002: el radar (C14), mirada 17 y 17-ter ----------------------------
+    /** Ámbar, «sábelo»: lo que la pantalla de la reunión dice de quién graba. */
+    radarGrabadaYBot: "Reunión grabada · bot de notas presente",
+    radarGrabada: "Reunión grabada",
+    radarBot: "Bot de notas presente",
+    /** «Meet muestra el aviso de grabación y «MinutaBot» aparece en la ventana de la reunión. …» */
+    radarMuestraElAviso: "muestra el aviso de grabación",
+    radarY: "y",
+    radarEnLaLista: "aparece en la ventana de la reunión.",
+    radarNoEsAngel: "Ese bot no es Angel Ghost, que nunca entra a la llamada.",
+    radarAvisoNoBloqueo: "Aviso, no bloqueo.",
+    radarLeidoDeTuPantalla: "leído de tu pantalla",
+    /** Coral, «invasivo»: un programa de tu Mac que te mira. */
+    radarTeMira: "Te está mirando un programa de tu Mac",
+    radarCatalogo: "catálogo",
+    radarEnTuEquipo: "en tu equipo, no en el del cliente",
+    radarQueVe: "qué ve",
+    radarSigueProtegida: "tu banda sigue protegida",
+    radarEnRed: "en red",
+    radarNadaPersiste: "nada persiste",
+    radarVerQueVe: "Ver qué alcanza a ver",
+    radarCortaTodo: "Corta todo",
+    /** Cómo nombra la banda cada clase del catálogo, entre paréntesis detrás del programa. */
+    radarClases: {
+      supervision: "supervisión de exámenes",
+      "anti-trampa": "anti-trampa con acceso al sistema",
+      monitoreo: "monitoreo de empleados",
+      "acceso-remoto": "acceso remoto",
+      mdm: "gestión de dispositivos",
+    },
+    // ---- fase 5 del sprint 002: la sugerencia (C7), mirada 18 ----------------------------------
+    sugerenciaEnTuMac: "sugerencia · en tu Mac",
+    /** «Claude Haiku · API · confianza media». */
+    api: "API",
+    confianzas: {
+      alta: "confianza alta",
+      media: "confianza media",
+      baja: "confianza baja",
+    },
 
     /**
      * MUESTRA SINTÉTICA «Páramo Azul» — la misma de la maqueta, con datos 100 % inventados.
@@ -148,6 +231,24 @@ export const es = {
       turno3: "¿Y si sumamos el Excel de la fuerza comercial? Lo tenemos en Power BI.",
       hora1: "14:01",
       hora2: "14:02",
+      /** La hora de «lo pediste · 14:05», el estado «pantalla · nada que leer». */
+      hora3: "14:05",
+      titularPdf: "Cuatro fuentes integradas en 9 semanas",
+      lineaPdf: "El perfilado previo recortó a la mitad la limpieza; la cuarta fuente entró en la semana 6.",
+      fuentePdf: "Sur del Valle · Resultados",
+      titularPantalla: "Tres canales, y no se sabe cuál deja margen",
+      lineaPantalla: "Mayorista, tiendas de vereda y venta directa: la propuesta mide el margen de cada uno.",
+      fuentePantalla: "Páramo Azul · Contexto",
+      /** El radar de la maqueta: «MinutaBot» y «ProctorLince» son inventados, como todo aquí. */
+      radarBot: "MinutaBot",
+      radarHora: "14:03",
+      radarPrograma: "ProctorLince",
+      radarVe: "ve tu pantalla completa y tu cámara",
+      /** La sugerencia de la maqueta (mirada 18). */
+      sugerenciaTitular: "Tres fuentes incluidas, la cuarta aparte",
+      sugerenciaLinea: "Confirma que la limpieza incluye hasta tres fuentes; una cuarta es adicional y se cotiza aparte.",
+      nombreApi: "Claude Haiku",
+      redApi: "1,2 KB",
     },
   },
   /**
@@ -193,8 +294,8 @@ export const es = {
     navHonestidad: "Honestidad",
     navIdioma: "Idioma",
     navIa: "IA",
-    sinSesion: "Sin sesión · 0 B",
-    meetDetectado: "Meet detectado · 0 B",
+    sinSesion: "Sin sesión",
+    detectado: "detectado",
 
     // ---- vocabulario de «todavía no» (§9-sexies) ----
     todaviaNo: "Todavía no",
@@ -210,17 +311,19 @@ export const es = {
     dosPistas: "Las dos pistas",
     pistaMic: "Micrófono — tú",
     pistaSistema: "Audio del sistema — el cliente",
-    pistaPantalla: "Pantalla — solo cuando cambia",
+    pistaPantalla: "Pantalla — solo lee lo nuevo",
     pistaAuriculares: "Auriculares conectados",
     esteCliente: "Este cliente",
-    fichaNdaRadar: "Ficha del cliente, NDA y radar",
+    fichaYNda: "Ficha del cliente y NDA",
     noSeInventa: "No se inventa nada mientras no exista: ni bandera, ni riesgo, ni catálogo.",
     queFuncionaHoy: "Qué funciona hoy",
     funcionaBanda: "La banda, abajo, protegida de la captura",
     funcionaAcople: "La reunión se hace sitio: se acopla y vuelve al cerrar",
     funcionaCorte: "Corta todo y vacía la memoria",
     iniciarSesion: "Iniciar sesión",
+    terminarSesion: "Terminar sesión",
     nadaSale: "corta todo · el sonido nunca se guarda · nada sale de tu equipo",
+    nadaSaleConApi: "corta todo · el sonido nunca se guarda · solo sale texto anonimizado al proveedor que encendiste",
     sinReunion: "Sin reunión abierta",
     tituloDeMuestra: "Páramo Azul — Propuesta tablero de rentabilidad",
     sinReunionVoz: "Abre Zoom, Meet o Teams y aparecerá aquí. Mientras tanto, prepara la reunión.",
@@ -233,22 +336,19 @@ export const es = {
     permSistema: "Audio del sistema",
     permSistemaPara: "Lo que suena en tu Mac: la voz del cliente. Sin bot en la reunión.",
     permPantalla: "Pantalla",
-    permPantallaPara: "Lee cifras y títulos solo cuando la pantalla cambia. Las imágenes no se guardan.",
+    permPantallaPara: "Lee cifras y títulos solo si hay algo nuevo, como otra diapositiva. Las imágenes no se guardan.",
     permAcople: "Acoplar la ventana de la reunión",
     permAcoplePara:
       "Para que la banda no tape la llamada: la reunión se encoge y las dos conviven. macOS lo llama «Accesibilidad».",
     concedido: "Concedido",
     sinConceder: "Sin conceder",
     concederEnMacos: "Conceder en macOS",
-    unSoloPermiso: "Audio del sistema y Pantalla son un solo permiso en macOS: se conceden y se caen juntos.",
     sinConcederNada: "Qué puedes hacer ya, sin conceder nada",
     indexar: "Indexar tu corpus",
     escribirNotas: "Escribir notas y acuerdos",
     buscarAMano: "Buscar tu evidencia a mano",
-    queTextoVeras: "Qué texto verás en macOS",
     textoMicrofono:
       "«Angel Ghost usa el micrófono para saber cuándo hablas tú. El audio vive solo en memoria y no se graba.»",
-    claveMicrofono: "NSMicrophoneUsageDescription · es / en",
 
     // ---- honestidad ----
     honestidadTitulo: "Honestidad",
@@ -270,11 +370,11 @@ export const es = {
      * `tests/unit/contador-de-red.test.ts` contando las puertas una a una.
      */
     modoDetalle:
-      "En esta versión la app no abre ninguna conexión: la única que existe la abre macOS cuando le pides instalar un modelo de voz.",
+      "La app abre una conexión solo si enciendes el API en IA, con tu clave, y solo con texto anonimizado. La otra la abre macOS cuando le pides instalar un modelo de voz.",
     piezasCola: "piezas: la otra todavía no existe.",
     loQueQuedara: "Lo que quedará cuando cierres",
     loQueQuedaraDetalle:
-      "Notas, acuerdos y fichas fijadas llegan más adelante. Hoy no queda nada porque hoy no se escribe nada.",
+      "Notas, acuerdos y fichas fijadas llegan más adelante. De la reunión no queda nada: lo único que la app escribe es tuyo —el índice de tu corpus, tu diccionario, el gasto del mes y dónde estaba la ventana de la reunión, para devolvérsela—.",
     // ---- sesión · lo que la fase 3 puso a funcionar ----
     funcionaEscucha: "Escucha las dos pistas y las transcribe en tu Mac",
     altavocesInternos: "Altavoces internos",
@@ -288,7 +388,7 @@ export const es = {
     // ---- idioma (subconjunto del sprint 1) ----
     idiomaTitulo: "Idioma y transcripción",
     idiomaSub:
-      "Dos pistas, los idiomas que marques, y un diccionario que es tuyo. La transcripción trabaja; casi nunca la miras.",
+      "Dos pistas, un idioma elegido para cada una y un diccionario tuyo. La transcripción trabaja; casi nunca la miras.",
     transcripcionEnVivo: "Transcripción en vivo",
     oculta: "oculta",
     visible: "visible",
@@ -296,6 +396,8 @@ export const es = {
       "Nace oculta a propósito. Leer lo que acaban de decir es la forma más rápida de dejar de escuchar: los ojos se van al texto y la conversación se queda sola.",
     laMuestraCuando: "la muestra cuando la necesites",
     idiomaPorPista: "Idioma por pista",
+    idiomaDeTuMicrofono: "Idioma de tu micrófono",
+    idiomaDelCliente: "Idioma del cliente",
     tuMicrofono: "Tú · micrófono",
     clienteSistema: "Cliente · sistema",
     modeloInstalado: "modelo instalado",
@@ -320,9 +422,150 @@ export const es = {
     loQueTodaviaNo: "Lo que todavía no existe",
     variosIdiomasPorPista: "Varios idiomas a la vez, marcados por pista",
     loQueFaltaDetalle:
-      "Hoy cada pista escucha un idioma, los nombres propios se transcriben como suenen, y los turnos mueren los dos —el tuyo y el del cliente— al cerrar y con la tecla.",
-    diccionarioTecnico: "Diccionario técnico: lo que se oye por lo que quieres leer",
+      "Hoy cada pista escucha un idioma, y los turnos mueren los dos —el tuyo y el del cliente— al cerrar y con la tecla.",
     conservarTusTurnos: "Conservar lo que dijiste tú",
+    // ---- fase 3 del sprint 002: LOS PORQUÉS (mirada 17-quater, `kit.html` §8-ter) ----
+    /**
+     * Cada estado que no funciona dice por qué con una frase CERRADA. Rust manda la clave; la frase
+     * vive aquí, en los dos idiomas, y termina en una salida siempre que la haya. Las claves son las
+     * de los enums de Rust tal cual (`kebab-case`), para que un porqué nuevo sin frase no compile.
+     */
+    noAbrio: "No abrió",
+    porQueNoAbrio: {
+      "sin-permiso-del-microfono": "macOS no dio permiso al micrófono. Concédelo en Permisos y vuelve a «Iniciar sesión».",
+      "sin-permiso-del-audio": "macOS no dio permiso para el audio del sistema. Concédelo en Permisos y vuelve a «Iniciar sesión».",
+      "dispositivo-ocupado": "macOS no dejó crear el tap: otra app tiene el dispositivo. Ciérrala y vuelve a «Iniciar sesión».",
+      "formato-ilegible": "El dispositivo entrega un formato de audio que la app no sabe leer. Prueba con otro y vuelve a «Iniciar sesión».",
+      "no-dejo": "macOS no dejó abrir esta pista. Vuelve a «Iniciar sesión»; si se repite, reinicia el Mac.",
+    },
+    escuchaAMedias: "Escucha y transcribe en tu Mac —",
+    soloTuPista: "solo tu pista",
+    soloLaDelCliente: "solo la del cliente",
+    aMedias: "A medias",
+    pantallaEspera: "Espera la reunión",
+    pantallaApagada: "Apagada",
+    pantallaApagadaPor: "No la lee sola. Pídesela cuando quieras: ⌃⌥L.",
+    pantallaSinPermiso: "Sin permiso",
+    pantallaSinPermisoPor: "macOS no ha concedido la grabación de pantalla: la app no lee nada de ella. Concédela en Permisos.",
+    pantallaNoPudo: "No pudo",
+    pantallaNoPudoPor: "macOS no entregó la ventana de la reunión. La app lo vuelve a intentar sola.",
+    leerlaSola: "Leerla sola",
+    leelaAhora: "léela ahora",
+    altavozExterno:
+      "Por HDMI, DisplayPort o AirPlay el sonido sale por un altavoz: el micrófono va a oír al cliente y el modo solo audio no habla.",
+    siEsUnAltavoz: "Si es un altavoz, no uses el modo solo audio.",
+    noSeSabe: "No se sabe",
+    /** Las dos últimas citan el dispositivo: la pantalla antepone su nombre entre comillas. */
+    porQueNoSeSabe: {
+      "sin-salida": "Este Mac no dice por dónde sale el sonido.",
+      "sin-conexion": "no dice cómo está conectado.",
+      "sin-fuente": "no dice por dónde suena.",
+    },
+    noSePuedeSaber: "No se puede saber si hay reunión",
+    porQueNoSeVe: {
+      "sin-accesibilidad": "Sin el permiso de Accesibilidad la app no puede ver si tienes Meet abierto. Concédelo en Permisos.",
+    },
+    dosPermisos: "Audio del sistema y Pantalla son dos permisos de macOS, aunque Ajustes los enseña en el mismo panel.",
+    antesDeQueMacos: "Antes de que macOS te pregunte",
+    textoPantalla:
+      "«Angel Ghost solo lee lo nuevo de tu pantalla compartida, para reconocer cifras y títulos. Las imágenes viven en memoria y no se guardan ni salen de tu equipo.»",
+    fraseDeMacos:
+      "macOS pregunta con su propia frase y no deja poner otra: «Angel Ghost quiere hacer una captura del contenido de la pantalla del sistema».",
+    soloEnMemoriaElUltimo: "solo en memoria · el último",
+    botonCorta: "El botón corta",
+    de: "de",
+    piezasNingunaFuera: "piezas: ninguna queda fuera.",
+    idiomasListos: "idiomas listos a la vez, como mucho: lo impone macOS, no la app.",
+    sinMotorTitulo: "Sin motor de voz: nada se transcribe",
+    porQueNoHayMotor: {
+      "sin-transcriptor": "Este Mac no trae el transcriptor de macOS 26.",
+      "sin-puente": "Esta copia de la app se construyó sin el transcriptor.",
+      "no-contesta": "El transcriptor de macOS no contestó. Vuelve a abrir la app; si se repite, reinicia el Mac.",
+    },
+    laBandaSigue: "Sin él no hay turnos, y sin turnos no llegan fichas por lo que se dice, tampoco con ⌃⌥A; las que trae la pantalla, sí.",
+    tuDiccionario: "Tu diccionario técnico",
+    deTuCorpus: "De tu corpus — nombres, productos, títulos",
+    enTuArchivo: "En tu archivo",
+    jamasCompleta: "Jamás completa una frase ni adivina una palabra.",
+    tuCarpeta: "Tu carpeta",
+    secciones: "secciones",
+
+    // ---- fase 5 del sprint 002: la pantalla IA y el modo de Honestidad (C7, mirada 18) ----------
+    iaSub: "Local por defecto. El API es tuyo, opcional, y se ve lo que sale por él.",
+    quienRedacta: "Quién redacta la sugerencia",
+    enTuMac: "en tu Mac",
+    nadie: "nadie",
+    proveedor: "proveedor",
+    estadoColumna: "estado",
+    latencia: "latencia",
+    modeloDelSistema: "Modelo del sistema (macOS 26)",
+    apiExterno: "API externo",
+    enUso: "en uso",
+    respaldo: "respaldo",
+    noDisponible: "no disponible",
+    apagado: "apagado",
+    encendido: "encendido",
+    porQueNoRedacta: {
+      "apple-intelligence-apagado": "Apple Intelligence está apagado en Ajustes.",
+      "mac-no-compatible": "Este Mac no puede usar el modelo del sistema.",
+      "no-disponible": "macOS no deja usar el modelo del sistema ahora mismo.",
+      "modelo-descargandose": "macOS todavía está descargando el modelo.",
+      "sin-puente": "Esta copia de la app se construyó sin el modelo del sistema.",
+      "sin-clave": "Sin clave: el API no se puede encender.",
+      "tope-del-mes": "Llegaste al tope del mes: vuelve sola a lo local.",
+    },
+    siFallaQuedan: "Si el modelo falla, quedan las fichas",
+    siFallaDetalle:
+      "La sugerencia es un acento. Buscar en tu corpus y mostrar la ficha con su fuente es código, no modelo: funciona aunque apagues esto entero.",
+    redactarSugerencias: "Redactar sugerencias (además de mostrar la ficha)",
+    proveedorExterno: "Proveedor externo",
+    tuClave: "Tu clave",
+    enTuLlavero: "se guarda en tu Llavero, nunca en un archivo",
+    guardarEnLlavero: "Guardar en el Llavero",
+    borrarLaClave: "Borrar la clave",
+    costo: "Costo",
+    estaReunion: "Esta reunión",
+    esteMes: "Este mes",
+    topeDelMes: "Tope del mes",
+    alLlegarAlTope: "Al llegar al tope vuelve sola al modelo local. No se detiene la reunión.",
+    /** Honestidad con el API encendido: «API encendido · Claude Haiku». */
+    modoApi: "API encendido",
+
+    // ---- fase 4 del sprint 002: el radar en Sesión, «software invasivo en tu Mac» ---------------
+    vigilanciaTitulo: "Software invasivo corriendo en tu Mac",
+    vigilanciaNoEs: "No es una grabación de la reunión: son programas que miran",
+    vigilanciaTuEquipo: "tu equipo",
+    vigilanciaQueMiran: "— tu pantalla, tu cámara, tus teclas o tus procesos. El radar mira",
+    vigilanciaSoloTuMac: "solo tu Mac",
+    vigilanciaJamas: ", jamás el computador de la contraparte. Es un aviso para que decidas, no un bloqueo.",
+    queEncontro: "qué encontró",
+    queAlcanzaAVer: "qué alcanza a ver",
+    nivel: "nivel",
+    catalogo: "catálogo",
+    invasivo: "Invasivo",
+    sabelo: "Sábelo",
+    tuProteccionSigue: "Tu protección propia sigue en pie",
+    panelProtegido: "Panel protegido de la captura",
+    aLaRed: "a la red",
+    nadaDeLaReunionEnDisco: "nada de la reunión se escribe en disco.",
+    iniciarDeTodosModos: "Iniciar de todos modos",
+    noIniciar: "No iniciar",
+    /** Las clases del catálogo como las titula la tabla: la palabra en negrita y su añadido. */
+    radarClases: {
+      supervision: { titulo: "Supervisión de exámenes", sufijo: "(proctoring)" },
+      "anti-trampa": { titulo: "Anti-trampa con acceso al sistema", sufijo: "" },
+      monitoreo: { titulo: "Monitoreo de empleados", sufijo: "" },
+      "acceso-remoto": { titulo: "Acceso remoto activo", sufijo: "" },
+      mdm: { titulo: "Gestión de dispositivos", sufijo: "(MDM) de un tercero" },
+    },
+    /** Las cinco filas de la maqueta, con sus nombres de ejemplo. Solo fuera de Tauri. */
+    muestraRadar: {
+      supervision: { nombre: "ProctorLince (ejemplo)", alcance: "Cámara, pantalla completa, apps abiertas; puede bloquear programas" },
+      "anti-trampa": { nombre: "GuardKernel (ejemplo)", alcance: "Procesos y memoria de todo el equipo, desde el núcleo del sistema" },
+      monitoreo: { nombre: "VigilaAgente (ejemplo)", alcance: "Capturas cada pocos minutos, tiempo por app, a veces teclas" },
+      "acceso-remoto": { nombre: "RemotoYa (ejemplo)", alcance: "Alguien podría estar viendo tu pantalla ahora mismo" },
+      mdm: { nombre: "MDM-Corp (ejemplo)", alcance: "Puede instalar, borrar y leer configuración. Normal en equipos de empresa" },
+    },
   },
 };
 

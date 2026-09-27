@@ -3,27 +3,92 @@ import { useT } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { TodaviaNo, PILA } from "../componentes/Ventana";
 import {
-  DEL_CLIENTE,
-  DEL_CONSULTOR,
+  fijarIdiomaDePista,
+  useIdiomasDePista,
+  type IdiomasDePista,
   instalarIdioma,
+  useDiccionario,
   type Disponibilidad,
+  type EstadoDelDiccionario,
   type QueSabeTranscribir,
 } from "../cuaderno";
 
 /**
  * IDIOMA — «Idioma y transcripción».
  *
- * Referencia: `docs/diseno/idioma.html`, estado **«así se ve hoy · sprint 1»** (mirada 13).
+ * Referencia: `docs/diseno/idioma.html`, estados **«así se ve hoy · sprint 2»** y **«… · sin motor de
+ * voz»** (mirada 17-bis).
  *
  * Lo que está vivo: la transcripción corre en el Mac y nace **oculta**, y cada pista tiene su
- * idioma con el estado real de su modelo leído del sistema. Lo que no existe lleva «todavía no»:
- * varios idiomas por pista, el diccionario técnico y conservar tus turnos.
+ * idioma —elegible desde la auditoría del S2— con el estado real de su modelo leído del sistema, y
+ * el diccionario técnico enseña sus números. Lo que no existe lleva «todavía no»: varios idiomas
+ * por pista y conservar tus turnos.
  *
  * **Y dos cosas que solo se supieron construyendo, y que esta pantalla dice en vez de esconder:**
  * macOS solo deja tener cinco idiomas listos a la vez, y el modelo de cada idioma lo descarga
- * macOS cuando el usuario se lo pide — la única vez que un módulo protegido de esta app toca la
- * red, y en la dirección contraria: entra el modelo, no sale nada.
+ * macOS cuando el usuario se lo pide — la única vez que la transcripción toca la red, y en la
+ * dirección contraria: entra el modelo, no sale nada. (La otra puerta de la app es el proveedor
+ * externo de IA, apagada salvo que el usuario la encienda.)
  */
+
+/**
+ * El nombre que la pantalla da a cada motor. Es el de `idioma.html` —el motor y el sistema que lo
+ * trae—, no el identificador interno. Un motor que no esté aquí se enseña por su identificador:
+ * mejor un nombre feo que uno inventado.
+ */
+const NOMBRE_DEL_MOTOR: Record<string, string> = {
+  "apple-speechanalyzer": "SpeechAnalyzer · macOS 26",
+};
+
+/**
+ * **Tu diccionario técnico** (mirada 17-bis, opción a): de dónde salen sus términos y **la ruta
+ * entera del archivo**, que es la única puerta para editarlo — un formulario haría escribir al
+ * módulo protegido. De la franja de la mirada 4 queda la mitad que es exactamente verdad.
+ */
+export function TuDiccionario({ diccionario }: { diccionario: EstadoDelDiccionario }) {
+  const t = useT().cuaderno;
+  return (
+    <div className="tarjeta diccionario">
+      <div className="fila">
+        <h2 className="seccion crece" style={{ margin: 0 }}>
+          {t.tuDiccionario}
+        </h2>
+        <span className="mono" style={{ color: "var(--ink-2)" }}>
+          {diccionario.terminos}
+        </span>
+      </div>
+      <table className="tabla">
+        <tbody>
+          <tr>
+            <td>{t.deTuCorpus}</td>
+            <td className="num">{diccionario.delCorpus}</td>
+          </tr>
+          <tr>
+            <td>{t.enTuArchivo}</td>
+            <td className="num">{diccionario.enTuArchivo}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p
+        className="mono"
+        style={{
+          fontSize: "11px",
+          color: "var(--ink-2)",
+          marginTop: "6px",
+          overflowWrap: "anywhere",
+          display: "flex",
+          gap: "6px",
+        }}
+      >
+        <span style={{ flex: "0 0 auto", marginTop: "1px", display: "inline-flex" }}>
+          <Ic id="i-doc" s />
+        </span>
+        <span>{diccionario.ruta}</span>
+      </p>
+      <p style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "6px" }}>{t.jamasCompleta}</p>
+    </div>
+  );
+}
 
 function estadoDelModelo(d: Disponibilidad | undefined, instalado: string): string | null {
   if (!d) return null;
@@ -32,6 +97,7 @@ function estadoDelModelo(d: Disponibilidad | undefined, instalado: string): stri
 
 export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
   const t = useT().cuaderno;
+  const diccionario = useDiccionario();
   /**
    * **Lo que pasó al instalar, que la pregunta de `useQueSabeTranscribir` no sabe todavía.**
    *
@@ -77,7 +143,11 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
   };
 
   /** Una pista con su idioma y el estado de su modelo. Si el modelo no está, se dice por qué. */
-  const pista = (icono: string, quien: string, codigo: string) => {
+  const elegidos = useIdiomasDePista();
+  // Los que se pueden elegir: los dos de la casa y los que el motor de este Mac dice conocer.
+  const codigos = [...new Set(["es-ES", "en-US", ...transcribe.idiomas.map((i) => i.codigo)])];
+  const pista = (icono: string, quien: string, cual: keyof IdiomasDePista, etiqueta: string) => {
+    const codigo = elegidos[cual];
     const d = de(codigo);
     const listo = d !== "instalando" && estadoDelModelo(d, t.modeloInstalado);
     return (
@@ -100,7 +170,22 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
             </>
           )}
         </span>
-        <span className="cuanto">{codigo}</span>
+        {/* **Elegible** desde la auditoría del S2 (A4): la pista del cliente estaba fijada en
+            inglés. Se ve como el código de siempre, subrayado a trazos porque se puede cambiar. */}
+        <label className="cuanto">
+          <span className="sr">{etiqueta}</span>
+          <select
+            className="idioma-de-pista"
+            value={codigo}
+            onChange={(e) => fijarIdiomaDePista(cual, e.target.value)}
+          >
+            {codigos.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
     );
   };
@@ -127,7 +212,7 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
                 {t.transcripcionEnVivo}
               </h2>
               {/* La maqueta lo dibuja como un interruptor, y aquí es un `span`, no un `label`.
-                  En este sprint la transcripción se abre **en la banda** con ⌘⇧T, no desde esta
+                  En este sprint la transcripción se abre **en la banda** con ⌃⌥T, no desde esta
                   pantalla: un `label` sin control al que asociarse sería un interruptor que no
                   conmuta nada — lo dice el lint de accesibilidad y tiene razón. Se pinta igual
                   (las reglas de `ghost.css` van por clase) y se lee como lo que es: un estado. */}
@@ -142,8 +227,8 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
             <p style={{ marginTop: "8px" }}>{t.naceOculta}</p>
             <div className="fila" style={{ marginTop: "10px", gap: "10px" }}>
               <span className="tecla">
-                <kbd>⌘</kbd>
-                <kbd>⇧</kbd>
+                <kbd>⌃</kbd>
+                <kbd>⌥</kbd>
                 <kbd>T</kbd>
               </span>
               <span style={{ fontSize: "12.5px", color: "var(--ink-2)" }}>{t.laMuestraCuando}</span>
@@ -154,40 +239,56 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
             <h2 className="seccion" style={{ margin: "0 0 4px" }}>
               {t.idiomaPorPista}
             </h2>
-            {pista("i-mic", t.tuMicrofono, DEL_CONSULTOR)}
-            {pista("i-sistema", t.clienteSistema, DEL_CLIENTE)}
-            <p style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "6px" }}>
-              {t.cincoIdiomas}
-            </p>
+            {pista("i-mic", t.tuMicrofono, "consultor", t.idiomaDeTuMicrofono)}
+            {pista("i-sistema", t.clienteSistema, "cliente", t.idiomaDelCliente)}
           </div>
         </div>
 
-        <div className="franja ok" role="status">
-          <Ic id="i-mac" relleno />
-          <div>
-            <strong>{t.transcribeTuMac}</strong>
-            <p>{t.transcribeTuMacDetalle}</p>
+        {/* **El motor tiene NOMBRE, y cuando falta tiene MOTIVO** (mirada 17-bis). Los dos
+            campos cruzaban la costura desde el sprint 001 y la pantalla los contaba en prosa —«el
+            motor de voz de macOS»— sin decir cuál ni cuántos idiomas admite. El porqué es cerrado
+            (17-quater): la frase sale del diccionario, en los dos idiomas. */}
+        {transcribe.motivo === null ? (
+          <div className="franja ok" role="status">
+            <Ic id="i-mac" relleno />
+            <div>
+              <strong>{t.transcribeTuMac}</strong>
+              <p className="mono" style={{ fontSize: "11px", color: "var(--ink-2)", margin: "2px 0 4px" }}>
+                {NOMBRE_DEL_MOTOR[transcribe.motor] ?? transcribe.motor} · {transcribe.techo}{" "}
+                {t.idiomasListos}
+              </p>
+              <p>{t.transcribeTuMacDetalle}</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="franja warn" role="status">
+            <Ic id="i-alert" relleno />
+            <div>
+              <strong>{t.sinMotorTitulo}</strong>
+              <p>
+                {t.porQueNoHayMotor[transcribe.motivo]} {t.laBandaSigue}
+              </p>
+            </div>
+          </div>
+        )}
 
-        {/* Las tres cosas que faltan, juntas y en una sola tarjeta. Separadas ocupaban media
-            pantalla y empujaban la tercera fuera de la ventana — y además se leían como tres
-            ausencias distintas cuando son la misma: lo que llega después de este sprint. */}
-        <div className="tarjeta pendiente">
-          <h2 className="seccion">{t.loQueTodaviaNo}</h2>
-          <div className="fila">
-            <span className="crece">{t.variosIdiomasPorPista}</span>
-            <TodaviaNo />
+        <div className="grid-2">
+          {diccionario && <TuDiccionario diccionario={diccionario} />}
+          {/* Las dos cosas que faltan, juntas. El diccionario técnico salió de esta lista en la
+              fase 1 del sprint 002: una pantalla que dice «todavía no» de algo que existe miente
+              igual que una que promete lo que falta. */}
+          <div className="tarjeta pendiente">
+            <h2 className="seccion">{t.loQueTodaviaNo}</h2>
+            <div className="fila">
+              <span className="crece">{t.variosIdiomasPorPista}</span>
+              <TodaviaNo />
+            </div>
+            <div className="fila">
+              <span className="crece">{t.conservarTusTurnos}</span>
+              <TodaviaNo />
+            </div>
+            <p>{t.loQueFaltaDetalle}</p>
           </div>
-          <div className="fila">
-            <span className="crece">{t.diccionarioTecnico}</span>
-            <TodaviaNo />
-          </div>
-          <div className="fila">
-            <span className="crece">{t.conservarTusTurnos}</span>
-            <TodaviaNo />
-          </div>
-          <p>{t.loQueFaltaDetalle}</p>
         </div>
       </div>
     </>

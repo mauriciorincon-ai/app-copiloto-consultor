@@ -110,7 +110,17 @@ pub enum Reunion {
         proteccion: Proteccion,
     },
     /// Hay un navegador abierto pero no podemos mirar sus ventanas. **No es «no hay reunión».**
-    NoSePuedeSaber { motivo: String },
+    NoSePuedeSaber { motivo: PorQueNoSeVe },
+}
+
+/// **Por qué no se puede saber si hay reunión**, en un conjunto cerrado (mirada 17-quater, kit
+/// §8-ter). Hoy tiene un solo miembro, y es un enum igual: el día que aparezca un segundo, la
+/// pantalla no compila hasta que alguien le escriba su frase en los dos idiomas.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum PorQueNoSeVe {
+    /// Sin el permiso de Accesibilidad no se leen los títulos de las ventanas del navegador.
+    SinAccesibilidad,
 }
 
 fn del_catalogo(bundle: &str) -> Option<&'static Cliente> {
@@ -156,9 +166,7 @@ pub fn clasificar(vista: &Vista) -> Reunion {
 
     // Hay navegador, pero no podemos ver sus ventanas: no sabemos, y se dice.
     if !navegadores.is_empty() && !vista.titulos_legibles {
-        return Reunion::NoSePuedeSaber {
-            motivo: "sin permiso de Accesibilidad no se puede ver si tienes Meet abierto".into(),
-        };
+        return Reunion::NoSePuedeSaber { motivo: PorQueNoSeVe::SinAccesibilidad };
     }
 
     Reunion::Ninguna
@@ -222,9 +230,72 @@ pub fn ahora() -> Reunion {
     clasificar(&mirar())
 }
 
+/// **A qué ventana mira la lectura de pantalla** (C8): la app de la videollamada detectada y, si
+/// es un navegador, las señales que su título tiene que llevar. Devuelve `(bundle, señales)`.
+///
+/// Sigue EXACTAMENTE el mismo orden que [`clasificar`] —primero las aplicaciones, luego Meet en un
+/// navegador— para que la ventana que se lee sea la de la reunión que Sesión enseña, y no otra.
+/// Con dos videollamadas abiertas a la vez, las dos pantallas eligen la misma.
+pub fn objetivo_de(vista: &Vista) -> Option<(String, Vec<String>)> {
+    for p in &vista.programas {
+        if let Some(c) = del_catalogo(&p.bundle) {
+            if c.clase == Clase::Aplicacion {
+                return Some((p.bundle.clone(), Vec::new()));
+            }
+        }
+    }
+    vista.programas.iter().find_map(|p| {
+        let c = del_catalogo(&p.bundle)?;
+        (c.clase == Clase::Navegador && p.titulos.iter().any(|t| es_meet(t))).then(|| {
+            (
+                p.bundle.clone(),
+                SENALES_MEET.iter().map(|s| s.to_string()).collect(),
+            )
+        })
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn la_pantalla_mira_la_misma_reunion_que_sesion() {
+        let meet = Vista {
+            programas: vec![
+                prog("com.apple.Safari", &["Correo"]),
+                prog("com.google.Chrome", &["Meet – abc-defg-hij · Google Meet"]),
+            ],
+            titulos_legibles: true,
+        };
+        assert_eq!(
+            objetivo_de(&meet),
+            Some((
+                "com.google.Chrome".into(),
+                vec!["google meet".into(), "meet.google.com".into()]
+            ))
+        );
+        let zoom_y_meet = Vista {
+            programas: vec![
+                prog("com.google.Chrome", &["Google Meet"]),
+                prog("us.zoom.xos", &[]),
+            ],
+            titulos_legibles: true,
+        };
+        // Zoom gana, igual que en `clasificar`: las dos pantallas eligen la misma reunión.
+        assert_eq!(
+            objetivo_de(&zoom_y_meet),
+            Some(("us.zoom.xos".into(), vec![]))
+        );
+        assert!(
+            matches!(clasificar(&zoom_y_meet), Reunion::Detectada { cliente, .. } if cliente == "Zoom")
+        );
+        let nada = Vista {
+            programas: vec![prog("com.google.Chrome", &["Correo"])],
+            titulos_legibles: true,
+        };
+        assert_eq!(objetivo_de(&nada), None);
+    }
 
     fn prog(bundle: &str, titulos: &[&str]) -> Programa {
         Programa {
@@ -281,7 +352,7 @@ mod tests {
         let Reunion::NoSePuedeSaber { motivo } = r else {
             panic!("sin permiso no se puede afirmar que no hay reunión")
         };
-        assert!(motivo.contains("Accesibilidad"), "motivo inútil: {motivo}");
+        assert_eq!(motivo, PorQueNoSeVe::SinAccesibilidad);
     }
 
     /// Sin navegadores abiertos, no poder leer títulos no cambia nada: no hay reunión y punto.

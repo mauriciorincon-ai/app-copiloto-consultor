@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-que-sabe-transcribir"
+description = "Enables the que_sabe_transcribir command without any pre-configured scope."
+commands.allow = ["que_sabe_transcribir"]
+
+[[permission]]
+identifier = "deny-que-sabe-transcribir"
+description = "Denies the que_sabe_transcribir command without any pre-configured scope."
+commands.deny = ["que_sabe_transcribir"]

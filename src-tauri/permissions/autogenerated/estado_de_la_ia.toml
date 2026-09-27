@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-estado-de-la-ia"
+description = "Enables the estado_de_la_ia command without any pre-configured scope."
+commands.allow = ["estado_de_la_ia"]
+
+[[permission]]
+identifier = "deny-estado-de-la-ia"
+description = "Denies the estado_de_la_ia command without any pre-configured scope."
+commands.deny = ["estado_de_la_ia"]

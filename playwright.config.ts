@@ -1,5 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// El puerto del build que se prueba. 3000 por defecto —la CI no lo toca—, y otro si hace falta:
+// en este Mac el 3000 lo puede tener otro proyecto, y el `strictPort` de abajo no deja compartirlo
+// (a propósito). `PUERTO_E2E=4300 pnpm test:e2e`.
+const PUERTO = Number(process.env.PUERTO_E2E ?? 3000);
+
 // Config que el ci.yml del kit ya asume (job e2e: "pnpm test:e2e").
 // Patrón validado en app-nutri-kids S1. Móvil primero: las apps del pipeline son mobile-first.
 export default defineConfig({
@@ -14,7 +19,7 @@ export default defineConfig({
   // de paso desmintió la razón original del cambio — ver CHANGELOG).
   reporter: process.env.CI ? [["github"], ["list"]] : "list",
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: `http://localhost:${PUERTO}`,
     trace: "on-first-retry",
   },
   // K1 (sprint 001): el kit trae un proyecto MÓVIL porque las apps del pipeline son
@@ -43,8 +48,8 @@ export default defineConfig({
     // `eval()` de React dev. En una app con CSP estricta o gate de red eso produce rojos sobre
     // un árbol limpio — 5 en Velo S1 — y un suite que grita cuando no pasa nada acaba ignorado.
     // Cuesta el tiempo del build; compra que el e2e local afirme lo mismo que el de CI.
-    command: "pnpm build && pnpm preview --port 3000 --strictPort",
-    url: "http://localhost:3000",
+    command: `pnpm build && pnpm preview --port ${PUERTO} --strictPort`,
+    url: `http://localhost:${PUERTO}`,
     // Sin reuso: un `pnpm dev` olvidado en :3000 secuestraría el suite entero en silencio.
     reuseExistingServer: false,
     timeout: 180_000,

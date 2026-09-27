@@ -11,6 +11,11 @@ en su lugar las del binario, los permisos del sistema y la no-persistencia.
 
 > **Regla dura (kit v1.15.0): cada casilla se verifica con EL comando del `ci-escritorio.yml`,
 > no con uno parecido.** Y todo comando que sea gate viaja ENTRE BACKTICKS (kit v1.24.0).
+> **Y la inversa (kit v1.28.0): todo comando que aparezca en una casilla VIVE en un job de la
+> CI, o la casilla dice `manual` y por qué** (necesita el Mac del usuario, un permiso TCC, una
+> firma). Un comando que solo existe en el checklist es un gate que depende de que alguien lo
+> recuerde *(Angel Ghost S1: `cargo clippy -- -D warnings` vivió aquí sin job y estaba en rojo
+> mientras la CI daba verde; desde v1.28.0 corre en `build-escritorio`)*.
 
 ### 1. Tests
 - [ ] `pnpm test` verde (con su `--coverage`); cobertura ≥70 % en `src/**` sin errores de glob.
@@ -18,13 +23,17 @@ en su lugar las del binario, los permisos del sistema y la no-persistencia.
 - [ ] `cargo test --locked` verde en `src-tauri/` (lo nativo: captura, ventana, permisos, buffers).
 
 ### 2. Type safety y lint
-- [ ] `pnpm typecheck` sin errores · `pnpm lint` sin warnings nuevos · `cargo clippy -- -D warnings` limpio.
+- [ ] `pnpm typecheck` sin errores · `pnpm lint` sin warnings nuevos · `cargo clippy --locked -- -D warnings` limpio (corre en `build-escritorio`, kit v1.28.0).
 - [ ] Tokens de tinta vetados y reduced-motion como en `/deploy-check` §3 (la UI sigue siendo web).
 
 ### 3. Build del binario
 - [ ] `pnpm build` (frontend) verde · `cargo check --locked` verde en CI (`build-escritorio`).
 - [ ] `pnpm tauri build` corre en local y produce el bundle (`.app`/`.dmg` en macOS); tamaño
-      anotado en la bitácora (regresiones de peso se ven aquí, no en Lighthouse).
+      anotado en la bitácora (regresiones de peso se ven aquí, no en Lighthouse). **`manual`:**
+      exige el Mac del usuario (firma, toolchain de Xcode); la CI cubre `cargo check --locked`.
+- [ ] Los tests que dependen del comportamiento del binario (pánicos atrapados, `panic = "abort"`)
+      corrieron al menos una vez con `--release` (regla 15, el modo incluye el perfil de
+      compilación — kit v1.28.0); el summary lo registra.
 - [ ] Firma y notarización: **antes de G-Release**, no por PR** — pero el PR que toque
       `tauri.conf.json`/`Info.plist` declara qué cambió en permisos y entitlements.
 

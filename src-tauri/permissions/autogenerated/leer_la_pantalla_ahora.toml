@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-leer-la-pantalla-ahora"
+description = "Enables the leer_la_pantalla_ahora command without any pre-configured scope."
+commands.allow = ["leer_la_pantalla_ahora"]
+
+[[permission]]
+identifier = "deny-leer-la-pantalla-ahora"
+description = "Denies the leer_la_pantalla_ahora command without any pre-configured scope."
+commands.deny = ["leer_la_pantalla_ahora"]

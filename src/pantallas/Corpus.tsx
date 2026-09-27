@@ -1,7 +1,7 @@
 import { useIdioma, useT, type Idioma } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { TodaviaNo } from "../componentes/Ventana";
-import { indexarCorpus, useCorpus, type UnidadDelCorpus } from "../cuaderno";
+import { indexarCorpus, useBytesALaRed, useCorpus, type UnidadDelCorpus } from "../cuaderno";
 
 /**
  * CORPUS — «Tus documentos, indexados donde están».
@@ -47,6 +47,7 @@ export function Corpus() {
   const b = useT().banda;
   const corpus = useCorpus();
   const idioma = useIdioma();
+  const bytes = useBytesALaRed();
   const cuantos = (u: UnidadDelCorpus) =>
     corpus.porUnidad.find((p) => p.unidad === u)?.documentos ?? 0;
 
@@ -67,9 +68,9 @@ export function Corpus() {
             {t.noSeCopianAntes} <b>{t.noSeCopianFuerte}</b>
             {t.noSeCopianDespues}
           </span>
-          <span className="red cero mono">
+          <span className={bytes === "0 B" ? "red cero mono" : "red api mono"}>
             <Ic id="i-subir" s />
-            0 B
+            {bytes}
           </span>
         </div>
 
@@ -111,6 +112,19 @@ export function Corpus() {
               <h2 className="seccion" style={{ margin: "0 0 6px" }}>
                 {t.dondeVive}
               </h2>
+              {/* **Qué carpeta señalaste y cuántas secciones salieron de ella** (mirada 17-bis).
+                  La app la ENVIABA al indexar y no la leía de vuelta: si el usuario no recordaba
+                  cuál eligió, no había dónde mirarlo. */}
+              {corpus.carpeta && (
+                <div className="buffer">
+                  <Ic id="i-doc" s />
+                  <span className="que">{t.tuCarpeta}</span>
+                  <span className="donde mono">{corpus.carpeta}</span>
+                  <span className="cuanto">
+                    {new Intl.NumberFormat(idioma).format(corpus.secciones)} {t.secciones}
+                  </span>
+                </div>
+              )}
               <div className="buffer">
                 <Ic id="i-candado" s />
                 <span className="que">{t.soloTu}</span>
@@ -119,7 +133,12 @@ export function Corpus() {
               </div>
               <p
                 className="mono"
-                style={{ fontSize: "10.5px", color: "var(--ink-2)", marginTop: "5px" }}
+                style={{
+                  fontSize: "10.5px",
+                  color: "var(--ink-2)",
+                  marginTop: "5px",
+                  overflowWrap: "anywhere",
+                }}
               >
                 {corpus.dondeVive ?? "—"}
               </p>

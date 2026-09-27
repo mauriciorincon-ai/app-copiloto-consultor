@@ -1,0 +1,632 @@
+{
+  "_leeme": "Catálogo del radar coral (C14). Cada fila: los ejecutables que la delatan (el último tramo de la ruta, comparado entero y sin mayúsculas), qué alcanza a ver en los dos idiomas y su fuente. Investigado el 2026-09-26; `nota` dice lo que se infirió y no se verificó. Fuera a propósito: los anti-trampa de núcleo (en macOS no hay: Apple desaconseja las extensiones de núcleo y en Apple silicon exigen bajar la seguridad al arrancar — https://support.apple.com/guide/security/kernel-extensions-sec8e454101b), las extensiones de navegador (Proctorio, Honorlock: no tienen proceso propio), y los nombres demasiado genéricos para cotejarlos solos (el «service» de RustDesk, el «go-agent» de Addigy, el «hubd» de Workspace ONE).",
+  "version": 1,
+  "fecha": "2026-09-26",
+  "programas": [
+    {
+      "id": "respondus",
+      "nombre": "Respondus LockDown Browser",
+      "categoria": "supervision",
+      "procesos": [
+        "LockDown Browser",
+        "LockDown Browser OEM"
+      ],
+      "ve": {
+        "es": "cierra tus otras apps y, con Respondus Monitor, graba tu cámara",
+        "en": "closes your other apps and, with Respondus Monitor, records your camera"
+      },
+      "alcance": {
+        "es": "Apps abiertas, que puede cerrar; con Respondus Monitor, tu cámara y a veces tu pantalla",
+        "en": "Open apps, which it can close; with Respondus Monitor, your camera and sometimes your screen"
+      },
+      "fuente": "https://support.respondus.com/hc/en-us/articles/4409595418907",
+      "nota": "nombre de la app verificado; que el ejecutable se llame igual es inferido"
+    },
+    {
+      "id": "safe-exam-browser",
+      "nombre": "Safe Exam Browser",
+      "categoria": "supervision",
+      "procesos": [
+        "Safe Exam Browser"
+      ],
+      "ve": {
+        "es": "bloquea las capturas, la mensajería y el acceso remoto",
+        "en": "blocks screenshots, messaging and remote access"
+      },
+      "alcance": {
+        "es": "Apps abiertas; bloquea capturas, mensajería, pantalla compartida y acceso remoto",
+        "en": "Open apps; blocks screenshots, messaging, screen sharing and remote access"
+      },
+      "fuente": "https://safeexambrowser.org/macosx/mac_usermanual_en.html"
+    },
+    {
+      "id": "examplify",
+      "nombre": "Examplify (ExamSoft)",
+      "categoria": "supervision",
+      "procesos": [
+        "Examplify"
+      ],
+      "ve": {
+        "es": "puede usar tu cámara, tu micrófono y tu pantalla",
+        "en": "can use your camera, microphone and screen"
+      },
+      "alcance": {
+        "es": "Cámara, micrófono y grabación de pantalla (ExamID, ExamMonitor)",
+        "en": "Camera, microphone and screen recording (ExamID, ExamMonitor)"
+      },
+      "fuente": "https://support.examsoft.com/hc/en-us/articles/11167826377101",
+      "nota": "nombre de la app verificado; ejecutable inferido"
+    },
+    {
+      "id": "guardian-browser",
+      "nombre": "Guardian Browser (Meazure / ProctorU)",
+      "categoria": "supervision",
+      "procesos": [
+        "Guardian Browser"
+      ],
+      "ve": {
+        "es": "comparte tu pantalla, tu cámara y tu micrófono con un supervisor",
+        "en": "shares your screen, camera and microphone with a proctor"
+      },
+      "alcance": {
+        "es": "Pantalla, cámara y micrófono; cierra los demás programas",
+        "en": "Screen, camera and microphone; closes other programs"
+      },
+      "fuente": "https://support.proctoru.com/hc/en-us/articles/360035678532",
+      "nota": "nombre de la app verificado; ejecutable inferido"
+    },
+    {
+      "id": "inspera",
+      "nombre": "Inspera Integrity Browser",
+      "categoria": "supervision",
+      "procesos": [
+        "Inspera Integrity Browser",
+        "Inspera Exam Portal"
+      ],
+      "ve": {
+        "es": "bloquea el Mac y puede grabar tu pantalla, tu cámara y tu audio",
+        "en": "locks the Mac and can record your screen, camera and audio"
+      },
+      "alcance": {
+        "es": "Bloquea el Mac; con Resilience, graba pantalla, cámara y audio",
+        "en": "Locks the Mac; with Resilience, records screen, camera and audio"
+      },
+      "fuente": "https://support.inspera.com/hc/en-us/articles/25547950441629",
+      "nota": "nombre del producto verificado; ejecutable inferido"
+    },
+    {
+      "id": "activtrak",
+      "nombre": "ActivTrak",
+      "categoria": "monitoreo",
+      "procesos": [
+        "scthostp"
+      ],
+      "ve": {
+        "es": "registra tus apps, tus ventanas y tus webs, y puede hacer capturas",
+        "en": "logs your apps, windows and websites, and can take screenshots"
+      },
+      "alcance": {
+        "es": "App activa, títulos de ventana y direcciones web; capturas de pantalla (opcional)",
+        "en": "Active app, window titles and web addresses; screenshots (optional)"
+      },
+      "fuente": "https://support.activtrak.com/hc/en-us/articles/44078083639963"
+    },
+    {
+      "id": "teramind",
+      "nombre": "Teramind",
+      "categoria": "monitoreo",
+      "procesos": [
+        "tmsysd",
+        "tmagent",
+        "tmui"
+      ],
+      "ve": {
+        "es": "graba tu pantalla y registra tus teclas",
+        "en": "records your screen and logs your keystrokes"
+      },
+      "alcance": {
+        "es": "Grabación de pantalla, apps, webs, teclas, correo web y archivos",
+        "en": "Screen recording, apps, websites, keystrokes, web email and files"
+      },
+      "fuente": "https://kb.teramind.co/en/articles/8791095",
+      "nota": "puede instalarse con otro nombre: ese no se ve"
+    },
+    {
+      "id": "insightful",
+      "nombre": "Insightful (Workpuls)",
+      "categoria": "monitoreo",
+      "procesos": [
+        "Workpuls",
+        "workpuls-agent"
+      ],
+      "ve": {
+        "es": "registra tu tiempo y tu actividad, y puede ocultar su icono",
+        "en": "tracks your time and activity, and can hide its icon"
+      },
+      "alcance": {
+        "es": "Tiempo y actividad por app; puede ocultar su icono",
+        "en": "Time and activity per app; can hide its icon"
+      },
+      "fuente": "https://help.insightful.io/en/articles/4036756"
+    },
+    {
+      "id": "hubstaff",
+      "nombre": "Hubstaff",
+      "categoria": "monitoreo",
+      "procesos": [
+        "Hubstaff"
+      ],
+      "ve": {
+        "es": "hace capturas de tu pantalla y mide tu actividad",
+        "en": "takes screenshots and measures your activity"
+      },
+      "alcance": {
+        "es": "Capturas de pantalla (hasta tres cada diez minutos) y nivel de actividad",
+        "en": "Screenshots (up to three every ten minutes) and activity level"
+      },
+      "fuente": "https://support.hubstaff.com/fixing-hubstaff-desktop-app-issues/",
+      "nota": "app verificada; ejecutable inferido"
+    },
+    {
+      "id": "time-doctor",
+      "nombre": "Time Doctor",
+      "categoria": "monitoreo",
+      "procesos": [
+        "Time Doctor 2"
+      ],
+      "ve": {
+        "es": "graba tu pantalla y el audio de tu Mac",
+        "en": "records your screen and your Mac’s audio"
+      },
+      "alcance": {
+        "es": "Capturas o vídeo de la pantalla y audio del sistema",
+        "en": "Screenshots or video of the screen, and system audio"
+      },
+      "fuente": "https://support.timedoctor.com/knowledge/how-to-install/uninstall-the-time-doctor-interactive-app",
+      "nota": "versión interactiva; la silenciosa no está verificada"
+    },
+    {
+      "id": "desktime",
+      "nombre": "DeskTime",
+      "categoria": "monitoreo",
+      "procesos": [
+        "DeskTime"
+      ],
+      "ve": {
+        "es": "lee tus ventanas y tus webs, y puede hacer capturas",
+        "en": "reads your windows and websites, and can take screenshots"
+      },
+      "alcance": {
+        "es": "Títulos de ventana, la web abierta, teclado y ratón; capturas (opcional)",
+        "en": "Window titles, the open website, keyboard and mouse; screenshots (optional)"
+      },
+      "fuente": "https://help.desktime.com/hc/en-us/articles/38510194571933",
+      "nota": "capacidades verificadas; ejecutable inferido"
+    },
+    {
+      "id": "controlio",
+      "nombre": "Controlio",
+      "categoria": "monitoreo",
+      "procesos": [
+        "Wemonc"
+      ],
+      "ve": {
+        "es": "pide ver tu pantalla, tus teclas y tu disco",
+        "en": "asks to see your screen, keystrokes and disk"
+      },
+      "alcance": {
+        "es": "Grabación de pantalla, teclado, disco completo y accesibilidad",
+        "en": "Screen recording, keyboard input, full disk and accessibility"
+      },
+      "fuente": "https://controlio.net/client_installation.html"
+    },
+    {
+      "id": "teamviewer",
+      "nombre": "TeamViewer",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "TeamViewer",
+        "TeamViewer_Service",
+        "TeamViewer_Desktop"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu Mac",
+        "en": "if someone connects, sees your screen and controls your Mac"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del Mac si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the Mac if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-mac/blob/2e7a7cf/Classes/ConfigFiles/SEBPresetSettings.m"
+    },
+    {
+      "id": "anydesk",
+      "nombre": "AnyDesk",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "AnyDesk"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu Mac",
+        "en": "if someone connects, sees your screen and controls your Mac"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del Mac si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the Mac if someone connects; open does not mean connected"
+      },
+      "fuente": "https://support.anydesk.com/docs/anydesk-for-macos"
+    },
+    {
+      "id": "chrome-remote-desktop",
+      "nombre": "Chrome Remote Desktop",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "remoting_me2me_host",
+        "remoting_me2me_host_service",
+        "Chrome Remote Desktop Host"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu Mac",
+        "en": "if someone connects, sees your screen and controls your Mac"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del Mac si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the Mac if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-mac/blob/2e7a7cf/Classes/ConfigFiles/SEBPresetSettings.m"
+    },
+    {
+      "id": "splashtop",
+      "nombre": "Splashtop Streamer",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "Splashtop Streamer",
+        "SRStreamerDaemon"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu Mac",
+        "en": "if someone connects, sees your screen and controls your Mac"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del Mac si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the Mac if someone connects; open does not mean connected"
+      },
+      "fuente": "https://support-splashtopbusiness.splashtop.com/hc/en-us/articles/212727163"
+    },
+    {
+      "id": "screenconnect",
+      "nombre": "ConnectWise ScreenConnect",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "ConnectWise Control Client",
+        "Screenconnect"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu Mac",
+        "en": "if someone connects, sees your screen and controls your Mac"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del Mac si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the Mac if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-mac/blob/2e7a7cf/Classes/ConfigFiles/SEBPresetSettings.m"
+    },
+    {
+      "id": "rustdesk",
+      "nombre": "RustDesk",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "RustDesk"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu Mac",
+        "en": "if someone connects, sees your screen and controls your Mac"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del Mac si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the Mac if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/rustdesk/rustdesk",
+      "nota": "su servicio de sistema se llama «service» a secas: demasiado genérico para cotejarlo por nombre, así que se reconoce por la app"
+    },
+    {
+      "id": "logmein",
+      "nombre": "LogMeIn",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "LogMeIn",
+        "LMIGUIAgent",
+        "LogMeInGUI"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu Mac",
+        "en": "if someone connects, sees your screen and controls your Mac"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del Mac si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the Mac if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-mac/blob/2e7a7cf/Classes/ConfigFiles/SEBPresetSettings.m"
+    },
+    {
+      "id": "logmein-rescue",
+      "nombre": "LogMeIn Rescue",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "Support-LogMeInRescue"
+      ],
+      "ve": {
+        "es": "alguien de soporte puede estar viendo tu pantalla ahora",
+        "en": "someone from support may be watching your screen now"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del Mac: solo existe durante una sesión de soporte",
+        "en": "Your screen and control of the Mac: it only exists during a support session"
+      },
+      "fuente": "https://support.proctoru.com/hc/en-us/articles/4407346445197"
+    },
+    {
+      "id": "jump-desktop-connect",
+      "nombre": "Jump Desktop Connect",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "Jump Desktop Connect"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu Mac",
+        "en": "if someone connects, sees your screen and controls your Mac"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del Mac si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the Mac if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-mac/blob/2e7a7cf/Classes/ConfigFiles/SEBPresetSettings.m",
+      "nota": "solo el anfitrión; «Jump Desktop», con el que TÚ te conectas a otro, no cuenta"
+    },
+    {
+      "id": "parsec",
+      "nombre": "Parsec",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "Parsec"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu Mac",
+        "en": "if someone connects, sees your screen and controls your Mac"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del Mac si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the Mac if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-mac/blob/2e7a7cf/Classes/ConfigFiles/SEBPresetSettings.m"
+    },
+    {
+      "id": "remotepc",
+      "nombre": "RemotePC",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "RemotePC"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu Mac",
+        "en": "if someone connects, sees your screen and controls your Mac"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del Mac si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the Mac if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-mac/blob/2e7a7cf/Classes/ConfigFiles/SEBPresetSettings.m"
+    },
+    {
+      "id": "dwagent",
+      "nombre": "DWService (DWAgent)",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "DWAgent"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu Mac",
+        "en": "if someone connects, sees your screen and controls your Mac"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del Mac si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the Mac if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-mac/blob/2e7a7cf/Classes/ConfigFiles/SEBPresetSettings.m"
+    },
+    {
+      "id": "isl-light",
+      "nombre": "ISL Light",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "ISL Light"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu Mac",
+        "en": "if someone connects, sees your screen and controls your Mac"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del Mac si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the Mac if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-mac/blob/2e7a7cf/Classes/ConfigFiles/SEBPresetSettings.m"
+    },
+    {
+      "id": "supremo",
+      "nombre": "Supremo",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "Supremo"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu Mac",
+        "en": "if someone connects, sees your screen and controls your Mac"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del Mac si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the Mac if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-mac/blob/2e7a7cf/Classes/ConfigFiles/SEBPresetSettings.m"
+    },
+    {
+      "id": "todesk",
+      "nombre": "ToDesk",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "ToDesk"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu Mac",
+        "en": "if someone connects, sees your screen and controls your Mac"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del Mac si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the Mac if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-mac/blob/2e7a7cf/Classes/ConfigFiles/SEBPresetSettings.m"
+    },
+    {
+      "id": "parallels-access",
+      "nombre": "Parallels Access",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "Parallels Access"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu Mac",
+        "en": "if someone connects, sees your screen and controls your Mac"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del Mac si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the Mac if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-mac/blob/2e7a7cf/Classes/ConfigFiles/SEBPresetSettings.m"
+    },
+    {
+      "id": "realvnc",
+      "nombre": "RealVNC Server",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "vncserver"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu Mac",
+        "en": "if someone connects, sees your screen and controls your Mac"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del Mac si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the Mac if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-mac/blob/2e7a7cf/Classes/ConfigFiles/SEBPresetSettings.m"
+    },
+    {
+      "id": "gestion-remota-macos",
+      "nombre": "Gestión remota de macOS",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "ARDAgent"
+      ],
+      "ve": {
+        "es": "está encendida: si alguien se conecta, ve tu pantalla y maneja tu Mac",
+        "en": "is on: if someone connects, sees your screen and controls your Mac"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del Mac; encendida no quiere decir conectada",
+        "en": "Your screen and control of the Mac; on does not mean connected"
+      },
+      "fuente": "https://safeexambrowser.org/macosx/mac_release_notes_en.html",
+      "nota": "ARDAgent corre siempre que «Gestión remota» está activada en Ajustes"
+    },
+    {
+      "id": "compartir-pantalla-macos",
+      "nombre": "Compartir pantalla de macOS",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "ScreensharingAgent",
+        "AppleVNCServer",
+        "screensharingd"
+      ],
+      "ve": {
+        "es": "alguien está viendo tu pantalla ahora mismo",
+        "en": "someone is watching your screen right now"
+      },
+      "alcance": {
+        "es": "Alguien podría estar viendo tu pantalla ahora mismo",
+        "en": "Someone could be watching your screen right now"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-mac/blob/2e7a7cf/Classes/Global/Constants.h",
+      "nota": "ScreensharingAgent y AppleVNCServer solo corren con una sesión; screensharingd, al atender una conexión. «Screen Sharing», la app con la que TÚ miras otra pantalla, no cuenta"
+    },
+    {
+      "id": "jamf",
+      "nombre": "Jamf",
+      "categoria": "mdm",
+      "procesos": [
+        "jamf",
+        "JamfDaemon",
+        "JamfAAD"
+      ],
+      "ve": {
+        "es": "puede instalar, borrar y leer la configuración",
+        "en": "can install, wipe and read configuration"
+      },
+      "alcance": {
+        "es": "Puede instalar, borrar y leer configuración. Normal en equipos de empresa",
+        "en": "Can install, wipe and read configuration. Normal on company machines"
+      },
+      "fuente": "https://docs.jamf.com/10.34.0/jamf-pro/documentation/Components_Installed_on_Managed_Computers.html"
+    },
+    {
+      "id": "intune",
+      "nombre": "Microsoft Intune",
+      "categoria": "mdm",
+      "procesos": [
+        "IntuneMdmAgent",
+        "IntuneMDMDaemon"
+      ],
+      "ve": {
+        "es": "puede instalar, borrar y leer la configuración",
+        "en": "can install, wipe and read configuration"
+      },
+      "alcance": {
+        "es": "Puede instalar, borrar y leer configuración. Normal en equipos de empresa",
+        "en": "Can install, wipe and read configuration. Normal on company machines"
+      },
+      "fuente": "https://learn.microsoft.com/en-us/intune/intune-service/apps/lob-apps-macos-agent",
+      "nota": "el agente solo se instala si la empresa asigna scripts: sin él, lo dice la inscripción"
+    },
+    {
+      "id": "jumpcloud",
+      "nombre": "JumpCloud",
+      "categoria": "mdm",
+      "procesos": [
+        "jumpcloud-agent"
+      ],
+      "ve": {
+        "es": "puede instalar, borrar y leer la configuración",
+        "en": "can install, wipe and read configuration"
+      },
+      "alcance": {
+        "es": "Puede instalar, borrar y leer configuración. Normal en equipos de empresa",
+        "en": "Can install, wipe and read configuration. Normal on company machines"
+      },
+      "fuente": "https://jumpcloud.com/support/stop-start-or-restart-the-agent"
+    },
+    {
+      "id": "mdm-macos",
+      "nombre": "MDM (macOS)",
+      "categoria": "mdm",
+      "inscripcion": true,
+      "ve": {
+        "es": "puede instalar, borrar y leer la configuración",
+        "en": "can install, wipe and read configuration"
+      },
+      "alcance": {
+        "es": "Puede instalar, borrar y leer configuración. Normal en equipos de empresa",
+        "en": "Can install, wipe and read configuration. Normal on company machines"
+      },
+      "fuente": "https://derflounder.wordpress.com/2018/03/30/detecting-user-approved-mdm-using-the-profiles-command-line-tool-on-macos-10-13-4/",
+      "nota": "no es un proceso: `profiles status -type enrollment` dice si este Mac está inscrito, y no necesita permisos de administrador"
+    }
+  ]
+}

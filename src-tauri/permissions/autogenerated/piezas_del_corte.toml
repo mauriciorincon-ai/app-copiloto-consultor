@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-piezas-del-corte"
+description = "Enables the piezas_del_corte command without any pre-configured scope."
+commands.allow = ["piezas_del_corte"]
+
+[[permission]]
+identifier = "deny-piezas-del-corte"
+description = "Denies the piezas_del_corte command without any pre-configured scope."
+commands.deny = ["piezas_del_corte"]

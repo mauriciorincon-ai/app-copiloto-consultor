@@ -100,3 +100,7 @@ strip = true
 
 [dev-dependencies]
 serde_json = "1"
+# Solo para el kit de pantalla: leer las imágenes sintéticas de `docs/kit-de-prueba/pantalla/` y
+# pasárselas a Vision como las pasaría la captura. Ya viajaba en el árbol (la usa Tauri para los
+# iconos): declararla aquí no añade una descarga, y NO entra en el binario — es de los tests.
+png = "0.17"

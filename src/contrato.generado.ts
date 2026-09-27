@@ -11,35 +11,26 @@
  *     cd src-tauri && ACTUALIZA_CONTRATO=1 cargo test contrato
  */
 import type { Novedad, Aparicion } from "./ficha";
-import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelCorpus } from "./cuaderno";
+import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelDiccionario, EstadoDelCorpus, InformeDelCorte, LaVoz, EstadoDeLaPantalla, QueSabeTranscribir } from "./cuaderno";
+import type { EnTuMac } from "./radar";
+import type { EstadoDeLaIa, PorQueNoRedacta } from "./ia";
 import type { EstadoDelAcople } from "./acople";
 
 export const NOVEDAD_EMPIEZA: Novedad = {
-    "pista": "microfono",
     "que": "empieza"
   };
 
 export const NOVEDAD_TURNO: Novedad = {
-    "desdeMs": 5400,
     "eco": false,
-    "hastaMs": 8000,
-    "hora": "14:02",
     "pista": "sistema",
-    "que": "turno",
-    "texto": "¿Y la limpieza de datos está dentro del alcance?"
+    "que": "turno"
   };
 
 export const NOVEDAD_SIN_TEXTO: Novedad = {
-    "desdeMs": 5400,
-    "hastaMs": 8000,
-    "motivo": "el motor no reconoció palabras en ese turno",
-    "pista": "sistema",
     "que": "sin-texto"
   };
 
 export const NOVEDAD_RUIDO: Novedad = {
-    "duracionMs": 140,
-    "pista": "microfono",
     "que": "ruido"
   };
 
@@ -125,12 +116,13 @@ export const REUNION_DETECTADA: Reunion = {
   };
 
 export const REUNION_NO_SE_PUEDE_SABER: Reunion = {
-    "motivo": "hay un navegador abierto pero no se pueden leer sus ventanas",
+    "motivo": "sin-accesibilidad",
     "que": "no-se-puede-saber"
   };
 
 export const PERMISOS: Permisos = {
     "accesibilidad": "no-se-sabe",
+    "audio": "concedido",
     "microfono": "concedido",
     "pantalla": "sin-conceder"
   };
@@ -141,24 +133,13 @@ export const ESTADO_DE_LA_ESCUCHA: EstadoDeEscucha = {
     "microfono": {
       "abierta": true,
       "bytes": 1920000,
-      "hablando": false,
-      "legible": "1,8 MB",
-      "motivo": null,
-      "muestrasRecibidas": 480000,
-      "segundos": 30.0
+      "motivo": null
     },
-    "motor": "apple-speechanalyzer",
-    "ramLegible": "1,8 MB",
     "sistema": {
       "abierta": false,
       "bytes": 0,
-      "hablando": false,
-      "legible": "0 B",
-      "motivo": "este Mac no deja abrir el audio del sistema",
-      "muestrasRecibidas": 0,
-      "segundos": 0.0
-    },
-    "turnosEnMemoria": 3
+      "motivo": "dispositivo-ocupado"
+    }
   };
 
 export const DISPONIBILIDAD_LISTO: Disponibilidad = {
@@ -166,17 +147,34 @@ export const DISPONIBILIDAD_LISTO: Disponibilidad = {
   };
 
 export const DISPONIBILIDAD_SIN_MOTOR: Disponibilidad = {
-    "estado": "sin-motor",
-    "motivo": "este Mac no trae el transcriptor"
+    "estado": "sin-motor"
   };
 
 export const SALIDA_DE_AUDIO: Salida = {
     "salida": "altavoces"
   };
 
+export const SALIDA_DE_AUDIO_ALTAVOZ_EXTERNO: Salida = {
+    "nombre": "Monitor LG",
+    "salida": "altavoz-externo"
+  };
+
 export const SALIDA_DE_AUDIO_OTRA: Salida = {
     "nombre": "AirPods Pro",
     "salida": "otra"
+  };
+
+export const SALIDA_DE_AUDIO_NO_SE_SABE: Salida = {
+    "motivo": "sin-conexion",
+    "nombre": "Altavoz USB",
+    "salida": "no-se-sabe"
+  };
+
+export const ESTADO_DEL_DICCIONARIO: EstadoDelDiccionario = {
+    "delCorpus": 12,
+    "enTuArchivo": 5,
+    "ruta": "~/Library/Application Support/com.aiapps.copiloto-consultor/diccionario.yaml",
+    "terminos": 17
   };
 
 export const ESTADO_DEL_CORPUS: EstadoDelCorpus = {
@@ -196,7 +194,273 @@ export const ESTADO_DEL_CORPUS: EstadoDelCorpus = {
     "sinUnidad": 1
   };
 
+export const INFORME_DEL_CORTE: InformeDelCorte = {
+    "piezas": [
+      [
+        "voz",
+        "cortada"
+      ],
+      [
+        "sugerencia",
+        "cortada"
+      ],
+      [
+        "audio-del-microfono",
+        "cortada"
+      ],
+      [
+        "audio-del-sistema",
+        "cortada"
+      ],
+      [
+        "ultimo-frame",
+        "cortada"
+      ],
+      [
+        "transcript",
+        "cortada"
+      ],
+      [
+        "contador-de-red",
+        "cortada"
+      ],
+      [
+        "banda",
+        "cortada"
+      ],
+      [
+        "acople",
+        "cortada"
+      ]
+    ]
+  };
+
+export const LA_VOZ_APAGADA: LaVoz = {
+    "diciendo": false,
+    "encendida": false,
+    "puede": false
+  };
+
+export const LA_VOZ_DICIENDO: LaVoz = {
+    "diciendo": true,
+    "encendida": true,
+    "puede": true
+  };
+
+export const LA_VOZ_SIN_AURICULARES: LaVoz = {
+    "diciendo": false,
+    "encendida": true,
+    "puede": false
+  };
+
+export const PANTALLA_LEYENDO: EstadoDeLaPantalla = {
+    "bytesEnMemoria": 1440318,
+    "vista": "leyendo"
+  };
+
+export const PANTALLA_APAGADA: EstadoDeLaPantalla = {
+    "bytesEnMemoria": 0,
+    "vista": "apagada"
+  };
+
+export const PANTALLA_SIN_PERMISO: EstadoDeLaPantalla = {
+    "bytesEnMemoria": 0,
+    "vista": "sin-permiso"
+  };
+
+export const PANTALLA_ESPERANDO_LA_REUNION: EstadoDeLaPantalla = {
+    "bytesEnMemoria": 0,
+    "vista": "esperando-la-reunion"
+  };
+
+export const PANTALLA_NO_PUDO: EstadoDeLaPantalla = {
+    "bytesEnMemoria": 0,
+    "vista": "no-pudo"
+  };
+
+export const NOVEDAD_APARECE_POR_PANTALLA: Novedad = {
+    "acumuladas": [
+      {
+        "texto": "Sur del Valle: cuatro fuentes en 9 semanas",
+        "unidad": "caso"
+      }
+    ],
+    "clase": "ficha",
+    "fuente": {
+      "conjeturada": false,
+      "documento": "Páramo Azul · Propuesta",
+      "seccion": "§3.2 Alcance",
+      "unidad": "propuesta"
+    },
+    "hora": "14:02",
+    "linea": "Cubre perfilado y limpieza de ERP, POS y Excel de canal.",
+    "lineaLarga": "Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente se cotiza aparte.",
+    "motivo": "pantalla",
+    "ms": 1240,
+    "que": "aparece",
+    "titular": "Limpieza de datos: incluida, hasta tres fuentes"
+  };
+
+export const NOVEDAD_NADA_EN_PANTALLA: Novedad = {
+    "hora": "14:05",
+    "que": "nada-en-pantalla"
+  };
+
+export const NOVEDAD_RADAR: Novedad = {
+    "bots": [
+      "MinutaBot"
+    ],
+    "grabando": true,
+    "hora": "14:03",
+    "que": "radar"
+  };
+
+export const EN_TU_MAC_VIGILADO: EnTuMac = {
+    "catalogo": {
+      "fecha": "2026-09-26",
+      "version": 1
+    },
+    "programas": [
+      {
+        "alcance": {
+          "en": "Camera, full screen, open apps; can block programs",
+          "es": "Cámara, pantalla completa, apps abiertas; puede bloquear programas"
+        },
+        "categoria": "supervision",
+        "nivel": "invasivo",
+        "nombre": "ProctorLince",
+        "ve": {
+          "en": "sees your full screen and your camera",
+          "es": "ve tu pantalla completa y tu cámara"
+        }
+      },
+      {
+        "alcance": {
+          "en": "Can install, wipe and read configuration. Normal on company machines",
+          "es": "Puede instalar, borrar y leer configuración. Normal en equipos de empresa"
+        },
+        "categoria": "mdm",
+        "nivel": "sabelo",
+        "nombre": "MDM-Corp",
+        "ve": {
+          "en": "can install, wipe and read configuration",
+          "es": "puede instalar, borrar y leer la configuración"
+        }
+      }
+    ]
+  };
+
+export const EN_TU_MAC_LIMPIO: EnTuMac = {
+    "catalogo": {
+      "fecha": "2026-09-26",
+      "version": 1
+    },
+    "programas": []
+  };
+
+export const NOVEDAD_SUGERENCIA: Novedad = {
+    "confianza": "media",
+    "ficha": {
+      "fuente": {
+        "conjeturada": false,
+        "documento": "Páramo Azul",
+        "seccion": "§3.2 Alcance",
+        "unidad": "propuesta"
+      },
+      "titular": "Limpieza de datos: incluida, hasta tres fuentes"
+    },
+    "linea": "Confirma que la limpieza incluye hasta tres fuentes; una cuarta es adicional y se cotiza aparte.",
+    "nombre": "Modelo del sistema",
+    "que": "sugerencia",
+    "quien": "sistema",
+    "titular": "Tres fuentes incluidas, la cuarta aparte"
+  };
+
+export const ESTADO_DE_LA_IA_NADIE: EstadoDeLaIa = {
+    "api": {
+      "encendida": false,
+      "externo": "claude",
+      "hayClave": false
+    },
+    "latenciaMs": null,
+    "mesUsd": 0.0,
+    "quien": null,
+    "redactar": false,
+    "reunionUsd": 0.0,
+    "sistema": "apple-intelligence-apagado",
+    "topeUsd": 10.0
+  };
+
+export const ESTADO_DE_LA_IA_CON_API: EstadoDeLaIa = {
+    "api": {
+      "encendida": true,
+      "externo": "gemini",
+      "hayClave": true
+    },
+    "latenciaMs": 1400,
+    "mesUsd": 0.84,
+    "quien": "api",
+    "redactar": true,
+    "reunionUsd": 0.031,
+    "sistema": null,
+    "topeUsd": 10.0
+  };
+
+export const POR_QUE_NO_REDACTA_APAGADO: PorQueNoRedacta = "apple-intelligence-apagado";
+
+export const POR_QUE_NO_REDACTA_NO_COMPATIBLE: PorQueNoRedacta = "mac-no-compatible";
+
+export const POR_QUE_NO_REDACTA_NO_DISPONIBLE: PorQueNoRedacta = "no-disponible";
+
+export const POR_QUE_NO_REDACTA_DESCARGANDO: PorQueNoRedacta = "modelo-descargandose";
+
+export const POR_QUE_NO_REDACTA_SIN_PUENTE: PorQueNoRedacta = "sin-puente";
+
+export const POR_QUE_NO_REDACTA_SIN_CLAVE: PorQueNoRedacta = "sin-clave";
+
+export const POR_QUE_NO_REDACTA_TOPE: PorQueNoRedacta = "tope-del-mes";
+
 export const ESTADO_DEL_ACOPLE: EstadoDelAcople = {
-    "acoplada": true,
-    "permiso": true
+    "acoplada": true
+  };
+
+export const QUE_SABE_TRANSCRIBIR: QueSabeTranscribir = {
+    "idiomas": [
+      {
+        "codigo": "es-ES",
+        "disponibilidad": {
+          "estado": "listo"
+        }
+      },
+      {
+        "codigo": "en-US",
+        "disponibilidad": {
+          "estado": "sin-modelo"
+        }
+      }
+    ],
+    "motivo": null,
+    "motor": "apple-speechanalyzer",
+    "techo": 5
+  };
+
+export const QUE_SABE_TRANSCRIBIR_SIN_TRANSCRIPTOR: QueSabeTranscribir = {
+    "idiomas": [],
+    "motivo": "sin-transcriptor",
+    "motor": "ninguno",
+    "techo": 0
+  };
+
+export const QUE_SABE_TRANSCRIBIR_SIN_PUENTE: QueSabeTranscribir = {
+    "idiomas": [],
+    "motivo": "sin-puente",
+    "motor": "ninguno",
+    "techo": 0
+  };
+
+export const QUE_SABE_TRANSCRIBIR_NO_CONTESTA: QueSabeTranscribir = {
+    "idiomas": [],
+    "motivo": "no-contesta",
+    "motor": "ninguno",
+    "techo": 0
   };

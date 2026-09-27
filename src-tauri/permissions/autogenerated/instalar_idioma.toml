@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-instalar-idioma"
+description = "Enables the instalar_idioma command without any pre-configured scope."
+commands.allow = ["instalar_idioma"]
+
+[[permission]]
+identifier = "deny-instalar-idioma"
+description = "Denies the instalar_idioma command without any pre-configured scope."
+commands.deny = ["instalar_idioma"]

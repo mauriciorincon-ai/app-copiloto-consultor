@@ -147,8 +147,8 @@ public func agSttEstado(_ idioma: UnsafePointer<CChar>) -> Int32 {
 /// Instala el modelo de un idioma. **Bloquea y usa la red**: macOS descarga el activo.
 ///
 /// Lo llama la pantalla de Idioma cuando el usuario lo pide, jamás la app por su cuenta. Es la
-/// única puerta a la red que tiene un módulo protegido de esta app, y por eso está aquí sola, con
-/// nombre propio y con la marca que el barrido exige.
+/// única puerta a la red de la transcripción —la otra de la app es `Red.swift`, la del proveedor
+/// externo de IA— y por eso está aquí sola, con nombre propio y con la marca que el barrido exige.
 @_cdecl("ag_stt_instalar")
 public func agSttInstalar(_ idioma: UnsafePointer<CChar>) -> Int32 {
   guard #available(macOS 26, *) else { return Codigo.sinSoporte.rawValue }
@@ -157,7 +157,8 @@ public func agSttInstalar(_ idioma: UnsafePointer<CChar>) -> Int32 {
     guard let t = await transcriptorDe(nombre) else { return Codigo.idiomaDesconocido.rawValue }
     do {
       await reservar(t)
-      // Las dos líneas de abajo son la ÚNICA puerta a la red de un módulo protegido de esta app,
+      // Las dos líneas de abajo son la puerta a la red de la transcripción —la otra de la app es
+      // `Red.swift`, la del proveedor externo de IA—,
       // y llevan su marca porque el barrido las prohíbe por defecto: es macOS quien descarga su
       // propio modelo de reconocimiento, a petición explícita del usuario desde la pantalla de
       // Idioma. No sale audio ni texto — solo entra el modelo.

@@ -1,9 +1,24 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "banda",
-  "description": "La banda: solo lo mínimo de `core` para vivir (eventos, tamaño, posición). Sin `opener` — una ventana que no puede abrir nada hacia afuera es una superficie más pequeña, y la banda es la que está encima de la reunión.",
-  "windows": ["banda"],
+  "description": "La banda: `core` por defecto y solo los trece comandos de la app que la banda llama de verdad (declarados en `build.rs`, vigilados por `tests/unit/capabilities.test.ts`) —ni la clave del API, ni el proveedor externo, ni redactar—. Sin `opener` — una ventana que no puede abrir nada hacia afuera es una superficie más pequeña, y la banda es la que está encima de la reunión.",
+  "windows": [
+    "banda"
+  ],
   "permissions": [
-    "core:default"
+    "core:default",
+    "allow-pedir-ficha",
+    "allow-radar-de-tu-mac",
+    "allow-turnos-recientes",
+    "allow-ajustar-banda",
+    "allow-asentar-banda",
+    "allow-estado-del-acople",
+    "allow-abrir-lo-que-ve",
+    "allow-bytes-a-la-red",
+    "allow-estado-del-corpus",
+    "allow-estado-de-la-escucha",
+    "allow-reunion-abierta",
+    "allow-estado-de-la-voz",
+    "allow-cortar-todo"
   ]
 }

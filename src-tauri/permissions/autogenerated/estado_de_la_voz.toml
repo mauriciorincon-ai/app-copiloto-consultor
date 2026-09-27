@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-estado-de-la-voz"
+description = "Enables the estado_de_la_voz command without any pre-configured scope."
+commands.allow = ["estado_de_la_voz"]
+
+[[permission]]
+identifier = "deny-estado-de-la-voz"
+description = "Denies the estado_de_la_voz command without any pre-configured scope."
+commands.deny = ["estado_de_la_voz"]

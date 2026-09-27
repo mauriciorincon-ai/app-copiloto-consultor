@@ -36,15 +36,31 @@ pnpm --dir . exec true && cd src-tauri && cargo test --test contra-el-mac-de-ver
 **Tres preguntas fallan hoy, a propósito.** Ninguna comparte una sola palabra con su sección
 («¿por qué nos contrataron para esto?» contra una sección que habla de márgenes y canales).
 BM25 no puede resolverlas, y reescribir las preguntas para que las acierte convertiría el kit en
-un espejo. Son la evidencia con la que el sprint 2 decidirá si los embeddings hacen falta.
+un espejo. Son la evidencia para decidir si los embeddings hacen falta; el sprint 002 no lo
+decidió (nDCG@5 0,82 sin ellos) y la decisión pasa al sprint 003 (ADR 008).
 
 **Lo que este kit ya encontró:** al correr por primera vez, la app citó una sección sobre gobierno
 de datos para responder «¿cuánto cuesta el software de Salesforce?». La sección traía «cuánto» y
 «cuesta», y con eso le bastaba para pasar por respuesta. Faltaba media docena de interrogativos en
 la lista de palabras vacías.
 
-## `audio/` — dos preguntas dichas en voz alta
+## `audio/` — cuatro frases dichas en voz alta
 
-`pregunta-es.wav` y `pregunta-en.wav`, generados con `say` y `afconvert` del propio macOS: 16 kHz,
-mono, 16 bits. Alimentan los tests que comprueban que el motor de voz transcribe y que una sesión
-completa no deja nada en el disco. Ver `audio/LEEME.md`.
+Dos preguntas del sprint 001 (`pregunta-es.wav`, `pregunta-en.wav`) y dos frases con jerga y cambio
+de idioma del sprint 002 (`mezcla-es.wav`, `mezcla-en.wav`), generadas con `say` y `afconvert` del
+propio macOS: 16 kHz, mono, 16 bits. Alimentan el WER con y sin diccionario, los tests que
+comprueban que el motor de voz transcribe y que una sesión completa no deja nada en el disco. Ver
+`audio/LEEME.md`.
+
+## `pantalla/` — cinco diapositivas y una reunión grabada
+
+Imágenes sintéticas de una reunión compartiendo pantalla (`scripts/kit-de-pantalla.mjs`): cuatro con
+cifras o términos del corpus y una agenda sin ninguno, para medir que la pantalla trae su ficha sin
+pregunta; y `reunion-grabada.png`, con el aviso de grabación y un bot de notas, para el radar ámbar.
+`meet-de-prueba.html` las enseña como si fuera una reunión de Meet (lo usa la guía de prueba).
+
+## `radar/` — un Mac limpio y un Mac vigilado
+
+`mac-limpio.txt` (82 procesos de un Mac corriente, con nombres parecidos a los del catálogo puestos
+a propósito) y `mac-vigilado.txt` (un proceso de cada fila del catálogo): el radar coral tiene que
+dar cero en el primero y todas las filas en el segundo.

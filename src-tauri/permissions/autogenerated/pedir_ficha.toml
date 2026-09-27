@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-pedir-ficha"
+description = "Enables the pedir_ficha command without any pre-configured scope."
+commands.allow = ["pedir_ficha"]
+
+[[permission]]
+identifier = "deny-pedir-ficha"
+description = "Denies the pedir_ficha command without any pre-configured scope."
+commands.deny = ["pedir_ficha"]

@@ -40,6 +40,35 @@ pub enum Estado {
     SinLeer { motivo: String },
 }
 
+/// **El cliente de una ficha de cliente**, tal como el usuario lo escribió en el nombre del
+/// archivo: lo que va tras el último «·» («Ficha de cliente · Páramo Azul» → «Páramo Azul»), o el
+/// nombre entero si no lleva «·». Es el nombre que se dice en una reunión; el del archivo, no. Lo
+/// usan la bóveda del API (lo tapa) y el diccionario (lo escribe bien) — auditoría del S2, A2 y A3.
+pub fn cliente_de(nombre_del_archivo: &str) -> String {
+    nombre_del_archivo.rsplit('·').next().unwrap_or(nombre_del_archivo).trim().to_string()
+}
+
+/// **Los clientes del corpus, por su nombre**: el de cada ficha de cliente que parezca un nombre.
+/// Es lo único que la sesión le pasa a la bóveda del API y al diccionario (auditoría del S2, A2 y
+/// A3), y lo que usa el kit del WER para medir la misma configuración que el usuario.
+pub fn clientes(documentos: &[Documento]) -> Vec<String> {
+    documentos
+        .iter()
+        .filter(|d| d.unidad == Some(Unidad::Cliente))
+        .map(|d| cliente_de(&d.nombre))
+        .filter(|n| parece_un_nombre_de_cliente(n))
+        .collect()
+}
+
+/// Un documento que el corpus clasifica como ficha de cliente no siempre se llama como el cliente:
+/// «Seguridad y manejo de datos del cliente» es de esa unidad y no es el nombre de nadie. Un nombre
+/// de cliente es corto —hasta cuatro palabras— y no dice «cliente».
+pub fn parece_un_nombre_de_cliente(n: &str) -> bool {
+    let palabras = n.split_whitespace().count();
+    let l = n.to_lowercase();
+    (1..=4).contains(&palabras) && !l.contains("cliente") && !l.contains("client")
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Documento {
@@ -200,6 +229,16 @@ impl Corpus {
 
     pub fn buscar(&self, texto: &str, cuantos: usize) -> Result<Vec<Hallazgo>, String> {
         self.indice.buscar(texto, cuantos)
+    }
+
+    /// La búsqueda con **lo que hay en la pantalla** como contexto. Ver [`Indice::buscar_con_pantalla`].
+    pub fn buscar_con_pantalla(
+        &self,
+        texto: &str,
+        pantalla: &str,
+        cuantos: usize,
+    ) -> Result<Vec<Hallazgo>, String> {
+        self.indice.buscar_con_pantalla(texto, pantalla, cuantos)
     }
 
     pub fn documentos(&self) -> &[Documento] {

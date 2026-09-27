@@ -13,8 +13,9 @@
 //!
 //! No pasó, y no pasó por cómo está escrito este archivo: al añadir las pistas en la fase 3, el
 //! compilador no dejó compilar hasta resolverlas. La cuenta pasó de tres piezas cortadas a seis, y
-//! la única que sigue declarada como inexistente es la lectura de pantalla, que llega en el
-//! sprint 2 con su propia funcionalidad.
+//! la lectura de pantalla fue la última declarada como inexistente, hasta que llegó con C8 en la
+//! fase 3 del sprint 002; la sugerencia en camino se sumó con la auditoría del S2. Desde entonces se
+//! cortan las nueve.
 //!
 //! Por eso el corte no es una lista de acciones sino una lista de **piezas** ([`Pieza`]), y cada
 //! una tiene que estar en uno de dos sitios: cortada, o declarada como que aún no existe.
@@ -43,10 +44,22 @@ pub enum Pieza {
     AudioDelMicrofono,
     /// Búfer circular del audio del sistema: el tap se destruye y el anillo se pisa.
     AudioDelSistema,
-    /// El último fotograma leído de la pantalla. **Todavía no existe: llega con C8, en el sprint 2.**
+    /// El último fotograma leído de la pantalla y el texto que se sacó de él. Nace en el sprint 002
+    /// con C8: se para el vigía y los dos se pisan con ceros.
     UltimoFrame,
     /// La ventana de turnos transcritos: se sobrescriben las letras antes de soltarlas.
     Transcript,
+    /// **La voz que sale**: se corta lo que esté diciendo, se tira lo que quede en la cola y el modo
+    /// solo audio se apaga. Nace en el sprint 002 con C15.
+    ///
+    /// Es la pieza más visible de todas y la única que se OYE. Si el usuario pulsa la tecla delante
+    /// de su cliente y la app sigue leyéndole una ficha en voz alta, no hay informe que arregle eso:
+    /// el kill-switch habría fallado en el único sitio donde el cliente puede notarlo.
+    Voz,
+    /// **La sugerencia en camino** (auditoría del S2, M2): el turno del cliente vive en el hilo del
+    /// proveedor mientras redacta, y con el API encendido una petición armada podía salir DESPUÉS
+    /// del corte. La época sube: lo que vuelva se tira y lo que no haya salido ya no sale.
+    Sugerencia,
 }
 
 /// Todas las piezas, en el orden en que se cortan: **primero lo que sigue entrando**.
@@ -55,6 +68,13 @@ pub enum Pieza {
 /// entrando sin nada en pantalla que lo dijera; vaciar un búfer que todavía recibe muestras lo
 /// deja con muestras nuevas un instante después. Se corta el grifo, luego se vacía el vaso.
 pub const TODAS: &[Pieza] = &[
+    // La voz va PRIMERA, antes incluso que los grifos, y es el único sitio donde el orden se decide
+    // por lo que el cliente percibe: es lo único de esta lista que se oye desde el otro lado de la
+    // llamada. Cerrar un grifo tarda milisegundos y no se nota; una frase a medio decir, sí.
+    Pieza::Voz,
+    // Justo detrás de la voz: es la única pieza que puede SALIR del Mac, y cuanto antes se corte,
+    // menos ventana queda para que una petición armada llegue a la red.
+    Pieza::Sugerencia,
     Pieza::AudioDelMicrofono,
     Pieza::AudioDelSistema,
     Pieza::UltimoFrame,
@@ -73,13 +93,15 @@ impl Pieza {
     /// que la lista y este `match` cuenten la misma historia.
     pub const fn orden(self) -> usize {
         match self {
-            Pieza::AudioDelMicrofono => 0,
-            Pieza::AudioDelSistema => 1,
-            Pieza::UltimoFrame => 2,
-            Pieza::Transcript => 3,
-            Pieza::ContadorDeRed => 4,
-            Pieza::Banda => 5,
-            Pieza::Acople => 6,
+            Pieza::Voz => 0,
+            Pieza::Sugerencia => 1,
+            Pieza::AudioDelMicrofono => 2,
+            Pieza::AudioDelSistema => 3,
+            Pieza::UltimoFrame => 4,
+            Pieza::Transcript => 5,
+            Pieza::ContadorDeRed => 6,
+            Pieza::Banda => 7,
+            Pieza::Acople => 8,
         }
     }
 }
@@ -91,16 +113,26 @@ pub enum Suerte {
     /// Se cortó o se vació.
     Cortada,
     /// Todavía no existe en el producto. **No es un fallo y no se disimula**: la pantalla de
-    /// honestidad enumera lo que hay, y en este sprint lo que hay es poco.
+    /// honestidad enumera lo que hay. Desde el sprint 002 no le toca a ninguna pieza.
     AunNoExiste,
 }
 
-/// Lo que el usuario ve después de pulsar la tecla.
+/// Lo que el usuario ve después de pulsar la tecla — y, antes de pulsarla, lo que el corte HARÍA.
+///
+/// **Le faltaba `rename_all` y nadie lo había notado**: llegaba al webview como `bytes_en_red`
+/// mientras TypeScript habría esperado `bytesEnRed`. Es el mismo defecto que el C1 del sprint 001,
+/// en el único sitio donde el gate del contrato no llegaba —porque esta struct no estaba en
+/// `contrato.rs`—, y sobrevivió porque los cuatro suscriptores del evento `corte` lo usan como
+/// **señal** y ninguno lee el payload. Desde el sprint 002 está en el contrato y se lee.
 #[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Informe {
     pub piezas: Vec<(Pieza, Suerte)>,
-    /// Los bytes que quedaron en el contador. Es `0` siempre; se reporta para que la pantalla
-    /// muestre un número **leído**, no una constante escrita en la interfaz.
+    /// Los bytes que había en el contador al cortar, leídos ANTES de que la pieza `ContadorDeRed`
+    /// lo ponga a cero (B25). **No cruza** (auditoría del S2, B9): lo lee Rust para el log del
+    /// corte, y el webview tiene el contador por su cuenta. No es «0 siempre»: con el API encendido
+    /// puede no serlo, y por eso el log lo dice.
+    #[serde(skip)]
     pub bytes_en_red: u64,
 }
 
@@ -119,10 +151,16 @@ pub fn suerte_en_este_sprint(pieza: Pieza) -> Suerte {
         | Pieza::Acople
         | Pieza::AudioDelMicrofono
         | Pieza::AudioDelSistema
-        | Pieza::Transcript => Suerte::Cortada,
-        // La lectura de pantalla es C8 y llega en el sprint 2. Mientras tanto se declara, que es
-        // lo contrario de disimularse.
-        Pieza::UltimoFrame => Suerte::AunNoExiste,
+        | Pieza::Transcript
+        // La voz existe desde la fase 2 del sprint 002 y se corta de verdad: `stopSpeaking` tira la
+        // frase en curso y la cola entera, y el modo queda apagado.
+        | Pieza::Voz
+        // La lectura de pantalla existe desde la fase 3 del sprint 002 (C8): se para el vigía y se
+        // pisan el cuadro de la reunión y el texto leído de él. Fue la última en llegar, y hasta
+        // entonces se declaró como inexistente en vez de disimularse.
+        | Pieza::UltimoFrame
+        // La sugerencia en camino, desde la auditoría del S2: la época sube.
+        | Pieza::Sugerencia => Suerte::Cortada,
     }
 }
 
@@ -173,19 +211,17 @@ mod tests {
     }
 
     /// En este sprint se corta lo que existe, y lo que no existe **se dice**. Un kill-switch que
-    /// informara «7 de 7 cortadas» teniendo piezas sin construir sería una mentira cómoda.
+    /// informara «8 de 8 cortadas» teniendo piezas sin construir sería una mentira cómoda.
     ///
-    /// La cuenta cambió en la fase 3 (de 3 y 4 a 6 y 1) y **el compilador obligó a cambiarla**:
-    /// las pistas de audio y el transcript pasaron de declararse a cortarse de verdad.
+    /// La cuenta ha cambiado tres veces y **las tres las obligó el compilador**: en la fase 3 del
+    /// sprint 001, de 3 y 4 a 6 y 1, cuando las pistas de audio y el transcript pasaron de
+    /// declararse a cortarse de verdad; en la fase 2 del sprint 002, a 7 y 1, con la voz que sale; y
+    /// en la fase 3 del sprint 002, a **8 y 0**, con la lectura de pantalla; y en la auditoría del
+    /// sprint 002, a **9 y 0**, con la sugerencia en camino (M2), que el corte no alcanzaba.
     #[test]
-    fn en_este_sprint_se_cortan_seis_y_la_septima_se_declara() {
+    fn en_este_sprint_se_cortan_las_nueve() {
         let cortadas = TODAS.iter().filter(|p| suerte_en_este_sprint(**p) == Suerte::Cortada).count();
         let futuras = TODAS.iter().filter(|p| suerte_en_este_sprint(**p) == Suerte::AunNoExiste).count();
-        assert_eq!((cortadas, futuras), (6, 1));
-        assert_eq!(
-            suerte_en_este_sprint(Pieza::UltimoFrame),
-            Suerte::AunNoExiste,
-            "la única pieza que este sprint no puede cortar es la lectura de pantalla"
-        );
+        assert_eq!((cortadas, futuras), (9, 0));
     }
 }

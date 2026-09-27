@@ -3,6 +3,38 @@
 > Las apps ya estampadas NO se actualizan solas: el delta relevante se anota en la orden de
 > construcción de su siguiente sprint.
 
+## v1.28.0 — aplicado en el sprint 002 de esta app (2026-09-24)
+
+Batch nacido del cierre del S1 de esta misma app, así que la mayor parte ya vivía aquí. Lo que el
+delta trajo de verdad:
+
+1. **Regla 19 — gate de contrato entre lenguajes**, en el `CLAUDE.md` de la app. No existía: la
+   lista terminaba en la 18. Su origen es el hallazgo C1 de este repo.
+2. **Regla 15, cuarto filo: el MODO incluye el PERFIL DE COMPILACIÓN.** Un test que solo corre en
+   `debug` no prueba `release` — el `catch_unwind` del PDF de este repo era letra muerta en
+   release, donde `panic = "abort"` lo anula.
+3. **`/audita-sprint`**: el reporte se persiste con TODOS los hallazgos y su `archivo:línea`, y la
+   casilla 4 (frases caducadas) se **repite** tras el último ajuste de la Fase 2.
+4. **`/release-check`**: todo comando de casilla vive en un job de CI o la casilla dice `manual` y
+   por qué; `cargo clippy --locked`; casilla nueva de `--release`.
+5. **El job `e2e` falla con cero pruebas**: fuera `--pass-with-no-tests` de `test:e2e`.
+6. **Plantilla del summary** con la sección fija «Gate ⭐ — diferimiento y contrapesos».
+7. **`testing-patterns` regla 10**: carpeta temporal única por test, creada por el propio test.
+
+Ya estaba aplicado por haber nacido aquí: los perfiles de Playwright y Vitest de escritorio,
+`afterEach(cleanup)`, `cargo clippy` dentro de `build-escritorio`, `verify-ephemeral` y el artefacto
+`SPRINT_001-auditoria.md`.
+
+**Añadido de esta casa, no del kit (regla 20):** el artefacto de auditoría se cuadra solo —
+`tests/unit/auditoria-con-sitio.test.ts`.
+
+## v1.27.1 — aplicado en el sprint 002 de esta app (2026-09-24)
+
+El estampado real cazó tres defectos del kit. Para esta app, ya resueltos o no aplicables:
+el falso verde del estampador (ahora espera `ci.yml` **por nombre**), `eslint@9` fijado por el peer
+de `eslint-plugin-jsx-a11y`, `src-tauri/Cargo.lock` versionado —lo está— y `verify-ephemeral.mjs`
+entrando al kit desde aquí; la mitad **en runtime** la añadió el S1 de esta app.
+
 ## v1.27.0 — 2026-09-18 (batch G-Metodo de la F1 de copiloto-consultor / Angel Ghost — primera app de ESCRITORIO)
 
 1. **Perfil `--escritorio` en `estampar-app.sh`** (Tauri, `create-tauri-app --template react-ts`,

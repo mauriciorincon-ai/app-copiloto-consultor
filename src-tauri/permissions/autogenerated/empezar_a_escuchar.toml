@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-empezar-a-escuchar"
+description = "Enables the empezar_a_escuchar command without any pre-configured scope."
+commands.allow = ["empezar_a_escuchar"]
+
+[[permission]]
+identifier = "deny-empezar-a-escuchar"
+description = "Denies the empezar_a_escuchar command without any pre-configured scope."
+commands.deny = ["empezar_a_escuchar"]

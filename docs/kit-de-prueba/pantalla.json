@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "comentario": "Kit de pantalla v1 del sprint 002 (C8). Cinco ventanas de videollamada inventadas con una diapositiva del cliente en el centro; las imágenes viven en `pantalla/` y las genera `scripts/kit-de-pantalla.mjs`. Cada caso empareja la imagen con algo que el cliente DIRÍA mirándola —una frase vaga que por sí sola vale para varias secciones— y la sección que DEBERÍA responderla. Se mide nDCG@5 de esa frase con y sin lo que se lee de la pantalla. `sola` es la ficha que la pantalla tendría que traer por sí sola, sin que nadie hable; `null` = esa pantalla no debe pedir ficha. Las expectativas se escribieron ANTES de la primera medición. Datos 100 % sintéticos.",
+  "casos": [
+    {
+      "imagen": "tablero-margen.png",
+      "dice": "¿Esto nos lo pueden entregar así?",
+      "espera": "Entregables",
+      "sola": ["Contexto", "Entregables"]
+    },
+    {
+      "imagen": "cronograma-erp.png",
+      "dice": "¿Qué pasa si se retrasa la entrega?",
+      "espera": "Supuestos",
+      "sola": ["Supuestos"]
+    },
+    {
+      "imagen": "caso-cooperativa.png",
+      "dice": "¿Y cuánto se retrasaron ellos?",
+      "espera": "Resultados",
+      "sola": ["Resultados"]
+    },
+    {
+      "imagen": "retencion-datos.png",
+      "dice": "¿Y cuánto tiempo guardan los datos?",
+      "espera": "Retención",
+      "sola": ["Retención"]
+    },
+    {
+      "imagen": "agenda.png",
+      "dice": "¿Cuál es el plazo de entrega?",
+      "espera": "Plazo de entrega",
+      "sola": null
+    }
+  ]
+}

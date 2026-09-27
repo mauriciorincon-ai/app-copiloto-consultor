@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-estado-del-diccionario"
+description = "Enables the estado_del_diccionario command without any pre-configured scope."
+commands.allow = ["estado_del_diccionario"]
+
+[[permission]]
+identifier = "deny-estado-del-diccionario"
+description = "Denies the estado_del_diccionario command without any pre-configured scope."
+commands.deny = ["estado_del_diccionario"]
