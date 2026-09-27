@@ -2287,3 +2287,43 @@ esté o no rinda. Roadmap, para Macs sin Apple Intelligence.
 | `una_linea_que_la_ficha_citada_no_dice_se_descarta` | `fundar` sin llamar a la regla | ROJO `sintesis/mod.rs:381` → verde |
 | `sintesis::fiel::pruebas` (3 tests) | `misma_raiz` siempre verdadera | ROJO `fiel.rs:185/196/220` → verde |
 | `un_titular_inventado_se_cambia_por_el_de_la_ficha` | conservar siempre el titular del modelo | ROJO → verde |
+
+### La guía v4
+
+`docs/GUIA-DE-PRUEBA.html` pasa de la v3 del cierre del S1 (41 pruebas) a la **v4: 71**. Las 41
+heredadas están **enteras**: 28 como «S1» (regresión) y 13 reescritas como «Mejorado en S2». Las 30
+nuevas van en cinco bloques: E pantalla · F radar · G sugerencia e IA · H solo audio · I diccionario,
+más cuatro en bloques viejos (pista que no abre, auriculares por su nombre, ficha por silencio, la
+banda que vuelve tras el corte). Namespace `ag-s2-`. **Ninguna eliminada.**
+
+**Dos pruebas heredadas no podían pasar tal como estaban escritas**, y las encontró esta reescritura,
+no una corrida:
+
+- **d3/d4 pedían decir la pregunta del cliente por el micrófono.** El micrófono es el consultor y su
+  voz no dispara fichas, a propósito (`disparo/mod.rs:10`). Ahora al cliente se le simula con `say`
+  en Terminal, que sale por el audio del sistema: la pista del cliente.
+- **d4 esperaba «Nada en tu corpus» de «¿Tienen certificación ISO 27001?»**, pero el corpus del kit
+  **sí** la responde: la ficha de Seguridad dice que no hay certificación vigente, y el kit de preguntas
+  la espera en «Certificaciones». Ahora es «¿Tienen oficina en Medellín?», de la lista `sinRespuesta`.
+
+**El ⭐⭐ se rehízo como un recorrido:** 9 paradas en el orden del documento (la banda en Meet · el
+corpus · la ficha a tiempo · la pantalla trae su ficha · el ámbar · la sugerencia fiel · la voz · el
+corte · el corte a mitad de frase). Para que se camine, **los bloques del corte y del idioma pasan a J
+y K** y lo nuevo va antes: el corte es el final natural de una reunión. **~25 min: cinco sobre el
+techo de ~20, declarado en la guía**; para caber habría que sacar una de las funciones nuevas que solo
+se juzgan mirando u oyendo. Deja fuera 51 ⭐. ⭐ = 60 (~105 min).
+
+**El ámbar se prueba sin grabar de verdad:** `meet-de-prueba.html` gana una sexta diapositiva,
+`reunion-grabada.png`, la misma imagen con la que la CI mide el radar ámbar con Vision. La grabación de
+verdad queda como prueba ⭐ (f3), que es además la que dirá si el texto real del aviso de Meet o Teams
+coincide con el catálogo.
+
+**Gate nuevo, `tests/unit/guia-cuadra.test.ts`:** la cabecera declara sus cuentas en prosa y nadie las
+cruzaba con los atributos. Ahora: ⭐ declarado = `data-minimo` marcados; paradas declaradas =
+`data-corto`; «deja fuera» = ⭐ − ⭐⭐; toda parada es también ⭐; paradas 1..M en orden y con la misma M;
+ids únicos. Rojos: «Gate mínimo ⭐: 59» con 60 marcadas → ROJO; dos paradas «4 de 9» → ROJO; verde al
+revertir.
+
+También en esta vuelta, del mismo tipo que la frase de la sugerencia: el manual decía de la
+instalación del modelo de voz «es la única vez que la app toca la red», falsa desde que existe el
+proveedor externo. Ahora dice «la única vez que la transcripción toca la red» y nombra la otra puerta.

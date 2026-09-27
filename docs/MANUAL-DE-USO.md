@@ -145,7 +145,8 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
   cada pista si su modelo está instalado y, **si falta, ofrece instalarlo**.
 - **Cómo se usa:** *Idioma* → «Instalar», el botón junto al aviso ámbar de la fila. Lo
   descarga macOS y tarda: mientras dura, el botón dice «instalando…» y no se deja pulsar otra
-  vez. Es la única vez que la app toca la red, y solo porque tú lo pediste.
+  vez. Es la única vez que la transcripción toca la red, y solo porque tú lo pediste (la otra
+  puerta a la red de la app es el proveedor externo de IA, apagado salvo que lo enciendas).
 - **Limitaciones conocidas:**
   - Si tu Mac **no reconoce** ese idioma, o no trae motor de voz, no hay nada que instalar y la app
     lo dice con esas palabras en vez de ofrecerte un botón que no puede funcionar.

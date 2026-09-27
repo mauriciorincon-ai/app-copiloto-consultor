@@ -24,8 +24,10 @@
 </footer>
 <script>
   // Las cinco pantallas del kit (pantalla.json). Cambiar de una a otra es lo que el vigía tiene que
-  // ver como «algo nuevo»; la agenda no trae cifra ni término, y no debe traer ficha.
-  const DIAPOSITIVAS = ["tablero-margen.png", "cronograma-erp.png", "caso-cooperativa.png", "retencion-datos.png", "agenda.png"];
+  // ver como «algo nuevo»; la agenda no trae cifra ni término, y no debe traer ficha. La sexta es la
+  // del radar ámbar (sprint 002, fase 4): una reunión con el aviso de grabación y un bot de notas en
+  // la lista — la guía de prueba la usa para ver el ámbar sin montar una grabación de verdad.
+  const DIAPOSITIVAS = ["tablero-margen.png", "cronograma-erp.png", "caso-cooperativa.png", "retencion-datos.png", "agenda.png", "reunion-grabada.png"];
   let i = 0;
   const pinta = () => {
     document.getElementById("d").src = DIAPOSITIVAS[i];
