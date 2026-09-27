@@ -7,8 +7,7 @@ import {
   dejarDeEscuchar,
   lecturaAutomatica,
   usePantalla,
-  DEL_CLIENTE,
-  DEL_CONSULTOR,
+  idiomasDeLasPistas,
   type EstadoDeEscucha,
   type EstadoDePista,
   type EstadoDeLaPantalla,
@@ -32,6 +31,12 @@ import { invasivos, useRadarDeTuMac, type EnTuMac } from "../radar";
  * Fuera de una sesión las pistas no están abiertas y eso no es una avería: se enseña lo que la app
  * sabe hacer, como en el sprint 001.
  */
+/** Empieza a escuchar con el idioma que cada pista tiene elegido en Idioma (auditoría del S2, A4). */
+function empezarConLosIdiomasElegidos() {
+  const { consultor, cliente } = idiomasDeLasPistas();
+  empezarAEscuchar(consultor, cliente);
+}
+
 export function Sesion({
   reunion,
   escucha,
@@ -45,7 +50,7 @@ export function Sesion({
 }) {
   const t = useT().cuaderno;
   const pantalla = usePantalla();
-  const hayEco = salida.salida === "altavoces";
+  const hayEco = salida.salida === "altavoces" || salida.salida === "altavoz-externo";
   const caida = (p: EstadoDePista) => escucha.escuchando && !p.abierta;
 
   /**
@@ -84,7 +89,7 @@ export function Sesion({
           radar={radar}
           iniciar={() => {
             setVisto(clave);
-            empezarAEscuchar(DEL_CONSULTOR, DEL_CLIENTE);
+            empezarConLosIdiomasElegidos();
           }}
           noIniciar={() => setVisto(clave)}
         />
@@ -163,7 +168,7 @@ export function Sesion({
               onClick={() =>
                 escucha.escuchando
                   ? dejarDeEscuchar()
-                  : empezarAEscuchar(DEL_CONSULTOR, DEL_CLIENTE)
+                  : empezarConLosIdiomasElegidos()
               }
             >
               <Ic id="i-voz" s />
@@ -424,6 +429,18 @@ export function LosAuriculares({ salida }: { salida: Salida }) {
             </span>
           </Fila>
           <Porque texto={t.siEsUnAltavoz} />
+        </>
+      );
+    case "altavoz-externo":
+      return (
+        <>
+          <Fila icono="i-auriculares" color="var(--warn)" texto={t.pistaAuriculares}>
+            <span className="estado warn">
+              <Ic id="i-alert" s />
+              <span>{salida.nombre}</span>
+            </span>
+          </Fila>
+          <Porque texto={t.altavozExterno} />
         </>
       );
     case "no-se-sabe":

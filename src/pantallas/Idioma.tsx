@@ -3,8 +3,9 @@ import { useT } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { TodaviaNo, PILA } from "../componentes/Ventana";
 import {
-  DEL_CLIENTE,
-  DEL_CONSULTOR,
+  fijarIdiomaDePista,
+  useIdiomasDePista,
+  type IdiomasDePista,
   instalarIdioma,
   useDiccionario,
   type Disponibilidad,
@@ -140,7 +141,11 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
   };
 
   /** Una pista con su idioma y el estado de su modelo. Si el modelo no está, se dice por qué. */
-  const pista = (icono: string, quien: string, codigo: string) => {
+  const elegidos = useIdiomasDePista();
+  // Los que se pueden elegir: los dos de la casa y los que el motor de este Mac dice conocer.
+  const codigos = [...new Set(["es-ES", "en-US", ...transcribe.idiomas.map((i) => i.codigo)])];
+  const pista = (icono: string, quien: string, cual: keyof IdiomasDePista, etiqueta: string) => {
+    const codigo = elegidos[cual];
     const d = de(codigo);
     const listo = d !== "instalando" && estadoDelModelo(d, t.modeloInstalado);
     return (
@@ -163,7 +168,22 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
             </>
           )}
         </span>
-        <span className="cuanto">{codigo}</span>
+        {/* **Elegible** desde la auditoría del S2 (A4): la pista del cliente estaba fijada en
+            inglés. Se ve como el código de siempre, subrayado a trazos porque se puede cambiar. */}
+        <label className="cuanto">
+          <span className="sr">{etiqueta}</span>
+          <select
+            className="idioma-de-pista"
+            value={codigo}
+            onChange={(e) => fijarIdiomaDePista(cual, e.target.value)}
+          >
+            {codigos.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
     );
   };
@@ -217,8 +237,8 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
             <h2 className="seccion" style={{ margin: "0 0 4px" }}>
               {t.idiomaPorPista}
             </h2>
-            {pista("i-mic", t.tuMicrofono, DEL_CONSULTOR)}
-            {pista("i-sistema", t.clienteSistema, DEL_CLIENTE)}
+            {pista("i-mic", t.tuMicrofono, "consultor", t.idiomaDeTuMicrofono)}
+            {pista("i-sistema", t.clienteSistema, "cliente", t.idiomaDelCliente)}
           </div>
         </div>
 

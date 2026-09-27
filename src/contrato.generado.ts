@@ -165,6 +165,11 @@ export const SALIDA_DE_AUDIO: Salida = {
     "salida": "altavoces"
   };
 
+export const SALIDA_DE_AUDIO_ALTAVOZ_EXTERNO: Salida = {
+    "nombre": "Monitor LG",
+    "salida": "altavoz-externo"
+  };
+
 export const SALIDA_DE_AUDIO_OTRA: Salida = {
     "nombre": "AirPods Pro",
     "salida": "otra"

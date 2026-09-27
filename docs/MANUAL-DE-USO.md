@@ -19,6 +19,9 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
 
 ## Primeros pasos
 
+**Necesitas macOS 26 o posterior.** La app usa el reconocimiento de voz y el modelo del sistema que
+solo trae macOS 26; en un Mac con una versión anterior no arranca.
+
 1. **Arranca la app.** Aparecen tres cosas: el cuaderno (la ventana grande), una banda apaisada
    pegada al borde inferior de la pantalla, y el relleno que la tapa cuando compartes pantalla.
 2. **Concede los permisos.** Ve a *Permisos*. La app te lleva al sitio exacto de Ajustes del
@@ -64,7 +67,10 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
   - **Usa auriculares.** Con los altavoces del Mac, tu micrófono también oye al cliente y el mismo
     turno llega por las dos pistas. La app lo detecta y lo marca como eco, pero la conversación se
     lee peor. Te avisa antes de empezar, cuando todavía puedes ponértelos.
-  - Cada pista escucha **un** idioma. Marcar varios a la vez llega más adelante.
+  - Cada pista escucha **un** idioma, y **se elige en *Idioma***: el código de cada pista (es-ES,
+    en-US…) es un selector. Las dos nacen en **español**; si tu cliente habla inglés, cámbiala antes
+    de «Iniciar sesión». La elección vive en memoria: al cerrar la app vuelven a español. Marcar
+    varios idiomas en la misma pista llega más adelante.
   - macOS solo deja tener **cinco idiomas de voz listos a la vez**. Es un límite del sistema.
   - Si no hablas, los contadores de audio se quedan quietos. **Eso es correcto**: cuando nadie
     habla, macOS no entrega una sola muestra.
@@ -318,6 +324,8 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
   - **Mientras ya esté diciendo otra ficha.** No encola una detrás de otra.
   - Y `⌥⎋` la calla y apaga el modo, como todo lo demás.
 - **Limitaciones conocidas:**
+  - **Por HDMI, DisplayPort o AirPlay** —el altavoz de un monitor, un televisor— **no habla**: esas
+    conexiones casi siempre son un altavoz, y la app las trata como los altavoces del Mac.
   - **Con auriculares por Bluetooth o USB —unos AirPods, por ejemplo— la app habla, y no puede
     estar segura de que sean auriculares.** macOS no distingue un casco de un altavoz de mesa
     conectado por el mismo cable: solo sabe con certeza cuándo el sonido sale por el altavoz interno

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { escuchar, hayTauri, llamar, preguntar } from "./puente";
 import { useT } from "./i18n";
 import { INFORME_DEL_CORTE } from "./contrato.generado";
@@ -196,6 +196,8 @@ export type Salida =
   | { salida: "altavoces" }
   | { salida: "auriculares" }
   | { salida: "otra"; nombre: string }
+  /** HDMI, DisplayPort o AirPlay: un altavoz que sí se reconoce (auditoría del S2, M4). */
+  | { salida: "altavoz-externo"; nombre: string }
   /** El nombre viaja aparte porque la frase lo cita y un nombre no se traduce. */
   | { salida: "no-se-sabe"; motivo: PorQueNoSeSabe; nombre: string | null };
 
@@ -549,15 +551,37 @@ export function useQueSabeTranscribir(): QueSabeTranscribir {
 }
 
 /**
- * Qué idioma escucha cada pista en este sprint.
+ * **Qué idioma escucha cada pista** — se elige en Idioma y lo lee Sesión al empezar a escuchar.
  *
- * Fijos, y por eso viven aquí y no en la pantalla de Idioma: los usa quien **enciende** la escucha
- * (la pantalla de Sesión) y quien los **enseña** (la de Idioma), y una constante que dos pantallas
- * copian por su cuenta es una constante que un día dirá dos cosas distintas. Elegirlos es de la
- * fase siguiente; hasta entonces la pantalla de Idioma los marca como lo que son.
+ * Vive aquí, en un solo sitio, porque lo usan quien **enciende** la escucha y quien lo **enseña**, y
+ * un valor que dos pantallas copian por su cuenta un día dice dos cosas distintas. Hasta la
+ * auditoría del S2 eran dos constantes, y la del cliente era `en-US` sin forma de cambiarla: con un
+ * cliente que habla español no llegaba un solo turno útil (A4). Nacen las dos en español —el corpus y
+ * los clientes del usuario lo son— y **viven en memoria**: al cerrar la app vuelven a español, como
+ * los interruptores de IA (declarado en el manual).
  */
-export const DEL_CONSULTOR = "es-ES";
-export const DEL_CLIENTE = "en-US";
+export type IdiomasDePista = { consultor: string; cliente: string };
+let idiomasDePista: IdiomasDePista = { consultor: "es-ES", cliente: "es-ES" };
+const oyentesDeIdioma = new Set<() => void>();
+
+export function idiomasDeLasPistas(): IdiomasDePista {
+  return idiomasDePista;
+}
+
+export function fijarIdiomaDePista(pista: keyof IdiomasDePista, codigo: string) {
+  idiomasDePista = { ...idiomasDePista, [pista]: codigo };
+  oyentesDeIdioma.forEach((f) => f());
+}
+
+export function useIdiomasDePista(): IdiomasDePista {
+  return useSyncExternalStore(
+    (f) => {
+      oyentesDeIdioma.add(f);
+      return () => oyentesDeIdioma.delete(f);
+    },
+    idiomasDeLasPistas,
+  );
+}
 
 /* ----------------------------------------------------------------- el corpus (fase 4) ------ */
 

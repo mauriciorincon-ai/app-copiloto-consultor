@@ -221,7 +221,32 @@ struct FondoDelRelleno(Option<PathBuf>);
 /// en un solo sitio.
 #[tauri::command]
 fn ajustar_banda(app: tauri::AppHandle, alto: u32) -> Result<(), String> {
+    // **El alto ES el modo** (manual y título del asa): arrastrarla por encima de la línea de voz
+    // apaga el modo solo audio. Antes la ventana crecía y la app seguía hablando y quedándose con
+    // `⎋` de la reunión (auditoría del S2, M14).
+    let voz = app.state::<LaVozQueSale>();
+    if el_asa_apaga_el_modo(alto, voz.encendida.load(Ordering::Relaxed)) {
+        apagar_el_modo(&app);
+        println!("[habla] el asa apagó el modo solo audio");
+    }
     ventana::ajustar_banda(&app, alto)
+}
+
+/// Arrastrar el asa por encima de la banda de voz, con el modo encendido, lo apaga.
+fn el_asa_apaga_el_modo(alto: u32, encendida: bool) -> bool {
+    encendida && alto > ventana::ALTO_VOZ
+}
+
+/// Apaga el modo solo audio: devuelve `⎋`, calla lo que esté diciendo y avisa a la banda. Lo usan
+/// `⌃⌥V` y el asa, para que las dos vías apaguen exactamente lo mismo.
+fn apagar_el_modo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> habla::LaVoz {
+    let estado = app.state::<LaVozQueSale>();
+    estado.encendida.store(false, Ordering::Relaxed);
+    con_el_callar(app, false);
+    estado.voz.callar();
+    let ahora = estado.estado();
+    let _ = app.emit_to(ventana::BANDA, EVENTO_VOZ, ahora);
+    ahora
 }
 
 /// El asa **al soltarla**: la reunión se vuelve a hacer sitio para la franja nueva.
@@ -1263,8 +1288,16 @@ fn conmutar_el_modo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> habla::LaVo
     let estado = app.state::<LaVozQueSale>();
     let el_corpus = app.state::<ElCorpus>();
     let escucha_viva = app.state::<LaEscucha>();
-    let encendida = !estado.encendida.load(Ordering::Relaxed);
-    estado.encendida.store(encendida, Ordering::Relaxed);
+    // Apagar: la banda vuelve a su alto y el modo se apaga por la misma vía que el asa.
+    if estado.encendida.load(Ordering::Relaxed) {
+        let alto = ventana::ALTO_COMPACTA;
+        if let Err(e) = asentar_banda((*app).clone(), alto) {
+            println!("[habla] la banda no pudo ir a {alto} px: {e}");
+        }
+        println!("[habla] ⌃⌥V: modo solo audio APAGADO · banda a {alto} px");
+        return apagar_el_modo(app);
+    }
+    estado.encendida.store(true, Ordering::Relaxed);
 
     // **El alto de la banda ES el modo.** Lo que el usuario pidió no era una voz: era recuperar la
     // pantalla mientras la app le habla, y eso son 44 px que vuelven a la reunión.
@@ -1276,27 +1309,21 @@ fn conmutar_el_modo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> habla::LaVo
     // ventana de la reunión. Sin esa segunda mitad el modo bajaría la banda y el usuario no ganaría
     // un píxel de pantalla, que es justo lo que pidió. Es una llamada por encendido, no por cuadro:
     // el arrastre del asa aprendió lo caro que es hacerlo sesenta veces por segundo.
-    let alto = if encendida { ventana::ALTO_VOZ } else { ventana::ALTO_COMPACTA };
+    let alto = ventana::ALTO_VOZ;
     if let Err(e) = asentar_banda((*app).clone(), alto) {
         println!("[habla] la banda no pudo ir a {alto} px: {e}");
     }
 
-    if encendida {
-        // `⎋` se registra SOLO mientras el modo está encendido. Un Escape global permanente se lo
-        // quitaría a la reunión —en Meet es la tecla de salir de pantalla completa— y a todas las
-        // demás apps del Mac, para una función que existe unos segundos por ficha.
-        con_el_callar(app, true);
-        println!("[habla] ⌃⌥V: modo solo audio ENCENDIDO · banda a {} px", ventana::ALTO_VOZ);
-        // La ficha vigente se rearma igual que en `pedir_ficha`: con el último turno del cliente.
-        // Si no se ha oído nada todavía, no hay nada que decir y el modo queda encendido, esperando.
-        match ficha_vigente(&escucha_viva, &el_corpus, &app.state::<LaPantalla>()) {
-            Some(a) => decir_la_ficha(app, &a),
-            None => println!("[habla] todavía no he oído nada del cliente: el modo queda a la espera"),
-        }
-    } else {
-        con_el_callar(app, false);
-        estado.voz.callar();
-        println!("[habla] ⌃⌥V: modo solo audio APAGADO · banda a {} px", ventana::ALTO_COMPACTA);
+    // `⎋` se registra SOLO mientras el modo está encendido. Un Escape global permanente se lo
+    // quitaría a la reunión —en Meet es la tecla de salir de pantalla completa— y a todas las
+    // demás apps del Mac, para una función que existe unos segundos por ficha.
+    con_el_callar(app, true);
+    println!("[habla] ⌃⌥V: modo solo audio ENCENDIDO · banda a {alto} px");
+    // La ficha vigente se rearma igual que en `pedir_ficha`: con el último turno del cliente.
+    // Si no se ha oído nada todavía, no hay nada que decir y el modo queda encendido, esperando.
+    match ficha_vigente(&escucha_viva, &el_corpus, &app.state::<LaPantalla>()) {
+        Some(a) => decir_la_ficha(app, &a),
+        None => println!("[habla] todavía no he oído nada del cliente: el modo queda a la espera"),
     }
 
     let ahora = estado.estado();
@@ -2472,5 +2499,20 @@ mod pruebas_del_gasto_del_mes {
             assert!(!ruta.with_extension("json.tmp").exists(), "quedó el temporal");
         }
         let _ = std::fs::remove_dir_all(&d);
+    }
+}
+
+#[cfg(test)]
+mod pruebas_del_asa_y_la_voz {
+    use super::*;
+
+    /// **Arrastrar el asa apaga el modo** (auditoría del S2, M14): por encima de los 44 px de la
+    /// banda de voz, con el modo encendido. Sin el modo, o dentro de la línea, no toca nada.
+    #[test]
+    fn el_asa_por_encima_de_la_banda_de_voz_apaga_el_modo() {
+        assert!(el_asa_apaga_el_modo(ventana::ALTO_COMPACTA, true));
+        assert!(el_asa_apaga_el_modo(ventana::ALTO_VOZ + 1, true));
+        assert!(!el_asa_apaga_el_modo(ventana::ALTO_VOZ, true));
+        assert!(!el_asa_apaga_el_modo(ventana::ALTO_COMPACTA, false));
     }
 }

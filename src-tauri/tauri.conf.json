@@ -62,7 +62,7 @@
     "active": true,
     "targets": "all",
     "macOS": {
-      "minimumSystemVersion": "14.2"
+      "minimumSystemVersion": "26.0"
     },
     "resources": {
       "lproj/es.lproj/InfoPlist.strings": "es.lproj/InfoPlist.strings",

@@ -4,6 +4,8 @@ import { Banda } from "@/componentes/Banda";
 import { Sesion } from "@/pantallas/Sesion";
 import { Ia } from "@/pantallas/Ia";
 import { Honestidad } from "@/pantallas/Honestidad";
+import { Idioma } from "@/pantallas/Idioma";
+import { fijarIdiomaDePista } from "@/cuaderno";
 import { IdiomaContext } from "@/i18n";
 import { llamar, preguntar } from "@/puente";
 import { es } from "@/i18n/es";
@@ -545,6 +547,39 @@ describe("la sugerencia, dentro del producto", () => {
     await act(async () => {});
     fireEvent.click([...document.querySelectorAll("[role=switch]")][0] as HTMLElement);
     expect(preguntar).toHaveBeenCalledWith("redactar_sugerencias", { si: true });
+  });
+
+  /**
+   * **El idioma de la pista del cliente se elige** (auditoría del S2, A4): era la constante `en-US`,
+   * y con un cliente que habla español no llegaba un turno útil. Nace en español; elegido inglés en
+   * Idioma, «Iniciar sesión» se lo pasa a Rust.
+   */
+  it("el idioma elegido para el cliente llega a empezar_a_escuchar", async () => {
+    render(
+      <IdiomaContext.Provider value="es">
+        <Idioma transcribe={{ motor: "apple-speechanalyzer", techo: 5, idiomas: [], motivo: null }} />
+      </IdiomaContext.Provider>,
+    );
+    render(
+      <IdiomaContext.Provider value="es">
+        <Sesion reunion={{ que: "ninguna" }} escucha={{ ...ESTADO_DE_LA_ESCUCHA, escuchando: false }} salida={SALIDA_DE_AUDIO} />
+      </IdiomaContext.Provider>,
+    );
+    await act(async () => {});
+    const iniciar = () =>
+      fireEvent.click(
+        [...document.querySelectorAll("button")].find((b) => b.textContent?.includes(es.cuaderno.iniciarSesion)) as HTMLElement,
+      );
+    // Sin tocar nada, las dos pistas en español: la constante vieja mandaba el cliente en inglés.
+    iniciar();
+    expect(llamar).toHaveBeenLastCalledWith("empezar_a_escuchar", { idiomaDelConsultor: "es-ES", idiomaDelCliente: "es-ES" });
+    // Elegido inglés en Idioma, llega inglés.
+    const [, delCliente] = [...document.querySelectorAll("select.idioma-de-pista")] as HTMLSelectElement[];
+    expect(delCliente.value).toBe("es-ES");
+    fireEvent.change(delCliente, { target: { value: "en-US" } });
+    iniciar();
+    expect(llamar).toHaveBeenLastCalledWith("empezar_a_escuchar", { idiomaDelConsultor: "es-ES", idiomaDelCliente: "en-US" });
+    fijarIdiomaDePista("cliente", "es-ES");
   });
 
   /** Elegir proveedor con el API apagado tiene que llegar a Rust (auditoría del S2, M3). */

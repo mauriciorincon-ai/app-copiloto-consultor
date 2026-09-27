@@ -29,6 +29,7 @@ pub mod nativo {
         Altavoces,
         Auriculares,
         Otra { nombre: String },
+        AltavozExterno { nombre: String },
         NoSeSabe { motivo: super::PorQueNoSeSabe, nombre: Option<String> },
     }
 

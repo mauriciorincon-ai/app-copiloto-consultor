@@ -82,7 +82,11 @@ camino escrito para ese caso; ponerlo hoy sería compilar whisper.cpp en cada bu
 
 ## Consecuencias
 
-- La app **exige macOS 26 para transcribir** y macOS 14.2 para lo demás (`minimumSystemVersion`).
+- La app **exige macOS 26** (`minimumSystemVersion`). Decía «26 para transcribir y 14.2 para lo
+  demás», y dejó de ser verdad en el sprint 002: el puente enlaza `FoundationModels` —que solo existe
+  en macOS 26— de forma fuerte, y en un Mac con 14 o 15 dyld aborta al arrancar. Lo vigila
+  `tests/unit/version-minima.test.ts` (auditoría del S2, M1). Bajar el mínimo exige enlazarlo débil
+  (`-weak_framework`) y guardas `@available`: queda para H2.
 - El puente añade `swiftc` a las herramientas del build. La CI de macOS lo tiene; si un día no lo
   tuviera, la compilación se rompería a propósito.
 - Una parte del código de esta app está en Swift. Vive entera en un archivo, bajo la misma regla

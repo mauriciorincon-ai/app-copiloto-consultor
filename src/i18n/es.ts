@@ -390,6 +390,8 @@ export const es = {
       "Nace oculta a propósito. Leer lo que acaban de decir es la forma más rápida de dejar de escuchar: los ojos se van al texto y la conversación se queda sola.",
     laMuestraCuando: "la muestra cuando la necesites",
     idiomaPorPista: "Idioma por pista",
+    idiomaDeTuMicrofono: "Idioma de tu micrófono",
+    idiomaDelCliente: "Idioma del cliente",
     tuMicrofono: "Tú · micrófono",
     clienteSistema: "Cliente · sistema",
     modeloInstalado: "modelo instalado",
@@ -443,6 +445,8 @@ export const es = {
     pantallaNoPudoPor: "macOS no entregó la ventana de la reunión. La app lo vuelve a intentar sola.",
     leerlaSola: "Leerla sola",
     leelaAhora: "léela ahora",
+    altavozExterno:
+      "Por HDMI, DisplayPort o AirPlay el sonido sale por un altavoz: el micrófono va a oír al cliente y el modo solo audio no habla.",
     siEsUnAltavoz: "Si es un altavoz, no uses el modo solo audio.",
     noSeSabe: "No se sabe",
     /** Las dos últimas citan el dispositivo: la pantalla antepone su nombre entre comillas. */

@@ -4,7 +4,7 @@ import { Idioma } from "@/pantallas/Idioma";
 import { SpriteIconos } from "@/componentes/Iconos";
 import { IdiomaContext, es, en, type Idioma as Lengua } from "@/i18n";
 import { preguntar } from "@/puente";
-import { DEL_CLIENTE, DEL_CONSULTOR, type QueSabeTranscribir } from "@/cuaderno";
+import { fijarIdiomaDePista, type QueSabeTranscribir } from "@/cuaderno";
 
 /**
  * **EL IDIOMA QUE NO TIENE MODELO** — hallazgos A6 y A7 de la auditoría.
@@ -31,8 +31,8 @@ function transcribeCon(delCliente: QueSabeTranscribir["idiomas"][number]["dispon
     motor: "apple-speechanalyzer",
     techo: 5,
     idiomas: [
-      { codigo: DEL_CONSULTOR, disponibilidad: { estado: "listo" as const } },
-      { codigo: DEL_CLIENTE, disponibilidad: delCliente },
+      { codigo: "es-ES", disponibilidad: { estado: "listo" as const } },
+      { codigo: "en-US", disponibilidad: delCliente },
     ],
     motivo: null,
   } satisfies QueSabeTranscribir;
@@ -51,6 +51,9 @@ function pinta(transcribe: QueSabeTranscribir, lengua: Lengua = "es") {
 beforeEach(() => {
   vi.mocked(preguntar).mockReset();
   vi.mocked(preguntar).mockResolvedValue(null);
+  // El cliente habla inglés en esta reunión, y este Mac no trae ese modelo: el usuario lo eligió en
+  // Idioma, que desde la auditoría del S2 (A4) es una elección y no una constante.
+  fijarIdiomaDePista("cliente", "en-US");
 });
 
 describe("el idioma sin modelo", () => {
@@ -69,7 +72,7 @@ describe("el idioma sin modelo", () => {
 
     await act(async () => boton.click());
 
-    expect(vi.mocked(preguntar)).toHaveBeenCalledWith("instalar_idioma", { codigo: DEL_CLIENTE });
+    expect(vi.mocked(preguntar)).toHaveBeenCalledWith("instalar_idioma", { codigo: "en-US" });
   });
 
   it("mientras macOS descarga, el botón lo dice y no se puede volver a pulsar", async () => {

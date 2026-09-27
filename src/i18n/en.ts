@@ -307,6 +307,8 @@ export const en: Diccionario = {
       "It ships hidden on purpose. Reading what was just said is the fastest way to stop listening: your eyes go to the text and the conversation is left alone.",
     laMuestraCuando: "shows it when you need it",
     idiomaPorPista: "Language per track",
+    idiomaDeTuMicrofono: "Language of your microphone",
+    idiomaDelCliente: "Language of the client",
     tuMicrofono: "You · microphone",
     clienteSistema: "Client · system",
     modeloInstalado: "model installed",
@@ -346,6 +348,8 @@ export const en: Diccionario = {
     pantallaNoPudoPor: "macOS did not hand over the meeting window. The app tries again on its own.",
     leerlaSola: "Read it on its own",
     leelaAhora: "read it now",
+    altavozExterno:
+      "Over HDMI, DisplayPort or AirPlay the sound comes out of a speaker: the microphone will hear the client and audio-only mode won\u2019t speak.",
     siEsUnAltavoz: "If it is a speaker, do not use audio-only mode.",
     noSeSabe: "Unknown",
     porQueNoSeSabe: {

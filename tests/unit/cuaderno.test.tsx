@@ -26,8 +26,10 @@ import {
   REUNION_NO_SE_PUEDE_SABER,
   SALIDA_DE_AUDIO_NO_SE_SABE,
   SALIDA_DE_AUDIO_OTRA,
+  SALIDA_DE_AUDIO_ALTAVOZ_EXTERNO,
 } from "@/contrato.generado";
 import type { EstadoDeEscucha, EstadoDePista, Reunion, Salida } from "@/cuaderno";
+import { fijarIdiomaDePista } from "@/cuaderno";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn() }));
@@ -377,6 +379,8 @@ describe("el cuaderno: lo que no existe se dice", () => {
    * conteo que cambia en silencio no dice cuál se fue—.
    */
   it("idioma: enseña el motor, el diccionario y lo que todavía no", () => {
+    // El cliente de esta reunión habla inglés: elegido en Idioma (A4). La pista nace en español.
+    fijarIdiomaDePista("cliente", "en-US");
     pinta("?pantalla=idioma");
     expect(screen.getByText(t.idiomaTitulo)).toBeInTheDocument();
     expect(screen.getByText(t.variosIdiomasPorPista)).toBeInTheDocument();
@@ -397,6 +401,7 @@ describe("el cuaderno: lo que no existe se dice", () => {
     expect(
       screen.getByRole("button", { name: new RegExp(t.instalarModelo) }),
     ).toBeInTheDocument();
+    fijarIdiomaDePista("cliente", "es-ES");
   });
 
   /** Sin motor, la franja lo dice con su porqué —cerrado, y en los dos idiomas— y lo que sigue funcionando. */
@@ -503,6 +508,14 @@ describe("lo que Rust emite, pintado", () => {
     conCascara(<LosAuriculares salida={SALIDA_DE_AUDIO_OTRA} />);
     if (SALIDA_DE_AUDIO_OTRA.salida !== "otra") throw new Error("cambió la muestra");
     expect(screen.getByText(SALIDA_DE_AUDIO_OTRA.nombre)).toBeInTheDocument();
+  });
+
+  /** HDMI, DisplayPort o AirPlay: un altavoz que sí se reconoce, en ámbar y diciendo por qué (M4). */
+  it("un altavoz externo se dice por su nombre y avisa de que el cliente oiría", () => {
+    conCascara(<LosAuriculares salida={SALIDA_DE_AUDIO_ALTAVOZ_EXTERNO} />);
+    if (SALIDA_DE_AUDIO_ALTAVOZ_EXTERNO.salida !== "altavoz-externo") throw new Error("cambió la muestra");
+    expect(screen.getByText(SALIDA_DE_AUDIO_ALTAVOZ_EXTERNO.nombre)).toBeInTheDocument();
+    expect(screen.getByText(t.altavozExterno)).toBeInTheDocument();
   });
 
   it("la reunión que no se puede ver", () => {

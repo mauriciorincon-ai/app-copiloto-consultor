@@ -247,6 +247,7 @@ pub fn muestras() -> Vec<Muestra> {
             &Disponibilidad::SinMotor { motivo: crate::stt::PorQueNoHayMotor::SinTranscriptor },
         ),
         m("SALIDA_DE_AUDIO", "Salida", "./cuaderno", &Salida::Altavoces),
+        m("SALIDA_DE_AUDIO_ALTAVOZ_EXTERNO", "Salida", "./cuaderno", &Salida::AltavozExterno { nombre: "Monitor LG".into() }),
         m(
             "SALIDA_DE_AUDIO_OTRA",
             "Salida",

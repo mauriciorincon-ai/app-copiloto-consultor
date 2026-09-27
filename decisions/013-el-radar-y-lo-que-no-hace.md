@@ -38,7 +38,7 @@ grabación (`bitácora:1374-1376`). Lo validó quien lo necesita: «yo que tengo
 identificar rápidamente» (`bitácora:1480-1482`).
 
 **El radar avisa, no bloquea**: no cierra ni frena ningún programa y no saca a nadie de la reunión; el
-usuario decide (`radar/mod.rs:22-23`, `docs/MANUAL-DE-USO.md:212-213`). El cliente tiene derecho a
+usuario decide (`radar/mod.rs:22-23`, `docs/MANUAL-DE-USO.md:213-214`). El cliente tiene derecho a
 grabar su reunión y a traer su bot (`radar/avisos.rs:6-8`), y la banda añade lo único que es siempre
 cierto: **«Ese bot no es Angel Ghost, que nunca entra a la llamada.»** No dice quién lo trajo, porque el
 radar no puede saberlo (`bitácora:1500-1507`).
@@ -62,16 +62,16 @@ de verificarse (`radar/catalogo.rs:21-38`). **Una fila sin fuente no entra**: lo
 
 El coral corre **desde que arranca la app, no desde que empieza la sesión**: Sesión tiene que poder
 decir que algo vigila el Mac **antes** de empezar, cuando el consultor todavía puede elegir «Iniciar de
-todos modos» o «No iniciar» (`lib.rs:1973-1978`, `bitácora:2077`). Mira cada 10 s
-(`lib.rs:1968-1971`) y **avisa solo cuando cambia lo que hay**; la primera vuelta avisa siempre, para
-que nadie confunda «nada» con «todavía no» (`lib.rs:1977-1978`, `lib.rs:1994-2010`).
+todos modos» o «No iniciar» (`lib.rs:2054-2059`, `bitácora:2077`). Mira cada 10 s
+(`lib.rs:2049-2052`) y **avisa solo cuando cambia lo que hay**; la primera vuelta avisa siempre, para
+que nadie confunda «nada» con «todavía no» (`lib.rs:2058-2059`, `lib.rs:2075-2091`).
 
 ### 3 · El MDM se le pregunta a `/usr/bin/profiles`, una vez
 
 Una inscripción en un MDM no siempre deja un proceso a la vista, así que se le pregunta a
 `/usr/bin/profiles status -type enrollment`, que lee la configuración de este equipo y no habla con
 nadie (`radar/mdm.rs:1-33`). Es **la única llamada del radar que lanza un programa**
-(`radar/mod.rs:19-22`), y se hace una vez al arrancar (`lib.rs:1982`): cuesta 0,13 s
+(`radar/mod.rs:19-22`), y se hace una vez al arrancar (`lib.rs:2063`): cuesta 0,13 s
 (`bitácora:2072`).
 
 ### 4 · El ámbar: frases y nombres del catálogo, sobre lo que Vision ya leyó
@@ -113,8 +113,8 @@ El gate `tests/unit/radar-solo-este-mac.test.ts` invierte la pregunta: no «¿ha
 | ni disco ni red         | `radar` entre los módulos protegidos del efímero                                                                            | `tests/unit/radar-solo-este-mac.test.ts:115-118`, `scripts/verify-ephemeral.mjs:69-75` |
 
 Se vio en rojo de cinco maneras: un `libc::socket`, un `Command::new("ping")`, un `extern "C"` propio,
-una URL y una IP, y el radar fuera de los protegidos (`bitácora:2142`). **Su primera versión no podía
-fallar por las URLs** —quitaba todo lo que viniera detrás de `//` y se comía el `https://`—; corregida,
+una URL con una IP, y el radar fuera de los protegidos (`bitácora:2142`). **Su primera versión no podía
+fallar por las URLs** —quitaba todo lo que viniera detrás de `//` y se comía el esquema de toda URL—; corregida,
 cazó una URL de ejemplo en `mdm.rs` (`bitácora:2142`,
 `tests/unit/radar-solo-este-mac.test.ts:55-65`).
 
@@ -130,7 +130,7 @@ gate del MVP (`data/radar/avisos.json:2`).
 ### 8 · Lo que el radar NO ve, declarado
 
 - **Un programa renombrado**, o uno que no está en el catálogo: se reconoce por el nombre de su
-  ejecutable (`docs/MANUAL-DE-USO.md:225-227`).
+  ejecutable (`docs/MANUAL-DE-USO.md:226-228`).
 - **Las extensiones de navegador** (Proctorio, Honorlock): no tienen proceso propio
   (`bitácora:2107-2109`, `data/radar/programas.json:2`).
 - **Los nombres demasiado genéricos para cotejarlos solos**: el `service` de RustDesk, el `go-agent`
@@ -139,9 +139,9 @@ gate del MVP (`data/radar/avisos.json:2`).
   desaconseja las extensiones de núcleo y en Apple silicon exigen bajar la seguridad al arrancar
   (`bitácora:2104-2106`, `data/radar/programas.json:2`).
 - **Si alguien está conectado ahora.** Un acceso remoto abierto significa que alguien **podría**, no que
-  lo esté: saberlo exigiría mirar fuera de este Mac (`docs/MANUAL-DE-USO.md:228-229`).
+  lo esté: saberlo exigiría mirar fuera de este Mac (`docs/MANUAL-DE-USO.md:229-230`).
 - **El ámbar sin lectura de pantalla:** si el consultor apaga «Leerla sola», el ámbar tampoco mira; el
-  coral no depende de eso (`docs/MANUAL-DE-USO.md:223-224`).
+  coral no depende de eso (`docs/MANUAL-DE-USO.md:224-225`).
 
 ## Alternativas consideradas
 
@@ -156,15 +156,15 @@ gate del MVP (`data/radar/avisos.json:2`).
 - **Una captura propia para el ámbar:** duplicaría la lectura de pantalla y su superficie. Mira las
   mismas líneas, antes de que se pisen (`pantalla/mod.rs:325-332`).
 - **Mirar la red para saber si alguien está conectado por acceso remoto:** sería sondear otras
-  máquinas. Se renuncia a saberlo y se dice (`docs/MANUAL-DE-USO.md:228-229`).
+  máquinas. Se renuncia a saberlo y se dice (`docs/MANUAL-DE-USO.md:229-230`).
 
 ## Consecuencias
 
 - **El consultor sabe qué vio el radar y de dónde lo sacó**: «leído de tu pantalla · 14:03»
-  (`docs/MANUAL-DE-USO.md:190-193`). Con la sesión en marcha, el coral salta en la banda y `⌃⌥R` («qué
-  ve») abre Sesión con la tabla de lo que alcanza a ver cada programa (`lib.rs:2028-2033`,
-  `docs/MANUAL-DE-USO.md:204-206`).
-- **`⌃⌥R` se registra al arrancar** (`lib.rs:2126`). La propuesta de cogerla solo con el coral en
+  (`docs/MANUAL-DE-USO.md:191-194`). Con la sesión en marcha, el coral salta en la banda y `⌃⌥R` («qué
+  ve») abre Sesión con la tabla de lo que alcanza a ver cada programa (`lib.rs:2109-2114`,
+  `docs/MANUAL-DE-USO.md:205-207`).
+- **`⌃⌥R` se registra al arrancar** (`lib.rs:2207`). La propuesta de cogerla solo con el coral en
   pantalla (`bitácora:1530-1532`) se escribió cuando la tecla era `⌘⇧R`, la recarga forzada de los
   navegadores; con el paso de todas las teclas a `⌃⌥` (`bitácora:1837-1856`) ese choque desaparece. Los
   de `⌃⌥` que quedan —VoiceOver y las apps que ordenan ventanas— están en el manual
@@ -176,7 +176,7 @@ gate del MVP (`data/radar/avisos.json:2`).
   `sprints/SPRINT_002-auditoria.md:474`); y el gate del contador de red no ve un `Command::new` fuera
   de `radar/` (B13, `sprints/SPRINT_002-auditoria.md:472`).
 - **Una cifra que no cuadra, dicha aquí con su sitio:** la bitácora (`bitácora:2079`, `bitácora:2083`),
-  el manual (`docs/MANUAL-DE-USO.md:218-219`) y el summary (`sprints/SPRINT_002-summary.md:95`) hablan de
+  el manual (`docs/MANUAL-DE-USO.md:219-222`) y el summary (`sprints/SPRINT_002-summary.md:95`) hablan de
   **100** procesos en el Mac limpio del kit. El archivo `docs/kit-de-prueba/radar/mac-limpio.txt` tiene
   **82** rutas de proceso, contadas con el mismo filtro que usa el test (`radar/procesos.rs:108-115`); el
   test solo exige más de 60 (`radar/procesos.rs:124`). El resultado —cero falsos positivos— no cambia;

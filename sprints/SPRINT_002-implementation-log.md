@@ -2421,3 +2421,24 @@ el caso se prueba con el nombre de archivo sintético.
   construidos y MLX condicionado; solo `AG_SINTESIS=mock`; conocidos = clientes del corpus; la red en
   `nativo/Red.swift`; **«el texto que salió, legible en IA» pendiente para el sprint 003**.
 - **B5 · `⌃⌥L` pedía sugerencia** con el último turno del cliente: quitada, con el comentario verdadero.
+
+### El bloque «lo que impide el uso real»: A4 · M14 · M4 · M1
+
+- **A4 · la pista del cliente, fijada en inglés.** El idioma de cada pista es un almacén en memoria
+  del webview (`useIdiomasDePista`, `fijarIdiomaDePista`), **las dos nacen en es-ES** (decisión del
+  usuario), Idioma lo elige con un `<select>` que se lee como el código de siempre (subrayado a trazos,
+  etiqueta para lector de pantalla) y Sesión lo lee al empezar. Maqueta «sprint 2» con los dos
+  selectores y el cliente en español instalado; fidelidad 116 encuadres, ninguno sobre el umbral.
+  **El primer test que escribí no podía fallar**: elegía «en-US», que era justo la constante vieja. Se
+  reescribió para exigir primero es-ES sin tocar nada. **Rojo:** con las constantes viejas en Sesión.
+  Seis tests de Idioma que daban por hecho el inglés eligen ahora «en-US», como haría el usuario.
+- **M14 · el asa no apagaba el modo solo audio.** `ajustar_banda` apaga el modo cuando el alto pasa de
+  44 px con el modo encendido (`el_asa_apaga_el_modo`, pura), por la misma vía que `⌃⌥V`
+  (`apagar_el_modo`: `⎋` devuelta, voz callada, banda avisada). **Rojo:** la regla siempre falsa.
+- **M4 · el modo hablaba por HDMI, DisplayPort y AirPlay.** `Salida::AltavozExterno { nombre }`, con
+  `puede_haber_eco() = Some(true)`; la clasificación sale a una función pura (`clasificar`) con test
+  por transporte; unión TS, muestra del contrato, Sesión en ámbar con su frase (maqueta en `kit.html`,
+  copy al gate del MVP). **Rojo:** HDMI cae en `Otra`.
+- **M1 · no arrancaba por debajo de macOS 26 y declaraba 14.2.** `minimumSystemVersion` 26.0, ADR 006 y
+  manual al día. Gate nuevo `tests/unit/version-minima.test.ts`: la versión declarada ≥ la que exige
+  cada framework que `build.rs` enlaza. **Rojo:** con 14.2, «expected 14.2 to be ≥ 26».

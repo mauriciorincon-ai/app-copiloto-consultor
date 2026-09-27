@@ -75,14 +75,16 @@ su primera sección le saca al menos un 10 % a la segunda, esa es la respuesta y
 nada. Si no, se repite la misma consulta con **la pregunta como cláusula obligatoria** y lo leído como
 opcional, con peso 0,5 (`corpus/indice.rs:42-69`, `corpus/indice.rs:250-283`,
 `corpus/indice.rs:297-316`). Así la pantalla solo reordena lo que la pregunta ya encontró. Sin lectura
-—apagada, sin permiso, sin reunión— la búsqueda es exactamente la de siempre (`lib.rs:394-403`).
+—apagada, sin permiso, sin reunión— la búsqueda es exactamente la de siempre (`lib.rs:419-428`).
 
 **La excepción es la ficha que pide la pantalla sola.** Si una lectura nueva trae una cifra o un
 término del consultor (`pantalla/refuerzo.rs:75-80`), pide ficha por el **mismo disparador** que un
 turno —seis segundos entre fichas y ninguna repetida (`disparo/mod.rs:29`, `disparo/mod.rs:140-170`)—,
 se busca con lo leído como única consulta (`corpus/indice.rs:294-296`) y **solo se enseña si hay
 ficha**: una pantalla que no encuentra nada no interrumpe a nadie para decir «no tengo nada», porque
-nadie preguntó (`escucha/mod.rs:382-398`, `lib.rs:1518-1560`).
+nadie preguntó (`escucha/mod.rs:382-398`, `lib.rs:1545-1588`). **Ninguna ficha de la pantalla lleva
+sugerencia**, tampoco la de `⌃⌥L`: no responde a ninguna pregunta del cliente, y la sugerencia tomaría
+su último turno, que puede ser de hace minutos y de otra cosa (auditoría B5, `lib.rs:1576-1578`).
 
 ### 5 · En memoria vive el último cuadro, y es una pieza del kill-switch
 
@@ -91,11 +93,12 @@ búfer reservado y vacío no cuenta, porque no guarda nada de nadie (`pantalla/m
 `pantalla/mod.rs:640-656`). El cuadro se pisa con ceros al soltarse, y también al encogerse, para que
 una captura pequeña no deje viva la cola de una grande (`pantalla/mod.rs:102-128`).
 
-El kill-switch tiene su pieza, `Pieza::UltimoFrame` (`corte.rs:46-48`, `corte.rs:65-77`): para el vigía
-y pisa el cuadro y el texto (`lib.rs:788-793`). **No espera al hilo**, a propósito: si el vigía está a
+El kill-switch tiene su pieza, `Pieza::UltimoFrame` (`corte.rs:47-49`, `corte.rs:65-85`): para el vigía
+y pisa el cuadro y el texto (`lib.rs:813-818`). **No espera al hilo**, a propósito: si el vigía está a
 mitad de una captura, el cuadro lo pisa él al terminar esa vuelta, y `⌥⎋` no se congela hasta 3 s
-justo cuando el usuario pulsa la tecla de emergencia (`pantalla/mod.rs:613-631`). Con esta pieza el
-corte pasa a **8 de 8** (`corte.rs:135-151`, `bitácora:1627`).
+justo cuando el usuario pulsa la tecla de emergencia (`pantalla/mod.rs:613-631`). Con esta pieza, en
+la fase 3, el corte pasó a **8 de 8**: ninguna quedaba ya declarada como inexistente
+(`corte.rs:155-158`, `bitácora:1627`).
 
 El módulo es **protegido**: `src-tauri/src/pantalla` está en la lista del efímero
 (`scripts/verify-ephemeral.mjs:63-68`), que además prohíbe por su nombre la API de Swift que grabaría
@@ -106,7 +109,7 @@ la ventana a vídeo (su rojo: `bitácora:1706-1709`).
 `CGPreflightScreenCaptureAccess` se consulta **antes** de tocar ScreenCaptureKit, que provocaría el
 diálogo de macOS si el permiso no está decidido: esta app no pide nada por sorpresa
 (`nativo/Pantalla.swift:18-21`, `nativo/Pantalla.swift:85`). Sin permiso, Sesión dice «Sin permiso» y
-la app funciona sin leer (`pantalla/mod.rs:352-366`, `docs/MANUAL-DE-USO.md:176-177`).
+la app funciona sin leer (`pantalla/mod.rs:352-366`, `docs/MANUAL-DE-USO.md:177-178`).
 
 Dos cosas se comprobaron en este Mac y cambiaron el plan (`bitácora:1583-1604`):
 
@@ -121,12 +124,12 @@ Dos cosas se comprobaron en este Mac y cambiaron el plan (`bitácora:1583-1604`)
 El plan pedía lectura **bajo demanda por región**. Una región exigía una cuarta ventana, y la app
 tiene tres (`ventana/mod.rs:1-7`). **El usuario eligió el atajo sin región** (`bitácora:1571`,
 `bitácora:1605-1606`): `⌃⌥L` lee **una vez** la ventana de la reunión, ahora, aunque «Leerla sola» esté
-apagada (`pantalla/mod.rs:599-602`, `lib.rs:1607-1633`). Si no hay texto, la banda lo dice —«Leí la
-pantalla: no hay texto que buscar.»— en vez de callar (`lib.rs:1554-1558`).
+apagada (`pantalla/mod.rs:599-602`, `lib.rs:1634-1660`). Si no hay texto, la banda lo dice —«Leí la
+pantalla: no hay texto que buscar.»— en vez de callar (`lib.rs:1581-1585`).
 
 Es la salida para una NDA estricta: apagar la lectura automática y leer solo cuando el consultor lo
-pide (`lib.rs:1613-1615`, `docs/MANUAL-DE-USO.md:164-168`). Apagada, el hilo **no captura ni un
-cuadro** y olvida lo que había leído (`pantalla/mod.rs:454-495`). Nace encendida (`lib.rs:1421-1427`).
+pide (`lib.rs:1640-1642`, `docs/MANUAL-DE-USO.md:165-169`). Apagada, el hilo **no captura ni un
+cuadro** y olvida lo que había leído (`pantalla/mod.rs:454-495`). Nace encendida (`lib.rs:1448-1454`).
 
 La tecla se dibujó como `⌘⇧L` y pasó a `⌃⌥` con todas las demás, porque las de `⌘⇧` chocaban con
 Zoom (`bitácora:1837-1856`).
@@ -158,9 +161,10 @@ Zoom (`bitácora:1837-1856`).
 
 - La lectura **solo existe con la ventana de la reunión visible**: detrás de otra ventana, minimizada
   o en otro escritorio, no hay nada que leer, y Sesión lo dice (`pantalla/mod.rs:146-147`,
-  `pantalla/mod.rs:368-379`, `docs/MANUAL-DE-USO.md:178-179`).
+  `pantalla/mod.rs:368-379`, `docs/MANUAL-DE-USO.md:179-180`).
 - **El radar ámbar (ADR 013) no captura por su cuenta**: mira las mismas líneas que Vision ya leyó,
-  antes de que se pisen (`pantalla/mod.rs:325-332`). Apagar «Leerla sola» apaga también el ámbar.
+  antes de que se pisen (`pantalla/mod.rs:325-332`). Apagar «Leerla sola» apaga también el ámbar
+  (`docs/MANUAL-DE-USO.md:224-225`).
 - **Qué mide la CI y qué no.** Vision viene con macOS, así que el kit de pantalla corre en la CI; la
   captura con ScreenCaptureKit necesita un permiso que el runner no tiene, y es del arranque en vivo y
   de la parada ⭐ (`bitácora:1697-1700`). En la máquina virtual de la CI Vision tarda ~1 s por lectura,
@@ -170,14 +174,13 @@ Zoom (`bitácora:1837-1856`).
   `la_ventana_de_meet_se_captura_y_se_lee` y la parada con el usuario delante (`bitácora:2010-2031`).
 - **Lo que esta decisión no cubre, con su sitio.** La auditoría del sprint registra que las copias del
   `Refuerzo` no se pisan al soltarse, contra lo que dice la cabecera del módulo (B6,
-  `sprints/SPRINT_002-auditoria.md:465`); que `⌃⌥L` pide además una sugerencia con un turno del cliente
-  que puede ser viejo (B5, `sprints/SPRINT_002-auditoria.md:464`); que el gate del efímero en marcha no
+  `sprints/SPRINT_002-auditoria.md:465`); que el gate del efímero en marcha no
   ejerce Vision (M8, `sprints/SPRINT_002-auditoria.md:314-331`); y que el coste de CPU de la lectura no
   está medido (B21, `sprints/SPRINT_002-auditoria.md:480`). Y lo que Swift hace con su propia memoria
   al leer no se pisa desde Rust: el texto de Vision se arma en un `String` de Swift que se suelta sin
   ceros (`nativo/Pantalla.swift:182-198`).
 - **Dos frases del código que este ADR deja con sitio:** la cabecera de `pantalla/huella.rs:8-13`
-  todavía justifica el pHash, y `huella::phash` (`pantalla/huella.rs:119-126`) ya solo lo usan los
+  todavía justifica el pHash, y `huella::phash` (`pantalla/huella.rs:119-122`) ya solo lo usan los
   tests del módulo. La decisión vigente es la de `pantalla/huella.rs:32-54`.
 
 ## Medición

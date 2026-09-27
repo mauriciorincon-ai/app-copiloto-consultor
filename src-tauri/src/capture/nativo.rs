@@ -60,6 +60,11 @@ const TIPO_DE_TRANSPORTE: u32 = cuatro(b"tran");
 const FUENTE_DE_DATOS: u32 = cuatro(b"ssrc");
 const AMBITO_SALIDA: u32 = cuatro(b"outp");
 const TRANSPORTE_INTERNO: u32 = cuatro(b"bltn");
+/// Transportes que casi siempre son un ALTAVOZ: el monitor por HDMI o DisplayPort, y AirPlay. A
+/// diferencia de USB y Bluetooth, aquí sí se sabe (auditoría del S2, M4).
+const TRANSPORTE_HDMI: u32 = cuatro(b"hdmi");
+const TRANSPORTE_DISPLAYPORT: u32 = cuatro(b"dprt");
+const TRANSPORTE_AIRPLAY: u32 = cuatro(b"airp");
 /// El altavoz interno del Mac. No está en ninguna cabecera pública; se comprobó midiendo en este
 /// Mac («bltn» + «ispk» + «MacBook Air Speakers») y es el valor que macOS lleva usando años.
 const ALTAVOZ_INTERNO: u32 = cuatro(b"ispk");
@@ -190,6 +195,9 @@ pub enum Salida {
     /// Un dispositivo externo (USB, Bluetooth, una interfaz). Puede ser un casco o un altavoz de
     /// mesa, y desde aquí **no se puede distinguir**: se dice el nombre y decide el usuario.
     Otra { nombre: String },
+    /// Un altavoz externo que SÍ se reconoce por su conexión —el monitor por HDMI o DisplayPort,
+    /// AirPlay—: el micrófono va a oír al cliente, igual que con los altavoces del Mac (M4).
+    AltavozExterno { nombre: String },
     /// No se sabe, con su porqué cerrado y —si lo hay— el nombre del dispositivo, que la frase cita.
     NoSeSabe { motivo: super::PorQueNoSeSabe, nombre: Option<String> },
 }
@@ -198,7 +206,7 @@ impl Salida {
     /// ¿Hay que avisar de que las pistas pueden mezclarse? `None` cuando no se sabe.
     pub fn puede_haber_eco(&self) -> Option<bool> {
         match self {
-            Salida::Altavoces => Some(true),
+            Salida::Altavoces | Salida::AltavozExterno { .. } => Some(true),
             Salida::Auriculares => Some(false),
             Salida::Otra { .. } | Salida::NoSeSabe { .. } => None,
         }
@@ -211,17 +219,51 @@ pub fn salida_de_audio() -> Salida {
         return Salida::NoSeSabe { motivo: super::PorQueNoSeSabe::SinSalida, nombre: None };
     };
     let nombre = leer_cadena(dispositivo, cuatro(b"lnam")).unwrap_or_else(|| "sin nombre".into());
-    let Some(transporte) = leer_u32(dispositivo, TIPO_DE_TRANSPORTE, AMBITO_GLOBAL) else {
+    let transporte = leer_u32(dispositivo, TIPO_DE_TRANSPORTE, AMBITO_GLOBAL);
+    // La fuente solo se pregunta por dentro: por fuera, el transporte ya decide.
+    let fuente = (transporte == Some(TRANSPORTE_INTERNO))
+        .then(|| leer_u32(dispositivo, FUENTE_DE_DATOS, AMBITO_SALIDA))
+        .flatten();
+    clasificar(transporte, fuente, nombre)
+}
+
+/// **Por dónde sale el sonido**, a partir de lo que Core Audio dice del dispositivo. Pura, para que
+/// cada transporte tenga su test sin enchufar nada.
+fn clasificar(transporte: Option<u32>, fuente: Option<u32>, nombre: String) -> Salida {
+    let Some(transporte) = transporte else {
         return Salida::NoSeSabe { motivo: super::PorQueNoSeSabe::SinConexion, nombre: Some(nombre) };
     };
-    if transporte != TRANSPORTE_INTERNO {
-        return Salida::Otra { nombre };
+    match transporte {
+        TRANSPORTE_HDMI | TRANSPORTE_DISPLAYPORT | TRANSPORTE_AIRPLAY => Salida::AltavozExterno { nombre },
+        TRANSPORTE_INTERNO => match fuente {
+            Some(ALTAVOZ_INTERNO) => Salida::Altavoces,
+            Some(_) => Salida::Auriculares,
+            // Conectado por dentro pero sin decir a qué: lo honesto es no elegir por el usuario.
+            None => Salida::NoSeSabe { motivo: super::PorQueNoSeSabe::SinFuente, nombre: Some(nombre) },
+        },
+        _ => Salida::Otra { nombre },
     }
-    match leer_u32(dispositivo, FUENTE_DE_DATOS, AMBITO_SALIDA) {
-        Some(f) if f == ALTAVOZ_INTERNO => Salida::Altavoces,
-        Some(_) => Salida::Auriculares,
-        // Conectado por dentro pero sin decir a qué: lo honesto es no elegir por el usuario.
-        None => Salida::NoSeSabe { motivo: super::PorQueNoSeSabe::SinFuente, nombre: Some(nombre) },
+}
+
+#[cfg(test)]
+mod pruebas_de_la_salida {
+    use super::*;
+
+    /// **Cada transporte, con su salida** (auditoría del S2, M4): HDMI, DisplayPort y AirPlay son
+    /// altavoces —el cliente oiría la voz—; USB y Bluetooth no se pueden distinguir y se dicen por su
+    /// nombre; por dentro manda la fuente.
+    #[test]
+    fn cada_transporte_dice_si_el_cliente_oiria() {
+        let n = || "X".to_string();
+        for t in [TRANSPORTE_HDMI, TRANSPORTE_DISPLAYPORT, TRANSPORTE_AIRPLAY] {
+            assert_eq!(clasificar(Some(t), None, n()), Salida::AltavozExterno { nombre: n() });
+            assert_eq!(clasificar(Some(t), None, n()).puede_haber_eco(), Some(true));
+        }
+        for t in [cuatro(b"usb "), cuatro(b"blue")] {
+            assert_eq!(clasificar(Some(t), None, n()), Salida::Otra { nombre: n() });
+        }
+        assert_eq!(clasificar(Some(TRANSPORTE_INTERNO), Some(ALTAVOZ_INTERNO), n()), Salida::Altavoces);
+        assert_eq!(clasificar(Some(TRANSPORTE_INTERNO), Some(cuatro(b"hdpn")), n()), Salida::Auriculares);
     }
 }
 
