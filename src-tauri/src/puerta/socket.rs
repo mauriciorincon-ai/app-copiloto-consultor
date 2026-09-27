@@ -162,20 +162,24 @@ impl Puerta {
 
     /// Cierra la apertura `epoca` (o cualquiera, con `None`): el hilo de una apertura vieja no puede
     /// cerrar la nueva.
+    ///
+    /// **El socket y el token se van ANTES de que la puerta diga «cerrada»**, dentro del mismo candado.
+    /// Al revés —anunciar primero y borrar después— hubo un instante en que IA decía «cerrada» con el
+    /// socket todavía en el disco y el token en el Llavero; la CI lo cazó en un runner lento (bitácora,
+    /// fase 4).
     fn cerrar_la(&self, epoca: Option<u64>, por: Cierre) -> bool {
-        let abierta = {
+        {
             let Ok(mut d) = self.dentro.lock() else { return false };
             match &d.abierta {
                 Some(a) if epoca.is_none_or(|e| e == a.epoca) => {
+                    a.llave.borrar();
+                    quitar(&a.ruta);
+                    d.abierta = None;
                     d.cerro = Some(por);
-                    d.abierta.take()
                 }
-                _ => None,
+                _ => return false,
             }
-        };
-        let Some(a) = abierta else { return false };
-        a.llave.borrar();
-        quitar(&a.ruta);
+        }
         println!("[puerta] cerrada ({})", if por == Cierre::EnReunion { "sola: hay reunión" } else { "a mano" });
         true
     }
@@ -257,14 +261,15 @@ fn atender(puerta: &Puerta, mut conexion: UnixStream, token: &Token, ops: &dyn O
             Entrada { hora: ops.hora(), orden: "ghost ?".into(), resultado: Resultado::Fallo },
         ),
     };
-    let en_reunion = respuesta == Respuesta::Denegado { motivo: Motivo::EnReunion };
+    // **Primero el estado, después la respuesta**: quien recibe «denegado · en reunión» encuentra la puerta
+    // ya cerrada y la orden ya en el registro. Al revés, había un instante en que no.
+    puerta.apuntar(entrada);
+    if respuesta == (Respuesta::Denegado { motivo: Motivo::EnReunion }) {
+        puerta.cerrar(Cierre::EnReunion);
+    }
     let mut linea = serde_json::to_string(&respuesta).unwrap_or_default();
     linea.push('\n');
     let _ = conexion.write_all(linea.as_bytes()); // verify-ephemeral:allow — ADR 018 §3: la respuesta vuelve por el socket
-    puerta.apuntar(entrada);
-    if en_reunion {
-        puerta.cerrar(Cierre::EnReunion);
-    }
 }
 
 /// Una línea, de [`TOPE_DE_LINEA`] como mucho. `None` si no llegó entera o pasa del tope.

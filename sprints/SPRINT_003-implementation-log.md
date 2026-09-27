@@ -921,6 +921,24 @@ y que la puerta atienda a la app viva** va a la prueba en vivo, con su fila y el
 - lint, typecheck, `verify:ephemeral` (ahora con `puerta/`) y `design-sync` (regenerado por `.puerta`),
   limpios.
 
+**Rojo en la CI de `c5cdc5c` (run 36354269242): una carrera del producto, no del test.**
+`build-escritorio` falló en `el_vigia_la_cierra_al_empezar_una_reunion`: «la puerta está cerrada» pero
+el socket seguía en el disco. `cerrar_la` marcaba la puerta cerrada dentro del candado y borraba el
+socket y el token **después**, fuera; en el runner lento, la prueba miró en medio. En la app eso era IA
+diciendo «cerrada» con el socket y el token todavía ahí un instante.
+- **Reproducida en local** plantando 300 ms entre el anuncio y el borrado: el mismo rojo.
+- **Arreglo:** el socket y el token se borran **dentro del candado, antes** de decir «cerrada». Con el
+  mismo retraso plantado, ahora sigue verde.
+- **La misma clase, buscada a propósito:** `atender` contestaba por el socket **antes** de apuntar la
+  orden en el registro y de cerrar la puerta en reunión. Con el orden viejo y 300 ms plantados caen tres
+  pruebas más (`una_orden_en_reunion…`, `una_orden_a_medias…`, `abierta_atiende…`): eran carreras
+  latentes que la CI aún no había pillado. Ahora el estado va primero y la respuesta después.
+- `tests/puerta.rs` 15 de 15 en verde seguidas; clippy 0.
+
+**El contador de red, dicho con precisión:** `el_contador_de_red_no_se_mueve` es un testigo, no un gate:
+solo se pondría rojo si la puerta pasara por el camino que sí se cuenta. Lo que hace estructural «la
+puerta no sale a la red» es `puerta-solo-local`, y ese sí tiene su rojo (el `TcpStream` plantado).
+
 ---
 
 ## Para la planeadora al cierre del sprint (va al summary, «Sugerencias de mejora al método»)
