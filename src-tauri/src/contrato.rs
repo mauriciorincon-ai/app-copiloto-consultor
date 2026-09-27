@@ -49,6 +49,30 @@ fn ficha_fijada() -> crate::notas::FichaFijada {
     }
 }
 
+/// Una propuesta tuya, la de la maqueta: una cifra con su fecha, dicha por ti.
+fn propuesta_tuya() -> crate::propuestas::Propuesta {
+    crate::propuestas::Propuesta {
+        regla: crate::propuestas::Regla::Cifra,
+        de: crate::propuestas::De::Tuyo,
+        texto: "Fecha real del tablero: 12 semanas desde la firma.".into(),
+        ficha: None,
+        seccion: None,
+        hora: "14:16".into(),
+    }
+}
+
+/// Un choque con una ficha fijada: la única forma con `ficha` y `seccion`.
+fn propuesta_choque() -> crate::propuestas::Propuesta {
+    crate::propuestas::Propuesta {
+        regla: crate::propuestas::Regla::Choque,
+        de: crate::propuestas::De::Cliente,
+        texto: "cuatro fuentes".into(),
+        ficha: Some("tres".into()),
+        seccion: Some("§3.2".into()),
+        hora: "14:18".into(),
+    }
+}
+
 fn m<T: serde::Serialize>(
     nombre: &'static str,
     tipo: &'static str,
@@ -495,7 +519,75 @@ pub fn muestras() -> Vec<Muestra> {
                 turnos_del_cliente: 63,
                 lecturas: 9,
                 retencion: crate::prefs::Retencion::Dias90,
+                propuestas: c.en_espera().to_vec(),
+                lleno: c.lleno(),
+                ventana: crate::bandeja::Ventana::TresHoras,
             }
+        }),
+        // ---- las propuestas y la bandeja (sprint 003, fase 2, ADR 016) ---------------------------
+        // Durante: el cuaderno con dos esperando (la maqueta «sprint 3 · durante, con propuestas»),
+        // una tuya y un choque con su ficha, que son las dos formas con campos opcionales.
+        m("VISTA_CON_PROPUESTAS", "VistaDelCuaderno", "./notas", &{
+            let mut c = crate::notas::Cuaderno::nuevo(false);
+            c.escribir("Piden la cuarta fuente.");
+            c.proponer(vec![propuesta_tuya(), propuesta_choque()]);
+            crate::reunion::VistaDelCuaderno {
+                nota: c.nota().to_string(),
+                acuerdos: Vec::new(),
+                fijadas: Vec::new(),
+                resumen: c.resumen(),
+                conservar_mis_turnos: false,
+                abierta: true,
+                escuchando: true,
+                previsto: None,
+                turnos_del_cliente: 12,
+                lecturas: 0,
+                retencion: crate::prefs::Retencion::Dias90,
+                propuestas: c.en_espera().to_vec(),
+                lleno: true,
+                ventana: crate::bandeja::Ventana::AlCerrar,
+            }
+        }),
+        // La línea de la banda: la última propuesta, o nada. Y las cinco reglas, cada una con su grafía.
+        m("PROPUESTA_EN_LA_BANDA", "LineaDePropuesta", "./notas", &Some(propuesta_tuya())),
+        m("SIN_PROPUESTA_EN_LA_BANDA", "LineaDePropuesta", "./notas", &None::<crate::propuestas::Propuesta>),
+        m("PROPUESTA_CHOQUE", "Propuesta", "./notas", &propuesta_choque()),
+        m("REGLA_CIFRA", "Regla", "./notas", &crate::propuestas::Regla::Cifra),
+        m("REGLA_COMPROMISO", "Regla", "./notas", &crate::propuestas::Regla::Compromiso),
+        m("REGLA_CHOQUE", "Regla", "./notas", &crate::propuestas::Regla::Choque),
+        m("REGLA_NOMBRE", "Regla", "./notas", &crate::propuestas::Regla::Nombre),
+        m("REGLA_PREGUNTA", "Regla", "./notas", &crate::propuestas::Regla::Pregunta),
+        m("VENTANA_AL_CERRAR", "Ventana", "./notas", &crate::bandeja::Ventana::AlCerrar),
+        m("VENTANA_UNA_HORA", "Ventana", "./notas", &crate::bandeja::Ventana::UnaHora),
+        m("VENTANA_TRES_HORAS", "Ventana", "./notas", &crate::bandeja::Ventana::TresHoras),
+        m("VENTANA_FIN_DEL_DIA", "Ventana", "./notas", &crate::bandeja::Ventana::FinDelDia),
+        m("VENTANA_UN_DIA", "Ventana", "./notas", &crate::bandeja::Ventana::Dia),
+        // La bandeja abierta (recién cerrada, con una guardada desde aquí) y cerrada con llave.
+        m("BANDEJA_ABIERTA", "VistaDeLaBandeja", "./notas", &crate::reunion::VistaDeLaBandeja {
+            archivo: "reunion-2026-09-20-1402.ghost".into(),
+            vence: 1_790_527_268,
+            bytes: 4_096,
+            propuestas: Some(vec![propuesta_tuya(), propuesta_choque()]),
+            guardadas: vec![crate::propuestas::Propuesta { texto: "La cuarta fuente se cotiza aparte.".into(), ..propuesta_tuya() }],
+            mas: 0,
+            ventana: crate::bandeja::Ventana::TresHoras,
+        }),
+        m("BANDEJA_CON_LLAVE", "VistaDeLaBandeja", "./notas", &crate::reunion::VistaDeLaBandeja {
+            archivo: "reunion-2026-09-20-1402.ghost".into(),
+            vence: 1_790_527_268,
+            bytes: 4_096,
+            propuestas: None,
+            guardadas: Vec::new(),
+            mas: 1,
+            ventana: crate::bandeja::Ventana::FinDelDia,
+        }),
+        m("ESTADO_DE_LA_BANDEJA", "EstadoDeLaBandeja", "./notas", &crate::reunion::EstadoDeLaBandeja {
+            vence: Some(1_790_527_268),
+            no_corrio: false,
+        }),
+        m("SIN_BANDEJA_Y_LA_TAREA_NO_CORRIO", "EstadoDeLaBandeja", "./notas", &crate::reunion::EstadoDeLaBandeja {
+            vence: None,
+            no_corrio: true,
         }),
         // `reuniones_guardadas` devuelve una lista; se ata el elemento, con vencimiento y sin él.
         m("REUNION_GUARDADA", "ReunionGuardada", "./notas", &crate::carpeta::Reunion {
@@ -661,12 +753,14 @@ mod tests {
     }
 
     /// Que cada muestra siga siendo lo que dice ser. Un `Value::Null` aquí significa que alguien
-    /// construyó la muestra mal y el gate de arriba compararía dos vacíos.
+    /// construyó la muestra mal y el gate de arriba compararía dos vacíos — salvo en las muestras
+    /// cuyo `null` ES el mensaje: «la banda ya no tiene propuesta que enseñar» (ADR 016 §3).
     #[test]
     fn ninguna_muestra_del_contrato_esta_vacia() {
+        const NULAS_A_PROPOSITO: &[&str] = &["SIN_PROPUESTA_EN_LA_BANDA"];
         for mu in muestras() {
             assert!(
-                mu.valor.is_object() || mu.valor.is_string(),
+                mu.valor.is_object() || mu.valor.is_string() || (mu.valor.is_null() && NULAS_A_PROPOSITO.contains(&mu.nombre)),
                 "la muestra «{}» no serializó a nada útil: {:?}",
                 mu.nombre,
                 mu.valor

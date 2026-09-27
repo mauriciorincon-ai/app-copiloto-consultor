@@ -53,6 +53,16 @@ const COMANDOS: &[&str] = &[
         "fijar_retencion",
         "elegir_carpeta_de_notas",
         "ir_a_notas",
+        // Sprint 003, fase 2: las propuestas y la bandeja (ADR 016). Solo la ventana principal.
+        "guardar_propuesta",
+        "descartar_propuesta",
+        "fijar_ventana",
+        "la_bandeja",
+        "abrir_la_bandeja",
+        "decidir_en_la_bandeja",
+        "decidir_toda_la_bandeja",
+        "cambiar_la_ventana",
+        "estado_de_la_bandeja",
 ];
 
 fn main() {

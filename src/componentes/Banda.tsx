@@ -16,7 +16,8 @@ import {
 } from "../cuaderno";
 import type { Sugerencia } from "../ia";
 import { abrirLoQueVe, type Programa } from "../radar";
-import { irANotas } from "../notas";
+import { irANotas, useFijada, useLineaDePropuesta, type Propuesta } from "../notas";
+import { textoDe } from "../propuesta";
 
 /**
  * LA BANDA — la forma principal de Angel Ghost durante una reunión.
@@ -60,7 +61,14 @@ export type EstadoBanda =
    * lo decide la sugerencia que llegó —y quién la redactó—; fuera, la URL.
    */
   | "sugerencia-local"
-  | "sugerencia-api";
+  | "sugerencia-api"
+  /**
+   * Las propuestas (sprint 003, mirada 20): la ficha con la línea pasiva «Te propongo guardar» arriba,
+   * y la ficha fijada con ⌃⌥P. Dentro de Tauri los deciden los eventos `propuesta` y `fijada`; fuera,
+   * la URL, para el arnés de capturas.
+   */
+  | "ficha-propuesta"
+  | "ficha-fijada";
 
 export type PropsBanda = {
   estado: EstadoBanda;
@@ -94,6 +102,7 @@ export function Banda({
 }: PropsBanda) {
   const t = useT().banda;
   const tc = useT().cuaderno;
+  const tn = useT().notas;
   const idioma = useIdioma();
   const m = t.muestra;
   const grande = ampliada || transcript;
@@ -151,7 +160,16 @@ export function Banda({
   // La ficha del PDF y la de la pantalla SON fichas: lo que cambia es su línea de «por qué», y eso
   // lo dice la aparición. Se dibujan con la misma rama.
   const estadoReal: EstadoBanda =
-    pedido === "ficha-pdf" || pedido === "ficha-pantalla" ? "ficha" : pedido;
+    pedido === "ficha-pdf" || pedido === "ficha-pantalla" || pedido === "ficha-propuesta" || pedido === "ficha-fijada"
+      ? "ficha"
+      : pedido;
+  // La propuesta de la maqueta: la tuya, la del plan («Fecha real del tablero…»).
+  const propuestaDeMuestra: Propuesta | null =
+    deLaMaqueta && estado === "ficha-propuesta"
+      ? { regla: "cifra", de: "tuyo", texto: tn.muestra.propuestaTuya, ficha: null, seccion: null, hora: "14:16" }
+      : null;
+  const propuesta = useLineaDePropuesta(propuestaDeMuestra);
+  const fijada = useFijada(aparicion, deLaMaqueta && estado === "ficha-fijada");
   // Los turnos se piden SIEMPRE, no solo con el transcript abierto: el hueco entre abrirlo y
   // recibir la primera respuesta se vería como un transcript vacío, y un transcript vacío en una
   // reunión con gente hablando parece una avería.
@@ -268,9 +286,17 @@ export function Banda({
 
   const atajosDeFicha = (
     <span className="atajos-b">
-      <span className="tecla">
-        <kbd>⌃⌥P</kbd> {t.fijar}
-      </span>
+      {/* ⌃⌥P fijó esta ficha: donde estaba la tecla, «fijada» con la chincheta llena (mirada 20). */}
+      {fijada ? (
+        <span className="tecla fijada">
+          <Ic id="i-pin-lleno" s relleno />
+          {t.fijada}
+        </span>
+      ) : (
+        <span className="tecla">
+          <kbd>⌃⌥P</kbd> {t.fijar}
+        </span>
+      )}
       <span className="tecla">
         <kbd>⌃⌥T</kbd> {t.transcript}
       </span>
@@ -384,6 +410,22 @@ export function Banda({
         )}
 
         {chipDelCliente()}
+
+        {/* La propuesta, pasiva y en una línea (mirada 20): no toca la ficha, no suena y no se lee en
+            voz alta. Tuya, tu frase entre comillas; del cliente, el hecho que dejó. */}
+        {propuesta && (
+          <span className="propuesta-b">
+            <Ic id="i-chispa" s />
+            <span className="que-b">
+              {`${t.tePropongoGuardar} ${
+                propuesta.de === "tuyo" ? entreComillas(propuesta.texto.replace(/[.。]$/, "")) : textoDe(propuesta, tn)
+              }`}
+            </span>
+            <span className="tecla">
+              <kbd>⌃⌥↵</kbd>
+            </span>
+          </span>
+        )}
 
         {/* Con el API encendido por el usuario deja de ser cero, y va en el acento, no en rojo: fue
             su decisión (panel, mirada 1; banda, mirada 18). */}

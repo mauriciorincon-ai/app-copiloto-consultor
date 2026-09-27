@@ -149,12 +149,14 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 - **Cómo se usa:** `⌥⎋` corta todo en el acto — audio, transcript, la banda y su relleno — y
   devuelve la ventana de la reunión a su tamaño. También está el botón en *Honestidad*, por si el
   atajo está cogido por otra app.
-- **El corte alcanza las 10 piezas · desde Sprint 003.** *Honestidad* lo dice debajo del botón rojo:
-  «El botón corta 10 de 10 piezas: ninguna queda fuera.» En el sprint 2 llegaron la lectura de
+- **El corte alcanza las 11 piezas · desde Sprint 003.** *Honestidad* lo dice debajo del botón rojo:
+  «El botón corta 11 de 11 piezas: ninguna queda fuera.» En el sprint 2 llegaron la lectura de
   pantalla y **la sugerencia en camino**: si el modelo está redactando cuando cortas, lo que vuelva se
   tira y, con el proveedor externo, una petición que no haya salido ya no sale. En el sprint 3, **tus
-  turnos en texto**: el corte se los lleva, igual que al resto de la captura. **Tus notas, tus
-  acuerdos y tus fichas fijadas se quedan** —*Honestidad* dice «Tus notas siguen ahí»—. La voz del
+  turnos en texto** y **las propuestas que no has decidido**: el corte se las lleva, igual que al
+  resto de la captura. **Tus notas, tus acuerdos, tus fichas fijadas y las propuestas que guardaste se
+  quedan** —*Honestidad* dice «Tus notas siguen ahí»—, y la bandeja de una reunión ya cerrada sigue su
+  ventana. La voz del
   modo solo audio es la primera que se corta, porque es la única que tu cliente podría oír.
 - **Limitaciones conocidas:** el botón corta lo que vive en memoria **ahora**; lo que ya salió por
   los altavoces o lo que ya viste en la banda, obviamente, no se puede deshacer.
@@ -201,12 +203,52 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     habló.
   - **Si la app se cae, lo no guardado se pierde**: vive en memoria a propósito. Si sales de la app con
     notas sin guardar, se guardan solas; y si empiezas otra sesión con la anterior abierta, también.
-  - **Hoy la app borra lo vencido al abrirse y cada hora mientras está abierta.** Con la app cerrada,
-    el borrado a su hora lo hará macOS; eso llega en la fase 2 de este sprint.
+  - **Tus notas vencidas se borran al abrir la app y, mientras está abierta, a la hora exacta de su
+    vencimiento.** Con la app cerrada, hoy **no**: macOS no deja que la tarea de fondo entre en
+    Documentos. Cómo se resuelve está pendiente de una decisión del usuario (ADR 016, «Hallazgo en
+    vivo»). La bandeja sí se borra sola con la app cerrada (abajo).
   - Si macOS no deja escribir en Documentos, la app lo dice, **no pierde la nota** y te deja elegir
     otra carpeta.
   - Hasta que llegue «Este cliente», el archivo se llama `reunion-<fecha>-<hora>` y no lleva el nombre
     del cliente.
+
+### La app te propone qué guardar, y la bandeja · Nuevo · Sprint 003
+
+- **Qué hace:** mientras hablas, la app **propone** qué guardar de la reunión, con **reglas publicadas y
+  sin modelo**: cifras, plazos y fechas · tus compromisos («te lo mando», «quedamos en») · lo que choca
+  con una ficha que fijaste · nombres que no están en tu corpus · preguntas que te hicieron. Proponer
+  no es guardar: nada entra en tu archivo sin tu sí.
+- **Qué se guarda de cada lado:** de lo que dices tú, tu frase. Del cliente, **nunca su turno**: un
+  hecho en una línea («Dijeron «cuatro fuentes»; tu ficha fijada dice «tres»»), con un fragmento de
+  ocho palabras como mucho; de una pregunta, solo sus palabras clave.
+- **Cómo se usa:**
+  1. La última propuesta aparece en la banda, arriba y en una línea: «Te propongo guardar: …». No
+     tapa la ficha, no suena y no se lee en voz alta. **`⌃⌥↵` la guarda.**
+  2. En *Notas*, «Te propongo guardar esto» las enseña todas, cada una con «Guardar» y «No». Las que
+     guardas entran en tu archivo, aparte de tus acuerdos.
+  3. Al parar, «al cerrar» dice cuántas quedan sin decidir y te deja elegir **cuánto esperan en la
+     bandeja**: al cerrar · 1 h · **3 h** (de fábrica) · fin del día · 24 h. La elección se recuerda.
+  4. Tras «Guardar cifrado y cerrar», *Notas* enseña **la bandeja** con su cuenta atrás: «Guardar» lleva
+     la propuesta a su reunión (con la retención de la reunión) y «No» la borra. También «Guardar
+     todas», «Descartar todas», cambiar la ventana ahí mismo e «Ir a tus reuniones».
+  5. Si la bandeja es de una vez anterior que abriste la app, se ve su cuenta atrás, pero **lo que dice
+     pide Touch ID**, como abrir una reunión.
+- **Dónde vive:** cifrada con la misma llave que tus notas, en la carpeta de la app
+  (`~/Library/Application Support/`), **no en Documentos**: la papelera de iCloud guarda 30 días lo que
+  se borra, y una lista que promete morir a las 3 h no puede tener una copia que viva un mes.
+- **Se borra sola al vencer, aunque no abras la app.** Lo cumple macOS con una tarea programada al
+  minuto de cada vencimiento; entre vencimientos no corre nada. *Honestidad* enseña la bandeja con su
+  cuenta atrás, y si la tarea no corrió mientras la app estaba cerrada, lo dice en rojo.
+- **Limitaciones conocidas:**
+  - **La primera vez, macOS avisa de que se añadió un ítem en segundo plano.** Hasta que la app vaya
+    firmada, en Ajustes del Sistema → General → Ítems de inicio aparece como **«sh · desarrollador no
+    identificado»**: es la tarea de borrado de Angel Ghost. Si la desactivas, la bandeja solo se borra
+    con la app abierta, y *Honestidad* lo dice.
+  - Si borras la app, la tarea sigue borrando a su hora lo que quede; después se queda como una
+    entrada inerte en Ítems de inicio, que puedes quitar.
+  - Como mucho hay 30 propuestas esperando; al llegar a 30, las nuevas no entran y *Notas* lo dice.
+  - Con el modelo local encendido, la app **no** redacta mejor las propuestas: en este ciclo son solo
+    reglas.
 
 ### El modelo de voz de un idioma · desde Sprint 001
 
@@ -473,7 +515,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 | `⌃⌥L` | **lee la pantalla una vez, ahora** — también con la lectura automática apagada |
 | `⌃⌥R` | **qué ve**: abre *Sesión* con la tabla del radar — qué programa de tu Mac te mira y qué alcanza a ver |
 | `⌃⌥N` | **anotar**: el cuaderno al frente, en *Notas*, con el cursor al final de tu nota |
-| `⌃⌥P` | **fijar** la ficha que ves en la banda: queda en tus notas, con su titular y su fuente |
+| `⌃⌥P` | **fijar** la ficha que ves en la banda: queda en tus notas, con su titular y su fuente; la banda dice «fijada» |
+| `⌃⌥↵` | **guardar la propuesta** que ves en la banda: entra en tu archivo |
 | `⎋` | calla la voz — **solo mientras el modo solo audio está encendido** |
 
 > **Por qué `⌃⌥` (Control + Opción) y no `⌘⇧`.** Hasta el sprint 2 las teclas eran `⌘⇧`, y según
@@ -522,7 +565,7 @@ detecta y lo marca, pero funciona mejor con auriculares.
 |---|---|
 | 001 | la banda protegida · el acople · las dos pistas y la transcripción local · el corpus indexado · la ficha de evidencia y la sugerencia de cómo conducirse · el modelo de voz de un idioma · el corte y la pantalla de Honestidad · español e inglés |
 | 002 | el disparo por silencio · **tu diccionario técnico** · **el modo solo audio** · **la lectura de pantalla** y `⌃⌥L` · **los porqués** (la pista que no abrió, la salida de audio por su nombre, el motor que falta) · **por qué llegó la ficha y cuánto tardó** · las teclas pasan a `⌃⌥` · **el radar** (ámbar y coral) y `⌃⌥R` · **la sugerencia** y la pantalla **IA** |
-| 003 | **tus notas** (el cuaderno de la reunión, el archivo cifrado por reunión, la retención, exportar y borrar) · `⌃⌥N` y `⌃⌥P` · **el cuaderno protegido** mientras la reunión está abierta · **lo que salió al API**, en *IA* · el corte pasa a 10 piezas · las preferencias se recuerdan |
+| 003 | **tus notas** (el cuaderno de la reunión, el archivo cifrado por reunión, la retención, exportar y borrar) · `⌃⌥N` y `⌃⌥P` · **el cuaderno protegido** mientras la reunión está abierta · **lo que salió al API**, en *IA* · **las propuestas por reglas y la bandeja** con su cuenta atrás y su borrado con la app cerrada · `⌃⌥↵` · la señal «fijada» · el corte pasa a 11 piezas · las preferencias se recuerdan |
 
 > **Corregido tras la auditoría del sprint 001** (2026-09-22): tres frases de este manual habían
 > dejado de ser ciertas y se arreglaron con lo que el código hacía de verdad — el disparo por

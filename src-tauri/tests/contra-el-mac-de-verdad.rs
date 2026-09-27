@@ -485,7 +485,8 @@ const CANARIA: &str = "quetzalcoatlus-de-bolsillo-7731";
 /// Lo único que una sesión puede dejar escrito, y por qué.
 ///
 /// **Cada entrada de aquí es una promesa que se afloja**, así que se añaden de a una, nombradas, y el
-/// summary del sprint las lista. Tres, al día del sprint 003.
+/// summary del sprint las lista. Cinco, al día de la fase 2 del sprint 003 (y el plist de launchd, que
+/// este test no escribe: lo prueba el test en vivo).
 struct Permitido {
     /// El índice del corpus: documentos DEL USUARIO, que la regla del efímero sí deja persistir.
     indice: PathBuf,
@@ -499,11 +500,24 @@ struct Permitido {
     /// comprobado abajo **con el archivo descifrado**: la canaria del cliente no está dentro. Mirarla
     /// sobre los bytes cifrados no probaría nada.
     notas: PathBuf,
+    /// **La bandeja** (sprint 003, fase 2, ADR 016 §4): las propuestas que no decidiste, cifradas y
+    /// con su vencimiento (techo 24 h). Es lo único escrito que puede llevar palabras del cliente, y
+    /// por eso tiene su propia comprobación, descifrada: **jamás su turno**, y cada fragmento suyo de
+    /// ocho palabras como mucho (una pregunta, cinco palabras clave). La canaria puede aparecer como
+    /// una de esas palabras: es lo que el ADR 016 §2 decidió dejar persistir, y lo que la regla dura 1
+    /// del `CLAUDE.md` nombra («la bandeja de propuestas durante la ventana elegida»).
+    bandeja: PathBuf,
+    /// La lista «hora · archivo» que lee la tarea de launchd: rutas y horas, nada de la reunión.
+    lista: PathBuf,
 }
 
 impl Permitido {
     fn cubre(&self, ruta: &Path) -> bool {
-        ruta.starts_with(&self.indice) || ruta == self.diccionario || ruta.starts_with(&self.notas)
+        ruta.starts_with(&self.indice)
+            || ruta == self.diccionario
+            || ruta.starts_with(&self.notas)
+            || ruta.starts_with(&self.bandeja)
+            || ruta == self.lista
     }
 }
 
@@ -776,6 +790,39 @@ fn una_sesion_completa(casa: &Path, corpus_en: &Path, llave: &dyn Llaves) -> (Ve
     println!("[sesión] notas guardadas y cifradas");
     ejercido.push("notas");
 
+    // 7-bis · **La bandeja** (sprint 003, fase 2, ADR 016). Las reglas miran los turnos de verdad —la
+    //     pregunta del cliente con la canaria y un plazo que dijo— y lo que no decidiste se sella en la
+    //     bandeja con su vencimiento, junto a la lista que lee la tarea de launchd. **El plist no se
+    //     escribe aquí**: registrarlo es tocar launchd y los Ítems de inicio de quien corre el test
+    //     (regla 22); lo prueba el test en vivo, con su «sí».
+    let plazo = Turno {
+        texto: format!("Necesitamos 12 semanas para el tablero del {CANARIA} y la integración completa con el ERP."),
+        hora: "14:04".into(),
+        ..turno.clone()
+    };
+    dicho.push(plazo.texto.clone());
+    let nada = |_: &str| false;
+    let ctx = app_copiloto_consultor_lib::propuestas::Contexto { fijadas: &[], conoce: &nada };
+    let mut sin_decidir = app_copiloto_consultor_lib::propuestas::proponer(&turno, &ctx);
+    sin_decidir.extend(app_copiloto_consultor_lib::propuestas::proponer(&plazo, &ctx));
+    assert!(!sin_decidir.is_empty(), "los turnos del cliente no dieron ninguna propuesta: la bandeja no se midió");
+    let bandeja = app_copiloto_consultor_lib::bandeja::Bandeja::en(casa.join(app_copiloto_consultor_lib::bandeja::CARPETA));
+    let cerro = 1_790_517_600;
+    let contenido_b = app_copiloto_consultor_lib::bandeja::Contenido {
+        version: app_copiloto_consultor_lib::bandeja::VERSION,
+        reunion: format!("{base}.{}", app_copiloto_consultor_lib::carpeta::EXTENSION),
+        encabezado: Encabezado { empezo: "2026-09-27 14:02".into(), minutos: 3, cliente: None },
+        vence_de_la_reunion: 0,
+        cerro,
+        propuestas: sin_decidir,
+    };
+    assert!(bandeja.dejar(llave, &contenido_b, Some(cerro + 3 * 3_600)).expect("la bandeja no se pudo escribir"));
+    let lista = app_copiloto_consultor_lib::vencimiento::lista_en_texto(&bandeja.pendientes());
+    app_copiloto_consultor_lib::almacen::escribir(&casa.join(app_copiloto_consultor_lib::vencimiento::LISTA), lista.as_bytes())
+        .expect("la lista de vencimientos no se pudo escribir");
+    println!("[sesión] bandeja sellada con {} propuesta(s) y su lista de vencimientos", contenido_b.propuestas.len());
+    ejercido.push("bandeja");
+
     // 8 · El kill-switch sobre lo que guardó la última pregunta del cliente.
     disparador.reiniciar();
     (dicho, ejercido)
@@ -806,6 +853,8 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
         indice: casa.join("corpus"),
         diccionario: casa.join("diccionario.yaml"),
         notas: casa.join(app_copiloto_consultor_lib::carpeta::CARPETA),
+        bandeja: casa.join(app_copiloto_consultor_lib::bandeja::CARPETA),
+        lista: casa.join(app_copiloto_consultor_lib::vencimiento::LISTA),
     };
     let llave = LlaveDeLaPrueba(Llave::nueva().a_hex());
 
@@ -821,6 +870,7 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     assert!(ejercido.contains(&"ocr"), "la lectura de pantalla no se ejerció: el inventario no la midió");
     assert!(ejercido.contains(&"sintesis"), "la síntesis no se ejerció: el inventario no la midió");
     assert!(ejercido.contains(&"notas"), "las notas no se guardaron: el inventario no las midió");
+    assert!(ejercido.contains(&"bandeja"), "la bandeja no se escribió: el inventario no la midió");
 
     let despues: BTreeMap<PathBuf, Huella> = sitios.iter().flat_map(|s| inventario(s)).collect();
 
@@ -867,8 +917,26 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     // archivos de notas se miran DESCIFRADOS**: sobre los bytes cifrados, la canaria no aparecería
     // nunca, estuviera dentro o no.
     let mut notas_descifradas = 0;
+    let mut bandejas_descifradas = 0;
     for (ruta, ..) in &tocados {
         let Ok(bytes) = std::fs::read(ruta) else { continue };
+        if ruta.starts_with(&permitido.bandeja) {
+            let claro = notas::cifrado::abrir(&llave.leer().unwrap(), &bytes)
+                .unwrap_or_else(|e| panic!("la bandeja de la sesión no se abre con su llave ({e}): {}", ruta.display()));
+            let dentro: app_copiloto_consultor_lib::bandeja::Contenido =
+                serde_json::from_slice(&claro).expect("la bandeja descifrada no se lee");
+            for p in &dentro.propuestas {
+                for dicho_por_el_cliente in dicho.iter().filter(|d| d.contains(CANARIA)) {
+                    assert!(!p.texto.contains(dicho_por_el_cliente.as_str()), "el turno del cliente entero acabó en la bandeja");
+                }
+                if p.de == app_copiloto_consultor_lib::propuestas::De::Cliente {
+                    let n = p.texto.split_whitespace().filter(|w| *w != "·").count();
+                    assert!(n <= 8, "un fragmento del cliente de {n} palabras en la bandeja: «{}»", p.texto);
+                }
+            }
+            bandejas_descifradas += 1;
+            continue;
+        }
         let claro = if ruta.starts_with(&permitido.notas) {
             let abierto = notas::cifrado::abrir(&llave.leer().unwrap(), &bytes)
                 .unwrap_or_else(|e| panic!("las notas de la sesión no se abren con su llave ({e}): {}", ruta.display()));
@@ -888,6 +956,7 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
         }
     }
     assert_eq!(notas_descifradas, 1, "tenía que haber un archivo de notas, descifrado y revisado");
+    assert_eq!(bandejas_descifradas, 1, "tenía que haber una bandeja, descifrada y revisada");
     assert!(dicho.iter().any(|d| d.contains(CANARIA)), "la canaria no llegó a recorrer la sesión");
 
     let _ = std::fs::remove_dir_all(&casa);

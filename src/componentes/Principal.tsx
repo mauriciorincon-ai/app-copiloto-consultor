@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Ventana, type Seccion } from "./Ventana";
 import { Sesion } from "../pantallas/Sesion";
 import { Permisos } from "../pantallas/Permisos";
@@ -7,7 +7,17 @@ import { Corpus } from "../pantallas/Corpus";
 import { Idioma } from "../pantallas/Idioma";
 import { Ia } from "../pantallas/Ia";
 import { Notas } from "../pantallas/Notas";
-import { useCuaderno, useMuestraDelCuaderno } from "../notas";
+import {
+  duracion,
+  useBandeja,
+  useCuaderno,
+  useMuestraDeLaBandeja,
+  useMuestraDelCuaderno,
+  useQuedan,
+  type VistaDeNotas,
+} from "../notas";
+import { useT } from "../i18n";
+import { hayTauri } from "../puente";
 import {
   useBytesALaRed,
   useEscucha,
@@ -45,8 +55,28 @@ export function Principal({ busqueda = globalThis.location?.search ?? "" }: { bu
   // El chip del rail dice «Cerrando…» mientras una reunión parada espera que la guardes o la
   // descartes. Fuera de Tauri, cuando la URL pide Notas «al cerrar».
   const estadoPedido = new URLSearchParams(busqueda).get("estado");
-  const [cuaderno] = useCuaderno(useMuestraDelCuaderno(estadoPedido === "al-cerrar" ? "al-cerrar" : "archivo"));
+  const [cuaderno] = useCuaderno(
+    useMuestraDelCuaderno(estadoPedido?.startsWith("al-cerrar") ? "al-cerrar" : "archivo"),
+  );
   const cerrando = Boolean(cuaderno?.abierta && !cuaderno.escuchando);
+  // El chip de la bandeja (ADR 016): la que espera, con su cuenta; o «vencida» mientras Notas enseña
+  // la que acaba de vencer. Fuera de Tauri, la de la URL.
+  const tn = useT().notas;
+  const [bandeja] = useBandeja(
+    useMuestraDeLaBandeja(estadoPedido === "bandeja" || estadoPedido === "bandeja-llave" || estadoPedido === "vencida" ? estadoPedido : "archivo"),
+  );
+  const quedan = useQuedan(bandeja?.vence ?? null);
+  const [vistaDeNotas, setVistaDeNotas] = useState<VistaDeNotas | null>(null);
+  const alCambiarDeVista = useCallback((v: VistaDeNotas | null) => setVistaDeNotas(v), []);
+  const vencidaEnPantalla = seccion === "notas" && vistaDeNotas === "vencida";
+  // Fuera de Tauri la escucha de muestra «escucha» siempre (la maqueta del sprint 1): no cuenta aquí.
+  const chipDeLaBandeja = hayTauri() && escucha.escuchando
+    ? null
+    : vencidaEnPantalla
+      ? { texto: tn.vencidaChip, vencida: true }
+      : quedan !== null && quedan > 0
+        ? { texto: `${tn.bandejaChip} ${duracion(quedan, tn)[1]}`, vencida: false }
+        : null;
 
   return (
     <Ventana
@@ -54,6 +84,7 @@ export function Principal({ busqueda = globalThis.location?.search ?? "" }: { bu
       ir={setSeccion}
       enSesion={reunion.que === "detectada"}
       cerrando={cerrando}
+      bandeja={chipDeLaBandeja}
       cliente={reunion.que === "detectada" ? reunion.cliente : undefined}
     >
       {seccion === "sesion" && (
@@ -67,11 +98,11 @@ export function Principal({ busqueda = globalThis.location?.search ?? "" }: { bu
         />
       )}
       {seccion === "permisos" && <Permisos permisos={permisos} />}
-      {seccion === "honestidad" && <Honestidad bytes={bytes} escucha={escucha} />}
+      {seccion === "honestidad" && <Honestidad bytes={bytes} escucha={escucha} busqueda={busqueda} />}
       {seccion === "corpus" && <Corpus />}
       {seccion === "idioma" && <Idioma transcribe={transcribe} />}
       {seccion === "ia" && <Ia busqueda={busqueda} />}
-      {seccion === "notas" && <Notas busqueda={busqueda} />}
+      {seccion === "notas" && <Notas busqueda={busqueda} alCambiarDeVista={alCambiarDeVista} />}
     </Ventana>
   );
 }

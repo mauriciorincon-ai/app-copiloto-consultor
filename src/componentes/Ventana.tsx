@@ -44,6 +44,7 @@ export function Ventana({
   enSesion = false,
   cliente = "Meet",
   cerrando = false,
+  bandeja = null,
   children,
 }: {
   seccion: Seccion;
@@ -54,6 +55,11 @@ export function Ventana({
   cliente?: string;
   /** Una reunión parada espera que la guardes o la descartes: el chip dice «Cerrando…». */
   cerrando?: boolean;
+  /**
+   * La bandeja espera (ADR 016): el chip dice «Bandeja · 2 h 41», o «Bandeja · vencida» mientras Notas
+   * enseña la que acaba de vencer. Mientras escuchas manda la reunión, no la bandeja.
+   */
+  bandeja?: { texto: string; vencida: boolean } | null;
   children: ReactNode;
 }) {
   // La cifra es la del contador, no una constante: con el API encendido, el chip decía «0 B»
@@ -108,6 +114,11 @@ export function Ventana({
             <span className="estado halo">
               <Ic id="i-reloj" s />
               <span>{tn.cerrando}</span>
+            </span>
+          ) : bandeja ? (
+            <span className={bandeja.vencida ? "estado mute" : "estado halo"}>
+              <Ic id="i-reloj" s />
+              <span>{bandeja.texto}</span>
             </span>
           ) : enSesion ? (
             <span className="estado halo">

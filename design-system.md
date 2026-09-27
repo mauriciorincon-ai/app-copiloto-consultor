@@ -1,7 +1,7 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.11.0  # 1.11.0: cómo ENVEJECE «todavía no» — el estado del sprint se pone al día, y lo que se libera se agrupa (sprint 001, fase 3). 1.10.0: «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2). 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
+version: 1.12.0  # 1.12.0: las propuestas y la bandeja CONSTRUIDAS (sprint 003, fase 2 — maquetado, no visto; se valida en el gate del MVP). 1.11.0: cómo ENVEJECE «todavía no» — el estado del sprint se pone al día, y lo que se libera se agrupa (sprint 001, fase 3). 1.10.0: «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2). 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
 fecha: 2026-09-21
 estado: aprobado   # G-Diseño aprobado el 2026-09-20 («sí apruebo la pantalla completa»)
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
@@ -517,6 +517,31 @@ cuatro todavía no existen»**, no «7 de 7».
    estado porque era opcional y futura; el acople se entrega en el sprint 001, y en el sprint 002
    el mismo permiso encuentra la pestaña de Meet para leer su pantalla.
 
+## 9-septies · Las propuestas y la bandeja, construidas (sprint 003, fase 2, 2026-09-27)
+
+> **Maquetado, no visto.** Por decisión del usuario (2026-09-27, «solo muéstrame cosas realmente
+> importantes que deba decidir; el resto lo validamos en los gates»), estas formas se construyen con
+> lo maquetado y su veredicto viaja al gate del MVP. Registro: `docs/diseno/README.md`.
+
+Lo que el sprint 3 añadió al sistema, sobre `.propuesta`, `.cuenta` y `.ventanas` (§9-ter y §9-quater):
+
+| Clase | Dónde | Regla |
+|---|---|---|
+| `.banda .propuesta-b` | la línea de estado de la banda | la propuesta **pasiva y en una línea**: halo, `i-chispa`, la tecla `⌃⌥↵`; no toca la ficha, no suena, no se lee en voz alta |
+| `.tecla.fijada` | donde estaba «⌃⌥P fijar» | la señal al fijar: chincheta llena + «fijada» + verde (símbolo, texto y color, §4); dura mientras esa ficha siga en la banda |
+| `.franja.mute` | «al cerrar» con la ventana en cero | gris, no ámbar: con «al cerrar» no hay bandeja y no hay nada que advertir |
+| `.cuenta.vencida` | la bandeja al llegar a cero | la cuenta se apaga y dice a qué hora venció |
+| `.franja .ventanas .op` | los chips de la ventana dentro de una franja | llevan su propia superficie: el tinte del elegido sobre el ámbar no alcanzaba AA en el tema claro (axe) |
+
+**Cómo se lee una propuesta** (`src/propuesta.ts`, una sola vez para Notas, la bandeja y la banda):
+tuya, tu frase; del cliente, **un hecho en una línea** con su plantilla —«Dijeron «…»», «Mencionaron a
+«…», que no está en tu corpus», «Te preguntaron por: …»—, jamás su turno. Tras el origen, la regla
+que saltó («· cifra y fecha»), o la sección de la ficha con que choca. El catálogo entero, en
+`notas.html` «sprint 3 · las cinco reglas».
+
+**La bandeja con llave.** Una bandeja de otra sesión de la app enseña su cuenta atrás sin abrirla;
+**lo que dice** pide Touch ID, como abrir una reunión, y la ventana no se cambia hasta abrirla.
+
 ## 10 · Deuda de diseño declarada
 
 | Qué | Por qué | Cuándo se paga |
@@ -541,4 +566,5 @@ cuatro todavía no existen»**, no «7 de 7».
 | 1.6.0 | 2026-09-20 | mirada 4-bis: `propuesta` (proponer ≠ guardar) · varios idiomas · puerta local para Claude Code |
 | 1.7.0 | 2026-09-20 | mirada 4-ter: **bandeja de propuestas con cuenta atrás** (§9-quater) · G-Diseño aprobado |
 | 1.8.0 | 2026-09-20 | sprint 001, fase 1a: **§9-quinquies — los seis estados de CONTENIDO de la banda** · tokens de alto (`--banda-h*`) · acciones como teclas · el asa con un trabajo · transcript a la derecha |
+| 1.12.0 | 2026-09-27 | sprint 003, fase 2: **§9-septies — las propuestas y la bandeja, construidas** (`propuesta-b`, `tecla.fijada`, `franja.mute`, `cuenta.vencida`, los chips dentro de una franja) — maquetado, no visto |
 | 1.9.0 | 2026-09-20 | mirada 11: **la maniobra** — catálogo versionado de seis maneras de responder + «lo más cercano que sí tienes», los dos deterministas; `maniobra-b` y `cercano-b`; estado «sin resultado · ampliada» |

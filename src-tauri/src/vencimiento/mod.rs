@@ -212,6 +212,19 @@ fn uid() -> u32 {
     unsafe { libc::getuid() }
 }
 
+/// El último segundo del día de `instante` en la hora del Mac: «fin del día» de la bandeja (ADR 016
+/// §4), las 23:59 del día en que cierras.
+pub fn fin_del_dia(instante: i64) -> i64 {
+    // SEGURIDAD: `localtime_r` escribe en una estructura que vive en esta función.
+    let pasado = unsafe {
+        let t = instante as libc::time_t;
+        let mut tm: libc::tm = std::mem::zeroed();
+        libc::localtime_r(&t, &mut tm);
+        i64::from(tm.tm_hour) * 3_600 + i64::from(tm.tm_min) * 60 + i64::from(tm.tm_sec)
+    };
+    instante + (86_399 - pasado)
+}
+
 /// La hora del Mac de un instante Unix, con `localtime_r`: sin una biblioteca de fechas.
 pub fn hora_del_mac(instante: i64) -> Minuto {
     // SEGURIDAD: `localtime_r` escribe en una estructura que vive en esta función.
@@ -264,6 +277,18 @@ mod pruebas {
             p(HOY - 10, "/b/bandeja/reunion.ghost"),
         ]);
         assert_eq!(texto, format!("{}\t/b/bandeja/reunion.ghost\n{}\t/n/Angel Ghost/reunion-2026-09-27-1402.ghost\n", HOY - 10, HOY + 3_600));
+    }
+
+    /// «Fin del día» son las 23:59:59 del día de cierre en la hora del Mac, sea la zona que sea.
+    #[test]
+    fn el_fin_del_dia_es_el_ultimo_segundo_del_dia_del_mac() {
+        for instante in [HOY, HOY + 9 * 3_600 + 59 * 60 + 59, HOY + 13 * 3_600] {
+            let fin = fin_del_dia(instante);
+            assert!(fin >= instante && fin - instante < 86_400, "{instante} → {fin}");
+            let m = hora_del_mac(fin);
+            assert_eq!((m.hora, m.minuto), (23, 59), "{instante} → {fin}");
+            assert_ne!(hora_del_mac(fin + 1).dia, m.dia, "el segundo siguiente ya es mañana");
+        }
     }
 
     #[test]

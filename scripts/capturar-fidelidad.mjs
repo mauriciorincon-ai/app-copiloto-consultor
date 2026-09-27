@@ -92,6 +92,9 @@ const ARTEFACTOS = [
       { id: "sugerencia-local", maqueta: "banda.html", estado: "sugerencia-local", alto: 88, url: "ventana=banda&estado=sugerencia-local" },
       { id: "sugerencia-api", maqueta: "banda.html", estado: "sugerencia-api", alto: 88, url: "ventana=banda&estado=sugerencia-api" },
       { id: "sugerencia-2", maqueta: "banda.html", estado: "sugerencia-2", alto: 200, url: "ventana=banda&estado=sugerencia-local&ampliada=1" },
+      // Las propuestas (sprint 003, fase 2, mirada 20): la línea pasiva y la señal «fijada».
+      { id: "propuesta", maqueta: "banda.html", estado: "s3-propuesta", alto: 88, url: "ventana=banda&estado=ficha-propuesta" },
+      { id: "fijada", maqueta: "banda.html", estado: "s3-fijada", alto: 88, url: "ventana=banda&estado=ficha-fijada" },
     ],
   },
   {
@@ -110,11 +113,21 @@ const ARTEFACTOS = [
       // Desde la fase 1 del sprint 003 Honestidad se compara con «así se ve hoy · sprint 3»: la
       // tarjeta de lo que quedará volvió, y el corte tiene diez piezas.
       { id: "honestidad", maqueta: "honestidad.html", estado: "s3", alto: 640, url: "ventana=principal&pantalla=honestidad" },
+      // La bandeja en Honestidad (fase 2): su cuenta atrás, y la tarea de borrado que no corrió.
+      { id: "honestidad-bandeja", maqueta: "honestidad.html", estado: "s3-bandeja", alto: 640, url: "ventana=principal&pantalla=honestidad&estado=bandeja" },
+      { id: "honestidad-no-corrio", maqueta: "honestidad.html", estado: "s3-no-corrio", alto: 640, url: "ventana=principal&pantalla=honestidad&estado=no-corrio" },
       // Notas (C9, sprint 003, fase 1): las cuatro vistas que el usuario recorre.
       { id: "notas-durante", maqueta: "notas.html", estado: "s3-durante", alto: 640, url: "ventana=principal&pantalla=notas&estado=durante" },
       { id: "notas-al-cerrar", maqueta: "notas.html", estado: "s3-al-cerrar", alto: 640, url: "ventana=principal&pantalla=notas&estado=al-cerrar" },
       { id: "notas-archivo", maqueta: "notas.html", estado: "s3-archivo", alto: 640, url: "ventana=principal&pantalla=notas&estado=archivo" },
       { id: "notas-exportar", maqueta: "notas.html", estado: "s3-exportar", alto: 640, url: "ventana=principal&pantalla=notas&estado=exportar" },
+      // Las propuestas y la bandeja (fase 2, mirada 20 y los estados «maquetado, no visto»).
+      { id: "notas-propuestas", maqueta: "notas.html", estado: "s3-propuestas", alto: 640, url: "ventana=principal&pantalla=notas&estado=propuestas" },
+      { id: "notas-cerrar-bandeja", maqueta: "notas.html", estado: "s3-cerrar-bandeja", alto: 640, url: "ventana=principal&pantalla=notas&estado=al-cerrar-bandeja" },
+      { id: "notas-cerrar-cero", maqueta: "notas.html", estado: "s3-cerrar-cero", alto: 640, url: "ventana=principal&pantalla=notas&estado=al-cerrar-cero" },
+      { id: "notas-bandeja", maqueta: "notas.html", estado: "s3-bandeja", alto: 640, url: "ventana=principal&pantalla=notas&estado=bandeja" },
+      { id: "notas-bandeja-llave", maqueta: "notas.html", estado: "s3-bandeja-llave", alto: 640, url: "ventana=principal&pantalla=notas&estado=bandeja-llave" },
+      { id: "notas-vencida", maqueta: "notas.html", estado: "s3-vencida", alto: 640, url: "ventana=principal&pantalla=notas&estado=vencida" },
       { id: "idioma", maqueta: "idioma.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=idioma" },
       // El radar coral en Sesión (fase 4): «software invasivo en tu Mac», con las cinco filas.
       { id: "vigilancia", maqueta: "sesion.html", estado: "vigilancia", alto: 640, url: "ventana=principal&pantalla=sesion&radar=vigilancia" },

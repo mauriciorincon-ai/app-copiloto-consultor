@@ -82,13 +82,12 @@ const DEUDA: Record<string, string> = {
   // descifrado de una reunión no cruza al webview (la maqueta no tiene «abrir»). `hora`, `externo` y
   // `Trozo.texto` los lee la misma vista, aunque el gate no pueda distinguirlos por su nombre.
 
-  // ── Sprint 003, fase 2: las propuestas cruzan antes que su pantalla ──
+  // ── Sprint 003, fase 2: las propuestas cruzaron antes que su pantalla; pagada en la misma fase ──
   //
-  // El cuaderno ya cuenta las propuestas (ADR 016), y la pantalla que las enseña espera la mirada 20.
-  // Se pagan en la fase 2, con «al cerrar» de Notas.
-  "ResumenDelCuaderno.propuestas": "fase 2 del S3 — «al cerrar» de Notas, tras la mirada 20",
-  "ResumenDelCuaderno.sinDecidir": "fase 2 del S3 — la franja de la bandeja en «al cerrar», tras la mirada 20",
-  "ResumenDelCuaderno.bytesPropuestas": "fase 2 del S3 — «al cerrar» de Notas, tras la mirada 20",
+  // `propuestas` y `sinDecidir` los leen «durante» y la franja de «al cerrar» de Notas.
+  // `bytesPropuestas` salió del contrato —y del cuaderno—: «Se va a guardar» no tiene fila de
+  // propuestas en la maqueta (la franja dice «Las 3 que guardaste van en tu archivo»), y un campo que
+  // nadie pinta no cruza. `EstadoDeLaBandeja.bandejas` nació y salió en la misma fase, por lo mismo.
 };
 
 /** Cada `export type X = … { … }`, con las variantes de una unión incluidas. */

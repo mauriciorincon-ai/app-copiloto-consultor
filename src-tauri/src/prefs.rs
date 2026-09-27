@@ -106,6 +106,8 @@ pub struct Preferencias {
     /// La carpeta de tus notas, **solo si elegiste otra** porque macOS negó Documentos. `None` es
     /// `~/Documents/Angel Ghost/` (ADR 015 §2).
     pub carpeta_de_notas: Option<String>,
+    /// Cuánto esperan en la bandeja las propuestas que no decidiste (ADR 016 §4). De fábrica, 3 h.
+    pub ventana_de_la_bandeja: crate::bandeja::Ventana,
 }
 
 impl Default for Preferencias {
@@ -119,6 +121,7 @@ impl Default for Preferencias {
             retencion: Retencion::default(),
             conservar_mis_turnos: false,
             carpeta_de_notas: None,
+            ventana_de_la_bandeja: crate::bandeja::Ventana::default(),
         }
     }
 }
@@ -206,6 +209,7 @@ mod tests {
             retencion: Retencion::Anio,
             conservar_mis_turnos: true,
             carpeta_de_notas: Some("/Users/quien/Notas de reuniones".into()),
+            ventana_de_la_bandeja: crate::bandeja::Ventana::FinDelDia,
         };
         guardar(&ruta, &elegidas).unwrap();
         assert_eq!(leer(&ruta), elegidas);
@@ -225,6 +229,7 @@ mod tests {
     fn la_retencion_vence_lo_que_dice() {
         assert_eq!(Preferencias::default().retencion, Retencion::Dias90);
         assert!(!Preferencias::default().conservar_mis_turnos, "tus turnos nacen apagados");
+        assert_eq!(Preferencias::default().ventana_de_la_bandeja, crate::bandeja::Ventana::TresHoras, "la bandeja espera 3 h de fábrica");
         let ahora = 1_800_000_000;
         assert_eq!(Retencion::Dias7.vence(ahora), ahora + 7 * 86_400);
         assert_eq!(Retencion::Anio.vence(ahora), ahora + 365 * 86_400);

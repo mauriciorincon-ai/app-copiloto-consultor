@@ -778,6 +778,8 @@ fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Inf
                 // Del cuaderno, lo que salió de la captura: tus turnos y la ficha que la banda
                 // enseñaba. Tu nota, tus acuerdos y tus fijadas se quedan (ADR 015 §7).
                 corte::Pieza::TusTurnos => reunion::cortar(app),
+                // Las propuestas sin decidir, y la línea de la banda con ellas (ADR 016 §4).
+                corte::Pieza::Propuestas => reunion::cortar_las_propuestas(app),
                 // Ya cortadas arriba, todas a la vez.
                 corte::Pieza::AudioDelMicrofono
                 | corte::Pieza::AudioDelSistema
@@ -881,7 +883,16 @@ pub fn run() {
             borrar_reunion,
             fijar_retencion,
             elegir_carpeta_de_notas,
-            ir_a_notas
+            ir_a_notas,
+            guardar_propuesta,
+            descartar_propuesta,
+            fijar_ventana,
+            la_bandeja,
+            abrir_la_bandeja,
+            decidir_en_la_bandeja,
+            decidir_toda_la_bandeja,
+            cambiar_la_ventana,
+            estado_de_la_bandeja
         ])
         .setup(|app| {
             // El invariante se comprueba ANTES de abrir nada y aborta el arranque si falla:
@@ -2323,6 +2334,71 @@ fn ir_a_notas(app: tauri::AppHandle) {
     reunion::ir_a_notas(&app);
 }
 
+// ---------------------------------------------------------------------------------------------
+// Sprint 003, fase 2 — LAS PROPUESTAS Y LA BANDEJA (ADR 016). La lógica vive en `reunion.rs`.
+// ---------------------------------------------------------------------------------------------
+
+/// «Guardar» una propuesta en Notas, durante la reunión.
+#[tauri::command]
+fn guardar_propuesta(app: tauri::AppHandle, id: u32) -> bool {
+    reunion::guardar_propuesta(&app, id)
+}
+
+/// «No»: la propuesta muere en ese momento.
+#[tauri::command]
+fn descartar_propuesta(app: tauri::AppHandle, id: u32) -> bool {
+    reunion::descartar_propuesta(&app, id)
+}
+
+/// La ventana de la bandeja, elegida en «al cerrar».
+#[tauri::command]
+fn fijar_ventana(app: tauri::AppHandle, ventana: bandeja::Ventana) {
+    reunion::fijar_ventana(&app, ventana);
+}
+
+/// La bandeja que vence antes, abierta o cerrada con llave.
+#[tauri::command]
+fn la_bandeja(app: tauri::AppHandle) -> Option<reunion::VistaDeLaBandeja> {
+    reunion::la_bandeja(&app)
+}
+
+/// «Abrir la bandeja»: pide el desbloqueo, como abrir una reunión. Síncrono a propósito, como
+/// `exportar_reunion`: esperar a Touch ID no congela la ventana.
+#[tauri::command]
+fn abrir_la_bandeja(app: tauri::AppHandle, archivo: String, idioma: String) -> Result<(), String> {
+    reunion::abrir_la_bandeja(&app, &archivo, &idioma)
+}
+
+/// «Guardar» o «No» sobre una propuesta de la bandeja.
+#[tauri::command]
+fn decidir_en_la_bandeja(app: tauri::AppHandle, archivo: String, indice: usize, guardar: bool) -> Result<(), String> {
+    reunion::decidir_en_la_bandeja(&app, &archivo, indice, guardar)
+}
+
+/// «Guardar todas» o «Descartar todas».
+#[tauri::command]
+fn decidir_toda_la_bandeja(app: tauri::AppHandle, archivo: String, guardar: bool) -> Result<(), String> {
+    reunion::decidir_toda_la_bandeja(&app, &archivo, guardar)
+}
+
+/// La ventana, cambiada desde la bandeja: la vuelve a sellar.
+#[tauri::command]
+fn cambiar_la_ventana(app: tauri::AppHandle, archivo: String, ventana: bandeja::Ventana) -> Result<(), String> {
+    reunion::cambiar_la_ventana(&app, &archivo, ventana)
+}
+
+/// Lo que Honestidad dice de la bandeja, sin abrirla.
+#[tauri::command]
+fn estado_de_la_bandeja(app: tauri::AppHandle) -> reunion::EstadoDeLaBandeja {
+    reunion::estado_de_la_bandeja(&app)
+}
+
+/// `⌃⌥↵` — guardar la última propuesta, la que la banda enseña (ADR 016 §3).
+fn el_atajo_de_guardar_la_propuesta() -> tauri_plugin_global_shortcut::Shortcut {
+    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
+    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::Enter)
+}
+
 /// `⌃⌥N` — el cuaderno al frente, en tu nota.
 fn el_atajo_de_anotar() -> tauri_plugin_global_shortcut::Shortcut {
     use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
@@ -2386,6 +2462,8 @@ fn atender_el_atajo<R: tauri::Runtime>(
         reunion::ir_a_notas(app);
     } else if *atajo == el_atajo_de_fijar() {
         reunion::fijar(app);
+    } else if *atajo == el_atajo_de_guardar_la_propuesta() {
+        reunion::guardar_la_ultima(app);
     } else if *atajo == el_atajo_de_callar() {
         let estado = app.state::<LaVozQueSale>();
         estado.voz.callar();
@@ -2456,6 +2534,13 @@ fn registrar_el_kill_switch<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
         Err(e) => println!(
             "[notas] NO se pudo registrar ⌃⌥P ({e}): la ficha de la banda no se va a poder fijar \
              con la tecla"
+        ),
+    }
+    match app.global_shortcut().register(el_atajo_de_guardar_la_propuesta()) {
+        Ok(()) => println!("[propuestas] ⌃⌥↵ «guardar la propuesta» registrado"),
+        Err(e) => println!(
+            "[propuestas] NO se pudo registrar ⌃⌥↵ ({e}): las propuestas se siguen guardando en \
+             Notas, pero la tecla no va a responder"
         ),
     }
 }
@@ -2634,6 +2719,7 @@ mod pruebas_de_las_teclas {
             (el_atajo_del_radar(), Code::KeyR),
             (el_atajo_de_anotar(), Code::KeyN),
             (el_atajo_de_fijar(), Code::KeyP),
+            (el_atajo_de_guardar_la_propuesta(), Code::Enter),
         ];
         for (atajo, tecla) in esperadas {
             assert_eq!(atajo, Shortcut::new(control_opcion, tecla), "{tecla:?} no es ⌃⌥");
@@ -2656,6 +2742,7 @@ mod pruebas_de_las_teclas {
             el_atajo_de_callar(),
             el_atajo_de_anotar(),
             el_atajo_de_fijar(),
+            el_atajo_de_guardar_la_propuesta(),
         ];
         for (i, a) in todas.iter().enumerate() {
             for b in &todas[i + 1..] {

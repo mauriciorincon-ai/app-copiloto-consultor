@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-la-bandeja"
+description = "Enables the la_bandeja command without any pre-configured scope."
+commands.allow = ["la_bandeja"]
+
+[[permission]]
+identifier = "deny-la-bandeja"
+description = "Denies the la_bandeja command without any pre-configured scope."
+commands.deny = ["la_bandeja"]

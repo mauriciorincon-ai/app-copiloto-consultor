@@ -151,6 +151,26 @@ impl Bandeja {
         r.map(|_| ())
     }
 
+    /// **Cambiar la ventana desde la bandeja** (ADR 016 §4): se vuelve a sellar con otro
+    /// vencimiento, contado desde el cierre y con su techo de 24 h. Con «al cerrar» (`None`) la
+    /// bandeja muere ahora: elegir cero es no esperar más.
+    /// `vence` recibe el cierre de la bandeja y devuelve el vencimiento nuevo.
+    pub fn revencer(&self, llaves: &dyn Llaves, archivo: &str, vence: impl FnOnce(i64) -> Option<i64>) -> Result<(), String> {
+        let (c, _) = self.abrir(llaves, archivo)?;
+        let Some(vence) = vence(c.cerro) else { return self.borrar(archivo) };
+        let vence = vence.clamp(c.cerro + 1, c.cerro + TECHO);
+        let mut claro = serde_json::to_vec(&c).map_err(|e| e.to_string())?;
+        let r = self.carpeta.escribir_sellado(llaves, archivo, &claro, vence);
+        claro.fill(0);
+        r.map(|_| ())
+    }
+
+    /// Borra una bandeja entera: «Descartar todas», o deshacer la que se escribió al cerrar si las
+    /// notas no se pudieron guardar.
+    pub fn borrar(&self, archivo: &str) -> Result<(), String> {
+        self.carpeta.borrar(archivo)
+    }
+
     /// Lo vencido a `ahora`, borrado. Devuelve cuántas bandejas.
     pub fn barrer(&self, ahora: i64) -> usize {
         self.carpeta.barrer(ahora)
@@ -278,6 +298,26 @@ mod pruebas {
         let quedan = b.pendientes();
         assert_eq!(quedan.len(), 1);
         assert!(quedan[0].ruta.ends_with("reunion-2026-09-27-1600.ghost"));
+        let _ = std::fs::remove_dir_all(&raiz);
+    }
+
+    /// **Cambiar la ventana desde la bandeja** vuelve a sellarla con el vencimiento nuevo, contado
+    /// desde el cierre y sin pasar del techo; «al cerrar» se la lleva. Demostrado en rojo: sin el
+    /// `clamp`, «24 h» elegida a las 20 h de cerrar alargaba la bandeja hasta 44 h.
+    #[test]
+    fn cambiar_la_ventana_la_vuelve_a_sellar_con_su_techo() {
+        let raiz = carpeta("revencer");
+        let b = Bandeja::en(raiz.clone());
+        let llaves = EnMemoria::default();
+        let archivo = "reunion-2026-09-27-1402.ghost";
+        b.dejar(&llaves, &contenido(archivo, &["12 semanas"]), Some(CIERRE + 3 * 3_600)).unwrap();
+        b.revencer(&llaves, archivo, |cerro| Ventana::UnaHora.vence(cerro, cerro)).unwrap();
+        assert_eq!(b.lista()[0].vence, CIERRE + 3_600);
+        b.revencer(&llaves, archivo, |_| Some(CIERRE + 20 * 3_600 + TECHO)).unwrap();
+        assert_eq!(b.lista()[0].vence, CIERRE + TECHO, "la ventana pasó del techo de 24 h desde el cierre");
+        assert_eq!(b.abrir(&llaves, archivo).unwrap().0.propuestas.len(), 1, "cambiar la ventana tocó las propuestas");
+        b.revencer(&llaves, archivo, |cerro| Ventana::AlCerrar.vence(cerro, cerro)).unwrap();
+        assert!(b.lista().is_empty(), "«al cerrar» desde la bandeja no se la llevó");
         let _ = std::fs::remove_dir_all(&raiz);
     }
 

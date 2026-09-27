@@ -4,7 +4,15 @@ import { useEffect, useState } from "react";
 import { PILA } from "../componentes/Ventana";
 import { cortarTodo, type EstadoDeEscucha, usePantalla, usePiezasDelCorte } from "../cuaderno";
 import { EXTERNOS, useIa } from "../ia";
-import { useCuaderno, useMuestraDelCuaderno, useReuniones } from "../notas";
+import {
+  AHORA_DE_MUESTRA,
+  reloj,
+  useCuaderno,
+  useEstadoDeLaBandeja,
+  useMuestraDelCuaderno,
+  useQuedan,
+  useReuniones,
+} from "../notas";
 import { escuchar } from "../puente";
 
 /**
@@ -35,8 +43,16 @@ import { escuchar } from "../puente";
 // arreglar es que este lado lo pregunte»—, y el día llegó con la deuda del S1. La cuenta que la
 // pantalla enseña sale de `corte::TODAS` y de su `match` sin comodín.
 
-export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoDeEscucha }) {
+export function Honestidad({ bytes, escucha, busqueda = "" }: { bytes: string; escucha: EstadoDeEscucha; busqueda?: string }) {
   const t = useT().cuaderno;
+  // La bandeja (ADR 016 §6), sin abrirla: cuándo vence la próxima y si la tarea de borrado corrió.
+  // Fuera de Tauri, lo que pide la URL: «sprint 3 · con bandeja» o «la tarea no corrió».
+  const pedido = new URLSearchParams(busqueda).get("estado");
+  const bandeja = useEstadoDeLaBandeja({
+    vence: pedido === "bandeja" ? AHORA_DE_MUESTRA + 2 * 3_600 + 41 * 60 + 8 : null,
+    noCorrio: pedido === "no-corrio",
+  });
+  const quedanBandeja = useQuedan(bandeja.vence);
   const idioma = useIdioma();
   const corte = usePiezasDelCorte();
   const pantalla = usePantalla();
@@ -80,6 +96,28 @@ export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoD
       </div>
 
       <div style={PILA}>
+        {/* Lo que no se calla: la tarea de borrado no corrió con la app cerrada (ADR 016 §5). */}
+        {bandeja.noCorrio && (
+          <div className="franja err" role="alert">
+            <Ic id="i-x-circle" relleno />
+            <div>
+              <strong>{t.noCorrio}</strong>
+            </div>
+          </div>
+        )}
+        {/* «Y una tercera cosa, que no muere al instante»: mientras haya bandeja, con su cuenta atrás. */}
+        {quedanBandeja !== null && quedanBandeja > 0 && (
+          <div className="franja warn" role="status">
+            <Ic id="i-reloj" />
+            <div className="fila crece" style={{ flexWrap: "nowrap" }}>
+              <strong className="crece">{t.terceraCosa}</strong>
+              <span className="estado warn">
+                <Ic id="i-reloj" s />
+                <span className="mono">{reloj(quedanBandeja)}</span>
+              </span>
+            </div>
+          </div>
+        )}
         {cortado && cuaderno?.abierta && (
           <div className="franja ok" role="status">
             <Ic id="i-check-circle" relleno />

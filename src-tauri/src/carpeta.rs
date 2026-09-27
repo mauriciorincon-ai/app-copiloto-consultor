@@ -117,14 +117,23 @@ impl Carpeta {
     /// Sella y escribe. `base` es el nombre sin extensión (`notas::nombre_del_archivo`); si ya
     /// existe, se prueba `-2`, `-3`… La carpeta nace 700 y el archivo 600 (`almacen`).
     pub fn guardar(&self, llaves: &dyn Llaves, contenido: &Contenido, base: &str, vence: i64) -> Result<Guardada, String> {
+        let archivo = self.nombre_libre(base)?;
+        self.guardar_como(llaves, contenido, &archivo, vence)
+    }
+
+    /// Sella y escribe con este nombre exacto: el que la bandeja ya apuntó como su reunión al cerrar
+    /// (ADR 016 §4), para que «Guardar» desde la bandeja encuentre el archivo.
+    pub fn guardar_como(&self, llaves: &dyn Llaves, contenido: &Contenido, archivo: &str, vence: i64) -> Result<Guardada, String> {
+        if !nombre_valido(archivo) {
+            return Err("ese nombre no es el de una reunión".into());
+        }
         let llave = la_llave(llaves, true)?;
         let mut claro = contenido.a_bytes();
         let sellado = cifrado::sellar(&llave, vence, &claro);
         claro.fill(0);
         crate::almacen::carpeta_privada(&self.raiz)?;
-        let archivo = self.nombre_libre(base)?;
-        crate::almacen::escribir(&self.raiz.join(&archivo), &sellado)?;
-        Ok(Guardada { archivo, bytes: sellado.len() as u64, vence })
+        crate::almacen::escribir(&self.raiz.join(archivo), &sellado)?;
+        Ok(Guardada { archivo: archivo.to_string(), bytes: sellado.len() as u64, vence })
     }
 
     fn nombre_libre(&self, base: &str) -> Result<String, String> {

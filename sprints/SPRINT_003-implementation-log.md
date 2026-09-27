@@ -585,6 +585,106 @@ importantes que deba decidir, el resto lo validamos en los gates».
 
 Registrado también en `docs/diseno/README.md` § Registro de miradas.
 
+### Fase 2 — las pantallas y el cableado (2026-09-27, tras el cambio al plan de miradas)
+
+**Lo construido:**
+- **Rust** (`reunion.rs`):
+  - al cerrar, **la bandeja se escribe primero** y con el mismo nombre que tendrá la reunión; si las
+    notas fallan, se deshace;
+  - con la ventana «al cerrar», las que no decidiste mueren y no se escribe nada;
+  - «Guardar»/«No» durante la reunión, y ⌃⌥↵ (atajo global) guarda la última;
+  - la bandeja recién escrita se lee sin pedir nada; una de otra sesión de la app pide Touch ID;
+  - desde la bandeja: decidir una o todas, y **cambiar la ventana** (se vuelve a sellar con su techo
+    de 24 h desde el cierre; «al cerrar» se la lleva);
+  - **el reloj duerme hasta el próximo vencimiento** (como mucho 1 h), no cada hora fija;
+  - al arrancar, **se mide si la tarea de launchd no corrió** con la app cerrada;
+  - launchd recibe **solo la bandeja**: las notas en Documentos esperan la decisión A/B/C.
+- **Corte:** pieza nueva `Propuestas`, **11 de 11**.
+- **Prefs:** `ventanaDeLaBandeja` (de fábrica, 3 h), con su test de reinicio.
+- **Banda:**
+  - la línea pasiva «Te propongo guardar: …» con ⌃⌥↵ (evento `propuesta`, solo a la banda);
+  - la señal «fijada» al pulsar ⌃⌥P (evento `fijada`), que se apaga con la ficha siguiente.
+- **Notas:**
+  - «durante» con propuestas;
+  - «al cerrar» con la franja de la bandeja y la ventana elegible;
+  - la bandeja: abierta, con llave y vencida;
+  - «Ir a tus reuniones», y el botón «Bandeja · 2 h 41» para volver a ella desde el archivo.
+- **Honestidad:** la franja de la bandeja con su cuenta atrás, y el aviso en rojo si la tarea no
+  corrió.
+- **Rail:** chip «Bandeja · 2 h 41» / «Bandeja · vencida».
+- **Contrato:**
+  - 20 muestras nuevas: la vista con propuestas, la línea de la banda con y sin propuesta, cada regla,
+    cada ventana, la bandeja abierta y con llave, y el estado de la bandeja;
+  - `bytesPropuestas` y `EstadoDeLaBandeja.bandejas` **salieron del contrato**: nadie los pintaba;
+  - la DEUDA del contrato queda pagada.
+- **Maquetas «maquetado, no visto»:**
+  - `notas.html`: «sprint 3 · la bandeja», «las cinco reglas» y «bandeja con llave»;
+  - `honestidad.html`: «con bandeja» y «la tarea no corrió», con el corte en 11 de 11;
+  - las 13 filas anteriores siguen diferidas (ver arriba).
+- **Design system** 1.12.0 (§9-septies), `design-sync/` al día, manual al día.
+
+**Cada gate nuevo, con su rojo** (defecto plantado → rojo → revertido → verde):
+
+| Gate | Defecto plantado | Lo que dijo en rojo |
+|---|---|---|
+| `al_cerrar_lo_que_no_decidiste_va_a_la_bandeja_y_lo_tuyo_a_tu_archivo` | sin `bandeja.dejar` al cerrar | `(0, 2)` en vez de `(2, 0)`: las propuestas se perdían |
+| `si_las_notas_fallan_la_bandeja_se_deshace` | sin el `bandeja.borrar` del error | «quedó una bandeja apuntando a una reunión que no se guardó» |
+| `empezar_otra_con_la_anterior_abierta_pide_guardarla` (ampliado) | la condición de antes, `!self.vacio()` | «empezar otra reunión tiraría las propuestas sin decidir» |
+| `cambiar_la_ventana_la_vuelve_a_sellar_con_su_techo` | sin el `clamp` al techo | «la ventana pasó del techo de 24 h desde el cierre» |
+| `el_fin_del_dia_es_el_ultimo_segundo_del_dia_del_mac` | `86_400` en vez de `86_399` | la hora cayó al día siguiente |
+| `ninguna_muestra_del_contrato_esta_vacia` (lista de nulas a propósito) | lista vacía | «SIN_PROPUESTA_EN_LA_BANDA no serializó a nada útil» |
+| efímero en marcha: la bandeja en `Permitido` | quitarla de `cubre` | «la sesión dejó rastro en 1 archivo(s)» |
+| efímero en marcha: **jamás el turno del cliente en la bandeja** (descifrada) | reglas que guardan la frase entera del cliente | «el turno del cliente entero acabó en la bandeja» |
+
+**Gates heredados que se pusieron rojos y cazaron algo de verdad:**
+- **`capabilities`:** nueve comandos nuevos sin su permiso; ahora solo la ventana principal los tiene.
+- **`contrato-con-lectores`:**
+  - dos campos huérfanos, que salieron del contrato;
+  - tres deudas ya pagadas, borradas.
+- **Diccionario en componentes:** una fecha de muestra escrita a mano que la maqueta no dice.
+- **Emojis en la maqueta:** un «⭐» en un comentario de Rust.
+- **Fidelidad:**
+  - le faltaba a la bandeja el párrafo «La bandeja guarda frases»;
+  - «al cerrar» con franja no quitaba «Esta columna no tiene casilla»;
+  - el chip del rail no decía «Bandeja».
+
+  Tras arreglarlo: **176 encuadres, ninguno sobre el umbral**.
+- **axe:** el chip elegido de la ventana («3 h») sobre la franja ámbar, en tema claro, no alcanzaba AA.
+  Los chips dentro de una franja llevan ahora su propia superficie (`ghost.css`); 112 de 112 pasan.
+
+**Un hallazgo que se registra, no se esconde.** La canaria del efímero en marcha exigía que lo que dijo
+el cliente no apareciera en ningún archivo escrito. La bandeja **sí** puede llevar palabras del
+cliente:
+- un fragmento de ≤ 8 palabras;
+- de una pregunta, ≤ 5 palabras clave, que pueden incluir la canaria.
+
+Lo decidió el ADR 016 §2, y la regla dura 1 nombra la bandeja entre lo que persiste. La comprobación
+de la bandeja es por eso otra, **y sobre el archivo descifrado**:
+- **jamás el turno entero**;
+- ningún fragmento del cliente pasa de 8 palabras.
+
+La canaria estricta sigue en todo lo demás.
+
+**Decisiones del constructor (se validan en el gate del MVP):**
+- «Bandeja con llave» enseña la cuenta atrás, no cuántas propuestas trae: el número va dentro del
+  cifrado.
+- En la bandeja caben tres filas; si guardaste alguna desde ahí, la última se queda a la vista como
+  «guardada».
+- «N de M» cuenta las filas visibles del total.
+- El chip del rail enseña la bandeja salvo mientras escuchas: entonces manda la reunión.
+- Cambiar la ventana desde la bandeja también la recuerda para las reuniones siguientes.
+
+**Lo que NO se corrió, y por qué (regla 22):**
+- **La app en vivo** (`pnpm tauri dev`) no se arrancó. Con una bandeja, la app registra la tarea de
+  launchd y aparece en Ítems de inicio: eso toca tu Mac y pide tu «sí». Va como fila en el cierre de
+  la fase.
+
+**Pruebas, local:**
+- cargo lib 431 · integración: la sesión completa del efímero pasa con la bandeja dentro;
+- vitest 276 · e2e 167 (eran 127: los 40 nuevos son axe sobre los 10 estados nuevos, en los dos temas y
+  las dos ventanas) · fidelidad 176 encuadres, ninguno sobre el umbral;
+- clippy 0, lint, typecheck y el efímero estático, limpios.
+
 ---
 
 ## Para la planeadora al cierre del sprint (va al summary, «Sugerencias de mejora al método»)

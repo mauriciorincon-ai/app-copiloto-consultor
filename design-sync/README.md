@@ -36,7 +36,7 @@ temas**, con las dos lenguas dentro (se muestra el español).
 | Componentes · S1 | La banda — seis estados | `components/s1/la-banda.html` |
 | Componentes · S1 | «Todavía no» | `components/s1/todavia-no.html` |
 
-Derivado de `design-system.md` **v1.11.0** y de la maqueta aprobada en G-Diseño
+Derivado de `design-system.md` **v1.12.0** y de la maqueta aprobada en G-Diseño
 (`docs/diseno/`). Nace en el sprint 001, el primero con UI, por la regla 16 de `CLAUDE.md`:
 el bundle se actualiza en el MISMO PR que toca la UI, para que el cierre de ciclo sea un delta
 pequeño y nunca una reconstrucción.

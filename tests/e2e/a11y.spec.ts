@@ -34,6 +34,17 @@ const PANTALLAS = [
   { que: "notas · al cerrar", url: "ventana=principal&pantalla=notas&estado=al-cerrar" },
   { que: "notas · el archivo", url: "ventana=principal&pantalla=notas&estado=archivo" },
   { que: "notas · exportar", url: "ventana=principal&pantalla=notas&estado=exportar" },
+  // Las propuestas y la bandeja (sprint 003, fase 2).
+  { que: "notas · con propuestas", url: "ventana=principal&pantalla=notas&estado=propuestas" },
+  { que: "notas · al cerrar, con bandeja", url: "ventana=principal&pantalla=notas&estado=al-cerrar-bandeja" },
+  { que: "notas · al cerrar, ventana cero", url: "ventana=principal&pantalla=notas&estado=al-cerrar-cero" },
+  { que: "notas · la bandeja", url: "ventana=principal&pantalla=notas&estado=bandeja" },
+  { que: "notas · bandeja con llave", url: "ventana=principal&pantalla=notas&estado=bandeja-llave" },
+  { que: "notas · bandeja vencida", url: "ventana=principal&pantalla=notas&estado=vencida" },
+  { que: "honestidad · con bandeja", url: "ventana=principal&pantalla=honestidad&estado=bandeja" },
+  { que: "honestidad · la tarea no corrió", url: "ventana=principal&pantalla=honestidad&estado=no-corrio" },
+  { que: "banda · te propongo guardar", url: "ventana=banda&estado=ficha-propuesta" },
+  { que: "banda · fijada", url: "ventana=banda&estado=ficha-fijada" },
   { que: "banda · sugerencia", url: "ventana=banda&estado=sugerencia-local" },
 ];
 

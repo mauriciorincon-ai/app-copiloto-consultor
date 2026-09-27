@@ -159,6 +159,9 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .puerta.no > .ic { color: var(--err); }
 .cuenta .ic { flex: 0 0 auto; color: var(--halo); }
 .cuenta.vencida .ic, .cuenta.vencida .reloj { color: var(--ink-2); }
+.franja .ventanas .op { background: var(--surface); }
+.franja .ventanas .op.on { background: linear-gradient(var(--halo-tint), var(--halo-tint)), var(--surface); }
+.franja .ventanas .op .ic { color: inherit; }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
 .mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
 @media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }

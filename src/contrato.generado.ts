@@ -15,7 +15,7 @@ import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida,
 import type { EnTuMac } from "./radar";
 import type { EstadoDeLaIa, PorQueNoRedacta, LoQueSalio } from "./ia";
 import type { EstadoDelAcople } from "./acople";
-import type { VistaDelCuaderno, ReunionGuardada, Guardada, ListaDeReuniones } from "./notas";
+import type { VistaDelCuaderno, LineaDePropuesta, Propuesta, Regla, Ventana, VistaDeLaBandeja, EstadoDeLaBandeja, ReunionGuardada, Guardada, ListaDeReuniones } from "./notas";
 
 export const NOVEDAD_EMPIEZA: Novedad = {
     "que": "empieza"
@@ -223,6 +223,10 @@ export const INFORME_DEL_CORTE: InformeDelCorte = {
       ],
       [
         "tus-turnos",
+        "cortada"
+      ],
+      [
+        "propuestas",
         "cortada"
       ],
       [
@@ -483,6 +487,7 @@ export const VISTA_DEL_CUADERNO: VistaDelCuaderno = {
       }
     ],
     "lecturas": 9,
+    "lleno": false,
     "nota": "Piden la cuarta fuente (Excel de logística).\nFecha real: 12 semanas desde la firma.",
     "previsto": {
       "archivo": "reunion-2026-09-20-1402.ghost",
@@ -490,12 +495,12 @@ export const VISTA_DEL_CUADERNO: VistaDelCuaderno = {
       "fecha": "2026-09-20",
       "minutos": 47
     },
+    "propuestas": [],
     "resumen": {
       "acuerdos": 1,
       "bytesAcuerdos": 33,
       "bytesFijadas": 64,
       "bytesNota": 84,
-      "bytesPropuestas": 0,
       "bytesTurnos": 0,
       "fijadas": 1,
       "parrafos": 2,
@@ -504,7 +509,151 @@ export const VISTA_DEL_CUADERNO: VistaDelCuaderno = {
       "turnos": 0
     },
     "retencion": "90d",
-    "turnosDelCliente": 63
+    "turnosDelCliente": 63,
+    "ventana": "3h"
+  };
+
+export const VISTA_CON_PROPUESTAS: VistaDelCuaderno = {
+    "abierta": true,
+    "acuerdos": [],
+    "conservarMisTurnos": false,
+    "escuchando": true,
+    "fijadas": [],
+    "lecturas": 0,
+    "lleno": true,
+    "nota": "Piden la cuarta fuente.",
+    "previsto": null,
+    "propuestas": [
+      {
+        "de": "tuyo",
+        "ficha": null,
+        "hora": "14:16",
+        "id": 1,
+        "regla": "cifra",
+        "seccion": null,
+        "texto": "Fecha real del tablero: 12 semanas desde la firma."
+      },
+      {
+        "de": "cliente",
+        "ficha": "tres",
+        "hora": "14:18",
+        "id": 2,
+        "regla": "choque",
+        "seccion": "§3.2",
+        "texto": "cuatro fuentes"
+      }
+    ],
+    "resumen": {
+      "acuerdos": 0,
+      "bytesAcuerdos": 0,
+      "bytesFijadas": 0,
+      "bytesNota": 23,
+      "bytesTurnos": 0,
+      "fijadas": 0,
+      "parrafos": 1,
+      "propuestas": 0,
+      "sinDecidir": 2,
+      "turnos": 0
+    },
+    "retencion": "90d",
+    "turnosDelCliente": 12,
+    "ventana": "0"
+  };
+
+export const PROPUESTA_EN_LA_BANDA: LineaDePropuesta = {
+    "de": "tuyo",
+    "ficha": null,
+    "hora": "14:16",
+    "regla": "cifra",
+    "seccion": null,
+    "texto": "Fecha real del tablero: 12 semanas desde la firma."
+  };
+
+export const SIN_PROPUESTA_EN_LA_BANDA: LineaDePropuesta = null;
+
+export const PROPUESTA_CHOQUE: Propuesta = {
+    "de": "cliente",
+    "ficha": "tres",
+    "hora": "14:18",
+    "regla": "choque",
+    "seccion": "§3.2",
+    "texto": "cuatro fuentes"
+  };
+
+export const REGLA_CIFRA: Regla = "cifra";
+
+export const REGLA_COMPROMISO: Regla = "compromiso";
+
+export const REGLA_CHOQUE: Regla = "choque";
+
+export const REGLA_NOMBRE: Regla = "nombre";
+
+export const REGLA_PREGUNTA: Regla = "pregunta";
+
+export const VENTANA_AL_CERRAR: Ventana = "0";
+
+export const VENTANA_UNA_HORA: Ventana = "1h";
+
+export const VENTANA_TRES_HORAS: Ventana = "3h";
+
+export const VENTANA_FIN_DEL_DIA: Ventana = "fin";
+
+export const VENTANA_UN_DIA: Ventana = "24h";
+
+export const BANDEJA_ABIERTA: VistaDeLaBandeja = {
+    "archivo": "reunion-2026-09-20-1402.ghost",
+    "bytes": 4096,
+    "guardadas": [
+      {
+        "de": "tuyo",
+        "ficha": null,
+        "hora": "14:16",
+        "regla": "cifra",
+        "seccion": null,
+        "texto": "La cuarta fuente se cotiza aparte."
+      }
+    ],
+    "mas": 0,
+    "propuestas": [
+      {
+        "de": "tuyo",
+        "ficha": null,
+        "hora": "14:16",
+        "regla": "cifra",
+        "seccion": null,
+        "texto": "Fecha real del tablero: 12 semanas desde la firma."
+      },
+      {
+        "de": "cliente",
+        "ficha": "tres",
+        "hora": "14:18",
+        "regla": "choque",
+        "seccion": "§3.2",
+        "texto": "cuatro fuentes"
+      }
+    ],
+    "vence": 1790527268,
+    "ventana": "3h"
+  };
+
+export const BANDEJA_CON_LLAVE: VistaDeLaBandeja = {
+    "archivo": "reunion-2026-09-20-1402.ghost",
+    "bytes": 4096,
+    "guardadas": [],
+    "mas": 1,
+    "propuestas": null,
+    "vence": 1790527268,
+    "ventana": "fin"
+  };
+
+export const ESTADO_DE_LA_BANDEJA: EstadoDeLaBandeja = {
+    "noCorrio": false,
+    "vence": 1790527268
+  };
+
+export const SIN_BANDEJA_Y_LA_TAREA_NO_CORRIO: EstadoDeLaBandeja = {
+    "noCorrio": true,
+    "vence": null
   };
 
 export const REUNION_GUARDADA: ReunionGuardada = {

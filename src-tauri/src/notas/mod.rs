@@ -127,7 +127,6 @@ pub struct Resumen {
     pub bytes_acuerdos: usize,
     pub bytes_fijadas: usize,
     pub bytes_turnos: usize,
-    pub bytes_propuestas: usize,
 }
 
 /// Una propuesta que espera tu decisión, con el número con que la pantalla la nombra.
@@ -268,12 +267,17 @@ impl Cuaderno {
         self.conservar_mis_turnos
     }
 
-    /// ⌥⎋. Mueren tus turnos (salen de la captura), la ficha vigente (la eligió el cliente con sus
-    /// palabras) y las propuestas sin decidir (salen de los turnos). Tu nota, tus acuerdos, tus fijadas
-    /// y las propuestas que guardaste siguen: «Tus notas siguen ahí».
+    /// ⌥⎋, la pieza `TusTurnos`. Mueren tus turnos (salen de la captura) y la ficha vigente (la
+    /// eligió el cliente con sus palabras). Tu nota, tus acuerdos y tus fijadas siguen: «Tus notas
+    /// siguen ahí».
     pub fn cortar(&mut self) {
         self.tirar_mis_turnos();
         self.vigente = None;
+    }
+
+    /// ⌥⎋, la pieza `Propuestas` (ADR 016 §4): mueren las que esperaban tu decisión, porque salen de
+    /// los turnos. Las que guardaste siguen, como tus notas.
+    pub fn cortar_las_propuestas(&mut self) {
         self.tirar_las_que_esperan();
     }
 
@@ -376,7 +380,6 @@ impl Cuaderno {
             .iter()
             .map(|f| f.titular.len() + f.documento.len() + f.seccion.as_ref().map_or(0, |s| s.len()))
             .sum();
-        let bytes_propuestas = self.guardadas.iter().map(|p| p.texto.len() + p.ficha.as_ref().map_or(0, |f| f.len())).sum();
         Resumen {
             parrafos: self.nota.split('\n').filter(|l| !l.trim().is_empty()).count(),
             acuerdos: self.acuerdos.len(),
@@ -388,7 +391,6 @@ impl Cuaderno {
             bytes_acuerdos: self.acuerdos.iter().map(String::len).sum(),
             bytes_fijadas: fijadas_bytes,
             bytes_turnos: self.mis_turnos.iter().map(|t| t.texto.len()).sum(),
-            bytes_propuestas,
         }
     }
 
@@ -687,13 +689,15 @@ mod pruebas {
     }
 
     /// **⌥⎋ se lleva las que esperan y deja las guardadas** (ADR 016 §4). Demostrado en rojo: sin
-    /// `tirar_las_que_esperan` en `cortar`, las propuestas del cliente sobreviven al corte.
+    /// `tirar_las_que_esperan` en `cortar_las_propuestas` (la pieza `Propuestas` del corte desde la
+    /// fase 2), las propuestas del cliente sobreviven al corte.
     #[test]
     fn el_corte_se_lleva_las_que_esperan_y_deja_las_guardadas() {
         let mut c = Cuaderno::nuevo(false);
         c.proponer(vec![propuesta("12 semanas"), propuesta("cuatro fuentes")]);
         c.guardar_propuesta(c.en_espera()[0].id);
         c.cortar();
+        c.cortar_las_propuestas();
         assert!(c.en_espera().is_empty(), "las que esperaban sobrevivieron al corte");
         assert_eq!(c.guardadas().len(), 1);
         assert!(!c.vacio(), "una propuesta guardada es tuya");

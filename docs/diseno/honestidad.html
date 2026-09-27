@@ -20,6 +20,8 @@
     <button data-estado="s2">así se ve hoy · sprint 2</button>
     <button data-estado="s3">así se ve hoy · sprint 3</button>
     <button data-estado="s3-corte">sprint 3 · tras el corte, con notas</button>
+    <button data-estado="s3-bandeja">sprint 3 · con bandeja</button>
+    <button data-estado="s3-no-corrio">sprint 3 · la tarea no corrió</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -35,6 +37,8 @@
   <div class="n" data-para="s2"><b>Qué mirar (mirada 17-quater):</b> dos cosas cambian, y las dos porque la pantalla ya se lee. <b>La fila del último cuadro deja de decir «todavía no»</b>: dice dónde vive —en memoria, solo el último— y cuánto ocupa, y el total de RAM de arriba lo cuenta. Y <b>la línea bajo el botón rojo dice «El botón corta 8 de 8 piezas: ninguna queda fuera»</b>. La frase de antes —«la otra todavía no existe»— era verdad con 6 de 7 y con 7 de 8; con 8 de 8 habría sido falsa, y es la pantalla que existe para no decir cosas falsas. <b>Mirada 17-quinquies:</b> empieza por «El botón corta» porque, sin eso, «8 de 8» se podía leer como «leyó todo bien».</div>
   <div class="n" data-para="s3"><b>Qué mirar (cierre de la fase 1 — forma):</b> «Lo que quedará cuando cierres» deja de decir «todavía no»: vuelve la tarjeta que la Etapa de Diseño aprobó —dónde vive, qué es tuyo y qué muere—, sin cifras: las cuentas están en Notas. El kill-switch corta ahora 10 de 10 piezas (tus turnos son la décima).</div>
   <div class="n" data-para="s3-corte"><b>Qué mirar (cierre de la fase 1 — forma):</b> tras ⌥⎋, con notas escritas, arriba la franja que la Etapa de Diseño dibujó para el corte, reducida a su titular —«Tus notas siguen ahí»— para que la pantalla quepa en su ventana.</div>
+  <div class="n" data-para="s3-bandeja"><b>Maquetado, no visto (fase 2 — va al gate del MVP):</b> mientras haya bandeja, arriba la franja que la Etapa de Diseño aprobó, reducida a su titular y con la <b>cuenta atrás de verdad</b>. Y el corte pasa a <b>11 de 11</b>: las propuestas sin decidir son la pieza nueva.</div>
+  <div class="n" data-para="s3-no-corrio"><b>Maquetado, no visto (fase 2 — va al gate del MVP):</b> si al abrir la app había algo vencido hace más de dos minutos con la tarea instalada, la tarea no corrió —la desactivaste en Ítems de inicio, o launchd no la cargó—. La app lo borra al abrirse y <b>lo dice aquí</b>, en rojo, en vez de callarlo.</div>
   <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
 </div>
 
@@ -53,7 +57,8 @@
     <div class="abajo">
       <span class="estado ok" data-en="activa verificacion al-cerrar"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando · 0 B</span><span lang="en">Listening · 0 B</span></span>
       <span class="estado err" data-en="kill"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span lang="es">Cortado · 0 B</span><span lang="en">Cut · 0 B</span></span>
-      <span class="estado halo" data-en="s1 s2 s3 s3-corte"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
+      <span class="estado halo" data-en="s1 s2 s3 s3-corte s3-no-corrio"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
+      <span class="estado halo" data-en="s3-bandeja"><svg class="ic s"><use href="#i-reloj"/></svg><span lang="es">Bandeja · 2 h 41</span><span lang="en">Tray · 2 h 41</span></span>
     </div>
   </nav>
 
@@ -320,7 +325,98 @@
             <p><span lang="es">La app abre una conexión solo si enciendes el API en IA, con tu clave, y solo con texto anonimizado. La otra la abre macOS cuando le pides instalar un modelo de voz.</span><span lang="en">The app opens a connection only if you turn on the API in AI, with your key, and only with anonymized text. The other one belongs to macOS, when you ask it to install a speech model.</span></p>
           </div>
           <button class="kill" style="justify-content:center"><svg class="ic s relleno"><use href="#i-rayo"/></svg><span lang="es">Corta todo y vacía la memoria</span><span lang="en">Cut everything and wipe memory</span> <kbd>⌥⎋</kbd></button>
-          <p class="mono" style="color:var(--ink-2)"><span lang="es">El botón corta 10 de 10 piezas: ninguna queda fuera.</span><span lang="en">The button cuts 10 of 10 pieces: none is left out.</span></p>
+          <p class="mono" style="color:var(--ink-2)"><span lang="es">El botón corta 11 de 11 piezas: ninguna queda fuera.</span><span lang="en">The button cuts 11 of 11 pieces: none is left out.</span></p>
+        </div>
+      </div>
+      <div class="tarjeta">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Lo que quedará cuando cierres</span><span lang="en">What will be left when you close</span></h2><span class="mono" style="color:var(--ink-2)"><span lang="es">~/Documentos/Angel Ghost/</span><span lang="en">~/Documents/Angel Ghost/</span></span></div>
+        <div class="fila" style="flex-wrap:nowrap">
+          <svg class="ic s" style="color:var(--ok)"><use href="#i-nota"/></svg>
+          <span class="crece"><span lang="es"><b>Tuyo</b> — tu nota, tus acuerdos, tus fichas fijadas y, si lo enciendes, tus turnos. Texto, cifrado.</span><span lang="en"><b>Yours</b> — your note, your agreements, your pinned cards and, if you turn it on, your turns. Text, encrypted.</span></span>
+        </div>
+        <div class="fila" style="flex-wrap:nowrap">
+          <svg class="ic s" style="color:var(--mute)"><use href="#i-basura"/></svg>
+          <span class="crece" style="color:var(--ink-2)"><span lang="es"><b>Del cliente</b> — su voz, su transcript y las capturas <b>mueren</b>. Y el audio, también el tuyo: lo que queda de ti es texto.</span><span lang="en"><b>The client’s</b> — their voice, transcript and captures <b>die</b>. And audio, yours included: what remains of you is text.</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== sprint 3 · con bandeja (fase 2, maquetado, no visto) ===== -->
+    <div data-en="s3-bandeja" style="display:flex;flex-direction:column;gap:14px">
+      <div class="franja warn" role="status">
+        <svg class="ic"><use href="#i-reloj"/></svg>
+        <div class="fila crece" style="flex-wrap:nowrap">
+          <strong class="crece"><span lang="es">Y una tercera cosa, que no muere al instante: la bandeja</span><span lang="en">And a third thing that does not die at once: the tray</span></strong>
+          <span class="estado warn"><svg class="ic s"><use href="#i-reloj"/></svg><span class="mono">2:41:08</span></span>
+        </div>
+      </div>
+      <div class="grid-2" style="grid-template-columns:1.25fr 1fr">
+        <div class="tarjeta" style="padding-bottom:4px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Qué vive en la memoria ahora</span><span lang="en">What lives in memory now</span></h2><span class="mono" style="color:var(--ink-2)">RAM · <span lang="es">5,1 MB</span><span lang="en">5.1 MB</span></span></div>
+          <div style="margin:0 -4px">
+            <div class="buffer"><svg class="ic s"><use href="#i-mic"/></svg><span class="que"><span lang="es">Audio · micrófono</span><span lang="en">Audio · microphone</span></span><span class="donde"><span lang="es">ring buffer · últimos 30 s</span><span lang="en">ring buffer · last 30 s</span></span><span class="cuanto"><span lang="es">1,8 MB</span><span lang="en">1.8 MB</span></span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-sistema"/></svg><span class="que"><span lang="es">Audio · sistema</span><span lang="en">Audio · system</span></span><span class="donde"><span lang="es">ring buffer · últimos 30 s</span><span lang="en">ring buffer · last 30 s</span></span><span class="cuanto"><span lang="es">1,8 MB</span><span lang="en">1.8 MB</span></span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-ojo"/></svg><span class="que">Transcript</span><span class="donde"><span lang="es">ventana de 12 turnos</span><span lang="en">window of 12 turns</span></span><span class="cuanto">2 KB</span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-pantalla"/></svg><span class="que"><span lang="es">Último frame leído</span><span lang="en">Last frame read</span></span><span class="donde"><span lang="es">solo en memoria · el último</span><span lang="en">in memory only · the last one</span></span><span class="cuanto"><span lang="es">1,4 MB</span><span lang="en">1.4 MB</span></span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="contador cero">
+            <div class="cifra">0 <small>B</small></div>
+            <div class="etq"><svg class="ic s relleno" style="color:var(--ok)"><use href="#i-check-circle"/></svg> <span lang="es">salieron de tu equipo en esta reunión</span><span lang="en">left your machine in this meeting</span></div>
+          </div>
+          <div class="tarjeta">
+            <h2 class="seccion"><span lang="es">Modo</span><span lang="en">Mode</span></h2>
+            <span class="estado ok"><svg class="ic s relleno"><use href="#i-mac"/></svg><span lang="es">100 % local · API apagado</span><span lang="en">100 % local · API off</span></span>
+            <p><span lang="es">La app abre una conexión solo si enciendes el API en IA, con tu clave, y solo con texto anonimizado. La otra la abre macOS cuando le pides instalar un modelo de voz.</span><span lang="en">The app opens a connection only if you turn on the API in AI, with your key, and only with anonymized text. The other one belongs to macOS, when you ask it to install a speech model.</span></p>
+          </div>
+          <button class="kill" style="justify-content:center"><svg class="ic s relleno"><use href="#i-rayo"/></svg><span lang="es">Corta todo y vacía la memoria</span><span lang="en">Cut everything and wipe memory</span> <kbd>⌥⎋</kbd></button>
+          <p class="mono" style="color:var(--ink-2)"><span lang="es">El botón corta 11 de 11 piezas: ninguna queda fuera.</span><span lang="en">The button cuts 11 of 11 pieces: none is left out.</span></p>
+        </div>
+      </div>
+      <div class="tarjeta">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Lo que quedará cuando cierres</span><span lang="en">What will be left when you close</span></h2><span class="mono" style="color:var(--ink-2)"><span lang="es">~/Documentos/Angel Ghost/</span><span lang="en">~/Documents/Angel Ghost/</span></span></div>
+        <div class="fila" style="flex-wrap:nowrap">
+          <svg class="ic s" style="color:var(--ok)"><use href="#i-nota"/></svg>
+          <span class="crece"><span lang="es"><b>Tuyo</b> — tu nota, tus acuerdos, tus fichas fijadas y, si lo enciendes, tus turnos. Texto, cifrado.</span><span lang="en"><b>Yours</b> — your note, your agreements, your pinned cards and, if you turn it on, your turns. Text, encrypted.</span></span>
+        </div>
+        <div class="fila" style="flex-wrap:nowrap">
+          <svg class="ic s" style="color:var(--mute)"><use href="#i-basura"/></svg>
+          <span class="crece" style="color:var(--ink-2)"><span lang="es"><b>Del cliente</b> — su voz, su transcript y las capturas <b>mueren</b>. Y el audio, también el tuyo: lo que queda de ti es texto.</span><span lang="en"><b>The client’s</b> — their voice, transcript and captures <b>die</b>. And audio, yours included: what remains of you is text.</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== sprint 3 · la tarea de borrado no corrió (fase 2, maquetado, no visto) ===== -->
+    <div data-en="s3-no-corrio" style="display:flex;flex-direction:column;gap:14px">
+      <div class="franja err" role="alert">
+        <svg class="ic relleno"><use href="#i-x-circle"/></svg>
+        <div>
+          <strong><span lang="es">La tarea de borrado no corrió con la app cerrada: revisa Ítems de inicio</span><span lang="en">The deletion task did not run while the app was closed: check Login Items</span></strong>
+        </div>
+      </div>
+      <div class="grid-2" style="grid-template-columns:1.25fr 1fr">
+        <div class="tarjeta" style="padding-bottom:4px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Qué vive en la memoria ahora</span><span lang="en">What lives in memory now</span></h2><span class="mono" style="color:var(--ink-2)">RAM · <span lang="es">5,1 MB</span><span lang="en">5.1 MB</span></span></div>
+          <div style="margin:0 -4px">
+            <div class="buffer"><svg class="ic s"><use href="#i-mic"/></svg><span class="que"><span lang="es">Audio · micrófono</span><span lang="en">Audio · microphone</span></span><span class="donde"><span lang="es">ring buffer · últimos 30 s</span><span lang="en">ring buffer · last 30 s</span></span><span class="cuanto"><span lang="es">1,8 MB</span><span lang="en">1.8 MB</span></span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-sistema"/></svg><span class="que"><span lang="es">Audio · sistema</span><span lang="en">Audio · system</span></span><span class="donde"><span lang="es">ring buffer · últimos 30 s</span><span lang="en">ring buffer · last 30 s</span></span><span class="cuanto"><span lang="es">1,8 MB</span><span lang="en">1.8 MB</span></span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-ojo"/></svg><span class="que">Transcript</span><span class="donde"><span lang="es">ventana de 12 turnos</span><span lang="en">window of 12 turns</span></span><span class="cuanto">2 KB</span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-pantalla"/></svg><span class="que"><span lang="es">Último frame leído</span><span lang="en">Last frame read</span></span><span class="donde"><span lang="es">solo en memoria · el último</span><span lang="en">in memory only · the last one</span></span><span class="cuanto"><span lang="es">1,4 MB</span><span lang="en">1.4 MB</span></span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="contador cero">
+            <div class="cifra">0 <small>B</small></div>
+            <div class="etq"><svg class="ic s relleno" style="color:var(--ok)"><use href="#i-check-circle"/></svg> <span lang="es">salieron de tu equipo en esta reunión</span><span lang="en">left your machine in this meeting</span></div>
+          </div>
+          <div class="tarjeta">
+            <h2 class="seccion"><span lang="es">Modo</span><span lang="en">Mode</span></h2>
+            <span class="estado ok"><svg class="ic s relleno"><use href="#i-mac"/></svg><span lang="es">100 % local · API apagado</span><span lang="en">100 % local · API off</span></span>
+            <p><span lang="es">La app abre una conexión solo si enciendes el API en IA, con tu clave, y solo con texto anonimizado. La otra la abre macOS cuando le pides instalar un modelo de voz.</span><span lang="en">The app opens a connection only if you turn on the API in AI, with your key, and only with anonymized text. The other one belongs to macOS, when you ask it to install a speech model.</span></p>
+          </div>
+          <button class="kill" style="justify-content:center"><svg class="ic s relleno"><use href="#i-rayo"/></svg><span lang="es">Corta todo y vacía la memoria</span><span lang="en">Cut everything and wipe memory</span> <kbd>⌥⎋</kbd></button>
+          <p class="mono" style="color:var(--ink-2)"><span lang="es">El botón corta 11 de 11 piezas: ninguna queda fuera.</span><span lang="en">The button cuts 11 of 11 pieces: none is left out.</span></p>
         </div>
       </div>
       <div class="tarjeta">
@@ -365,7 +461,7 @@
             <p><span lang="es">La app abre una conexión solo si enciendes el API en IA, con tu clave, y solo con texto anonimizado. La otra la abre macOS cuando le pides instalar un modelo de voz.</span><span lang="en">The app opens a connection only if you turn on the API in AI, with your key, and only with anonymized text. The other one belongs to macOS, when you ask it to install a speech model.</span></p>
           </div>
           <button class="kill" style="justify-content:center"><svg class="ic s relleno"><use href="#i-rayo"/></svg><span lang="es">Corta todo y vacía la memoria</span><span lang="en">Cut everything and wipe memory</span> <kbd>⌥⎋</kbd></button>
-          <p class="mono" style="color:var(--ink-2)"><span lang="es">El botón corta 10 de 10 piezas: ninguna queda fuera.</span><span lang="en">The button cuts 10 of 10 pieces: none is left out.</span></p>
+          <p class="mono" style="color:var(--ink-2)"><span lang="es">El botón corta 11 de 11 piezas: ninguna queda fuera.</span><span lang="en">The button cuts 11 of 11 pieces: none is left out.</span></p>
         </div>
       </div>
       <div class="tarjeta">

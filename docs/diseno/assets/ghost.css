@@ -602,6 +602,12 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 /* Sprint 3 (notas): los chips de «Cuánto viven tus notas» se pulsan — son botones con la misma cara. */
 .ventanas button.op { cursor: pointer; line-height: inherit; }
 .ventanas button.op:focus-visible { outline: 2px solid var(--halo); outline-offset: 1px; }
+/* Dentro de una franja (al cerrar, con propuestas) los chips llevan su propia superficie: el tinte del
+   elegido sobre el ámbar de la franja no alcanzaba AA en el tema claro (axe, fase 2 del sprint 3). Y
+   el icono del elegido es del chip, no de la franja. */
+.franja .ventanas .op { background: var(--surface); }
+.franja .ventanas .op.on { background: linear-gradient(var(--halo-tint), var(--halo-tint)), var(--surface); }
+.franja .ventanas .op .ic { color: inherit; }
 
 /* Sprint 3 (notas, mirada 19): tu nota es un campo de verdad, y el acuerdo, una línea que se confirma con ↵. */
 /* El tamaño y el color son los que se VIERON en la mirada 19: los párrafos de la maqueta tomaban los de

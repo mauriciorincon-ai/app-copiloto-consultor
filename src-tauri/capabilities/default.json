@@ -49,6 +49,15 @@
     "allow-borrar-reunion",
     "allow-fijar-retencion",
     "allow-elegir-carpeta-de-notas",
-    "allow-ir-a-notas"
+    "allow-ir-a-notas",
+    "allow-guardar-propuesta",
+    "allow-descartar-propuesta",
+    "allow-fijar-ventana",
+    "allow-la-bandeja",
+    "allow-abrir-la-bandeja",
+    "allow-decidir-en-la-bandeja",
+    "allow-decidir-toda-la-bandeja",
+    "allow-cambiar-la-ventana",
+    "allow-estado-de-la-bandeja"
   ]
 }

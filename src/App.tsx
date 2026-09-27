@@ -71,6 +71,9 @@ const ESTADOS: EstadoBanda[] = [
   // La sugerencia (fase 5): la ampliada sale del alto de la ventana, como todas.
   "sugerencia-local",
   "sugerencia-api",
+  // Las propuestas (sprint 003, fase 2, mirada 20): la línea pasiva y la señal «fijada».
+  "ficha-propuesta",
+  "ficha-fijada",
 ];
 
 /**

@@ -272,6 +272,8 @@ export type PiezaDelCorte =
   | "transcript"
   /** Del cuaderno, lo que salió de la captura: tus turnos y la ficha vigente (sprint 003, ADR 015). */
   | "tus-turnos"
+  /** Las propuestas sin decidir (sprint 003, ADR 016 §4): salen de los turnos. */
+  | "propuestas"
   | "contador-de-red"
   | "banda"
   | "acople";
