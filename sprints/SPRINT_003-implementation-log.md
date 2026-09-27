@@ -560,6 +560,31 @@ el constructor lo enseña en una matriz de una fila (qué · para qué · qué a
 deshace) y espera un «sí» por acción. Los tests `#[ignore]` que tocan el Mac entran en la regla. Un aviso
 que no se anunció se deniega.
 
+### Cambio al plan de miradas del sprint 003 — decisión del usuario (2026-09-27)
+
+El usuario, ante la matriz de 13 filas: «dejemos de revisar pequeñeces; solo muéstrame cosas realmente
+importantes que deba decidir, el resto lo validamos en los gates».
+
+**Qué cambia:**
+- **Las 13 filas** (cierre de la fase 1 y mirada 20) quedan «maquetado, no visto». **No es una
+  aprobación: nadie miró.** Viajan al ⭐⭐, en un bloque separable «Diferidos: formas y textos» (se
+  suma al de textos que ya existía).
+- **Se construye con lo maquetado** y tres decisiones del constructor, que se validan en el gate:
+  - «Borrar ahora» pregunta antes de borrar (fila 4);
+  - Honestidad sin cifras (fila 6);
+  - la señal «fijada» en la banda al pulsar ⌃⌥P (fila 9: símbolo + texto + color, regla 8).
+- **Las miradas 21 y 22** (fases 3 y 4) siguen la misma criba.
+- **Desde aquí solo abre parada** lo que:
+  - cambia una decisión que el usuario ya tomó;
+  - cambia la promesa del producto;
+  - toca su Mac (regla 22).
+
+  Todo lo demás, maquetado y registrado, va a los gates.
+- **Queda una decisión que sí es suya:** A, B o C para el vencimiento de las notas. Cambia su decisión
+  de guardar las notas en Documentos y lo que ve en Ítems de inicio.
+
+Registrado también en `docs/diseno/README.md` § Registro de miradas.
+
 ---
 
 ## Para la planeadora al cierre del sprint (va al summary, «Sugerencias de mejora al método»)
@@ -578,3 +603,9 @@ que no se anunció se deniega.
    dura, para que el estampado la lleve a cada app, y a `/audita-sprint` como casilla: «¿qué protección
    del Mac tocó el sprint y dónde está el “sí” del usuario?». Origen e inventario: «Falla del
    constructor: toqué las protecciones del Mac sin avisar», más arriba en esta bitácora.
+2. **La regla 10 (la mirada de FORMA abre parada) chocó con el usuario por tercera vez.** Las dos
+   anteriores fueron en el S2 («así no vamos a avanzar nada», los textos al gate del MVP). En el S3:
+   «solo muéstrame cosas realmente importantes que deba decidir; el resto lo validamos en los gates».
+   Sugerencia al método: que la parada la abra solo lo que cambia una decisión del usuario, la
+   promesa del producto o toca su Mac; que la FORMA nueva se maquete, se registre «no vista» y vaya al
+   gate del MVP. Lo pidió el usuario para esta app; la planeadora decide si vale para todas.
