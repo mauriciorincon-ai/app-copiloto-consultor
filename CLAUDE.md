@@ -467,6 +467,24 @@ decisions/NNN-titulo.md   (ADRs de implementación)
     es lo contrario —Claude Code, en la sesión del usuario, llama a la app por `ghost`— y se rige
     por la regla dura 9 y su ADR.
 
+22. **Las protecciones del Mac se enseñan ANTES de tocarlas (este repo, S3 2026-09-27 — regla dura
+    del usuario; va a la planeadora al cierre del sprint para TODAS las apps).** Antes de correr
+    cualquier cosa que pueda **pedir contraseña o Touch ID**, abrir un **aviso de permiso** (TCC:
+    Documentos, micrófono, pantalla, Accesibilidad, Automatización), **tocar el Llavero**,
+    **registrar algo en launchd o en Ítems de inicio**, **controlar la interfaz** (System Events,
+    `osascript`, pulsaciones, clics) o **leer registros del sistema** (`sfltool`, `tccutil`, `log
+    show` amplio), el constructor se DETIENE y lo enseña en una **matriz de una fila**: qué voy a
+    correr · para qué · qué aviso vas a ver, con su texto · cómo se deshace. Solo se corre con un
+    **«sí» explícito por acción**; el «sí» de una no vale para la siguiente. Los tests `#[ignore]`
+    que tocan el Mac de verdad entran en la regla. Para comprobar el estado del Mac se usa primero
+    lo que no pide permiso (`ls ~/Library/LaunchAgents`, `launchctl list`) o se le pide al usuario
+    que mire. **Un aviso que no se anunció, el usuario lo deniega.** *(Origen: en el S3 el
+    constructor corrió sin avisar una prueba de launchd y un diagnóstico que dejaron «sh ·
+    desarrollador no identificado» en Ítems de inicio, y seis veces `sfltool dumpbtm`, que pidió la
+    contraseña de administrador. El usuario creyó que se había metido algo: «si voy a poner mi clave
+    es porque sé qué está pasando». Las peticiones de contraseña eran la única forma que tenía de
+    enterarse. Inventario completo en `sprints/SPRINT_003-implementation-log.md`.)*
+
 ## Estándares (los 6+1, gates en CI)
 
 Testing · CI/CD · Observabilidad · Seguridad · Performance (contra `perf-budget.json`) · UX+A11y ·

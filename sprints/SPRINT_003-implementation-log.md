@@ -559,3 +559,22 @@ que tenía de enterarse de lo que yo hacía.
 el constructor lo enseña en una matriz de una fila (qué · para qué · qué aviso vas a ver · cómo se
 deshace) y espera un «sí» por acción. Los tests `#[ignore]` que tocan el Mac entran en la regla. Un aviso
 que no se anunció se deniega.
+
+---
+
+## Para la planeadora al cierre del sprint (va al summary, «Sugerencias de mejora al método»)
+
+1. **Regla dura nueva para TODAS las apps (pedida por el usuario el 2026-09-27): las protecciones del
+   Mac se enseñan ANTES de tocarlas.** Nada que pueda:
+   - pedir contraseña o Touch ID;
+   - abrir un aviso de permiso;
+   - tocar el Llavero;
+   - registrar algo en launchd o en Ítems de inicio;
+   - controlar la interfaz;
+   - leer registros del sistema;
+
+   se corre sin una matriz de una fila (qué · para qué · qué aviso vas a ver · cómo se deshace) y un
+   «sí» por acción. En esta app ya es la **regla 22 del `CLAUDE.md`**. Se propone al kit como regla
+   dura, para que el estampado la lleve a cada app, y a `/audita-sprint` como casilla: «¿qué protección
+   del Mac tocó el sprint y dónde está el “sí” del usuario?». Origen e inventario: «Falla del
+   constructor: toqué las protecciones del Mac sin avisar», más arriba en esta bitácora.
