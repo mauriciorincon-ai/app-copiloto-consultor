@@ -1168,9 +1168,15 @@ fn el_wer_no_empeora_con_el_diccionario_y_mejora_donde_hay_jerga() {
     .expect("transcripciones.json no se pudo leer");
 
     let motor = motor_de_la_casa();
-    // La jerga sale de la SEMILLA, no del archivo del usuario: el kit tiene que medir lo mismo en
-    // esta máquina y en la integración continua, y el archivo del usuario es distinto en cada Mac.
-    let jerga = app_copiloto_consultor_lib::diccionario::Diccionario::semilla();
+    // La jerga se arma COMO LA SESIÓN: la semilla —no el archivo del usuario, que es distinto en
+    // cada Mac— más los clientes del corpus del kit. Hasta la auditoría del S2 se medía solo la
+    // semilla, y el defecto estaba en lo que la sesión le añadía (A3).
+    let mut jerga = app_copiloto_consultor_lib::diccionario::Diccionario::semilla();
+    let mut del_kit = Corpus::en_memoria().unwrap();
+    del_kit
+        .indexar(Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba/corpus")), &|_| {})
+        .expect("no se indexó el corpus del kit");
+    jerga.con_nombres_del_corpus(&app_copiloto_consultor_lib::corpus::clientes(del_kit.documentos()));
 
     let mut medidos = 0;
     let mut peor_subida = 0.0_f64;

@@ -570,10 +570,10 @@ fn empezar_a_escuchar(
     });
     // Los nombres propios salen del corpus DEL USUARIO, jamás de la reunión: es lo que hace que el
     // diccionario no sea un transcript persistido con otro nombre.
-    let jerga = diccionario_de_la_sesion(
-        &ruta_del_diccionario(&app),
-        &escucha::Buscador::vocabulario(&*buscador),
-    );
+    // Solo los nombres de cliente, con sus mayúsculas y sus tildes: el vocabulario del disparador son
+    // palabras sueltas sin tildes («valle», «manejo»), y como términos del diccionario estropeaban
+    // el castellano corriente del cliente (auditoría del S2, A3).
+    let jerga = diccionario_de_la_sesion(&ruta_del_diccionario(&app), &clientes_del_corpus(el_corpus.inner()));
     let nueva = escucha::Escucha::arrancar(
         &idioma_del_consultor,
         &idioma_del_cliente,
@@ -716,7 +716,7 @@ fn estado_del_diccionario(
     el_corpus: tauri::State<'_, ElCorpus>,
 ) -> EstadoDelDiccionario {
     let ruta = ruta_del_diccionario(&app);
-    let d = diccionario_de_la_sesion(&ruta, &escucha::Buscador::vocabulario(el_corpus.inner()));
+    let d = diccionario_de_la_sesion(&ruta, &clientes_del_corpus(el_corpus.inner()));
     EstadoDelDiccionario::de(&d, &ruta)
 }
 
@@ -1749,13 +1749,7 @@ fn clientes_del_corpus(el_corpus: &ElCorpus) -> Vec<String> {
         .lock()
         .ok()
         .and_then(|g| {
-            g.as_ref().map(|c| {
-                c.documentos()
-                    .iter()
-                    .filter(|d| d.unidad == Some(corpus::Unidad::Cliente))
-                    .map(|d| d.nombre.clone())
-                    .collect()
-            })
+            g.as_ref().map(|c| corpus::clientes(c.documentos()))
         })
         .unwrap_or_default()
 }
@@ -2364,5 +2358,31 @@ mod pruebas_del_estado_del_diccionario {
         if !casa.is_empty() {
             assert!(e.ruta.starts_with("~/Library/"), "{}", e.ruta);
         }
+    }
+}
+
+#[cfg(test)]
+mod pruebas_de_los_clientes_del_corpus {
+    use super::*;
+
+    fn el_kit() -> ElCorpus {
+        let mut c = corpus::Corpus::en_memoria().unwrap();
+        let raiz = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba/corpus");
+        c.indexar(std::path::Path::new(raiz), &|_| {}).expect("no se indexó el kit");
+        ElCorpus(std::sync::Arc::new(std::sync::Mutex::new(Some(c))))
+    }
+
+    /// **Lo que reciben la bóveda y el diccionario es el nombre del cliente**, no el del archivo
+    /// (auditoría del S2, A2 y A3): «Ficha de cliente · Páramo Azul» no aparece nunca en una frase
+    /// del cliente, así que como «nombre conocido» la bóveda no tapaba nada.
+    #[test]
+    fn los_clientes_del_corpus_son_sus_nombres_y_la_boveda_los_tapa() {
+        assert_eq!(clientes_del_corpus(&el_kit()), vec!["Páramo Azul".to_string()]);
+        // Un cliente de una sola palabra, que la heurística de nombres propios no ve.
+        let conocidos = vec![corpus::cliente_de("Ficha de cliente · Bancolombia")];
+        let mut b = sintesis::anonimo::Boveda::nueva(&conocidos);
+        let fuera = b.tapar("Bancolombia pide lo mismo");
+        assert!(!fuera.contains("Bancolombia"), "{fuera}");
+        assert!(fuera.contains("[CLIENTE_1]"), "{fuera}");
     }
 }

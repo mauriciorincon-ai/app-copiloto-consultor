@@ -4,7 +4,8 @@
 //! Qué se tapa, de más seguro a más ancho:
 //! 1. **Los nombres conocidos**: los clientes de tu corpus. Enteros, sin mayúsculas.
 //! 2. **Lo que delata a alguien sin estar en ninguna lista**: correos, teléfonos y números largos
-//!    (cédulas, NIT, cuentas) —siete dígitos o más—. Las cifras cortas de la evidencia («23 %»,
+//!    (cédulas, NIT, cuentas) —siete dígitos o más, aunque vengan partidos por espacios, puntos o
+//!    guiones: «300 555 1234», «900.123.456»—. Las cifras cortas de la evidencia («23 %»,
 //!    «9 semanas», «2026») se quedan: son lo que la sugerencia necesita.
 //! 3. **Parejas de Nombres Propios** («Andrea Villalba», «Ana Torres»): dos o más palabras seguidas
 //!    que empiezan en mayúscula y siguen en minúscula. Tapa también cosas que no son personas
@@ -61,48 +62,79 @@ impl Boveda {
                 t.replace_range(i..i + nombre.len(), &m);
             }
         }
-        // 2 y 3. Palabra a palabra.
-        let palabras: Vec<&str> = t.split(' ').collect();
-        let mut salida: Vec<String> = Vec::with_capacity(palabras.len());
+        // 2 y 3. Palabra a palabra, partiendo por CUALQUIER blanco —el texto que sale lleva saltos
+        // de línea entre el turno y cada ficha— y guardando cada blanco tal cual, para que el texto
+        // se rearme idéntico y ninguna etiqueta «F1» quede pegada a lo que se tapa.
+        let (prefijo, piezas) = piezas(&t);
+        let mut salida = String::with_capacity(t.len());
+        salida.push_str(prefijo);
         let mut i = 0;
-        while i < palabras.len() {
-            let p = palabras[i];
-            let (nucleo, cola) = separar_puntuacion(p);
-            if es_correo(nucleo) {
-                let m = self.marcador("CORREO", nucleo);
-                salida.push(format!("{m}{cola}"));
-                i += 1;
-                continue;
-            }
-            if es_numero_largo(nucleo) {
-                let m = self.marcador("NUMERO", nucleo);
-                salida.push(format!("{m}{cola}"));
-                i += 1;
-                continue;
-            }
-            // Una racha de Nombres Propios: se mira hasta dónde llega.
+        while i < piezas.len() {
+            // Un número partido por espacios («300 555 1234») es UN número: se juntan las piezas
+            // que solo tienen cifras y signos de teléfono, en la misma línea.
             let mut j = i;
-            while j < palabras.len() && es_nombre_propio(separar_puntuacion(palabras[j]).0) {
-                // La puntuación corta la racha: «Torres, y» termina en «Torres».
-                if !separar_puntuacion(palabras[j]).1.is_empty() {
-                    j += 1;
+            let mut digitos = 0;
+            while let Some((abre, cifras, cierra)) = piezas.get(j).and_then(numero) {
+                // Solo la primera puede traer algo delante, y la última algo detrás.
+                if j > i && !abre.is_empty() {
                     break;
                 }
+                digitos += cifras.chars().filter(char::is_ascii_digit).count();
                 j += 1;
+                if !cierra.is_empty() || !piezas[j - 1].blanco.chars().all(|c| c == ' ') {
+                    break;
+                }
+            }
+            if j > i && digitos >= 7 {
+                let (abre, _, _) = numero(&piezas[i]).unwrap_or_default();
+                let (_, _, cierra) = numero(&piezas[j - 1]).unwrap_or_default();
+                let todo = unir(&piezas[i..j]);
+                let original = &todo[abre.len()..todo.len() - cierra.len()];
+                let m = self.marcador("NUMERO", original);
+                salida.push_str(&format!("{abre}{m}{cierra}{}", piezas[j - 1].blanco));
+                i = j;
+                continue;
+            }
+            let p = &piezas[i];
+            if es_correo(p.nucleo) {
+                let m = self.marcador("CORREO", p.nucleo);
+                salida.push_str(&format!("{}{m}{}{}", p.cabeza, p.cola, p.blanco));
+                i += 1;
+                continue;
+            }
+            // Una racha de Nombres Propios: sigue mientras no haya puntuación entre dos palabras y
+            // las separe un espacio de la misma línea. «(Juan Pérez)» y «¿Andrea Villalba?» son
+            // rachas; «Torres, y» termina en «Torres»; un salto de línea termina cualquier racha.
+            let mut j = i;
+            while j < piezas.len() && es_nombre_propio(piezas[j].nucleo) {
+                j += 1;
+                let (esta, sigue) = (&piezas[j - 1], piezas.get(j));
+                let continua = esta.cola.is_empty()
+                    && esta.blanco.chars().all(|c| c == ' ')
+                    && sigue.is_some_and(|s| s.cabeza.is_empty());
+                if !continua {
+                    break;
+                }
             }
             if j - i >= 2 {
-                let (ultimo, cola) = separar_puntuacion(palabras[j - 1]);
-                let mut nombre: Vec<&str> = palabras[i..j - 1].to_vec();
-                nombre.push(ultimo);
-                let m = self.marcador("PERSONA", &nombre.join(" "));
-                salida.push(format!("{m}{cola}"));
+                let (primera, ultima) = (&piezas[i], &piezas[j - 1]);
+                let mut nombre = String::new();
+                for (k, q) in piezas[i..j].iter().enumerate() {
+                    nombre.push_str(q.nucleo);
+                    if k + 1 < j - i {
+                        nombre.push_str(q.blanco);
+                    }
+                }
+                let m = self.marcador("PERSONA", &nombre);
+                salida.push_str(&format!("{}{m}{}{}", primera.cabeza, ultima.cola, ultima.blanco));
                 i = j;
             } else {
-                salida.push(p.to_string());
+                salida.push_str(p.palabra);
+                salida.push_str(p.blanco);
                 i += 1;
             }
         }
-        salida.join(" ")
+        salida
     }
 
     /// **Destapar** lo que volvió: cada marcador por su original, en el Mac.
@@ -143,21 +175,65 @@ fn buscar_sin_mayusculas(texto: &str, nombre: &str) -> Option<usize> {
     None
 }
 
-fn separar_puntuacion(p: &str) -> (&str, &str) {
-    let fin = p.trim_end_matches(|c: char| ",.;:!?)»\"”".contains(c)).len();
-    (&p[..fin], &p[fin..])
+/// Una palabra del texto, con la puntuación que la abre y la cierra separada, y el blanco que la
+/// sigue tal cual (espacio, salto de línea…): con eso el texto se rearma idéntico.
+struct Pieza<'a> {
+    palabra: &'a str,
+    cabeza: &'a str,
+    nucleo: &'a str,
+    cola: &'a str,
+    blanco: &'a str,
+}
+
+const ABRE: &str = "¿¡(«\"“'[";
+const CIERRA: &str = ",.;:!?)»\"”'…]";
+
+fn piezas(t: &str) -> (&str, Vec<Pieza<'_>>) {
+    let (prefijo, mut resto) = t.split_at(t.len() - t.trim_start().len());
+    let mut v = Vec::new();
+    while !resto.is_empty() {
+        let (palabra, tras) = resto.split_at(resto.find(char::is_whitespace).unwrap_or(resto.len()));
+        let (blanco, sigue) = tras.split_at(tras.len() - tras.trim_start().len());
+        let sin_cabeza = palabra.trim_start_matches(|c: char| ABRE.contains(c));
+        let nucleo = sin_cabeza.trim_end_matches(|c: char| CIERRA.contains(c));
+        v.push(Pieza {
+            palabra,
+            cabeza: &palabra[..palabra.len() - sin_cabeza.len()],
+            nucleo,
+            cola: &sin_cabeza[nucleo.len()..],
+            blanco,
+        });
+        resto = sigue;
+    }
+    (prefijo, v)
+}
+
+/// Las piezas seguidas, con sus blancos de por medio: lo que se tapó, tal como estaba.
+fn unir(piezas: &[Pieza<'_>]) -> String {
+    let mut s = String::new();
+    for (k, p) in piezas.iter().enumerate() {
+        s.push_str(p.palabra);
+        if k + 1 < piezas.len() {
+            s.push_str(p.blanco);
+        }
+    }
+    s
+}
+
+/// Si la palabra es un trozo de teléfono, cédula o cuenta —cifras y `+ - . ( )`—, la separa de la
+/// puntuación de frase que la rodea: (lo de delante, el número, lo de detrás).
+fn numero<'a>(p: &Pieza<'a>) -> Option<(&'a str, &'a str, &'a str)> {
+    let w = p.palabra;
+    let sin_abre = w.trim_start_matches(|c: char| "¿¡«\"“'".contains(c));
+    let cifras = sin_abre.trim_end_matches(|c: char| ",;:!?»\"”'…".contains(c));
+    let es = cifras.chars().any(|c| c.is_ascii_digit())
+        && cifras.chars().all(|c| c.is_ascii_digit() || "+-.()".contains(c));
+    es.then(|| (&w[..w.len() - sin_abre.len()], cifras, &sin_abre[cifras.len()..]))
 }
 
 fn es_correo(p: &str) -> bool {
     let Some((usuario, dominio)) = p.split_once('@') else { return false };
     !usuario.is_empty() && dominio.contains('.') && !dominio.starts_with('.') && !dominio.ends_with('.')
-}
-
-/// Siete dígitos o más, contando los que van separados por puntos, guiones o espacios dentro de la
-/// palabra («300-555-1234», «900.123.456»).
-fn es_numero_largo(p: &str) -> bool {
-    let digitos = p.chars().filter(char::is_ascii_digit).count();
-    digitos >= 7 && p.chars().all(|c| c.is_ascii_digit() || "+-.()".contains(c))
 }
 
 fn es_nombre_propio(p: &str) -> bool {
@@ -199,6 +275,33 @@ mod pruebas {
         let fuera = b.tapar("¿Y Páramo Azul tiene el Excel?");
         assert!(fuera.contains("[CLIENTE_1]"));
         assert_eq!(b.destapar("Confirma a [CLIENTE_1] las tres fuentes."), "Confirma a Páramo Azul las tres fuentes.");
+    }
+
+    /// **Lo que de verdad sale**: el texto de `Peticion::texto`, con el turno en la primera línea
+    /// y una ficha por línea detrás. Cada turno lleva un dato plantado en una posición que el
+    /// tokenizador por espacios dejaba pasar (auditoría del S2, A1): tras «¿» o «(», entre
+    /// comillas, pegado al salto de línea de la ficha, o un teléfono partido por espacios.
+    #[test]
+    fn los_datos_plantados_no_salen_en_ninguna_posicion_del_texto_real() {
+        use super::super::{pruebas::respaldo, Peticion};
+        for (turno, plantado) in [
+            ("¿Andrea Villalba ya lo aprobó?", "Villalba"),
+            ("Lo aprobó Andrea Villalba", "Villalba"),
+            ("Mi celular es 300 555 1234", "555 1234"),
+            ("llámame al 3005551234", "3005551234"),
+            ("(Juan Pérez) dijo que sí", "Pérez"),
+            ("«Ana Torres» lo firmó", "Torres"),
+            ("escríbele a andrea@paramo.co", "andrea@"),
+        ] {
+            let texto = Peticion::nueva(turno, &respaldo()).unwrap().texto();
+            let mut b = Boveda::default();
+            let fuera = b.tapar(&texto);
+            assert!(!fuera.contains(plantado), "«{plantado}» salió:\n{fuera}");
+            for id in ["F1 · ", "F2 · ", "F3 · "] {
+                assert!(fuera.contains(id), "se perdió «{id}» (el modelo ya no podría citarla):\n{fuera}");
+            }
+            assert_eq!(b.destapar(&fuera), texto, "el texto no vuelve igual");
+        }
     }
 
     #[test]

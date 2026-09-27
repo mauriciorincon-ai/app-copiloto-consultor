@@ -40,8 +40,10 @@ use std::collections::HashSet;
 /// porque se parezca.
 fn tolerancia(largo: usize) -> usize {
     match largo {
-        0..=4 => 0,
-        5..=8 => 1,
+        // Hasta seis letras, solo lo exacto: «fabric» está a una letra de «fábrica», y una palabra
+        // corta de la jerga tiene siempre una vecina corriente (auditoría del S2, A3).
+        0..=6 => 0,
+        7..=8 => 1,
         _ => 2,
     }
 }
@@ -75,7 +77,9 @@ pub struct Diccionario {
 const SEMILLA: &[(&str, &[&str])] = &[
     ("Power BI", &["power bi", "powerbi", "power by", "poder bi", "power be", "power vi"]),
     ("DAX", &["dax", "the ax", "daks", "dacs", "dachs", "de ax", "dax's"]),
-    ("Microsoft Fabric", &["microsoft fabric", "fabric", "fabrica", "fabrics", "favric"]),
+    // Sin «fabrica» ni «fabrics»: «la fábrica» y «fabricar» son castellano corriente, y como
+    // variantes convertían la frase del cliente en «la Microsoft Fabric» (auditoría del S2, A3).
+    ("Microsoft Fabric", &["microsoft fabric", "fabric", "favric"]),
     ("Semantic Model", &["semantic model", "semantico model", "semantic modelo", "modelo semantico"]),
     ("Lakehouse", &["lakehouse", "lake house", "leikhaus", "lago house", "lake haus"]),
 ];
@@ -104,12 +108,14 @@ impl Diccionario {
         self.del_corpus.len()
     }
 
-    /// **Los nombres propios del corpus, que son los del cliente de hoy.**
+    /// **Los nombres de tus clientes, que salen de tu corpus.**
     ///
-    /// Vienen de `disparo::vocabulario`, que ya los saca de los nombres de documento y los títulos
-    /// de sección y ya deja fuera las palabras que dice todo el mundo. Aquí se añaden **sin
+    /// Vienen de las fichas de cliente (`corpus::cliente_de`), con sus mayúsculas y sus tildes:
+    /// «Páramo Azul», no «paramo». Hasta la auditoría del S2 venían del vocabulario del disparador
+    /// —palabras sueltas, en minúscula y sin tildes, de nombres de documento y títulos de sección—,
+    /// y el diccionario convertía «Vale» en «valle» y «manejó» en «manejo» (A3). Se añaden **sin
     /// variantes**: no se sabe cómo los va a oír mal el transcriptor, así que lo único que se puede
-    /// hacer es la distancia acotada, y para eso basta el canónico.
+    /// hacer es la distancia acotada, y solo para los largos (ver [`Self::buscar`]).
     ///
     /// Se ignoran los cortos, por lo mismo que la tolerancia es cero por debajo de cinco letras: un
     /// nombre de cuatro letras corregiría media conversación.
@@ -180,10 +186,18 @@ impl Diccionario {
         // Y solo después el parecido, con el techo que le toca a su largo.
         let mut mejor: Option<(usize, &str)> = None;
         for t in &self.terminos {
+            // Un nombre del corpus de menos de ocho letras solo se corrige si se oyó EXACTO: por
+            // parecido, un cliente corto se come palabras corrientes que están a una letra de él.
+            let corto_del_corpus = self.del_corpus.contains(&t.canonico) && t.canonico.chars().count() < 8;
+            if corto_del_corpus {
+                continue;
+            }
             let candidatos = std::iter::once(normalizar(&t.canonico)).chain(t.variantes.iter().cloned());
             for c in candidatos {
                 let techo = tolerancia(c.chars().count());
-                if techo == 0 {
+                // El parecido compara trozos del MISMO número de palabras: si no, la ventana de tres
+                // palabras «y paramo azul» está a dos letras de «paramo azul» y se come la «y».
+                if techo == 0 || c.split_whitespace().count() != norma.split_whitespace().count() {
                     continue;
                 }
                 // Una diferencia de largo mayor que el techo no puede salvarse: se descarta sin
@@ -438,8 +452,10 @@ mod pruebas {
         let mut d = Diccionario::semilla();
         d.con_nombres_del_corpus(&["Páramo".into(), "Azul".into(), "Cooperativa".into()]);
         assert_eq!(d.cuantos_del_corpus(), 2, "«Azul» tiene cuatro letras y no debería entrar");
-        // Con seis letras la tolerancia es 1: una letra de más se corrige.
-        assert_eq!(d.corregir("lo de paramos"), "lo de Páramo");
+        // Un nombre largo se corrige por parecido: una letra mal oída.
+        assert_eq!(d.corregir("lo de la cooperatiba"), "lo de la Cooperativa");
+        // Uno de menos de ocho letras, solo si se oyó exacto: «paramos» es otra palabra.
+        assert_eq!(d.corregir("lo de paramos"), "lo de paramos");
         // «Azul» no entró, así que «asul» se queda como vino.
         assert_eq!(d.corregir("el asul de la marca"), "el asul de la marca");
     }
@@ -496,5 +512,24 @@ mod pruebas {
         assert_eq!(normalizar("  Páramo   Azul  "), "paramo azul");
         assert_eq!(normalizar("¿Power BI?"), "power bi");
         assert_eq!(normalizar("MAÑANA"), "manana");
+    }
+
+    /// **El castellano corriente del cliente no se toca** (auditoría del S2, A3). El diccionario de
+    /// la sesión es la semilla más los clientes del corpus del kit («Páramo Azul»), como lo arma
+    /// `lib.rs`; cada una de estas frases le salía estropeada al cableado anterior.
+    #[test]
+    fn con_el_corpus_del_kit_no_toca_el_castellano_corriente() {
+        let mut d = Diccionario::semilla();
+        d.con_nombres_del_corpus(&["Páramo Azul".to_string()]);
+        for frase in [
+            "Vale, la fábrica ya está lista",
+            "¿Quién manejó la adopción?",
+            "Páramo Azul cierra la etapa",
+            "Queremos fabricar más",
+        ] {
+            assert_eq!(d.corregir(frase), frase, "el diccionario estropeó una frase corriente");
+        }
+        // Y el nombre del cliente, oído en minúscula y sin tilde, sí sale bien escrito.
+        assert_eq!(d.corregir("y paramo azul qué dice"), "y Páramo Azul qué dice");
     }
 }

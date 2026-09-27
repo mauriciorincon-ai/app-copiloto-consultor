@@ -2348,3 +2348,49 @@ Corregidos, la demo de verdad: la sugerencia a opacidad 0 **solo** con `prefers-
   última versión** y lo fija: no se puede pagar aquí. Deuda con disparador («cuando tantivy suba»).
 - `pnpm tauri build`: **ejecutable 12,06 MB** (S1: 11,05; +1,01 MB por pantalla, radar, voz, síntesis y
   el puente) · `.app` 12 MB · `.dmg` **5,34 MB** (S1: 4,88).
+
+## `/audita-sprint` — Fase 1 (auditor independiente) y la aprobación del usuario
+
+Un subagente que no construyó el sprint auditó el diff `main...HEAD` sobre `b55f1fe`, en solo lectura:
+**40 hallazgos — 0 críticos · 4 altos · 15 medios · 21 bajos**, todos con `archivo:línea` y ajuste
+ejecutable, en `sprints/SPRINT_002-auditoria.md` (su gate, `auditoria-con-sitio`, verde). Veredicto:
+«requiere ajustes». El constructor verificó en el código A3 (`lib.rs:573-576` pasa
+`Buscador::vocabulario` al diccionario; la semilla trae «fabrica») y A4 (`cuaderno.ts:558`
+`DEL_CLIENTE = "en-US"`): son reales.
+
+**Decisión del usuario (2026-09-26):** pagar **los 40** en la Fase 2, en el orden del auditor;
+**M15 se construye** (la maniobra a medida, camino determinista de `design-system.md` §10); la pista
+del cliente, elegible, nace en **es-ES**. El copy nuevo que salga de los ajustes va al gate del MVP.
+
+## `/audita-sprint` — Fase 2: los ajustes, hallazgo a hallazgo
+
+### A1 · la bóveda partía por espacios
+`tapar` parte ahora por **cualquier blanco** y guarda cada blanco tal cual (`Pieza {cabeza, nucleo,
+cola, blanco}`): el texto se rearma idéntico, «¿», «(» y «» ya no esconden un nombre, un salto de
+línea corta cualquier racha y ninguna etiqueta «F1» queda pegada a lo que se tapa. Los números
+partidos por espacios («300 555 1234») son uno. Test nuevo sobre el texto REAL de `Peticion::texto`,
+siete turnos con el dato en cada posición que el tokenizador viejo dejaba pasar; exige además que
+F1–F3 sobrevivan y que `destapar` devuelva el texto exacto. **Rojo:** el test sobre la bóveda vieja →
+«Villalba» salió → verde con la nueva.
+
+### A2 · los «conocidos» eran nombres de archivo — y A3 · el diccionario estropeaba el castellano
+Una sola función para las dos: `corpus::clientes(documentos)` → el nombre del cliente de cada ficha
+de cliente (`cliente_de`: lo que va tras el último «·»), filtrado por forma (`parece_un_nombre_de_cliente`:
+hasta cuatro palabras y sin la palabra «cliente» — el test cazó que el corpus clasifica «Seguridad y
+manejo de datos del cliente» como ficha de cliente). La bóveda y el diccionario reciben eso, y ya no
+el vocabulario del disparador. Además, en el diccionario:
+- fuera las variantes «fabrica» y «fabrics» de la semilla;
+- **hasta seis letras, solo lo exacto** (antes cinco): «fabric» está a una letra de «fábrica»;
+- un nombre del corpus de menos de ocho letras solo se corrige si se oyó exacto;
+- **y un defecto que destapó el test nuevo, anterior a la auditoría:** la ventana de tres palabras
+  «y paramo azul» estaba a dos letras de «paramo azul» y **se comía la «y»**. El parecido compara ahora
+  trozos del mismo número de palabras.
+
+Tests: `con_el_corpus_del_kit_no_toca_el_castellano_corriente` (las cuatro frases del auditor, más
+«y paramo azul» → «y Páramo Azul») y `los_clientes_del_corpus_son_sus_nombres_y_la_boveda_los_tapa`
+(el kit indexado de verdad → `["Páramo Azul"]`; «Bancolombia» tapado). **Rojos:** cableado viejo →
+`["Ficha de cliente · Páramo Azul", …]`; semilla con «fabrica» → «la Microsoft Fabric»; verde al
+revertir. El test del WER arma ahora la jerga **como la sesión** (semilla + clientes del kit): WER
+sin cambios (mezcla-es 0,458 → 0,417 · mezcla-en 0,348 → 0,261). **Desviación del ajuste del auditor:**
+no se añadió un documento «Bancolombia» al corpus del kit —movería todas las medidas de los kits—;
+el caso se prueba con el nombre de archivo sintético.
