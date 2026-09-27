@@ -233,8 +233,8 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
 ### La sugerencia: qué decir, con su fuente · Nuevo · Sprint 002
 
 - **Qué hace:** cuando llega una ficha que responde a lo que dijo el cliente, la app **te propone qué
-  decir en una frase**, debajo de la ficha: «Confirma que las tres fuentes están dentro; una cuarta
-  va como adicional con costo aparte». Dice dónde se redactó («sugerencia · en tu Mac», o el nombre
+  decir en una frase**, debajo de la ficha: «Confirma que la limpieza incluye hasta tres fuentes; una
+  cuarta es adicional y se cotiza aparte». Dice dónde se redactó («sugerencia · en tu Mac», o el nombre
   del proveedor externo) y con qué **confianza** (alta, media o baja). **La ficha no se va**: su
   titular y su fuente siguen a la vista, y con la banda ampliada la sugerencia ocupa el hueco de la
   derecha.
@@ -253,6 +253,14 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
     sugerencia **se tira** y no la ves. Lo vigila `sintesis::pruebas::una_sugerencia_sin_fuente_dada_se_descarta`,
     y el tipo que llega a la banda solo se puede fabricar pasando por esa comprobación (no compila de
     otra forma).
+  - **Tampoco le deja decir lo que la ficha no dice.** Citar bien no basta: cada palabra con
+    contenido de la sugerencia tiene que estar en la ficha que cita, las cifras tienen que ser las
+    mismas («cuatro» es 4) y no puede poner ni quitar un «no». Si falla, la sugerencia se tira y te
+    queda la ficha. Nació de medir el modelo de verdad: citó bien y dijo «el taller de cierre va
+    aparte» cuando la propuesta lo incluye. Lo vigilan `sintesis::fiel::pruebas` y
+    `sintesis::pruebas::una_linea_que_la_ficha_citada_no_dice_se_descarta`. Si el titular que propone
+    el modelo no sale ni de la ficha ni de tu pregunta, ves el titular de la ficha
+    (`…un_titular_inventado_se_cambia_por_el_de_la_ficha`).
   - **No te hace esperar.** La ficha sale primero y sin esperar al modelo; la sugerencia llega
     después. Si tarda más de **6 segundos**, no se enseña (`…pasado_el_techo_no_hay_sugerencia…`).
   - **Al proveedor externo solo sale texto corto y anonimizado en tu Mac:** tu pregunta y las tres
@@ -267,15 +275,23 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
   enseña **esta reunión**, **este mes** y el **tope del mes (USD 10)**. Al llegar al tope, vuelve sola
   a lo local; la reunión no se detiene. La cifra del mes es lo único que se guarda (un número, no el
   texto de nada).
-- **Medido:** en el kit de prueba, de las 30 preguntas, 17 llegan a ficha; con el proveedor de
-  prueba, **17 de 17** sugerencias salen fundadas en una ficha. El modelo del sistema **todavía no se
-  ha medido en este Mac** porque Apple Intelligence está apagado: su calidad en español y su
-  latencia se escriben aquí cuando se midan, no antes.
+- **Medido** (kit de prueba, `el_kit_de_sugerencias_mide_grounding_y_latencia`): de las 30
+  preguntas, 17 llegan a ficha. Con **el modelo del sistema** (Apple Intelligence, en un Mac con
+  macOS 26, 2026-09-26): entre **11 y 13 de 17** sugerencias pasan la comprobación —varía de una
+  corrida a otra—; el resto se tira y queda la ficha. Tarda **~0,8 s de mediana y ~1 s en el peor
+  5 %** (el presupuesto es 4 y 6). Con el proveedor de prueba de la CI, 17 de 17. Antes de la
+  comprobación de fidelidad, 17 de 17 «citaban bien» y 3 de ellas decían algo falso o ajeno a su
+  ficha: por eso la cifra baja es la honesta.
 - **Limitaciones conocidas:**
   - Las fichas que trae **la pantalla sola** no llevan sugerencia: no responden a ninguna pregunta.
   - Un nombre de persona **suelto** («Andrea») que no esté en tu corpus no se reconoce al anonimizar;
     dos palabras con mayúscula seguidas («Andrea Villalba») sí.
   - El camino **MLX** (un modelo que descargas tú) todavía no existe; aparece en IA como «Todavía no».
+    Sin Apple Intelligence, la sugerencia local no está.
+  - La sugerencia se escribe **en el idioma de la ficha que cita**, no en el de la pregunta: si tu
+    cliente pregunta en inglés y tu propuesta está en español, la sugerencia sale en español.
+  - A veces la sugerencia es fiel a su ficha pero **no contesta la pregunta** (cita otra de las tres
+    fichas del momento). No es falsa; es poco útil. La confianza suele decirlo.
   - Los interruptores de IA vuelven a apagado al cerrar la app.
   - El precio de cada proveedor está escrito en la app con su fecha (2026-09-26); si el proveedor lo
     cambia, el costo que ves se desvía hasta la versión siguiente.

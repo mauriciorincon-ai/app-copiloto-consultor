@@ -372,11 +372,11 @@ export const NOVEDAD_SUGERENCIA: Novedad = {
       },
       "titular": "Limpieza de datos: incluida, hasta tres fuentes"
     },
-    "linea": "Confirma que las tres fuentes están dentro; una cuarta va como adicional con costo aparte.",
+    "linea": "Confirma que la limpieza incluye hasta tres fuentes; una cuarta es adicional y se cotiza aparte.",
     "nombre": "Modelo del sistema",
     "que": "sugerencia",
     "quien": "sistema",
-    "titular": "Tres fuentes dentro, la cuarta aparte"
+    "titular": "Tres fuentes incluidas, la cuarta aparte"
   };
 
 export const ESTADO_DE_LA_IA_NADIE: EstadoDeLaIa = {

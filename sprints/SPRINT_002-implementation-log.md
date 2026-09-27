@@ -2237,3 +2237,53 @@ diccionario fiel a la maqueta, maquetas que caben) y el summary lo dirá así. M
 | `logs-de-la-sintesis` | `{turno}` plantado · la respuesta cruda en el log | ROJO los dos → verde |
 | contador de red | sesión `.default` · la puerta sin su ADR | ROJO los dos → verde |
 | `verify:ephemeral` + contador de red | mi comentario de cabecera nombraba la API de red | ROJO los dos (lo cazaron solos) → comentario reescrito |
+
+---
+
+## Fase 6 — kit v1, guía v4, manual y cierre (2026-09-26)
+
+Arranca con el «continúa» del usuario y **Apple Intelligence encendido por él** (opción A del cierre
+de la fase 5: medir el modelo del sistema en vez de construir MLX).
+
+### El modelo del sistema, medido — y lo que la medida destapó
+
+Primera corrida del kit de sugerencias con el proveedor (a): **17 de 17 «fundadas», mediana 786 ms,
+p95 974 ms.** El test cuenta citas; no lee. Leídas una a una contra el corpus, **3 de las 17 citaban
+una ficha válida y decían algo que esa ficha no dice**:
+
+| Pregunta del kit | Lo que redactó | Lo que dice el corpus |
+|---|---|---|
+| ¿El taller de cierre va aparte? | «El taller de cierre de tres horas va aparte» (cita Entregables) | **falso**: Precio dice «Incluye el taller de cierre» |
+| ¿Cuántas reglas por fuente acuerdan? | «…no hay penalidades por terminación anticipada» (cita Calidad) | frase de la ficha de cliente, pegada a Calidad; no dice «cinco» |
+| ¿Quién responde por cada fuente? | «Cada fuente responde a su propia decisión» | sin sentido |
+
+**«Fundada» medía la mitad del grounding.** Una cita válida con una línea falsa es el peor caso del
+producto: el consultor se la repite al cliente. Se paga en código, no en el prompt:
+
+- **`sintesis/fiel.rs` — la línea dice lo que dice la ficha.** Léxica y determinista: cada palabra con
+  contenido de la línea sale de la ficha citada (raíz de 5 letras, sin tildes), cifras exactas en
+  dígitos o letras, ninguna negación puesta ni quitada. `fundar()` la exige (`Descarte::NoLoDiceLaFicha`).
+  Declarado lo que no ve: palabras reordenadas, y sinónimos legítimos, que descarta de más.
+- **El titular** que no sale ni de la ficha ni de la pregunta se cambia por el de la ficha (no se
+  descarta: la afirmación es la línea). Había «Fourth Source» en inglés, «Claro», «Consultor».
+- **El prompt** pide escribir con las palabras y **en el idioma de la ficha citada** (antes, en el de
+  la pregunta: una línea traducida no se puede cotejar). Manual → limitación declarada.
+- **La muestra de la maqueta** («…las tres fuentes están **dentro**… con **costo** aparte») era una
+  sugerencia que la app ahora tira: se cambió en la maqueta, i18n, el contrato y `design-sync/` a
+  «Confirma que la limpieza incluye hasta tres fuentes; una cuarta es adicional y se cotiza aparte».
+  Fidelidad: 116 encuadres, ninguno sobre el umbral.
+
+Con la regla, dos corridas: **13 y 11 de 17** pasan (el modelo varía); las descartadas son las
+falsas y las que parafrasean de más. Latencia: mediana 790–832 ms, p95 993–1043 ms. El kit gana un
+piso para el modelo del sistema (≥ la mitad), que solo corre donde hay Apple Intelligence (no en CI).
+Una que pasa y no sirve, declarada: «¿Quién responde por cada fuente?» → una línea fiel a la ficha
+de Uso que no contesta.
+
+**MLX no se construye**: (a) cumple el presupuesto con holgura y ADR 011 lo condiciona a que (a) no
+esté o no rinda. Roadmap, para Macs sin Apple Intelligence.
+
+| Gate / test | Cambio plantado | Resultado |
+|---|---|---|
+| `una_linea_que_la_ficha_citada_no_dice_se_descarta` | `fundar` sin llamar a la regla | ROJO `sintesis/mod.rs:381` → verde |
+| `sintesis::fiel::pruebas` (3 tests) | `misma_raiz` siempre verdadera | ROJO `fiel.rs:185/196/220` → verde |
+| `un_titular_inventado_se_cambia_por_el_de_la_ficha` | conservar siempre el titular del modelo | ROJO → verde |

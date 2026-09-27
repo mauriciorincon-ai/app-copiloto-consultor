@@ -41,6 +41,14 @@ con **varias** fichas y redactar la frase que el consultor diría. Eso es lengua
   una `Sugerencia` solo se construye con `fundar()`, que exige que `fuente` sea **exactamente** una
   de las fichas que se le dieron; si no lo es, la sugerencia se **descarta** (test). No hay otra
   forma de crear el tipo que la banda recibe.
+- **Enmienda (fase 6, al medir el modelo real): citar bien no basta.** `fundar()` exige además que la
+  línea **diga lo que dice la ficha citada** (`sintesis/fiel.rs`, determinista y léxica): cada palabra
+  con contenido sale de esa ficha, las cifras son exactas y no se pone ni se quita una negación. La
+  primera medida con Apple Intelligence dio 17 de 17 citas válidas y **3 líneas falsas o ajenas** a su
+  ficha («el taller de cierre va aparte», cuando la propuesta lo incluye). Con la regla, 11–13 de 17
+  pasan y las falsas se tiran. El prompt pide ahora escribir **con las palabras y en el idioma de la
+  ficha citada** (antes: en el de la pregunta), porque una línea traducida no se puede cotejar. El
+  titular que no sale de la ficha ni de la pregunta se cambia por el de la ficha.
 
 ## 4. Fallback determinista (obligatorio)
 
@@ -77,4 +85,8 @@ El motivo se anuncia en la pantalla IA (qué proveedor, por qué no está) y va 
 
 ## Medición (se llena al construir; nada se afirma antes)
 
-Ver la sección «Medido» de la fase 5 en `sprints/SPRINT_002-implementation-log.md`.
+Ver la sección «Medido» de la fase 5 en `sprints/SPRINT_002-implementation-log.md`, y la entrada
+«Fase 6 — el modelo del sistema, medido» para Apple Intelligence: mediana ~0,8 s, p95 ~1 s,
+11–13 de 17 sugerencias pasan el contrato completo. **MLX no se construye**: el proveedor (a) cumple el
+presupuesto con holgura y el (b) solo tenía sentido si (a) no estaba (ADR 011); queda en el roadmap
+para Macs sin Apple Intelligence.

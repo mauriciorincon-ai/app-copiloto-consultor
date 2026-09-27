@@ -67,8 +67,8 @@ fn sugerencia() -> crate::sintesis::Sugerencia {
     let peticion = crate::sintesis::Peticion::nueva("¿Y si sumamos el Excel de la fuerza comercial?", &respaldo)
         .expect("la muestra tiene turno y ficha");
     let crudo = crate::sintesis::Crudo {
-        titular: "Tres fuentes dentro, la cuarta aparte".into(),
-        linea: "Confirma que las tres fuentes están dentro; una cuarta va como adicional con costo aparte.".into(),
+        titular: "Tres fuentes incluidas, la cuarta aparte".into(),
+        linea: "Confirma que la limpieza incluye hasta tres fuentes; una cuarta es adicional y se cotiza aparte.".into(),
         fuente: "F1".into(),
         confianza: "media".into(),
     };

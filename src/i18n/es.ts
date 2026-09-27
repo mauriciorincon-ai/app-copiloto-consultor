@@ -241,8 +241,8 @@ export const es = {
       radarPrograma: "ProctorLince",
       radarVe: "ve tu pantalla completa y tu cámara",
       /** La sugerencia de la maqueta (mirada 18). */
-      sugerenciaTitular: "Tres fuentes dentro, la cuarta aparte",
-      sugerenciaLinea: "Confirma que las tres fuentes están dentro; una cuarta va como adicional con costo aparte.",
+      sugerenciaTitular: "Tres fuentes incluidas, la cuarta aparte",
+      sugerenciaLinea: "Confirma que la limpieza incluye hasta tres fuentes; una cuarta es adicional y se cotiza aparte.",
       nombreApi: "Claude Haiku",
       redApi: "1,2 KB",
     },

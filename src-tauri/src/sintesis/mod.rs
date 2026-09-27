@@ -14,12 +14,15 @@
 //! - **La regla dura que no compila:** una [`Sugerencia`] solo se construye con [`fundar`], y
 //!   `fundar` exige que `fuente` sea **exactamente** el id de una de las fichas que se le dieron. Los
 //!   campos son privados: no hay otra manera de fabricar el tipo que viaja a la banda.
+//! - **Y la línea dice lo que dice esa ficha:** [`fiel::dice_lo_que_la_ficha`]. Una cita válida
+//!   con una afirmación que la ficha no hace se descarta igual.
 //! - **El techo:** [`TECHO`]. Pasado, no hay sugerencia; la ficha ya estaba en pantalla.
 //! - **El fallback:** ninguno que hacer. La ficha y la maniobra son el camino de siempre y no
 //!   esperan a la síntesis: si esto falla, simplemente no aparece nada debajo.
 
 pub mod anonimo;
 pub mod api;
+pub mod fiel;
 pub mod mock;
 pub mod sistema;
 
@@ -67,9 +70,9 @@ impl Peticion {
     pub fn instrucciones() -> &'static str {
         "You help a consultant during a live meeting. You get the client's last question and up to \
          three evidence cards from the consultant's own documents, each with an id (F1, F2, F3). \
-         Write ONE short suggestion of what the consultant could say next, using ONLY what the cards \
-         say — never add facts, numbers or names that are not in them. Answer in the language of the \
-         client's question. Reply with a single JSON object and nothing else: \
+         Write ONE short suggestion of what the consultant could say next, using ONLY what ONE card \
+         says, in that card's own words and language — never add facts, numbers, names or negations \
+         that are not in it. Reply with a single JSON object and nothing else: \
          {\"titular\": \"<up to 8 words>\", \"linea\": \"<one sentence, up to 30 words>\", \
          \"fuente\": \"<the id of the card you used: F1, F2 or F3>\", \
          \"confianza\": \"<alta | media | baja>\"}. \
@@ -181,6 +184,8 @@ pub enum Descarte {
     FueraDelEsquema,
     /// Citaba una fuente que no se le dio. **El caso que la regla existe para impedir.**
     SinFuente,
+    /// Citaba bien, pero la línea dice algo que esa ficha no dice ([`fiel`]).
+    NoLoDiceLaFicha,
     /// Pasó el techo.
     Tarde,
     /// El proveedor no contestó. El detalle, para el log.
@@ -214,6 +219,14 @@ pub fn fundar(
         .find(|(i, _)| id == format!("F{}", i + 1))
         .map(|(_, f)| f)
         .ok_or(Descarte::SinFuente)?;
+    if !fiel::dice_lo_que_la_ficha(linea, citada) {
+        return Err(Descarte::NoLoDiceLaFicha);
+    }
+    let titular = if fiel::titular_de_la_ficha_o_el_turno(titular, citada, &peticion.turno) {
+        titular
+    } else {
+        citada.titular.as_str()
+    };
     Ok(Sugerencia {
         titular: titular.to_string(),
         linea: linea.to_string(),
@@ -337,7 +350,7 @@ pub(crate) mod pruebas {
     fn crudo(fuente: &str) -> Crudo {
         Crudo {
             titular: "Tres fuentes dentro, la cuarta aparte".into(),
-            linea: "Confirma que las tres fuentes están dentro; una cuarta va como adicional.".into(),
+            linea: "Confirma que incluye hasta tres fuentes; una cuarta es adicional y se cotiza aparte.".into(),
             fuente: fuente.into(),
             confianza: "media".into(),
         }
@@ -345,7 +358,9 @@ pub(crate) mod pruebas {
 
     #[test]
     fn una_sugerencia_que_cita_una_ficha_dada_se_funda_con_esa_ficha() {
-        let s = fundar(&crudo(" f3 "), &peticion(), Quien::Mock, "mock", 10).unwrap();
+        let mut c = crudo(" f3 ");
+        c.linea = "Sur del Valle: cuatro fuentes en 9 semanas.".into();
+        let s = fundar(&c, &peticion(), Quien::Mock, "mock", 10).unwrap();
         assert_eq!(s.ficha.titular, "Sur del Valle");
         assert_eq!(s.ficha.fuente.documento, "Sur del Valle · Resultados");
     }
@@ -361,6 +376,27 @@ pub(crate) mod pruebas {
                 "«{mala}» contó como fuente"
             );
         }
+    }
+
+    /// **La segunda mitad del grounding**, cableada: la cita es válida y la línea no es de esa
+    /// ficha (la de F1 dicha como si fuera de F2).
+    #[test]
+    fn una_linea_que_la_ficha_citada_no_dice_se_descarta() {
+        assert!(fundar(&crudo("F1"), &peticion(), Quien::Mock, "mock", 10).is_ok());
+        assert_eq!(fundar(&crudo("F2"), &peticion(), Quien::Mock, "mock", 10), Err(Descarte::NoLoDiceLaFicha));
+    }
+
+    /// Un titular que no sale ni de la ficha ni de la pregunta no tumba la sugerencia: se cambia por
+    /// el de la ficha, que sí es del consultor.
+    #[test]
+    fn un_titular_inventado_se_cambia_por_el_de_la_ficha() {
+        let mut c = crudo("F1");
+        c.titular = "Fourth Source".into();
+        let s = fundar(&c, &peticion(), Quien::Mock, "mock", 10).unwrap();
+        assert_eq!(s.titular, "Limpieza de datos: incluida, hasta tres fuentes");
+        let mut c = crudo("F1");
+        c.titular = "Tres fuentes, la cuarta aparte".into();
+        assert_eq!(fundar(&c, &peticion(), Quien::Mock, "mock", 10).unwrap().titular, "Tres fuentes, la cuarta aparte");
     }
 
     #[test]

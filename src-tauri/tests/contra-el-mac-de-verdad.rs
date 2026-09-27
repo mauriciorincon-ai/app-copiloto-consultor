@@ -1684,6 +1684,12 @@ fn el_kit_de_sugerencias_mide_grounding_y_latencia() {
     // Menos que eso es una regresión del retriever o de la ficha, no de la síntesis.
     assert!(pedidas >= 17, "solo {pedidas} preguntas llegaron a pedir sugerencia (medido: 17)");
     assert!(mediana <= 4_000 && p95 <= 6_000, "fuera de presupuesto: mediana {mediana} · p95 {p95}");
+    if proveedor.quien() == sintesis::Quien::Sistema {
+        // Medido en la fase 6 con Apple Intelligence encendido: 13 de 17 pasan el contrato; las 4
+        // descartadas dicen algo que su ficha no dice (una de ellas, «el taller va aparte», es
+        // falsa). Menos de la mitad es otro modelo, u otro prompt: se mira antes de seguir.
+        assert!(fundadas * 2 >= pedidas, "el modelo del sistema: solo {fundadas} de {pedidas} pasan el contrato");
+    }
     if proveedor.quien() == sintesis::Quien::Mock {
         // El mock cita siempre F1, la ficha que la banda enseña: todas fundadas, y su sección es la
         // de la ficha, así que «en su sección» es el acierto del retriever, no del modelo.
