@@ -345,3 +345,40 @@ Su alcance exacto se decide en la **mirada 22** (cierre de la fase 3).
   - ⌃⌥N con el cursor al final.
 
 **Una frase que la fase 2 tiene que hacer verdad.** La pantalla dice, desde la maqueta aprobada: «se borra sola al vencer aunque no abras la app». Hoy borra al abrir la app y cada hora mientras está abierta; con la app cerrada, lo hará launchd, en la fase 2. El manual lo dice así, como limitación. Si la fase 2 no llegara, la frase sería falsa, y la casilla 4 de la auditoría la tiene que mirar.
+
+---
+
+## ⏸ PUNTO SEGURO 2 (2026-09-27): fase 1 cerrada, esperando al usuario
+
+**Estado:**
+- Rama `sprint-003/el-cuaderno-y-el-cierre`, PR **#8** en borrador.
+- Último commit de código: `2d323f8`, con quality, e2e y build-escritorio en success.
+- Árbol limpio y ninguna app corriendo.
+- El mensaje de cierre de la fase 1 ya se entregó.
+
+**Lo que espera respuesta del usuario, antes de construir encima:**
+1. **La matriz del cierre de la fase 1**, siete filas de FORMA:
+   - `notas.html`:
+     - sprint 3 · al cerrar;
+     - sprint 3 · no se pudo guardar;
+     - sprint 3 · sin reuniones;
+     - sprint 3 · borrar;
+     - sprint 3 · no se exportó.
+   - `honestidad.html`:
+     - así se ve hoy · sprint 3;
+     - sprint 3 · tras el corte, con notas.
+
+   El veredicto se registra aquí antes de seguir. Si alguna fila cambia, se ajusta antes de la fase 2.
+2. **Su decisión sobre una señal en la banda al fijar con ⌃⌥P.** Si dice que sí, se maqueta para la mirada 20.
+3. **Su «continúa».**
+
+**Después, la fase 2:**
+- Empieza por el **ADR 016 «las propuestas y la bandeja»**: el vencimiento con launchd a la hora exacta, más `RunAtLoad`, y `/bin/sh` que borra lo vencido. Plan: `~/.claude/plans/idempotent-marinating-pebble.md`.
+- La fase 2 tiene además que **hacer verdad** la frase «se borra sola al vencer aunque no abras la app» y quitar del manual la limitación «hoy la app borra lo vencido al abrirse…» (ver arriba).
+
+**Para las paradas del ⭐⭐:**
+- Touch ID al exportar;
+- el permiso de Documentos la primera vez;
+- el archivo `.ghost` con 600 en `~/Documents/Angel Ghost/`;
+- el cuaderno en negro en Meet;
+- ⌃⌥N con el cursor al final.
