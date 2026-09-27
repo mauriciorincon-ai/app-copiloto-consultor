@@ -344,7 +344,8 @@ describe("el cuaderno: lo que no existe se dice", () => {
 
   /**
    * «8 de 8» con una pieza sin construir sería la mentira cómoda — y desde la fase 3 del sprint 002
-   * ya no falta ninguna: la lectura de pantalla (C8) era la última, y se corta de verdad.
+   * ya no falta ninguna: la lectura de pantalla (C8) era la última, y se corta de verdad. La
+   * auditoría del S2 sumó la novena, la sugerencia en camino (M2).
    *
    * La cuenta la da Rust (`corte::TODAS` con su `match` sin comodín), no esta pantalla: el test lee
    * la muestra del contrato, que es lo que Rust emite.
@@ -353,7 +354,7 @@ describe("el cuaderno: lo que no existe se dice", () => {
     pinta("?pantalla=honestidad");
     // «El botón corta»: sin sujeto, «8 de 8 piezas» se leyó como «leyó todo bien» (mirada 17-quater).
     expect(
-      screen.getByText(`${t.botonCorta} 8 ${t.de} 8 ${t.piezasNingunaFuera}`),
+      screen.getByText(`${t.botonCorta} 9 ${t.de} 9 ${t.piezasNingunaFuera}`),
     ).toBeInTheDocument();
   });
 
@@ -366,8 +367,8 @@ describe("el cuaderno: lo que no existe se dice", () => {
         <Principal busqueda="?pantalla=honestidad" />
       </Cascara>,
     );
-    expect(screen.getByText(/The button cuts 8 of 8 pieces/)).toBeInTheDocument();
-    expect(screen.queryByText(/8 de 8/)).toBeNull();
+    expect(screen.getByText(/The button cuts 9 of 9 pieces/)).toBeInTheDocument();
+    expect(screen.queryByText(/9 de 9/)).toBeNull();
   });
 
   /**

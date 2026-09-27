@@ -14,7 +14,8 @@
 //! No pasó, y no pasó por cómo está escrito este archivo: al añadir las pistas en la fase 3, el
 //! compilador no dejó compilar hasta resolverlas. La cuenta pasó de tres piezas cortadas a seis, y
 //! la lectura de pantalla fue la última declarada como inexistente, hasta que llegó con C8 en la
-//! fase 3 del sprint 002. Desde entonces se cortan las ocho.
+//! fase 3 del sprint 002; la sugerencia en camino se sumó con la auditoría del S2. Desde entonces se
+//! cortan las nueve.
 //!
 //! Por eso el corte no es una lista de acciones sino una lista de **piezas** ([`Pieza`]), y cada
 //! una tiene que estar en uno de dos sitios: cortada, o declarada como que aún no existe.
@@ -55,6 +56,10 @@ pub enum Pieza {
     /// de su cliente y la app sigue leyéndole una ficha en voz alta, no hay informe que arregle eso:
     /// el kill-switch habría fallado en el único sitio donde el cliente puede notarlo.
     Voz,
+    /// **La sugerencia en camino** (auditoría del S2, M2): el turno del cliente vive en el hilo del
+    /// proveedor mientras redacta, y con el API encendido una petición armada podía salir DESPUÉS
+    /// del corte. La época sube: lo que vuelva se tira y lo que no haya salido ya no sale.
+    Sugerencia,
 }
 
 /// Todas las piezas, en el orden en que se cortan: **primero lo que sigue entrando**.
@@ -67,6 +72,9 @@ pub const TODAS: &[Pieza] = &[
     // por lo que el cliente percibe: es lo único de esta lista que se oye desde el otro lado de la
     // llamada. Cerrar un grifo tarda milisegundos y no se nota; una frase a medio decir, sí.
     Pieza::Voz,
+    // Justo detrás de la voz: es la única pieza que puede SALIR del Mac, y cuanto antes se corte,
+    // menos ventana queda para que una petición armada llegue a la red.
+    Pieza::Sugerencia,
     Pieza::AudioDelMicrofono,
     Pieza::AudioDelSistema,
     Pieza::UltimoFrame,
@@ -86,13 +94,14 @@ impl Pieza {
     pub const fn orden(self) -> usize {
         match self {
             Pieza::Voz => 0,
-            Pieza::AudioDelMicrofono => 1,
-            Pieza::AudioDelSistema => 2,
-            Pieza::UltimoFrame => 3,
-            Pieza::Transcript => 4,
-            Pieza::ContadorDeRed => 5,
-            Pieza::Banda => 6,
-            Pieza::Acople => 7,
+            Pieza::Sugerencia => 1,
+            Pieza::AudioDelMicrofono => 2,
+            Pieza::AudioDelSistema => 3,
+            Pieza::UltimoFrame => 4,
+            Pieza::Transcript => 5,
+            Pieza::ContadorDeRed => 6,
+            Pieza::Banda => 7,
+            Pieza::Acople => 8,
         }
     }
 }
@@ -146,7 +155,9 @@ pub fn suerte_en_este_sprint(pieza: Pieza) -> Suerte {
         // La lectura de pantalla existe desde la fase 3 del sprint 002 (C8): se para el vigía y se
         // pisan el cuadro de la reunión y el texto leído de él. Fue la última en llegar, y hasta
         // entonces se declaró como inexistente en vez de disimularse.
-        | Pieza::UltimoFrame => Suerte::Cortada,
+        | Pieza::UltimoFrame
+        // La sugerencia en camino, desde la auditoría del S2: la época sube.
+        | Pieza::Sugerencia => Suerte::Cortada,
     }
 }
 
@@ -202,12 +213,12 @@ mod tests {
     /// La cuenta ha cambiado tres veces y **las tres las obligó el compilador**: en la fase 3 del
     /// sprint 001, de 3 y 4 a 6 y 1, cuando las pistas de audio y el transcript pasaron de
     /// declararse a cortarse de verdad; en la fase 2 del sprint 002, a 7 y 1, con la voz que sale; y
-    /// en la fase 3 del sprint 002, a **8 y 0**, con la lectura de pantalla. Es la primera vez que
-    /// el kill-switch corta todas sus piezas, y la primera en que `AunNoExiste` no le toca a nadie.
+    /// en la fase 3 del sprint 002, a **8 y 0**, con la lectura de pantalla; y en la auditoría del
+    /// sprint 002, a **9 y 0**, con la sugerencia en camino (M2), que el corte no alcanzaba.
     #[test]
-    fn en_este_sprint_se_cortan_las_ocho() {
+    fn en_este_sprint_se_cortan_las_nueve() {
         let cortadas = TODAS.iter().filter(|p| suerte_en_este_sprint(**p) == Suerte::Cortada).count();
         let futuras = TODAS.iter().filter(|p| suerte_en_este_sprint(**p) == Suerte::AunNoExiste).count();
-        assert_eq!((cortadas, futuras), (8, 0));
+        assert_eq!((cortadas, futuras), (9, 0));
     }
 }

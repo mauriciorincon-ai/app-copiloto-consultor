@@ -141,6 +141,7 @@ mod puente {
         pub fn ag_llavero_guardar(cuenta: *const c_char, clave: *const c_char) -> c_int;
         pub fn ag_llavero_leer(cuenta: *const c_char, salida: *mut u8, capacidad: c_int) -> c_int;
         pub fn ag_llavero_borrar(cuenta: *const c_char) -> c_int;
+        pub fn ag_llavero_hay(cuenta: *const c_char) -> c_int;
     }
 }
 
@@ -187,11 +188,20 @@ fn leer_clave(externo: Externo) -> Option<String> {
     }
 }
 
+/// ¿Hay clave? Se pregunta por los atributos, **sin leer el secreto**: la pantalla IA lo pregunta
+/// cada vez que se pinta, y la clave solo se lee en el instante de enviar (auditoría del S2, B1).
 pub fn hay_clave(externo: Externo) -> bool {
-    leer_clave(externo).map(|mut c| {
-        // SEGURIDAD: ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
-        unsafe { c.as_mut_vec() }.fill(0);
-    }).is_some()
+    #[cfg(all(target_os = "macos", puente_de_swift))]
+    {
+        let Ok(c) = std::ffi::CString::new(externo.cuenta()) else { return false };
+        // SEGURIDAD: un texto terminado en cero que vive hasta que la llamada vuelve.
+        unsafe { puente::ag_llavero_hay(c.as_ptr()) == 1 }
+    }
+    #[cfg(not(all(target_os = "macos", puente_de_swift)))]
+    {
+        let _ = externo;
+        false
+    }
 }
 
 pub fn borrar_clave(externo: Externo) -> Result<(), String> {
@@ -217,7 +227,30 @@ pub fn borrar_clave(externo: Externo) -> Result<(), String> {
 pub struct Api {
     pub externo: Externo,
     pub conocidos: Vec<String>,
+    /// La época del corte en que nació la petición. Si `⌥⎋` llega antes de enviar, no se envía.
+    pub vigencia: Vigencia,
 }
+
+/// **El corte alcanza a la petición en camino** (auditoría del S2, M2). La sesión sube la época en
+/// cada `⌥⎋`; una petición que nació en la época anterior no sale a la red, aunque ya estuviera
+/// armada. Lo que ya salió, salió: esto cierra la ventana entre armarla y enviarla.
+#[derive(Clone, Debug, Default)]
+pub struct Vigencia {
+    epoca: std::sync::Arc<std::sync::atomic::AtomicU64>,
+    desde: u64,
+}
+
+impl Vigencia {
+    pub fn desde_ahora(epoca: &std::sync::Arc<std::sync::atomic::AtomicU64>) -> Self {
+        Self { epoca: epoca.clone(), desde: epoca.load(std::sync::atomic::Ordering::SeqCst) }
+    }
+    pub fn sigue(&self) -> bool {
+        self.epoca.load(std::sync::atomic::Ordering::SeqCst) == self.desde
+    }
+}
+
+/// Lo que devuelve un envío que el corte alcanzó antes de salir.
+pub const CORTADA: &str = "cortada antes de salir";
 
 /// Lo que se envía de verdad, para que un test pueda mirarlo sin red: el texto ya tapado.
 pub fn lo_que_sale(conocidos: &[String], instrucciones: &str, texto: &str) -> (String, Boveda) {
@@ -243,6 +276,9 @@ impl Proveedor for Api {
     #[cfg(all(target_os = "macos", puente_de_swift))]
     fn redactar(&self, instrucciones: &str, texto: &str) -> Result<Respuesta, String> {
         use std::ffi::CString;
+        if !self.vigencia.sigue() {
+            return Err(CORTADA.into());
+        }
         let mut clave = leer_clave(self.externo).ok_or("sin clave en el Llavero")?;
         let (mut tapado, boveda) = lo_que_sale(&self.conocidos, instrucciones, texto);
         let (mut cabeceras, mut cuerpo) = self.externo.peticion(&clave, instrucciones, &tapado);
@@ -250,6 +286,12 @@ impl Proveedor for Api {
         unsafe { clave.as_mut_vec() }.fill(0);
         unsafe { tapado.as_mut_vec() }.fill(0);
         let bytes_fuera = (cuerpo.len() + cabeceras.len()) as u64;
+        // Otra vez, lo más cerca posible de la red: el corte pudo llegar mientras se armaba.
+        if !self.vigencia.sigue() {
+            unsafe { cabeceras.as_mut_vec() }.fill(0);
+            unsafe { cuerpo.as_mut_vec() }.fill(0);
+            return Err(CORTADA.into());
+        }
         // Se cuenta ANTES de enviar: un envío que falla a medias también salió.
         crate::red::registrar_salida(bytes_fuera);
         let url = CString::new(self.externo.url()).map_err(|e| e.to_string())?;
@@ -295,6 +337,9 @@ impl Proveedor for Api {
 
     #[cfg(not(all(target_os = "macos", puente_de_swift)))]
     fn redactar(&self, _i: &str, _t: &str) -> Result<Respuesta, String> {
+        if !self.vigencia.sigue() {
+            return Err(CORTADA.into());
+        }
         Err("esta compilación no trae el puente de red".into())
     }
 }
@@ -321,6 +366,21 @@ mod pruebas {
         assert!(b.tapadas() >= 4);
         // Y las fichas siguen diciendo lo suyo: las cifras no se tocan.
         assert!(fuera.contains("9 semanas"), "{fuera}");
+    }
+
+    /// **El corte alcanza a la petición armada** (auditoría del S2, M2): con la época subida entre
+    /// nacer y enviar, no sale nada y el contador de red no se mueve.
+    #[test]
+    fn una_peticion_de_antes_del_corte_no_sale() {
+        let epoca = std::sync::Arc::new(std::sync::atomic::AtomicU64::new(7));
+        let vigencia = Vigencia::desde_ahora(&epoca);
+        assert!(vigencia.sigue());
+        epoca.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        assert!(!vigencia.sigue());
+        // Sale antes de leer la clave o de contar un byte: el error es el del corte, no el de «sin
+        // clave» ni el del puente.
+        let api = Api { externo: Externo::Claude, conocidos: Vec::new(), vigencia };
+        assert_eq!(api.redactar("i", "t").err().as_deref(), Some(CORTADA));
     }
 
     #[test]

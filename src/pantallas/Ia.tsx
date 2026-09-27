@@ -54,10 +54,11 @@ export function Ia() {
     return `${idioma === "en" ? s : s.replace(".", ",")} s`;
   };
 
-  const elegir = (externo: Externo) =>
-    ia.api.encendida
-      ? aplicar(apiExterna(true, externo))
-      : setIa({ ...ia, api: { ...ia.api, externo } });
+  // La elección se le pide SIEMPRE a Rust, también con el API apagado: si solo cambiaba aquí, el
+  // estado que Rust devolvía al guardar la clave seguía diciendo «claude», la pantalla volvía sola
+  // a Claude y encender pedía la clave equivocada (auditoría del S2, M3). `api_externa` con el API
+  // apagado guarda la elección sin exigir clave.
+  const elegir = (externo: Externo) => aplicar(apiExterna(ia.api.encendida, externo));
 
   return (
     <>

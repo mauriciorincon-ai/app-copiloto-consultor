@@ -256,6 +256,9 @@ pub enum PorQueNoRedacta {
     AppleIntelligenceApagado,
     /// Este Mac no puede usar el modelo del sistema.
     MacNoCompatible,
+    /// macOS no lo deja usar ahora por otra razón que no dice (auditoría del S2, B2): decir «este
+    /// Mac no es compatible» ahí era falso.
+    NoDisponible,
     /// macOS todavía está descargando el modelo.
     ModeloDescargandose,
     /// Esta copia de la app se construyó sin el puente del modelo.
@@ -288,6 +291,10 @@ pub struct Resultado {
     pub sugerencia: Result<Sugerencia, Descarte>,
     pub respuesta: Respuesta,
     pub ms: u64,
+    /// Pasado el techo, la respuesta todavía puede llegar —la red espera un segundo más— y **el
+    /// proveedor la cobra igual**. No se enseña, pero quien llama puede esperarla para sumar su
+    /// costo al tope del mes (auditoría del S2, M10). `None` si no hubo techo.
+    pub tarde: Option<std::sync::mpsc::Receiver<Result<Respuesta, String>>>,
 }
 
 /// **UNA SUGERENCIA, CON SU TECHO.** El proveedor corre en un hilo aparte; si no contesta dentro de
@@ -312,14 +319,14 @@ pub fn sugerir(
     let llegada = rx.recv_timeout(techo);
     let ms = reloj.elapsed().as_millis() as u64;
     match llegada {
-        Err(_) => Resultado { sugerencia: Err(Descarte::Tarde), respuesta: Respuesta::default(), ms },
-        Ok(Err(e)) => Resultado { sugerencia: Err(Descarte::Fallo(e)), respuesta: Respuesta::default(), ms },
+        Err(_) => Resultado { sugerencia: Err(Descarte::Tarde), respuesta: Respuesta::default(), ms, tarde: Some(rx) },
+        Ok(Err(e)) => Resultado { sugerencia: Err(Descarte::Fallo(e)), respuesta: Respuesta::default(), ms, tarde: None },
         Ok(Ok(respuesta)) => {
             let sugerencia = objeto(&respuesta.json)
                 .and_then(|o| serde_json::from_str::<Crudo>(o).ok())
                 .ok_or(Descarte::FueraDelEsquema)
                 .and_then(|c| fundar(&c, peticion, proveedor.quien(), &proveedor.nombre(), ms));
-            Resultado { sugerencia, respuesta, ms }
+            Resultado { sugerencia, respuesta, ms, tarde: None }
         }
     }
 }
@@ -444,6 +451,10 @@ pub(crate) mod pruebas {
         let r = sugerir(Arc::new(Lento(Duration::from_millis(400), json)), &peticion(), Duration::from_millis(100));
         assert_eq!(r.sugerencia, Err(Descarte::Tarde));
         assert!(r.ms < 300, "esperó {} ms con un techo de 100", r.ms);
+        // Y lo que llega tarde se puede esperar aparte, para cobrarlo (M10).
+        let tarde = r.tarde.expect("pasado el techo, la respuesta tardía se pierde y no se cobra");
+        let llego = tarde.recv_timeout(Duration::from_secs(2)).expect("no llegó").expect("falló");
+        assert!(llego.json.contains("\"fuente\":\"F1\""));
     }
 
     #[test]

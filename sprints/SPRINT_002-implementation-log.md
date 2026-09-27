@@ -2394,3 +2394,30 @@ revertir. El test del WER arma ahora la jerga **como la sesión** (semilla + cli
 sin cambios (mezcla-es 0,458 → 0,417 · mezcla-en 0,348 → 0,261). **Desviación del ajuste del auditor:**
 no se añadió un documento «Bancolombia» al corpus del kit —movería todas las medidas de los kits—;
 el caso se prueba con el nombre de archivo sintético.
+
+### El bloque «antes de encender el API»: M2 · M10 · M3 · B1 · B2 · B3 · B4 · B5
+
+- **M2 · el corte no alcanzaba a la sugerencia en camino.** `corte::Pieza::Sugerencia` —la novena—,
+  justo detrás de la voz porque es la única que puede SALIR del Mac: sube la época. La época es ahora
+  un `Arc<AtomicU64>` que comparte el adaptador del API (`api::Vigencia`), que la mira **al empezar y
+  justo antes de contar y enviar**: una petición armada antes del corte ya no sale. Honestidad dice
+  «9 de 9» (lo lee del informe; maqueta, manual y guía al día). **Rojo:** sin la comprobación, el test
+  devuelve «sin clave en el Llavero» en vez de `CORTADA`.
+- **M10 · el tope contaba de menos.** `Resultado.tarde`: pasado el techo, el canal de la respuesta
+  tardía vuelve a quien llamó, y la sesión la espera aparte para **cobrarla** sin enseñarla
+  (`cobrar()`, extraído). El gasto se escribe a un temporal que nace cerrado y se **renombra** encima
+  (`escribir_el_gasto`): una caída ya no deja el mes en 0. **Rojo:** con `tarde: None`, «la respuesta
+  tardía se pierde y no se cobra».
+- **B3 · el mes que cambia con la app abierta.** `gasto_vigente` antes de LEER la cifra (en
+  `proveedor_de_ahora`, `estado_de_la_ia_de` y al cobrar). **Rojo:** sin él, `("2026-09", 12.0)`.
+- **M3 · elegir proveedor con el API apagado no llegaba a Rust.** `elegir` pide siempre `api_externa`.
+  **Rojo:** con el `Ia.tsx` anterior, el test no ve la llamada.
+- **B1 · `hay_clave` leía el secreto.** `ag_llavero_hay` pide los atributos, nunca el dato. `leer_clave`
+  queda con un solo llamador (`api.rs`, al enviar). Verificado **en vivo** con el test del Llavero.
+- **B2 · «Este Mac no es compatible» para cualquier otra causa.** `PorQueNoRedacta::NoDisponible`
+  («macOS no deja usar el modelo del sistema ahora mismo»), con test del mapeo y **una muestra del
+  contrato por cada variante** del enum (el riesgo latente de la casilla 5).
+- **B4 · los ADR afirmaban lo que el código no hace.** 010 y 011 enmendados: tres proveedores
+  construidos y MLX condicionado; solo `AG_SINTESIS=mock`; conocidos = clientes del corpus; la red en
+  `nativo/Red.swift`; **«el texto que salió, legible en IA» pendiente para el sprint 003**.
+- **B5 · `⌃⌥L` pedía sugerencia** con el último turno del cliente: quitada, con el comentario verdadero.

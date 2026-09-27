@@ -13,7 +13,7 @@
 import type { Novedad, Aparicion } from "./ficha";
 import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelDiccionario, EstadoDelCorpus, InformeDelCorte, LaVoz, EstadoDeLaPantalla } from "./cuaderno";
 import type { EnTuMac } from "./radar";
-import type { EstadoDeLaIa } from "./ia";
+import type { EstadoDeLaIa, PorQueNoRedacta } from "./ia";
 import type { EstadoDelAcople } from "./acople";
 
 export const NOVEDAD_EMPIEZA: Novedad = {
@@ -205,6 +205,10 @@ export const INFORME_DEL_CORTE: InformeDelCorte = {
     "piezas": [
       [
         "voz",
+        "cortada"
+      ],
+      [
+        "sugerencia",
         "cortada"
       ],
       [
@@ -408,6 +412,20 @@ export const ESTADO_DE_LA_IA_CON_API: EstadoDeLaIa = {
     "sistema": null,
     "topeUsd": 10.0
   };
+
+export const POR_QUE_NO_REDACTA_APAGADO: PorQueNoRedacta = "apple-intelligence-apagado";
+
+export const POR_QUE_NO_REDACTA_NO_COMPATIBLE: PorQueNoRedacta = "mac-no-compatible";
+
+export const POR_QUE_NO_REDACTA_NO_DISPONIBLE: PorQueNoRedacta = "no-disponible";
+
+export const POR_QUE_NO_REDACTA_DESCARGANDO: PorQueNoRedacta = "modelo-descargandose";
+
+export const POR_QUE_NO_REDACTA_SIN_PUENTE: PorQueNoRedacta = "sin-puente";
+
+export const POR_QUE_NO_REDACTA_SIN_CLAVE: PorQueNoRedacta = "sin-clave";
+
+export const POR_QUE_NO_REDACTA_TOPE: PorQueNoRedacta = "tope-del-mes";
 
 export const ESTADO_DEL_ACOPLE: EstadoDelAcople = {
     "acoplada": true,

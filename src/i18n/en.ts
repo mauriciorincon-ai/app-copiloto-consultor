@@ -399,6 +399,7 @@ export const en: Diccionario = {
     porQueNoRedacta: {
       "apple-intelligence-apagado": "Apple Intelligence is off in Settings.",
       "mac-no-compatible": "This Mac cannot use the system model.",
+      "no-disponible": "macOS won\u2019t let the app use the system model right now.",
       "modelo-descargandose": "macOS is still downloading the model.",
       "sin-puente": "This copy of the app was built without the system model.",
       "sin-clave": "No key: the API cannot be turned on.",

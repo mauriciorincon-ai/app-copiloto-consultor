@@ -14,6 +14,7 @@ export type Externo = "claude" | "gemini" | "groq";
 export type PorQueNoRedacta =
   | "apple-intelligence-apagado"
   | "mac-no-compatible"
+  | "no-disponible"
   | "modelo-descargandose"
   | "sin-puente"
   | "sin-clave"

@@ -1,6 +1,8 @@
 // La clave del API del usuario, en SU Llavero de macOS — jamás en un archivo (regla de la casa y
 // ADR 011). El Llavero la cifra con la cuenta del usuario; la app la lee solo en el instante de
-// enviar una petición y no la guarda en ningún otro sitio.
+// enviar una petición y no la guarda en ningún otro sitio. Para saber SI hay clave —lo que la
+// pantalla IA pregunta cada vez que se pinta— se piden los atributos, nunca el secreto
+// (`ag_llavero_hay`; auditoría del S2, B1).
 
 import Foundation
 import Security
@@ -41,6 +43,19 @@ public func agLlaveroLeer(
   guard datos.count <= Int(capacidad) else { return -2 }
   datos.copyBytes(to: salida, count: datos.count)
   return Int32(datos.count)
+}
+
+/// ¿Hay clave para este proveedor? 1 = sí, 0 = no, negativo = el Llavero no contestó. Pide solo
+/// los atributos: el secreto no sale del Llavero para contestar esto.
+@_cdecl("ag_llavero_hay")
+public func agLlaveroHay(_ cuenta: UnsafePointer<CChar>) -> Int32 {
+  var q = consulta(String(cString: cuenta))
+  q[kSecReturnAttributes as String] = true
+  q[kSecMatchLimit as String] = kSecMatchLimitOne
+  var resultado: AnyObject?
+  let estado = SecItemCopyMatching(q as CFDictionary, &resultado)
+  if estado == errSecItemNotFound { return 0 }
+  return estado == errSecSuccess ? 1 : -1
 }
 
 /// Borra la clave de un proveedor. 0 = bien (también si no había).

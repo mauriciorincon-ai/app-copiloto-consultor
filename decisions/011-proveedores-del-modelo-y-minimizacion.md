@@ -12,12 +12,15 @@ localmente.
 
 ## Decisión
 
-### Un adapter, cuatro proveedores, una interfaz
+### Un adapter, tres proveedores construidos (y MLX condicionado), una interfaz
 
-`src-tauri/src/sintesis/` define `Proveedor` (`nombre`, `disponible`, `redactar`). Los cuatro
-implementan lo mismo y **el mismo contrato los envuelve**: esquema cerrado, `fundar()` (la fuente
-tiene que ser una de las fichas dadas) y el techo de 6 s. Cuál se usa lo decide la app por orden
-de disponibilidad, o `AG_SINTESIS=mock|sistema|api` para forzarlo (la CI usa `mock`).
+`src-tauri/src/sintesis/` define `Proveedor` (`nombre`, `disponible`, `redactar`). Los construidos
+—`mock`, el modelo del sistema y el API— implementan lo mismo y **el mismo contrato los envuelve**:
+esquema cerrado, `fundar()` (la fuente tiene que ser una de las fichas dadas, y la línea tiene que
+decir lo que esa ficha dice) y el techo de 6 s. Cuál se usa lo decide la app por orden de
+disponibilidad; **solo `AG_SINTESIS=mock` lo fuerza** (la CI y el kit). MLX se construye solo si (a)
+no está o no rinde, y (a) rinde (medido en la fase 6: mediana ~0,8 s): queda en el roadmap.
+*(Enmienda de la auditoría del S2, B4: decía «cuatro proveedores» y `AG_SINTESIS=mock|sistema|api`.)*
 
 | Proveedor | Dónde corre | Qué necesita | Cómo se apaga |
 |---|---|---|---|
@@ -28,18 +31,23 @@ de disponibilidad, o `AG_SINTESIS=mock|sistema|api` para forzarlo (la CI usa `mo
 
 ### Qué sale por el API, y cómo se anonimiza (patrón Velo)
 
-1. **Minimizar:** solo el último turno del cliente y el titular, la línea y la fuente de las tres
-   fichas del top. Nunca el transcript entero, ni documentos, ni audio, ni pantalla.
+1. **Minimizar:** solo el último turno del cliente —la frase de un tercero— y el titular y la línea
+   de las tres fichas del top, cada una con su id. Nunca el transcript entero, ni documentos, ni
+   audio, ni pantalla.
 2. **Anonimizar en el Mac, antes de salir:** una **bóveda** en memoria cambia cada nombre conocido por
-   un marcador (`[CLIENTE_1]`, `[PERSONA_1]`…) —los nombres del corpus (fichas de cliente) y del
-   diccionario— y además los patrones que delatan a alguien sin estar en ninguna lista: correos,
-   teléfonos y números de identificación. La respuesta vuelve con marcadores y la bóveda los
+   un marcador (`[CLIENTE_1]`, `[PERSONA_1]`…) —los nombres de cliente del corpus
+   (`corpus::clientes`: el nombre que va tras el «·» de cada ficha de cliente)— y además los patrones
+   que delatan a alguien sin estar en ninguna lista: correos, teléfonos (también partidos por
+   espacios), números de identificación y parejas de nombres propios. *(Enmienda B4: decía «y del
+   diccionario», que no se usa; y los conocidos eran nombres de archivo hasta A2.)* La respuesta vuelve con marcadores y la bóveda los
    restaura **en el Mac**. La bóveda muere con la petición.
 3. **Contar:** cada byte que sale pasa por `red::registrar_salida` —el único camino de entrada al
    contador— y Honestidad lo enseña. El gate del contador de red deja de ser «ninguna puerta» y se
-   estrecha a **una puerta declarada**: el cliente HTTP vive solo en `sintesis/api.rs`.
-4. **Registrar sin contenido:** proveedor, bytes, ms y costo al log; el texto que salió, solo en la
-   pantalla IA y en memoria, para que el usuario lo pueda leer.
+   estrecha a **una puerta declarada**: la sesión de red vive solo en `nativo/Red.swift`
+   (`URLSession` efímera), y `sintesis/api.rs` arma la petición y la cuenta.
+4. **Registrar sin contenido:** proveedor, bytes, ms y costo al log. **Pendiente, sprint 003:** el
+   texto exacto que salió, visible en la pantalla IA y solo en memoria, para que el usuario lo pueda
+   leer. Hoy IA enseña cuántos datos se taparon, no el texto. *(Enmienda B4.)*
 
 ### Costo
 

@@ -132,10 +132,11 @@ momento exacto de la conversación, sin ponerse a buscar delante del cliente.
 - **Cómo se usa:** `⌥⎋` corta todo en el acto — audio, transcript, la banda y su relleno — y
   devuelve la ventana de la reunión a su tamaño. También está el botón en *Honestidad*, por si el
   atajo está cogido por otra app.
-- **El corte alcanza las 8 piezas · desde Sprint 002.** *Honestidad* lo dice debajo del botón rojo:
-  «El botón corta 8 de 8 piezas: ninguna queda fuera.» La última en llegar fue la lectura de pantalla;
-  y la voz del modo solo audio es la primera que se corta, porque es la única que tu cliente podría
-  oír.
+- **El corte alcanza las 9 piezas · desde Sprint 002.** *Honestidad* lo dice debajo del botón rojo:
+  «El botón corta 9 de 9 piezas: ninguna queda fuera.» La lectura de pantalla llegó en este sprint, y
+  la última en sumarse fue **la sugerencia en camino**: si el modelo está redactando cuando cortas, lo
+  que vuelva se tira y, con el proveedor externo, una petición que aún no haya salido ya no sale. La
+  voz del modo solo audio es la primera que se corta, porque es la única que tu cliente podría oír.
 - **Limitaciones conocidas:** el botón corta lo que vive en memoria **ahora**; lo que ya salió por
   los altavoces o lo que ya viste en la banda, obviamente, no se puede deshacer.
 

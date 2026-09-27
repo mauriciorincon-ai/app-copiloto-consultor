@@ -498,6 +498,7 @@ export const es = {
     porQueNoRedacta: {
       "apple-intelligence-apagado": "Apple Intelligence está apagado en Ajustes.",
       "mac-no-compatible": "Este Mac no puede usar el modelo del sistema.",
+      "no-disponible": "macOS no deja usar el modelo del sistema ahora mismo.",
       "modelo-descargandose": "macOS todavía está descargando el modelo.",
       "sin-puente": "Esta copia de la app se construyó sin el modelo del sistema.",
       "sin-clave": "Sin clave: el API no se puede encender.",

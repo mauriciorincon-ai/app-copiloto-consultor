@@ -68,8 +68,8 @@ El motivo se anuncia en la pantalla IA (qué proveedor, por qué no está) y va 
   precio del proveedor) y se suma por reunión y por mes; **techo US$10/mes** por defecto, visible
   en IA. Al llegar al techo vuelve sola a lo local; la reunión no se detiene.
 - **Privacidad:** al log solo metadata (proveedor, bytes, ms, si se descartó y por qué) — un término
-  plantado en una sugerencia no puede aparecer en el log (test). El registro de lo que salió vive en
-  memoria y muere con la reunión; lo que persiste es la cifra del mes, no el texto.
+  plantado en una sugerencia no puede aparecer en el log (test). Lo que persiste es la cifra del mes,
+  no el texto. *(El registro del texto que salió, legible en IA, queda para el sprint 003 — ADR 011.)*
 - **HITL:** el consultor es quien decide qué decir. La sugerencia se enseña como tal, con su
   fuente y su confianza, **debajo** de la ficha que la respalda.
 

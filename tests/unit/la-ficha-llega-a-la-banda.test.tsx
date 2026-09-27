@@ -547,6 +547,20 @@ describe("la sugerencia, dentro del producto", () => {
     expect(preguntar).toHaveBeenCalledWith("redactar_sugerencias", { si: true });
   });
 
+  /** Elegir proveedor con el API apagado tiene que llegar a Rust (auditoría del S2, M3). */
+  it("elegir Gemini con el API apagado se lo dice a Rust, sin encenderlo", async () => {
+    respuestas.set("estado_de_la_ia", ESTADO_DE_LA_IA_NADIE);
+    render(
+      <IdiomaContext.Provider value="es">
+        <Ia />
+      </IdiomaContext.Provider>,
+    );
+    await act(async () => {});
+    const gemini = [...document.querySelectorAll("button")].find((x) => x.textContent?.includes("Gemini"));
+    fireEvent.click(gemini as HTMLElement);
+    expect(preguntar).toHaveBeenCalledWith("api_externa", { encendida: false, externo: "gemini" });
+  });
+
   it("Honestidad nombra el proveedor cuando el API está encendido", async () => {
     respuestas.set("estado_de_la_ia", ESTADO_DE_LA_IA_CON_API);
     render(

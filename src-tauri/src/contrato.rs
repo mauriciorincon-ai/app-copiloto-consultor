@@ -424,6 +424,15 @@ pub fn muestras() -> Vec<Muestra> {
             tope_usd: 10.0,
         }),
         // ---- el acople, que la banda dibuja en su cabecera --------------------------------
+        // Cada motivo de «nadie redacta», uno por uno: son grafías kebab de varias palabras, y un
+        // cambio de `rename_all` solo lo vería una muestra de CADA variante (auditoría del S2, B2).
+        m("POR_QUE_NO_REDACTA_APAGADO", "PorQueNoRedacta", "./ia", &crate::sintesis::PorQueNoRedacta::AppleIntelligenceApagado),
+        m("POR_QUE_NO_REDACTA_NO_COMPATIBLE", "PorQueNoRedacta", "./ia", &crate::sintesis::PorQueNoRedacta::MacNoCompatible),
+        m("POR_QUE_NO_REDACTA_NO_DISPONIBLE", "PorQueNoRedacta", "./ia", &crate::sintesis::PorQueNoRedacta::NoDisponible),
+        m("POR_QUE_NO_REDACTA_DESCARGANDO", "PorQueNoRedacta", "./ia", &crate::sintesis::PorQueNoRedacta::ModeloDescargandose),
+        m("POR_QUE_NO_REDACTA_SIN_PUENTE", "PorQueNoRedacta", "./ia", &crate::sintesis::PorQueNoRedacta::SinPuente),
+        m("POR_QUE_NO_REDACTA_SIN_CLAVE", "PorQueNoRedacta", "./ia", &crate::sintesis::PorQueNoRedacta::SinClave),
+        m("POR_QUE_NO_REDACTA_TOPE", "PorQueNoRedacta", "./ia", &crate::sintesis::PorQueNoRedacta::TopeDelMes),
         m("ESTADO_DEL_ACOPLE", "EstadoDelAcople", "./acople", &crate::EstadoDelAcople {
             permiso: true,
             acoplada: true,

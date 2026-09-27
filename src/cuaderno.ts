@@ -243,6 +243,8 @@ export type EstadoDeEscucha = {
 export type PiezaDelCorte =
   /** La voz que sale (C15, sprint 002). Es la primera que se corta: la única que se OYE. */
   | "voz"
+  /** La sugerencia en camino (auditoría del S2, M2): lo que vuelva tras el corte se tira. */
+  | "sugerencia"
   | "audio-del-microfono"
   | "audio-del-sistema"
   | "ultimo-frame"

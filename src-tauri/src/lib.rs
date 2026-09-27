@@ -749,16 +749,6 @@ fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Inf
         }
     };
 
-    // Una sugerencia que se esté redactando ahora volverá DESPUÉS del corte: la época sube y, cuando
-    // vuelva, se tira sin enseñarla. La reunión, además, deja de sumar costo.
-    {
-        let s = app.state::<LaSintesis>();
-        s.epoca.fetch_add(1, Ordering::Relaxed);
-        if let Ok(mut u) = s.reunion_usd.lock() {
-            *u = 0.0;
-        };
-    }
-
     let mut piezas = Vec::new();
     for pieza in corte::TODAS {
         let suerte = corte::suerte_en_este_sprint(*pieza);
@@ -775,6 +765,16 @@ fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Inf
                         println!("[corte] el modo solo audio estaba encendido: callado y apagado");
                         let _ = app.emit_to(ventana::BANDA, EVENTO_VOZ, voz.estado());
                     }
+                }
+                // La sugerencia en camino: la época sube. Lo que vuelva de antes del corte se tira
+                // sin enseñarlo, y una petición al API que aún no haya salido ya no sale. La
+                // reunión, además, deja de sumar costo.
+                corte::Pieza::Sugerencia => {
+                    let s = app.state::<LaSintesis>();
+                    s.epoca.fetch_add(1, Ordering::SeqCst);
+                    if let Ok(mut u) = s.reunion_usd.lock() {
+                        *u = 0.0;
+                    };
                 }
                 corte::Pieza::ContadorDeRed => red::reiniciar(),
                 corte::Pieza::Banda => ventana::cerrar_banda(app),
@@ -1546,9 +1546,9 @@ fn atender_la_pantalla<R: tauri::Runtime>(
     match aparicion {
         Some(a) => {
             decir_la_ficha(app, &a);
-            // Con `⌃⌥L` hay una pregunta —la del usuario— y la ficha sale con motivo «lo pediste»;
-            // la que trae la pantalla sola la descarta `sintetizar` por su motivo.
-            sintetizar(app, &a);
+            // **Sin sugerencia**, ni con `⌃⌥L`: una ficha de la pantalla no responde a ninguna
+            // pregunta del cliente, y la sugerencia tomaría su último turno, que puede ser de hace
+            // minutos y de otra cosa (auditoría del S2, B5).
             let _ = app.emit(EVENTO_ESCUCHA, escucha::Novedad::Aparece(Box::new(a)));
         }
         None if origen == pantalla::Origen::Pedida => {
@@ -1674,8 +1674,9 @@ struct LaSintesis {
     mes: std::sync::Mutex<GastoDelMes>,
     /// Lo que tardaron las sugerencias de esta sesión, para la mediana que enseña IA.
     latencias: std::sync::Mutex<Vec<u64>>,
-    /// Sube con cada corte: una sugerencia que vuelva de antes del corte se tira sin enseñarla.
-    epoca: std::sync::atomic::AtomicU64,
+    /// Sube con cada corte: una sugerencia que vuelva de antes del corte se tira sin enseñarla, y
+    /// una petición al API que no haya salido todavía ya no sale (la comparte con el adaptador).
+    epoca: std::sync::Arc<std::sync::atomic::AtomicU64>,
     /// Una a la vez: si llega otra ficha mientras se redacta, esa se queda sin sugerencia.
     en_marcha: AtomicBool,
 }
@@ -1730,16 +1731,31 @@ fn cargar_el_gasto<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> GastoDelMes 
         .unwrap_or(GastoDelMes { mes: hoy, usd: 0.0 })
 }
 
+/// **El mes que cambia con la app abierta** (auditoría del S2, B3): el gasto de septiembre no puede
+/// seguir bloqueando el API en octubre. Se pone a cero antes de LEER la cifra, no solo al sumar.
+fn gasto_vigente(g: &mut GastoDelMes, hoy: &str) {
+    if g.mes != hoy {
+        *g = GastoDelMes { mes: hoy.to_string(), usd: 0.0 };
+    }
+}
+
+/// Se escribe a un temporal —que nace cerrado— y se RENOMBRA encima: una caída entre borrar y crear
+/// dejaba el mes en 0 y el tope sin efecto (auditoría del S2, M10). El renombrado es atómico.
 fn guardar_el_gasto<R: tauri::Runtime>(app: &tauri::AppHandle<R>, gasto: &GastoDelMes) {
-    let ruta = ruta_del_costo(app);
+    if let Err(e) = escribir_el_gasto(&ruta_del_costo(app), gasto) {
+        println!("[sintesis] no se pudo guardar el gasto del mes: {e}");
+    }
+}
+
+fn escribir_el_gasto(ruta: &std::path::Path, gasto: &GastoDelMes) -> Result<(), String> {
     let texto = serde_json::to_string(gasto).unwrap_or_default();
-    let _ = std::fs::remove_file(&ruta);
     if let Some(padre) = ruta.parent() {
         let _ = std::fs::create_dir_all(padre);
     }
-    if let Err(e) = nacer_cerrado(&ruta, &texto) {
-        println!("[sintesis] no se pudo guardar el gasto del mes: {e}");
-    }
+    let temporal = ruta.with_extension("json.tmp");
+    let _ = std::fs::remove_file(&temporal);
+    nacer_cerrado(&temporal, &texto)?;
+    std::fs::rename(&temporal, ruta).map_err(|e| format!("no se pudo renombrar: {e}"))
 }
 
 /// Los clientes del corpus, por su nombre: lo que la bóveda tapa antes de que nada salga (ADR 011).
@@ -1766,9 +1782,20 @@ fn proveedor_de_ahora(
         return Some(std::sync::Arc::new(sintesis::mock::Mock));
     }
     let api = *s.api.lock().ok()?;
-    let bajo_el_tope = s.mes.lock().map(|g| g.usd < TOPE_DEL_MES_USD).unwrap_or(false);
+    let bajo_el_tope = s
+        .mes
+        .lock()
+        .map(|mut g| {
+            gasto_vigente(&mut g, &mes_de_hoy());
+            g.usd < TOPE_DEL_MES_USD
+        })
+        .unwrap_or(false);
     if api.encendida && bajo_el_tope && sintesis::api::hay_clave(api.externo) {
-        return Some(std::sync::Arc::new(sintesis::api::Api { externo: api.externo, conocidos }));
+        return Some(std::sync::Arc::new(sintesis::api::Api {
+            externo: api.externo,
+            conocidos,
+            vigencia: sintesis::api::Vigencia::desde_ahora(&s.epoca),
+        }));
     }
     let sistema = sintesis::sistema::DelSistema;
     sistema.disponible().is_ok().then(|| std::sync::Arc::new(sistema) as std::sync::Arc<dyn sintesis::Proveedor>)
@@ -1780,7 +1807,14 @@ fn estado_de_la_ia_de<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> EstadoDeL
     let api = s.api.lock().map(|a| *a).unwrap_or_default();
     let hay_clave = sintesis::api::hay_clave(api.externo);
     let sistema = sintesis::sistema::DelSistema.disponible().err();
-    let mes_usd = s.mes.lock().map(|g| g.usd).unwrap_or(0.0);
+    let mes_usd = s
+        .mes
+        .lock()
+        .map(|mut g| {
+            gasto_vigente(&mut g, &mes_de_hoy());
+            g.usd
+        })
+        .unwrap_or(0.0);
     let quien = if std::env::var("AG_SINTESIS").as_deref() == Ok("mock") {
         Some(sintesis::Quien::Mock)
     } else if api.encendida && hay_clave && mes_usd < TOPE_DEL_MES_USD {
@@ -1861,21 +1895,20 @@ fn sintetizar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Aparicion
         let quien = proveedor.quien();
         let r = sintesis::sugerir(proveedor, &peticion, sintesis::TECHO);
         drop(peticion);
-        if quien == sintesis::Quien::Api && r.respuesta.tokens_entrada + r.respuesta.tokens_salida > 0 {
-            let externo = s.api.lock().map(|a| a.externo).unwrap_or(sintesis::api::Externo::Claude);
-            let usd = externo.costo(r.respuesta.tokens_entrada, r.respuesta.tokens_salida);
-            if let Ok(mut u) = s.reunion_usd.lock() {
-                *u += usd;
-            }
-            let gasto = s.mes.lock().ok().map(|mut g| {
-                if g.mes != mes_de_hoy() {
-                    *g = GastoDelMes { mes: mes_de_hoy(), usd: 0.0 };
-                }
-                g.usd += usd;
-                g.clone()
-            });
-            if let Some(g) = gasto {
-                guardar_el_gasto(&mango, &g);
+        if quien == sintesis::Quien::Api {
+            cobrar(&mango, &r.respuesta);
+            // Pasado el techo, el proveedor todavía puede contestar —y cobrar—: se espera aparte
+            // para sumar su costo al tope del mes, sin enseñar nada (auditoría del S2, M10).
+            if let Some(tarde) = r.tarde {
+                let mango = mango.clone();
+                std::thread::spawn(move || {
+                    if let Ok(Ok(mut respuesta)) = tarde.recv() {
+                        cobrar(&mango, &respuesta);
+                        // SEGURIDAD: ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
+                        unsafe { respuesta.json.as_mut_vec() }.fill(0);
+                        println!("[sintesis] llegó pasado el techo: cobrada, no enseñada");
+                    }
+                });
             }
         }
         if let Ok(mut l) = s.latencias.lock() {
@@ -1897,6 +1930,27 @@ fn sintetizar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Aparicion
         s.en_marcha.store(false, Ordering::Relaxed);
         avisar_a_la_ia(&mango);
     });
+}
+
+/// Suma lo que costó una respuesta del API a la reunión y al mes, y guarda el mes.
+fn cobrar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, respuesta: &sintesis::Respuesta) {
+    if respuesta.tokens_entrada + respuesta.tokens_salida == 0 {
+        return;
+    }
+    let s = app.state::<LaSintesis>();
+    let externo = s.api.lock().map(|a| a.externo).unwrap_or(sintesis::api::Externo::Claude);
+    let usd = externo.costo(respuesta.tokens_entrada, respuesta.tokens_salida);
+    if let Ok(mut u) = s.reunion_usd.lock() {
+        *u += usd;
+    }
+    let gasto = s.mes.lock().ok().map(|mut g| {
+        gasto_vigente(&mut g, &mes_de_hoy());
+        g.usd += usd;
+        g.clone()
+    });
+    if let Some(g) = gasto {
+        guardar_el_gasto(app, &g);
+    }
 }
 
 #[tauri::command]
@@ -2384,5 +2438,39 @@ mod pruebas_de_los_clientes_del_corpus {
         let fuera = b.tapar("Bancolombia pide lo mismo");
         assert!(!fuera.contains("Bancolombia"), "{fuera}");
         assert!(fuera.contains("[CLIENTE_1]"), "{fuera}");
+    }
+}
+
+#[cfg(test)]
+mod pruebas_del_gasto_del_mes {
+    use super::*;
+
+    /// **El mes que cambia con la app abierta** (auditoría del S2, B3): el gasto del mes anterior no
+    /// bloquea el API del nuevo.
+    #[test]
+    fn el_gasto_de_otro_mes_no_cuenta() {
+        let mut g = GastoDelMes { mes: "2026-09".into(), usd: 12.0 };
+        gasto_vigente(&mut g, "2026-09");
+        assert_eq!(g.usd, 12.0, "el del mes en curso se conserva");
+        gasto_vigente(&mut g, "2026-10");
+        assert_eq!((g.mes.as_str(), g.usd), ("2026-10", 0.0));
+    }
+
+    /// **El archivo del gasto no desaparece nunca** (M10): se escribe a un temporal y se renombra
+    /// encima. Cada escritura deja el archivo con lo último, cerrado (600) y sin temporal al lado.
+    #[test]
+    fn el_gasto_se_reemplaza_sin_desaparecer() {
+        use std::os::unix::fs::PermissionsExt;
+        let d = std::env::temp_dir().join(format!("ag-gasto-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&d);
+        let ruta = d.join(COSTO_DEL_MES);
+        for usd in [0.5, 1.25] {
+            escribir_el_gasto(&ruta, &GastoDelMes { mes: "2026-09".into(), usd }).unwrap();
+            let leido: GastoDelMes = serde_json::from_str(&std::fs::read_to_string(&ruta).unwrap()).unwrap();
+            assert_eq!(leido.usd, usd);
+            assert_eq!(std::fs::metadata(&ruta).unwrap().permissions().mode() & 0o777, 0o600);
+            assert!(!ruta.with_extension("json.tmp").exists(), "quedó el temporal");
+        }
+        let _ = std::fs::remove_dir_all(&d);
     }
 }

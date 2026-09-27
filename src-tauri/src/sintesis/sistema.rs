@@ -29,7 +29,8 @@ fn motivo(codigo: i32) -> PorQueNoRedacta {
         -1 => PorQueNoRedacta::AppleIntelligenceApagado,
         -2 => PorQueNoRedacta::MacNoCompatible,
         -3 => PorQueNoRedacta::ModeloDescargandose,
-        _ => PorQueNoRedacta::MacNoCompatible,
+        // -4 y cualquier otro: macOS no dice por qué. «Este Mac no es compatible» sería inventarlo.
+        _ => PorQueNoRedacta::NoDisponible,
     }
 }
 
@@ -88,5 +89,20 @@ impl Proveedor for DelSistema {
     #[cfg(not(all(target_os = "macos", puente_de_swift)))]
     fn redactar(&self, _i: &str, _t: &str) -> Result<Respuesta, String> {
         Err("esta compilación no trae el puente del modelo del sistema".into())
+    }
+}
+
+#[cfg(test)]
+mod pruebas {
+    use super::*;
+
+    /// Cada código del puente con su motivo, y lo desconocido **sin inventar la causa** (B2).
+    #[test]
+    fn cada_codigo_dice_su_motivo_y_lo_desconocido_no_se_inventa() {
+        assert_eq!(motivo(-1), PorQueNoRedacta::AppleIntelligenceApagado);
+        assert_eq!(motivo(-2), PorQueNoRedacta::MacNoCompatible);
+        assert_eq!(motivo(-3), PorQueNoRedacta::ModeloDescargandose);
+        assert_eq!(motivo(-4), PorQueNoRedacta::NoDisponible);
+        assert_eq!(motivo(-99), PorQueNoRedacta::NoDisponible);
     }
 }
