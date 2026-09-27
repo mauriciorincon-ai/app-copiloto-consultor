@@ -1,0 +1,91 @@
+{
+  "_leeme": "Las reglas con que la app te propone qué guardar (ADR 016). Son TODAS: la pantalla «Qué sabe reconocer» sale de aquí. Las frases y palabras se comparan sin mayúsculas ni tildes y por palabras enteras. Ningún modelo decide nada: si una frase no está aquí, no se propone.",
+  "version": 1,
+  "fecha": "2026-09-27",
+  "reglas": [
+    {
+      "id": "cifra",
+      "de": "ambos",
+      "nombre": { "es": "Cifras, plazos y fechas dichos en voz alta", "en": "Figures, terms and dates said out loud" }
+    },
+    {
+      "id": "compromiso",
+      "de": "tuyo",
+      "nombre": { "es": "Compromisos tuyos («te lo mando», «quedamos en»)", "en": "Your commitments (“I'll send it”, “we agreed”)" }
+    },
+    {
+      "id": "choque",
+      "de": "ambos",
+      "nombre": { "es": "Lo que contradice una ficha que fijaste", "en": "Anything clashing with a card you pinned" }
+    },
+    {
+      "id": "nombre",
+      "de": "ambos",
+      "nombre": { "es": "Nombres propios que no están en tu corpus", "en": "Proper names missing from your corpus" }
+    },
+    {
+      "id": "pregunta",
+      "de": "cliente",
+      "nombre": { "es": "Preguntas que te hicieron", "en": "Questions you were asked" }
+    }
+  ],
+  "compromisos": [
+    "te lo mando", "te lo envio", "te lo paso", "te mando", "te envio", "te paso", "te hago llegar",
+    "les mando", "les envio", "les paso", "les hago llegar", "quedamos en", "me comprometo",
+    "me encargo", "lo tengo para", "te confirmo", "les confirmo", "te escribo", "te aviso",
+    "i'll send", "i will send", "i'll get you", "i'll get back", "i will get back", "we agreed",
+    "i'll follow up", "i will follow up", "let me send", "i'll share", "i will share",
+    "i'll confirm", "i commit", "you'll have it"
+  ],
+  "numeros": {
+    "cero": 0, "uno": 1, "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5, "seis": 6, "siete": 7,
+    "ocho": 8, "nueve": 9, "diez": 10, "once": 11, "doce": 12, "trece": 13, "catorce": 14,
+    "quince": 15, "dieciseis": 16, "diecisiete": 17, "dieciocho": 18, "diecinueve": 19,
+    "veinte": 20, "treinta": 30, "cuarenta": 40, "cincuenta": 50, "sesenta": 60, "setenta": 70,
+    "ochenta": 80, "noventa": 90, "cien": 100,
+    "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
+    "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14,
+    "fifteen": 15, "sixteen": 16, "seventeen": 17, "eighteen": 18, "nineteen": 19, "twenty": 20,
+    "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60, "seventy": 70, "eighty": 80,
+    "ninety": 90, "hundred": 100
+  },
+  "unidades": [
+    "segundos", "minutos", "horas", "dias", "semanas", "meses", "anos", "trimestres", "sprints",
+    "hora", "dia", "semana", "mes", "ano", "trimestre", "sprint",
+    "por ciento", "%", "dolares", "pesos", "euros", "millones", "mil", "usd", "cop", "eur",
+    "seconds", "minutes", "hours", "days", "weeks", "months", "years", "quarters",
+    "hour", "day", "week", "month", "year", "quarter",
+    "percent", "dollars", "million", "thousand", "k"
+  ],
+  "monedas": ["usd", "us$", "$", "cop", "eur", "€", "mxn", "clp", "pen", "ars"],
+  "fechas": [
+    "lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo",
+    "manana", "pasado manana", "la proxima semana", "la semana que viene", "fin de mes",
+    "fin de ano", "fin de trimestre", "cierre de trimestre",
+    "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+    "tomorrow", "next week", "end of the month", "end of the year", "end of the quarter"
+  ],
+  "meses": [
+    "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre",
+    "setiembre", "octubre", "noviembre", "diciembre",
+    "january", "february", "march", "april", "june", "july", "august", "september", "october",
+    "november", "december"
+  ],
+  "interrogativos": [
+    "que", "cual", "cuales", "cuando", "cuanto", "cuanta", "cuantos", "cuantas", "como", "donde",
+    "quien", "quienes", "por que", "para que",
+    "what", "which", "when", "how", "where", "who", "why", "can", "could", "would", "is", "are",
+    "do", "does", "did", "will"
+  ],
+  "vacias": [
+    "el", "la", "los", "las", "un", "una", "unos", "unas", "de", "del", "al", "a", "en", "y", "o",
+    "que", "con", "por", "para", "es", "son", "esta", "este", "eso", "esto", "ese", "esa", "se",
+    "lo", "le", "les", "me", "te", "nos", "su", "sus", "mi", "tu", "si", "no", "ya", "muy", "mas",
+    "pero", "como", "hay", "tiene", "tienen", "van", "va", "ser", "estar", "entonces", "bueno",
+    "todo", "toda", "todos", "todas", "algo", "nada", "mucho", "poco", "otro", "otra", "cosa",
+    "the", "a", "an", "of", "to", "in", "on", "and", "or", "for", "with", "is", "are", "was",
+    "it", "this", "that", "these", "those", "we", "you", "i", "they", "our", "your", "my", "be",
+    "so", "but", "not", "do", "does", "can", "will", "there", "have", "has", "all", "some",
+    "thing", "other", "about"
+  ]
+}

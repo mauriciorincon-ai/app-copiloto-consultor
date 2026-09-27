@@ -11,7 +11,9 @@
 //! - de las fichas, **solo las que fijas tú**: la que la banda enseña («la vigente») vive aquí para
 //!   que ⌃⌥P tenga qué fijar, y muere con el corte — la eligió el disparador por las palabras del
 //!   cliente, y su lista sería la huella de lo que dijo;
-//! - ⌥⎋ corta tus turnos y la vigente; tu nota, tus acuerdos y tus fijadas **sobreviven**.
+//! - ⌥⎋ corta tus turnos, la vigente y las propuestas sin decidir; tu nota, tus acuerdos, tus fijadas
+//!   y las propuestas que guardaste **sobreviven**;
+//! - las propuestas (ADR 016) esperan aquí tu sí: sin él, no entran al archivo.
 
 pub mod cifrado;
 
@@ -19,6 +21,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::capture::Pista;
 use crate::corpus::Unidad;
+use crate::propuestas::{self, Propuesta};
 use crate::stt::Turno;
 
 /// La versión del contenido (el JSON de dentro). La del sobre es `cifrado::VERSION`.
@@ -29,16 +32,23 @@ pub const VERSION: u32 = 1;
 pub const TOPE_DE_LA_NOTA: usize = 200_000;
 /// Tope de un acuerdo, en letras. Un acuerdo es una línea.
 pub const TOPE_DEL_ACUERDO: usize = 500;
+/// Cuántas propuestas pueden esperar a la vez (ADR 016 §1). Al llegar, las nuevas no entran.
+pub const TOPE_DE_PROPUESTAS: usize = 30;
 
 /// Una ficha que fijaste: cómo se llamaba y de dónde salía. **No** el texto del documento: ese sigue
 /// en tu corpus, y copiarlo aquí sería guardar dos veces lo mismo.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FichaFijada {
     pub titular: String,
     pub documento: String,
     pub seccion: Option<String>,
     pub unidad: Option<Unidad>,
+    /// La línea de la ficha, **solo en memoria**: la regla `choque` compara con ella las cifras que
+    /// se dicen (ADR 016). No va al archivo ni a la pantalla: es texto de tu documento, que ya está en
+    /// tu corpus.
+    #[serde(skip)]
+    pub linea: String,
 }
 
 /// Un turno tuyo, en texto. La hora es la del reloj, «14:02», como en el transcript.
@@ -71,6 +81,10 @@ pub struct Contenido {
     pub acuerdos: Vec<String>,
     pub fijadas: Vec<FichaFijada>,
     pub mis_turnos: Vec<TurnoPropio>,
+    /// Las propuestas que guardaste (ADR 016 §3). Un archivo de antes de la fase 2 no las trae y se
+    /// lee como una lista vacía.
+    #[serde(default)]
+    pub propuestas: Vec<Propuesta>,
 }
 
 impl Contenido {
@@ -92,6 +106,7 @@ impl Drop for Contenido {
         pisar(&mut self.nota);
         self.acuerdos.iter_mut().for_each(pisar);
         self.mis_turnos.iter_mut().for_each(|t| pisar(&mut t.texto));
+        self.propuestas.iter_mut().for_each(pisar_propuesta);
     }
 }
 
@@ -104,11 +119,24 @@ pub struct Resumen {
     pub acuerdos: usize,
     pub fijadas: usize,
     pub turnos: usize,
+    /// Las propuestas que guardaste, y las que esperan tu decisión.
+    pub propuestas: usize,
+    pub sin_decidir: usize,
     /// Bytes en claro de cada parte, para las cifras de «Se va a guardar».
     pub bytes_nota: usize,
     pub bytes_acuerdos: usize,
     pub bytes_fijadas: usize,
     pub bytes_turnos: usize,
+    pub bytes_propuestas: usize,
+}
+
+/// Una propuesta que espera tu decisión, con el número con que la pantalla la nombra.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EnEspera {
+    pub id: u32,
+    #[serde(flatten)]
+    pub propuesta: Propuesta,
 }
 
 /// El cuaderno de la reunión, en memoria.
@@ -121,6 +149,16 @@ pub struct Cuaderno {
     conservar_mis_turnos: bool,
     /// La ficha que la banda enseña ahora. No es tuya todavía: lo es si la fijas.
     vigente: Option<FichaFijada>,
+    /// Las propuestas que esperan tu sí, en el orden en que llegaron.
+    en_espera: Vec<EnEspera>,
+    /// Las que guardaste: entran al archivo.
+    guardadas: Vec<Propuesta>,
+    /// Lo que ya se propuso en esta reunión (regla y texto, plegados), para no repetirlo aunque lo
+    /// descartaras.
+    propuestas_vistas: Vec<String>,
+    siguiente: u32,
+    /// Se llegó al tope de propuestas y alguna no entró. La pantalla lo dice.
+    lleno: bool,
 }
 
 impl Cuaderno {
@@ -132,6 +170,11 @@ impl Cuaderno {
             mis_turnos: Vec::new(),
             conservar_mis_turnos,
             vigente: None,
+            en_espera: Vec::new(),
+            guardadas: Vec::new(),
+            propuestas_vistas: Vec::new(),
+            siguiente: 1,
+            lleno: false,
         }
     }
 
@@ -225,16 +268,106 @@ impl Cuaderno {
         self.conservar_mis_turnos
     }
 
-    /// ⌥⎋. Mueren tus turnos (salen de la captura) y la ficha vigente (la eligió el cliente con sus
-    /// palabras). Tu nota, tus acuerdos y tus fijadas siguen: «Tus notas siguen ahí».
+    /// ⌥⎋. Mueren tus turnos (salen de la captura), la ficha vigente (la eligió el cliente con sus
+    /// palabras) y las propuestas sin decidir (salen de los turnos). Tu nota, tus acuerdos, tus fijadas
+    /// y las propuestas que guardaste siguen: «Tus notas siguen ahí».
     pub fn cortar(&mut self) {
         self.tirar_mis_turnos();
         self.vigente = None;
+        self.tirar_las_que_esperan();
     }
 
     /// ¿Hay algo tuyo que guardar?
     pub fn vacio(&self) -> bool {
-        self.nota.trim().is_empty() && self.acuerdos.is_empty() && self.fijadas.is_empty() && self.mis_turnos.is_empty()
+        self.nota.trim().is_empty()
+            && self.acuerdos.is_empty()
+            && self.fijadas.is_empty()
+            && self.mis_turnos.is_empty()
+            && self.guardadas.is_empty()
+    }
+
+    /// ¿Queda algo que decidir al cerrar? Lo tuyo, o propuestas esperando (ADR 016 §4): una reunión
+    /// así no se cierra sola al parar.
+    pub fn hay_que_decidir(&self) -> bool {
+        !self.vacio() || !self.en_espera.is_empty()
+    }
+
+    // ---- las propuestas (ADR 016) ----
+
+    /// Las fijadas como las ven las reglas: titular, línea y sección.
+    pub fn para_las_reglas(&self) -> Vec<propuestas::Fijada> {
+        self.fijadas
+            .iter()
+            .map(|f| propuestas::Fijada { titular: f.titular.clone(), linea: f.linea.clone(), seccion: f.seccion.clone() })
+            .collect()
+    }
+
+    /// Llegan propuestas de un turno. Entran las que no se propusieron ya en esta reunión, hasta el
+    /// tope. Devuelve cuántas entraron.
+    pub fn proponer(&mut self, nuevas: Vec<Propuesta>) -> usize {
+        let mut entraron = 0;
+        for p in nuevas {
+            let clave = format!("{}:{}", p.regla.id(), propuestas::plegar(&p.texto));
+            if self.propuestas_vistas.contains(&clave) {
+                continue;
+            }
+            if self.en_espera.len() >= TOPE_DE_PROPUESTAS {
+                self.lleno = true;
+                continue;
+            }
+            self.propuestas_vistas.push(clave);
+            self.en_espera.push(EnEspera { id: self.siguiente, propuesta: p });
+            self.siguiente += 1;
+            entraron += 1;
+        }
+        entraron
+    }
+
+    pub fn en_espera(&self) -> &[EnEspera] {
+        &self.en_espera
+    }
+
+    pub fn guardadas(&self) -> &[Propuesta] {
+        &self.guardadas
+    }
+
+    /// ¿Se quedó alguna fuera por el tope?
+    pub fn lleno(&self) -> bool {
+        self.lleno
+    }
+
+    /// «Guardar»: la propuesta pasa a tu archivo.
+    pub fn guardar_propuesta(&mut self, id: u32) -> bool {
+        let Some(i) = self.en_espera.iter().position(|e| e.id == id) else { return false };
+        let e = self.en_espera.remove(i);
+        self.guardadas.push(e.propuesta);
+        true
+    }
+
+    /// ⌃⌥↵: guarda la última que llegó. Devuelve la guardada.
+    pub fn guardar_la_ultima(&mut self) -> Option<&Propuesta> {
+        let id = self.en_espera.last()?.id;
+        self.guardar_propuesta(id);
+        self.guardadas.last()
+    }
+
+    /// «No»: muere en ese momento.
+    pub fn descartar_propuesta(&mut self, id: u32) -> bool {
+        let Some(i) = self.en_espera.iter().position(|e| e.id == id) else { return false };
+        let mut e = self.en_espera.remove(i);
+        pisar_propuesta(&mut e.propuesta);
+        true
+    }
+
+    /// Al cerrar: las que no decidiste salen del cuaderno (a la bandeja, o a morir si la ventana es
+    /// «al cerrar»).
+    pub fn sin_decidir(&mut self) -> Vec<Propuesta> {
+        self.en_espera.drain(..).map(|e| e.propuesta).collect()
+    }
+
+    fn tirar_las_que_esperan(&mut self) {
+        self.en_espera.iter_mut().for_each(|e| pisar_propuesta(&mut e.propuesta));
+        self.en_espera.clear();
     }
 
     pub fn resumen(&self) -> Resumen {
@@ -243,15 +376,19 @@ impl Cuaderno {
             .iter()
             .map(|f| f.titular.len() + f.documento.len() + f.seccion.as_ref().map_or(0, |s| s.len()))
             .sum();
+        let bytes_propuestas = self.guardadas.iter().map(|p| p.texto.len() + p.ficha.as_ref().map_or(0, |f| f.len())).sum();
         Resumen {
             parrafos: self.nota.split('\n').filter(|l| !l.trim().is_empty()).count(),
             acuerdos: self.acuerdos.len(),
             fijadas: self.fijadas.len(),
             turnos: self.mis_turnos.len(),
+            propuestas: self.guardadas.len(),
+            sin_decidir: self.en_espera.len(),
             bytes_nota: self.nota.len(),
             bytes_acuerdos: self.acuerdos.iter().map(String::len).sum(),
             bytes_fijadas: fijadas_bytes,
             bytes_turnos: self.mis_turnos.iter().map(|t| t.texto.len()).sum(),
+            bytes_propuestas,
         }
     }
 
@@ -265,6 +402,7 @@ impl Cuaderno {
             acuerdos: self.acuerdos.clone(),
             fijadas: self.fijadas.clone(),
             mis_turnos: if self.conservar_mis_turnos { self.mis_turnos.clone() } else { Vec::new() },
+            propuestas: self.guardadas.clone(),
         }
     }
 
@@ -274,6 +412,8 @@ impl Cuaderno {
         pisar(&mut self.nota);
         self.acuerdos.iter_mut().for_each(pisar);
         self.tirar_mis_turnos();
+        self.tirar_las_que_esperan();
+        self.guardadas.iter_mut().for_each(pisar_propuesta);
         *self = Cuaderno::nuevo(conservar);
     }
 
@@ -288,6 +428,16 @@ impl Drop for Cuaderno {
         pisar(&mut self.nota);
         self.acuerdos.iter_mut().for_each(pisar);
         self.mis_turnos.iter_mut().for_each(|t| pisar(&mut t.texto));
+        self.en_espera.iter_mut().for_each(|e| pisar_propuesta(&mut e.propuesta));
+        self.guardadas.iter_mut().for_each(pisar_propuesta);
+    }
+}
+
+/// Una propuesta se pisa entera: su texto y lo que dice la ficha.
+pub fn pisar_propuesta(p: &mut Propuesta) {
+    pisar(&mut p.texto);
+    if let Some(f) = p.ficha.as_mut() {
+        pisar(f);
     }
 }
 
@@ -367,6 +517,7 @@ mod pruebas {
             documento: "Propuesta Páramo Azul".into(),
             seccion: Some("Alcance".into()),
             unidad: Some(Unidad::Propuesta),
+            ..Default::default()
         }
     }
 
@@ -481,5 +632,91 @@ mod pruebas {
 
     fn encabezado() -> Encabezado {
         Encabezado { empezo: "2026-09-27 14:02".into(), minutos: 47, cliente: None }
+    }
+
+    fn propuesta(texto: &str) -> Propuesta {
+        Propuesta {
+            regla: propuestas::Regla::Cifra,
+            de: propuestas::De::Cliente,
+            texto: texto.into(),
+            ficha: None,
+            seccion: None,
+            hora: "14:16".into(),
+        }
+    }
+
+    /// **Proponer no es guardar.** Solo entra al archivo lo que dijiste que sí. Demostrado en rojo:
+    /// con `propuestas: self.en_espera…` en `contenido`, las que esperan acaban cifradas en el archivo.
+    #[test]
+    fn solo_las_que_guardas_entran_al_archivo() {
+        let mut c = Cuaderno::nuevo(false);
+        assert_eq!(c.proponer(vec![propuesta("12 semanas"), propuesta("USD 40.000"), propuesta("el viernes")]), 3);
+        let ids: Vec<u32> = c.en_espera().iter().map(|e| e.id).collect();
+        assert!(c.guardar_propuesta(ids[0]));
+        assert!(c.descartar_propuesta(ids[1]));
+        let dentro = c.contenido(encabezado());
+        assert_eq!(dentro.propuestas.iter().map(|p| p.texto.as_str()).collect::<Vec<_>>(), ["12 semanas"]);
+        assert_eq!(c.resumen().propuestas, 1);
+        assert_eq!(c.resumen().sin_decidir, 1);
+        // y un archivo de antes de la fase 2, sin el campo, se lee como una lista vacía
+        let mut sin = serde_json::to_value(&dentro).unwrap();
+        sin.as_object_mut().unwrap().remove("propuestas");
+        let vuelta = Contenido::de_bytes(&serde_json::to_vec(&sin).unwrap()).unwrap();
+        assert!(vuelta.propuestas.is_empty());
+    }
+
+    #[test]
+    fn la_misma_propuesta_no_se_repite_ni_despues_de_descartarla_y_hay_tope() {
+        let mut c = Cuaderno::nuevo(false);
+        c.proponer(vec![propuesta("12 semanas")]);
+        let id = c.en_espera()[0].id;
+        c.descartar_propuesta(id);
+        assert_eq!(c.proponer(vec![propuesta("12 Semanas")]), 0, "descartada una vez, no vuelve");
+        let muchas: Vec<Propuesta> = (0..40).map(|i| propuesta(&format!("{i} días"))).collect();
+        assert_eq!(c.proponer(muchas), TOPE_DE_PROPUESTAS);
+        assert!(c.lleno());
+    }
+
+    #[test]
+    fn la_ultima_se_guarda_con_una_tecla() {
+        let mut c = Cuaderno::nuevo(false);
+        assert!(c.guardar_la_ultima().is_none());
+        c.proponer(vec![propuesta("12 semanas"), propuesta("el viernes")]);
+        assert_eq!(c.guardar_la_ultima().map(|p| p.texto.clone()).as_deref(), Some("el viernes"));
+        assert_eq!(c.en_espera().len(), 1);
+    }
+
+    /// **⌥⎋ se lleva las que esperan y deja las guardadas** (ADR 016 §4). Demostrado en rojo: sin
+    /// `tirar_las_que_esperan` en `cortar`, las propuestas del cliente sobreviven al corte.
+    #[test]
+    fn el_corte_se_lleva_las_que_esperan_y_deja_las_guardadas() {
+        let mut c = Cuaderno::nuevo(false);
+        c.proponer(vec![propuesta("12 semanas"), propuesta("cuatro fuentes")]);
+        c.guardar_propuesta(c.en_espera()[0].id);
+        c.cortar();
+        assert!(c.en_espera().is_empty(), "las que esperaban sobrevivieron al corte");
+        assert_eq!(c.guardadas().len(), 1);
+        assert!(!c.vacio(), "una propuesta guardada es tuya");
+    }
+
+    #[test]
+    fn una_reunion_con_propuestas_sin_decidir_tiene_algo_que_decidir() {
+        let mut c = Cuaderno::nuevo(false);
+        assert!(!c.hay_que_decidir());
+        c.proponer(vec![propuesta("12 semanas")]);
+        assert!(c.vacio());
+        assert!(c.hay_que_decidir());
+        assert_eq!(c.sin_decidir().len(), 1);
+        assert!(!c.hay_que_decidir());
+    }
+
+    #[test]
+    fn las_reglas_ven_la_linea_de_la_fijada_y_el_archivo_no() {
+        let mut c = Cuaderno::nuevo(false);
+        c.ver(FichaFijada { linea: "una cuarta fuente es adicional".into(), ..ficha("Hasta tres fuentes") });
+        c.fijar_la_vigente();
+        assert_eq!(c.para_las_reglas()[0].linea, "una cuarta fuente es adicional");
+        let json = String::from_utf8(c.contenido(encabezado()).a_bytes()).unwrap();
+        assert!(!json.contains("cuarta"), "la línea del documento acabó en el archivo: {json}");
     }
 }

@@ -495,9 +495,12 @@ export const VISTA_DEL_CUADERNO: VistaDelCuaderno = {
       "bytesAcuerdos": 33,
       "bytesFijadas": 64,
       "bytesNota": 84,
+      "bytesPropuestas": 0,
       "bytesTurnos": 0,
       "fijadas": 1,
       "parrafos": 2,
+      "propuestas": 0,
+      "sinDecidir": 0,
       "turnos": 0
     },
     "retencion": "90d",

@@ -32,6 +32,7 @@ pub mod notas;
 pub mod pantalla;
 pub mod permisos;
 pub mod prefs;
+pub mod propuestas;
 pub mod radar;
 pub mod red;
 pub mod relleno;
@@ -39,6 +40,7 @@ pub mod reunion;
 pub mod sesion;
 pub mod sintesis;
 pub mod stt;
+pub mod vencimiento;
 pub mod ventana;
 pub mod voz;
 
@@ -590,6 +592,15 @@ fn empezar_a_escuchar(
             // «Conservar mis turnos»: el cuaderno decide si el turno es tuyo (micrófono, sin eco).
             if let escucha::Novedad::Turno(t) = &novedad {
                 reunion::oir(&mango, t);
+                // Las propuestas (ADR 016): las reglas, con tus fijadas y tu corpus para los nombres.
+                // `try_lock` y no `lock`: si el corpus se está indexando, este hilo es el de la escucha
+                // y no puede esperar; ese turno no propone nombres, y ya está.
+                let corpus = mango.state::<ElCorpus>();
+                let conoce = |nombre: &str| match corpus.0.try_lock() {
+                    Ok(c) => c.as_ref().is_none_or(|c| c.conoce(nombre)),
+                    Err(_) => true,
+                };
+                reunion::proponer(&mango, t, &conoce);
             }
             let _ = mango.emit(EVENTO_ESCUCHA, novedad);
         },

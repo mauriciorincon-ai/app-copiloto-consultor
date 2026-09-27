@@ -84,6 +84,9 @@ const PROTEGIDOS = [
   // —el micrófono oyendo al cliente por los altavoces—, que son la voz del cliente. Decide qué es tuyo,
   // lo cifra y entrega bytes; los escribe `carpeta.rs`, que no ve un turno. El patrón del diccionario.
   "src-tauri/src/notas",
+  // `propuestas` (sprint 003, fase 2, ADR 016): lee cada turno, también los del cliente, para
+  // proponerte qué guardar. Devuelve propuestas y nada más; las sella `bandeja.rs`, que solo ve líneas.
+  "src-tauri/src/propuestas",
   "src-tauri/nativo",
   "src/capture",
 ];

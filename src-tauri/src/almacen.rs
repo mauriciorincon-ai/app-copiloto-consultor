@@ -28,6 +28,20 @@ pub fn escribir(ruta: &Path, bytes: &[u8]) -> Result<(), String> {
     if let Some(padre) = ruta.parent() {
         carpeta_privada(padre)?;
     }
+    poner(ruta, bytes)
+}
+
+/// Lo mismo, en una carpeta **que no es de la app**: la crea si falta, pero **no toca sus permisos**.
+/// Es la de `~/Library/LaunchAgents` (ADR 016): el plist de la tarea de vencimiento vive ahí, y esa
+/// carpeta es del usuario y de otras apps. El archivo nace 600 igual.
+pub fn escribir_en_carpeta_ajena(ruta: &Path, bytes: &[u8]) -> Result<(), String> {
+    if let Some(padre) = ruta.parent() {
+        std::fs::create_dir_all(padre).map_err(|e| format!("no se pudo crear {}: {e}", padre.display()))?;
+    }
+    poner(ruta, bytes)
+}
+
+fn poner(ruta: &Path, bytes: &[u8]) -> Result<(), String> {
     let temporal = temporal_de(ruta);
     // Un temporal que dejó una caída anterior no puede bloquear esta escritura.
     let _ = std::fs::remove_file(&temporal);
@@ -109,6 +123,20 @@ mod tests {
 
     fn modo(p: &Path) -> u32 {
         std::fs::metadata(p).unwrap().permissions().mode() & 0o777
+    }
+
+    /// **La carpeta ajena no se toca.** Demostrado en rojo: con `carpeta_privada(padre)` en
+    /// `escribir_en_carpeta_ajena`, la carpeta pasa de 755 a 700.
+    #[test]
+    fn en_una_carpeta_ajena_el_archivo_nace_600_y_la_carpeta_queda_como_estaba() {
+        let d = carpeta("ajena");
+        std::fs::create_dir_all(&d).unwrap();
+        std::fs::set_permissions(&d, std::fs::Permissions::from_mode(0o755)).unwrap();
+        let f = d.join("tarea.plist");
+        escribir_en_carpeta_ajena(&f, b"<plist/>").unwrap();
+        assert_eq!(modo(&f), ARCHIVO);
+        assert_eq!(modo(&d), 0o755, "la carpeta del usuario cambió de permisos");
+        let _ = std::fs::remove_dir_all(&d);
     }
 
     /// **Nace en 600, sin ventana.** Si `cerrar_permisos` no tuvo nada que reparar, el archivo nunca

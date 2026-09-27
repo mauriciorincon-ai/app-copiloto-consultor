@@ -332,6 +332,7 @@ mod pruebas {
             documento: "Propuesta Páramo Azul".into(),
             seccion: Some("§3.2".into()),
             unidad: None,
+            ..Default::default()
         });
         c.fijar_la_vigente();
         c.contenido(Encabezado { empezo: "2026-09-20 14:02".into(), minutos: 47, cliente: Some("Páramo Azul".into()) })

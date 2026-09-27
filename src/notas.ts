@@ -29,10 +29,14 @@ export type ResumenDelCuaderno = {
   acuerdos: number;
   fijadas: number;
   turnos: number;
+  /** Las propuestas que guardaste y las que esperan tu decisión (ADR 016). */
+  propuestas: number;
+  sinDecidir: number;
   bytesNota: number;
   bytesAcuerdos: number;
   bytesFijadas: number;
   bytesTurnos: number;
+  bytesPropuestas: number;
 };
 
 /** La línea de «al cerrar»: «2026-09-20 · 47 min → reunion-2026-09-20-1402.ghost». */
@@ -106,10 +110,13 @@ export function useMuestraDelCuaderno(vista: VistaDeNotas): VistaDelCuaderno {
       acuerdos: 2,
       fijadas: 2,
       turnos: 0,
+      propuestas: 0,
+      sinDecidir: 0,
       bytesNota: 2_048,
       bytesAcuerdos: 1_024,
       bytesFijadas: 1_024,
       bytesTurnos: 0,
+      bytesPropuestas: 0,
     },
     conservarMisTurnos: false,
     abierta: vista === "durante" || vista === "al-cerrar",

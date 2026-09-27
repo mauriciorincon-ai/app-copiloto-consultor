@@ -45,6 +45,7 @@ fn ficha_fijada() -> crate::notas::FichaFijada {
         documento: "Propuesta Páramo Azul".into(),
         seccion: Some("§3.2".into()),
         unidad: Some(crate::corpus::Unidad::Propuesta),
+        ..Default::default()
     }
 }
 

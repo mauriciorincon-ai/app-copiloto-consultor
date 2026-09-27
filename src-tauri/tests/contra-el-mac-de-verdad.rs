@@ -753,6 +753,7 @@ fn una_sesion_completa(casa: &Path, corpus_en: &Path, llave: &dyn Llaves) -> (Ve
         documento: "Propuesta Páramo Azul".into(),
         seccion: Some("Alcance".into()),
         unidad: Some(Unidad::Propuesta),
+        ..Default::default()
     });
     cuaderno.fijar_la_vigente();
     let mio = Turno {
@@ -2022,4 +2023,162 @@ fn el_llavero_guarda_lee_y_borra_la_clave() {
     borrar_clave(Externo::Groq).expect("el Llavero no la borró");
     assert!(!hay_clave(Externo::Groq), "la clave sigue ahí después de borrarla");
     println!("\n[llavero] guardada, leída y borrada: el Llavero queda como estaba");
+}
+
+// =============================================================================================
+// el vencimiento: el barrido de launchd, con /bin/sh de verdad (ADR 016 §5)
+// =============================================================================================
+
+// Lo que launchd corre con la app cerrada es `/bin/sh` sobre una lista. Aquí se corre ESE guion, con
+// ESE shell, sobre archivos de verdad: lo único que el test unitario del plist no puede afirmar.
+
+use app_copiloto_consultor_lib::vencimiento::{self, Pendiente, Tarea};
+
+fn carpeta_del_vencimiento(nombre: &str) -> PathBuf {
+    let d = std::env::temp_dir().join(format!("ag-vencimiento-{nombre}-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&d);
+    std::fs::create_dir_all(d.join("con espacios")).unwrap();
+    d
+}
+
+fn ahora() -> i64 {
+    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64
+}
+
+/// **El barrido borra lo vencido y nada más.** Solo `.ghost`, solo lo que está en la lista y solo si
+/// su hora pasó; y no escribe la lista. Demostrado en rojo: sin el `case "$ruta" in *.ghost)`, el
+/// `.txt` vencido de la lista se borra.
+#[test]
+fn el_barrido_de_launchd_borra_lo_vencido_y_nada_mas() {
+    let _t = turno();
+    let d = carpeta_del_vencimiento("barrido");
+    let hoy = ahora();
+    let archivo = |nombre: &str| {
+        let r = d.join(nombre);
+        std::fs::write(&r, b"AGHOST").unwrap();
+        r
+    };
+    let vencida = archivo("vencida.ghost");
+    let con_espacios = archivo("con espacios/también vencida.ghost");
+    let futura = archivo("futura.ghost");
+    let texto = archivo("vencida.txt");
+    let fuera = archivo("fuera-de-la-lista.ghost");
+    // la lista a mano, con el .txt dentro: el guion tiene que defenderse solo aunque la lista mienta
+    let lista = d.join("vencimientos");
+    let contenido = format!(
+        "{}\t{}\n{}\t{}\n{}\t{}\n{}\t{}\n",
+        hoy - 60,
+        vencida.display(),
+        hoy - 1,
+        con_espacios.display(),
+        hoy + 3_600,
+        futura.display(),
+        hoy - 60,
+        texto.display(),
+    );
+    std::fs::write(&lista, &contenido).unwrap();
+
+    let salio = std::process::Command::new("/bin/sh")
+        .args(["-c", vencimiento::BARRIDO, "prueba"])
+        .arg(&lista)
+        .status()
+        .unwrap();
+    assert!(salio.success());
+    assert!(!vencida.exists(), "lo vencido sigue ahí");
+    assert!(!con_espacios.exists(), "una ruta con espacios y tildes no se borró");
+    assert!(futura.exists(), "se borró algo que no había vencido");
+    assert!(texto.exists(), "se borró un archivo que no es .ghost");
+    assert!(fuera.exists(), "se borró algo que no estaba en la lista");
+    assert_eq!(std::fs::read_to_string(&lista).unwrap(), contenido, "el barrido escribió la lista");
+
+    // sin lista, no hace nada y sale bien
+    std::fs::remove_file(&lista).unwrap();
+    let salio = std::process::Command::new("/bin/sh").args(["-c", vencimiento::BARRIDO, "prueba"]).arg(&lista).status().unwrap();
+    assert!(salio.success());
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+#[test]
+fn el_plist_de_la_tarea_es_un_plist_valido() {
+    let _t = turno();
+    let d = carpeta_del_vencimiento("plist");
+    let tarea = Tarea { etiqueta: vencimiento::ETIQUETA.into(), plist: d.join("tarea.plist"), lista: d.join("con espacios/vencimientos") };
+    let hoy = ahora();
+    let texto = vencimiento::plist(
+        &tarea,
+        &[Pendiente { vence: hoy + 3 * 3_600, ruta: d.join("a.ghost") }, Pendiente { vence: hoy + 90 * 86_400, ruta: d.join("b.ghost") }],
+        &vencimiento::hora_del_mac,
+    );
+    std::fs::write(&tarea.plist, texto).unwrap();
+    let lint = std::process::Command::new("/usr/bin/plutil").arg("-lint").arg(&tarea.plist).output().unwrap();
+    assert!(lint.status.success(), "plutil: {}", String::from_utf8_lossy(&lint.stdout));
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+/// **En vivo, con launchd de verdad** (ADR 016 §5; parada del ⭐⭐ con la app). Registra una tarea de
+/// prueba con su propia etiqueta, un archivo que vence en menos de un minuto en una carpeta temporal
+/// y **otro en `~/Documents/Angel Ghost/`**, que es donde viven tus notas y donde macOS protege el
+/// acceso; y espera a que launchd los borre sin que nada de esta app esté corriendo. Al final quita
+/// la tarea y lo que creó. Se corre a mano: `cargo test --test contra-el-mac-de-verdad en_vivo -- --ignored --nocapture`.
+///
+/// **Su primera corrida (2026-09-27) cazó lo que el plan no vio:** la carpeta temporal se borró 38 s
+/// después de vencer; `~/Documents`, no. macOS le niega Documentos al `sh` de launchd (ADR 016,
+/// «Hallazgo en vivo»).
+#[test]
+#[ignore = "en vivo: registra una tarea en launchd y espera a que borre (≈ 2 min)"]
+fn en_vivo_launchd_borra_a_su_hora_sin_la_app() {
+    let _t = turno();
+    let casa = PathBuf::from(std::env::var("HOME").unwrap());
+    let d = carpeta_del_vencimiento("en-vivo");
+    let etiqueta = format!("{}.prueba", vencimiento::ETIQUETA);
+    let tarea = Tarea {
+        plist: casa.join("Library/LaunchAgents").join(format!("{etiqueta}.plist")),
+        lista: d.join("vencimientos"),
+        etiqueta,
+    };
+    let documentos = casa.join("Documents/Angel Ghost");
+    let habia_carpeta = documentos.exists();
+    std::fs::create_dir_all(&documentos).unwrap();
+    let en_temporal = d.join("con espacios/bandeja de prueba.ghost");
+    let en_documentos = documentos.join(format!("prueba-del-vencimiento-{}.ghost", std::process::id()));
+    std::fs::write(&en_temporal, b"AGHOST").unwrap();
+    std::fs::write(&en_documentos, b"AGHOST").unwrap();
+
+    let vence = ahora() + 20;
+    let pendientes = [Pendiente { vence, ruta: en_temporal.clone() }, Pendiente { vence, ruta: en_documentos.clone() }];
+    let hecho = vencimiento::al_dia(&tarea, &pendientes, &vencimiento::hora_del_mac).unwrap();
+    assert_eq!(hecho, vencimiento::Hecho::Registrada);
+    // `RunAtLoad` la corre al registrarla: antes de su hora no puede borrar nada
+    std::thread::sleep(std::time::Duration::from_secs(3));
+    assert!(en_temporal.exists() && en_documentos.exists(), "se borró antes de vencer");
+    println!("[vencimiento] vence a las {} (+20 s); la tarea corre al minuto siguiente", vence);
+
+    let mut temporal_a = None;
+    let mut documentos_a = None;
+    for _ in 0..40 {
+        std::thread::sleep(std::time::Duration::from_secs(5));
+        if temporal_a.is_none() && !en_temporal.exists() {
+            temporal_a = Some(ahora() - vence);
+        }
+        if documentos_a.is_none() && !en_documentos.exists() {
+            documentos_a = Some(ahora() - vence);
+        }
+        if temporal_a.is_some() && documentos_a.is_some() {
+            break;
+        }
+    }
+    println!("[vencimiento] carpeta temporal: {temporal_a:?} s tras vencer · ~/Documents: {documentos_a:?} s tras vencer");
+
+    // limpieza, pase lo que pase
+    let quitada = vencimiento::al_dia(&tarea, &[], &vencimiento::hora_del_mac).unwrap();
+    let _ = std::fs::remove_file(&en_documentos);
+    if !habia_carpeta {
+        let _ = std::fs::remove_dir(&documentos);
+    }
+    let _ = std::fs::remove_dir_all(&d);
+    assert_eq!(quitada, vencimiento::Hecho::Quitada);
+    assert!(!tarea.plist.exists(), "el plist de prueba se quedó en LaunchAgents");
+
+    assert!(temporal_a.is_some_and(|s| s <= 90), "launchd no borró el archivo de la carpeta temporal a su hora");
+    assert!(documentos_a.is_some_and(|s| s <= 90), "launchd no borró el archivo de ~/Documents a su hora (¿macOS le niega Documentos a sh?)");
 }

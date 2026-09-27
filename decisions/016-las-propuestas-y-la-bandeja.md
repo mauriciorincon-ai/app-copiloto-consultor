@@ -52,8 +52,10 @@ reunión, y como mucho hay 30 esperando; al llegar a 30, las nuevas no entran y 
 - **Lo del cliente** (sistema, **o micrófono marcado como eco**, que es su voz): **jamás el turno**.
   Un hecho en una línea, hecho con una plantilla y un fragmento de **como mucho 8 palabras**:
   «Dijeron «12 semanas»», «Mencionaron a «Andrea Villalba», que no está en tu corpus»,
-  «Dijeron «cuatro fuentes»; tu ficha fijada dice «tres»», «Te preguntaron: «…»». Test en rojo: el
-  turno entero nunca aparece, y el fragmento no pasa de 8 palabras.
+  «Dijeron «cuatro fuentes»; tu ficha fijada dice «tres»». De una pregunta, **ni un fragmento**: sus
+  palabras clave, como mucho cinco («limpieza · datos · dentro · alcance»). Test en rojo: en un turno
+  de más de 8 palabras, el turno nunca aparece, y ningún fragmento pasa de 8 palabras. (Un turno de
+  ocho palabras o menos puede coincidir con su propio hecho: «Doce semanas.»)
 - **De dónde salió** va siempre con la propuesta: «lo dijiste tú · 14:16», «lo dijo el cliente ·
   14:21», «choca con una ficha que fijaste · §3.2», como en la maqueta.
 
@@ -68,8 +70,8 @@ reunión, y como mucho hay 30 esperando; al llegar a 30, las nuevas no entran y 
   lista aparte de tus acuerdos (tus acuerdos los escribes tú; estas las aceptaste). El archivo `.ghost`
   gana ese campo sin cambiar de versión: un archivo sin él se lee como una lista vacía (test).
 - **No** la descarta: muere en ese momento.
-- La propuesta llega **≤ 1 s** después del turno (kit): son expresiones regulares y una consulta al
-  índice del corpus, sin red y sin modelo (test con reloj).
+- La propuesta llega **≤ 1 s** después del turno (kit): son comparaciones de palabras contra el
+  catálogo y una consulta al índice del corpus, sin red y sin modelo (test con reloj).
 
 ### 4 · Al cerrar: la bandeja
 
@@ -189,6 +191,25 @@ propuesta, ni un nombre de archivo, ni una ruta.**
 «Si enciendes el modelo local, solo **redacta mejor** la propuesta — nunca decide cuál merece
 guardarse.» En H1 el modelo **no toca** las propuestas (cero LLM nuevo). La pantalla dice solo «Son
 reglas, no un modelo adivinando…», y la frase del modelo no se construye. Va al bloque de textos.
+
+## Hallazgo en vivo (2026-09-27): launchd no puede entrar en Documentos
+
+La prueba en vivo del punto 5 (`en_vivo_launchd_borra_a_su_hora_sin_la_app`) registró la tarea con
+dos archivos que vencían a la vez:
+
+- el de una carpeta temporal lo borró **38 s después de vencer**, en el minuto siguiente, sin nada de
+  la app corriendo;
+- el de `~/Documents/Angel Ghost/` **no lo borró**.
+
+Una tarea de diagnóstico lo confirma: desde launchd, `/bin/sh` recibe `ls: ~/Documents: Operation not
+permitted`, y `~/Library/Application Support` lo lee sin problema. Es la protección de Documentos de
+macOS (TCC): el permiso es de la app, no de `sh`.
+
+**Consecuencia:** tal como está, launchd cumple la promesa para **la bandeja** (Application Support)
+y **no** para **las notas** (Documentos). Con las notas en Documentos, lo vencido se borra al abrir la
+app y cada hora mientras corre, que es lo que el manual ya dice. **La decisión de cómo se cierra la
+brecha es del usuario**, porque la carpeta de Documentos fue suya (plan del sprint), y queda
+registrada aquí cuando la tome.
 
 ## Alternativas consideradas
 

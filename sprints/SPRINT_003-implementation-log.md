@@ -434,3 +434,61 @@ fila más, maquetada, para que se decida con el archivo abierto y sin otra vuelt
 **Pruebas:** `maqueta-cabe` en verde, e2e 127 con axe, vitest 276 y el espejo de `design-sync/`
 regenerado. El CSS nuevo (`.propuesta-b`, `.franja.mute`, `.cuenta.vencida`, `.tecla.fijada`) entra
 en `design-system.md` cuando la mirada lo apruebe.
+
+### Fase 2 — lo que no tiene pantalla, mientras llega el veredicto (2026-09-27)
+
+Construido sin tocar ninguna pantalla:
+- **`propuestas/`** (módulo protegido, puro) y el catálogo `data/propuestas/reglas.json`:
+  - cinco reglas, con compromisos, números, unidades, monedas, fechas, meses e interrogativos en
+    español e inglés;
+  - la pantalla sacará la lista de reglas de ese catálogo.
+- **El cuaderno** gana:
+  - las propuestas que esperan y las guardadas;
+  - el tope de 30, y no repetir una propuesta aunque la descartes;
+  - «guardar la última» (⌃⌥↵);
+  - ⌥⎋ se lleva las que esperan;
+  - una reunión con propuestas sin decidir no se cierra sola.
+- `FichaFijada.linea`, solo en memoria: la regla `choque` compara contra ella.
+- **`Corpus::conoce`**, para la regla `nombre`: busca en el índice con el mismo análisis que el
+  índice.
+- **La conexión:** cada turno pasa por las reglas. Toma el corpus con `try_lock`, porque ese hilo es el
+  de la escucha y no puede esperar a un reindexado.
+- **`vencimiento/`**:
+  - la lista, el plist puro y el barrido en `/bin/sh`;
+  - `launchctl` registra la tarea, y la quita cuando no queda nada;
+  - «no corrió» se **mide**.
+- **`almacen::escribir_en_carpeta_ajena`.** El plist vive en `~/Library/LaunchAgents`, que no es de la
+  app, y el escritor de siempre la habría dejado en 700.
+- **`contador-de-red`** cuenta dos programas: `/usr/bin/profiles` y `/bin/launchctl`.
+- **La deuda del contrato:** tres cuentas nuevas del resumen, a pagar con «al cerrar».
+
+**Cada gate nuevo, con su rojo.** Todos volvieron a verde al restaurar.
+
+| Gate | Defecto plantado | Rojo |
+|---|---|---|
+| del cliente, jamás el turno | `De::Cliente => frase(...)` | 6 tests, entre ellos «del cliente jamás el turno, solo un fragmento de ocho palabras» |
+| el eco es del cliente | `del_turno` sin mirar `eco` | «el eco es la voz del cliente» |
+| `propuestas/` no escribe | `std::fs::write` plantado en el catálogo | `verify:ephemeral`: «2 uso(s) de disco/red» |
+| solo lo guardado entra al archivo | las que esperan, en `contenido` | «solo las que guardas entran al archivo» |
+| ⌥⎋ se lleva las que esperan | `cortar` sin tirarlas | «el corte se lleva las que esperan y deja las guardadas» |
+| parar no cierra con propuestas | `terminar` con `vacio()` | «sin nada tuyo parar cierra la reunión…» |
+| la carpeta ajena no se toca | `carpeta_privada` en el escritor ajeno | «en una carpeta ajena… la carpeta queda como estaba» (755 → 700) |
+| el barrido solo borra `.ghost` | sin el `case *.ghost` | «se borró un archivo que no es .ghost» |
+| `launchctl` solo desde `vencimiento/` | `Command::new("/bin/launchctl")` en `reunion.rs` | `contador-de-red`: «reunion.rs:624 lanza «/bin/launchctl»» |
+
+**En vivo con launchd** (`en_vivo_launchd_borra_a_su_hora_sin_la_app`, `#[ignore]`, 203 s):
+- **carpeta temporal:** borrado **38 s después de vencer**, en el minuto siguiente, sin la app;
+- **`~/Documents/Angel Ghost/`:** **no se borró.**
+
+Una tarea de diagnóstico lo confirma: `ls: ~/Documents: Operation not permitted` desde el `sh` de
+launchd, y `Application Support` legible. Es TCC: el permiso de Documentos es de la app, no de `sh`.
+La prueba quitó su tarea, su plist y su archivo, y `~/Library/LaunchAgents` quedó sin nada de la app.
+
+**Consecuencia:** launchd cumple la promesa para la bandeja y no para las notas en Documentos. La
+carpeta fue decisión del usuario, así que **la pregunta va a él** (ADR 016, «Hallazgo en vivo»).
+Mientras tanto, el manual sigue diciendo la verdad: las notas vencidas se borran al abrir la app y cada
+hora.
+
+**Totales:**
+- cargo lib 420, y 3 de integración nuevas (2 corren siempre y 1 en vivo);
+- vitest 276, clippy limpio, lint, typecheck y efímero estático.

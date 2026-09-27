@@ -227,6 +227,13 @@ impl Corpus {
         &self.vocabulario
     }
 
+    /// ¿Está este nombre en tu corpus? En el nombre de un documento o en su texto (ADR 016, regla
+    /// `nombre`).
+    pub fn conoce(&self, nombre: &str) -> bool {
+        let buscado = crate::propuestas::plegar(nombre);
+        self.documentos.iter().any(|d| crate::propuestas::plegar(&d.nombre).contains(&buscado)) || self.indice.conoce(nombre)
+    }
+
     pub fn buscar(&self, texto: &str, cuantos: usize) -> Result<Vec<Hallazgo>, String> {
         self.indice.buscar(texto, cuantos)
     }

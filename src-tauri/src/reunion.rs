@@ -121,12 +121,13 @@ impl ElCuaderno {
         self.abierta.store(true, Ordering::Relaxed);
     }
 
-    /// Paraste de escuchar. Devuelve si la reunión se cerró (no había nada tuyo).
+    /// Paraste de escuchar. Devuelve si la reunión se cerró: no había nada tuyo **ni propuestas
+    /// esperando tu decisión** (ADR 016 §4, que enmienda el ADR 015 §7).
     fn terminar(&self) -> bool {
         if let Ok(mut t) = self.termino.lock() {
             t.get_or_insert_with(Instant::now);
         }
-        if self.vacio() {
+        if !self.con(|c| c.hay_que_decidir()).unwrap_or(false) {
             return self.cerrar();
         }
         false
@@ -344,6 +345,7 @@ pub fn ver<R: Runtime>(app: &AppHandle<R>, aparicion: &crate::ficha::Aparicion) 
             documento: f.fuente.documento.clone(),
             seccion: f.fuente.seccion.clone(),
             unidad: f.fuente.unidad,
+            linea: f.linea.clone(),
         })
     });
 }
@@ -356,6 +358,25 @@ pub fn oir<R: Runtime>(app: &AppHandle<R>, turno: &crate::stt::Turno) {
         el.turnos_del_cliente.fetch_add(1, Ordering::Relaxed);
     }
     el.con(|c| c.oir(turno));
+}
+
+/// Las propuestas de un turno (ADR 016): las reglas deciden, y el cuaderno las guarda esperando tu
+/// sí. Sin reunión abierta no hay dónde proponer. Al log, solo cuántas.
+pub fn proponer<R: Runtime>(app: &AppHandle<R>, turno: &crate::stt::Turno, conoce: &dyn Fn(&str) -> bool) {
+    let Some(el) = app.try_state::<ElCuaderno>() else { return };
+    if !el.abierta() {
+        return;
+    }
+    let fijadas = el.con(|c| c.para_las_reglas()).unwrap_or_default();
+    let nuevas = crate::propuestas::proponer(turno, &crate::propuestas::Contexto { fijadas: &fijadas, conoce });
+    if nuevas.is_empty() {
+        return;
+    }
+    let entraron = el.con(|c| c.proponer(nuevas)).unwrap_or(0);
+    if entraron > 0 {
+        println!("[propuestas] {entraron} nueva(s)");
+        let _ = app.emit(EVENTO, ());
+    }
 }
 
 /// ⌃⌥P: fija la ficha que la banda enseña.
@@ -569,6 +590,20 @@ mod pruebas {
         el.con(|c| c.escribir("algo"));
         assert!(!el.terminar(), "con algo tuyo, parar no cierra: queda «al cerrar»");
         assert!(el.abierta());
+        // y con propuestas esperando, tampoco (ADR 016 §4): queda la decisión de qué hacer con ellas
+        let el = ElCuaderno::default();
+        el.abrir(false, HOY);
+        el.con(|c| {
+            c.proponer(vec![crate::propuestas::Propuesta {
+                regla: crate::propuestas::Regla::Cifra,
+                de: crate::propuestas::De::Cliente,
+                texto: "12 semanas".into(),
+                ficha: None,
+                seccion: None,
+                hora: "14:16".into(),
+            }])
+        });
+        assert!(!el.terminar(), "con propuestas sin decidir, parar cerró la reunión y se las llevó");
         let c = carpeta("vacia");
         let vacio = ElCuaderno::default();
         assert_eq!(vacio.guardar_en(&c, &EnMemoria::default(), prefs::Retencion::Dias90, 0).unwrap(), None);
