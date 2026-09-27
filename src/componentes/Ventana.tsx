@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useT } from "../i18n";
 import { Ic } from "./Iconos";
+import { useBytesALaRed } from "../cuaderno";
 
 /**
  * LA VENTANA DEL CUADERNO (960 × 640) — el marco de las pantallas de la ventana principal.
@@ -40,14 +41,20 @@ export function Ventana({
   seccion,
   ir,
   enSesion = false,
+  cliente = "Meet",
   children,
 }: {
   seccion: Seccion;
   ir: (s: Seccion) => void;
   /** Hay una reunión detectada: el chip de abajo lo dice. */
   enSesion?: boolean;
+  /** El cliente de videollamada detectado: el chip lo nombra (decía «Meet» con Zoom o Teams). */
+  cliente?: string;
   children: ReactNode;
 }) {
+  // La cifra es la del contador, no una constante: con el API encendido, el chip decía «0 B»
+  // mientras salían bytes (auditoría del S2, M11 y B17).
+  const bytes = useBytesALaRed();
   const t = useT().cuaderno;
 
   return (
@@ -95,12 +102,17 @@ export function Ventana({
           {enSesion ? (
             <span className="estado halo">
               <Ic id="i-video" s />
-              <span>{t.meetDetectado}</span>
+              <span>
+                {/* El nombre corto, como la maqueta: «Meet», «Teams», «Zoom». */}
+                {cliente.replace(/^(Google|Microsoft)\s+/, "")} {t.detectado} · {bytes}
+              </span>
             </span>
           ) : (
             <span className="estado mute">
               <Ic id="i-ring" s />
-              <span>{t.sinSesion}</span>
+              <span>
+                {t.sinSesion} · {bytes}
+              </span>
             </span>
           )}
         </div>

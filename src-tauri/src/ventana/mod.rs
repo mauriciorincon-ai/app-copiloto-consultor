@@ -83,7 +83,7 @@ fn config_de<'a>(ventanas: &'a [WindowConfig], etiqueta: &str) -> Result<&'a Win
 /// No abre nada si el invariante de protección no se cumple.
 ///
 /// **Y es idempotente desde el sprint 002, que es lo que hace posible que la banda VUELVA.** El
-/// kill-switch la cierra —es una de las siete piezas del corte— y hasta ahora no había manera de
+/// kill-switch la cierra —es una de las piezas del corte— y hasta ahora no había manera de
 /// recuperarla sin reiniciar la app: `abrir_banda` estaba escrita, registrada como comando y sin un
 /// solo llamador (hallazgo M4). Volver a llamarla con la banda en pantalla habría sido un error,
 /// porque `build()` no admite una etiqueta repetida, así que la reposición se mira **ventana por

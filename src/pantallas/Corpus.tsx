@@ -1,7 +1,7 @@
 import { useIdioma, useT, type Idioma } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { TodaviaNo } from "../componentes/Ventana";
-import { indexarCorpus, useCorpus, type UnidadDelCorpus } from "../cuaderno";
+import { indexarCorpus, useBytesALaRed, useCorpus, type UnidadDelCorpus } from "../cuaderno";
 
 /**
  * CORPUS — «Tus documentos, indexados donde están».
@@ -47,6 +47,7 @@ export function Corpus() {
   const b = useT().banda;
   const corpus = useCorpus();
   const idioma = useIdioma();
+  const bytes = useBytesALaRed();
   const cuantos = (u: UnidadDelCorpus) =>
     corpus.porUnidad.find((p) => p.unidad === u)?.documentos ?? 0;
 
@@ -67,9 +68,9 @@ export function Corpus() {
             {t.noSeCopianAntes} <b>{t.noSeCopianFuerte}</b>
             {t.noSeCopianDespues}
           </span>
-          <span className="red cero mono">
+          <span className={bytes === "0 B" ? "red cero mono" : "red api mono"}>
             <Ic id="i-subir" s />
-            0 B
+            {bytes}
           </span>
         </div>
 

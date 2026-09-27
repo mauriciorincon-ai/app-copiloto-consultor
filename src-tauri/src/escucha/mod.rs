@@ -54,6 +54,17 @@ const LATIDO_MS: u64 = 40;
 /// canal**, igual que antes: esto no es un bucle nuevo, es el mismo con un despertador.
 const LATIDO_DEL_SILENCIO_MS: u64 = 400;
 
+/// Lo que el evento de un turno le cuenta al webview: quién habló y si era eco. Nada más.
+fn solo_quien_y_eco<S: serde::Serializer>(t: &Turno, s: S) -> Result<S::Ok, S::Error> {
+    use serde::Serialize;
+    #[derive(Serialize)]
+    struct Aviso<'a> {
+        pista: &'a Pista,
+        eco: bool,
+    }
+    Aviso { pista: &t.pista, eco: t.eco }.serialize(s)
+}
+
 /// Lo que pasa mientras se escucha. Sale de aquí hacia quien quiera enterarse — en la app, hacia
 /// la banda y la pantalla de Honestidad.
 #[derive(Clone, Debug, serde::Serialize)]
@@ -62,14 +73,35 @@ const LATIDO_DEL_SILENCIO_MS: u64 = 400;
 // como una inconsistencia espera a que alguien la encuentre en producción.
 #[serde(rename_all = "kebab-case", rename_all_fields = "camelCase", tag = "que")]
 pub enum Novedad {
-    /// Alguien empezó a hablar en esta pista.
-    Empieza { pista: Pista },
-    /// Un turno terminó y ya tiene texto.
+    /// Alguien empezó a hablar en esta pista. **Lo que no se lee, no cruza** (auditoría del S2,
+    /// B11): la pista la usa Rust; al webview le basta saber que empezó.
+    Empieza {
+        #[serde(skip)]
+        pista: Pista,
+    },
+    /// Un turno terminó y ya tiene texto. **Al webview solo le llega quién y si es eco**: es lo único
+    /// que la banda lee de este evento, y el texto —del cliente, un tercero— cruzaba a todas las
+    /// ventanas en una copia que nadie leía (la banda lo pide aparte con `turnos_recientes`; B11).
+    #[serde(serialize_with = "solo_quien_y_eco")]
     Turno(Turno),
-    /// Un turno terminó y **no** se pudo transcribir. Con su motivo.
-    SinTexto { pista: Pista, desde_ms: usize, hasta_ms: usize, motivo: String },
+    /// Un turno terminó y **no** se pudo transcribir. Con su motivo, que va al log en Rust.
+    SinTexto {
+        #[serde(skip)]
+        pista: Pista,
+        #[serde(skip)]
+        desde_ms: usize,
+        #[serde(skip)]
+        hasta_ms: usize,
+        #[serde(skip)]
+        motivo: String,
+    },
     /// El detector oyó algo demasiado corto para ser un turno.
-    Ruido { pista: Pista, duracion_ms: usize },
+    Ruido {
+        #[serde(skip)]
+        pista: Pista,
+        #[serde(skip)]
+        duracion_ms: usize,
+    },
     /// El disparador decidió que había que buscar, y esto es lo que salió: una ficha del corpus
     /// del usuario, o la declaración de que no hay nada con su maniobra.
     Aparece(Box<Aparicion>),
@@ -907,6 +939,24 @@ pub fn explicar(d: &Disponibilidad, idioma: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+
+    /// **El texto del cliente no cruza en el evento del turno** (auditoría del S2, B11): viajaba a
+    /// todas las ventanas en una copia que nadie leía. Solo quién y si es eco.
+    #[test]
+    fn el_evento_de_un_turno_no_lleva_lo_que_dijo_el_cliente() {
+        let t = Turno {
+            pista: Pista::Sistema,
+            desde_ms: 1,
+            hasta_ms: 2,
+            texto: "CANARIA-DEL-CLIENTE".into(),
+            hora: "14:02".into(),
+            eco: false,
+        };
+        let json = serde_json::to_string(&Novedad::Turno(t)).unwrap();
+        assert!(!json.contains("CANARIA"), "el texto del cliente cruzó en el evento: {json}");
+        assert_eq!(json, r#"{"que":"turno","pista":"sistema","eco":false}"#);
+    }
+
     use super::*;
 
     /// El invariante que hace que un turno se transcriba con SU audio y no con el de otro

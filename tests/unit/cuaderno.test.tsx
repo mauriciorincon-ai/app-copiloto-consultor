@@ -241,10 +241,12 @@ describe("el cuaderno: lo que no existe se dice", () => {
     expect(within(hoy).getAllByText(t.funciona)).toHaveLength(3);
     expect(within(hoy).getByText("⌥⎋")).toBeInTheDocument();
     expect(within(hoy).queryByText(t.todaviaNo)).toBeNull();
-    // Y «Iniciar sesión» dejó de ser una promesa: es un botón que se puede pulsar.
+    // Y el botón es de verdad, y dice lo que hace: la muestra está escuchando, así que la termina
+    // (decía «Iniciar sesión» también cuando paraba — auditoría del S2, B16).
     expect(
-      screen.getByRole("button", { name: new RegExp(t.iniciarSesion) }),
+      screen.getByRole("button", { name: new RegExp(t.terminarSesion) }),
     ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: new RegExp(t.iniciarSesion) })).toBeNull();
   });
 
   it("sesión no inventa la ficha del cliente: la declara ausente con su motivo", () => {
@@ -304,13 +306,14 @@ describe("el cuaderno: lo que no existe se dice", () => {
     const tarjeta = screen
       .getByText(t.sinConcederNada)
       .closest(".tarjeta") as HTMLElement;
-    // Indexar el corpus (fase 4) y buscar a mano con ⌃⌥A: ninguna necesita permisos.
-    expect(within(tarjeta).getAllByText(t.funciona)).toHaveLength(2);
-    // Escribir notas y acuerdos es lo único que todavía no existe.
-    expect(within(tarjeta).getAllByText(t.todaviaNo)).toHaveLength(1);
-    expect(
-      within(tarjeta).getByText(t.escribirNotas).closest(".fila")?.className,
-    ).toContain("pendiente");
+    // Sin conceder nada, solo funciona indexar el corpus. Buscar a mano decía «Funciona», pero
+    // `⌃⌥A` busca sobre lo que dijo el cliente y eso necesita el audio del sistema (auditoría del
+    // S2, B19): va con las notas, entre lo que todavía no existe.
+    expect(within(tarjeta).getAllByText(t.funciona)).toHaveLength(1);
+    expect(within(tarjeta).getAllByText(t.todaviaNo)).toHaveLength(2);
+    for (const pendiente of [t.escribirNotas, t.buscarAMano]) {
+      expect(within(tarjeta).getByText(pendiente).closest(".fila")?.className).toContain("pendiente");
+    }
   });
 
   /**

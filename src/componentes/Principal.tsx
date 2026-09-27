@@ -43,7 +43,12 @@ export function Principal({ busqueda = globalThis.location?.search ?? "" }: { bu
   const transcribe = useQueSabeTranscribir();
 
   return (
-    <Ventana seccion={seccion} ir={setSeccion} enSesion={reunion.que === "detectada"}>
+    <Ventana
+      seccion={seccion}
+      ir={setSeccion}
+      enSesion={reunion.que === "detectada"}
+      cliente={reunion.que === "detectada" ? reunion.cliente : undefined}
+    >
       {seccion === "sesion" && (
         <Sesion
           reunion={reunion}

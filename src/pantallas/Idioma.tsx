@@ -20,13 +20,15 @@ import {
  * voz»** (mirada 17-bis).
  *
  * Lo que está vivo: la transcripción corre en el Mac y nace **oculta**, y cada pista tiene su
- * idioma con el estado real de su modelo leído del sistema. Lo que no existe lleva «todavía no»:
- * varios idiomas por pista, el diccionario técnico y conservar tus turnos.
+ * idioma —elegible desde la auditoría del S2— con el estado real de su modelo leído del sistema, y
+ * el diccionario técnico enseña sus números. Lo que no existe lleva «todavía no»: varios idiomas
+ * por pista y conservar tus turnos.
  *
  * **Y dos cosas que solo se supieron construyendo, y que esta pantalla dice en vez de esconder:**
  * macOS solo deja tener cinco idiomas listos a la vez, y el modelo de cada idioma lo descarga
- * macOS cuando el usuario se lo pide — la única vez que un módulo protegido de esta app toca la
- * red, y en la dirección contraria: entra el modelo, no sale nada.
+ * macOS cuando el usuario se lo pide — la única vez que la transcripción toca la red, y en la
+ * dirección contraria: entra el modelo, no sale nada. (La otra puerta de la app es el proveedor
+ * externo de IA, apagada salvo que el usuario la encienda.)
  */
 
 /**

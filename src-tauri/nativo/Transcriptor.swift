@@ -147,8 +147,8 @@ public func agSttEstado(_ idioma: UnsafePointer<CChar>) -> Int32 {
 /// Instala el modelo de un idioma. **Bloquea y usa la red**: macOS descarga el activo.
 ///
 /// Lo llama la pantalla de Idioma cuando el usuario lo pide, jamás la app por su cuenta. Es la
-/// única puerta a la red que tiene un módulo protegido de esta app, y por eso está aquí sola, con
-/// nombre propio y con la marca que el barrido exige.
+/// única puerta a la red de la transcripción —la otra de la app es `Red.swift`, la del proveedor
+/// externo de IA— y por eso está aquí sola, con nombre propio y con la marca que el barrido exige.
 @_cdecl("ag_stt_instalar")
 public func agSttInstalar(_ idioma: UnsafePointer<CChar>) -> Int32 {
   guard #available(macOS 26, *) else { return Codigo.sinSoporte.rawValue }

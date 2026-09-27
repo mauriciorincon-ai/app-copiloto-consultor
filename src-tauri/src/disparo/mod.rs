@@ -18,8 +18,9 @@
 //! sin espera la banda parpadearía tres fichas en cuatro segundos. No es cosmética: una ficha que
 //! se va antes de leerse es peor que ninguna.
 //!
-//! Todo esto es código: ni un token de modelo. La regla del código primero pide exactamente esto
-//! y este sprint no tiene una sola línea de LLM.
+//! Todo esto es código: ni un token de modelo. La regla del código primero pide exactamente esto:
+//! el disparo es determinista, y la única pieza con modelo de la app —la sugerencia, `sintesis/`—
+//! llega después de la ficha y no decide cuándo aparece.
 
 use crate::capture::Pista;
 use crate::stt::Turno;

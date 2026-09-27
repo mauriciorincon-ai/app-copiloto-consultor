@@ -28,11 +28,22 @@ import { describe, expect, it } from "vitest";
  * ¿Puede fallar? Sí, y falla: quitarle una línea a `DEUDA` o cablear un campo sin sacarlo de ahí lo
  * pone en rojo por los dos lados. Su rojo está registrado en la bitácora del sprint 002.
  */
-const DECLARACIONES = ["src/cuaderno.ts", "src/ficha.ts"];
+// Con los tres del sprint 002 (auditoría del S2, M6): la sugerencia, el estado de la IA, el radar y
+// el acople vivían en archivos que este gate no leía, y para sus 32 campos no podía fallar.
+const DECLARACIONES = ["src/cuaderno.ts", "src/ficha.ts", "src/radar.ts", "src/ia.ts", "src/acople.ts"];
 const FIXTURE = "src/contrato.generado.ts";
 
+/**
+ * Campos que se leen por CLAVE CALCULADA —`p.ve[idioma]`—, que un acceso por nombre no ve. Cada uno
+ * con su razón; la lista es corta a propósito.
+ */
+const LEIDOS_POR_CLAVE: Record<string, string> = {
+  "Bilingue.es": "`p.ve[idioma]` y `p.alcance[idioma]` en la banda y Sesión: el idioma de la interfaz elige el campo",
+  "Bilingue.en": "ídem",
+};
+
 /** Tipos que viven SOLO en la interfaz: no cruzan la costura y no les toca esta regla. */
-const NO_CRUZAN = new Set(["LoQueLaBandaEnseña"]);
+const NO_CRUZAN = new Set(["LoQueLaBandaEnseña", "RadarEnLaBanda", "IdiomasDePista"]);
 
 /** Los campos que eligen la variante de una unión. Se leen comparándolos, no accediendo. */
 const DISCRIMINANTES = new Set(["que", "clase", "estado", "salida"]);
@@ -55,9 +66,10 @@ const DEUDA: Record<string, string> = {
   // por leídos porque compara por NOMBRE y otro tipo tenía un campo que se llamaba igual. Es la
   // limitación que su propia bitácora declara, vista en acción.
 
-  // ── Y uno que NO es deuda: lo lee el emisor ──
-  "InformeDelCorte.bytesEnRed":
-    "lo lee RUST, no el webview: `ejecutar_el_corte` lo escribe en el log del corte. Cruza porque la forma tiene que cuadrar en las dos orillas, y el webview ya tiene el contador por su cuenta. No se paga: se declara",
+  // ── Y el último, pagado en la auditoría del S2 (B9) ──
+  //
+  // `InformeDelCorte.bytesEnRed` se declaraba aquí como «lo lee Rust, no se paga»: un tercer estado
+  // que la regla 20 no tiene. Lo que lee solo Rust no cruza: `#[serde(skip)]`, y la lista queda vacía.
 };
 
 /** Cada `export type X = … { … }`, con las variantes de una unión incluidas. */
@@ -83,9 +95,11 @@ function tipos(
         desde: texto.slice(0, abre).split("\n").length,
         cuerpo: texto.slice(abre, j + 1),
       });
-      // Si lo que sigue es `|`, es otra variante de la MISMA unión: se sigue leyendo.
+      // Si lo que sigue es `|`, es otra variante de la MISMA unión: se sigue leyendo. Entre la llave
+      // y la barra puede haber una intersección cerrada —`({ que: "turno" } & Turno)`— y comentarios:
+      // la primera versión se cortaba ahí y no veía las variantes de `Novedad` que seguían (M6).
       const resto = texto.slice(j + 1);
-      if (!/^\s*\|/.test(resto)) break;
+      if (!/^\s*\)?\s*(?:&\s*\w+\s*\)?)?\s*(?:(?:\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)\s*)*\|/.test(resto)) break;
       i = j + 1 + resto.indexOf("|");
     }
   }
@@ -148,6 +162,7 @@ function lector(campo: string): string | null {
 
 const DECLARADOS = campos();
 const HUERFANOS = [...DECLARADOS.keys()]
+  .filter((c) => !(c in LEIDOS_POR_CLAVE))
   .filter((c) => !lector(c.split(".")[1]))
   .sort();
 
@@ -181,7 +196,7 @@ describe("todo campo del contrato tiene un lector, o está declarado como deuda 
 
   it("cada línea de la deuda dice dónde se paga (regla 20: nada por conteo)", () => {
     const mudas = Object.entries(DEUDA)
-      .filter(([, razon]) => !/fase \d|No se paga/.test(razon))
+      .filter(([, razon]) => !/fase \d/.test(razon))
       .map(([c]) => c);
     expect(
       mudas,

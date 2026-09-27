@@ -135,9 +135,11 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
             <Fila icono="i-nota" texto={t.escribirNotas} pendiente>
               <TodaviaNo />
             </Fila>
-            {/* Buscar a mano es `⌃⌥A`: no necesita micrófono ni pantalla, solo el corpus. */}
-            <Fila icono="i-buscar" texto={t.buscarAMano}>
-              <Funciona />
+            {/* Buscar a mano, sin conceder nada, **todavía no existe**: `⌃⌥A` busca sobre lo último
+                que dijo el cliente, y para eso hace falta el audio del sistema. Decía «Funciona»
+                (auditoría del S2, B19). */}
+            <Fila icono="i-buscar" texto={t.buscarAMano} pendiente>
+              <TodaviaNo />
             </Fila>
           </div>
           <div className="tarjeta">

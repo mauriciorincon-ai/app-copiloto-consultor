@@ -5,12 +5,14 @@
 //! para leer cien veces la misma diapositiva. La huella decide **si hay algo nuevo que leer**, y
 //! cuesta un par de milisegundos.
 //!
-//! **Por qué pHash y no comparar píxeles.** Una videollamada nunca entrega dos cuadros idénticos:
-//! la compresión de vídeo mueve el ruido de un cuadro a otro, el cursor se pasea y un contador de
-//! tiempo cambia cada segundo. Comparar píxeles diría «cambió» siempre. El pHash reduce el cuadro a
-//! 32×32 grises, se queda con las **frecuencias bajas** de su transformada del coseno —la
-//! composición, no el detalle— y las resume en 64 bits. Un cursor no mueve las frecuencias bajas;
-//! una diapositiva nueva, sí.
+//! **Ni píxeles ni pHash: miniaturas por zonas.** Una videollamada nunca entrega dos cuadros
+//! idénticos —la compresión mueve el ruido, el cursor se pasea, un contador cambia cada segundo—, así
+//! que comparar píxeles diría «cambió» siempre. El plan pedía pHash, y el kit lo tumbó: mira la
+//! composición y tira el detalle, que es justo el texto que cambia. La huella que el vigía usa es
+//! [`Huella`] —una miniatura de 32×32 grises por zona de una cuadrícula de 4×4, contando celdas que
+//! cambian de verdad—, y su doc cuenta las dos medidas que la trajeron hasta aquí. Las funciones de
+//! pHash de abajo **solo existen para los tests** que dejan escrita esa medida (auditoría del S2,
+//! hallazgo nuevo de la Fase 2: esta cabecera seguía defendiendo el pHash).
 //!
 //! Todo aquí es aritmética sobre un búfer que ya está en memoria: ni disco, ni red, ni reloj.
 
@@ -19,7 +21,8 @@ use super::Cuadro;
 /// El lado de la miniatura sobre la que se calcula la transformada.
 const LADO: usize = 32;
 
-/// Cuántas frecuencias bajas se miran por eje: 8 × 8 = los 64 bits de la huella.
+/// Cuántas frecuencias bajas mira el pHash por eje: 8 × 8 = 64 bits (solo lo usan los tests).
+#[cfg(test)]
 const BAJAS: usize = 8;
 
 /// Cuántas zonas por lado tiene la cuadrícula de la huella: 4 × 4 = 16 zonas.
@@ -116,11 +119,13 @@ impl Huella {
     }
 }
 
+#[cfg(test)]
 /// El pHash de 64 bits de un cuadro entero.
 pub fn phash(cuadro: &Cuadro) -> u64 {
     phash_de(cuadro, 0, 0, cuadro.ancho, cuadro.alto)
 }
 
+#[cfg(test)]
 /// El pHash de 64 bits de un rectángulo del cuadro. Uno vacío tiene la huella 0, y no es un error:
 /// es «no hay nada que comparar», que el vigía trata como cualquier otro.
 pub fn phash_de(cuadro: &Cuadro, x0: usize, y0: usize, ancho: usize, alto: usize) -> u64 {
@@ -162,6 +167,7 @@ pub fn phash_de(cuadro: &Cuadro, x0: usize, y0: usize, ancho: usize, alto: usize
     )
 }
 
+#[cfg(test)]
 /// Cuántos de los 64 bits difieren entre dos huellas.
 pub fn distancia(a: u64, b: u64) -> u32 {
     (a ^ b).count_ones()
@@ -196,6 +202,7 @@ fn reducir(cuadro: &Cuadro, x0: usize, y0: usize, ancho: usize, alto: usize) -> 
     mini
 }
 
+#[cfg(test)]
 fn tabla_de_cosenos() -> [[f32; LADO]; BAJAS] {
     let mut t = [[0f32; LADO]; BAJAS];
     for (u, fila) in t.iter_mut().enumerate() {

@@ -5,9 +5,9 @@
 //!
 //! **Todo lo que la ficha dice es texto del usuario.** El titular sale del título de su sección o
 //! de la primera frase de su documento; la línea, de la frase de esa sección que más responde a
-//! lo preguntado. La app **no redacta**: recorta y cita. Es la diferencia entre esta app y la
-//! categoría con la que se la va a confundir, y es también lo que hace que este sprint pueda
-//! entregar la ficha con cero LLM.
+//! lo preguntado. La ficha **no se redacta**: recorta y cita. Es la diferencia entre esta app y la
+//! categoría con la que se la va a confundir. Lo único redactado es la sugerencia (`sintesis/`,
+//! ADR 010), que va aparte, debajo de la ficha, y solo puede decir lo que su ficha dice.
 //!
 //! **Cuándo NO hay ficha.** BM25 siempre devuelve algo: sobre un corpus de propuestas, cualquier
 //! pregunta encuentra la sección «menos mala». Enseñarla como respuesta sería el fallo más caro

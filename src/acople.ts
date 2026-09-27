@@ -14,7 +14,7 @@ import { escuchar, hayTauri, preguntar } from "./puente";
  * preguntar se perdería el estado inicial, porque el acople del arranque ocurre antes de que este
  * webview exista.
  */
-export type EstadoDelAcople = { permiso: boolean; acoplada: boolean };
+export type EstadoDelAcople = { acoplada: boolean };
 
 /** El evento con el que Rust avisa de que el acople cambió. */
 export const EVENTO_ACOPLE = "acople";

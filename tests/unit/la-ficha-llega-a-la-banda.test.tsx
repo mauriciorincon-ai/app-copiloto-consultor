@@ -5,6 +5,8 @@ import { Sesion } from "@/pantallas/Sesion";
 import { Ia } from "@/pantallas/Ia";
 import { Honestidad } from "@/pantallas/Honestidad";
 import { Idioma } from "@/pantallas/Idioma";
+import { Corpus } from "@/pantallas/Corpus";
+import { Ventana } from "@/componentes/Ventana";
 import { fijarIdiomaDePista } from "@/cuaderno";
 import { IdiomaContext } from "@/i18n";
 import { llamar, preguntar } from "@/puente";
@@ -582,6 +584,26 @@ describe("la sugerencia, dentro del producto", () => {
     fijarIdiomaDePista("cliente", "es-ES");
   });
 
+  /** Un Mac inscrito en un MDM y sin ningún invasivo: Sesión lo dice como «sábelo», sin tomar la
+   *  pantalla (auditoría del S2, B15). */
+  it("un MDM solo se lista en Sesión como «sábelo»", async () => {
+    respuestas.set("radar_de_tu_mac", {
+      ...EN_TU_MAC_VIGILADO,
+      programas: EN_TU_MAC_VIGILADO.programas.filter((p) => p.categoria === "mdm"),
+    });
+    render(
+      <IdiomaContext.Provider value="es">
+        <Sesion reunion={{ que: "ninguna" }} escucha={ESTADO_DE_LA_ESCUCHA} salida={SALIDA_DE_AUDIO} />
+      </IdiomaContext.Provider>,
+    );
+    await act(async () => {});
+    const texto = document.body.textContent ?? "";
+    expect(texto).toContain(`${c.radarClases.mdm.titulo} ${c.radarClases.mdm.sufijo}`);
+    expect(texto).toContain(c.sabelo);
+    expect(texto).not.toContain(c.iniciarDeTodosModos);
+    respuestas.delete("radar_de_tu_mac");
+  });
+
   /** Elegir proveedor con el API apagado tiene que llegar a Rust (auditoría del S2, M3). */
   it("elegir Gemini con el API apagado se lo dice a Rust, sin encenderlo", async () => {
     respuestas.set("estado_de_la_ia", ESTADO_DE_LA_IA_NADIE);
@@ -594,6 +616,36 @@ describe("la sugerencia, dentro del producto", () => {
     const gemini = [...document.querySelectorAll("button")].find((x) => x.textContent?.includes("Gemini"));
     fireEvent.click(gemini as HTMLElement);
     expect(preguntar).toHaveBeenCalledWith("api_externa", { encendida: false, externo: "gemini" });
+  });
+
+  /**
+   * **Ninguna superficie dice «0 B» mientras salen bytes** (auditoría del S2, M11 y B17): el rail,
+   * Corpus y Honestidad leen el contador; el chip nombra el cliente de videollamada de verdad; y el
+   * contador de Honestidad deja el verde y el check cuando la cifra no es cero.
+   */
+  it("con bytes fuera, el rail, Corpus y Honestidad dicen la cifra y no se pintan de «todo bien»", async () => {
+    respuestas.set("bytes_a_la_red", "1,2 KB");
+    const { container } = render(
+      <IdiomaContext.Provider value="es">
+        <Ventana seccion="corpus" ir={() => {}} enSesion cliente="Zoom">
+          <Corpus />
+        </Ventana>
+      </IdiomaContext.Provider>,
+    );
+    await act(async () => {});
+    expect(container.textContent).toContain(`Zoom ${c.detectado} · 1,2 KB`);
+    // El chip de red de Corpus (el «0 B» del tamaño del índice vacío es otra cosa y se queda).
+    expect(container.querySelector(".red")?.textContent).toContain("1,2 KB");
+    expect(container.querySelector(".red.cero")).toBeNull();
+    const h = render(
+      <IdiomaContext.Provider value="es">
+        <Honestidad bytes="1,2 KB" escucha={ESTADO_DE_LA_ESCUCHA} />
+      </IdiomaContext.Provider>,
+    );
+    await act(async () => {});
+    expect(h.container.querySelector(".contador.api")).not.toBeNull();
+    expect(h.container.querySelector(".contador.cero")).toBeNull();
+    respuestas.delete("bytes_a_la_red");
   });
 
   it("Honestidad nombra el proveedor cuando el API está encendido", async () => {

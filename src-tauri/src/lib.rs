@@ -232,6 +232,11 @@ fn ajustar_banda(app: tauri::AppHandle, alto: u32) -> Result<(), String> {
     ventana::ajustar_banda(&app, alto)
 }
 
+/// El modo solo audio solo se enciende si hay voz para el idioma en que se lee.
+fn puede_encender_el_modo(hay_voz: bool) -> bool {
+    hay_voz
+}
+
 /// Arrastrar el asa por encima de la banda de voz, con el modo encendido, lo apaga.
 fn el_asa_apaga_el_modo(alto: u32, encendida: bool) -> bool {
     encendida && alto > ventana::ALTO_VOZ
@@ -276,7 +281,8 @@ fn cerrar_banda(app: tauri::AppHandle) {
 /// palabra sea un hecho comprobado, no una etiqueta fija.
 #[derive(Clone, serde::Serialize)]
 pub struct EstadoDelAcople {
-    pub permiso: bool,
+    // `permiso` salió en la auditoría del S2 (B10): nadie lo leía, y rellenarlo costaba una llamada
+    // a la Accessibility API en cada consulta.
     pub acoplada: bool,
 }
 
@@ -285,7 +291,6 @@ const EVENTO_ACOPLE: &str = "acople";
 
 fn estado_ahora<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> EstadoDelAcople {
     EstadoDelAcople {
-        permiso: acople::hay_permiso(),
         // La verdad está en la huella, no en una variable nuestra: es el mismo archivo que usa
         // la devolución, así que la banda no puede decir «acoplada» mientras no hay nada que
         // devolver, ni al revés.
@@ -536,7 +541,7 @@ fn piezas_del_corte() -> corte::Informe {
 /// sería exactamente lo que esta app promete no hacer.
 ///
 /// **Y es por donde la banda VUELVE tras el kill-switch** (hallazgo M4). `⌥⎋` cierra la banda —es
-/// una de las siete piezas del corte— y hasta el sprint 002 no había forma de recuperarla sin
+/// una de las piezas del corte— y hasta el sprint 002 no había forma de recuperarla sin
 /// reiniciar la app. El sitio es este y no un botón nuevo: la banda es donde la ficha aparece, así
 /// que empezar una sesión sin banda es empezar una sesión sin ningún sitio donde enseñar nada. El
 /// invariante queda en un solo lado —hay escucha ⇒ hay banda— y no en cada lugar de la interfaz
@@ -558,7 +563,11 @@ fn empezar_a_escuchar(
     if let Some(vieja) = guardada.take() {
         vieja.cortar();
     }
-    // Una reunión nueva: su costo y sus latencias empiezan de cero (el gasto del mes, no).
+    // Una reunión nueva: su costo, sus latencias y **su contador de red** empiezan de cero (el gasto
+    // del mes, no). El contador dice «salieron de tu equipo en esta reunión», y solo lo ponía a cero
+    // `⌥⎋`: una reunión heredaba los bytes de la anterior (auditoría del S2, B18).
+    red::reiniciar();
+    println!("[red] reunión nueva: el contador vuelve a 0 B");
     {
         let s = app.state::<LaSintesis>();
         if let Ok(mut u) = s.reunion_usd.lock() {
@@ -1296,6 +1305,14 @@ fn conmutar_el_modo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> habla::LaVo
         }
         println!("[habla] ⌃⌥V: modo solo audio APAGADO · banda a {alto} px");
         return apagar_el_modo(app);
+    }
+    // Sin voz para el idioma, el modo NO se enciende: bajar la banda a 44 px y quedarse con `⎋`
+    // para no decir nada —y con «Conecta auriculares», que es el motivo equivocado— era peor que
+    // no encenderlo (auditoría del S2, B14). El manual lo prometía así.
+    let idioma = estado.idioma();
+    if !puede_encender_el_modo(estado.voz.hay_para(&idioma)) {
+        println!("[habla] sin voz para {idioma}: el modo no se enciende");
+        return estado.estado();
     }
     estado.encendida.store(true, Ordering::Relaxed);
 
@@ -2514,5 +2531,12 @@ mod pruebas_del_asa_y_la_voz {
         assert!(el_asa_apaga_el_modo(ventana::ALTO_VOZ + 1, true));
         assert!(!el_asa_apaga_el_modo(ventana::ALTO_VOZ, true));
         assert!(!el_asa_apaga_el_modo(ventana::ALTO_COMPACTA, false));
+    }
+
+    /// Sin voz para el idioma, `⌃⌥V` no enciende el modo (auditoría del S2, B14).
+    #[test]
+    fn sin_voz_el_modo_no_se_enciende() {
+        assert!(puede_encender_el_modo(true));
+        assert!(!puede_encender_el_modo(false));
     }
 }

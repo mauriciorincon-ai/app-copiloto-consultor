@@ -113,7 +113,7 @@ pub enum Suerte {
     /// Se cortó o se vació.
     Cortada,
     /// Todavía no existe en el producto. **No es un fallo y no se disimula**: la pantalla de
-    /// honestidad enumera lo que hay, y en este sprint lo que hay es poco.
+    /// honestidad enumera lo que hay. Desde el sprint 002 no le toca a ninguna pieza.
     AunNoExiste,
 }
 
@@ -128,8 +128,10 @@ pub enum Suerte {
 #[serde(rename_all = "camelCase")]
 pub struct Informe {
     pub piezas: Vec<(Pieza, Suerte)>,
-    /// Los bytes que quedaron en el contador. Es `0` siempre; se reporta para que la pantalla
-    /// muestre un número **leído**, no una constante escrita en la interfaz.
+    /// Los bytes que había en el contador al cortar. **No cruza** (auditoría del S2, B9): lo lee Rust
+    /// para el log del corte, y el webview tiene el contador por su cuenta. No es «0 siempre»: con
+    /// el API encendido puede no serlo, y por eso el log lo dice.
+    #[serde(skip)]
     pub bytes_en_red: u64,
 }
 

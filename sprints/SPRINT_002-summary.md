@@ -92,7 +92,7 @@ prueba es el ⭐⭐ del cierre de ciclo (§ Gate ⭐).
 | Cifra en pantalla → ficha sin pregunta | la correcta               | **4 de 4** (kit de pantalla, en CI con Vision)                                   |
 | nDCG@5 con refuerzo de pantalla        | mejora                    | 0,626 → **0,700**; con la peor pantalla delante, el kit v0 **0,819** (mín. 0,80) |
 | OCR solo ante cambio                   | ≤ 1/s                     | mediana **87 ms**, huella mínima entre diapositivas 144 celdas (umbral 12)       |
-| Radar coral                            | 0 FP · 100 %              | **0** en 100 procesos · **34/34** filas                                          |
+| Radar coral                            | 0 FP · 100 %              | **0** en 82 procesos · **34/34** filas                                          |
 | Radar ámbar                            | aviso y bot               | los dos, con Vision; **0** avisos en 5 reuniones sin grabar                      |
 | WER con diccionario                    | no empeora                | es-mezcla 0,458 → **0,417** · en-mezcla 0,348 → **0,261** · controles sin cambio |
 | Sugerencia local                       | ≤ 4 s mediana · ≤ 6 s p95 | **0,79–0,83 s · 0,99–1,04 s** (Apple Intelligence, este Mac)                     |

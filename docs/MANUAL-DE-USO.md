@@ -121,8 +121,9 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   ficha no trae una segunda al callarse. En el sprint 001 esto estaba escrito en el código y sin
   conectar, y este manual lo declaraba como limitación; ahora funciona.
 - **Limitaciones conocidas:**
-  - **Todo lo que la ficha dice está recortado de tus documentos.** La app no redacta: si no
-    encuentra nada, lo dice.
+  - **Todo lo que la ficha dice está recortado de tus documentos.** La ficha no se redacta: si no
+    encuentra nada, lo dice. (Lo único redactado es la *sugerencia*, si la enciendes, y va aparte,
+    marcada como tal y comprobada contra su ficha.)
   - Cuando no encuentra nada, enseña **qué buscó** —para que veas en el acto si te entendió mal—,
     lo más parecido que sí tienes, y una sugerencia de cómo conducirte. Esa sugerencia habla de
     **cómo responder**, jamás de tu negocio.
@@ -195,8 +196,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 - **Qué hace:** te avisa de dos cosas, con dos colores y dos símbolos distintos, **mirando solo tu
   Mac y tu pantalla**:
   - **Ámbar, «sábelo»** (el punto de grabación): la pantalla de la reunión muestra el **aviso de
-    grabación o de transcripción** de Meet, Zoom o Teams, o hay un **bot de notas** en la lista de
-    participantes. La banda dice, por ejemplo, «Reunión grabada · bot de notas presente» y de dónde lo
+    grabación o de transcripción** de Meet, Zoom o Teams, o el nombre de un **bot de notas** aparece
+    en la ventana de la reunión. La banda dice, por ejemplo, «Reunión grabada · bot de notas presente» y de dónde lo
     sacó: «leído de tu pantalla · 14:03». Ese bot es de otra persona: **Angel Ghost nunca entra a la
     llamada**. El cliente tiene derecho a grabar y a traer su bot; la app **avisa, no bloquea**.
   - **Coral, «invasivo»** (la equis rellena): un programa **de tu propio Mac** que mira tu pantalla,
@@ -222,7 +223,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   tira. El catálogo viaja **dentro de la app**, versionado y con la fuente de cada fila; se actualiza
   con una versión nueva de la app, no por la red. Lo vigila un test que falla si el radar llama a
   algo fuera de su lista (`tests/unit/radar-solo-este-mac.test.ts`).
-- **Medido:** en el kit de prueba, un Mac sintético con cien programas normales —y nombres
+- **Medido:** en el kit de prueba, un Mac sintético con 82 programas normales —y nombres
   parecidos a propósito, como Microsoft Teams o la app «Compartir pantalla» con la que tú miras la de
   otro— da **cero** avisos; el mismo Mac con un programa de cada fila del catálogo los encuentra
   **todos**.
@@ -235,6 +236,9 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - Un programa de acceso remoto **abierto** no significa que alguien esté conectado **ahora**: la
     app avisa de que podría, no de que lo esté.
   - Si hay dos bots de notas, la banda nombra el primero.
+  - El bot se reconoce por su nombre **en cualquier sitio de la ventana de la reunión** —la lista de
+    participantes, pero también una diapositiva o el chat que lo mencione—: la banda dice que
+    «aparece en la ventana», no que esté conectado.
   - El aviso de grabación se reconoce por sus frases en español e inglés, tal y como Meet, Zoom y
     Teams las escriben hoy. Si cambian, el catálogo tiene que ponerse al día.
 
@@ -256,7 +260,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     la guarda en tu **Llavero** —nunca en un archivo— y enciendes su interruptor. Sin clave no se
     enciende.
 - **Lo que no hace, y cómo se comprueba:**
-  - **Nunca inventa la fuente.** El modelo recibe tu pregunta y las tres fichas del momento, cada una
+  - **Nunca inventa la fuente.** El modelo recibe **la última frase de tu cliente** y las tres fichas del momento, cada una
     con un número; tiene que decir de cuál sacó la sugerencia, y si cita una que no se le dio, la
     sugerencia **se tira** y no la ves. Lo vigila `sintesis::pruebas::una_sugerencia_sin_fuente_dada_se_descarta`,
     y el tipo que llega a la banda solo se puede fabricar pasando por esa comprobación (no compila de
@@ -267,11 +271,11 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     queda la ficha. Nació de medir el modelo de verdad: citó bien y dijo «el taller de cierre va
     aparte» cuando la propuesta lo incluye. Lo vigilan `sintesis::fiel::pruebas` y
     `sintesis::pruebas::una_linea_que_la_ficha_citada_no_dice_se_descarta`. Si el titular que propone
-    el modelo no sale ni de la ficha ni de tu pregunta, ves el titular de la ficha
+    el modelo no sale ni de la ficha ni de la frase de tu cliente, ves el titular de la ficha
     (`…un_titular_inventado_se_cambia_por_el_de_la_ficha`).
   - **No te hace esperar.** La ficha sale primero y sin esperar al modelo; la sugerencia llega
     después. Si tarda más de **6 segundos**, no se enseña (`…pasado_el_techo_no_hay_sugerencia…`).
-  - **Al proveedor externo solo sale texto corto y anonimizado en tu Mac:** tu pregunta y las tres
+  - **Al proveedor externo solo sale texto corto y anonimizado en tu Mac:** la última frase de tu cliente —palabras de un tercero— y las tres
     fichas, con los nombres de tus clientes, los correos, los teléfonos, los números largos y los
     nombres de personas cambiados por marcadores antes de salir; la respuesta vuelve con los nombres
     puestos otra vez, en tu Mac. Nunca audio, pantalla ni documentos enteros: ese camino no existe
@@ -419,7 +423,7 @@ está comprobado y la app te lo dice en vez de prometértelo.
 **¿Sube mis documentos a algún sitio?**
 No. Los lee donde están y el índice se queda en tu Mac. El contador de *Honestidad* marca los bytes
 que salieron de tu equipo: **0** salvo que enciendas el proveedor externo en *IA*, y aun entonces
-solo salen tu pregunta y tres fichas cortas, anonimizadas —nunca un documento—.
+solo salen la última frase de tu cliente y tres fichas cortas, anonimizadas —nunca un documento—.
 
 **¿Guarda lo que se habla en la reunión?**
 No. El audio vive treinta segundos en memoria y se va pisando; el texto, los últimos doce turnos.

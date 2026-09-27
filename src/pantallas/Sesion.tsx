@@ -8,6 +8,7 @@ import {
   lecturaAutomatica,
   usePantalla,
   idiomasDeLasPistas,
+  useBytesALaRed,
   type EstadoDeEscucha,
   type EstadoDePista,
   type EstadoDeLaPantalla,
@@ -50,6 +51,7 @@ export function Sesion({
 }) {
   const t = useT().cuaderno;
   const pantalla = usePantalla();
+  const bytes = useBytesALaRed();
   const hayEco = salida.salida === "altavoces" || salida.salida === "altavoz-externo";
   const caida = (p: EstadoDePista) => escucha.escuchando && !p.abierta;
 
@@ -70,6 +72,9 @@ export function Sesion({
     .map((p) => p.nombre)
     .join("|");
   const vigilado = clave !== "" && clave !== visto;
+  // Un MDM solo es «sábelo»: no toma la pantalla. Sin esta fila, un Mac inscrito y sin ningún
+  // invasivo no lo veía en ningún sitio, y el manual decía que Sesión lo lista (auditoría del S2, B15).
+  const mdm = radar.programas.find((p) => p.categoria === "mdm");
 
   const titulo = (
     <div className="titulo">
@@ -157,6 +162,14 @@ export function Sesion({
             mic={!caida(escucha.microfono)}
             sistema={!caida(escucha.sistema)}
           />
+          {mdm && (
+            <Fila icono="i-radar" color="var(--ink-2)" texto={`${t.radarClases.mdm.titulo} ${t.radarClases.mdm.sufijo}`}>
+              <span className="estado mute">
+                <Ic id="i-ring" s />
+                <span>{t.sabelo}</span>
+              </span>
+            </Fila>
+          )}
           {/* El kill-switch salió de esta lista y bajó a la fila de la acción, al lado de la
               promesa que cumple: «corta todo · el sonido nunca se guarda · nada sale de tu
               equipo». La lista se quedó con lo que sí lleva la palabra «Funciona», y la pantalla
@@ -171,15 +184,16 @@ export function Sesion({
                   : empezarConLosIdiomasElegidos()
               }
             >
-              <Ic id="i-voz" s />
-              <span>{t.iniciarSesion}</span>
+              {/* Dice lo que hace: con la sesión en marcha, la termina (auditoría del S2, B16). */}
+              <Ic id={escucha.escuchando ? "i-x-circle" : "i-voz"} s />
+              <span>{escucha.escuchando ? t.terminarSesion : t.iniciarSesion}</span>
             </button>
             <span className="crece"></span>
             <span className="tecla">
               <kbd>⌥⎋</kbd>
             </span>
             <span className="mono" style={{ color: "var(--ink-2)" }}>
-              {t.nadaSale}
+              {bytes === "0 B" ? t.nadaSale : t.nadaSaleConApi}
             </span>
           </div>
         </div>
@@ -516,6 +530,7 @@ export function LaVigilancia({
 }) {
   const t = useT().cuaderno;
   const idioma = useIdioma();
+  const bytes = useBytesALaRed();
   return (
     <div style={PILA}>
       <div className="franja err" role="alert" style={{ padding: "14px 16px" }}>
@@ -581,7 +596,9 @@ export function LaVigilancia({
           <Ic id="i-check-circle" relleno />
           <div>
             <strong>{t.tuProteccionSigue}</strong>
-            <p>{t.panelProtegido}</p>
+            <p>
+              {t.panelProtegido} · {bytes} {t.aLaRed} · {t.nadaDeLaReunionEnDisco}
+            </p>
           </div>
         </div>
         {iniciar && noIniciar && (

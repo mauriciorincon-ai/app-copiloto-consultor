@@ -179,22 +179,33 @@ public func agPantallaLeer(
     return CodigoDePantalla.fallo.rawValue
   }
 
-  var texto = ""
+  // **Directo al búfer de Rust, sin copias propias** (auditoría del S2, hallazgo nuevo de la Fase 2):
+  // antes el texto leído se juntaba en `String` de Swift —el renglón aplanado, el texto entero y su
+  // copia en bytes— que se soltaban sin pisar. Swift no deja pisar un `String`; lo que sí se puede
+  // es no crearlo. Rust pisa este búfer al terminar. Lo que Vision guarde por dentro no es nuestro.
+  let cap = Int(capacidad)
+  let destino = UnsafeMutableRawPointer(salida).assumingMemoryBound(to: UInt8.self)
+  var escrito = 0
+  func poner(_ b: UInt8) -> Bool {
+    guard escrito < cap - 1 else { return false }
+    destino[escrito] = b
+    escrito += 1
+    return true
+  }
   var lineas: Int32 = 0
   for observacion in pedido.results ?? [] {
     guard let mejor = observacion.topCandidates(1).first else { continue }
-    // Un salto de línea dentro de un renglón rompería el formato; se aplana.
-    let limpio = mejor.string.replacingOccurrences(of: "\n", with: " ")
-    texto += "\(mejor.confidence)\t\(observacion.boundingBox.height)\t\(limpio)\n"
+    // La cabecera del renglón son solo números: confianza y alto.
+    var bien = "\(mejor.confidence)\t\(observacion.boundingBox.height)\t".utf8.allSatisfy(poner)
+    // Un salto de línea dentro de un renglón rompería el formato; se aplana al copiarlo.
+    bien = bien && mejor.string.utf8.allSatisfy { poner($0 == 0x0A ? 0x20 : $0) } && poner(0x0A)
+    if !bien {
+      // No cabe: **no se deja escrito a medias**. Se pisa lo escrito y se dice.
+      destino.update(repeating: 0, count: escrito)
+      return CodigoDePantalla.cabeMal.rawValue
+    }
     lineas += 1
   }
-  let bytes = Array(texto.utf8)
-  guard bytes.count < Int(capacidad) else { return CodigoDePantalla.cabeMal.rawValue }
-  bytes.withUnsafeBufferPointer { origen in
-    salida.withMemoryRebound(to: UInt8.self, capacity: bytes.count + 1) { destino in
-      destino.update(from: origen.baseAddress!, count: bytes.count)
-      destino[bytes.count] = 0
-    }
-  }
+  destino[escrito] = 0
   return lineas
 }

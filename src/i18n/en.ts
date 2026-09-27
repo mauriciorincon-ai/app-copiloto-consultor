@@ -60,7 +60,7 @@ export const en: Diccionario = {
     sinVerificarCuando: "Verified only in Meet · macOS 26.6.2 · 2026-09-20",
     sinVerificarVentana: "Share a window, not the screen",
     sinVerificarMonitor: "Or use a second monitor",
-    sinVerificarNotas: "Or switch to notes-only mode",
+    sinVerificarNotas: "Or cut the band with ⌥⎋ while you share",
     yaVerifique: "I verified it in Zoom",
     soloNotas: "Notes-only mode",
 
@@ -107,7 +107,7 @@ export const en: Diccionario = {
     radarBot: "Note-taking bot present",
     radarMuestraElAviso: "shows the recording notice",
     radarY: "and",
-    radarEnLaLista: "is in the participant list.",
+    radarEnLaLista: "appears in the meeting window.",
     radarNoEsAngel: "That bot isn’t Angel Ghost, which never joins the call.",
     radarAvisoNoBloqueo: "A notice, not a block.",
     radarLeidoDeTuPantalla: "read from your screen",
@@ -219,8 +219,8 @@ export const en: Diccionario = {
     navHonestidad: "Honesty",
     navIdioma: "Language",
     navIa: "AI",
-    sinSesion: "No session · 0 B",
-    meetDetectado: "Meet detected · 0 B",
+    sinSesion: "No session",
+    detectado: "detected",
 
     todaviaNo: "Not yet",
     funciona: "Works",
@@ -244,7 +244,9 @@ export const en: Diccionario = {
     funcionaAcople: "The meeting makes room: it docks and returns on close",
     funcionaCorte: "Cut everything and wipe memory",
     iniciarSesion: "Start session",
+    terminarSesion: "End session",
     nadaSale: "cuts everything · sound is never stored · nothing leaves your machine",
+    nadaSaleConApi: "cuts everything · sound is never stored · only anonymised text goes to the provider you turned on",
     sinReunion: "No meeting open",
     tituloDeMuestra: "Páramo Azul — Profitability dashboard proposal",
     sinReunionVoz: "Open Zoom, Meet or Teams and it will show up here. Meanwhile, get ready.",
@@ -285,7 +287,7 @@ export const en: Diccionario = {
     piezasCola: "pieces: the other one does not exist yet.",
     loQueQuedara: "What will be left when you close",
     loQueQuedaraDetalle:
-      "Notes, agreements and pinned cards come later. Today nothing is left because today nothing is written.",
+      "Notes, agreements and pinned cards come later. Nothing of the meeting is left: the only things the app writes are yours \u2014your corpus index, your dictionary and the month\u2019s spend\u2014.",
     // ---- session · what phase 3 turned on ----
     funcionaEscucha: "It listens to both tracks and transcribes them on your Mac",
     altavocesInternos: "Internal speakers",
@@ -299,7 +301,7 @@ export const en: Diccionario = {
     // ---- language (sprint 1 subset) ----
     idiomaTitulo: "Language and transcript",
     idiomaSub:
-      "Two tracks, the languages you tick, and a dictionary that is yours. The transcript works; you hardly ever look at it.",
+      "Two tracks, a chosen language for each and your own dictionary. The transcript works; you hardly ever look at it.",
     transcripcionEnVivo: "Live transcript",
     oculta: "hidden",
     visible: "visible",
@@ -378,7 +380,7 @@ export const en: Diccionario = {
       "sin-puente": "This copy of the app was built without the transcriber.",
       "no-contesta": "The macOS transcriber did not answer. Reopen the app; if it repeats, restart the Mac.",
     },
-    laBandaSigue: "The band still works with ⌃⌥A and your corpus; what does not arrive is the automatic card.",
+    laBandaSigue: "Without it there are no turns, and without turns no cards arrive from what is said, not even with ⌃⌥A; the ones the screen brings still do.",
     tuDiccionario: "Your technical dictionary",
     deTuCorpus: "From your corpus — names, products, titles",
     enTuArchivo: "In your file",
@@ -438,7 +440,9 @@ export const en: Diccionario = {
     invasivo: "Invasive",
     sabelo: "Be aware",
     tuProteccionSigue: "Your own protection still holds",
-    panelProtegido: "Panel protected from capture · 0 B to the network · nothing written to disk.",
+    panelProtegido: "Panel protected from capture",
+    aLaRed: "to the network",
+    nadaDeLaReunionEnDisco: "nothing of the meeting written to disk.",
     iniciarDeTodosModos: "Start anyway",
     noIniciar: "Do not start",
     radarClases: {

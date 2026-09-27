@@ -65,8 +65,8 @@ impl Peticion {
     }
 
     /// Lo que va delante de la pregunta: el trabajo, el formato cerrado y la prohibición de
-    /// inventar. En inglés porque es lo que mejor siguen los modelos; la respuesta va en el idioma
-    /// del cliente.
+    /// inventar. En inglés porque es lo que mejor siguen los modelos; la respuesta va **en el idioma
+    /// de la ficha citada**, con sus palabras —una línea traducida no se puede cotejar (`fiel.rs`)—.
     pub fn instrucciones() -> &'static str {
         "You help a consultant during a live meeting. You get the client's last question and up to \
          three evidence cards from the consultant's own documents, each with an id (F1, F2, F3). \

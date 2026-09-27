@@ -434,10 +434,7 @@ pub fn muestras() -> Vec<Muestra> {
         m("POR_QUE_NO_REDACTA_SIN_PUENTE", "PorQueNoRedacta", "./ia", &crate::sintesis::PorQueNoRedacta::SinPuente),
         m("POR_QUE_NO_REDACTA_SIN_CLAVE", "PorQueNoRedacta", "./ia", &crate::sintesis::PorQueNoRedacta::SinClave),
         m("POR_QUE_NO_REDACTA_TOPE", "PorQueNoRedacta", "./ia", &crate::sintesis::PorQueNoRedacta::TopeDelMes),
-        m("ESTADO_DEL_ACOPLE", "EstadoDelAcople", "./acople", &crate::EstadoDelAcople {
-            permiso: true,
-            acoplada: true,
-        }),
+        m("ESTADO_DEL_ACOPLE", "EstadoDelAcople", "./acople", &crate::EstadoDelAcople { acoplada: true }),
     ]
 }
 

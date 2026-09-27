@@ -19,9 +19,10 @@ import { EXTERNOS, useIa } from "../ia";
  * las cifras en la interfaz sería la interfaz afirmando en vez de medir, que es justo lo que esta
  * pantalla existe para no hacer.
  *
- * El cero de la red sigue sin mantenerse por disciplina: no existe código capaz de abrir una
- * conexión. Y la cuenta del kill-switch subió de tres piezas a seis — no porque cambiara la
- * interfaz, sino porque un `match` sin comodín en `corte.rs` no dejó compilar hasta resolverlas.
+ * El cero de la red no se mantiene por disciplina: la única puerta es la del proveedor externo de
+ * IA —apagada salvo que el usuario la encienda—, y cada byte que sale por ella pasa por el
+ * contador que esta pantalla lee. Y la cuenta del kill-switch la da Rust: un `match` sin comodín en
+ * `corte.rs` no deja compilar una pieza nueva sin resolverla (hoy son nueve).
  */
 
 // Las piezas del kill-switch ya NO se escriben aquí: se preguntan. Hasta el sprint 002 eran dos
@@ -89,7 +90,9 @@ export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoD
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div className="contador cero">
+            {/* Verde y con el check solo en cero: con el API encendido, la cifra se pinta del color
+                del API y sin la marca de «todo bien» (regla 8; auditoría del S2, M11). */}
+            <div className={bytes === "0 B" ? "contador cero" : "contador api"}>
               {/* La maqueta separa la cifra de la unidad («0» grande, «B» pequeña) y el CSS las
                   dimensiona distinto. Si llegaran como un solo texto, la unidad saldría del tamaño
                   de la cifra — 24 px de diferencia que el gate de fidelidad vería y el ojo no. */}
@@ -97,7 +100,11 @@ export function Honestidad({ bytes, escucha }: { bytes: string; escucha: EstadoD
                 {cifra} <small>{unidad}</small>
               </div>
               <div className="etq">
-                <Ic id="i-check-circle" s relleno color="var(--ok)" />{" "}
+                {bytes === "0 B" ? (
+                  <Ic id="i-check-circle" s relleno color="var(--ok)" />
+                ) : (
+                  <Ic id="i-subir" s color="var(--halo)" />
+                )}{" "}
                 <span>{t.salieronDeTuEquipo}</span>
               </div>
             </div>

@@ -86,7 +86,7 @@ que la promesa, pero cierto.
 | Alternativa | Por qué no |
 |---|---|
 | **BM25 a mano** en vez de `tantivy` | habría que escribir también tokenización, stemming de dos idiomas y persistencia. Medido antes de comprometerlo: `tantivy` cuesta 193 nodos y 16,7 s de compilación en frío, asumible |
-| **Embeddings + RRF** ya en el S1 | la regla del código primero: BM25 es determinista y explicable. Los embeddings entran en el S2 **si el kit de evaluación demuestra** que BM25 no basta — y ahora habrá con qué demostrarlo |
+| **Embeddings + RRF** ya en el S1 | la regla del código primero: BM25 es determinista y explicable. Los embeddings entran **si el kit de evaluación demuestra** que BM25 no basta. El sprint 002 no lo decidió —el kit v0 da nDCG@5 0,82 sin ellos y el refuerzo de pantalla subió la frase de 0,63 a 0,70—: **la decisión pasa al sprint 003**, con esas cifras como punto de partida |
 | **Una librería de Word** para el `.docx` | un `.docx` es un zip con XML: se abre con `zip` + `quick-xml`. Menos superficie, y ningún escritor de `.docx` enlazado en una app que jamás escribe `.docx` |
 | **Detectar el idioma** del documento y usar un solo stemmer | falla en los corpus mezclados, que son exactamente los de este usuario |
 | **Un LLM** para clasificar la unidad o redactar el titular | cero LLM en este sprint, y no hace falta: el titular **se recorta del documento del usuario**, no se redacta |

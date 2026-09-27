@@ -2442,3 +2442,75 @@ el caso se prueba con el nombre de archivo sintético.
 - **M1 · no arrancaba por debajo de macOS 26 y declaraba 14.2.** `minimumSystemVersion` 26.0, ADR 006 y
   manual al día. Gate nuevo `tests/unit/version-minima.test.ts`: la versión declarada ≥ la que exige
   cada framework que `build.rs` enlaza. **Rojo:** con 14.2, «expected 14.2 to be ≥ 26».
+
+### El bloque «lo que la app afirma y no es cierto»: M11 · M13 · M12 · B7 · B14–B20 · B22–B24
+
+- **M11 + B17 · «0 B» y «nada sale» escritos como constante.** El rail, la banda de 44 px, el coral
+  ampliado, Sesión, Corpus y Honestidad leen `useBytesALaRed()`; «nada sale de tu equipo» y «Panel
+  protegido · 0 B» tienen su variante con el API encendido; «hoy no se escribe nada» y «nada se escribe
+  en disco» pasan a «nada **de la reunión**» y nombran lo que sí se escribe (índice, diccionario, gasto).
+  Honestidad deja el verde y el check cuando la cifra no es cero (`contador api`). El chip del rail
+  nombra el cliente de verdad (B17: decía «Meet» con Zoom). **Rojo:** con el rail y Honestidad de
+  antes, el test ve «Meet» y la clase `cero` con 1,2 KB.
+- **B18 · el contador heredaba los bytes de la reunión anterior.** `red::reiniciar()` al empezar a
+  escuchar, con su línea de log.
+- **M13 · el manual decía que al modelo sale «tu pregunta».** Sale la última frase del cliente —de un
+  tercero—, y así lo dicen las cuatro frases.
+- **M12 · la banda anunciaba teclas y botones que no hacen nada.** «Buscar con otras palabras» hace lo
+  que `⌃⌥A` (el hook de la banda expone `pedir`); `⌃⌥P fijar` y `⌃⌥N anotar` van `pendiente` (apagadas,
+  a trazos, «todavía no» para el lector); «Anotar», «Ya lo verifiqué en Zoom» y «Modo solo notas»,
+  `disabled`; el consejo «O pasa a modo solo notas» dice ahora «O corta la banda con ⌥⎋ mientras
+  compartes». Maqueta al día. Gate nuevo `tests/unit/banda-sin-promesas-vacias.test.tsx`: en cada estado,
+  compacta y ampliada, toda tecla `⌃⌥X` está registrada en `lib.rs` o es pendiente, y todo botón tiene
+  manejador o está desactivado. **Rojo:** con la banda de antes, ocho estados en rojo.
+- **B7 · «está en la lista de participantes».** El radar coteja la ventana entera: «aparece en la
+  ventana de la reunión», en i18n, maquetas, bundle y manual (con la limitación dicha).
+- **B14 · sin voz, `⌃⌥V` encendía el modo igual.** No se enciende y el log lo dice. **Rojo** en la
+  función pura.
+- **B15 · un MDM solo no se veía.** Fila «Gestión de dispositivos (MDM) de un tercero · Sábelo» en
+  Sesión, sin tomar la pantalla. **Rojo:** sin la fila.
+- **B16 · el botón decía «Iniciar sesión» también al pararla.** «Terminar sesión» con su icono cuando
+  escucha; maqueta de los estados en marcha al día. **Rojo:** con la etiqueta fija.
+- **B19 · tres frases falsas.** «Buscar tu evidencia a mano» pasa a «Todavía no» (necesita el audio del
+  sistema); «los idiomas que marques» → «el idioma que elijas para cada una»; «la banda sigue
+  funcionando con ⌃⌥A» → lo que de verdad pasa sin motor de voz. **Rojo:** Permisos de antes.
+- **B20 · comentarios y documentos con promesas caducadas:** Honestidad, `red.rs`, `corte.rs`,
+  `ventana/mod.rs`, `lib.rs`, `Idioma.tsx`, `Transcriptor.swift`, `asa.ts`, `disparo/`, `voz/`,
+  `sintesis/mod.rs`, `ficha/mod.rs`, el manual («la app no redacta»), ADR 006, 007 y 008 (los embeddings:
+  **la decisión pasa al sprint 003**), el LEEME del kit (cuatro audios, `pantalla/`, `radar/`) y la nota de
+  `banda.html`. Lo de `maniobra.rs` se paga con M15.
+- **Tres hallazgos nuevos que trajo el subagente de los ADR (B22–B24), pagados aquí:**
+  - **B22 · «100 procesos» en el Mac limpio del kit: son 82** (contados con el filtro del test). Manual,
+    summary y LEEME al día. *Corrección a esta bitácora:* las entradas de la fase 4 que dicen «100
+    procesos» deben leerse «82».
+  - **B23 · la cabecera de `huella.rs` defendía el pHash**, que el vigía ya no usa: reescrita, y las
+    funciones de pHash quedan `#[cfg(test)]` (solo las usan los tests que dejan escrita la medida).
+  - **B24 · el texto que Vision lee se juntaba en `String` de Swift que no se pisan.** Se escribe byte a
+    byte directo al búfer de Rust, sin copias propias; si no cabe, se pisa lo escrito y se devuelve
+    `cabeMal` (el contrato de «no escribir a medias» se conserva). Kit de pantalla y radar ámbar con
+    Vision: mismos números (4 de 4, nDCG 0,700; aviso y bot vistos).
+
+### Fidelidad tras el bloque de frases: tres caídas, las tres explicadas
+La corrida tras los cambios de copy dio 10 encuadres sobre el umbral (Idioma claro, «vigilancia», IA):
+- el chip del rail pasó a nombrar el cliente de la muestra, «**Google** Meet detectado», y la maqueta
+  dice «Meet detectado»: el rail usa el **nombre corto** («Meet», «Teams», «Zoom»);
+- `.btn:disabled` (M12) apagó el «Guardar en el Llavero» de IA, que ya estaba desactivado sin clave:
+  un botón desactivado **debe** verse así, y la maqueta de IA pasa a pintarlo `disabled`;
+- el subtítulo inglés nuevo de Idioma se desbordaba 4 px: más corto en los dos idiomas.
+Tercera corrida: 116 encuadres, ninguno sobre el umbral, ningún desborde.
+
+### Gates y contrato: M6 · B9 · B10 · B11 · B12
+- **M6 · el gate de campos sin lector no leía los tipos del sprint.** Lee ahora también `radar.ts`,
+  `ia.ts` y `acople.ts`, y su parser atraviesa `({ que: "turno" } & Turno)` y los comentarios entre
+  variantes. **Su rojo fue el árbol de antes**: nombró `EstadoDelAcople.permiso`, `Novedad.duracionMs`
+  y `Bilingue.es/en` (estos dos se leen por clave calculada, `p.ve[idioma]`: van a una lista corta
+  `LEIDOS_POR_CLAVE` con su razón).
+- **B9 · `InformeDelCorte.bytesEnRed`** se declaraba «lo lee Rust, no se paga», un tercer estado que la
+  regla 20 no tiene: `#[serde(skip)]`, fuera del tipo TS, y `DEUDA` queda **vacía**.
+- **B10 · `EstadoDelAcople.permiso`** fuera, con la llamada a la Accessibility API que lo rellenaba.
+- **B11 · los campos de `Novedad` que nadie leía no cruzan**, y **el evento de un turno ya no lleva el
+  texto del cliente**: solo quién y si es eco (`serialize_with`); la banda pide el texto aparte con
+  `turnos_recientes`. Test nuevo con una canaria. **Rojo:** sin el serializador, el JSON lleva
+  «CANARIA-DEL-CLIENTE».
+- **B12 · `Aparicion.hora`** solo la leía la muestra: la línea «oído» usa la hora de la aparición
+  también en el producto.

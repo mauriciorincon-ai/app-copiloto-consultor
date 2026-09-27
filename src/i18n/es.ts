@@ -89,7 +89,7 @@ export const es = {
     sinVerificarCuando: "Verificada solo en Meet · macOS 26.6.2 · 2026-09-20",
     sinVerificarVentana: "Comparte una ventana, no la pantalla",
     sinVerificarMonitor: "O usa un segundo monitor",
-    sinVerificarNotas: "O pasa a modo solo notas",
+    sinVerificarNotas: "O corta la banda con ⌥⎋ mientras compartes",
     yaVerifique: "Ya lo verifiqué en Zoom",
     soloNotas: "Modo solo notas",
 
@@ -149,10 +149,10 @@ export const es = {
     radarGrabadaYBot: "Reunión grabada · bot de notas presente",
     radarGrabada: "Reunión grabada",
     radarBot: "Bot de notas presente",
-    /** «Meet muestra el aviso de grabación y «MinutaBot» está en la lista de participantes. …» */
+    /** «Meet muestra el aviso de grabación y «MinutaBot» aparece en la ventana de la reunión. …» */
     radarMuestraElAviso: "muestra el aviso de grabación",
     radarY: "y",
-    radarEnLaLista: "está en la lista de participantes.",
+    radarEnLaLista: "aparece en la ventana de la reunión.",
     radarNoEsAngel: "Ese bot no es Angel Ghost, que nunca entra a la llamada.",
     radarAvisoNoBloqueo: "Aviso, no bloqueo.",
     radarLeidoDeTuPantalla: "leído de tu pantalla",
@@ -290,8 +290,8 @@ export const es = {
     navHonestidad: "Honestidad",
     navIdioma: "Idioma",
     navIa: "IA",
-    sinSesion: "Sin sesión · 0 B",
-    meetDetectado: "Meet detectado · 0 B",
+    sinSesion: "Sin sesión",
+    detectado: "detectado",
 
     // ---- vocabulario de «todavía no» (§9-sexies) ----
     todaviaNo: "Todavía no",
@@ -317,7 +317,9 @@ export const es = {
     funcionaAcople: "La reunión se hace sitio: se acopla y vuelve al cerrar",
     funcionaCorte: "Corta todo y vacía la memoria",
     iniciarSesion: "Iniciar sesión",
+    terminarSesion: "Terminar sesión",
     nadaSale: "corta todo · el sonido nunca se guarda · nada sale de tu equipo",
+    nadaSaleConApi: "corta todo · el sonido nunca se guarda · solo sale texto anonimizado al proveedor que encendiste",
     sinReunion: "Sin reunión abierta",
     tituloDeMuestra: "Páramo Azul — Propuesta tablero de rentabilidad",
     sinReunionVoz: "Abre Zoom, Meet o Teams y aparecerá aquí. Mientras tanto, prepara la reunión.",
@@ -368,7 +370,7 @@ export const es = {
     piezasCola: "piezas: la otra todavía no existe.",
     loQueQuedara: "Lo que quedará cuando cierres",
     loQueQuedaraDetalle:
-      "Notas, acuerdos y fichas fijadas llegan más adelante. Hoy no queda nada porque hoy no se escribe nada.",
+      "Notas, acuerdos y fichas fijadas llegan más adelante. De la reunión no queda nada: lo único que la app escribe es tuyo —el índice de tu corpus, tu diccionario y el gasto del mes—.",
     // ---- sesión · lo que la fase 3 puso a funcionar ----
     funcionaEscucha: "Escucha las dos pistas y las transcribe en tu Mac",
     altavocesInternos: "Altavoces internos",
@@ -382,7 +384,7 @@ export const es = {
     // ---- idioma (subconjunto del sprint 1) ----
     idiomaTitulo: "Idioma y transcripción",
     idiomaSub:
-      "Dos pistas, los idiomas que marques, y un diccionario que es tuyo. La transcripción trabaja; casi nunca la miras.",
+      "Dos pistas, un idioma elegido para cada una y un diccionario tuyo. La transcripción trabaja; casi nunca la miras.",
     transcripcionEnVivo: "Transcripción en vivo",
     oculta: "oculta",
     visible: "visible",
@@ -476,7 +478,7 @@ export const es = {
       "sin-puente": "Esta copia de la app se construyó sin el transcriptor.",
       "no-contesta": "El transcriptor de macOS no contestó. Vuelve a abrir la app; si se repite, reinicia el Mac.",
     },
-    laBandaSigue: "La banda sigue funcionando con ⌃⌥A y tu corpus; lo que no llega es la ficha automática.",
+    laBandaSigue: "Sin él no hay turnos, y sin turnos no llegan fichas por lo que se dice, tampoco con ⌃⌥A; las que trae la pantalla, sí.",
     tuDiccionario: "Tu diccionario técnico",
     deTuCorpus: "De tu corpus — nombres, productos, títulos",
     enTuArchivo: "En tu archivo",
@@ -539,7 +541,9 @@ export const es = {
     invasivo: "Invasivo",
     sabelo: "Sábelo",
     tuProteccionSigue: "Tu protección propia sigue en pie",
-    panelProtegido: "Panel protegido de la captura · 0 B a la red · nada se escribe en disco.",
+    panelProtegido: "Panel protegido de la captura",
+    aLaRed: "a la red",
+    nadaDeLaReunionEnDisco: "nada de la reunión se escribe en disco.",
     iniciarDeTodosModos: "Iniciar de todos modos",
     noIniciar: "No iniciar",
     /** Las clases del catálogo como las titula la tabla: la palabra en negrita y su añadido. */

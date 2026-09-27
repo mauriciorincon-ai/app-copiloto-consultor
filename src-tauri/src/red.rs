@@ -5,10 +5,10 @@
 //! `tests/unit/contador-de-red.test.ts` vigila — barre el crate entero buscando cualquier forma
 //! de abrir un socket y se pone rojo si aparece una.
 //!
-//! **Por qué existe ya, vacío.** El contador es la prueba visible de la promesa «nada crudo sale
-//! del equipo», y una promesa que se instrumenta cuando llega la primera conexión llega tarde: el
-//! día que el adaptador de LLM se encienda (sprint 2, con su ADR), el contador tiene que estar
-//! puesto desde antes, con su cero comprobado, o no hay contra qué comparar.
+//! **Por qué existió antes que la red.** El contador es la prueba visible de la promesa «nada crudo
+//! sale del equipo», y una promesa que se instrumenta cuando llega la primera conexión llega tarde.
+//! Nació vacío en el sprint 001; desde el sprint 002 tiene un llamador, el proveedor externo de la
+//! síntesis (`sintesis/api.rs`, ADR 011), que cuenta cada petición ANTES de enviarla.
 //!
 //! **Un solo camino de entrada.** [`registrar_salida`] es el único sitio que suma. No se expone un
 //! contador mutable ni se suma desde varios lugares: si mañana hay dos caminos para salir a la
@@ -94,9 +94,9 @@ mod tests {
         assert_eq!(bytes(), 0, "el kill-switch tiene que dejarlo en cero");
     }
 
-    /// El cero del sprint 001 no es «nadie llamó»: es que **no hay a quién llamar**. Quien lo
-    /// vigila de verdad es el gate del lado TypeScript, que barre el crate entero buscando
-    /// sockets; esto solo fija el valor de partida.
+    /// El valor de partida: cero. Quien vigila que no haya otras puertas es el gate del lado
+    /// TypeScript (`contador-de-red.test.ts`), que barre el crate y el puente de Swift y exige que
+    /// las declaradas sean exactamente las que hay.
     #[test]
     fn en_este_sprint_el_contador_arranca_en_cero() {
         let _turno = TURNO.lock().unwrap_or_else(|e| e.into_inner());

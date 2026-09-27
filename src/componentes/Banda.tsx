@@ -80,7 +80,7 @@ export type PropsBanda = {
   verificado?: boolean;
 };
 
-/** En el sprint 001 no hay red: ni un byte sale del equipo, y el contador lo dice. */
+/** La cifra que pintan las muestras de la maqueta. El producto pinta la del contador, siempre. */
 const RED = "0 B";
 
 export function Banda({
@@ -114,7 +114,7 @@ export function Banda({
   // La ficha viene del corpus del usuario. Fuera de Tauri es la de la maqueta, que es lo que
   // hace posible el gate de FIDELIDAD; dentro del producto es la de verdad, y si no hay ninguna
   // no se pinta ninguna.
-  const { aparicion, buscando, nadaEnPantalla, radar, sugerencia } = useFicha(estado);
+  const { aparicion, buscando, nadaEnPantalla, radar, sugerencia, pedir } = useFicha(estado);
   const bytesReales = useBytesALaRed();
   /** El contador: fuera de Tauri, el de la maqueta; dentro, el de verdad, que el API puede mover. */
   const bytes = deLaMaqueta ? (estado === "sugerencia-api" ? m.redApi : RED) : bytesReales;
@@ -266,8 +266,9 @@ export function Banda({
 
   const atajosDeFicha = (
     <span className="atajos-b">
-      <span className="tecla">
+      <span className="tecla pendiente">
         <kbd>⌃⌥P</kbd> {t.fijar}
+        <span className="sr"> · {tc.todaviaNo}</span>
       </span>
       <span className="tecla">
         <kbd>⌃⌥T</kbd> {t.transcript}
@@ -342,6 +343,7 @@ export function Banda({
       : voz;
     return (
       <BandaDeVoz
+        bytes={bytes}
         voz={comoEsta}
         aparicion={aparicion?.clase === "ficha" ? aparicion : null}
         asa={asa}
@@ -479,8 +481,9 @@ export function Banda({
                 </span>
                 {fuenteDe(sugerencia.ficha.fuente)}
                 <span className="atajos-b">
-                  <span className="tecla">
+                  <span className="tecla pendiente">
                     <kbd>⌃⌥P</kbd> {t.fijar}
+                    <span className="sr"> · {tc.todaviaNo}</span>
                   </span>
                   <span className="tecla">
                     <kbd>⌥⎋</kbd>
@@ -564,7 +567,7 @@ export function Banda({
               </div>
               <span className="meta-b" style={{ marginTop: "8px" }}>
                 <Ic id="i-check-circle" s relleno />
-                {t.radarSigueProtegida} · {RED} {t.radarEnRed} · {t.radarNadaPersiste}
+                {t.radarSigueProtegida} · {bytes} {t.radarEnRed} · {t.radarNadaPersiste}
               </span>
             </span>
             <span className="lado-b">
@@ -635,8 +638,9 @@ export function Banda({
               {transcript && <Transcript turnos={turnos} />}
               {transcript ? (
                 <span className="atajos-b">
-                  <span className="tecla">
+                  <span className="tecla pendiente">
                     <kbd>⌃⌥P</kbd> {t.fijar}
+                    <span className="sr"> · {tc.todaviaNo}</span>
                   </span>
                   <span className="tecla">
                     <kbd>⌥⎋</kbd>
@@ -663,7 +667,9 @@ export function Banda({
                 <span className="oido">
                   <span className="quien">
                     <Ic id="i-sistema" s />{" "}
-                    {deLaMaqueta ? `${t.cliente} ${aparicion.hora}` : oido?.quien}
+                    {/* La hora es la de la aparición —la del turno que la pidió— también en el
+                        producto; antes solo la leía la muestra (auditoría del S2, B12). */}
+                    {`${t.cliente} ${aparicion.hora}`}
                   </span>
                   <q>{deLaMaqueta ? m.oidoIso : oido?.texto}</q>
                 </span>
@@ -685,11 +691,12 @@ export function Banda({
               {grande ? (
                 <>
                   <span className="acciones-b">
-                    <button className="btn mini" type="button">
+                    <button className="btn mini" type="button" onClick={pedir}>
                       <Ic id="i-buscar" s />
                       {t.buscarOtras} <kbd className="tecla">⌃⌥A</kbd>
                     </button>
-                    <button className="btn mini" type="button">
+                    {/* Anotar llega con las notas (sprint 003): se ve, y se ve apagado. */}
+                    <button className="btn mini" type="button" disabled title={tc.todaviaNo}>
                       <Ic id="i-nota" s />
                       {t.anotarDespues} <kbd className="tecla">⌃⌥N</kbd>
                     </button>
@@ -716,8 +723,9 @@ export function Banda({
                     <span className="tecla">
                       <kbd>⌃⌥A</kbd> {t.otrasPalabras}
                     </span>
-                    <span className="tecla">
+                    <span className="tecla pendiente">
                       <kbd>⌃⌥N</kbd> {t.anotar}
+                      <span className="sr"> · {tc.todaviaNo}</span>
                     </span>
                     <span className="tecla">
                       <kbd>⌥⎋</kbd>
@@ -759,11 +767,13 @@ export function Banda({
               {grande ? (
                 <>
                   <span className="acciones-b">
-                    <button className="btn mini" type="button">
+                    {/* Ni marcar un cliente como verificado ni el modo solo notas existen todavía:
+                        apagados en vez de botones que no hacen nada (auditoría del S2, M12). */}
+                    <button className="btn mini" type="button" disabled title={tc.todaviaNo}>
                       <Ic id="i-check-circle" s relleno />
                       {t.yaVerifique}
                     </button>
-                    <button className="btn mini" type="button">
+                    <button className="btn mini" type="button" disabled title={tc.todaviaNo}>
                       <Ic id="i-nota" s />
                       {t.soloNotas}
                     </button>
@@ -814,10 +824,12 @@ export function Banda({
  * baja a la línea. Es una de las tres decisiones que el usuario aprobó en la mirada 16.
  */
 function BandaDeVoz({
+  bytes,
   voz,
   aparicion,
   asa,
 }: {
+  bytes: string;
   voz: LaVoz;
   aparicion: (Aparicion & { clase: "ficha" }) | null;
   asa: React.RefObject<HTMLSpanElement | null>;
@@ -827,9 +839,9 @@ function BandaDeVoz({
 
   /** El contador, que a este alto vive en la línea y no en la cabecera. */
   const red = (
-    <span className="red cero mono">
+    <span className={bytes === RED ? "red cero mono" : "red api mono"}>
       <Ic id="i-subir" s />
-      {RED}
+      {bytes}
     </span>
   );
 

@@ -17,31 +17,20 @@ import type { EstadoDeLaIa, PorQueNoRedacta } from "./ia";
 import type { EstadoDelAcople } from "./acople";
 
 export const NOVEDAD_EMPIEZA: Novedad = {
-    "pista": "microfono",
     "que": "empieza"
   };
 
 export const NOVEDAD_TURNO: Novedad = {
-    "desdeMs": 5400,
     "eco": false,
-    "hastaMs": 8000,
-    "hora": "14:02",
     "pista": "sistema",
-    "que": "turno",
-    "texto": "¿Y la limpieza de datos está dentro del alcance?"
+    "que": "turno"
   };
 
 export const NOVEDAD_SIN_TEXTO: Novedad = {
-    "desdeMs": 5400,
-    "hastaMs": 8000,
-    "motivo": "el motor no reconoció palabras en ese turno",
-    "pista": "sistema",
     "que": "sin-texto"
   };
 
 export const NOVEDAD_RUIDO: Novedad = {
-    "duracionMs": 140,
-    "pista": "microfono",
     "que": "ruido"
   };
 
@@ -206,7 +195,6 @@ export const ESTADO_DEL_CORPUS: EstadoDelCorpus = {
   };
 
 export const INFORME_DEL_CORTE: InformeDelCorte = {
-    "bytesEnRed": 0,
     "piezas": [
       [
         "voz",
@@ -433,6 +421,5 @@ export const POR_QUE_NO_REDACTA_SIN_CLAVE: PorQueNoRedacta = "sin-clave";
 export const POR_QUE_NO_REDACTA_TOPE: PorQueNoRedacta = "tope-del-mes";
 
 export const ESTADO_DEL_ACOPLE: EstadoDelAcople = {
-    "acoplada": true,
-    "permiso": true
+    "acoplada": true
   };

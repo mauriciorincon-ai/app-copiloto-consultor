@@ -138,10 +138,7 @@ export function usePiezasDelCorte(): InformeDelCorte {
   return usePreguntaAlVolver<InformeDelCorte>(
     "piezas_del_corte",
     INFORME_DEL_CORTE,
-    {
-      piezas: [],
-      bytesEnRed: 0,
-    },
+    { piezas: [] },
   );
 }
 
@@ -260,7 +257,6 @@ export type SuerteDelCorte = "cortada" | "aun-no-existe";
 
 export type InformeDelCorte = {
   piezas: [PiezaDelCorte, SuerteDelCorte][];
-  bytesEnRed: number;
 };
 
 export type Pista = "microfono" | "sistema";

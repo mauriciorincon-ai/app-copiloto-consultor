@@ -184,6 +184,11 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 /* Tecla / atajo */
 .tecla { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
 .tecla kbd { font: inherit; padding: 0 5px; border: var(--borde) solid var(--line-2); border-bottom-width: 2px; border-radius: var(--r-tecla); background: var(--surface-2); color: var(--ink); line-height: 16px; }
+/* Una tecla de algo que todavía no existe (fijar, anotar): se ve, apagada y a trazos, y el lector
+   de pantalla oye «todavía no» (auditoría del S2, M12). */
+.tecla.pendiente { color: var(--mute); }
+.tecla.pendiente kbd { color: var(--mute); border-style: dashed; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
 
 /* Botón discreto (el panel no tiene CTAs grandes) */
 .btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: var(--r-chip); border: var(--borde) solid var(--line-2); background: var(--surface-2); color: var(--ink); font-size: var(--t-meta); font-weight: 500; transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease); }

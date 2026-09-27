@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { escuchar, hayTauri, preguntar } from "./puente";
 import { useT } from "./i18n";
-import type { Pista, Turno } from "./cuaderno";
+import type { Pista } from "./cuaderno";
 import { invasivos, type CatalogoDelRadar, type EnTuMac, type Programa } from "./radar";
 import type { Sugerencia } from "./ia";
 
@@ -86,16 +86,12 @@ export type Aparicion = Respuesta & {
  * escribe Rust con el serde de producción, y `pnpm typecheck` falla si un campo deja de encajar.
  */
 export type Novedad =
-  | { que: "empieza"; pista: Pista }
-  | ({ que: "turno" } & Turno)
-  | {
-      que: "sin-texto";
-      pista: Pista;
-      desdeMs: number;
-      hastaMs: number;
-      motivo: string;
-    }
-  | { que: "ruido"; pista: Pista; duracionMs: number }
+  // Lo que no se lee, no cruza (auditoría del S2, B11): de un turno, la banda solo necesita
+  // quién habló y si era eco; el texto lo pide aparte con `turnos_recientes`.
+  | { que: "empieza" }
+  | { que: "turno"; pista: Pista; eco: boolean }
+  | { que: "sin-texto" }
+  | { que: "ruido" }
   | ({ que: "aparece" } & Aparicion)
   /** `⌃⌥L` leyó la pantalla y no había texto: la banda contesta igual, porque alguien preguntó. */
   | { que: "nada-en-pantalla"; hora: string }
@@ -129,6 +125,8 @@ export type LoQueLaBandaEnseña = {
   radar: RadarEnLaBanda | null;
   /** La sugerencia de la ficha que está en pantalla, si el modelo la redactó a tiempo. */
   sugerencia: Sugerencia | null;
+  /** Pide la ficha otra vez sobre lo último del cliente: `⌃⌥A` y «Buscar con otras palabras». */
+  pedir: () => void;
 };
 
 /**
@@ -174,6 +172,30 @@ export function useFicha(
   // Los invasivos que ya se enseñaron. El evento llega cada vez que cambia CUALQUIER cosa de la
   // lista —también un MDM—, y la banda solo tiene que avisar cuando cambian los invasivos.
   const coralVisto = useRef("");
+
+  /**
+   * **Pedir la ficha otra vez**, sobre lo último que dijo el cliente: lo que hace `⌃⌥A`, y lo que
+   * hace el botón «Buscar con otras palabras» de la banda ampliada, que antes no tenía manejador
+   * (auditoría del S2, M12).
+   */
+  const pedir = useCallback(() => {
+    setBuscando(true);
+    setNada(null);
+    setRadar(null);
+    // `null` es «todavía no he oído nada del cliente»: la banda vuelve a lo que enseñaba. Y
+    // pase lo que pase —también si el puente falla—, el «buscando» se cierra: una banda que se
+    // queda buscando para siempre es la avería que la corrida en vivo encontró.
+    void preguntar<Aparicion>("pedir_ficha")
+      .then((a) => {
+        if (a !== null) {
+          fichaAhora.current = a;
+          setFicha(a);
+          setSugerencia(null);
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => setBuscando(false));
+  }, []);
 
   useEffect(() => {
     if (!hayTauri()) return;
@@ -223,24 +245,7 @@ export function useFicha(
         }
       }),
       escuchar<EnTuMac>("radar", atenderElCoral),
-      escuchar("ficha", () => {
-        setBuscando(true);
-        setNada(null);
-        setRadar(null);
-        // `null` es «todavía no he oído nada del cliente»: la banda vuelve a lo que enseñaba. Y
-        // pase lo que pase —también si el puente falla—, el «buscando» se cierra: una banda que se
-        // queda buscando para siempre es la avería que la corrida en vivo encontró.
-        void preguntar<Aparicion>("pedir_ficha")
-          .then((a) => {
-            if (a !== null) {
-              fichaAhora.current = a;
-              setFicha(a);
-              setSugerencia(null);
-            }
-          })
-          .catch(() => undefined)
-          .finally(() => setBuscando(false));
-      }),
+      escuchar("ficha", pedir),
       // Tras el kill-switch no queda ficha en pantalla: la promesa es que no queda nada.
       escuchar("corte", () => {
         fichaAhora.current = null;
@@ -252,9 +257,9 @@ export function useFicha(
       }),
     ];
     return () => bajas.forEach((b) => b());
-  }, []);
+  }, [pedir]);
 
-  return { aparicion: ficha, buscando, nadaEnPantalla, radar, sugerencia };
+  return { aparicion: ficha, buscando, nadaEnPantalla, radar, sugerencia, pedir };
 }
 
 /** La sugerencia de `banda.html` (mirada 18), fundada en la ficha de «Páramo Azul · §3.2 Alcance». */

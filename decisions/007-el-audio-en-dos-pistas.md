@@ -24,9 +24,9 @@ puede fallar la conversión a mono — sin ahorrar nada.
 Los dos grifos son el mismo código con un dispositivo distinto. Todo el `unsafe` vive en
 `capture/nativo.rs`, igual que `acople/ax.rs` concentra el del acople.
 
-El tap **se excluye a sí mismo**. Hoy la app no hace ruido; en cuanto exista el modo solo audio
-(C15, sprint 2) hablará por los altavoces, y un tap que se oyera a sí mismo transcribiría su
-propia voz como si fuera el cliente.
+El tap **se excluye a sí mismo**. Desde el sprint 002 la app habla —el modo solo audio (C15), por
+auriculares o una salida externa, nunca por los altavoces del Mac ni por HDMI o AirPlay (ADR 014)—,
+y un tap que se oyera a sí mismo transcribiría su propia voz como si fuera el cliente.
 
 ### 2 · Todo a 16 kHz mono en la puerta de entrada, con filtro
 

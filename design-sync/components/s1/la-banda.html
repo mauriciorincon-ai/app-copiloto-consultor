@@ -99,7 +99,20 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
 .estado.warn { color: var(--warn); background: var(--warn-tint); border-color: var(--warn); }
+.estado.pendiente {
+  color: var(--mute);
+  background: transparent;
+  border-color: var(--line-2);
+  border-style: dashed;
+}
+.pendiente { color: var(--mute); }
 .pendiente .ic { opacity: .75; }
+.tarjeta.pendiente {
+  border-style: dashed;
+  border-color: var(--line-2);
+  background: transparent;
+}
+.tarjeta.pendiente .seccion { color: var(--mute); }
 .franja .ic { margin-top: 1px; }
 .franja.warn { border-color: var(--warn); background: var(--warn-tint); }
 .franja.warn .ic { color: var(--warn); }
@@ -107,6 +120,8 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .franja.ok .ic { color: var(--ok); }
 .tecla { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
 .tecla kbd { font: inherit; padding: 0 5px; border: var(--borde) solid var(--line-2); border-bottom-width: 2px; border-radius: var(--r-tecla); background: var(--surface-2); color: var(--ink); line-height: 16px; }
+.tecla.pendiente { color: var(--mute); }
+.tecla.pendiente kbd { color: var(--mute); border-style: dashed; }
 .barra .pistas .pista.off .ic { opacity: .75; }
 .red { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; color: var(--ink-2); }
 .red.cero { color: var(--ok); }
@@ -504,7 +519,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
                motivo va en palabras, las cinco de `Motivo::etiqueta()`. -->
           <span class="meta-b por-que"><svg class="ic s"><use href="#i-reloj"></use></svg><span lang="es">pregunta · 1,2 s</span><span lang="en">question · 1.2 s</span></span>
           <span class="atajos-b">
-            <span class="tecla"><kbd>⌃⌥P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla pendiente"><kbd>⌃⌥P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
             <span class="tecla"><kbd>⌃⌥T</kbd> transcript</span>
             <span class="tecla"><kbd>⌥⎋</kbd></span>
           </span>
@@ -640,7 +655,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
           </span>
           <span class="atajos-b">
             <span class="tecla"><kbd>⌃⌥A</kbd> <span lang="es">otras palabras</span><span lang="en">other words</span></span>
-            <span class="tecla"><kbd>⌃⌥N</kbd> <span lang="es">anotar</span><span lang="en">note it</span></span>
+            <span class="tecla pendiente"><kbd>⌃⌥N</kbd> <span lang="es">anotar</span><span lang="en">note it</span></span>
             <span class="tecla"><kbd>⌥⎋</kbd></span>
           </span>
         </span>
@@ -824,7 +839,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
             <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:02 · 6 s</span></span><q><span lang="es">¿Y si sumamos el Excel de la fuerza comercial? Lo tenemos en Power BI.</span><span lang="en">What if we add the sales team’s Excel? We have it in Power BI.</span></q></span>
           </span>
           <span class="atajos-b">
-            <span class="tecla"><kbd>⌃⌥P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla pendiente"><kbd>⌃⌥P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
             <span class="tecla"><kbd>⌥⎋</kbd></span>
           </span>
         </span>
@@ -1092,7 +1107,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
                motivo va en palabras, las cinco de `Motivo::etiqueta()`. -->
           <span class="meta-b por-que"><svg class="ic s"><use href="#i-reloj"></use></svg><span lang="es">pregunta · 1,2 s</span><span lang="en">question · 1.2 s</span></span>
           <span class="atajos-b">
-            <span class="tecla"><kbd>⌃⌥P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla pendiente"><kbd>⌃⌥P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
             <span class="tecla"><kbd>⌃⌥T</kbd> transcript</span>
             <span class="tecla"><kbd>⌥⎋</kbd></span>
           </span>
@@ -1228,7 +1243,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
           </span>
           <span class="atajos-b">
             <span class="tecla"><kbd>⌃⌥A</kbd> <span lang="es">otras palabras</span><span lang="en">other words</span></span>
-            <span class="tecla"><kbd>⌃⌥N</kbd> <span lang="es">anotar</span><span lang="en">note it</span></span>
+            <span class="tecla pendiente"><kbd>⌃⌥N</kbd> <span lang="es">anotar</span><span lang="en">note it</span></span>
             <span class="tecla"><kbd>⌥⎋</kbd></span>
           </span>
         </span>
@@ -1412,7 +1427,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
             <span class="turno"><span class="quien"><svg class="ic s"><use href="#i-sistema"></use></svg><span lang="es">cliente</span><span lang="en">client</span><span class="hora">14:02 · 6 s</span></span><q><span lang="es">¿Y si sumamos el Excel de la fuerza comercial? Lo tenemos en Power BI.</span><span lang="en">What if we add the sales team’s Excel? We have it in Power BI.</span></q></span>
           </span>
           <span class="atajos-b">
-            <span class="tecla"><kbd>⌃⌥P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla pendiente"><kbd>⌃⌥P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
             <span class="tecla"><kbd>⌥⎋</kbd></span>
           </span>
         </span>

@@ -96,6 +96,7 @@ camino escrito para ese caso; ponerlo hoy sería compilar whisper.cpp en cada bu
 
 ## Lo que este ADR NO decide
 
-- Qué idioma escucha cada pista. Hoy es fijo (es-ES / en-US); elegirlos es de la fase siguiente.
-- Varios idiomas por pista, ni el diccionario técnico: los dos son del sprint 2, y hasta entonces
-  la pantalla de Idioma los lleva marcados como «todavía no».
+- Qué idioma escucha cada pista. Era fijo (es-ES / en-US); desde la auditoría del sprint 002 (A4)
+  se elige en la pantalla de Idioma y las dos nacen en es-ES.
+- El diccionario técnico, que llegó en el sprint 002 (fase 1). Varios idiomas en una misma pista
+  siguen pendientes: el ADR 009 midió que el motor no sostiene la mezcla y la pantalla lo dice.
