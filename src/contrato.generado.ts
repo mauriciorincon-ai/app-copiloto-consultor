@@ -11,7 +11,7 @@
  *     cd src-tauri && ACTUALIZA_CONTRATO=1 cargo test contrato
  */
 import type { Novedad, Aparicion } from "./ficha";
-import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelDiccionario, EstadoDelCorpus, InformeDelCorte, LaVoz, EstadoDeLaPantalla } from "./cuaderno";
+import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelDiccionario, EstadoDelCorpus, InformeDelCorte, LaVoz, EstadoDeLaPantalla, QueSabeTranscribir } from "./cuaderno";
 import type { EnTuMac } from "./radar";
 import type { EstadoDeLaIa, PorQueNoRedacta } from "./ia";
 import type { EstadoDelAcople } from "./acople";
@@ -422,4 +422,45 @@ export const POR_QUE_NO_REDACTA_TOPE: PorQueNoRedacta = "tope-del-mes";
 
 export const ESTADO_DEL_ACOPLE: EstadoDelAcople = {
     "acoplada": true
+  };
+
+export const QUE_SABE_TRANSCRIBIR: QueSabeTranscribir = {
+    "idiomas": [
+      {
+        "codigo": "es-ES",
+        "disponibilidad": {
+          "estado": "listo"
+        }
+      },
+      {
+        "codigo": "en-US",
+        "disponibilidad": {
+          "estado": "sin-modelo"
+        }
+      }
+    ],
+    "motivo": null,
+    "motor": "apple-speechanalyzer",
+    "techo": 5
+  };
+
+export const QUE_SABE_TRANSCRIBIR_SIN_TRANSCRIPTOR: QueSabeTranscribir = {
+    "idiomas": [],
+    "motivo": "sin-transcriptor",
+    "motor": "ninguno",
+    "techo": 0
+  };
+
+export const QUE_SABE_TRANSCRIBIR_SIN_PUENTE: QueSabeTranscribir = {
+    "idiomas": [],
+    "motivo": "sin-puente",
+    "motor": "ninguno",
+    "techo": 0
+  };
+
+export const QUE_SABE_TRANSCRIBIR_NO_CONTESTA: QueSabeTranscribir = {
+    "idiomas": [],
+    "motivo": "no-contesta",
+    "motor": "ninguno",
+    "techo": 0
   };

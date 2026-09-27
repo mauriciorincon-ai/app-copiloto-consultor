@@ -676,7 +676,13 @@ export function Banda({
               )}
               <span className="maniobra-b">
                 <Ic id="i-flecha" s />
-                <span className="t">{t.maniobras[aparicion.maniobra]}</span>
+                <span className="t">
+                  {/* El puente lleva el nombre de lo más cercano que el consultor SÍ tiene: es la
+                      maniobra a medida de la situación (M15), sin inventar nada. */}
+                  {aparicion.maniobra === "puente" && aparicion.cercanas[0]
+                    ? `${t.puenteAntes} ${t.comillaAbre}${aparicion.cercanas[0].texto}${t.comillaCierra}${t.puenteDespues}`
+                    : t.maniobras[aparicion.maniobra]}
+                </span>
               </span>
               {grande && aparicion.cercanas.length > 0 && (
                 <>

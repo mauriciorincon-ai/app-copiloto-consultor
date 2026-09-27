@@ -435,6 +435,35 @@ pub fn muestras() -> Vec<Muestra> {
         m("POR_QUE_NO_REDACTA_SIN_CLAVE", "PorQueNoRedacta", "./ia", &crate::sintesis::PorQueNoRedacta::SinClave),
         m("POR_QUE_NO_REDACTA_TOPE", "PorQueNoRedacta", "./ia", &crate::sintesis::PorQueNoRedacta::TopeDelMes),
         m("ESTADO_DEL_ACOPLE", "EstadoDelAcople", "./acople", &crate::EstadoDelAcople { acoplada: true }),
+        // Lo que el motor de este Mac sabe hacer (auditoría del S2, M7): con motor, y sin él por cada
+        // uno de sus tres porqués, que son grafías kebab de varias palabras.
+        m("QUE_SABE_TRANSCRIBIR", "QueSabeTranscribir", "./cuaderno", &crate::QueSabeTranscribir {
+            motor: "apple-speechanalyzer",
+            techo: 5,
+            idiomas: vec![
+                crate::IdiomaDelMotor { codigo: "es-ES".into(), disponibilidad: Disponibilidad::Listo },
+                crate::IdiomaDelMotor { codigo: "en-US".into(), disponibilidad: Disponibilidad::SinModelo },
+            ],
+            motivo: None,
+        }),
+        m("QUE_SABE_TRANSCRIBIR_SIN_TRANSCRIPTOR", "QueSabeTranscribir", "./cuaderno", &crate::QueSabeTranscribir {
+            motor: "ninguno",
+            techo: 0,
+            idiomas: vec![],
+            motivo: Some(crate::stt::PorQueNoHayMotor::SinTranscriptor),
+        }),
+        m("QUE_SABE_TRANSCRIBIR_SIN_PUENTE", "QueSabeTranscribir", "./cuaderno", &crate::QueSabeTranscribir {
+            motor: "ninguno",
+            techo: 0,
+            idiomas: vec![],
+            motivo: Some(crate::stt::PorQueNoHayMotor::SinPuente),
+        }),
+        m("QUE_SABE_TRANSCRIBIR_NO_CONTESTA", "QueSabeTranscribir", "./cuaderno", &crate::QueSabeTranscribir {
+            motor: "ninguno",
+            techo: 0,
+            idiomas: vec![],
+            motivo: Some(crate::stt::PorQueNoHayMotor::NoContesta),
+        }),
     ]
 }
 

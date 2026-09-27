@@ -47,7 +47,11 @@ export const en: Diccionario = {
       referencia: "Offer a reference from the sector without naming the client yet.",
       contrato: "Do not opine on contracts live: note it down and answer in writing.",
       generica: "Turn the question around: what do they need it for?",
+      /** El puente (M15): la banda pone entre las dos partes el nombre de lo más cercano. */
+      puente: "The closest thing you do have is «…»: offer it and ask what they need it for.",
     },
+    puenteAntes: "The closest thing you do have is",
+    puenteDespues: ": offer it and ask what they need it for.",
     cercano: "closest match",
     cercanoLargo: "closest things you do have · none answers the question",
     buscarOtras: "Search with other words",

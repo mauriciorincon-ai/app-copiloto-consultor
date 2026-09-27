@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-permisos-de-macos"
+description = "Enables the permisos_de_macos command without any pre-configured scope."
+commands.allow = ["permisos_de_macos"]
+
+[[permission]]
+identifier = "deny-permisos-de-macos"
+description = "Denies the permisos_de_macos command without any pre-configured scope."
+commands.deny = ["permisos_de_macos"]

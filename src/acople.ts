@@ -24,13 +24,15 @@ export const EVENTO_ACOPLE = "acople";
  * fidelidad para recorrer los dos encuadres (`?acoplada=0` y `?acoplada=1`) en un navegador,
  * donde no hay parte nativa a la que preguntar.
  */
-export function useAcoplada(forzado?: boolean): boolean {
+export function useAcoplada(forzado?: boolean, activo = true): boolean {
   // Fuera de Tauri —los tests, `pnpm dev`, el arnés de capturas— la respuesta es «sí»: es el
   // estado normal del producto y el que la maqueta dibuja por defecto.
   const [acoplada, setAcoplada] = useState(forzado ?? true);
 
   useEffect(() => {
-    if (forzado !== undefined || !hayTauri()) return;
+    // Solo la banda lo usa, y desde la auditoría del S2 (M5) solo la banda puede preguntarlo: cada
+    // ventana tiene su lista de comandos permitidos.
+    if (forzado !== undefined || !activo || !hayTauri()) return;
     let vivo = true;
     void preguntar<EstadoDelAcople>("estado_del_acople").then((e) => {
       if (vivo && e) setAcoplada(e.acoplada);
@@ -40,7 +42,7 @@ export function useAcoplada(forzado?: boolean): boolean {
       vivo = false;
       baja();
     };
-  }, [forzado]);
+  }, [forzado, activo]);
 
   return acoplada;
 }

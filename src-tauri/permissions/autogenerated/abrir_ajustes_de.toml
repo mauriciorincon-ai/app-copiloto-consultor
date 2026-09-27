@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-abrir-ajustes-de"
+description = "Enables the abrir_ajustes_de command without any pre-configured scope."
+commands.allow = ["abrir_ajustes_de"]
+
+[[permission]]
+identifier = "deny-abrir-ajustes-de"
+description = "Denies the abrir_ajustes_de command without any pre-configured scope."
+commands.deny = ["abrir_ajustes_de"]

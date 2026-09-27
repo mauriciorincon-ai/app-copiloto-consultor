@@ -577,6 +577,14 @@ fn donde_se_mira(casa: &Path) -> Vec<PathBuf> {
             sitios.push(d);
         }
     }
+    // Y la caché que macOS le da a ESTE proceso —el ejecutable del test—, que es donde Vision, la
+    // voz o Foundation Models escribirían por debajo si escribieran (auditoría del S2, M8).
+    if let Some(exe) = std::env::current_exe().ok().and_then(|p| p.file_name().map(|n| n.to_owned())) {
+        let d = hogar.join("Library").join("Caches").join(exe);
+        if d.is_dir() {
+            sitios.push(d);
+        }
+    }
     for c in ["Documents", "Desktop", "Downloads"] {
         let d = hogar.join(c);
         if d.is_dir() {
@@ -587,8 +595,9 @@ fn donde_se_mira(casa: &Path) -> Vec<PathBuf> {
 }
 
 /// La sesión. Devuelve lo que se dijo, para poder afirmar que de verdad pasó por dentro.
-fn una_sesion_completa(casa: &Path, corpus_en: &Path) -> Vec<String> {
+fn una_sesion_completa(casa: &Path, corpus_en: &Path) -> (Vec<String>, Vec<&'static str>) {
     let mut dicho = Vec::new();
+    let mut ejercido = Vec::new();
 
     // 1 · El corpus del usuario, indexado. Esto SÍ escribe, y por eso está en `PERMITIDO`.
     let mut corpus = Corpus::en(&casa.join("corpus")).expect("el índice no se pudo abrir");
@@ -602,7 +611,11 @@ fn una_sesion_completa(casa: &Path, corpus_en: &Path) -> Vec<String> {
     let ruta_dicc = casa.join("diccionario.yaml");
     app_copiloto_consultor_lib::asegurar_el_diccionario(&ruta_dicc)
         .expect("no se pudo dejar escrito el diccionario");
-    let jerga = app_copiloto_consultor_lib::diccionario_de_la_sesion(&ruta_dicc, corpus.vocabulario());
+    // Con los clientes del corpus, como la sesión de verdad desde la auditoría del S2 (A3).
+    let jerga = app_copiloto_consultor_lib::diccionario_de_la_sesion(
+        &ruta_dicc,
+        &app_copiloto_consultor_lib::corpus::clientes(corpus.documentos()),
+    );
 
     // 2 · Audio de verdad por el motor de verdad. Es el paso que el barrido estático no puede
     //     mirar: lo que Apple escriba por debajo, se escribe aquí.
@@ -660,9 +673,54 @@ fn una_sesion_completa(casa: &Path, corpus_en: &Path) -> Vec<String> {
         Respuesta::SinResultado { buscado, .. } => dicho.push(buscado),
     }
 
-    // 5 · El kill-switch sobre lo que guardó la última pregunta del cliente.
+    // 6 · **Lo que el sprint 002 añadió, DENTRO de la ventana del inventario** (auditoría del S2, M8):
+    //     lo que Apple escriba por debajo al leer la pantalla, al hablar o al redactar, se escribe
+    //     aquí y el inventario lo ve. Cada paso dice si se ejerció: sin eso, un paso que no corre en
+    //     una máquina sería un verde que no midió nada.
+    let (_, lector) = pantalla::apple::ojos();
+    let diapositiva = cuadro_de(concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba/pantalla/tablero-margen.png"));
+    match lector.leer(&diapositiva) {
+        Ok(lineas) => {
+            println!("[sesión] OCR ejercido: {} líneas", lineas.len());
+            ejercido.push("ocr");
+        }
+        Err(e) => println!("[sesión] OCR NO ejercido: {e:?}"),
+    }
+    let voz = habla::voz();
+    if voz.hay_para("es-ES") && voz.decir("es-ES", "Alcance incluido.").is_ok() {
+        voz.callar();
+        println!("[sesión] voz ejercida (encolada y callada)");
+        ejercido.push("voz");
+    } else {
+        println!("[sesión] voz NO ejercida: este Mac no tiene voz para es-ES o no hay salida");
+    }
+    {
+        use app_copiloto_consultor_lib::sintesis::{self, Proveedor};
+        let del_sistema = sintesis::sistema::DelSistema;
+        let proveedor: std::sync::Arc<dyn Proveedor> = if del_sistema.disponible().is_ok() {
+            std::sync::Arc::new(del_sistema)
+        } else {
+            std::sync::Arc::new(sintesis::mock::Mock)
+        };
+        // Una pregunta que el corpus mínimo responde: la de la canaria no trae ficha a propósito.
+        let pregunta = "¿La limpieza de las tres fuentes está dentro del alcance?";
+        let respaldo = match armar(pregunta, &corpus.buscar(pregunta, 3).unwrap()) {
+            Respuesta::Ficha(f) => f.respaldo,
+            Respuesta::SinResultado { .. } => Vec::new(),
+        };
+        match sintesis::Peticion::nueva(pregunta, &respaldo) {
+            Some(p) => {
+                let r = sintesis::sugerir(proveedor.clone(), &p, sintesis::TECHO);
+                println!("[sesión] síntesis ejercida con «{}» · {} ms", proveedor.nombre(), r.ms);
+                ejercido.push("sintesis");
+            }
+            None => println!("[sesión] síntesis NO ejercida: la pregunta no trajo ficha"),
+        }
+    }
+
+    // 7 · El kill-switch sobre lo que guardó la última pregunta del cliente.
     disparador.reiniciar();
-    dicho
+    (dicho, ejercido)
 }
 
 /// Un corpus mínimo para la sesión del efímero: una propuesta y nada más.
@@ -695,7 +753,11 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     let antes: BTreeMap<PathBuf, Huella> = sitios.iter().flat_map(|s| inventario(s)).collect();
     println!("[efímero] {} archivos antes, en {} sitios", antes.len(), sitios.len());
 
-    let dicho = una_sesion_completa(&casa, &fuente);
+    let (dicho, ejercido) = una_sesion_completa(&casa, &fuente);
+    // Lo que el sprint 002 añadió tiene que haber corrido DENTRO del inventario: la pantalla y la
+    // síntesis corren en cualquier Mac con el puente (la CI incluida); la voz, solo donde hay voces.
+    assert!(ejercido.contains(&"ocr"), "la lectura de pantalla no se ejerció: el inventario no la midió");
+    assert!(ejercido.contains(&"sintesis"), "la síntesis no se ejerció: el inventario no la midió");
 
     let despues: BTreeMap<PathBuf, Huella> = sitios.iter().flat_map(|s| inventario(s)).collect();
 
@@ -786,7 +848,7 @@ fn sesion_para_el_log() {
     std::fs::create_dir_all(&casa).unwrap();
     let fuente = corpus_para_el_efimero();
 
-    let dicho = una_sesion_completa(&casa, &fuente);
+    let (dicho, _) = una_sesion_completa(&casa, &fuente);
     assert!(dicho.iter().any(|d| d.contains(CANARIA)), "la canaria no llegó a recorrer la sesión");
 
     let _ = std::fs::remove_dir_all(&casa);
@@ -1381,6 +1443,15 @@ struct CasoDePantalla {
     sola: Option<Vec<String>>,
 }
 
+/// Milisegundos de CPU (usuario + sistema) que lleva el proceso, todos sus hilos.
+fn cpu_del_proceso_ms() -> u64 {
+    // SEGURIDAD: `getrusage` escribe en la estructura que se le pasa, entera y con su tamaño.
+    let mut uso: libc::rusage = unsafe { std::mem::zeroed() };
+    unsafe { libc::getrusage(libc::RUSAGE_SELF, &mut uso) };
+    let ms = |t: libc::timeval| t.tv_sec as u64 * 1000 + t.tv_usec as u64 / 1000;
+    ms(uso.ru_utime) + ms(uso.ru_stime)
+}
+
 /// Una imagen del kit, en grises, como la dejaría la captura en el búfer de Rust.
 fn cuadro_de(ruta: &str) -> Cuadro {
     let archivo =
@@ -1461,12 +1532,15 @@ fn el_kit_de_pantalla_mide_la_lectura_y_su_refuerzo() {
     let mut solas_esperadas = 0;
     let mut falsos = Vec::new();
     let mut peor_v0 = f64::MAX;
+    let mut cpu = Vec::new();
     for (caso, (_, cuadro)) in kit.casos.iter().zip(&cuadros) {
         let reloj = Instant::now();
+        let cpu_antes = cpu_del_proceso_ms();
         let lineas = lector
             .leer(cuadro)
             .expect("Vision no leyó la imagen del kit");
         tiempos.push(reloj.elapsed().as_millis() as u64);
+        cpu.push(cpu_del_proceso_ms() - cpu_antes);
         let refuerzo = pantalla::refuerzo::extraer(&lineas, &vocabulario);
         let contexto = refuerzo.consulta();
 
@@ -1559,6 +1633,16 @@ fn el_kit_de_pantalla_mide_la_lectura_y_su_refuerzo() {
         "│ Vision                mediana {} ms · peor {peor} ms (techo {} ms)",
         tiempos[tiempos.len() / 2],
         pantalla::RITMO_MS
+    );
+    // **La CPU de una lectura** (auditoría del S2, B21): el presupuesto la pedía anotada. Es CPU del
+    // proceso entero —Vision reparte en varios hilos— durante la lectura, así que puede pasar del
+    // tiempo de reloj: es lo que le cuesta al Mac, no lo que tarda.
+    cpu.sort_unstable();
+    println!(
+        "│ CPU de una lectura    mediana {} ms · peor {} ms (a ≤ 1 lectura/s: menos de {:.0} % de un núcleo)",
+        cpu[cpu.len() / 2],
+        cpu[cpu.len() - 1],
+        cpu[cpu.len() / 2] as f64 / 10.0
     );
     println!(
         "│ huella                la menor distancia entre diapositivas: {menor} celdas (umbral {})",

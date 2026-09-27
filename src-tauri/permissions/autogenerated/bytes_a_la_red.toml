@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-bytes-a-la-red"
+description = "Enables the bytes_a_la_red command without any pre-configured scope."
+commands.allow = ["bytes_a_la_red"]
+
+[[permission]]
+identifier = "deny-bytes-a-la-red"
+description = "Denies the bytes_a_la_red command without any pre-configured scope."
+commands.deny = ["bytes_a_la_red"]

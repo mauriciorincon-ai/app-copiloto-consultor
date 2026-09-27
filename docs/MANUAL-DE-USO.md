@@ -126,7 +126,10 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     marcada como tal y comprobada contra su ficha.)
   - Cuando no encuentra nada, enseña **qué buscó** —para que veas en el acto si te entendió mal—,
     lo más parecido que sí tienes, y una sugerencia de cómo conducirte. Esa sugerencia habla de
-    **cómo responder**, jamás de tu negocio.
+    **cómo responder**, jamás de tu negocio. Si la pregunta no encaja en ninguna situación conocida
+    (precio, plazo, credencial, referencia, contrato) pero tu corpus tiene algo cercano, **te lo
+    nombra**: «Lo más cercano que sí tienes es «Alcance»: ofrécelo y pregunta para qué lo
+    necesitan.» · nuevo en Sprint 002.
   - Busca por las **palabras** de la pregunta. Si el cliente pregunta algo con palabras
     completamente distintas a las de tu documento, no lo encontrará.
   - Tu propia voz no dispara fichas: la app te contestaría a ti en mitad de tu frase.

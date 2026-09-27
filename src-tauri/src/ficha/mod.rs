@@ -168,7 +168,8 @@ pub fn armar(pregunta: &str, hallazgos: &[Hallazgo]) -> Respuesta {
                         texto: recortar(&titular_de(h), PALABRAS_DEL_TITULAR),
                     })
                     .collect(),
-                maniobra: maniobra::elegir(pregunta).id.to_string(),
+                // Con algo cercano en el corpus, la genérica se vuelve el puente (M15).
+                maniobra: maniobra::elegir_con(pregunta, !hallazgos.is_empty()).id.to_string(),
             }
         }
     }

@@ -56,6 +56,15 @@ pub struct Refuerzo {
     pub terminos: Vec<String>,
 }
 
+/// **Toda copia se pisa al soltarse** (auditoría del S2, B6): la cabecera del módulo promete que «el
+/// texto leído se pisa antes de soltarse», y las copias que viajan en `Resultado::Leido` y sus
+/// clones se soltaban sin pisar.
+impl Drop for Refuerzo {
+    fn drop(&mut self) {
+        self.olvidar();
+    }
+}
+
 impl Refuerzo {
     /// Todo junto, como texto de consulta. El buscador lo limpia igual que un turno hablado.
     pub fn consulta(&self) -> String {

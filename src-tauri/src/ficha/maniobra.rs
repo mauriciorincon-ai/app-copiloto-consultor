@@ -7,14 +7,15 @@
 //! palabra es lo que impide que se separen en silencio.
 //!
 //! **Las maniobras hablan de cómo conducirse, jamás del negocio del usuario.** Por eso pueden ser
-//! fijas y por eso no son una funcionalidad de IA: cero tokens, cero red. Cuando llegue la
-//! síntesis con modelo (sprint 2), este catálogo es su fallback permanente — lo pide la regla del
-//! código primero.
+//! fijas y por eso no son una funcionalidad de IA: cero tokens, cero red. La sugerencia con modelo
+//! (sprint 002, `sintesis/`) no las toca: solo acompaña a una ficha, y cuando no hay ficha, la
+//! maniobra es lo que queda.
 //!
-//! **Deuda declarada y aprobada por el usuario (mirada 11, segunda vuelta):** la sexta maniobra
-//! —la genérica— *«deja solo al consultor»*, y es la que más se va a disparar. El requisito
-//! escrito para el sprint 2 es «sin inventar respuesta, pero a medida de la situación», y el
-//! camino determinista está en `design-system.md` §10.
+//! **La genérica, a medida** (mirada 11; pagada en la auditoría del S2, M15): *«deja solo al
+//! consultor»* era el requisito sin cumplir. El camino determinista de `design-system.md` §10: si
+//! ninguna marca elige una maniobra pero el corpus trajo algo cercano, la maniobra es el
+//! [`PUENTE`] —nombrar lo más cercano que el consultor SÍ tiene y ofrecerlo—, con el nombre de esa
+//! sección puesto por la banda. La genérica queda para cuando no hay nada cerca.
 
 /// Una maniobra del catálogo.
 ///
@@ -87,6 +88,23 @@ pub const GENERICA: Maniobra = Maniobra {
     porque: "la pregunta real suele ser otra — y da tiempo",
 };
 
+/// **La séptima: el puente** a lo más cercano que sí tienes. La banda pone el nombre de la sección
+/// donde el texto dice «…» (el copy es bilingüe y vive en el diccionario).
+pub const PUENTE: Maniobra = Maniobra {
+    id: "puente",
+    texto: "Lo más cercano que sí tienes es «…»: ofrécelo y pregunta para qué lo necesitan.",
+    porque: "no te quedas en blanco: tu propio documento abre la conversación",
+};
+
+/// Elige la maniobra **sabiendo si el corpus trajo algo cercano**: sin marca y con algo cerca, el
+/// puente; sin marca y sin nada, la genérica.
+pub fn elegir_con(pregunta: &str, hay_algo_cercano: bool) -> Maniobra {
+    match elegir(pregunta) {
+        m if m == GENERICA && hay_algo_cercano => PUENTE,
+        m => m,
+    }
+}
+
 /// Elige la maniobra. El orden del catálogo decide los empates, y es el mismo del design system:
 /// una pregunta que mezcla precio y plazo se responde por el precio, que es lo que compromete.
 pub fn elegir(pregunta: &str) -> Maniobra {
@@ -100,12 +118,11 @@ pub fn elegir(pregunta: &str) -> Maniobra {
     GENERICA
 }
 
-/// Cuántas maniobras hay, para que la pantalla pueda decir «1 de 6» y para que el test que
-/// compara con el design system sepa cuántas buscar.
-pub const CUANTAS: usize = 6;
+/// Cuántas maniobras hay, para que el test que compara con el design system sepa cuántas buscar.
+pub const CUANTAS: usize = 7;
 
 pub fn todas() -> Vec<Maniobra> {
-    CATALOGO.iter().map(|(_, m)| *m).chain(std::iter::once(GENERICA)).collect()
+    CATALOGO.iter().map(|(_, m)| *m).chain([PUENTE, GENERICA]).collect()
 }
 
 fn normalizar(texto: &str) -> String {
@@ -151,6 +168,15 @@ mod pruebas {
         assert_eq!(elegir(""), GENERICA);
     }
 
+    /// **La genérica a medida** (M15): sin marca y con algo cercano en el corpus, el puente; sin
+    /// nada cercano, la genérica; y una marca manda siempre sobre el puente.
+    #[test]
+    fn sin_marca_y_con_algo_cercano_sale_el_puente() {
+        assert_eq!(elegir_con("¿Y ustedes dónde quedan?", true), PUENTE);
+        assert_eq!(elegir_con("¿Y ustedes dónde quedan?", false), GENERICA);
+        assert_eq!(elegir_con("¿Cuánto cuesta?", true).id, "cifra");
+    }
+
     /// Una pregunta que mezcla dos marcas se resuelve por el orden del catálogo, y ese orden es
     /// el del design system. Sin esto, dos corridas podrían dar maniobras distintas.
     #[test]
@@ -161,7 +187,7 @@ mod pruebas {
     }
 
     #[test]
-    fn son_seis_y_ninguna_se_repite() {
+    fn son_siete_y_ninguna_se_repite() {
         let t = todas();
         assert_eq!(t.len(), CUANTAS);
         for (i, a) in t.iter().enumerate() {

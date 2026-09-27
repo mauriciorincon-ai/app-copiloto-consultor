@@ -64,11 +64,42 @@ private final class Bandera: @unchecked Sendable {
 
 private let hablando = Bandera()
 
+/// **Cuánto tardó en sonar la última frase** (auditoría del S2, B21): el instante en que se encoló y
+/// los milisegundos hasta que el sintetizador avisó `didStart`, que es cuando de verdad empieza el
+/// sonido. `hablando` no sirve para esto: se pone al encolar, a propósito.
+private final class Arranque: @unchecked Sendable {
+  private let candado = NSLock()
+  private var desde: DispatchTime?
+  private var ms: Int32 = -1
+  func encolada() {
+    candado.lock()
+    desde = DispatchTime.now()
+    ms = -1
+    candado.unlock()
+  }
+  func sono() {
+    candado.lock()
+    if let d = desde {
+      ms = Int32((DispatchTime.now().uptimeNanoseconds - d.uptimeNanoseconds) / 1_000_000)
+      desde = nil
+    }
+    candado.unlock()
+  }
+  var milisegundos: Int32 {
+    candado.lock()
+    defer { candado.unlock() }
+    return ms
+  }
+}
+
+private let arranque = Arranque()
+
 /// El delegado que mueve la bandera. Las tres devoluciones que importan son las tres formas en que
 /// una frase deja de sonar: terminó, la cancelaron, o nunca empezó porque el sistema la descartó.
 private final class Delegado: NSObject, AVSpeechSynthesizerDelegate, @unchecked Sendable {
   func speechSynthesizer(_: AVSpeechSynthesizer, didStart _: AVSpeechUtterance) {
     hablando.poner(true)
+    arranque.sono()
   }
 
   func speechSynthesizer(_: AVSpeechSynthesizer, didFinish _: AVSpeechUtterance) {
@@ -137,10 +168,18 @@ public func agHablaDecir(_ idioma: UnsafePointer<CChar>, _ texto: UnsafePointer<
   // hablar. El disparador automático mira esa bandera para no interrumpirse, así que ese hueco es
   // exactamente el que produciría dos voces a la vez.
   hablando.poner(true)
+  arranque.encolada()
   DispatchQueue.main.async {
     sintetizador.speak(frasePara)
   }
   return Int32(frase.count)
+}
+
+/// Los milisegundos entre encolar la última frase y que empezara a sonar, o `-1` si todavía no
+/// sonó. Solo tiempos: ni el texto ni la voz.
+@_cdecl("ag_habla_ms_hasta_sonar")
+public func agHablaMsHastaSonar() -> Int32 {
+  arranque.milisegundos
 }
 
 /// **Cállate.** Corta lo que esté diciendo y tira lo que quede en la cola. `⎋` acaba aquí.

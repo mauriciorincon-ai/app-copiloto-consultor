@@ -1,5 +1,50 @@
+/// **Los comandos de la app, declarados** (auditoría del S2, M5). Sin esta lista, Tauri deja que
+/// CUALQUIER ventana llame a cualquier comando: la banda —la que pinta texto de terceros encima de la
+/// reunión— podía guardar la clave del API, y el relleno —que no puede tener contenido— también.
+/// Con ella, cada ventana solo puede lo que su capability (`capabilities/*.json`) le permite, y un
+/// permiso mal escrito rompe la compilación. Tiene que ser la misma lista que `generate_handler!`:
+/// lo vigila `tests/unit/capabilities.test.ts`.
+const COMANDOS: &[&str] = &[
+        "ajustar_banda",
+        "asentar_banda",
+        "estado_del_acople",
+        "fondo_del_relleno",
+        "reunion_abierta",
+        "permisos_de_macos",
+        "abrir_ajustes_de",
+        "bytes_a_la_red",
+        "cortar_todo",
+        "empezar_a_escuchar",
+        "dejar_de_escuchar",
+        "estado_de_la_escucha",
+        "turnos_recientes",
+        "que_sabe_transcribir",
+        "estado_del_diccionario",
+        "instalar_idioma",
+        "salida_de_audio",
+        "elegir_carpeta",
+        "indexar_corpus",
+        "estado_del_corpus",
+        "piezas_del_corte",
+        "pedir_ficha",
+        "estado_de_la_voz",
+        "estado_de_la_pantalla",
+        "lectura_automatica",
+        "leer_la_pantalla_ahora",
+        "radar_de_tu_mac",
+        "abrir_lo_que_ve",
+        "estado_de_la_ia",
+        "redactar_sugerencias",
+        "api_externa",
+        "guardar_clave_del_api",
+        "borrar_clave_del_api",
+];
+
 fn main() {
-    tauri_build::build();
+    tauri_build::try_build(
+        tauri_build::Attributes::new().app_manifest(tauri_build::AppManifest::new().commands(COMANDOS)),
+    )
+    .expect("tauri-build no pudo generar el manifiesto de comandos");
     #[cfg(target_os = "macos")]
     compilar_el_puente_de_swift();
 }

@@ -2,7 +2,7 @@
 //! `habla/`**, igual que `stt/apple.rs` concentra el de la transcripción y `acople/ax.rs` el del
 //! acople: una sola puerta, vigilada, y el resto del módulo en Rust seguro.
 //!
-//! Las cuatro funciones que cruzan la frontera están declaradas abajo tal y como las expone
+//! Las cinco funciones que cruzan la frontera están declaradas abajo tal y como las expone
 //! `nativo/Habla.swift`. Ninguna deja punteros vivos tras la llamada: el texto entra copiado a un
 //! `CString` y lo que vuelve es un entero.
 //!
@@ -22,6 +22,20 @@ mod puente {
         pub fn ag_habla_decir(idioma: *const c_char, texto: *const c_char) -> c_int;
         pub fn ag_habla_callar() -> c_int;
         pub fn ag_habla_hablando() -> c_int;
+        pub fn ag_habla_ms_hasta_sonar() -> c_int;
+    }
+}
+
+/// Cuánto tardó en sonar la última frase desde que se encoló, si ya sonó (auditoría del S2, B21).
+pub fn ms_hasta_sonar() -> Option<u32> {
+    #[cfg(all(target_os = "macos", puente_de_swift))]
+    {
+        let ms = unsafe { puente::ag_habla_ms_hasta_sonar() };
+        (ms >= 0).then_some(ms as u32)
+    }
+    #[cfg(not(all(target_os = "macos", puente_de_swift)))]
+    {
+        None
     }
 }
 

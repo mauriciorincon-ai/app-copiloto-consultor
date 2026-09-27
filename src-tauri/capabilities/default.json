@@ -8,6 +8,32 @@
   "permissions": [
     "core:default",
     "opener:default",
-    "dialog:allow-open"
+    "dialog:allow-open",
+    "allow-reunion-abierta",
+    "allow-permisos-de-macos",
+    "allow-abrir-ajustes-de",
+    "allow-bytes-a-la-red",
+    "allow-cortar-todo",
+    "allow-empezar-a-escuchar",
+    "allow-dejar-de-escuchar",
+    "allow-estado-de-la-escucha",
+    "allow-que-sabe-transcribir",
+    "allow-estado-del-diccionario",
+    "allow-instalar-idioma",
+    "allow-salida-de-audio",
+    "allow-elegir-carpeta",
+    "allow-indexar-corpus",
+    "allow-estado-del-corpus",
+    "allow-piezas-del-corte",
+    "allow-estado-de-la-voz",
+    "allow-estado-de-la-pantalla",
+    "allow-lectura-automatica",
+    "allow-leer-la-pantalla-ahora",
+    "allow-radar-de-tu-mac",
+    "allow-estado-de-la-ia",
+    "allow-redactar-sugerencias",
+    "allow-api-externa",
+    "allow-guardar-clave-del-api",
+    "allow-borrar-clave-del-api"
   ]
 }

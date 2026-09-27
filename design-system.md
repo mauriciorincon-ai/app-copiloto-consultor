@@ -403,6 +403,7 @@ deterministas**:
 | `cuándo · plazo · semanas · entrega` | Da el plazo del caso más parecido y confírmalo por escrito. | anclar en un caso real es defendible; una fecha inventada, no |
 | `quién más · referencia · han trabajado con` | Ofrece una referencia del sector sin nombrar al cliente aún. | nombrar clientes sin permiso es un problema, no una venta |
 | `contrato · cláusula · penalidad · NDA` | No opines de contrato en vivo: anótalo y respóndelo por escrito. | lo contractual no se improvisa en una llamada |
+| *cualquier otra, con algo cercano en tu corpus* | Lo más cercano que sí tienes es «…»: ofrécelo y pregunta para qué lo necesitan. | no te quedas en blanco: tu propio documento abre la conversación |
 | *cualquier otra* | Devuelve la pregunta: ¿para qué lo necesitan? | la pregunta real suele ser otra — y da tiempo |
 
 **Las maniobras hablan de cómo conducirse, jamás del negocio del usuario** — por eso pueden ser
@@ -522,7 +523,7 @@ cuatro todavía no existen»**, no «7 de 7».
 | El pie del panel abrevia «corta» (kill-switch) | 380 px | el `kbd` ⌥⎋ y el tooltip completan; en Sesión y Honestidad va el texto entero |
 | Simulación deutan del arnés (capturas `--cvd`) | herramienta de la etapa, no gate | corregida en la Fase 2; se vuelve gate visual del S1 |
 | La píldora de voz no muestra el texto de la ficha | ocuparía la pantalla que el modo existe para liberar | si el usuario lo pide, un estado «píldora expandida» en el S2 |
-| **La maniobra genérica deja solo al consultor** — «devuelve la pregunta: ¿para qué lo necesitan?» | es la única de las seis que no se apoya en nada: cuando ni las reglas léxicas ni el corpus dan material, la app se queda sin qué decir | **sprint 2.** Requisito del usuario (mirada 11): *no inventar una respuesta, pero sugerir cómo abordar la situación* **a medida de la situación**. Camino determinista disponible sin LLM: construir la maniobra con lo que la app **sí sabe** —la unidad que falta, la sección más cercana del corpus, la ficha del cliente, la jurisdicción, lo ya comprometido en esta reunión— en vez de elegir una frase de catálogo. El catálogo queda como último recurso, no como respuesta normal |
+| ~~**La maniobra genérica deja solo al consultor**~~ — **pagada en la auditoría del S2 (M15)** | es la única que no se apoyaba en nada | **sprint 2, pagada.** Requisito del usuario (mirada 11): *no inventar una respuesta, pero sugerir cómo abordar la situación* **a medida de la situación**. Se construyó por el camino determinista: sin marca y con algo cercano en el corpus, la maniobra es el **puente** —«Lo más cercano que sí tienes es «…»: ofrécelo y pregunta para qué lo necesitan.», con el nombre de esa sección—; la genérica queda para cuando no hay nada cerca (`src-tauri/src/ficha/maniobra.rs`). La unidad que falta, la ficha del cliente y lo comprometido en la reunión quedan como siguientes pasos del mismo camino |
 
 ## Registro de cambios
 

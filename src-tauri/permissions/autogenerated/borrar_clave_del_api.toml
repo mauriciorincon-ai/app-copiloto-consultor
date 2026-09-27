@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-borrar-clave-del-api"
+description = "Enables the borrar_clave_del_api command without any pre-configured scope."
+commands.allow = ["borrar_clave_del_api"]
+
+[[permission]]
+identifier = "deny-borrar-clave-del-api"
+description = "Denies the borrar_clave_del_api command without any pre-configured scope."
+commands.deny = ["borrar_clave_del_api"]

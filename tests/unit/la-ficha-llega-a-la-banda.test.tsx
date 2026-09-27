@@ -138,6 +138,21 @@ describe("la ficha, dentro del producto", () => {
     expect(banda().textContent).toContain(NOVEDAD_APARECE_SIN_RESULTADO.buscado);
   });
 
+  /**
+   * **La maniobra a medida** (auditoría del S2, M15): sin marca y con algo cercano en el corpus, la
+   * banda no dice «devuelve la pregunta» a secas — nombra lo más cercano que el consultor SÍ tiene.
+   */
+  it("el puente nombra lo más cercano que sí tienes", async () => {
+    if (NOVEDAD_APARECE_SIN_RESULTADO.clase !== "sinResultado") throw new Error("cambió la muestra");
+    const cercana = NOVEDAD_APARECE_SIN_RESULTADO.cercanas[0];
+    expect(cercana, "la muestra no trae nada cercano").toBeDefined();
+    await laBanda();
+    await emitir("escucha", { ...NOVEDAD_APARECE_SIN_RESULTADO, maniobra: "puente" });
+    const t = es.banda;
+    expect(banda().textContent).toContain(`${t.puenteAntes} ${t.comillaAbre}${cercana.texto}${t.comillaCierra}${t.puenteDespues}`);
+    expect(banda().textContent).not.toContain(t.maniobras.generica);
+  });
+
   it("el turno del cliente abre el «buscando» antes de que haya respuesta", async () => {
     await laBanda();
     await emitir("escucha", NOVEDAD_TURNO);

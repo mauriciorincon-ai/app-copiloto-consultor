@@ -106,8 +106,11 @@ que la promesa, pero cierto.
 
 ## Deuda declarada
 
-La **maniobra genérica** —la sexta, la que sale cuando ninguna marca aparece— sigue siendo la del
-catálogo fijo, y es la que más se va a disparar. El usuario ya lo señaló en la mirada 11: *«no
-quiero que invente una respuesta, quiero que le sugiera cómo abordar la situación muy a medida de
-la situación»*. El camino determinista está escrito en `design-system.md` §10 y es trabajo del
-sprint 2.
+~~La **maniobra genérica** deja solo al consultor~~ — **pagada en la auditoría del sprint 002
+(M15).** El usuario lo señaló en la mirada 11: *«no quiero que invente una respuesta, quiero que le
+sugiera cómo abordar la situación muy a medida de la situación»*. Se construyó por el camino
+determinista de `design-system.md` §10: si ninguna marca elige maniobra pero el corpus trajo algo
+cercano, la maniobra es el **puente** —«Lo más cercano que sí tienes es «…»: ofrécelo y pregunta
+para qué lo necesitan.», con el nombre de esa sección—; la genérica queda para cuando no hay nada
+cerca (`src-tauri/src/ficha/maniobra.rs`, `elegir_con`). Lo que el §10 nombra además —la unidad que
+falta, la ficha del cliente, lo comprometido en la reunión— son pasos siguientes del mismo camino.

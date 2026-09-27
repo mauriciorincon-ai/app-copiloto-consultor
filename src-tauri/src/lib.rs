@@ -269,14 +269,6 @@ fn asentar_banda<R: tauri::Runtime>(app: tauri::AppHandle<R>, alto: u32) -> Resu
     Ok(())
 }
 
-/// Cierra la banda **y su relleno**, y devuelve a su sitio lo que el acople encogió. El relleno
-/// jamás sobrevive a la banda, y la reunión jamás se queda recortada.
-#[tauri::command]
-fn cerrar_banda(app: tauri::AppHandle) {
-    registrar_acople(&app, "soltar", &acople::soltar(&huella(&app)));
-    ventana::cerrar_banda(&app);
-}
-
 /// Lo que la banda necesita para dibujar «acoplada» o «sin acople» — y lo que hace que esa
 /// palabra sea un hecho comprobado, no una etiqueta fija.
 #[derive(Clone, serde::Serialize)]
@@ -301,29 +293,6 @@ fn estado_ahora<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> EstadoDelAcople
 #[tauri::command]
 fn estado_del_acople(app: tauri::AppHandle) -> EstadoDelAcople {
     estado_ahora(&app)
-}
-
-/// Acopla la aplicación que está al frente. La **fase 2** la llamará al detectar la reunión; aquí
-/// existe para poder verlo correr.
-#[tauri::command]
-fn acoplar(app: tauri::AppHandle) -> Result<bool, String> {
-    let alto = ventana::alto_actual(&app).unwrap_or(ventana::ALTO_COMPACTA);
-    let informe = acople::acoplar(ventana::franja(&app, alto)?, &huella(&app));
-    registrar_acople(&app, "acoplar", &informe);
-    Ok(informe.acoplada())
-}
-
-#[tauri::command]
-fn soltar_acople(app: tauri::AppHandle) -> bool {
-    let informe = acople::soltar(&huella(&app));
-    registrar_acople(&app, "soltar", &informe);
-    informe.acoplada()
-}
-
-/// Pide el permiso de Accesibilidad: macOS abre su diálogo y lleva a Ajustes del Sistema.
-#[tauri::command]
-fn pedir_permiso_de_acople() -> bool {
-    acople::pedir_permiso()
 }
 
 /// El fondo de escritorio para el relleno, como `data:` listo para CSS. `None` = negro, que es la
@@ -353,12 +322,6 @@ fn fondo_del_relleno(estado: tauri::State<'_, FondoDelRelleno>) -> Option<String
 #[tauri::command]
 fn reunion_abierta() -> sesion::Reunion {
     sesion::ahora()
-}
-
-/// La versión del catálogo de clientes de videollamada, para mostrarla al lado de lo que afirma.
-#[tauri::command]
-fn version_del_catalogo() -> &'static str {
-    sesion::VERSION_CATALOGO
 }
 
 #[tauri::command]
@@ -687,21 +650,23 @@ fn turnos_recientes(estado: tauri::State<'_, LaEscucha>, cuantos: usize) -> Vec<
 /// Un idioma tal y como lo enseña la pantalla de Idioma.
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
-struct IdiomaDelMotor {
-    codigo: String,
-    disponibilidad: stt::Disponibilidad,
+pub(crate) struct IdiomaDelMotor {
+    pub(crate) codigo: String,
+    pub(crate) disponibilidad: stt::Disponibilidad,
 }
 
 /// Lo que el motor de este Mac sabe hacer. **Se pregunta al sistema**, no se lleva una lista
 /// escrita que quedaría desfasada con la siguiente versión de macOS.
+/// **Cruza la costura con muestra** desde la auditoría del S2 (M7): su `motivo` pasó de texto libre a
+/// un enum cerrado en este sprint, y era el único camino por el que ese enum cruzaba sin fixture.
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
-struct QueSabeTranscribir {
-    motor: &'static str,
-    techo: u32,
-    idiomas: Vec<IdiomaDelMotor>,
+pub(crate) struct QueSabeTranscribir {
+    pub(crate) motor: &'static str,
+    pub(crate) techo: u32,
+    pub(crate) idiomas: Vec<IdiomaDelMotor>,
     /// Si no hay motor, por qué — cerrado; Idioma lo pinta con su frase en los dos idiomas.
-    motivo: Option<stt::PorQueNoHayMotor>,
+    pub(crate) motivo: Option<stt::PorQueNoHayMotor>,
 }
 
 #[tauri::command]
@@ -873,14 +838,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             ajustar_banda,
             asentar_banda,
-            cerrar_banda,
             estado_del_acople,
-            acoplar,
-            soltar_acople,
-            pedir_permiso_de_acople,
             fondo_del_relleno,
             reunion_abierta,
-            version_del_catalogo,
             permisos_de_macos,
             abrir_ajustes_de,
             bytes_a_la_red,
@@ -898,7 +858,6 @@ pub fn run() {
             estado_del_corpus,
             piezas_del_corte,
             pedir_ficha,
-            modo_solo_audio,
             estado_de_la_voz,
             estado_de_la_pantalla,
             lectura_automatica,
@@ -1252,7 +1211,21 @@ fn decir_la_ficha<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Apari
 
     let dicho = habla::a_voz(&f.titular, &f.linea, &fuente_hablada(&f.fuente));
     match estado.voz.decir(&idioma, &dicho) {
-        Ok(()) => println!("[habla] diciendo la ficha · {} letras · {idioma}", dicho.chars().count()),
+        Ok(()) => {
+            println!("[habla] diciendo la ficha · {} letras · {idioma}", dicho.chars().count());
+            // **El presupuesto «la voz empieza ≤ 1 s tras la ficha», medido en vivo** (auditoría del
+            // S2, B21): lo que tardó el sintetizador en sonar de verdad, al log. Solo el número.
+            std::thread::spawn(|| {
+                for _ in 0..100 {
+                    if let Some(ms) = habla::apple::ms_hasta_sonar() {
+                        println!("[habla] empezó a sonar a los {ms} ms (presupuesto 1000)");
+                        return;
+                    }
+                    std::thread::sleep(std::time::Duration::from_millis(20));
+                }
+                println!("[habla] no empezó a sonar en 2 s");
+            });
+        }
         Err(e) => println!("[habla] el sintetizador no pudo: {e}"),
     }
     let _ = app.emit_to(ventana::BANDA, EVENTO_VOZ, estado.estado());
@@ -1271,21 +1244,6 @@ fn fuente_hablada(f: &ficha::Fuente) -> String {
     } else {
         format!("{}, {}", f.documento, seccion.trim())
     }
-}
-
-/// `⌃⌥V` — **enciende o apaga el modo solo audio**, y con él la banda de 44 px.
-///
-/// Lo llaman la tecla global y nadie más. Al encender lee la ficha vigente, que es lo que el usuario
-/// espera de haber pulsado la tecla: si no dijera nada hasta el turno siguiente, parecería que no
-/// funcionó.
-///
-/// **Por qué la tecla es `⌃⌥V` y no el `⌃⌥A` que pedía la orden del sprint:** `⌃⌥A` ya es «ayúdame
-/// con esto» desde el sprint 001 — está registrada [`el_atajo_de_ayuda`], dibujada en la banda y
-/// escrita en el manual. El panel que el usuario aprobó en la etapa de diseño ya usaba `⌃⌥V`.
-/// Desviación declarada en la bitácora.
-#[tauri::command]
-fn modo_solo_audio(app: tauri::AppHandle) -> habla::LaVoz {
-    conmutar_el_modo(&app)
 }
 
 /// El trabajo de `⌃⌥V`, **hecho en Rust y no pedido a la banda por un evento**.

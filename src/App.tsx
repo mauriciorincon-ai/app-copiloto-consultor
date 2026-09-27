@@ -109,7 +109,7 @@ function acopleDesdeLaUrl(busqueda: string): boolean | undefined {
 export function Enrutador({ busqueda = globalThis.location?.search ?? "" }: { busqueda?: string }) {
   const ventana = ventanaActual(busqueda);
   const alto = useAltoDeVentana();
-  const acoplada = useAcoplada(acopleDesdeLaUrl(busqueda));
+  const acoplada = useAcoplada(acopleDesdeLaUrl(busqueda), ventana === "banda");
   // `⌃⌥T` conmuta el transcript desde la parte nativa. El parámetro de URL sigue existiendo para
   // que el arnés de capturas pueda fotografiar el encuadre abierto sin pulsar una tecla global.
   const transcript = useTranscriptVisible(

@@ -156,6 +156,29 @@ describe("contador de red: la única puerta que hay está declarada y contada", 
     expect(hallazgos, `salidas a la red en Rust:\n${hallazgos.join("\n")}`).toEqual([]);
   });
 
+  /**
+   * **Ni lanza un programa que salga por él** (auditoría del S2, B13): un `Command::new("curl")` en
+   * `lib.rs` pasaba todos los gates. La app lanza exactamente UN programa —`/usr/bin/profiles`, desde
+   * el MDM del radar, que solo lee la inscripción de ESTE Mac— y cualquier otro es rojo.
+   */
+  it("el único programa que la app lanza es el del MDM del radar", () => {
+    const PERMITIDOS: Record<string, string> = { "src-tauri/src/radar/mdm.rs": "/usr/bin/profiles" };
+    const lanzados: string[] = [];
+    for (const f of archivos(RUST, [".rs"])) {
+      readFileSync(f, "utf8")
+        .split("\n")
+        .forEach((linea, i) => {
+          const t = linea.trim();
+          if (t.startsWith("//")) return;
+          for (const m of linea.matchAll(/Command::new\(\s*("[^"]*"|[^)]*)\)/g)) {
+            const programa = m[1].replace(/"/g, "");
+            if (PERMITIDOS[f] !== programa) lanzados.push(`${f}:${i + 1} lanza «${programa}»`);
+          }
+        });
+    }
+    expect(lanzados, `programas lanzados fuera de la lista:\n${lanzados.join("\n")}`).toEqual([]);
+  });
+
   it("ningún archivo del webview sale a la red", () => {
     const hallazgos = barrer(archivos(WEBVIEW, [".ts", ".tsx"]), SALIDAS_WEB);
     expect(hallazgos, `salidas a la red en el webview:\n${hallazgos.join("\n")}`).toEqual([]);

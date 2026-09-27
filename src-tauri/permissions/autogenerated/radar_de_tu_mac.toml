@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-radar-de-tu-mac"
+description = "Enables the radar_de_tu_mac command without any pre-configured scope."
+commands.allow = ["radar_de_tu_mac"]
+
+[[permission]]
+identifier = "deny-radar-de-tu-mac"
+description = "Denies the radar_de_tu_mac command without any pre-configured scope."
+commands.deny = ["radar_de_tu_mac"]

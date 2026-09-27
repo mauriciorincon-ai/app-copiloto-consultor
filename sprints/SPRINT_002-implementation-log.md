@@ -2514,3 +2514,40 @@ Tercera corrida: 116 encuadres, ninguno sobre el umbral, ningún desborde.
   «CANARIA-DEL-CLIENTE».
 - **B12 · `Aparicion.hora`** solo la leía la muestra: la línea «oído» usa la hora de la aparición
   también en el producto.
+
+### Gates y contrato (sigue): M7 · M5 · B8 · B13 · M8 — y M15, B21, B6
+- **M7 · `QueSabeTranscribir` cruzaba sin muestra.** `pub(crate)` y cuatro muestras en el contrato —con
+  motor, y sin él por cada uno de sus tres porqués—. **Rojo:** renombrar `motivo` en el tipo TS rompe
+  `pnpm typecheck` en `contrato.generado.ts`.
+- **M5 · sin manifiesto, toda ventana podía llamar a todo.** `build.rs` declara los 33 comandos
+  (`AppManifest::commands`); `capabilities/banda.json` permite **13** —los que la banda alcanza, seguidos
+  hook por hook—, `relleno.json` **uno** (`fondo_del_relleno`), el cuaderno el resto. `useAcoplada` solo
+  pregunta en la banda. `tauri-build` valida los permisos al compilar. Gate nuevo
+  `tests/unit/capabilities.test.ts`: manifiesto = `generate_handler!`; ningún comando muerto ni
+  inexistente; el relleno puede uno y la banda nada de la clave, el API, el corpus ni la sesión; y la
+  banda puede todo lo que de verdad llama (función por función desde `Banda.tsx`). **Rojos:** la banda
+  con `allow-guardar-clave-del-api`; la banda sin `allow-pedir-ficha`. **Lo que no se pudo verificar:**
+  el «invoke rechazado desde la consola de la banda» que pedía el auditor: la consola del webview no es
+  accesible desde esta sesión; queda la validación de `tauri-build`, el gate y el arranque en vivo.
+- **B8 · seis comandos sin llamador** (`modo_solo_audio`, `cerrar_banda`, `acoplar`, `soltar_acople`,
+  `pedir_permiso_de_acople`, `version_del_catalogo`): fuera. Lo vigila el mismo gate.
+- **B13 · un `Command::new("curl")` pasaba todos los gates.** El contador de red exige que el único
+  programa lanzado sea `/usr/bin/profiles` desde `radar/mdm.rs`. **Rojo:** `curl` plantado en `lib.rs`.
+- **M8 · el efímero en marcha no ejercía nada del sprint 002.** La sesión completa lee una diapositiva
+  con Vision, encola y calla la voz, y redacta una sugerencia (el modelo del sistema si está, el mock si
+  no) **dentro** de la ventana del inventario, y dice qué ejerció; se mira además la caché de macOS del
+  propio proceso. El test exige OCR y síntesis (la voz, solo donde hay voces). Medido aquí: OCR 11
+  líneas, voz encolada y callada, síntesis con el modelo del sistema, **cero intrusos**. **Rojo:** sin el
+  paso del OCR, «la lectura de pantalla no se ejerció». El diccionario de esa sesión usa ya los clientes
+  del corpus (A3).
+- **M15 · la maniobra genérica, a medida** (decisión del usuario: construirla). Sin marca y con algo
+  cercano en el corpus, la maniobra es el **puente**: «Lo más cercano que sí tienes es «Alcance»:
+  ofrécelo y pregunta para qué lo necesitan.» —la banda pone el nombre—; sin nada cerca, la genérica.
+  Design system (§9-quinquies con su fila, §10 pagada), maqueta, ADR 008 y manual al día. **Rojos:** el
+  test del catálogo contra el design system cayó antes de añadir la fila; la banda sin el puente.
+- **B21 · dos presupuestos sin medir.** CPU de una lectura de pantalla, en el kit: **mediana 172 ms de
+  CPU** (Vision reparte en varios hilos; 88 ms de reloj) → a ≤ 1 lectura/s, menos del 17 % de un núcleo.
+  La voz: `cargo test` no puede medirla (el hilo principal no atiende la cola del sintetizador), así que
+  el puente guarda el instante de encolar y el de `didStart`, y la app escribe en vivo **«[habla] empezó a
+  sonar a los N ms (presupuesto 1000)»**: el número sale en la parada h1 del gate del MVP.
+- **B6 · `Refuerzo` sin `Drop`.** Toda copia se pisa al soltarse.

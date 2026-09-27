@@ -52,7 +52,7 @@ export type Ficha = {
  * el diccionario, donde el gate que exige que toda cadena esté en la maqueta puede vigilarlo.
  */
 export type IdDeManiobra =
-  "credencial" | "cifra" | "plazo" | "referencia" | "contrato" | "generica";
+  "credencial" | "cifra" | "plazo" | "referencia" | "contrato" | "puente" | "generica";
 
 export type SinResultado = {
   clase: "sinResultado";

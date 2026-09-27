@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-indexar-corpus"
+description = "Enables the indexar_corpus command without any pre-configured scope."
+commands.allow = ["indexar_corpus"]
+
+[[permission]]
+identifier = "deny-indexar-corpus"
+description = "Denies the indexar_corpus command without any pre-configured scope."
+commands.deny = ["indexar_corpus"]

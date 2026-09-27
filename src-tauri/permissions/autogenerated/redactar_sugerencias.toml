@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-redactar-sugerencias"
+description = "Enables the redactar_sugerencias command without any pre-configured scope."
+commands.allow = ["redactar_sugerencias"]
+
+[[permission]]
+identifier = "deny-redactar-sugerencias"
+description = "Denies the redactar_sugerencias command without any pre-configured scope."
+commands.deny = ["redactar_sugerencias"]

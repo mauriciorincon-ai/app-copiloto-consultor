@@ -75,7 +75,11 @@ export const es = {
       referencia: "Ofrece una referencia del sector sin nombrar al cliente aún.",
       contrato: "No opines de contrato en vivo: anótalo y respóndelo por escrito.",
       generica: "Devuelve la pregunta: ¿para qué lo necesitan?",
+      /** El puente (M15): la banda pone entre las dos partes el nombre de lo más cercano. */
+      puente: "Lo más cercano que sí tienes es «…»: ofrécelo y pregunta para qué lo necesitan.",
     },
+    puenteAntes: "Lo más cercano que sí tienes es",
+    puenteDespues: ": ofrécelo y pregunta para qué lo necesitan.",
     cercano: "lo más cercano",
     cercanoLargo: "lo más cercano que sí tienes · ninguno responde la pregunta",
     buscarOtras: "Buscar con otras palabras",
