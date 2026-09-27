@@ -358,7 +358,7 @@ export function Banda({
       data-estado={estadoReal}
     >
       {/* El asa ajusta la banda Y su relleno a la vez; el arrastre lo resuelve Rust. */}
-      <span className="asa" ref={asa} title="arrastra para ajustar las dos a la vez">
+      <span className="asa" ref={asa} title={t.asaAjustar}>
         <i />
       </span>
 
@@ -881,7 +881,7 @@ function BandaDeVoz({
       {/* El asa sigue siendo la misma y sigue haciendo lo mismo: arrastrarla saca del modo,
           porque el alto ES el modo. No hace falta una tecla distinta para lo que ya se hace
           tirando de la banda. */}
-      <span className="asa" ref={asa} title="arrastra para volver a la banda de 88 px">
+      <span className="asa" ref={asa} title={t.asaVolver}>
         <i />
       </span>
 

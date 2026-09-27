@@ -482,9 +482,13 @@ fn empezar_a_escuchar(
     app: tauri::AppHandle,
     estado: tauri::State<'_, LaEscucha>,
     el_corpus: tauri::State<'_, ElCorpus>,
-    idioma_del_consultor: String,
-    idioma_del_cliente: String,
 ) -> Result<escucha::EstadoDeEscucha, String> {
+    // **Los idiomas salen de las preferencias, que son la única fuente** (sprint 003). En la fase 0
+    // los mandaba el webview desde su caché, y la casilla 6 lo cazó: después de reiniciar, Sesión
+    // mandaba los de fábrica si el usuario no había pasado antes por Idioma. Sin parámetros, el
+    // webview ya no tiene cómo mandar unos viejos.
+    let prefs::IdiomasDePista { consultor: idioma_del_consultor, cliente: idioma_del_cliente } =
+        idiomas_guardados(&app.state::<LasPreferencias>());
     let mut guardada = estado.0.lock().map_err(|_| "la escucha quedó en mal estado")?;
     if let Some(vieja) = guardada.take() {
         vieja.cortar();
@@ -1386,10 +1390,10 @@ fn con_el_callar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, coger: bool) {
 
 /// **LA LECTURA DE PANTALLA**, viva lo que viva la sesión.
 ///
-/// El interruptor (`encendida`) vive fuera de la lectura y **sobrevive a las sesiones** mientras la
-/// app esté abierta: si el usuario la apagó en una reunión con una NDA estricta, la siguiente sesión
-/// no la vuelve a encender a sus espaldas. No se guarda en disco —es una preferencia de esta
-/// sesión de la app, no del usuario— y arranca encendida, que es lo que la maqueta dibuja.
+/// El interruptor (`encendida`) vive fuera de la lectura y **sobrevive a las sesiones**: si el
+/// usuario la apagó en una reunión con una NDA estricta, la siguiente sesión no la vuelve a encender
+/// a sus espaldas. Desde el sprint 003 **sobrevive también al reinicio** (`prefs.rs`): de fábrica
+/// arranca encendida, que es lo que la maqueta dibuja, y después como la dejó el usuario.
 struct LaPantalla {
     lectura: std::sync::Mutex<Option<pantalla::Lectura>>,
     encendida: AtomicBool,
@@ -1660,10 +1664,15 @@ fn recordar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, cambio: impl FnOnce(&m
     }
 }
 
-/// El idioma de cada pista, como lo dejó el usuario. Lo lee el cuaderno al abrirse.
+/// El idioma de cada pista, como lo dejó el usuario.
+fn idiomas_guardados(lp: &LasPreferencias) -> prefs::IdiomasDePista {
+    lp.actuales.lock().map(|p| p.idiomas.clone()).unwrap_or_default()
+}
+
+/// El idioma de cada pista, para que Idioma lo enseñe. La escucha no lo pide: lo lee de aquí mismo.
 #[tauri::command]
 fn idiomas_de_pista(lp: tauri::State<'_, LasPreferencias>) -> prefs::IdiomasDePista {
-    lp.actuales.lock().map(|p| p.idiomas.clone()).unwrap_or_default()
+    idiomas_guardados(&lp)
 }
 
 /// Idioma elige el de una pista. Solo `consultor` o `cliente`, y solo un código de idioma.
@@ -2081,13 +2090,28 @@ fn guardar_clave_del_api(
 #[tauri::command]
 fn borrar_clave_del_api(app: tauri::AppHandle, externo: sintesis::api::Externo) -> Result<EstadoDeLaIa, String> {
     sintesis::api::borrar_clave(externo)?;
-    if let Ok(mut a) = app.state::<LaSintesis>().api.lock() {
-        if a.externo == externo {
-            a.encendida = false;
-        }
+    let se_apago = app
+        .state::<LaSintesis>()
+        .api
+        .lock()
+        .map(|mut a| apagar_si_usaba(&mut a, externo))
+        .unwrap_or(false);
+    // Y se recuerda apagado: si no, al guardar otra clave y reiniciar, el API se encendería solo
+    // (casilla 6 del S3).
+    if se_apago {
+        recordar(&app, |p| p.api_encendida = false);
     }
     println!("[sintesis] clave de {} borrada del Llavero", externo.nombre());
     Ok(avisar_a_la_ia(&app))
+}
+
+/// Sin su clave, el proveedor que estaba encendido se apaga. Devuelve si se apagó, para recordarlo.
+fn apagar_si_usaba(api: &mut ConfigDelApi, externo: sintesis::api::Externo) -> bool {
+    if api.externo == externo && api.encendida {
+        api.encendida = false;
+        return true;
+    }
+    false
 }
 
 // ── EL RADAR (C14) ──────────────────────────────────────────────────────────────────────────────
@@ -2574,6 +2598,24 @@ mod pruebas_del_asa_y_la_voz {
     fn sin_voz_el_modo_no_se_enciende() {
         assert!(puede_encender_el_modo(true));
         assert!(!puede_encender_el_modo(false));
+    }
+}
+
+#[cfg(test)]
+mod pruebas_de_la_clave_borrada {
+    use super::*;
+
+    /// **Borrar la clave apaga el API y lo dice** (casilla 6 del S3): si no se apagara —y no se
+    /// recordara apagado—, al guardar otra clave y reiniciar se encendería solo. ¿Puede fallar? Sí:
+    /// con `apagar_si_usaba` devolviendo siempre `false`, es rojo (bitácora).
+    #[test]
+    fn borrar_la_clave_del_encendido_lo_apaga() {
+        let mut api = ConfigDelApi { encendida: true, externo: sintesis::api::Externo::Groq };
+        assert!(!apagar_si_usaba(&mut api, sintesis::api::Externo::Claude), "se apagó por la clave de otro");
+        assert!(api.encendida);
+        assert!(apagar_si_usaba(&mut api, sintesis::api::Externo::Groq));
+        assert!(!api.encendida);
+        assert!(!apagar_si_usaba(&mut api, sintesis::api::Externo::Groq), "ya estaba apagado: nada que recordar");
     }
 }
 

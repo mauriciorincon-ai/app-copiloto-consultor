@@ -113,20 +113,30 @@ export const EXTERNOS: { id: Externo; nombre: string }[] = [
   { id: "groq", nombre: "Groq" },
 ];
 
-/** El estado de la pantalla IA: se pregunta al montarse y se escucha el evento `ia`. */
+/**
+ * El estado de la pantalla IA: se pregunta al montarse, **al volver a la ventana** y con cada evento
+ * `ia`. Lo del foco es de la casilla 6 del S3: si el usuario apaga Apple Intelligence en Ajustes y
+ * vuelve, nadie emite `ia` —Rust no se entera de Ajustes—, y la pantalla seguía diciendo «en tu Mac».
+ * Es lo mismo que Permisos hace desde el S1.
+ */
 export function useIa(): [EstadoDeLaIa, (e: EstadoDeLaIa) => void] {
   const [estado, setEstado] = useState<EstadoDeLaIa>(DE_MUESTRA);
   useEffect(() => {
     if (!hayTauri()) return;
     let vivo = true;
-    void preguntar<EstadoDeLaIa>("estado_de_la_ia").then((e) => {
-      if (vivo && e) setEstado(e);
-    });
+    const pedir = () => {
+      void preguntar<EstadoDeLaIa>("estado_de_la_ia").then((e) => {
+        if (vivo && e) setEstado(e);
+      });
+    };
+    pedir();
+    globalThis.addEventListener("focus", pedir);
     const baja = escuchar<EstadoDeLaIa>("ia", (e) => {
       if (vivo && e) setEstado(e);
     });
     return () => {
       vivo = false;
+      globalThis.removeEventListener("focus", pedir);
       baja();
     };
   }, []);

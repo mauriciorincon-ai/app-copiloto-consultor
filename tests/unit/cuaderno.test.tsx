@@ -521,6 +521,14 @@ describe("lo que Rust emite, pintado", () => {
     expect(screen.getByText(t.altavozExterno)).toBeInTheDocument();
   });
 
+  it("una reunión sin verificar nombra a SU cliente, no a Zoom (casilla 6 del S3)", () => {
+    conCascara(
+      <LaReunion reunion={{ que: "detectada", cliente: "Microsoft Teams", titulo: null, proteccion: "SinVerificar" }} />,
+    );
+    expect(screen.getByText("Teams · sin verificar")).toBeInTheDocument();
+    expect(screen.queryByText("Zoom · sin verificar")).toBeNull();
+  });
+
   it("la reunión que no se puede ver", () => {
     conCascara(<LaReunion reunion={REUNION_NO_SE_PUEDE_SABER} />);
     if (REUNION_NO_SE_PUEDE_SABER.que !== "no-se-puede-saber") throw new Error("cambió la muestra");

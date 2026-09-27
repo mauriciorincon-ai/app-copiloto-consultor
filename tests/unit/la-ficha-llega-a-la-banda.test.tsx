@@ -568,34 +568,24 @@ describe("la sugerencia, dentro del producto", () => {
 
   /**
    * **El idioma de la pista del cliente se elige** (auditoría del S2, A4): era la constante `en-US`,
-   * y con un cliente que habla español no llegaba un turno útil. Nace en español; elegido inglés en
-   * Idioma, «Iniciar sesión» se lo pasa a Rust.
+   * y con un cliente que habla español no llegaba un turno útil. Nace en español, se elige en Idioma,
+   * y desde el S3 se guarda en Rust: «Iniciar sesión» ya no lo manda (lo lee Rust).
    */
-  it("el idioma elegido para el cliente llega a empezar_a_escuchar", async () => {
-    render(
-      <IdiomaContext.Provider value="es">
-        <Idioma transcribe={{ motor: "apple-speechanalyzer", techo: 5, idiomas: [], motivo: null }} />
-      </IdiomaContext.Provider>,
-    );
+  it("«Iniciar sesión» no manda idiomas: Rust lee los que el usuario guardó", async () => {
     render(
       <IdiomaContext.Provider value="es">
         <Sesion reunion={{ que: "ninguna" }} escucha={{ ...ESTADO_DE_LA_ESCUCHA, escuchando: false }} salida={SALIDA_DE_AUDIO} />
       </IdiomaContext.Provider>,
     );
     await act(async () => {});
-    const iniciar = () =>
-      fireEvent.click(
-        [...document.querySelectorAll("button")].find((b) => b.textContent?.includes(es.cuaderno.iniciarSesion)) as HTMLElement,
-      );
-    // Sin tocar nada, las dos pistas en español: la constante vieja mandaba el cliente en inglés.
-    iniciar();
-    expect(llamar).toHaveBeenLastCalledWith("empezar_a_escuchar", { idiomaDelConsultor: "es-ES", idiomaDelCliente: "es-ES" });
-    // Elegido inglés en Idioma, llega inglés.
-    const [, delCliente] = [...document.querySelectorAll("select.idioma-de-pista")] as HTMLSelectElement[];
-    expect(delCliente.value).toBe("es-ES");
-    fireEvent.change(delCliente, { target: { value: "en-US" } });
-    iniciar();
-    expect(llamar).toHaveBeenLastCalledWith("empezar_a_escuchar", { idiomaDelConsultor: "es-ES", idiomaDelCliente: "en-US" });
+    // Elegido inglés para el cliente (en Idioma, o en un arranque anterior: da igual), «Iniciar
+    // sesión» NO lo manda: si el webview los mandara desde su caché, después de reiniciar valdrían
+    // los de fábrica hasta abrir Idioma (casilla 6 del S3). Rust los lee de `preferencias.json`.
+    fijarIdiomaDePista("cliente", "en-US");
+    fireEvent.click(
+      [...document.querySelectorAll("button")].find((b) => b.textContent?.includes(es.cuaderno.iniciarSesion)) as HTMLElement,
+    );
+    expect(llamar).toHaveBeenLastCalledWith("empezar_a_escuchar");
     fijarIdiomaDePista("cliente", "es-ES");
   });
 

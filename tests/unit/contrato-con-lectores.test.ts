@@ -40,6 +40,8 @@ const FIXTURE = "src/contrato.generado.ts";
 const LEIDOS_POR_CLAVE: Record<string, string> = {
   "Bilingue.es": "`p.ve[idioma]` y `p.alcance[idioma]` en la banda y Sesión: el idioma de la interfaz elige el campo",
   "Bilingue.en": "ídem",
+  "IdiomasDePista.consultor":
+    "`elegidos[cual]` en Idioma: la pista elige el campo. Desde el S3 «Iniciar sesión» no los manda (los lee Rust)",
 };
 
 /** Tipos que viven SOLO en la interfaz: no cruzan la costura y no les toca esta regla. */

@@ -11,6 +11,10 @@
  */
 export const es = {
   banda: {
+    /** El título del asa, para quien la pase el ratón. Estaba escrito en español en el componente y
+     * salía igual en la interfaz inglesa (casilla 6 del S3). */
+    asaAjustar: "arrastra para ajustar las dos a la vez",
+    asaVolver: "arrastra para volver a la banda de 88 px",
     // ---- cabecera: estado de la sesión ----
     /**
      * LAS CINCO CADENAS DE ABAJO SON LO QUE LA MAQUETA DIBUJA, y dentro del producto **ya no se
@@ -305,7 +309,6 @@ export const es = {
     sesionTitulo: "Antes de empezar",
     sesionSub: "Nada se enciende hasta que tú lo digas. Esto es lo que la app ve de tu propio Mac.",
     proteccionVerificada: "Protección verificada",
-    proteccionSinVerificar: "Zoom · sin verificar",
     proteccionDetalle:
       "Tu panel no aparece en la pantalla que compartes. Verificado en tu Mac (macOS 26.6.2) el 2026-09-20. En Zoom y Teams está sin verificar.",
     dosPistas: "Las dos pistas",
@@ -374,7 +377,7 @@ export const es = {
     piezasCola: "piezas: la otra todavía no existe.",
     loQueQuedara: "Lo que quedará cuando cierres",
     loQueQuedaraDetalle:
-      "Notas, acuerdos y fichas fijadas llegan más adelante. De la reunión no queda nada: lo único que la app escribe es tuyo —el índice de tu corpus, tu diccionario, el gasto del mes y dónde estaba la ventana de la reunión, para devolvérsela—.",
+      "Notas, acuerdos y fichas fijadas llegan más adelante. De la reunión no queda nada: lo único que la app escribe es tuyo —el índice de tu corpus, tu diccionario, tus preferencias, el gasto del mes y dónde estaba la ventana de la reunión, para devolvérsela—.",
     // ---- sesión · lo que la fase 3 puso a funcionar ----
     funcionaEscucha: "Escucha las dos pistas y las transcribe en tu Mac",
     altavocesInternos: "Altavoces internos",

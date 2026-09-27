@@ -7,7 +7,6 @@ import {
   dejarDeEscuchar,
   lecturaAutomatica,
   usePantalla,
-  idiomasDeLasPistas,
   useBytesALaRed,
   type EstadoDeEscucha,
   type EstadoDePista,
@@ -32,11 +31,6 @@ import { invasivos, useRadarDeTuMac, type EnTuMac } from "../radar";
  * Fuera de una sesión las pistas no están abiertas y eso no es una avería: se enseña lo que la app
  * sabe hacer, como en el sprint 001.
  */
-/** Empieza a escuchar con el idioma que cada pista tiene elegido en Idioma (auditoría del S2, A4). */
-function empezarConLosIdiomasElegidos() {
-  const { consultor, cliente } = idiomasDeLasPistas();
-  empezarAEscuchar(consultor, cliente);
-}
 
 export function Sesion({
   reunion,
@@ -94,7 +88,7 @@ export function Sesion({
           radar={radar}
           iniciar={() => {
             setVisto(clave);
-            empezarConLosIdiomasElegidos();
+            empezarAEscuchar();
           }}
           noIniciar={() => setVisto(clave)}
         />
@@ -181,7 +175,7 @@ export function Sesion({
               onClick={() =>
                 escucha.escuchando
                   ? dejarDeEscuchar()
-                  : empezarConLosIdiomasElegidos()
+                  : empezarAEscuchar()
               }
             >
               {/* Dice lo que hace: con la sesión en marcha, la termina (auditoría del S2, B16). */}
@@ -215,6 +209,7 @@ function Porque({
 
 export function LaReunion({ reunion }: { reunion: Reunion }) {
   const t = useT().cuaderno;
+  const tb = useT().banda;
   if (reunion.que === "detectada") {
     return (
       <div className="tarjeta">
@@ -233,7 +228,11 @@ export function LaReunion({ reunion }: { reunion: Reunion }) {
           ) : (
             <span className="estado warn">
               <Ic id="i-alert" s relleno />
-              <span>{t.proteccionSinVerificar}</span>
+              {/* El cliente que HAY, no «Zoom» para todos: Teams, Safari o Edge también salían como
+                  «Zoom · sin verificar» (casilla 6 del S3). Mismo nombre corto que el rail. */}
+              <span>
+                {reunion.cliente.replace(/^(Google|Microsoft)\s+/, "")} · {tb.sinVerificarSufijo}
+              </span>
             </span>
           )}
         </div>

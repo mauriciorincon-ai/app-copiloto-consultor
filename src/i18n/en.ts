@@ -7,6 +7,8 @@ import type { Diccionario } from "./es";
  */
 export const en: Diccionario = {
   banda: {
+    asaAjustar: "drag to resize both at once",
+    asaVolver: "drag to go back to the 88 px band",
     escuchando: "Listening · 2 tracks",
     protegido: "Meet · protected",
     sinVerificar: "Zoom · not verified",
@@ -232,7 +234,6 @@ export const en: Diccionario = {
     sesionTitulo: "Before you start",
     sesionSub: "Nothing turns on until you say so. This is what the app sees of your own Mac.",
     proteccionVerificada: "Protection verified",
-    proteccionSinVerificar: "Zoom · not verified",
     proteccionDetalle:
       "Your panel does not show in the screen you share. Verified on your Mac (macOS 26.6.2) on 2026-09-20. In Zoom and Teams it is unverified.",
     dosPistas: "The two tracks",
@@ -291,7 +292,7 @@ export const en: Diccionario = {
     piezasCola: "pieces: the other one does not exist yet.",
     loQueQuedara: "What will be left when you close",
     loQueQuedaraDetalle:
-      "Notes, agreements and pinned cards come later. Nothing of the meeting is left: the only things the app writes are yours \u2014your corpus index, your dictionary, the month\u2019s spend and where the meeting window was, to give it back\u2014.",
+      "Notes, agreements and pinned cards come later. Nothing of the meeting is left: the only things the app writes are yours \u2014your corpus index, your dictionary, your preferences, the month\u2019s spend and where the meeting window was, to give it back\u2014.",
     // ---- session · what phase 3 turned on ----
     funcionaEscucha: "It listens to both tracks and transcribes them on your Mac",
     altavocesInternos: "Internal speakers",

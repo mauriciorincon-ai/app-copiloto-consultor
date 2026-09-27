@@ -96,7 +96,13 @@ const PERMISOS_DE_MUESTRA: Permisos = {
  * protegido» durante el primer instante de cada arranque —y para siempre si el comando fallaba—.
  * Datos de una consultora inventada dentro de la app de alguien. La familia del hallazgo A1.
  */
-function usePreguntaAlVolver<T>(comando: string, deMuestra: T, vacio: T): T {
+function usePreguntaAlVolver<T>(
+  comando: string,
+  deMuestra: T,
+  vacio: T,
+  /** Otra ocasión de volver a preguntar, además del foco: se suscribe y devuelve cómo darse de baja. */
+  tambienCuando?: (preguntarAhora: () => void) => () => void,
+): T {
   const [valor, setValor] = useState<T>(() => (hayTauri() ? vacio : deMuestra));
   useEffect(() => {
     if (!hayTauri()) return;
@@ -108,12 +114,27 @@ function usePreguntaAlVolver<T>(comando: string, deMuestra: T, vacio: T): T {
     };
     preguntarAhora();
     globalThis.addEventListener("focus", preguntarAhora);
+    const baja = tambienCuando?.(preguntarAhora);
     return () => {
       vivo = false;
       globalThis.removeEventListener("focus", preguntarAhora);
+      baja?.();
     };
-  }, [comando]);
+    // `tambienCuando` es una función de módulo en quien la usa: no cambia entre renders.
+  }, [comando, tambienCuando]);
   return valor;
+}
+
+/**
+ * **La reunión se vuelve a preguntar al empezar una sesión** (casilla 6 del S3). La banda no recibe
+ * el foco —está encima de la reunión y no se toca—, así que si la app se abrió antes de la llamada
+ * se quedaba en «sin reunión» toda la sesión, sin decir «Zoom · sin verificar» cuando tocaba. No
+ * hay nada vigilando las ventanas en segundo plano (ADR 005): se pregunta cuando abre una pista.
+ */
+function alEmpezarLaSesion(preguntarAhora: () => void): () => void {
+  return escuchar<{ que?: string }>("escucha", (n) => {
+    if (n?.que === "empieza") preguntarAhora();
+  });
 }
 
 export function useReunion(): Reunion {
@@ -124,6 +145,7 @@ export function useReunion(): Reunion {
     {
       que: "ninguna",
     },
+    alEmpezarLaSesion,
   );
 }
 
@@ -675,11 +697,13 @@ export async function indexarCorpus(): Promise<void> {
   await preguntar("indexar_corpus", { carpeta });
 }
 
-export function empezarAEscuchar(
-  idiomaDelConsultor: string,
-  idiomaDelCliente: string,
-) {
-  void llamar("empezar_a_escuchar", { idiomaDelConsultor, idiomaDelCliente });
+/**
+ * «Iniciar sesión». **Sin idiomas:** Rust los lee de sus preferencias, que son la única fuente. Hasta
+ * la fase 0 del S3 se mandaban desde la caché de este módulo, y después de reiniciar valían los de
+ * fábrica si el usuario no había abierto antes Idioma (casilla 6 del S3).
+ */
+export function empezarAEscuchar() {
+  void llamar("empezar_a_escuchar");
 }
 
 export function dejarDeEscuchar() {

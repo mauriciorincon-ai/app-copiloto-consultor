@@ -105,3 +105,69 @@ En sus archivos, como «decisión de diseño no escrita», con su «Qué mirar»
 - `notas.html` · **sprint 3 · exportar**: el aviso convertido en pregunta con dos botones.
 - `ia.html` · **sprint 3 · quién redacta**: un botón «Ver lo que salió · N» en la tarjeta del proveedor externo.
 - `ia.html` · **sprint 3 · lo que salió**: el estado «API encendido» aprobado, con botón para volver.
+
+### Casilla 6 sobre la guía v4 (kit v1.31.0): las 72 pruebas contra la arquitectura de hoy
+
+Lo hizo un subagente de solo lectura. **Resultado: 72 revisadas.**
+- **10 falsas o imposibles hoy:** k1b, d11, i2, d6, h5, e4, a6, g1, g3 y e2. De e2 falta confirmarlo en vivo.
+- **10 caducan en la fase 1:** a2, a3b, a3c, b1, b5, g6, j1, j2, j4 y j6.
+- **52 ciertas.** De ellas, 7 con un punto de partida que cambió la fase 0 (d3, e1, e3, g2, g5, k2, k4: las preferencias ya se recuerdan) y 6 con desajustes menores de redacción (b2, d1, b8, h4, j2b, j7).
+
+**Las reescrituras van a la guía v5 (fase 5)**, con origen «Mejorado en S3», jamás borradas. El texto listo para pegar de cada una está en el informe del subagente; el resumen:
+- **k1b:** se recuerda al reiniciar. La consola dice `[prefs] idiomas … / en-US`; sin pasar por Idioma, «Iniciar sesión» abre `sistema · en-US`.
+- **d11:** la frase del S2 tenía palabras del corpus («calidad», «datos», «canal»). Nueva: «Nos preocupa el margen de las tiendas de vereda».
+- **i2 y d6:** el transcript solo se pinta con una ficha en la banda. Hay que decirlo, y ⌃⌥T no agranda.
+- **h5:** con el modo solo audio la banda de una línea sigue «Callado». La «sin resultado» se ve al salir del modo.
+- **e4:** necesita una página de kit en negro, sin texto ni pie (`meet-en-negro.html`). Tapar la ventana no sirve: ScreenCaptureKit la lee igual.
+- **a6:** «Cierra la banda» pasa a ⌥⎋. Queda ligado al arreglo de ⌘W, pendiente abajo.
+- **g1:** IA se pone al día al volver (pagado abajo). La prueba entra y sale de IA.
+- **g3:** las tres preguntas las dice el CLIENTE (`say -v Paulina …`), no tu micrófono.
+- **e2:** el kit dice «Páramo Azul» en el título de la pestaña y «N de 6» en el pie. La app lee la ventana entera, y eso le da a la agenda un término y una cifra. Hay que cambiar la página del kit y esperar 6 s entre diapositivas.
+
+**Bugs de producto que encontró, y su estado.** Cada uno con su test en rojo antes del verde:
+
+| # | Bug | Origen | Estado |
+|---|---|---|---|
+| 1 | Tras reiniciar, Sesión mandaba los idiomas de fábrica si no se había abierto Idioma: el webview los mandaba desde su caché | **fase 0 (mío)** | **pagado**: `empezar_a_escuchar` ya no recibe idiomas y Rust los lee de `preferencias.json`. **Rojo:** con los idiomas en la llamada, `la-ficha-llega-a-la-banda` «no manda idiomas» cae |
+| 2 | «Borrar la clave» no guardaba «API apagado»: con otra clave y un reinicio, se encendía solo | **fase 0 (mío)** | **pagado**: `apagar_si_usaba` + `recordar`. **Rojo:** con `false` siempre, cae `borrar_la_clave_del_encendido_lo_apaga` |
+| 3 | Honestidad («lo único que la app escribe…») no nombraba tus preferencias. El comentario de `LaPantalla` decía «no se guarda en disco» | fase 0 | **pagado**: es/en y maqueta (dos estados), más el comentario |
+| 4 | Sesión decía «Zoom · sin verificar» con cualquier cliente sin verificar | S2 | **pagado**: nombre corto del cliente + sufijo; sale la clave `proteccionSinVerificar`. **Rojo:** con «Zoom» fijo, cae «nombra a SU cliente» |
+| 5 | La banda no se enteraba de la reunión si la app se abrió antes de la llamada: solo preguntaba al montarse y con el foco, y la banda no recibe foco | S2 | **pagado**: `useReunion` vuelve a preguntar al abrir una pista (`escucha` · `empieza`). No vigila nada en segundo plano (ADR 005). **Rojo:** sin `alEmpezarLaSesion`, cae `reunion-al-empezar.test.tsx` |
+| 6 | Dos tooltips del asa solo en español en la interfaz inglesa | S1/S2 | **pagado**: `banda.asaAjustar` y `banda.asaVolver` es/en. La maqueta los lleva como texto `sr` para que el gate del diccionario los vea |
+| 7 | IA no se ponía al día al volver a la ventana (Apple Intelligence apagado en Ajustes no emite nada) | S2 | **pagado**: `useIa` pregunta también con `focus`. **Rojo:** sin el `focus`, cae `ia-al-volver.test.tsx` |
+| 8 | **⌘W sobre la banda** la cerraría sola: el relleno quedaría encima de la reunión y Chrome encogido | S1 | **PENDIENTE**, ver abajo |
+| 9 | El manual promete cosas que la relectura desmintió: e4 («tapa la ventana», `MANUAL-DE-USO.md:195-196`) y el transcript incondicional (`:65-66`, `:411`) | S1/S2 | **PENDIENTE**, ver abajo |
+
+- **Gate del contrato:** `IdiomasDePista.consultor` se lee por clave calculada (`elegidos[cual]` en Idioma) y queda declarado en `LEIDOS_POR_CLAVE`.
+- **`design-sync/`** regenerado: la banda cambió por los tooltips.
+
+---
+
+## ⏸ PUNTO SEGURO (2026-09-27) — pedido por el usuario para compactar
+
+**Estado:**
+- Rama `sprint-003/el-cuaderno-y-el-cierre`, PR **#8** en borrador.
+- Commit de la fase 0: `ac93bba`, CI con los tres checks en success.
+- Este punto seguro va en el commit siguiente.
+- Gates locales verdes: vitest 262 · cargo --lib 356 · clippy · lint · typecheck · `verify:ephemeral` estático.
+
+**Lo que falta para cerrar la fase 0, en orden:**
+1. **⌘W (bug 8).**
+   - `ventana::cerrar_banda` (`ventana/mod.rs:208`) usa `v.close()` sobre banda y relleno, así que un `prevent_close` global bloquearía también al corte.
+   - Plan: en `tauri::Builder` añadir `.on_window_event`, y para `banda` y `relleno` en `CloseRequested` hacer `api.prevent_close()`, **salvo** que el cierre venga del corte.
+   - Opción A: una bandera `AtomicBool` que `cerrar_banda` levanta antes de cerrar.
+   - Opción B: cambiar `cerrar_banda` a `destroy()`, que no emite `CloseRequested`; comprobar primero en la doc de Tauri 2.
+   - Test del camino puro + comprobación en vivo en `pnpm tauri dev`. La prueba a6 de la guía v5 pasa a «⌥⎋ es la única forma de quitar la banda».
+2. **El manual (bug 9).**
+   - `MANUAL-DE-USO.md:195-196`: tapar la ventana no deja a la app sin texto; ScreenCaptureKit la lee igual.
+   - `:65-66` y `:411`: el transcript se abre con ⌃⌥T **cuando hay una ficha en la banda**, y no agranda la banda.
+3. **Fidelidad:** volver a correr `PUERTO_E2E=4300 pnpm fidelidad` (SPRINT ya es `s3`) y comitear `docs/fidelidad/s3-*` y `S3-*.html`. Están sin versionar a propósito: la primera corrida fue antes del cambio de texto de Honestidad.
+4. Commit y push; `gh pr checks 8` en success.
+5. **Mensaje de cierre de la fase 0** al usuario, que lleva la **mirada 19 en matriz de una fila por decisión**:
+   - `docs/diseno/notas.html` · «sprint 3 · durante» · teclas reales, acuerdos sin tecla, «el cliente no la ve»;
+   - `notas.html` · «sprint 3 · el archivo» · retención 7 d / 30 d / 90 d / 1 año / siempre, global;
+   - `notas.html` · «sprint 3 · exportar» · la pregunta antes de exportar;
+   - `ia.html` · «sprint 3 · quién redacta» · el botón «Ver lo que salió · N»;
+   - `ia.html` · «sprint 3 · lo que salió» · la vista con volver.
+   Y recordar `/model` y esperar «continúa».
+6. **Después, fase 1**, que empieza por el ADR 015 «las notas y su cifrado». Ver el plan: `~/.claude/plans/idempotent-marinating-pebble.md`.
