@@ -882,7 +882,7 @@ pub fn run() {
             exportar_reunion,
             borrar_reunion,
             fijar_retencion,
-            elegir_carpeta_de_notas,
+            mostrar_las_notas_en_finder,
             ir_a_notas,
             guardar_propuesta,
             descartar_propuesta,
@@ -2322,10 +2322,10 @@ fn fijar_retencion(app: tauri::AppHandle, retencion: prefs::Retencion) {
     reunion::fijar_retencion(&app, retencion);
 }
 
-/// Si macOS negó Documentos: otra carpeta para tus notas.
+/// «Mostrar en Finder»: la carpeta de tus notas, o esa reunión seleccionada dentro de ella.
 #[tauri::command]
-fn elegir_carpeta_de_notas(app: tauri::AppHandle) -> Option<String> {
-    reunion::elegir_otra_carpeta(&app)
+fn mostrar_las_notas_en_finder(app: tauri::AppHandle, archivo: Option<String>) -> Result<(), String> {
+    reunion::mostrar_en_finder(&app, archivo.as_deref())
 }
 
 /// «Anotar para después» en la banda: lo mismo que `⌃⌥N`.

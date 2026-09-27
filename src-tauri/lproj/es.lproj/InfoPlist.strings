@@ -7,4 +7,3 @@
 
 "NSSpeechRecognitionUsageDescription" = "Angel Ghost convierte voz en texto dentro de este Mac, con el motor de voz de macOS. Ningún audio sale de tu equipo para convertirse en texto.";
 
-"NSDocumentsFolderUsageDescription" = "Angel Ghost guarda en Documentos/Angel Ghost las notas que decides guardar, cifradas con una llave que no sale de este Mac. Nada del otro lado de la llamada se guarda.";

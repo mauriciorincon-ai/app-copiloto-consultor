@@ -218,6 +218,26 @@ app y cada hora mientras corre, que es lo que el manual ya dice. **La decisión 
 brecha es del usuario**, porque la carpeta de Documentos fue suya (plan del sprint), y queda
 registrada aquí cuando la tome.
 
+## Decisión del usuario (2026-09-27): la A
+
+Las tres salidas que se le dieron:
+
+| | Dónde viven tus notas | Qué pasa al vencer con la app cerrada |
+|---|---|---|
+| **A** | En la carpeta privada de la app, con «Mostrar en Finder» | Las borra la misma tarea que borra la bandeja |
+| **B** | En Documentos | La tarea abre la app sin ventana para que ella las borre; si borras la app, dejan de borrarse |
+| **C** | En Documentos | Se borran al abrir la app; cambia lo que prometen el manual y Honestidad |
+
+**Eligió la A** («Sí la A»). Queda en la enmienda 1 del ADR 015. Aquí cambia:
+- `lo_que_vence` (`reunion.rs`) pasa a ser **tus notas y la bandeja**; las de «siempre» no entran.
+  Guardar y «Borrar ahora» ponen la tarea al día.
+- La prueba en vivo `en_vivo_launchd_borra_a_su_hora_sin_la_app` ya **no entra en Documentos**: su
+  segundo archivo va en la carpeta de notas de la app. Sigue siendo `#[ignore]` y solo se corre con el
+  «sí» del usuario (regla 22).
+- **Lo que no cambia y se vigila en vivo:** la tarea sigue apareciendo en Ítems de inicio, y ahora
+  vive mientras tengas notas con fecha, no solo mientras haya bandeja. Hay que ver si volver a
+  registrarla tras cada reunión hace que macOS vuelva a avisar; lo dirá la corrida en vivo con la app.
+
 ## Alternativas consideradas
 
 - **Que un modelo decida qué proponer:** regla 14 de la app, y la maqueta dice «son reglas». Una
@@ -231,7 +251,8 @@ registrada aquí cuando la tome.
   está.
 - **El vencimiento solo en la lista:** la lista es una copia. La fuente es la cabecera autenticada de
   cada archivo; la lista se regenera de ella.
-- **La bandeja en Documentos, junto a las notas:** la papelera de iCloud guarda 30 días.
+- **La bandeja en Documentos, junto a las notas de entonces:** la papelera de iCloud guarda 30 días.
+  Con la decisión A, las notas se vinieron con ella.
 
 ## Consecuencias
 

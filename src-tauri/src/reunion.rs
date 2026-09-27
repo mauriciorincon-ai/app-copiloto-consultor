@@ -148,13 +148,11 @@ pub struct Previsto {
     pub archivo: String,
 }
 
-/// Las reuniones guardadas y dónde viven.
+/// Las reuniones guardadas. Dónde viven no viaja: siempre en la carpeta de la app (decisión A), que la
+/// interfaz nombra en su idioma y enseña con «Mostrar en Finder».
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ListaDeReuniones {
-    /// `None` es la de fábrica, `~/Documents/Angel Ghost/` —la interfaz la nombra en su idioma, como
-    /// Finder—; `Some` es la que elegiste, con `~` en vez de tu carpeta de usuario.
-    pub carpeta: Option<String>,
     pub reuniones: Vec<Reunion>,
 }
 
@@ -336,17 +334,14 @@ fn preferencias<R: Runtime>(app: &AppHandle<R>) -> prefs::Preferencias {
         .unwrap_or_default()
 }
 
-/// La carpeta de tus notas: la que elegiste, o `~/Documents/Angel Ghost/`.
+/// La carpeta de tus notas: `~/Library/Application Support/<app>/notas/`, junto a la bandeja.
+///
+/// **No en Documentos** (ADR 016, decisión A del usuario, 2026-09-27): desde launchd, el `sh` que
+/// borra lo vencido con la app cerrada no puede entrar en Documentos —el permiso es de la app, no
+/// suyo—, así que ahí la retención solo se cumplía al abrir la app. Aquí se cumple aunque no la abras,
+/// macOS no pide el permiso de Documentos y ninguna copia viaja a iCloud.
 pub fn carpeta<R: Runtime>(app: &AppHandle<R>) -> Carpeta {
-    let raiz = match preferencias(app).carpeta_de_notas {
-        Some(elegida) => PathBuf::from(elegida),
-        None => app
-            .path()
-            .document_dir()
-            .unwrap_or_else(|_| std::env::var("HOME").map(PathBuf::from).unwrap_or_default().join("Documents"))
-            .join(carpeta::CARPETA),
-    };
-    Carpeta::en(raiz)
+    Carpeta::en(carpeta_de_la_app(app).join(carpeta::CARPETA))
 }
 
 /// La bandeja: `~/Library/Application Support/<app>/bandeja/`, **no en Documentos** (ADR 016 §4).
@@ -467,9 +462,9 @@ pub fn guardar<R: Runtime>(app: &AppHandle<R>) -> Result<Option<Guardada>, Strin
     if hecho.a_la_bandeja > 0 || hecho.murieron > 0 {
         println!("[propuestas] al cerrar: {} a la bandeja · {} murieron", hecho.a_la_bandeja, hecho.murieron);
     }
-    if hecho.a_la_bandeja > 0 {
-        poner_al_dia_el_vencimiento(app);
-    }
+    // Tus notas vencen con su retención y la bandeja con su ventana: las dos entran en la lista.
+    // Si nada cambió, launchd no se toca.
+    poner_al_dia_el_vencimiento(app);
     a_la_banda(app, &el);
     avisar(app);
     Ok(hecho.guardada.map(|(guardada, resumen)| {
@@ -749,11 +744,15 @@ fn la_tarea<R: Runtime>(app: &AppHandle<R>) -> Option<vencimiento::Tarea> {
     Some(vencimiento::Tarea::de_la_app(&casa, &carpeta_de_la_app(app)))
 }
 
-/// Lo que launchd tiene que borrar con la app cerrada: **la bandeja**. Las notas entran cuando se
-/// decida dónde viven (A/B/C, ADR 016 «Hallazgo en vivo»): en Documentos, el `sh` de launchd no
-/// puede borrarlas, y anotarlas prometería lo que no cumple.
+/// Lo que launchd tiene que borrar con la app cerrada: **tus notas y la bandeja**. Las notas entraron
+/// con la decisión A (ADR 016): desde que viven en la carpeta de la app, el `sh` de launchd puede
+/// borrarlas. Las que guardaste con «siempre» no vencen y no entran.
 fn lo_que_vence<R: Runtime>(app: &AppHandle<R>) -> Vec<vencimiento::Pendiente> {
-    la_bandeja_de(app).pendientes()
+    lo_que_vence_en(&carpeta(app), &la_bandeja_de(app))
+}
+
+pub fn lo_que_vence_en(notas: &Carpeta, bandeja: &Bandeja) -> Vec<vencimiento::Pendiente> {
+    notas.pendientes().into_iter().chain(bandeja.pendientes()).collect()
 }
 
 /// Pone la tarea de launchd al día con lo que vence. Solo toca launchd si la lista cambió.
@@ -804,16 +803,7 @@ pub fn conservar_mis_turnos<R: Runtime>(app: &AppHandle<R>, si: bool) {
 }
 
 pub fn lista<R: Runtime>(app: &AppHandle<R>) -> ListaDeReuniones {
-    let carpeta_elegida = preferencias(app).carpeta_de_notas.map(|c| con_virgulilla(&c));
-    ListaDeReuniones { carpeta: carpeta_elegida, reuniones: carpeta(app).lista() }
-}
-
-/// `/Users/quien/Notas` → `~/Notas`: tu carpeta de usuario no hace falta en pantalla.
-fn con_virgulilla(ruta: &str) -> String {
-    match std::env::var("HOME") {
-        Ok(casa) if !casa.is_empty() && ruta.starts_with(&casa) => format!("~{}", &ruta[casa.len()..]),
-        _ => ruta.to_string(),
-    }
+    ListaDeReuniones { reuniones: carpeta(app).lista() }
 }
 
 /// ⌃⌥N y «Anotar para después»: el cuaderno al frente, en Notas, con el cursor al final de tu nota.
@@ -860,6 +850,7 @@ pub fn exportar<R: Runtime>(app: &AppHandle<R>, archivo: &str, idioma: &str) -> 
 pub fn borrar<R: Runtime>(app: &AppHandle<R>, archivo: &str) -> Result<(), String> {
     carpeta(app).borrar(archivo)?;
     println!("[notas] una reunión guardada, borrada a mano");
+    poner_al_dia_el_vencimiento(app);
     Ok(())
 }
 
@@ -868,14 +859,19 @@ pub fn fijar_retencion<R: Runtime>(app: &AppHandle<R>, retencion: prefs::Retenci
     avisar(app);
 }
 
-/// Si macOS negó Documentos: elegir otra carpeta. `None` si cancelaste.
-pub fn elegir_otra_carpeta<R: Runtime>(app: &AppHandle<R>) -> Option<String> {
-    use tauri_plugin_dialog::DialogExt;
-    let elegida = app.dialog().file().blocking_pick_folder()?.into_path().ok()?;
-    let texto = elegida.to_string_lossy().into_owned();
-    crate::recordar(app, |p| p.carpeta_de_notas = Some(texto.clone()));
-    println!("[notas] carpeta de notas cambiada por el usuario");
-    Some(texto)
+/// «Mostrar en Finder»: la carpeta de tus notas, o una reunión dentro de ella, seleccionada en Finder.
+/// Lo hace macOS (`NSWorkspace`), sin lanzar ningún programa. Si aún no guardaste nada, la carpeta
+/// nace aquí, 700, para que haya qué enseñar.
+pub fn mostrar_en_finder<R: Runtime>(app: &AppHandle<R>, archivo: Option<&str>) -> Result<(), String> {
+    let notas = carpeta(app);
+    let ruta = match archivo {
+        Some(a) => notas.ruta_de(a)?,
+        None => {
+            crate::almacen::carpeta_privada(notas.raiz())?;
+            notas.raiz().to_path_buf()
+        }
+    };
+    tauri_plugin_opener::reveal_item_in_dir(&ruta).map_err(|e| format!("Finder no pudo enseñarla: {e}"))
 }
 
 /// Barre lo vencido ahora y luego **al llegar el próximo vencimiento** (como mucho, cada hora),
@@ -912,10 +908,8 @@ pub fn arrancar_el_barrido<R: Runtime>(app: &AppHandle<R>) {
 
 /// Cuánto dormir: hasta el próximo vencimiento de notas o bandeja, como mucho [`BARRIDO_CADA`].
 fn hasta_el_proximo<R: Runtime>(app: &AppHandle<R>, ahora: i64) -> std::time::Duration {
-    let proximo = carpeta(app)
-        .pendientes()
+    let proximo = lo_que_vence(app)
         .into_iter()
-        .chain(la_bandeja_de(app).pendientes())
         .map(|p| p.vence)
         .filter(|v| *v > ahora)
         .min();
@@ -1050,6 +1044,31 @@ mod pruebas {
         assert_eq!(reunion.propuestas.len(), 1, "a tu archivo solo va la que guardaste");
         assert!(!el.abierta() && !el.hay_que_decidir());
         assert!(el.con_la_abierta(&g.archivo, |a| a.contenido.propuestas.len()) == Some(2), "la bandeja recién escrita se lee sin pedir nada");
+        let _ = std::fs::remove_dir_all(c.raiz());
+        let _ = std::fs::remove_dir_all(b.raiz());
+    }
+
+    /// **Decisión A (ADR 016):** lo que launchd borra con la app cerrada trae tus notas **y** la
+    /// bandeja; una reunión guardada para «siempre» no entra. ¿Puede fallar? Sí, y se vio en rojo: con
+    /// la lista de antes —solo la bandeja— tus notas vencidas esperaban a que abrieras la app.
+    #[test]
+    fn launchd_se_lleva_tus_notas_y_la_bandeja() {
+        let (c, b, llaves) = (carpeta("launchd"), bandeja("launchd"), EnMemoria::default());
+        let el = ElCuaderno::default();
+        el.abrir(false, HOY);
+        el.con(|cu| {
+            cu.escribir("Piden la cuarta fuente.");
+            cu.proponer(vec![propuesta("12 semanas")]);
+        });
+        let g = el.guardar_en(&c, &b, &llaves, prefs::Retencion::Dias90, Some(CIERRE + 3 * 3_600), CIERRE).unwrap().guardada.unwrap().0;
+        let para_siempre = ElCuaderno::default();
+        para_siempre.abrir(false, notas::Fecha { minuto: 30, ..HOY });
+        para_siempre.con(|cu| cu.escribir("Esta la guardo para siempre."));
+        assert!(para_siempre.guardar_en(&c, &b, &llaves, prefs::Retencion::Siempre, None, CIERRE).unwrap().guardada.is_some());
+        let lista: Vec<(PathBuf, i64)> = lo_que_vence_en(&c, &b).into_iter().map(|p| (p.ruta, p.vence)).collect();
+        assert_eq!(lista.len(), 2, "la reunión de «siempre» entró, o faltó algo: {lista:?}");
+        assert!(lista.contains(&(c.raiz().join(&g.archivo), CIERRE + 90 * 86_400)), "tus notas no están en la lista de launchd: {lista:?}");
+        assert!(lista.contains(&(b.raiz().join(&g.archivo), CIERRE + 3 * 3_600)), "la bandeja no está en la lista de launchd: {lista:?}");
         let _ = std::fs::remove_dir_all(c.raiz());
         let _ = std::fs::remove_dir_all(b.raiz());
     }

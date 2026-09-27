@@ -19,8 +19,10 @@ use crate::llavero::{self, Servicio};
 use crate::notas::cifrado::{self, Llave};
 use crate::notas::{Contenido, Resumen};
 
-/// El nombre de la carpeta, dentro de Documentos. Lo dibuja la maqueta: `~/Documentos/Angel Ghost/`.
-pub const CARPETA: &str = "Angel Ghost";
+/// El nombre de la carpeta, dentro de la de la app (`~/Library/Application Support/<app>/notas/`),
+/// junto a la bandeja. **No en Documentos** (ADR 016, decisión A del usuario, 2026-09-27): ahí el
+/// `sh` de launchd no puede borrar lo vencido, y la papelera de iCloud guarda 30 días lo que se borra.
+pub const CARPETA: &str = "notas";
 pub const EXTENSION: &str = "ghost";
 /// La cuenta de la llave en el servicio «Angel Ghost · notas». Con versión: si un día cambia la forma
 /// de la llave, la vieja sigue ahí para abrir lo viejo.
@@ -99,8 +101,8 @@ pub struct Guardada {
     pub vence: i64,
 }
 
-/// La carpeta, dondequiera que esté. En la app, `~/Documents/Angel Ghost/` o la que elegiste; en
-/// los tests, una del temporal.
+/// La carpeta, dondequiera que esté. En la app, `notas/` dentro de la carpeta de la app; en los
+/// tests, una del temporal.
 pub struct Carpeta {
     raiz: PathBuf,
 }
@@ -274,7 +276,7 @@ impl Carpeta {
         r
     }
 
-    fn ruta_de(&self, archivo: &str) -> Result<PathBuf, String> {
+    pub fn ruta_de(&self, archivo: &str) -> Result<PathBuf, String> {
         if !nombre_valido(archivo) {
             return Err("ese no es el nombre de una reunión guardada".into());
         }

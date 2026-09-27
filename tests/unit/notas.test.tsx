@@ -119,14 +119,25 @@ describe("Notas dentro de Tauri", () => {
     });
     expect(screen.getByRole("alert")).toHaveTextContent(t.noSeGuardo);
     expect(screen.getByText(t.seVaAGuardar)).toBeInTheDocument();
+    // «Intentar otra vez» vuelve a guardar lo mismo (decisión A: ya no hay otra carpeta que elegir),
+    // y si esta vez sale bien, el aviso se va.
+    respuestas.set("guardar_la_reunion", null);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: t.intentarOtraVez }));
+    });
+    expect(pedidos("guardar_la_reunion")).toHaveLength(2);
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("sin reunión abierta enseña el archivo, y la retención se elige con un clic", async () => {
     respuestas.set("cuaderno_de_la_reunion", { ...VISTA_DEL_CUADERNO, abierta: false });
-    respuestas.set("reuniones_guardadas", { carpeta: null, reuniones: [REUNION_GUARDADA, REUNION_GUARDADA_PARA_SIEMPRE] });
+    respuestas.set("reuniones_guardadas", { reuniones: [REUNION_GUARDADA, REUNION_GUARDADA_PARA_SIEMPRE] });
     await pinta();
     expect(screen.getAllByText(REUNION_GUARDADA.archivo).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(t.carpetaDeFabrica).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(t.carpetaDeLaApp).length).toBeGreaterThan(0);
+    // «Mostrar en Finder» abre la carpeta con la reunión que estás viendo seleccionada
+    fireEvent.click(screen.getByRole("button", { name: t.mostrarEnFinder }));
+    expect(pedidos("mostrar_las_notas_en_finder").at(-1)?.[1]).toEqual({ archivo: REUNION_GUARDADA.archivo });
     fireEvent.click(screen.getByRole("radio", { name: "7 d" }));
     expect(pedidos("fijar_retencion").at(-1)?.[1]).toEqual({ retencion: "7d" });
     expect(screen.getByRole("radio", { name: /7 d/ })).toHaveAttribute("aria-checked", "true");
@@ -134,7 +145,7 @@ describe("Notas dentro de Tauri", () => {
 
   it("exportar pregunta antes, y solo el segundo botón exporta", async () => {
     respuestas.set("cuaderno_de_la_reunion", { ...VISTA_DEL_CUADERNO, abierta: false });
-    respuestas.set("reuniones_guardadas", { carpeta: null, reuniones: [REUNION_GUARDADA] });
+    respuestas.set("reuniones_guardadas", { reuniones: [REUNION_GUARDADA] });
     respuestas.set("exportar_reunion", true);
     await pinta();
     fireEvent.click(screen.getByRole("button", { name: new RegExp(t.exportarATexto) }));
@@ -148,7 +159,7 @@ describe("Notas dentro de Tauri", () => {
 
   it("borrar pregunta antes, y «Cancelar» no borra nada", async () => {
     respuestas.set("cuaderno_de_la_reunion", { ...VISTA_DEL_CUADERNO, abierta: false });
-    respuestas.set("reuniones_guardadas", { carpeta: null, reuniones: [REUNION_GUARDADA] });
+    respuestas.set("reuniones_guardadas", { reuniones: [REUNION_GUARDADA] });
     await pinta();
     fireEvent.click(screen.getByRole("button", { name: new RegExp(t.borrarAhora) }));
     expect(pedidos("borrar_reunion")).toHaveLength(0);
@@ -174,6 +185,8 @@ describe("Notas dentro de Tauri", () => {
     respuestas.set("cuaderno_de_la_reunion", { ...VISTA_DEL_CUADERNO, abierta: false });
     await pinta();
     expect(screen.getByText(t.sinReuniones)).toBeInTheDocument();
-    expect(screen.getByText(t.carpetaDeFabrica)).toBeInTheDocument();
+    expect(screen.getByText(t.carpetaDeLaApp)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: t.mostrarEnFinder }));
+    expect(pedidos("mostrar_las_notas_en_finder").at(-1)?.[1]).toEqual({ archivo: null });
   });
 });

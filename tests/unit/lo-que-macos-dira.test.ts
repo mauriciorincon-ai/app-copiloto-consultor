@@ -26,8 +26,8 @@ const CLAVES = [
   "NSMicrophoneUsageDescription",
   "NSAudioCaptureUsageDescription",
   "NSSpeechRecognitionUsageDescription",
-  // Sprint 003 (ADR 015 §2): tus notas se guardan en `~/Documentos/Angel Ghost/`.
-  "NSDocumentsFolderUsageDescription",
+  // Sin `NSDocumentsFolderUsageDescription`: tus notas viven en la carpeta privada de la app, no en
+  // Documentos (ADR 016, decisión A del sprint 003), así que la app no pide ese permiso.
 ] as const;
 
 function delPlist(texto: string): Record<string, string> {

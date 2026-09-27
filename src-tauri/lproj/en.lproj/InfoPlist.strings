@@ -7,4 +7,3 @@
 
 "NSSpeechRecognitionUsageDescription" = "Angel Ghost turns speech into text on this Mac, using the macOS speech engine. No audio ever leaves your computer to become text.";
 
-"NSDocumentsFolderUsageDescription" = "Angel Ghost keeps the notes you choose to save in Documents/Angel Ghost, encrypted with a key that never leaves this Mac. Nothing from the other side of the call is saved.";

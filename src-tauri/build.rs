@@ -51,7 +51,7 @@ const COMANDOS: &[&str] = &[
         "exportar_reunion",
         "borrar_reunion",
         "fijar_retencion",
-        "elegir_carpeta_de_notas",
+        "mostrar_las_notas_en_finder",
         "ir_a_notas",
         // Sprint 003, fase 2: las propuestas y la bandeja (ADR 016). Solo la ventana principal.
         "guardar_propuesta",

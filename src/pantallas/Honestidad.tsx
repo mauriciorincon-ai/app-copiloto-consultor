@@ -11,7 +11,6 @@ import {
   useEstadoDeLaBandeja,
   useMuestraDelCuaderno,
   useQuedan,
-  useReuniones,
 } from "../notas";
 import { escuchar } from "../puente";
 
@@ -58,7 +57,6 @@ export function Honestidad({ bytes, escucha, busqueda = "" }: { bytes: string; e
   const pantalla = usePantalla();
   const [ia] = useIa();
   const tn = useT().notas;
-  const [lista] = useReuniones();
   const [cuaderno] = useCuaderno(useMuestraDelCuaderno("archivo"));
   // Tras ⌥⎋ con una reunión abierta —es decir, con algo tuyo escrito—, la franja de la Etapa de
   // Diseño: el corte no toca tus notas.
@@ -206,9 +204,7 @@ export function Honestidad({ bytes, escucha, busqueda = "" }: { bytes: string; e
             <h2 className="seccion crece" style={{ margin: 0 }}>
               {t.loQueQuedara}
             </h2>
-            <span className="mono" style={{ color: "var(--ink-2)" }}>
-              {lista.carpeta ?? tn.carpetaDeFabrica}
-            </span>
+            <span style={{ color: "var(--ink-2)" }}>{tn.carpetaDeLaApp}</span>
           </div>
           {/* Sin salto: con la frase larga, el icono se quedaba solo en su línea (se vio en la
               fidelidad del sprint 003, en la maqueta y en el producto a la vez). */}

@@ -46,8 +46,8 @@ vende **no persistir, verificable**.
    carpeta de notas; **(d)** término plantado en logs; **(e)** kill-switch de una tecla que corta
    captura y vacía buffers. **Qué persiste y qué no (mirada 3 de la Etapa de Diseño, 2026-09-20):**
    el diseño distingue **lo del usuario** de **lo de terceros**, no «texto» de «audio». Persiste,
-   cifrado, con retención y borrado, en la carpeta del usuario: notas y acuerdos escritos · fichas
-   mostradas y fijadas · **turnos del propio consultor (pista de micrófono) en TEXTO, opt-in, por
+   cifrado, con retención y borrado, en el Mac del usuario (carpeta privada de la app, decisión A del
+   S3): notas y acuerdos escritos · fichas mostradas y fijadas · **turnos del propio consultor (pista de micrófono) en TEXTO, opt-in, por
    defecto apagado** · la **bandeja de propuestas** durante la ventana elegida (defecto 3 h, techo
    24 h, mínimo cero; borrado automático al vencer aunque la app no se abra; visible en Honestidad)
    · el índice del corpus (documentos propios, en claro) · preferencias y metadatos de costo. Muere

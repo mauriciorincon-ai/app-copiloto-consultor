@@ -685,6 +685,63 @@ La canaria estricta sigue en todo lo demás.
   las dos ventanas) · fidelidad 176 encuadres, ninguno sobre el umbral;
 - clippy 0, lint, typecheck y el efímero estático, limpios.
 
+### Cierre de la fase 2 y decisión A del usuario (2026-09-27)
+
+**CI de `b85404f`:** `quality`, `e2e` y `build-escritorio`, cada uno con conclusión propia `success`
+(run 36343010382).
+
+**El usuario, ante la tabla A/B/C:** «Sí la A. Perfecto la prueba en vivo: dame las instrucciones claras
+cuando ya la vayamos a hacer. Continúa». Tus notas pasan a la carpeta privada de la app, y la prueba en
+vivo con la app se hace con instrucciones paso a paso y su «sí» de la regla 22, cuando toque.
+
+**Lo construido (cola de la fase 2, antes de abrir la 3):**
+- **Rust:**
+  - `reunion::carpeta` → `~/Library/Application Support/com.aiapps.copiloto-consultor/notas/`, junto
+    a la bandeja (`carpeta::CARPETA = "notas"`);
+  - `lo_que_vence` = **tus notas y la bandeja** (`lo_que_vence_en`, pura). Las de «siempre» no entran;
+  - guardar y «Borrar ahora» ponen la tarea al día; el reloj duerme hasta el próximo vencimiento de las
+    dos;
+  - **fuera:** `prefs.carpeta_de_notas`, `elegir_carpeta_de_notas`, `ListaDeReuniones.carpeta` y
+    `NSDocumentsFolderUsageDescription` (plist y los dos `InfoPlist.strings`);
+  - **nuevo:** el comando `mostrar_las_notas_en_finder`, que lo hace macOS con `NSWorkspace`
+    (`tauri-plugin-opener`, ya dependencia) sin lanzar ningún programa. Solo en la ventana principal.
+- **Pantalla:**
+  - «Dónde» dice «Carpeta privada de la app» con **«Mostrar en Finder»**, que selecciona la reunión que
+    ves;
+  - «No se pudo guardar» ofrece **«Intentar otra vez»** en vez de «Elegir otra carpeta»;
+  - Honestidad nombra la carpeta de la app;
+  - la bandeja deja de decir «fuera de Documentos».
+  - **Maquetas antes que código**, «maquetado, no visto»; registrado en `docs/diseno/README.md`.
+- **La prueba en vivo `en_vivo_launchd_borra_a_su_hora_sin_la_app` ya no entra en Documentos:** su
+  segundo archivo va en la carpeta de notas de la app. No se corrió (regla 22).
+- **Documentos:** ADR 015 enmienda 1 · ADR 016 «Decisión del usuario» · **ADR 002 enmienda 4**, que el
+  ADR 016 anunciaba y **nunca se había escrito** (se paga aquí) · manual · regla dura 1 del
+  `CLAUDE.md` («en el Mac del usuario (carpeta privada de la app)»).
+
+**Cada gate nuevo, con su rojo** (verde al restaurar):
+
+| Gate | Defecto plantado | Rojo |
+|---|---|---|
+| launchd se lleva notas y bandeja | `lo_que_vence_en` devuelve solo la bandeja (la lista de antes) | `launchd_se_lleva_tus_notas_y_la_bandeja`: 1 en vez de 2 |
+| un `prefs.json` de la fase 1 se sigue leyendo | `#[serde(deny_unknown_fields)]` en `Archivo` | `un_campo_que_ya_no_existe_se_ignora` |
+
+**La tercera pregunta de la regla 15, respondida en el acto:** el primer rojo de `prefs` se plantó en
+`Preferencias` y **no cayó**: con `#[serde(flatten)]`, serde ignora el `deny_unknown_fields` de lo
+aplanado. El defecto que sí rompe la lectura es en `Archivo`, y ahí se vio el rojo.
+
+**Ruido registrado, no de la app:** la primera corrida de la sesión completa del efímero denunció dos
+PDF nuevos en `$TMPDIR/cv-pdf-test-sitio-97236/`. Eran de otro proyecto del usuario, cuyas pruebas
+escribían a la vez en la carpeta temporal compartida (el proceso ya no existía al mirarlo). La segunda
+corrida pasó. El gate hizo lo que debe: ve archivos nuevos y no sabe de quién son.
+
+**Pruebas, local:**
+- cargo lib 433 (+2) · la sesión completa del efímero pasa, con notas de 90 d y la lista con las dos;
+- vitest 276: los casos de `notas.test.tsx` ganan comprobaciones («Mostrar en Finder» con y sin
+  reunión; «Intentar otra vez» vuelve a guardar y quita el aviso);
+- e2e 167 · fidelidad 176 encuadres, ninguno sobre el umbral; leídos como imagen el archivo y
+  Honestidad;
+- clippy 0, lint, typecheck, `design-sync` sin cambios (0 escritos).
+
 ---
 
 ## Para la planeadora al cierre del sprint (va al summary, «Sugerencias de mejora al método»)

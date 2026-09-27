@@ -165,9 +165,9 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 
 - **Qué hace:** mientras escuchas, *Notas* es tu cuaderno de la reunión: **tu nota** (un campo para
   escribir lo que quieras), **tus acuerdos** (los escribes tú; la app no decide qué fue un acuerdo) y
-  **las fichas que fijaste**. Al terminar, se guardan en **un archivo por reunión, cifrado**, en
-  `Documentos/Angel Ghost/`. Es lo único de la reunión que llega al día siguiente: del cliente no se
-  guarda nada —ni su voz, ni sus turnos, ni lo que se leyó de su pantalla—.
+  **las fichas que fijaste**. Al terminar, se guardan en **un archivo por reunión, cifrado**, en la
+  **carpeta privada de la app**. Es lo único de la reunión que llega al día siguiente: del cliente no
+  se guarda nada —ni su voz, ni sus turnos, ni lo que se leyó de su pantalla—.
 - **Cómo se usa:**
   1. Durante la sesión, `⌃⌥N` te trae el cuaderno a *Notas* con el cursor al final de tu nota. Escribe
      y sigue: se va guardando en memoria a cada letra.
@@ -178,7 +178,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   4. Al parar la sesión, *Notas* te enseña **qué se va a guardar y qué muere**, contado, y el nombre
      del archivo que va a nacer. «Guardar cifrado y cerrar» o «Cerrar sin guardar».
   5. Sin reunión abierta, *Notas* es **el archivo**: tus reuniones guardadas, dónde viven, con qué
-     llave y cuándo se borran. **«Cuánto viven tus notas»** es una sola elección para todas: 7 días,
+     llave y cuándo se borran. **«Mostrar en Finder»** abre su carpeta con la reunión que estás viendo
+     seleccionada. **«Cuánto viven tus notas»** es una sola elección para todas: 7 días,
      30 días, **90 días** (de fábrica), 1 año o siempre. Cada reunión se guarda con la que haya al
      guardarla.
   6. **«Exportar a texto»** te pregunta antes —porque el archivo exportado ya no está cifrado—, después
@@ -191,24 +192,25 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   la ventana del cuaderno se ve **negra** para quien vea tu pantalla compartida, como la banda (en
   Meet está comprobado; en Zoom y Teams, sin verificar). Así tu nota no se ve si compartes la
   pantalla entera por descuido.
+- **Dónde viven:** en `~/Library/Application Support/com.aiapps.copiloto-consultor/notas/`, junto a
+  la bandeja. **No en Documentos**: desde ahí la tarea que borra lo vencido con la app cerrada no puede
+  entrar, y la papelera de iCloud guardaría 30 días lo que se borra. Como esa carpeta no se sincroniza
+  con iCloud, ninguna copia sale de tu Mac. Si guardar falla —el Llavero no contesta, el disco está
+  lleno—, la reunión sigue abierta, tu nota entera, y «Intentar otra vez» vuelve a guardar.
 - **La llave:** vive en el Llavero de tu Mac («Angel Ghost · notas»), **ligada a este Mac**. Guardar no
   te pide nada; abrir o exportar una reunión guardada te pide Touch ID o tu contraseña, una vez cada
   vez que abres la app.
 - **Limitaciones conocidas:**
   - **Si borras el Llavero o cambias de Mac, tus reuniones guardadas no se pueden abrir.** No hay
     recuperación: cualquier recuperación sería una segunda llave.
-  - **Si Documentos está en iCloud**, viaja una copia del archivo cifrado; nadie puede abrirla fuera
-    de este Mac, porque la llave no viaja.
+  - **Tus notas no aparecen en Documentos:** se llega a ellas desde *Notas*, o con «Mostrar en Finder».
   - **El nombre del archivo va en claro** (`reunion-2026-09-27-1402.ghost`): dice qué día, no qué se
     habló.
   - **Si la app se cae, lo no guardado se pierde**: vive en memoria a propósito. Si sales de la app con
     notas sin guardar, se guardan solas; y si empiezas otra sesión con la anterior abierta, también.
-  - **Tus notas vencidas se borran al abrir la app y, mientras está abierta, a la hora exacta de su
-    vencimiento.** Con la app cerrada, hoy **no**: macOS no deja que la tarea de fondo entre en
-    Documentos. Cómo se resuelve está pendiente de una decisión del usuario (ADR 016, «Hallazgo en
-    vivo»). La bandeja sí se borra sola con la app cerrada (abajo).
-  - Si macOS no deja escribir en Documentos, la app lo dice, **no pierde la nota** y te deja elegir
-    otra carpeta.
+  - **Tus notas vencidas se borran solas, aunque no abras la app:** las borra la misma tarea de macOS
+    que la bandeja (abajo), en el minuto siguiente a su vencimiento. Las que guardaste para «siempre»
+    no vencen. Mientras tengas notas con fecha, esa tarea aparece en Ítems de inicio.
   - Hasta que llegue «Este cliente», el archivo se llama `reunion-<fecha>-<hora>` y no lleva el nombre
     del cliente.
 
@@ -233,17 +235,18 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
      todas», «Descartar todas», cambiar la ventana ahí mismo e «Ir a tus reuniones».
   5. Si la bandeja es de una vez anterior que abriste la app, se ve su cuenta atrás, pero **lo que dice
      pide Touch ID**, como abrir una reunión.
-- **Dónde vive:** cifrada con la misma llave que tus notas, en la carpeta de la app
-  (`~/Library/Application Support/`), **no en Documentos**: la papelera de iCloud guarda 30 días lo que
-  se borra, y una lista que promete morir a las 3 h no puede tener una copia que viva un mes.
+- **Dónde vive:** cifrada con la misma llave que tus notas y junto a ellas, en la carpeta privada de la
+  app, **no en Documentos**: la papelera de iCloud guarda 30 días lo que se borra, y una lista que
+  promete morir a las 3 h no puede tener una copia que viva un mes.
 - **Se borra sola al vencer, aunque no abras la app.** Lo cumple macOS con una tarea programada al
   minuto de cada vencimiento; entre vencimientos no corre nada. *Honestidad* enseña la bandeja con su
   cuenta atrás, y si la tarea no corrió mientras la app estaba cerrada, lo dice en rojo.
 - **Limitaciones conocidas:**
   - **La primera vez, macOS avisa de que se añadió un ítem en segundo plano.** Hasta que la app vaya
     firmada, en Ajustes del Sistema → General → Ítems de inicio aparece como **«sh · desarrollador no
-    identificado»**: es la tarea de borrado de Angel Ghost. Si la desactivas, la bandeja solo se borra
-    con la app abierta, y *Honestidad* lo dice.
+    identificado»**: es la tarea de borrado de Angel Ghost, y se queda mientras haya bandeja o notas
+    con fecha. Si la desactivas, la bandeja y tus notas vencidas solo se borran con la app abierta, y
+    *Honestidad* lo dice.
   - Si borras la app, la tarea sigue borrando a su hora lo que quede; después se queda como una
     entrada inerte en Ítems de inicio, que puedes quitar.
   - Como mucho hay 30 propuestas esperando; al llegar a 30, las nuevas no entran y *Notas* lo dice.
@@ -565,7 +568,7 @@ detecta y lo marca, pero funciona mejor con auriculares.
 |---|---|
 | 001 | la banda protegida · el acople · las dos pistas y la transcripción local · el corpus indexado · la ficha de evidencia y la sugerencia de cómo conducirse · el modelo de voz de un idioma · el corte y la pantalla de Honestidad · español e inglés |
 | 002 | el disparo por silencio · **tu diccionario técnico** · **el modo solo audio** · **la lectura de pantalla** y `⌃⌥L` · **los porqués** (la pista que no abrió, la salida de audio por su nombre, el motor que falta) · **por qué llegó la ficha y cuánto tardó** · las teclas pasan a `⌃⌥` · **el radar** (ámbar y coral) y `⌃⌥R` · **la sugerencia** y la pantalla **IA** |
-| 003 | **tus notas** (el cuaderno de la reunión, el archivo cifrado por reunión, la retención, exportar y borrar) · `⌃⌥N` y `⌃⌥P` · **el cuaderno protegido** mientras la reunión está abierta · **lo que salió al API**, en *IA* · **las propuestas por reglas y la bandeja** con su cuenta atrás y su borrado con la app cerrada · `⌃⌥↵` · la señal «fijada» · el corte pasa a 11 piezas · las preferencias se recuerdan |
+| 003 | **tus notas** (el cuaderno de la reunión, el archivo cifrado por reunión, la retención, exportar y borrar) · `⌃⌥N` y `⌃⌥P` · **el cuaderno protegido** mientras la reunión está abierta · **lo que salió al API**, en *IA* · **las propuestas por reglas y la bandeja** con su cuenta atrás y su borrado con la app cerrada · `⌃⌥↵` · la señal «fijada» · el corte pasa a 11 piezas · las preferencias se recuerdan · tus notas pasan a la **carpeta privada de la app**, con «Mostrar en Finder», y se borran solas al vencer aunque no abras la app |
 
 > **Corregido tras la auditoría del sprint 001** (2026-09-22): tres frases de este manual habían
 > dejado de ser ciertas y se arreglaron con lo que el código hacía de verdad — el disparo por

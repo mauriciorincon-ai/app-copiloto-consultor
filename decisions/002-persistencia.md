@@ -154,3 +154,27 @@ con su llave antes de buscar la canaria. Las dos demos en rojo están en la bit�
 descifra la ve (la comprobación vieja, sobre los bytes cifrados, pasa en verde sin haber mirado nada).
 
 El detalle —formato, llave, desbloqueo, retención— es el ADR 015.
+
+---
+
+## Enmienda 4 — la bandeja, la lista de vencimientos, la tarea de launchd y dónde viven tus notas (sprint 003, fase 2, 2026-09-27)
+
+El ADR 016 anunciaba esta enmienda y no se había escrito; se escribe junto con la decisión A del
+usuario, que mueve las notas.
+
+| Qué | Dónde | Quién lo escribe | Permisos | Vence |
+|---|---|---|---|---|
+| Tus notas (`.ghost`) | `~/Library/Application Support/com.aiapps.copiloto-consultor/notas/` | `carpeta.rs`, vía `almacen` | 700 / 600 | su retención (90 d de fábrica; «siempre» no vence) |
+| La bandeja (`.ghost`) | `…/com.aiapps.copiloto-consultor/bandeja/` | `bandeja.rs`, vía `carpeta.rs` | 700 / 600 | su ventana (3 h de fábrica, techo 24 h) |
+| La lista de vencimientos | `…/com.aiapps.copiloto-consultor/vencimientos` | `vencimiento/`, vía `almacen` | 600 | se regenera de las cabeceras; sin nada que vencer, se borra |
+| La tarea de launchd | `~/Library/LaunchAgents/com.aiapps.copiloto-consultor.vencimiento.plist` | `vencimiento/`, vía `almacen::escribir_en_carpeta_ajena` | 600, sin tocar la carpeta ajena | se quita cuando no queda nada que vencer |
+
+**Tus notas salieron de Documentos (decisión A, ADR 015 enmienda 1).** Desde launchd, el `sh` que
+borra lo vencido no puede entrar en Documentos, así que ahí la retención solo se cumplía al abrir la
+app. En la carpeta de la app se cumple aunque no la abras, y ninguna copia viaja a iCloud.
+
+**Lo que entra en el inventario del efímero:** `Permitido` suma la bandeja y la lista, además de la
+carpeta de notas de la enmienda 3. La sesión completa guarda notas con 90 d y sella una bandeja, y
+el test exige que la lista traiga las dos. El plist **no** se escribe en esa sesión: registrarlo es
+tocar launchd y los Ítems de inicio de quien corre el test (regla 22 del `CLAUDE.md`); lo cubre la
+prueba en vivo, que solo corre con el «sí» del usuario.

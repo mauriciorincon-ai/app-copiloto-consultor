@@ -11,7 +11,7 @@
 //!    RENOMBRA encima, que es atómico (auditoría del S2, M10). Una caída deja el archivo viejo o el
 //!    nuevo, jamás uno vacío.
 //! 3. **Su carpeta es solo del dueño (700)**, y si ya existía floja se repara — solo la carpeta del
-//!    archivo, nunca sus padres: `~/Documents` no es de esta app.
+//!    archivo, nunca sus padres: `~/Library/Application Support` no es de esta app.
 //!
 //! Qué se escribe, dónde y por qué lo decide cada módulo con su ADR (002 y sus enmiendas); este
 //! archivo solo decide **cómo**.

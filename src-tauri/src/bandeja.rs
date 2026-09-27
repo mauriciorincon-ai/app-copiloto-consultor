@@ -2,10 +2,10 @@
 //!
 //! Al cerrar, las propuestas sin decidir se sellan aquí con su vencimiento: cierre + la ventana que
 //! elegiste (al cerrar · 1 h · 3 h · fin del día · 24 h; techo 24 h). Con «al cerrar» no se escribe
-//! nada. Vive en `~/Library/Application Support/<app>/bandeja/`, **no en Documentos**: la papelera
-//! de iCloud guarda 30 días lo que se borra allí, y una lista que promete morir a las 3 h no puede
-//! tener una copia que viva un mes. Y porque launchd sí puede borrar aquí, y en Documentos no (ADR
-//! 016, «Hallazgo en vivo»).
+//! nada. Vive en `~/Library/Application Support/<app>/bandeja/`, junto a tus notas (`notas/`), y
+//! **no en Documentos**: la papelera de iCloud guarda 30 días lo que se borra allí, y una lista que
+//! promete morir a las 3 h no puede tener una copia que viva un mes. Y porque launchd sí puede borrar
+//! aquí, y en Documentos no (ADR 016, «Hallazgo en vivo» y la decisión A).
 //!
 //! Este módulo escribe, y por eso **solo ve propuestas ya reducidas a una línea** (`propuestas/`
 //! decidió qué se escribe de cada lado): ni un turno pasa por aquí. Usa la carpeta sellada de

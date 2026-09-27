@@ -137,10 +137,11 @@ export type ReunionGuardada = {
 /** Lo que devuelve «Guardar cifrado y cerrar»; `null` si no había nada tuyo. */
 export type Guardada = { archivo: string; bytes: number; vence: number };
 
-/** Las reuniones guardadas y dónde viven (`reuniones_guardadas`). */
+/**
+ * Las reuniones guardadas (`reuniones_guardadas`). Dónde viven no viaja: siempre en la carpeta
+ * privada de la app (ADR 016, decisión A), que la interfaz nombra y enseña con «Mostrar en Finder».
+ */
 export type ListaDeReuniones = {
-  /** `null`: la de fábrica, `~/Documentos/Angel Ghost/`, que la interfaz nombra en su idioma. */
-  carpeta: string | null;
   reuniones: ReunionGuardada[];
 };
 
@@ -247,7 +248,6 @@ export function useMuestraDeLaBandeja(vista: VistaDeNotas): VistaDeLaBandeja | n
 
 /** Las tres reuniones de la maqueta (`notas.html`, «sprint 3 · el archivo»), a su fecha. */
 export const REUNIONES_DE_MUESTRA: ListaDeReuniones = {
-  carpeta: null,
   reuniones: [
     { archivo: "paramo-azul-2026-09-20.ghost", bytes: 22_528, guardada: Date.UTC(2026, 8, 20, 12) / 1000, vence: 0 },
     { archivo: "paramo-azul-2026-09-06.ghost", bytes: 17_408, guardada: Date.UTC(2026, 8, 6, 12) / 1000, vence: 0 },
@@ -294,7 +294,7 @@ export function useCuaderno(muestra: VistaDelCuaderno): [VistaDelCuaderno | null
 /** Las reuniones guardadas. Se pregunta al montar, al volver y tras guardar, borrar o exportar. */
 export function useReuniones(): [ListaDeReuniones, () => void] {
   const [lista, setLista] = useState<ListaDeReuniones>(() =>
-    hayTauri() ? { carpeta: null, reuniones: [] } : REUNIONES_DE_MUESTRA,
+    hayTauri() ? { reuniones: [] } : REUNIONES_DE_MUESTRA,
   );
   const [vuelta, setVuelta] = useState(0);
   const volver = useCallback(() => setVuelta((v) => v + 1), []);
@@ -352,8 +352,9 @@ export function fijarRetencion(retencion: Retencion): Promise<boolean> {
   return llamar("fijar_retencion", { retencion });
 }
 
-export function elegirCarpetaDeNotas(): Promise<string | null> {
-  return preguntar<string | null>("elegir_carpeta_de_notas");
+/** «Mostrar en Finder»: la carpeta de tus notas o, con `archivo`, esa reunión seleccionada. */
+export function mostrarEnFinder(archivo?: string): Promise<boolean> {
+  return llamar("mostrar_las_notas_en_finder", { archivo: archivo ?? null });
 }
 
 /** «Anotar para después» en la banda: lo mismo que ⌃⌥N. */

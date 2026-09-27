@@ -677,12 +677,6 @@ export const REUNION_GUARDADA_AHORA: Guardada = {
   };
 
 export const LISTA_DE_REUNIONES: ListaDeReuniones = {
-    "carpeta": null,
-    "reuniones": []
-  };
-
-export const LISTA_EN_OTRA_CARPETA: ListaDeReuniones = {
-    "carpeta": "~/Notas de reuniones",
     "reuniones": []
   };
 

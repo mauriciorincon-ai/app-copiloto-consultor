@@ -784,8 +784,10 @@ fn una_sesion_completa(casa: &Path, corpus_en: &Path, llave: &dyn Llaves) -> (Ve
     assert!(!cuaderno.oir(&eco), "el eco —la voz del cliente por tus altavoces— entró al cuaderno");
     let contenido = cuaderno.contenido(Encabezado { empezo: "2026-09-27 14:02".into(), minutos: 3, cliente: None });
     let base = notas::nombre_del_archivo(None, &notas::Fecha { anio: 2026, mes: 9, dia: 27, hora: 14, minuto: 2 });
-    Carpeta::en(casa.join(app_copiloto_consultor_lib::carpeta::CARPETA))
-        .guardar(llave, &contenido, &base, 0)
+    // Con la retención de fábrica (90 d), como en la app: así las notas entran en la lista de launchd.
+    let notas_de_la_sesion = Carpeta::en(casa.join(app_copiloto_consultor_lib::carpeta::CARPETA));
+    notas_de_la_sesion
+        .guardar(llave, &contenido, &base, 1_790_517_600 + 90 * 86_400)
         .expect("las notas de la sesión no se pudieron guardar");
     println!("[sesión] notas guardadas y cifradas");
     ejercido.push("notas");
@@ -817,7 +819,13 @@ fn una_sesion_completa(casa: &Path, corpus_en: &Path, llave: &dyn Llaves) -> (Ve
         propuestas: sin_decidir,
     };
     assert!(bandeja.dejar(llave, &contenido_b, Some(cerro + 3 * 3_600)).expect("la bandeja no se pudo escribir"));
-    let lista = app_copiloto_consultor_lib::vencimiento::lista_en_texto(&bandeja.pendientes());
+    // La lista, con lo mismo que la app le da a launchd: tus notas y la bandeja (decisión A).
+    let pendientes = app_copiloto_consultor_lib::reunion::lo_que_vence_en(&notas_de_la_sesion, &bandeja);
+    let lista = app_copiloto_consultor_lib::vencimiento::lista_en_texto(&pendientes);
+    assert!(
+        lista.contains(&notas_de_la_sesion.raiz().display().to_string()) && lista.lines().count() == 2,
+        "la lista de launchd no trae tus notas y la bandeja:\n{lista}"
+    );
     app_copiloto_consultor_lib::almacen::escribir(&casa.join(app_copiloto_consultor_lib::vencimiento::LISTA), lista.as_bytes())
         .expect("la lista de vencimientos no se pudo escribir");
     println!("[sesión] bandeja sellada con {} propuesta(s) y su lista de vencimientos", contenido_b.propuestas.len());
@@ -2186,13 +2194,15 @@ fn el_plist_de_la_tarea_es_un_plist_valido() {
 
 /// **En vivo, con launchd de verdad** (ADR 016 §5; parada del ⭐⭐ con la app). Registra una tarea de
 /// prueba con su propia etiqueta, un archivo que vence en menos de un minuto en una carpeta temporal
-/// y **otro en `~/Documents/Angel Ghost/`**, que es donde viven tus notas y donde macOS protege el
-/// acceso; y espera a que launchd los borre sin que nada de esta app esté corriendo. Al final quita
-/// la tarea y lo que creó. Se corre a mano: `cargo test --test contra-el-mac-de-verdad en_vivo -- --ignored --nocapture`.
+/// y **otro en la carpeta de tus notas** (`~/Library/Application Support/<app>/notas/`); y espera a
+/// que launchd los borre sin que nada de esta app esté corriendo. Al final quita la tarea y lo que
+/// creó. Toca launchd y deja «sh» en Ítems de inicio mientras dura: **regla 22, se corre solo con el
+/// «sí» del usuario**: `cargo test --test contra-el-mac-de-verdad en_vivo -- --ignored --nocapture`.
 ///
 /// **Su primera corrida (2026-09-27) cazó lo que el plan no vio:** la carpeta temporal se borró 38 s
-/// después de vencer; `~/Documents`, no. macOS le niega Documentos al `sh` de launchd (ADR 016,
-/// «Hallazgo en vivo»).
+/// después de vencer; `~/Documents`, no, porque macOS le niega Documentos al `sh` de launchd (ADR
+/// 016, «Hallazgo en vivo»). El usuario eligió la A: las notas pasaron a la carpeta de la app, y esta
+/// prueba ya no entra en Documentos.
 #[test]
 #[ignore = "en vivo: registra una tarea en launchd y espera a que borre (≈ 2 min)"]
 fn en_vivo_launchd_borra_a_su_hora_sin_la_app() {
@@ -2205,49 +2215,52 @@ fn en_vivo_launchd_borra_a_su_hora_sin_la_app() {
         lista: d.join("vencimientos"),
         etiqueta,
     };
-    let documentos = casa.join("Documents/Angel Ghost");
-    let habia_carpeta = documentos.exists();
-    std::fs::create_dir_all(&documentos).unwrap();
+    let notas = casa
+        .join("Library/Application Support")
+        .join(vencimiento::APP)
+        .join(app_copiloto_consultor_lib::carpeta::CARPETA);
+    let habia_carpeta = notas.exists();
+    std::fs::create_dir_all(&notas).unwrap();
     let en_temporal = d.join("con espacios/bandeja de prueba.ghost");
-    let en_documentos = documentos.join(format!("prueba-del-vencimiento-{}.ghost", std::process::id()));
+    let en_notas = notas.join(format!("prueba-del-vencimiento-{}.ghost", std::process::id()));
     std::fs::write(&en_temporal, b"AGHOST").unwrap();
-    std::fs::write(&en_documentos, b"AGHOST").unwrap();
+    std::fs::write(&en_notas, b"AGHOST").unwrap();
 
     let vence = ahora() + 20;
-    let pendientes = [Pendiente { vence, ruta: en_temporal.clone() }, Pendiente { vence, ruta: en_documentos.clone() }];
+    let pendientes = [Pendiente { vence, ruta: en_temporal.clone() }, Pendiente { vence, ruta: en_notas.clone() }];
     let hecho = vencimiento::al_dia(&tarea, &pendientes, &vencimiento::hora_del_mac).unwrap();
     assert_eq!(hecho, vencimiento::Hecho::Registrada);
     // `RunAtLoad` la corre al registrarla: antes de su hora no puede borrar nada
     std::thread::sleep(std::time::Duration::from_secs(3));
-    assert!(en_temporal.exists() && en_documentos.exists(), "se borró antes de vencer");
+    assert!(en_temporal.exists() && en_notas.exists(), "se borró antes de vencer");
     println!("[vencimiento] vence a las {} (+20 s); la tarea corre al minuto siguiente", vence);
 
     let mut temporal_a = None;
-    let mut documentos_a = None;
+    let mut notas_a = None;
     for _ in 0..40 {
         std::thread::sleep(std::time::Duration::from_secs(5));
         if temporal_a.is_none() && !en_temporal.exists() {
             temporal_a = Some(ahora() - vence);
         }
-        if documentos_a.is_none() && !en_documentos.exists() {
-            documentos_a = Some(ahora() - vence);
+        if notas_a.is_none() && !en_notas.exists() {
+            notas_a = Some(ahora() - vence);
         }
-        if temporal_a.is_some() && documentos_a.is_some() {
+        if temporal_a.is_some() && notas_a.is_some() {
             break;
         }
     }
-    println!("[vencimiento] carpeta temporal: {temporal_a:?} s tras vencer · ~/Documents: {documentos_a:?} s tras vencer");
+    println!("[vencimiento] carpeta temporal: {temporal_a:?} s tras vencer · carpeta de notas: {notas_a:?} s tras vencer");
 
     // limpieza, pase lo que pase
     let quitada = vencimiento::al_dia(&tarea, &[], &vencimiento::hora_del_mac).unwrap();
-    let _ = std::fs::remove_file(&en_documentos);
+    let _ = std::fs::remove_file(&en_notas);
     if !habia_carpeta {
-        let _ = std::fs::remove_dir(&documentos);
+        let _ = std::fs::remove_dir(&notas);
     }
     let _ = std::fs::remove_dir_all(&d);
     assert_eq!(quitada, vencimiento::Hecho::Quitada);
     assert!(!tarea.plist.exists(), "el plist de prueba se quedó en LaunchAgents");
 
     assert!(temporal_a.is_some_and(|s| s <= 90), "launchd no borró el archivo de la carpeta temporal a su hora");
-    assert!(documentos_a.is_some_and(|s| s <= 90), "launchd no borró el archivo de ~/Documents a su hora (¿macOS le niega Documentos a sh?)");
+    assert!(notas_a.is_some_and(|s| s <= 90), "launchd no borró el archivo de la carpeta de notas a su hora");
 }

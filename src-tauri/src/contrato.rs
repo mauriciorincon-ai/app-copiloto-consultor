@@ -608,11 +608,6 @@ pub fn muestras() -> Vec<Muestra> {
             vence: 1_797_676_000,
         }),
         m("LISTA_DE_REUNIONES", "ListaDeReuniones", "./notas", &crate::reunion::ListaDeReuniones {
-            carpeta: None,
-            reuniones: Vec::new(),
-        }),
-        m("LISTA_EN_OTRA_CARPETA", "ListaDeReuniones", "./notas", &crate::reunion::ListaDeReuniones {
-            carpeta: Some("~/Notas de reuniones".into()),
             reuniones: Vec::new(),
         }),
         m("QUE_SABE_TRANSCRIBIR", "QueSabeTranscribir", "./cuaderno", &crate::QueSabeTranscribir {

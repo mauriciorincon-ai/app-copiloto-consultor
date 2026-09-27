@@ -40,6 +40,10 @@ voz del cliente** y no entra jamás, aunque la casilla esté encendida (test en 
 
 ### 2 · Dónde y con qué nombre
 
+> **Enmendado el mismo día (enmienda 1, al final):** el usuario eligió la **A** y las notas pasaron a
+> la carpeta privada de la app. Lo que sigue sobre Documentos, iCloud y «elegir otra carpeta» queda
+> como historia de la decisión, no como lo que hace la app.
+
 - Carpeta: `~/Documents/Angel Ghost/` (Finder la enseña como «Documentos»). **700**; el archivo,
   **600**, y los dos nacen así: los escribe `almacen.rs` (ADR 002, enmienda 2).
 - Nombre: `<cliente>-<AAAA-MM-DD>.ghost`, con el cliente en minúsculas, sin tildes y con guiones
@@ -179,3 +183,48 @@ no lleva ni el nombre del archivo ni una palabra de la nota.
 - Se añade una dependencia: `chacha20poly1305` 0.11 (RustCrypto), con `zeroize`. `cargo audit` la
   cubre desde este commit.
 - El rendimiento prometido: abrir un archivo cifrado en **≤ 500 ms** (plan del sprint), con test.
+
+## Enmienda 1 (2026-09-27) — tus notas, en la carpeta privada de la app (decisión A)
+
+**Qué pasó.** La prueba en vivo de launchd (ADR 016, «Hallazgo en vivo») mostró que el `sh` que borra
+lo vencido con la app cerrada **no puede entrar en Documentos**: el permiso es de la app, no suyo. Con
+las notas en `~/Documents/Angel Ghost/`, la retención solo se cumplía al abrir la app. La carpeta había
+sido decisión del usuario, así que se le preguntó con tres salidas:
+
+- **A:** mover las notas a la carpeta privada de la app;
+- **B:** dejarlas en Documentos y que la tarea abra la app para borrarlas;
+- **C:** dejarlas en Documentos y cambiar la promesa.
+
+**Eligió la A** («Sí la A», 2026-09-27).
+
+**Qué cambia:**
+- **Dónde:** `~/Library/Application Support/com.aiapps.copiloto-consultor/notas/`, junto a la bandeja.
+  700 la carpeta y 600 cada archivo, como antes. El nombre y el formato `.ghost` no cambian.
+- **La pantalla la nombra, no la escribe:** «Carpeta privada de la app», con **«Mostrar en Finder»**,
+  que la abre con la reunión que estás viendo seleccionada. Lo hace macOS (`NSWorkspace`), sin lanzar
+  ningún programa.
+- **La retención se cumple aunque no abras la app:** tus notas entran en la lista de launchd, como la
+  bandeja. Las guardadas para «siempre» no entran.
+- **Fuera:** `NSDocumentsFolderUsageDescription` (la app ya no pide Documentos), la preferencia
+  `carpetaDeNotas`, el comando `elegir_carpeta_de_notas` y el camino «elegir otra carpeta». Si guardar
+  falla —el Llavero no contesta, el disco está lleno—, la reunión sigue abierta, la nota entera, y la
+  salida es «Intentar otra vez».
+- **iCloud deja de aplicar:** la carpeta de la app no se sincroniza, así que no viaja ninguna copia ni
+  queda nada 30 días en «Eliminado recientemente». Exportar a texto sigue yendo donde tú elijas.
+- **No hay migración:** la app no se ha publicado y nadie tiene notas en Documentos.
+
+**Lo que cuesta, dicho:**
+- Tus notas no se ven al abrir Documentos: se llega a ellas desde la app, o con «Mostrar en Finder».
+- **La tarea de borrado vive mientras tengas notas con fecha**, no solo mientras haya bandeja: con la
+  retención de fábrica (90 d), queda en Ítems de inicio casi siempre. En desarrollo se ve como «sh ·
+  desarrollador no identificado», porque la app no está firmada; firmada, debería verse como Angel
+  Ghost, y eso no está verificado todavía.
+
+**Tests:**
+- `launchd_se_lleva_tus_notas_y_la_bandeja` (`reunion.rs`), en rojo con la lista de antes (solo la
+  bandeja);
+- la sesión completa del efímero guarda las notas con 90 d y exige que la lista traiga notas y bandeja;
+- `un_campo_que_ya_no_existe_se_ignora` (`prefs.rs`): un `prefs.json` de la fase 1 con `carpetaDeNotas`
+  se sigue leyendo. En rojo con `deny_unknown_fields` en el archivo;
+- `lo-que-macos-dira`: la clave de Documentos ya no está, y el gate exige que tampoco esté en los
+  `InfoPlist.strings`.

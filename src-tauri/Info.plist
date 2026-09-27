@@ -34,14 +34,6 @@
   <key>NSAudioCaptureUsageDescription</key>
   <string>Angel Ghost listens to what plays on your Mac so it can hear the other side of the call without putting a bot in the meeting. Audio lives in memory only and is never recorded.</string>
 
-  <!--
-    Tus notas (sprint 003, ADR 015 §2): se guardan cifradas en `~/Documents/Angel Ghost/`. macOS pide
-    este permiso la primera vez que se guarda una reunión. Si lo niegas, la app no pierde la nota:
-    lo dice y te deja elegir otra carpeta.
-  -->
-  <key>NSDocumentsFolderUsageDescription</key>
-  <string>Angel Ghost keeps the notes you choose to save in Documents/Angel Ghost, encrypted with a key that never leaves this Mac. Nothing from the other side of the call is saved.</string>
-
   <key>NSSpeechRecognitionUsageDescription</key>
   <string>Angel Ghost turns speech into text on this Mac, using the macOS speech engine. No audio ever leaves your computer to become text.</string>
 </dict>

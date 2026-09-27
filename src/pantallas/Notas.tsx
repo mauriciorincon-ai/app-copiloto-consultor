@@ -14,13 +14,13 @@ import {
   decidirTodaLaBandeja,
   descartarPropuesta,
   DIAS_DE_MUESTRA,
-  elegirCarpetaDeNotas,
   escribirNota,
   exportarReunion,
   fijarRetencion,
   fijarVentana,
   guardarLaReunion,
   guardarPropuesta,
+  mostrarEnFinder,
   duracion,
   HORA_DE_MUESTRA,
   reloj,
@@ -403,12 +403,36 @@ function Fijada({ ficha }: { ficha: FichaFijada }) {
   );
 }
 
+/**
+ * «Dónde»: la carpeta privada de la app, nombrada y no escrita como ruta, y «Mostrar en Finder»
+ * para verla (ADR 016, decisión A). Con `archivo`, Finder la abre con esa reunión seleccionada.
+ */
+function DondeViven({ archivo }: { archivo?: string }) {
+  const t = useT().notas;
+  return (
+    <div className="fila" style={{ gap: "8px" }}>
+      <span className="crece">{t.carpetaDeLaApp}</span>
+      <button className="btn mini" type="button" onClick={() => void mostrarEnFinder(archivo).catch(() => undefined)}>
+        {t.mostrarEnFinder}
+      </button>
+    </div>
+  );
+}
+
 // ---- al cerrar -------------------------------------------------------------------------------
 
 function AlCerrar({ cuaderno, volver }: { cuaderno: VistaDelCuaderno; volver: () => void }) {
   const t = useT().notas;
   const idioma = useIdioma();
   const [fallo, setFallo] = useState(false);
+  const guardar = () =>
+    guardarLaReunion().then(
+      () => {
+        setFallo(false);
+        volver();
+      },
+      () => setFallo(true),
+    );
   const [ventana, setVentana] = useState<Ventana>(cuaderno.ventana);
   useEffect(() => setVentana(cuaderno.ventana), [cuaderno.ventana]);
   const r = cuaderno.resumen;
@@ -435,12 +459,8 @@ function AlCerrar({ cuaderno, volver }: { cuaderno: VistaDelCuaderno; volver: ()
             <strong>{t.noSeGuardo}</strong>
             <p>{t.noSeGuardoDetalle}</p>
             <div className="fila" style={{ gap: "8px", marginTop: "8px" }}>
-              <button
-                className="btn mini"
-                type="button"
-                onClick={() => void elegirCarpetaDeNotas().then((c) => c && setFallo(false))}
-              >
-                {t.elegirOtraCarpeta}
+              <button className="btn mini" type="button" onClick={() => void guardar()}>
+                {t.intentarOtraVez}
               </button>
             </div>
           </div>
@@ -510,19 +530,7 @@ function AlCerrar({ cuaderno, volver }: { cuaderno: VistaDelCuaderno; volver: ()
           <button className="btn" type="button" onClick={() => void cerrarSinGuardar().then(volver)}>
             {t.cerrarSinGuardar}
           </button>
-          <button
-            className="btn primario"
-            type="button"
-            onClick={() =>
-              guardarLaReunion().then(
-                () => {
-                  setFallo(false);
-                  volver();
-                },
-                () => setFallo(true),
-              )
-            }
-          >
+          <button className="btn primario" type="button" onClick={() => void guardar()}>
             <Ic id="i-candado" s />
             {t.guardarCifrado}
           </button>
@@ -882,7 +890,6 @@ function Archivo({ retencion, preguntaInicial, bandeja, volverALaBandeja }: {
   };
   const reunion = lista.reuniones.find((r) => r.archivo === elegida) ?? lista.reuniones[0];
   const indice = reunion ? lista.reuniones.indexOf(reunion) : -1;
-  const carpeta = lista.carpeta ?? t.carpetaDeFabrica;
   const fecha = (s: number) => {
     const d = new Date(s * 1000);
     return `${String(d.getDate()).padStart(2, "0")} ${MESES[idioma][d.getMonth()]}`;
@@ -937,7 +944,9 @@ function Archivo({ retencion, preguntaInicial, bandeja, volverALaBandeja }: {
               <tbody>
                 <tr>
                   <td>{t.donde}</td>
-                  <td className="mono">{carpeta}</td>
+                  <td>
+                    <DondeViven />
+                  </td>
                 </tr>
                 <tr>
                   <td>{t.llave}</td>
@@ -1047,7 +1056,9 @@ function Archivo({ retencion, preguntaInicial, bandeja, volverALaBandeja }: {
             <tbody>
               <tr>
                 <td>{t.donde}</td>
-                <td className="mono">{carpeta}</td>
+                <td>
+                  <DondeViven archivo={reunion.archivo} />
+                </td>
               </tr>
               <tr>
                 <td>{t.tamano}</td>

@@ -103,9 +103,6 @@ pub struct Preferencias {
     /// «Conservar mis turnos»: tus turnos, en texto, entran al archivo de la reunión. De fábrica,
     /// apagado (regla dura 1).
     pub conservar_mis_turnos: bool,
-    /// La carpeta de tus notas, **solo si elegiste otra** porque macOS negó Documentos. `None` es
-    /// `~/Documents/Angel Ghost/` (ADR 015 §2).
-    pub carpeta_de_notas: Option<String>,
     /// Cuánto esperan en la bandeja las propuestas que no decidiste (ADR 016 §4). De fábrica, 3 h.
     pub ventana_de_la_bandeja: crate::bandeja::Ventana,
 }
@@ -120,7 +117,6 @@ impl Default for Preferencias {
             lectura_automatica: true,
             retencion: Retencion::default(),
             conservar_mis_turnos: false,
-            carpeta_de_notas: None,
             ventana_de_la_bandeja: crate::bandeja::Ventana::default(),
         }
     }
@@ -208,7 +204,6 @@ mod tests {
             lectura_automatica: false,
             retencion: Retencion::Anio,
             conservar_mis_turnos: true,
-            carpeta_de_notas: Some("/Users/quien/Notas de reuniones".into()),
             ventana_de_la_bandeja: crate::bandeja::Ventana::FinDelDia,
         };
         guardar(&ruta, &elegidas).unwrap();
@@ -245,6 +240,15 @@ mod tests {
         let p = de_texto(r#"{"version":1,"redactar":true}"#).unwrap();
         assert!(p.redactar);
         assert_eq!(p.idiomas, IdiomasDePista::default());
+    }
+
+    /// Y al revés: un campo que ya no existe no rompe la lectura. `carpetaDeNotas` vivió en la fase 1
+    /// del sprint 003, hasta que las notas pasaron a la carpeta de la app (decisión A): un archivo de
+    /// entonces se sigue leyendo entero, y ese campo se ignora.
+    #[test]
+    fn un_campo_que_ya_no_existe_se_ignora() {
+        let p = de_texto(r#"{"version":1,"redactar":true,"carpetaDeNotas":"/Users/quien/Notas"}"#).unwrap();
+        assert!(p.redactar);
     }
 
     /// **Lo escrito a mano no llega al motor de voz sin validar.** Un código que no es de idioma
