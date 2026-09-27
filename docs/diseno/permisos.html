@@ -248,11 +248,9 @@
         <p class="mono" style="color:var(--ink-2)"><span lang="es">Audio del sistema y Pantalla son un solo permiso en macOS: se conceden y se caen juntos.</span><span lang="en">System audio and Screen are a single macOS permission: they are granted and lost together.</span></p>
       </div>
       <div class="grid-2">
-        <!-- DOS DE LAS TRES YA FUNCIONAN (fase 2 de la auditoría del sprint 001, hallazgo M11).
-             Este estado se dibujó antes de la fase 4 y se quedó con los tres «todavía no»: indexar
-             el corpus existe desde la fase 4 y buscar a mano es ⌃⌥A, y ninguna de las dos necesita
-             un permiso. Es el error simétrico del resto de la auditoría — la app escondiendo lo que
-             sí hace, en la pantalla que existe para decir qué se puede hacer sin conceder nada. -->
+        <!-- UNA DE LAS TRES FUNCIONA SIN PERMISOS: indexar el corpus. Buscar a mano es ⌃⌥A, que
+             busca sobre lo último que dijo el cliente y necesita el audio del sistema (auditoría
+             del S2, B19); las notas no existen todavía. -->
         <div class="tarjeta">
           <h2 class="seccion"><span lang="es">Qué puedes hacer ya, sin conceder nada</span><span lang="en">What you can do now, granting nothing</span></h2>
           <div class="fila"><svg class="ic s"><use href="#i-doc"/></svg><span class="crece"><span lang="es">Indexar tu corpus</span><span lang="en">Index your corpus</span></span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Funciona</span><span lang="en">Works</span></span></div>
@@ -295,11 +293,9 @@
         <p class="mono" style="color:var(--ink-2)"><span lang="es">Audio del sistema y Pantalla son dos permisos de macOS, aunque Ajustes los enseña en el mismo panel.</span><span lang="en">System audio and Screen are two macOS permissions, even though Settings shows them in the same pane.</span></p>
       </div>
       <div class="grid-2">
-        <!-- DOS DE LAS TRES YA FUNCIONAN (fase 2 de la auditoría del sprint 001, hallazgo M11).
-             Este estado se dibujó antes de la fase 4 y se quedó con los tres «todavía no»: indexar
-             el corpus existe desde la fase 4 y buscar a mano es ⌃⌥A, y ninguna de las dos necesita
-             un permiso. Es el error simétrico del resto de la auditoría — la app escondiendo lo que
-             sí hace, en la pantalla que existe para decir qué se puede hacer sin conceder nada. -->
+        <!-- UNA DE LAS TRES FUNCIONA SIN PERMISOS: indexar el corpus. Buscar a mano es ⌃⌥A, que
+             busca sobre lo último que dijo el cliente y necesita el audio del sistema (auditoría
+             del S2, B19); las notas no existen todavía. -->
         <div class="tarjeta">
           <h2 class="seccion"><span lang="es">Qué puedes hacer ya, sin conceder nada</span><span lang="en">What you can do now, granting nothing</span></h2>
           <div class="fila"><svg class="ic s"><use href="#i-doc"/></svg><span class="crece"><span lang="es">Indexar tu corpus</span><span lang="en">Index your corpus</span></span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Funciona</span><span lang="en">Works</span></span></div>

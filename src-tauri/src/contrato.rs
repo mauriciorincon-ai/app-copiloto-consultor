@@ -24,7 +24,8 @@
 //!
 //! **Lo que este gate NO cubre, dicho aquí para que no se lea como más de lo que es:** que alguien
 //! *lea* los campos. Un campo puede encajar perfectamente y no tener un solo consumidor —la
-//! auditoría contó diecisiete así. Eso es otra comprobación y vive en la deuda del sprint.
+//! auditoría contó diecisiete así. Eso es otra comprobación y vive en
+//! `tests/unit/contrato-con-lectores.test.ts` (auditoría del S2, M6).
 
 use serde_json::Value;
 
@@ -300,9 +301,9 @@ pub fn muestras() -> Vec<Muestra> {
         }),
         // ---- la voz que sale, el modo solo audio (C15) del sprint 002 ---------------------
         // Las tres formas que la banda dibuja: apagada (banda a 88 px), diciendo la ficha, y
-        // encendida sin poder hablar. La cuarta combinación —encendida, puede, y callada— es el
-        // hueco que la mirada 16 no dibujó y que solo apareció al construir esto: está declarada en
-        // la bitácora y pendiente de la mirada 16-bis.
+        // encendida sin poder hablar. La cuarta combinación —encendida, puede, y callada— la
+        // dibuja la mirada 16-bis (aprobada el 2026-09-26): «Callado · esperando el siguiente
+        // turno».
         m("LA_VOZ_APAGADA", "LaVoz", "./cuaderno", &crate::habla::LaVoz::APAGADA),
         m("LA_VOZ_DICIENDO", "LaVoz", "./cuaderno", &crate::habla::LaVoz {
             encendida: true,

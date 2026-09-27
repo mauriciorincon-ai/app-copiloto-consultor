@@ -122,11 +122,11 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
         </div>
 
         <div className="grid-2">
-          {/* «Qué puedes hacer ya, sin conceder nada» — y desde la fase 4 se pueden hacer DOS de
-              las tres. Marcarlas «todavía no» era el error simétrico del resto de la auditoría: la
-              app escondiendo lo que sí hace, en la pantalla que existe para decir qué se puede
-              hacer sin conceder permisos. Lo encontró el barrido de promesas aplazadas (M11).
-              La tarjeta deja de ser `pendiente`: dos de tres funcionan. */}
+          {/* «Qué puedes hacer ya, sin conceder nada» — hoy UNA de las tres: indexar tu corpus.
+              Buscar a mano necesita el audio del sistema (⌃⌥A busca sobre lo último que dijo el
+              cliente; auditoría del S2, B19) y las notas llegan en el sprint 3. La tarjeta no es
+              pendiente entera porque una fila sí funciona: marcarla toda «todavía no» escondería
+              lo que la app hace sin permisos (M11 del S1). */}
           <div className="tarjeta">
             <h2 className="seccion">{t.sinConcederNada}</h2>
             <Fila icono="i-doc" texto={t.indexar}>

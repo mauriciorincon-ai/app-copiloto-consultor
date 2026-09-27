@@ -109,9 +109,9 @@ pub enum Novedad {
     /// pantalla en negro—. Se contesta igual, porque alguien preguntó: sin esto la tecla parecería
     /// rota (mirada 17-quater, «pantalla · nada que leer»).
     NadaEnPantalla { hora: String },
-    /// **El radar ámbar (C14)**: la pantalla de la reunión muestra el aviso de grabación, o hay un
-    /// bot de notas en la lista de participantes. Los bots van con el nombre del CATÁLOGO, no con
-    /// lo que Vision leyó: por esta costura no cruza texto de la pantalla.
+    /// **El radar ámbar (C14)**: la pantalla de la reunión muestra el aviso de grabación, o el
+    /// nombre de un bot de notas aparece en la ventana de la reunión. Los bots van con el nombre
+    /// del CATÁLOGO, no con lo que Vision leyó: por esta costura no cruza texto de la pantalla.
     Radar { grabando: bool, bots: Vec<String>, hora: String },
     /// **La sugerencia (C7)**: una frase que el modelo redactó a partir de las fichas, fundada en una
     /// de ellas. Llega DESPUÉS de la ficha, que no la espera. Solo existe si pasó `sintesis::fundar`.
@@ -358,7 +358,7 @@ impl Escucha {
         for p in pistas.lock().unwrap().iter() {
             match &p.no_abrio {
                 Some(m) => println!("[escucha] pista «{}» NO abierta: {m}", p.cual.etiqueta()),
-                None => println!("[escucha] pista «{}» abierta", p.cual.etiqueta()),
+                None => println!("[escucha] pista «{}» abierta · {}", p.cual.etiqueta(), p.idioma),
             }
         }
 

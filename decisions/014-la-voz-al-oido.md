@@ -55,13 +55,15 @@ sería una grabación de la reunión con otro nombre (`habla/mod.rs:15-18`,
 
 ### 2 · El candado de los auriculares, y lo que macOS no deja saber
 
-`Salida::puede_haber_eco()` tiene **tres** respuestas: `Some(true)` con los altavoces internos,
-`Some(false)` con auriculares por el conector del Mac, y `None` con cualquier dispositivo externo o
-cuando no se sabe (`capture/nativo.rs:183-206`, `capture/nativo.rs:208-226`). Los altavoces internos
+`Salida::puede_haber_eco()` tiene **tres** respuestas: `Some(true)` con los altavoces internos y
+con HDMI, DisplayPort o AirPlay (`Salida::AltavozExterno`, auditoría M4), `Some(false)` con
+auriculares por el conector del Mac, y `None` con un dispositivo por USB o Bluetooth o cuando no se
+sabe (`capture/nativo.rs:188-246`). Los altavoces internos
 se reconocen por su transporte y su fuente de datos, comprobados en este Mac
 (`capture/nativo.rs:59-65`).
 
-- **Con los altavoces internos, calla.** Es el único caso en que la app **sabe** que el cliente oiría
+- **Con los altavoces internos, o por HDMI, DisplayPort o AirPlay, calla.** Son los casos en que la
+  app **sabe** —o da por hecho, por el transporte— que el cliente oiría
   (`habla/mod.rs:187-190`), y la banda lo dice en ámbar: «Conecta auriculares · el cliente te oiría»
   (`docs/MANUAL-DE-USO.md:315-316`).
 - **Con un dispositivo externo por USB o Bluetooth —unos AirPods incluidos— habla.** Negarse dejaría
@@ -167,16 +169,16 @@ que acordarse de añadirla: `Pieza::orden` es un `match` sin comodín y el crate
 
 ## Consecuencias
 
-- **Con un dispositivo externo la app habla y sí podría oírse a sí misma por el micrófono**: el tap
+- **Con un dispositivo por USB o Bluetooth la app habla y sí podría oírse a sí misma por el
+  micrófono**: el tap
   la excluye, el micrófono no. Esa parada es del gate ⭐, con auriculares puestos y sin ellos
   (`bitácora:1167-1169`, `src-tauri/tests/contra-el-mac-de-verdad.rs:1312-1316`).
 - **La CI sí mide la voz.** `macos-latest` no trae modelos para reconocer, pero sí voces para
   sintetizar: el puente de `habla/` y el candado se miden en cada PR (`bitácora:1287-1309`).
-- **Lo que la auditoría del sprint registra además sobre esta pieza, con su sitio:** sin voz para el
-  idioma, `⌃⌥V` enciende igual el modo, se queda con `⎋` y la banda da el motivo equivocado, mientras
-  el manual dice que el modo no se enciende (B14, `sprints/SPRINT_002-auditoria.md:473`); y el
-  presupuesto «la voz empieza ≤ 1 s tras la ficha» no está medido (B21,
-  `sprints/SPRINT_002-auditoria.md:480`).
+- **Lo que la auditoría registró sobre esta pieza, ya pagado:** sin voz para el idioma, `⌃⌥V` no
+  enciende el modo y lo dice en el registro (B14); el arranque de la voz se mide en vivo —`[habla]
+  empezó a sonar a los N ms (presupuesto 1000)`— y el número sale en la parada h1 del gate del MVP
+  (B21).
 
 ## Medición
 
@@ -191,11 +193,11 @@ que acordarse de añadirla: `Pieza::orden` es un `match` sin comodín y el crate
   dos lados, y el candado abierto —tres tests en rojo, uno contra el Mac de verdad—. Y el cuarto, el de
   fidelidad de la banda de 44 px (`bitácora:1272-1274`).
 
-## Pendiente — dos decisiones que se implementan en este mismo sprint
+## Dos decisiones de la auditoría, ya implementadas
 
-La auditoría del sprint encontró dos huecos en esta pieza. Este ADR registra **lo que se decide**;
-**no están hechos** cuando se escribe, y se pagan en la Fase 2 de la auditoría, dentro del sprint 002,
-por decisión del usuario de pagar los cuarenta hallazgos (`bitácora:2361`).
+La auditoría del sprint encontró dos huecos en esta pieza. Este ADR registra lo que se decidió; los
+dos se pagaron en la Fase 2 de la auditoría, dentro del sprint 002 (`7a50222`), por decisión del
+usuario de pagar los cuarenta hallazgos (`bitácora:2361`).
 
 1. **HDMI, DisplayPort y AirPlay cuentan como altavoz** (auditoría M4,
    `sprints/SPRINT_002-auditoria.md:247-261`). La auditoría encontró que todo transporte que no sea el

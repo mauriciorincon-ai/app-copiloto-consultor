@@ -748,6 +748,9 @@ fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Inf
         }
     };
 
+    // Se lee ANTES del bucle: la pieza `ContadorDeRed` lo pone a cero, y leído después el log
+    // diría siempre «red 0 B» (auditoría del S2, B25).
+    let bytes_al_cortar = red::bytes();
     let mut piezas = Vec::new();
     for pieza in corte::TODAS {
         let suerte = corte::suerte_en_este_sprint(*pieza);
@@ -797,7 +800,7 @@ fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Inf
     if escuchaba {
         println!("[corte] las dos pistas estaban abiertas: cerradas y vaciadas");
     }
-    let informe = corte::Informe { piezas, bytes_en_red: red::bytes() };
+    let informe = corte::Informe { piezas, bytes_en_red: bytes_al_cortar };
     println!(
         "[corte] ⌥⎋: {} de {} piezas cortadas · red {}",
         informe.cortadas(),
@@ -1248,7 +1251,7 @@ fn fuente_hablada(f: &ficha::Fuente) -> String {
 
 /// El trabajo de `⌃⌥V`, **hecho en Rust y no pedido a la banda por un evento**.
 ///
-/// Los otros tres atajos emiten a la banda y la banda actúa, y aquí eso no sirve: este cambia el
+/// `⌃⌥T` y `⌃⌥A` emiten a la banda y la banda actúa, y aquí eso no sirve: este cambia el
 /// ALTO de la ventana, y el `⌥⎋` puede haberla cerrado. Un modo que se enciende solo si queda una
 /// banda que lo pida no es un modo, es una casualidad.
 fn conmutar_el_modo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> habla::LaVoz {
@@ -2496,5 +2499,26 @@ mod pruebas_del_asa_y_la_voz {
     fn sin_voz_el_modo_no_se_enciende() {
         assert!(puede_encender_el_modo(true));
         assert!(!puede_encender_el_modo(false));
+    }
+}
+
+#[cfg(test)]
+mod pruebas_del_informe_del_corte {
+    /// **El log del corte dice los bytes que habían salido** (segunda pasada de la auditoría del
+    /// S2, B25). La pieza `ContadorDeRed` pone el contador a cero DENTRO del bucle, así que leerlo
+    /// después escribía siempre «red 0 B». `ejecutar_el_corte` necesita la app entera y no se puede
+    /// llamar en un test; lo que se vigila es el orden, que es donde vivía el defecto.
+    ///
+    /// ¿Puede fallar? Sí: con `bytes_en_red: red::bytes()` en el informe, es rojo (bitácora).
+    #[test]
+    fn el_contador_se_lee_antes_de_ponerlo_a_cero() {
+        let fuente = include_str!("lib.rs");
+        let desde = fuente.find("fn ejecutar_el_corte").expect("la función del corte");
+        let cuerpo = &fuente[desde..];
+        let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
+        let lee = cuerpo.find("red::bytes()").expect("el corte lee el contador");
+        let bucle = cuerpo.find("for pieza in corte::TODAS").expect("el bucle de las piezas");
+        assert!(lee < bucle, "el contador se lee después de que el corte lo ponga a cero");
+        assert_eq!(cuerpo.matches("red::bytes()").count(), 1, "y se lee una sola vez");
     }
 }

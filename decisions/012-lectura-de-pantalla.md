@@ -172,16 +172,13 @@ Zoom (`bitácora:1837-1856`).
 - **Todavía no se ha visto capturar una ventana viva.** En la corrida en vivo de la fase 3 no hubo
   ventana visible que capturar; quedan el test bajo demanda
   `la_ventana_de_meet_se_captura_y_se_lee` y la parada con el usuario delante (`bitácora:2010-2031`).
-- **Lo que esta decisión no cubre, con su sitio.** La auditoría del sprint registra que las copias del
-  `Refuerzo` no se pisan al soltarse, contra lo que dice la cabecera del módulo (B6,
-  `sprints/SPRINT_002-auditoria.md:465`); que el gate del efímero en marcha no
-  ejerce Vision (M8, `sprints/SPRINT_002-auditoria.md:314-331`); y que el coste de CPU de la lectura no
-  está medido (B21, `sprints/SPRINT_002-auditoria.md:480`). Y lo que Swift hace con su propia memoria
-  al leer no se pisa desde Rust: el texto de Vision se arma en un `String` de Swift que se suelta sin
-  ceros (`nativo/Pantalla.swift:182-198`).
-- **Dos frases del código que este ADR deja con sitio:** la cabecera de `pantalla/huella.rs:8-13`
-  todavía justifica el pHash, y `huella::phash` (`pantalla/huella.rs:119-122`) ya solo lo usan los
-  tests del módulo. La decisión vigente es la de `pantalla/huella.rs:32-54`.
+- **Lo que la auditoría del sprint registró sobre esta pieza, ya pagado:** las copias del
+  `Refuerzo` se pisan al soltarse (`impl Drop`, B6); el gate del efímero en marcha lee una
+  diapositiva con Vision dentro de la ventana del inventario (M8); la CPU está medida —mediana
+  172 ms de CPU por lectura, menos del 17 % de un núcleo a una lectura por segundo (B21,
+  `bitácora:2548-2549`)—; y el texto de Vision se escribe byte a byte en el búfer de Rust, sin
+  `String` de Swift (B24). Lo que Vision guarde por dentro no es nuestro. La cabecera de
+  `pantalla/huella.rs` ya describe la huella por zonas y el pHash quedó `#[cfg(test)]` (B23).
 
 ## Medición
 

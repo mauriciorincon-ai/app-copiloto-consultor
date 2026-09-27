@@ -52,8 +52,10 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   como si fueran dos aplicaciones pegadas. Al cerrar la banda, la ventana vuelve a su tamaño.
 - **Cómo se usa:** solo, si concediste el permiso de **Accesibilidad**. Si no, la banda flota
   encima y te avisa con «sin acople».
-- **Limitaciones conocidas:** es el único permiso opcional de la app. Sin él todo lo demás
-  funciona igual.
+- **Limitaciones conocidas:** sin él la banda flota encima en vez de acoplarse. Y con **Meet en el
+  navegador** hace falta para algo más: sin él la app no puede leer el título de la pestaña, así que
+  no sabe que hay reunión —*Sesión* dice «No se puede saber si hay reunión»—, no lee su pantalla y
+  el radar ámbar no mira. Con Zoom y Teams no hace falta para eso.
 
 ### Escucha las dos pistas · desde Sprint 001
 
@@ -81,9 +83,10 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   Y la fila «Escucha las dos pistas» pasa a **«A medias»** diciendo cuál queda. Hasta el sprint 002
   esta pantalla decía «Funciona» en las dos pistas pasara lo que pasara, y te habrías enterado al
   terminar la reunión, al ver que faltaba medio transcript.
-- **Los auriculares por su nombre · nuevo en Sprint 002.** Si el sonido sale por un aparato externo
-  (unos AirPods, un altavoz USB), *Sesión* dice su nombre. La app **no puede saber** si es un casco o
-  un altavoz: si es un altavoz, no uses el modo solo audio.
+- **Los auriculares por su nombre · nuevo en Sprint 002.** Si el sonido sale por un aparato por USB
+  o Bluetooth (unos AirPods, un altavoz USB), *Sesión* dice su nombre. La app **no puede saber** si
+  es un casco o un altavoz: si es un altavoz, no uses el modo solo audio. Por HDMI, DisplayPort o
+  AirPlay lo trata como un altavoz: la fila sale en ámbar y lo dice.
 
 ### Tu corpus, indexado · desde Sprint 001
 
@@ -184,8 +187,9 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   pregunta y la agenda —que no trae ni cifra ni término— no trae ninguna. Cada lectura tarda **menos de
   una décima de segundo**, y como mucho hay una por segundo.
 - **Limitaciones conocidas:**
-  - Necesita el permiso de **Pantalla**. Sin él, *Sesión* lo dice («Sin permiso») y la app funciona
-    igual, sin leerla.
+  - Necesita el permiso de **Pantalla** y, con Meet en el navegador, también el de **Accesibilidad**
+    (para encontrar la pestaña). Sin el de Pantalla, *Sesión* lo dice («Sin permiso») y la app
+    funciona igual, sin leerla.
   - Lee **la ventana de la reunión**, no tu pantalla entera, y solo si **está visible**. Si la
     reunión está detrás de otra ventana, no hay nada que leer.
   - **El vídeo de los participantes no cuenta como «algo nuevo»**: se mueve todo el rato y no trae
@@ -219,7 +223,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     lo que el radar revisa. El mismo aviso no se repite en cada diapositiva: sale una vez, y otra vez
     solo si cambia (un bot nuevo, por ejemplo).
   - Si tu Mac está **inscrito en un MDM** (la gestión de equipos de una empresa), *Sesión* lo lista
-    como «Sábelo» dentro de la tabla: es normal en un equipo de empresa y no salta a la banda.
+    como «Sábelo» —en su lista de lo que funciona, o dentro de la tabla si además hay un programa
+    invasivo—: es normal en un equipo de empresa y no salta a la banda.
 - **Lo que NO hace, y cómo se comprueba:** no toca la máquina de nadie, no abre conexiones, no
   pregunta nada a internet y no cierra ni bloquea ningún programa. La lista de programas se le pide
   al núcleo de tu Mac —la misma que ves en el Monitor de Actividad—, se compara en memoria y se
@@ -382,9 +387,10 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 - **Limitaciones conocidas:**
   - **Arregla lo que se oyó parecido, no lo que se perdió.** «Power B» se convierte en «Power BI»,
     pero si el motor oyó «Lakehouse» como «en la que usé», no queda nada a lo que parecerse.
-  - **Los términos de cuatro letras o menos solo se corrigen si tú escribes cómo se oyen.** «DAX»
-    está a una letra de «das», «dos», «tax» y «max»: corregir por parecido ahí estropearía más de lo
-    que arregla.
+  - **Los términos de seis letras o menos solo se corrigen si tú escribes cómo se oyen.** «DAX»
+    está a una letra de «das», «dos», «tax» y «max», y «fabric» a una de «fábrica»: corregir por
+    parecido ahí estropearía más de lo que arregla. Y un nombre de cliente de menos de ocho letras
+    solo se corrige si se oyó exacto.
   - **Los nombres de tus clientes no se guardan en el archivo.** Salen de tu corpus cada vez que
     empiezas sesión, así que ese archivo no contiene el nombre de nadie.
   - **Cada pista escucha un idioma.** Si en mitad de una frase castellana el cliente dice tres

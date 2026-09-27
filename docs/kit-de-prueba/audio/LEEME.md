@@ -26,7 +26,9 @@ el consultor quiere verla («Power BI», no «power by»): eso es lo que la app 
 produciendo, así que es la referencia correcta. Medir contra lo que el motor oye sería medirlo contra sí
 mismo.
 
-Se mide en cada `cargo test`, con el diccionario técnico puesto y sin él:
+Se mide en cada `cargo test` de un Mac con los modelos de voz instalados, con el diccionario técnico
+puesto y sin él. En la CI (`macos-latest`, sin modelos para reconocer) el test lo dice —«el WER no
+se pudo medir en ninguna pista»— y no mide nada:
 
 ```
 cd src-tauri && cargo test --test contra-el-mac-de-verdad el_wer -- --nocapture
@@ -62,7 +64,7 @@ que quedaban ya pagadas:
 | Los turnos marcados del disparador | `../disparo.json` | **hecho** en la auditoría — 26 turnos con precisión y recall |
 | La mediana de latencia del kit | dentro del test del kit | **hecho** en la auditoría |
 | Un audio con **mezcla de idiomas** | `mezcla-es.wav` · `mezcla-en.wav` | **pagado en el sprint 002**, fase 1 |
-| **WER** informativo de la transcripción | `transcripciones.json` + el test `el_wer…` | **pagado en el sprint 002**, fase 1 — y no es informativo: tiene umbral y falla |
+| **WER** informativo de la transcripción | `transcripciones.json` + el test `el_wer…` | **pagado en el sprint 002**, fase 1 — y no es informativo: tiene umbral y falla en un Mac con modelos; en la CI no mide |
 
 **Sobre el margen de ±1 turno** que el plan pedía para el disparador: `disparo.json` mide turno a
 turno **sin margen**, porque sus turnos son texto y su reloj es exacto. Es más estricto, no más

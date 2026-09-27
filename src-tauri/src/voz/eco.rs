@@ -24,9 +24,9 @@
 //! un comparador de palabras exactas habría dicho que no se parecen en nada.
 //!
 //! **Y lo que hace con el eco es marcarlo, no borrarlo.** Un turno que desaparece sin explicación
-//! es la clase de silencio que esta app no se permite. La banda sabrá que ese turno es un reflejo
-//! y no lo atribuirá a nadie; la pantalla de Sesión, mientras tanto, dice lo único que de verdad
-//! resuelve el problema: ponte los auriculares.
+//! es la clase de silencio que esta app no se permite. La banda sabe que ese turno es un reflejo y
+//! no lo atribuye a nadie (`src/componentes/Banda.tsx`); la pantalla de Sesión, además, dice lo
+//! único que de verdad resuelve el problema: ponte los auriculares.
 
 use std::collections::HashSet;
 

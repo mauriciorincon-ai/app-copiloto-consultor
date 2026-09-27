@@ -72,8 +72,8 @@ export type PropsBanda = {
    */
   transcript?: boolean;
   /**
-   * Con el permiso de Accesibilidad la banda recorta la reunión; sin él flota encima. Es el
-   * único permiso opcional de la app y el fallback está declarado en la maqueta.
+   * Con el permiso de Accesibilidad la banda recorta la reunión; sin él flota encima, y el
+   * fallback está declarado en la maqueta.
    */
   acoplada?: boolean;
   /** El cliente detectado tiene la protección verificada por el spike. */
@@ -235,7 +235,7 @@ export function Banda({
 
   /**
    * La línea del ámbar, compuesta de las piezas de la maqueta: «Meet muestra el aviso de grabación
-   * y «MinutaBot» está en la lista de participantes. Ese bot no es Angel Ghost, que nunca entra a
+   * y «MinutaBot» aparece en la ventana de la reunión. Ese bot no es Angel Ghost, que nunca entra a
    * la llamada. Aviso, no bloqueo.» Si hay dos bots se nombra el primero —la frase es singular— y
    * si no se sabe el cliente, se dice lo demás sin inventarlo.
    */
@@ -814,7 +814,7 @@ export function Banda({
  * pantalla de reunión»*.
  *
  * Referencia visual: `docs/diseno/banda.html`, estados «voz» y «voz-sin» (mirada 16, aprobada el
- * 2026-09-26) y «voz-espera» (mirada 16-bis, **pendiente**).
+ * 2026-09-26) y «voz-espera» (mirada 16-bis, aprobada con un cambio el 2026-09-26).
  *
  * **Los tres estados, y de dónde sale cada uno.** Rust manda tres booleanos y ninguna frase: el
  * copy vive en `src/i18n/`, donde el gate del diccionario lo compara con la maqueta.
@@ -823,7 +823,7 @@ export function Banda({
  * |---|---|
  * | `puede: false` | «Conecta auriculares · el cliente te oiría», en ámbar y con el glifo tachado |
  * | `diciendo: true` | «Diciéndote la ficha…» y de dónde sale |
- * | el resto | **la línea de la ficha que acaba de leerse**, con su fuente |
+ * | el resto | **«Callado · esperando el siguiente turno»**, y la fuente de lo último que se leyó |
  *
  * **El contador de red se queda, aunque la cabecera no.** A 44 px desaparece el `cab-b` entero, y
  * con él se habría ido el «0 B». Es una promesa dura de la app (regla 2), no un adorno, así que

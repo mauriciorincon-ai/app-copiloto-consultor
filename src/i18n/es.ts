@@ -53,9 +53,9 @@ export const es = {
      * EL CATÁLOGO DE MANIOBRAS, bilingüe.
      *
      * Rust dice **cuál** maniobra (`credencial`, `cifra`, …) y el texto vive aquí, porque la
-     * maniobra es voz de la app y la app es bilingüe por regla dura. Las seis están en
-     * `docs/diseno/banda.html` —la maqueta es el primer diccionario— y en `design-system.md`,
-     * donde el usuario las aprobó en la mirada 11.
+     * maniobra es voz de la app y la app es bilingüe por regla dura. Las siete están en
+     * `docs/diseno/banda.html` —la maqueta es el primer diccionario— y en `design-system.md`: seis
+     * aprobadas en la mirada 11 y el puente, construido en la auditoría del S2 (M15).
      */
     /** Las comillas del idioma: la maqueta escribe «…» en español y “…” en inglés. */
     comillaAbre: "«",
@@ -112,7 +112,7 @@ export const es = {
     /**
      * ---- el modo solo audio (C15, sprint 002) ----
      *
-     * Las cinco cadenas salen de `docs/diseno/banda.html`, estados «voz», «voz-espera» y
+     * Las siete cadenas salen de `docs/diseno/banda.html`, estados «voz», «voz-espera» y
      * «voz-sin», y el gate del diccionario las compara una a una con la maqueta. Rust **no manda
      * ninguna**: manda tres booleanos. Si la parte nativa mandara «Conecta auriculares», ese texto
      * se podría cambiar sin que ninguna mirada lo viera nunca.
@@ -374,7 +374,7 @@ export const es = {
     piezasCola: "piezas: la otra todavía no existe.",
     loQueQuedara: "Lo que quedará cuando cierres",
     loQueQuedaraDetalle:
-      "Notas, acuerdos y fichas fijadas llegan más adelante. De la reunión no queda nada: lo único que la app escribe es tuyo —el índice de tu corpus, tu diccionario y el gasto del mes—.",
+      "Notas, acuerdos y fichas fijadas llegan más adelante. De la reunión no queda nada: lo único que la app escribe es tuyo —el índice de tu corpus, tu diccionario, el gasto del mes y dónde estaba la ventana de la reunión, para devolvérsela—.",
     // ---- sesión · lo que la fase 3 puso a funcionar ----
     funcionaEscucha: "Escucha las dos pistas y las transcribe en tu Mac",
     altavocesInternos: "Altavoces internos",

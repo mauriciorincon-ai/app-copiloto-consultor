@@ -167,9 +167,10 @@
       <p class="eyebrow" style="margin:0 0 6px">Qué cambió en esta versión</p>
       <p class="chica" style="margin:0"><strong>v4 — el sprint 002: la app mira la pantalla, avisa de
         quién graba o vigila, te lee la ficha al oído, escribe bien tu jerga y, si lo enciendes, te
-        propone qué decir.</strong> Cinco bloques nuevos (E a I) con <strong>31 pruebas nuevas</strong>, y
-        <strong>13 de las 41 heredadas reescritas</strong> («Mejorado en S2»): las teclas pasaron de ⌘⇧ a ⌃⌥, el
-        corte alcanza ahora 8 piezas, y Permisos separa el audio del sistema de la pantalla.</p>
+        propone qué decir.</strong> <strong>31 pruebas nuevas</strong> —26 en cinco bloques nuevos (E a I) y
+        5 en bloques de antes—, y <strong>13 de las 41 heredadas reescritas</strong> («Mejorado en S2»): las
+        teclas pasaron de ⌘⇧ a ⌃⌥, el corte alcanza ahora 9 piezas, y Permisos separa el audio del sistema de
+        la pantalla.</p>
       <p class="chica" style="margin:8px 0 0"><strong>Dos pruebas heredadas no podían pasar tal como
         estaban escritas</strong>, y las encontró esta reescritura: pedían decir la pregunta del cliente
         <em>tú</em>, por el micrófono —y tu voz, a propósito, no pide fichas—, y una esperaba «nada en tu
@@ -497,7 +498,7 @@
         <span class="origen origen-nuevo">Nuevo · S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
     </ul>
-    <div class="kit"><p><strong>Kit de prueba:</strong> <code>docs/kit-de-prueba/audio/</code> trae la misma frase como audio (<code>mezcla-es.wav</code>) con su transcripción de referencia: es con la que la CI mide cuánto mejora el diccionario.</p></div>
+    <div class="kit"><p><strong>Kit de prueba:</strong> <code>docs/kit-de-prueba/audio/</code> trae la misma frase como audio (<code>mezcla-es.wav</code>) con su transcripción de referencia: es con la que se mide cuánto mejora el diccionario, en un Mac con los modelos de voz instalados (la CI no los tiene y no lo mide).</p></div>
     <div class="reportame"><p><strong>Repórtame sí o sí:</strong> una palabra que estaba bien y el diccionario estropea, o un nombre de cliente dentro del archivo.</p></div>
   </section>
 
@@ -549,7 +550,7 @@
     <ul class="pasos">
       <li data-origen="heredada"><input type="checkbox" id="k1"><label for="k1">Mira las dos pistas con su idioma y el estado real de su modelo. <strong>Si un modelo no está instalado, lo dice</strong> en vez de fallar en silencio cuando alguien hable.
         <span class="origen origen-heredada">S1</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="k1b"><label for="k1b">El código de cada pista (<code>es-ES</code>, <code>en-US</code>…) <strong>se elige</strong>: tiene un subrayado a trazos. Las dos nacen en <strong>español</strong>. Cambia la del cliente a <code>en-US</code>, vuelve a Sesión, pulsa «Iniciar sesión» y en la consola la pista del sistema abre en inglés. Cierra la app y ábrela: <strong>vuelven a español</strong> (la elección vive en memoria, y el manual lo dice).
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="k1b"><label for="k1b">El código de cada pista (<code>es-ES</code>, <code>en-US</code>…) <strong>se elige</strong>: tiene un subrayado a trazos. Las dos nacen en <strong>español</strong>. Cambia la del cliente a <code>en-US</code>, vuelve a Sesión, pulsa «Iniciar sesión» y en la consola aparece <code>[escucha] pista «sistema» abierta · en-US</code>. Cierra la app y ábrela: <strong>vuelven a español</strong> (la elección vive en memoria, y el manual lo dice).
         <p class="chica suave" style="margin:6px 0 0">Hasta la auditoría del S2 la pista del cliente estaba fijada en inglés, sin forma de cambiarla: con un cliente que habla español no llegaba un solo turno útil.</p>
         <span class="origen origen-nuevo">Nuevo · S2 · auditoría</span>
         <span class="minimo">⭐ mínimo</span></label></li>
@@ -577,11 +578,11 @@
     <details class="chica">
       <summary>Historial de la guía</summary>
       <ul>
-        <li><strong>S2 · v4 · 2026-09-26:</strong> 72 pruebas. <strong>31 nuevas</strong> en cinco
+        <li><strong>S2 · v4 · 2026-09-26:</strong> 72 pruebas. <strong>31 nuevas</strong>: 26 en cinco
           bloques —la pantalla de la reunión (E), el radar (F), la sugerencia y la pantalla IA (G), el
-          modo solo audio (H) y el diccionario técnico (I)— y tres en bloques viejos: la pista que no
-          abre, los auriculares por su nombre, la ficha por silencio y la banda que vuelve tras el
-          corte. <strong>13 heredadas reescritas</strong>; dos de ellas no podían pasar (la pregunta
+          modo solo audio (H) y el diccionario técnico (I)— y cinco en bloques viejos: la pista que no
+          abre, los auriculares por su nombre, la ficha por silencio, la banda que vuelve tras el
+          corte y el idioma que se elige por pista. <strong>13 heredadas reescritas</strong>; dos de ellas no podían pasar (la pregunta
           del cliente dicha por tu micrófono, y «nada en tu corpus» para una pregunta con ficha). Los
           bloques del corte y del idioma pasan a ser J y K para que el ⭐⭐ se camine hasta el final.
           Gate mínimo ⭐ de 61; corto ⭐⭐ de 9 paradas (~25 min, cinco sobre el techo, declarado).

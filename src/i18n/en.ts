@@ -291,7 +291,7 @@ export const en: Diccionario = {
     piezasCola: "pieces: the other one does not exist yet.",
     loQueQuedara: "What will be left when you close",
     loQueQuedaraDetalle:
-      "Notes, agreements and pinned cards come later. Nothing of the meeting is left: the only things the app writes are yours \u2014your corpus index, your dictionary and the month\u2019s spend\u2014.",
+      "Notes, agreements and pinned cards come later. Nothing of the meeting is left: the only things the app writes are yours \u2014your corpus index, your dictionary, the month\u2019s spend and where the meeting window was, to give it back\u2014.",
     // ---- session · what phase 3 turned on ----
     funcionaEscucha: "It listens to both tracks and transcribes them on your Mac",
     altavocesInternos: "Internal speakers",

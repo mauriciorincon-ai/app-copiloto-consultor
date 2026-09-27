@@ -157,7 +157,8 @@ public func agSttInstalar(_ idioma: UnsafePointer<CChar>) -> Int32 {
     guard let t = await transcriptorDe(nombre) else { return Codigo.idiomaDesconocido.rawValue }
     do {
       await reservar(t)
-      // Las dos líneas de abajo son la ÚNICA puerta a la red de un módulo protegido de esta app,
+      // Las dos líneas de abajo son la puerta a la red de la transcripción —la otra de la app es
+      // `Red.swift`, la del proveedor externo de IA—,
       // y llevan su marca porque el barrido las prohíbe por defecto: es macOS quien descarga su
       // propio modelo de reconocimiento, a petición explícita del usuario desde la pantalla de
       // Idioma. No sale audio ni texto — solo entra el modelo.

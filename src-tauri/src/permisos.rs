@@ -86,8 +86,8 @@ pub enum Cara {
     Revocado,
 }
 
-/// Los que la pantalla de permisos exige para escuchar. La accesibilidad no entra: es del acople,
-/// vive en su propia tarjeta y la app hace su trabajo entero sin ella.
+/// Los que la pantalla de permisos exige para escuchar. La accesibilidad no entra: es del acople y
+/// de encontrar la pestaña de Meet, vive en su propia tarjeta, y sin ella la app escucha igual.
 fn los_de_escuchar(p: &Permisos) -> [Estado; 2] {
     [p.microfono, p.audio]
 }
@@ -316,8 +316,8 @@ mod tests {
         assert_eq!(cara(&p(Estado::Concedido, Estado::SinConceder, Estado::SinConceder)), Cara::SinConceder);
     }
 
-    /// La accesibilidad es del acople y la app hace su trabajo entero sin ella: no puede poner la
-    /// pantalla de permisos en rojo.
+    /// La accesibilidad no es de la escucha —es del acople y de encontrar la pestaña de Meet—: no
+    /// puede poner la pantalla de permisos en rojo.
     #[test]
     fn la_accesibilidad_no_pinta_la_pantalla_de_permisos() {
         let sin = p(Estado::Concedido, Estado::Concedido, Estado::Denegado);

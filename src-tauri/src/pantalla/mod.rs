@@ -10,7 +10,7 @@
 //!
 //! ```text
 //!   cada 500 ms           ¿cambió?              ¿≤ 1 por segundo?        ¿trae tema?
-//!   ScreenCaptureKit ──▶  huella (pHash) ──▶    Vision (OCR) ──▶         refuerzo ──▶ buscador
+//!   ScreenCaptureKit ──▶  huella (zonas) ──▶    Vision (OCR) ──▶         refuerzo ──▶ buscador
 //!   (solo la ventana      2 ms, en Rust          cientos de ms           cifras, títulos,
 //!    de la reunión)                                                       tus términos
 //! ```

@@ -1,6 +1,6 @@
 //! La ventana deslizante de turnos: **lo único que queda de lo que se dijo, y dura poco**.
 //!
-//! La banda enseña los últimos turnos y el disparador de la fase 4 leerá el último del cliente.
+//! La banda enseña los últimos turnos y el disparador (`disparo/`) lee el último del cliente.
 //! Ninguno de los dos necesita la reunión entera, así que la reunión entera no existe: caben
 //! [`TURNOS`] y el más viejo se cae solo. Es la misma idea del anillo de audio aplicada al texto —
 //! la capacidad hace el trabajo que una promesa no puede hacer.

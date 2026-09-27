@@ -36,7 +36,8 @@ impl Boveda {
         Self { conocidos: c, pares: Vec::new() }
     }
 
-    /// Cuántas cosas se taparon. Es lo que IA enseña en «anonimizados».
+    /// Cuántas cosas se taparon. Hoy solo lo leen los tests: la pantalla IA no lo enseña (ADR 011,
+    /// punto 4).
     pub fn tapadas(&self) -> usize {
         self.pares.len()
     }

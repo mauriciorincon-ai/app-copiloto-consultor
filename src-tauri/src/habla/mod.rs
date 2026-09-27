@@ -105,7 +105,8 @@ impl LaVoz {
 pub enum Impedimento {
     /// El modo solo audio está apagado. No es un fallo: es el estado normal.
     ModoApagado,
-    /// El sonido saldría por los altavoces del Mac. **Es el único que la banda dibuja**, y lo
+    /// El sonido saldría por un altavoz: los del Mac, o un monitor por HDMI o DisplayPort, o
+    /// AirPlay (M4). **Es el único que la banda dibuja**, y lo
     /// dibuja con las palabras que el usuario aprobó: «Conecta auriculares · el cliente te oiría».
     TeOiriaElCliente,
     /// Este Mac no tiene ninguna voz para ese idioma.
@@ -156,10 +157,10 @@ pub struct Momento<'a> {
 /// ### La decisión que hubo que tomar, y por qué está escrita aquí
 ///
 /// `Salida::puede_haber_eco()` tiene **tres** respuestas, no dos: `Some(true)` con los altavoces
-/// internos, `Some(false)` con auriculares por el conector, y **`None` con cualquier dispositivo
-/// externo** — porque desde Core Audio un USB o un Bluetooth puede ser un casco o un altavoz de
-/// mesa y **no se distinguen**. Eso incluye los AirPods, que es como la mayoría de la gente hace
-/// una videollamada.
+/// internos y con HDMI, DisplayPort o AirPlay —casi siempre un altavoz (auditoría del S2, M4)—,
+/// `Some(false)` con auriculares por el conector, y **`None` con un dispositivo por USB o
+/// Bluetooth** — porque desde Core Audio puede ser un casco o un altavoz de mesa y **no se
+/// distinguen**. Eso incluye los AirPods, que es como la mayoría de la gente hace una videollamada.
 ///
 /// Las dos salidas eran malas: negarse con `None` deja C15 inservible para el caso normal (una
 /// funcionalidad que nunca corre es peor que una limitación declarada); hablar con `None` acepta que
@@ -168,18 +169,18 @@ pub struct Momento<'a> {
 /// **Se habla.** Tres razones, en orden de peso:
 ///
 /// 1. **La app ya trazó esta línea y el usuario la aprobó.** El aviso de eco de la pantalla de
-///    Sesión se enciende SOLO con los altavoces internos (`Sesion.tsx`: `salida.salida ===
-///    "altavoces"`), y esa pantalla pasó la mirada 13. Trazarla distinta aquí sería que la misma
-///    app respondiera dos cosas a la misma pregunta.
+///    Sesión se enciende solo con un altavoz conocido (`Sesion.tsx`: `altavoces` o
+///    `altavoz-externo`), y esa pantalla pasó la mirada 13. Trazarla distinta aquí sería que la
+///    misma app respondiera dos cosas a la misma pregunta.
 /// 2. **Un dispositivo externo en una videollamada es un casco**, porque es lo que el consultor se
 ///    pone para no oírse. No es una certeza, y por eso no se escribe como tal en ningún sitio.
 /// 3. **Quien lo enciende es el usuario, con una tecla, sabiendo por dónde le suena el Mac.** El
 ///    modo no se enciende solo nunca.
 ///
-/// **Y lo que falta para cerrarlo bien está nombrado:** la frase precisa —«no sé si "AirPods Pro"
-/// es un casco»— necesita `Salida.nombre`, que es uno de los campos del contrato sin lector, con su
-/// sitio pedido para la mirada 17. Hasta entonces el log lo dice con el nombre del dispositivo y el
-/// manual lo declara como limitación. Cambiar la decisión es **una línea de esta función**.
+/// **La frase precisa ya está en Sesión:** con USB o Bluetooth la fila dice el nombre del
+/// dispositivo (`Salida.nombre`, con lector desde la mirada 17) y «Si es un altavoz, no uses el
+/// modo solo audio.»; el manual lo declara como limitación. Cambiar la decisión es **una línea de
+/// esta función**.
 pub fn cabe_decirla(m: &Momento) -> Result<(), Impedimento> {
     if !m.modo_encendido {
         return Err(Impedimento::ModoApagado);

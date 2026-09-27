@@ -33,7 +33,7 @@ use std::collections::HashSet;
 /// Cuánto se puede equivocar el transcriptor y aún así entenderse, según lo largo que sea el
 /// término.
 ///
-/// **Con cuatro letras o menos, cero.** Es la decisión que evita que este módulo haga más daño que
+/// **Con seis letras o menos, cero.** Es la decisión que evita que este módulo haga más daño que
 /// bien: «DAX» está a una edición de «das», «dos», «día», «tax», «max» y de media docena más de
 /// palabras que la gente dice de verdad. Para los términos cortos la única corrección que se
 /// acepta es una **variante escrita a mano** — «the ax» → «DAX» porque alguien lo puso ahí, no
@@ -117,8 +117,8 @@ impl Diccionario {
     /// variantes**: no se sabe cómo los va a oír mal el transcriptor, así que lo único que se puede
     /// hacer es la distancia acotada, y solo para los largos (ver [`Self::buscar`]).
     ///
-    /// Se ignoran los cortos, por lo mismo que la tolerancia es cero por debajo de cinco letras: un
-    /// nombre de cuatro letras corregiría media conversación.
+    /// Se ignoran los de menos de cinco letras: un nombre de cuatro corregiría media conversación
+    /// (y los de menos de ocho solo se corrigen si se oyeron exactos: ver [`Self::buscar`]).
     pub fn con_nombres_del_corpus(&mut self, nombres: &[String]) {
         for n in nombres {
             if n.chars().count() < 5 {

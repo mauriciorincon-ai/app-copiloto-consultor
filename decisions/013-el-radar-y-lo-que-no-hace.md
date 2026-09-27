@@ -169,18 +169,12 @@ gate del MVP (`data/radar/avisos.json:2`).
   navegadores; con el paso de todas las teclas a `⌃⌥` (`bitácora:1837-1856`) ese choque desaparece. Los
   de `⌃⌥` que quedan —VoiceOver y las apps que ordenan ventanas— están en el manual
   (`bitácora:1852-1854`).
-- **Lo que la auditoría del sprint registra sobre esta pieza, con su sitio:** el ámbar coteja los
-  nombres de bot en **cualquier** línea de la ventana, no solo en la lista de participantes, mientras
-  el copy dice lo segundo (B7, `sprints/SPRINT_002-auditoria.md:466`); un Mac inscrito en un MDM y sin
-  ningún invasivo no lo ve en ningún sitio, aunque el manual dice que Sesión lo lista (B15,
-  `sprints/SPRINT_002-auditoria.md:474`); y el gate del contador de red no ve un `Command::new` fuera
-  de `radar/` (B13, `sprints/SPRINT_002-auditoria.md:472`).
-- **Una cifra que no cuadra, dicha aquí con su sitio:** la bitácora (`bitácora:2079`, `bitácora:2083`),
-  el manual (`docs/MANUAL-DE-USO.md:219-222`) y el summary (`sprints/SPRINT_002-summary.md:95`) hablan de
-  **100** procesos en el Mac limpio del kit. El archivo `docs/kit-de-prueba/radar/mac-limpio.txt` tiene
-  **82** rutas de proceso, contadas con el mismo filtro que usa el test (`radar/procesos.rs:108-115`); el
-  test solo exige más de 60 (`radar/procesos.rs:124`). El resultado —cero falsos positivos— no cambia;
-  el número sí.
+- **Lo que la auditoría registró sobre esta pieza, ya pagado:** el copy del bot dice «aparece en la
+  ventana de la reunión», porque el ámbar coteja cualquier línea (B7); un Mac con MDM y sin invasivo
+  lo ve en Sesión como fila «Sábelo» (B15); el gate del contador ve `Command::new` fuera de `radar/`
+  (B13). **La cifra, corregida:** el Mac limpio del kit tiene **82** rutas de proceso
+  (`radar/procesos.rs:108-115`); el manual y el summary ya lo dicen, y la bitácora lleva su nota de
+  corrección (`bitácora:2483`, B22). El resultado —cero falsos positivos— no cambia.
 
 ## Medición
 

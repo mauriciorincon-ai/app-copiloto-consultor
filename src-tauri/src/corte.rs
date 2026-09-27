@@ -128,9 +128,10 @@ pub enum Suerte {
 #[serde(rename_all = "camelCase")]
 pub struct Informe {
     pub piezas: Vec<(Pieza, Suerte)>,
-    /// Los bytes que había en el contador al cortar. **No cruza** (auditoría del S2, B9): lo lee Rust
-    /// para el log del corte, y el webview tiene el contador por su cuenta. No es «0 siempre»: con
-    /// el API encendido puede no serlo, y por eso el log lo dice.
+    /// Los bytes que había en el contador al cortar, leídos ANTES de que la pieza `ContadorDeRed`
+    /// lo ponga a cero (B25). **No cruza** (auditoría del S2, B9): lo lee Rust para el log del
+    /// corte, y el webview tiene el contador por su cuenta. No es «0 siempre»: con el API encendido
+    /// puede no serlo, y por eso el log lo dice.
     #[serde(skip)]
     pub bytes_en_red: u64,
 }

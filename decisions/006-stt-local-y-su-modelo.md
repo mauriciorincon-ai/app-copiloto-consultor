@@ -89,7 +89,8 @@ camino escrito para ese caso; ponerlo hoy sería compilar whisper.cpp en cada bu
   (`-weak_framework`) y guardas `@available`: queda para H2.
 - El puente añade `swiftc` a las herramientas del build. La CI de macOS lo tiene; si un día no lo
   tuviera, la compilación se rompería a propósito.
-- Una parte del código de esta app está en Swift. Vive entera en un archivo, bajo la misma regla
+- Una parte del código de esta app está en Swift: seis archivos en `src-tauri/nativo/`
+  (transcriptor, voz, pantalla, síntesis, red y Llavero), bajo la misma regla
   del efímero, y `pnpm verify:ephemeral` lo barre con una lista de API prohibida traducida a
   Swift — que **también se añadió en este sprint**, porque antes el barrido leía el archivo y no
   veía nada.

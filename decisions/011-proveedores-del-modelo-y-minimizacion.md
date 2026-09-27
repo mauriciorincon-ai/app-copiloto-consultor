@@ -47,7 +47,8 @@ no está o no rinde, y (a) rinde (medido en la fase 6: mediana ~0,8 s): queda en
    (`URLSession` efímera), y `sintesis/api.rs` arma la petición y la cuenta.
 4. **Registrar sin contenido:** proveedor, bytes, ms y costo al log. **Pendiente, sprint 003:** el
    texto exacto que salió, visible en la pantalla IA y solo en memoria, para que el usuario lo pueda
-   leer. Hoy IA enseña cuántos datos se taparon, no el texto. *(Enmienda B4.)*
+   leer. Hoy IA no enseña ni el texto ni cuántos datos se taparon: la bóveda los cuenta
+   (`Boveda::tapadas`) y solo lo leen los tests. *(Enmienda B4.)*
 
 ### Costo
 

@@ -66,8 +66,8 @@ hay jerga y que no suba en ningún sitio.
 ### 3 · Lo que NO se midió, dicho para que no se lea como más de lo que es
 
 **No se midió qué hace SpeechAnalyzer con varios idiomas configurados a la vez**, porque **la app no
-tiene manera de configurarlo**: `stt::Motor::transcribir` recibe **un** `idioma: &str`, y los dos que
-usa la app son dos constantes (`cuaderno.ts` `DEL_CONSULTOR` / `DEL_CLIENTE`). El techo de cinco
+tiene manera de configurarlo**: `stt::Motor::transcribir` recibe **un** `idioma: &str` por pista —el
+que el usuario elige en Idioma desde la auditoría del S2 (A4)—. El techo de cinco
 idiomas que la pantalla menciona es cuántos modelos puede tener **instalados** el Mac, no cuántos
 reconoce en una frase.
 
@@ -91,7 +91,8 @@ o suavizar antes de construir esa feature.
 
 ## Consecuencias
 
-- El kit mide el WER en cada `cargo test` y **el umbral es doble**: no empeora en ningún audio, y baja
+- El kit mide el WER en cada `cargo test` de un Mac con modelos de voz (en la CI no mide) y **el
+  umbral es doble**: no empeora en ningún audio, y baja
   en al menos uno con jerga. Un diccionario que no corrigiera nada pasaría el primero y falla el
   segundo.
 - Los números de arriba son la **línea base**. Cuando la fase 3 traiga el OCR y la 5 el modelo, esta

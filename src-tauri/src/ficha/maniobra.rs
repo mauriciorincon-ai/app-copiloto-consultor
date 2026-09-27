@@ -1,6 +1,6 @@
 //! EL CATÁLOGO DE MANIOBRAS — qué sugerir cuando el corpus no tiene nada.
 //!
-//! Seis maneras de conducirse, escritas por personas y versionadas aquí, elegidas por reglas
+//! Siete maneras de conducirse, escritas por personas y versionadas aquí, elegidas por reglas
 //! léxicas sobre lo que preguntó el cliente. El texto es **literalmente** el de
 //! `design-system.md` §9-quinquies, aprobado en la mirada 11: este módulo no lo reescribe, lo
 //! ejecuta. Si el catálogo cambia allí, cambia aquí, y el test que los compara palabra por
@@ -81,7 +81,7 @@ const CATALOGO: &[(&[&str], Maniobra)] = &[
     ),
 ];
 
-/// La sexta: la que sale cuando ninguna marca aparece.
+/// La sexta: la que sale cuando ninguna marca aparece y el corpus no trajo nada cercano.
 pub const GENERICA: Maniobra = Maniobra {
     id: "generica",
     texto: "Devuelve la pregunta: ¿para qué lo necesitan?",

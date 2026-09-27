@@ -392,7 +392,7 @@ deterministas**:
 1. **Lo más cercano que SÍ tiene.** La búsqueda no encontró nada por encima del umbral, pero sabe
    qué quedó justo debajo. Sale del corpus del usuario con su fuente exacta, y la app dice sin
    adornos que **ninguno responde la pregunta**. Es recuperación, no redacción.
-2. **Una manera de responder**, de un **catálogo versionado** de seis maniobras escritas por
+2. **Una manera de responder**, de un **catálogo versionado** de siete maniobras escritas por
    personas, elegida por **reglas léxicas** sobre lo que preguntó el cliente — el mismo mecanismo
    determinista del disparo.
 
@@ -411,8 +411,9 @@ fijas. Y no pueden parecer salida de un modelo: **sin acento `halo` y sin `i-chi
 este sistema marcan la síntesis de la IA), en **Avenir** —la voz de la app— nunca en **Charter**,
 que es la voz de la evidencia. Clase canon: `maniobra-b`; el vecino de la derecha, `cercano-b`.
 
-Cuando exista la síntesis con modelo (sprint 2), la maniobra **no desaparece**: es su fallback
-permanente, como manda la regla del código primero.
+La síntesis con modelo llegó en el sprint 2 y no toca la maniobra: la sugerencia solo acompaña a una
+ficha, así que cuando no hay ficha la maniobra es lo que queda. El fallback permanente de la
+sugerencia es la ficha, como manda la regla del código primero.
 
 **Lo que esta extensión NO redecide:** el relleno de la franja (ya elegido: fondo de escritorio,
 negro a una tecla), el modo solo audio de 44 px (C15, fuera del sprint 001) y la sugerencia
@@ -508,12 +509,13 @@ cuatro todavía no existen»**, no «7 de 7».
 
 ### Dos cosas que la maqueta no había escrito y el sistema obliga
 
-1. **«Audio del sistema» y «Pantalla» son UN SOLO permiso en macOS** («Grabación de pantalla y
-   audio del sistema»): se conceden y se caen juntos. Se siguen dibujando como dos filas —son dos
-   usos distintos y el usuario los entiende así— con una línea que lo dice.
+1. **«Audio del sistema» y «Pantalla» son DOS permisos en macOS** (`kTCCServiceAudioCapture` y
+   `kTCCServiceScreenCapture`), aunque Ajustes los enseñe en el mismo panel («Grabación de pantalla
+   y audio del sistema»). Se dibujan como dos filas, cada una con el suyo, y una línea lo dice.
+   Hasta el sprint 002 aquí decía que eran uno solo; la mirada 17-quater lo desmintió en `tccd`.
 2. **La Accesibilidad sube a la lista principal de permisos.** En la maqueta vivía en su propio
-   estado porque era opcional y futura; el acople se entrega en el sprint 001 y es **el único
-   permiso que hoy cambia algo**.
+   estado porque era opcional y futura; el acople se entrega en el sprint 001, y en el sprint 002
+   el mismo permiso encuentra la pestaña de Meet para leer su pantalla.
 
 ## 10 · Deuda de diseño declarada
 

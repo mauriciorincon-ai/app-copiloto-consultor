@@ -2,10 +2,10 @@
 //!
 //! Recibe las líneas que la lectura de pantalla ya sacó de la ventana de la reunión —el radar no
 //! captura nada— y busca dos cosas del catálogo `data/radar/avisos.json`: **el aviso de grabación
-//! o transcripción** del cliente de videollamada, y **un bot de notas** en la lista de
-//! participantes. Es «sábelo»: el cliente tiene derecho a grabar su reunión y a traer su bot, y la
-//! app no bloquea nada; solo te cuenta lo que estaba en la pantalla y no ibas a leer mientras
-//! hablabas.
+//! o transcripción** del cliente de videollamada, y **el nombre de un bot de notas** en cualquier
+//! línea de la ventana —la lista de participantes, pero también una diapositiva o el chat (B7)—.
+//! Es «sábelo»: el cliente tiene derecho a grabar su reunión y a traer su bot, y la app no
+//! bloquea nada; solo te cuenta lo que estaba en la pantalla y no ibas a leer mientras hablabas.
 //!
 //! **Las líneas son texto de un tercero.** Lo que sale de aquí son dos datos del CATÁLOGO —si hay
 //! aviso, y el nombre del bot tal y como el catálogo lo escribe—, nunca el texto leído; y las copias

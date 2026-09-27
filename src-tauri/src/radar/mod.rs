@@ -3,10 +3,12 @@
 //! **MÓDULO PROTEGIDO.** Dos mitades, y las dos miran solo este equipo (regla dura 9 de la casa:
 //! la app jamás sondea, escanea ni actúa sobre el computador de la contraparte):
 //!
-//! - **Ámbar, «sábelo»** ([`avisos`]): el aviso de grabación de Meet, Zoom o Teams y los bots de
-//!   notas de la lista de participantes. Se leen del texto que la lectura de pantalla YA sacó de la
-//!   ventana de la reunión —el radar no captura nada por su cuenta— y por eso este módulo tiene en
-//!   las manos texto de un tercero: ni disco, ni red, ni log, y las copias se pisan al soltarse.
+//! - **Ámbar, «sábelo»** ([`avisos`]): el aviso de grabación de Meet, Zoom o Teams y los nombres
+//!   de bots de notas que aparezcan en la ventana de la reunión (la lista de participantes, pero
+//!   también una diapositiva o el chat; B7). Se leen del texto que la lectura de pantalla YA sacó
+//!   de la ventana de la reunión —el radar no captura nada por su cuenta— y por eso este módulo
+//!   tiene en las manos texto de un tercero: ni disco, ni red, ni log, y las copias se pisan al
+//!   soltarse.
 //! - **Coral, «invasivo»** ([`procesos`]): programas de este Mac que miran tu pantalla, tu cámara,
 //!   tus teclas o tus procesos —supervisión de exámenes, monitoreo de empleados, acceso remoto—,
 //!   cotejados contra un catálogo versionado y con fuente. La lista de procesos se le pide al

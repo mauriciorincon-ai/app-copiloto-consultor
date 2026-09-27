@@ -25,7 +25,7 @@ pub use ventana::Ventana;
 
 use crate::capture::Pista;
 
-/// Un turno transcrito. Es lo que la banda enseña y lo que el disparador de la fase 4 leerá.
+/// Un turno transcrito. Es lo que la banda enseña y lo que el disparador (`disparo/`) lee.
 ///
 /// **No lleva marca de tiempo del reloj del sistema, solo del audio.** Un `SystemTime` sería una
 /// fecha real de una reunión real, y esto es un objeto que existe para vivir en memoria y morir;

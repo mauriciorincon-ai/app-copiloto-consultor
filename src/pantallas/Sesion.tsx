@@ -402,9 +402,10 @@ export function LaPantalla({ pantalla }: { pantalla: EstadoDeLaPantalla }) {
 }
 
 /**
- * Por dónde sale el sonido. Con los altavoces internos el micrófono oye al cliente (eco); con un
- * dispositivo externo **la app no puede saber** si es un casco o un altavoz, así que dice su nombre
- * y lo único que importa: si es un altavoz, el modo solo audio no se usa.
+ * Por dónde sale el sonido. Con los altavoces internos —o por HDMI, DisplayPort o AirPlay, casi
+ * siempre un altavoz (M4)— el micrófono oye al cliente (eco); con un dispositivo por USB o
+ * Bluetooth **la app no puede saber** si es un casco o un altavoz, así que dice su nombre y lo
+ * único que importa: si es un altavoz, el modo solo audio no se usa.
  */
 export function LosAuriculares({ salida }: { salida: Salida }) {
   const t = useT().cuaderno;

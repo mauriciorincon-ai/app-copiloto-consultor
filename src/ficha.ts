@@ -96,8 +96,9 @@ export type Novedad =
   /** `⌃⌥L` leyó la pantalla y no había texto: la banda contesta igual, porque alguien preguntó. */
   | { que: "nada-en-pantalla"; hora: string }
   /**
-   * **El radar ámbar (C14)**: la pantalla de la reunión muestra el aviso de grabación, o hay un bot
-   * de notas en la lista de participantes. Los bots llegan con el nombre del catálogo.
+   * **El radar ámbar (C14)**: la pantalla de la reunión muestra el aviso de grabación, o el nombre
+   * de un bot de notas aparece en la ventana de la reunión. Los bots llegan con el nombre del
+   * catálogo.
    */
   | { que: "radar"; grabando: boolean; bots: string[]; hora: string }
   /** **La sugerencia (C7)**: llega DESPUÉS de su ficha, fundada en ella o en una de sus acumuladas. */
