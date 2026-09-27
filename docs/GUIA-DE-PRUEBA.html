@@ -167,7 +167,7 @@
       <p class="eyebrow" style="margin:0 0 6px">Qué cambió en esta versión</p>
       <p class="chica" style="margin:0"><strong>v4 — el sprint 002: la app mira la pantalla, avisa de
         quién graba o vigila, te lee la ficha al oído, escribe bien tu jerga y, si lo enciendes, te
-        propone qué decir.</strong> Cinco bloques nuevos (E a I) con <strong>30 pruebas nuevas</strong>, y
+        propone qué decir.</strong> Cinco bloques nuevos (E a I) con <strong>31 pruebas nuevas</strong>, y
         <strong>13 de las 41 heredadas reescritas</strong> («Mejorado en S2»): las teclas pasaron de ⌘⇧ a ⌃⌥, el
         corte alcanza ahora 8 piezas, y Permisos separa el audio del sistema de la pantalla.</p>
       <p class="chica" style="margin:8px 0 0"><strong>Dos pruebas heredadas no podían pasar tal como
@@ -187,11 +187,11 @@
       ficha sola, el ámbar de una reunión grabada, <strong>una sugerencia que no diga nada que su ficha
       no diga</strong>, la voz en tus auriculares y el corte, también a mitad de frase. <strong>Pasa del
       techo de ~20 min en unos cinco</strong>: el ciclo sumó cuatro funciones que solo se juzgan
-      mirando u oyendo, y para caber habría que sacar una de ellas. <strong>Deja fuera 51 pruebas
+      mirando u oyendo, y para caber habría que sacar una de ellas. <strong>Deja fuera 52 pruebas
       ⭐</strong> —instalar un modelo de idioma, el comportamiento sin permisos, el eco, el coral de tu
       Mac, el proveedor externo con tu clave, el diccionario, entre otras—: ninguna se borra, siguen
       enteras en el filtro ⭐.</p>
-    <p class="chica"><strong>Gate mínimo ⭐: 60 pruebas · ~105 min.</strong> Es lo que ninguna
+    <p class="chica"><strong>Gate mínimo ⭐: 61 pruebas · ~107 min.</strong> Es lo que ninguna
       automatización puede verificar: hardware de verdad, voz de verdad, una videollamada de
       verdad, y el juicio humano sobre lo que se ve y se oye. Lo que la CI ya respalda queda fuera del
       mínimo y se corre en los pases completos. Se puede correr por bloques.</p>
@@ -205,7 +205,8 @@
       <p class="chica suave" style="margin:8px 0 0"><strong>Cada bloque abre con "Empieza en:"</strong> —
         dónde estar antes de empezar: una pantalla del cuaderno, la banda, o la reunión.</p>
       <p class="chica suave" style="margin:8px 0 0"><strong>Qué hace falta tener a mano:</strong>
-        auriculares, una reunión de Google Meet (basta una sala tuya, sin invitados), la carpeta
+        <strong>macOS 26 o posterior</strong> (la app no arranca en versiones anteriores), auriculares,
+        una reunión de Google Meet (basta una sala tuya, sin invitados), la carpeta
         <code>docs/kit-de-prueba/corpus/</code> de este mismo repo, <strong>Terminal</strong> (el
         cliente de prueba habla con <code>say</code>), la página
         <code>docs/kit-de-prueba/pantalla/meet-de-prueba.html</code> abierta en Chrome, y
@@ -337,7 +338,7 @@
         <span class="origen origen-mejorado">Mejorado en S2</span>
         <span class="minimo">⭐ mínimo</span>
         <span class="minimo">⭐⭐ Parada 3 de 9</span></label></li>
-      <li data-origen="mejorado" data-minimo><input type="checkbox" id="d4"><label for="d4">Ahora haz que el cliente pregunte algo que el corpus <strong>no tiene</strong>: <code>say -v Paulina "¿Tienen oficina en Medellín?"</code>. La banda dice <strong>«Nada en tu corpus sobre…»</strong> con los términos que de verdad buscó, y debajo una sugerencia de cómo conducirse. <strong>No inventa una respuesta.</strong>
+      <li data-origen="mejorado" data-minimo><input type="checkbox" id="d4"><label for="d4">Ahora haz que el cliente pregunte algo que el corpus <strong>no tiene</strong>: <code>say -v Paulina "¿Tienen oficina en Medellín?"</code>. La banda dice <strong>«Nada en tu corpus sobre…»</strong> con los términos que de verdad buscó, y debajo una sugerencia de cómo conducirse; si tu corpus tiene algo cercano, <strong>te lo nombra</strong>: «Lo más cercano que sí tienes es «…»: ofrécelo y pregunta para qué lo necesitan.» <strong>No inventa una respuesta.</strong>
         <p class="chica suave" style="margin:6px 0 0">La versión anterior usaba «¿Tienen certificación ISO 27001?», que el corpus del kit <strong>sí</strong> responde (la ficha de Seguridad dice que no hay certificación vigente): esperaba «nada» de una pregunta con ficha. Y la pedía por el micrófono.</p>
         <span class="origen origen-mejorado">Mejorado en S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
@@ -458,7 +459,7 @@
     <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la banda, con una ficha a la vista y auriculares puestos</code> ·
       ~6 min · que te hable sin que el cliente lo oiga, y que se calle cuando debe</p>
     <ul class="pasos">
-      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="h1"><label for="h1">Con los auriculares puestos y una ficha en la banda, pulsa <strong>⌃⌥V</strong>. La banda <strong>baja a una sola línea</strong>, la ventana de la reunión se hace más grande, y <strong>oyes la ficha</strong>: el titular, la línea y de dónde sale.
+      <li data-origen="nuevo" data-minimo data-corto><input type="checkbox" id="h1"><label for="h1">Con los auriculares puestos y una ficha en la banda, pulsa <strong>⌃⌥V</strong>. La banda <strong>baja a una sola línea</strong>, la ventana de la reunión se hace más grande, y <strong>oyes la ficha</strong>: el titular, la línea y de dónde sale. En la consola de <code>pnpm tauri dev</code> aparece <code>[habla] empezó a sonar a los N ms</code>: <strong>apunta ese número</strong> (el presupuesto es 1000).
         <span class="origen origen-nuevo">Nuevo · S2</span>
         <span class="minimo">⭐ mínimo</span>
         <span class="minimo">⭐⭐ Parada 7 de 9</span></label></li>
@@ -468,7 +469,7 @@
       <li data-origen="nuevo" data-minimo><input type="checkbox" id="h3"><label for="h3">Mientras te lee, pulsa <strong>⎋</strong>: <strong>se calla en el acto</strong>. Con el modo encendido, ⎋ no le llega a la reunión (en Meet no sale de pantalla completa); al apagar el modo con ⌃⌥V, vuelve a llegarle.
         <span class="origen origen-nuevo">Nuevo · S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-minimo><input type="checkbox" id="h4"><label for="h4">Desconecta los auriculares para que el sonido salga por el <strong>altavoz del Mac</strong>: no habla, y la banda dice en ámbar <strong>«Conecta auriculares · el cliente te oiría»</strong>.
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="h4"><label for="h4">Desconecta los auriculares para que el sonido salga por el <strong>altavoz del Mac</strong> —o por un monitor por HDMI o DisplayPort, o por AirPlay—: no habla, y la banda dice en ámbar <strong>«Conecta auriculares · el cliente te oiría»</strong>.
         <span class="origen origen-nuevo">Nuevo · S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
       <li data-origen="nuevo" data-minimo><input type="checkbox" id="h5"><label for="h5">Haz que el cliente pregunte algo que el corpus no tiene: la banda pinta «Nada en tu corpus sobre…» y <strong>no lo lee en voz alta</strong> (serían las palabras del cliente).
@@ -548,7 +549,11 @@
     <ul class="pasos">
       <li data-origen="heredada"><input type="checkbox" id="k1"><label for="k1">Mira las dos pistas con su idioma y el estado real de su modelo. <strong>Si un modelo no está instalado, lo dice</strong> en vez de fallar en silencio cuando alguien hable.
         <span class="origen origen-heredada">S1</span></label></li>
-      <li data-origen="mejorado" data-minimo><input type="checkbox" id="k2"><label for="k2">Con un idioma sin modelo, la fila lo dice en ámbar y ofrece <strong>«Instalar»</strong>. Púlsalo: el botón pasa a <strong>«instalando…»</strong> y no se puede volver a pulsar; cuando macOS termina, la fila dice <strong>«modelo instalado»</strong>. Es la única vez que la transcripción toca la red, y en la dirección contraria: entra el modelo, no sale nada. El contador sigue en <strong>0 B</strong>.
+      <li data-origen="nuevo" data-minimo><input type="checkbox" id="k1b"><label for="k1b">El código de cada pista (<code>es-ES</code>, <code>en-US</code>…) <strong>se elige</strong>: tiene un subrayado a trazos. Las dos nacen en <strong>español</strong>. Cambia la del cliente a <code>en-US</code>, vuelve a Sesión, pulsa «Iniciar sesión» y en la consola la pista del sistema abre en inglés. Cierra la app y ábrela: <strong>vuelven a español</strong> (la elección vive en memoria, y el manual lo dice).
+        <p class="chica suave" style="margin:6px 0 0">Hasta la auditoría del S2 la pista del cliente estaba fijada en inglés, sin forma de cambiarla: con un cliente que habla español no llegaba un solo turno útil.</p>
+        <span class="origen origen-nuevo">Nuevo · S2 · auditoría</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="mejorado" data-minimo><input type="checkbox" id="k2"><label for="k2">Elige para el cliente un idioma cuyo modelo tu Mac no traiga (en un Mac en español, suele ser <code>en-US</code>): la fila lo dice en ámbar y ofrece <strong>«Instalar»</strong>. Púlsalo: el botón pasa a <strong>«instalando…»</strong> y no se puede volver a pulsar; cuando macOS termina, la fila dice <strong>«modelo instalado»</strong>. Es la única vez que la transcripción toca la red, y en la dirección contraria: entra el modelo, no sale nada. El contador sigue en <strong>0 B</strong>.
         <p class="chica suave" style="margin:6px 0 0">Decía «la única vez que la app toca la red»: desde este sprint hay otra puerta, el proveedor externo de IA, apagada salvo que la enciendas (bloque G).</p>
         <span class="origen origen-mejorado">Mejorado en S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
@@ -572,14 +577,14 @@
     <details class="chica">
       <summary>Historial de la guía</summary>
       <ul>
-        <li><strong>S2 · v4 · 2026-09-26:</strong> 71 pruebas. <strong>30 nuevas</strong> en cinco
+        <li><strong>S2 · v4 · 2026-09-26:</strong> 72 pruebas. <strong>31 nuevas</strong> en cinco
           bloques —la pantalla de la reunión (E), el radar (F), la sugerencia y la pantalla IA (G), el
           modo solo audio (H) y el diccionario técnico (I)— y tres en bloques viejos: la pista que no
           abre, los auriculares por su nombre, la ficha por silencio y la banda que vuelve tras el
           corte. <strong>13 heredadas reescritas</strong>; dos de ellas no podían pasar (la pregunta
           del cliente dicha por tu micrófono, y «nada en tu corpus» para una pregunta con ficha). Los
           bloques del corte y del idioma pasan a ser J y K para que el ⭐⭐ se camine hasta el final.
-          Gate mínimo ⭐ de 60; corto ⭐⭐ de 9 paradas (~25 min, cinco sobre el techo, declarado).
+          Gate mínimo ⭐ de 61; corto ⭐⭐ de 9 paradas (~25 min, cinco sobre el techo, declarado).
           <strong>Ninguna eliminada.</strong> Namespace nuevo (<code>ag-s2-</code>).</li>
         <li><strong>S1 · v3 · 2026-09-23 (al cerrar el sprint):</strong> 41 pruebas.
           <strong>Dos nuevas</strong>, las dos ⭐: la banda que no se ve al compartir pantalla en

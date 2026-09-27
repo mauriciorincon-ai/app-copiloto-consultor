@@ -1,4 +1,9 @@
-# Auditoría del sprint 002 — Fase 1
+# Auditoría del sprint 002 — Fase 1 y Fase 2
+
+> **Fase 2 cerrada (2026-09-26):** el usuario aprobó pagar los 40 y el constructor los pagó todos, cada
+> uno con su test en rojo antes del verde (bitácora, sección «`/audita-sprint` — Fase 2»). En la Fase 2
+> aparecieron tres bajos más (B22–B24), también pagados: **43 hallazgos, 43 pagados**. El estado de
+> cada uno lleva el commit que lo pagó.
 
 Esta auditoría la hizo un auditor independiente que no construyó el sprint, el **2026-09-26**, sobre el **HEAD `b55f1fe`** de `sprint-002/cuando-que-y-quien-mira` (PR #6). Fue solo lectura: no se editó, creó ni comiteó nada en el repo.
 
@@ -108,7 +113,7 @@ El test `src-tauri/src/sintesis/api.rs:309-324` pasa con el defecto puesto: su f
 
 **Verificado cuando:** los siete tests salen rojos con el código actual y verdes después, y `cargo test --lib sintesis` sigue verde.
 
-**Estado:** abierto
+**Estado:** **pagado** · `c474f96`
 
 ### A2 · La capa de «nombres conocidos» recibe nombres de archivo: los clientes de una palabra salen enteros al API
 
@@ -130,7 +135,7 @@ El ADR 011 promete además los nombres «del diccionario», y no se usan. El tes
 
 **Verificado cuando:** el test nuevo es rojo con el cableado actual y verde después, y «Bancolombia» sale como `[CLIENTE_1]`.
 
-**Estado:** abierto
+**Estado:** **pagado** · `c474f96`
 
 ### A3 · El diccionario técnico corrompe el transcript del cliente en cada sesión
 
@@ -163,7 +168,7 @@ El gate del WER (`src-tauri/tests/contra-el-mac-de-verdad.rs:1173`) usa solo `Di
 
 **Verificado cuando:** el test nuevo pasa de rojo a verde, y el WER sigue sin empeorar en el kit.
 
-**Estado:** abierto
+**Estado:** **pagado** · `c474f96`
 
 ### A4 · La pista del cliente está fijada en inglés y no hay forma de cambiarla (origen S1)
 
@@ -184,7 +189,7 @@ Con un cliente hispanohablante —el caso del corpus del kit— no llegan turnos
 
 **Verificado cuando:** ese test es verde, y en `pnpm tauri dev` el log dice `[escucha] pista «sistema» abierta` con el idioma elegido.
 
-**Estado:** abierto
+**Estado:** **pagado** · `7a50222` — por defecto es-ES (decisión del usuario)
 
 ## MEDIOS (15)
 
@@ -205,7 +210,7 @@ En macOS 14 o 15, dyld aborta al arrancar, antes de que la app pueda decir «sin
 
 **Verificado cuando:** el test es verde y el ADR dice lo mismo que la configuración.
 
-**Estado:** abierto
+**Estado:** **pagado** · `7a50222`
 
 ### M2 · El kill-switch no alcanza a la síntesis en vuelo
 
@@ -226,7 +231,7 @@ Honestidad dice «8 de 8 piezas» y hay una novena que no se corta. Es la misma 
 
 **Verificado cuando:** el test es verde, rojo al quitar el `if`, y Honestidad enseña «9 de 9».
 
-**Estado:** abierto
+**Estado:** **pagado** · `1eea670`
 
 ### M3 · Elegir Gemini o Groq con el API apagado no llega a Rust
 
@@ -242,7 +247,7 @@ El flujo natural falla así: elegir Gemini, pegar la clave, guardar y encender r
 
 **Verificado cuando:** el test pasa de rojo a verde.
 
-**Estado:** abierto
+**Estado:** **pagado** · `1eea670`
 
 ### M4 · El modo solo audio habla por HDMI, DisplayPort y AirPlay
 
@@ -258,7 +263,7 @@ Todo transporte que no sea `bltn` cae en `Salida::Otra`, con `puede_haber_eco() 
 
 **Verificado cuando:** `cabe_decirla` devuelve `TeOiriaElCliente` para `AltavozExterno` (test) y `pnpm typecheck` pasa.
 
-**Estado:** abierto
+**Estado:** **pagado** · `7a50222`
 
 ### M5 · Sin manifiesto de comandos: la banda y el relleno pueden llamar a todo, incluida la clave del API
 
@@ -275,7 +280,7 @@ Tauri 2 permite todos los comandos de `generate_handler!` a todas las ventanas s
 
 **Verificado cuando:** el test es verde, y en `pnpm tauri dev` un `invoke("guardar_clave_del_api")` desde la consola de la banda es rechazado.
 
-**Estado:** abierto
+**Estado:** **pagado** · `823c9f6` — verificado por `tauri-build` y `tests/unit/capabilities.test.ts`; el «invoke rechazado desde la consola de la banda» no se pudo ver (consola del webview inaccesible)
 
 ### M6 · El gate de campos sin lector no lee los tipos nuevos del sprint
 
@@ -294,7 +299,7 @@ Además, el parser de uniones se corta en `({ que: "turno" } & Turno)` (el `& Tu
 
 **Verificado cuando:** está en rojo antes de pagar B9–B12 y en verde después.
 
-**Estado:** abierto
+**Estado:** **pagado** · `3090483`
 
 ### M7 · `QueSabeTranscribir` cambió de forma en este sprint y no está en el contrato
 
@@ -309,7 +314,7 @@ Además, el parser de uniones se corta en `({ que: "turno" } & Turno)` (el `& Tu
 
 **Verificado cuando:** renombrar un campo en `cuaderno.ts` hace fallar `pnpm typecheck`.
 
-**Estado:** abierto
+**Estado:** **pagado** · `823c9f6`
 
 ### M8 · El gate runtime del efímero no ejerce ninguna pieza del sprint 002
 
@@ -328,7 +333,7 @@ Además, el parser de uniones se corta en `({ que: "turno" } & Turno)` (el `& Tu
 
 **Verificado cuando:** la salida `--nocapture` enseña los tres pasos ejercidos y el gate sigue verde.
 
-**Estado:** abierto
+**Estado:** **pagado** · `823c9f6`
 
 ### M9 · Faltan tres ADRs que la DoD exige: lectura de pantalla, radar y voz
 
@@ -344,7 +349,7 @@ Escribir, con esas decisiones y sus mediciones (citando las líneas de la bitác
 
 **Verificado cuando:** los tres archivos existen y el summary los cita.
 
-**Estado:** abierto
+**Estado:** **pagado** · `7a50222`
 
 ### M10 · El tope de US$10/mes cuenta de menos
 
@@ -362,7 +367,7 @@ Hay dos fugas de cuenta:
 
 **Verificado cuando:** el test ve la respuesta tardía y el archivo nunca desaparece.
 
-**Estado:** abierto
+**Estado:** **pagado** · `1eea670`
 
 ### M11 · «0 B», «nada sale» y «nada se escribe» siguen escritos como constantes
 
@@ -390,7 +395,7 @@ Y «nada se escribe en disco» / «hoy no se escribe nada» es falso siempre: la
 
 **Verificado cuando:** ese test es verde.
 
-**Estado:** abierto
+**Estado:** **pagado** · `3090483`
 
 ### M12 · La banda anuncia teclas y botones que no hacen nada (origen S1)
 
@@ -408,7 +413,7 @@ Es la superficie que el consultor usa delante del cliente.
 
 **Verificado cuando:** ese test pasa de rojo a verde.
 
-**Estado:** abierto
+**Estado:** **pagado** · `3090483`
 
 ### M13 · El manual dice que al modelo y al API sale «tu pregunta»; sale la frase del cliente
 
@@ -422,7 +427,7 @@ Lo que sale es el último turno de la pista del sistema, es decir, palabras de u
 
 **Verificado cuando:** ese grep no devuelve líneas que hablen de lo que sale.
 
-**Estado:** abierto
+**Estado:** **pagado** · `3090483`
 
 ### M14 · Arrastrar el asa no saca del modo solo audio
 
@@ -436,7 +441,7 @@ El manual y el propio título del asa dicen que arrastrar «apaga el modo». Per
 
 **Verificado cuando:** en `pnpm tauri dev`, con el modo encendido, arrastrar el asa escribe `[habla] ⎋ devuelta al sistema` y la banda pinta 88 px.
 
-**Estado:** abierto
+**Estado:** **pagado** · `7a50222`
 
 ### M15 · La deuda «maniobra genérica · sprint 2» no se pagó ni se re-declaró
 
@@ -451,33 +456,36 @@ Hay dos caminos:
 
 **Verificado cuando:** los tres sitios nombran el mismo sprint de pago, o el test de la maniobra nueva está verde.
 
-**Estado:** abierto
+**Estado:** **pagado** · `823c9f6` — construida (decisión del usuario): el puente
 
-## BAJOS (21)
+## BAJOS (24)
 
 | # | Hallazgo | Dónde | Ajuste ejecutable | Estado |
 |---|---|---|---|---|
-| **B1** | `hay_clave` lee la clave entera del Llavero cada vez que se pinta IA para saber si existe. `Llavero.swift` afirma que solo se lee «en el instante de enviar». | `src-tauri/src/sintesis/api.rs:190-195` · `src-tauri/nativo/Llavero.swift:1-3` · `src-tauri/src/lib.rs:1776` · `src-tauri/src/lib.rs:1787` · `src-tauri/src/lib.rs:1928` | Añadir `@_cdecl("ag_llavero_hay")` que consulte con `kSecReturnAttributes: true` y sin `kSecReturnData`, y devuelva 1, 0 o -1. Declararlo en `api.rs` (`mod puente`) y usarlo en `hay_clave`. Verificado: `grep -n "leer_clave(" src-tauri/src` solo devuelve `api.rs:246`. | abierto |
-| **B2** | Cualquier otra razón de indisponibilidad de Foundation Models (código -4) se muestra como «Este Mac no puede usar el modelo del sistema». Es copy falso. | `src-tauri/src/sintesis/sistema.rs:27-34` · `src-tauri/nativo/Sintesis.swift:64-66` | Añadir `PorQueNoRedacta::NoDisponible` (kebab `no-disponible`) con frase es/en en `porQueNoRedacta`, la unión de `src/ia.ts:14-20` y una muestra del contrato. Mapear `-4` y `_` a esa variante. Test: `motivo(-4) == NoDisponible`. | abierto |
-| **B3** | Con la app abierta al cambiar de mes, el gasto del mes anterior sigue bloqueando el API: solo se reinicia dentro de una llamada al API que ya no ocurre. | `src-tauri/src/lib.rs:1775` · `src-tauri/src/lib.rs:1789` · `src-tauri/src/lib.rs:1877-1879` | Crear `fn gasto_vigente(g: &mut GastoDelMes, hoy: &str)` que ponga a cero si `g.mes != hoy`, y llamarla antes de leer `usd` en `proveedor_de_ahora` y en `estado_de_la_ia_de`. Test con dos meses inyectados. | abierto |
-| **B4** | Los ADRs afirman lo que el código no hace: «cuatro proveedores», que `AG_SINTESIS` acepte `sistema` y `api` (solo lee `mock`), que la bóveda use el diccionario, que el cliente HTTP viva en `sintesis/api.rs` (vive en `Red.swift`) y que el texto que salió se pueda leer en IA (no existe). | `decisions/011-proveedores-del-modelo-y-minimizacion.md:15-20` · `decisions/011-proveedores-del-modelo-y-minimizacion.md:33-42` · `decisions/010-sintesis-codigo-primero.md:71-72` | Enmendar con lo real: tres construidos y MLX condicionado; solo `AG_SINTESIS=mock`; bóveda con los clientes del corpus (tras A2); red en `nativo/Red.swift`; «el texto que salió» declarado como pendiente con sprint. Verificado: releer contra `lib.rs:1766-1781`. | abierto |
-| **B5** | ⌃⌥L pide sugerencia con el último turno del cliente, que puede ser de hace minutos y de otra cosa. El comentario dice que lleva «la pregunta del usuario», y no la hay. | `src-tauri/src/lib.rs:1549-1551` · `src-tauri/src/lib.rs:1833-1836` | Quitar `sintetizar(app, &a)` de `atender_la_pantalla` y reescribir el comentario (misma razón que la ficha de pantalla). Verificado: tras ⌃⌥L el log no escribe `[sintesis]`. | abierto |
-| **B6** | `Refuerzo` no tiene `Drop`. Cada lectura suelta sin pisar la copia `Resultado::Leido.refuerzo` y sus clones, contra la cabecera del módulo («el texto leído se pisa antes de soltarse»). | `src-tauri/src/pantalla/refuerzo.rs:53-57` · `src-tauri/src/pantalla/mod.rs:5-6` · `src-tauri/src/pantalla/mod.rs:519-547` | `impl Drop for Refuerzo { fn drop(&mut self) { self.olvidar(); } }`. Si algún sitio mueve campos (E0509), usar `std::mem::take`. Verificado: `cargo test --lib pantalla` verde y el `impl Drop` presente. | abierto |
-| **B7** | El ámbar afirma que el bot «está en la lista de participantes», pero coteja cualquier línea de la ventana: una diapositiva o el chat que mencione «Otter.ai» o «tl;dv» lo dispara. | `src-tauri/src/radar/avisos.rs:59-70` · `src/i18n/es.ts:155` · `src/i18n/en.ts:110` | Cambiar el copy a «aparece en la ventana de la reunión» / «appears in the meeting window» en i18n, `docs/diseno/banda.html` y el manual. Verificado: el gate i18n↔maqueta sigue verde. | abierto |
-| **B8** | Seis comandos registrados sin llamador en el webview, todos invocables: `modo_solo_audio` (nuevo) y `cerrar_banda`, `acoplar`, `soltar_acople`, `pedir_permiso_de_acople`, `version_del_catalogo` (S1). | `src-tauri/src/lib.rs:842-849` · `src-tauri/src/lib.rs:867` · `src-tauri/src/lib.rs:1252-1255` | Sacarlos de `generate_handler!` y quitarles `#[tauri::command]` si se usan por dentro. Añadir un test que compare los nombres de `generate_handler!` con los que invoca `src/`. Verificado: el test es verde. | abierto |
-| **B9** | `InformeDelCorte.bytesEnRed` cruza sin lector: lo lee Rust antes de serializar. El gate lo exime con «No se paga», un tercer estado que la regla 20 no tiene, y el doc dice «Es 0 siempre». | `src-tauri/src/corte.rs:116-124` · `tests/unit/contrato-con-lectores.test.ts:59-60` · `tests/unit/contrato-con-lectores.test.ts:184` | Poner `#[serde(skip)]` a `bytes_en_red`, quitarlo del tipo de `src/cuaderno.ts:257-260` y regenerar la muestra. Borrar la entrada de `DEUDA` y la salida «No se paga» del filtro. Corregir el doc. Verificado: el gate queda verde con `DEUDA` vacía. | abierto |
-| **B10** | `EstadoDelAcople.permiso` no tiene lector, y Rust hace una llamada a la Accessibility API en cada consulta para rellenarlo (origen S1). | `src/acople.ts:17` · `src-tauri/src/lib.rs:252-263` | Quitar el campo y la llamada `acople::hay_permiso()` de `estado_ahora`, o darle lector con copy aprobado. Verificado: el gate de M6 no lo lista. | abierto |
-| **B11** | Siete campos de `Novedad` no tienen lector: `Empieza.pista`, los cuatro de `SinTexto` y los dos de `Ruido`. Además `Novedad::Turno` manda el **texto del cliente** a todas las ventanas en una copia que nadie lee (la banda lo vuelve a pedir con `turnos_recientes`), y `SinTexto.motivo` sigue siendo castellano libre. | `src-tauri/src/escucha/mod.rs:66-72` · `src-tauri/src/escucha/mod.rs:831` · `src/ficha.ts:89-98` · `src-tauri/src/lib.rs:616` | Poner `#[serde(skip)]` a los campos no leídos de `Empieza`, `SinTexto` y `Ruido`, y a `texto`, `hora`, `desde_ms` y `hasta_ms` del turno en el evento (con `Turno` aparte para `turnos_recientes`), o crear un `NovedadParaLaBanda`. Cerrar `motivo` en un enum si se queda. Test: el JSON serializado de `Novedad::Turno` no contiene `texto`. | abierto |
-| **B12** | `Aparicion.hora` solo se lee en la rama de la maqueta. En el producto la banda enseña la hora del último turno, no la de la ficha. | `src/componentes/Banda.tsx:666` · `src-tauri/src/ficha/mod.rs:99-106` | Usar `aparicion.hora` en la rama del producto de la línea «oído», o `#[serde(skip)]`. Verificado: el gate de M6 no lo lista. | abierto |
-| **B13** | El gate del contador de red no ve `std::process::Command` fuera de `radar/`: un `Command::new("curl")` en `lib.rs` pasa todos los gates. La regla 9 prohíbe salidas fuera del adapter. | `tests/unit/contador-de-red.test.ts:52-65` | Añadir `Command::new` a `SOCKETS_RUST`, con una lista permitida `{src-tauri/src/radar/mdm.rs → /usr/bin/profiles}`. Demo en rojo con `Command::new("curl")` plantado en `lib.rs`. | abierto |
-| **B14** | Sin voz para el idioma, ⌃⌥V enciende igual el modo: baja a 44 px, se queda con ⎋ y la banda dice «Conecta auriculares», que es el motivo equivocado. El manual dice que «el modo no se enciende». | `src-tauri/src/lib.rs:1262-1290` · `src-tauri/src/habla/mod.rs:207-209` · `docs/MANUAL-DE-USO.md:331` | En `conmutar_el_modo`, si se va a encender y `!estado.voz.hay_para(&idioma)`, no encender y escribir `[habla] sin voz para {idioma}: el modo no se enciende`. Test sobre una función pura `puede_encender(hay_voz)`. | abierto |
-| **B15** | Un Mac inscrito en un MDM sin ningún invasivo no lo ve en ningún sitio. El manual dice que Sesión lo lista. | `src/pantallas/Sesion.tsx:62-67` · `docs/MANUAL-DE-USO.md:210-211` | Pintar en Sesión la fila «Sábelo» del MDM cuando `radar.programas` tenga `categoria === "mdm"`, sin tomar la pantalla entera, o corregir el manual. Test: un `EnTuMac` con solo el MDM enseña la fila. | abierto |
-| **B16** | El botón de Sesión dice «Iniciar sesión» también cuando lo que hace es pararla (regla 8). | `src/pantallas/Sesion.tsx:161-171` | Etiqueta e icono según `escucha.escuchando`, con la clave nueva `terminarSesion` es/en. Test: con `escuchando: true` se lee «Terminar sesión». | abierto |
-| **B17** | El rail dice «Meet detectado» con cualquier reunión, también en Zoom o Teams. | `src/componentes/Ventana.tsx:95-99` · `src/i18n/es.ts:294` · `src/i18n/en.ts:223` | Usar `useReunion()` y pintar «{cliente} detectado». Test con cliente Zoom. | abierto |
-| **B18** | El contador dice «salieron de tu equipo en esta reunión», pero solo lo pone a cero ⌥⎋: una reunión hereda los bytes de la anterior. | `src-tauri/src/lib.rs:536-545` · `src-tauri/src/red.rs:33` · `src/i18n/es.ts:355` | Llamar `red::reiniciar()` en `empezar_a_escuchar`, junto al reinicio del costo de la reunión. Verificado: el log de inicio escribe la red en 0. | abierto |
-| **B19** | Tres frases más del producto son falsas hoy:<br>1. Idioma: «La banda sigue funcionando con ⌃⌥A…; lo que no llega es la ficha automática». ⌃⌥A necesita un turno transcrito, y la ficha de pantalla sí llega.<br>2. Idioma: «los idiomas que marques». No se marca ninguno (A4).<br>3. Permisos: «Buscar tu evidencia a mano — Funciona» sin conceder nada. ⌃⌥A necesita el audio del sistema. | `src/i18n/es.ts:475` · `src/i18n/en.ts:377` · `src/i18n/es.ts:384` · `src/i18n/en.ts:301` · `src/pantallas/Permisos.tsx:136-141` | Reescribir `laBandaSigue`, quitar «que marques» hasta A4 y marcar «Buscar a mano» como `<TodaviaNo />`, también en las maquetas. Verificado: el gate i18n↔maqueta sigue verde y las frases describen lo que el código hace. | abierto |
-| **B20** | Comentarios y documentos con promesas caducadas o falsas. La lista completa está en la casilla 4, primera pasada, filas marcadas B20. | `src/pantallas/Honestidad.tsx:22-23` · `src-tauri/src/red.rs:8-11` · `src-tauri/src/corte.rs:106-107` · `src-tauri/src/sintesis/mod.rs:67-69` · `src-tauri/src/ficha/maniobra.rs:10-12` | Reescribir cada línea de la tabla de la casilla 4 marcada B20 para que diga lo que el código hace hoy. Verificado: un segundo barrido de la casilla 4 no las devuelve. | abierto |
-| **B21** | Dos presupuestos de la DoD sin medir: «la voz empieza ≤1 s tras la ficha» y «la CPU de la lectura de pantalla». El peso del binario va con el release-check. | `src-tauri/tests/contra-el-mac-de-verdad.rs:1257-1310` · `src-tauri/tests/contra-el-mac-de-verdad.rs:1403-1622` | Voz: en `la_voz_de_este_mac…`, medir desde `decir` hasta `hablando()==true` (sondeo de 10 ms, techo 2 s) e imprimirlo. CPU: en el kit de pantalla, `libc::getrusage(RUSAGE_SELF)` antes y después de 10 `una_vuelta` y el tiempo de CPU por lectura. Anotar los números en la bitácora y el summary. | abierto |
+| **B1** | `hay_clave` lee la clave entera del Llavero cada vez que se pinta IA para saber si existe. `Llavero.swift` afirma que solo se lee «en el instante de enviar». | `src-tauri/src/sintesis/api.rs:190-195` · `src-tauri/nativo/Llavero.swift:1-3` · `src-tauri/src/lib.rs:1776` · `src-tauri/src/lib.rs:1787` · `src-tauri/src/lib.rs:1928` | Añadir `@_cdecl("ag_llavero_hay")` que consulte con `kSecReturnAttributes: true` y sin `kSecReturnData`, y devuelva 1, 0 o -1. Declararlo en `api.rs` (`mod puente`) y usarlo en `hay_clave`. Verificado: `grep -n "leer_clave(" src-tauri/src` solo devuelve `api.rs:246`. | **pagado** · `1eea670` |
+| **B2** | Cualquier otra razón de indisponibilidad de Foundation Models (código -4) se muestra como «Este Mac no puede usar el modelo del sistema». Es copy falso. | `src-tauri/src/sintesis/sistema.rs:27-34` · `src-tauri/nativo/Sintesis.swift:64-66` | Añadir `PorQueNoRedacta::NoDisponible` (kebab `no-disponible`) con frase es/en en `porQueNoRedacta`, la unión de `src/ia.ts:14-20` y una muestra del contrato. Mapear `-4` y `_` a esa variante. Test: `motivo(-4) == NoDisponible`. | **pagado** · `1eea670` |
+| **B3** | Con la app abierta al cambiar de mes, el gasto del mes anterior sigue bloqueando el API: solo se reinicia dentro de una llamada al API que ya no ocurre. | `src-tauri/src/lib.rs:1775` · `src-tauri/src/lib.rs:1789` · `src-tauri/src/lib.rs:1877-1879` | Crear `fn gasto_vigente(g: &mut GastoDelMes, hoy: &str)` que ponga a cero si `g.mes != hoy`, y llamarla antes de leer `usd` en `proveedor_de_ahora` y en `estado_de_la_ia_de`. Test con dos meses inyectados. | **pagado** · `1eea670` |
+| **B4** | Los ADRs afirman lo que el código no hace: «cuatro proveedores», que `AG_SINTESIS` acepte `sistema` y `api` (solo lee `mock`), que la bóveda use el diccionario, que el cliente HTTP viva en `sintesis/api.rs` (vive en `Red.swift`) y que el texto que salió se pueda leer en IA (no existe). | `decisions/011-proveedores-del-modelo-y-minimizacion.md:15-20` · `decisions/011-proveedores-del-modelo-y-minimizacion.md:33-42` · `decisions/010-sintesis-codigo-primero.md:71-72` | Enmendar con lo real: tres construidos y MLX condicionado; solo `AG_SINTESIS=mock`; bóveda con los clientes del corpus (tras A2); red en `nativo/Red.swift`; «el texto que salió» declarado como pendiente con sprint. Verificado: releer contra `lib.rs:1766-1781`. | **pagado** · `1eea670` |
+| **B5** | ⌃⌥L pide sugerencia con el último turno del cliente, que puede ser de hace minutos y de otra cosa. El comentario dice que lleva «la pregunta del usuario», y no la hay. | `src-tauri/src/lib.rs:1549-1551` · `src-tauri/src/lib.rs:1833-1836` | Quitar `sintetizar(app, &a)` de `atender_la_pantalla` y reescribir el comentario (misma razón que la ficha de pantalla). Verificado: tras ⌃⌥L el log no escribe `[sintesis]`. | **pagado** · `1eea670` |
+| **B6** | `Refuerzo` no tiene `Drop`. Cada lectura suelta sin pisar la copia `Resultado::Leido.refuerzo` y sus clones, contra la cabecera del módulo («el texto leído se pisa antes de soltarse»). | `src-tauri/src/pantalla/refuerzo.rs:53-57` · `src-tauri/src/pantalla/mod.rs:5-6` · `src-tauri/src/pantalla/mod.rs:519-547` | `impl Drop for Refuerzo { fn drop(&mut self) { self.olvidar(); } }`. Si algún sitio mueve campos (E0509), usar `std::mem::take`. Verificado: `cargo test --lib pantalla` verde y el `impl Drop` presente. | **pagado** · `823c9f6` |
+| **B7** | El ámbar afirma que el bot «está en la lista de participantes», pero coteja cualquier línea de la ventana: una diapositiva o el chat que mencione «Otter.ai» o «tl;dv» lo dispara. | `src-tauri/src/radar/avisos.rs:59-70` · `src/i18n/es.ts:155` · `src/i18n/en.ts:110` | Cambiar el copy a «aparece en la ventana de la reunión» / «appears in the meeting window» en i18n, `docs/diseno/banda.html` y el manual. Verificado: el gate i18n↔maqueta sigue verde. | **pagado** · `3090483` |
+| **B8** | Seis comandos registrados sin llamador en el webview, todos invocables: `modo_solo_audio` (nuevo) y `cerrar_banda`, `acoplar`, `soltar_acople`, `pedir_permiso_de_acople`, `version_del_catalogo` (S1). | `src-tauri/src/lib.rs:842-849` · `src-tauri/src/lib.rs:867` · `src-tauri/src/lib.rs:1252-1255` | Sacarlos de `generate_handler!` y quitarles `#[tauri::command]` si se usan por dentro. Añadir un test que compare los nombres de `generate_handler!` con los que invoca `src/`. Verificado: el test es verde. | **pagado** · `823c9f6` |
+| **B9** | `InformeDelCorte.bytesEnRed` cruza sin lector: lo lee Rust antes de serializar. El gate lo exime con «No se paga», un tercer estado que la regla 20 no tiene, y el doc dice «Es 0 siempre». | `src-tauri/src/corte.rs:116-124` · `tests/unit/contrato-con-lectores.test.ts:59-60` · `tests/unit/contrato-con-lectores.test.ts:184` | Poner `#[serde(skip)]` a `bytes_en_red`, quitarlo del tipo de `src/cuaderno.ts:257-260` y regenerar la muestra. Borrar la entrada de `DEUDA` y la salida «No se paga» del filtro. Corregir el doc. Verificado: el gate queda verde con `DEUDA` vacía. | **pagado** · `3090483` |
+| **B10** | `EstadoDelAcople.permiso` no tiene lector, y Rust hace una llamada a la Accessibility API en cada consulta para rellenarlo (origen S1). | `src/acople.ts:17` · `src-tauri/src/lib.rs:252-263` | Quitar el campo y la llamada `acople::hay_permiso()` de `estado_ahora`, o darle lector con copy aprobado. Verificado: el gate de M6 no lo lista. | **pagado** · `3090483` |
+| **B11** | Siete campos de `Novedad` no tienen lector: `Empieza.pista`, los cuatro de `SinTexto` y los dos de `Ruido`. Además `Novedad::Turno` manda el **texto del cliente** a todas las ventanas en una copia que nadie lee (la banda lo vuelve a pedir con `turnos_recientes`), y `SinTexto.motivo` sigue siendo castellano libre. | `src-tauri/src/escucha/mod.rs:66-72` · `src-tauri/src/escucha/mod.rs:831` · `src/ficha.ts:89-98` · `src-tauri/src/lib.rs:616` | Poner `#[serde(skip)]` a los campos no leídos de `Empieza`, `SinTexto` y `Ruido`, y a `texto`, `hora`, `desde_ms` y `hasta_ms` del turno en el evento (con `Turno` aparte para `turnos_recientes`), o crear un `NovedadParaLaBanda`. Cerrar `motivo` en un enum si se queda. Test: el JSON serializado de `Novedad::Turno` no contiene `texto`. | **pagado** · `3090483` |
+| **B12** | `Aparicion.hora` solo se lee en la rama de la maqueta. En el producto la banda enseña la hora del último turno, no la de la ficha. | `src/componentes/Banda.tsx:666` · `src-tauri/src/ficha/mod.rs:99-106` | Usar `aparicion.hora` en la rama del producto de la línea «oído», o `#[serde(skip)]`. Verificado: el gate de M6 no lo lista. | **pagado** · `3090483` |
+| **B13** | El gate del contador de red no ve `std::process::Command` fuera de `radar/`: un `Command::new("curl")` en `lib.rs` pasa todos los gates. La regla 9 prohíbe salidas fuera del adapter. | `tests/unit/contador-de-red.test.ts:52-65` | Añadir `Command::new` a `SOCKETS_RUST`, con una lista permitida `{src-tauri/src/radar/mdm.rs → /usr/bin/profiles}`. Demo en rojo con `Command::new("curl")` plantado en `lib.rs`. | **pagado** · `823c9f6` |
+| **B14** | Sin voz para el idioma, ⌃⌥V enciende igual el modo: baja a 44 px, se queda con ⎋ y la banda dice «Conecta auriculares», que es el motivo equivocado. El manual dice que «el modo no se enciende». | `src-tauri/src/lib.rs:1262-1290` · `src-tauri/src/habla/mod.rs:207-209` · `docs/MANUAL-DE-USO.md:331` | En `conmutar_el_modo`, si se va a encender y `!estado.voz.hay_para(&idioma)`, no encender y escribir `[habla] sin voz para {idioma}: el modo no se enciende`. Test sobre una función pura `puede_encender(hay_voz)`. | **pagado** · `3090483` |
+| **B15** | Un Mac inscrito en un MDM sin ningún invasivo no lo ve en ningún sitio. El manual dice que Sesión lo lista. | `src/pantallas/Sesion.tsx:62-67` · `docs/MANUAL-DE-USO.md:210-211` | Pintar en Sesión la fila «Sábelo» del MDM cuando `radar.programas` tenga `categoria === "mdm"`, sin tomar la pantalla entera, o corregir el manual. Test: un `EnTuMac` con solo el MDM enseña la fila. | **pagado** · `3090483` |
+| **B16** | El botón de Sesión dice «Iniciar sesión» también cuando lo que hace es pararla (regla 8). | `src/pantallas/Sesion.tsx:161-171` | Etiqueta e icono según `escucha.escuchando`, con la clave nueva `terminarSesion` es/en. Test: con `escuchando: true` se lee «Terminar sesión». | **pagado** · `3090483` |
+| **B17** | El rail dice «Meet detectado» con cualquier reunión, también en Zoom o Teams. | `src/componentes/Ventana.tsx:95-99` · `src/i18n/es.ts:294` · `src/i18n/en.ts:223` | Usar `useReunion()` y pintar «{cliente} detectado». Test con cliente Zoom. | **pagado** · `3090483` |
+| **B18** | El contador dice «salieron de tu equipo en esta reunión», pero solo lo pone a cero ⌥⎋: una reunión hereda los bytes de la anterior. | `src-tauri/src/lib.rs:536-545` · `src-tauri/src/red.rs:33` · `src/i18n/es.ts:355` | Llamar `red::reiniciar()` en `empezar_a_escuchar`, junto al reinicio del costo de la reunión. Verificado: el log de inicio escribe la red en 0. | **pagado** · `3090483` |
+| **B19** | Tres frases más del producto son falsas hoy:<br>1. Idioma: «La banda sigue funcionando con ⌃⌥A…; lo que no llega es la ficha automática». ⌃⌥A necesita un turno transcrito, y la ficha de pantalla sí llega.<br>2. Idioma: «los idiomas que marques». No se marca ninguno (A4).<br>3. Permisos: «Buscar tu evidencia a mano — Funciona» sin conceder nada. ⌃⌥A necesita el audio del sistema. | `src/i18n/es.ts:475` · `src/i18n/en.ts:377` · `src/i18n/es.ts:384` · `src/i18n/en.ts:301` · `src/pantallas/Permisos.tsx:136-141` | Reescribir `laBandaSigue`, quitar «que marques» hasta A4 y marcar «Buscar a mano» como `<TodaviaNo />`, también en las maquetas. Verificado: el gate i18n↔maqueta sigue verde y las frases describen lo que el código hace. | **pagado** · `3090483` |
+| **B20** | Comentarios y documentos con promesas caducadas o falsas. La lista completa está en la casilla 4, primera pasada, filas marcadas B20. | `src/pantallas/Honestidad.tsx:22-23` · `src-tauri/src/red.rs:8-11` · `src-tauri/src/corte.rs:106-107` · `src-tauri/src/sintesis/mod.rs:67-69` · `src-tauri/src/ficha/maniobra.rs:10-12` | Reescribir cada línea de la tabla de la casilla 4 marcada B20 para que diga lo que el código hace hoy. Verificado: un segundo barrido de la casilla 4 no las devuelve. | **pagado** · `3090483` |
+| **B21** | Dos presupuestos de la DoD sin medir: «la voz empieza ≤1 s tras la ficha» y «la CPU de la lectura de pantalla». El peso del binario va con el release-check. | `src-tauri/tests/contra-el-mac-de-verdad.rs:1257-1310` · `src-tauri/tests/contra-el-mac-de-verdad.rs:1403-1622` | Voz: en `la_voz_de_este_mac…`, medir desde `decir` hasta `hablando()==true` (sondeo de 10 ms, techo 2 s) e imprimirlo. CPU: en el kit de pantalla, `libc::getrusage(RUSAGE_SELF)` antes y después de 10 `una_vuelta` y el tiempo de CPU por lectura. Anotar los números en la bitácora y el summary. | **pagado** · `823c9f6` — CPU medida en el kit; la voz se mide en vivo (log `[habla] empezó a sonar…`) y el número sale en la parada h1 del gate del MVP |
+| **B22** | *(hallazgo nuevo de la Fase 2, del subagente de los ADR)* El manual, el summary y la bitácora decían «100 procesos» en el Mac limpio del kit del radar: son 82, contados con el filtro del test | `docs/kit-de-prueba/radar/mac-limpio.txt` · `src-tauri/src/radar/procesos.rs:108-124` · `docs/MANUAL-DE-USO.md` | Corregir la cifra a 82 en el manual y el summary; nota de corrección en la bitácora | **pagado** · `3090483` |
+| **B23** | *(hallazgo nuevo de la Fase 2)* La cabecera de `huella.rs` defendía el pHash, que el vigía ya no usa; las funciones de pHash solo las usaban los tests | `src-tauri/src/pantalla/huella.rs:8-13` · `src-tauri/src/pantalla/huella.rs:119-122` | Reescribir la cabecera (miniaturas por zonas) y dejar el pHash `#[cfg(test)]` | **pagado** · `3090483` |
+| **B24** | *(hallazgo nuevo de la Fase 2)* El texto que Vision lee se juntaba en `String` de Swift que se soltaban sin pisar | `src-tauri/nativo/Pantalla.swift:182-198` | Escribir byte a byte en el búfer de Rust, sin copias propias; si no cabe, pisar lo escrito y devolver `cabeMal` | **pagado** · `3090483` |
 
 ## Casilla 4 — frases caducadas (primera pasada)
 

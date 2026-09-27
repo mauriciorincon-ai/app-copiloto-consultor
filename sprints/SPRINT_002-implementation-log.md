@@ -2551,3 +2551,15 @@ Tercera corrida: 116 encuadres, ninguno sobre el umbral, ningún desborde.
   el puente guarda el instante de encolar y el de `didStart`, y la app escribe en vivo **«[habla] empezó a
   sonar a los N ms (presupuesto 1000)»**: el número sale en la parada h1 del gate del MVP.
 - **B6 · `Refuerzo` sin `Drop`.** Toda copia se pisa al soltarse.
+
+### Después de pagar: la guía, el artefacto y la app en vivo
+- **Guía v4, al día con la Fase 2:** macOS 26 en «qué hace falta», el puente en d4, la cifra de
+  arranque de la voz en h1 («apunta ese número»), HDMI/AirPlay en h4, k2 pide elegir antes un idioma
+  sin modelo, y una prueba nueva ⭐ (k1b) para el idioma elegible por pista. 72 pruebas · ⭐ 61 · ⭐⭐ 9;
+  `guia-cuadra` verde.
+- **El artefacto de auditoría** lleva el estado de cada hallazgo con el commit que lo pagó, y los tres
+  nuevos (B22–B24): 43 hallazgos, 43 pagados; `auditoria-con-sitio` verde.
+- **Fidelidad** 116 encuadres, ninguno sobre el umbral · **e2e** 107 · **cargo** 339 · **vitest** 258.
+- **La app en vivo** (`pnpm tauri dev`) con el manifiesto de comandos puesto: arranca limpia, el
+  cuaderno invoca sus comandos (`[permisos]`, `[sesion]`, `[red]`, `[stt]`, `[audio]` se escriben al
+  llamarse), sin un error ni un pánico. Cerrada por PID.
