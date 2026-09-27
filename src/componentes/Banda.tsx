@@ -68,7 +68,8 @@ export type PropsBanda = {
   /**
    * El transcript en vivo (⌃⌥T), oculto por defecto. Vive en la columna derecha y por eso
    * **solo existe en la banda ampliada**: en 88 px no caben tres turnos. Encenderlo desde la
-   * banda compacta la amplía, que es lo mismo que haría el asa.
+   * banda compacta la amplía, que es lo mismo que haría el asa (`useAltoDelTranscript`). Y se
+   * pinta junto a una FICHA: es su columna derecha, como en `banda.html`.
    */
   transcript?: boolean;
   /**

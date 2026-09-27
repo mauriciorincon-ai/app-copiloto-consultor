@@ -116,10 +116,10 @@ Lo hizo un subagente de solo lectura. **Resultado: 72 revisadas.**
 **Las reescrituras van a la guía v5 (fase 5)**, con origen «Mejorado en S3», jamás borradas. El texto listo para pegar de cada una está en el informe del subagente; el resumen:
 - **k1b:** se recuerda al reiniciar. La consola dice `[prefs] idiomas … / en-US`; sin pasar por Idioma, «Iniciar sesión» abre `sistema · en-US`.
 - **d11:** la frase del S2 tenía palabras del corpus («calidad», «datos», «canal»). Nueva: «Nos preocupa el margen de las tiendas de vereda».
-- **i2 y d6:** el transcript solo se pinta con una ficha en la banda. Hay que decirlo, y ⌃⌥T no agranda.
+- **i2 y d6:** el transcript solo se pinta con una ficha en la banda, y hay que decirlo. «⌃⌥T no agranda» era cierto y **ya no lo es**: se pagó como bug 10 (abajo); la v5 dice que agranda.
 - **h5:** con el modo solo audio la banda de una línea sigue «Callado». La «sin resultado» se ve al salir del modo.
 - **e4:** necesita una página de kit en negro, sin texto ni pie (`meet-en-negro.html`). Tapar la ventana no sirve: ScreenCaptureKit la lee igual.
-- **a6:** «Cierra la banda» pasa a ⌥⎋. Queda ligado al arreglo de ⌘W, pendiente abajo.
+- **a6:** «Cierra la banda» pasa a ⌥⎋, que es la única forma: ⌘W no la cierra (bug 8, medido abajo).
 - **g1:** IA se pone al día al volver (pagado abajo). La prueba entra y sale de IA.
 - **g3:** las tres preguntas las dice el CLIENTE (`say -v Paulina …`), no tu micrófono.
 - **e2:** el kit dice «Páramo Azul» en el título de la pestaña y «N de 6» en el pie. La app lee la ventana entera, y eso le da a la agenda un término y una cifra. Hay que cambiar la página del kit y esperar 6 s entre diapositivas.
@@ -135,8 +135,9 @@ Lo hizo un subagente de solo lectura. **Resultado: 72 revisadas.**
 | 5 | La banda no se enteraba de la reunión si la app se abrió antes de la llamada: solo preguntaba al montarse y con el foco, y la banda no recibe foco | S2 | **pagado**: `useReunion` vuelve a preguntar al abrir una pista (`escucha` · `empieza`). No vigila nada en segundo plano (ADR 005). **Rojo:** sin `alEmpezarLaSesion`, cae `reunion-al-empezar.test.tsx` |
 | 6 | Dos tooltips del asa solo en español en la interfaz inglesa | S1/S2 | **pagado**: `banda.asaAjustar` y `banda.asaVolver` es/en. La maqueta los lleva como texto `sr` para que el gate del diccionario los vea |
 | 7 | IA no se ponía al día al volver a la ventana (Apple Intelligence apagado en Ajustes no emite nada) | S2 | **pagado**: `useIa` pregunta también con `focus`. **Rojo:** sin el `focus`, cae `ia-al-volver.test.tsx` |
-| 8 | **⌘W sobre la banda** la cerraría sola: el relleno quedaría encima de la reunión y Chrome encogido | S1 | **PENDIENTE**, ver abajo |
-| 9 | El manual promete cosas que la relectura desmintió: e4 («tapa la ventana», `MANUAL-DE-USO.md:195-196`) y el transcript incondicional (`:65-66`, `:411`) | S1/S2 | **PENDIENTE**, ver abajo |
+| 8 | **⌘W sobre la banda** la cerraría sola: el relleno quedaría encima de la reunión y Chrome encogido | S1 | **no se reproduce, medido en vivo.** Con una sonda en `CloseRequested` y **sin** freno: ⌘W y «Close All» sobre la banda no llegan (tres ventanas antes y después); sobre la principal sí («CloseRequested «principal»», se cerró). La banda y el relleno no tienen bordes y macOS no les manda el cierre. Se probó primero un freno (`on_window_event` + `destroy()` en el corte, con su rojo), y **se retiró**: ningún camino lo alcanzaba, era código que nunca corre (tercera pregunta de la regla 15). Queda atada la razón real: `la_banda_y_su_relleno_no_tienen_bordes` (`ventana/mod.rs`). **Rojo:** con `decorations: true` en la banda, cae nombrándola |
+| 9 | El manual promete cosas que la relectura desmintió: e4 («tapa la ventana», `MANUAL-DE-USO.md:195-196`) y el transcript incondicional (`:65-66`, `:411`) | S1/S2 | **pagado.** La lectura se hace aunque otra ventana tape la reunión (`SCContentFilter(desktopIndependentWindow:)`); lo que la deja sin leer es minimizarla u ocultarla (`isOnScreen`, `Pantalla.swift:96`). El transcript se pinta junto a la ficha y agranda la banda compacta |
+| 10 | **⌃⌥T no agrandaba la banda**: cambiaba el dibujo a «ampliada» (200 px) dentro de una ventana de 88 y la banda salía recortada por abajo. El comentario de `Banda.tsx` prometía lo contrario | S1 | **pagado.** `useAltoDelTranscript` (`src/asa.ts`), llamado desde el enrutador: abre → `ajustar_banda` + `asentar_banda` a 200, como el asa; cierra → vuelve a 88, solo si la agrandó el transcript. **Rojo:** sin la llamada en `App.tsx`, cae `transcript-agranda.test.tsx` («expected [] to deeply equal [ajustar_banda:200, …]»). **En vivo:** una corrida con la banda a la vista, 88 → 200 → 88 medido por System Events, con su reacople en el log (compilación con una sonda Rust; el JS, idéntico al final). Dos intentos más no cambiaron el alto, y **no está medido por qué**: en uno se pulsó nada más abrir, con Vite en frío; en el otro, CoreGraphics daba todas las ventanas de la app fuera de pantalla (otro escritorio). Dejé de mandar teclas porque el usuario estaba trabajando en ese Mac. Lo repite la prueba i2 de la guía v5, con la banda delante |
 
 - **Gate del contrato:** `IdiomasDePista.consultor` se lee por clave calculada (`elegidos[cual]` en Idioma) y queda declarado en `LEIDOS_POR_CLAVE`.
 - **`design-sync/`** regenerado: la banda cambió por los tooltips.
@@ -171,3 +172,9 @@ Lo hizo un subagente de solo lectura. **Resultado: 72 revisadas.**
    - `ia.html` · «sprint 3 · lo que salió» · la vista con volver.
    Y recordar `/model` y esperar «continúa».
 6. **Después, fase 1**, que empieza por el ADR 015 «las notas y su cifrado». Ver el plan: `~/.claude/plans/idempotent-marinating-pebble.md`.
+
+### Retomado tras el compact (2026-09-27)
+
+- **CI de `752dca9`:** quality, e2e y build-escritorio en success, cada uno con su conclusión propia.
+- **Pasos 1–3 del punto seguro, hechos:** los bugs 8, 9 y 10 de la tabla de arriba. El 10 no estaba en la lista: apareció al comprobar el 9 contra el código.
+- **Gates locales:** vitest 264 · cargo --lib 357 · clippy limpio · lint · typecheck · `verify:ephemeral` estático.

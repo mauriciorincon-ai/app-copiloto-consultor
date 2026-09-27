@@ -63,8 +63,10 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   convierte los dos a texto **dentro de tu equipo**. Ningún audio sale de tu Mac para convertirse
   en texto.
 - **Cómo se usa:** *Sesión* → «Iniciar sesión». Nada se enciende hasta que tú lo digas. `⌃⌥T`
-  muestra u oculta el transcript en la banda; nace oculto a propósito, porque leer lo que acaban
-  de decir es la forma más rápida de dejar de escuchar.
+  muestra u oculta el transcript. Aparece **junto a la ficha** que haya en la banda (es su columna
+  derecha: sin ficha, todavía no hay dónde pintarlo) y, si la banda está compacta, la agranda como
+  el asa; al ocultarlo vuelve a su alto. Nace oculto a propósito, porque leer lo que acaban de
+  decir es la forma más rápida de dejar de escuchar.
 - **Limitaciones conocidas:**
   - **Usa auriculares.** Con los altavoces del Mac, tu micrófono también oye al cliente y el mismo
     turno llega por las dos pistas. La app lo detecta y lo marca como eco, pero la conversación se
@@ -192,8 +194,9 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - Necesita el permiso de **Pantalla** y, con Meet en el navegador, también el de **Accesibilidad**
     (para encontrar la pestaña). Sin el de Pantalla, *Sesión* lo dice («Sin permiso») y la app
     funciona igual, sin leerla.
-  - Lee **la ventana de la reunión**, no tu pantalla entera, y solo si **está visible**. Si la
-    reunión está detrás de otra ventana, no hay nada que leer.
+  - Lee **la ventana de la reunión**, no tu pantalla entera. La lee **aunque otra ventana la
+    tape**: macOS le entrega su contenido tal cual. Lo que la deja sin leer es **minimizarla u
+    ocultarla** (`⌘H`).
   - **El vídeo de los participantes no cuenta como «algo nuevo»**: se mueve todo el rato y no trae
     texto. Si alguien comparte un vídeo, la app espera a que se quede quieto.
   - Lee español e inglés. Una diapositiva en otro idioma se lee peor.
@@ -408,7 +411,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 |---|---|
 | `⌥⎋` | corta todo: audio, transcript, banda y relleno. Devuelve la ventana de la reunión |
 | `⌃⌥A` | «ayúdame con esto»: busca una ficha sobre lo último que dijo el cliente |
-| `⌃⌥T` | muestra u oculta el transcript en la banda |
+| `⌃⌥T` | muestra u oculta el transcript junto a la ficha; con la banda compacta, la agranda |
 | `⌃⌥V` | enciende o apaga el **modo solo audio**: te lee la ficha y la banda baja a una línea |
 | `⌃⌥L` | **lee la pantalla una vez, ahora** — también con la lectura automática apagada |
 | `⌃⌥R` | **qué ve**: abre *Sesión* con la tabla del radar — qué programa de tu Mac te mira y qué alcanza a ver |

@@ -271,6 +271,29 @@ mod tests {
         assert_eq!(prestadas.len(), 3, "se esperaban tres ventanas");
     }
 
+    /// La banda y su relleno **no tienen bordes**, y eso es lo único que impide cerrarlas por
+    /// separado: macOS no le manda el cierre a una ventana sin bordes. Medido en vivo el
+    /// 2026-09-27 con una sonda en `CloseRequested`: ⌘W y «Close All» sobre la banda no llegan
+    /// (tres ventanas antes y después), y sobre la principal sí. Con bordes, ⌘W cerraría la banda
+    /// sola y dejaría el relleno —un rectángulo opaco— encima de la reunión. Se quitan juntas, con
+    /// ⌥⎋ (`cerrar_banda`).
+    #[test]
+    fn la_banda_y_su_relleno_no_tienen_bordes() {
+        let json: serde_json::Value =
+            serde_json::from_str(include_str!("../../tauri.conf.json")).expect("tauri.conf.json ilegible");
+        for etiqueta in [BANDA, RELLENO] {
+            let v = json["app"]["windows"]
+                .as_array()
+                .and_then(|vs| vs.iter().find(|v| v["label"] == etiqueta))
+                .unwrap_or_else(|| panic!("«{etiqueta}» no está en tauri.conf.json"));
+            assert_eq!(
+                v["decorations"].as_bool(),
+                Some(false),
+                "«{etiqueta}» con bordes: ⌘W la cerraría sola y el relleno quedaría encima de la reunión"
+            );
+        }
+    }
+
     /// El alto de la banda y el de la maqueta son el mismo número o el gate de fidelidad compara
     /// contra un diseño que ya no existe.
     #[test]
