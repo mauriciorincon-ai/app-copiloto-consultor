@@ -2563,3 +2563,32 @@ Tercera corrida: 116 encuadres, ninguno sobre el umbral, ningún desborde.
 - **La app en vivo** (`pnpm tauri dev`) con el manifiesto de comandos puesto: arranca limpia, el
   cuaderno invoca sus comandos (`[permisos]`, `[sesion]`, `[red]`, `[stt]`, `[audio]` se escriben al
   llamarse), sin un error ni un pánico. Cerrada por PID.
+
+### La segunda pasada de la casilla 4 (2026-09-26, después del último ajuste)
+
+Otro auditor independiente, en solo lectura, sobre `823c9f6` más la guía v4 sin comitear. Buscó por
+promesa aplazada y **siguió cada ajuste de la Fase 2 hasta sus frases hermanas**: 441 líneas de
+promesa y 80 de exclusividad cotejadas contra el código. **25 frases falsas hoy (B25–B49), todas
+bajas**: once las creó un ajuste de la Fase 2 (B25, B27, B28, B30, B31, B32, B36, B37, B38, B42, B49)
+y dos la guía v4 (B33, B34). Detalle, sitio y ajuste de cada una en `SPRINT_002-auditoria.md`.
+
+- **B25 era código, no texto.** `ejecutar_el_corte` leía `red::bytes()` para el informe **después** del
+  bucle, y la pieza `ContadorDeRed` lo pone a cero dentro: el log escribía siempre `red 0 B`. El
+  comentario viejo («Es 0 siempre») era el cierto; la reescritura de B9 lo volvió falso sin cambiar el
+  código. Ahora se lee antes del bucle. `ejecutar_el_corte` necesita la app entera y ningún test la
+  llama, así que se vigila el orden: `pruebas_del_informe_del_corte::el_contador_se_lee_antes_de_ponerlo_a_cero`.
+  **Rojo:** con el orden viejo, «el contador se lee después de que el corte lo ponga a cero»; verde al
+  restaurar.
+- **B34 también tocó código:** k1b pedía ver en la consola la pista del sistema abrir en inglés y ningún
+  log escribía el idioma. Ahora: `[escucha] pista «sistema» abierta · en-US`.
+- **El resto, 23 grupos de frases:** manual, guía, ADRs 004/006/009/010/011/012/013/014,
+  `design-system.md`, las descripciones de `banda.json` y `relleno.json`, tres maquetas (permisos,
+  banda, honestidad) y comentarios. La frase de Honestidad (B41) cambió de largo: fidelidad **116
+  encuadres, ninguno sobre el umbral**, y la captura de Honestidad leída como imagen, sin desborde.
+- **La hermana de B41 en el summary:** la casilla 12 del release-check decía «nada más» y omitía
+  `acople.json` (600, solo mientras la banda está acoplada). Corregida.
+- **Una cifra del summary que no cuadraba:** vitest es **257**, no 258 (el árbol comiteado antes de esta
+  pasada también da 257). Corregida; `cargo test --lib` pasa a **340** con el test de B25.
+- Gates: `typecheck`, `lint`, vitest 257, `cargo test --lib` 340 + 1 ignorado, `clippy --all-targets
+  -D warnings` limpio, `design-sync` sin deriva, `auditoria-con-sitio` verde con **68 hallazgos, 68
+  pagados**.

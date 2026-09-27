@@ -2,8 +2,9 @@
 
 > **Fase 2 cerrada (2026-09-26):** el usuario aprobó pagar los 40 y el constructor los pagó todos, cada
 > uno con su test en rojo antes del verde (bitácora, sección «`/audita-sprint` — Fase 2»). En la Fase 2
-> aparecieron tres bajos más (B22–B24), también pagados: **43 hallazgos, 43 pagados**. El estado de
-> cada uno lleva el commit que lo pagó.
+> aparecieron tres bajos más (B22–B24), también pagados. **La casilla 4 corrió dos veces:** la segunda
+> pasada, después del último ajuste, encontró 25 bajos más (B25–B49), pagados en `eefc7c3`: **68
+> hallazgos, 68 pagados**. El estado de cada uno lleva el commit que lo pagó.
 
 Esta auditoría la hizo un auditor independiente que no construyó el sprint, el **2026-09-26**, sobre el **HEAD `b55f1fe`** de `sprint-002/cuando-que-y-quien-mira` (PR #6). Fue solo lectura: no se editó, creó ni comiteó nada en el repo.
 
@@ -458,7 +459,7 @@ Hay dos caminos:
 
 **Estado:** **pagado** · `823c9f6` — construida (decisión del usuario): el puente
 
-## BAJOS (24)
+## BAJOS (49)
 
 | # | Hallazgo | Dónde | Ajuste ejecutable | Estado |
 |---|---|---|---|---|
@@ -486,6 +487,31 @@ Hay dos caminos:
 | **B22** | *(hallazgo nuevo de la Fase 2, del subagente de los ADR)* El manual, el summary y la bitácora decían «100 procesos» en el Mac limpio del kit del radar: son 82, contados con el filtro del test | `docs/kit-de-prueba/radar/mac-limpio.txt` · `src-tauri/src/radar/procesos.rs:108-124` · `docs/MANUAL-DE-USO.md` | Corregir la cifra a 82 en el manual y el summary; nota de corrección en la bitácora | **pagado** · `3090483` |
 | **B23** | *(hallazgo nuevo de la Fase 2)* La cabecera de `huella.rs` defendía el pHash, que el vigía ya no usa; las funciones de pHash solo las usaban los tests | `src-tauri/src/pantalla/huella.rs:8-13` · `src-tauri/src/pantalla/huella.rs:119-122` | Reescribir la cabecera (miniaturas por zonas) y dejar el pHash `#[cfg(test)]` | **pagado** · `3090483` |
 | **B24** | *(hallazgo nuevo de la Fase 2)* El texto que Vision lee se juntaba en `String` de Swift que se soltaban sin pisar | `src-tauri/nativo/Pantalla.swift:182-198` | Escribir byte a byte en el búfer de Rust, sin copias propias; si no cabe, pisar lo escrito y devolver `cabeMal` | **pagado** · `3090483` |
+| **B25** | *(segunda pasada; creado por B9)* El log del corte escribía siempre `red 0 B`: la pieza `ContadorDeRed` pone el contador a cero dentro del bucle y el informe lo leía después. El doc de `Informe` afirmaba lo contrario. | `src-tauri/src/corte.rs:131-134` · `src-tauri/src/lib.rs:752` · `src-tauri/src/lib.rs:778` · `src-tauri/src/lib.rs:800` | Leer `red::bytes()` antes del bucle y pasarlo al informe. Test de orden `el_contador_se_lee_antes_de_ponerlo_a_cero`, rojo con el orden viejo. | **pagado** · `eefc7c3` |
+| **B26** | *(segunda pasada)* «Sin Accesibilidad todo lo demás funciona igual» / «el único permiso opcional»: con Meet en el navegador, sin ese permiso la app no encuentra la pestaña, no lee su pantalla y el ámbar no mira. | `docs/MANUAL-DE-USO.md:55-56` · `docs/MANUAL-DE-USO.md:187-188` · `src-tauri/src/permisos.rs:89-90` · `src-tauri/src/permisos.rs:319-320` · `src/componentes/Banda.tsx:75-76` · `design-system.md:515-516` | Manual, comentarios y `design-system.md` dicen para qué más hace falta. | **pagado** · `eefc7c3` |
+| **B27** | *(segunda pasada; creado por B19)* «DOS de las tres funcionan sin permisos»: tras B19 solo funciona indexar. | `src/pantallas/Permisos.tsx:125-129` · `docs/diseno/permisos.html:251-255` · `docs/diseno/permisos.html:298-302` | El comentario y la maqueta dicen «una de las tres» y por qué. | **pagado** · `eefc7c3` |
+| **B28** | *(segunda pasada; creado por M4)* Frases que decían que solo calla con los altavoces internos o que todo externo es desconocido; HDMI, DisplayPort y AirPlay ya son altavoz, y Sesión ya pinta `Salida.nombre`. | `src-tauri/src/habla/mod.rs:108-109` · `src-tauri/src/habla/mod.rs:158-162` · `src-tauri/src/habla/mod.rs:170-173` · `src-tauri/src/habla/mod.rs:179-182` · `src/pantallas/Sesion.tsx:404-408` · `docs/MANUAL-DE-USO.md:84-86` · `decisions/014-la-voz-al-oido.md:58-60` · `decisions/014-la-voz-al-oido.md:64-66` · `decisions/014-la-voz-al-oido.md:170` | Reescritas con las tres respuestas: altavoz conocido (internos, HDMI, DisplayPort, AirPlay), auriculares por conector, USB/Bluetooth sin saber. | **pagado** · `eefc7c3` |
+| **B29** | *(segunda pasada)* Los ADR 012, 013 y 014 listaban como abiertos hallazgos ya pagados (B6, M8, B21, B24, B23, B7, B15, B13, B22, B14, M4, M14). | `decisions/012-lectura-de-pantalla.md:175-184` · `decisions/013-el-radar-y-lo-que-no-hace.md:172-183` · `decisions/014-la-voz-al-oido.md:175-179` · `decisions/014-la-voz-al-oido.md:194-198` | Cada ADR dice «ya pagado» y cómo; la cifra 82 con su nota en la bitácora. | **pagado** · `eefc7c3` |
+| **B30** | *(segunda pasada; creado por M15)* «Seis maniobras» en código, i18n, `design-system.md`, maqueta y ADR 010: son siete con el puente. Y «cuando exista la síntesis, la maniobra es su fallback»: el fallback es la ficha. | `src-tauri/src/ficha/maniobra.rs:3` · `src-tauri/src/ficha/maniobra.rs:84` · `src/i18n/es.ts:56-58` · `design-system.md:395` · `design-system.md:414-415` · `docs/diseno/banda.html:593` · `decisions/010-sintesis-codigo-primero.md:22` | «Siete» en los seis sitios; la genérica dice cuándo sale; el fallback, bien dicho. | **pagado** · `eefc7c3` |
+| **B31** | *(segunda pasada; creado por A3)* «Cuatro letras o menos» / «por debajo de cinco»: A3 subió el tramo exacto a seis letras y los nombres de cliente cortos a ocho. | `docs/MANUAL-DE-USO.md:385-387` · `src-tauri/src/diccionario/mod.rs:36` · `src-tauri/src/diccionario/mod.rs:120-121` | Seis letras en el manual y el código; el manual añade la regla de los nombres de menos de ocho. | **pagado** · `eefc7c3` |
+| **B32** | *(segunda pasada; creado por B7)* Cinco comentarios seguían con «lista de participantes»; el ámbar coteja cualquier línea de la ventana. | `src/componentes/Banda.tsx:237-238` · `src/ficha.ts:99-100` · `src-tauri/src/escucha/mod.rs:112-113` · `src-tauri/src/radar/mod.rs:6-7` · `src-tauri/src/radar/avisos.rs:4-5` | «aparece en la ventana de la reunión» en los cinco. | **pagado** · `eefc7c3` |
+| **B33** | *(segunda pasada; creado por la guía v4)* «Cinco bloques nuevos con 31 pruebas nuevas» (son 26 + 5 en bloques viejos), «8 piezas» (son 9) y un historial que decía «tres» y enumeraba cuatro. | `docs/GUIA-DE-PRUEBA.html:170-172` · `docs/GUIA-DE-PRUEBA.html:580-584` | Cabecera e historial con 26 + 5, 9 piezas y las cinco enumeradas. | **pagado** · `eefc7c3` |
+| **B34** | *(segunda pasada; verificación de A4)* k1b pedía ver en la consola que la pista del sistema abre en inglés, y ningún log escribía el idioma. | `docs/GUIA-DE-PRUEBA.html:552` · `src-tauri/src/escucha/mod.rs:361` | El log dice `[escucha] pista «sistema» abierta · en-US`, y k1b cita esa línea. | **pagado** · `eefc7c3` |
+| **B35** | *(segunda pasada)* «La CI mide el WER»: la CI no tiene modelos para reconocer y lo declara sin medir. | `docs/GUIA-DE-PRUEBA.html:500` · `docs/kit-de-prueba/audio/LEEME.md:29` · `docs/kit-de-prueba/audio/LEEME.md:65` · `decisions/009-un-idioma-por-pista.md:94` | «En un Mac con modelos de voz; en la CI no mide», en los cuatro. | **pagado** · `eefc7c3` |
+| **B36** | *(segunda pasada; creado por A4)* ADR 009 citaba las constantes `DEL_CONSULTOR` / `DEL_CLIENTE`, que ya no existen. | `decisions/009-un-idioma-por-pista.md:69-70` | El idioma se elige por pista (A4). | **pagado** · `eefc7c3` |
+| **B37** | *(segunda pasada; creado por B4)* «IA enseña cuántos datos se taparon»: ninguna pantalla lo enseña; solo lo leen los tests. | `decisions/011-proveedores-del-modelo-y-minimizacion.md:50` · `src-tauri/src/sintesis/anonimo.rs:39` | El ADR y el comentario lo dicen tal cual. | **pagado** · `eefc7c3` |
+| **B38** | *(segunda pasada; creado por M5)* Las descripciones de `banda.json` y `relleno.json` no nombraban los comandos que M5 les dio. | `src-tauri/capabilities/banda.json:4` · `src-tauri/capabilities/relleno.json:4` | Cada descripción dice qué comandos permite y quién lo vigila. | **pagado** · `eefc7c3` |
+| **B39** | *(segunda pasada)* La mirada 16-bis seguía «pendiente» en código y contrato, la tabla del estado callado describía lo de antes, y «cinco cadenas» eran siete. | `src/componentes/Banda.tsx:816-817` · `src/componentes/Banda.tsx:826` · `src-tauri/src/contrato.rs:302-305` · `src/i18n/es.ts:115` | Aprobada el 2026-09-26; «Callado · esperando el siguiente turno»; siete cadenas. | **pagado** · `eefc7c3` |
+| **B40** | *(segunda pasada; tras B15)* «Sesión lo lista como Sábelo dentro de la tabla»: con solo un MDM no hay tabla. | `docs/MANUAL-DE-USO.md:221-222` | «en su lista de lo que funciona, o dentro de la tabla si además hay un invasivo». | **pagado** · `eefc7c3` |
+| **B41** | *(segunda pasada)* «lo único que la app escribe es tuyo —índice, diccionario y gasto—»: también escribe `acople.json`, dónde estaba la ventana de la reunión. | `src/i18n/es.ts:377` · `src/i18n/en.ts:293-294` · `docs/diseno/honestidad.html:262` · `docs/diseno/honestidad.html:292` | La frase suma «dónde estaba la ventana de la reunión, para devolvérsela», es/en y maqueta; fidelidad 116 verde. Su hermana en la casilla 12 del release-check del summary (`sprints/SPRINT_002-summary.md`), también. | **pagado** · `eefc7c3` |
+| **B42** | *(segunda pasada; creado por B23)* El diagrama del módulo decía «huella (pHash)»: es por zonas. | `src-tauri/src/pantalla/mod.rs:13` | «huella (zonas)». | **pagado** · `eefc7c3` |
+| **B43** | *(segunda pasada; resto de B20)* «la ÚNICA puerta a la red de un módulo protegido»: `Red.swift` también lo es. | `src-tauri/nativo/Transcriptor.swift:160` | «la puerta a la red de la transcripción —la otra es `Red.swift`—». | **pagado** · `eefc7c3` |
+| **B44** | *(segunda pasada; tras M6)* «vive en la deuda del sprint»: los lectores del contrato ya tienen su gate. | `src-tauri/src/contrato.rs:27` | Apunta a `tests/unit/contrato-con-lectores.test.ts`. | **pagado** · `eefc7c3` |
+| **B45** | *(segunda pasada; clase B20)* Futuros de cosas que existen desde el S1: «el disparador de la fase 4 leerá», «la banda sabrá». | `src-tauri/src/stt/ventana.rs:3` · `src-tauri/src/stt/mod.rs:28` · `src-tauri/src/voz/eco.rs:27-28` | En presente, con dónde vive. | **pagado** · `eefc7c3` |
+| **B46** | *(segunda pasada)* «Los otros tres atajos emiten a la banda»: solo `⌃⌥T` y `⌃⌥A`. | `src-tauri/src/lib.rs:1251` | Nombra los dos. | **pagado** · `eefc7c3` |
+| **B47** | *(segunda pasada)* «El Swift vive entero en un archivo»: son seis. | `decisions/006-stt-local-y-su-modelo.md:92` | Los seis, nombrados. | **pagado** · `eefc7c3` |
+| **B48** | *(segunda pasada)* `design-system.md` decía que audio del sistema y pantalla son UN permiso; son dos (mirada 17-quater, `tccd`). | `design-system.md:511-513` | DOS permisos, con sus nombres TCC y la historia. | **pagado** · `eefc7c3` |
+| **B49** | *(segunda pasada; creado por B8)* ADR 004 daba `cerrar_banda` como primer camino de devolución; el comando salió en B8. | `decisions/004-acople-por-accessibility.md:63-65` | El primer camino es el corte (`corte::Pieza::Acople`). | **pagado** · `eefc7c3` |
 
 ## Casilla 4 — frases caducadas (primera pasada)
 
@@ -543,6 +569,32 @@ El barrido se hizo por vocabulario de promesa aplazada («todavía no», «más 
 | `decisions/006-stt-local-y-su-modelo.md:85` | «14.2 para lo demás» | no arranca por debajo de 26 | M1 |
 | `src-tauri/src/pantalla/mod.rs:5-6` | «el texto leído se pisa antes de soltarse» | las copias del refuerzo no | B6 |
 | `src-tauri/src/lib.rs:1549-1550` | «hay una pregunta —la del usuario—» | no la hay | B5 |
+
+## Casilla 4 — segunda pasada (después del último ajuste)
+
+La hizo un auditor independiente el **2026-09-26**, en solo lectura, sobre `823c9f6` más la guía v4 sin
+comitear (lo que luego fue `0b90589`). Buscó por vocabulario de promesa aplazada, y además siguió cada
+ajuste de la Fase 2 hasta sus **frases hermanas**: el arreglo cambia el código y deja atrás, en otros
+archivos, frases que decían lo contrario. Cotejó contra el código las cifras que citan los documentos.
+
+- **441 líneas** con vocabulario de promesa (257 en documentos, maquetas, i18n y ADRs; 184 en
+  comentarios) y **80** afirmaciones de exclusividad («solo», «único», «only»). 435 + 77 son ciertas
+  hoy o historia fechada; las 9 restantes caen en B26, B30, B41 y B45.
+- **25 hallazgos (B25–B49), todos bajos**, en la tabla de BAJOS. **Once los creó un ajuste de la
+  Fase 2** (B25, B27, B28, B30, B31, B32, B36, B37, B38, B42, B49) y **dos la guía v4** (B33 y parte
+  de B34): es exactamente el riesgo que la segunda pasada existe para cubrir.
+- **B25 no era solo texto:** el log del corte leía el contador después de ponerlo a cero. Se pagó en
+  el código, con un test de orden que se vio en rojo con el orden viejo.
+- **Cifras cotejadas y correctas:** 9 piezas del corte (`src-tauri/src/corte.rs:72-83`), 7 atajos,
+  30 s y 12 turnos, 4 s de silencio, techo de 6 s, USD 10, radar cada 10 s, 88/44 px, 82 procesos,
+  macOS 26, las dos pistas en es-ES, 7 maniobras, las cuentas de la guía (72 · 31 · 13 · ⭐ 61 · 9
+  paradas) y el WER sin cambios tras A3.
+- **Comprobadas y ciertas, para no reabrirlas:** la MLX «Todavía no»; «Anotar llega con las notas
+  (sprint 003)»; el «Pendiente, sprint 003» del ADR 011; «Lo que todavía no existe» de Idioma y de
+  Corpus; «cuando exista la banda por monitor»; «Todavía no se ha visto capturar una ventana viva»
+  (ADR 012); `Llavero.swift` y `Red.swift` como la única puerta del proveedor externo; los
+  interruptores de IA que vuelven a apagado; el «9 de 9»; la tabla de atajos; B14 y M14 ya pagados;
+  «Páramo Azul ya sabe escribirlo bien»; la tabla del WER.
 
 ## Casilla 5 — campos sin lector
 

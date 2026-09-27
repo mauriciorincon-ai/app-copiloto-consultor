@@ -41,7 +41,7 @@ prueba es el ⭐⭐ del cierre de ciclo (§ Gate ⭐).
 
 ## DoD — checklist
 
-- **Testing** ✅ — vitest **258**, `cargo test --lib` **339** + 22 de integración, e2e **107** (87 → 107:
+- **Testing** ✅ — vitest **257**, `cargo test --lib` **340** + 22 de integración, e2e **107** (87 → 107:
   los 20 nuevos de reduced-motion). Gates nuevos de la fase 6 y la auditoría, cada uno con su rojo:
   `guia-cuadra`, `banda-sin-promesas-vacias`, `capabilities`, `version-minima`, el programa lanzado
   (en `contador-de-red`) y el efímero en marcha que ejerce pantalla, voz y síntesis. **Regla 19:** cada evento nuevo Rust→TS entra por
@@ -160,7 +160,7 @@ Qué viaja al gate del MVP, además del ⭐⭐:
 
 Los que importan; el detalle, con sus rojos, está en la bitácora.
 
-- **Los 43 hallazgos de la auditoría** (§ Auditoría), entre ellos los cuatro altos: la bóveda del API
+- **Los 68 hallazgos de la auditoría** (§ Auditoría), entre ellos los cuatro altos: la bóveda del API
   dejaba salir nombres y teléfonos, sus «conocidos» eran nombres de archivo, el diccionario estropeaba el
   castellano corriente y la pista del cliente estaba fijada en inglés.
 
@@ -224,11 +224,18 @@ hallazgo, su `archivo:línea`, su ajuste y **el commit que lo pagó** (lo vigila
 - **Aprobación del usuario:** pagar **los 40**; construir M15; la pista del cliente nace en es-ES.
 - **Fase 2:** los 40 pagados, **cada uno con su test en rojo antes del verde**, en cinco commits
   (`c474f96` · `1eea670` · `7a50222` · `3090483` · `823c9f6`). En la Fase 2 aparecieron **tres bajos
-  más** (B22–B24, del subagente de los ADR), pagados también: **43 hallazgos, 43 pagados**.
+  más** (B22–B24, del subagente de los ADR), pagados también. Y la segunda pasada de la casilla 4
+  trajo **25 bajos más** (B25–B49), pagados en `eefc7c3`: **68 hallazgos, 68 pagados**.
 - **Los altos:** A1 la bóveda dejaba salir nombres y teléfonos · A2 los «conocidos» eran nombres de
   archivo · A3 el diccionario estropeaba el castellano corriente (y se comía la «y» delante de un
   cliente, que destapó el test nuevo) · A4 la pista del cliente fijada en inglés.
-- **Casilla 4 dos veces:** la primera en la Fase 1; la segunda, después del último ajuste (§ abajo).
+- **Casilla 4 dos veces:** la primera en la Fase 1; la segunda, después del último ajuste, con otro
+  auditor independiente que además siguió cada ajuste hasta sus frases hermanas. Encontró 25 frases
+  falsas hoy (B25–B49): **once las creó un ajuste de la Fase 2 y dos la guía v4**, que es justo lo que
+  la segunda pasada existe para cazar. Una no era solo texto: **B25**, el log del corte leía el contador
+  de red después de ponerlo a cero y escribía siempre «red 0 B»; se pagó en el código, con un test de
+  orden visto en rojo. Al cerrar, la casilla 12 de este release-check tenía la hermana de B41 (omitía
+  `acople.json`), corregida.
 - **Casilla 5:** 10 campos sin lector encontrados por el auditor; pagados (B9–B12) y el gate que no los
   veía, arreglado (M6).
 
@@ -238,7 +245,7 @@ hallazgo, su `archivo:línea`, su ajuste y **el commit que lo pagó** (lo vigila
 
 | # | Casilla | Resultado |
 |---|---|---|
-| 1 | Tests | ✅ vitest 258 con cobertura (90 % statements) · e2e 107, cero flaky · `cargo test --locked` en `build-escritorio` |
+| 1 | Tests | ✅ vitest 257 con cobertura (90 % statements) · e2e 107, cero flaky · `cargo test --locked` en `build-escritorio` |
 | 2 | Tipos y lint | ✅ `pnpm typecheck` · `pnpm lint` · `cargo clippy --locked --all-targets -- -D warnings` limpio (y en CI) |
 | 3 | Build del binario | ✅ `pnpm build` · `cargo check --locked` en CI · `pnpm tauri build` local: 12,06 MB, `.dmg` 5,34 MB. **Cambios en `tauri.conf.json` declarados:** CSP real (M1) y `minimumSystemVersion` 26.0 (auditoría M1). El `--release` de los tests que dependen del binario corrió en la fase 0 |
 | 4 | Permisos TCC | ✅ `NS*UsageDescription` es/en para micrófono, audio del sistema y reconocimiento de voz (la captura de pantalla no tiene clave de uso: la pide macOS); la app arranca y se usa sin permisos |
@@ -249,7 +256,7 @@ hallazgo, su `archivo:línea`, su ajuste y **el commit que lo pagó** (lo vigila
 | 9 | A11y y diseño | ✅ axe en los estados nuevos · teclado · dos temas · `design-sync/` regenerado y espejo verde |
 | 10 | Documentación y cero enlaces | ✅ manual y guía v4 al día · barrido `git grep -nE "vercel[.]app\|workers[.]dev\|pages[.]dev" -- ':!pnpm-lock.yaml'` vacío tras cada `git add` |
 | 11 | Checks del PR | ✅ `quality` · `e2e` · `build-escritorio` en `success` propio en cada push (el último se comprueba antes de entregar) |
-| 12 | El disco en runtime | ✅ inventario: índice del corpus (700), `diccionario.yaml` (600), `costo-del-mes.json` (600, escrito por renombrado atómico); nada más, y el gate en marcha lo demuestra |
+| 12 | El disco en runtime | ✅ inventario: índice del corpus (700), `diccionario.yaml` (600), `costo-del-mes.json` (600, escrito por renombrado atómico) y `acople.json` (600, solo mientras la banda está acoplada: se borra al devolver la ventana, S1); nada más, y el gate en marcha lo demuestra |
 
 **Decisión: MERGE OK** en cuanto la CI del último push cierre en verde. El ⭐ está diferido al gate del
 MVP, como declara el plan (`gate_estrella: diferido`).
