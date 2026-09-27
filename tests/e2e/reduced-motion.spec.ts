@@ -21,6 +21,13 @@ const ENCUADRES = [
   { que: "honestidad", url: "ventana=principal&pantalla=honestidad", clave: ".contador .cifra" },
   { que: "banda · ficha", url: "ventana=banda&estado=ficha", clave: ".titular-b" },
   { que: "banda · sin resultado", url: "ventana=banda&estado=sin-resultado", clave: ".maniobra-b .t" },
+  // Los estados del sprint 002: lo que llega a la banda sin que nadie lo pida tiene que VERSE
+  // también con «reducir movimiento» — un aviso de grabación que nace en opacidad 0 no avisa.
+  { que: "banda · radar ámbar", url: "ventana=banda&estado=radar", clave: ".aviso-b" },
+  { que: "banda · radar coral", url: "ventana=banda&estado=radar-invasivo", clave: ".franja.err" },
+  { que: "banda · sugerencia", url: "ventana=banda&estado=sugerencia-local", clave: ".lado-b .sugerencia" },
+  { que: "banda · voz", url: "ventana=banda&estado=voz", clave: ".banda.voz .linea-b" },
+  { que: "ia", url: "ventana=principal&pantalla=ia", clave: ".titulo h1" },
 ];
 
 /** Lo que de verdad se ve: en el árbol, con caja, y sin transparencia. */
