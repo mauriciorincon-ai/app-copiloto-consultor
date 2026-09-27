@@ -6,3 +6,5 @@
 "NSAudioCaptureUsageDescription" = "Angel Ghost listens to what plays on your Mac so it can hear the other side of the call without putting a bot in the meeting. Audio lives in memory only and is never recorded.";
 
 "NSSpeechRecognitionUsageDescription" = "Angel Ghost turns speech into text on this Mac, using the macOS speech engine. No audio ever leaves your computer to become text.";
+
+"NSDocumentsFolderUsageDescription" = "Angel Ghost keeps the notes you choose to save in Documents/Angel Ghost, encrypted with a key that never leaves this Mac. Nothing from the other side of the call is saved.";

@@ -259,5 +259,12 @@ El usuario las puede revocar:
 - Honestidad: «Lo que quedará cuando cierres» en vivo, y «Tus notas siguen ahí» tras el corte;
 - la vista B37 en IA;
 - el manual;
-- `NSDocumentsFolderUsageDescription` es/en;
 - las pruebas en vivo en `pnpm tauri dev`: Touch ID, guardado en `~/Documents/Angel Ghost/` y cuaderno en negro en Meet.
+
+**CI de `c517af3`:** quality, e2e y build-escritorio en success. En el log de build-escritorio corrieron, en macOS, `una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus` (el efímero en marcha, ahora con notas), `la_carpeta_nace_700_y_el_archivo_600` y `abrir_una_reunion_tarda_menos_de_medio_segundo`.
+
+**⌃⌥P se queda para la pantalla, no se activa suelto.** La banda lo dibuja «pendiente» también en la maqueta. Activarlo sin nada que diga «fijada» dejaría una tecla que no confirma lo que hizo, y esa señal sería una forma nueva. Se resuelve con la pantalla, tras el veredicto.
+
+### El permiso de Documentos (hecho mientras corría la CI de `c517af3`)
+- `NSDocumentsFolderUsageDescription` en el `Info.plist`, `en.lproj` y `es.lproj`. El gate `lo-que-macos-dira.test.ts` gana la clave. **Rojo:** con la clave en el gate y sin los textos, caen tres tests («falta NSDocumentsFolderUsageDescription … macOS mata la app al pedir ese permiso»).
+- **Mirada de TEXTO**, maquetada y no vista: va al bloque de textos del ⭐⭐. Dice: «Angel Ghost guarda en Documentos/Angel Ghost las notas que decides guardar, cifradas con una llave que no sale de este Mac. Nada del otro lado de la llamada se guarda.» / «Angel Ghost keeps the notes you choose to save in Documents/Angel Ghost, encrypted with a key that never leaves this Mac. Nothing from the other side of the call is saved.»

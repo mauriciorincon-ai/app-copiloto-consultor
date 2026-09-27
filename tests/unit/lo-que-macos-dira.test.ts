@@ -26,6 +26,8 @@ const CLAVES = [
   "NSMicrophoneUsageDescription",
   "NSAudioCaptureUsageDescription",
   "NSSpeechRecognitionUsageDescription",
+  // Sprint 003 (ADR 015 §2): tus notas se guardan en `~/Documentos/Angel Ghost/`.
+  "NSDocumentsFolderUsageDescription",
 ] as const;
 
 function delPlist(texto: string): Record<string, string> {
@@ -51,7 +53,7 @@ describe("lo que macOS dirá cuando pida un permiso", () => {
     Object.entries(IDIOMAS).map(([k, ruta]) => [k, delStrings(readFileSync(ruta, "utf8"))]),
   );
 
-  it("el Info.plist declara las tres claves que esta app pide", () => {
+  it("el Info.plist declara todas las claves que esta app pide", () => {
     for (const clave of CLAVES) {
       expect(plist[clave], `falta ${clave} en ${PLIST}: macOS mata la app al pedir ese permiso`).toBeTruthy();
       expect(plist[clave].length, `${clave} está vacía`).toBeGreaterThan(40);
