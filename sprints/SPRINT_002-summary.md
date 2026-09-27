@@ -41,10 +41,14 @@ prueba es el ⭐⭐ del cierre de ciclo (§ Gate ⭐).
 
 ## DoD — checklist
 
-- **Testing** ✅ — vitest **220** (27 → 28 archivos), `cargo test --lib` **327** + integración, e2e
-  **107** (87 → 107: los 20 nuevos de reduced-motion). **Regla 19:** cada evento nuevo Rust→TS entra por
+- **Testing** ✅ — vitest **258**, `cargo test --lib` **339** + 22 de integración, e2e **107** (87 → 107:
+  los 20 nuevos de reduced-motion). Gates nuevos de la fase 6 y la auditoría, cada uno con su rojo:
+  `guia-cuadra`, `banda-sin-promesas-vacias`, `capabilities`, `version-minima`, el programa lanzado
+  (en `contador-de-red`) y el efímero en marcha que ejerce pantalla, voz y síntesis. **Regla 19:** cada evento nuevo Rust→TS entra por
   `contrato.rs`, con fixture del serializador real, tipo generado y test de suscripción: pantalla,
-  radar, voz, sugerencia, estado de la IA, `Informe` y `Documento`. `catch_unwind` del PDF corrido con
+  radar, voz, sugerencia, estado de la IA, `Informe` y, desde la auditoría, `QueSabeTranscribir` y cada
+  motivo de «nadie redacta». Lo que nadie lee ya no cruza: el evento de un turno no lleva el texto del
+  cliente, y el gate de campos sin lector lee los tipos del sprint con `DEUDA` vacía. `catch_unwind` del PDF corrido con
   `--release` (fase 0). **Kit v1 en CI:** WER con y sin diccionario (sale «NO SE MIDIÓ» en el runner,
   que no tiene modelos de voz, y lo dice), nDCG con pantalla, radar coral y ámbar con Vision, grounding
   y latencia de la sugerencia con `mock`.
@@ -64,14 +68,23 @@ prueba es el ⭐⭐ del cierre de ciclo (§ Gate ⭐).
   - La clave del API vive en el Llavero (`kSecAttrAccessibleWhenUnlockedThisDeviceOnly`), y su ida y
     vuelta se verificó en vivo.
   - La única puerta de red nueva es efímera y está declarada, contada por el gate del contador (3
-    puertas).
+    puertas); y el único programa que la app lanza es `/usr/bin/profiles` (gate nuevo).
+  - **Manifiesto de comandos por ventana** (auditoría, M5): la banda puede 13 comandos y ninguno de la
+    clave, el API, el corpus ni la sesión; el relleno, uno.
+  - **La bóveda del API** tapa nombres, teléfonos y correos en cualquier posición del texto real, y
+    conoce a los clientes por su nombre (auditoría, A1 y A2). El corte alcanza la petición en camino
+    (M2) y el tope del mes cobra lo tardío (M10).
   - `verify:ephemeral` protege `radar/`, `sintesis/`, `habla/` y `pantalla/`.
 - **Performance** ✅ — medido en el kit:
   - OCR mediana 87 ms (techo 1000), ≤ 1 lectura/s.
   - Sugerencia mediana 0,79–0,83 s, p95 0,99–1,04 s (presupuesto 4 / 6).
   - Binario de release: 12,06 MB, +1,01 MB sobre el S1 (§ Métricas).
-  - **No medido:** «la voz empieza ≤ 1 s tras la ficha». El puente encola y calla medido, pero no se
-    cronometró el inicio (parada ⭐ h1).
+  - CPU de una lectura de pantalla: **mediana 172 ms de CPU** en un Mac con Apple silicon (≤ 17 % de un
+    núcleo a una lectura/s); en la máquina virtual de la CI, sin aceleración, 886 ms —la misma VM en que
+    Vision tarda 617 ms de reloj—.
+  - «La voz empieza ≤ 1 s tras la ficha»: **se mide en vivo** —el puente guarda el `didStart` y el log
+    dice «empezó a sonar a los N ms»—; `cargo test` no puede medirlo (no hay bucle principal que atienda
+    al sintetizador). El número sale en la parada h1 del gate del MVP.
 - **UX/A11y** ✅:
   - axe sobre todos los estados nuevos, en los dos temas.
   - Símbolo + texto + color en ámbar y coral, cada uno con su símbolo propio.
@@ -97,7 +110,8 @@ prueba es el ⭐⭐ del cierre de ciclo (§ Gate ⭐).
 | WER con diccionario                    | no empeora                | es-mezcla 0,458 → **0,417** · en-mezcla 0,348 → **0,261** · controles sin cambio |
 | Sugerencia local                       | ≤ 4 s mediana · ≤ 6 s p95 | **0,79–0,83 s · 0,99–1,04 s** (Apple Intelligence, este Mac)                     |
 | Sugerencia sin fuente descartada       | test                      | sí, más la regla de fidelidad: **11–13 de 17** pasan con el modelo real          |
-| Voz empieza tras la ficha              | ≤ 1 s                     | **no medido** (declarado)                                                        |
+| Voz empieza tras la ficha              | ≤ 1 s                     | medido **en vivo** (log `[habla] empezó a sonar a los N ms`); el número, en la parada h1 del MVP |
+| CPU de la lectura de pantalla          | anotada                   | mediana **172 ms de CPU** por lectura · a ≤ 1 lectura/s, menos del 17 % de un núcleo |
 | Peso del binario | anotado | ejecutable de release **12,06 MB** (S1: 11,05 → **+1,01 MB** por pantalla, radar, voz, síntesis y el puente de Swift) · `.app` 12 MB · `.dmg` **5,34 MB** (S1: 4,88) — `pnpm tauri build` local, 2026-09-26 |
 
 ## Gate ⭐ — diferimiento y contrapesos
@@ -107,7 +121,7 @@ prueba es el ⭐⭐ del cierre de ciclo (§ Gate ⭐).
 | Pasada de capturas del builder | **116 encuadres** producto contra maqueta, en los dos temas y los dos idiomas, leídos como imagen · `docs/fidelidad/S2-banda.html` · `docs/fidelidad/S2-cuaderno.html` · `pnpm fidelidad` 2026-09-26 tras el último cambio de copy: ninguno sobre el 0,15 %, ningún desborde |
 | e2e de `reduced-motion`        | **42 pruebas** (10 encuadres × 2 modos + la forma del árbol, en 2 proyectos) · `tests/e2e/reduced-motion.spec.ts` · rojo demostrado escondiendo la sugerencia solo con «reduce» · corre en el job `e2e`                                                                      |
 
-**⭐ diferido: 60 pruebas ⭐ al acumulado del ciclo (S1: 33 · S2: +27), 9 paradas ⭐⭐.** Lo cuenta la
+**⭐ diferido: 61 pruebas ⭐ al acumulado del ciclo (S1: 33 · S2: +28), 9 paradas ⭐⭐; la guía v4 tiene 72.** Lo cuenta la
 guía v4, no el plan. El plan esperaba 7 nuevas: las 7 están, y el resto son las que un humano tiene que
 ver de cada función (sin permisos, sin auriculares, el coral de su Mac, el proveedor externo con su
 clave). **El ⭐⭐ pasa del techo de ~20 min en unos cinco (~25 min), declarado en la guía.**
@@ -134,10 +148,21 @@ Qué viaja al gate del MVP, además del ⭐⭐:
   2026-09-26; memoria `textos-al-gate-del-mvp`).
 - **El prompt de la sugerencia** pide escribir en el idioma de la ficha, no en el de la pregunta: una
   línea traducida no se puede cotejar (limitación declarada en el manual).
+- **ADR 012 (lectura de pantalla), 013 (el radar y lo que no hace) y 014 (la voz al oído)**, escritos en
+  la auditoría (M9): las decisiones de producto que solo vivían en la bitácora.
+- **La pista del cliente se elige y nace en español** (auditoría A4, decisión del usuario sobre el
+  valor por defecto). **La maniobra genérica se construyó a medida** (M15, decisión del usuario): el
+  puente a lo más cercano que sí tienes.
+- **`minimumSystemVersion` 26.0** (M1): el puente enlaza FoundationModels de forma fuerte.
+- **Los embeddings no se decidieron en el S2**: pasa al S3 con nDCG@5 0,82 sin ellos (ADR 008).
 
 ## Bugs + resoluciones
 
 Los que importan; el detalle, con sus rojos, está en la bitácora.
+
+- **Los 43 hallazgos de la auditoría** (§ Auditoría), entre ellos los cuatro altos: la bóveda del API
+  dejaba salir nombres y teléfonos, sus «conocidos» eran nombres de archivo, el diccionario estropeaba el
+  castellano corriente y la pista del cliente estaba fijada en inglés.
 
 - **La sugerencia «fundada» decía cosas falsas** («el taller de cierre va aparte»): el contador medía
   citas, no contenido. Se paga con `sintesis/fiel.rs` (fase 6).
@@ -178,18 +203,56 @@ Los que importan; el detalle, con sus rojos, está en la bitácora.
 
 ## Deuda técnica aceptada
 
-| Qué                                                  | Por qué                                                     | Pago                                                      |
-| ---------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------- |
-| `lru` 0.16.4 _unsound_ vía tantivy 0.26.2            | la última versión de tantivy lo fija; no hay subida posible | cuando tantivy suba de `lru` (vigilado por `cargo audit`) |
-| MLX                                                  | Apple Intelligence cumple; MLX solo hacía falta sin él      | roadmap (Macs sin Apple Intelligence)                     |
-| «La voz empieza ≤ 1 s» sin cronometrar               | necesita audio real                                         | parada ⭐ h1 del gate del MVP                             |
-| Los interruptores de IA no persisten entre arranques | declarado en el manual                                      | S3 (preferencias)                                         |
-
-_(La auditoría se registra abajo.)_
+| Qué | Por qué | Pago |
+|---|---|---|
+| `lru` 0.16.4 *unsound* vía tantivy 0.26.2 | la última versión de tantivy lo fija; no hay subida posible | cuando tantivy suba de `lru` (vigilado por `cargo audit`) |
+| MLX | Apple Intelligence cumple; MLX solo hacía falta sin él (ADR 011) | roadmap (Macs sin Apple Intelligence) |
+| El texto exacto que salió al API, legible en IA | IA enseña cuántos datos se taparon, no el texto (ADR 011, enmendado) | sprint 003 |
+| Los interruptores de IA y el idioma elegido por pista no persisten entre arranques | declarado en el manual; hoy viven en memoria | sprint 003 (preferencias) |
+| La decisión sobre los embeddings | el S2 no la tomó; nDCG@5 0,82 sin ellos | sprint 003 (ADR 008) |
+| La maniobra a medida, siguientes pasos (la unidad que falta, la ficha del cliente, lo comprometido) | el puente es el primero; el §10 nombra los demás | sprint 003 |
+| Ver un `invoke` prohibido rechazado desde la consola de la banda (M5) | la consola del webview no es accesible desde la sesión del builder; lo cubren `tauri-build` y el gate | gate del MVP (prueba manual con las herramientas de desarrollo del webview) |
 
 ## Auditoría
 
-_(se completa con el reporte del auditor independiente)_
+`/audita-sprint` con **auditor independiente** (un subagente que no construyó el sprint, sobre el diff
+`main...HEAD` en `b55f1fe`, solo lectura). Artefacto: `sprints/SPRINT_002-auditoria.md`, con cada
+hallazgo, su `archivo:línea`, su ajuste y **el commit que lo pagó** (lo vigila `auditoria-con-sitio`).
+
+- **Fase 1:** 40 hallazgos — **0 críticos · 4 altos · 15 medios · 21 bajos**. Veredicto «requiere
+  ajustes». El constructor verificó en el código los dos altos más serios antes de presentarlos.
+- **Aprobación del usuario:** pagar **los 40**; construir M15; la pista del cliente nace en es-ES.
+- **Fase 2:** los 40 pagados, **cada uno con su test en rojo antes del verde**, en cinco commits
+  (`c474f96` · `1eea670` · `7a50222` · `3090483` · `823c9f6`). En la Fase 2 aparecieron **tres bajos
+  más** (B22–B24, del subagente de los ADR), pagados también: **43 hallazgos, 43 pagados**.
+- **Los altos:** A1 la bóveda dejaba salir nombres y teléfonos · A2 los «conocidos» eran nombres de
+  archivo · A3 el diccionario estropeaba el castellano corriente (y se comía la «y» delante de un
+  cliente, que destapó el test nuevo) · A4 la pista del cliente fijada en inglés.
+- **Casilla 4 dos veces:** la primera en la Fase 1; la segunda, después del último ajuste (§ abajo).
+- **Casilla 5:** 10 campos sin lector encontrados por el auditor; pagados (B9–B12) y el gate que no los
+  veía, arreglado (M6).
+
+## `/release-check` (perfil escritorio)
+
+**✅ Pasa 11/12 · ⚠️ 1 aviso · ❌ 0.**
+
+| # | Casilla | Resultado |
+|---|---|---|
+| 1 | Tests | ✅ vitest 258 con cobertura (90 % statements) · e2e 107, cero flaky · `cargo test --locked` en `build-escritorio` |
+| 2 | Tipos y lint | ✅ `pnpm typecheck` · `pnpm lint` · `cargo clippy --locked --all-targets -- -D warnings` limpio (y en CI) |
+| 3 | Build del binario | ✅ `pnpm build` · `cargo check --locked` en CI · `pnpm tauri build` local: 12,06 MB, `.dmg` 5,34 MB. **Cambios en `tauri.conf.json` declarados:** CSP real (M1) y `minimumSystemVersion` 26.0 (auditoría M1). El `--release` de los tests que dependen del binario corrió en la fase 0 |
+| 4 | Permisos TCC | ✅ `NS*UsageDescription` es/en para micrófono, audio del sistema y reconocimiento de voz (la captura de pantalla no tiene clave de uso: la pide macOS); la app arranca y se usa sin permisos |
+| 5 | Ventana protegida | ✅ `content_protected` con su test; la parada ⭐⭐ 1 de la guía es la invisibilidad en Meet |
+| 6 | No persistencia | ✅ `pnpm verify:ephemeral` (estático) y la sesión completa en marcha, que ahora ejerce pantalla, voz y síntesis: cero intrusos; fuga inyectada (S1) y canaria en el log vigentes; contador en 0 B en modo local |
+| 7 | Seguridad | ⚠️ `pnpm audit` limpio · `cargo audit` **sin vulnerabilidades, 9 avisos** (`lru` *unsound* vía tantivy, sin subida posible: deuda) · gitleaks · CSP · **capabilities mínimas por ventana (M5)** |
+| 8 | Observabilidad | ✅ metadata-only; canaria del cliente en el log y `logs-de-la-sintesis` |
+| 9 | A11y y diseño | ✅ axe en los estados nuevos · teclado · dos temas · `design-sync/` regenerado y espejo verde |
+| 10 | Documentación y cero enlaces | ✅ manual y guía v4 al día · barrido `git grep -nE "vercel[.]app\|workers[.]dev\|pages[.]dev" -- ':!pnpm-lock.yaml'` vacío tras cada `git add` |
+| 11 | Checks del PR | ✅ `quality` · `e2e` · `build-escritorio` en `success` propio en cada push (el último se comprueba antes de entregar) |
+| 12 | El disco en runtime | ✅ inventario: índice del corpus (700), `diccionario.yaml` (600), `costo-del-mes.json` (600, escrito por renombrado atómico); nada más, y el gate en marcha lo demuestra |
+
+**Decisión: MERGE OK** en cuanto la CI del último push cierre en verde. El ⭐ está diferido al gate del
+MVP, como declara el plan (`gate_estrella: diferido`).
 
 ## Archivos clave
 
