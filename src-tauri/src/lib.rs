@@ -13,6 +13,7 @@
 
 pub mod acople;
 pub mod almacen;
+pub mod bandeja;
 pub mod capture;
 pub mod carpeta;
 pub mod corpus;

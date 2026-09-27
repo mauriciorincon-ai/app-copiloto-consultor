@@ -492,3 +492,24 @@ hora.
 **Totales:**
 - cargo lib 420, y 3 de integración nuevas (2 corren siempre y 1 en vivo);
 - vitest 276, clippy limpio, lint, typecheck y efímero estático.
+
+**La bandeja (`bandeja.rs`)**, también sin pantalla:
+- **dónde:** en Application Support, sellada con la misma llave y el mismo formato;
+- **la ventana:** «al cerrar · 1 h · 3 h · fin del día · 24 h», con 3 h de fábrica y techo de 24 h;
+  con «al cerrar» no escribe nada;
+- **Guardar** lleva la propuesta a su reunión:
+  - si la reunión existe, le conserva el vencimiento;
+  - si no tenía nada tuyo, el archivo nace con el vencimiento que habría tenido;
+- **No** la quita, y la bandeja vacía se borra;
+- entra en la lista de launchd.
+
+`Carpeta` gana lo genérico que la bandeja reutiliza: `escribir_sellado`, `abrir_en_claro`,
+`sumar_propuesta` y `pendientes`. El doble del Llavero de las pruebas pasa a ser uno: había una copia en
+`carpeta.rs` y otra en `reunion.rs`.
+
+| Gate | Defecto plantado | Rojo |
+|---|---|---|
+| ventana cero, nada escrito | `vence.unwrap_or(c.cerro)` | «con la ventana en cero no se escribe nada» |
+| guardar conserva el vencimiento de la reunión | volver a sellar con 0 | «guardar la lleva a su reunión y no la quita» |
+
+cargo lib: **426**.

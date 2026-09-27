@@ -520,32 +520,7 @@ fn fecha_de_ahora() -> notas::Fecha {
 #[cfg(test)]
 mod pruebas {
     use super::*;
-    use crate::carpeta::Llaves;
-    use crate::notas::cifrado::Llave;
-    use std::cell::RefCell;
-
-    /// El Llavero en memoria, que puede negarse a contestar.
-    #[derive(Default)]
-    struct EnMemoria {
-        hex: RefCell<Option<String>>,
-        no_contesta: bool,
-    }
-
-    impl Llaves for EnMemoria {
-        fn existe(&self) -> Result<bool, String> {
-            if self.no_contesta {
-                return Err("el Llavero no contestó".into());
-            }
-            Ok(self.hex.borrow().is_some())
-        }
-        fn leer(&self) -> Result<Llave, String> {
-            Llave::de_hex(self.hex.borrow().as_deref().ok_or("no hay")?).ok_or_else(|| "no es una llave".into())
-        }
-        fn crear(&self, llave: &Llave) -> Result<(), String> {
-            *self.hex.borrow_mut() = Some(llave.a_hex());
-            Ok(())
-        }
-    }
+    use crate::carpeta::doble::EnMemoria;
 
     fn carpeta(nombre: &str) -> Carpeta {
         let d = std::env::temp_dir().join(format!("ag-reunion-{nombre}-{}", std::process::id()));

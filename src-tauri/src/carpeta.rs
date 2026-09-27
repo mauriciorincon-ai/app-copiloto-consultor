@@ -171,6 +171,73 @@ impl Carpeta {
         contenido
     }
 
+    /// Sella `claro` y lo escribe con **este** nombre, encima si ya existe. Es lo que usan la bandeja
+    /// (que se llama como su reunión) y «Guardar» desde la bandeja (que vuelve a sellar la reunión).
+    pub fn escribir_sellado(&self, llaves: &dyn Llaves, archivo: &str, claro: &[u8], vence: i64) -> Result<u64, String> {
+        let ruta = self.ruta_de(archivo)?;
+        let llave = la_llave(llaves, true)?;
+        let sellado = cifrado::sellar(&llave, vence, claro);
+        crate::almacen::carpeta_privada(&self.raiz)?;
+        crate::almacen::escribir(&ruta, &sellado)?;
+        Ok(sellado.len() as u64)
+    }
+
+    /// Abre un archivo sellado y devuelve lo de dentro, en claro, con su vencimiento. **Quien llama
+    /// pisa los bytes** cuando termina.
+    pub fn abrir_en_claro(&self, llaves: &dyn Llaves, archivo: &str) -> Result<(Vec<u8>, i64), String> {
+        let ruta = self.ruta_de(archivo)?;
+        let sellado = std::fs::read(&ruta).map_err(|e| format!("no se pudo leer {archivo}: {e}"))?;
+        let vence = cifrado::vence_de(&sellado).map_err(|e| format!("{archivo} {e}"))?;
+        let llave = la_llave(llaves, false)?;
+        let claro = cifrado::abrir(&llave, &sellado).map_err(|e| format!("{archivo} {e}"))?;
+        Ok((claro, vence))
+    }
+
+    /// **Guardar desde la bandeja** (ADR 016 §4): la propuesta entra en su reunión, que se vuelve a
+    /// sellar **con el mismo vencimiento**. Si la reunión no tenía nada tuyo, no hubo archivo: nace
+    /// ahora, con el encabezado y el vencimiento que habría tenido.
+    pub fn sumar_propuesta(
+        &self,
+        llaves: &dyn Llaves,
+        archivo: &str,
+        propuesta: crate::propuestas::Propuesta,
+        encabezado: &crate::notas::Encabezado,
+        vence_si_nace: i64,
+    ) -> Result<(), String> {
+        let ruta = self.ruta_de(archivo)?;
+        let (mut contenido, vence) = if ruta.exists() {
+            let (mut claro, vence) = self.abrir_en_claro(llaves, archivo)?;
+            let c = Contenido::de_bytes(&claro);
+            claro.fill(0);
+            (c?, vence)
+        } else {
+            let c = Contenido {
+                version: crate::notas::VERSION,
+                encabezado: encabezado.clone(),
+                nota: String::new(),
+                acuerdos: Vec::new(),
+                fijadas: Vec::new(),
+                mis_turnos: Vec::new(),
+                propuestas: Vec::new(),
+            };
+            (c, vence_si_nace)
+        };
+        contenido.propuestas.push(propuesta);
+        let mut claro = contenido.a_bytes();
+        let r = self.escribir_sellado(llaves, archivo, &claro, vence);
+        claro.fill(0);
+        r.map(|_| ())
+    }
+
+    /// Lo que vence en esta carpeta, para la tarea de launchd (`vencimiento`). «Siempre» no entra.
+    pub fn pendientes(&self) -> Vec<crate::vencimiento::Pendiente> {
+        self.lista()
+            .into_iter()
+            .filter(|r| r.vence != 0)
+            .map(|r| crate::vencimiento::Pendiente { vence: r.vence, ruta: self.raiz.join(&r.archivo) })
+            .collect()
+    }
+
     /// «Borrar ahora».
     pub fn borrar(&self, archivo: &str) -> Result<(), String> {
         let ruta = self.ruta_de(archivo)?;
@@ -285,18 +352,19 @@ pub fn linea_de_log(r: &Resumen, g: &Guardada) -> String {
     )
 }
 
+/// El Llavero en memoria, con sus fallos a mano. Uno para todas las pruebas que guardan (carpeta,
+/// reunión, bandeja): antes había una copia por archivo.
 #[cfg(test)]
-mod pruebas {
-    use super::*;
-    use crate::notas::{Cuaderno, Encabezado, FichaFijada};
+pub(crate) mod doble {
+    use super::Llaves;
+    use crate::notas::cifrado::Llave;
     use std::cell::RefCell;
 
-    /// El Llavero en memoria, con sus fallos a mano.
     #[derive(Default)]
-    struct EnMemoria {
-        hex: RefCell<Option<String>>,
-        no_contesta: bool,
-        creadas: RefCell<usize>,
+    pub(crate) struct EnMemoria {
+        pub(crate) hex: RefCell<Option<String>>,
+        pub(crate) no_contesta: bool,
+        pub(crate) creadas: RefCell<usize>,
     }
 
     impl Llaves for EnMemoria {
@@ -316,6 +384,13 @@ mod pruebas {
             Ok(())
         }
     }
+}
+
+#[cfg(test)]
+mod pruebas {
+    use super::doble::EnMemoria;
+    use super::*;
+    use crate::notas::{Cuaderno, Encabezado, FichaFijada};
 
     fn carpeta(nombre: &str) -> Carpeta {
         let d = std::env::temp_dir().join(format!("ag-carpeta-{nombre}-{}", std::process::id()));
