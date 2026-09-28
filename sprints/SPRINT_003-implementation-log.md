@@ -1188,6 +1188,16 @@ en la CI) y B29 (recordar la carpeta del corpus o declararla H2).
 **Los 13 candidatos del constructor:** nueve confirmados como bajos, dos como medios (M12 y M3), uno dentro
 de M7 y el de la carpeta del corpus es B29.
 
+**Rojo en la CI de `dfeee23`, por tiempo, no por deriva.** El gate del espejo de `design-sync` lanza el
+generador en otro proceso. Con las tres tarjetas del S3, que parsean pantallas enteras de la maqueta,
+tardó **5,9 s en el runner** y pasó el límite de 5 s por defecto de Vitest. En `3325b19` había pasado:
+vivía al borde. Arreglo:
+- el generador parsea cada página una vez y copia por estado (1,06 → 0,90 s en local);
+- el test tiene su propio límite, declarado: `TIEMPO_DEL_GENERADOR`, 30 s.
+
+**Comprobado que sigue midiendo:** una tarjeta editada a mano da «deriva en
+design-sync/components/s3/la-bandeja.html»; verde al restaurar.
+
 ---
 
 ## Para la planeadora al cierre del sprint (va al summary, «Sugerencias de mejora al método»)

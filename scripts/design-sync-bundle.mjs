@@ -164,9 +164,17 @@ function spritePara(mapa, html) {
 
 const CHROME = ".mq-bar, .mq-nota, .mq-corte, .mq-choque, .mq-dock, .mq-h2, script, link";
 
+/**
+ * Cada página de la maqueta se parsea UNA vez y cada estado trabaja sobre una copia. Parsearla por
+ * estado hacía que el gate del espejo pasara de los 5 s del runner de la CI con las tarjetas del
+ * sprint 003 (rojo en `dfeee23`: 5,9 s, por tiempo, no por deriva).
+ */
+const PARSEADAS = new Map();
 function documento(pagina) {
-  const dom = new JSDOM(readFileSync(join(DISENO, pagina), "utf8"));
-  return dom.window.document;
+  if (!PARSEADAS.has(pagina)) {
+    PARSEADAS.set(pagina, new JSDOM(readFileSync(join(DISENO, pagina), "utf8")).window.document);
+  }
+  return PARSEADAS.get(pagina).cloneNode(true);
 }
 
 /** La misma cuenta que hace `maqueta.js`: en un estado, lo que no es de ese estado no existe. */
