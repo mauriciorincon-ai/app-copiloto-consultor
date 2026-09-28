@@ -1129,6 +1129,38 @@ confirme o los descarte con el diff delante.
 
 La UI no cambió: la fidelidad y los e2e quedan como en la fase 4.
 
+### ⏸ PUNTO SEGURO 3 (2026-09-27) — pedido por el usuario para compactar
+
+**Estado:** la primera mitad de la fase 5 está commiteada y empujada en **`3325b19`**. Lleva el kit v2,
+la guía v5, el BLUEPRINT, la auditoría del `CLAUDE.md`, el barrido de tokens vetados, el manual,
+README, `.env.example` y `design-sync/` con 3 tarjetas nuevas. El árbol queda limpio salvo esta nota.
+
+**Corriendo en segundo plano al compactar:**
+1. **CI de `3325b19`**, run **36359354394**, vigilada con `gh run watch`; el resultado queda en
+   `scratchpad/ci-3325b19.txt`. Si sale algo en rojo, se arregla antes de seguir.
+2. **La `/audita-sprint` Fase 1**: la hace un auditor independiente, solo lectura, que escribe
+   únicamente `sprints/SPRINT_003-auditoria.md`. Tiene la lista de 13 candidatos de arriba para
+   confirmarlos o descartarlos. Su informe llega como mensaje.
+
+**CI de `3325b19` (run 36359354394): verde, con conclusión propia en los tres checks** —quality 1 min 5 s ·
+e2e 1 min 53 s · build-escritorio 10 min 49 s—; en la CI corren ya los kits v2.
+
+**Lo que sigue, en orden:**
+1. ~~Leer la CI~~ (hecho: verde).
+2. Con el informe del auditor: verificar en el código sus hallazgos altos. Después, **detenerse y
+   presentarle al usuario la Fase 1** con los conteos, lo importante y las decisiones que sean suyas
+   (por ejemplo, si la carpeta del corpus se recuerda o queda en H2).
+3. En el mismo mensaje, **volver a ofrecer la prueba en vivo** con sus filas de la regla 22, que siguen
+   sin «sí». Es condición del cierre por la regla 15 (tercer filo).
+4. Fase 2: se pagan **todos** los hallazgos, cada uno con su rojo. Luego la casilla 4 por segunda
+   vez, ahora con el summary incluido.
+5. `/release-check` (con el peso del binario del S3 medido), el summary en **Opción B** dentro del PR,
+   el PR fuera de borrador, `gh pr checks` en verde, el «mergea» del usuario y el Acto 1.
+
+**Herramientas en el scratchpad:** `guia_v5.py`, `guia_v5_b.py` y `guia_v5_c.py` generan la guía v5 desde
+`GUIA-v4.html`. Se corre `guia_v5_c.py`, que es idempotente. Si una reescritura se paga en la Fase 2,
+se edita ahí y se regenera, o se toca la guía a mano y se abandona el generador.
+
 ---
 
 ## Para la planeadora al cierre del sprint (va al summary, «Sugerencias de mejora al método»)
