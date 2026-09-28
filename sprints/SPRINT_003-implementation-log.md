@@ -1161,6 +1161,33 @@ e2e 1 min 53 s · build-escritorio 10 min 49 s—; en la CI corren ya los kits v
 `GUIA-v4.html`. Se corre `guia_v5_c.py`, que es idempotente. Si una reescritura se paga en la Fase 2,
 se edita ahí y se regenera, o se toca la guía a mano y se abandona el generador.
 
+### `/audita-sprint` — Fase 1: el auditor independiente (2026-09-27)
+
+Un subagente que no construyó el sprint auditó en solo lectura el diff `main...HEAD` sobre `3325b19`.
+Corrió `cargo test --lib`, `--test puerta` y `--test ghost`, clippy, `pnpm test`, lint, typecheck,
+`verify:ephemeral` y el espejo de `design-sync`, todo en verde. Midió con sondas en una copia del
+código, en el scratchpad. **Por la regla 22 no corrió** nada que toque el Mac: ni
+`contra-el-mac-de-verdad`, ni `--ignored`, ni la app viva.
+
+**Veredicto: «requiere ajustes». 45 hallazgos: 0 críticos · 2 altos · 13 medios · 30 bajos**, todos con
+`archivo:línea` y ajuste ejecutable, en `sprints/SPRINT_003-auditoria.md` (su gate, verde).
+
+El constructor comprobó en el código los dos altos antes de enseñarlos:
+- **A1**: `carpeta.nombre_para` solo mira `notas/` (`carpeta.rs:146-150`), y `Bandeja::dejar` escribe
+  encima (`bandeja.rs:101-110`). Dos reuniones del mismo cliente el mismo día se pisan la bandeja.
+- **A2**: `nativo/Llavero.swift:30` pone `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` sin
+  `kSecUseDataProtectionKeychain`. Según Apple, el llavero de archivo ignora esa accesibilidad, así que
+  «ligada a este Mac» no es lo que el código garantiza. Lo confirma una mirada del usuario en Acceso a
+  Llaveros.
+
+**Decisiones que son del usuario**, pendientes: A2 (su comprobación), M4 (el desbloqueo de la puerta, por
+apertura o por orden), M3 (qué proveedores externos se quedan, con la tabla de retención delante), M2
+(si las notas también salen de las copias de Time Machine), M12 (dependabot de Cargo o `cargo audit`
+en la CI) y B29 (recordar la carpeta del corpus o declararla H2).
+
+**Los 13 candidatos del constructor:** nueve confirmados como bajos, dos como medios (M12 y M3), uno dentro
+de M7 y el de la carpeta del corpus es B29.
+
 ---
 
 ## Para la planeadora al cierre del sprint (va al summary, «Sugerencias de mejora al método»)
