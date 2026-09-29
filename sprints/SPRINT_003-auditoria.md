@@ -528,7 +528,7 @@ el próximo `cargo audit` a mano.
 **Verificado cuando:** el paso nuevo corre en `build-escritorio` con conclusión propia, se vio en rojo en el
 PR desechable, y `gh pr checks` sale en success.
 
-**Estado:** **pagado** (Fase 2) — **pagado en local, falta el rojo en la CI**: paso `cargo audit` en `build-escritorio`, el primero tras la cadena de Rust (`taiki-e/install-action`), para que falle antes de compilar (desviación declarada: el plan decía «tras clippy»). Hoy: exit 0 con 9 avisos que no bloquean. Rojo local con `smallvec` 1.6.0 en un `Cargo.lock` de prueba: RUSTSEC-2021-0003, exit 1. Sin dependabot de Cargo (decisión del usuario), dicho en el BLUEPRINT. El rojo en la CI va en un PR desechable.
+**Estado:** **pagado** (Fase 2) — paso `cargo audit` en `build-escritorio`, el primero tras la cadena de Rust (`taiki-e/install-action`), para que falle antes de compilar (desviación declarada: el plan decía «tras clippy»). Hoy: exit 0 con 9 avisos que no bloquean. Rojo local con `smallvec` 1.6.0 en un `Cargo.lock` de prueba: RUSTSEC-2021-0003, exit 1. Sin dependabot de Cargo (decisión del usuario), dicho en el BLUEPRINT. Rojo en la CI: PR desechable #9, `build-escritorio` falló en el paso `cargo audit` con RUSTSEC-2021-0003 (smallvec 1.6.0); cerrado sin mergear. En la rama del sprint, verde desde `eb9044d` (0 vulnerabilidades, 9 avisos).
 
 ### M13 · Notas.tsx y `propuesta.ts`, la pantalla central del sprint y el vestido de lo que dijo el cliente, casi sin tests
 
