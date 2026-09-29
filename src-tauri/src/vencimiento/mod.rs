@@ -191,10 +191,32 @@ pub fn al_dia(tarea: &Tarea, pendientes: &[Pendiente], local: &dyn Fn(i64) -> Mi
     crate::almacen::escribir(&tarea.lista, lista.as_bytes())?;
     crate::almacen::escribir_en_carpeta_ajena(&tarea.plist, nuevo.as_bytes())?;
     launchctl(&["bootout", &format!("gui/{}/{}", uid(), tarea.etiqueta)]);
-    if !launchctl(&["bootstrap", &format!("gui/{}", uid()), &tarea.plist.display().to_string()]) {
+    let dominio = format!("gui/{}", uid());
+    let plist = tarea.plist.display().to_string();
+    if !con_reintentos(INTENTOS, &|| std::thread::sleep(ENTRE_INTENTOS), || launchctl(&["bootstrap", &dominio, &plist])) {
         return Err("launchd no aceptó la tarea de vencimiento".into());
     }
     Ok(Hecho::Registrada)
+}
+
+/// Cuántas veces se intenta registrar la tarea y cuánto se espera entre una y otra. `bootout` no
+/// espera a que launchd suelte la tarea, y un `bootstrap` inmediato puede encontrarla todavía dentro
+/// (auditoría del S3, B27).
+pub const INTENTOS: u32 = 3;
+pub const ENTRE_INTENTOS: std::time::Duration = std::time::Duration::from_millis(300);
+
+/// Hace `hacer` hasta `intentos` veces, con `esperar` entre una y otra. Puro, para probarlo sin
+/// launchd: quien llama le pasa el ejecutor.
+pub fn con_reintentos(intentos: u32, esperar: &dyn Fn(), mut hacer: impl FnMut() -> bool) -> bool {
+    for n in 1..=intentos {
+        if hacer() {
+            return true;
+        }
+        if n < intentos {
+            esperar();
+        }
+    }
+    false
 }
 
 /// El segundo programa que lanza la app, con la ruta entera y solo desde aquí. Devuelve si salió bien.
@@ -266,6 +288,29 @@ mod pruebas {
 
     // 2026-09-27 14:00:00 UTC
     const HOY: i64 = 1_790_517_600;
+
+    /// **El registro se reintenta** (auditoría del S3, B27): si launchd todavía no soltó la tarea, el
+    /// `bootstrap` falla; con tres intentos y una espera entre ellos, entra. Con un ejecutor falso, sin
+    /// tocar launchd. Demostrado en rojo con un solo intento.
+    #[test]
+    fn el_registro_se_reintenta_antes_de_rendirse() {
+        use std::cell::Cell;
+        let (veces, esperas) = (Cell::new(0), Cell::new(0));
+        let espera = || esperas.set(esperas.get() + 1);
+        let ok = con_reintentos(INTENTOS, &espera, || {
+            veces.set(veces.get() + 1);
+            veces.get() == 3
+        });
+        assert!(ok, "falló dos veces y a la tercera tenía que entrar");
+        assert_eq!((veces.get(), esperas.get()), (3, 2));
+        let (veces, esperas) = (Cell::new(0), Cell::new(0));
+        let espera = || esperas.set(esperas.get() + 1);
+        assert!(!con_reintentos(INTENTOS, &espera, || {
+            veces.set(veces.get() + 1);
+            false
+        }));
+        assert_eq!((veces.get(), esperas.get()), (3, 2), "tras el último intento no se espera");
+    }
 
     #[test]
     fn la_lista_lleva_solo_lo_que_vence_y_solo_archivos_ghost() {

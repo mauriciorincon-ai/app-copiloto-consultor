@@ -204,3 +204,14 @@ disco, y sale de él al cerrarla.
 018 §5, lo vigila `empezar_cierra_la_puerta_antes_que_nada`), así que durante una sesión el socket no
 existe. `Permitido` no lo lleva a propósito: si alguna vez apareciera en el inventario de una sesión, es
 que la puerta siguió abierta en una reunión, y el gate en marcha lo tiene que delatar.
+
+## Enmienda 7 — la carpeta de tu corpus, recordada (auditoría del S3, B29; 2026-09-28)
+
+`preferencias.json` gana `carpetaDelCorpus`: **la ruta** de la carpeta que señalaste en Corpus, jamás su
+contenido. Al arrancar, la app la vuelve a leer en segundo plano y reconstruye el índice (que ya persistía,
+600). Decisión del usuario: «que la recuerde» — sin ella, tras reiniciar no había «Este cliente», ni la NDA
+guardada a la vista, ni corpus para la puerta local.
+- Si la carpeta vive en Documentos, Escritorio o Descargas, macOS puede pedir su permiso al arrancar (se
+  anuncia en la guía y en el manual; es fila de la regla 22 en la prueba en vivo).
+- **Inventario del efímero:** nada nuevo. Es un campo más de un archivo que ya estaba en `Permitido`.
+

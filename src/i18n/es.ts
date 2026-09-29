@@ -748,6 +748,7 @@ export const es = {
     irATusReuniones: "Ir a tus reuniones",
     cerradaConLlave: "Cerrada con llave: es de una sesión anterior de la app",
     paraLeerla: "Para leerla, Touch ID, como para exportar una reunión. Una vez por sesión de la app.",
+    sinProteger: "Tu cuaderno no se pudo proteger: no compartas la pantalla entera.",
     abrirConTouchId: "Abrir con Touch ID",
     bandejasDetras: "Bandejas detrás de esta:",
     bandejaChip: "Bandeja ·",

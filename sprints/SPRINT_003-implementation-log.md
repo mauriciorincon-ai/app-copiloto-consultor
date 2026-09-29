@@ -1415,6 +1415,44 @@ se ha comprobado. Queda como deuda para el H2: subirlo cuando `tantivy` lo permi
 Gates: `cargo test --lib` 473 ✓ · `--test puerta` 14 ✓ · `--test ghost` 5 ✓ · clippy limpio · `pnpm test` 347 ✓
 (cobertura con sus umbrales) · lint · typecheck · `verify:ephemeral` ✓ · `design-sync` al día.
 
+**El rojo de `cargo audit` en la CI (M12), en un PR desechable.** PR #9 (`desechable/cargo-audit-rojo`, base
+la rama del sprint), con `smallvec` 1.6.0 en el `Cargo.lock`: `build-escritorio` falló **en el paso
+`cargo audit`**, antes de compilar —«Crate: smallvec · error: 1 vulnerability found! · ID:
+RUSTSEC-2021-0003»—. Cerrado sin mergear; la rama, borrada en el remoto y en local, y el worktree del
+scratchpad, quitado. La CI de la rama del sprint, en verde con el paso nuevo.
+
+### Bloque 6 — higiene y declaraciones (B1 · B4 · B6 · B8 · B18 · B26 · B27 · B28 · B29)
+
+| Hallazgo | Arreglo | El rojo que se vio |
+|---|---|---|
+| **B1** | la huella del acople la escribe `almacen::escribir`; la carpeta del diccionario nace con `carpeta_privada` | `la_huella_la_escribe_el_escritor_unico`: el mismo inodo con `fs::write`. `la_carpeta_del_diccionario_nace_en_700`: 755 |
+| **B4** | `proteger_el_cuaderno` devuelve el error; `sinProteger` cruza el contrato (muestra `CUADERNO_SIN_PROTEGER`) y «durante» pinta la franja | el test de Notas, sin la franja |
+| **B6** | `zod` fuera; el lockfile solo pierde sus 8 líneas (regla 18: leída la salida del install) | — |
+| **B8 · B18** | el mensaje del hook de gitleaks; el comentario en su test | — |
+| **B26** | `Llave::igual` en tiempo constante; el cifrador sin `Key` intermedia; la copia del generador, pisada | `la_llave_se_compara_sin_volverse_texto` con el stub. Su primera versión se encontraba a sí misma: el comentario citaba la aguja; reescrito |
+| **B27** | `con_reintentos` (3 × 300 ms) para `bootstrap`; si falla, Honestidad lo dice | `el_registro_se_reintenta_antes_de_rendirse` con un intento. Sin tocar launchd |
+| **B28** | el resto de la maniobra §10, declarado H2: ADR 008 y `## Desviación del plan` | — |
+| **B29** | `carpeta_del_corpus` en las preferencias; se recuerda al indexar y se reindexa al arrancar; evento `corpus` para Corpus y «Este cliente» | `la_carpeta_del_corpus_se_recuerda_y_se_relee_al_arrancar`, sin el `recordar` |
+
+**B5 espera a la prueba en vivo:** si macOS enseña o no el aviso de Reconocimiento de voz decide si la clave
+se quita o si Permisos gana una fila.
+
+**TEXTO y FORMA nuevos, maquetados y no vistos:** la franja de B4 («Tu cuaderno no se pudo proteger: no
+compartas la pantalla entera.» / «Your notebook could not be protected: do not share your whole screen.»), el
+aviso de macOS por la carpeta del corpus en la guía, y el manual de Corpus.
+
+Gates: `cargo test --lib` ✓ · `--test puerta` · `--test ghost` · clippy limpio · vitest 348 ✓ · lint ·
+typecheck · `verify:ephemeral` ✓.
+
+---
+
+## Desviación del plan
+
+- **La maniobra §10 (el resto de `design-system.md` §10) no se construyó en el S3 y pasa al H2.** El plan
+  la ponía primera en lo que se corta «si no cabe, H2, declarado» (fase 0, punto 7), y el corte no se
+  declaró en su momento: lo encontró la auditoría independiente (B28). Declarado ahora en el ADR 008
+  (enmienda del 2026-09-28), aquí, en el summary y en el PR.
+
 ---
 
 ## Para la planeadora al cierre del sprint (va al summary, «Sugerencias de mejora al método»)

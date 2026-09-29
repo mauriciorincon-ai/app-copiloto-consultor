@@ -512,6 +512,7 @@ export const VISTA_DEL_CUADERNO: VistaDelCuaderno = {
       "turnos": 0
     },
     "retencion": "90d",
+    "sinProteger": false,
     "turnosDelCliente": 63,
     "ventana": "3h"
   };
@@ -559,8 +560,38 @@ export const VISTA_CON_PROPUESTAS: VistaDelCuaderno = {
       "turnos": 0
     },
     "retencion": "90d",
+    "sinProteger": false,
     "turnosDelCliente": 12,
     "ventana": "0"
+  };
+
+export const CUADERNO_SIN_PROTEGER: VistaDelCuaderno = {
+    "abierta": true,
+    "acuerdos": [],
+    "conservarMisTurnos": false,
+    "escuchando": true,
+    "fijadas": [],
+    "lecturas": 0,
+    "lleno": false,
+    "nota": "Piden la cuarta fuente.",
+    "previsto": null,
+    "propuestas": [],
+    "resumen": {
+      "acuerdos": 0,
+      "bytesAcuerdos": 0,
+      "bytesFijadas": 0,
+      "bytesNota": 23,
+      "bytesTurnos": 0,
+      "fijadas": 0,
+      "parrafos": 1,
+      "propuestas": 0,
+      "sinDecidir": 0,
+      "turnos": 0
+    },
+    "retencion": "90d",
+    "sinProteger": true,
+    "turnosDelCliente": 3,
+    "ventana": "3h"
   };
 
 export const PROPUESTA_EN_LA_BANDA: LineaDePropuesta = {

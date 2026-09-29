@@ -642,6 +642,7 @@ export const en: Diccionario = {
     irATusReuniones: "Go to your meetings",
     cerradaConLlave: "Locked: it is from an earlier app session",
     paraLeerla: "To read it, Touch ID, as for exporting a meeting. Once per app session.",
+    sinProteger: "Your notebook could not be protected: do not share your whole screen.",
     abrirConTouchId: "Open with Touch ID",
     bandejasDetras: "Trays behind this one:",
     bandejaChip: "Tray ·",

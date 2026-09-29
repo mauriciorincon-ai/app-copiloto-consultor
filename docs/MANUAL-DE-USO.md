@@ -106,8 +106,11 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - **Un PDF no trae títulos**, trae líneas: la app conjetura dónde empieza cada sección por la
     forma del texto, y te dice de cuántos documentos hizo esa conjetura para que puedas juzgarlo.
   - Hasta **2 000 documentos** por carpeta.
-  - **La carpeta se vuelve a señalar cada vez que abres la app**: la app no la recuerda al cerrarse,
-    y hasta que la señalas no hay fichas (tampoco para la puerta local).
+  - **La app recuerda la carpeta** (solo su ruta, en tus preferencias) y **la vuelve a leer al
+    arrancar**, en segundo plano: *Corpus*, «Este cliente» y la puerta local la tienen sin que la
+    señales otra vez. Si la carpeta vive en Documentos, Escritorio o Descargas, macOS puede preguntarte
+    la primera vez si Angel Ghost puede leerla. Si ya no está (un disco desconectado), la app lo dice y
+    la puedes señalar de nuevo.
   - Arrastrar documentos sobre la ventana y releer solo lo que cambió no están en este MVP: quedan
     para el H2. Hoy se vuelve a recorrer la carpeta entera.
   - El índice vive en la carpeta de datos de la app, **y solo tu cuenta del Mac puede leerlo**.

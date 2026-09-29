@@ -54,7 +54,7 @@ vende **no persistir, verificable**.
    micrófono) en TEXTO, opt-in, por defecto apagado** · la **bandeja de propuestas** durante la ventana
    elegida (defecto 3 h, techo 24 h, mínimo cero; borrado automático al vencer aunque la app no se
    abra; visible en Honestidad). Persiste **en claro, con 600/700**: el índice del corpus (documentos
-   propios) · preferencias (con la respuesta de NDA de cada cliente) · el diccionario · los metadatos
+   propios) · preferencias (con la respuesta de NDA de cada cliente y la ruta de la carpeta del corpus) · el diccionario · los metadatos
    de costo · la huella del acople · la lista de vencimientos y la tarea de launchd que la cumple. Los
    secretos, **solo en el Llavero**. El socket de la puerta local existe solo mientras está abierta y
    no lleva contenido (ADR 002 y sus enmiendas; ADR 015–018). Muere

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { hayTauri, llamar, preguntar } from "./puente";
+import { escuchar, hayTauri, llamar, preguntar } from "./puente";
 import type { Bilingue } from "./radar";
 import type { EstadoDeEscucha } from "./cuaderno";
 import {
@@ -125,9 +125,13 @@ export function useEsteCliente(
     };
     leer();
     globalThis.addEventListener("focus", leer);
+    // Los clientes salen del corpus: si el arranque vuelve a leer la carpeta recordada (auditoría del
+    // S3, B29), la lista llega después, y la pantalla se entera.
+    const baja = escuchar("corpus", leer);
     return () => {
       vivo = false;
       globalThis.removeEventListener("focus", leer);
+      baja();
     };
   }, [muestra]);
   return [vista, setVista];

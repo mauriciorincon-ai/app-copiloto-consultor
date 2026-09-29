@@ -79,6 +79,8 @@ pub struct ElCuaderno {
     bandeja: Mutex<Option<BandejaAbierta>>,
     /// Al arrancar se midió que la tarea de borrado no corrió con la app cerrada (ADR 016 §5).
     no_corrio: AtomicBool,
+    /// macOS no dejó proteger el cuaderno al empezar (auditoría del S3, B4).
+    sin_proteger: AtomicBool,
     /// **«Este cliente»** (ADR 017 §3): el que elegiste en Sesión. Nombra el archivo de la reunión y
     /// elige la bandera y la NDA. Vive en memoria, mientras la app esté abierta: no se guarda.
     cliente: Mutex<Option<String>>,
@@ -111,6 +113,9 @@ pub struct VistaDelCuaderno {
     pub lleno: bool,
     /// Cuánto esperarán en la bandeja las que no decidas.
     pub ventana: Ventana,
+    /// macOS no dejó proteger el cuaderno al empezar: tu nota se vería al compartir la pantalla entera
+    /// (auditoría del S3, B4). Notas lo dice en una franja.
+    pub sin_proteger: bool,
 }
 
 /// La bandeja que Notas enseña: la que vence antes (ADR 016 §4).
@@ -394,6 +399,7 @@ pub fn vista<R: Runtime>(app: &AppHandle<R>) -> Option<VistaDelCuaderno> {
     let (turnos_del_cliente, lecturas) =
         (el.turnos_del_cliente.load(Ordering::Relaxed), el.lecturas.load(Ordering::Relaxed));
     let ventana = preferencias(app).ventana_de_la_bandeja;
+    let sin_proteger = el.sin_proteger.load(Ordering::Relaxed);
     el.con(|c| VistaDelCuaderno {
         nota: c.nota().to_string(),
         acuerdos: c.acuerdos().to_vec(),
@@ -409,6 +415,7 @@ pub fn vista<R: Runtime>(app: &AppHandle<R>) -> Option<VistaDelCuaderno> {
         propuestas: c.en_espera().to_vec(),
         lleno: c.lleno(),
         ventana,
+        sin_proteger,
     })
 }
 
@@ -430,7 +437,8 @@ pub fn al_empezar<R: Runtime>(app: &AppHandle<R>) {
         }
     }
     el.abrir(preferencias(app).conservar_mis_turnos, fecha_de_ahora());
-    ventana::proteger_el_cuaderno(app, true);
+    let fallo = ventana::proteger_el_cuaderno(app, true).is_err();
+    el.sin_proteger.store(fallo, Ordering::Relaxed);
     avisar(app);
 }
 
@@ -441,7 +449,8 @@ pub fn al_terminar<R: Runtime>(app: &AppHandle<R>) {
     let Some(el) = app.try_state::<ElCuaderno>() else { return };
     el.solo_notas.store(false, Ordering::Relaxed);
     if el.terminar() {
-        ventana::proteger_el_cuaderno(app, false);
+        let _ = ventana::proteger_el_cuaderno(app, false);
+        el.sin_proteger.store(false, Ordering::Relaxed);
     }
     avisar(app);
 }
@@ -497,7 +506,8 @@ pub fn cortar_las_propuestas<R: Runtime>(app: &AppHandle<R>) {
 
 fn cerrar<R: Runtime>(app: &AppHandle<R>, el: &ElCuaderno) {
     if el.cerrar() {
-        ventana::proteger_el_cuaderno(app, false);
+        let _ = ventana::proteger_el_cuaderno(app, false);
+        el.sin_proteger.store(false, Ordering::Relaxed);
     }
     avisar(app);
 }
@@ -513,7 +523,8 @@ pub fn guardar<R: Runtime>(app: &AppHandle<R>) -> Result<Option<Guardada>, Strin
     let vence_bandeja = ventana_de_prueba(p.ventana_de_la_bandeja.vence(ahora, vencimiento::fin_del_dia(ahora)), ahora);
     let hecho = el.guardar_en(&carpeta(app), &la_bandeja_de(app), &DelLlavero, p.retencion, vence_bandeja, ahora)?;
     if estaba && !el.abierta() {
-        ventana::proteger_el_cuaderno(app, false);
+        let _ = ventana::proteger_el_cuaderno(app, false);
+        el.sin_proteger.store(false, Ordering::Relaxed);
     }
     if hecho.a_la_bandeja > 0 || hecho.murieron > 0 {
         println!("[propuestas] al cerrar: {} a la bandeja · {} murieron", hecho.a_la_bandeja, hecho.murieron);
@@ -835,7 +846,15 @@ pub fn poner_al_dia_el_vencimiento<R: Runtime>(app: &AppHandle<R>) {
         Ok(vencimiento::Hecho::SinCambios) => {}
         Ok(vencimiento::Hecho::Registrada) => println!("[vencimiento] la tarea de borrado, al día"),
         Ok(vencimiento::Hecho::Quitada) => println!("[vencimiento] nada que vencer: la tarea de borrado, quitada"),
-        Err(e) => println!("[vencimiento] {e}"),
+        Err(e) => {
+            println!("[vencimiento] {}", sin_ruta(&e));
+            // Sin la tarea registrada, lo que vence no se borra con la app cerrada: Honestidad lo dice
+            // en rojo, como cuando la tarea no corrió (auditoría del S3, B27).
+            if let Some(el) = app.try_state::<ElCuaderno>() {
+                el.no_corrio.store(true, Ordering::Relaxed);
+                avisar(app);
+            }
+        }
     }
 }
 

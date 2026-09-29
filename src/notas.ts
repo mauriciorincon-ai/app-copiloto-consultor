@@ -122,6 +122,8 @@ export type VistaDelCuaderno = {
   lleno: boolean;
   /** Cuánto esperarán en la bandeja las que no decidas. */
   ventana: Ventana;
+  /** macOS no dejó proteger el cuaderno al empezar: Notas lo dice (auditoría del S3, B4). */
+  sinProteger: boolean;
 };
 
 /** Una reunión guardada, como la lista la enseña: sin abrirla (`reuniones_guardadas`). */
@@ -209,6 +211,7 @@ export function useMuestraDelCuaderno(vista: VistaDeNotas): VistaDelCuaderno {
     propuestas: conPropuestas ? propuestasDeMuestra(m) : [],
     lleno: false,
     ventana: vista === "al-cerrar-cero" ? "0" : "3h",
+    sinProteger: false,
   };
 }
 

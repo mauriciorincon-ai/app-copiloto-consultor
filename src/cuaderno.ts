@@ -688,11 +688,16 @@ export const CORPUS_VACIO: EstadoDelCorpus = {
   bytesDelIndice: 0,
 };
 
+/** El corpus cambió: indexaste, o el arranque volvió a leer la carpeta que recordabas (auditoría del
+ *  S3, B29). Función de módulo para que `usePreguntaAlVolver` no se vuelva a suscribir en cada render. */
+const alCambiarElCorpus = (preguntarAhora: () => void) => escuchar("corpus", preguntarAhora);
+
 export function useCorpus(): EstadoDelCorpus {
   return usePreguntaAlVolver<EstadoDelCorpus>(
     "estado_del_corpus",
     CORPUS_DE_MUESTRA,
     CORPUS_VACIO,
+    alCambiarElCorpus,
   );
 }
 

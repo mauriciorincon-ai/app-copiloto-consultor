@@ -109,6 +109,9 @@ pub struct Preferencias {
     /// estar aquí. La NDA no cambia de una reunión a otra, por eso se guarda; con quién te reúnes hoy,
     /// no.
     pub ndas: std::collections::BTreeMap<String, crate::jurisdiccion::Nda>,
+    /// La carpeta de tu corpus: la ruta, jamás su contenido. Al arrancar se vuelve a leer, en segundo
+    /// plano (auditoría del S3, B29; decisión del usuario, 2026-09-28: «que la recuerde»).
+    pub carpeta_del_corpus: Option<String>,
 }
 
 impl Default for Preferencias {
@@ -123,6 +126,7 @@ impl Default for Preferencias {
             conservar_mis_turnos: false,
             ventana_de_la_bandeja: crate::bandeja::Ventana::default(),
             ndas: std::collections::BTreeMap::new(),
+            carpeta_del_corpus: None,
         }
     }
 }
@@ -211,6 +215,9 @@ mod tests {
             conservar_mis_turnos: true,
             ventana_de_la_bandeja: crate::bandeja::Ventana::FinDelDia,
             ndas: [("Páramo Azul".to_string(), crate::jurisdiccion::Nda::LoProhibe)].into(),
+            // La carpeta del corpus se recuerda (auditoría del S3, B29; decisión del usuario): sin
+            // ella, tras reiniciar no había «Este cliente», ni NDA, ni corpus para la puerta.
+            carpeta_del_corpus: Some("/Users/consultor/Corpus".into()),
         };
         guardar(&ruta, &elegidas).unwrap();
         assert_eq!(leer(&ruta), elegidas);

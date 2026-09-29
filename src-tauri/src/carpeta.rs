@@ -75,7 +75,7 @@ pub fn la_llave(llaves: &dyn Llaves, crear: bool) -> Result<Llave, String> {
     let nueva = Llave::nueva();
     llaves.crear(&nueva)?;
     let vuelta = llaves.leer()?;
-    if vuelta.a_hex() != nueva.a_hex() {
+    if !vuelta.igual(&nueva) {
         return Err("el Llavero devolvió otra llave que la que se acaba de guardar".into());
     }
     Ok(vuelta)

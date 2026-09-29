@@ -175,16 +175,15 @@ pub const MODO_ARCHIVO: u32 = 0o600;
 #[cfg(unix)]
 pub const MODO_CARPETA: u32 = 0o700;
 
-/// Guarda la huella, creando la carpeta si hace falta, y **repara los permisos si el archivo o la
-/// carpeta ya existían mal** — que es el caso que de verdad ocurre: el primero se crea bien y el
-/// que quedó flojo es el de la versión anterior.
+/// Guarda la huella con **el escritor único** (`almacen::escribir`, auditoría del S3, B1): carpeta 700,
+/// y el archivo nace 600 en un temporal que se renombra encima. Si la carpeta o un archivo viejo
+/// estaban flojos, lo que queda es nuevo y cerrado. `restringir` se queda para reparar la carpeta.
 pub fn guardar(ruta: &Path, pendiente: &Pendiente) -> std::io::Result<()> {
+    crate::almacen::escribir(ruta, &serde_json::to_vec_pretty(pendiente)?).map_err(std::io::Error::other)?;
     if let Some(carpeta) = ruta.parent() {
-        std::fs::create_dir_all(carpeta)?;
         restringir(carpeta, MODO_CARPETA)?;
     }
-    std::fs::write(ruta, serde_json::to_vec_pretty(pendiente)?)?;
-    restringir(ruta, MODO_ARCHIVO)
+    Ok(())
 }
 
 #[cfg(unix)]
@@ -622,6 +621,23 @@ mod tests {
         assert_eq!(modo(&base), 0o700, "la carpeta quedó abierta");
         assert_eq!((MODO_ARCHIVO, MODO_CARPETA), (0o600, 0o700));
 
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    /// **La huella la escribe el escritor único** (auditoría del S3, B1): nace entera en un temporal 600 y
+    /// se renombra encima, así que el archivo que queda es **otro** (otro inodo), no el viejo reescrito y
+    /// apretado después. Demostrado en rojo con `fs::write`: el inodo era el mismo.
+    #[cfg(unix)]
+    #[test]
+    fn la_huella_la_escribe_el_escritor_unico() {
+        use std::os::unix::fs::MetadataExt;
+        let base = std::env::temp_dir().join(format!("ag-acople-escritor-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        let ruta = ruta_de_la_huella(&base);
+        guardar(&ruta, &Pendiente::default()).unwrap();
+        let antes = std::fs::metadata(&ruta).unwrap().ino();
+        guardar(&ruta, &Pendiente::default()).unwrap();
+        assert_ne!(std::fs::metadata(&ruta).unwrap().ino(), antes, "la huella se reescribió en su sitio: no pasó por el almacén");
         let _ = std::fs::remove_dir_all(&base);
     }
 

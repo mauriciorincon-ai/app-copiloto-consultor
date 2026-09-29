@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "gitleaks protect --no-banner --redact --staged 2>/dev/null; if [ $? -eq 1 ]; then echo 'SECRET DETECTADO. Escritura bloqueada: mueve la clave a .env.local / Vercel env vars.'; exit 2; fi; exit 0"
+            "command": "gitleaks protect --no-banner --redact --staged 2>/dev/null; if [ $? -eq 1 ]; then echo 'SECRET DETECTADO. Escritura bloqueada: los secretos van al Llavero de macOS, nunca a un archivo del repo.'; exit 2; fi; exit 0"
           }
         ]
       },

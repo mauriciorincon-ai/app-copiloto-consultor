@@ -34,9 +34,11 @@ pub struct Llave([u8; LARGO_DE_LA_LLAVE]);
 impl Llave {
     /// Una llave nueva, del generador del sistema.
     pub fn nueva() -> Llave {
-        let k = Key::generate();
+        let mut k = Key::generate();
         let mut bytes = [0u8; LARGO_DE_LA_LLAVE];
         bytes.copy_from_slice(k.as_slice());
+        // La copia del generador se pisa antes de soltarse (B26).
+        k.as_mut_slice().fill(0);
         Llave(bytes)
     }
 
@@ -58,8 +60,14 @@ impl Llave {
         Some(Llave(bytes))
     }
 
+    /// ¿Es la misma llave? **En tiempo constante**, como el token de la puerta, y sin volverla texto.
+    pub fn igual(&self, otra: &Llave) -> bool {
+        self.0.iter().zip(otra.0.iter()).fold(0u8, |d, (x, y)| d | (x ^ y)) == 0
+    }
+
     fn cifrador(&self) -> XChaCha20Poly1305 {
-        XChaCha20Poly1305::new(&Key::from(self.0))
+        // Desde la llave misma, sin una `Key` intermedia que nadie pisaría (auditoría del S3, B26).
+        XChaCha20Poly1305::new_from_slice(&self.0).expect("la llave mide lo que pide el cifrado")
     }
 }
 
@@ -162,6 +170,22 @@ mod pruebas {
         let sellado = sellar(&llave, 1_800_000_000, TEXTO);
         assert_eq!(abrir(&llave, &sellado).unwrap(), TEXTO);
         assert_eq!(vence_de(&sellado).unwrap(), 1_800_000_000);
+    }
+
+    /// **La llave no deja copias sin pisar** (auditoría del S3, B26). Se compara byte a byte en tiempo
+    /// constante, sin volverla texto hexadecimal (dos `String` que nadie pisaba), y el cifrador se arma
+    /// sin una `Key` intermedia. Demostrado en rojo con el código de antes: `la_llave` pasaba las dos
+    /// llaves a hexadecimal para compararlas.
+    #[test]
+    fn la_llave_se_compara_sin_volverse_texto() {
+        let a = Llave::nueva();
+        let b = Llave::de_hex(&a.a_hex()).unwrap();
+        assert!(a.igual(&b) && !a.igual(&Llave::nueva()));
+        for (archivo, fuente) in [("carpeta.rs", include_str!("../carpeta.rs")), ("cifrado.rs", include_str!("cifrado.rs"))] {
+            let aguja = concat!("a_hex()", " !=");
+            assert!(!fuente.contains(aguja), "{archivo} compara llaves pasándolas a texto");
+        }
+        assert!(!include_str!("cifrado.rs").contains(concat!("Key::", "from(self.0)")), "el cifrador copia la llave en una Key intermedia");
     }
 
     #[test]

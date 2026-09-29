@@ -7,6 +7,7 @@ import { llamar, preguntar } from "@/puente";
 import {
   BANDEJA_ABIERTA,
   BANDEJA_CON_LLAVE,
+  CUADERNO_SIN_PROTEGER,
   LISTA_DE_REUNIONES,
   REUNION_GUARDADA,
   REUNION_GUARDADA_PARA_SIEMPRE,
@@ -190,6 +191,18 @@ describe("Notas dentro de Tauri", () => {
     expect(screen.getByText(t.carpetaDeLaApp)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: t.mostrarEnFinder }));
     expect(pedidos("mostrar_las_notas_en_finder").at(-1)?.[1]).toEqual({ archivo: null });
+  });
+
+  it("si macOS no dejó proteger el cuaderno, «durante» lo dice en una franja; si lo protegió, nada", async () => {
+    // Auditoría del S3, B4: antes solo lo decía la consola, y la pantalla seguía prometiendo que tu
+    // nota no la veía nadie. ¿Puede fallar? Sí: sin la franja, este test es rojo (bitácora).
+    respuestas.set("cuaderno_de_la_reunion", CUADERNO_SIN_PROTEGER);
+    await pinta();
+    expect(screen.getByRole("alert")).toHaveTextContent(t.sinProteger);
+    cleanup();
+    respuestas.set("cuaderno_de_la_reunion", { ...CUADERNO_SIN_PROTEGER, sinProteger: false });
+    await pinta();
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   // ---- la bandeja (auditoría del S3, M13: Notas.tsx estaba bajo el 50 % de ramas) ----

@@ -96,8 +96,9 @@ fn ruta_del_diccionario<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf
 /// Los permisos se aseguran **también cuando ya existía**, igual que hace el índice del corpus: una
 /// versión anterior pudo dejarlo flojo, y descubrirlo no sirve de nada si no se repara.
 pub fn asegurar_el_diccionario(ruta: &std::path::Path) -> Result<(), String> {
+    // La carpeta, en 700 como la del resto de lo que escribe la app (auditoría del S3, B1).
     if let Some(padre) = ruta.parent() {
-        std::fs::create_dir_all(padre).map_err(|e| format!("no se pudo crear {}: {e}", padre.display()))?;
+        almacen::carpeta_privada(padre)?;
     }
     if !ruta.exists() {
         nacer_cerrado(ruta, &diccionario::Diccionario::semilla().a_texto())?;
@@ -444,13 +445,38 @@ fn indexar_corpus(
         let _ = d;
     })?;
     let informe = c.estado();
+    drop(guardado);
     println!(
         "[corpus] {cuantos} documentos · {} secciones · {} ilegibles · índice en {}",
         informe.secciones,
         informe.ilegibles,
         informe.donde_vive.as_deref().unwrap_or("memoria")
     );
+    // La carpeta se recuerda para el arranque siguiente —la ruta, no su contenido— (auditoría del S3,
+    // B29), y Corpus y Sesión se enteran de que el corpus cambió.
+    recordar(&app, |p| p.carpeta_del_corpus = Some(carpeta.clone()));
+    let _ = app.emit_to(ventana::PRINCIPAL, EVENTO_CORPUS, ());
     Ok(informe)
+}
+
+/// El evento con que Corpus y Sesión («Este cliente») se enteran de que el corpus cambió: una señal.
+const EVENTO_CORPUS: &str = "corpus";
+
+/// **La carpeta que recordabas, otra vez leída** (auditoría del S3, B29). En segundo plano: el arranque
+/// no espera a indexar. Si la carpeta ya no está, se dice sin su ruta y no se olvida: puede ser un
+/// disco que no está conectado. Si está en Documentos, Escritorio o Descargas, macOS puede preguntarte
+/// la primera vez si Angel Ghost puede leerla.
+fn reindexar_al_arrancar(app: &tauri::AppHandle, carpeta: String) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        if !std::path::Path::new(&carpeta).is_dir() {
+            println!("[corpus] la carpeta que recordabas no está: señálala otra vez en Corpus");
+            return;
+        }
+        if let Err(e) = indexar_corpus(app.clone(), app.state::<ElCorpus>(), carpeta) {
+            println!("[corpus] no se pudo volver a leer la carpeta al arrancar: {}", e.split(": ").last().unwrap_or(""));
+        }
+    });
 }
 
 /// Qué hay en el corpus ahora mismo. Lo pide la pantalla de Corpus.
@@ -967,7 +993,11 @@ pub fn run() {
                 let ruta = ruta_de_las_preferencias(app.handle());
                 let p = prefs::leer(&ruta);
                 aplicar_las_preferencias(app.handle(), &p);
+                let carpeta_del_corpus = p.carpeta_del_corpus.clone();
                 app.manage(LasPreferencias { ruta, actuales: std::sync::Mutex::new(p) });
+                if let Some(carpeta) = carpeta_del_corpus {
+                    reindexar_al_arrancar(app.handle(), carpeta);
+                }
             }
             // La puerta local nace cerrada en cada arranque (ADR 018 §5): no se recuerda. Si la vez
             // anterior la app se cayó con ella abierta, quedan su socket y su token: se borran.
@@ -3024,6 +3054,20 @@ mod pruebas_del_diccionario_en_disco {
         let _ = std::fs::remove_dir_all(ruta.parent().unwrap());
     }
 
+    /// **Y su carpeta nace en 700** (auditoría del S3, B1): el «escritor único» del `CLAUDE.md` promete
+    /// carpetas 700, y esta se creaba con `create_dir_all` (el umask: 755). Demostrado en rojo con el
+    /// código de antes.
+    #[cfg(unix)]
+    #[test]
+    fn la_carpeta_del_diccionario_nace_en_700() {
+        use std::os::unix::fs::PermissionsExt;
+        let ruta = temporal("carpeta");
+        asegurar_el_diccionario(&ruta).unwrap();
+        let padre = ruta.parent().unwrap();
+        assert_eq!(std::fs::metadata(padre).unwrap().permissions().mode() & 0o777, 0o700, "la carpeta del diccionario nació abierta");
+        let _ = std::fs::remove_dir_all(padre);
+    }
+
     /// Editar el archivo a mano tiene que servir para algo, y tiene que servir **sin reiniciar la
     /// app**: se lee al empezar la sesión.
     #[test]
@@ -3133,6 +3177,31 @@ mod pruebas_del_estado_del_diccionario {
         if !casa.is_empty() {
             assert!(e.ruta.starts_with("~/Library/"), "{}", e.ruta);
         }
+    }
+}
+
+#[cfg(test)]
+mod pruebas_de_la_carpeta_del_corpus {
+    /// **La carpeta del corpus se recuerda y se vuelve a leer al arrancar** (auditoría del S3, B29;
+    /// decisión del usuario). `indexar_corpus` la guarda en las preferencias, y el arranque la reindexa
+    /// en segundo plano. Se vigila la fuente: las dos cosas necesitan la app entera. ¿Puede fallar? Sí:
+    /// sin el `recordar` en `indexar_corpus`, o sin la llamada en `setup`, es rojo (bitácora).
+    #[test]
+    fn la_carpeta_del_corpus_se_recuerda_y_se_relee_al_arrancar() {
+        let fuente = include_str!("lib.rs");
+        let cuerpo = |firma: &str| {
+            let desde = fuente.find(firma).unwrap_or_else(|| panic!("no está {firma}"));
+            let c = &fuente[desde..];
+            c[..c.find("\n}\n").expect("su cierre")].to_string()
+        };
+        assert!(
+            cuerpo("\nfn indexar_corpus(").contains(concat!("p.carpeta_del_corpus = ", "Some(")),
+            "indexar no recuerda la carpeta"
+        );
+        assert!(
+            fuente.contains(concat!("reindexar_al_", "arrancar(app.handle()")),
+            "el arranque no vuelve a leer la carpeta recordada"
+        );
     }
 }
 

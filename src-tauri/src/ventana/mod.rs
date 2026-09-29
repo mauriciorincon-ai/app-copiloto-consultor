@@ -99,8 +99,10 @@ pub fn invariante_en_marcha(ventanas: &[(&str, bool)], reunion_abierta: bool) ->
 }
 
 /// Pone o quita el flag del cuaderno. **Solo sabe tocar la principal**: el riesgo nº 1 del sprint 001
-/// —un relleno protegido— sigue sin camino.
-pub fn proteger_el_cuaderno<R: Runtime>(app: &AppHandle<R>, reunion_abierta: bool) {
+/// —un relleno protegido— sigue sin camino. Devuelve el error si macOS no dejó cambiarlo: quien la
+/// llama lo enseña en Notas, porque la consola no la lee nadie (auditoría del S3, B4).
+pub fn proteger_el_cuaderno<R: Runtime>(app: &AppHandle<R>, reunion_abierta: bool) -> Result<(), String> {
+    let mut resultado = Ok(());
     for (etiqueta, protegida) in lo_que_cambia(reunion_abierta) {
         if let Some(v) = app.get_webview_window(etiqueta) {
             match v.set_content_protected(protegida) {
@@ -108,10 +110,14 @@ pub fn proteger_el_cuaderno<R: Runtime>(app: &AppHandle<R>, reunion_abierta: boo
                     "[ventanas] «{etiqueta}» {}",
                     if protegida { "protegida mientras la reunión está abierta" } else { "sin proteger: la reunión se cerró" }
                 ),
-                Err(e) => println!("[ventanas] «{etiqueta}»: no se pudo cambiar su protección ({e})"),
+                Err(e) => {
+                    println!("[ventanas] «{etiqueta}»: no se pudo cambiar su protección ({e})");
+                    resultado = Err(format!("«{etiqueta}»: {e}"));
+                }
             }
         }
     }
+    resultado
 }
 
 /// Las parejas `(etiqueta, protegida)` tal como las declara `tauri.conf.json`.
@@ -324,12 +330,6 @@ mod tests {
         assert_eq!(prestadas.len(), 3, "se esperaban tres ventanas");
     }
 
-    /// La banda y su relleno **no tienen bordes**, y eso es lo único que impide cerrarlas por
-    /// separado: macOS no le manda el cierre a una ventana sin bordes. Medido en vivo el
-    /// 2026-09-27 con una sonda en `CloseRequested`: ⌘W y «Close All» sobre la banda no llegan
-    /// (tres ventanas antes y después), y sobre la principal sí. Con bordes, ⌘W cerraría la banda
-    /// sola y dejaría el relleno —un rectángulo opaco— encima de la reunión. Se quitan juntas, con
-    /// ⌥⎋ (`cerrar_banda`).
     /// El cuaderno, protegido con la reunión abierta: aplicado sobre el `tauri.conf.json` de verdad,
     /// con reunión y sin ella, el invariante en marcha se cumple. Si `lo_que_cambia` tocara el
     /// relleno, o se olvidara del cuaderno, cae aquí con su nombre.
@@ -363,6 +363,12 @@ mod tests {
         assert!(invariante_en_marcha(&[(BANDA, false)], false).unwrap_err().contains("la vería"));
     }
 
+    /// La banda y su relleno **no tienen bordes**, y eso es lo único que impide cerrarlas por
+    /// separado: macOS no le manda el cierre a una ventana sin bordes. Medido en vivo el
+    /// 2026-09-27 con una sonda en `CloseRequested`: ⌘W y «Close All» sobre la banda no llegan
+    /// (tres ventanas antes y después), y sobre la principal sí. Con bordes, ⌘W cerraría la banda
+    /// sola y dejaría el relleno —un rectángulo opaco— encima de la reunión. Se quitan juntas, con
+    /// ⌥⎋ (`cerrar_banda`).
     #[test]
     fn la_banda_y_su_relleno_no_tienen_bordes() {
         let json: serde_json::Value =

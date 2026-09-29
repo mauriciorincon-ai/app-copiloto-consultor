@@ -536,6 +536,7 @@ pub fn muestras() -> Vec<Muestra> {
                 propuestas: c.en_espera().to_vec(),
                 lleno: c.lleno(),
                 ventana: crate::bandeja::Ventana::TresHoras,
+                sin_proteger: false,
             }
         }),
         // ---- las propuestas y la bandeja (sprint 003, fase 2, ADR 016) ---------------------------
@@ -560,6 +561,29 @@ pub fn muestras() -> Vec<Muestra> {
                 propuestas: c.en_espera().to_vec(),
                 lleno: true,
                 ventana: crate::bandeja::Ventana::AlCerrar,
+                sin_proteger: false,
+            }
+        }),
+        // macOS no dejó proteger el cuaderno (auditoría del S3, B4): la única forma con el campo en `true`.
+        m("CUADERNO_SIN_PROTEGER", "VistaDelCuaderno", "./notas", &{
+            let mut c = crate::notas::Cuaderno::nuevo(false);
+            c.escribir("Piden la cuarta fuente.");
+            crate::reunion::VistaDelCuaderno {
+                nota: c.nota().to_string(),
+                acuerdos: Vec::new(),
+                fijadas: Vec::new(),
+                resumen: c.resumen(),
+                conservar_mis_turnos: false,
+                abierta: true,
+                escuchando: true,
+                previsto: None,
+                turnos_del_cliente: 3,
+                lecturas: 0,
+                retencion: crate::prefs::Retencion::Dias90,
+                propuestas: Vec::new(),
+                lleno: false,
+                ventana: crate::bandeja::Ventana::TresHoras,
+                sin_proteger: true,
             }
         }),
         // La línea de la banda: la última propuesta, o nada. Y las cinco reglas, cada una con su grafía.

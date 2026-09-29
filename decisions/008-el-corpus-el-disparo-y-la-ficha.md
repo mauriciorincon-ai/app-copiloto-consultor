@@ -138,3 +138,17 @@ paráfrasis (sin palabra en común con la sección que las responde) en el que e
 por debajo de 0,80. Si eso pasa, entran los embeddings con RRF sobre BM25, un modelo multilingüe
 ≤ 600 M descargado a la carpeta del usuario —jamás al repo— y su ADR. **Hasta entonces, roadmap H2**,
 junto al resto de lo que el ciclo dejó para después (VISION: MLX, diarización, AEC).
+
+## Enmienda (2026-09-28) — el resto de la maniobra del §10 pasa al H2 (auditoría del S3, B28)
+
+El plan del S3 la puso primera en la lista de lo que se corta «si no cabe, H2, declarado», y se intentaría al
+final de la fase 2. **No se construyó y no se declaró en su momento**: el corte silencioso que el método
+prohíbe. Se declara ahora.
+- **Lo que existe:** el puente («Lo más cercano que sí tienes es «…»: ofrécelo y pregunta para qué lo
+  necesitan») y la genérica cuando no hay nada cerca (`ficha/maniobra.rs`, pagado en el S2, M15).
+- **Lo que pasa al H2:** los pasos siguientes que nombra `design-system.md` §10 —la unidad que falta, la
+  ficha del cliente y lo comprometido en la reunión como materia de la maniobra—.
+- **Por qué:** el S3 cerró C9, C11 y C16 y los cierres del ciclo, que el plan declaraba incortables; la fase
+  2 no dejó sitio.
+- Queda en la bitácora del S3 (`## Desviación del plan`), en el summary y en la descripción del PR.
+

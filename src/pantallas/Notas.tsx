@@ -260,6 +260,16 @@ function Durante({ cuaderno, volver, foco }: { cuaderno: VistaDelCuaderno; volve
 
   return (
     <div style={{ ...COLUMNA, gap: conPropuestas ? "9px" : "12px" }}>
+      {/* macOS no dejó proteger el cuaderno al empezar: se dice aquí, no solo en la consola
+          (auditoría del S3, B4 — maquetado, no visto). */}
+      {cuaderno.sinProteger && (
+        <div className="franja warn" role="alert">
+          <Ic id="i-alert" relleno />
+          <div>
+            <strong>{t.sinProteger}</strong>
+          </div>
+        </div>
+      )}
       <div
         className="grid-2"
         style={{ gridTemplateColumns: "1.3fr 1fr", gap: "12px", alignItems: conPropuestas ? "stretch" : "start" }}
