@@ -125,6 +125,12 @@ impl Puerta {
             println!("[puerta] la ruta del socket pasa de {RUTA_MAXIMA} bytes: no se abre");
             return Err(NoAbre::RutaLarga);
         }
+        // El socket nace con el umask y se aprieta a 600 un instante después: en ese instante lo
+        // protege la carpeta. Si no está en 700, no se crea nada (auditoría del S3, B17).
+        if !carpeta_en_700(carpeta) {
+            println!("[puerta] la carpeta de la app no está en 700: no se abre");
+            return Err(NoAbre::Socket);
+        }
         quitar(&ruta);
         let escucha = UnixListener::bind(&ruta).map_err(|e| {
             println!("[puerta] no se pudo crear el socket: {e}");
@@ -210,6 +216,17 @@ pub fn limpiar_lo_que_quedo(carpeta_de_la_app: &Path, llave: &dyn Llave) -> bool
 
 fn quitar(ruta: &Path) {
     let _ = std::fs::remove_file(ruta); // verify-ephemeral:allow — ADR 018 §1: el socket se borra al cerrar la puerta
+}
+
+#[cfg(unix)]
+fn carpeta_en_700(carpeta: &Path) -> bool {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::metadata(carpeta).is_ok_and(|m| m.is_dir() && m.permissions().mode() & 0o777 == 0o700) // verify-ephemeral:allow — ADR 018 §1: la carpeta del socket, en 700, antes de crearlo
+}
+
+#[cfg(not(unix))]
+fn carpeta_en_700(_carpeta: &Path) -> bool {
+    false
 }
 
 #[cfg(unix)]

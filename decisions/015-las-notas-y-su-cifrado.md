@@ -79,14 +79,15 @@ voz del cliente** y no entra jamás, aunque la casilla esté encendida (test en 
 - 32 bytes aleatorios del sistema, creados al **primer guardado**. Una sola llave para todas tus
   reuniones.
 - Viven en el Llavero de macOS, servicio **«Angel Ghost · notas»**, con
-  `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`: se leen solo con tu sesión abierta y **no salen de
-  este Mac**, ni por copia de seguridad ni por iCloud. Sin contraseña que recordar y sin archivo de
-  llave.
-- **Consecuencia que se dice, no se arregla:** si borras el Llavero o cambias de Mac, tus notas
+  `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`: se leen solo con tu sesión abierta ~~y **no salen de
+  este Mac**, ni por copia de seguridad ni por iCloud~~ **(falso en el llavero que la app usa hoy:
+  enmienda 2)**. Sin contraseña que recordar y sin archivo de llave.
+- **Consecuencia que se dice, no se arregla:** si borras el Llavero ~~o cambias de Mac~~, tus notas
   guardadas no se pueden abrir. No hay recuperación, porque cualquier recuperación sería una segunda
-  llave. Lo dice el manual.
+  llave. Lo dice el manual. *(Si migras a otro Mac con el Asistente de migración, la llave viaja: enmienda 2.)*
 - **Si Documentos está en iCloud**, viaja una copia del archivo cifrado. Nadie puede abrirla fuera de
-  este Mac, porque la llave no viaja. Lo dicen el manual y Honestidad.
+  este Mac, porque la llave no viaja. Lo dicen el manual y Honestidad. *(Dejó de aplicar con la
+  enmienda 1: las notas ya no viven en Documentos.)*
 
 ### 5 · Guardar no pide nada; abrir y exportar, sí
 
@@ -164,7 +165,8 @@ no lleva ni el nombre del archivo ni una palabra de la nota.
 
 - **Cifrar con una contraseña tuya (derivada con Argon2):** una contraseña más que recordar, y que si
   se olvida pierde lo mismo que perder el Llavero. El Llavero ya está desbloqueado cuando tu sesión lo
-  está, y `ThisDeviceOnly` es lo que hace imposible abrir la copia de iCloud.
+  está, y ~~`ThisDeviceOnly` es lo que hace imposible abrir la copia de iCloud~~ el llavero de inicio
+  de sesión no se sincroniza con iCloud (enmienda 2).
 - **Pedir Touch ID también al guardar:** cierra la reunión con un diálogo en el peor momento, y
   protege lo contrario de lo que importa: escribir tus propias notas no es el riesgo, leerlas otro sí.
 - **Un archivo por nota, o una base de datos:** la maqueta dibuja un archivo por reunión, y un archivo
@@ -228,3 +230,57 @@ sido decisión del usuario, así que se le preguntó con tres salidas:
   se sigue leyendo. En rojo con `deny_unknown_fields` en el archivo;
 - `lo-que-macos-dira`: la clave de Documentos ya no está, y el gate exige que tampoco esté en los
   `InfoPlist.strings`.
+
+## Enmienda 2 (2026-09-28) — la llave vive en el llavero de inicio de sesión, y viaja con él
+
+**Lo que encontró la auditoría independiente del S3 (A2).** `SecItemAdd` se llama sin
+`kSecUseDataProtectionKeychain`, así que en macOS el ítem va al **llavero de archivo**, el de inicio de
+sesión (`login.keychain-db`). Según Apple (TN3137 «On Mac keychain APIs and implementations» y la
+referencia de `kSecAttrAccessible`), ese llavero **ignora** `kSecAttrAccessible`: el
+`WhenUnlockedThisDeviceOnly` del §4 no opera. El llavero de protección de datos, donde sí opera, exige la
+app firmada con su grupo de llaveros, y la firma llega con G-Release (H2).
+
+**Lo que es verdad hoy, y lo que dicen los textos desde esta enmienda:**
+- la llave está en el llavero de inicio de sesión de tu Mac y se abre con tu sesión;
+- **no se sincroniza con iCloud**;
+- **viaja con tus copias de Time Machine y con el Asistente de migración**, protegida por tu contraseña
+  de sesión. Si migras a otro Mac o restauras una copia, tus notas y su llave viajan juntas y se abren;
+- si borras el Llavero, tus notas no se pueden abrir (eso no cambia).
+
+La seguridad no empeora por esto: el llavero de archivo sigue cerrado con tu contraseña. Lo que era falso
+es la promesa «ligada a este Mac», y el producto se vende como «no persistir, verificable».
+
+**Comprobación del usuario (2026-09-28):** en Keychain Access, llavero **login**, «Angel Ghost» no da
+ninguna fila: la llave todavía no existe en este Mac. La mirada se repite en la prueba en vivo, después del
+primer guardado.
+
+**Qué cambia:**
+- las cabeceras de `nativo/Llavero.swift`, `llavero.rs` y `carpeta.rs`, el §4 de arriba (tachado, sin
+  borrar la historia), el manual, el BLUEPRINT, la fila «Llave» de Notas y su maqueta;
+- el código **no** cambia: `WhenUnlockedThisDeviceOnly` se queda escrito para el día de la firma, con un
+  comentario;
+- gate `tests/unit/llavero-sin-promesas.test.ts`: mientras `nativo/Llavero.swift` no active
+  `kSecUseDataProtectionKeychain` en código (no en un comentario), el manual, el BLUEPRINT, el
+  diccionario, la maqueta de Notas, las cabeceras y este ADR fuera de lo tachado no pueden decir «ligada a
+  este Mac», «tied to this Mac», «ni por copia de seguridad», «no viajan en copias de seguridad», «no salen
+  de este Mac», «no viaja a otro Mac» ni «cambias de Mac». Nació en rojo.
+
+**Deuda, con su sprint de pago (G-Release, H2):** `kSecUseDataProtectionKeychain: true` con la app
+firmada; entonces se rediseña el diálogo de la puerta (ADR 018 §2), que hoy es la lista de acceso del
+llavero de archivo, y los textos pueden volver a decir «ligada a este Mac» porque el gate lo permitirá.
+
+## Enmienda 3 (2026-09-28) — «abrir» es de la puerta, con su propio desbloqueo (auditoría del S3, M4 y M8)
+
+El §5 habla de **abrir o exportar** una reunión guardada con un desbloqueo por sesión de la app. Lo que
+existe hoy es otra cosa, y así se dice desde ahora:
+- **En la pantalla no hay «abrir»:** *Notas* ofrece «Exportar a texto» y «Borrar ahora», y el contenido
+  descifrado no cruza al webview (`tests/unit/contrato-con-lectores.test.ts`). Exportar pide el desbloqueo
+  una vez por sesión de la app, como decía el §5.
+- **Abrir una reunión solo se puede por la puerta local** (`ghost notas abrir`, ADR 018), y la puerta
+  lleva **su propio desbloqueo**, que pide Touch ID o tu contraseña **una vez por cada apertura** de la
+  puerta (decisión del usuario, 2026-09-28). El de la pantalla no le sirve: exportar por la mañana ya no
+  abre tus reuniones a tu agente por la tarde.
+- Leer una bandeja de otra sesión de la app pide el desbloqueo de la pantalla, como exportar.
+- Los textos que decían «abrir una reunión» en el manual, la interfaz y la guía dicen ahora «exportar»,
+  salvo donde nombran a `ghost`. Lo vigila `tests/unit/abrir-no-existe.test.ts`.
+

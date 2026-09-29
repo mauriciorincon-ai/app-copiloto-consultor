@@ -896,9 +896,16 @@ pub fn ir_a_notas<R: Runtime>(app: &AppHandle<R>) {
 }
 
 /// Abre una reunión guardada: pide el desbloqueo una vez por sesión de la app (ADR 015 §5).
-pub fn abrir<R: Runtime>(app: &AppHandle<R>, archivo: &str, idioma: &str) -> Result<Contenido, String> {
-    let el = app.try_state::<ElCuaderno>().ok_or("el cuaderno no está listo")?;
-    el.desbloqueo.asegurar(|| desbloqueo::pedir(desbloqueo::razon(idioma)))?;
+/// Abre una reunión guardada con **el desbloqueo que le toca a quien la pide**: hoy solo la puerta
+/// local, que lleva el suyo y lo pide una vez por apertura (auditoría del S3, M4). En la pantalla no hay
+/// «abrir»: se exporta.
+pub fn abrir_con<R: Runtime>(
+    app: &AppHandle<R>,
+    desbloqueo: &desbloqueo::Desbloqueo,
+    archivo: &str,
+    idioma: &str,
+) -> Result<Contenido, String> {
+    desbloqueo.asegurar(|| desbloqueo::pedir(desbloqueo::razon(idioma)))?;
     let t = Instant::now();
     let c = carpeta(app).abrir(&DelLlavero, archivo)?;
     println!("[notas] reunión abierta en {} ms", t.elapsed().as_millis());

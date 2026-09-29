@@ -2558,9 +2558,11 @@ fn estado_de_la_bandeja(app: tauri::AppHandle) -> reunion::EstadoDeLaBandeja {
 // la puerta puede hacer con la app —la misma búsqueda, el mismo reindexado, las mismas preferencias
 // y el mismo desbloqueo que usa la pantalla— y los tres comandos de IA, solo de la ventana principal.
 
-/// La puerta. `Arc` porque el hilo que atiende la lleva consigo.
+/// La puerta. `Arc` porque el hilo que atiende la lleva consigo. Y **su propio desbloqueo**, que se
+/// olvida al abrirla y al cerrarla: Touch ID una vez por apertura, nunca heredado del de la pantalla
+/// (auditoría del S3, M4; decisión del usuario, 2026-09-28: «por apertura»).
 #[derive(Default)]
-struct LaPuerta(std::sync::Arc<puerta::socket::Puerta>);
+struct LaPuerta(std::sync::Arc<puerta::socket::Puerta>, desbloqueo::Desbloqueo);
 
 /// El nombre del evento con que IA se entera de que la puerta cambió. Solo a la ventana principal.
 const EVENTO_PUERTA: &str = "puerta";
@@ -2654,7 +2656,8 @@ fn hacer_por_la_puerta(app: &tauri::AppHandle, orden: &puerta::Orden) -> Result<
             } else {
                 "es"
             };
-            Ok(Hecho { datos: a_json(&reunion::abrir(app, archivo, idioma)?)?, cuenta: None })
+            let desbloqueo = &app.state::<LaPuerta>().1;
+            Ok(Hecho { datos: a_json(&reunion::abrir_con(app, desbloqueo, archivo, idioma)?)?, cuenta: None })
         }
         // La política lo deniega antes de llegar aquí (`puerta::decidir`); si llegara, tampoco.
         Orden::EncenderApi {} => Err("la puerta no enciende el API".into()),
@@ -2725,10 +2728,12 @@ fn la_puerta(app: tauri::AppHandle) -> puerta::VistaDeLaPuerta {
 #[tauri::command]
 fn abrir_la_puerta(app: tauri::AppHandle) -> puerta::VistaDeLaPuerta {
     let carpeta = reunion::carpeta_de_la_app(&app);
+    // Se intenta dejar en 700; si no queda, la puerta misma se niega a abrir (auditoría del S3, B17).
     if let Err(e) = almacen::carpeta_privada(&carpeta) {
-        println!("[puerta] la carpeta de la app no quedó en 700: {e}");
+        println!("[puerta] la carpeta de la app no quedó en 700: {}", e.split(": ").last().unwrap_or(""));
     }
     let ops = std::sync::Arc::new(LaAppParaLaPuerta(app.clone()));
+    app.state::<LaPuerta>().1.olvidar();
     let _ = app.state::<LaPuerta>().0.abrir(&carpeta, std::sync::Arc::new(puerta::DelLlavero), ops);
     vista_de_la_puerta(&app)
 }
@@ -2736,6 +2741,7 @@ fn abrir_la_puerta(app: tauri::AppHandle) -> puerta::VistaDeLaPuerta {
 #[tauri::command]
 fn cerrar_la_puerta(app: tauri::AppHandle) -> puerta::VistaDeLaPuerta {
     app.state::<LaPuerta>().0.cerrar(puerta::Cierre::ATuMano);
+    app.state::<LaPuerta>().1.olvidar();
     let vista = vista_de_la_puerta(&app);
     let _ = app.emit_to(ventana::PRINCIPAL, EVENTO_PUERTA, vista.clone());
     vista
@@ -2743,6 +2749,7 @@ fn cerrar_la_puerta(app: tauri::AppHandle) -> puerta::VistaDeLaPuerta {
 
 /// «Iniciar sesión» y «Solo notas» cierran la puerta **antes** de abrir nada de la reunión.
 fn cerrar_la_puerta_al_empezar<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    app.state::<LaPuerta>().1.olvidar();
     if app.state::<LaPuerta>().0.cerrar(puerta::Cierre::EnReunion) {
         let _ = app.emit_to(ventana::PRINCIPAL, EVENTO_PUERTA, vista_de_la_puerta(app));
     }
@@ -3310,6 +3317,23 @@ mod pruebas_de_la_puerta_local {
         let cuerpo = &fuente[desde..];
         let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
         assert!(cuerpo.contains(abrir), "la puerta se abre fuera de su conmutador");
+    }
+
+    /// **La puerta abre tus reuniones con SU desbloqueo, y lo olvida al abrirse** (auditoría del S3, M4).
+    /// Con el de la pantalla, exportar por la mañana abría todas tus reuniones a tu agente por la tarde
+    /// sin un Touch ID. ¿Puede fallar? Sí: con `reunion::abrir` y el desbloqueo del cuaderno, que era el
+    /// código de antes, es rojo (bitácora).
+    #[test]
+    fn la_puerta_abre_con_su_desbloqueo_y_lo_olvida_al_abrirse() {
+        let fuente = include_str!("lib.rs");
+        let desde = fuente.find("Orden::AbrirNota { archivo } =>").expect("la orden de abrir una nota");
+        let rama = &fuente[desde..desde + 600];
+        assert!(rama.contains(concat!("app.state::<LaPuerta>()", ".1")), "la puerta abre con un desbloqueo que no es el suyo");
+        assert!(rama.contains(concat!("reunion::abrir_", "con(app, desbloqueo")), "la puerta no le pasa su desbloqueo");
+        let desde = fuente.find("\nfn abrir_la_puerta(").expect("el comando que la abre");
+        let cuerpo = &fuente[desde..];
+        let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
+        assert!(cuerpo.contains(concat!("LaPuerta>().1.", "olvidar()")), "al abrirse, la puerta no olvida el desbloqueo anterior");
     }
 
     /// **«Iniciar sesión» y «Solo notas» la cierran antes que nada de la reunión**: antes de abrir el

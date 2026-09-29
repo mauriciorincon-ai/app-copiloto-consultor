@@ -270,3 +270,35 @@ Las tres salidas que se le dieron:
 - El manual quita la limitación «hoy lo vencido se borra al abrir la app» y dice lo que hace launchd,
   cómo se ve en Ítems de inicio y qué pasa si la desactivas.
 - Parada del ⭐⭐: una bandeja de 2 minutos que desaparece con la app cerrada.
+
+## Enmienda 2 (2026-09-28) — la bandeja, fuera de Time Machine; y su nombre, libre en las dos carpetas
+
+Dos hallazgos de la auditoría independiente del S3 tocan el §4.
+
+**M2 · Time Machine.** El §4 sacó la bandeja de Documentos con este argumento: «una lista que promete
+morir a las 3 h no puede tener una copia que viva un mes». Pero `~/Library/Application Support` entra en
+Time Machine, y nada marcaba `bandeja/` como excluida: la copia horaria la hacía vivir semanas en el disco
+de copias, y con la llave en el mismo llavero (ADR 015, enmienda 2).
+- **Decisión:** `Bandeja::dejar` marca su carpeta con el atributo estándar «fuera de las copias»
+  (`URLResourceValues.isExcludedFromBackup`, `nativo/Copias.swift` → `almacen::fuera_de_las_copias`). No
+  pide permiso ni contraseña, y es idempotente. Si macOS no deja marcarla, se dice en el log y la bandeja
+  se queda.
+- **Tus notas siguen entrando en las copias** (decisión del usuario, 2026-09-28: «Notas en Time Machine:
+  dentro»): son tuyas, están hechas para durar, y si el Mac se estropea se recuperan de la copia. El
+  manual lo dice.
+- **Lo que no cubre, dicho:** las instantáneas locales de Time Machine (≤ 24 h) son del volumen entero y
+  sí ven la bandeja hasta que se reciclan.
+- `verify:ephemeral` prohíbe desde ahora `setResourceValues` en los protegidos: la única línea que lo usa
+  lleva su marca y este ADR.
+- **Test:** `la_bandeja_queda_fuera_de_las_copias` (`bandeja.rs`, solo con el puente de Swift): tras
+  `dejar`, la carpeta lleva `com.apple.metadata:com_apple_backup_excludeItem`. Nació en rojo sin la llamada.
+  En la prueba en vivo, `tmutil isexcluded` sobre `bandeja/` tiene que decir `[Excluded]`.
+
+**A1 · Dos reuniones del mismo cliente el mismo día.** El §4 dice que la bandeja «se llama como su
+reunión». El nombre lo elegía la carpeta de notas mirando solo `notas/`: una reunión sin nota deja bandeja
+sin archivo de notas, y la siguiente del mismo cliente y día tomaba su nombre y la pisaba.
+- **Decisión:** el nombre se busca libre en `notas/` **y** en `bandeja/` (`carpeta::nombre_libre`), y
+  `Bandeja::dejar` no pisa jamás: si el archivo existe, es un error.
+- **Tests:** `dos_reuniones_del_mismo_cliente_el_mismo_dia_no_se_pisan` (`reunion.rs`) y
+  `dejar_no_pisa_una_bandeja_que_ya_existe` (`bandeja.rs`), los dos nacidos en rojo.
+

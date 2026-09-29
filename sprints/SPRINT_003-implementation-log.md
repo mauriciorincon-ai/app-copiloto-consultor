@@ -596,6 +596,20 @@ el constructor lo enseña en una matriz de una fila (qué · para qué · qué a
 deshace) y espera un «sí» por acción. Los tests `#[ignore]` que tocan el Mac entran en la regla. Un aviso
 que no se anunció se deniega.
 
+**Segunda falla, la encontré yo (2026-09-28, Fase 2 de la auditoría).** Corrí `cargo test` **entero** para
+verificar el bloque 2, y eso arrastra los 24 tests sin `#[ignore]` de `tests/contra-el-mac-de-verdad.rs`
+(47 s): **abren el micrófono y el grifo del audio del sistema** (`Escucha::arrancar`, `Grifo`) y **hacen
+sonar frases por los altavoces** (`afplay`). No tocan el Llavero, launchd ni contraseñas, pero el micrófono
+y la grabación del audio del sistema son permisos de macOS (TCC). Si ya estaban concedidos al proceso que
+corre los tests, macOS no enseñó nada; si no, pudo enseñar un aviso de micrófono o de grabación de audio
+del sistema **sin que yo lo anunciara**. Ya lo había hecho antes, en la fase 4 (la «primera corrida completa
+de `cargo test`» de su bitácora), después de nacer la regla 22, y escribí «nada de esta fase tocó el Mac»:
+era falso. El auditor, en cambio, lo dejó fuera a propósito.
+- **Desde ahora:** en local corro solo `cargo test --lib --test puerta --test ghost`. Los 24 de
+  `contra-el-mac-de-verdad` los corre la CI (`build-escritorio`), donde no hay nadie a quien preguntar. En
+  local, solo con su fila de la regla 22 y un «sí».
+- **La regla 22 del `CLAUDE.md` lo dice ya por su nombre**: `cargo test` a secas entra en la regla.
+
 ### Cambio al plan de miradas del sprint 003 — decisión del usuario (2026-09-27)
 
 El usuario, ante la matriz de 13 filas: «dejemos de revisar pequeñeces; solo muéstrame cosas realmente
@@ -1320,6 +1334,32 @@ Markdown, el punto de la plantilla de la pantalla sobraba.
 
 Gates: `cargo test --lib` 469 ✓ (1 ignorado) · clippy limpio · vitest 317 ✓ · lint · typecheck ·
 `verify:ephemeral` ✓.
+
+CI de `689f81f`: los tres checks en verde (quality 1 min 8 s · e2e 2 min 27 s · build-escritorio 11 min 39 s).
+
+### Bloque 2 — las afirmaciones de seguridad (A2 · M2 · M3 · M4 · B17 · B12, y B20 de paso)
+
+| Hallazgo | Arreglo | El rojo que se vio |
+|---|---|---|
+| **A2** | Los textos dicen lo que hace el llavero de archivo: «llavero de inicio de sesión: se abre con tu sesión, no se sincroniza con iCloud, viaja con tus copias de Time Machine y con el Asistente de migración, protegido por tu contraseña». Cabeceras de `Llavero.swift`, `llavero.rs` y `carpeta.rs`; ADR 015 §4 **tachado** (la historia a la vista) y **enmienda 2**; manual; BLUEPRINT; `enTuLlavero` es/en con su maqueta `notas.html` y la fila t12 de la guía. El código conserva `WhenUnlockedThisDeviceOnly` con un comentario para el día de la firma | Gate nuevo `llavero-sin-promesas`: **17 líneas** en rojo con los textos de antes (manual ×2, BLUEPRINT ×3, guía, maqueta ×6, i18n ×2, Swift, ADR ×2). Lee Swift sin comentarios —un comentario no activa el otro llavero— y el ADR sin lo tachado y hasta su enmienda |
+| **M2** | `nativo/Copias.swift` (`ag_fuera_de_las_copias`, `URLResourceValues.isExcludedFromBackup`) → `almacen::fuera_de_las_copias`, llamada al final de `Bandeja::dejar`. Las notas siguen dentro (decisión del usuario). `verify:ephemeral` prohíbe `setResourceValues` en los protegidos; la única línea lleva su marca y el ADR 016. Manual, cabecera de `bandeja.rs`, ADR 016 **enmienda 2** (con A1 dentro) | `la_bandeja_queda_fuera_de_las_copias` (solo con el puente): «entra en las copias de Time Machine» sin la llamada. `verify:ephemeral` sin la marca: «✕ Copias.swift:17 /\bsetResourceValues\b/» |
+| **M3** | Enmienda del ADR 011 con la tabla de los tres proveedores (Gemini en dos filas: sin y con facturación), leída el 2026-09-28 en sus páginas oficiales por un subagente de investigación. **Lo que dice:** con una clave estándar, solo Groq cumple «sin retención ni entrenamiento», encendiendo la retención cero en su consola; Claude no entrena pero guarda ≤ 30 días; la Gemini Developer API no ofrece retención cero, y gratis entrena. **Falta la decisión del usuario** | `proveedores-con-su-retencion`: rojo sin la tabla («el ADR 011 tiene la tabla» y «cada proveedor… con fecha y URL») |
+| **M4** | `LaPuerta` lleva su propio `Desbloqueo`, que se olvida al abrirla, al cerrarla a mano y al cerrarse por la reunión; `Orden::AbrirNota` → `reunion::abrir_con(app, desbloqueo, …)`. Ayuda de `ghost` («una vez por apertura»), `notasPor`, manual, guía n5, ADR 018 **enmienda 1**, ADR 015 **enmienda 3** (en la pantalla se exporta; abrir es de la puerta) | `la_puerta_pide_el_suyo_y_al_olvidarlo_vuelve_a_pedir` con `olvidar` vacía; `la_puerta_abre_con_su_desbloqueo_y_lo_olvida_al_abrirse` sin el `olvidar` al abrir |
+| **B17** | `intentar_abrir` exige la carpeta en 700 antes de crear el socket (`carpeta_en_700`, línea marcada con el ADR 018) | `sin_la_carpeta_en_700_no_se_abre`: «la puerta se abrió en una carpeta en 755» |
+| **B12** | «Cada vez que abres la puerta, macOS te pregunta…» en la ayuda es/en, `daselo` es/en y `ia.html` | `la_ayuda_dice_que_pregunta_en_cada_apertura`: «es: la ayuda dice «la primera vez»» |
+| **B20** | ADR 011: «La vista en IA existe desde la fase 1 del sprint 003», con el tope de B15 | — (texto) |
+
+**TEXTO nuevo, maquetado y no visto** (al bloque de textos del ⭐⭐): «en el llavero de inicio de sesión de este
+Mac» / «in the login keychain of this Mac» (Notas, fila «Llave»); «Cada vez que abres la puerta, macOS te
+pregunta…» / «Each time you open the door…»; «te pide desbloquear una vez por apertura» / «…once per opening».
+`design-sync/components/s3/la-puerta-local.html` regenerado por el texto de la puerta (regla 16).
+
+**M8, adelantado donde tocaba la misma frase:** el manual ya no dice «abrir o exportar» en la llave de las
+notas, ni «como abrir en *Notas*» en la puerta. El resto de M8 va en el bloque 3.
+
+Gates: `cargo test --lib` 473 ✓ · `--test puerta` 14 ✓ · `--test ghost` 5 ✓ · clippy limpio · vitest 323 ✓ ·
+lint · typecheck · `verify:ephemeral` ✓ · `design-sync --verificar` ✓. *(Los 24 de `contra-el-mac-de-verdad`
+también corrieron, sin «sí»: ver «Segunda falla» en la sección de la regla 22.)*
 
 ---
 

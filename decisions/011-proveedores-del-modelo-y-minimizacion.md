@@ -51,9 +51,10 @@ no está o no rinde, y (a) rinde (medido en la fase 6: mediana ~0,8 s): queda en
    exacto que salió**, trozo a trozo, con lo que la bóveda reemplazó en el Mac al lado de cada
    marcador y la cuenta de lo tapado (`sintesis::api::Registro` y `LoQueSalio`). Solo en memoria: lo
    vacían `⌥⎋` y el final de la sesión, y lo pide únicamente la ventana principal por comando
-   (`lo_que_salio_al_api`), nunca un evento. La vista en IA llega en la fase 1 del sprint 003, tras
-   la mirada 19, porque dónde cabe en una pantalla que ya ocupa sus 640 px es una decisión de forma.
-   *(Enmienda B4; pago de B37.)*
+   (`lo_que_salio_al_api`), nunca un evento. La vista en IA existe desde la fase 1 del sprint 003
+   (mirada 19): «Ver lo que salió». El registro guarda **las últimas 20 peticiones**
+   (`TOPE_DE_LO_QUE_SALIO`) y Honestidad las cuenta. *(Enmienda B4; pago de B37; auditoría del S3, B20
+   y B15.)*
 
 ### Costo
 
@@ -67,3 +68,31 @@ que la regla 1 permite persistir). **Techo US$10/mes**; al llegarlo, la app vuel
   Honestidad y el manual se reescriben para decirlo, con su gate al lado.
 - (b) MLX se construye **solo si** (a) no está disponible o no cumple el presupuesto en el kit.
 - La validación contra un proveedor real es manual (estándar 7): la CI no llama a nadie.
+
+## Enmienda (2026-09-28) — cuánto guarda cada proveedor lo que le mandas (auditoría del S3, M3)
+
+La regla dura 2 dice que el API externo, si el usuario lo enciende, manda texto minimizado y anonimizado
+**«bajo proveedor con no-retención»**. Hasta aquí nadie había leído qué hace cada proveedor con ese texto.
+Se leyó en sus páginas oficiales el **2026-09-28**. La app llama a la Gemini Developer API (no a Vertex AI)
+y pide `claude-haiku-4-5`, `gemini-2.5-flash` y `llama-3.3-70b-versatile` (`sintesis/api.rs`).
+
+| Proveedor | Retención por defecto | ¿Entrena con lo que recibe? | Cómo se consigue no-retención | ¿Con una clave estándar? | Fuente | Leído |
+|---|---|---|---|---|---|---|
+| **Claude** (Anthropic API) | se borra en ≤ 30 días; lo que marque su sistema de seguridad, hasta 2 años | no, salvo que mandes feedback o lo autorices | acuerdo de retención cero por organización, pedido a Ventas | **no** | https://privacy.claude.com/en/articles/7996866 · https://privacy.claude.com/en/articles/7996868 · https://platform.claude.com/docs/en/manage-claude/api-and-data-retention | 2026-09-28 |
+| **Gemini**, sin facturación | 55 días para vigilar abusos; lo que usa para mejorar productos, sin plazo publicado | **sí**, con revisores humanos | no existe | **no** | https://ai.google.dev/gemini-api/terms · https://ai.google.dev/gemini-api/docs/usage-policies | 2026-09-28 |
+| **Gemini**, con facturación | 55 días para vigilar abusos | no | no existe en esta API; Google remite a Vertex AI, que es otro endpoint | **no** | https://ai.google.dev/gemini-api/terms · https://ai.google.dev/gemini-api/docs/zdr | 2026-09-28 |
+| **Groq** | no retiene por defecto; puede registrar hasta 30 días solo para fiabilidad o abuso | no (lo prohíbe su contrato) | interruptor de retención cero en *Data Controls* de su consola | **sí**, según su documentación («All customers may enable»); su contrato dice «Eligible Customers» sin definirlo | https://console.groq.com/docs/your-data · https://console.groq.com/docs/legal/services-agreement | 2026-09-28 |
+
+**Lo que dice la tabla:** con una clave individual estándar, **solo Groq** cumple «sin retención y sin
+entrenamiento», y solo si el usuario enciende la retención cero en su consola. Claude no entrena, pero
+guarda hasta 30 días sin un acuerdo. La Gemini Developer API no ofrece retención cero en ningún nivel, y
+sin facturación entrena con lo que recibe.
+
+**Decisión del usuario:** pendiente, proveedor por proveedor y con esta tabla delante: se queda · se queda
+con un aviso en su fila de IA · sale de la app. Se registra aquí y en el summary.
+
+**Gate:** `tests/unit/proveedores-con-su-retencion.test.ts`. Cada `nombre` de `EXTERNOS` (`src/ia.ts`)
+tiene al menos una fila en esta tabla con una fecha `AAAA-MM-DD` y una URL. Nació en rojo: antes de esta
+enmienda no había tabla. Los términos se vuelven a leer antes de cada release (estándar 7), y la fila se
+fecha de nuevo.
+

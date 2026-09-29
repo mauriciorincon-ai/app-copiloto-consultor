@@ -85,6 +85,27 @@ pub fn nacer_cerrado(ruta: &Path, bytes: &[u8]) -> Result<(), String> {
     std::fs::write(ruta, bytes).map_err(|e| format!("no se pudo escribir {}: {e}", ruta.display()))
 }
 
+/// Saca `carpeta` de las copias de Time Machine (auditoría del S3, M2; ADR 016, enmienda 2): el
+/// atributo estándar de macOS, puesto por el puente de Swift. Es idempotente y no pide nada al
+/// usuario. Devuelve si quedó marcada; sin el puente (compilación sin Swift), `false`.
+pub fn fuera_de_las_copias(carpeta: &Path) -> bool {
+    #[cfg(all(target_os = "macos", puente_de_swift))]
+    {
+        use std::os::unix::ffi::OsStrExt;
+        extern "C" {
+            fn ag_fuera_de_las_copias(ruta: *const std::os::raw::c_char) -> std::os::raw::c_int;
+        }
+        let Ok(r) = std::ffi::CString::new(carpeta.as_os_str().as_bytes()) else { return false };
+        // SEGURIDAD: una ruta terminada en cero que vive hasta que la llamada vuelve.
+        unsafe { ag_fuera_de_las_copias(r.as_ptr()) == 0 }
+    }
+    #[cfg(not(all(target_os = "macos", puente_de_swift)))]
+    {
+        let _ = carpeta;
+        false
+    }
+}
+
 /// Crea la carpeta si falta y la deja en 700. **Solo la última**: sus padres no son de esta app.
 pub fn carpeta_privada(carpeta: &Path) -> Result<(), String> {
     std::fs::create_dir_all(carpeta).map_err(|e| format!("no se pudo crear {}: {e}", carpeta.display()))?;

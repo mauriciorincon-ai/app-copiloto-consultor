@@ -15,7 +15,7 @@ Diseño, y `ia.html` «Claude Code» lo dibuja con su promesa entera:
 
 - **Lo que puede hacer:** buscar en tu corpus y devolver fichas · reindexar · correr el kit de
   evaluación · leer y cambiar preferencias · abrir tus notas guardadas («te pide desbloquear una vez
-  por sesión»).
+  por sesión»; desde la enmienda 1, **una vez por apertura**).
 - **Lo que no puede hacer nunca:** tocar una reunión en curso («en reunión la puerta se cierra
   sola») · encender el API externo · sacar nada a la red · abrirse sola · tocar una máquina que no sea
   la tuya.
@@ -92,7 +92,7 @@ Es un `enum`: lo que no está en él no se interpreta, se deniega como «orden d
 | `ghost prefs leer`                    | tus preferencias                                                       |                                                                                                    |
 | `ghost prefs cambiar <clave> <valor>` | idiomas de pista, retención, ventana de la bandeja, lectura automática | lista blanca (§5)                                                                                  |
 | `ghost notas listar`                  | tus reuniones guardadas                                                | nombre, fecha y vencimiento                                                                        |
-| `ghost notas abrir <archivo>`         | una reunión guardada                                                   | **pide el desbloqueo en el Mac** (Touch ID o contraseña, una vez por sesión de la app, ADR 015 §5) |
+| `ghost notas abrir <archivo>`         | una reunión guardada                                                   | **pide el desbloqueo en el Mac** (Touch ID o contraseña) **una vez por apertura de la puerta**, con su propio desbloqueo: el de la pantalla no le sirve (enmienda 1, M4) |
 
 `corpus::evaluar` saca el nDCG@5 del test de integración y lo hace producto: el test y la puerta
 miden con el mismo código.
@@ -164,3 +164,30 @@ banda, que pinta texto de terceros sobre la reunión, no puede abrir la puerta.
 - El manual explica cómo abrirla y cómo dársela a Claude Code.
 - **Para el constructor, regla 22:** correr `ghost` contra la app de verdad lee el Llavero y abre el
   diálogo de macOS. Solo con un «sí» del usuario y su fila.
+
+## Enmienda 1 (2026-09-28) — la puerta pide su propio desbloqueo, una vez por apertura (auditoría del S3, M4 y B12)
+
+**Lo que encontró la auditoría.** `ghost notas abrir` pasaba por `reunion::abrir`, que usaba el mismo
+`Desbloqueo` que «Exportar» en Notas. Si por la mañana exportabas una reunión, tu agente abría **todas** tus
+reuniones por la tarde sin un solo Touch ID; solo quedaba una línea en el registro. Y la ayuda de `ghost` y
+la vista de la puerta decían «la primera vez, macOS te pregunta», cuando el diálogo de la lista de acceso
+sale en cada apertura (el token es nuevo cada vez).
+
+**Decisión del usuario (2026-09-28): «por apertura».**
+- `LaPuerta` lleva su propio `Desbloqueo` (`lib.rs`), que se olvida al abrirla, al cerrarla a mano y al
+  cerrarse por la reunión (`Desbloqueo::olvidar`). `Orden::AbrirNota` abre con `reunion::abrir_con` y ese
+  desbloqueo: la primera nota de cada apertura pide Touch ID; las siguientes de esa apertura, no.
+- La ayuda de `ghost`, la vista de la puerta (`daselo`, `notasPor`), la maqueta `ia.html`, el manual y la
+  guía (n5) dicen «cada vez que abres la puerta» y «una vez por apertura».
+
+**Tests:** `la_puerta_pide_el_suyo_y_al_olvidarlo_vuelve_a_pedir` (`desbloqueo.rs`, rojo con `olvidar`
+vacía), `la_puerta_abre_con_su_desbloqueo_y_lo_olvida_al_abrirse` (`lib.rs`, rojo sin el `olvidar` al
+abrir) y `la_ayuda_dice_que_pregunta_en_cada_apertura` (`puerta/cli.rs`, rojo con la ayuda de antes). En la
+prueba en vivo (su fila de la regla 22): Touch ID al primer `ghost notas abrir` de cada apertura.
+
+**Y la carpeta, antes del socket (auditoría del S3, B17).** El socket nace con el umask y se aprieta a 600
+un instante después; en ese instante lo protege la carpeta de la app. `intentar_abrir` exige ahora que la
+carpeta esté en 700 **antes** de crear nada: si no, no se abre, no queda socket y no se guarda token. Antes
+solo se logueaba y se abría igual. Test `sin_la_carpeta_en_700_no_se_abre` (`tests/puerta.rs`), en rojo con
+el código de antes.
+

@@ -5,7 +5,9 @@
 //! nada. Vive en `~/Library/Application Support/<app>/bandeja/`, junto a tus notas (`notas/`), y
 //! **no en Documentos**: la papelera de iCloud guarda 30 días lo que se borra allí, y una lista que
 //! promete morir a las 3 h no puede tener una copia que viva un mes. Y porque launchd sí puede borrar
-//! aquí, y en Documentos no (ADR 016, «Hallazgo en vivo» y la decisión A).
+//! aquí, y en Documentos no (ADR 016, «Hallazgo en vivo» y la decisión A). Por lo mismo, la carpeta
+//! **no entra en las copias de Time Machine** (`almacen::fuera_de_las_copias`, auditoría del S3, M2);
+//! las instantáneas locales de macOS (≤ 24 h) sí la ven hasta que se reciclan.
 //!
 //! Este módulo escribe, y por eso **solo ve propuestas ya reducidas a una línea** (`propuestas/`
 //! decidió qué se escribe de cada lado): ni un turno pasa por aquí. Usa la carpeta sellada de
@@ -111,7 +113,15 @@ impl Bandeja {
         let mut claro = serde_json::to_vec(c).map_err(|e| e.to_string())?;
         let r = self.carpeta.escribir_sellado(llaves, &c.reunion, &claro, vence);
         claro.fill(0);
-        r.map(|_| true)
+        r?;
+        // Fuera de las copias de Time Machine (M2): una bandeja que muere a las 3 h no puede vivir
+        // semanas en el disco de copias. Si macOS no deja marcarla, se dice en el log y la bandeja se
+        // queda: perder tus propuestas sería peor.
+        #[cfg(all(target_os = "macos", puente_de_swift))]
+        if !crate::almacen::fuera_de_las_copias(self.carpeta.raiz()) {
+            println!("[bandeja] no se pudo sacar de las copias de Time Machine");
+        }
+        Ok(true)
     }
 
     /// Las bandejas que hay, sin abrirlas: nombre, tamaño y vencimiento.
@@ -252,6 +262,23 @@ mod pruebas {
         assert!(b.dejar(&llaves, &contenido(nombre, &["12 semanas", "cuatro fuentes"]), Some(CIERRE + 3_600)).unwrap());
         assert!(b.dejar(&llaves, &contenido(nombre, &["el viernes"]), Some(CIERRE + 3_600)).is_err(), "la segunda pisó la primera");
         assert_eq!(b.abrir(&llaves, nombre).unwrap().0.propuestas.len(), 2, "la primera bandeja no quedó entera");
+        let _ = std::fs::remove_dir_all(&raiz);
+    }
+
+    /// **La bandeja no entra en las copias de Time Machine** (auditoría del S3, M2). Solo con el puente
+    /// de Swift: el atributo lo pone Foundation. Demostrado en rojo sin la llamada en `dejar`: la carpeta
+    /// no llevaba el atributo.
+    #[cfg(all(target_os = "macos", puente_de_swift))]
+    #[test]
+    fn la_bandeja_queda_fuera_de_las_copias() {
+        let raiz = carpeta("copias");
+        let b = Bandeja::en(raiz.clone());
+        assert!(b.dejar(&EnMemoria::default(), &contenido("reunion-2026-09-27-1402.ghost", &["12 semanas"]), Some(CIERRE + 3_600)).unwrap());
+        let ruta = std::ffi::CString::new(raiz.to_str().unwrap()).unwrap();
+        let nombre = std::ffi::CString::new("com.apple.metadata:com_apple_backup_excludeItem").unwrap();
+        // SEGURIDAD: dos textos terminados en cero; con valor nulo, `getxattr` solo dice el tamaño.
+        let tam = unsafe { libc::getxattr(ruta.as_ptr(), nombre.as_ptr(), std::ptr::null_mut(), 0, 0, 0) };
+        assert!(tam > 0, "la carpeta de la bandeja entra en las copias de Time Machine");
         let _ = std::fs::remove_dir_all(&raiz);
     }
 

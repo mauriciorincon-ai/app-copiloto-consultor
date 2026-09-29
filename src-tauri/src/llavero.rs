@@ -9,7 +9,11 @@
 //! | «Angel Ghost · notas» | la llave de tus notas cifradas (ADR 015) | `notas`, al guardar y al abrir |
 //! | «Angel Ghost · puerta» | el token de la puerta local (ADR 018) | la puerta y `ghost` |
 //!
-//! Todos con `WhenUnlockedThisDeviceOnly` (`nativo/Llavero.swift`). Hasta el sprint 003 esto vivía
+//! Hoy los tres van al **llavero de inicio de sesión** (el de archivo): se abre con tu sesión, no se
+//! sincroniza con iCloud y viaja con tus copias de Time Machine y con el Asistente de migración,
+//! protegido por tu contraseña. El `WhenUnlockedThisDeviceOnly` de `nativo/Llavero.swift` solo opera
+//! en el llavero de protección de datos, que llega con la firma (ADR 015, enmienda 2; auditoría del
+//! S3, A2). Hasta el sprint 003 esto vivía
 //! dentro de `sintesis/api.rs` con un solo servicio; salió de ahí cuando lo necesitaron las notas y
 //! la puerta, y el servicio de las claves del API no cambió de nombre, así que las claves que el
 //! usuario ya guardó se siguen encontrando.

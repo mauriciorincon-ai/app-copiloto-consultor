@@ -76,6 +76,12 @@ impl Desbloqueo {
     pub fn desbloqueado(&self) -> bool {
         self.hecho.load(Ordering::Relaxed)
     }
+
+    /// Olvida el desbloqueo: la próxima vez vuelve a preguntar. Lo usa la puerta al abrirse y al
+    /// cerrarse, para pedirlo **una vez por apertura** (auditoría del S3, M4).
+    pub fn olvidar(&self) {
+        self.hecho.store(false, Ordering::Relaxed);
+    }
 }
 
 #[cfg(test)]
@@ -107,6 +113,30 @@ mod pruebas {
         assert!(!d.desbloqueado());
         assert!(d.asegurar(|| Respuesta::NoSePuede).unwrap_err().contains("contraseña"));
         assert!(d.asegurar(|| Respuesta::Hecho).is_ok());
+    }
+
+    /// **La puerta pide el suyo, una vez por apertura** (auditoría del S3, M4). El desbloqueo de la
+    /// pantalla —exportar esta mañana— no abre tus reuniones a tu agente esta tarde: la puerta lleva
+    /// su propio `Desbloqueo`, y al abrirse lo olvida. Demostrado en rojo con `olvidar` vacía: tras
+    /// olvidar, no volvía a preguntar.
+    #[test]
+    fn la_puerta_pide_el_suyo_y_al_olvidarlo_vuelve_a_pedir() {
+        let (pantalla, puerta) = (Desbloqueo::default(), Desbloqueo::default());
+        let veces = Cell::new(0);
+        let pedir = || {
+            veces.set(veces.get() + 1);
+            Respuesta::Hecho
+        };
+        pantalla.asegurar(pedir).unwrap();
+        puerta.asegurar(pedir).unwrap();
+        assert_eq!(veces.get(), 2, "el desbloqueo de la pantalla abrió la puerta sin preguntar");
+        puerta.asegurar(pedir).unwrap();
+        assert_eq!(veces.get(), 2, "dentro de la misma apertura, se volvió a preguntar");
+        puerta.olvidar();
+        assert!(!puerta.desbloqueado());
+        puerta.asegurar(pedir).unwrap();
+        assert_eq!(veces.get(), 3, "en la apertura siguiente no se volvió a preguntar");
+        assert!(pantalla.desbloqueado(), "olvidar el de la puerta tocó el de la pantalla");
     }
 
     #[test]

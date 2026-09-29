@@ -37,7 +37,8 @@ pub trait Llaves {
     fn crear(&self, llave: &Llave) -> Result<(), String>;
 }
 
-/// El Llavero de macOS, servicio «Angel Ghost · notas», `WhenUnlockedThisDeviceOnly`.
+/// El Llavero de macOS, servicio «Angel Ghost · notas», en el llavero de inicio de sesión (ADR 015,
+/// enmienda 2).
 pub struct DelLlavero;
 
 impl Llaves for DelLlavero {

@@ -100,6 +100,8 @@ const EL_PUENTE: &[&str] = &[
     "nativo/Llavero.swift",
     // El desbloqueo de las notas guardadas (sprint 003, fase 1, ADR 015 §5).
     "nativo/Desbloqueo.swift",
+    // La bandeja, fuera de las copias de Time Machine (auditoría del S3, M2; ADR 016, enmienda 2).
+    "nativo/Copias.swift",
 ];
 
 /// Compila el puente de Swift y lo deja listo para enlazar dentro del binario.

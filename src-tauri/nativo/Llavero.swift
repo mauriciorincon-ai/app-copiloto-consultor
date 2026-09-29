@@ -1,10 +1,11 @@
 // Los secretos de la app, en el Llavero de macOS del usuario — jamás en un archivo (regla de la
 // casa, ADR 011 y ADR 015). Tres servicios, uno por dueño: «Angel Ghost · API» (las claves de los
 // proveedores externos), «Angel Ghost · notas» (la llave de tus notas cifradas) y «Angel Ghost ·
-// puerta» (el token de la puerta local). Todos con `WhenUnlockedThisDeviceOnly`: el secreto solo se
-// lee con la sesión abierta y no viaja a otro Mac, ni por copia de seguridad ni por iCloud. Para
-// saber SI hay secreto se piden los atributos, nunca el secreto (`ag_llavero_hay`; auditoría del
-// S2, B1).
+// puerta» (el token de la puerta local). **Hoy van al llavero de inicio de sesión**, el de archivo
+// (`login.keychain-db`): se abre con tu sesión y no se sincroniza con iCloud, pero viaja con tus
+// copias de Time Machine y con el Asistente de migración, protegido por tu contraseña (ADR 015,
+// enmienda 2; auditoría del S3, A2). Para saber SI hay secreto se piden los atributos, nunca el
+// secreto (`ag_llavero_hay`; auditoría del S2, B1).
 
 import Foundation
 import Security
@@ -27,6 +28,9 @@ public func agLlaveroGuardar(
   SecItemDelete(consulta(s, c) as CFDictionary)
   var q = consulta(s, c)
   q[kSecValueData as String] = Data(String(cString: clave).utf8)
+  // Solo opera en el llavero de protección de datos, que pide la app firmada con su grupo de
+  // llaveros (G-Release, H2). En el de archivo, donde va hoy, macOS lo ignora (TN3137): se deja
+  // escrito para el día de la firma, cuando se active el otro llavero (ADR 015, enmienda 2).
   q[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
   return SecItemAdd(q as CFDictionary, nil)
 }

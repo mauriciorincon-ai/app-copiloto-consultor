@@ -79,11 +79,11 @@ Usage:
   ghost prefs get
   ghost prefs set <key> <value>       {claves}
   ghost notes list
-  ghost notes open <file>             asks for Touch ID on the Mac
+  ghost notes open <file>             asks for Touch ID on the Mac, once per door opening
   ghost --version · ghost --help
 
 You open the door by hand, in Angel Ghost → AI. In a meeting it closes itself and denies everything.
-The first time, macOS asks you whether ghost may use the key in your Keychain.
+Each time you open the door, macOS asks you whether ghost may use the key in your Keychain.
 Output: JSON. Exit code: 0 done · 2 denied · 3 door closed · 1 failed · 64 usage.
 "
         )
@@ -98,11 +98,11 @@ Uso:
   ghost prefs leer
   ghost prefs cambiar <clave> <valor> {claves}
   ghost notas listar
-  ghost notas abrir <archivo>         pide Touch ID en el Mac
+  ghost notas abrir <archivo>         pide Touch ID en el Mac, una vez por apertura
   ghost --version · ghost --help
 
 La puerta se abre a mano, en Angel Ghost → IA. En reunión se cierra sola y lo deniega todo.
-La primera vez, macOS te pregunta si ghost puede usar la llave de tu Llavero.
+Cada vez que abres la puerta, macOS te pregunta si ghost puede usar la llave de tu Llavero.
 Salida: JSON. Código: 0 hecho · 2 denegado · 3 puerta cerrada · 1 fallo · 64 uso.
 "
         )
@@ -115,6 +115,19 @@ mod pruebas {
 
     fn de(linea: &str) -> Result<Pedido, String> {
         interpretar(&linea.split_whitespace().map(String::from).collect::<Vec<_>>())
+    }
+
+    /// **La ayuda dice cuándo pregunta macOS: en cada apertura** (auditoría del S3, B12 y M4). Decía «la
+    /// primera vez», y el diálogo de la lista de acceso sale cada vez que abres la puerta, porque el
+    /// token es nuevo; y el Touch ID de las notas, una vez por apertura. Demostrado en rojo con la ayuda
+    /// de antes.
+    #[test]
+    fn la_ayuda_dice_que_pregunta_en_cada_apertura() {
+        for (idioma, cada, una_vez) in [("es", "Cada vez que abres la puerta", "una vez por apertura"), ("en", "Each time you open the door", "once per door opening")] {
+            let a = ayuda(idioma);
+            assert!(!a.contains("La primera vez") && !a.contains("The first time"), "{idioma}: la ayuda dice «la primera vez»");
+            assert!(a.contains(cada) && a.contains(una_vez), "{idioma}: la ayuda no dice cuándo pregunta:\n{a}");
+        }
     }
 
     #[test]

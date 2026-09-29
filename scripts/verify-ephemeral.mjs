@@ -111,6 +111,9 @@ const PROHIBIDO = [
   // nada, que es la peor forma de pasar: verde por no saber mirar.
   /\bFileManager\b/, /\bURLSession\b/, /\bNSURLConnection\b/, /contentsOf:/, /\bwrite\(to:/,
   /\bNWConnection\b/, /\bCFSocket/, /\bNSFileHandle\b/, /\bUserDefaults\b/,
+  // Escribir atributos del disco también es escribir (auditoría del S3, M2): la única línea que lo
+  // hace es la que saca la bandeja de las copias de Time Machine, marcada con su ADR.
+  /\bsetResourceValues\b/,
   // La PANTALLA (sprint 002, fase 3): las maneras que tienen Apple de convertir un cuadro de la
   // reunión en algo que sobreviva a la memoria. `CGImageDestination` y las representaciones de
   // `NSBitmapImageRep` lo hacen imagen (PNG, JPEG, TIFF); `SCRecordingOutput` —macOS 15— graba la

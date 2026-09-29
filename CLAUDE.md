@@ -524,7 +524,10 @@ decisions/NNN-titulo.md   (ADRs de implementación)
     show` amplio), el constructor se DETIENE y lo enseña en una **matriz de una fila**: qué voy a
     correr · para qué · qué aviso vas a ver, con su texto · cómo se deshace. Solo se corre con un
     **«sí» explícito por acción**; el «sí» de una no vale para la siguiente. Los tests `#[ignore]`
-    que tocan el Mac de verdad entran en la regla. Para comprobar el estado del Mac se usa primero
+    que tocan el Mac de verdad entran en la regla, **y también `cargo test` a secas**: arrastra
+    `tests/contra-el-mac-de-verdad.rs`, que abre el micrófono y el audio del sistema y hace sonar los
+    altavoces. En local se corre `cargo test --lib --test puerta --test ghost`; lo demás, la CI. Para
+    comprobar el estado del Mac se usa primero
     lo que no pide permiso (`ls ~/Library/LaunchAgents`, `launchctl list`) o se le pide al usuario
     que mire. **Un aviso que no se anunció, el usuario lo deniega.** *(Origen: en el S3 el
     constructor corrió sin avisar una prueba de launchd y un diagnóstico que dejaron «sh ·

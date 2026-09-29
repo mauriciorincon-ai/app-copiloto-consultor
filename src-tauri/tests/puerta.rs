@@ -95,6 +95,24 @@ fn esperar(que: impl Fn() -> bool) -> bool {
     false
 }
 
+/// **Sin la carpeta en 700, no se abre** (auditoría del S3, B17): el socket nace con el umask antes del
+/// `chmod` a 600, y lo que lo protege en ese instante es la carpeta. Si no está en 700, la puerta no crea
+/// nada y no guarda token. Demostrado en rojo con el código de antes: se abría y dejaba el socket.
+#[cfg(unix)]
+#[test]
+fn sin_la_carpeta_en_700_no_se_abre() {
+    use std::os::unix::fs::PermissionsExt;
+    let d = carpeta("floja");
+    std::fs::set_permissions(&d, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let (puerta, llave, doble) =
+        (Arc::new(Puerta::con_vigia(Duration::from_millis(200))), Arc::new(LlaveDePrueba::default()), Arc::new(Doble::default()));
+    assert!(puerta.abrir(&d, llave.clone(), doble).is_err(), "la puerta se abrió en una carpeta en 755");
+    assert!(!puerta.abierta());
+    assert!(!ruta_en(&d).exists(), "quedó un socket en la carpeta floja");
+    assert!(llave.token.lock().unwrap().is_none(), "se guardó un token sin abrir");
+    let _ = std::fs::remove_dir_all(&d);
+}
+
 /// **Nace cerrada**: sin socket, sin token, y `ghost` lo sabe sin tocar el Llavero.
 #[test]
 fn nace_cerrada() {

@@ -200,15 +200,20 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   pantalla entera por descuido.
 - **Dónde viven:** en `~/Library/Application Support/com.aiapps.copiloto-consultor/notas/`, junto a
   la bandeja. **No en Documentos**: desde ahí la tarea que borra lo vencido con la app cerrada no puede
-  entrar, y la papelera de iCloud guardaría 30 días lo que se borra. Como esa carpeta no se sincroniza
-  con iCloud, ninguna copia sale de tu Mac. Si guardar falla —el Llavero no contesta, el disco está
-  lleno—, la reunión sigue abierta, tu nota entera, y «Intentar otra vez» vuelve a guardar.
-- **La llave:** vive en el Llavero de tu Mac («Angel Ghost · notas»), **ligada a este Mac**. Guardar no
-  te pide nada; abrir o exportar una reunión guardada te pide Touch ID o tu contraseña, una vez cada
-  vez que abres la app.
+  entrar, y la papelera de iCloud guardaría 30 días lo que se borra. Esa carpeta no se sincroniza con
+  iCloud. **Tus notas sí entran en tus copias de Time Machine**: son tuyas y están hechas para durar, y
+  si se te estropea el Mac las recuperas de la copia. Si guardar falla —el Llavero no contesta, el
+  disco está lleno—, la reunión sigue abierta, tu nota entera, y «Intentar otra vez» vuelve a guardar.
+- **La llave:** vive en el **llavero de inicio de sesión** de tu Mac («Angel Ghost · notas»): se abre
+  con tu sesión y no se sincroniza con iCloud, pero **viaja con tus copias de Time Machine y con el
+  Asistente de migración**, protegida por tu contraseña. Guardar no te pide nada; exportar una reunión
+  guardada te pide Touch ID o tu contraseña, una vez cada vez que abres la app.
 - **Limitaciones conocidas:**
-  - **Si borras el Llavero o cambias de Mac, tus reuniones guardadas no se pueden abrir.** No hay
-    recuperación: cualquier recuperación sería una segunda llave.
+  - **Si borras el Llavero, tus reuniones guardadas no se pueden abrir.** No hay recuperación:
+    cualquier recuperación sería una segunda llave. Si migras a otro Mac con el Asistente de migración,
+    o restauras una copia de Time Machine, tu llavero y tus notas viajan juntos y se siguen abriendo.
+  - **Que la llave quede solo en este Mac llega con la firma de Apple (H2):** hasta entonces, el
+    llavero que la app puede usar no sabe atarla a un solo equipo.
   - **Tus notas no aparecen en Documentos:** se llega a ellas desde *Notas*, o con «Mostrar en Finder».
   - **El nombre del archivo va en claro** (`reunion-2026-09-27-1402.ghost`): dice qué día, no qué se
     habló.
@@ -243,7 +248,9 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
      pide Touch ID**, como abrir una reunión.
 - **Dónde vive:** cifrada con la misma llave que tus notas y junto a ellas, en la carpeta privada de la
   app, **no en Documentos**: la papelera de iCloud guarda 30 días lo que se borra, y una lista que
-  promete morir a las 3 h no puede tener una copia que viva un mes.
+  promete morir a las 3 h no puede tener una copia que viva un mes. Por lo mismo, **la bandeja no entra
+  en tus copias de Time Machine**: la app la marca fuera de las copias al escribirla. Las instantáneas
+  locales que macOS guarda unas horas (menos de 24 h) sí la ven hasta que se reciclan.
 - **Se borra sola al vencer, aunque no abras la app.** Lo cumple macOS con una tarea programada al
   minuto de cada vencimiento; entre vencimientos no corre nada. *Honestidad* enseña la bandeja con su
   cuenta atrás, y si la tarea no corrió mientras la app estaba cerrada, lo dice en rojo.
@@ -494,7 +501,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   `kit <preguntas.json>` (por ejemplo, `docs/kit-de-prueba/preguntas.json`) · `prefs leer` ·
   `prefs cambiar <clave> <valor>`, solo con `idioma-consultor`, `idioma-cliente`, `retencion`,
   `ventana-de-la-bandeja` y `lectura-automatica` · `notas listar` · `notas abrir <archivo>`, que te
-  pide **Touch ID o tu contraseña en el Mac** (una vez por sesión de la app, como abrir en *Notas*).
+  pide **Touch ID o tu contraseña en el Mac** una vez cada vez que abres la puerta: aunque hayas
+  exportado en *Notas*, la puerta pide el suyo.
 - **Lo que no puede nunca:** nada en reunión (si la app escucha, si hay una reunión en solo notas, si ve
   una videollamada abierta **o si no puede saberlo**); encender el API externo; cambiar «Redactar
   sugerencias», el proveedor externo, «Conservar mis turnos» ni lo que respondiste de una NDA; abrirse
