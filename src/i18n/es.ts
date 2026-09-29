@@ -366,6 +366,8 @@ export const es = {
     bufSistema: "Audio · sistema",
     bufTranscript: "Transcript",
     bufFrame: "Último frame leído",
+    bufLoQueSalio: "Lo que salió al API",
+    hastaElCorte: "solo en memoria · hasta el corte",
     salieronDeTuEquipo: "salieron de tu equipo en esta reunión",
     modo: "Modo",
     modoLocal: "100 % local · API apagado",

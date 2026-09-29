@@ -3,7 +3,7 @@ import { Ic } from "../componentes/Iconos";
 import { useEffect, useState } from "react";
 import { PILA } from "../componentes/Ventana";
 import { cortarTodo, type EstadoDeEscucha, usePantalla, usePiezasDelCorte } from "../cuaderno";
-import { EXTERNOS, useIa } from "../ia";
+import { EXTERNOS, useIa, useLoQueSalio } from "../ia";
 import {
   AHORA_DE_MUESTRA,
   reloj,
@@ -12,7 +12,7 @@ import {
   useMuestraDelCuaderno,
   useQuedan,
 } from "../notas";
-import { escuchar } from "../puente";
+import { escuchar, hayTauri } from "../puente";
 
 /**
  * HONESTIDAD — «Qué vive en la memoria ahora mismo y qué salió de tu equipo».
@@ -56,6 +56,10 @@ export function Honestidad({ bytes, escucha, busqueda = "" }: { bytes: string; e
   const corte = usePiezasDelCorte();
   const pantalla = usePantalla();
   const [ia] = useIa();
+  // Lo que salió al API vive en memoria hasta el corte, con tope (auditoría del S3, B15): se cuenta
+  // aquí como un búfer más. Fuera de Tauri, la muestra solo en «sprint 3 · con el API encendido».
+  const salio = useLoQueSalio();
+  const peticiones = hayTauri() || pedido === "api" ? salio.length : 0;
   const tn = useT().notas;
   const [cuaderno] = useCuaderno(useMuestraDelCuaderno("archivo"));
   // Tras ⌥⎋ con una reunión abierta —es decir, con algo tuyo escrito—, la franja de la Etapa de
@@ -143,6 +147,7 @@ export function Honestidad({ bytes, escucha, busqueda = "" }: { bytes: string; e
               {buffer("i-sistema", t.bufSistema, t.ringBuffer30, formatear(escucha.sistema.bytes, idioma))}
               {buffer("i-ojo", t.bufTranscript, t.ventana12, formatear(escucha.bytesDelTranscript, idioma))}
               {buffer("i-pantalla", t.bufFrame, t.soloEnMemoriaElUltimo, formatear(pantalla.bytesEnMemoria, idioma))}
+              {peticiones > 0 && buffer("i-subir", t.bufLoQueSalio, t.hastaElCorte, `${peticiones} ${t.peticiones}`)}
             </div>
           </div>
 

@@ -245,7 +245,7 @@ impl ElCuaderno {
     }
 
     /// Lo que se escribiría al guardar ahora. `None` sin nada tuyo: no habría archivo.
-    fn previsto(&self, carpeta: &Carpeta) -> Option<Previsto> {
+    fn previsto(&self, carpeta: &Carpeta, bandeja: &Bandeja) -> Option<Previsto> {
         if self.vacio() {
             return None;
         }
@@ -255,7 +255,8 @@ impl ElCuaderno {
         Some(Previsto {
             fecha: format!("{}-{:02}-{:02}", fecha.anio, fecha.mes, fecha.dia),
             minutos,
-            archivo: carpeta.nombre_para(&base).unwrap_or_else(|| format!("{base}.{}", carpeta::EXTENSION)),
+            archivo: carpeta::nombre_libre(&base, &[carpeta.raiz(), bandeja.raiz()])
+                .unwrap_or_else(|| format!("{base}.{}", carpeta::EXTENSION)),
             cliente,
         })
     }
@@ -290,7 +291,9 @@ impl ElCuaderno {
             })
             .ok_or("el cuaderno quedó en mal estado")?;
         let base = notas::nombre_del_archivo(cliente.as_deref(), &fecha);
-        let archivo = carpeta.nombre_para(&base).ok_or("no queda un nombre libre para esta reunión")?;
+        // Libre en las notas **y** en la bandeja (A1): la bandeja de otra reunión de hoy no se pisa.
+        let archivo = carpeta::nombre_libre(&base, &[carpeta.raiz(), bandeja.raiz()])
+            .ok_or("no queda un nombre libre para esta reunión")?;
         let vence_de_la_reunion = retencion.vence(ahora);
 
         let sin_decidir = pendientes.len();
@@ -328,6 +331,16 @@ impl ElCuaderno {
             }
         }
         Ok(Cierre { guardada, a_la_bandeja: a, murieron: sin_decidir - a })
+    }
+
+    /// Suelta la bandeja abierta en memoria si su archivo ya no está entre las `vivas` (auditoría del
+    /// S3, B16): vencida y borrada, lo del cliente no puede seguir en RAM porque haya otra bandeja viva.
+    fn soltar_si_no_vive(&self, vivas: &[Reunion]) {
+        if let Ok(mut m) = self.bandeja.lock() {
+            if m.as_ref().is_some_and(|a| !vivas.iter().any(|v| v.archivo == a.archivo)) {
+                *m = None;
+            }
+        }
     }
 
     /// La bandeja abierta en memoria, si es `archivo` y sigue viva.
@@ -377,7 +390,7 @@ pub fn vista<R: Runtime>(app: &AppHandle<R>) -> Option<VistaDelCuaderno> {
     let el = app.try_state::<ElCuaderno>()?;
     let retencion = preferencias(app).retencion;
     let (abierta, escuchando) = (el.abierta(), el.escuchando());
-    let previsto = el.previsto(&carpeta(app));
+    let previsto = el.previsto(&carpeta(app), &la_bandeja_de(app));
     let (turnos_del_cliente, lecturas) =
         (el.turnos_del_cliente.load(Ordering::Relaxed), el.lecturas.load(Ordering::Relaxed));
     let ventana = preferencias(app).ventana_de_la_bandeja;
@@ -413,7 +426,7 @@ pub fn al_empezar<R: Runtime>(app: &AppHandle<R>) {
     if el.hay_que_guardar_la_anterior() {
         match guardar(app) {
             Ok(_) => println!("[notas] la reunión anterior seguía abierta: guardada antes de empezar otra"),
-            Err(e) => println!("[notas] la reunión anterior seguía abierta y no se pudo guardar: {e}"),
+            Err(e) => println!("[notas] la reunión anterior seguía abierta y no se pudo guardar: {}", sin_ruta(&e)),
         }
     }
     el.abrir(preferencias(app).conservar_mis_turnos, fecha_de_ahora());
@@ -548,7 +561,7 @@ pub fn al_salir<R: Runtime>(app: &AppHandle<R>) {
     }
     match guardar(app) {
         Ok(_) => println!("[notas] al salir quedaban notas sin guardar: guardadas"),
-        Err(e) => println!("[notas] al salir quedaban notas sin guardar y NO se pudieron guardar: {e}"),
+        Err(e) => println!("[notas] al salir quedaban notas sin guardar y NO se pudieron guardar: {}", sin_ruta(&e)),
     }
 }
 
@@ -638,14 +651,9 @@ pub fn la_bandeja<R: Runtime>(app: &AppHandle<R>) -> Option<VistaDeLaBandeja> {
     let el = app.try_state::<ElCuaderno>()?;
     let b = la_bandeja_de(app);
     let ahora = carpeta::ahora();
-    let mut vivas: Vec<Reunion> = b.lista().into_iter().filter(|r| r.vence > ahora).collect();
-    vivas.sort_by_key(|r| r.vence);
-    let Some(primera) = vivas.first().cloned() else {
-        if let Ok(mut m) = el.bandeja.lock() {
-            *m = None;
-        }
-        return None;
-    };
+    let vivas = vivas_en(&b, ahora);
+    el.soltar_si_no_vive(&vivas);
+    let primera = vivas.first().cloned()?;
     if el.con_la_abierta(&primera.archivo, |_| ()).is_none() && el.desbloqueo.desbloqueado() {
         abrir_del_disco(&el, &b, &primera.archivo);
     }
@@ -663,6 +671,28 @@ pub fn la_bandeja<R: Runtime>(app: &AppHandle<R>) -> Option<VistaDeLaBandeja> {
     })
 }
 
+/// El error, **sin rutas**, para el log (auditoría del S3, B30; ADR 015 §9): el nombre de una reunión
+/// lleva el del cliente, y los errores del disco traen la ruta entera. Cada ruta absoluta, hasta el
+/// «: » que la separa de su motivo, se cambia por `[ruta]`; el motivo del sistema se queda.
+fn sin_ruta(e: &str) -> String {
+    let mut fuera = String::with_capacity(e.len());
+    let mut resto = e;
+    while let Some(i) = resto.char_indices().find(|&(i, c)| c == '/' && (i == 0 || resto[..i].ends_with(' '))).map(|(i, _)| i) {
+        fuera.push_str(&resto[..i]);
+        fuera.push_str("[ruta]");
+        resto = resto[i..].find(": ").map_or("", |j| &resto[i + j..]);
+    }
+    fuera.push_str(resto);
+    fuera
+}
+
+/// Las bandejas que no han vencido a `ahora`, la que vence antes primero.
+fn vivas_en(b: &Bandeja, ahora: i64) -> Vec<Reunion> {
+    let mut vivas: Vec<Reunion> = b.lista().into_iter().filter(|r| r.vence > ahora).collect();
+    vivas.sort_by_key(|r| r.vence);
+    vivas
+}
+
 fn abrir_del_disco(el: &ElCuaderno, b: &Bandeja, archivo: &str) -> bool {
     match b.abrir(&DelLlavero, archivo) {
         Ok((contenido, vence)) => {
@@ -672,7 +702,7 @@ fn abrir_del_disco(el: &ElCuaderno, b: &Bandeja, archivo: &str) -> bool {
             true
         }
         Err(e) => {
-            println!("[bandeja] no se pudo abrir: {e}");
+            println!("[bandeja] no se pudo abrir: {}", sin_ruta(&e));
             false
         }
     }
@@ -939,9 +969,13 @@ pub fn arrancar_el_barrido<R: Runtime>(app: &AppHandle<R>) {
         if notas > 0 {
             println!("[notas] {notas} reunión(es) vencida(s), borrada(s)");
         }
-        let bandejas = la_bandeja_de(&mango).barrer(ahora);
+        let b = la_bandeja_de(&mango);
+        let bandejas = b.barrer(ahora);
         if bandejas > 0 {
             println!("[bandeja] {bandejas} bandeja(s) vencida(s), borrada(s)");
+            if let Some(el) = mango.try_state::<ElCuaderno>() {
+                el.soltar_si_no_vive(&vivas_en(&b, ahora));
+            }
             avisar(&mango);
         }
         poner_al_dia_el_vencimiento(&mango);
@@ -1126,11 +1160,95 @@ mod pruebas {
         *el.cliente.lock().unwrap() = Some("Páramo Azul".into());
         el.abrir(false, HOY);
         el.con(|cu| cu.escribir("Piden la cuarta fuente."));
-        assert_eq!(el.previsto(&c).unwrap().archivo, "paramo-azul-2026-09-27.ghost");
+        assert_eq!(el.previsto(&c, &b).unwrap().archivo, "paramo-azul-2026-09-27.ghost");
         let g = el.guardar_en(&c, &b, &llaves, prefs::Retencion::Dias90, None, CIERRE).unwrap().guardada.unwrap().0;
         assert_eq!(g.archivo, "paramo-azul-2026-09-27.ghost");
         assert_eq!(c.abrir(&llaves, &g.archivo).unwrap().encabezado.cliente.as_deref(), Some("Páramo Azul"));
         let _ = std::fs::remove_dir_all(c.raiz());
+    }
+
+    /// **Dos reuniones del mismo cliente el mismo día no se pisan** (auditoría del S3, A1). El nombre
+    /// tiene que estar libre en las notas **y** en la bandeja: una llamada sin nota deja su bandeja
+    /// sin archivo de notas, y la siguiente, mirando solo `notas/`, tomaba su nombre, pisaba su bandeja
+    /// (de 3 propuestas quedaba 1) y recibía lo que se guardara desde ella. Demostrado en rojo con el
+    /// código de antes: una sola bandeja y 1 propuesta viva.
+    #[test]
+    fn dos_reuniones_del_mismo_cliente_el_mismo_dia_no_se_pisan() {
+        let (c, b, llaves) = (carpeta("mismo-dia"), bandeja("mismo-dia"), EnMemoria::default());
+        let primera = ElCuaderno::default();
+        *primera.cliente.lock().unwrap() = Some("Páramo Azul".into());
+        primera.abrir(false, HOY);
+        primera.con(|cu| cu.proponer(vec![propuesta("12 semanas"), propuesta("cuatro fuentes")]));
+        let r1 = primera.guardar_en(&c, &b, &llaves, prefs::Retencion::Dias90, Some(CIERRE + 3_600), CIERRE).unwrap();
+        assert!(r1.guardada.is_none() && r1.a_la_bandeja == 2);
+
+        let segunda = ElCuaderno::default();
+        *segunda.cliente.lock().unwrap() = Some("Páramo Azul".into());
+        segunda.abrir(false, notas::Fecha { hora: 16, ..HOY });
+        segunda.con(|cu| {
+            cu.escribir("Piden la cuarta fuente.");
+            cu.proponer(vec![propuesta("el viernes")]);
+        });
+        assert_ne!(segunda.previsto(&c, &b).unwrap().archivo, "paramo-azul-2026-09-27.ghost", "lo previsto pisa la bandeja de la primera");
+        let r2 = segunda.guardar_en(&c, &b, &llaves, prefs::Retencion::Dias90, Some(CIERRE + 3_600), CIERRE).unwrap();
+        let de_la_segunda = r2.guardada.unwrap().0.archivo;
+
+        let bandejas = b.lista();
+        assert_eq!(bandejas.len(), 2, "la segunda pisó la bandeja de la primera: {bandejas:?}");
+        let vivas: usize = bandejas.iter().map(|x| b.abrir(&llaves, &x.archivo).unwrap().0.propuestas.len()).sum();
+        assert_eq!(vivas, 3, "se dejaron 3 propuestas en la bandeja y quedan {vivas}");
+        let de_la_primera = bandejas.iter().map(|x| b.abrir(&llaves, &x.archivo).unwrap().0).find(|x| x.propuestas.len() == 2).unwrap();
+        assert_ne!(de_la_primera.reunion, de_la_segunda, "la bandeja de la primera apunta a las notas de la segunda");
+
+        b.guardar(&llaves, &c, &de_la_primera.reunion, 0).unwrap();
+        assert_eq!(c.lista().len(), 2, "«Guardar» desde la bandeja de la primera no creó su propio archivo");
+        assert!(c.abrir(&llaves, &de_la_segunda).unwrap().propuestas.is_empty(), "la propuesta de la primera acabó en la segunda");
+        let _ = std::fs::remove_dir_all(c.raiz());
+        let _ = std::fs::remove_dir_all(b.raiz());
+    }
+
+    /// **La bandeja abierta muere con su archivo aunque haya otra viva** (auditoría del S3, B16). Antes
+    /// solo se soltaba cuando no quedaba ninguna: con otra bandeja viva, lo del cliente seguía en RAM
+    /// pasada su hora. Demostrado en rojo con `soltar_si_no_vive` vacía.
+    #[test]
+    fn la_bandeja_abierta_muere_con_su_archivo_aunque_haya_otra() {
+        let (c, b, llaves) = (carpeta("suelta"), bandeja("suelta"), EnMemoria::default());
+        let el = ElCuaderno::default();
+        el.abrir(false, HOY);
+        el.con(|cu| cu.proponer(vec![propuesta("12 semanas")]));
+        el.guardar_en(&c, &b, &llaves, prefs::Retencion::Dias90, Some(CIERRE + 3_600), CIERRE).unwrap();
+        let abierta = b.lista()[0].archivo.clone();
+        assert!(el.con_la_abierta(&abierta, |_| ()).is_some());
+        let otra = ElCuaderno::default();
+        otra.abrir(false, notas::Fecha { hora: 16, ..HOY });
+        otra.con(|cu| cu.proponer(vec![propuesta("el viernes")]));
+        otra.guardar_en(&c, &b, &llaves, prefs::Retencion::Dias90, Some(CIERRE + 7_200), CIERRE).unwrap();
+        std::fs::remove_file(b.raiz().join(&abierta)).unwrap();
+        let vivas = vivas_en(&b, CIERRE);
+        assert_eq!(vivas.len(), 1, "la otra bandeja tenía que seguir viva");
+        el.soltar_si_no_vive(&vivas);
+        assert!(el.con_la_abierta(&abierta, |_| ()).is_none(), "la bandeja vencida sigue en memoria");
+        let _ = std::fs::remove_dir_all(c.raiz());
+        let _ = std::fs::remove_dir_all(b.raiz());
+    }
+
+    /// **Los logs de error no llevan el nombre del cliente** (auditoría del S3, B30; ADR 015 §9). El
+    /// nombre del archivo lleva el del cliente, y los errores del disco traen la ruta entera. Demostrado
+    /// en rojo con el código de antes: «no se pudo leer paramo-azul-2026-09-27.ghost…» y la ruta del
+    /// temporal en el error de escribir.
+    #[test]
+    fn los_errores_que_se_loguean_no_nombran_al_cliente() {
+        let c = carpeta("sin-nombre");
+        let e = c.abrir_en_claro(&EnMemoria::default(), "paramo-azul-2026-09-27.ghost").unwrap_err();
+        assert!(!e.contains("paramo"), "el error de abrir nombra al cliente: {e}");
+        let tapon = std::env::temp_dir().join(format!("ag-reunion-tapon-log-{}", std::process::id()));
+        std::fs::write(&tapon, b"").unwrap();
+        let e = crate::almacen::escribir(&tapon.join("paramo-azul-2026-09-27.ghost"), b"x").unwrap_err();
+        let log = sin_ruta(&e);
+        assert!(!log.contains("paramo") && !log.contains('/'), "el log lleva la ruta: {log}");
+        assert!(log.starts_with("no se pudo crear"), "se perdió el motivo: {log}");
+        assert_eq!(sin_ruta("sin ruta: nada que cortar"), "sin ruta: nada que cortar");
+        let _ = std::fs::remove_file(&tapon);
     }
 
     /// Con la ventana «al cerrar», las que no decidiste mueren y **no se escribe nada** en la bandeja.

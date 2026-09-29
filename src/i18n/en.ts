@@ -288,6 +288,8 @@ export const en: Diccionario = {
     bufSistema: "Audio · system",
     bufTranscript: "Transcript",
     bufFrame: "Last frame read",
+    bufLoQueSalio: "What went to the API",
+    hastaElCorte: "in memory only · until the cut",
     salieronDeTuEquipo: "left your machine in this meeting",
     modo: "Mode",
     modoLocal: "100 % local · API off",

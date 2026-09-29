@@ -101,6 +101,17 @@ pub struct Guardada {
     pub vence: i64,
 }
 
+/// El primer nombre (`base.ghost`, `base-2.ghost`…) que no existe en **ninguna** de `carpetas`. Las
+/// notas y la bandeja de una reunión se llaman igual para que «Guardar» desde la bandeja encuentre su
+/// reunión (ADR 016 §4), así que el nombre tiene que estar libre en las dos: una reunión sin nota deja
+/// bandeja sin archivo de notas, y la siguiente del mismo cliente y día no puede tomar su nombre
+/// (auditoría del S3, A1).
+pub fn nombre_libre(base: &str, carpetas: &[&Path]) -> Option<String> {
+    (1..1000)
+        .map(|n| if n == 1 { format!("{base}.{EXTENSION}") } else { format!("{base}-{n}.{EXTENSION}") })
+        .find(|nombre| nombre_valido(nombre) && carpetas.iter().all(|c| !c.join(nombre).exists()))
+}
+
 /// La carpeta, dondequiera que esté. En la app, `notas/` dentro de la carpeta de la app; en los
 /// tests, una del temporal.
 pub struct Carpeta {
@@ -119,7 +130,7 @@ impl Carpeta {
     /// Sella y escribe. `base` es el nombre sin extensión (`notas::nombre_del_archivo`); si ya
     /// existe, se prueba `-2`, `-3`… La carpeta nace 700 y el archivo 600 (`almacen`).
     pub fn guardar(&self, llaves: &dyn Llaves, contenido: &Contenido, base: &str, vence: i64) -> Result<Guardada, String> {
-        let archivo = self.nombre_libre(base)?;
+        let archivo = self.nombre_para(base).ok_or("no queda un nombre libre para esta reunión")?;
         self.guardar_como(llaves, contenido, &archivo, vence)
     }
 
@@ -138,15 +149,10 @@ impl Carpeta {
         Ok(Guardada { archivo: archivo.to_string(), bytes: sellado.len() as u64, vence })
     }
 
-    fn nombre_libre(&self, base: &str) -> Result<String, String> {
-        self.nombre_para(base).ok_or_else(|| "no queda un nombre libre para esta reunión".into())
-    }
-
-    /// El nombre que tendría una reunión guardada ahora con esta `base`: el primero libre.
+    /// El nombre que tendría una reunión guardada ahora con esta `base`: el primero libre **en esta
+    /// carpeta**. Una reunión que además deja bandeja pide el suyo con `nombre_libre` sobre las dos.
     pub fn nombre_para(&self, base: &str) -> Option<String> {
-        (1..1000)
-            .map(|n| if n == 1 { format!("{base}.{EXTENSION}") } else { format!("{base}-{n}.{EXTENSION}") })
-            .find(|nombre| nombre_valido(nombre) && !self.raiz.join(nombre).exists())
+        nombre_libre(base, &[&self.raiz])
     }
 
     /// Las reuniones guardadas, la más reciente primero. Solo se lee la cabecera: **sin la llave**.
@@ -197,10 +203,11 @@ impl Carpeta {
     /// pisa los bytes** cuando termina.
     pub fn abrir_en_claro(&self, llaves: &dyn Llaves, archivo: &str) -> Result<(Vec<u8>, i64), String> {
         let ruta = self.ruta_de(archivo)?;
-        let sellado = std::fs::read(&ruta).map_err(|e| format!("no se pudo leer {archivo}: {e}"))?;
-        let vence = cifrado::vence_de(&sellado).map_err(|e| format!("{archivo} {e}"))?;
+        // Sin el nombre: lleva el del cliente, y este error acaba en el log (auditoría del S3, B30).
+        let sellado = std::fs::read(&ruta).map_err(|e| format!("no se pudo leer el archivo de la reunión: {e}"))?;
+        let vence = cifrado::vence_de(&sellado).map_err(|e| format!("el archivo de la reunión {e}"))?;
         let llave = la_llave(llaves, false)?;
-        let claro = cifrado::abrir(&llave, &sellado).map_err(|e| format!("{archivo} {e}"))?;
+        let claro = cifrado::abrir(&llave, &sellado).map_err(|e| format!("el archivo de la reunión {e}"))?;
         Ok((claro, vence))
     }
 
@@ -266,11 +273,12 @@ impl Carpeta {
     }
 
     /// Exportar a texto: el contenido, en claro, en `destino`. **Quita el cifrado**, y por eso se
-    /// pregunta antes (la pantalla); aquí se hace. El archivo nace 600, como todo lo que escribe la app.
+    /// pregunta antes (la pantalla); aquí se hace. El archivo nace 600, como todo lo que escribe la app,
+    /// pero **la carpeta la eligió el usuario y no se toca** (auditoría del S3, M5).
     pub fn exportar(&self, llaves: &dyn Llaves, archivo: &str, destino: &Path, idioma: &str) -> Result<(), String> {
         let contenido = self.abrir(llaves, archivo)?;
         let mut texto = a_texto(&contenido, idioma);
-        let r = crate::almacen::escribir(destino, texto.as_bytes());
+        let r = crate::almacen::escribir_en_carpeta_ajena(destino, texto.as_bytes());
         // SEGURIDAD: ceros son UTF-8 válido.
         unsafe { texto.as_mut_vec() }.fill(0);
         r
@@ -317,10 +325,10 @@ pub fn ahora() -> i64 {
 /// idiomas, no se traducen (regla bilingüe).
 pub fn a_texto(c: &Contenido, idioma: &str) -> String {
     let en = idioma.starts_with("en");
-    let (nota, acuerdos, fijadas, turnos, min) = if en {
-        ("Your note", "Agreements", "Pinned cards", "Your turns", "min")
+    let (nota, acuerdos, propuestas, fijadas, turnos, min) = if en {
+        ("Your note", "Agreements", "Suggestions you saved", "Pinned cards", "Your turns", "min")
     } else {
-        ("Tu nota", "Acuerdos", "Fichas fijadas", "Tus turnos", "min")
+        ("Tu nota", "Acuerdos", "Propuestas que guardaste", "Fichas fijadas", "Tus turnos", "min")
     };
     let mut t = String::new();
     let titulo = match &c.encabezado.cliente {
@@ -335,6 +343,10 @@ pub fn a_texto(c: &Contenido, idioma: &str) -> String {
         t.push_str(&format!("\n## {acuerdos}\n\n"));
         c.acuerdos.iter().for_each(|a| t.push_str(&format!("- {a}\n")));
     }
+    if !c.propuestas.is_empty() {
+        t.push_str(&format!("\n## {propuestas}\n\n"));
+        c.propuestas.iter().for_each(|p| t.push_str(&format!("- {} · {}\n", p.hora, propuesta_en_texto(p, en))));
+    }
     if !c.fijadas.is_empty() {
         t.push_str(&format!("\n## {fijadas}\n\n"));
         for f in &c.fijadas {
@@ -347,6 +359,35 @@ pub fn a_texto(c: &Contenido, idioma: &str) -> String {
         c.mis_turnos.iter().for_each(|m| t.push_str(&format!("- {} · {}\n", m.hora, m.texto)));
     }
     t
+}
+
+/// Una propuesta guardada, como se lee al exportar: tu frase, o del cliente **el hecho con su
+/// plantilla, jamás su turno** (ADR 016 §2). Las plantillas son las de la pantalla (`src/propuesta.ts`
+/// y el diccionario), redactadas en los dos idiomas.
+fn propuesta_en_texto(p: &crate::propuestas::Propuesta, en: bool) -> String {
+    use crate::propuestas::{De, Regla};
+    if p.de == De::Tuyo {
+        return p.texto.clone();
+    }
+    let t = &p.texto;
+    match (p.regla, en) {
+        (Regla::Choque, false) => match (&p.ficha, &p.seccion) {
+            (Some(f), Some(s)) => format!("Dijeron «{t}»; tu ficha fijada dice «{f}» ({s})"),
+            (Some(f), None) => format!("Dijeron «{t}»; tu ficha fijada dice «{f}»"),
+            _ => format!("Dijeron «{t}»"),
+        },
+        (Regla::Choque, true) => match (&p.ficha, &p.seccion) {
+            (Some(f), Some(s)) => format!("They said “{t}”; your pinned card says “{f}” ({s})"),
+            (Some(f), None) => format!("They said “{t}”; your pinned card says “{f}”"),
+            _ => format!("They said “{t}”"),
+        },
+        (Regla::Nombre, false) => format!("Mencionaron a «{t}», que no está en tu corpus"),
+        (Regla::Nombre, true) => format!("They mentioned “{t}”, who is not in your corpus"),
+        (Regla::Pregunta, false) => format!("Te preguntaron por: {t}"),
+        (Regla::Pregunta, true) => format!("They asked about: {t}"),
+        (_, false) => format!("Dijeron «{t}»"),
+        (_, true) => format!("They said “{t}”"),
+    }
 }
 
 /// La línea del log al guardar: **cuánto, nunca qué** (ADR 015 §9). Ni el nombre del archivo —lleva
@@ -511,11 +552,27 @@ mod pruebas {
         assert!(nombre_valido("paramo-azul-2026-09-20-2.ghost"));
     }
 
+    fn guardada(regla: crate::propuestas::Regla, de: crate::propuestas::De, texto: &str) -> crate::propuestas::Propuesta {
+        crate::propuestas::Propuesta { regla, de, texto: texto.into(), ficha: None, seccion: None, hora: "14:16".into() }
+    }
+
+    /// **Exportar quita el cifrado, nace 600 y lleva las propuestas que guardaste** (auditoría del S3,
+    /// M6: el ADR 016 §3 las mete en el archivo y exportar las dejaba fuera). Del cliente, el hecho con
+    /// su plantilla, jamás su turno. Demostrado en rojo con el código de antes: sin la sección.
     #[test]
     fn exportar_quita_el_cifrado_y_nace_600() {
+        use crate::propuestas::{De, Regla};
         let c = carpeta("exportar");
         let llaves = EnMemoria::default();
-        let g = c.guardar(&llaves, &contenido("Piden la cuarta fuente."), "paramo-azul-2026-09-20", 0).unwrap();
+        let mut con_propuestas = contenido("Piden la cuarta fuente.");
+        con_propuestas.propuestas = vec![
+            guardada(Regla::Compromiso, De::Tuyo, "Te lo mando el viernes con el detalle"),
+            guardada(Regla::Cifra, De::Cliente, "12 semanas desde la firma"),
+            crate::propuestas::Propuesta { ficha: Some("tres".into()), seccion: Some("§3.2 Alcance".into()), ..guardada(Regla::Choque, De::Cliente, "cuatro fuentes") },
+            guardada(Regla::Nombre, De::Cliente, "Andrea Villalba"),
+            guardada(Regla::Pregunta, De::Cliente, "limpieza · alcance"),
+        ];
+        let g = c.guardar(&llaves, &con_propuestas, "paramo-azul-2026-09-20", 0).unwrap();
         let destino = c.raiz().parent().unwrap().join("exportada.md");
         c.exportar(&llaves, &g.archivo, &destino, "es").unwrap();
         let texto = std::fs::read_to_string(&destino).unwrap();
@@ -523,12 +580,53 @@ mod pruebas {
         assert!(texto.contains("## Tu nota\n\nPiden la cuarta fuente."));
         assert!(texto.contains("- Cuarta fuente: cotización aparte"));
         assert!(texto.contains("- Limpieza de datos: hasta tres fuentes — Propuesta Páramo Azul · §3.2"));
-        assert!(a_texto(&contenido("x"), "en").contains("## Agreements"));
+        assert!(texto.contains("## Propuestas que guardaste\n\n"), "exportar deja fuera las propuestas guardadas:\n{texto}");
+        for linea in [
+            "- 14:16 · Te lo mando el viernes con el detalle",
+            "- 14:16 · Dijeron «12 semanas desde la firma»",
+            "- 14:16 · Dijeron «cuatro fuentes»; tu ficha fijada dice «tres» (§3.2 Alcance)",
+            "- 14:16 · Mencionaron a «Andrea Villalba», que no está en tu corpus",
+            "- 14:16 · Te preguntaron por: limpieza · alcance",
+        ] {
+            assert!(texto.contains(linea), "falta «{linea}»:\n{texto}");
+        }
+        let en = a_texto(&con_propuestas, "en");
+        assert!(en.contains("## Agreements"));
+        assert!(en.contains("## Suggestions you saved\n\n"), "{en}");
+        for linea in [
+            "- 14:16 · They said “12 semanas desde la firma”",
+            "- 14:16 · They said “cuatro fuentes”; your pinned card says “tres” (§3.2 Alcance)",
+            "- 14:16 · They mentioned “Andrea Villalba”, who is not in your corpus",
+            "- 14:16 · They asked about: limpieza · alcance",
+        ] {
+            assert!(en.contains(linea), "falta «{linea}»:\n{en}");
+        }
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
             assert_eq!(std::fs::metadata(&destino).unwrap().permissions().mode() & 0o777, 0o600);
         }
+        let _ = std::fs::remove_dir_all(c.raiz().parent().unwrap());
+    }
+
+    /// **Exportar no toca la carpeta que eliges** (auditoría del S3, M5): es tuya, no de la app. Con
+    /// `almacen::escribir` quedaba en 700 —la carpeta compartida de tu equipo dejaba de serlo— y en una
+    /// carpeta que no es tuya el `chmod` fallaba y la exportación entera también. Demostrado en rojo
+    /// con el código de antes: 755 → 700.
+    #[cfg(unix)]
+    #[test]
+    fn exportar_no_toca_la_carpeta_de_destino() {
+        use std::os::unix::fs::PermissionsExt;
+        let c = carpeta("destino");
+        let llaves = EnMemoria::default();
+        let g = c.guardar(&llaves, &contenido("x"), "paramo-azul-2026-09-20", 0).unwrap();
+        let tuya = c.raiz().parent().unwrap().join("compartida");
+        std::fs::create_dir_all(&tuya).unwrap();
+        std::fs::set_permissions(&tuya, std::fs::Permissions::from_mode(0o755)).unwrap();
+        c.exportar(&llaves, &g.archivo, &tuya.join("reunion.md"), "es").unwrap();
+        let modo = |p: &Path| std::fs::metadata(p).unwrap().permissions().mode() & 0o777;
+        assert_eq!(modo(&tuya), 0o755, "exportar cambió los permisos de tu carpeta");
+        assert_eq!(modo(&tuya.join("reunion.md")), 0o600, "el archivo exportado no nació 600");
         let _ = std::fs::remove_dir_all(c.raiz().parent().unwrap());
     }
 

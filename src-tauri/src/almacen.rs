@@ -32,8 +32,9 @@ pub fn escribir(ruta: &Path, bytes: &[u8]) -> Result<(), String> {
 }
 
 /// Lo mismo, en una carpeta **que no es de la app**: la crea si falta, pero **no toca sus permisos**.
-/// Es la de `~/Library/LaunchAgents` (ADR 016): el plist de la tarea de vencimiento vive ahí, y esa
-/// carpeta es del usuario y de otras apps. El archivo nace 600 igual.
+/// Tiene dos usos: la de `~/Library/LaunchAgents` (ADR 016), donde vive el plist de la tarea de
+/// vencimiento y que es del usuario y de otras apps; y **el destino que eliges al exportar** una
+/// reunión (auditoría del S3, M5), que es tuyo. El archivo nace 600 igual.
 pub fn escribir_en_carpeta_ajena(ruta: &Path, bytes: &[u8]) -> Result<(), String> {
     if let Some(padre) = ruta.parent() {
         std::fs::create_dir_all(padre).map_err(|e| format!("no se pudo crear {}: {e}", padre.display()))?;

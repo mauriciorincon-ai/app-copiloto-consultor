@@ -97,11 +97,16 @@ impl Bandeja {
     }
 
     /// Deja las propuestas sin decidir en la bandeja, con su vencimiento. Sin propuestas o con
-    /// `vence` en `None` («al cerrar»), **no escribe nada** y devuelve `false`.
+    /// `vence` en `None` («al cerrar»), **no escribe nada** y devuelve `false`. **Jamás pisa** una
+    /// bandeja que ya existe (auditoría del S3, A1): quien elige el nombre lo busca libre en las dos
+    /// carpetas, y si aun así existe, es un error, no una sobrescritura.
     pub fn dejar(&self, llaves: &dyn Llaves, c: &Contenido, vence: Option<i64>) -> Result<bool, String> {
         let Some(vence) = vence else { return Ok(false) };
         if c.propuestas.is_empty() {
             return Ok(false);
+        }
+        if self.carpeta.ruta_de(&c.reunion)?.exists() {
+            return Err("ya hay una bandeja con ese nombre: no se pisa".into());
         }
         let mut claro = serde_json::to_vec(c).map_err(|e| e.to_string())?;
         let r = self.carpeta.escribir_sellado(llaves, &c.reunion, &claro, vence);
@@ -233,6 +238,21 @@ mod pruebas {
         assert!(!b.dejar(&llaves, &contenido("reunion-2026-09-27-1402.ghost", &["12 semanas"]), Ventana::AlCerrar.vence(CIERRE, CIERRE)).unwrap());
         assert!(!b.dejar(&llaves, &contenido("reunion-2026-09-27-1402.ghost", &[]), Some(CIERRE + 60)).unwrap());
         assert!(!raiz.exists(), "con la ventana en cero se creó la bandeja");
+    }
+
+    /// **Dejar jamás pisa una bandeja** (auditoría del S3, A1): la segunda con el mismo nombre es un
+    /// error y la primera sigue entera. Demostrado en rojo sin la comprobación: la segunda escribía
+    /// encima y de dos propuestas quedaba una.
+    #[test]
+    fn dejar_no_pisa_una_bandeja_que_ya_existe() {
+        let raiz = carpeta("no-pisa");
+        let b = Bandeja::en(raiz.clone());
+        let llaves = EnMemoria::default();
+        let nombre = "paramo-azul-2026-09-27.ghost";
+        assert!(b.dejar(&llaves, &contenido(nombre, &["12 semanas", "cuatro fuentes"]), Some(CIERRE + 3_600)).unwrap());
+        assert!(b.dejar(&llaves, &contenido(nombre, &["el viernes"]), Some(CIERRE + 3_600)).is_err(), "la segunda pisó la primera");
+        assert_eq!(b.abrir(&llaves, nombre).unwrap().0.propuestas.len(), 2, "la primera bandeja no quedó entera");
+        let _ = std::fs::remove_dir_all(&raiz);
     }
 
     #[test]

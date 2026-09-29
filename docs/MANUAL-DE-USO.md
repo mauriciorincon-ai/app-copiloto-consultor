@@ -186,8 +186,11 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
      30 días, **90 días** (de fábrica), 1 año o siempre. Cada reunión se guarda con la que haya al
      guardarla.
   6. **«Exportar a texto»** te pregunta antes —porque el archivo exportado ya no está cifrado—, después
-     te pide Touch ID o la contraseña del Mac, y después dónde. **«Borrar ahora»** también pregunta
-     antes: no hay copia en otro sitio.
+     te pide Touch ID o la contraseña del Mac, y después dónde. El `.md` lleva tu nota, tus acuerdos,
+     **las propuestas que guardaste** (del cliente, el hecho en una línea, como en la pantalla), tus
+     fichas fijadas y, si los conservas, tus turnos. La carpeta que eliges no cambia de permisos: el
+     archivo exportado nace legible solo para tu cuenta. **«Borrar ahora»** también pregunta antes: no
+     hay copia en otro sitio.
 - **«Conservar mis turnos»**: si lo enciendes (nace apagado), lo que **tú** dices, en texto, entra
   también en el archivo de las reuniones siguientes. Nunca el audio, ni el tuyo. Y nunca un turno de
   tu micrófono marcado como eco: con altavoces, ese turno es la voz del cliente.

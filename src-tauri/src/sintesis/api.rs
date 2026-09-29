@@ -278,6 +278,11 @@ pub fn trozos(tapado: &str, boveda: &Boveda) -> Vec<Trozo> {
     salida
 }
 
+/// Cuántas peticiones recuerda el registro. Cada una lleva un turno anonimizado del cliente y, en
+/// claro, lo que se tapó: sin tope, con el API encendido, guardaba la reunión entera, mucho más allá
+/// del anillo de 30 s (auditoría del S3, B15). Al pasarlo, la más vieja se suelta y se pisa.
+pub const TOPE_DE_LO_QUE_SALIO: usize = 20;
+
 /// **Las peticiones de la reunión.** Lo comparten la sesión —que lo enseña y lo vacía— y cada `Api`.
 #[derive(Clone, Default)]
 pub struct Registro {
@@ -292,6 +297,10 @@ impl Registro {
         salio.id = id;
         if let Ok(mut p) = self.peticiones.lock() {
             p.push(salio);
+            if p.len() > TOPE_DE_LO_QUE_SALIO {
+                // `LoQueSalio` se pisa al soltarse (su `Drop`).
+                p.remove(0);
+            }
         }
         id
     }
@@ -516,6 +525,21 @@ mod pruebas {
         // Cobrar una que ya no está no hace nada.
         r.cobrar(dos, 1.0);
         assert_eq!(r.cuantas(), 0);
+    }
+
+    /// **El registro tiene tope** (auditoría del S3, B15): 25 peticiones dejan las 20 últimas y la
+    /// primera ya no está. Demostrado en rojo sin el `remove(0)`: quedaban 25.
+    #[test]
+    fn el_registro_recuerda_solo_las_ultimas() {
+        let r = Registro::default();
+        let b = Boveda::nueva(&[]);
+        for n in 1..=25 {
+            r.anotar(LoQueSalio::de("x", &b, Externo::Claude, &format!("ficha {n}")));
+        }
+        assert_eq!(r.cuantas(), TOPE_DE_LO_QUE_SALIO);
+        let sobres: Vec<String> = r.todas().into_iter().map(|s| s.sobre.clone()).collect();
+        assert!(!sobres.contains(&"ficha 1".to_string()), "la más vieja sigue en memoria");
+        assert_eq!(sobres.first().map(String::as_str), Some("ficha 25"));
     }
 
     #[test]

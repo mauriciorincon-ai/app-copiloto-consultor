@@ -152,9 +152,11 @@ pub struct Cuaderno {
     en_espera: Vec<EnEspera>,
     /// Las que guardaste: entran al archivo.
     guardadas: Vec<Propuesta>,
-    /// Lo que ya se propuso en esta reunión (regla y texto, plegados), para no repetirlo aunque lo
-    /// descartaras.
-    propuestas_vistas: Vec<String>,
+    /// Lo que ya se propuso en esta reunión, para no repetirlo aunque lo descartaras: **una huella**
+    /// de regla y texto plegados, nunca el texto (auditoría del S3, M1: «nombre:andrea villalba»
+    /// sobrevivía al corte). La llave de la huella nace al azar con cada cuaderno, y ⌥⎋ la vacía.
+    propuestas_vistas: std::collections::HashSet<u64>,
+    vistas_con: std::hash::RandomState,
     siguiente: u32,
     /// Se llegó al tope de propuestas y alguna no entró. La pantalla lo dice.
     lleno: bool,
@@ -171,7 +173,8 @@ impl Cuaderno {
             vigente: None,
             en_espera: Vec::new(),
             guardadas: Vec::new(),
-            propuestas_vistas: Vec::new(),
+            propuestas_vistas: std::collections::HashSet::new(),
+            vistas_con: std::hash::RandomState::new(),
             siguiente: 1,
             lleno: false,
         }
@@ -276,9 +279,11 @@ impl Cuaderno {
     }
 
     /// ⌥⎋, la pieza `Propuestas` (ADR 016 §4): mueren las que esperaban tu decisión, porque salen de
-    /// los turnos. Las que guardaste siguen, como tus notas.
+    /// los turnos. Las que guardaste siguen, como tus notas. Y se olvida qué se propuso (M1): lo que
+    /// se diga después del corte es captura nueva.
     pub fn cortar_las_propuestas(&mut self) {
         self.tirar_las_que_esperan();
+        self.propuestas_vistas.clear();
     }
 
     /// ¿Hay algo tuyo que guardar?
@@ -311,7 +316,9 @@ impl Cuaderno {
     pub fn proponer(&mut self, nuevas: Vec<Propuesta>) -> usize {
         let mut entraron = 0;
         for p in nuevas {
-            let clave = format!("{}:{}", p.regla.id(), propuestas::plegar(&p.texto));
+            let mut texto = format!("{}:{}", p.regla.id(), propuestas::plegar(&p.texto));
+            let clave = std::hash::BuildHasher::hash_one(&self.vistas_con, &texto);
+            pisar(&mut texto);
             if self.propuestas_vistas.contains(&clave) {
                 continue;
             }
@@ -319,7 +326,7 @@ impl Cuaderno {
                 self.lleno = true;
                 continue;
             }
-            self.propuestas_vistas.push(clave);
+            self.propuestas_vistas.insert(clave);
             self.en_espera.push(EnEspera { id: self.siguiente, propuesta: p });
             self.siguiente += 1;
             entraron += 1;
@@ -693,6 +700,21 @@ mod pruebas {
         let muchas: Vec<Propuesta> = (0..40).map(|i| propuesta(&format!("{i} días"))).collect();
         assert_eq!(c.proponer(muchas), TOPE_DE_PROPUESTAS);
         assert!(c.lleno());
+    }
+
+    /// **El corte no deja copia de lo que se propuso** (auditoría del S3, M1). La memoria de «ya lo
+    /// propuse» guardaba `regla:texto` en claro —«nombre:andrea villalba»—, y ni ⌥⎋ ni «No» la
+    /// tocaban. Ahora guarda solo una huella con llave al azar por cuaderno y el corte la vacía: lo
+    /// que se diga después es captura nueva. Demostrado en rojo con el código de antes: la lista
+    /// seguía con el nombre del cliente tras el corte.
+    #[test]
+    fn el_corte_no_deja_copia_de_lo_que_se_propuso() {
+        let mut c = Cuaderno::nuevo(false);
+        c.proponer(vec![Propuesta { regla: propuestas::Regla::Nombre, texto: "Andrea Villalba".into(), ..propuesta("") }]);
+        c.cortar();
+        c.cortar_las_propuestas();
+        assert!(c.propuestas_vistas.is_empty(), "lo que se propuso sobrevive al corte: {:?}", c.propuestas_vistas);
+        assert_eq!(c.proponer(vec![Propuesta { regla: propuestas::Regla::Nombre, texto: "Andrea Villalba".into(), ..propuesta("") }]), 1);
     }
 
     #[test]
