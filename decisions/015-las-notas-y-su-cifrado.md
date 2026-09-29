@@ -226,7 +226,7 @@ sido decisión del usuario, así que se le preguntó con tres salidas:
 - `launchd_se_lleva_tus_notas_y_la_bandeja` (`reunion.rs`), en rojo con la lista de antes (solo la
   bandeja);
 - la sesión completa del efímero guarda las notas con 90 d y exige que la lista traiga notas y bandeja;
-- `un_campo_que_ya_no_existe_se_ignora` (`prefs.rs`): un `prefs.json` de la fase 1 con `carpetaDeNotas`
+- `un_campo_que_ya_no_existe_se_ignora` (`prefs.rs`): un `preferencias.json` de la fase 1 con `carpetaDeNotas`
   se sigue leyendo. En rojo con `deny_unknown_fields` en el archivo;
 - `lo-que-macos-dira`: la clave de Documentos ya no está, y el gate exige que tampoco esté en los
   `InfoPlist.strings`.

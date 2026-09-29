@@ -1361,6 +1361,36 @@ Gates: `cargo test --lib` 473 ✓ · `--test puerta` 14 ✓ · `--test ghost` 5 
 lint · typecheck · `verify:ephemeral` ✓ · `design-sync --verificar` ✓. *(Los 24 de `contra-el-mac-de-verdad`
 también corrieron, sin «sí»: ver «Segunda falla» en la sección de la regla 22.)*
 
+### Bloques 3 y 4 — lo que la app dice y no es cierto, y la guía antes del Acto 2
+
+Van en un solo commit porque tocan las mismas frases: el «ábrela» de la parada 7 es M8 y M10 a la vez.
+
+| Hallazgo | Arreglo | El rojo que se vio |
+|---|---|---|
+| **M7** | Idioma: fuera «Conservar lo que dijiste tú — Todavía no»; el detalle dice que tus turnos quedan si enciendes «Conservar mis turnos». Permisos: «Escribir notas y acuerdos — Funciona». Banda: «Solo notas» apagado con «Se elige en Sesión, antes de empezar»; el estado «sin verificar» es solo de maqueta, y el comentario lo dice | `sin-todavia-no-de-lo-que-existe`: seis frases con las pantallas de antes (Idioma ×2, Permisos, Banda, Corpus, IA) |
+| **B9** | `EnElH2` («En el H2» / «In H2») en MLX y en las tres filas de Corpus; títulos «Lo que llega en el H2» | el mismo gate |
+| **M8** | «exportar» en vez de «abrir» en el manual, `paraLeerla` y su maqueta, la guía, ADR 015 (enmienda 3) y ADR 016 | `abrir-no-existe`: nueve líneas. Su primera versión eximía toda línea con «ghost», y la extensión `.ghost` de la parada 7 la escondía: ahora exime solo el comando cerca de la frase, con su caso de prueba |
+| **M9** | h2 con «¿Cuántas rondas de revisión incluye?» y la advertencia de que la app no repite; h3 con «¿En cuántas semanas…?» | — (texto de la guía; las dos fichas, en la prueba en vivo) |
+| **M10** | m1 se camina exportando, y k1 guarda con ⌃⌥↵ «Te lo mando el viernes con el detalle» | — (se camina en la prueba en vivo) |
+| **B21 · B22 · B23 · B24** | `.md` en m2 · el aviso de Terminal en la lista · el ítem en segundo plano en la parada 7, «si no lo viste» en la 9, dejar de compartir en la 8 · cinco minutos en o5 | — |
+| **B25** | `guia-cuadra` cuenta las nuevas y las reescritas | «28 pruebas nuevas» plantado: 28 ≠ 29 |
+| **B10 · B19 · B2 · B3** | Honestidad sin cifra y `piezasCola` en plural · el README dice lo de la bandeja · la capability dice que exportar abre su diálogo desde Rust · `preferencias.json` en los ADR | — |
+
+**El Mac del usuario está en inglés** (lo pidió el 2026-09-28, con la comprobación del Llavero): la guía pone
+entre paréntesis el nombre en inglés de lo que se busca en macOS —System Settings, Keychain Access, Login
+Items & Extensions, Screen & System Audio Recording, Background Items Added, Activity Monitor, Allow / Always
+Allow—, 19 sitios. Se guarda en la memoria del proyecto.
+
+**TEXTO nuevo, maquetado y no visto:** Idioma («Lo que llega en el H2», el detalle), «En el H2», Permisos
+(«Funciona» en notas), el porqué de «Solo notas» en la banda, `paraLeerla`, `piezasCola`, el README.
+
+**Fidelidad y pasada de capturas:** `pnpm fidelidad` verde —216 encuadres, ningún desborde, el peor 0,124 %
+(ia-puerta-abierta, claro, es) bajo el umbral de 0,15 %—. Leídas como imagen: `idioma--dark--es` (la tarjeta
+«Lo que llega en el H2» con una sola fila) y `permisos--dark--es` (dos «Funciona» y un «Todavía no»).
+
+Gates: `cargo test --lib` 473 ✓ · vitest 329 ✓ · lint · typecheck · `design-sync --verificar` ✓ (bandeja
+regenerada por `paraLeerla`) · `guia-cuadra` ✓.
+
 ---
 
 ## Para la planeadora al cierre del sprint (va al summary, «Sugerencias de mejora al método»)

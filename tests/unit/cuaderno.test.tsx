@@ -320,14 +320,13 @@ describe("el cuaderno: lo que no existe se dice", () => {
     const tarjeta = screen
       .getByText(t.sinConcederNada)
       .closest(".tarjeta") as HTMLElement;
-    // Sin conceder nada, solo funciona indexar el corpus. Buscar a mano decía «Funciona», pero
-    // `⌃⌥A` busca sobre lo que dijo el cliente y eso necesita el audio del sistema (auditoría del
-    // S2, B19): va con las notas, entre lo que todavía no existe.
-    expect(within(tarjeta).getAllByText(t.funciona)).toHaveLength(1);
-    expect(within(tarjeta).getAllByText(t.todaviaNo)).toHaveLength(2);
-    for (const pendiente of [t.escribirNotas, t.buscarAMano]) {
-      expect(within(tarjeta).getByText(pendiente).closest(".fila")?.className).toContain("pendiente");
-    }
+    // Sin conceder nada funcionan indexar el corpus y escribir notas y acuerdos («Solo notas», en
+    // Sesión; auditoría del S3, M7). Buscar a mano decía «Funciona», pero `⌃⌥A` busca sobre lo que dijo
+    // el cliente y eso necesita el audio del sistema (auditoría del S2, B19): sigue «todavía no».
+    expect(within(tarjeta).getAllByText(t.funciona)).toHaveLength(2);
+    expect(within(tarjeta).getAllByText(t.todaviaNo)).toHaveLength(1);
+    expect(within(tarjeta).getByText(t.escribirNotas).closest(".fila")?.className).not.toContain("pendiente");
+    expect(within(tarjeta).getByText(t.buscarAMano).closest(".fila")?.className).toContain("pendiente");
   });
 
   /**
@@ -402,8 +401,10 @@ describe("el cuaderno: lo que no existe se dice", () => {
     pinta("?pantalla=idioma");
     expect(screen.getByText(t.idiomaTitulo)).toBeInTheDocument();
     expect(screen.getByText(t.variosIdiomasPorPista)).toBeInTheDocument();
-    expect(screen.getByText(t.conservarTusTurnos)).toBeInTheDocument();
-    expect(screen.getAllByText(t.todaviaNo)).toHaveLength(2);
+    // «Conservar lo que dijiste tú» salió de aquí: existe en Notas (auditoría del S3, M7). Varios
+    // idiomas por pista es H2, y lo dice (B9).
+    expect(screen.getAllByText(t.enElH2)).toHaveLength(1);
+    expect(screen.queryByText(t.todaviaNo)).toBeNull();
     expect(
       screen.getByText(`SpeechAnalyzer · macOS 26 · 5 ${t.idiomasListos}`),
     ).toBeInTheDocument();
@@ -470,7 +471,8 @@ describe("el cuaderno: lo que no existe se dice", () => {
     expect(container.querySelector(".titulo h1")?.textContent).toBe(
       t.corpusTitulo,
     );
-    expect(screen.getAllByText(t.todaviaNo)).toHaveLength(3);
+    // Lo que falta es H2, y lo dice (auditoría del S3, B9).
+    expect(screen.getAllByText(t.enElH2)).toHaveLength(3);
     // Las cinco unidades más la sexta respuesta: lo que no encaja en ninguna.
     expect(container.querySelectorAll(".unidad-chip")).toHaveLength(6);
     expect(screen.getByText(t.sinUnidad)).toBeInTheDocument();

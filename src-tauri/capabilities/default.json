@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Permisos de la ventana principal — la única que abre cosas hacia afuera: el opener, para llevar al usuario a Ajustes del Sistema, y el diálogo de ABRIR, para que señale su carpeta de documentos. `dialog:allow-save` NO está: esta app no escribe archivos por diálogo, y un permiso que nadie usa es superficie regalada. La banda y el relleno no tienen ninguno de los dos: ver sus propias capabilities.",
+  "description": "Permisos de la ventana principal — la única que abre cosas hacia afuera: el opener, para llevar al usuario a Ajustes del Sistema, y el diálogo de ABRIR, para que señale su carpeta de documentos. `dialog:allow-save` NO está: la ventana no guarda por diálogo; «Exportar a texto» abre el de guardar desde Rust (`reunion::exportar`), sin esta capability, y un permiso que nadie usa es superficie regalada. La banda y el relleno no tienen ninguno de los dos: ver sus propias capabilities.",
   "windows": [
     "principal"
   ],

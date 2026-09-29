@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useIdioma, useT } from "../i18n";
 import { Ic } from "../componentes/Iconos";
-import { TodaviaNo, PILA } from "../componentes/Ventana";
+import { PILA, EnElH2 } from "../componentes/Ventana";
 import { useBytesALaRed } from "../cuaderno";
 import { hayTauri } from "../puente";
 import {
@@ -163,7 +163,7 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
                 <tr className="apagada">
                   <td>MLX · Qwen 3 4B</td>
                   <td>
-                    <TodaviaNo />
+                    <EnElH2 />
                   </td>
                   <td className="num">—</td>
                 </tr>

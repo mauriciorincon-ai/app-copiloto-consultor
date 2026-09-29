@@ -206,7 +206,7 @@ export const en: Diccionario = {
     noSeCopianDespues: ": they are read where they live.",
     dondeVive: "Where the index lives",
     soloTu: "Only you can read it",
-    corpusPendiente: "What does not exist yet",
+    corpusPendiente: "What comes in H2",
     arrastrar: "Drag and drop documents",
     releer: "Re-read only what you change",
     leerEscaneado: "Read what is scanned",
@@ -233,6 +233,8 @@ export const en: Diccionario = {
     detectado: "detected",
 
     todaviaNo: "Not yet",
+    enElH2: "In H2",
+    soloNotasEnSesion: "It is chosen in Session, before you start",
     funciona: "Works",
 
     sesionTitulo: "Before you start",
@@ -295,7 +297,7 @@ export const en: Diccionario = {
     modoLocal: "100 % local · API off",
     modoDetalle:
       "The app opens a connection only if you turn on the API in AI, with your key, and only with anonymized text. The other one belongs to macOS, when you ask it to install a speech model.",
-    piezasCola: "pieces: the other one does not exist yet.",
+    piezasCola: "pieces: the rest do not exist yet.",
     loQueQuedara: "What will be left when you close",
     // ---- session · what phase 3 turned on ----
     funcionaEscucha: "It listens to both tracks and transcribes them on your Mac",
@@ -332,11 +334,10 @@ export const en: Diccionario = {
     transcribeTuMac: "Your Mac transcribes, not a service",
     transcribeTuMacDetalle:
       "The macOS speech engine, inside your machine. No audio leaves to become text. The only time it touches the network is when you ask to install a language model: macOS downloads it —while it runs, installing…— and if it cannot: not recognised · no engine.",
-    loQueTodaviaNo: "What does not exist yet",
+    loQueTodaviaNo: "What comes in H2",
     variosIdiomasPorPista: "Several languages at once, ticked per track",
     loQueFaltaDetalle:
-      "Today each track listens to one language, and both sets of turns die — yours and the client’s — on close and with the key.",
-    conservarTusTurnos: "Keep what you said",
+      "Today each track listens to one language. Your turns are kept, as text, only if you turn on “Keep my turns” in Notes; the client’s always die.",
     // ---- phase 3 of sprint 002: THE WHYS (look 17-quater, `kit.html` §8-ter) ----
     noAbrio: "Did not open",
     porQueNoAbrio: {
@@ -640,7 +641,7 @@ export const en: Diccionario = {
     elPrecio: ". Come back five hours later and it is gone: the price of it having a bottom.",
     irATusReuniones: "Go to your meetings",
     cerradaConLlave: "Locked: it is from an earlier app session",
-    paraLeerla: "To read it, Touch ID, as for opening a meeting. Once per app session.",
+    paraLeerla: "To read it, Touch ID, as for exporting a meeting. Once per app session.",
     abrirConTouchId: "Open with Touch ID",
     bandejasDetras: "Trays behind this one:",
     bandejaChip: "Tray ·",

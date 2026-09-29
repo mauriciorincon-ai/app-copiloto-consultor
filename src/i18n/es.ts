@@ -280,7 +280,7 @@ export const es = {
     noSeCopianDespues: ": se leen donde están.",
     dondeVive: "Dónde vive el índice",
     soloTu: "Solo tú puedes leerlo",
-    corpusPendiente: "Lo que todavía no existe",
+    corpusPendiente: "Lo que llega en el H2",
     arrastrar: "Arrastrar y soltar documentos",
     releer: "Releer solo lo que cambies",
     leerEscaneado: "Leer lo escaneado",
@@ -308,6 +308,8 @@ export const es = {
 
     // ---- vocabulario de «todavía no» (§9-sexies) ----
     todaviaNo: "Todavía no",
+    enElH2: "En el H2",
+    soloNotasEnSesion: "Se elige en Sesión, antes de empezar",
     funciona: "Funciona",
 
     // ---- sesión ----
@@ -381,7 +383,7 @@ export const es = {
      */
     modoDetalle:
       "La app abre una conexión solo si enciendes el API en IA, con tu clave, y solo con texto anonimizado. La otra la abre macOS cuando le pides instalar un modelo de voz.",
-    piezasCola: "piezas: la otra todavía no existe.",
+    piezasCola: "piezas: las demás todavía no existen.",
     loQueQuedara: "Lo que quedará cuando cierres",
     // ---- sesión · lo que la fase 3 puso a funcionar ----
     funcionaEscucha: "Escucha las dos pistas y las transcribe en tu Mac",
@@ -427,11 +429,10 @@ export const es = {
     transcribeTuMac: "Transcribe tu Mac, no un servicio",
     transcribeTuMacDetalle:
       "El motor de voz de macOS, dentro de tu equipo. Ningún audio sale para convertirse en texto. La única vez que toca la red es cuando pides instalar el modelo de un idioma: lo descarga macOS —mientras dura, instalando…— y si no puede: no lo reconoce · sin motor.",
-    loQueTodaviaNo: "Lo que todavía no existe",
+    loQueTodaviaNo: "Lo que llega en el H2",
     variosIdiomasPorPista: "Varios idiomas a la vez, marcados por pista",
     loQueFaltaDetalle:
-      "Hoy cada pista escucha un idioma, y los turnos mueren los dos —el tuyo y el del cliente— al cerrar y con la tecla.",
-    conservarTusTurnos: "Conservar lo que dijiste tú",
+      "Hoy cada pista escucha un idioma. Tus turnos solo quedan, en texto, si enciendes «Conservar mis turnos» en Notas; los del cliente mueren siempre.",
     // ---- fase 3 del sprint 002: LOS PORQUÉS (mirada 17-quater, `kit.html` §8-ter) ----
     /**
      * Cada estado que no funciona dice por qué con una frase CERRADA. Rust manda la clave; la frase
@@ -746,7 +747,7 @@ export const es = {
     elPrecio: ". Vuelve cinco horas después y ya no está: es el precio de que tenga fondo.",
     irATusReuniones: "Ir a tus reuniones",
     cerradaConLlave: "Cerrada con llave: es de una sesión anterior de la app",
-    paraLeerla: "Para leerla, Touch ID, como para abrir una reunión. Una vez por sesión de la app.",
+    paraLeerla: "Para leerla, Touch ID, como para exportar una reunión. Una vez por sesión de la app.",
     abrirConTouchId: "Abrir con Touch ID",
     bandejasDetras: "Bandejas detrás de esta:",
     bandejaChip: "Bandeja ·",

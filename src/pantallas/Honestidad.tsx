@@ -34,7 +34,8 @@ import { escuchar, hayTauri } from "../puente";
  * El cero de la red no se mantiene por disciplina: la única puerta es la del proveedor externo de
  * IA —apagada salvo que el usuario la encienda—, y cada byte que sale por ella pasa por el
  * contador que esta pantalla lee. Y la cuenta del kill-switch la da Rust: un `match` sin comodín en
- * `corte.rs` no deja compilar una pieza nueva sin resolverla (hoy son diez).
+ * `corte.rs` no deja compilar una pieza nueva sin resolverla; la cuenta sale de `corte::TODAS`, y por eso
+ * aquí no se escribe ninguna cifra (auditoría del S3, B10: decía «hoy son diez» con once).
  */
 
 // Las piezas del kill-switch ya NO se escriben aquí: se preguntan. Hasta el sprint 002 eran dos

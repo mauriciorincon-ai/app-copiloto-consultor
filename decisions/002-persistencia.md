@@ -183,13 +183,13 @@ prueba en vivo, que solo corre con el «sí» del usuario.
 
 ## Enmienda 5 — lo que respondiste de la NDA de cada cliente (sprint 003, fase 3, 2026-09-27)
 
-`prefs.json` gana `ndas`: por el nombre de cada cliente, «lo prohíbe» o «no lo prohíbe» (ADR 017 §4).
+`preferencias.json` gana `ndas`: por el nombre de cada cliente, «lo prohíbe» o «no lo prohíbe» (ADR 017 §4).
 «Sin revisar» es no estar en la lista. Son nombres de **tus** clientes, sacados de **tu** corpus, en tu
 Mac y en 600, como el resto de tus preferencias. Se guardan porque una NDA no cambia de una reunión a
 otra y la respuesta la diste tú; **con quién te reúnes hoy** («Este cliente») no se guarda: vive en
 memoria mientras la app esté abierta.
 
-**Lo que entra en el inventario del efímero:** nada nuevo. `prefs.json` se escribe cuando respondes, no
+**Lo que entra en el inventario del efímero:** nada nuevo. `preferencias.json` se escribe cuando respondes, no
 durante una sesión; la sesión completa del gate en marcha no lo toca.
 
 ## Enmienda 6 — el socket de la puerta local (sprint 003, fase 4, 2026-09-27)

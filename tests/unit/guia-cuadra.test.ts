@@ -58,6 +58,17 @@ describe("la guía de prueba cuadra", () => {
     ).toEqual([]);
   });
 
+  // Las cifras de la cabecera sobre el origen (auditoría del S3, B25; casilla 6 a): «29 pruebas nuevas» y
+  // «33 de las 72 heredadas reescritas» eran ciertas, pero nadie las contaba. Rojo cambiando una cifra.
+  it("la cabecera cuenta bien las nuevas y las heredadas reescritas", () => {
+    const de = (origen: string) => PRUEBAS.filter((p) => p[2] === origen).length;
+    expect(declarada(/(\d+) pruebas nuevas/)).toBe(de("nuevo"));
+    const m = /(\d+) de las (\d+) heredadas reescritas/.exec(GUIA);
+    expect(m, "la cabecera no dice cuántas heredadas se reescribieron").not.toBeNull();
+    expect(Number(m![1])).toBe(de("mejorado"));
+    expect(Number(m![2])).toBe(de("mejorado") + de("heredada"));
+  });
+
   it("las paradas son un recorrido: 1..M en el orden del documento, una por prueba marcada", () => {
     const paradas = [...GUIA.matchAll(/⭐⭐ Parada (\d+) de (\d+)/g)];
     const total = PRUEBAS.filter((p) => p[1].includes("data-corto")).length;

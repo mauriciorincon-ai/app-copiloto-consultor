@@ -245,7 +245,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
      la propuesta a su reunión (con la retención de la reunión) y «No» la borra. También «Guardar
      todas», «Descartar todas», cambiar la ventana ahí mismo e «Ir a tus reuniones».
   5. Si la bandeja es de una vez anterior que abriste la app, se ve su cuenta atrás, pero **lo que dice
-     pide Touch ID**, como abrir una reunión.
+     pide Touch ID**, como exportar una reunión.
 - **Dónde vive:** cifrada con la misma llave que tus notas y junto a ellas, en la carpeta privada de la
   app, **no en Documentos**: la papelera de iCloud guarda 30 días lo que se borra, y una lista que
   promete morir a las 3 h no puede tener una copia que viva un mes. Por lo mismo, **la bandeja no entra
@@ -467,7 +467,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - Un nombre de persona **suelto** («Andrea») que no esté en tu corpus no se reconoce al anonimizar;
     dos palabras con mayúscula seguidas («Andrea Villalba») sí.
   - El camino **MLX** (un modelo que descargas tú) no está en este MVP: queda en el roadmap del H2, y
-    en IA su fila lo dice con «Todavía no». Sin Apple Intelligence, la sugerencia local no está.
+    en IA su fila lo dice con «En el H2». Sin Apple Intelligence, la sugerencia local no está.
   - La sugerencia se escribe **en el idioma de la ficha que cita**, no en el de la pregunta: si tu
     cliente pregunta en inglés y tu propuesta está en español, la sugerencia sale en español.
   - A veces la sugerencia es fiel a su ficha pero **no contesta la pregunta** (cita otra de las tres

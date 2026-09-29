@@ -119,7 +119,7 @@ Jurisdiction: Florida
   grabar o transcribir por cualquier medio?»** — «Sí, lo prohíbe» · «No lo prohíbe». Ocupa **la fila
   de los botones**, a lo ancho: se contesta justo antes de «Iniciar sesión». (Dentro de la tarjeta no
   cabía en los 640 px de la ventana; lo midió `maqueta-cabe`.)
-- **La respuesta se guarda en tus preferencias**, por cliente (`ndas`, en `prefs.json`, 600): la NDA
+- **La respuesta se guarda en tus preferencias**, por cliente (`ndas`, en `preferencias.json`, 600): la NDA
   no cambia de una reunión a otra. «Volver a revisar la NDA» la borra y vuelve a preguntar.
 - **«Lo prohíbe»** convierte Sesión en el estado aprobado «NDA prohíbe transcribir»: qué queda
   apagado, qué sigue funcionando, «Iniciar en modo solo notas» y «Volver a revisar la NDA». **Nunca
@@ -181,7 +181,7 @@ use.
 - Módulo nuevo **`jurisdiccion/`**, puro: entra en los protegidos de `verify:ephemeral` (no necesita
   disco ni red; el catálogo va dentro del binario).
 - `corpus::Documento` gana la jurisdicción de la ficha, sin serializarla.
-- `prefs.json` gana `ndas` (ADR 002, enmienda 5): nombres de tus clientes, en tu Mac, 600.
+- `preferencias.json` gana `ndas` (ADR 002, enmienda 5): nombres de tus clientes, en tu Mac, 600.
 - `EstadoDeEscucha` gana `soloNotas`, y el contrato Rust→TS la vista de «Este cliente» (regla 19).
 - Comandos nuevos, solo en la ventana principal: el cliente, la NDA y empezar solo notas.
 - El manual gana «El marco en la mano» con sus limitaciones.

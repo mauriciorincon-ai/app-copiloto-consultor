@@ -94,7 +94,7 @@ reunión, y como mucho hay 30 esperando; al llegar a 30, las nuevas no entran y 
   (mismo vencimiento) y la quita de la bandeja. **No** la quita y ya está. Cuando la bandeja se
   queda vacía, su archivo se borra.
 - **Leer la bandeja:** justo después de cerrar está en memoria y no pide nada. Si la app se cerró
-  entre medias y hay que leerla del disco, pide Touch ID como abrir una reunión (ADR 015 §5, una vez
+  entre medias y hay que leerla del disco, pide Touch ID como exportar una reunión (ADR 015 §5 y su enmienda 3, una vez
   por sesión de la app).
 - **⌥⎋** se lleva las propuestas sin decidir de la reunión en marcha (nueva pieza del corte:
   `Propuestas`), porque salen de la captura. Las guardadas se quedan, como tus notas. Las bandejas de

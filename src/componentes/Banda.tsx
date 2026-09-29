@@ -134,8 +134,8 @@ export function Banda({
 
   // **Dentro del producto el estado de contenido lo decide la ficha, no la URL.** Tener las dos
   // cosas mandando a la vez fue un defecto real: la banda pedía «sin resultado» y la ficha traía
-  // una ficha, así que no se pintaba nada. `sin-verificar` es la excepción y no es capricho: lo
-  // decide la protección de la ventana, que no tiene nada que ver con el corpus.
+  // una ficha, así que no se pintaba nada. `sin-verificar` es la excepción: hoy **solo existe en la
+  // maqueta** y se llega a él por la URL; nada del producto lo pide todavía (auditoría del S3, M7).
   const pedido: EstadoBanda = !hayTauri()
     ? estado
     : estado === "sin-verificar"
@@ -827,13 +827,15 @@ export function Banda({
               {grande ? (
                 <>
                   <span className="acciones-b">
-                    {/* Ni marcar un cliente como verificado ni el modo solo notas existen todavía:
-                        apagados en vez de botones que no hacen nada (auditoría del S2, M12). */}
+                    {/* Estos dos botones son del estado «sin verificar», que hoy **solo existe en la
+                        maqueta** (se llega por la URL). Marcar un cliente como verificado no existe
+                        todavía; «Solo notas» sí, pero se elige en Sesión antes de empezar, y la banda
+                        no tiene ese comando (auditoría del S3, M7). Apagados, con su porqué. */}
                     <button className="btn mini" type="button" disabled title={tc.todaviaNo}>
                       <Ic id="i-check-circle" s relleno />
                       {t.yaVerifique}
                     </button>
-                    <button className="btn mini" type="button" disabled title={tc.todaviaNo}>
+                    <button className="btn mini" type="button" disabled title={tc.soloNotasEnSesion}>
                       <Ic id="i-nota" s />
                       {t.soloNotas}
                     </button>

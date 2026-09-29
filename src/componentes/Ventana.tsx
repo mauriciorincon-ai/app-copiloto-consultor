@@ -165,6 +165,18 @@ export function TodaviaNo() {
   );
 }
 
+/** Lo que no está en el MVP y ya tiene sitio: el H2 (auditoría del S3, B9). «Todavía no» queda para lo
+ *  que no tiene horizonte escrito. */
+export function EnElH2() {
+  const t = useT().cuaderno;
+  return (
+    <span className="estado pendiente">
+      <Ic id="i-pendiente" s />
+      <span>{t.enElH2}</span>
+    </span>
+  );
+}
+
 export function Funciona() {
   const t = useT().cuaderno;
   return (
