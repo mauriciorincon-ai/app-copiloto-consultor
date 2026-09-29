@@ -15,7 +15,7 @@ import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida,
 import type { EnTuMac } from "./radar";
 import type { EstadoDeLaIa, PorQueNoRedacta, LoQueSalio } from "./ia";
 import type { EstadoDelAcople } from "./acople";
-import type { VistaDelCuaderno, LineaDePropuesta, Propuesta, Regla, Ventana, VistaDeLaBandeja, EstadoDeLaBandeja, ReunionGuardada, Guardada, ListaDeReuniones } from "./notas";
+import type { VistaDelCuaderno, LineaDePropuesta, Propuesta, Regla, Ventana, VistaDeLaBandeja, EstadoDeLaBandeja, ReunionGuardada, ListaDeReuniones } from "./notas";
 import type { VistaDelCliente, LaBandera, Nda } from "./jurisdiccion";
 import type { VistaDeLaPuerta, Cierre, NoAbre, Motivo } from "./puerta";
 
@@ -928,12 +928,6 @@ export const REUNION_GUARDADA_PARA_SIEMPRE: ReunionGuardada = {
     "bytes": 3104,
     "guardada": 1790500000,
     "vence": 0
-  };
-
-export const REUNION_GUARDADA_AHORA: Guardada = {
-    "archivo": "paramo-azul-2026-09-20.ghost",
-    "bytes": 22528,
-    "vence": 1797676000
   };
 
 export const LISTA_DE_REUNIONES: ListaDeReuniones = {

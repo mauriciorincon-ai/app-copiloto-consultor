@@ -675,11 +675,6 @@ pub fn muestras() -> Vec<Muestra> {
             guardada: 1_790_500_000,
             vence: 0,
         }),
-        m("REUNION_GUARDADA_AHORA", "Guardada", "./notas", &crate::carpeta::Guardada {
-            archivo: "paramo-azul-2026-09-20.ghost".into(),
-            bytes: 22_528,
-            vence: 1_797_676_000,
-        }),
         m("LISTA_DE_REUNIONES", "ListaDeReuniones", "./notas", &crate::reunion::ListaDeReuniones {
             reuniones: Vec::new(),
         }),

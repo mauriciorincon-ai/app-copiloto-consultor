@@ -1391,6 +1391,30 @@ Allow—, 19 sitios. Se guarda en la memoria del proyecto.
 Gates: `cargo test --lib` 473 ✓ · vitest 329 ✓ · lint · typecheck · `design-sync --verificar` ✓ (bandeja
 regenerada por `paraLeerla`) · `guia-cuadra` ✓.
 
+### Bloque 5 — gates, contrato y tests (M11 · M13 · B11 · B13 · B14 · B7 · M12)
+
+| Hallazgo | Arreglo | El rojo que se vio |
+|---|---|---|
+| **M11** | `corto` (es/en) en cada regla de `reglas.json`; `reglas-publicadas` ata `sonReglas` a esa lista; `catalogo::reglas()` borrada; ADR 016, enmienda 3 | sin `corto`: tres rojos («el catálogo trae… su corto», y `sonReglas` en es y en) |
+| **M13** | `propuesta.test.ts` (9 tests) y tres tests de la bandeja en `notas.test.tsx`; umbrales por archivo | la plantilla de `nombre` con texto de más: dos rojos (es y en). Umbral de ramas de Notas a 90: «70.72 % does not meet 90 %» |
+| **B11** | `topes-en-el-texto` | `TOPE_DE_PROPUESTAS` a 25: rojo |
+| **B13 · B14** | `guardar_la_reunion` sin dato de vuelta; el evento `modo` es una señal | — (contrato regenerado; el gate de contrato, verde) |
+| **B7** | `verify:ephemeral`: sin `src/capture`, falla con una entrada que no existe y exige el ADR junto a la marca | la entrada falsa y la marca sin ADR, los dos en rojo |
+| **M12** | `cargo audit` primero en `build-escritorio` | en local, `smallvec` 1.6.0 en un `Cargo.lock` de prueba: RUSTSEC-2021-0003, exit 1. **El rojo en la CI**, en un PR desechable (abajo) |
+
+**Cobertura medida** (`pnpm test`): global 91,65 % de líneas y 81,79 % de ramas; `propuesta.ts` 100 %;
+`Notas.tsx` 87,25 % de líneas y 70,72 % de ramas (antes 56,9 % y 44,6 %).
+
+**`cargo audit` hoy: exit 0, 9 avisos que no bloquean.** Siete crates sin mantener (`proc-macro-error`,
+`ttf-parser`, cinco `unic-*`: todos llegan por Tauri y sus dependencias) y dos *unsound*: `glib`
+(RUSTSEC-2024-0429, por Tauri en Linux: no se compila en macOS) y **`lru` 0.16.4 (RUSTSEC-2026-0253,
+2026-05-12: un posible *use-after-free* si `LruCache::pop()` entra en pánico)**. `lru` llega solo por
+`tantivy` (`cargo tree -i lru`); el código de la app no lo usa, y si `tantivy` llama a `pop()` por dentro no
+se ha comprobado. Queda como deuda para el H2: subirlo cuando `tantivy` lo permita.
+
+Gates: `cargo test --lib` 473 ✓ · `--test puerta` 14 ✓ · `--test ghost` 5 ✓ · clippy limpio · `pnpm test` 347 ✓
+(cobertura con sus umbrales) · lint · typecheck · `verify:ephemeral` ✓ · `design-sync` al día.
+
 ---
 
 ## Para la planeadora al cierre del sprint (va al summary, «Sugerencias de mejora al método»)

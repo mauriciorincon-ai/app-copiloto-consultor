@@ -1,32 +1,37 @@
 {
-  "_leeme": "Las reglas con que la app te propone qué guardar (ADR 016). Son TODAS: la pantalla «Qué sabe reconocer» sale de aquí. Las frases y palabras se comparan sin mayúsculas ni tildes y por palabras enteras. Ningún modelo decide nada: si una frase no está aquí, no se propone.",
+  "_leeme": "Las reglas con que la app te propone qué guardar (ADR 016). Son TODAS: la frase «Qué sabe reconocer» de la pantalla se compara con los `corto` de esta lista (tests/unit/reglas-publicadas.test.ts). Las frases y palabras se comparan sin mayúsculas ni tildes y por palabras enteras. Ningún modelo decide nada: si una frase no está aquí, no se propone.",
   "version": 1,
   "fecha": "2026-09-27",
   "reglas": [
     {
       "id": "cifra",
       "de": "ambos",
-      "nombre": { "es": "Cifras, plazos y fechas dichos en voz alta", "en": "Figures, terms and dates said out loud" }
+      "nombre": { "es": "Cifras, plazos y fechas dichos en voz alta", "en": "Figures, terms and dates said out loud" },
+      "corto": { "es": "cifras, plazos y fechas", "en": "figures, terms and dates" }
     },
     {
       "id": "compromiso",
       "de": "tuyo",
-      "nombre": { "es": "Compromisos tuyos («te lo mando», «quedamos en»)", "en": "Your commitments (“I'll send it”, “we agreed”)" }
+      "nombre": { "es": "Compromisos tuyos («te lo mando», «quedamos en»)", "en": "Your commitments (“I'll send it”, “we agreed”)" },
+      "corto": { "es": "tus compromisos", "en": "your commitments" }
     },
     {
       "id": "choque",
       "de": "ambos",
-      "nombre": { "es": "Lo que contradice una ficha que fijaste", "en": "Anything clashing with a card you pinned" }
+      "nombre": { "es": "Lo que contradice una ficha que fijaste", "en": "Anything clashing with a card you pinned" },
+      "corto": { "es": "lo que choca con una ficha que fijaste", "en": "anything clashing with a card you pinned" }
     },
     {
       "id": "nombre",
       "de": "ambos",
-      "nombre": { "es": "Nombres propios que no están en tu corpus", "en": "Proper names missing from your corpus" }
+      "nombre": { "es": "Nombres propios que no están en tu corpus", "en": "Proper names missing from your corpus" },
+      "corto": { "es": "nombres que no están en tu corpus", "en": "names missing from your corpus" }
     },
     {
       "id": "pregunta",
       "de": "cliente",
-      "nombre": { "es": "Preguntas que te hicieron", "en": "Questions you were asked" }
+      "nombre": { "es": "Preguntas que te hicieron", "en": "Questions you were asked" },
+      "corto": { "es": "preguntas que te hicieron", "en": "questions you were asked" }
     }
   ],
   "compromisos": [

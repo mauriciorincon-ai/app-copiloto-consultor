@@ -1,8 +1,9 @@
 //! El catálogo de las propuestas, **dentro del binario** (como el del radar).
 //!
-//! `data/propuestas/reglas.json` se incluye al compilar y se lee una vez. Las reglas que enseña la
-//! pantalla salen de aquí, así que la lista que lees es la lista entera (ADR 016 §1). Todo se guarda
-//! plegado —sin mayúsculas ni tildes—, que es como se compara.
+//! `data/propuestas/reglas.json` se incluye al compilar y se lee una vez. La frase de la pantalla («Qué
+//! sabe reconocer») es de la maqueta, y `tests/unit/reglas-publicadas.test.ts` la compara con el `corto`
+//! de cada regla de aquí: la lista que lees es la lista entera (ADR 016 §1 y su enmienda 3; auditoría del
+//! S3, M11). Todo se guarda plegado —sin mayúsculas ni tildes—, que es como se compara.
 
 use std::collections::{HashMap, HashSet};
 use std::sync::OnceLock;
@@ -21,6 +22,8 @@ pub struct FilaDeRegla {
     /// `ambos`, `tuyo` o `cliente`.
     pub de: String,
     pub nombre: crate::radar::Bilingue,
+    /// El trozo exacto de la frase de la pantalla («cifras, plazos y fechas»), en los dos idiomas.
+    pub corto: crate::radar::Bilingue,
 }
 
 #[derive(Deserialize)]
@@ -103,11 +106,6 @@ pub fn catalogo() -> &'static Catalogo {
     UNO.get_or_init(|| Catalogo::de_texto(REGLAS).expect("data/propuestas/reglas.json"))
 }
 
-/// Las reglas, para la pantalla «Qué sabe reconocer».
-pub fn reglas() -> Vec<FilaDeRegla> {
-    catalogo().reglas.clone()
-}
-
 #[cfg(test)]
 mod pruebas {
     use super::*;
@@ -123,6 +121,7 @@ mod pruebas {
         assert_eq!(ids, del_codigo, "la pantalla enseñaría una lista distinta de la que aplica el código");
         for r in &c.reglas {
             assert!(!r.nombre.es.is_empty() && !r.nombre.en.is_empty(), "{} sin nombre en los dos idiomas", r.id);
+            assert!(!r.corto.es.is_empty() && !r.corto.en.is_empty(), "{} sin su trozo de la frase de la pantalla", r.id);
             assert!(["ambos", "tuyo", "cliente"].contains(&r.de.as_str()), "{}: de «{}»", r.id, r.de);
         }
     }

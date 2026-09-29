@@ -5,6 +5,8 @@ import { IdiomaContext } from "@/i18n";
 import { es } from "@/i18n/es";
 import { llamar, preguntar } from "@/puente";
 import {
+  BANDEJA_ABIERTA,
+  BANDEJA_CON_LLAVE,
   LISTA_DE_REUNIONES,
   REUNION_GUARDADA,
   REUNION_GUARDADA_PARA_SIEMPRE,
@@ -189,4 +191,57 @@ describe("Notas dentro de Tauri", () => {
     fireEvent.click(screen.getByRole("button", { name: t.mostrarEnFinder }));
     expect(pedidos("mostrar_las_notas_en_finder").at(-1)?.[1]).toEqual({ archivo: null });
   });
+
+  // ---- la bandeja (auditoría del S3, M13: Notas.tsx estaba bajo el 50 % de ramas) ----
+
+  const dentroDe = (segundos: number) => Math.floor(Date.now() / 1000) + segundos;
+
+  it("la bandeja abierta enseña lo que espera, y «Guardar», «No» y «Guardar todas» van a Rust", async () => {
+    respuestas.set("cuaderno_de_la_reunion", { ...VISTA_DEL_CUADERNO, abierta: false });
+    respuestas.set("la_bandeja", { ...BANDEJA_ABIERTA, vence: dentroDe(3_600) });
+    await pinta();
+    expect(screen.getByText(t.esperanTuDecision)).toBeInTheDocument();
+    expect(screen.getByText(BANDEJA_ABIERTA.propuestas![0].texto)).toBeInTheDocument();
+    // Del cliente, el hecho con su plantilla: jamás el turno.
+    expect(screen.getByText(`${t.dijeron}cuatro fuentes${t.tuFichaDice}tres${t.cierraConPunto}`)).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole("button", { name: t.guardar })[0]);
+    });
+    expect(pedidos("decidir_en_la_bandeja").at(-1)?.[1]).toEqual({ archivo: BANDEJA_ABIERTA.archivo, indice: 0, guardar: true });
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole("button", { name: t.no })[1]);
+    });
+    expect(pedidos("decidir_en_la_bandeja").at(-1)?.[1]).toEqual({ archivo: BANDEJA_ABIERTA.archivo, indice: 1, guardar: false });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: new RegExp(t.guardarTodas) }));
+    });
+    expect(pedidos("decidir_toda_la_bandeja").at(-1)?.[1]).toEqual({ archivo: BANDEJA_ABIERTA.archivo, guardar: true });
+  });
+
+  it("la bandeja de otra sesión llega cerrada con llave, y abrirla pide el desbloqueo a Rust", async () => {
+    respuestas.set("cuaderno_de_la_reunion", { ...VISTA_DEL_CUADERNO, abierta: false });
+    respuestas.set("la_bandeja", { ...BANDEJA_CON_LLAVE, vence: dentroDe(3_600) });
+    await pinta();
+    expect(screen.getByText(t.cerradaConLlave)).toBeInTheDocument();
+    expect(screen.getByText(t.paraLeerla)).toBeInTheDocument();
+    // Lo que dice no está en pantalla: la vista no trae las propuestas, ni un botón para decidirlas.
+    expect(screen.queryByText(BANDEJA_ABIERTA.propuestas![0].texto)).toBeNull();
+    expect(screen.queryByRole("button", { name: t.guardar })).toBeNull();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: new RegExp(t.abrirConTouchId) }));
+    });
+    expect(pedidos("abrir_la_bandeja").at(-1)?.[1]).toEqual({ archivo: BANDEJA_CON_LLAVE.archivo, idioma: "es" });
+  });
+
+  it("la bandeja que vence mientras la miras lo dice en vez de desaparecer, y lleva al archivo", async () => {
+    respuestas.set("cuaderno_de_la_reunion", { ...VISTA_DEL_CUADERNO, abierta: false });
+    respuestas.set("la_bandeja", { ...BANDEJA_ABIERTA, vence: dentroDe(-5) });
+    await pinta();
+    await act(async () => {});
+    expect(screen.getByText(new RegExp(t.laBandejaVencio))).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: new RegExp(t.irATusReuniones) })[0]);
+    await act(async () => {});
+    expect(screen.queryByText(new RegExp(t.laBandejaVencio))).toBeNull();
+  });
 });
+

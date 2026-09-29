@@ -98,7 +98,8 @@ const PROTEGIDOS = [
   // escribir la respuesta) llevan su marca y el ADR 018 en la misma línea.
   "src-tauri/src/puerta",
   "src-tauri/nativo",
-  "src/capture",
+  // `src/capture` estaba aquí desde el estampado y nunca existió: la captura vive en Rust. Una entrada
+  // que no existe vigila nada y se lee como vigilancia (auditoría del S3, B7): ahora es un fallo.
 ];
 // API prohibida dentro de los protegidos (Rust y TS). Se puede ampliar; jamás recortar sin ADR.
 const PROHIBIDO = [
@@ -126,7 +127,9 @@ const PROHIBIDO = [
   // en un módulo efímero puede existir; lo que no puede es existir sin que se vea.
   /\bdownloadAndInstall\b/, /\bassetInstallationRequest\b/,
 ];
-const ALLOW = /verify-ephemeral:allow\b/; // línea explícitamente autorizada (exige ADR citado en la misma línea)
+// Línea explícitamente autorizada: **con su ADR en la misma línea** («ADR 016»). Antes bastaba la
+// marca, y el comentario prometía un ADR que nadie exigía (auditoría del S3, B7).
+const ALLOW = /verify-ephemeral:allow\b.*\bADR\s*\d{3}/;
 
 function archivos(dir) {
   if (!existsSync(dir)) return [];
@@ -135,6 +138,14 @@ function archivos(dir) {
     return statSync(p).isDirectory() ? archivos(p) : /\.(rs|ts|tsx|js|mjs|swift|m|mm)$/.test(n) ? [p] : [];
   });
 }
+
+// Cada entrada de PROTEGIDOS tiene que existir: una carpeta que no está no se vigila, y la lista
+// diría lo contrario (auditoría del S3, B7).
+const fantasmas = PROTEGIDOS.filter((d) => !existsSync(d));
+for (const d of fantasmas) {
+  console.error(`✕ PROTEGIDOS nombra «${d}», que no existe: o se crea, o sale de la lista.`);
+}
+if (fantasmas.length) process.exit(1);
 
 let hallazgos = 0, inspeccionados = 0;
 for (const dir of PROTEGIDOS) {

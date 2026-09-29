@@ -302,3 +302,14 @@ sin archivo de notas, y la siguiente del mismo cliente y día tomaba su nombre y
 - **Tests:** `dos_reuniones_del_mismo_cliente_el_mismo_dia_no_se_pisan` (`reunion.rs`) y
   `dejar_no_pisa_una_bandeja_que_ya_existe` (`bandeja.rs`), los dos nacidos en rojo.
 
+## Enmienda 3 (2026-09-28) — la lista que lees sale del catálogo, y un test lo comprueba (auditoría del S3, M11)
+
+El §1 decía que lo que enseña la pantalla «sale del catálogo… (test)». No era así: la pantalla pinta
+`sonReglas`, una frase escrita a mano en el diccionario (que tiene que ser fiel a la maqueta);
+`catalogo::reglas()` no tenía llamador, y el único test comparaba los ids del catálogo con el `enum`.
+- Cada regla de `data/propuestas/reglas.json` lleva ahora `corto` (es/en): su trozo exacto de la frase.
+- `tests/unit/reglas-publicadas.test.ts` exige que `sonReglas`, en cada idioma, sea exactamente el prefijo
+  más los `corto` en el orden del catálogo, unidos con « · » y con punto final. Nació en rojo (sin
+  `corto`); si una regla se añade, se quita o se renombra sin la frase, es rojo.
+- `catalogo::reglas()` se borró: nadie la llamaba.
+

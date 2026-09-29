@@ -9,10 +9,8 @@
 //! «grabar o transcribir por cualquier medio», o puedes decidirlo tú. Siguen tus notas, fijar, `⌃⌥A`
 //! (que busca con la última línea de tu nota), el radar coral y `⌥⎋`.
 
-use serde::Serialize;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "kebab-case")]
+/// No cruza a la pantalla: el evento `modo` es una señal sin dato (auditoría del S3, B14).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Modo {
     Normal,
     SoloNotas,

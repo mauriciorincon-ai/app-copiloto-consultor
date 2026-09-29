@@ -134,8 +134,6 @@ export type ReunionGuardada = {
   vence: number;
 };
 
-/** Lo que devuelve «Guardar cifrado y cerrar»; `null` si no había nada tuyo. */
-export type Guardada = { archivo: string; bytes: number; vence: number };
 
 /**
  * Las reuniones guardadas (`reuniones_guardadas`). Dónde viven no viaja: siempre en la carpeta
@@ -330,9 +328,10 @@ export function conservarMisTurnos(si: boolean): Promise<boolean> {
   return llamar("conservar_mis_turnos", { si });
 }
 
-/** «Guardar cifrado y cerrar». Rechaza con el motivo si no se pudo: la nota se queda. */
-export function guardarLaReunion(): Promise<Guardada | null> {
-  return preguntar<Guardada | null>("guardar_la_reunion");
+/** «Guardar cifrado y cerrar». Rechaza con el motivo si no se pudo: la nota se queda. No devuelve lo
+ *  guardado: nadie lo leía (auditoría del S3, B13). */
+export function guardarLaReunion(): Promise<null> {
+  return preguntar<null>("guardar_la_reunion");
 }
 
 export function cerrarSinGuardar(): Promise<boolean> {

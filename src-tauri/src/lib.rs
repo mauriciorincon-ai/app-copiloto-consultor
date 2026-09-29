@@ -508,8 +508,8 @@ fn empezar_solo_notas(
     empezar(app, &estado, &el_corpus, modo::Modo::SoloNotas)
 }
 
-/// El nombre del evento con el que la banda y Sesión se enteran de que la reunión empezó o terminó, y
-/// en qué modo.
+/// El nombre del evento con el que la banda y Sesión se enteran de que la reunión empezó o terminó. Es
+/// una **señal** sin dato: el oyente vuelve a preguntar el estado (auditoría del S3, B14; casilla 5).
 const EVENTO_MODO: &str = "modo";
 
 fn empezar(
@@ -567,7 +567,7 @@ fn empezar(
     if !modo::abre_la_captura(modo) {
         parar_la_pantalla(&app);
         println!("[sesión] modo solo notas: ni pistas, ni transcripción, ni pantalla");
-        let _ = app.emit(EVENTO_MODO, modo);
+        let _ = app.emit(EVENTO_MODO, ());
         return Ok(escucha::EstadoDeEscucha::solo_notas());
     }
     let mango = app.clone();
@@ -649,7 +649,7 @@ fn empezar(
     );
     let informe = nueva.estado();
     *guardada = Some(nueva);
-    let _ = app.emit(EVENTO_MODO, modo);
+    let _ = app.emit(EVENTO_MODO, ());
     Ok(informe)
 }
 
@@ -2360,10 +2360,11 @@ fn conservar_mis_turnos(app: tauri::AppHandle, si: bool) {
     reunion::conservar_mis_turnos(&app, si);
 }
 
-/// «Guardar cifrado y cerrar».
+/// «Guardar cifrado y cerrar». No devuelve lo guardado: la pantalla no lo leía (auditoría del S3, B13;
+/// casilla 5). `carpeta::Guardada` sigue para la línea del log.
 #[tauri::command]
-fn guardar_la_reunion(app: tauri::AppHandle) -> Result<Option<carpeta::Guardada>, String> {
-    reunion::guardar(&app)
+fn guardar_la_reunion(app: tauri::AppHandle) -> Result<(), String> {
+    reunion::guardar(&app).map(|_| ())
 }
 
 /// «Cerrar sin guardar».

@@ -57,6 +57,16 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with: { workspaces: src-tauri }
+      # `cargo audit` (auditoria del S3, M12): la DoD de Seguridad lo pide y se corria a mano, una vez
+      # por sprint. Va PRIMERO: solo lee el Cargo.lock, asi que un aviso de RustSec falla en segundos,
+      # antes de compilar nada. Falla con vulnerabilidades; los avisos de «sin mantener» o «unsound»
+      # no bloquean (hoy son 9, anotados en la bitacora). Las subidas de Rust son a mano, sin
+      # dependabot de Cargo (decision del usuario, 2026-09-28): este paso es el que avisa.
+      - uses: taiki-e/install-action@v2
+        with: { tool: cargo-audit }
+      - name: cargo audit (vulnerabilidades conocidas de RustSec)
+        working-directory: src-tauri
+        run: cargo audit
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }
