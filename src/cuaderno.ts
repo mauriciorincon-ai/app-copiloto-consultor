@@ -96,7 +96,13 @@ const PERMISOS_DE_MUESTRA: Permisos = {
  * protegido» durante el primer instante de cada arranque —y para siempre si el comando fallaba—.
  * Datos de una consultora inventada dentro de la app de alguien. La familia del hallazgo A1.
  */
-function usePreguntaAlVolver<T>(comando: string, deMuestra: T, vacio: T): T {
+function usePreguntaAlVolver<T>(
+  comando: string,
+  deMuestra: T,
+  vacio: T,
+  /** Otra ocasión de volver a preguntar, además del foco: se suscribe y devuelve cómo darse de baja. */
+  tambienCuando?: (preguntarAhora: () => void) => () => void,
+): T {
   const [valor, setValor] = useState<T>(() => (hayTauri() ? vacio : deMuestra));
   useEffect(() => {
     if (!hayTauri()) return;
@@ -108,12 +114,27 @@ function usePreguntaAlVolver<T>(comando: string, deMuestra: T, vacio: T): T {
     };
     preguntarAhora();
     globalThis.addEventListener("focus", preguntarAhora);
+    const baja = tambienCuando?.(preguntarAhora);
     return () => {
       vivo = false;
       globalThis.removeEventListener("focus", preguntarAhora);
+      baja?.();
     };
-  }, [comando]);
+    // `tambienCuando` es una función de módulo en quien la usa: no cambia entre renders.
+  }, [comando, tambienCuando]);
   return valor;
+}
+
+/**
+ * **La reunión se vuelve a preguntar al empezar una sesión** (casilla 6 del S3). La banda no recibe
+ * el foco —está encima de la reunión y no se toca—, así que si la app se abrió antes de la llamada
+ * se quedaba en «sin reunión» toda la sesión, sin decir «Zoom · sin verificar» cuando tocaba. No
+ * hay nada vigilando las ventanas en segundo plano (ADR 005): se pregunta cuando abre una pista.
+ */
+function alEmpezarLaSesion(preguntarAhora: () => void): () => void {
+  return escuchar<{ que?: string }>("escucha", (n) => {
+    if (n?.que === "empieza") preguntarAhora();
+  });
 }
 
 export function useReunion(): Reunion {
@@ -124,6 +145,7 @@ export function useReunion(): Reunion {
     {
       que: "ninguna",
     },
+    alEmpezarLaSesion,
   );
 }
 
@@ -220,6 +242,8 @@ export type EstadoDePista = {
 
 export type EstadoDeEscucha = {
   escuchando: boolean;
+  /** La reunión va en modo solo notas (ADR 017 §5): hay reunión y nada se captura. */
+  soloNotas: boolean;
   microfono: EstadoDePista;
   sistema: EstadoDePista;
   // `turnosEnMemoria` salió por la misma decisión: Honestidad cuenta el transcript por sus bytes.
@@ -248,6 +272,10 @@ export type PiezaDelCorte =
   | "audio-del-sistema"
   | "ultimo-frame"
   | "transcript"
+  /** Del cuaderno, lo que salió de la captura: tus turnos y la ficha vigente (sprint 003, ADR 015). */
+  | "tus-turnos"
+  /** Las propuestas sin decidir (sprint 003, ADR 016 §4): salen de los turnos. */
+  | "propuestas"
   | "contador-de-red"
   | "banda"
   | "acople";
@@ -286,6 +314,7 @@ export type QueSabeTranscribir = {
  */
 const ESCUCHA_DE_MUESTRA: EstadoDeEscucha = {
   escuchando: true,
+  soloNotas: false,
   microfono: {
     abierta: true,
     motivo: null,
@@ -342,7 +371,8 @@ export function useEscucha(): EstadoDeEscucha {
       );
     };
     leer();
-    const bajas = [escuchar("escucha", leer), escuchar("corte", leer)];
+    // «modo»: empezó o terminó una reunión, normal o solo notas (ADR 017 §5).
+    const bajas = [escuchar("escucha", leer), escuchar("corte", leer), escuchar("modo", leer)];
     globalThis.addEventListener("focus", leer);
     return () => {
       vivo = false;
@@ -356,6 +386,7 @@ export function useEscucha(): EstadoDeEscucha {
 /** Nadie está escuchando: ni pistas abiertas ni bytes. No es un error, es el estado de reposo. */
 const APAGADA: EstadoDeEscucha = {
   escuchando: false,
+  soloNotas: false,
   microfono: {
     abierta: false,
     motivo: null,
@@ -553,25 +584,46 @@ export function useQueSabeTranscribir(): QueSabeTranscribir {
  * un valor que dos pantallas copian por su cuenta un día dice dos cosas distintas. Hasta la
  * auditoría del S2 eran dos constantes, y la del cliente era `en-US` sin forma de cambiarla: con un
  * cliente que habla español no llegaba un solo turno útil (A4). Nacen las dos en español —el corpus y
- * los clientes del usuario lo son— y **viven en memoria**: al cerrar la app vuelven a español, como
- * los interruptores de IA (declarado en el manual).
+ * los clientes del usuario lo son— y **se recuerdan** (sprint 003, ADR 002 enmienda 2): Rust las
+ * guarda en `preferencias.json` y el cuaderno las pide al abrirse.
  */
 export type IdiomasDePista = { consultor: string; cliente: string };
 let idiomasDePista: IdiomasDePista = { consultor: "es-ES", cliente: "es-ES" };
 const oyentesDeIdioma = new Set<() => void>();
+/** Se piden a Rust una vez, al primer lector; si el usuario elige antes de que lleguen, manda él. */
+let pedidos = false;
+let elegidoAntes = false;
+
+function avisarDelIdioma() {
+  oyentesDeIdioma.forEach((f) => f());
+}
+
+function pedirLosGuardados() {
+  if (pedidos || !hayTauri()) return;
+  pedidos = true;
+  void preguntar<IdiomasDePista>("idiomas_de_pista").then((guardados) => {
+    if (!guardados || elegidoAntes) return;
+    idiomasDePista = guardados;
+    avisarDelIdioma();
+  });
+}
 
 export function idiomasDeLasPistas(): IdiomasDePista {
   return idiomasDePista;
 }
 
+/** Elige el idioma de una pista: se ve ya y Rust lo guarda para la próxima vez. */
 export function fijarIdiomaDePista(pista: keyof IdiomasDePista, codigo: string) {
+  elegidoAntes = true;
   idiomasDePista = { ...idiomasDePista, [pista]: codigo };
-  oyentesDeIdioma.forEach((f) => f());
+  avisarDelIdioma();
+  void llamar("fijar_idioma_de_pista", { pista, idioma: codigo });
 }
 
 export function useIdiomasDePista(): IdiomasDePista {
   return useSyncExternalStore(
     (f) => {
+      pedirLosGuardados();
       oyentesDeIdioma.add(f);
       return () => oyentesDeIdioma.delete(f);
     },
@@ -636,11 +688,16 @@ export const CORPUS_VACIO: EstadoDelCorpus = {
   bytesDelIndice: 0,
 };
 
+/** El corpus cambió: indexaste, o el arranque volvió a leer la carpeta que recordabas (auditoría del
+ *  S3, B29). Función de módulo para que `usePreguntaAlVolver` no se vuelva a suscribir en cada render. */
+const alCambiarElCorpus = (preguntarAhora: () => void) => escuchar("corpus", preguntarAhora);
+
 export function useCorpus(): EstadoDelCorpus {
   return usePreguntaAlVolver<EstadoDelCorpus>(
     "estado_del_corpus",
     CORPUS_DE_MUESTRA,
     CORPUS_VACIO,
+    alCambiarElCorpus,
   );
 }
 
@@ -654,11 +711,13 @@ export async function indexarCorpus(): Promise<void> {
   await preguntar("indexar_corpus", { carpeta });
 }
 
-export function empezarAEscuchar(
-  idiomaDelConsultor: string,
-  idiomaDelCliente: string,
-) {
-  void llamar("empezar_a_escuchar", { idiomaDelConsultor, idiomaDelCliente });
+/**
+ * «Iniciar sesión». **Sin idiomas:** Rust los lee de sus preferencias, que son la única fuente. Hasta
+ * la fase 0 del S3 se mandaban desde la caché de este módulo, y después de reiniciar valían los de
+ * fábrica si el usuario no había abierto antes Idioma (casilla 6 del S3).
+ */
+export function empezarAEscuchar() {
+  void llamar("empezar_a_escuchar");
 }
 
 export function dejarDeEscuchar() {

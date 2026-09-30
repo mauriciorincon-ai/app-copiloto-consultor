@@ -36,10 +36,15 @@ impl Boveda {
         Self { conocidos: c, pares: Vec::new() }
     }
 
-    /// Cuántas cosas se taparon. Hoy solo lo leen los tests: la pantalla IA no lo enseña (ADR 011,
-    /// punto 4).
+    /// Cuántas cosas se taparon. Desde el sprint 003 viaja con cada petición en
+    /// `api::LoQueSalio::tapadas`, que es lo que la pantalla IA pide (auditoría del S2, B37).
     pub fn tapadas(&self) -> usize {
         self.pares.len()
+    }
+
+    /// Lo que un marcador tapó, para enseñarlo **en el Mac** al lado de lo que salió.
+    pub fn original_de(&self, marcador: &str) -> Option<&str> {
+        self.pares.iter().find(|(m, _)| m == marcador).map(|(_, o)| o.as_str())
     }
 
     fn marcador(&mut self, clase: &str, original: &str) -> String {

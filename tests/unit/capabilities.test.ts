@@ -63,7 +63,7 @@ function loQueLlamaLaBanda(): string[] {
   const salida = new Set<string>();
   const imports = [
     ...(banda + app).matchAll(
-      /import\s*\{([^}]*)\}\s*from\s*"\.\.?\/(cuaderno|ficha|turnos|asa|radar|acople|ia)"/g,
+      /import\s*\{([^}]*)\}\s*from\s*"\.\.?\/(cuaderno|ficha|turnos|asa|radar|acople|ia|notas)"/g,
     ),
   ];
   for (const [, nombres, modulo] of imports) {
@@ -105,6 +105,9 @@ describe("cada ventana puede solo lo suyo", () => {
       "radar",
       "acople",
       "ia",
+      "notas",
+      "jurisdiccion",
+      "puerta",
       "componentes/Relleno",
     ]
       .map((m) =>

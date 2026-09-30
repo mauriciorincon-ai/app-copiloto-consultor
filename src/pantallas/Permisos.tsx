@@ -122,18 +122,18 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
         </div>
 
         <div className="grid-2">
-          {/* «Qué puedes hacer ya, sin conceder nada» — hoy UNA de las tres: indexar tu corpus.
-              Buscar a mano necesita el audio del sistema (⌃⌥A busca sobre lo último que dijo el
-              cliente; auditoría del S2, B19) y las notas llegan en el sprint 3. La tarjeta no es
-              pendiente entera porque una fila sí funciona: marcarla toda «todavía no» escondería
-              lo que la app hace sin permisos (M11 del S1). */}
+          {/* «Qué puedes hacer ya, sin conceder nada» — hoy DOS de las tres: indexar tu corpus y
+              escribir notas y acuerdos («Solo notas», en Sesión, no abre ninguna captura; auditoría
+              del S3, M7). Buscar a mano necesita el audio del sistema (⌃⌥A busca sobre lo último que
+              dijo el cliente; auditoría del S2, B19). La tarjeta no es pendiente entera: marcarla
+              toda «todavía no» escondería lo que la app hace sin permisos (M11 del S1). */}
           <div className="tarjeta">
             <h2 className="seccion">{t.sinConcederNada}</h2>
             <Fila icono="i-doc" texto={t.indexar}>
               <Funciona />
             </Fila>
-            <Fila icono="i-nota" texto={t.escribirNotas} pendiente>
-              <TodaviaNo />
+            <Fila icono="i-nota" texto={t.escribirNotas}>
+              <Funciona />
             </Fila>
             {/* Buscar a mano, sin conceder nada, **todavía no existe**: `⌃⌥A` busca sobre lo último
                 que dijo el cliente, y para eso hace falta el audio del sistema. Decía «Funciona»

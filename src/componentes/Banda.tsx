@@ -16,6 +16,8 @@ import {
 } from "../cuaderno";
 import type { Sugerencia } from "../ia";
 import { abrirLoQueVe, type Programa } from "../radar";
+import { irANotas, useFijada, useLineaDePropuesta, type Propuesta } from "../notas";
+import { textoDe } from "../propuesta";
 
 /**
  * LA BANDA — la forma principal de Angel Ghost durante una reunión.
@@ -59,7 +61,16 @@ export type EstadoBanda =
    * lo decide la sugerencia que llegó —y quién la redactó—; fuera, la URL.
    */
   | "sugerencia-local"
-  | "sugerencia-api";
+  | "sugerencia-api"
+  /**
+   * Las propuestas (sprint 003, mirada 20): la ficha con la línea pasiva «Te propongo guardar» arriba,
+   * y la ficha fijada con ⌃⌥P. Dentro de Tauri los deciden los eventos `propuesta` y `fijada`; fuera,
+   * la URL, para el arnés de capturas.
+   */
+  | "ficha-propuesta"
+  | "ficha-fijada"
+  /** La reunión en modo solo notas (sprint 003, fase 3, ADR 017 §5): la banda en reposo, sin escucha. */
+  | "solo-notas";
 
 export type PropsBanda = {
   estado: EstadoBanda;
@@ -68,7 +79,8 @@ export type PropsBanda = {
   /**
    * El transcript en vivo (⌃⌥T), oculto por defecto. Vive en la columna derecha y por eso
    * **solo existe en la banda ampliada**: en 88 px no caben tres turnos. Encenderlo desde la
-   * banda compacta la amplía, que es lo mismo que haría el asa.
+   * banda compacta la amplía, que es lo mismo que haría el asa (`useAltoDelTranscript`). Y se
+   * pinta junto a una FICHA: es su columna derecha, como en `banda.html`.
    */
   transcript?: boolean;
   /**
@@ -92,6 +104,7 @@ export function Banda({
 }: PropsBanda) {
   const t = useT().banda;
   const tc = useT().cuaderno;
+  const tn = useT().notas;
   const idioma = useIdioma();
   const m = t.muestra;
   const grande = ampliada || transcript;
@@ -121,8 +134,8 @@ export function Banda({
 
   // **Dentro del producto el estado de contenido lo decide la ficha, no la URL.** Tener las dos
   // cosas mandando a la vez fue un defecto real: la banda pedía «sin resultado» y la ficha traía
-  // una ficha, así que no se pintaba nada. `sin-verificar` es la excepción y no es capricho: lo
-  // decide la protección de la ventana, que no tiene nada que ver con el corpus.
+  // una ficha, así que no se pintaba nada. `sin-verificar` es la excepción: hoy **solo existe en la
+  // maqueta** y se llega a él por la URL; nada del producto lo pide todavía (auditoría del S3, M7).
   const pedido: EstadoBanda = !hayTauri()
     ? estado
     : estado === "sin-verificar"
@@ -149,7 +162,21 @@ export function Banda({
   // La ficha del PDF y la de la pantalla SON fichas: lo que cambia es su línea de «por qué», y eso
   // lo dice la aparición. Se dibujan con la misma rama.
   const estadoReal: EstadoBanda =
-    pedido === "ficha-pdf" || pedido === "ficha-pantalla" ? "ficha" : pedido;
+    pedido === "ficha-pdf" || pedido === "ficha-pantalla" || pedido === "ficha-propuesta" || pedido === "ficha-fijada"
+      ? "ficha"
+      : pedido === "solo-notas"
+        ? "esperando"
+        : pedido;
+  // **Solo notas** (ADR 017 §5): nada escucha, y la banda lo dice. Dentro de Tauri lo decide Rust;
+  // fuera, la URL.
+  const soloNotas = deLaMaqueta ? estado === "solo-notas" : escucha.soloNotas;
+  // La propuesta de la maqueta: la tuya, la del plan («Fecha real del tablero…»).
+  const propuestaDeMuestra: Propuesta | null =
+    deLaMaqueta && estado === "ficha-propuesta"
+      ? { regla: "cifra", de: "tuyo", texto: tn.muestra.propuestaTuya, ficha: null, seccion: null, hora: "14:16" }
+      : null;
+  const propuesta = useLineaDePropuesta(propuestaDeMuestra);
+  const fijada = useFijada(aparicion, deLaMaqueta && estado === "ficha-fijada");
   // Los turnos se piden SIEMPRE, no solo con el transcript abierto: el hueco entre abrirlo y
   // recibir la primera respuesta se vería como un transcript vacío, y un transcript vacío en una
   // reunión con gente hablando parece una avería.
@@ -266,10 +293,17 @@ export function Banda({
 
   const atajosDeFicha = (
     <span className="atajos-b">
-      <span className="tecla pendiente">
-        <kbd>⌃⌥P</kbd> {t.fijar}
-        <span className="sr"> · {tc.todaviaNo}</span>
-      </span>
+      {/* ⌃⌥P fijó esta ficha: donde estaba la tecla, «fijada» con la chincheta llena (mirada 20). */}
+      {fijada ? (
+        <span className="tecla fijada">
+          <Ic id="i-pin-lleno" s relleno />
+          {t.fijada}
+        </span>
+      ) : (
+        <span className="tecla">
+          <kbd>⌃⌥P</kbd> {t.fijar}
+        </span>
+      )}
       <span className="tecla">
         <kbd>⌃⌥T</kbd> {t.transcript}
       </span>
@@ -358,7 +392,7 @@ export function Banda({
       data-estado={estadoReal}
     >
       {/* El asa ajusta la banda Y su relleno a la vez; el arrastre lo resuelve Rust. */}
-      <span className="asa" ref={asa} title="arrastra para ajustar las dos a la vez">
+      <span className="asa" ref={asa} title={t.asaAjustar}>
         <i />
       </span>
 
@@ -366,7 +400,13 @@ export function Banda({
         {/* «Escuchando» solo cuando se está escuchando de verdad, y con las pistas que de verdad
             se abrieron. Antes lo decía siempre — también durante la media hora en que la banda
             está abierta y el usuario todavía no ha pulsado «Iniciar sesión». */}
-        {(deLaMaqueta || escucha.escuchando) && (
+        {soloNotas && (
+          <span className="marca-min warn">
+            <Ic id="i-nota" s />
+            {t.soloNotasCab}
+          </span>
+        )}
+        {!soloNotas && (deLaMaqueta || escucha.escuchando) && (
           <span className="marca-min">
             <Ic id="i-check-circle" s relleno />
             {deLaMaqueta
@@ -384,6 +424,22 @@ export function Banda({
 
         {chipDelCliente()}
 
+        {/* La propuesta, pasiva y en una línea (mirada 20): no toca la ficha, no suena y no se lee en
+            voz alta. Tuya, tu frase entre comillas; del cliente, el hecho que dejó. */}
+        {propuesta && (
+          <span className="propuesta-b">
+            <Ic id="i-chispa" s />
+            <span className="que-b">
+              {`${t.tePropongoGuardar} ${
+                propuesta.de === "tuyo" ? entreComillas(propuesta.texto.replace(/[.。]$/, "")) : textoDe(propuesta, tn)
+              }`}
+            </span>
+            <span className="tecla">
+              <kbd>⌃⌥↵</kbd>
+            </span>
+          </span>
+        )}
+
         {/* Con el API encendido por el usuario deja de ser cero, y va en el acento, no en rojo: fue
             su decisión (panel, mirada 1; banda, mirada 18). */}
         <span className={bytes === RED ? "red cero mono" : "red api mono"}>
@@ -396,7 +452,7 @@ export function Banda({
         {estadoReal === "esperando" && (
           <>
             <span className="ficha-b">
-              <span className="voz-b">{t.esperando}</span>
+              <span className="voz-b">{soloNotas ? t.esperandoSoloNotas : t.esperando}</span>
               {/* El corpus se compone con los números que el índice tiene, no con los de la
                   maqueta. Con los datos de muestra sale la misma línea que `banda.html` dibuja —
                   143 documentos y cinco unidades—, así que el encuadre del gate no se mueve. */}
@@ -481,9 +537,8 @@ export function Banda({
                 </span>
                 {fuenteDe(sugerencia.ficha.fuente)}
                 <span className="atajos-b">
-                  <span className="tecla pendiente">
+                  <span className="tecla">
                     <kbd>⌃⌥P</kbd> {t.fijar}
-                    <span className="sr"> · {tc.todaviaNo}</span>
                   </span>
                   <span className="tecla">
                     <kbd>⌥⎋</kbd>
@@ -638,9 +693,8 @@ export function Banda({
               {transcript && <Transcript turnos={turnos} />}
               {transcript ? (
                 <span className="atajos-b">
-                  <span className="tecla pendiente">
+                  <span className="tecla">
                     <kbd>⌃⌥P</kbd> {t.fijar}
-                    <span className="sr"> · {tc.todaviaNo}</span>
                   </span>
                   <span className="tecla">
                     <kbd>⌥⎋</kbd>
@@ -701,8 +755,9 @@ export function Banda({
                       <Ic id="i-buscar" s />
                       {t.buscarOtras} <kbd className="tecla">⌃⌥A</kbd>
                     </button>
-                    {/* Anotar llega con las notas (sprint 003): se ve, y se ve apagado. */}
-                    <button className="btn mini" type="button" disabled title={tc.todaviaNo}>
+                    {/* Lo mismo que ⌃⌥N: el cuaderno al frente, en tu nota, para escribirlo con tus
+                        palabras. La pregunta del cliente NO se copia: es su transcript (regla dura 1). */}
+                    <button className="btn mini" type="button" onClick={irANotas}>
                       <Ic id="i-nota" s />
                       {t.anotarDespues} <kbd className="tecla">⌃⌥N</kbd>
                     </button>
@@ -729,9 +784,8 @@ export function Banda({
                     <span className="tecla">
                       <kbd>⌃⌥A</kbd> {t.otrasPalabras}
                     </span>
-                    <span className="tecla pendiente">
+                    <span className="tecla">
                       <kbd>⌃⌥N</kbd> {t.anotar}
-                      <span className="sr"> · {tc.todaviaNo}</span>
                     </span>
                     <span className="tecla">
                       <kbd>⌥⎋</kbd>
@@ -773,13 +827,15 @@ export function Banda({
               {grande ? (
                 <>
                   <span className="acciones-b">
-                    {/* Ni marcar un cliente como verificado ni el modo solo notas existen todavía:
-                        apagados en vez de botones que no hacen nada (auditoría del S2, M12). */}
+                    {/* Estos dos botones son del estado «sin verificar», que hoy **solo existe en la
+                        maqueta** (se llega por la URL). Marcar un cliente como verificado no existe
+                        todavía; «Solo notas» sí, pero se elige en Sesión antes de empezar, y la banda
+                        no tiene ese comando (auditoría del S3, M7). Apagados, con su porqué. */}
                     <button className="btn mini" type="button" disabled title={tc.todaviaNo}>
                       <Ic id="i-check-circle" s relleno />
                       {t.yaVerifique}
                     </button>
-                    <button className="btn mini" type="button" disabled title={tc.todaviaNo}>
+                    <button className="btn mini" type="button" disabled title={tc.soloNotasEnSesion}>
                       <Ic id="i-nota" s />
                       {t.soloNotas}
                     </button>
@@ -881,7 +937,7 @@ function BandaDeVoz({
       {/* El asa sigue siendo la misma y sigue haciendo lo mismo: arrastrarla saca del modo,
           porque el alto ES el modo. No hace falta una tecla distinta para lo que ya se hace
           tirando de la banda. */}
-      <span className="asa" ref={asa} title="arrastra para volver a la banda de 88 px">
+      <span className="asa" ref={asa} title={t.asaVolver}>
         <i />
       </span>
 

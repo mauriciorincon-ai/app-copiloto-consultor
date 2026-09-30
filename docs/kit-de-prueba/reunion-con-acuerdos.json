@@ -1,0 +1,134 @@
+{
+  "version": 1,
+  "comentario": "Kit de las PROPUESTAS, sprint 003 (ADR 016). Una reunión inventada con Páramo Azul, turno a turno y EN ORDEN, cada uno con lo que las reglas publicadas de data/propuestas/reglas.json deben proponer: la regla y de quién. Datos 100 % sintéticos. Se pasan todos por `propuestas::proponer` con el corpus del kit indexado (la regla «nombre» pregunta si tu corpus conoce el nombre) y con una ficha fijada (la regla «choque» la compara). La app NO transcribe nada aquí: el camino del audio al texto lo mide `una_frase_por_los_altavoces_acaba_siendo_texto`, con el Mac de verdad. Además de acertar, el kit exige lo que el ADR 016 §2 promete: del cliente, JAMÁS el turno —un fragmento de como mucho ocho palabras, o de una pregunta solo sus palabras clave— y cada turno resuelto muy por debajo del segundo.",
+  "fijadas": [
+    {
+      "titular": "Tarifa cerrada de cuatro semanas",
+      "linea": "Incluye el taller de cierre y dos rondas de revisión.",
+      "seccion": "Precio"
+    }
+  ],
+  "turnos": [
+    {
+      "dice": "Buenos días, gracias por hacer el espacio.",
+      "pista": "sistema",
+      "espera": [],
+      "porque": "cortesía: ni cifra, ni nombre, ni pregunta"
+    },
+    {
+      "dice": "Buenos días, empezamos cuando quieras.",
+      "pista": "microfono",
+      "espera": [],
+      "porque": "cortesía tuya: ningún compromiso del catálogo"
+    },
+    {
+      "dice": "¿Cuánto tiempo toma la entrega completa?",
+      "pista": "sistema",
+      "espera": [{ "regla": "pregunta", "de": "cliente" }],
+      "porque": "pregunta del cliente: se guardan sus palabras clave, no la pregunta"
+    },
+    {
+      "dice": "Son cuatro semanas desde la firma del contrato.",
+      "pista": "microfono",
+      "espera": [{ "regla": "cifra", "de": "tuyo" }],
+      "porque": "un plazo con su unidad; coincide con la ficha fijada, así que no hay choque"
+    },
+    {
+      "dice": "Entendimos que eran tres rondas de revisión.",
+      "pista": "sistema",
+      "espera": [{ "regla": "choque", "de": "cliente" }],
+      "porque": "la ficha fijada dice dos rondas: el cliente dice tres"
+    },
+    {
+      "dice": "Te lo mando el viernes con el detalle de las rondas.",
+      "pista": "microfono",
+      "espera": [{ "regla": "compromiso", "de": "tuyo" }],
+      "porque": "«te lo mando» es un compromiso tuyo; la fecha cae en la misma frase y no se propone dos veces"
+    },
+    {
+      "dice": "El presupuesto aprobado es de USD 40.000 para este trimestre.",
+      "pista": "sistema",
+      "espera": [{ "regla": "cifra", "de": "cliente" }],
+      "porque": "una cifra con su moneda: del cliente se guarda «USD 40.000», no el turno"
+    },
+    {
+      "dice": "Lo revisamos con Laura Méndez de compras.",
+      "pista": "sistema",
+      "espera": [{ "regla": "nombre", "de": "cliente" }],
+      "porque": "un nombre propio que tu corpus no tiene"
+    },
+    {
+      "dice": "Perfecto, quedamos en una llamada con ella la próxima semana.",
+      "pista": "microfono",
+      "espera": [{ "regla": "compromiso", "de": "tuyo" }],
+      "porque": "«quedamos en»; la fecha va en la misma frase"
+    },
+    {
+      "dice": "¿Y el taller de cierre va aparte?",
+      "pista": "microfono",
+      "eco": true,
+      "espera": [{ "regla": "pregunta", "de": "cliente" }],
+      "porque": "entró por tu micrófono pero es eco: es la voz del cliente saliendo por tus altavoces"
+    },
+    {
+      "dice": "Páramo Azul ya tiene el tablero de margen del piloto.",
+      "pista": "microfono",
+      "espera": [],
+      "porque": "«Páramo Azul» es un nombre que tu corpus SÍ conoce: no se propone"
+    },
+    {
+      "dice": "La entrega queda para el 15 de octubre.",
+      "pista": "microfono",
+      "espera": [{ "regla": "cifra", "de": "tuyo" }],
+      "porque": "una fecha: el día del mes"
+    },
+    {
+      "dice": "Y para que quede claro, el comité aprobó ayer un recorte del 15 % en el presupuesto de todos los proyectos de datos del año.",
+      "pista": "sistema",
+      "espera": [{ "regla": "cifra", "de": "cliente" }],
+      "porque": "un turno largo del cliente: se guarda la cifra con su unidad, jamás el turno"
+    },
+    {
+      "dice": "Quedamos en eso, te lo mando firmado.",
+      "pista": "sistema",
+      "espera": [],
+      "porque": "el compromiso es del CLIENTE: la regla de compromisos solo mira los tuyos"
+    },
+    {
+      "dice": "When can we see the first draft?",
+      "pista": "sistema",
+      "espera": [{ "regla": "pregunta", "de": "cliente" }],
+      "porque": "pregunta en inglés"
+    },
+    {
+      "dice": "I'll send the revised scope tomorrow.",
+      "pista": "microfono",
+      "espera": [{ "regla": "compromiso", "de": "tuyo" }],
+      "porque": "compromiso tuyo en inglés; la fecha va en la misma frase"
+    },
+    {
+      "dice": "We'll need the dashboard by October 15.",
+      "pista": "sistema",
+      "espera": [{ "regla": "cifra", "de": "cliente" }],
+      "porque": "una fecha en inglés, el mes delante"
+    },
+    {
+      "dice": "Margin is around 30 percent in the direct channel.",
+      "pista": "sistema",
+      "espera": [{ "regla": "cifra", "de": "cliente" }],
+      "porque": "un porcentaje en inglés"
+    },
+    {
+      "dice": "¿Les parece bien si arrancamos el lunes?",
+      "pista": "microfono",
+      "espera": [{ "regla": "cifra", "de": "tuyo" }],
+      "porque": "tu propia pregunta no se propone como pregunta (esa regla es del cliente); la fecha sí"
+    },
+    {
+      "dice": "Nos vemos, gracias.",
+      "pista": "sistema",
+      "espera": [],
+      "porque": "despedida"
+    }
+  ]
+}

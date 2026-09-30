@@ -12,6 +12,7 @@
 //! Se llena en la fase 4 del sprint 001 (ingesta → chunking por sección → BM25 con tantivy).
 
 pub mod consulta;
+pub mod evaluar;
 pub mod indice;
 pub mod leer;
 pub mod seccion;
@@ -79,6 +80,10 @@ pub struct Documento {
     pub conjeturado: bool,
     #[serde(flatten)]
     pub estado: Estado,
+    /// **La línea «Jurisdicción:» de una ficha de cliente** (ADR 017 §2), tal como la escribiste. Solo
+    /// en memoria y solo para las fichas de cliente: no viaja a la pantalla del corpus ni al índice.
+    #[serde(skip)]
+    pub jurisdiccion: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -181,6 +186,7 @@ impl Corpus {
                         unidad: None,
                         conjeturado: false,
                         estado: Estado::SinLeer { motivo: e.motivo() },
+                        jurisdiccion: None,
                     },
                     Vec::new(),
                 )
@@ -190,6 +196,11 @@ impl Corpus {
         let secciones = seccion::trocear(&leido.lineas);
         let plano: String = secciones.iter().map(|s| s.texto.as_str()).collect::<Vec<_>>().join(" ");
         let unidad = Unidad::clasificar(&nombre, &plano);
+        let jurisdiccion = if unidad == Some(Unidad::Cliente) {
+            leido.lineas.iter().find_map(|l| crate::jurisdiccion::de_la_linea(&l.texto))
+        } else {
+            None
+        };
 
         let titulos: Vec<String> = secciones.iter().filter_map(|s| s.titulo.clone()).collect();
         match self.indice.meter(&como_texto, &nombre, unidad, leido.conjeturado, &secciones) {
@@ -200,6 +211,7 @@ impl Corpus {
                     unidad,
                     conjeturado: leido.conjeturado,
                     estado: Estado::Indexado { secciones: n },
+                    jurisdiccion,
                 },
                 titulos,
             ),
@@ -210,6 +222,7 @@ impl Corpus {
                     unidad,
                     conjeturado: leido.conjeturado,
                     estado: Estado::SinLeer { motivo: format!("no se pudo indexar: {e}") },
+                    jurisdiccion,
                 },
                 Vec::new(),
             ),
@@ -227,6 +240,13 @@ impl Corpus {
         &self.vocabulario
     }
 
+    /// ¿Está este nombre en tu corpus? En el nombre de un documento o en su texto (ADR 016, regla
+    /// `nombre`).
+    pub fn conoce(&self, nombre: &str) -> bool {
+        let buscado = crate::propuestas::plegar(nombre);
+        self.documentos.iter().any(|d| crate::propuestas::plegar(&d.nombre).contains(&buscado)) || self.indice.conoce(nombre)
+    }
+
     pub fn buscar(&self, texto: &str, cuantos: usize) -> Result<Vec<Hallazgo>, String> {
         self.indice.buscar(texto, cuantos)
     }
@@ -239,6 +259,16 @@ impl Corpus {
         cuantos: usize,
     ) -> Result<Vec<Hallazgo>, String> {
         self.indice.buscar_con_pantalla(texto, pantalla, cuantos)
+    }
+
+    /// Lo que dice la línea «Jurisdicción:» de la ficha de `cliente` (su nombre, como lo da
+    /// [`clientes`]). `None` si no hay ficha con ese nombre o no lo dice.
+    pub fn jurisdiccion_de(&self, cliente: &str) -> Option<&str> {
+        self.documentos
+            .iter()
+            .filter(|d| d.unidad == Some(Unidad::Cliente))
+            .find(|d| cliente_de(&d.nombre) == cliente)
+            .and_then(|d| d.jurisdiccion.as_deref())
     }
 
     pub fn documentos(&self) -> &[Documento] {
@@ -349,6 +379,39 @@ mod pruebas {
         // Oculto: tampoco.
         std::fs::write(c.join(".sincroniza.md"), "# Nada\nnada de nada aquí dentro nunca.\n").unwrap();
         c
+    }
+
+    /// **La jurisdicción sale de la ficha del cliente, y de nada más** (ADR 017 §2). ¿Puede fallar?
+    /// Sí: sin mirar la unidad, la propuesta que dice «Jurisdicción: Chile» le pondría bandera a un
+    /// documento que no es un cliente (rojo en la bitácora).
+    #[test]
+    fn la_jurisdiccion_sale_de_la_ficha_del_cliente_y_de_nada_mas() {
+        let c = std::env::temp_dir().join(format!("ag-corpus-{}-jurisdiccion", std::process::id()));
+        let _ = std::fs::remove_dir_all(&c);
+        std::fs::create_dir_all(&c).unwrap();
+        std::fs::write(
+            c.join("Ficha de cliente · Páramo Azul.md"),
+            "# Quiénes son\nDistribuidora familiar de alimento para ganado, ciento veinte empleados.\nJurisdicción: Colombia\n\n# Quién decide\nLa gerente general firma.\n",
+        )
+        .unwrap();
+        std::fs::write(
+            c.join("Ficha de cliente · Sur del Valle.md"),
+            "# Quiénes son\nCooperativa lechera de tres municipios del valle, con planta propia.\n",
+        )
+        .unwrap();
+        std::fs::write(
+            c.join("Propuesta Páramo Azul.md"),
+            "# Alcance\nTres canales y una línea base de doce meses de histórico.\nJurisdicción: Chile\n",
+        )
+        .unwrap();
+        let mut corpus = Corpus::en_memoria().unwrap();
+        corpus.indexar(&c, &|_| {}).unwrap();
+        assert_eq!(corpus.jurisdiccion_de("Páramo Azul"), Some("Colombia"));
+        assert_eq!(corpus.jurisdiccion_de("Sur del Valle"), None, "una ficha sin la línea no tiene jurisdicción");
+        let otros: Vec<_> = corpus.documentos().iter().filter(|d| d.unidad != Some(Unidad::Cliente)).collect();
+        assert!(!otros.is_empty(), "la propuesta no se indexó: el caso no midió nada");
+        assert!(otros.iter().all(|d| d.jurisdiccion.is_none()), "un documento que no es de un cliente tiene jurisdicción");
+        let _ = std::fs::remove_dir_all(&c);
     }
 
     #[test]

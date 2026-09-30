@@ -38,6 +38,40 @@ const COMANDOS: &[&str] = &[
         "api_externa",
         "guardar_clave_del_api",
         "borrar_clave_del_api",
+        "idiomas_de_pista",
+        "fijar_idioma_de_pista",
+        "lo_que_salio_al_api",
+        "cuaderno_de_la_reunion",
+        "escribir_nota",
+        "anotar_acuerdo",
+        "conservar_mis_turnos",
+        "guardar_la_reunion",
+        "cerrar_sin_guardar",
+        "reuniones_guardadas",
+        "exportar_reunion",
+        "borrar_reunion",
+        "fijar_retencion",
+        "mostrar_las_notas_en_finder",
+        "este_cliente",
+        "elegir_cliente",
+        "responder_nda",
+        "revisar_nda",
+        "empezar_solo_notas",
+        "ir_a_notas",
+        // Sprint 003, fase 2: las propuestas y la bandeja (ADR 016). Solo la ventana principal.
+        "guardar_propuesta",
+        "descartar_propuesta",
+        "fijar_ventana",
+        "la_bandeja",
+        "abrir_la_bandeja",
+        "decidir_en_la_bandeja",
+        "decidir_toda_la_bandeja",
+        "cambiar_la_ventana",
+        "estado_de_la_bandeja",
+        // Sprint 003, fase 4: la puerta local para tu agente (ADR 018 §7). Solo la ventana principal.
+        "la_puerta",
+        "abrir_la_puerta",
+        "cerrar_la_puerta",
 ];
 
 fn main() {
@@ -64,6 +98,10 @@ const EL_PUENTE: &[&str] = &[
     "nativo/Sintesis.swift",
     "nativo/Red.swift",
     "nativo/Llavero.swift",
+    // El desbloqueo de las notas guardadas (sprint 003, fase 1, ADR 015 §5).
+    "nativo/Desbloqueo.swift",
+    // La bandeja, fuera de las copias de Time Machine (auditoría del S3, M2; ADR 016, enmienda 2).
+    "nativo/Copias.swift",
 ];
 
 /// Compila el puente de Swift y lo deja listo para enlazar dentro del binario.
@@ -115,6 +153,8 @@ fn compilar_el_puente_de_swift() {
             // La síntesis (C7, sprint 002, fase 5): el modelo del sistema.
             println!("cargo:rustc-link-lib=framework=FoundationModels");
             println!("cargo:rustc-link-lib=framework=Security");
+            // Touch ID o la contraseña del Mac, para abrir tus notas guardadas (ADR 015 §5).
+            println!("cargo:rustc-link-lib=framework=LocalAuthentication");
             println!("cargo:rustc-cfg=puente_de_swift");
         }
         Ok(fallo) => {

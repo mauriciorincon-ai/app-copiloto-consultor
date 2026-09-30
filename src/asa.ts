@@ -29,6 +29,34 @@ export function useAltoDeVentana(): number {
   return alto;
 }
 
+/**
+ * **`⌃⌥T` AGRANDA LA BANDA** para que quepa el transcript. El transcript vive en la columna derecha
+ * de la banda ampliada (`banda.html` · transcript, 200 px), y abrirlo cambia el dibujo a «ampliada»;
+ * hasta el sprint 003 solo cambiaba el dibujo, y en una ventana de 88 px la banda salía recortada
+ * por abajo (casilla 6 del S3). Ahora la ventana crece como la haría crecer el asa —`ajustar_banda`
+ * y luego `asentar_banda`, así que el modo solo audio se apaga igual y la reunión se vuelve a hacer
+ * sitio— y al cerrarlo vuelve a la compacta, **solo si fue el transcript quien la agrandó**: si la
+ * habías ampliado tú con el asa, se queda como la dejaste.
+ */
+export function useAltoDelTranscript(transcript: boolean, alto: number, activo: boolean): void {
+  const agrandada = useRef(false);
+  useEffect(() => {
+    if (!activo) return;
+    if (transcript && alto < DESDE_AMPLIADA && !agrandada.current) {
+      agrandada.current = true;
+      pedirAlto(ALTO_AMPLIADA);
+    } else if (!transcript && agrandada.current) {
+      agrandada.current = false;
+      if (alto >= DESDE_AMPLIADA) pedirAlto(ALTO_COMPACTA);
+    }
+  }, [transcript, alto, activo]);
+}
+
+/** El mismo par que el asa al soltarla: primero lo nuestro, luego la reunión. */
+function pedirAlto(alto: number): void {
+  void llamar("ajustar_banda", { alto }).then(() => llamar("asentar_banda", { alto }));
+}
+
 export function useAsa() {
   const asa = useRef<HTMLSpanElement | null>(null);
 

@@ -79,8 +79,27 @@ const PROTEGIDOS = [
   // ADR 011.
   "src-tauri/src/sintesis",
   "src-tauri/src/sesion",
+  // `notas` (sprint 003, fase 1, ADR 015): tus notas SÍ persisten, y el módulo está aquí igual. Recibe
+  // los turnos del micrófono para «Conservar mis turnos», y entre ellos llegan los marcados como eco
+  // —el micrófono oyendo al cliente por los altavoces—, que son la voz del cliente. Decide qué es tuyo,
+  // lo cifra y entrega bytes; los escribe `carpeta.rs`, que no ve un turno. El patrón del diccionario.
+  "src-tauri/src/notas",
+  // `propuestas` (sprint 003, fase 2, ADR 016): lee cada turno, también los del cliente, para
+  // proponerte qué guardar. Devuelve propuestas y nada más; las sella `bandeja.rs`, que solo ve líneas.
+  "src-tauri/src/propuestas",
+  // `jurisdiccion` (sprint 003, fase 3, ADR 017): no toca nada de la reunión —solo el catálogo, que
+  // entra al compilar, y la línea «Jurisdicción:» de tu ficha—, y por eso mismo no necesita ni disco ni
+  // red. Está aquí para que no pueda empezar a necesitarlos en silencio: traer el catálogo de un
+  // servidor rompería la regla dura 2.
+  "src-tauri/src/jurisdiccion",
+  // `puerta` (sprint 003, fase 4, ADR 018): la puerta local para tu agente. Por ella pasa lo que tu agente
+  // pide y lo que la app le devuelve —fichas de tu corpus, tus notas abiertas—, y un registro que jamás
+  // lleva contenido. Ni disco ni red: las únicas líneas que tocan el socket (crearlo en 600, borrarlo,
+  // escribir la respuesta) llevan su marca y el ADR 018 en la misma línea.
+  "src-tauri/src/puerta",
   "src-tauri/nativo",
-  "src/capture",
+  // `src/capture` estaba aquí desde el estampado y nunca existió: la captura vive en Rust. Una entrada
+  // que no existe vigila nada y se lee como vigilancia (auditoría del S3, B7): ahora es un fallo.
 ];
 // API prohibida dentro de los protegidos (Rust y TS). Se puede ampliar; jamás recortar sin ADR.
 const PROHIBIDO = [
@@ -93,6 +112,9 @@ const PROHIBIDO = [
   // nada, que es la peor forma de pasar: verde por no saber mirar.
   /\bFileManager\b/, /\bURLSession\b/, /\bNSURLConnection\b/, /contentsOf:/, /\bwrite\(to:/,
   /\bNWConnection\b/, /\bCFSocket/, /\bNSFileHandle\b/, /\bUserDefaults\b/,
+  // Escribir atributos del disco también es escribir (auditoría del S3, M2): la única línea que lo
+  // hace es la que saca la bandeja de las copias de Time Machine, marcada con su ADR.
+  /\bsetResourceValues\b/,
   // La PANTALLA (sprint 002, fase 3): las maneras que tienen Apple de convertir un cuadro de la
   // reunión en algo que sobreviva a la memoria. `CGImageDestination` y las representaciones de
   // `NSBitmapImageRep` lo hacen imagen (PNG, JPEG, TIFF); `SCRecordingOutput` —macOS 15— graba la
@@ -105,7 +127,9 @@ const PROHIBIDO = [
   // en un módulo efímero puede existir; lo que no puede es existir sin que se vea.
   /\bdownloadAndInstall\b/, /\bassetInstallationRequest\b/,
 ];
-const ALLOW = /verify-ephemeral:allow\b/; // línea explícitamente autorizada (exige ADR citado en la misma línea)
+// Línea explícitamente autorizada: **con su ADR en la misma línea** («ADR 016»). Antes bastaba la
+// marca, y el comentario prometía un ADR que nadie exigía (auditoría del S3, B7).
+const ALLOW = /verify-ephemeral:allow\b.*\bADR\s*\d{3}/;
 
 function archivos(dir) {
   if (!existsSync(dir)) return [];
@@ -114,6 +138,14 @@ function archivos(dir) {
     return statSync(p).isDirectory() ? archivos(p) : /\.(rs|ts|tsx|js|mjs|swift|m|mm)$/.test(n) ? [p] : [];
   });
 }
+
+// Cada entrada de PROTEGIDOS tiene que existir: una carpeta que no está no se vigila, y la lista
+// diría lo contrario (auditoría del S3, B7).
+const fantasmas = PROTEGIDOS.filter((d) => !existsSync(d));
+for (const d of fantasmas) {
+  console.error(`✕ PROTEGIDOS nombra «${d}», que no existe: o se crea, o sale de la lista.`);
+}
+if (fantasmas.length) process.exit(1);
 
 let hallazgos = 0, inspeccionados = 0;
 for (const dir of PROTEGIDOS) {

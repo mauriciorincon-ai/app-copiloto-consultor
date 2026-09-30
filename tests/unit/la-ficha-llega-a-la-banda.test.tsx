@@ -11,6 +11,7 @@ import { fijarIdiomaDePista } from "@/cuaderno";
 import { IdiomaContext } from "@/i18n";
 import { llamar, preguntar } from "@/puente";
 import { es } from "@/i18n/es";
+import { en } from "@/i18n/en";
 import {
   APARICION_DEL_ATAJO,
   EN_TU_MAC_LIMPIO,
@@ -568,34 +569,24 @@ describe("la sugerencia, dentro del producto", () => {
 
   /**
    * **El idioma de la pista del cliente se elige** (auditoría del S2, A4): era la constante `en-US`,
-   * y con un cliente que habla español no llegaba un turno útil. Nace en español; elegido inglés en
-   * Idioma, «Iniciar sesión» se lo pasa a Rust.
+   * y con un cliente que habla español no llegaba un turno útil. Nace en español, se elige en Idioma,
+   * y desde el S3 se guarda en Rust: «Iniciar sesión» ya no lo manda (lo lee Rust).
    */
-  it("el idioma elegido para el cliente llega a empezar_a_escuchar", async () => {
-    render(
-      <IdiomaContext.Provider value="es">
-        <Idioma transcribe={{ motor: "apple-speechanalyzer", techo: 5, idiomas: [], motivo: null }} />
-      </IdiomaContext.Provider>,
-    );
+  it("«Iniciar sesión» no manda idiomas: Rust lee los que el usuario guardó", async () => {
     render(
       <IdiomaContext.Provider value="es">
         <Sesion reunion={{ que: "ninguna" }} escucha={{ ...ESTADO_DE_LA_ESCUCHA, escuchando: false }} salida={SALIDA_DE_AUDIO} />
       </IdiomaContext.Provider>,
     );
     await act(async () => {});
-    const iniciar = () =>
-      fireEvent.click(
-        [...document.querySelectorAll("button")].find((b) => b.textContent?.includes(es.cuaderno.iniciarSesion)) as HTMLElement,
-      );
-    // Sin tocar nada, las dos pistas en español: la constante vieja mandaba el cliente en inglés.
-    iniciar();
-    expect(llamar).toHaveBeenLastCalledWith("empezar_a_escuchar", { idiomaDelConsultor: "es-ES", idiomaDelCliente: "es-ES" });
-    // Elegido inglés en Idioma, llega inglés.
-    const [, delCliente] = [...document.querySelectorAll("select.idioma-de-pista")] as HTMLSelectElement[];
-    expect(delCliente.value).toBe("es-ES");
-    fireEvent.change(delCliente, { target: { value: "en-US" } });
-    iniciar();
-    expect(llamar).toHaveBeenLastCalledWith("empezar_a_escuchar", { idiomaDelConsultor: "es-ES", idiomaDelCliente: "en-US" });
+    // Elegido inglés para el cliente (en Idioma, o en un arranque anterior: da igual), «Iniciar
+    // sesión» NO lo manda: si el webview los mandara desde su caché, después de reiniciar valdrían
+    // los de fábrica hasta abrir Idioma (casilla 6 del S3). Rust los lee de `preferencias.json`.
+    fijarIdiomaDePista("cliente", "en-US");
+    fireEvent.click(
+      [...document.querySelectorAll("button")].find((b) => b.textContent?.includes(es.cuaderno.iniciarSesion)) as HTMLElement,
+    );
+    expect(llamar).toHaveBeenLastCalledWith("empezar_a_escuchar");
     fijarIdiomaDePista("cliente", "es-ES");
   });
 
@@ -620,7 +611,7 @@ describe("la sugerencia, dentro del producto", () => {
   });
 
   /** Elegir proveedor con el API apagado tiene que llegar a Rust (auditoría del S2, M3). */
-  it("elegir Gemini con el API apagado se lo dice a Rust, sin encenderlo", async () => {
+  it("elegir Groq con el API apagado se lo dice a Rust, sin encenderlo", async () => {
     respuestas.set("estado_de_la_ia", ESTADO_DE_LA_IA_NADIE);
     render(
       <IdiomaContext.Provider value="es">
@@ -628,9 +619,38 @@ describe("la sugerencia, dentro del producto", () => {
       </IdiomaContext.Provider>,
     );
     await act(async () => {});
-    const gemini = [...document.querySelectorAll("button")].find((x) => x.textContent?.includes("Gemini"));
-    fireEvent.click(gemini as HTMLElement);
-    expect(preguntar).toHaveBeenCalledWith("api_externa", { encendida: false, externo: "gemini" });
+    const groq = [...document.querySelectorAll("button")].find((x) => x.textContent?.includes("Groq"));
+    fireEvent.click(groq as HTMLElement);
+    expect(preguntar).toHaveBeenCalledWith("api_externa", { encendida: false, externo: "groq" });
+  });
+
+  /**
+   * Bajo los proveedores, lo que cada uno hace con lo que le mandas (ADR 011, decisión del usuario
+   * 2026-09-29): Claude lo guarda hasta 30 días; Groq, salvo que enciendas su retención cero.
+   */
+  it("IA dice cuánto guarda el proveedor elegido, y solo el suyo", async () => {
+    respuestas.set("estado_de_la_ia", ESTADO_DE_LA_IA_NADIE);
+    render(
+      <IdiomaContext.Provider value="es">
+        <Ia />
+      </IdiomaContext.Provider>,
+    );
+    await act(async () => {});
+    expect(document.querySelector(".retencion")?.textContent).toBe(c.retencionClaude);
+    expect(document.body.textContent).not.toContain(c.retencionGroq);
+    const botones = [...document.querySelectorAll("button")].map((b) => b.textContent);
+    expect(botones.filter((b) => b === "Gemini")).toEqual([]);
+  });
+
+  it("con Groq elegido, la línea es la de Groq", async () => {
+    respuestas.set("estado_de_la_ia", ESTADO_DE_LA_IA_CON_API);
+    render(
+      <IdiomaContext.Provider value="en">
+        <Ia />
+      </IdiomaContext.Provider>,
+    );
+    await act(async () => {});
+    expect(document.querySelector(".retencion")?.textContent).toBe(en.cuaderno.retencionGroq);
   });
 
   /**
@@ -671,7 +691,7 @@ describe("la sugerencia, dentro del producto", () => {
       </IdiomaContext.Provider>,
     );
     await act(async () => {});
-    expect(document.body.textContent).toContain(`${c.modoApi} · Gemini`);
+    expect(document.body.textContent).toContain(`${c.modoApi} · Groq`);
     expect(document.body.textContent).not.toContain(c.modoLocal);
   });
 });

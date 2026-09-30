@@ -5,7 +5,7 @@ import { Banda, type EstadoBanda } from "./componentes/Banda";
 import { Relleno } from "./componentes/Relleno";
 import { Principal } from "./componentes/Principal";
 import { ventanaActual } from "./ventanas";
-import { useAltoDeVentana, DESDE_AMPLIADA } from "./asa";
+import { useAltoDeVentana, useAltoDelTranscript, DESDE_AMPLIADA } from "./asa";
 import { useAcoplada } from "./acople";
 import { useTranscriptVisible } from "./turnos";
 
@@ -71,6 +71,11 @@ const ESTADOS: EstadoBanda[] = [
   // La sugerencia (fase 5): la ampliada sale del alto de la ventana, como todas.
   "sugerencia-local",
   "sugerencia-api",
+  // Las propuestas (sprint 003, fase 2, mirada 20): la línea pasiva y la señal «fijada».
+  "ficha-propuesta",
+  "ficha-fijada",
+  // Solo notas (sprint 003, fase 3): la banda en reposo, sin escucha.
+  "solo-notas",
 ];
 
 /**
@@ -115,6 +120,7 @@ export function Enrutador({ busqueda = globalThis.location?.search ?? "" }: { bu
   const transcript = useTranscriptVisible(
     new URLSearchParams(busqueda).get("transcript") === "1",
   );
+  useAltoDelTranscript(transcript, alto, ventana === "banda");
 
   // La identidad de la ventana vive en `<html>`, al lado del tema y del idioma: un solo lugar de
   // verdad del que cuelga el CSS de ventana — y, de paso, lo que un e2e puede leer sin adivinar.

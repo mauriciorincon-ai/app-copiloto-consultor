@@ -71,6 +71,11 @@ indique (o la más reciente en `portafolio/<slug>/ordenes/` de la planeadora,
      cualquier cambio (agrupar, reordenar, posponer) se propone y se aprueba ANTES de construir
      el segundo artefacto — jamás lo decidas sobre la marcha. Que ninguna mirada pida ajustes
      después no valida el desvío: es suerte, no proceso.
+   - (f) **Dos clases de mirada (kit v1.31.0):** el plan de miradas separa las de **FORMA**
+     (qué se construye — abren parada) de las de **TEXTO** (si se entiende — no bloquean:
+     «maquetado, no visto», veredicto al gate del MVP). Cada mirada en **matriz de una fila**
+     (archivo · botón/estado · qué mirar · respuesta esperada); **segundas vueltas sin parada**
+     (se ven al cierre de fase). Y **`gh pr checks` tras CADA push** de la fase, no al final.
 10. **Al concluir la construcción** (todas las fases aprobadas): corre **`/audita-sprint`**
    (auditoría final de dos fases — OBLIGATORIA, método v1.10.0) ANTES del summary definitivo
    y de entregar la guía/gate ⭐ al usuario.

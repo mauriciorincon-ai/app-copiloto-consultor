@@ -1,6 +1,6 @@
 import { useIdioma, useT, type Idioma } from "../i18n";
 import { Ic } from "../componentes/Iconos";
-import { TodaviaNo } from "../componentes/Ventana";
+import { EnElH2 } from "../componentes/Ventana";
 import { indexarCorpus, useBytesALaRed, useCorpus, type UnidadDelCorpus } from "../cuaderno";
 
 /**
@@ -160,7 +160,7 @@ export function Corpus() {
             {[t.arrastrar, t.releer, t.leerEscaneado].map((que) => (
               <div className="fila" key={que}>
                 <span className="crece">{que}</span>
-                <TodaviaNo />
+                <EnElH2 />
               </div>
             ))}
             <p>{t.corpusNota}</p>

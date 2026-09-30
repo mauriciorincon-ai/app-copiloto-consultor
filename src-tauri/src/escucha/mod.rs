@@ -153,6 +153,9 @@ pub struct EstadoDePista {
 #[serde(rename_all = "camelCase")]
 pub struct EstadoDeEscucha {
     pub escuchando: bool,
+    /// **La reunión va en modo solo notas** (ADR 017 §5): hay reunión y no hay captura. La banda lo
+    /// dice —«Solo notas · sin transcripción»— y Sesión ofrece terminarla.
+    pub solo_notas: bool,
     pub microfono: EstadoDePista,
     pub sistema: EstadoDePista,
     /// Fuera del contrato por la misma decisión: Honestidad cuenta el transcript por sus bytes.
@@ -166,6 +169,30 @@ pub struct EstadoDeEscucha {
     /// que compara por nombre, daba por leída esta copia porque la otra sí lo estaba.
     #[serde(skip)]
     pub motor: &'static str,
+}
+
+impl EstadoDeEscucha {
+    /// Una reunión en modo solo notas: ninguna pista se abrió, y no es una avería —no hay motivo que
+    /// dar—, sino lo que pediste.
+    pub fn solo_notas() -> EstadoDeEscucha {
+        let cerrada = || EstadoDePista {
+            abierta: false,
+            motivo: None,
+            bytes: 0,
+            segundos: 0.0,
+            muestras_recibidas: 0,
+            hablando: false,
+        };
+        EstadoDeEscucha {
+            escuchando: false,
+            solo_notas: true,
+            microfono: cerrada(),
+            sistema: cerrada(),
+            turnos_en_memoria: 0,
+            bytes_del_transcript: 0,
+            motor: "",
+        }
+    }
 }
 
 struct PistaViva {
@@ -462,6 +489,7 @@ impl Escucha {
         let (microfono, sistema) = (de(Pista::Microfono), de(Pista::Sistema));
         EstadoDeEscucha {
             escuchando: self.viva.load(Ordering::Relaxed),
+            solo_notas: false,
             microfono,
             sistema,
             turnos_en_memoria: turnos,

@@ -1,3 +1,4 @@
+import { useT } from "./i18n";
 import { useEffect, useState } from "react";
 import { escuchar, hayTauri, preguntar } from "./puente";
 import type { Fuente } from "./ficha";
@@ -9,7 +10,7 @@ import type { Fuente } from "./ficha";
 
 export type Quien = "sistema" | "api" | "mock";
 export type Confianza = "alta" | "media" | "baja";
-export type Externo = "claude" | "gemini" | "groq";
+export type Externo = "claude" | "groq";
 
 export type PorQueNoRedacta =
   | "apple-intelligence-apagado"
@@ -61,27 +62,112 @@ const DE_MUESTRA: EstadoDeLaIa = {
   topeUsd: 10,
 };
 
-/** Los nombres de los tres proveedores externos, como la app los enseña. */
+/**
+ * **Lo que salió al API en esta reunión** (auditoría del S2, B37): el texto exacto, trozo a trozo,
+ * con lo que la bóveda reemplazó **en tu Mac** al lado de cada marcador. Solo en memoria: lo vacían el
+ * corte y el final de la sesión, y se pide por comando desde esta ventana —el texto no viaja en
+ * ningún evento—.
+ */
+export type Trozo =
+  | { que: "texto"; texto: string }
+  | { que: "tapado"; marcador: string; original: string };
+
+export type LoQueSalio = {
+  hora: string;
+  externo: Externo;
+  /** El titular de la ficha que provocó la petición. */
+  sobre: string;
+  trozos: Trozo[];
+  caracteres: number;
+  tapadas: number;
+  /** `null` hasta que el proveedor contesta (o si no contestó). */
+  usd: number | null;
+};
+
+/**
+ * Las tres peticiones de la maqueta (`ia.html`, «sprint 3 · lo que salió»), **fuera de Tauri**: lo que
+ * hace posible comparar la vista con la maqueta. Dentro del producto, lo que Rust anotó de verdad.
+ */
+export function useSalioDeMuestra(): LoQueSalio[] {
+  const m = useT().cuaderno.muestraSalio;
+  return [
+    {
+      hora: "14:22",
+      externo: "claude",
+      sobre: m.sobre1,
+      trozos: [
+        { que: "texto", texto: `Client: ${m.t1} ` },
+        { que: "tapado", marcador: "[CLIENTE_1]", original: "Páramo Azul" },
+        { que: "texto", texto: ` ${m.t2} ` },
+        { que: "tapado", marcador: "[PERSONA_1]", original: "Andrea Villalba" },
+        { que: "texto", texto: ` ${m.t3}` },
+      ],
+      caracteres: 412,
+      tapadas: 2,
+      usd: 0.004,
+    },
+    { hora: "14:16", externo: "claude", sobre: m.sobre2, trozos: [], caracteres: 377, tapadas: 3, usd: 0.003 },
+    { hora: "14:09", externo: "claude", sobre: m.sobre3, trozos: [], caracteres: 501, tapadas: 1, usd: null },
+  ];
+}
+
+/** Las peticiones de la reunión, de la más nueva a la más vieja. Se vuelve a pedir con cada `ia`. */
+export function useLoQueSalio(): LoQueSalio[] {
+  const muestra = useSalioDeMuestra();
+  const [salio, setSalio] = useState<LoQueSalio[]>(() => (hayTauri() ? [] : muestra));
+  useEffect(() => {
+    if (!hayTauri()) return;
+    let vivo = true;
+    const pedir = () => {
+      void preguntar<LoQueSalio[]>("lo_que_salio_al_api").then((s) => {
+        if (vivo) setSalio(s ?? []);
+      });
+    };
+    pedir();
+    const baja = escuchar<unknown>("ia", pedir);
+    const bajaCorte = escuchar<unknown>("corte", pedir);
+    return () => {
+      vivo = false;
+      baja();
+      bajaCorte();
+    };
+  }, []);
+  return salio;
+}
+
+/**
+ * Los nombres de los proveedores externos, como la app los enseña. Gemini salió por decisión del usuario
+ * (2026-09-29, ADR 011): su API no ofrece retención cero en ningún nivel.
+ */
 export const EXTERNOS: { id: Externo; nombre: string }[] = [
   { id: "claude", nombre: "Claude" },
-  { id: "gemini", nombre: "Gemini" },
   { id: "groq", nombre: "Groq" },
 ];
 
-/** El estado de la pantalla IA: se pregunta al montarse y se escucha el evento `ia`. */
+/**
+ * El estado de la pantalla IA: se pregunta al montarse, **al volver a la ventana** y con cada evento
+ * `ia`. Lo del foco es de la casilla 6 del S3: si el usuario apaga Apple Intelligence en Ajustes y
+ * vuelve, nadie emite `ia` —Rust no se entera de Ajustes—, y la pantalla seguía diciendo «en tu Mac».
+ * Es lo mismo que Permisos hace desde el S1.
+ */
 export function useIa(): [EstadoDeLaIa, (e: EstadoDeLaIa) => void] {
   const [estado, setEstado] = useState<EstadoDeLaIa>(DE_MUESTRA);
   useEffect(() => {
     if (!hayTauri()) return;
     let vivo = true;
-    void preguntar<EstadoDeLaIa>("estado_de_la_ia").then((e) => {
-      if (vivo && e) setEstado(e);
-    });
+    const pedir = () => {
+      void preguntar<EstadoDeLaIa>("estado_de_la_ia").then((e) => {
+        if (vivo && e) setEstado(e);
+      });
+    };
+    pedir();
+    globalThis.addEventListener("focus", pedir);
     const baja = escuchar<EstadoDeLaIa>("ia", (e) => {
       if (vivo && e) setEstado(e);
     });
     return () => {
       vivo = false;
+      globalThis.removeEventListener("focus", pedir);
       baja();
     };
   }, []);

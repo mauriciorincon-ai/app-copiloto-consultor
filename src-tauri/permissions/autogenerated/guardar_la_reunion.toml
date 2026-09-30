@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-guardar-la-reunion"
+description = "Enables the guardar_la_reunion command without any pre-configured scope."
+commands.allow = ["guardar_la_reunion"]
+
+[[permission]]
+identifier = "deny-guardar-la-reunion"
+description = "Denies the guardar_la_reunion command without any pre-configured scope."
+commands.deny = ["guardar_la_reunion"]

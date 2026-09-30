@@ -1,5 +1,6 @@
 # Quiénes son
 Distribuidora familiar de alimento para ganado, ciento veinte empleados, tres departamentos.
+Jurisdicción: Colombia
 
 # Quién decide
 La gerente general firma. El jefe de sistemas tiene veto técnico sobre los accesos.

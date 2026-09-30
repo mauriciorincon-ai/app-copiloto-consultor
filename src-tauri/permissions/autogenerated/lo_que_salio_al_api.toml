@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-lo-que-salio-al-api"
+description = "Enables the lo_que_salio_al_api command without any pre-configured scope."
+commands.allow = ["lo_que_salio_al_api"]
+
+[[permission]]
+identifier = "deny-lo-que-salio-al-api"
+description = "Denies the lo_que_salio_al_api command without any pre-configured scope."
+commands.deny = ["lo_que_salio_al_api"]

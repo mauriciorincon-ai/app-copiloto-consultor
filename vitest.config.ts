@@ -30,6 +30,18 @@ export default defineConfig({
         functions: 50,
         branches: 50,
         statements: 50,
+        // Auditoría del S3, M13: la pantalla central del sprint y el vestido de lo que dijo el cliente
+        // estaban casi sin tests, y el umbral global (86 %) lo escondía. Cada uno, su suelo propio.
+        "src/propuesta.ts": {
+          lines: 80,
+          functions: 80,
+          branches: 80,
+          statements: 80,
+        },
+        "src/pantallas/Notas.tsx": {
+          lines: 60,
+          branches: 50,
+        },
         // Si algún día aparece lógica pura en TS, se le exige lo de los motores.
         "src/lib/**/*.ts": {
           lines: 80,

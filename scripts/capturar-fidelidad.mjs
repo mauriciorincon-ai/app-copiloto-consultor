@@ -42,7 +42,7 @@ const FIDELIDAD = join(RAIZ, "docs/fidelidad");
  * enseña como contrapeso del gate diferido pasó a enseñar pantallas del sprint 2. Se cambia en el
  * primer commit de cada sprint que capture.
  */
-const SPRINT = "s2";
+const SPRINT = "s3";
 
 const MARCO = 9;
 const PUERTO = 4180;
@@ -92,6 +92,11 @@ const ARTEFACTOS = [
       { id: "sugerencia-local", maqueta: "banda.html", estado: "sugerencia-local", alto: 88, url: "ventana=banda&estado=sugerencia-local" },
       { id: "sugerencia-api", maqueta: "banda.html", estado: "sugerencia-api", alto: 88, url: "ventana=banda&estado=sugerencia-api" },
       { id: "sugerencia-2", maqueta: "banda.html", estado: "sugerencia-2", alto: 200, url: "ventana=banda&estado=sugerencia-local&ampliada=1" },
+      // Las propuestas (sprint 003, fase 2, mirada 20): la línea pasiva y la señal «fijada».
+      { id: "propuesta", maqueta: "banda.html", estado: "s3-propuesta", alto: 88, url: "ventana=banda&estado=ficha-propuesta" },
+      { id: "fijada", maqueta: "banda.html", estado: "s3-fijada", alto: 88, url: "ventana=banda&estado=ficha-fijada" },
+      // Solo notas (sprint 003, fase 3): la cabecera ámbar y la frase de reposo que manda a tu nota.
+      { id: "solo-notas", maqueta: "banda.html", estado: "s3-solo-notas", alto: 88, url: "ventana=banda&estado=solo-notas" },
     ],
   },
   {
@@ -104,15 +109,48 @@ const ARTEFACTOS = [
     encuadres: [
       // Desde la fase 3 del sprint 002 el producto se compara con los estados «así se ve hoy ·
       // sprint 2». Los de «sprint 1» quedan en la maqueta como historia: ya no describen la app.
-      { id: "sesion", maqueta: "sesion.html", estado: "s2-pantalla", alto: 640, url: "ventana=principal&pantalla=sesion" },
+      // Desde la fase 3 del sprint 003 Sesión se compara con «sprint 3 · este cliente»: vuelve al diseño
+      // de la Etapa de Diseño, con «Este cliente» vivo (ADR 017). «sprint 2» queda como historia.
+      { id: "sesion", maqueta: "sesion.html", estado: "s3", alto: 640, url: "ventana=principal&pantalla=sesion" },
+      { id: "sesion-en-marcha", maqueta: "sesion.html", estado: "s3-en-marcha", alto: 640, url: "ventana=principal&pantalla=sesion&estado=en-marcha" },
+      { id: "sesion-pregunta", maqueta: "sesion.html", estado: "s3-pregunta", alto: 640, url: "ventana=principal&pantalla=sesion&estado=pregunta" },
+      { id: "sesion-sin-bandera", maqueta: "sesion.html", estado: "s3-sin-bandera", alto: 640, url: "ventana=principal&pantalla=sesion&estado=sin-bandera" },
+      { id: "sesion-clausula", maqueta: "sesion.html", estado: "s3-clausula", alto: 640, url: "ventana=principal&pantalla=sesion&estado=clausula" },
+      // El estado de la Etapa de Diseño «NDA prohíbe transcribir», aprobado en G-Diseño: por fin tiene producto.
+      { id: "sesion-nda", maqueta: "sesion.html", estado: "nda", alto: 640, url: "ventana=principal&pantalla=sesion&estado=nda" },
+      { id: "sesion-solo-notas", maqueta: "sesion.html", estado: "s3-solo-notas", alto: 640, url: "ventana=principal&pantalla=sesion&estado=solo-notas" },
       { id: "permisos", maqueta: "permisos.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=permisos" },
       { id: "corpus", maqueta: "corpus.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=corpus" },
-      { id: "honestidad", maqueta: "honestidad.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=honestidad" },
+      // Desde la fase 1 del sprint 003 Honestidad se compara con «así se ve hoy · sprint 3»: la
+      // tarjeta de lo que quedará volvió, y el corte tiene diez piezas.
+      { id: "honestidad", maqueta: "honestidad.html", estado: "s3", alto: 640, url: "ventana=principal&pantalla=honestidad" },
+      // La bandeja en Honestidad (fase 2): su cuenta atrás, y la tarea de borrado que no corrió.
+      { id: "honestidad-bandeja", maqueta: "honestidad.html", estado: "s3-bandeja", alto: 640, url: "ventana=principal&pantalla=honestidad&estado=bandeja" },
+      { id: "honestidad-no-corrio", maqueta: "honestidad.html", estado: "s3-no-corrio", alto: 640, url: "ventana=principal&pantalla=honestidad&estado=no-corrio" },
+      // Notas (C9, sprint 003, fase 1): las cuatro vistas que el usuario recorre.
+      { id: "notas-durante", maqueta: "notas.html", estado: "s3-durante", alto: 640, url: "ventana=principal&pantalla=notas&estado=durante" },
+      { id: "notas-al-cerrar", maqueta: "notas.html", estado: "s3-al-cerrar", alto: 640, url: "ventana=principal&pantalla=notas&estado=al-cerrar" },
+      { id: "notas-archivo", maqueta: "notas.html", estado: "s3-archivo", alto: 640, url: "ventana=principal&pantalla=notas&estado=archivo" },
+      { id: "notas-exportar", maqueta: "notas.html", estado: "s3-exportar", alto: 640, url: "ventana=principal&pantalla=notas&estado=exportar" },
+      // Las propuestas y la bandeja (fase 2, mirada 20 y los estados «maquetado, no visto»).
+      { id: "notas-propuestas", maqueta: "notas.html", estado: "s3-propuestas", alto: 640, url: "ventana=principal&pantalla=notas&estado=propuestas" },
+      { id: "notas-cerrar-bandeja", maqueta: "notas.html", estado: "s3-cerrar-bandeja", alto: 640, url: "ventana=principal&pantalla=notas&estado=al-cerrar-bandeja" },
+      { id: "notas-cerrar-cero", maqueta: "notas.html", estado: "s3-cerrar-cero", alto: 640, url: "ventana=principal&pantalla=notas&estado=al-cerrar-cero" },
+      { id: "notas-bandeja", maqueta: "notas.html", estado: "s3-bandeja", alto: 640, url: "ventana=principal&pantalla=notas&estado=bandeja" },
+      { id: "notas-bandeja-llave", maqueta: "notas.html", estado: "s3-bandeja-llave", alto: 640, url: "ventana=principal&pantalla=notas&estado=bandeja-llave" },
+      { id: "notas-vencida", maqueta: "notas.html", estado: "s3-vencida", alto: 640, url: "ventana=principal&pantalla=notas&estado=vencida" },
       { id: "idioma", maqueta: "idioma.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=idioma" },
       // El radar coral en Sesión (fase 4): «software invasivo en tu Mac», con las cinco filas.
       { id: "vigilancia", maqueta: "sesion.html", estado: "vigilancia", alto: 640, url: "ventana=principal&pantalla=sesion&radar=vigilancia" },
       // La pantalla IA (fase 5): «así se ve hoy · sprint 2».
-      { id: "ia", maqueta: "ia.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=ia" },
+      // IA desde la fase 1 del sprint 003 (B37, mirada 19): «quién redacta» con su botón, y lo que salió.
+      { id: "ia", maqueta: "ia.html", estado: "s3-quien", alto: 640, url: "ventana=principal&pantalla=ia" },
+      { id: "ia-salio", maqueta: "ia.html", estado: "s3-salio", alto: 640, url: "ventana=principal&pantalla=ia&vista=salio" },
+      // La puerta local (C16, fase 4 del sprint 003, ADR 018): cerrada, abierta con su registro, y cerrada
+      // sola por una reunión.
+      { id: "ia-puerta", maqueta: "ia.html", estado: "s3-puerta", alto: 640, url: "ventana=principal&pantalla=ia&vista=puerta" },
+      { id: "ia-puerta-abierta", maqueta: "ia.html", estado: "s3-puerta-abierta", alto: 640, url: "ventana=principal&pantalla=ia&vista=puerta&puerta=abierta" },
+      { id: "ia-puerta-reunion", maqueta: "ia.html", estado: "s3-puerta-reunion", alto: 640, url: "ventana=principal&pantalla=ia&vista=puerta&puerta=en-reunion" },
     ],
   },
 ];

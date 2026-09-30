@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-empezar-solo-notas"
+description = "Enables the empezar_solo_notas command without any pre-configured scope."
+commands.allow = ["empezar_solo_notas"]
+
+[[permission]]
+identifier = "deny-empezar-solo-notas"
+description = "Denies the empezar_solo_notas command without any pre-configured scope."
+commands.deny = ["empezar_solo_notas"]

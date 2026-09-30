@@ -69,6 +69,8 @@ en su lugar las del binario, los permisos del sistema y la no-persistencia.
 ### 9. Accesibilidad y diseño
 - [ ] axe en los e2e · teclado end-to-end · ambos temas · `design-system.md` y `design-sync/`
       actualizados si el sprint tocó UI (`/deploy-check` §7 aplica tal cual).
+- [ ] La pasada de capturas mide el **área de desplazamiento** (`/deploy-check` §3, kit v1.31.0):
+      ningún encuadre con `scrollHeight` mayor que su alto visible.
 
 ### 10. Documentación y cero enlaces
 - [ ] `docs/MANUAL-DE-USO.md` y `docs/GUIA-DE-PRUEBA.html` (acumulativa) al día; summary EN el PR.

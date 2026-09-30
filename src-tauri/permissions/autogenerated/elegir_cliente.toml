@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-elegir-cliente"
+description = "Enables the elegir_cliente command without any pre-configured scope."
+commands.allow = ["elegir_cliente"]
+
+[[permission]]
+identifier = "deny-elegir-cliente"
+description = "Denies the elegir_cliente command without any pre-configured scope."
+commands.deny = ["elegir_cliente"]

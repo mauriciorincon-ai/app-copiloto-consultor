@@ -16,7 +16,8 @@ import { test, expect, type Page } from "@playwright/test";
  */
 
 // IA se abrió en el sprint 002 (fase 5, C7). Notas es la única que sigue sin existir.
-const PANTALLAS = ["sesion", "permisos", "corpus", "honestidad", "idioma", "ia"] as const;
+// Siete desde el sprint 003: Notas fue la última en encenderse (fase 1, C9).
+const PANTALLAS = ["sesion", "permisos", "corpus", "notas", "honestidad", "idioma", "ia"] as const;
 
 async function abrir(pag: Page, busqueda: string) {
   await pag.goto(`/?${busqueda}`);
@@ -24,7 +25,7 @@ async function abrir(pag: Page, busqueda: string) {
 }
 
 test.describe("el cuaderno", () => {
-  test("las seis pantallas se pintan y ninguna deja la ventana vacía", async ({ page }) => {
+  test("las siete pantallas se pintan y ninguna deja la ventana vacía", async ({ page }) => {
     for (const pantalla of PANTALLAS) {
       await abrir(page, `ventana=principal&pantalla=${pantalla}`);
       await expect(page.locator(".titulo h1")).toBeVisible();
@@ -32,13 +33,16 @@ test.describe("el cuaderno", () => {
     }
   });
 
-  test("el rail navega entre las seis, y no ofrece la que no existe", async ({ page }) => {
+  test("el rail navega entre las siete, y ninguna queda apagada", async ({ page }) => {
     await abrir(page, "ventana=principal&pantalla=sesion");
     const rail = page.locator("nav.rail");
     await expect(rail.locator("a")).toHaveCount(PANTALLAS.length);
-    // Las secciones que aún no existen están en el rail pero no son enlaces: el usuario ve que
-    // van a llegar sin que una de ellas le lleve a una pantalla en blanco.
-    await expect(rail.locator(".item.pendiente")).toHaveCount(1);
+    // Hasta el sprint 003 Notas estaba en el rail sin enlace («todavía no»); ya no queda ninguna así.
+    await expect(rail.locator(".item.pendiente")).toHaveCount(0);
+
+    // El navegador de los e2e puede abrir en inglés: el nombre se busca en los dos idiomas.
+    await rail.getByRole("link", { name: /^(notas|notes)$/i }).click();
+    await expect(page.locator(".titulo h1")).toHaveText(/^(Notas|Notes)$/);
 
     await rail.getByRole("link", { name: /corpus/i }).click();
     await expect(page.locator(".titulo h1")).toHaveText("Corpus");

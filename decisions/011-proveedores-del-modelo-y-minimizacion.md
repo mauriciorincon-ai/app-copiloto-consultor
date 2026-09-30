@@ -47,8 +47,14 @@ no está o no rinde, y (a) rinde (medido en la fase 6: mediana ~0,8 s): queda en
    (`URLSession` efímera), y `sintesis/api.rs` arma la petición y la cuenta.
 4. **Registrar sin contenido:** proveedor, bytes, ms y costo al log. **Pendiente, sprint 003:** el
    texto exacto que salió, visible en la pantalla IA y solo en memoria, para que el usuario lo pueda
-   leer. Hoy IA no enseña ni el texto ni cuántos datos se taparon: la bóveda los cuenta
-   (`Boveda::tapadas`) y solo lo leen los tests. *(Enmienda B4.)*
+   leer. **Desde el sprint 003 (fase 0), cada petición deja en un registro de la reunión el texto
+   exacto que salió**, trozo a trozo, con lo que la bóveda reemplazó en el Mac al lado de cada
+   marcador y la cuenta de lo tapado (`sintesis::api::Registro` y `LoQueSalio`). Solo en memoria: lo
+   vacían `⌥⎋` y el final de la sesión, y lo pide únicamente la ventana principal por comando
+   (`lo_que_salio_al_api`), nunca un evento. La vista en IA existe desde la fase 1 del sprint 003
+   (mirada 19): «Ver lo que salió». El registro guarda **las últimas 20 peticiones**
+   (`TOPE_DE_LO_QUE_SALIO`) y Honestidad las cuenta. *(Enmienda B4; pago de B37; auditoría del S3, B20
+   y B15.)*
 
 ### Costo
 
@@ -62,3 +68,57 @@ que la regla 1 permite persistir). **Techo US$10/mes**; al llegarlo, la app vuel
   Honestidad y el manual se reescriben para decirlo, con su gate al lado.
 - (b) MLX se construye **solo si** (a) no está disponible o no cumple el presupuesto en el kit.
 - La validación contra un proveedor real es manual (estándar 7): la CI no llama a nadie.
+
+## Enmienda (2026-09-28) — cuánto guarda cada proveedor lo que le mandas (auditoría del S3, M3)
+
+La regla dura 2 dice que el API externo, si el usuario lo enciende, manda texto minimizado y anonimizado
+**«bajo proveedor con no-retención»**. Hasta aquí nadie había leído qué hace cada proveedor con ese texto.
+Se leyó en sus páginas oficiales el **2026-09-28**. Hasta la decisión de abajo, la app llamaba a la Gemini Developer
+API (no a Vertex AI) y pedía `claude-haiku-4-5`, `gemini-2.5-flash` y `llama-3.3-70b-versatile` (`sintesis/api.rs`).
+
+| Proveedor | Retención por defecto | ¿Entrena con lo que recibe? | Cómo se consigue no-retención | ¿Con una clave estándar? | Fuente | Leído |
+|---|---|---|---|---|---|---|
+| **Claude** (Anthropic API) | se borra en ≤ 30 días; lo que marque su sistema de seguridad, hasta 2 años | no, salvo que mandes feedback o lo autorices | acuerdo de retención cero por organización, pedido a Ventas | **no** | https://privacy.claude.com/en/articles/7996866 · https://privacy.claude.com/en/articles/7996868 · https://platform.claude.com/docs/en/manage-claude/api-and-data-retention | 2026-09-28 |
+| **Gemini**, sin facturación | 55 días para vigilar abusos; lo que usa para mejorar productos, sin plazo publicado | **sí**, con revisores humanos | no existe | **no** | https://ai.google.dev/gemini-api/terms · https://ai.google.dev/gemini-api/docs/usage-policies | 2026-09-28 |
+| **Gemini**, con facturación | 55 días para vigilar abusos | no | no existe en esta API; Google remite a Vertex AI, que es otro endpoint | **no** | https://ai.google.dev/gemini-api/terms · https://ai.google.dev/gemini-api/docs/zdr | 2026-09-28 |
+| **Groq** | no retiene por defecto; puede registrar hasta 30 días solo para fiabilidad o abuso | no (lo prohíbe su contrato) | interruptor de retención cero en *Data Controls* de su consola | **sí**, según su documentación («All customers may enable»); su contrato dice «Eligible Customers» sin definirlo | https://console.groq.com/docs/your-data · https://console.groq.com/docs/legal/services-agreement | 2026-09-28 |
+
+**Lo que dice la tabla:** con una clave individual estándar, **solo Groq** cumple «sin retención y sin
+entrenamiento», y solo si el usuario enciende la retención cero en su consola. Claude no entrena, pero
+guarda hasta 30 días sin un acuerdo. La Gemini Developer API no ofrece retención cero en ningún nivel, y
+sin facturación entrena con lo que recibe.
+
+**Decisión del usuario (2026-09-29):** con esta tabla delante, «Groq se queda y Claude también, Gemini sale».
+
+| Proveedor | Decisión | Qué dice la app |
+|---|---|---|
+| Claude | se queda, con aviso | En IA, bajo el costo: «Claude no entrena con lo que le mandas, pero lo guarda hasta 30 días.» |
+| Groq | se queda, con aviso | «Groq no entrena con lo que le mandas; sin retención cero en su consola, puede guardarlo hasta 30 días.» |
+| Gemini | sale | Nada: sale de la lista de IA, del tipo `Externo` de Rust y de la maqueta. |
+
+La línea de IA cabe en dos renglones: la pantalla llena su ventana de 640 px, y el gate de desbordes de
+`pnpm fidelidad` la midió. El detalle —el acuerdo con Anthropic, dónde está el interruptor de Groq
+(*Data Controls*)— está en el manual.
+
+**Consecuencias:**
+
+1. **La regla dura 2 queda más estrecha de lo que dice.** «Bajo proveedor con no-retención» solo lo cumple
+   Groq, y solo con su interruptor encendido. Claude guarda hasta 30 días sin un acuerdo. El usuario lo
+   decide sabiéndolo, y la app lo dice donde se elige el proveedor, en vez de callarlo. Es una desviación
+   de la regla de la planeadora: va a la bitácora bajo «Desviación del plan» y al summary.
+2. **La cláusula modelo** (`data/jurisdicciones/catalogo.json`) decía «bajo condiciones de no retención».
+   Ahora dice lo que es verdad con los dos proveedores: «el proveedor no entrena con ellos y puede
+   conservarlos hasta 30 días».
+3. **Unas preferencias guardadas con Gemini** no tumban el archivo entero: el proveedor vuelve al de
+   fábrica y **el API queda apagado**. Nunca se enciende solo con otro proveedor (`prefs::de_texto`, con
+   test que se vio en rojo).
+4. **Una clave de Gemini guardada** se quedaría en el Llavero, sin que la app la lea. La app nunca se
+   distribuyó, y su único usuario no guardó ninguna: lo comprobó el 2026-09-28 en Keychain Access.
+
+**Gate:** `tests/unit/proveedores-con-su-retencion.test.ts`. Cada `nombre` de `EXTERNOS` (`src/ia.ts`)
+tiene al menos una fila en esta tabla con una fecha `AAAA-MM-DD` y una URL. Nació en rojo: antes de esta
+enmienda no había tabla. Desde la decisión, además: cada proveedor de `EXTERNOS` tiene «se queda» en la
+tabla de la decisión y su aviso en los dos idiomas (`cuaderno.retencion<Nombre>`), y el que «sale» no está
+en `EXTERNOS`, ni en `enum Externo`, ni entre los botones de `docs/diseno/ia.html`. También nació en rojo. Los términos se vuelven a leer antes de cada release (estándar 7), y la fila se
+fecha de nuevo.
+
