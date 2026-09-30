@@ -430,6 +430,10 @@ export const en: Diccionario = {
     proveedorExterno: "External provider",
     tuClave: "Your key",
     enTuLlavero: "stored in your Keychain, never in a file",
+    retencionClaude:
+      "Claude does not train on what you send it, but keeps it for up to 30 days.",
+    retencionGroq:
+      "Groq does not train on what you send; without zero retention in its console, it may keep it up to 30 days.",
     guardarEnLlavero: "Save to Keychain",
     borrarLaClave: "Delete the key",
     costo: "Cost",

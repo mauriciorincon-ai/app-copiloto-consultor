@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useIdioma, useT } from "../i18n";
+import { useIdioma, useT, type Diccionario } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { PILA, EnElH2 } from "../componentes/Ventana";
 import { useBytesALaRed } from "../cuaderno";
@@ -43,6 +43,15 @@ import {
  * Todo nace apagado: redactar sugerencias y el proveedor externo. Encender el externo exige su clave
  * en el Llavero, y la pantalla dice por qué no se puede cuando no se puede.
  */
+/**
+ * Lo que cada proveedor hace con lo que le mandas (ADR 011, decisión del usuario 2026-09-29). Un
+ * `Record` por proveedor: uno nuevo sin su frase no compila.
+ */
+const RETENCION: Record<Externo, (t: Diccionario["cuaderno"]) => string> = {
+  claude: (t) => t.retencionClaude,
+  groq: (t) => t.retencionGroq,
+};
+
 export function Ia({ busqueda = "" }: { busqueda?: string }) {
   const t = useT().cuaderno;
   const idioma = useIdioma();
@@ -301,27 +310,34 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
               </div>
             </div>
           </div>
-          <div className="tarjeta" style={{ paddingBottom: "6px" }}>
-            <h2 className="seccion" style={{ margin: "0 0 4px" }}>
-              {t.costo}
-            </h2>
-            <table className="tabla">
-              <tbody>
-                <tr>
-                  <td>{t.estaReunion}</td>
-                  <td className="num">{dolares(ia.reunionUsd, idioma)}</td>
-                </tr>
-                <tr>
-                  <td>{t.esteMes}</td>
-                  <td className="num">{dolares(ia.mesUsd, idioma)}</td>
-                </tr>
-                <tr>
-                  <td>{t.topeDelMes}</td>
-                  <td className="num">{dolares(ia.topeUsd, idioma)}</td>
-                </tr>
-              </tbody>
-            </table>
-            <p style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "6px" }}>{t.alLlegarAlTope}</p>
+          {/* Lo que guarda el proveedor va bajo el costo: esta columna tiene sitio y la otra llena los
+              640 px de la ventana (auditoría del S3, M3). */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div className="tarjeta" style={{ paddingBottom: "6px" }}>
+              <h2 className="seccion" style={{ margin: "0 0 4px" }}>
+                {t.costo}
+              </h2>
+              <table className="tabla">
+                <tbody>
+                  <tr>
+                    <td>{t.estaReunion}</td>
+                    <td className="num">{dolares(ia.reunionUsd, idioma)}</td>
+                  </tr>
+                  <tr>
+                    <td>{t.esteMes}</td>
+                    <td className="num">{dolares(ia.mesUsd, idioma)}</td>
+                  </tr>
+                  <tr>
+                    <td>{t.topeDelMes}</td>
+                    <td className="num">{dolares(ia.topeUsd, idioma)}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "6px" }}>{t.alLlegarAlTope}</p>
+            </div>
+            <p className="retencion" style={{ fontSize: "11.5px", color: "var(--ink-2)", margin: "0 4px" }}>
+              {RETENCION[ia.api.externo](t)}
+            </p>
           </div>
         </div>
       </div>

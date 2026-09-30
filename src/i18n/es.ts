@@ -532,6 +532,11 @@ export const es = {
     proveedorExterno: "Proveedor externo",
     tuClave: "Tu clave",
     enTuLlavero: "se guarda en tu Llavero, nunca en un archivo",
+    // Lo que cada proveedor hace con lo que le mandas (ADR 011, decisión del usuario 2026-09-29).
+    retencionClaude:
+      "Claude no entrena con lo que le mandas, pero lo guarda hasta 30 días.",
+    retencionGroq:
+      "Groq no entrena con lo que le mandas; sin retención cero en su consola, puede guardarlo hasta 30 días.",
     guardarEnLlavero: "Guardar en el Llavero",
     borrarLaClave: "Borrar la clave",
     costo: "Costo",

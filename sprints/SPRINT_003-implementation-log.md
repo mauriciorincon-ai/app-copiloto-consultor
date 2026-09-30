@@ -1444,6 +1444,33 @@ aviso de macOS por la carpeta del corpus en la guía, y el manual de Corpus.
 Gates: `cargo test --lib` ✓ · `--test puerta` · `--test ghost` · clippy limpio · vitest 348 ✓ · lint ·
 typecheck · `verify:ephemeral` ✓.
 
+### M3 — la decisión del usuario, proveedor por proveedor (2026-09-29)
+
+Con la tabla del ADR 011 delante, el usuario: **«Groq se queda y Claude también, Gemini sale»**.
+
+| Qué | Arreglo | El rojo que se vio |
+|---|---|---|
+| La decisión, escrita y vigilada | ADR 011: tabla «Decisión del usuario (2026-09-29)» con «se queda, con aviso» / «sale». El gate `proveedores-con-su-retencion` exige, además de la fila de retención, que cada proveedor de `EXTERNOS` «se queda», que tenga su línea en los dos idiomas, y que el que «sale» no esté en `EXTERNOS`, ni en `enum Externo`, ni en los botones de `ia.html` | Primero 3 rojos: la decisión sin escribir y las seis frases sin existir. Escrita la decisión, el rojo nombró los tres sitios: «Gemini en EXTERNOS (src/ia.ts)», «Gemini en enum Externo (sintesis/api.rs)», «Gemini en botones de docs/diseno/ia.html» |
+| Gemini fuera | `enum Externo` con dos variantes, su URL, precio, modelo y cuenta del Llavero fuera; `EXTERNOS` y el tipo TS con dos; la muestra del contrato con API pasa a Groq; los tests de IA eligen Groq | el gate de arriba |
+| Unas preferencias con Gemini | `prefs::de_texto` cambia un proveedor que ya no existe por el de fábrica **y apaga el API**; el resto del archivo se conserva | `un_proveedor_que_salio_no_borra_las_demas_ni_enciende_otro`: «no se entiende: unknown variant `gemini`» — el archivo entero volvía a fábrica, NDAs y retención incluidas |
+| El aviso de cada proveedor | IA, bajo el costo: «Claude no entrena con lo que le mandas, pero lo guarda hasta 30 días.» · «Groq no entrena con lo que le mandas; sin retención cero en su consola, puede guardarlo hasta 30 días.» (y en inglés). Un `Record<Externo, …>`: un proveedor sin su frase no compila. Dos tests de IA: la línea del elegido, y solo la suya | ver abajo, el desborde |
+| La cláusula modelo | decía «bajo condiciones de no retención» / «under no-retention terms»: falso con Claude. Ahora: «el proveedor no entrena con ellos y puede conservarlos hasta 30 días» / «the provider does not train on them and may keep them for up to 30 days». Catálogo, maqueta de Sesión y contrato regenerado | — (el diccionario fiel a la maqueta la vigila) |
+| El título de la maqueta de la banda y del panel | «proveedor con no-retención» → «Claude no entrena con él y lo guarda hasta 30 días» | — |
+| Manual · BLUEPRINT · `CLAUDE.md` · guía | manual con lo que guarda cada uno y por qué salió Gemini; BLUEPRINT sin Gemini (diagrama, Llavero, API, costo) y «lo que no afirma» al día; `CLAUDE.md` reglas 2, 3 y Stack; guía: h6 «Claude o Groq», fila 18 (la cláusula cambió) y **fila 20 nueva** en los textos diferidos (20 filas) | `guia-cuadra` con la cuenta de la cabecera |
+
+**El desborde que cazó `pnpm fidelidad`:** la línea, puesta bajo los botones de los proveedores, dejaba la
+pantalla IA **51 px más alta que su ventana** en español y 39 px en inglés (el gate de `scrollHeight`, heredado
+y demostrado en la fase 0). Medida la pantalla, la columna del costo tenía sitio y la de los proveedores
+no; bajo el costo, las frases largas seguían en tres renglones y sobraban 4 px. Con las frases en dos
+renglones y el hueco en 6 px: **ningún desborde, 216 encuadres dentro del umbral**. Lo que no cabe en dos
+renglones —el acuerdo con Anthropic, el interruptor de Groq en *Data Controls*— está en el manual.
+
+**TEXTO nuevo, maquetado y no visto:** las dos líneas de IA y la cláusula cambiada van al bloque de textos
+del ⭐⭐ (filas 18 y 20).
+
+Gates: `cargo test --lib` (480) · `--test puerta` · `--test ghost` ✓ · clippy limpio · vitest 354 ✓ · lint ·
+typecheck · `verify:ephemeral` ✓ · `pnpm fidelidad` 216 encuadres, ningún desborde.
+
 ---
 
 ## Desviación del plan
@@ -1452,6 +1479,11 @@ typecheck · `verify:ephemeral` ✓.
   la ponía primera en lo que se corta «si no cabe, H2, declarado» (fase 0, punto 7), y el corte no se
   declaró en su momento: lo encontró la auditoría independiente (B28). Declarado ahora en el ADR 008
   (enmienda del 2026-09-28), aquí, en el summary y en el PR.
+- **La regla dura 2 queda más estrecha de lo que dice (decisión del usuario, 2026-09-29, ADR 011).**
+  «Bajo proveedor con no-retención» solo lo cumple Groq, con su retención cero encendida; Claude se queda
+  y guarda hasta 30 días sin un acuerdo. El usuario lo decidió con la tabla delante, y la app lo dice en
+  IA, en el manual y en la cláusula. Gemini sale de la app. La planeadora decide si la regla se reescribe
+  («proveedor que declara su retención, y la app la enseña») o si Claude sale en el H2.
 
 ---
 

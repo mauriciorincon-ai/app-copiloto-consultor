@@ -10,7 +10,7 @@ import type { Fuente } from "./ficha";
 
 export type Quien = "sistema" | "api" | "mock";
 export type Confianza = "alta" | "media" | "baja";
-export type Externo = "claude" | "gemini" | "groq";
+export type Externo = "claude" | "groq";
 
 export type PorQueNoRedacta =
   | "apple-intelligence-apagado"
@@ -135,10 +135,12 @@ export function useLoQueSalio(): LoQueSalio[] {
   return salio;
 }
 
-/** Los nombres de los tres proveedores externos, como la app los enseña. */
+/**
+ * Los nombres de los proveedores externos, como la app los enseña. Gemini salió por decisión del usuario
+ * (2026-09-29, ADR 011): su API no ofrece retención cero en ningún nivel.
+ */
 export const EXTERNOS: { id: Externo; nombre: string }[] = [
   { id: "claude", nombre: "Claude" },
-  { id: "gemini", nombre: "Gemini" },
   { id: "groq", nombre: "Groq" },
 ];
 

@@ -36,7 +36,7 @@
   <div class="n" data-para="evaluacion"><b>Qué mirar:</b> la regla «código primero» convertida en tabla medida. El modelo aporta 3 aciertos de 40 y cuesta 2,3 segundos. Y la fila incómoda está ahí: <b>1 de 40 se inventó una cifra</b>, en los dos modelos.</div>
   <div class="n" data-para="s2"><b>Qué mirar (mirada 18 — su veredicto viaja al gate del MVP):</b> la pantalla que se construye en el sprint 2, armada con piezas que ya aprobaste arriba. Quién redacta, <b>con el motivo cuando nadie puede</b> —aquí, Apple Intelligence apagado en Ajustes—; el contador; la casilla de redactar, <b>apagada</b>; y el proveedor externo con tu clave en el Llavero y su costo con el tope del mes. Lo que no entra todavía y queda declarado: el texto exacto que salió con lo reemplazado tachado, la lista de peticiones y el kit de evaluación en pantalla (sus números están en la bitácora del sprint).</div>
   <div class="n" data-para="claude-code"><b>Qué mirar:</b> lo que pediste — que Claude Code pueda operar la app desde tu propio Mac. La puerta es <b>local</b> y nace <b>cerrada</b>. Mira sobre todo las dos columnas: qué puede hacer y qué <b>no puede hacer nunca</b>. Y la regla que lo sostiene todo: <b>en reunión la puerta se cierra sola</b> — un agente no toca jamás lo que está vivo en memoria. Abajo, el registro de lo que hizo.</div>
-  <div class="n" data-para="s3-quien"><b>Qué mirar (mirada 19 — forma, decisión de diseño no escrita):</b> la pantalla de hoy no tiene sitio para «lo que salió» —ocupa sus 640 px—, así que no se le añade debajo: aparece un botón <b>«Ver lo que salió · N»</b> en la tarjeta del proveedor externo, solo cuando algo salió en esta reunión.</div>
+  <div class="n" data-para="s3-quien"><b>Qué mirar (mirada 19 — forma, decisión de diseño no escrita):</b> la pantalla de hoy no tiene sitio para «lo que salió» —ocupa sus 640 px—, así que no se le añade debajo: aparece un botón <b>«Ver lo que salió · N»</b> en la tarjeta del proveedor externo, solo cuando algo salió en esta reunión. <b>Maquetado, no visto (auditoría del S3, M3 — decisión del usuario, 2026-09-29):</b> Gemini sale; bajo el costo —la columna que tiene sitio—, una línea dice qué hace el proveedor elegido con lo que le mandas. Con Groq elegido: «<span lang="es">Groq no entrena con lo que le mandas; sin retención cero en su consola, puede guardarlo hasta 30 días.</span><span lang="en">Groq does not train on what you send; without zero retention in its console, it may keep it up to 30 days.</span>»</div>
   <div class="n" data-para="s3-puerta"><b>Qué mirar (sprint 3 · mirada 22 — forma, «maquetado, no visto»):</b> la puerta local para Claude Code se abre como «lo que salió»: un botón <b>«Puerta local · cerrada»</b> en la fila de «Redactar sugerencias» lleva a la vista de la Etapa de Diseño, con un botón para volver. Nace cerrada. Los textos de la Etapa de Diseño que prometían más de lo que la puerta hace se ajustan (va al bloque de textos del gate): reindexar sin «añadir carpetas», el kit mide la búsqueda y no compara proveedores, las preferencias son las de la lista blanca, y «ni decidir por ti» (redactar, tus turnos, tu NDA). Sin nada en el registro: «Tu agente no ha pedido nada en esta sesión de la app.»</div>
   <div class="n" data-para="s3-puerta-abierta"><b>Qué mirar (sprint 3 · mirada 22):</b> abierta. El comando para dárselo a Claude Code, con «Copiar» —si <code>ghost</code> no está compilado, en su lugar: «Falta compilar ghost junto a la app: pnpm ghost»—, y lo que va a pasar en tu Mac: cada vez que abres la puerta, <b>macOS te pregunta</b> si ghost puede usar la llave de tu Llavero (auditoría del S3, B12: decía «la primera vez»; texto, maquetado, no visto). El registro, lo más reciente arriba, sin contenido: la orden, si se hizo y, si no, por qué. Los otros motivos que puede decir: «llave errada», «lo decides tú», «orden desconocida»; y lo hecho sin cuenta dice «hecho». El registro guarda las últimas 50 órdenes de esta sesión de la app: se ven tres y el resto se desplaza. En inglés: <span lang="en">«ghost is not built next to the app: pnpm ghost» · «wrong key» · «unknown order» · «done»</span>.</div>
   <div class="n" data-para="s3-puerta-reunion"><b>Qué mirar (sprint 3 · mirada 22):</b> empezó una reunión y la puerta <b>se cerró sola</b>; lo que tu agente pidió después queda denegado en el registro. No se vuelve a abrir sola. Si intentas abrirla y no se puede, la misma franja dice «No se abrió» y por qué: «Hay una reunión, o no se puede saber si la hay.» · «La ruta de la carpeta de la app es demasiado larga para un socket.» · «El Llavero no guardó la llave.» · «macOS no dejó crear el socket.» En inglés: <span lang="en">«It did not open» · «There is a meeting, or it cannot be known.» · «The app folder path is too long for a socket.» · «The Keychain did not store the key.» · «macOS did not let the socket be created.»</span></div>
@@ -258,7 +258,6 @@
           <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Proveedor externo</span><span lang="en">External provider</span></h2><label class="conm off"><span class="track"></span><span class="etq"><span lang="es">apagado</span><span lang="en">off</span></span></label></div>
           <div class="fila" style="gap:6px;margin-top:8px">
             <button class="btn mini" aria-pressed="true"><svg class="ic s relleno" style="color:var(--halo)"><use href="#i-check-circle"/></svg>Claude</button>
-            <button class="btn mini" aria-pressed="false">Gemini</button>
             <button class="btn mini" aria-pressed="false">Groq</button>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
@@ -266,6 +265,7 @@
             <div class="fila" style="gap:8px"><button class="btn mini" disabled><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Guardar en el Llavero</span><span lang="en">Save to Keychain</span></button><button class="btn mini"><span lang="es">Borrar la clave</span><span lang="en">Delete the key</span></button></div>
           </div>
         </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
         <div class="tarjeta" style="padding-bottom:6px">
           <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Costo</span><span lang="en">Cost</span></h2>
           <table class="tabla">
@@ -276,6 +276,8 @@
             </tbody>
           </table>
           <p style="font-size:11.5px;color:var(--ink-2);margin-top:6px"><span lang="es">Al llegar al tope vuelve sola al modelo local. No se detiene la reunión.</span><span lang="en">On reaching the cap it falls back to the local model on its own. The meeting is not interrupted.</span></p>
+        </div>
+        <p class="retencion" style="font-size:11.5px;color:var(--ink-2);margin:0 4px"><span lang="es">Claude no entrena con lo que le mandas, pero lo guarda hasta 30 días.</span><span lang="en">Claude does not train on what you send it, but keeps it for up to 30 days.</span></p>
         </div>
       </div>
     </div>
@@ -315,7 +317,6 @@
           <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Proveedor externo</span><span lang="en">External provider</span></h2><label class="conm off"><span class="track"></span><span class="etq"><span lang="es">apagado</span><span lang="en">off</span></span></label></div>
           <div class="fila" style="gap:6px;margin-top:8px">
             <button class="btn mini" aria-pressed="true"><svg class="ic s relleno" style="color:var(--halo)"><use href="#i-check-circle"/></svg>Claude</button>
-            <button class="btn mini" aria-pressed="false">Gemini</button>
             <button class="btn mini" aria-pressed="false">Groq</button>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
@@ -323,6 +324,7 @@
             <div class="fila" style="gap:8px"><button class="btn mini" disabled><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Guardar en el Llavero</span><span lang="en">Save to Keychain</span></button><button class="btn mini"><span lang="es">Borrar la clave</span><span lang="en">Delete the key</span></button><span class="crece"></span><button class="btn mini"><svg class="ic s"><use href="#i-nube"/></svg><span lang="es">Ver lo que salió · 3</span><span lang="en">See what left · 3</span></button></div>
           </div>
         </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
         <div class="tarjeta" style="padding-bottom:6px">
           <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Costo</span><span lang="en">Cost</span></h2>
           <table class="tabla">
@@ -333,6 +335,8 @@
             </tbody>
           </table>
           <p style="font-size:11.5px;color:var(--ink-2);margin-top:6px"><span lang="es">Al llegar al tope vuelve sola al modelo local. No se detiene la reunión.</span><span lang="en">On reaching the cap it falls back to the local model on its own. The meeting is not interrupted.</span></p>
+        </div>
+        <p class="retencion" style="font-size:11.5px;color:var(--ink-2);margin:0 4px"><span lang="es">Claude no entrena con lo que le mandas, pero lo guarda hasta 30 días.</span><span lang="en">Claude does not train on what you send it, but keeps it for up to 30 days.</span></p>
         </div>
       </div>
     </div>

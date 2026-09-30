@@ -421,9 +421,16 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   apagado en Ajustes»).
   - **El modelo del sistema** necesita **Apple Intelligence** activado en *Ajustes del Sistema →
     Apple Intelligence y Siri*. Es gratis y no sale nada de tu Mac.
-  - **El proveedor externo** (Claude, Gemini o Groq) es opcional y es **tuyo**: pegas tu clave, la app
+  - **El proveedor externo** (Claude o Groq) es opcional y es **tuyo**: pegas tu clave, la app
     la guarda en tu **Llavero** —nunca en un archivo— y enciendes su interruptor. Sin clave no se
     enciende.
+  - **Lo que cada proveedor hace con lo que le mandas** está escrito debajo de sus botones, en IA.
+    Ninguno de los dos entrena con ello. **Claude lo guarda hasta 30 días**; para que no guarde nada
+    hace falta un acuerdo de retención cero con Anthropic. **Groq puede guardarlo hasta 30 días**
+    para vigilar abusos, salvo que enciendas la retención cero en *Data Controls*, en su consola: si
+    usas Groq, enciéndela. Lo que sale va siempre anonimizado en tu Mac, pero sale. Gemini estuvo en
+    la app y salió: su API no ofrece retención cero en ningún nivel, y sin facturación entrena con lo
+    que recibe (la tabla, con sus fuentes y la fecha en que se leyó, está en el ADR 011).
 - **Lo que no hace, y cómo se comprueba:**
   - **Nunca inventa la fuente.** El modelo recibe **la última frase de tu cliente** y las tres fichas del momento, cada una
     con un número; tiene que decir de cuál sacó la sugerencia, y si cita una que no se le dio, la

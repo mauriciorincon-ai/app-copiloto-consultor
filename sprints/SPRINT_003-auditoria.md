@@ -267,7 +267,7 @@ proveedor el tiempo que digan sus términos, que nadie leyó.
 
 **Verificado cuando:** el gate pasa de rojo a verde y la decisión del usuario queda en el summary.
 
-**Estado:** **pagado** (Fase 2) — **pagado en parte**: enmienda del ADR 011 con la tabla por proveedor (retención, entrenamiento, cómo se consigue no-retención, si basta una clave estándar, fuente y fecha 2026-09-28), leída por un subagente en las páginas oficiales. Gate `tests/unit/proveedores-con-su-retencion.test.ts` (rojo sin la tabla). **Falta la decisión del usuario, proveedor por proveedor.**
+**Estado:** **pagado** (Fase 2). La tabla por proveedor en el ADR 011 (retención, entrenamiento, cómo se consigue no-retención, si basta una clave estándar, fuente y fecha 2026-09-28) y la **decisión del usuario del 2026-09-29: Claude y Groq se quedan con su aviso en IA, Gemini sale** (ADR 011; `sintesis/api.rs`, `src/ia.ts`, `ia.html`). El gate `tests/unit/proveedores-con-su-retencion.test.ts` exige la fila, la decisión, el aviso en los dos idiomas y que el que sale no vuelva (rojo registrado en la bitácora). La cláusula modelo dejó de prometer «no retención». La regla dura 2 queda más estrecha de lo que dice: desviación declarada para la planeadora.
 
 ### M4 · La puerta hereda el desbloqueo de la pantalla: tu agente abre cualquier reunión sin preguntarte
 

@@ -64,13 +64,16 @@ vende **no persistir, verificable**.
    defecto la app es **100 % local** (STT, OCR, retrieval y síntesis on-device); el API externo
    está APAGADO hasta que el usuario lo encienda con su propia clave, y aun así solo recibe texto
    minimizado y anonimizado localmente (patrón Velo) bajo proveedor con no-retención. **Contador
-   de salida a red** visible por reunión (0 en modo local) con test.
+   de salida a red** visible por reunión (0 en modo local) con test. *En esta app hoy (decisión del
+   usuario, 2026-09-29, ADR 011):* «no-retención» solo la cumple Groq con su retención cero encendida;
+   Claude guarda hasta 30 días sin un acuerdo, y la app lo dice bajo cada proveedor, en IA. Gemini salió.
+   Es una desviación de la regla, declarada en la bitácora del S3 para la planeadora.
 3. **CÓDIGO PRIMERO.** Captura, VAD, fin de turno, STT, OCR, disparo y recuperación son
    deterministas. La única feature LLM (síntesis de sugerencia) lleva **ADR «código primero»**
    (plantilla en `decisions/PLANTILLA-ADR-codigo-primero.md`) y su fallback permanente son las
    fichas del corpus sin LLM. Orden de proveedores: Apple Foundation Models → MLX → API opt-in;
    adapter con `mock` como proveedor de primera clase. **En esta app hoy:** modelo del sistema
-   (`sintesis/sistema.rs`) → API opt-in (`sintesis/api.rs`: Claude, Gemini, Groq); MLX queda en el
+   (`sintesis/sistema.rs`) → API opt-in (`sintesis/api.rs`: Claude, Groq); MLX queda en el
    roadmap del H2 (ADR 011); `mock` de primera clase (`AG_SINTESIS=mock`).
 4. **CERO HUELLAS DE VOZ, CERO EMOCIONES.** La atribución de hablante se resuelve por pista
    (mic/sistema), nunca por biometría; no se infiere estado emocional de nadie.
@@ -115,7 +118,7 @@ vende **no persistir, verificable**.
 - **Pantalla:** Apple Vision OCR (`es-ES`/`en-US`) solo ante cambio (huella por zonas).
 - **Corpus:** índice local **BM25 (tantivy) por sección**; los embeddings + RRF pasan al H2 con su
   condición escrita (ADR 008).
-- **IA embebida:** adapter `sintesis/` (modelo del sistema → API opt-in Claude / Gemini / Groq) +
+- **IA embebida:** adapter `sintesis/` (modelo del sistema → API opt-in Claude / Groq) +
   `mock` (`AG_SINTESIS=mock`); salida en esquema cerrado y comprobada contra su ficha (`fundar()`,
   `sintesis/fiel.rs`); costo por reunión y por mes con tope (ADR 011) (skill `ia-embebida`).
 - **Tests:** Vitest (unit) + Playwright (e2e de la webview vía `pnpm preview`) + axe + `cargo test`.

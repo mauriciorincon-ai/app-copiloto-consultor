@@ -466,7 +466,7 @@ pub fn muestras() -> Vec<Muestra> {
             sistema: None,
             api: crate::EstadoDelApi {
                 encendida: true,
-                externo: crate::sintesis::api::Externo::Gemini,
+                externo: crate::sintesis::api::Externo::Groq,
                 hay_clave: true,
             },
             latencia_ms: Some(1_400),

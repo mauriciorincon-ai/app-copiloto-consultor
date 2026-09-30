@@ -73,8 +73,8 @@ que la regla 1 permite persistir). **Techo US$10/mes**; al llegarlo, la app vuel
 
 La regla dura 2 dice que el API externo, si el usuario lo enciende, manda texto minimizado y anonimizado
 **«bajo proveedor con no-retención»**. Hasta aquí nadie había leído qué hace cada proveedor con ese texto.
-Se leyó en sus páginas oficiales el **2026-09-28**. La app llama a la Gemini Developer API (no a Vertex AI)
-y pide `claude-haiku-4-5`, `gemini-2.5-flash` y `llama-3.3-70b-versatile` (`sintesis/api.rs`).
+Se leyó en sus páginas oficiales el **2026-09-28**. Hasta la decisión de abajo, la app llamaba a la Gemini Developer
+API (no a Vertex AI) y pedía `claude-haiku-4-5`, `gemini-2.5-flash` y `llama-3.3-70b-versatile` (`sintesis/api.rs`).
 
 | Proveedor | Retención por defecto | ¿Entrena con lo que recibe? | Cómo se consigue no-retención | ¿Con una clave estándar? | Fuente | Leído |
 |---|---|---|---|---|---|---|
@@ -88,11 +88,37 @@ entrenamiento», y solo si el usuario enciende la retención cero en su consola.
 guarda hasta 30 días sin un acuerdo. La Gemini Developer API no ofrece retención cero en ningún nivel, y
 sin facturación entrena con lo que recibe.
 
-**Decisión del usuario:** pendiente, proveedor por proveedor y con esta tabla delante: se queda · se queda
-con un aviso en su fila de IA · sale de la app. Se registra aquí y en el summary.
+**Decisión del usuario (2026-09-29):** con esta tabla delante, «Groq se queda y Claude también, Gemini sale».
+
+| Proveedor | Decisión | Qué dice la app |
+|---|---|---|
+| Claude | se queda, con aviso | En IA, bajo el costo: «Claude no entrena con lo que le mandas, pero lo guarda hasta 30 días.» |
+| Groq | se queda, con aviso | «Groq no entrena con lo que le mandas; sin retención cero en su consola, puede guardarlo hasta 30 días.» |
+| Gemini | sale | Nada: sale de la lista de IA, del tipo `Externo` de Rust y de la maqueta. |
+
+La línea de IA cabe en dos renglones: la pantalla llena su ventana de 640 px, y el gate de desbordes de
+`pnpm fidelidad` la midió. El detalle —el acuerdo con Anthropic, dónde está el interruptor de Groq
+(*Data Controls*)— está en el manual.
+
+**Consecuencias:**
+
+1. **La regla dura 2 queda más estrecha de lo que dice.** «Bajo proveedor con no-retención» solo lo cumple
+   Groq, y solo con su interruptor encendido. Claude guarda hasta 30 días sin un acuerdo. El usuario lo
+   decide sabiéndolo, y la app lo dice donde se elige el proveedor, en vez de callarlo. Es una desviación
+   de la regla de la planeadora: va a la bitácora bajo «Desviación del plan» y al summary.
+2. **La cláusula modelo** (`data/jurisdicciones/catalogo.json`) decía «bajo condiciones de no retención».
+   Ahora dice lo que es verdad con los dos proveedores: «el proveedor no entrena con ellos y puede
+   conservarlos hasta 30 días».
+3. **Unas preferencias guardadas con Gemini** no tumban el archivo entero: el proveedor vuelve al de
+   fábrica y **el API queda apagado**. Nunca se enciende solo con otro proveedor (`prefs::de_texto`, con
+   test que se vio en rojo).
+4. **Una clave de Gemini guardada** se quedaría en el Llavero, sin que la app la lea. La app nunca se
+   distribuyó, y su único usuario no guardó ninguna: lo comprobó el 2026-09-28 en Keychain Access.
 
 **Gate:** `tests/unit/proveedores-con-su-retencion.test.ts`. Cada `nombre` de `EXTERNOS` (`src/ia.ts`)
 tiene al menos una fila en esta tabla con una fecha `AAAA-MM-DD` y una URL. Nació en rojo: antes de esta
-enmienda no había tabla. Los términos se vuelven a leer antes de cada release (estándar 7), y la fila se
+enmienda no había tabla. Desde la decisión, además: cada proveedor de `EXTERNOS` tiene «se queda» en la
+tabla de la decisión y su aviso en los dos idiomas (`cuaderno.retencion<Nombre>`), y el que «sale» no está
+en `EXTERNOS`, ni en `enum Externo`, ni entre los botones de `docs/diseno/ia.html`. También nació en rojo. Los términos se vuelven a leer antes de cada release (estándar 7), y la fila se
 fecha de nuevo.
 

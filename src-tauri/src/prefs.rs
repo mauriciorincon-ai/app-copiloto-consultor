@@ -151,9 +151,27 @@ pub fn es_un_idioma(codigo: &str) -> bool {
         && b[4].is_ascii_uppercase()
 }
 
+/// Un proveedor que salió de la app (Gemini, decisión del usuario 2026-09-29, ADR 011) no tumba el
+/// archivo entero: vuelve el de fábrica **y el API queda apagado** — jamás se enciende solo con otro.
+/// Devuelve el nombre del que salió, para el log.
+fn sin_proveedor_que_salio(v: &mut serde_json::Value) -> Option<String> {
+    let o = v.as_object_mut()?;
+    let cual = o.get("externo")?.as_str()?.to_string();
+    if serde_json::from_value::<Externo>(serde_json::Value::String(cual.clone())).is_ok() {
+        return None;
+    }
+    o.insert("externo".into(), serde_json::to_value(Preferencias::default().externo).ok()?);
+    o.insert("apiEncendida".into(), serde_json::Value::Bool(false));
+    Some(cual)
+}
+
 /// Las preferencias de un texto, o las de fábrica con el motivo.
 pub fn de_texto(texto: &str) -> Result<Preferencias, String> {
-    let a: Archivo = serde_json::from_str(texto).map_err(|e| format!("no se entiende: {e}"))?;
+    let mut v: serde_json::Value = serde_json::from_str(texto).map_err(|e| format!("no se entiende: {e}"))?;
+    if let Some(cual) = sin_proveedor_que_salio(&mut v) {
+        println!("[prefs] el proveedor «{cual}» ya no está en la app: el API queda apagado");
+    }
+    let a: Archivo = serde_json::from_value(v).map_err(|e| format!("no se entiende: {e}"))?;
     if a.version != VERSION {
         return Err(format!("es de la versión {}, y esta app lee la {VERSION}", a.version));
     }
@@ -229,6 +247,22 @@ mod tests {
         let p = leer(&carpeta("ausente").join(ARCHIVO));
         assert_eq!(p, Preferencias::default());
         assert_eq!((p.idiomas.cliente.as_str(), p.redactar, p.lectura_automatica), ("es-ES", false, true));
+    }
+
+    /// Gemini salió de la app (decisión del usuario, 2026-09-29; ADR 011). Unas preferencias que lo
+    /// tenían elegido no se pierden enteras —la NDA de cada cliente, la retención…— y el API queda
+    /// apagado: la app jamás lo enciende sola con un proveedor que no elegiste.
+    #[test]
+    fn un_proveedor_que_salio_no_borra_las_demas_ni_enciende_otro() {
+        let texto = r#"{"version":1,"redactar":true,"apiEncendida":true,"externo":"gemini","retencion":"30d"}"#;
+        let p = de_texto(texto).expect("el archivo entero se perdía por un proveedor que ya no está");
+        assert_eq!(p.externo, Externo::Claude);
+        assert!(!p.api_encendida, "se encendió solo con otro proveedor");
+        assert!(p.redactar);
+        assert_eq!(p.retencion, Retencion::Dias30);
+        // Uno que sigue en la app se lee tal cual.
+        let groq = de_texto(r#"{"version":1,"apiEncendida":true,"externo":"groq"}"#).unwrap();
+        assert_eq!((groq.externo, groq.api_encendida), (Externo::Groq, true));
     }
 
     /// La retención de fábrica es la de la maqueta (90 días) y cada una vence lo que dice. «Siempre»

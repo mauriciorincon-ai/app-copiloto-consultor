@@ -8,9 +8,10 @@
 //! 3. **Envía** por el puente de Swift —la única puerta de la app a la red, efímera y https—.
 //! 4. **Destapa** la respuesta en el Mac y se la da a `fundar`, que la valida como a cualquier otra.
 //!
-//! Tres proveedores intercambiables, dos formatos: el de Anthropic y el compatible con OpenAI (que
-//! Gemini y Groq también hablan). El precio de cada uno está escrito aquí, con su fecha: el costo
-//! que la app enseña es tokens medidos × ese precio.
+//! Dos proveedores intercambiables, cada uno en su formato: el de Anthropic y el compatible con
+//! OpenAI, que Groq habla. Cuánto guarda cada uno lo que recibe está en el ADR 011, con la decisión del
+//! usuario (2026-09-29): los dos se quedan, con su aviso en IA. El precio de cada uno está escrito
+//! aquí, con su fecha: el costo que la app enseña es tokens medidos × ese precio.
 
 use super::anonimo::Boveda;
 use super::{PorQueNoRedacta, Proveedor, Quien, Respuesta};
@@ -20,19 +21,17 @@ use super::{PorQueNoRedacta, Proveedor, Quien, Respuesta};
 #[serde(rename_all = "kebab-case")]
 pub enum Externo {
     Claude,
-    Gemini,
     Groq,
 }
 
 /// Precios de lista por millón de tokens (entrada, salida), en dólares, **a 2026-09-26**. Si el
 /// proveedor los cambia, el costo que se enseña se desvía hasta que se actualicen aquí.
 impl Externo {
-    pub const TODOS: [Externo; 3] = [Externo::Claude, Externo::Gemini, Externo::Groq];
+    pub const TODOS: [Externo; 2] = [Externo::Claude, Externo::Groq];
 
     pub fn nombre(self) -> &'static str {
         match self {
             Externo::Claude => "Claude Haiku",
-            Externo::Gemini => "Gemini Flash",
             Externo::Groq => "Groq · Llama",
         }
     }
@@ -40,7 +39,6 @@ impl Externo {
     fn modelo(self) -> &'static str {
         match self {
             Externo::Claude => "claude-haiku-4-5",
-            Externo::Gemini => "gemini-2.5-flash",
             Externo::Groq => "llama-3.3-70b-versatile",
         }
     }
@@ -48,7 +46,6 @@ impl Externo {
     fn url(self) -> &'static str {
         match self {
             Externo::Claude => "https://api.anthropic.com/v1/messages",
-            Externo::Gemini => "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
             Externo::Groq => "https://api.groq.com/openai/v1/chat/completions",
         }
     }
@@ -56,7 +53,6 @@ impl Externo {
     fn precio(self) -> (f64, f64) {
         match self {
             Externo::Claude => (1.00, 5.00),
-            Externo::Gemini => (0.30, 2.50),
             Externo::Groq => (0.59, 0.79),
         }
     }
@@ -65,7 +61,6 @@ impl Externo {
     fn cuenta(self) -> &'static str {
         match self {
             Externo::Claude => "claude",
-            Externo::Gemini => "gemini",
             Externo::Groq => "groq",
         }
     }
@@ -85,7 +80,7 @@ impl Externo {
                 "system": instrucciones,
                 "messages": [{ "role": "user", "content": texto }],
             }),
-            Externo::Gemini | Externo::Groq => serde_json::json!({
+            Externo::Groq => serde_json::json!({
                 "model": self.modelo(),
                 "max_tokens": 200,
                 "messages": [
@@ -98,7 +93,7 @@ impl Externo {
             Externo::Claude => format!(
                 "content-type: application/json\nx-api-key: {clave}\nanthropic-version: 2023-06-01"
             ),
-            Externo::Gemini | Externo::Groq => {
+            Externo::Groq => {
                 format!("content-type: application/json\nauthorization: Bearer {clave}")
             }
         };
@@ -113,7 +108,7 @@ impl Externo {
                 json["usage"]["input_tokens"].as_u64().unwrap_or(0),
                 json["usage"]["output_tokens"].as_u64().unwrap_or(0),
             )),
-            Externo::Gemini | Externo::Groq => Some((
+            Externo::Groq => Some((
                 json["choices"][0]["message"]["content"].as_str()?.to_string(),
                 json["usage"]["prompt_tokens"].as_u64().unwrap_or(0),
                 json["usage"]["completion_tokens"].as_u64().unwrap_or(0),
@@ -596,7 +591,7 @@ mod pruebas {
         let claude = serde_json::json!({"content":[{"text":"{}"}],"usage":{"input_tokens":10,"output_tokens":2}});
         assert_eq!(Externo::Claude.leer(&claude), Some(("{}".into(), 10, 2)));
         let groq = serde_json::json!({"choices":[{"message":{"content":"{}"}}],"usage":{"prompt_tokens":7,"completion_tokens":3}});
-        assert_eq!(Externo::Gemini.leer(&groq), Some(("{}".into(), 7, 3)));
+        assert_eq!(Externo::Groq.leer(&groq), Some(("{}".into(), 7, 3)));
         for e in Externo::TODOS {
             assert!(e.url().starts_with("https://"), "{e:?} sin https");
         }
