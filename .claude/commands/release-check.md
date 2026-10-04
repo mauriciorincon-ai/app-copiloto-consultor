@@ -21,6 +21,13 @@ en su lugar las del binario, los permisos del sistema y la no-persistencia.
 - [ ] `pnpm test` verde (con su `--coverage`); cobertura ≥70 % en `src/**` sin errores de glob.
 - [ ] `pnpm test:e2e` verde y con CERO flaky (la UI de la webview vía `pnpm preview`).
 - [ ] `cargo test --locked` verde en `src-tauri/` (lo nativo: captura, ventana, permisos, buffers).
+- [ ] **`cargo test` a secas no abre hardware (regla 25 del kit, v1.36.0; en esta app, dentro de la regla 22).**
+      Lo que abre micrófono, audio del sistema, altavoces, Accessibility, Llavero o launchd va con
+      `#[ignore = "hardware: …"]` y lo corre la CI con `-- --include-ignored --skip en_vivo_`; lo que solo
+      puede correr en el Mac del usuario se llama `en_vivo_*` y se corre a mano, con su matriz y su «sí».
+      En la CI el paso a secas corre con `AG_SIN_HARDWARE=1`, que hace saltar el centinela en cualquier
+      entrada nativa abierta sin la marca. *(El kit no actualizó este checklist para las reglas 24/25:
+      K-S4, bitácora del sprint 004.)*
 
 ### 2. Type safety y lint
 - [ ] `pnpm typecheck` sin errores · `pnpm lint` sin warnings nuevos · `cargo clippy --locked -- -D warnings` limpio (corre en `build-escritorio`, kit v1.28.0).

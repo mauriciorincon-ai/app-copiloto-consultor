@@ -225,10 +225,18 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .cuenta.vencida .ic, .cuenta.vencida .reloj { color: var(--ink-2); }
 .franja .ventanas .op .ic { color: inherit; }
 .pregunta-nda .ic { color: var(--halo); flex: 0 0 auto; }
+.evidencia-e li .ic { margin-top: 2px; }
+.evidencia-e .usada .ic { color: var(--ok); }
+.evidencia-e .sin-usar .ic { color: var(--halo); }
+.cifra-e .d { font-size: 11px; color: var(--ink-2); }
+.banda[data-borde="arriba"] { border-top: 0; border-bottom: var(--borde) solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+.banda[data-borde="arriba"] .asa { top: auto; bottom: 0; }
 .mq-pos.banda-borde .banda { border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
 .mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
 @media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
+.mq-pos.banda-arriba .banda { border-radius: 0; border-left: 0; border-right: 0; }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
 .prohibido li .ic { color: var(--err); }
 /* marco de exhibición del bundle */
   body { margin: 0; padding: var(--s-6); }

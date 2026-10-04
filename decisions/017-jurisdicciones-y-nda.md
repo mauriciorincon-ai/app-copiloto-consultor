@@ -150,7 +150,9 @@ En el catálogo, en español y en inglés, **redactada desde el informe** (§1.c
 «asistencia de IA local, sin grabación ni retención», dice qué se procesa y dónde, qué persiste (tus
 notas, cifradas) y qué sale del equipo (nada por defecto; con el API encendido, solo texto minimizado
 y sin datos que identifiquen, a un proveedor sin retención), y que el cliente puede pedir que no se
-use.
+use. *(Enmienda del sprint 004: «sin retención» ya no lo dice la cláusula. Desde la auditoría del S3
+(M3, A3) dice lo que cada proveedor publica —«el proveedor no entrena con ellos y puede conservarlos
+hasta 30 días»—, que es lo que pide el estándar v2.18.0 §4-T, «retención publicada».)*
 
 - Sesión la enseña con **«Ver la cláusula»**: las dos versiones, lado a lado, cada una con su
   «Copiar». Se copia la que va con la carta de encargo, no la del idioma de la interfaz.

@@ -90,7 +90,11 @@ ejecutable**: archivo(s) y línea(s), cambio exacto propuesto, y el criterio obs
 "ajuste verificado" — el formato que un modelo de menor capacidad puede seguir sin pensar
 de más. Cierra recordando al usuario: *"aprueba la Fase 1 y fija el modelo de la Fase 2 con
 `/model` (un modelo menor basta si sigue este plan)"*.
-6. **NINGÚN NÚMERO DE ENTIDADES CABLEADO (kit v1.29.0 — comprobación mecánica).** Lee en el
+   **Todo copy que la Fase 1 PROPONGA pasa por su propia casilla 4 antes de entregarse (kit
+   v1.35.0):** los ajustes ejecutables fabrican texto (copies de estado, líneas de manual, pies de
+   brochure) y ese texto puede traer una promesa aplazada nueva *(ds S5: el arreglo propuesto para
+   el pie del brochure prometía «se suman cuando la página se re-arme» en una página pública)*.
+7. **NINGÚN NÚMERO DE ENTIDADES CABLEADO (kit v1.29.0 — comprobación mecánica).** Lee en el
    brief y la VISION de la planeadora qué entidades se declaran **extensibles solo con datos**
    (p. ej. «N plataformas», «N idiomas», «N capas»). Para cada una, busca en el núcleo y en las
    vistas literales y arreglos fijos que asuman la cardinalidad de hoy (`3`, `[a, b, c]`,
@@ -101,6 +105,13 @@ de más. Cierra recordando al usuario: *"aprueba la Fase 1 y fija el modelo de l
    «podría suscitar un error estructural».)*
 
 
+8. **¿QUÉ PROTECCIÓN DEL SISTEMA DEL USUARIO TOCÓ EL SPRINT, Y DÓNDE ESTÁ EL «SÍ»? (kit v1.36.0, regla 24).**
+   Lista cada acción del sprint sobre lo que el sistema operativo protege (Llavero, permisos TCC, launchd o
+   ítems de inicio, Touch ID, Automatización, cuentas, certificados) —en código, en scripts, en tests y en
+   comandos del constructor— y busca en la bitácora la matriz previa (qué · para qué · aviso · cómo se deshace)
+   y el «sí» del usuario. Acción sin matriz o sin «sí» = hallazgo **alto**. Y comprueba la regla 25: el comando
+   de pruebas por defecto no corre nada de eso (lo marcado `#[ignore]`/feature lo corre la CI).
+
 ## FASE 2 — Correcciones (SOLO tras aprobación del usuario)
 
 1. Propón el **plan de ajustes para TODOS los hallazgos — críticos, altos, medios y bajos (kit
@@ -108,9 +119,16 @@ de más. Cierra recordando al usuario: *"aprueba la Fase 1 y fija el modelo de l
    sprint… resolver todos, hasta los bajos»).** La deuda solo recoge lo que es IMPOSIBLE pagar en
    el sprint, con su razón y su `archivo:línea`; **«no reproducible» no cierra un hallazgo**: si
    no se puede reproducir, se re-audita su superficie hasta ubicarlo o descartarlo con evidencia.
-2. **Espera la validación del usuario** del plan.
+2. **Espera la validación del usuario** del plan. **Toda decisión que le pidas va en llano (kit v1.36.0):**
+   para cada opción, qué pasa si la elige y qué cuesta (tiempo, dinero, lo que deja de funcionar), sin
+   identificadores de hallazgo ni jerga en la pregunta *(Angel Ghost S3: seis decisiones llegaron en jerga y el
+   usuario pidió que se las explicaran)*.
 3. Solo entonces implementa — siguiendo el plan de la Fase 1 al pie; cualquier desviación se
-   declara antes de ejecutarla.
+   declara antes de ejecutarla. **Orden de pago (kit v1.35.0): primero los hallazgos que CREAN o
+   amplían gates (tests, axe, aserciones); después el resto; y los gates nuevos se corren AL FINAL
+   sobre el árbol completo**, no solo sobre el archivo que los motivó *(ds S5: el axe nuevo de un
+   pago atrapó una regresión introducida por otro pago)*. Toda demo en rojo de la Fase 2 va con
+   `scripts/demo-rojo.sh` (regla 15).
 4. **Repite la casilla 4 de la Fase 1 («¿qué frases caducaron?») DESPUÉS del último ajuste
    (kit v1.28.0):** los arreglos de la Fase 2 fabrican frases nuevas —un texto de estado, un
    copy de vacío, una línea del manual— y la casilla corrida antes de ellos no las vio. Es el
@@ -119,7 +137,8 @@ de más. Cierra recordando al usuario: *"aprueba la Fase 1 y fija el modelo de l
    sigue cada ajuste hasta sus frases HERMANAS y nombra el summary entre las superficies (kit
    v1.31.0):** el summary se escribe después de la auditoría y nadie lo audita *(Angel Ghost S2:
    de 25 frases cazadas en la segunda pasada, once las fabricó la Fase 2 y dos vivían en el
-   propio summary)*.
+   propio summary)*. **La segunda pasada la hace OTRO auditor independiente (kit v1.36.0):** un subagente
+   que no construyó ni auditó la Fase 1, en solo lectura, sobre el diff completo del sprint.
 5. Al terminar: registra en la bitácora y en el `SPRINT_NNN-summary.md` los hallazgos, los
    pagos y la deuda aceptada. **Sin auditoría registrada en el summary, el cierre del sprint
    queda condicionado** (lo verifica el `/cierre-sprint` de la planeadora).

@@ -104,3 +104,21 @@ body.mq { min-height: 100vh; background: #0d0e10; color: #cfd3d8; font-family: "
 .mq-card.estrella:hover { border-color: #9ccc65; }
 .mq-spike { max-width: 1180px; margin: 0 auto 40px; padding: 0 18px; }
 @media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
+
+/* Sprint 004 — la banda ARRIBA (mirada de DECISIÓN 2): pegada bajo la barra de menús; la reunión BAJA y
+   se encoge (su borde inferior no se mueve). El Dock se esconde como en los estados acoplados de abajo:
+   el escritorio de referencia lo dibuja encima de la reunión, y en un Mac de verdad la ventana termina
+   sobre él. La cámara, dibujada donde
+   está en un MacBook: en el centro del borde de arriba. */
+.mq-pos.banda-arriba { left: 0; right: 0; top: 24px; }
+.mq-pos.banda-arriba .banda { border-radius: 0; border-left: 0; border-right: 0; }
+.mq-escritorio[data-acople="a88"] .mq-meet { top: 112px; }
+.mq-escritorio[data-acople="a200"] .mq-meet { top: 224px; }
+.mq-escritorio[data-acople="a44"] .mq-meet { top: 68px; }
+.mq-escritorio .mq-meet { transition: bottom 150ms cubic-bezier(.2,.6,.2,1), top 150ms cubic-bezier(.2,.6,.2,1); }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
+.mq-corte.abajo span { top: 6px; }
+.mq-camara { position: absolute; top: 7px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; border-radius: 50%; background: #07090c; border: 2px solid #565c66; z-index: 7; }
+.mq-mirada { position: absolute; left: calc(50% + 14px); top: 14px; z-index: 6; padding-left: 10px; border-left: 2px dashed #7dd3fc; color: #7dd3fc; font-size: 11px; line-height: 1.35; pointer-events: none; }
+.mq-mirada span { display: inline-block; background: #0b1016; border: 1px solid #7dd3fc; border-radius: 4px; padding: 2px 8px; white-space: nowrap; }
+.mq-relleno-arriba { position: absolute; left: 0; right: 0; top: 24px; height: 88px; z-index: 3; background: linear-gradient(150deg, #33405f 0%, #463d5e 100%); outline: 2px dashed #7dd3fc; outline-offset: -2px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #cfd3d8; }

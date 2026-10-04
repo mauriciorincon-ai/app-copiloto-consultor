@@ -12,6 +12,8 @@ Comandos reutilizables que Claude Code puede invocar en cualquier app del pipeli
 | `/deploy-check` | Antes de mergear a main (perfil WEB). Verificaciones exhaustivas (tests, lint, build, a11y, perf). |
 | `/release-check` | Antes de mergear a main (perfil ESCRITORIO, kit v1.27.0). Sustituye a `/deploy-check`: binario, permisos del sistema, ventana protegida, no persistencia. |
 | `/run-tests` | Corrida completa de la suite (unit + integration + e2e + a11y). |
+| `/audita-sprint` | OBLIGATORIO al concluir la construcción, antes de la guía/gate ⭐ y del summary (método v1.10.0). Dos fases: auditor independiente (solo lectura, todas las severidades con archivo:línea) → aprobación → pagos de TODOS los hallazgos. |
+| `/design-sync` | Al cierre de ciclo, DESPUÉS del gate ⭐⭐ y solo cuando el usuario lo invoca (lleva `disable-model-invocation`): publica el design system con el bundle `design-sync/` del repo. |
 
 ## Cómo Claude Code los usa
 

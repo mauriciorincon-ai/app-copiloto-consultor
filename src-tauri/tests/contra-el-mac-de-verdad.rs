@@ -120,11 +120,13 @@ fn formato(d: &Disponibilidad) -> String {
 }
 
 #[test]
+#[ignore = "hardware: el reconocimiento de voz de Apple; lo corre la CI con --include-ignored"]
 fn transcribe_la_pregunta_en_espanol() {
     probar("pregunta-es.wav", "es-ES", &["limpieza de datos", "alcance"]);
 }
 
 #[test]
+#[ignore = "hardware: el reconocimiento de voz de Apple; lo corre la CI con --include-ignored"]
 fn transcribe_la_pregunta_en_ingles() {
     probar("pregunta-en.wav", "en-US", &["data cleaning", "scope"]);
 }
@@ -133,6 +135,7 @@ fn transcribe_la_pregunta_en_ingles() {
 // («ISO27.001», «ISO 27,001») y el corpus las tiene sin él. La fase 4 tendrá que normalizarlas
 // antes de buscar, y este test existe para que ese día no parezca un bug nuevo.
 #[test]
+#[ignore = "hardware: el reconocimiento de voz de Apple; lo corre la CI con --include-ignored"]
 fn las_cifras_llegan_con_separadores_del_idioma() {
     let (muestras, hz) = leer_wav("../docs/kit-de-prueba/audio/pregunta-es.wav");
     let motor = motor_de_la_casa();
@@ -196,11 +199,13 @@ fn escuchar(que: &str, abrir: impl FnOnce(Arc<Mutex<Anillo>>) -> Result<Grifo, N
 }
 
 #[test]
+#[ignore = "hardware: abre el micrófono; lo corre la CI con --include-ignored"]
 fn el_microfono_se_abre_o_dice_por_que_no() {
     escuchar("micrófono", Grifo::del_microfono);
 }
 
 #[test]
+#[ignore = "hardware: abre el audio del sistema (process tap); lo corre la CI con --include-ignored"]
 fn el_audio_del_sistema_se_abre_o_dice_por_que_no() {
     escuchar("audio del sistema", Grifo::del_sistema);
 }
@@ -220,6 +225,7 @@ use std::sync::mpsc;
 use std::time::Instant;
 
 #[test]
+#[ignore = "hardware: hace sonar los altavoces y abre el audio del sistema; lo corre la CI con --include-ignored"]
 fn una_frase_por_los_altavoces_acaba_siendo_texto() {
     let _turno = turno();
     let motor = motor_de_la_casa();
@@ -851,6 +857,7 @@ fn corpus_para_el_efimero() -> PathBuf {
 }
 
 #[test]
+#[ignore = "hardware: reconocimiento de voz de Apple, e inventaría ~/Documents, ~/Desktop y ~/Downloads; lo corre la CI con --include-ignored"]
 fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     let _turno = turno();
     let casa = std::env::temp_dir().join(format!("ag-efimero-casa-{}", std::process::id()));
@@ -996,6 +1003,7 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
 /// Dos procesos no comparten el mutex del turno, así que la respuesta no era un candado: era que el
 /// hijo **no mire lo que no le toca**. Para leer un log hace falta la sesión, no el inventario.
 #[test]
+#[ignore = "hardware: el reconocimiento de voz de Apple (lo lanza la canaria del log como proceso hijo); lo corre la CI con --include-ignored"]
 fn sesion_para_el_log() {
     let _turno = turno();
     let casa = std::env::temp_dir().join(format!("ag-log-casa-{}", std::process::id()));
@@ -1011,13 +1019,14 @@ fn sesion_para_el_log() {
 }
 
 #[test]
+#[ignore = "hardware: lanza la sesión con el reconocimiento de voz de Apple; lo corre la CI con --include-ignored"]
 fn la_canaria_del_cliente_no_aparece_en_el_log() {
     // El turno porque el hijo usa el motor de voz, y los tests de audio de este binario usan los
     // altavoces y el tap del sistema: van de a uno, como todos los demás.
     let _turno = turno();
     let yo = std::env::current_exe().expect("no se supo cuál es este binario de pruebas");
     let hijo = std::process::Command::new(&yo)
-        .args(["sesion_para_el_log", "--exact", "--nocapture", "--test-threads=1"])
+        .args(["sesion_para_el_log", "--exact", "--include-ignored", "--nocapture", "--test-threads=1"])
         .output()
         .expect("no se pudo correr la sesión en un proceso hijo");
 
@@ -1570,6 +1579,7 @@ struct Transcripciones {
 }
 
 #[test]
+#[ignore = "hardware: el reconocimiento de voz de Apple; lo corre la CI con --include-ignored"]
 fn el_wer_no_empeora_con_el_diccionario_y_mejora_donde_hay_jerga() {
     let _turno = turno();
     let raiz = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba/audio");
@@ -1673,6 +1683,7 @@ use app_copiloto_consultor_lib::capture::nativo::salida_de_audio;
 use app_copiloto_consultor_lib::habla::{self, Momento};
 
 #[test]
+#[ignore = "hardware: encola una frase en la voz del sistema (los altavoces); lo corre la CI con --include-ignored"]
 fn la_voz_de_este_mac_contesta_y_dice_lo_que_hay() {
     let v = habla::voz();
     let salida = salida_de_audio();
@@ -2205,8 +2216,8 @@ fn el_radar_ambar_lee_la_reunion_grabada() {
 /// propósito, y un test bajo demanda que pasa sin haber medido nada es decorado. (La primera versión
 /// salía en verde con «no hay ventana»: se vio al correrla.)
 #[test]
-#[ignore = "necesita la ventana de docs/kit-de-prueba/pantalla/meet-de-prueba.html abierta y visible"]
-fn la_ventana_de_meet_se_captura_y_se_lee() {
+#[ignore = "en vivo: necesita la ventana de docs/kit-de-prueba/pantalla/meet-de-prueba.html abierta y visible, y el permiso de grabar la pantalla"]
+fn en_vivo_la_ventana_de_meet_se_captura_y_se_lee() {
     use app_copiloto_consultor_lib::pantalla::{refuerzo, NoSeVe, Objetivo};
     let _turno = turno();
     let (ojo, lector) = pantalla::apple::ojos();
@@ -2283,8 +2294,8 @@ fn en_una_maquina_virtual() -> bool {
 /// el_llavero -- --ignored`. **Se niega a correr si ya hay una clave de Groq guardada**: pisarla
 /// sería borrarle al usuario su clave de verdad.
 #[test]
-#[ignore = "toca el Llavero del usuario: se corre a mano"]
-fn el_llavero_guarda_lee_y_borra_la_clave() {
+#[ignore = "en vivo: toca el Llavero del usuario; se corre a mano, con su matriz y su «sí» (regla 22)"]
+fn en_vivo_el_llavero_guarda_lee_y_borra_la_clave() {
     use app_copiloto_consultor_lib::sintesis::api::{borrar_clave, guardar_clave, hay_clave, Externo};
     assert!(
         !hay_clave(Externo::Groq),

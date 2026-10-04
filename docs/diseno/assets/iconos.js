@@ -38,6 +38,7 @@
   <symbol id="i-nota" viewBox="0 0 16 16"><path d="M2.5 3.5h11v9h-11zM5 6.5h6M5 9h4"/></symbol>
   <symbol id="i-ram" viewBox="0 0 16 16"><rect x="1.5" y="4.5" width="13" height="7" rx="1"/><path d="M4 11.5v2M7 11.5v2M10 11.5v2M13 11.5v2M4 6.5h2M8 6.5h2"/></symbol>
   <symbol id="i-reloj" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5V8l2.5 1.5"/></symbol>
+  <symbol id="i-ensayo" viewBox="0 0 16 16"><path d="M13.2 8.6A5.3 5.3 0 1 1 11.6 4.2"/><path d="M12.6 1.8v2.9H9.7"/><path d="M6.6 6.3l3 1.7-3 1.7z" fill="currentColor"/></symbol>
   <symbol id="i-basura" viewBox="0 0 16 16"><path d="M3 4.5h10M6 4.5V3h4v1.5M4.5 4.5l.7 9h5.6l.7-9"/></symbol>
   <symbol id="i-llave" viewBox="0 0 16 16"><circle cx="5.5" cy="10.5" r="3"/><path d="M7.7 8.3 14 2M11.5 4.5l2 2M9.5 6.5l2 2"/></symbol>
   <symbol id="i-voz" viewBox="0 0 16 16"><path d="M2 7v2M5 4.5v7M8 2.5v11M11 5.5v5M14 7v2"/></symbol>

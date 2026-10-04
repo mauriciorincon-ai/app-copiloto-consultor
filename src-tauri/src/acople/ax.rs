@@ -76,6 +76,7 @@ pub fn permiso_concedido() -> bool {
 /// estaba concedido — **nunca** `true` por haber preguntado: el usuario tiene que ir a Ajustes y
 /// volver, y hasta entonces la respuesta honesta es `false` y la banda flota.
 pub fn pedir_permiso() -> bool {
+    crate::hardware::vigilar("el aviso de Accessibility");
     let opciones = CFDictionary::from_CFType_pairs(&[(
         CFString::new(CLAVE_PREGUNTAR).as_CFType(),
         CFBoolean::true_value().as_CFType(),
@@ -116,6 +117,7 @@ unsafe fn marco_de(ventana: AXUIElementRef) -> Option<Marco> {
 /// aplicaciones acotan lo que se les pide; guardar lo pedido en vez de lo conseguido dejaría la
 /// devolución sin poder reconocer su propia huella.
 unsafe fn poner_alto(ventana: AXUIElementRef, alto: f64) -> Option<Marco> {
+    crate::hardware::vigilar("escribir el tamaño de una ventana ajena (Accessibility)");
     let actual = marco_de(ventana)?;
     let pedido = CGSize {
         ancho: actual.ancho,

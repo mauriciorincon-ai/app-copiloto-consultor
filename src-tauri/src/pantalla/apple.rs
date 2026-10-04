@@ -68,6 +68,7 @@ impl Ojo for DelSistema {
         objetivo: &super::Objetivo,
         cuadro: &mut super::Cuadro,
     ) -> Result<(), super::NoSeVe> {
+        crate::hardware::vigilar("la captura de pantalla");
         use super::{NoSeVe, ANCHO_MAXIMO};
         let bundle = std::ffi::CString::new(objetivo.bundle.as_str())
             .map_err(|_| NoSeVe::Fallo("el identificador de la app lleva un cero dentro".into()))?;

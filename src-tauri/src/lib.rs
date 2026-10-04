@@ -28,6 +28,7 @@ pub mod disparo;
 pub mod escucha;
 pub mod ficha;
 pub mod habla;
+pub mod hardware;
 pub mod jurisdiccion;
 pub mod llavero;
 pub mod modo;

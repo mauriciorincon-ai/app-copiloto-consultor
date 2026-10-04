@@ -215,3 +215,24 @@ guardada a la vista, ni corpus para la puerta local.
   anuncia en la guía y en el manual; es fila de la regla 22 en la prueba en vivo).
 - **Inventario del efímero:** nada nuevo. Es un campo más de un archivo que ya estaba en `Permitido`.
 
+## Enmienda 8 — la posición de la banda, el banco enriquecido y tus ensayos (sprint 004, fase 0, 2026-10-04)
+
+`preferencias.json` gana tres campos, todos tuyos y en 600 como el resto:
+
+| Campo | Qué guarda | De fábrica |
+|---|---|---|
+| `posicionDeLaBanda` | arriba o abajo (ADR 004, enmienda 1) | arriba |
+| `avisoDeArribaVisto` | que ya viste, en Sesión, el aviso de la primera vez con la banda arriba | no |
+| `enriquecerElBanco` | si el modelo propone preguntas de más en el ensayo (ADR 019 §3) | apagado |
+
+Y nace una carpeta, **`ensayos/`**, en la carpeta privada de la app (700), con un archivo `.ghost` por
+ensayo (600): **cifrado con la misma llave de tus notas** y con la retención de tus notas (ADR 015,
+enmienda 4, que se escribe antes de la fase 4). Lleva tus respuestas **en texto** y las cifras de cada
+pregunta. **El audio no se guarda nunca**, tampoco el tuyo (regla dura 1). Entra en la lista de
+vencimientos como tus notas, así que lo vencido se borra aunque no abras la app.
+
+**Lo que entra en el inventario del efímero:** `Permitido` suma `ensayos/`. La sesión completa del gate en
+marcha guarda un ensayo, el test lo descifra y busca la canaria del cliente (no puede estar: el ensayo
+no abre la pista del sistema), y un archivo intruso en `ensayos/` lo pone en rojo (fase 4). Las tres
+preferencias no son nuevas para el inventario: son campos de un archivo que ya estaba.
+

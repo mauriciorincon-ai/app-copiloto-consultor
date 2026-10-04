@@ -39,6 +39,10 @@ Corre cada verificación en orden y reporta estado:
       `scrollHeight`/`scrollWidth` contra el alto/ancho visible del contenedor (test o script de
       fidelidad); un desborde es un rojo aunque la comparación por píxel pase *(Angel Ghost: 15 px
       de desborde sobrevivieron a 60 encuadres comparados al 0,15 %)*.
+- [ ] **La pasada de capturas incluye una pasada de INTERACCIÓN (kit v1.32.0, regla 22):** por cada
+      control dibujado (botón, panel, ficha, conmutador de tema/idioma, siguiente paso) el arnés lo
+      activa y comprueba que algo cambió (DOM o captura); el gate `controladores-maqueta` está en verde
+      *(Big-D: la ficha del nivel 2 sin script sobrevivió a cuatro miradas con capturas de un panel cerrado)*.
 - [ ] `prefers-reduced-motion` respetado si hay animaciones nuevas — **y la FORMA del árbol no
       depende de `useReducedMotion()`** (kit v1.26.0): test unitario «mismo HTML con `null` /
       `true` / `false`» sobre cada componente de motion nuevo o tocado + axe bajo emulación de
@@ -103,7 +107,9 @@ Corre cada verificación en orden y reporta estado:
       archivo del repo ni campo de GitHub contenga la URL de producción o de previews:
       ```
       git grep -nE "vercel[.]app|workers[.]dev|pages[.]dev" -- ':!pnpm-lock.yaml'   # TODOS los archivos versionados — jamás include-list (kit v1.23.0: wrangler.jsonc pasó un gate con lista); suma el host real del stack si difiere
-      gh repo view --json homepageUrl -q .homepageUrl   # el campo About/website debe estar vacío o apuntar al repo
+      gh repo view --json homepageUrl -q .homepageUrl   # el campo About/website APUNTA AL PROPIO REPO (kit v1.32.1); si está vacío, Vercel lo reescribe
+      # REPARA, no solo verifica (kit v1.35.0 — habla: Vercel lo reescribió tres veces tras el deploy y se limpió a mano):
+      [ "$(gh repo view --json homepageUrl -q .homepageUrl)" = "$(gh repo view --json url -q .url)" ] || gh repo edit --homepage "$(gh repo view --json url -q .url)"
       ```
       README, BLUEPRINT ("qué ve quién" sin la URL), manual, guía (su campo de URL se llena EN
       USO), CTAs. *La producción se muestra (brochure), jamás se entrega (link).* Si este sprint
@@ -124,6 +130,12 @@ Corre cada verificación en orden y reporta estado:
       describir el sprint pasado.*
 - [ ] README actualizado si cambió el setup.
 - [ ] **`docs/MANUAL-DE-USO.md` actualizado con las features de este sprint** (qué hace, cómo se usa, limitaciones — en lenguaje de usuario final). Feature sin manual = sprint no cierra.
+- [ ] **IA de construcción por suscripción (7-S, kit v1.33.0 — regla 21):** si la app tiene una skill que
+      corre con la suscripción de la persona, **antes de cada release** se releen los términos vigentes y la
+      fecha y lo leído quedan en su ADR de cumplimiento. Sin relectura fechada, el release no sale. *(Big-D
+      S1, M-4: el ADR remitía a esta casilla y no existía.)*
+- [ ] **Matriz de envejecimiento (kit v1.33.0 — regla 23):** si la app tiene datos con fecha de cambio de
+      estado, el gate que construye la página en cada una de esas fechas está en verde (y nació en rojo).
 - [ ] CHANGELOG entry (si el proyecto lo usa).
 - [ ] Si hay decisión arquitectónica: ADR en `decisions/` de este repo.
 

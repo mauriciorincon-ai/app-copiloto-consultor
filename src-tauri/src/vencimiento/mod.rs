@@ -221,6 +221,7 @@ pub fn con_reintentos(intentos: u32, esperar: &dyn Fn(), mut hacer: impl FnMut()
 
 /// El segundo programa que lanza la app, con la ruta entera y solo desde aquí. Devuelve si salió bien.
 fn launchctl(argumentos: &[&str]) -> bool {
+    crate::hardware::vigilar("launchd");
     std::process::Command::new("/bin/launchctl")
         .args(argumentos)
         .stdout(std::process::Stdio::null())

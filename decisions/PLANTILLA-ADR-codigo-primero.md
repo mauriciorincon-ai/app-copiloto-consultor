@@ -31,7 +31,7 @@ fallback ANUNCIA su motivo. La app debe ser útil sin el LLM.>
 ## 5. Proveedor, costo y privacidad
 - **Orden de proveedores:** <on-device → self-host → API; el adapter del kit + `mock` como proveedor de primera clase>.
 - **Costo medido:** <US$ por operación/reunión/día con el logger del kit; techo declarado (US$10/mes en etapa inicial)>.
-- **Privacidad:** <qué se loguea (solo metadatos), retención del proveedor (no-retención exigida si hay terceros), anonimización previa>.
+- **Privacidad:** <qué se loguea (solo metadatos), retención del proveedor (la PUBLICADA, leída con fecha y fuente y enseñada en la app donde se elige; se prefiere retención cero — estándares v2.18.0 §4-T), anonimización previa>.
 - **HITL:** <si el dominio es sensible, quién revisa qué antes de que llegue al usuario final>.
 
 ## Consecuencias

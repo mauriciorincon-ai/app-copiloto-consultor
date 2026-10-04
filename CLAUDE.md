@@ -64,12 +64,15 @@ vende **no persistir, verificable**.
 2. **NADA CRUDO SALE DEL EQUIPO.** Ningún audio ni imagen viaja jamás a un proveedor. Por
    defecto la app es **100 % local** (STT, OCR, retrieval y síntesis on-device); el API externo
    está APAGADO hasta que el usuario lo encienda con su propia clave, y aun así solo recibe texto
-   minimizado y anonimizado localmente (patrón Velo) bajo proveedor con no-retención. **Contador
-   de salida a red** visible por reunión (0 en modo local) con test. *En esta app hoy (decisión del
-   usuario, 2026-09-29, ADR 011):* «no-retención» solo la cumple Groq con su retención cero encendida;
-   Claude guarda hasta 30 días sin un acuerdo, y la app lo dice en IA, bajo el costo, para el proveedor
-   elegido. Gemini salió.
-   Es una desviación de la regla, declarada en la bitácora del S3 para la planeadora.
+   minimizado y anonimizado localmente (patrón Velo) bajo **retención PUBLICADA por el proveedor,
+   leída con fecha y fuente y enseñada en la app donde se elige el proveedor** (estándares v2.18.0,
+   §4-T; antes decía «no-retención»): se prefiere el de retención cero, pero solo se afirma lo que el
+   proveedor publica. **Contador de salida a red** visible por reunión (0 en modo local) con test.
+   *En esta app hoy (decisión del usuario, 2026-09-29, ADR 011):* Groq (retención cero si el usuario
+   la enciende en su consola) y Claude (hasta 30 días sin un acuerdo); la app lo dice en IA, bajo el
+   costo, para el proveedor elegido, y la cláusula de encargo dice lo mismo
+   (`tests/unit/proveedores-con-su-retencion.test.ts`). Gemini salió. La desviación que declaró el S3
+   («no-retención» solo la cumplía Groq) la resolvió la planeadora con el estándar v2.18.0.
 3. **CÓDIGO PRIMERO.** Captura, VAD, fin de turno, STT, OCR, disparo y recuperación son
    deterministas. La única feature LLM (síntesis de sugerencia) lleva **ADR «código primero»**
    (plantilla en `decisions/PLANTILLA-ADR-codigo-primero.md`) y su fallback permanente son las
@@ -282,11 +285,16 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    mirada real con todos los gates de palabra cumplidos; 3ª ocurrencia de la clase. Es la
    regla 15-hermana del lado humano: una mirada satisfecha sin mirada es un gate que nunca
    ejecutó.)*
-   **Dos clases de mirada (kit v1.31.0, método v1.33.0):** la de **FORMA** (qué se construye:
-   estado nuevo, pantalla, estructura) abre parada antes de construir encima. La de **TEXTO**
-   (si un copy se entiende) **no bloquea**: maquetas igual, registras «maquetado, no visto» y su
-   veredicto viaja al gate humano del MVP; mientras, la vigilan los gates automáticos
-   (diccionario fiel a la maqueta, fidelidad, maquetas que caben). Toda mirada va en **matriz
+   **Tres clases de mirada (kit v1.36.0, método v1.38.0; antes dos, kit v1.31.0):** abre parada
+   **SOLO la de DECISIÓN** — lo que cambia una decisión del usuario, la promesa del producto o su
+   máquina: una pantalla o un flujo nuevos fuera de la maqueta aprobada, un cambio de forma que
+   altera cómo se usa, cualquier acción sobre las protecciones del sistema. Va **una pregunta de
+   sí/no por mensaje, con el archivo abierto en el estado exacto**. La de **FORMA** (un estado nuevo
+   de una pantalla aprobada, una variante) y la de **TEXTO** (si un copy se entiende) **no
+   bloquean**: se maquetan, se registran «maquetada, no vista» con su fecha y su veredicto viaja al
+   gate humano del MVP; mientras, las vigilan los gates automáticos (diccionario fiel a la maqueta,
+   fidelidad, maquetas que caben, controles con script). Indiferibles siempre: G-Diseño y la
+   FIDELIDAD del primer sprint con UI. En duda, DECISIÓN. Toda mirada va en **matriz
    de una fila** (archivo · botón/estado · qué mirar · respuesta esperada), nunca preguntas
    sueltas. **Las segundas vueltas no abren parada**: copy retocado por su propio veredicto y
    filas sin respuesta se aplican, se registran y se ven al cierre de fase. *(Este repo, S2:
@@ -418,6 +426,11 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    mirar en una fase; desde entonces cada push termina leyendo sus checks)*. **Y una métrica
    del kit que la CI NO puede medir se declara `manual` con su corrida local registrada**, o
    no se declara: el WER vivió dos sprints «en CI» sin que el runner tuviera modelos de voz.
+   **Y la demo se corre con `scripts/demo-rojo.sh` (kit v1.35.0):** mutación literal → gate (debe
+   fallar) → restauración desde UNA carpeta de respaldo (`.demo-rojo/`, ignorada por git) verificada
+   con `grep` y `cmp` → gate restaurado (debe pasar). *En esta casa,* su opción `--puerto` mata lo que
+   ocupe el puerto: solo se usa con un puerto propio, jamás con el 3000, que es de otra app del
+   usuario.
 16. **El bundle publicable del design system es un ARTEFACTO DEL REPO (kit v1.17.0).** `design-sync/`
    se versiona aquí como **espejo 1:1** de lo publicado en Claude Design, y la jerarquía es fija:
    `design-system.md` (fuente de verdad) → `design-sync/` (bundle, deriva) → el proyecto remoto
@@ -449,10 +462,12 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    `BLUEPRINT.html` (documenta dominio y protección como "qué ve quién sin sesión" **sin escribir
    la URL** — la URL exacta vive en la planeadora, que es privada), ni el manual, ni la guía
    (su campo de URL se llena EN USO, desde la orden), ni `package.json`. El CTA público de la app
-   es la **«lista de espera»** — sin promesa de otorgamiento. **La limpieza del campo homepage
-   es RECURRENTE, no de una vez (kit v1.22.0):** la GitHub App de Vercel lo reescribe tras cada
-   deploy de producción (confirmado en vivo) — se re-verifica tras CADA merge a `main`, y JAMÁS
-   se automatiza con un PAT de administración como secret en un repo público. Y **los documentos
+   es la **«lista de espera»** — sin promesa de otorgamiento. **El campo homepage del repo
+   APUNTA AL PROPIO REPO (kit v1.32.1; antes «limpieza recurrente», v1.22.0):** vacío, la GitHub App
+   de Vercel lo reescribe tras cada deploy; con la URL del repo, no. Se fijó en el sprint 004 (`gh
+   repo edit --homepage <url del repo>`), `/deploy-check` §9 lo verifica y lo repara, y JAMÁS se
+   automatiza con un PAT de administración como secret en un repo público. *(Esta app no tiene
+   Vercel ni previews; la regla se cumple igual: el campo no queda vacío.)* Y **los documentos
    que NARRAN el barrido escriben los patrones sin el literal** (clase de carácter, p. ej.
    `vercel[.]app`): un summary que cita el patrón tal cual rompe el grep y el gate deja de ser
    binario. **El comando del barrido corre sobre TODOS los archivos versionados** (kit
@@ -481,6 +496,13 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    CI pasa VERDE porque **ninguna puerta compara el resultado contra la INTENCIÓN del PR**:
    leer la salida del install ES el gate. `pnpm peers check` corre en quality (es lo único que
    ve un peer insatisfecho). Overrides: en `pnpm-workspace.yaml`, jamás en `package.json`.
+   **Comprobación MECÁNICA (kit v1.32.0; falla CERRADO desde v1.35.0):**
+   `scripts/verificar-dependencias.mjs` corre en el job `quality` en cada PR y falla si algún paquete
+   quedó por debajo de `main` (su rojo: un `jsdom` bajado a mano en el lockfile, bitácora del S4).
+   **Excepciones de auditoría (kit v1.34.0):** `pnpm audit --audit-level high` es gate y su nivel no
+   se baja; una advisory SIN parche publicado puede ir a `auditConfig.ignoreGhsas` de
+   `pnpm-workspace.yaml` con un ADR que diga id, razón, fecha y condición de retiro. Una advisory CON
+   parche nunca se excepciona. Hoy la lista está vacía.
 
 19. **Todo puente entre dos lenguajes exige su GATE DE CONTRATO, en el mismo sprint que lo cruza
    (kit v1.28.0).** Donde un dato cambia de lenguaje o de runtime —Rust→TS por eventos de Tauri,
@@ -528,10 +550,17 @@ decisions/NNN-titulo.md   (ADRs de implementación)
     `osascript`, pulsaciones, clics) o **leer registros del sistema** (`sfltool`, `tccutil`, `log
     show` amplio), el constructor se DETIENE y lo enseña en una **matriz de una fila**: qué voy a
     correr · para qué · qué aviso vas a ver, con su texto · cómo se deshace. Solo se corre con un
-    **«sí» explícito por acción**; el «sí» de una no vale para la siguiente. Los tests `#[ignore]`
-    que tocan el Mac de verdad entran en la regla, **y también `cargo test` a secas**: arrastra
-    `tests/contra-el-mac-de-verdad.rs`, que abre el micrófono y el audio del sistema y hace sonar los
-    altavoces. En local se corre `cargo test --lib --test puerta --test ghost`; lo demás, la CI. Para
+    **«sí» explícito por acción**; el «sí» de una no vale para la siguiente. Los tests que tocan el
+    Mac de verdad entran en la regla. **Desde el sprint 004 `cargo test` a secas no toca nada** (reglas
+    24 y 25 del kit, «las protecciones del sistema se enseñan antes de tocarlas» y «el comando de
+    pruebas por defecto no toca hardware», citadas por nombre): lo que abre micrófono, audio del
+    sistema, altavoces, reconocimiento de voz, pantalla, Accessibility, Llavero, desbloqueo o launchd
+    lleva `#[ignore = "hardware: …"]` y lo corre la CI con `--include-ignored`; lo que necesita al
+    usuario delante se llama `en_vivo_*`, la CI lo salta y se corre a mano, con su matriz y su «sí».
+    Lo garantiza un centinela, no la memoria: con `AG_SIN_HARDWARE=1` cada entrada nativa **aborta antes
+    de cruzar a C** (`src-tauri/src/hardware.rs`; gate `tests/unit/cargo-test-sin-hardware.test.ts`).
+    Su primera corrida cazó un test de la voz que desde el S2 encolaba una frase en los altavoces. En
+    local se corre `AG_SIN_HARDWARE=1 cargo test`; lo marcado, la CI. Para
     comprobar el estado del Mac se usa primero
     lo que no pide permiso (`ls ~/Library/LaunchAgents`, `launchctl list`) o se le pide al usuario
     que mire. **Un aviso que no se anunció, el usuario lo deniega.** *(Origen: en el S3 el
@@ -540,6 +569,25 @@ decisions/NNN-titulo.md   (ADRs de implementación)
     contraseña de administrador. El usuario creyó que se había metido algo: «si voy a poner mi clave
     es porque sé qué está pasando». Las peticiones de contraseña eran la única forma que tenía de
     enterarse. Inventario completo en `sprints/SPRINT_003-implementation-log.md`.)*
+
+23. **Los controles de la maqueta tienen su script (regla 22 del kit, v1.32.0 — citada por nombre).**
+    Todo control dibujado en `docs/diseno/*.html` carga su script, y cada botón de la sala de diseño
+    hace algo que `assets/maqueta.js` atiende (`tests/unit/controladores-maqueta.test.ts`). Y se pulsa
+    de verdad: cada clic cambia algo y ningún par de estados se ve igual
+    (`tests/e2e/maqueta-interaccion.spec.ts`, más la pasada de interacción de
+    `scripts/capturar-maqueta.mjs`). *La parte del kit sobre el generador de la maqueta no aplica:*
+    aquí la maqueta se escribe a mano, sin generador, así que no hay deriva que vigilar. *(Origen en
+    el kit: Big-D — la ficha del nivel 2 sin script sobrevivió a cuatro miradas con capturas de un
+    panel cerrado.)*
+
+24. **La matriz de envejecimiento (regla 23 del kit, v1.33.0 — citada por nombre).** Todo dato con
+    fecha de cambio de estado se pinta en cada fecha en que algo cambia —hoy, cada umbral, un segundo
+    antes y uno después, +100 días—, con la fecha como perilla del test y nunca el reloj, sin `NaN`,
+    `undefined`, cuentas negativas ni quejas en la consola (`tests/unit/envejecimiento.test.tsx`). Hoy
+    entran la bandeja (3 h de fábrica, 24 h de techo, «al cerrar») en Notas y Honestidad, y la
+    retención de las notas (7 d · 30 d · 90 d · 1 año · siempre). Todo lo nuevo que venza entra en la
+    matriz en el sprint que lo trae. La fecha «consultado» del catálogo de jurisdicciones no cambia el
+    estado de nada y queda fuera, dicho aquí.
 
 ## Estándares (los 6+1, gates en CI)
 

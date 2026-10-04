@@ -54,6 +54,7 @@ mod puente {
 /// Guarda (o reemplaza) un secreto. El texto que llega se pisa con ceros en cuanto el Llavero lo
 /// tiene.
 pub fn guardar(servicio: Servicio, cuenta: &str, secreto: &str) -> Result<(), String> {
+    crate::hardware::vigilar("el Llavero");
     #[cfg(all(target_os = "macos", puente_de_swift))]
     {
         let s = std::ffi::CString::new(servicio.nombre()).map_err(|e| e.to_string())?;
@@ -77,6 +78,7 @@ pub fn guardar(servicio: Servicio, cuenta: &str, secreto: &str) -> Result<(), St
 
 /// Lee un secreto, si hay. El búfer intermedio se pisa con ceros; quien lo recibe responde del suyo.
 pub fn leer(servicio: Servicio, cuenta: &str) -> Option<String> {
+    crate::hardware::vigilar("el Llavero");
     #[cfg(all(target_os = "macos", puente_de_swift))]
     {
         let s = std::ffi::CString::new(servicio.nombre()).ok()?;
@@ -97,6 +99,7 @@ pub fn leer(servicio: Servicio, cuenta: &str) -> Option<String> {
 
 /// ¿Hay secreto? Se pregunta por los atributos, **sin leerlo**.
 pub fn hay(servicio: Servicio, cuenta: &str) -> bool {
+    crate::hardware::vigilar("el Llavero");
     #[cfg(all(target_os = "macos", puente_de_swift))]
     {
         let (Ok(s), Ok(c)) = (std::ffi::CString::new(servicio.nombre()), std::ffi::CString::new(cuenta)) else {
@@ -117,6 +120,7 @@ pub fn hay(servicio: Servicio, cuenta: &str) -> bool {
 /// hay», y crear uno nuevo encima borraría el que había. Para la llave de las notas eso es perder
 /// todas las reuniones guardadas (ADR 015 §4).
 pub fn existe(servicio: Servicio, cuenta: &str) -> Result<bool, String> {
+    crate::hardware::vigilar("el Llavero");
     #[cfg(all(target_os = "macos", puente_de_swift))]
     {
         let s = std::ffi::CString::new(servicio.nombre()).map_err(|e| e.to_string())?;
@@ -137,6 +141,7 @@ pub fn existe(servicio: Servicio, cuenta: &str) -> Result<bool, String> {
 
 /// Borra un secreto (bien también si no había).
 pub fn borrar(servicio: Servicio, cuenta: &str) -> Result<(), String> {
+    crate::hardware::vigilar("el Llavero");
     #[cfg(all(target_os = "macos", puente_de_swift))]
     {
         let s = std::ffi::CString::new(servicio.nombre()).map_err(|e| e.to_string())?;

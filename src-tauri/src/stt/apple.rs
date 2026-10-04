@@ -79,6 +79,7 @@ impl Motor for Apple {
         let Ok(c) = std::ffi::CString::new(idioma) else {
             return Disponibilidad::IdiomaDesconocido;
         };
+        crate::hardware::vigilar("la descarga de un modelo de voz de macOS");
         traducir(unsafe { puente::ag_stt_instalar(c.as_ptr()) })
     }
 
@@ -91,6 +92,8 @@ impl Motor for Apple {
             Fallo::NoDisponible(Disponibilidad::IdiomaDesconocido)
         })?;
         let mut salida = vec![0i8; CABIDA];
+        // El centinela de la regla 25, justo antes de cruzar: lo de arriba es validación pura.
+        crate::hardware::vigilar("el reconocimiento de voz de Apple");
         let escritos = unsafe {
             puente::ag_stt_transcribir(
                 c.as_ptr(),

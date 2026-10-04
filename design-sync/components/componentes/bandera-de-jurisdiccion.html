@@ -182,10 +182,15 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .selector { font: inherit; font-size: var(--t-meta); font-weight: 500; color: var(--ink); background: var(--surface-2); border: var(--borde) solid var(--line-2); border-radius: var(--r-chip); padding: 2px 6px; max-width: 180px; }
 .bandera .pendiente { font-size: 11px; color: var(--ink-2); }
 .pregunta-nda .ic { color: var(--halo); flex: 0 0 auto; }
+.evidencia-e li .ic { margin-top: 2px; }
+.evidencia-e .fuente { grid-column: 2; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.evidencia-e .usada .ic { color: var(--ok); }
+.evidencia-e .sin-usar .ic { color: var(--halo); }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
 .mq-relleno .mini { position: relative; height: 158px; border: 1px solid #3a3e46; border-radius: 8px; overflow: hidden; background: linear-gradient(150deg, #2b3550 0%, #3a3350 55%, #4a3a44 100%); }
 .mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
 @media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
 .k-sec > p.regla { font-size: var(--t-ui); color: var(--ink-2); max-width: 78ch; }
 .k-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
 .k-grid.ancha { grid-template-columns: 1fr; }

@@ -629,3 +629,32 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .pregunta-nda { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: var(--borde) solid var(--line-2); border-left: 3px solid var(--halo); background: var(--surface); border-radius: var(--r-chip); font-size: var(--t-meta); font-weight: 600; color: var(--ink); }
 .pregunta-nda .ic { color: var(--halo); flex: 0 0 auto; }
 .tarjeta p.clausula { font-family: var(--font-evidencia); font-size: 12.5px; line-height: 1.45; color: var(--ink); }
+
+/* Sprint 004, fase 0 — EL ENSAYO (ADR 019; maqueta `ensayo.html`, mirada de DECISIÓN 1). La pregunta,
+   el reloj de tu respuesta, lo que usaste y lo que tenías sin usar, y las cuatro cifras. «Tenías y no
+   usaste» es una pista, no un castigo: va con el acento y el círculo punteado, jamás en rojo. */
+.pregunta-e { padding: 12px 15px 13px; border: var(--borde) solid var(--line-2); border-left: 3px solid var(--halo); border-radius: var(--r-ficha); background: var(--surface); }
+.pregunta-e .de { display: flex; align-items: center; gap: 8px; font-size: var(--t-meta); color: var(--ink-2); }
+.pregunta-e .texto { margin-top: 6px; font-family: var(--font-evidencia); font-size: 19px; line-height: 1.35; color: var(--ink); }
+.pregunta-e.chica { padding: 9px 13px 10px; }
+.pregunta-e.chica .texto { font-size: var(--t-titular); }
+.reloj-e { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 19px; line-height: 1.1; color: var(--ok); }
+.respuesta-e { font-family: var(--font-evidencia); font-size: var(--t-linea); line-height: 1.5; color: var(--ink-2); }
+.evidencia-e { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.evidencia-e li { display: grid; grid-template-columns: 16px 1fr auto; gap: 2px 8px; align-items: start; }
+.evidencia-e li .ic { margin-top: 2px; }
+.evidencia-e .titular { font-family: var(--font-evidencia); font-size: var(--t-ui); color: var(--ink); }
+.evidencia-e .fuente { grid-column: 2; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.evidencia-e .usada .ic { color: var(--ok); }
+.evidencia-e .sin-usar .ic { color: var(--halo); }
+.cifras-e { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.cifra-e { padding: 7px 10px 8px; border: var(--borde) solid var(--line); border-radius: var(--r-chip); background: var(--surface); }
+.cifra-e .q { font-size: var(--t-meta); color: var(--ink-2); }
+.cifra-e .n { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 17px; line-height: 1.3; color: var(--ink); }
+.cifra-e .d { font-size: 11px; color: var(--ink-2); }
+
+/* Sprint 004, fase 0 — LA BANDA ARRIBA (ADR 004, enmienda 1; maqueta `posicion.html`, mirada de
+   DECISIÓN 2): bajo la barra de menús, junto a la cámara. El borde y la sombra miran a la reunión, que
+   ahora está debajo, y el asa va en ese mismo borde: es el que se arrastra para ajustar las dos. */
+.banda[data-borde="arriba"] { border-top: 0; border-bottom: var(--borde) solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+.banda[data-borde="arriba"] .asa { top: auto; bottom: 0; }

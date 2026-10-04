@@ -29,6 +29,7 @@ mod puente {
 
 /// Pide el desbloqueo con el diálogo del sistema. Bloquea hasta que contestas.
 pub fn pedir(razon: &str) -> Respuesta {
+    crate::hardware::vigilar("el desbloqueo (Touch ID o contraseña)");
     #[cfg(all(target_os = "macos", puente_de_swift))]
     {
         let Ok(r) = std::ffi::CString::new(razon) else { return Respuesta::NoSePuede };

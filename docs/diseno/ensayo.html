@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="es" data-theme="dark" data-lang="es" data-estado="preparar">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Angel Ghost · Maqueta — 09 Ensayo</title>
+<link rel="stylesheet" href="assets/ghost.css">
+<link rel="stylesheet" href="assets/maqueta.css">
+</head>
+<body class="mq">
+
+<div class="mq-bar" role="toolbar" aria-label="Sala de diseño">
+  <span class="mq-t">09 · Ensayo · sprint 4</span>
+  <span class="mq-g"><span>estado</span>
+    <button data-estado="preparar">1 · preparar</button>
+    <button data-estado="preguntando">2 · preguntando</button>
+    <button data-estado="respondiendo">3 · respondiendo</button>
+    <button data-estado="evaluada">4 · evaluada</button>
+    <button data-estado="cerrado">5 · el informe</button>
+    <button data-estado="progreso">6 · tu progreso</button>
+    <button data-estado="sin-corpus">7 · sin corpus</button>
+  </span>
+  <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
+  <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
+  <a href="index.html">← recorrido</a>
+</div>
+
+<div class="mq-nota">
+  <div class="n" data-para="preparar"><b>Mirada de DECISIÓN 1 (pantalla nueva, sprint 4) — qué mirar:</b> el ensayo vive en la ventana principal, en el rail, justo debajo de Sesión: es lo que haces <b>antes</b>. Eliges el cliente y tu propuesta; a la derecha, <b>de dónde salen las preguntas</b> —tu propuesta, la ficha del cliente y un catálogo publicado de objeciones de datos, BI e IA— contadas. El modelo que enriquece el banco está <b>apagado</b> y se enciende en IA. Abajo, la promesa: <b>solo tu micrófono</b>, y lo que queda es texto cifrado con tus notas, nunca audio.</div>
+  <div class="n" data-para="preguntando"><b>Qué mirar:</b> una pregunta a la vez, en grande, con <b>de dónde sale</b> (la sección de tu propuesta). Si la voz está encendida la app te la lee, y <b>el micrófono no escucha mientras habla</b>: sin reunión la voz puede salir por los altavoces, y así la app no se oye a sí misma. Las teclas son de esta ventana, no globales: R repite, S salta, Esc termina; ⌥⎋ lo corta todo, como siempre.</div>
+  <div class="n" data-para="respondiendo"><b>Qué mirar:</b> el reloj de tu respuesta lleva su símbolo, y el estado dice <b>«solo el micrófono»</b>. Lo que vas diciendo aparece en texto (es tuyo). La respuesta se cierra sola con <b>2,5 s de silencio</b>, o con Enter si estás pensando.</div>
+  <div class="n" data-para="evaluada"><b>Qué mirar (la decisión de fondo):</b> <b>sin nota ni puntaje</b>. A la izquierda, la evidencia de tu corpus que usaste; a la derecha, la que <b>tenías y no usaste</b> —con el acento y el círculo punteado, nunca en rojo— y un «Sí lo dije» si la dijiste con otras palabras. Debajo, cuatro cifras medidas: tiempo, ritmo, muletillas y evidencia. Las muletillas son las que la transcripción conserva: la de Apple suele quitar «eh» y «um», y la pantalla lo dice.</div>
+  <div class="n" data-para="cerrado"><b>Qué mirar:</b> el informe del ensayo, pregunta por pregunta, con los totales arriba. <b>Guardar</b> lo cifra con la llave de tus notas y lo borra con tu retención; <b>Cerrar sin guardar</b> no deja nada. El audio no se guardó en ningún momento.</div>
+  <div class="n" data-para="progreso"><b>Qué mirar:</b> tu progreso con <b>ese</b> cliente, ensayo a ensayo: las mismas cuatro cifras en una tabla, y abajo cómo cambiaron desde el primero, con flecha y texto. Sin puntajes inventados. Abrir tus ensayos pide el mismo desbloqueo que tus notas.</div>
+  <div class="n" data-para="sin-corpus"><b>Qué mirar:</b> si tu corpus no tiene ni la propuesta ni la ficha de ese cliente, no hay de dónde sacar preguntas: la pantalla lo dice y te lleva a Corpus, en vez de inventarlas.</div>
+  <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
+</div>
+
+<div style="display:flex;justify-content:center;padding:0 18px 40px">
+<main class="ventana" data-captura>
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"/></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a href="sesion.html"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a href="ensayo.html" aria-current="page"><svg class="ic s"><use href="#i-ensayo"/></svg><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></a>
+    <a href="permisos.html"><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a href="corpus.html"><svg class="ic s"><use href="#i-doc"/></svg>Corpus</a>
+    <a href="notas.html"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a href="honestidad.html"><svg class="ic s"><use href="#i-ram"/></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a href="idioma.html"><svg class="ic s"><use href="#i-globo"/></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a href="ia.html"><svg class="ic s"><use href="#i-chispa"/></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      <span class="estado mute" data-en="preparar cerrado progreso sin-corpus"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Sin reunión · 0 B</span><span lang="en">No meeting · 0 B</span></span>
+      <span class="estado halo" data-en="preguntando respondiendo evaluada"><svg class="ic s"><use href="#i-mic"/></svg><span lang="es">Ensayando · 0 B</span><span lang="en">Rehearsing · 0 B</span></span>
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></h1>
+      <p class="sub"><span lang="es">Practica antes de la reunión: la app te hace las preguntas que este cliente probablemente hará y te dice qué evidencia usaste.</span><span lang="en">Practice before the meeting: the app asks the questions this client will likely ask and tells you what evidence you used.</span></p>
+    </div>
+
+    <!-- ===== 1 · preparar ===== -->
+    <div data-en="preparar" style="display:flex;flex-direction:column;gap:12px">
+      <div class="grid-2" style="grid-template-columns:1.1fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta" style="display:flex;flex-direction:column;gap:9px">
+          <h2 class="seccion" style="margin:0"><span lang="es">Con quién ensayas</span><span lang="en">Who you rehearse with</span></h2>
+          <div class="fila"><span class="crece"><span lang="es">Cliente</span><span lang="en">Client</span></span><select class="selector" aria-label="Cliente"><option selected>Páramo Azul</option><option>Sur del Valle</option></select></div>
+          <div class="fila"><span class="crece"><span lang="es">Propuesta</span><span lang="en">Proposal</span></span><select class="selector" aria-label="Propuesta"><option selected>Rentabilidad por canal</option></select></div>
+          <div class="fila"><span class="crece"><span lang="es">Preguntas</span><span lang="en">Questions</span></span>
+            <div class="ventanas"><span class="op">5</span><span class="op on"><svg class="ic s relleno"><use href="#i-check-circle"/></svg>8</span><span class="op">12</span></div>
+          </div>
+          <label class="conm on"><span class="track"></span><span class="etq"><span lang="es">Leer la pregunta en voz alta</span><span lang="en">Read the question aloud</span></span></label>
+          <p style="font-size:11.5px;color:var(--ink-2)"><span lang="es">Sin reunión, la voz sale por donde suene tu Mac; mientras habla, el micrófono no escucha.</span><span lang="en">With no meeting, the voice plays wherever your Mac plays sound; while it speaks, the microphone does not listen.</span></p>
+          <p style="font-size:11.5px;color:var(--ink-2)"><span lang="es">Idioma del ensayo: el de la propuesta, español.</span><span lang="en">Rehearsal language: the proposal's, Spanish.</span></p>
+        </div>
+        <div class="tarjeta" style="padding-bottom:8px">
+          <h2 class="seccion" style="margin:0 0 4px"><span lang="es">De dónde salen las preguntas</span><span lang="en">Where the questions come from</span></h2>
+          <div style="margin:0 -4px">
+            <div class="buffer"><svg class="ic s"><use href="#i-doc"/></svg><span class="que"><span lang="es">Tu propuesta</span><span lang="en">Your proposal</span></span><span class="donde"><span lang="es">secciones, cifras, plazos</span><span lang="en">sections, figures, deadlines</span></span><span class="cuanto">5</span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-nota"/></svg><span class="que"><span lang="es">Su ficha de cliente</span><span lang="en">Their client card</span></span><span class="donde"><span lang="es">quién decide, acuerdos previos</span><span lang="en">who decides, past agreements</span></span><span class="cuanto">1</span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-alert"/></svg><span class="que"><span lang="es">Objeciones típicas</span><span lang="en">Typical objections</span></span><span class="donde"><span lang="es">datos, BI e IA · catálogo publicado</span><span lang="en">data, BI and AI · published catalog</span></span><span class="cuanto">2</span></div>
+          </div>
+          <div class="franja mute" style="margin-top:8px"><svg class="ic s"><use href="#i-chispa"/></svg><div><strong><span lang="es">Enriquecer el banco: apagado</span><span lang="en">Enrich the bank: off</span></strong><p><span lang="es">Un modelo puede proponer preguntas de más. Se enciende en IA.</span><span lang="en">A model can suggest extra questions. Turn it on in AI.</span></p></div></div>
+        </div>
+      </div>
+      <div class="fila" style="gap:12px">
+        <button class="btn primario"><svg class="ic s"><use href="#i-mic"/></svg><span lang="es">Empezar el ensayo</span><span lang="en">Start the rehearsal</span></button>
+        <p class="crece" style="font-size:11.5px;color:var(--ink-2)"><span lang="es"><b>Solo tu micrófono:</b> ni el audio del sistema ni la pantalla. Queda tu respuesta en texto, cifrada con tus notas; el audio, nunca.</span><span lang="en"><b>Only your microphone:</b> no system audio, no screen. Your answer stays as text, encrypted with your notes; audio, never.</span></p>
+      </div>
+    </div>
+
+    <!-- ===== 2 · preguntando ===== -->
+    <div data-en="preguntando" style="display:flex;flex-direction:column;gap:12px">
+      <div class="progreso"><span><span lang="es">Pregunta 3 de 8</span><span lang="en">Question 3 of 8</span></span><span class="pista"><i style="width:37.5%"></i></span><span>Páramo Azul</span></div>
+      <div class="pregunta-e">
+        <div class="de"><span class="unidad-chip"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span><span lang="es">Supuestos</span><span lang="en">Assumptions</span></span></div>
+        <p class="texto"><span lang="es">¿Qué pasa con el plazo si el ERP no entrega los datos limpios a tiempo?</span><span lang="en">What happens to the timeline if the ERP does not deliver clean data on time?</span></p>
+      </div>
+      <div class="fila" style="gap:8px">
+        <span class="estado halo"><svg class="ic s"><use href="#i-voz"/></svg><span lang="es">Te la está leyendo</span><span lang="en">Reading it to you</span></span>
+        <span class="estado mute"><svg class="ic s"><use href="#i-mic-off"/></svg><span lang="es">El micrófono espera a que termine</span><span lang="en">The microphone waits until it ends</span></span>
+      </div>
+      <div class="fila" style="gap:14px">
+        <span class="tecla"><kbd>R</kbd> <span lang="es">repetir</span><span lang="en">repeat</span></span>
+        <span class="tecla"><kbd>S</kbd> <span lang="es">saltar</span><span lang="en">skip</span></span>
+        <span class="tecla"><kbd>Esc</kbd> <span lang="es">terminar</span><span lang="en">end</span></span>
+      </div>
+    </div>
+
+    <!-- ===== 3 · respondiendo ===== -->
+    <div data-en="respondiendo" style="display:flex;flex-direction:column;gap:12px">
+      <div class="progreso"><span><span lang="es">Pregunta 3 de 8</span><span lang="en">Question 3 of 8</span></span><span class="pista"><i style="width:37.5%"></i></span><span>Páramo Azul</span></div>
+      <div class="pregunta-e chica">
+        <div class="de"><span class="unidad-chip"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span><span lang="es">Supuestos</span><span lang="en">Assumptions</span></span></div>
+        <p class="texto"><span lang="es">¿Qué pasa con el plazo si el ERP no entrega los datos limpios a tiempo?</span><span lang="en">What happens to the timeline if the ERP does not deliver clean data on time?</span></p>
+      </div>
+      <div class="tarjeta" style="display:flex;flex-direction:column;gap:8px">
+        <div class="fila"><span class="estado ok"><svg class="ic s"><use href="#i-mic"/></svg><span lang="es">Te escucho · solo el micrófono</span><span lang="en">Listening · microphone only</span></span><span class="crece"></span><span class="reloj-e"><svg class="ic s"><use href="#i-reloj"/></svg>0:42</span></div>
+        <h2 class="seccion" style="margin:0"><span lang="es">Tu respuesta</span><span lang="en">Your answer</span></h2>
+        <p class="respuesta-e"><span lang="es">El supuesto dos lo cubre: el plazo corre desde que el ERP entrega los datos, no desde la firma. O sea, si llegan tarde, el tablero se corre lo mismo…</span><span lang="en">Assumption two covers it: the timeline runs from when the ERP delivers the data, not from signing. I mean, if they arrive late, the dashboard moves by the same…</span></p>
+      </div>
+      <div class="fila" style="gap:14px">
+        <span class="tecla"><kbd>↵</kbd> <span lang="es">listo</span><span lang="en">done</span></span>
+        <span class="tecla"><kbd>R</kbd> <span lang="es">repetir</span><span lang="en">repeat</span></span>
+        <span class="tecla"><kbd>S</kbd> <span lang="es">saltar</span><span lang="en">skip</span></span>
+        <span class="tecla"><kbd>Esc</kbd> <span lang="es">terminar</span><span lang="en">end</span></span>
+        <span class="crece"></span>
+        <span style="font-size:11.5px;color:var(--ink-2)"><span lang="es">Se cierra con 2,5 s de silencio.</span><span lang="en">It closes after 2.5 s of silence.</span></span>
+      </div>
+    </div>
+
+    <!-- ===== 4 · evaluada ===== -->
+    <div data-en="evaluada" style="display:flex;flex-direction:column;gap:10px">
+      <div class="progreso"><span><span lang="es">Pregunta 3 de 8</span><span lang="en">Question 3 of 8</span></span><span class="pista"><i style="width:37.5%"></i></span><span>Páramo Azul</span></div>
+      <div class="pregunta-e chica">
+        <div class="de"><span class="unidad-chip"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span><span lang="es">Supuestos</span><span lang="en">Assumptions</span></span></div>
+        <p class="texto"><span lang="es">¿Qué pasa con el plazo si el ERP no entrega los datos limpios a tiempo?</span><span lang="en">What happens to the timeline if the ERP does not deliver clean data on time?</span></p>
+      </div>
+      <div class="grid-2" style="gap:10px;align-items:start">
+        <div class="tarjeta" style="padding:10px 12px">
+          <h2 class="seccion" style="margin:0 0 7px"><span lang="es">Usaste</span><span lang="en">You used</span></h2>
+          <ul class="evidencia-e">
+            <li class="usada"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span class="titular"><span lang="es">El plazo corre desde la entrega de datos</span><span lang="en">The timeline runs from data delivery</span></span><span></span><span class="fuente"><span lang="es">propuesta · Supuestos</span><span lang="en">proposal · Assumptions</span></span></li>
+            <li class="usada"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span class="titular"><span lang="es">Sur del Valle: tres semanas por datos</span><span lang="en">Sur del Valle: three weeks for data</span></span><span></span><span class="fuente"><span lang="es">caso · cierre</span><span lang="en">case · closeout</span></span></li>
+          </ul>
+        </div>
+        <div class="tarjeta" style="padding:10px 12px">
+          <h2 class="seccion" style="margin:0 0 7px"><span lang="es">Tenías y no usaste</span><span lang="en">You had it and did not use it</span></h2>
+          <ul class="evidencia-e">
+            <li class="sin-usar"><svg class="ic s"><use href="#i-pendiente"/></svg><span class="titular"><span lang="es">Limpiar antes del tablero</span><span lang="en">Clean before the dashboard</span></span><button class="btn mini"><span lang="es">Sí lo dije</span><span lang="en">I did say it</span></button><span class="fuente"><span lang="es">marco · etapa 2</span><span lang="en">framework · stage 2</span></span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="cifras-e">
+        <div class="cifra-e"><div class="q"><span lang="es">Tiempo</span><span lang="en">Time</span></div><div class="n">1:12</div></div>
+        <div class="cifra-e"><div class="q"><span lang="es">Ritmo</span><span lang="en">Pace</span></div><div class="n"><span lang="es">142 ppm</span><span lang="en">142 wpm</span></div></div>
+        <div class="cifra-e"><div class="q"><span lang="es">Muletillas</span><span lang="en">Fillers</span></div><div class="n">4</div><div class="d"><span lang="es">«o sea» ×3 · «básicamente» ×1</span><span lang="en">“I mean” ×3 · “basically” ×1</span></div></div>
+        <div class="cifra-e"><div class="q"><span lang="es">Evidencia</span><span lang="en">Evidence</span></div><div class="n"><span lang="es">2 de 3</span><span lang="en">2 of 3</span></div></div>
+      </div>
+      <div class="fila" style="gap:12px">
+        <button class="btn primario"><span lang="es">Siguiente pregunta</span><span lang="en">Next question</span></button>
+        <span class="tecla"><kbd>↵</kbd></span>
+        <p class="crece" style="font-size:11.5px;color:var(--ink-2)"><span lang="es">Sin puntaje: son cifras de lo que mediste. La transcripción no conserva «eh» ni «um», así que no se cuentan.</span><span lang="en">No score: these are measured figures. The transcription drops “uh” and “um”, so they are not counted.</span></p>
+      </div>
+    </div>
+
+    <!-- ===== 5 · el informe ===== -->
+    <div data-en="cerrado" style="display:flex;flex-direction:column;gap:10px">
+      <div class="franja ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><div><strong><span lang="es">Ensayo terminado: 7 respondidas, 1 saltada</span><span lang="en">Rehearsal finished: 7 answered, 1 skipped</span></strong></div></div>
+      <div class="cifras-e">
+        <div class="cifra-e"><div class="q"><span lang="es">Evidencia usada</span><span lang="en">Evidence used</span></div><div class="n"><span lang="es">14 de 21</span><span lang="en">14 of 21</span></div></div>
+        <div class="cifra-e"><div class="q"><span lang="es">Ritmo medio</span><span lang="en">Average pace</span></div><div class="n"><span lang="es">138 ppm</span><span lang="en">138 wpm</span></div></div>
+        <div class="cifra-e"><div class="q"><span lang="es">Muletillas</span><span lang="en">Fillers</span></div><div class="n">9</div><div class="d"><span lang="es">la que más: «o sea» ×5</span><span lang="en">most often: “I mean” ×5</span></div></div>
+        <div class="cifra-e"><div class="q"><span lang="es">Tiempo medio</span><span lang="en">Average time</span></div><div class="n">0:58</div></div>
+      </div>
+      <div class="tarjeta" style="padding:4px 10px 6px">
+        <table class="tabla">
+          <thead><tr><th>#</th><th><span lang="es">Pregunta</span><span lang="en">Question</span></th><th class="num"><span lang="es">Evidencia</span><span lang="en">Evidence</span></th><th class="num"><span lang="es">Tiempo</span><span lang="en">Time</span></th><th class="num">ppm</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">1</td><td><span lang="es">¿Cómo garantizan la calidad del dato del tablero?</span><span lang="en">How do you guarantee the dashboard's data quality?</span></td><td class="num">2/3</td><td class="num">0:51</td><td class="num">131</td></tr>
+            <tr><td class="mono">2</td><td><span lang="es">¿De dónde sale el 12 % de margen por canal?</span><span lang="en">Where does the 12% margin per channel come from?</span></td><td class="num">3/3</td><td class="num">0:44</td><td class="num">140</td></tr>
+            <tr><td class="mono">3</td><td><span lang="es">¿Qué pasa con el plazo si el ERP no entrega los datos limpios a tiempo?</span><span lang="en">What happens to the timeline if the ERP does not deliver clean data on time?</span></td><td class="num">2/3</td><td class="num">1:12</td><td class="num">142</td></tr>
+            <tr class="apagada"><td class="mono">4</td><td><span lang="es">¿Quién lo va a usar cuando ustedes se vayan?</span><span lang="en">Who will use it once you leave?</span></td><td class="num">—</td><td class="num">—</td><td class="num"><span lang="es">saltada</span><span lang="en">skipped</span></td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:11.5px;color:var(--ink-2);margin:6px 0 0"><span lang="es">y 4 más</span><span lang="en">and 4 more</span></p>
+      </div>
+      <div class="fila" style="gap:8px">
+        <button class="btn primario"><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Guardar con tus notas</span><span lang="en">Save with your notes</span></button>
+        <button class="btn"><span lang="es">Exportar como texto</span><span lang="en">Export as text</span></button>
+        <button class="btn"><span lang="es">Cerrar sin guardar</span><span lang="en">Close without saving</span></button>
+      </div>
+      <p style="font-size:11.5px;color:var(--ink-2)"><span lang="es">Se cifra con la llave de tus notas y se borra en 90 d, tu retención. El audio no se guardó en ningún momento.</span><span lang="en">It is encrypted with your notes' key and deleted in 90 d, your retention. Audio was never saved.</span></p>
+    </div>
+
+    <!-- ===== 6 · tu progreso ===== -->
+    <div data-en="progreso" style="display:flex;flex-direction:column;gap:10px">
+      <div class="tarjeta" style="padding:10px 12px 8px">
+        <div class="fila" style="margin-bottom:4px"><h2 class="seccion crece" style="margin:0"><span lang="es">Tu progreso con este cliente</span><span lang="en">Your progress with this client</span></h2><select class="selector" aria-label="Cliente"><option selected>Páramo Azul</option><option>Sur del Valle</option></select></div>
+        <table class="tabla">
+          <thead><tr><th><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></th><th class="num"><span lang="es">Evidencia usada</span><span lang="en">Evidence used</span></th><th class="num"><span lang="es">Ritmo</span><span lang="en">Pace</span></th><th class="num"><span lang="es">Muletillas</span><span lang="en">Fillers</span></th><th class="num"><span lang="es">Tiempo medio</span><span lang="en">Average time</span></th></tr></thead>
+          <tbody>
+            <tr><td class="mono"><span lang="es">21 sep</span><span lang="en">Sep 21</span></td><td class="num"><span lang="es">9 de 21</span><span lang="en">9 of 21</span></td><td class="num">161</td><td class="num">17</td><td class="num">1:21</td></tr>
+            <tr><td class="mono"><span lang="es">27 sep</span><span lang="en">Sep 27</span></td><td class="num"><span lang="es">11 de 21</span><span lang="en">11 of 21</span></td><td class="num">150</td><td class="num">12</td><td class="num">1:09</td></tr>
+            <tr><td class="mono"><span lang="es">02 oct</span><span lang="en">Oct 02</span></td><td class="num"><span lang="es">12 de 21</span><span lang="en">12 of 21</span></td><td class="num">143</td><td class="num">11</td><td class="num">1:02</td></tr>
+            <tr><td class="mono"><span lang="es">04 oct</span><span lang="en">Oct 04</span></td><td class="num"><span lang="es">14 de 21</span><span lang="en">14 of 21</span></td><td class="num">138</td><td class="num">9</td><td class="num">0:58</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="fila" style="gap:8px;flex-wrap:wrap">
+        <span style="font-size:var(--t-meta);color:var(--ink-2)"><span lang="es">Desde el primero:</span><span lang="en">Since the first:</span></span>
+        <span class="estado mute"><span lang="es">↑ evidencia 9 → 14</span><span lang="en">↑ evidence 9 → 14</span></span>
+        <span class="estado mute"><span lang="es">↓ ritmo 161 → 138 ppm</span><span lang="en">↓ pace 161 → 138 wpm</span></span>
+        <span class="estado mute"><span lang="es">↓ muletillas 17 → 9</span><span lang="en">↓ fillers 17 → 9</span></span>
+        <span class="estado mute"><span lang="es">↓ tiempo 1:21 → 0:58</span><span lang="en">↓ time 1:21 → 0:58</span></span>
+      </div>
+      <p style="font-size:11.5px;color:var(--ink-2)"><span lang="es">Solo cifras que mediste, ensayo a ensayo; sin puntajes. Abrir tus ensayos pide el mismo desbloqueo que tus notas.</span><span lang="en">Only figures you measured, rehearsal by rehearsal; no scores. Opening your rehearsals asks for the same unlock as your notes.</span></p>
+    </div>
+
+    <!-- ===== 7 · sin corpus ===== -->
+    <div data-en="sin-corpus" style="display:flex;flex-direction:column;gap:12px">
+      <div class="tarjeta"><div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Con quién ensayas</span><span lang="en">Who you rehearse with</span></h2><select class="selector" aria-label="Cliente"><option>Páramo Azul</option><option selected>Sur del Valle</option></select></div></div>
+      <div class="franja mute"><svg class="ic s"><use href="#i-doc"/></svg><div><strong><span lang="es">Tu corpus no tiene nada de este cliente</span><span lang="en">Your corpus has nothing for this client</span></strong><p><span lang="es">Para sacar preguntas hace falta tu propuesta o su ficha de cliente. Añádelas en Corpus y vuelve: la app no inventa preguntas.</span><span lang="en">Questions need your proposal or their client card. Add them in Corpus and come back: the app does not make questions up.</span></p></div></div>
+      <div class="fila"><button class="btn"><svg class="ic s"><use href="#i-doc"/></svg><span lang="es">Ir a Corpus</span><span lang="en">Go to Corpus</span></button></div>
+    </div>
+
+  </div>
+</main>
+</div>
+
+<script src="assets/iconos.js"></script>
+<script src="assets/maqueta.js"></script>
+</body>
+</html>

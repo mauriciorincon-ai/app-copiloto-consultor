@@ -179,9 +179,17 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .franja .ventanas .op.on { background: linear-gradient(var(--halo-tint), var(--halo-tint)), var(--surface); }
 .franja .ventanas .op .ic { color: inherit; }
 .pregunta-nda .ic { color: var(--halo); flex: 0 0 auto; }
+.pregunta-e .de { display: flex; align-items: center; gap: 8px; font-size: var(--t-meta); color: var(--ink-2); }
+.pregunta-e .texto { margin-top: 6px; font-family: var(--font-evidencia); font-size: 19px; line-height: 1.35; color: var(--ink); }
+.pregunta-e.chica .texto { font-size: var(--t-titular); }
+.evidencia-e li .ic { margin-top: 2px; }
+.evidencia-e .usada .ic { color: var(--ok); }
+.evidencia-e .sin-usar .ic { color: var(--halo); }
+.cifra-e .q { font-size: var(--t-meta); color: var(--ink-2); }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
 .mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
 @media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
 .k-sec > p.regla { font-size: var(--t-ui); color: var(--ink-2); max-width: 78ch; }
 .k-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
 .k-grid.ancha { grid-template-columns: 1fr; }
