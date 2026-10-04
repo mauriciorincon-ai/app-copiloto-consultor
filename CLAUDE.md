@@ -26,9 +26,9 @@ Escucha ambos lados de la videollamada (dos pistas: micrófono = consultor, audi
 cliente), lee la pantalla solo cuando cambia, y muestra **fichas de evidencia del propio corpus
 del consultor** (propuesta · marco · caso · ficha de cliente · perfil del consultor): un titular,
 una línea y la fuente. Si el usuario lo enciende, un modelo local redacta una sugerencia breve.
-**Silenciosa y efímera:** nada se graba ni persiste; al cerrar quedan solo las notas escritas.
+**Silenciosa y efímera:** nada de terceros se graba ni persiste; al cerrar queda solo lo tuyo (regla dura 1).
 Bilingüe español/inglés en todo. Contrato de alcance: `portafolio/copiloto-consultor/VISION.md`
-(planeadora, aprobada 2026-09-18, v1.2.0 el 2026-09-19 — 25 funcionalidades: 17 MVP personal · 2 MVP terceros · 6 roadmap).
+(planeadora, aprobada 2026-09-18; **v1.5.0 el 2026-09-27** — 30 funcionalidades: 20 MVP personal · 4 MVP terceros · 6 roadmap).
 
 **La tesis del producto:** el valor está en recuperar la evidencia PROPIA en el momento justo sin
 romper el flujo (Salesforce: 2,8 s vs. 25–65 s manuales; CHI/CSCW 2025: la ayuda pasiva e
@@ -40,29 +40,43 @@ vende **no persistir, verificable**.
 1. **EFÍMERO VERIFICABLE (estándar 4-T).** Audio, transcript y frames de pantalla viven SOLO en
    memoria (ring buffers) y mueren al cerrar la sesión: ni disco, ni temporales, ni swap de
    buffers, ni logs, ni Sentry. Se blinda por capas y DEMOSTRABLE: **(a)** lint que prohíbe API
-   de disco y de red en `src-tauri/src/capture/`, `stt/`, `screen/`; **(b)** test de **fuga
-   inyectada** (un `fs::write` plantado hace fallar la suite — se demuestra en rojo, regla 15);
-   **(c)** `pnpm verify:ephemeral`: tras una sesión completa, cero archivos nuevos fuera de la
-   carpeta de notas; **(d)** término plantado en logs; **(e)** kill-switch de una tecla que corta
+   de disco y de red en los **módulos protegidos** (lista `PROTEGIDOS` de `scripts/verify-ephemeral.mjs`:
+   captura, escucha, stt, voz, pantalla, síntesis, notas, propuestas, jurisdicción, puerta… y el puente
+   Swift); **(b)** test de **fuga inyectada** (un `fs::write` plantado hace fallar la suite — se
+   demuestra en rojo, regla 15); **(c)** `pnpm verify:ephemeral` (estático) y
+   `pnpm verify:ephemeral:runtime`: tras una sesión completa, cero archivos nuevos fuera de lo que
+   admite `Permitido` (índice, diccionario, notas, bandeja y lista de vencimientos), con la canaria
+   del cliente buscada en las notas y la bandeja **descifradas**; **(d)** término plantado en logs; **(e)** kill-switch de una tecla que corta
    captura y vacía buffers. **Qué persiste y qué no (mirada 3 de la Etapa de Diseño, 2026-09-20):**
-   el diseño distingue **lo del usuario** de **lo de terceros**, no «texto» de «audio». Persiste,
-   cifrado, con retención y borrado, en la carpeta del usuario: notas y acuerdos escritos · fichas
-   mostradas y fijadas · **turnos del propio consultor (pista de micrófono) en TEXTO, opt-in, por
-   defecto apagado** · la **bandeja de propuestas** durante la ventana elegida (defecto 3 h, techo
-   24 h, mínimo cero; borrado automático al vencer aunque la app no se abra; visible en Honestidad)
-   · el índice del corpus (documentos propios, en claro) · preferencias y metadatos de costo. Muere
+   el diseño distingue **lo del usuario** de **lo de terceros**, no «texto» de «audio». Persiste
+   **cifrado**, con retención y borrado, en el Mac del usuario (carpeta privada de la app, decisión A
+   del S3): notas y acuerdos escritos · fichas fijadas · **turnos del propio consultor (pista de
+   micrófono) en TEXTO, opt-in, por defecto apagado** · las **propuestas que aceptas** (del cliente, un
+   hecho de una línea, ≤ 8 palabras), con la retención de la reunión · la **bandeja de propuestas** durante la ventana
+   elegida (defecto 3 h, techo 24 h, mínimo cero; borrado automático al vencer aunque la app no se
+   abra; visible en Honestidad). Persiste **en claro, con 600/700**: el índice del corpus (documentos
+   propios) · preferencias (con la respuesta de NDA de cada cliente y la ruta de la carpeta del corpus) · el diccionario · los metadatos
+   de costo · la huella del acople · la lista de vencimientos y la tarea de launchd que la cumple. Los
+   secretos, **solo en el Llavero**. El socket de la puerta local existe solo mientras está abierta y
+   no lleva contenido (ADR 002 y sus enmiendas; ADR 015–018). Muere
    SIEMPRE, sin conmutador que lo encienda: audio de cualquier pista (la propia incluida),
    transcript del cliente, lo leído de la pantalla. El consultor responde por su propia carpeta.
 2. **NADA CRUDO SALE DEL EQUIPO.** Ningún audio ni imagen viaja jamás a un proveedor. Por
    defecto la app es **100 % local** (STT, OCR, retrieval y síntesis on-device); el API externo
    está APAGADO hasta que el usuario lo encienda con su propia clave, y aun así solo recibe texto
    minimizado y anonimizado localmente (patrón Velo) bajo proveedor con no-retención. **Contador
-   de salida a red** visible por reunión (0 en modo local) con test.
+   de salida a red** visible por reunión (0 en modo local) con test. *En esta app hoy (decisión del
+   usuario, 2026-09-29, ADR 011):* «no-retención» solo la cumple Groq con su retención cero encendida;
+   Claude guarda hasta 30 días sin un acuerdo, y la app lo dice en IA, bajo el costo, para el proveedor
+   elegido. Gemini salió.
+   Es una desviación de la regla, declarada en la bitácora del S3 para la planeadora.
 3. **CÓDIGO PRIMERO.** Captura, VAD, fin de turno, STT, OCR, disparo y recuperación son
    deterministas. La única feature LLM (síntesis de sugerencia) lleva **ADR «código primero»**
    (plantilla en `decisions/PLANTILLA-ADR-codigo-primero.md`) y su fallback permanente son las
    fichas del corpus sin LLM. Orden de proveedores: Apple Foundation Models → MLX → API opt-in;
-   adapter con `mock` como proveedor de primera clase.
+   adapter con `mock` como proveedor de primera clase. **En esta app hoy:** modelo del sistema
+   (`sintesis/sistema.rs`) → API opt-in (`sintesis/api.rs`: Claude, Groq); MLX queda en el
+   roadmap del H2 (ADR 011); `mock` de primera clase (`AG_SINTESIS=mock`).
 4. **CERO HUELLAS DE VOZ, CERO EMOCIONES.** La atribución de hablante se resuelve por pista
    (mic/sistema), nunca por biometría; no se infiere estado emocional de nadie.
 5. **CERO DATOS REALES DE CLIENTES EN EL REPO.** Público por defecto: kits de prueba y maquetas
@@ -81,23 +95,34 @@ vende **no persistir, verificable**.
    **Radar de captura (C14)** observa SOLO el Mac y la pantalla del consultor: banner de
    grabación, bots de notas en la lista de participantes, agentes de monitoreo/proctoring locales;
    catálogos versionados con fuente; alerta al usuario, no «expone» a nadie. Lint que prohíbe
-   sockets salientes fuera del adapter LLM (que además nace apagado).
+   sockets salientes fuera de las puertas declaradas (`tests/unit/contador-de-red.test.ts`: el
+   adapter LLM, que además nace apagado, y las descargas de modelos de voz de macOS; y solo dos
+   programas del sistema, `profiles` y `launchctl`), y **los sockets Unix solo en la puerta local**,
+   que no sabe salir del Mac (`tests/unit/puerta-solo-local.test.ts`).
 
 ## Stack
 
 - **Perfil ESCRITORIO (kit v1.27.0):** **Tauri 2** (Rust) + webview **React + TypeScript strict +
   Tailwind** (Vite). Distribución como binario firmado/notarizado; **sin Vercel, sin Supabase, sin
-  backend** (local-first; backend solo por ADR).
+  backend** (local-first; backend solo por ADR). *Auditoría del ciclo H1:* Tailwind v4 está cargado,
+  pero los estilos son las clases canon y los tokens de la maqueta (`src/index.css`, espejo de
+  `docs/diseno/assets/ghost.css`), sin utilidades de Tailwind. Hoy el binario se compila en local y
+  **sin firmar**: la firma y la notarización llegan con G-Release (H2).
   captura_terceros: true
-- **Nativo (Rust, `src-tauri/`):** audio en dos pistas (Core Audio process taps 14.4+ /
-  ScreenCaptureKit audio 13+ + micrófono), ventana con `content_protected`, permisos TCC,
-  captura de pantalla + pHash, kill-switch. `tracing` metadata-only.
-- **STT / VAD / EOT:** Apple SpeechAnalyzer (macOS 26+) con respaldo Parakeet-TDT v3 / Whisper
-  turbo (WhisperKit); Silero VAD; fin de turno determinista (prosodia + acústica).
-- **Pantalla:** Apple Vision OCR (`es-ES`/`en-US`) solo ante cambio (dHash/pHash).
-- **Corpus:** índice local BM25 + embedding multilingüe ≤600M + RRF; chunking por sección.
-- **IA embebida:** adapter multi-proveedor conmutable por env (on-device → MLX → Claude API /
-  Gemini / Groq / Azure) + `mock`; esquema Zod; prompt caching; costo por reunión (skill `ia-embebida`).
+- **Nativo (Rust, `src-tauri/`, y el puente Swift `src-tauri/nativo/`):** audio en dos pistas por
+  Core Audio (el *process tap* del sistema + el micrófono, ADR 007), ventana con `content_protected`,
+  permisos TCC, captura de pantalla (ScreenCaptureKit) con **huella por zonas** para saber si cambió
+  (`pantalla/huella.rs`; el pHash se probó y el kit lo descartó), kill-switch. Logs: `println!` con
+  prefijo y **solo metadatos** (ADR 003 y su enmienda), sin `tracing` ni Sentry. La app exige macOS 26.
+- **STT / VAD / EOT:** Apple SpeechAnalyzer (macOS 26+), **sin respaldo** (Parakeet/Whisper quedan
+  como deuda del ADR 006); VAD **por energía** con suelo de ruido adaptativo (`voz/vad.rs`); fin de
+  turno por **320 ms de silencio** (`voz/turno.rs`). Todo determinista.
+- **Pantalla:** Apple Vision OCR (`es-ES`/`en-US`) solo ante cambio (huella por zonas).
+- **Corpus:** índice local **BM25 (tantivy) por sección**; los embeddings + RRF pasan al H2 con su
+  condición escrita (ADR 008).
+- **IA embebida:** adapter `sintesis/` (modelo del sistema → API opt-in Claude / Groq) +
+  `mock` (`AG_SINTESIS=mock`); salida en esquema cerrado y comprobada contra su ficha (`fundar()`,
+  `sintesis/fiel.rs`); costo por reunión y por mes con tope (ADR 011) (skill `ia-embebida`).
 - **Tests:** Vitest (unit) + Playwright (e2e de la webview vía `pnpm preview`) + axe + `cargo test`.
 - **CI:** `quality` · `e2e` · `build-escritorio` (macOS: cargo check/test + gate `verify:ephemeral`).
   Checklist pre-merge: **`/release-check`** (no `/deploy-check`).
@@ -106,25 +131,39 @@ vende **no persistir, verificable**.
 ## Adaptaciones del perfil escritorio (declaradas en el estampado — no son desviaciones)
 
 - No hay Vercel ni previews: **G-Diseño se aprueba sobre la maqueta abierta en LOCAL** (doble
-  clic en `docs/diseno/index.html`); los gates de fidelidad visual se corren con `pnpm tauri dev`.
+  clic en `docs/diseno/index.html`); los gates de fidelidad visual se corren con `pnpm fidelidad`
+  (la webview construida, servida desde `dist/`, contra la maqueta; lo que solo existe en la app de
+  verdad —la protección al compartir pantalla— se mira en la guía, en el ⭐).
 - No hay Lighthouse: el presupuesto es de **latencia** (fin de turno → ficha ≤4 s, medida en el
   kit de prueba) y de **peso del binario** (anotado por PR).
 - `src/lib/observability.ts` del kit no viaja (importa Sentry para Next): la observabilidad
-  entra por ADR (tracing en Rust + logger metadata-only en la UI).
+  entra por ADR — **ADR 003 «observabilidad sin contenido»**: `println!` con prefijo y solo
+  metadatos, sin logger en la UI y sin Sentry; un término plantado lo vigila en el log.
 - Ruleset `main-protegida` con checks requeridos `quality` · `e2e` · `build-escritorio`.
 
 ## Estructura
 
+La del kit web (`src/app/`, `engine/`, `lib/ia/`…) **no aplica a esta app de escritorio**. La real
+(auditoría del ciclo H1):
+
 ```
-src/
-├─ app/            (App Router)
-├─ components/     (UI sin lógica de negocio)
-├─ engine/         (motores puros, sin side-effects, cobertura >80%)
-├─ lib/            (utils, dominio)
-│  └─ ia/          (patrón IA-embebida: schemas.ts · client.ts · guardrails.ts · persist.ts)
-└─ types/
-tests/{unit,integration,e2e}/
-design-system.md          (fuente de verdad visual — se crea en el sprint 1, skill diseno-ui)
+src/                       (webview React: SOLO pinta y conmuta; nada de lógica de negocio)
+├─ pantallas/              (Sesión, Permisos, Corpus, Notas, Honestidad, Idioma, IA)
+├─ componentes/            (la banda, el relleno, la ventana del cuaderno, iconos)
+├─ i18n/                   (es.ts · en.ts — cada cadena, fiel a la maqueta)
+├─ *.ts                    (un hook o puente por tema: cuaderno, ia, notas, puerta, jurisdicción…)
+└─ contrato.generado.ts    (GENERADO desde src-tauri/src/contrato.rs — regla 19)
+src-tauri/
+├─ src/                    (los motores y todo lo nativo, en Rust; módulos protegidos en
+│                           scripts/verify-ephemeral.mjs)
+├─ src/bin/ghost.rs        (la puerta local, del lado de tu agente — ADR 018)
+├─ nativo/                 (el puente Swift: voz, pantalla, Llavero, desbloqueo, modelo del sistema)
+└─ tests/                  (contra el Mac y el disco de verdad · la puerta · ghost)
+data/                      (catálogos versionados: radar, propuestas, jurisdicciones)
+tests/{unit,e2e}/          (Vitest · Playwright + axe)
+scripts/                   (fidelidad, capturas, design-sync, verify-ephemeral)
+docs/{diseno,fidelidad,kit-de-prueba}/ · docs/BLUEPRINT.html · docs/GUIA-DE-PRUEBA.html
+design-system.md          (fuente de verdad visual — nació en la Etapa de Diseño)
 design-sync/              (bundle publicable a Claude Design — VERSIONADO; project.json + styles.css
                            + components/<grupo>/<tarjeta>.html. Nace en el primer sprint que publique)
 docs/MANUAL-DE-USO.md     (manual de uso general — OBLIGATORIO, vivo desde el sprint 1)
@@ -140,9 +179,14 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    umbrales del `vitest.config.ts` no se aplican en CI (el estampado lo omite para que la CI del
    commit inicial quede verde sin tests). Directorios **generados** (`coverage/`, assets copiados
    a `public/` tipo `public/pyodide/`) van a los `globalIgnores` de `eslint.config.mjs`.
+   *En esta app:* `pnpm test` ya corre con `--coverage` (umbral de la UI, 50 %); los motores viven en
+   Rust y los cubre `cargo test` —con sus kits medidos en la CI—, sin umbral de cobertura propio. La
+   configuración de ESLint es `eslint.config.js`.
 3. **Motor separado de UI.** Lógica pura en `engine/`/`lib/`; componentes sin lógica de negocio.
+   *En esta app:* los motores están en `src-tauri/src/`; `src/` solo pinta y conmuta.
 4. **Toda salida de LLM que se persista pasa por esquema Zod** (skill `ia-embebida`) — nunca texto
-   libre directo a la BD.
+   libre directo a la BD. *En esta app no hay base de datos y la sugerencia no se persiste:* sale en
+   un esquema cerrado y se comprueba contra su ficha (`fundar()`, `sintesis/fiel.rs`) antes de pintarse.
 5. **A11y desde el inicio:** tabindex, aria-labels, contraste AA, `prefers-reduced-motion`.
    **Y dos reglas que nacen de reincidencias (kit v1.26.0):** (a) **la FORMA del árbol jamás
    depende de `useReducedMotion()`** — el hook vale `null` en el servidor y `true` en el
@@ -156,11 +200,16 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    lint/test, no en axe al final** (p. ej. `ink-3`, que no alcanza AA sobre superficie): un
    barrido de clases prohibidas sobre `src/` que corre con `pnpm lint`/`pnpm test` — la
    segunda reincidencia en una misma app (hoja-de-vida S6 y post-S7) fue la señal.
+   *En esta app:* (a) no aplica tal cual —no hay SSR y el movimiento va en CSS—; su gate es
+   `tests/e2e/reduced-motion.spec.ts`. (b) es `tests/unit/tokens-vetados.test.ts`, que lee la lista de
+   `design-system.md` §7.2; **debía nacer en el S1 y nació en el cierre del ciclo H1**, cuando esta
+   auditoría lo encontró ausente.
 6. **Commits convencionales**; branch `sprint-NNN/<tema>`; **jamás push directo a `main`** (hook lo
    bloquea); PR con CI verde + preview probado. La ruleset `main-protegida` exige los checks
    `quality`/`e2e`/`lighthouse` **desde el estampado** (regla 2026-07-10 — protección GitHub no
    negociable, repo público); **si un sprint añade un job de CI (p. ej. `integration`), se añade
-   a la ruleset en el mismo sprint** (`gh api` o Settings → Rules).
+   a la ruleset en el mismo sprint** (`gh api` o Settings → Rules). *En esta app:* no hay preview
+   (escritorio) y los checks requeridos son `quality` · `e2e` · `build-escritorio`.
 7. **Secrets solo en `.env.local` (gitignored) y Vercel env vars.** Doble protección gitleaks:
    hook `pre-commit` de git (`githooks/`, cubre commits manuales) + hook PreToolUse de Claude
    Code (cubre escrituras del agente). El hook nace ejecutable (100755) y `core.hooksPath` se
@@ -173,6 +222,8 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    carnada floja pasa en silencio dando falsa tranquilidad (lección 2026-07-15: dos falsos "todo
    bien" seguidos). Si gitleaks sube de versión mayor, re-verificar la carnada en sandbox antes
    de confiar en ella.
+   *En esta app no hay `.env.local` ni Vercel:* los secretos viven **solo en el Llavero de macOS**
+   (`src-tauri/src/llavero.rs`: API · notas · puerta), ninguno en archivo.
 8. **Presupuesto de esfuerzo:** ~12 pasos por pantalla; si lo excedes, detente y simplifica o consulta.
 9. **Manual de uso vivo (`docs/MANUAL-DE-USO.md`, obligatorio).** Toda feature que llegue a `main`
    queda documentada ahí **en el mismo sprint**: qué hace, cómo se usa (pasos para el usuario final,
@@ -231,6 +282,15 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    mirada real con todos los gates de palabra cumplidos; 3ª ocurrencia de la clase. Es la
    regla 15-hermana del lado humano: una mirada satisfecha sin mirada es un gate que nunca
    ejecutó.)*
+   **Dos clases de mirada (kit v1.31.0, método v1.33.0):** la de **FORMA** (qué se construye:
+   estado nuevo, pantalla, estructura) abre parada antes de construir encima. La de **TEXTO**
+   (si un copy se entiende) **no bloquea**: maquetas igual, registras «maquetado, no visto» y su
+   veredicto viaja al gate humano del MVP; mientras, la vigilan los gates automáticos
+   (diccionario fiel a la maqueta, fidelidad, maquetas que caben). Toda mirada va en **matriz
+   de una fila** (archivo · botón/estado · qué mirar · respuesta esperada), nunca preguntas
+   sueltas. **Las segundas vueltas no abren parada**: copy retocado por su propio veredicto y
+   filas sin respuesta se aplican, se registran y se ven al cierre de fase. *(Este repo, S2:
+   el usuario cortó las paradas de copy — «así no vamos a avanzar nada».)*
 11. **Guía de prueba viva y ACUMULATIVA (`docs/GUIA-DE-PRUEBA.html`, OBLIGATORIA en todo sprint
    con UI — reglas duras del pipeline, G-Metodo 2026-07-12 ×2).** HTML visual y **AUTOCONTENIDO**
    (cero CDNs; casillas con `localStorage` bajo **prefijo versionado por sprint** — cambia en
@@ -268,7 +328,9 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    **abrir, versionar y llevarse**. Sin excepciones, ni "para verlo rápido". Si algo merece
    mostrarse visualmente, se escribe como archivo y se entrega su ruta.
 13. **Brochure vivo (`docs/BROCHURE.html` + ruta pública `/conoce` — molde v2, kit v1.10.0,
-   informe del piloto habla 2026-08-08).** El entregable de PRESENTACIÓN de la app para
+   informe del piloto habla 2026-08-08).** *En esta app de escritorio no hay ruta `/conoce`: el
+   brochure es `docs/BROCHURE.html` + `docs/brochure-export.json`, y llega por su orden aparte tras el
+   Acto 1 del cierre del ciclo H1.* El entregable de PRESENTACIÓN de la app para
    usuarios finales y clientes — el anti-manual. **Tiene DOS estados (kit v1.19.0, método
    v1.20.0):** nace como **BROCHURE INICIAL** en el cierre DE CONSTRUCCIÓN del ciclo (declara
    visiblemente que es inicial y que se sella con las pruebas) y pasa a **BROCHURE SELLADO
@@ -351,6 +413,11 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    con el perfil con que la app se DISTRIBUYE, y el summary lo dice *(este repo, S1: el
    `catch_unwind` que protegía el parseo de PDF pasaba todos sus tests en debug y era letra
    muerta en release, donde `panic = "abort"` lo anula)*.
+   **Y `gh pr checks` DESPUÉS DE CADA PUSH (kit v1.31.0), no al cierre de la fase:** un rojo
+   que nadie mira es un gate que no ejecutó para ti *(este repo, S2: tres corridas en rojo sin
+   mirar en una fase; desde entonces cada push termina leyendo sus checks)*. **Y una métrica
+   del kit que la CI NO puede medir se declara `manual` con su corrida local registrada**, o
+   no se declara: el WER vivió dos sprints «en CI» sin que el runner tuviera modelos de voz.
 16. **El bundle publicable del design system es un ARTEFACTO DEL REPO (kit v1.17.0).** `design-sync/`
    se versiona aquí como **espejo 1:1** de lo publicado en Claude Design, y la jerarquía es fija:
    `design-system.md` (fuente de verdad) → `design-sync/` (bundle, deriva) → el proyecto remoto
@@ -441,9 +508,43 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    su cuenta y que la cuenta cuadre con sus filas *(origen: el S1 resumió quince hallazgos en una
    frase con un puntero roto y desaparecieron)*.
 
+21. **IA de construcción por suscripción (estándar 7-S, kit v1.30.0 — en el kit es su regla 21).**
+    Si un agente o un lote de esta app usa la **suscripción del usuario** como proveedor de modelo
+    (binario oficial de Claude Code en modo no interactivo): solo el binario sin modificar y la
+    sesión propia del usuario · el token **jamás** entra a variables de entorno, trazas ni al repo
+    · la invocación corre en un **directorio temporal limpio con MCP vacío** (esta constitución NO
+    entra al prompt del agente) · los lotes se corren **fuera de CI**, pequeños y espaciados ·
+    existe un **ADR de cumplimiento** con la lectura de los términos vigentes, re-leídos antes de
+    cada release, y un **interruptor a proveedor por clave** · prohibido exponer el patrón a
+    terceros. **Hoy no aplica:** la app no invoca a Claude Code. La puerta local (C16, sprint 003)
+    es lo contrario —Claude Code, en la sesión del usuario, llama a la app por `ghost`— y se rige
+    por la regla dura 9 y su ADR.
+
+22. **Las protecciones del Mac se enseñan ANTES de tocarlas (este repo, S3 2026-09-27 — regla dura
+    del usuario; va a la planeadora al cierre del sprint para TODAS las apps).** Antes de correr
+    cualquier cosa que pueda **pedir contraseña o Touch ID**, abrir un **aviso de permiso** (TCC:
+    Documentos, micrófono, pantalla, Accesibilidad, Automatización), **tocar el Llavero**,
+    **registrar algo en launchd o en Ítems de inicio**, **controlar la interfaz** (System Events,
+    `osascript`, pulsaciones, clics) o **leer registros del sistema** (`sfltool`, `tccutil`, `log
+    show` amplio), el constructor se DETIENE y lo enseña en una **matriz de una fila**: qué voy a
+    correr · para qué · qué aviso vas a ver, con su texto · cómo se deshace. Solo se corre con un
+    **«sí» explícito por acción**; el «sí» de una no vale para la siguiente. Los tests `#[ignore]`
+    que tocan el Mac de verdad entran en la regla, **y también `cargo test` a secas**: arrastra
+    `tests/contra-el-mac-de-verdad.rs`, que abre el micrófono y el audio del sistema y hace sonar los
+    altavoces. En local se corre `cargo test --lib --test puerta --test ghost`; lo demás, la CI. Para
+    comprobar el estado del Mac se usa primero
+    lo que no pide permiso (`ls ~/Library/LaunchAgents`, `launchctl list`) o se le pide al usuario
+    que mire. **Un aviso que no se anunció, el usuario lo deniega.** *(Origen: en el S3 el
+    constructor corrió sin avisar una prueba de launchd y un diagnóstico que dejaron «sh ·
+    desarrollador no identificado» en Ítems de inicio, y seis veces `sfltool dumpbtm`, que pidió la
+    contraseña de administrador. El usuario creyó que se había metido algo: «si voy a poner mi clave
+    es porque sé qué está pasando». Las peticiones de contraseña eran la única forma que tenía de
+    enterarse. Inventario completo en `sprints/SPRINT_003-implementation-log.md`.)*
+
 ## Estándares (los 6+1, gates en CI)
 
-Testing · CI/CD · Observabilidad · Seguridad · Performance (contra `perf-budget.json`) · UX+A11y ·
+Testing · CI/CD · Observabilidad · Seguridad · Performance (en esta app, contra el presupuesto de
+latencia y de peso del binario de § Adaptaciones: no hay `perf-budget.json`) · UX+A11y ·
 **IA embebida responsable**. Detalle canónico: `estandares/estandares.md` de la planeadora
 (read-only). Ítem rojo ⇒ deuda técnica explícita en el summary o el sprint no cierra.
 
@@ -478,7 +579,8 @@ las fases aprobadas): **corre `/audita-sprint`** (auditoría final de dos fases,
 v1.10.0 — Fase 1 solo-lectura con severidades y veredicto "listo para cierre"/"requiere
 ajustes"; **el modelo poderoso audita y PLANEA los ajustes para que CUALQUIER modelo de menor
 capacidad los ejecute**; Fase 2 solo tras aprobación del usuario) — ANTES de la guía/gate ⭐.
-Luego, con la DoD completa: `/deploy-check` → genera `sprints/SPRINT_NNN-summary.md`
+Luego, con la DoD completa: `/deploy-check` (en esta app, **`/release-check`**, que remite a sus §3,
+§7, §11 y §12) → genera `sprints/SPRINT_NNN-summary.md`
 (plantilla abajo; **registra la auditoría: hallazgos y pagos**) → PR → gate ⭐ del usuario →
 merge con CI verde. **El summary es CONDICIÓN DE MERGE (método v1.24.0): viaja DENTRO del PR
 del sprint — un PR de sprint sin `SPRINT_NNN-summary.md` no se mergea.** Sin summary el sprint
@@ -559,9 +661,47 @@ pr: <link>
 
 ## Patrones de dominio de esta app
 
-[DOMAIN — llenar al estampar con los patrones del brief. Ej.: motor de fronteras de decisión en
-`src/engine/decision-boundary.ts`, inferencia en Web Workers.]
+Llenado en la auditoría del cierre del ciclo H1 (sprint 003); el estampado lo dejó en blanco.
+
+- **Dos pistas por dispositivo, jamás por voz** (regla dura 4): micrófono = consultor, audio del
+  sistema = cliente (`capture/`); un turno del micrófono que repite al cliente se marca eco
+  (`voz/eco.rs`) y cuenta como del cliente.
+- **Turno → disparo → búsqueda → ficha en ≤ 4 s:** `voz/turno.rs` → `stt/` → `disparo/` →
+  `corpus/` (BM25 por sección) → `ficha/` (con `maniobra.rs` cuando el corpus no tiene nada). Todo
+  determinista; la pantalla aporta al mismo camino (`pantalla/refuerzo.rs`).
+- **Grounding en dos mitades:** la sugerencia sale en un esquema cerrado y `fundar()` la tira si
+  dice algo que su ficha no dice (`sintesis/mod.rs`, `sintesis/fiel.rs`). La ficha es el respaldo
+  permanente.
+- **Protegidos efímeros, y el que decide no escribe:** los módulos que tocan audio, turnos o
+  pantalla no tienen disco ni red (`verify:ephemeral`, estático y en marcha); lo que se guarda lo
+  escribe otro módulo que ya solo recibe lo tuyo y, del cliente, hechos de una línea (`notas/` →
+  `carpeta.rs`, `propuestas/` → `bandeja.rs`).
+- **Un solo escritor:** todo lo que persiste nace en 600 dentro de una carpeta 700 por `almacen.rs`
+  (temporal, `fsync`, renombrado), salvo el índice del corpus, que escribe tantivy dentro de su
+  carpeta 700.
+- **El corte (`⌥⎋`)** vacía todas las piezas en memoria (`corte.rs`: añadir una pieza sin cortarla no
+  compila); tus notas se quedan.
+- **Contrato Rust → TS generado** (`contrato.rs` → `src/contrato.generado.ts`, regla 19).
+- **La red, contada en un solo sitio** (`red.rs`) y cada salida declarada (`contador-de-red`).
+- **Secretos solo en el Llavero** (`llavero.rs`); lo cifrado, con XChaCha20-Poly1305 y la llave ahí.
+- **Catálogos versionados en `data/`** (radar, propuestas, jurisdicciones), dentro del binario con
+  `include_str!`: sin red para actualizarlos.
+- **La puerta local** (`puerta/`, `bin/ghost.rs`): un socket Unix solo mientras está abierta, llave
+  por apertura, cerrada en reunión.
+- **Lo que vence sin la app:** una tarea de launchd al minuto de cada vencimiento (`vencimiento/`).
 
 ## Idioma
 
 Español en conversación y bitácoras. Inglés en código, commits, nombres y ADRs.
+*Auditoría del ciclo H1:* en esta app, **desde el S1**, el código, los nombres y los ADRs están en
+español (`almacen`, `fundar`, `decisions/*.md`); solo los commits van en inglés. Se registra como
+realidad de la casa y va a la planeadora como fricción del kit, en vez de reescribir tres sprints.
+
+**La app es BILINGÜE español/inglés en TODO desde el primer sprint (kit v1.29.0 — en el kit es su
+regla 20; aquí se cita por nombre porque la 20 de esta casa es la del artefacto de auditoría;
+estándares 2.14.0 apartado 6-B).** Interfaz, contenido, informes, documentos generados, demo y
+ficha técnica. El dato nace como mapa de idioma `{ es, en }` (nunca un campo en un idioma más una
+traducción aparte); **redactado, no traducido** (la traducción automática de contenido de producto
+está prohibida); las pruebas de texto, capturas y e2e con texto corren en AMBOS idiomas; conmutador
+visible desde la maqueta de la Etapa de Diseño. En esta app lo dice además la regla dura de
+producto 7.

@@ -1,4 +1,23 @@
-# Kit de prueba — Angel Ghost, sprint 001
+# Kit de prueba — Angel Ghost · v2 (sprint 003)
+
+Nació en el sprint 001 con el corpus y las preguntas; el sprint 002 le sumó el audio, la pantalla y el
+radar; **el sprint 003 (v2) le suma las propuestas, las jurisdicciones, la puerta local y dos documentos
+de ejemplo** para la NDA y la carta de encargo.
+
+**Qué mide la integración continua y qué no.** Todo lo de este kit lo mide la CI en cada push
+(`cargo test --test contra-el-mac-de-verdad el_kit` y `cargo test --test puerta el_kit`), **salvo el
+WER**, que necesita los modelos de voz de macOS y el runner no los tiene: es una medida **manual**, con
+su corrida local registrada en la bitácora de cada sprint (ver `audio/LEEME.md`).
+
+| Archivo | Qué mide | Hoy | Mínimo |
+|---|---|---|---|
+| `preguntas.json` | el buscador: nDCG@5 y cuántas sin respuesta rechaza | 0,823 · 1,000 | 0,80 · 1,00 |
+| `disparo.json` | cuándo la app se pone a buscar, turno a turno | 1,000 · 1,000 | 1,00 · 1,00 |
+| `pantalla.json` y `pantalla/` | la lectura de pantalla: ficha sin preguntar y el kit con la peor pantalla delante | 4 de 4 · 0,819 | 4 de 4 · 0,80 |
+| `reunion-con-acuerdos.json` | **v2** · las propuestas: regla y dueño, turno a turno; del cliente jamás el turno | 15 de 15 · el turno más lento, menos de 1 ms | 100 % · 50 ms |
+| `jurisdicciones.json` | **v2** · la bandera que sale de la línea «Jurisdicción:» de la ficha | 17 de 17 | 100 % |
+| `preguntas.json` por la puerta | **v2** · el kit que corre `ghost` mide lo mismo que la CI | 0,823 = 0,823 | igual |
+| `audio/` | el WER con y sin diccionario | ver `audio/LEEME.md` | **manual** |
 
 Todo lo de esta carpeta es **100 % sintético**. Ni un cliente real, ni un dato real, ni una cifra
 real: la regla de esta app es que los datos del usuario viven fuera del repo, y un kit que la
@@ -36,8 +55,9 @@ pnpm --dir . exec true && cd src-tauri && cargo test --test contra-el-mac-de-ver
 **Tres preguntas fallan hoy, a propósito.** Ninguna comparte una sola palabra con su sección
 («¿por qué nos contrataron para esto?» contra una sección que habla de márgenes y canales).
 BM25 no puede resolverlas, y reescribir las preguntas para que las acierte convertiría el kit en
-un espejo. Son la evidencia para decidir si los embeddings hacen falta; el sprint 002 no lo
-decidió (nDCG@5 0,82 sin ellos) y la decisión pasa al sprint 003 (ADR 008).
+un espejo. Eran la evidencia para decidir si los embeddings hacen falta, y el sprint 003 lo decidió
+(ADR 008): **no en el H1**. BM25 cumple el umbral (0,823) y los embeddings pasan al H2 con una
+condición escrita: diez preguntas de paráfrasis con nDCG@5 por debajo de 0,80.
 
 **Lo que este kit ya encontró:** al correr por primera vez, la app citó una sección sobre gobierno
 de datos para responder «¿cuánto cuesta el software de Salesforce?». La sección traía «cuánto» y
@@ -64,3 +84,36 @@ pregunta; y `reunion-grabada.png`, con el aviso de grabación y un bot de notas,
 `mac-limpio.txt` (82 procesos de un Mac corriente, con nombres parecidos a los del catálogo puestos
 a propósito) y `mac-vigilado.txt` (un proceso de cada fila del catálogo): el radar coral tiene que
 dar cero en el primero y todas las filas en el segundo.
+
+## `reunion-con-acuerdos.json` — las propuestas (v2)
+
+Una reunión inventada con Páramo Azul, veinte turnos en español y en inglés, cada uno con lo que las
+reglas publicadas (`data/propuestas/reglas.json`) tienen que proponerte: la regla —cifra, compromiso,
+choque con tu ficha fijada, nombre que tu corpus no tiene, pregunta del cliente— y de quién es. Trae
+también los casos en que **no** debe proponer nada: una cortesía, un nombre que tu corpus sí conoce, un
+compromiso que hace el cliente (la regla de compromisos solo mira los tuyos).
+
+Además de acertar, la prueba exige lo que la app promete y ninguna pantalla deja ver: **del cliente
+jamás se guarda el turno**, solo un fragmento de como mucho ocho palabras o, de una pregunta, sus
+palabras clave.
+
+## `jurisdicciones.json` — la bandera de cada cliente (v2)
+
+Diecisiete líneas «Jurisdicción:» como las escribirías en la ficha de un cliente, y la bandera que la
+app tiene que sacar del catálogo (`data/jurisdicciones/catalogo.json`): varias en una línea, la más
+estricta; lo que el informe legal no verificó, dicho; lo que no está en el catálogo, «fuera del
+catálogo», sin adivinar.
+
+## `nda-de-ejemplo.md` y `carta-de-encargo-de-ejemplo.md` — para la guía (v2)
+
+Dos documentos sintéticos, en español y en inglés, **que no son asesoría legal**. La NDA trae dos
+versiones de la cláusula de registro de las reuniones —una que lo permite y otra que lo prohíbe— para
+contestar las dos respuestas del chequeo de NDA de Sesión. La carta de encargo tiene una sección vacía
+donde pegar la cláusula que copias en Sesión → «Cláusula de encargo».
+
+## `pantalla/meet-en-negro.html` — una reunión sin nada que leer (v2)
+
+Una página negra cuyo título dice «Google Meet»: con ella, ⌃⌥L tiene que contestar «Leí la pantalla: no
+hay texto que buscar». Y `meet-de-prueba.html` se retocó en el sprint 003: la app lee la ventana entera,
+pestaña y pie incluidos, y su título («Páramo Azul») y su contador («5 de 6») le daban a la agenda un
+término y una cifra que la diapositiva no tiene. Ahora el título es neutro y el pie cuenta con puntos.

@@ -103,6 +103,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .franja.warn .ic { color: var(--warn); }
 .franja.err .ic { color: var(--err); }
 .franja.ok .ic { color: var(--ok); }
+.franja.mute .ic { color: var(--ink-2); }
 .barra .pistas .pista.off .ic { opacity: .75; }
 .red { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; color: var(--ink-2); }
 .red.cero { color: var(--ok); }
@@ -131,6 +132,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .banda .sugerencia-b .ic { flex: 0 0 auto; color: var(--halo); align-self: center; }
 .banda.voz .linea-b .ic { flex: 0 0 auto; color: var(--halo); }
 .banda.voz .linea-b.warn .ic { color: var(--warn); }
+.banda .propuesta-b:not([hidden]) + .red { margin-left: 12px; }
 .banda .aviso-b .ic { flex: 0 0 auto; margin-top: 1px; }
 .banda .maniobra-b .ic { flex: 0 0 auto; align-self: center; color: var(--ink-2); }
 .propuesta > .ic { margin-top: 2px; color: var(--halo); }
@@ -140,6 +142,9 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .puerta.si > .ic { color: var(--ok); }
 .puerta.no > .ic { color: var(--err); }
 .cuenta .ic { flex: 0 0 auto; color: var(--halo); }
+.cuenta.vencida .ic, .cuenta.vencida .reloj { color: var(--ink-2); }
+.franja .ventanas .op .ic { color: inherit; }
+.pregunta-nda .ic { color: var(--halo); flex: 0 0 auto; }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
 .mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
 @media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }

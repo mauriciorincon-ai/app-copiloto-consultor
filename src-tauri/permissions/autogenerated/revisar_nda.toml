@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-revisar-nda"
+description = "Enables the revisar_nda command without any pre-configured scope."
+commands.allow = ["revisar_nda"]
+
+[[permission]]
+identifier = "deny-revisar-nda"
+description = "Denies the revisar_nda command without any pre-configured scope."
+commands.deny = ["revisar_nda"]

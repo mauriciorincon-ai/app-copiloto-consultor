@@ -112,6 +112,8 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .franja.err .ic { color: var(--err); }
 .franja.ok { border-color: var(--ok);   background: var(--ok-tint); }
 .franja.ok .ic { color: var(--ok); }
+.franja.mute { border-color: var(--line-2); background: var(--surface-2); }
+.franja.mute .ic { color: var(--ink-2); }
 .franja ul { margin: 4px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 10px; color: var(--ink-2); }
 .franja ul li::before { content: "·"; margin-right: 6px; color: var(--ink-2); }
 .franja ul li:first-child::before { content: none; }
@@ -143,6 +145,11 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .puerta.si > .ic { color: var(--ok); }
 .puerta.no > .ic { color: var(--err); }
 .cuenta .ic { flex: 0 0 auto; color: var(--halo); }
+.cuenta.vencida .ic, .cuenta.vencida .reloj { color: var(--ink-2); }
+.franja .ventanas .op { background: var(--surface); }
+.franja .ventanas .op.on { background: linear-gradient(var(--halo-tint), var(--halo-tint)), var(--surface); }
+.franja .ventanas .op .ic { color: inherit; }
+.pregunta-nda .ic { color: var(--halo); flex: 0 0 auto; }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
 .mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
 @media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }

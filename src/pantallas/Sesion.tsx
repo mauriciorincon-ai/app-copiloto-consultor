@@ -1,13 +1,25 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useIdioma, useT } from "../i18n";
 import { Ic } from "../componentes/Iconos";
-import { Fila, Funciona, TodaviaNo, PILA } from "../componentes/Ventana";
+import { Fila, Funciona, PILA } from "../componentes/Ventana";
+import { hayTauri } from "../puente";
+import type { Bilingue } from "../radar";
+import {
+  elegirCliente,
+  empezarSoloNotas,
+  estadoDeSesion,
+  muestraDelCliente,
+  responderNda,
+  revisarNda,
+  useEsteCliente,
+  type LaBandera,
+  type VistaDelCliente,
+} from "../jurisdiccion";
 import {
   empezarAEscuchar,
   dejarDeEscuchar,
   lecturaAutomatica,
   usePantalla,
-  idiomasDeLasPistas,
   useBytesALaRed,
   type EstadoDeEscucha,
   type EstadoDePista,
@@ -32,26 +44,31 @@ import { invasivos, useRadarDeTuMac, type EnTuMac } from "../radar";
  * Fuera de una sesión las pistas no están abiertas y eso no es una avería: se enseña lo que la app
  * sabe hacer, como en el sprint 001.
  */
-/** Empieza a escuchar con el idioma que cada pista tiene elegido en Idioma (auditoría del S2, A4). */
-function empezarConLosIdiomasElegidos() {
-  const { consultor, cliente } = idiomasDeLasPistas();
-  empezarAEscuchar(consultor, cliente);
-}
 
 export function Sesion({
   reunion,
   escucha,
   salida,
   radarDeMuestra = false,
+  busqueda = "",
 }: {
   reunion: Reunion;
   escucha: EstadoDeEscucha;
   salida: Salida;
   radarDeMuestra?: boolean;
+  /** Fuera de Tauri, el estado de `sesion.html` que pide el arnés de fidelidad por la URL. */
+  busqueda?: string;
 }) {
   const t = useT().cuaderno;
+  const tc = useT().cliente;
   const pantalla = usePantalla();
   const bytes = useBytesALaRed();
+  const fuera = !hayTauri();
+  const pedido = estadoDeSesion(busqueda);
+  const muestra = useMemo(() => muestraDelCliente(pedido), [pedido]);
+  const [vista, setVista] = useEsteCliente(muestra);
+  const [preguntando, setPreguntando] = useState(fuera && pedido === "pregunta");
+  const [viendoClausula, setViendoClausula] = useState(fuera && pedido === "clausula");
   const hayEco = salida.salida === "altavoces" || salida.salida === "altavoz-externo";
   const caida = (p: EstadoDePista) => escucha.escuchando && !p.abierta;
 
@@ -83,10 +100,19 @@ export function Sesion({
     </div>
   );
 
-  // La muestra de escucha de la maqueta está «escuchando» (es la de las pistas que funcionan); el
-  // estado «software invasivo en tu Mac» se dibuja antes de empezar, y así se fotografía.
+  // «Revisar» abre la pregunta; si ya había respuesta, se borra primero (ADR 017 §4).
+  const revisar = () => {
+    setPreguntando(true);
+    if (vista.nda !== "sin-revisar") void revisarNda().then((v) => v && setVista(v));
+  };
+  const responder = (prohibe: boolean) =>
+    void responderNda(prohibe).then((v) => {
+      if (v) setVista(v);
+      setPreguntando(false);
+    });
+
   const antesDeEmpezar = !escucha.escuchando || radarDeMuestra;
-  if (vigilado && antesDeEmpezar) {
+  if (vigilado && antesDeEmpezar && !escucha.soloNotas) {
     return (
       <>
         {titulo}
@@ -94,10 +120,40 @@ export function Sesion({
           radar={radar}
           iniciar={() => {
             setVisto(clave);
-            empezarConLosIdiomasElegidos();
+            empezarAEscuchar();
           }}
           noIniciar={() => setVisto(clave)}
         />
+      </>
+    );
+  }
+
+  // **Solo notas, en marcha** (ADR 017 §5): nada escucha ni transcribe; se termina como cualquier otra.
+  if (escucha.soloNotas) {
+    return (
+      <>
+        {titulo}
+        <EnSoloNotas terminar={dejarDeEscuchar} bytes={bytes} />
+      </>
+    );
+  }
+
+  if (viendoClausula) {
+    return (
+      <>
+        {titulo}
+        <LaClausula clausula={vista.clausula} volver={() => setViendoClausula(false)} />
+      </>
+    );
+  }
+
+  // **La NDA lo prohíbe**: el estado aprobado en la Etapa de Diseño. Nunca bloquea: se vuelve a revisar
+  // con un clic, y «Iniciar en modo solo notas» es la salida.
+  if (!escucha.escuchando && vista.elegido && vista.nda === "lo-prohibe") {
+    return (
+      <>
+        {titulo}
+        <LaNdaLoProhibe iniciar={() => void empezarSoloNotas()} revisar={revisar} />
       </>
     );
   }
@@ -138,67 +194,357 @@ export function Sesion({
                 {t.avisoDelEco}
               </p>
             )}
+            {/* «Escucha las dos pistas» solo aparece cuando NO es verdad (mirada 17): con una pista
+                caída, dice cuál queda. Vivía en «Qué funciona hoy», que el sprint 3 retiró al volver
+                al diseño aprobado de la Etapa de Diseño. */}
+            {(caida(escucha.microfono) || caida(escucha.sistema)) && (
+              <LaEscucha mic={!caida(escucha.microfono)} sistema={!caida(escucha.sistema)} />
+            )}
           </div>
 
-          <div className="tarjeta pendiente">
-            <h2 className="seccion">{t.esteCliente}</h2>
-            <div className="fila">
-              <span className="crece">{t.fichaYNda}</span>
-              <TodaviaNo />
-            </div>
-            <p>{t.noSeInventa}</p>
-          </div>
+          <EsteCliente
+            vista={vista}
+            elegir={(nombre) => void elegirCliente(nombre).then((v) => v && setVista(v))}
+            revisar={revisar}
+            preguntando={preguntando}
+            verLaClausula={() => setViendoClausula(true)}
+          />
         </div>
 
-        <div className="tarjeta">
-          <h2 className="seccion">{t.queFuncionaHoy}</h2>
-          <Fila icono="i-candado" color="var(--ok)" texto={t.funcionaBanda}>
-            <Funciona />
+        {mdm && (
+          <Fila icono="i-radar" color="var(--ink-2)" texto={`${t.radarClases.mdm.titulo} ${t.radarClases.mdm.sufijo}`}>
+            <span className="estado mute">
+              <Ic id="i-ring" s />
+              <span>{t.sabelo}</span>
+            </span>
           </Fila>
-          <Fila icono="i-video" color="var(--ok)" texto={t.funcionaAcople}>
-            <Funciona />
-          </Fila>
-          <LaEscucha
-            mic={!caida(escucha.microfono)}
-            sistema={!caida(escucha.sistema)}
-          />
-          {mdm && (
-            <Fila icono="i-radar" color="var(--ink-2)" texto={`${t.radarClases.mdm.titulo} ${t.radarClases.mdm.sufijo}`}>
-              <span className="estado mute">
-                <Ic id="i-ring" s />
-                <span>{t.sabelo}</span>
-              </span>
-            </Fila>
-          )}
-          {/* El kill-switch salió de esta lista y bajó a la fila de la acción, al lado de la
-              promesa que cumple: «corta todo · el sonido nunca se guarda · nada sale de tu
-              equipo». La lista se quedó con lo que sí lleva la palabra «Funciona», y la pantalla
-              volvió a caber en los 640 px de la ventana — que es lo que el gate de fidelidad
-              midió y el ojo no. */}
+        )}
+
+        {escucha.escuchando ? (
+          // El kill-switch va al lado de la promesa que cumple, en la fila de la acción.
           <div className="fila">
-            <button
-              className="btn primario"
-              onClick={() =>
-                escucha.escuchando
-                  ? dejarDeEscuchar()
-                  : empezarConLosIdiomasElegidos()
-              }
-            >
+            <button className="btn primario" onClick={() => dejarDeEscuchar()}>
               {/* Dice lo que hace: con la sesión en marcha, la termina (auditoría del S2, B16). */}
-              <Ic id={escucha.escuchando ? "i-x-circle" : "i-voz"} s />
-              <span>{escucha.escuchando ? t.terminarSesion : t.iniciarSesion}</span>
+              <Ic id="i-x-circle" s />
+              <span>{t.terminarSesion}</span>
             </button>
             <span className="crece"></span>
-            <span className="tecla">
-              <kbd>⌥⎋</kbd>
-            </span>
-            <span className="mono" style={{ color: "var(--ink-2)" }}>
-              {bytes === "0 B" ? t.nadaSale : t.nadaSaleConApi}
-            </span>
+            <Promesa bytes={bytes} />
           </div>
-        </div>
+        ) : preguntando ? (
+          <LaPreguntaDeLaNda responder={responder} />
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div className="fila">
+              <button className="btn primario" onClick={() => empezarAEscuchar()}>
+                <Ic id="i-voz" s />
+                <span>{t.iniciarSesion}</span>
+              </button>
+              <button className="btn" onClick={() => void empezarSoloNotas()}>
+                <Ic id="i-nota" s />
+                <span>{tc.soloNotas}</span>
+              </button>
+            </div>
+            <div className="fila">
+              <Promesa bytes={bytes} />
+            </div>
+          </div>
+        )}
       </div>
     </>
+  );
+}
+
+/** `⌥⎋` y la promesa que cumple: «corta todo · el sonido nunca se guarda · …». */
+function Promesa({ bytes }: { bytes: string }) {
+  const t = useT().cuaderno;
+  return (
+    <>
+      <span className="tecla">
+        <kbd>⌥⎋</kbd>
+      </span>
+      <span className="mono" style={{ color: "var(--ink-2)" }}>
+        {bytes === "0 B" ? t.nadaSale : t.nadaSaleConApi}
+      </span>
+    </>
+  );
+}
+
+/**
+ * **«ESTE CLIENTE»** (C11, ADR 017; `sesion.html` «sprint 3 · este cliente», maquetado, no visto): el
+ * selector con los clientes de tu corpus, la bandera de su jurisdicción, su NDA y la cláusula. «No es
+ * asesoría legal» va siempre.
+ */
+function EsteCliente({
+  vista,
+  elegir,
+  revisar,
+  preguntando,
+  verLaClausula,
+}: {
+  vista: VistaDelCliente;
+  elegir: (nombre: string | null) => void;
+  revisar: () => void;
+  preguntando: boolean;
+  verLaClausula: () => void;
+}) {
+  const t = useT().cuaderno;
+  const tc = useT().cliente;
+  return (
+    <div className="tarjeta">
+      <div className="fila">
+        <h2 className="seccion crece" style={{ margin: 0 }}>
+          {t.esteCliente}
+        </h2>
+        <select
+          className="selector"
+          aria-label={t.esteCliente}
+          value={vista.elegido ?? ""}
+          onChange={(e) => elegir(e.target.value || null)}
+        >
+          <option value="">{tc.sinElegir}</option>
+          {vista.clientes.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </div>
+      {vista.bandera && <BanderaDelCliente bandera={vista.bandera} />}
+      {vista.elegido && vista.nda !== "lo-prohibe" && (
+        <div className="fila">
+          {vista.nda === "no-lo-prohibe" ? (
+            <Ic id="i-check-circle" s color="var(--ok)" />
+          ) : (
+            <Ic id="i-pendiente" s color="var(--mute)" />
+          )}
+          <span className="crece" style={{ fontSize: "var(--t-meta)" }}>
+            {vista.nda === "no-lo-prohibe" ? tc.ndaNoLoProhibe : tc.ndaSinRevisar}
+          </span>
+          <button className="btn mini" type="button" aria-expanded={preguntando} onClick={revisar}>
+            {tc.revisar}
+          </button>
+        </div>
+      )}
+      <div className="fila">
+        <span className="crece aviso-legal">{tc.noEsAsesoria}</span>
+        <button className="btn mini" type="button" onClick={verLaClausula}>
+          <Ic id="i-doc" s />
+          {tc.clausulaDeEncargo}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * La bandera de `kit.html` §5, con lo que Rust decidió: su riesgo con símbolo, texto y color (regla
+ * 8), la regla, lo que implica, las normas con la fecha del informe y, si algo no se verificó, dicho.
+ */
+export function BanderaDelCliente({ bandera }: { bandera: LaBandera }) {
+  const tc = useT().cliente;
+  const idioma = useIdioma();
+  if (bandera.que !== "conocida") {
+    const fuera = bandera.que === "fuera-del-catalogo";
+    const [abre, cierra] = idioma === "es" ? ["«", "»"] : ["\u201c", "\u201d"];
+    return (
+      <div className="bandera desconocida">
+        <Ic id="i-globo" />
+        <div className="donde">
+          {fuera ? `${abre}${bandera.escrita}${cierra} ${tc.noEstaEnElCatalogo} v${bandera.version}` : tc.noIndicada}{" "}
+          <span className="estado mute">
+            <Ic id="i-ring" s />
+            <span>{tc.sinBandera}</span>
+          </span>
+        </div>
+        <div className="regla">{fuera ? tc.escribela : tc.indicaDonde}</div>
+        <div className="implica">{tc.mientrasTanto}</div>
+        <div className="fuente">—</div>
+      </div>
+    );
+  }
+  const b = bandera.bandera;
+  const bajo = b.riesgo === "bajo" || b.riesgo === "bajo-medio";
+  const medio = b.riesgo === "medio" || b.riesgo === "medio-alto";
+  const clase = bajo ? "riesgo-bajo" : b.riesgo === "medio" ? "riesgo-medio" : b.riesgo === "medio-alto" ? "riesgo-alto" : "desconocida";
+  return (
+    <div className={`bandera ${clase}`}>
+      <Ic id="i-globo" />
+      <div className="donde">
+        {b.nombre[idioma]}{" "}
+        <span className={bajo ? "estado ok" : medio ? "estado warn" : "estado mute"}>
+          {bajo ? <Ic id="i-check-circle" s relleno /> : medio ? <Ic id="i-alert" s relleno /> : <Ic id="i-ring" s />}
+          <span>{tc.riesgo[b.riesgo]}</span>
+        </span>
+      </div>
+      <div className="regla">{b.regla[idioma]}</div>
+      <div className="implica">{b.implica[idioma]}</div>
+      <div className="fuente">{[...b.normas, b.consultado].join(" · ")}</div>
+      {b.pendiente && (
+        <div className="pendiente">
+          {tc.sinVerificar} {b.pendiente[idioma]}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** La pregunta del chequeo de NDA, en la fila de la acción: se contesta antes de empezar. */
+function LaPreguntaDeLaNda({ responder }: { responder: (prohibe: boolean) => void }) {
+  const tc = useT().cliente;
+  return (
+    <div className="pregunta-nda" role="group" aria-label="NDA">
+      <Ic id="i-pendiente" s />
+      <span className="crece">{tc.pregunta}</span>
+      <button className="btn mini" type="button" onClick={() => responder(true)}>
+        {tc.siLoProhibe}
+      </button>
+      <button className="btn mini" type="button" onClick={() => responder(false)}>
+        {tc.noLoProhibe}
+      </button>
+    </div>
+  );
+}
+
+/**
+ * La cláusula modelo, **las dos versiones lado a lado** (ADR 017 §6): se copia la del idioma de la
+ * carta de encargo, no la de la interfaz. Cada una lleva su `lang` para que un lector de pantalla la
+ * pronuncie bien.
+ */
+function LaClausula({ clausula, volver }: { clausula: Bilingue; volver: () => void }) {
+  const tc = useT().cliente;
+  const [copiada, setCopiada] = useState<"es" | "en" | null>(null);
+  const copiar = (idioma: "es" | "en") =>
+    void navigator.clipboard?.writeText(clausula[idioma]).then(
+      () => setCopiada(idioma),
+      () => setCopiada(null),
+    );
+  return (
+    <div className="tarjeta">
+      <div className="fila">
+        <h2 className="seccion crece" style={{ margin: 0 }}>
+          {tc.clausulaTitulo}
+        </h2>
+        <button className="btn mini" type="button" onClick={volver}>
+          {tc.volver}
+        </button>
+      </div>
+      <p className="aviso-legal">{tc.plantilla}</p>
+      <div className="grid-2" style={{ gap: "14px", alignItems: "start" }}>
+        {(["es", "en"] as const).map((l) => (
+          <div key={l} style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div className="fila">
+              <strong className="crece">{l === "es" ? "Español" : "English"}</strong>
+              <button className="btn mini" type="button" onClick={() => copiar(l)}>
+                {copiada === l && <Ic id="i-check-circle" s relleno />}
+                {copiada === l ? tc.copiada : tc.copiar}
+              </button>
+            </div>
+            <p className="clausula" lang={l}>
+              {clausula[l]}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** «Qué queda apagado» y «Qué sigue funcionando»: lo mismo antes de empezar en solo notas y durante. */
+function LoQueQuedaYLoQueSigue() {
+  const tc = useT().cliente;
+  const apagada = (icono: string, texto: string) => (
+    <div className="fila" key={icono}>
+      <Ic id={icono} s color="var(--mute)" />
+      <span className="crece" style={{ color: "var(--mute)" }}>
+        {texto}
+      </span>
+      <span className="estado mute">
+        <Ic id="i-ring" s />
+        <span>{tc.apagado}</span>
+      </span>
+    </div>
+  );
+  return (
+    <div className="grid-2">
+      <div className="tarjeta">
+        <h2 className="seccion">{tc.queQuedaApagado}</h2>
+        {apagada("i-mic-off", tc.microfono)}
+        {apagada("i-sistema-off", tc.audioDelSistema)}
+        {apagada("i-pantalla-off", tc.lecturaDePantalla)}
+      </div>
+      <div className="tarjeta">
+        <h2 className="seccion">{tc.queSigue}</h2>
+        <Fila icono="i-nota" color="var(--ok)" texto={tc.notasYAcuerdos}>
+          <span className="tecla">
+            <kbd>⌃⌥N</kbd>
+          </span>
+        </Fila>
+        <Fila icono="i-buscar" color="var(--ok)" texto={tc.buscarAMano}>
+          <span className="tecla">
+            <kbd>⌃⌥A</kbd>
+          </span>
+        </Fila>
+        <Fila icono="i-candado" color="var(--ok)" texto={tc.panelProtegido} />
+      </div>
+    </div>
+  );
+}
+
+/** `sesion.html` «NDA prohíbe transcribir» (Etapa de Diseño): la app no bloquea, propone solo notas. */
+function LaNdaLoProhibe({ iniciar, revisar }: { iniciar: () => void; revisar: () => void }) {
+  const tc = useT().cliente;
+  return (
+    <div style={PILA}>
+      <div className="franja warn" role="status" style={{ padding: "14px 16px" }}>
+        <Ic id="i-alert" relleno />
+        <div>
+          <strong>{tc.ndaProhibe}</strong>
+          <p style={{ marginTop: "4px" }}>
+            {tc.ndaProhibeAntes} <b>{tc.ndaProhibeModo}</b>
+            {tc.ndaProhibeDespues}
+          </p>
+        </div>
+      </div>
+      <LoQueQuedaYLoQueSigue />
+      <div className="fila">
+        <button className="btn primario" style={{ padding: "9px 16px", fontSize: "var(--t-ui)" }} onClick={iniciar}>
+          <Ic id="i-nota" s />
+          <span>{tc.iniciarSoloNotas}</span>
+        </button>
+        <button className="btn" onClick={revisar}>
+          <span>{tc.volverARevisar}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** La reunión en solo notas, en marcha (`sesion.html` «sprint 3 · en solo notas»). */
+function EnSoloNotas({ terminar, bytes }: { terminar: () => void; bytes: string }) {
+  const t = useT().cuaderno;
+  const tc = useT().cliente;
+  return (
+    <div style={PILA}>
+      <div className="franja warn" role="status" style={{ padding: "14px 16px" }}>
+        <Ic id="i-nota" />
+        <div>
+          <strong>{tc.modoSoloNotas}</strong>
+          <p style={{ marginTop: "4px" }}>
+            {tc.enMarchaAntes} <b>⌃⌥A</b> {tc.enMarchaDespues}
+          </p>
+        </div>
+      </div>
+      <LoQueQuedaYLoQueSigue />
+      <div className="fila">
+        <button className="btn primario" onClick={terminar}>
+          <Ic id="i-x-circle" s />
+          <span>{t.terminarSesion}</span>
+        </button>
+        <span className="crece"></span>
+        <Promesa bytes={bytes} />
+      </div>
+    </div>
   );
 }
 
@@ -215,6 +561,7 @@ function Porque({
 
 export function LaReunion({ reunion }: { reunion: Reunion }) {
   const t = useT().cuaderno;
+  const tb = useT().banda;
   if (reunion.que === "detectada") {
     return (
       <div className="tarjeta">
@@ -233,7 +580,11 @@ export function LaReunion({ reunion }: { reunion: Reunion }) {
           ) : (
             <span className="estado warn">
               <Ic id="i-alert" s relleno />
-              <span>{t.proteccionSinVerificar}</span>
+              {/* El cliente que HAY, no «Zoom» para todos: Teams, Safari o Edge también salían como
+                  «Zoom · sin verificar» (casilla 6 del S3). Mismo nombre corto que el rail. */}
+              <span>
+                {reunion.cliente.replace(/^(Google|Microsoft)\s+/, "")} · {tb.sinVerificarSufijo}
+              </span>
             </span>
           )}
         </div>

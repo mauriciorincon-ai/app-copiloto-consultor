@@ -459,6 +459,24 @@ use app_copiloto_consultor_lib::disparo::{Contexto, Disparador};
 use app_copiloto_consultor_lib::stt::Turno;
 use app_copiloto_consultor_lib::voz::turno::{Suceso, Turnos};
 use app_copiloto_consultor_lib::voz::vad::PorEnergia;
+use app_copiloto_consultor_lib::carpeta::{Carpeta, Llaves};
+use app_copiloto_consultor_lib::notas::{self, cifrado::Llave, Cuaderno, Encabezado, FichaFijada};
+
+/// La llave de las notas de la sesión del efímero: en memoria, para no tocar el Llavero del usuario.
+/// Es la misma llave con que el test descifra después lo que se escribió.
+struct LlaveDeLaPrueba(String);
+
+impl Llaves for LlaveDeLaPrueba {
+    fn existe(&self) -> Result<bool, String> {
+        Ok(true)
+    }
+    fn leer(&self) -> Result<Llave, String> {
+        Llave::de_hex(&self.0).ok_or_else(|| "la llave de la prueba no es una llave".into())
+    }
+    fn crear(&self, _: &Llave) -> Result<(), String> {
+        Ok(())
+    }
+}
 
 /// La frase que solo dice el cliente. No se parece a nada del corpus ni del código, para que
 /// encontrarla en un archivo signifique una sola cosa.
@@ -467,7 +485,8 @@ const CANARIA: &str = "quetzalcoatlus-de-bolsillo-7731";
 /// Lo único que una sesión puede dejar escrito, y por qué.
 ///
 /// **Cada entrada de aquí es una promesa que se afloja**, así que se añaden de a una, nombradas, y el
-/// summary del sprint las lista. Dos, al día del sprint 002.
+/// summary del sprint las lista. Cinco, al día de la fase 2 del sprint 003 (y el plist de launchd, que
+/// este test no escribe: lo prueba el test en vivo).
 struct Permitido {
     /// El índice del corpus: documentos DEL USUARIO, que la regla del efímero sí deja persistir.
     indice: PathBuf,
@@ -476,11 +495,29 @@ struct Permitido {
     /// es que sus entradas salen de dos sitios y de ninguno más: su archivo y los nombres de su
     /// corpus. Nunca de la reunión — la canaria de abajo lo comprueba archivo por archivo.
     diccionario: PathBuf,
+    /// **La carpeta de tus notas** (sprint 003, fase 1, ADR 015): lo tuyo de la reunión, cifrado. Es
+    /// lo único de la reunión que la regla del efímero deja persistir, y lo que la hace inocua está
+    /// comprobado abajo **con el archivo descifrado**: la canaria del cliente no está dentro. Mirarla
+    /// sobre los bytes cifrados no probaría nada.
+    notas: PathBuf,
+    /// **La bandeja** (sprint 003, fase 2, ADR 016 §4): las propuestas que no decidiste, cifradas y
+    /// con su vencimiento (techo 24 h). Es lo único escrito que puede llevar palabras del cliente, y
+    /// por eso tiene su propia comprobación, descifrada: **jamás su turno**, y cada fragmento suyo de
+    /// ocho palabras como mucho (una pregunta, cinco palabras clave). La canaria puede aparecer como
+    /// una de esas palabras: es lo que el ADR 016 §2 decidió dejar persistir, y lo que la regla dura 1
+    /// del `CLAUDE.md` nombra («la bandeja de propuestas durante la ventana elegida»).
+    bandeja: PathBuf,
+    /// La lista «hora · archivo» que lee la tarea de launchd: rutas y horas, nada de la reunión.
+    lista: PathBuf,
 }
 
 impl Permitido {
     fn cubre(&self, ruta: &Path) -> bool {
-        ruta.starts_with(&self.indice) || ruta == self.diccionario
+        ruta.starts_with(&self.indice)
+            || ruta == self.diccionario
+            || ruta.starts_with(&self.notas)
+            || ruta.starts_with(&self.bandeja)
+            || ruta == self.lista
     }
 }
 
@@ -595,7 +632,7 @@ fn donde_se_mira(casa: &Path) -> Vec<PathBuf> {
 }
 
 /// La sesión. Devuelve lo que se dijo, para poder afirmar que de verdad pasó por dentro.
-fn una_sesion_completa(casa: &Path, corpus_en: &Path) -> (Vec<String>, Vec<&'static str>) {
+fn una_sesion_completa(casa: &Path, corpus_en: &Path, llave: &dyn Llaves) -> (Vec<String>, Vec<&'static str>) {
     let mut dicho = Vec::new();
     let mut ejercido = Vec::new();
 
@@ -718,7 +755,83 @@ fn una_sesion_completa(casa: &Path, corpus_en: &Path) -> (Vec<String>, Vec<&'sta
         }
     }
 
-    // 7 · El kill-switch sobre lo que guardó la última pregunta del cliente.
+    // 7 · **Tus notas** (sprint 003, fase 1). El cuaderno recibe lo que recibe en la app —tu nota, un
+    //     acuerdo, la ficha que la banda enseña para fijarla, y los turnos transcritos con «Conservar
+    //     mis turnos» encendido—, y **entre esos turnos van dos con la canaria**: el del cliente y el
+    //     mismo oído por tus altavoces (eco). Ninguno de los dos puede acabar en el archivo.
+    let mut cuaderno = Cuaderno::nuevo(true);
+    cuaderno.escribir("Revisar la cuarta fuente antes del viernes.");
+    cuaderno.acordar("Cuarta fuente: cotización aparte");
+    cuaderno.ver(FichaFijada {
+        titular: "Alcance".into(),
+        documento: "Propuesta Páramo Azul".into(),
+        seccion: Some("Alcance".into()),
+        unidad: Some(Unidad::Propuesta),
+        ..Default::default()
+    });
+    cuaderno.fijar_la_vigente();
+    let mio = Turno {
+        pista: Pista::Microfono,
+        desde_ms: 2_500,
+        hasta_ms: 4_000,
+        texto: "Te envío la cotización el lunes.".into(),
+        hora: "14:03".into(),
+        eco: false,
+    };
+    assert!(cuaderno.oir(&mio), "tu propio turno no entró al cuaderno: el paso no midió nada");
+    assert!(!cuaderno.oir(&turno), "el turno del cliente entró al cuaderno");
+    let eco = Turno { pista: Pista::Microfono, eco: true, ..turno.clone() };
+    assert!(!cuaderno.oir(&eco), "el eco —la voz del cliente por tus altavoces— entró al cuaderno");
+    let contenido = cuaderno.contenido(Encabezado { empezo: "2026-09-27 14:02".into(), minutos: 3, cliente: None });
+    let base = notas::nombre_del_archivo(None, &notas::Fecha { anio: 2026, mes: 9, dia: 27, hora: 14, minuto: 2 });
+    // Con la retención de fábrica (90 d), como en la app: así las notas entran en la lista de launchd.
+    let notas_de_la_sesion = Carpeta::en(casa.join(app_copiloto_consultor_lib::carpeta::CARPETA));
+    notas_de_la_sesion
+        .guardar(llave, &contenido, &base, 1_790_517_600 + 90 * 86_400)
+        .expect("las notas de la sesión no se pudieron guardar");
+    println!("[sesión] notas guardadas y cifradas");
+    ejercido.push("notas");
+
+    // 7-bis · **La bandeja** (sprint 003, fase 2, ADR 016). Las reglas miran los turnos de verdad —la
+    //     pregunta del cliente con la canaria y un plazo que dijo— y lo que no decidiste se sella en la
+    //     bandeja con su vencimiento, junto a la lista que lee la tarea de launchd. **El plist no se
+    //     escribe aquí**: registrarlo es tocar launchd y los Ítems de inicio de quien corre el test
+    //     (regla 22); lo prueba el test en vivo, con su «sí».
+    let plazo = Turno {
+        texto: format!("Necesitamos 12 semanas para el tablero del {CANARIA} y la integración completa con el ERP."),
+        hora: "14:04".into(),
+        ..turno.clone()
+    };
+    dicho.push(plazo.texto.clone());
+    let nada = |_: &str| false;
+    let ctx = app_copiloto_consultor_lib::propuestas::Contexto { fijadas: &[], conoce: &nada };
+    let mut sin_decidir = app_copiloto_consultor_lib::propuestas::proponer(&turno, &ctx);
+    sin_decidir.extend(app_copiloto_consultor_lib::propuestas::proponer(&plazo, &ctx));
+    assert!(!sin_decidir.is_empty(), "los turnos del cliente no dieron ninguna propuesta: la bandeja no se midió");
+    let bandeja = app_copiloto_consultor_lib::bandeja::Bandeja::en(casa.join(app_copiloto_consultor_lib::bandeja::CARPETA));
+    let cerro = 1_790_517_600;
+    let contenido_b = app_copiloto_consultor_lib::bandeja::Contenido {
+        version: app_copiloto_consultor_lib::bandeja::VERSION,
+        reunion: format!("{base}.{}", app_copiloto_consultor_lib::carpeta::EXTENSION),
+        encabezado: Encabezado { empezo: "2026-09-27 14:02".into(), minutos: 3, cliente: None },
+        vence_de_la_reunion: 0,
+        cerro,
+        propuestas: sin_decidir,
+    };
+    assert!(bandeja.dejar(llave, &contenido_b, Some(cerro + 3 * 3_600)).expect("la bandeja no se pudo escribir"));
+    // La lista, con lo mismo que la app le da a launchd: tus notas y la bandeja (decisión A).
+    let pendientes = app_copiloto_consultor_lib::reunion::lo_que_vence_en(&notas_de_la_sesion, &bandeja);
+    let lista = app_copiloto_consultor_lib::vencimiento::lista_en_texto(&pendientes);
+    assert!(
+        lista.contains(&notas_de_la_sesion.raiz().display().to_string()) && lista.lines().count() == 2,
+        "la lista de launchd no trae tus notas y la bandeja:\n{lista}"
+    );
+    app_copiloto_consultor_lib::almacen::escribir(&casa.join(app_copiloto_consultor_lib::vencimiento::LISTA), lista.as_bytes())
+        .expect("la lista de vencimientos no se pudo escribir");
+    println!("[sesión] bandeja sellada con {} propuesta(s) y su lista de vencimientos", contenido_b.propuestas.len());
+    ejercido.push("bandeja");
+
+    // 8 · El kill-switch sobre lo que guardó la última pregunta del cliente.
     disparador.reiniciar();
     (dicho, ejercido)
 }
@@ -744,8 +857,14 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     let _ = std::fs::remove_dir_all(&casa);
     std::fs::create_dir_all(&casa).unwrap();
     let fuente = corpus_para_el_efimero();
-    let permitido =
-        Permitido { indice: casa.join("corpus"), diccionario: casa.join("diccionario.yaml") };
+    let permitido = Permitido {
+        indice: casa.join("corpus"),
+        diccionario: casa.join("diccionario.yaml"),
+        notas: casa.join(app_copiloto_consultor_lib::carpeta::CARPETA),
+        bandeja: casa.join(app_copiloto_consultor_lib::bandeja::CARPETA),
+        lista: casa.join(app_copiloto_consultor_lib::vencimiento::LISTA),
+    };
+    let llave = LlaveDeLaPrueba(Llave::nueva().a_hex());
 
     // El inventario se toma DESPUÉS de crear los fixtures: lo que se mide es lo que deja la
     // sesión, no lo que deja el test preparándola.
@@ -753,11 +872,13 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     let antes: BTreeMap<PathBuf, Huella> = sitios.iter().flat_map(|s| inventario(s)).collect();
     println!("[efímero] {} archivos antes, en {} sitios", antes.len(), sitios.len());
 
-    let (dicho, ejercido) = una_sesion_completa(&casa, &fuente);
+    let (dicho, ejercido) = una_sesion_completa(&casa, &fuente, &llave);
     // Lo que el sprint 002 añadió tiene que haber corrido DENTRO del inventario: la pantalla y la
     // síntesis corren en cualquier Mac con el puente (la CI incluida); la voz, solo donde hay voces.
     assert!(ejercido.contains(&"ocr"), "la lectura de pantalla no se ejerció: el inventario no la midió");
     assert!(ejercido.contains(&"sintesis"), "la síntesis no se ejerció: el inventario no la midió");
+    assert!(ejercido.contains(&"notas"), "las notas no se guardaron: el inventario no las midió");
+    assert!(ejercido.contains(&"bandeja"), "la bandeja no se escribió: el inventario no la midió");
 
     let despues: BTreeMap<PathBuf, Huella> = sitios.iter().flat_map(|s| inventario(s)).collect();
 
@@ -800,16 +921,50 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     );
     assert!(!tocados.is_empty(), "no se escribió NI el índice: la sesión no llegó a correr");
 
-    // Y la canaria: lo que dijo el cliente no puede estar dentro de lo que sí se escribió.
+    // Y la canaria: lo que dijo el cliente no puede estar dentro de lo que sí se escribió. **Los
+    // archivos de notas se miran DESCIFRADOS**: sobre los bytes cifrados, la canaria no aparecería
+    // nunca, estuviera dentro o no.
+    let mut notas_descifradas = 0;
+    let mut bandejas_descifradas = 0;
     for (ruta, ..) in &tocados {
         let Ok(bytes) = std::fs::read(ruta) else { continue };
-        let texto = String::from_utf8_lossy(&bytes);
+        if ruta.starts_with(&permitido.bandeja) {
+            let claro = notas::cifrado::abrir(&llave.leer().unwrap(), &bytes)
+                .unwrap_or_else(|e| panic!("la bandeja de la sesión no se abre con su llave ({e}): {}", ruta.display()));
+            let dentro: app_copiloto_consultor_lib::bandeja::Contenido =
+                serde_json::from_slice(&claro).expect("la bandeja descifrada no se lee");
+            for p in &dentro.propuestas {
+                for dicho_por_el_cliente in dicho.iter().filter(|d| d.contains(CANARIA)) {
+                    assert!(!p.texto.contains(dicho_por_el_cliente.as_str()), "el turno del cliente entero acabó en la bandeja");
+                }
+                if p.de == app_copiloto_consultor_lib::propuestas::De::Cliente {
+                    let n = p.texto.split_whitespace().filter(|w| *w != "·").count();
+                    assert!(n <= 8, "un fragmento del cliente de {n} palabras en la bandeja: «{}»", p.texto);
+                }
+            }
+            bandejas_descifradas += 1;
+            continue;
+        }
+        let claro = if ruta.starts_with(&permitido.notas) {
+            let abierto = notas::cifrado::abrir(&llave.leer().unwrap(), &bytes)
+                .unwrap_or_else(|e| panic!("las notas de la sesión no se abren con su llave ({e}): {}", ruta.display()));
+            notas_descifradas += 1;
+            abierto
+        } else {
+            bytes
+        };
+        let texto = String::from_utf8_lossy(&claro);
         assert!(
             !texto.contains(CANARIA),
             "la frase del cliente acabó dentro de {}",
             ruta.display()
         );
+        if ruta.starts_with(&permitido.notas) {
+            assert!(texto.contains("cotización el lunes"), "el archivo de notas no trae tu turno: no se miró el de verdad");
+        }
     }
+    assert_eq!(notas_descifradas, 1, "tenía que haber un archivo de notas, descifrado y revisado");
+    assert_eq!(bandejas_descifradas, 1, "tenía que haber una bandeja, descifrada y revisada");
     assert!(dicho.iter().any(|d| d.contains(CANARIA)), "la canaria no llegó a recorrer la sesión");
 
     let _ = std::fs::remove_dir_all(&casa);
@@ -848,7 +1003,7 @@ fn sesion_para_el_log() {
     std::fs::create_dir_all(&casa).unwrap();
     let fuente = corpus_para_el_efimero();
 
-    let (dicho, _) = una_sesion_completa(&casa, &fuente);
+    let (dicho, _) = una_sesion_completa(&casa, &fuente, &LlaveDeLaPrueba(Llave::nueva().a_hex()));
     assert!(dicho.iter().any(|d| d.contains(CANARIA)), "la canaria no llegó a recorrer la sesión");
 
     let _ = std::fs::remove_dir_all(&casa);
@@ -926,29 +1081,9 @@ const FALLOS_SEMANTICOS_CONOCIDOS: usize = 3;
 /// una ficha sobre algo que no se tiene es el fallo que esta app existe para no cometer.
 const RECHAZO_MINIMO: f64 = 1.0;
 
-#[derive(serde::Deserialize)]
-struct Kit {
-    preguntas: Vec<Caso>,
-    #[serde(rename = "sinRespuesta")]
-    sin_respuesta: Vec<String>,
-}
-
-#[derive(serde::Deserialize)]
-struct Caso {
-    dice: String,
-    espera: String,
-}
-
-/// nDCG@5 con relevancia binaria: la sección esperada vale 1 y todo lo demás 0. Con un solo
-/// documento relevante, el ideal es 1.0 y el descuento sale del puesto en el que aparece.
-fn ndcg_5(puestos: &[String], espera: &str) -> f64 {
-    puestos
-        .iter()
-        .take(5)
-        .position(|s| s == espera)
-        .map(|i| 1.0 / ((i + 2) as f64).log2())
-        .unwrap_or(0.0)
-}
+// El kit y el nDCG@5 viven en el producto desde el sprint 003 (`corpus::evaluar`, ADR 018 §4): la
+// puerta local corre las preguntas del usuario con el mismo código con que este test corre las del kit.
+use app_copiloto_consultor_lib::corpus::evaluar::{evaluar, ndcg_5, Kit};
 
 #[test]
 fn el_kit_de_evaluacion_mide_el_retriever_y_su_negativa() {
@@ -962,45 +1097,31 @@ fn el_kit_de_evaluacion_mide_el_retriever_y_su_negativa() {
     let mut corpus = Corpus::en_memoria().unwrap();
     corpus.indexar(Path::new(&format!("{raiz}/corpus")), &|_| {}).expect("no se indexó el kit");
     assert_eq!(corpus.estado().documentos, 6, "el corpus del kit cambió de tamaño");
+    // La ficha del kit dice dónde está su cliente (ADR 017 §2), y el catálogo la reconoce: es la bandera
+    // que la parada del gate corto enseña al elegir Páramo Azul en Sesión.
+    let escrita = corpus.jurisdiccion_de("Páramo Azul");
+    assert_eq!(escrita, Some("Colombia"), "la ficha del kit perdió su línea «Jurisdicción:»");
+    assert!(matches!(
+        app_copiloto_consultor_lib::jurisdiccion::bandera(escrita),
+        app_copiloto_consultor_lib::jurisdiccion::LaBandera::Conocida { .. }
+    ));
 
-    // ---- nDCG@5 sobre las treinta que SÍ están, y la LATENCIA de cada una
-    let mut suma = 0.0;
-    let mut fallos = Vec::new();
-    let mut latencias = Vec::new();
-    for c in &kit.preguntas {
-        // Se cronometra lo mismo que cronometra el producto —buscar y armar la ficha—, y se
-        // cronometra **por pregunta**, no el total: una media esconde los picos, y el presupuesto
-        // del sprint es sobre el turno que el usuario está esperando, no sobre el promedio del día.
-        let reloj = Instant::now();
-        let hallazgos = corpus.buscar(&c.dice, 5).unwrap();
-        let _ = armar(&c.dice, &hallazgos);
-        latencias.push(reloj.elapsed().as_micros() as u64);
-        let puestos: Vec<String> =
-            hallazgos.into_iter().map(|h| h.seccion.unwrap_or_default()).collect();
-        let n = ndcg_5(&puestos, &c.espera);
-        suma += n;
-        if n == 0.0 {
-            fallos.push(format!("  «{}» → esperaba «{}», trajo {:?}", c.dice, c.espera, puestos));
-        }
-    }
-    let ndcg = suma / kit.preguntas.len() as f64;
-    latencias.sort_unstable();
+    // ---- nDCG@5 sobre las treinta que SÍ están, la LATENCIA de cada una, y la negativa sobre las que
+    // NO están: lo mismo que mide la puerta local con las preguntas del usuario.
+    let informe = evaluar(&corpus, &kit).expect("el kit no se pudo evaluar");
+    let ndcg = informe.ndcg5;
+    let rechazo = informe.rechazo.expect("el kit trae preguntas sin respuesta");
+    let rechazadas = kit.sin_respuesta.len() - informe.aproximadas.len();
+    let latencias = &informe.latencias_us;
     let percentil = |p: f64| latencias[((latencias.len() as f64 - 1.0) * p).round() as usize];
     let (mediana, p90, peor) = (percentil(0.5), percentil(0.9), *latencias.last().unwrap());
-
-    // ---- y la negativa sobre las que NO están
-    let mut rechazadas = 0;
-    let mut aproximadas = Vec::new();
-    for dice in &kit.sin_respuesta {
-        let hallazgos = corpus.buscar(dice, 3).unwrap();
-        match armar(dice, &hallazgos) {
-            Respuesta::SinResultado { .. } => rechazadas += 1,
-            Respuesta::Ficha(f) => {
-                aproximadas.push(format!("  «{dice}» → citó «{}»", f.fuente.documento))
-            }
-        }
-    }
-    let rechazo = rechazadas as f64 / kit.sin_respuesta.len() as f64;
+    let fallos: Vec<String> = informe
+        .fallos
+        .iter()
+        .map(|f| format!("  «{}» → esperaba «{}», trajo {:?}", f.dice, f.espera, f.trajo))
+        .collect();
+    let aproximadas: Vec<String> =
+        informe.aproximadas.iter().map(|a| format!("  «{}» → citó «{}»", a.dice, a.cito)).collect();
 
     println!("\n╭─ kit de evaluación v0 ─────────────────────────────");
     println!("│ nDCG@5          {ndcg:.3}   (mínimo {NDCG_MINIMO:.2})");
@@ -1143,6 +1264,235 @@ fn el_kit_mide_el_disparador_turno_a_turno() {
         "precisión {precision:.3}: el disparador interrumpe cuando no debe"
     );
     assert!(recall >= RECALL_MINIMO, "recall {recall:.3}: se está quedando callado cuando debería buscar");
+}
+
+// ═══════════════════════════════════════════ el KIT v2: propuestas y jurisdicciones (sprint 003)
+//
+// Lo que el sprint 003 añadió al producto se mide igual que el retriever y el disparador: un archivo
+// del kit con lo que TIENE que pasar, escrito antes de mirar lo que pasa, y un umbral. Las dos cosas
+// son código (cero modelos), así que no hay ruido que tolerar: el umbral es el 100 %.
+//
+// **Las propuestas** (`reunion-con-acuerdos.json`, ADR 016): una reunión inventada con Páramo Azul,
+// turno a turno, con la regla y el dueño de cada propuesta. Además de acertar, mide lo que el ADR 016
+// §2 promete y ninguna pantalla deja ver: del cliente, JAMÁS el turno —un fragmento de como mucho ocho
+// palabras, o de una pregunta solo sus palabras clave— y cada turno resuelto muy por debajo del
+// segundo que pide el DoD.
+//
+// **Las jurisdicciones** (`jurisdicciones.json`, ADR 017): la línea de la ficha del cliente y la
+// bandera que sale del catálogo, con los casos que el catálogo tiene que resolver sin adivinar.
+
+use app_copiloto_consultor_lib::jurisdiccion::{self, LaBandera};
+use app_copiloto_consultor_lib::propuestas::{self, De, Fijada, Regla};
+
+#[derive(serde::Deserialize)]
+struct KitDeLaReunion {
+    fijadas: Vec<FijadaDelKit>,
+    turnos: Vec<TurnoDeLaReunion>,
+}
+
+#[derive(serde::Deserialize)]
+struct FijadaDelKit {
+    titular: String,
+    linea: String,
+    seccion: Option<String>,
+}
+
+#[derive(serde::Deserialize)]
+struct TurnoDeLaReunion {
+    dice: String,
+    pista: String,
+    #[serde(default)]
+    eco: bool,
+    espera: Vec<Esperada>,
+    porque: String,
+}
+
+#[derive(serde::Deserialize, PartialEq, Eq, Hash, Clone, Copy, Debug)]
+#[serde(rename_all = "lowercase")]
+enum ReglaDelKit {
+    Cifra,
+    Compromiso,
+    Choque,
+    Nombre,
+    Pregunta,
+}
+
+#[derive(serde::Deserialize, PartialEq, Eq, Hash, Clone, Copy, Debug)]
+#[serde(rename_all = "lowercase")]
+enum DeDelKit {
+    Tuyo,
+    Cliente,
+}
+
+#[derive(serde::Deserialize, PartialEq, Eq, Hash, Clone, Copy, Debug)]
+struct Esperada {
+    regla: ReglaDelKit,
+    de: DeDelKit,
+}
+
+fn del_kit(regla: Regla, de: De) -> Esperada {
+    Esperada {
+        regla: match regla {
+            Regla::Cifra => ReglaDelKit::Cifra,
+            Regla::Compromiso => ReglaDelKit::Compromiso,
+            Regla::Choque => ReglaDelKit::Choque,
+            Regla::Nombre => ReglaDelKit::Nombre,
+            Regla::Pregunta => ReglaDelKit::Pregunta,
+        },
+        de: match de {
+            De::Tuyo => DeDelKit::Tuyo,
+            De::Cliente => DeDelKit::Cliente,
+        },
+    }
+}
+
+/// El turno más lento puede tardar esto como mucho. El DoD pide que la propuesta llegue en ≤ 1 s tras
+/// el turno; las reglas son comparaciones de palabras y se resuelven en microsegundos, así que el
+/// umbral deja todo el segundo para la transcripción y el evento.
+const TOPE_POR_TURNO: std::time::Duration = std::time::Duration::from_millis(50);
+
+#[test]
+fn el_kit_mide_las_propuestas_turno_a_turno() {
+    let _turno = turno();
+    let raiz = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba");
+    let kit: KitDeLaReunion = serde_json::from_str(
+        &std::fs::read_to_string(format!("{raiz}/reunion-con-acuerdos.json")).expect("falta reunion-con-acuerdos.json"),
+    )
+    .expect("reunion-con-acuerdos.json no se pudo leer");
+
+    // La regla «nombre» pregunta si tu corpus conoce el nombre: se le da el del kit.
+    let mut corpus = Corpus::en_memoria().unwrap();
+    corpus.indexar(Path::new(&format!("{raiz}/corpus")), &|_| {}).expect("no se indexó el kit");
+    let fijadas: Vec<Fijada> = kit
+        .fijadas
+        .iter()
+        .map(|f| Fijada { titular: f.titular.clone(), linea: f.linea.clone(), seccion: f.seccion.clone() })
+        .collect();
+    let conoce = |nombre: &str| corpus.conoce(nombre);
+    let ctx = propuestas::Contexto { fijadas: &fijadas, conoce: &conoce };
+
+    let (mut ciertas, mut sobran, mut faltan, mut fugas) = (0usize, Vec::new(), Vec::new(), Vec::new());
+    let mut mas_lento = std::time::Duration::ZERO;
+    for t in &kit.turnos {
+        let turno = app_copiloto_consultor_lib::stt::Turno {
+            pista: if t.pista == "microfono" { Pista::Microfono } else { Pista::Sistema },
+            desde_ms: 0,
+            hasta_ms: 2_000,
+            texto: t.dice.clone(),
+            hora: "14:16".into(),
+            eco: t.eco,
+        };
+        let antes = std::time::Instant::now();
+        let dadas = propuestas::proponer(&turno, &ctx);
+        mas_lento = mas_lento.max(antes.elapsed());
+
+        let dadas_kit: Vec<Esperada> = dadas.iter().map(|p| del_kit(p.regla, p.de)).collect();
+        for e in &t.espera {
+            if dadas_kit.contains(e) {
+                ciertas += 1;
+            } else {
+                faltan.push(format!("  «{}» — falta {:?} de {:?} ({})", t.dice, e.regla, e.de, t.porque));
+            }
+        }
+        for d in &dadas_kit {
+            if !t.espera.contains(d) {
+                sobran.push(format!("  «{}» — sobra {:?} de {:?} ({})", t.dice, d.regla, d.de, t.porque));
+            }
+        }
+        // ADR 016 §2: del cliente, jamás el turno.
+        for p in dadas.iter().filter(|p| p.de == De::Cliente) {
+            let palabras = p.texto.split_whitespace().filter(|w| *w != "·").count();
+            let entero = sin_signos(&p.texto) == sin_signos(&t.dice);
+            if entero || palabras > propuestas::TOPE_DEL_FRAGMENTO {
+                fugas.push(format!("  «{}» → guardaría «{}»", t.dice, p.texto));
+            }
+        }
+    }
+
+    let dadas = ciertas + sobran.len();
+    let esperadas = ciertas + faltan.len();
+    let precision = if dadas == 0 { 1.0 } else { ciertas as f64 / dadas as f64 };
+    let recall = if esperadas == 0 { 1.0 } else { ciertas as f64 / esperadas as f64 };
+
+    println!("\n╭─ las propuestas sobre el kit ──────────────────────");
+    println!("│ turnos          {}", kit.turnos.len());
+    println!("│ propuestas      {esperadas} esperadas · {dadas} dadas · {ciertas} ciertas");
+    println!("│ precisión       {precision:.3}   (mínimo 1,00)");
+    println!("│ recall          {recall:.3}   (mínimo 1,00)");
+    println!("│ turno más lento {} µs   (tope {} ms)", mas_lento.as_micros(), TOPE_POR_TURNO.as_millis());
+    println!("╰────────────────────────────────────────────────────");
+    if !sobran.is_empty() {
+        println!("propuso y no debía:\n{}", sobran.join("\n"));
+    }
+    if !faltan.is_empty() {
+        println!("no propuso y debía:\n{}", faltan.join("\n"));
+    }
+
+    assert!(fugas.is_empty(), "del cliente se guardaría el turno, o más de ocho palabras:\n{}", fugas.join("\n"));
+    assert_eq!(precision, 1.0, "las reglas proponen lo que no deben");
+    assert_eq!(recall, 1.0, "las reglas se callan lo que deben proponer");
+    assert!(mas_lento <= TOPE_POR_TURNO, "un turno tardó {} µs en resolverse", mas_lento.as_micros());
+}
+
+/// Para comparar un fragmento con su turno: minúsculas, sin signos, un espacio entre palabras.
+fn sin_signos(texto: &str) -> String {
+    texto
+        .to_lowercase()
+        .chars()
+        .map(|c| if c.is_alphanumeric() { c } else { ' ' })
+        .collect::<String>()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+#[derive(serde::Deserialize)]
+struct KitDeJurisdicciones {
+    casos: Vec<CasoDeJurisdiccion>,
+}
+
+#[derive(serde::Deserialize)]
+struct CasoDeJurisdiccion {
+    linea: Option<String>,
+    espera: String,
+    porque: String,
+}
+
+#[test]
+fn el_kit_mide_las_jurisdicciones_contra_el_catalogo() {
+    let raiz = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba");
+    let kit: KitDeJurisdicciones = serde_json::from_str(
+        &std::fs::read_to_string(format!("{raiz}/jurisdicciones.json")).expect("falta jurisdicciones.json"),
+    )
+    .expect("jurisdicciones.json no se pudo leer");
+
+    let catalogo = jurisdiccion::catalogo();
+    let mut fallos = Vec::new();
+    for c in &kit.casos {
+        let escrita = c.linea.as_deref().and_then(jurisdiccion::de_la_linea);
+        let dio = match jurisdiccion::bandera(escrita.as_deref()) {
+            LaBandera::Conocida { bandera } => {
+                let fila = catalogo.filas.iter().find(|f| f.nombre == bandera.nombre).expect("bandera sin fila");
+                // Lo que el informe no verificó se enseña: la bandera lleva su pendiente.
+                if fila.pendiente.is_some() != bandera.pendiente.is_some() {
+                    fallos.push(format!("  {:?} — la bandera de «{}» perdió su «sin verificar»", c.linea, fila.id));
+                }
+                fila.id.clone()
+            }
+            LaBandera::FueraDelCatalogo { .. } => "fuera".into(),
+            LaBandera::SinIndicar => "sin-indicar".into(),
+        };
+        if dio != c.espera {
+            fallos.push(format!("  {:?} — dio «{dio}», se esperaba «{}» ({})", c.linea, c.espera, c.porque));
+        }
+    }
+
+    println!("\n╭─ las jurisdicciones sobre el kit ──────────────────");
+    println!("│ casos           {}", kit.casos.len());
+    println!("│ aciertos        {}", kit.casos.len() - fallos.len());
+    println!("│ catálogo        v{} · consultado {}", catalogo.version, catalogo.consultado);
+    println!("╰────────────────────────────────────────────────────");
+    assert!(fallos.is_empty(), "el catálogo no resuelve lo que el kit pide:\n{}", fallos.join("\n"));
 }
 
 // ═══════════════════════════════════════════ el WER, CON Y SIN DICCIONARIO (sprint 002, fase 1)
@@ -1945,4 +2295,167 @@ fn el_llavero_guarda_lee_y_borra_la_clave() {
     borrar_clave(Externo::Groq).expect("el Llavero no la borró");
     assert!(!hay_clave(Externo::Groq), "la clave sigue ahí después de borrarla");
     println!("\n[llavero] guardada, leída y borrada: el Llavero queda como estaba");
+}
+
+// =============================================================================================
+// el vencimiento: el barrido de launchd, con /bin/sh de verdad (ADR 016 §5)
+// =============================================================================================
+
+// Lo que launchd corre con la app cerrada es `/bin/sh` sobre una lista. Aquí se corre ESE guion, con
+// ESE shell, sobre archivos de verdad: lo único que el test unitario del plist no puede afirmar.
+
+use app_copiloto_consultor_lib::vencimiento::{self, Pendiente, Tarea};
+
+fn carpeta_del_vencimiento(nombre: &str) -> PathBuf {
+    let d = std::env::temp_dir().join(format!("ag-vencimiento-{nombre}-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&d);
+    std::fs::create_dir_all(d.join("con espacios")).unwrap();
+    d
+}
+
+fn ahora() -> i64 {
+    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64
+}
+
+/// **El barrido borra lo vencido y nada más.** Solo `.ghost`, solo lo que está en la lista y solo si
+/// su hora pasó; y no escribe la lista. Demostrado en rojo: sin el `case "$ruta" in *.ghost)`, el
+/// `.txt` vencido de la lista se borra.
+#[test]
+fn el_barrido_de_launchd_borra_lo_vencido_y_nada_mas() {
+    let _t = turno();
+    let d = carpeta_del_vencimiento("barrido");
+    let hoy = ahora();
+    let archivo = |nombre: &str| {
+        let r = d.join(nombre);
+        std::fs::write(&r, b"AGHOST").unwrap();
+        r
+    };
+    let vencida = archivo("vencida.ghost");
+    let con_espacios = archivo("con espacios/también vencida.ghost");
+    let futura = archivo("futura.ghost");
+    let texto = archivo("vencida.txt");
+    let fuera = archivo("fuera-de-la-lista.ghost");
+    // la lista a mano, con el .txt dentro: el guion tiene que defenderse solo aunque la lista mienta
+    let lista = d.join("vencimientos");
+    let contenido = format!(
+        "{}\t{}\n{}\t{}\n{}\t{}\n{}\t{}\n",
+        hoy - 60,
+        vencida.display(),
+        hoy - 1,
+        con_espacios.display(),
+        hoy + 3_600,
+        futura.display(),
+        hoy - 60,
+        texto.display(),
+    );
+    std::fs::write(&lista, &contenido).unwrap();
+
+    let salio = std::process::Command::new("/bin/sh")
+        .args(["-c", vencimiento::BARRIDO, "prueba"])
+        .arg(&lista)
+        .status()
+        .unwrap();
+    assert!(salio.success());
+    assert!(!vencida.exists(), "lo vencido sigue ahí");
+    assert!(!con_espacios.exists(), "una ruta con espacios y tildes no se borró");
+    assert!(futura.exists(), "se borró algo que no había vencido");
+    assert!(texto.exists(), "se borró un archivo que no es .ghost");
+    assert!(fuera.exists(), "se borró algo que no estaba en la lista");
+    assert_eq!(std::fs::read_to_string(&lista).unwrap(), contenido, "el barrido escribió la lista");
+
+    // sin lista, no hace nada y sale bien
+    std::fs::remove_file(&lista).unwrap();
+    let salio = std::process::Command::new("/bin/sh").args(["-c", vencimiento::BARRIDO, "prueba"]).arg(&lista).status().unwrap();
+    assert!(salio.success());
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+#[test]
+fn el_plist_de_la_tarea_es_un_plist_valido() {
+    let _t = turno();
+    let d = carpeta_del_vencimiento("plist");
+    let tarea = Tarea { etiqueta: vencimiento::ETIQUETA.into(), plist: d.join("tarea.plist"), lista: d.join("con espacios/vencimientos") };
+    let hoy = ahora();
+    let texto = vencimiento::plist(
+        &tarea,
+        &[Pendiente { vence: hoy + 3 * 3_600, ruta: d.join("a.ghost") }, Pendiente { vence: hoy + 90 * 86_400, ruta: d.join("b.ghost") }],
+        &vencimiento::hora_del_mac,
+    );
+    std::fs::write(&tarea.plist, texto).unwrap();
+    let lint = std::process::Command::new("/usr/bin/plutil").arg("-lint").arg(&tarea.plist).output().unwrap();
+    assert!(lint.status.success(), "plutil: {}", String::from_utf8_lossy(&lint.stdout));
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+/// **En vivo, con launchd de verdad** (ADR 016 §5; parada del ⭐⭐ con la app). Registra una tarea de
+/// prueba con su propia etiqueta, un archivo que vence en menos de un minuto en una carpeta temporal
+/// y **otro en la carpeta de tus notas** (`~/Library/Application Support/<app>/notas/`); y espera a
+/// que launchd los borre sin que nada de esta app esté corriendo. Al final quita la tarea y lo que
+/// creó. Toca launchd y deja «sh» en Ítems de inicio mientras dura: **regla 22, se corre solo con el
+/// «sí» del usuario**: `cargo test --test contra-el-mac-de-verdad en_vivo -- --ignored --nocapture`.
+///
+/// **Su primera corrida (2026-09-27) cazó lo que el plan no vio:** la carpeta temporal se borró 38 s
+/// después de vencer; `~/Documents`, no, porque macOS le niega Documentos al `sh` de launchd (ADR
+/// 016, «Hallazgo en vivo»). El usuario eligió la A: las notas pasaron a la carpeta de la app, y esta
+/// prueba ya no entra en Documentos.
+#[test]
+#[ignore = "en vivo: registra una tarea en launchd y espera a que borre (≈ 2 min)"]
+fn en_vivo_launchd_borra_a_su_hora_sin_la_app() {
+    let _t = turno();
+    let casa = PathBuf::from(std::env::var("HOME").unwrap());
+    let d = carpeta_del_vencimiento("en-vivo");
+    let etiqueta = format!("{}.prueba", vencimiento::ETIQUETA);
+    let tarea = Tarea {
+        plist: casa.join("Library/LaunchAgents").join(format!("{etiqueta}.plist")),
+        lista: d.join("vencimientos"),
+        etiqueta,
+    };
+    let notas = casa
+        .join("Library/Application Support")
+        .join(vencimiento::APP)
+        .join(app_copiloto_consultor_lib::carpeta::CARPETA);
+    let habia_carpeta = notas.exists();
+    std::fs::create_dir_all(&notas).unwrap();
+    let en_temporal = d.join("con espacios/bandeja de prueba.ghost");
+    let en_notas = notas.join(format!("prueba-del-vencimiento-{}.ghost", std::process::id()));
+    std::fs::write(&en_temporal, b"AGHOST").unwrap();
+    std::fs::write(&en_notas, b"AGHOST").unwrap();
+
+    let vence = ahora() + 20;
+    let pendientes = [Pendiente { vence, ruta: en_temporal.clone() }, Pendiente { vence, ruta: en_notas.clone() }];
+    let hecho = vencimiento::al_dia(&tarea, &pendientes, &vencimiento::hora_del_mac).unwrap();
+    assert_eq!(hecho, vencimiento::Hecho::Registrada);
+    // `RunAtLoad` la corre al registrarla: antes de su hora no puede borrar nada
+    std::thread::sleep(std::time::Duration::from_secs(3));
+    assert!(en_temporal.exists() && en_notas.exists(), "se borró antes de vencer");
+    println!("[vencimiento] vence a las {} (+20 s); la tarea corre al minuto siguiente", vence);
+
+    let mut temporal_a = None;
+    let mut notas_a = None;
+    for _ in 0..40 {
+        std::thread::sleep(std::time::Duration::from_secs(5));
+        if temporal_a.is_none() && !en_temporal.exists() {
+            temporal_a = Some(ahora() - vence);
+        }
+        if notas_a.is_none() && !en_notas.exists() {
+            notas_a = Some(ahora() - vence);
+        }
+        if temporal_a.is_some() && notas_a.is_some() {
+            break;
+        }
+    }
+    println!("[vencimiento] carpeta temporal: {temporal_a:?} s tras vencer · carpeta de notas: {notas_a:?} s tras vencer");
+
+    // limpieza, pase lo que pase
+    let quitada = vencimiento::al_dia(&tarea, &[], &vencimiento::hora_del_mac).unwrap();
+    let _ = std::fs::remove_file(&en_notas);
+    if !habia_carpeta {
+        let _ = std::fs::remove_dir(&notas);
+    }
+    let _ = std::fs::remove_dir_all(&d);
+    assert_eq!(quitada, vencimiento::Hecho::Quitada);
+    assert!(!tarea.plist.exists(), "el plist de prueba se quedó en LaunchAgents");
+
+    assert!(temporal_a.is_some_and(|s| s <= 90), "launchd no borró el archivo de la carpeta temporal a su hora");
+    assert!(notas_a.is_some_and(|s| s <= 90), "launchd no borró el archivo de la carpeta de notas a su hora");
 }

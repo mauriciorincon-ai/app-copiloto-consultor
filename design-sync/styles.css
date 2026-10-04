@@ -1,6 +1,6 @@
 /* ============================================================================
    Angel Ghost — hoja del proyecto en Claude Design.
-   ESPEJO de docs/diseno/assets/ghost.css (design-system.md v1.11.0).
+   ESPEJO de docs/diseno/assets/ghost.css (design-system.md v1.14.1).
    NO se edita aquí ni allá: se edita el sistema y se regenera con
    `node scripts/design-sync-bundle.mjs`.
    Las tarjetas no dependen de esta hoja —cada una lleva en línea lo que
@@ -184,6 +184,9 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .franja.err .ic { color: var(--err); }
 .franja.ok   { border-color: var(--ok);   background: var(--ok-tint); }
 .franja.ok .ic { color: var(--ok); }
+/* Mirada 20: una franja que informa sin avisar de nada (la bandeja en cero: no hay nada que vigilar). */
+.franja.mute { border-color: var(--line-2); background: var(--surface-2); }
+.franja.mute .ic { color: var(--ink-2); }
 .franja ul { margin: 4px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 10px; color: var(--ink-2); }
 .franja ul li::before { content: "·"; margin-right: 6px; color: var(--ink-2); }
 .franja ul li:first-child::before { content: none; }
@@ -196,6 +199,8 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 /* Una tecla de algo que todavía no existe (fijar, anotar): se ve, apagada y a trazos, y el lector
    de pantalla oye «todavía no» (auditoría del S2, M12). */
 .tecla.pendiente { color: var(--mute); }
+/* Mirada 20: la ficha que fijaste con ⌃⌥P, donde estaba la tecla. Mide lo mismo que una tecla. */
+.tecla.fijada { color: var(--ok); }
 .tecla.pendiente kbd { color: var(--mute); border-style: dashed; }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 
@@ -489,6 +494,12 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
    --------------------------------------------------------------------------- */
 .banda .cliente-b { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; }
 .banda .cliente-b.warn { color: var(--warn); }
+/* Mirada 20 (sprint 3): la propuesta de nota, pasiva, en la línea de estado. Empuja el contador de
+   red a la derecha en vez de él; nunca pasa de una línea. */
+.banda .propuesta-b { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 60%; margin-left: auto; color: var(--halo); font-size: var(--t-meta); white-space: nowrap; }
+.banda .propuesta-b .que-b { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.banda .propuesta-b .tecla { flex: 0 0 auto; }
+.banda .propuesta-b:not([hidden]) + .red { margin-left: 12px; }
 
 /* esperando — el vacío está diseñado: una frase en Charter, no un ícono gris */
 .banda .voz-b { font-family: var(--font-evidencia); font-style: italic; font-size: 15px; line-height: 1.4; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -576,7 +587,7 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .idiomas .lg .ic { flex: 0 0 auto; }
 
 /* Puerta local (C16, mirada 4): qué puede y qué no puede un agente del propio Mac */
-.puerta { display: grid; grid-template-columns: 16px 1fr; gap: 1px 9px; padding: 5px 2px; align-items: start; border-bottom: var(--borde) solid var(--line); }
+.puerta { display: grid; grid-template-columns: 16px 1fr; gap: 1px 9px; padding: 3px 2px; align-items: start; border-bottom: var(--borde) solid var(--line); }
 .puerta:last-child { border-bottom: 0; }
 .puerta > .ic { margin-top: 2px; }
 .puerta.si > .ic { color: var(--ok); }
@@ -590,6 +601,40 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .cuenta .reloj { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 19px; line-height: 1.1; color: var(--halo); }
 .cuenta .txt { font-size: var(--t-meta); color: var(--ink-2); line-height: 1.4; }
 .cuenta .txt b { color: var(--ink); }
+/* Mirada 20: la bandeja al llegar a cero. La cuenta se apaga: sin acento, porque ya no hay nada que
+   decidir. */
+.cuenta.vencida { border-color: var(--line-2); background: var(--surface-2); }
+.cuenta.vencida .ic, .cuenta.vencida .reloj { color: var(--ink-2); }
 .ventanas { display: flex; flex-wrap: wrap; gap: 5px; }
 .ventanas .op { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: var(--r-chip); border: var(--borde) solid var(--line-2); background: var(--surface-2); color: var(--ink-2); font-family: var(--font-mono); font-size: var(--t-mono); }
 .ventanas .op.on { border-color: var(--halo); background: var(--halo-tint); color: var(--halo); }
+/* Sprint 3 (notas): los chips de «Cuánto viven tus notas» se pulsan — son botones con la misma cara. */
+.ventanas button.op { cursor: pointer; line-height: inherit; }
+.ventanas button.op:focus-visible { outline: 2px solid var(--halo); outline-offset: 1px; }
+/* Dentro de una franja (al cerrar, con propuestas) los chips llevan su propia superficie: el tinte del
+   elegido sobre el ámbar de la franja no alcanzaba AA en el tema claro (axe, fase 2 del sprint 3). Y
+   el icono del elegido es del chip, no de la franja. */
+.franja .ventanas .op { background: var(--surface); }
+.franja .ventanas .op.on { background: linear-gradient(var(--halo-tint), var(--halo-tint)), var(--surface); }
+.franja .ventanas .op .ic { color: inherit; }
+
+/* Sprint 3 (notas, mirada 19): tu nota es un campo de verdad, y el acuerdo, una línea que se confirma con ↵. */
+/* El tamaño y el color son los que se VIERON en la mirada 19: los párrafos de la maqueta tomaban los de
+   `.tarjeta p`, no los 14,5 px de su caja, y eso es lo que el usuario aprobó. */
+.nota-campo { width: 100%; resize: none; font-family: var(--font-evidencia); font-size: var(--t-ui); line-height: 1.6; color: var(--ink-2); background: var(--surface-2); border: var(--borde) solid var(--line-2); border-radius: var(--r-chip); padding: 8px 10px; min-height: 170px; }
+.acuerdo-campo { width: 100%; margin-top: 6px; font: inherit; font-size: var(--t-ui); color: var(--ink); background: var(--surface-2); border: var(--borde) solid var(--line-2); border-radius: var(--r-chip); padding: 6px 9px; }
+.nota-campo::placeholder, .acuerdo-campo::placeholder, .acuerdo-campo.muestra { color: var(--ink-2); }
+.nota-campo:focus-visible, .acuerdo-campo:focus-visible { outline: 2px solid var(--halo); outline-offset: 1px; }
+/* El nombre de una reunión guardada se pulsa para elegirla; sin cara de botón, como en la maqueta. */
+.tabla .elegir { appearance: none; -webkit-appearance: none; background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.tabla .elegir:hover { text-decoration: underline dotted; }
+.tabla .elegir:focus-visible { outline: 2px solid var(--halo); outline-offset: 2px; }
+
+/* Sprint 003, fase 3 — «Este cliente» (ADR 017): el selector, lo que el informe no verificó, el aviso
+   legal y la cláusula. */
+.selector { font: inherit; font-size: var(--t-meta); font-weight: 500; color: var(--ink); background: var(--surface-2); border: var(--borde) solid var(--line-2); border-radius: var(--r-chip); padding: 2px 6px; max-width: 180px; }
+.bandera .pendiente { font-size: 11px; color: var(--ink-2); }
+.aviso-legal, .tarjeta p.aviso-legal { font-size: 11px; color: var(--ink-2); }
+.pregunta-nda { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: var(--borde) solid var(--line-2); border-left: 3px solid var(--halo); background: var(--surface); border-radius: var(--r-chip); font-size: var(--t-meta); font-weight: 600; color: var(--ink); }
+.pregunta-nda .ic { color: var(--halo); flex: 0 0 auto; }
+.tarjeta p.clausula { font-family: var(--font-evidencia); font-size: 12.5px; line-height: 1.45; color: var(--ink); }

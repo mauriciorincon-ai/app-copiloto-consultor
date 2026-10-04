@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-idiomas-de-pista"
+description = "Enables the idiomas_de_pista command without any pre-configured scope."
+commands.allow = ["idiomas_de_pista"]
+
+[[permission]]
+identifier = "deny-idiomas-de-pista"
+description = "Denies the idiomas_de_pista command without any pre-configured scope."
+commands.deny = ["idiomas_de_pista"]

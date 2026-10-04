@@ -123,9 +123,11 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .franja.err .ic { color: var(--err); }
 .franja.ok { border-color: var(--ok);   background: var(--ok-tint); }
 .franja.ok .ic { color: var(--ok); }
+.franja.mute .ic { color: var(--ink-2); }
 .tecla { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
 .tecla kbd { font: inherit; padding: 0 5px; border: var(--borde) solid var(--line-2); border-bottom-width: 2px; border-radius: var(--r-tecla); background: var(--surface-2); color: var(--ink); line-height: 16px; }
 .tecla.pendiente { color: var(--mute); }
+.tecla.fijada { color: var(--ok); }
 .tecla.pendiente kbd { color: var(--mute); border-style: dashed; }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 .btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: var(--r-chip); border: var(--borde) solid var(--line-2); background: var(--surface-2); color: var(--ink); font-size: var(--t-meta); font-weight: 500; transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease); }
@@ -198,6 +200,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .banda .sugerencia-b .ic { flex: 0 0 auto; color: var(--halo); align-self: center; }
 .banda.voz .linea-b .ic { flex: 0 0 auto; color: var(--halo); }
 .banda.voz .linea-b.warn .ic { color: var(--warn); }
+.banda .propuesta-b .tecla { flex: 0 0 auto; }
 .banda .aviso-b .ic { flex: 0 0 auto; margin-top: 1px; }
 .banda .aviso-b.err { color: var(--err); }
 .banda .transcript-b .cab .tecla { margin-left: auto; }
@@ -213,7 +216,16 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .puerta.si > .ic { color: var(--ok); }
 .puerta.no > .ic { color: var(--err); }
 .cuenta .ic { flex: 0 0 auto; color: var(--halo); }
+.cuenta.vencida .ic, .cuenta.vencida .reloj { color: var(--ink-2); }
 .ventanas .op.on { border-color: var(--halo); background: var(--halo-tint); color: var(--halo); }
+.franja .ventanas .op.on { background: linear-gradient(var(--halo-tint), var(--halo-tint)), var(--surface); }
+.franja .ventanas .op .ic { color: inherit; }
+.tabla .elegir { appearance: none; -webkit-appearance: none; background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.tabla .elegir:hover { text-decoration: underline dotted; }
+.tabla .elegir:focus-visible { outline: 2px solid var(--halo); outline-offset: 2px; }
+.aviso-legal, .tarjeta p.aviso-legal { font-size: 11px; color: var(--ink-2); }
+.pregunta-nda .ic { color: var(--halo); flex: 0 0 auto; }
+.tarjeta p.clausula { font-family: var(--font-evidencia); font-size: 12.5px; line-height: 1.45; color: var(--ink); }
 .mq-meet .titulo { height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 12px; font-size: 12px; color: #8a919b; border-bottom: 1px solid #2c3037; }
 .mq-meet .titulo i { width: 10px; height: 10px; border-radius: 50%; background: #3e434b; display: inline-block; }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }

@@ -26,6 +26,10 @@ const CLAVES = [
   "NSMicrophoneUsageDescription",
   "NSAudioCaptureUsageDescription",
   "NSSpeechRecognitionUsageDescription",
+  // Sin `NSDocumentsFolderUsageDescription`: tus notas viven en la carpeta privada de la app, no en
+  // Documentos (ADR 015, enmienda 1: decisión A del sprint 003). Pero si la carpeta del corpus vive en
+  // Documentos, macOS puede preguntar al releerla al arrancar (B29), y lo hará sin la frase de la app:
+  // se decide en el Acto 2, con B5.
 ] as const;
 
 function delPlist(texto: string): Record<string, string> {
@@ -51,7 +55,7 @@ describe("lo que macOS dirá cuando pida un permiso", () => {
     Object.entries(IDIOMAS).map(([k, ruta]) => [k, delStrings(readFileSync(ruta, "utf8"))]),
   );
 
-  it("el Info.plist declara las tres claves que esta app pide", () => {
+  it("el Info.plist declara todas las claves que esta app pide", () => {
     for (const clave of CLAVES) {
       expect(plist[clave], `falta ${clave} en ${PLIST}: macOS mata la app al pedir ese permiso`).toBeTruthy();
       expect(plist[clave].length, `${clave} está vacía`).toBeGreaterThan(40);

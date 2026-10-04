@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-escribir-nota"
+description = "Enables the escribir_nota command without any pre-configured scope."
+commands.allow = ["escribir_nota"]
+
+[[permission]]
+identifier = "deny-escribir-nota"
+description = "Denies the escribir_nota command without any pre-configured scope."
+commands.deny = ["escribir_nota"]

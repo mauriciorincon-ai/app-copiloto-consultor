@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-borrar-reunion"
+description = "Enables the borrar_reunion command without any pre-configured scope."
+commands.allow = ["borrar_reunion"]
+
+[[permission]]
+identifier = "deny-borrar-reunion"
+description = "Denies the borrar_reunion command without any pre-configured scope."
+commands.deny = ["borrar_reunion"]

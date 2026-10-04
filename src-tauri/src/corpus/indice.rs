@@ -242,6 +242,24 @@ impl Indice {
         self.lector.searcher().num_docs() as usize
     }
 
+    /// ¿Aparece cada palabra de este nombre en tu corpus, en un título o en un cuerpo? Para la regla
+    /// `nombre` de las propuestas (ADR 016): un nombre que tu corpus no tiene se propone; uno que
+    /// tiene, no. Pasa por el mismo análisis que el índice, así que «Villalba» y «villalba» son uno.
+    pub fn conoce(&self, nombre: &str) -> bool {
+        let Some(mut analisis) = self.indice.tokenizers().get("es") else { return false };
+        let mut terminos: Vec<String> = Vec::new();
+        analisis.token_stream(nombre).process(&mut |t| terminos.push(t.text.clone()));
+        if terminos.is_empty() {
+            return false;
+        }
+        let buscador = self.lector.searcher();
+        terminos.iter().all(|t| {
+            [self.campos.cuerpo_es, self.campos.titulo_es].into_iter().any(|campo| {
+                buscador.doc_freq(&tantivy::Term::from_field_text(campo, t)).is_ok_and(|n| n > 0)
+            })
+        })
+    }
+
     /// La búsqueda. `texto` es lo que dijo el cliente, tal cual salió del transcriptor.
     pub fn buscar(&self, texto: &str, cuantos: usize) -> Result<Vec<Hallazgo>, String> {
         self.buscar_con_pantalla(texto, "", cuantos)
@@ -370,6 +388,17 @@ mod pruebas {
 
     fn s(titulo: &str, texto: &str) -> Seccion {
         Seccion { titulo: (!titulo.is_empty()).then(|| titulo.to_string()), texto: texto.into() }
+    }
+
+    #[test]
+    fn conoce_un_nombre_si_cada_palabra_esta_en_el_corpus() {
+        let i = Indice::en_memoria().unwrap();
+        i.meter("/c/ficha.md", "Ficha Páramo Azul", None, false, &[s("Equipo", "La gerente es Andrea Villalba, de finanzas.")])
+            .unwrap();
+        assert!(i.conoce("Andrea Villalba"));
+        assert!(i.conoce("andrea villalba"), "sin mayúsculas es el mismo nombre");
+        assert!(!i.conoce("Andrea Quiroga"), "una palabra que falta basta");
+        assert!(!i.conoce(""));
     }
 
     fn con_dos_documentos() -> Indice {

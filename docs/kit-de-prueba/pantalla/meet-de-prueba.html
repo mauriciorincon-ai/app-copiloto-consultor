@@ -3,8 +3,13 @@
 <head>
 <meta charset="utf-8">
 <!-- El título es lo que Angel Ghost busca para saber que hay una reunión de Meet: «Google Meet».
-     Datos 100 % sintéticos (regla 5): las diapositivas son las del kit de pantalla. -->
-<title>Google Meet — Páramo Azul (prueba sintética)</title>
+     Datos 100 % sintéticos (regla 5): las diapositivas son las del kit de pantalla.
+
+     La app lee la VENTANA entera, pestaña y pie incluidos, no solo la diapositiva. Por eso aquí fuera
+     de la imagen no hay ni una cifra ni una palabra del corpus del kit (sprint 003, casilla 6 sobre la
+     guía v4): hasta entonces el título decía «Páramo Azul» y el pie «5 de 6 · agenda.png», y los dos le
+     daban a la agenda un término y una cifra que la diapositiva no tiene. El pie cuenta con puntos. -->
+<title>Google Meet — prueba sintética</title>
 <style>
   :root { color-scheme: dark; }
   body { margin: 0; background: #202124; color: #e8eaed; font: 14px/1.4 -apple-system, sans-serif; height: 100vh; display: flex; flex-direction: column; }
@@ -31,7 +36,8 @@
   let i = 0;
   const pinta = () => {
     document.getElementById("d").src = DIAPOSITIVAS[i];
-    document.getElementById("cual").textContent = `${i + 1} de ${DIAPOSITIVAS.length} · ${DIAPOSITIVAS[i]}`;
+    // Puntos, no números: un «5 de 6» es una cifra para la app.
+    document.getElementById("cual").textContent = DIAPOSITIVAS.map((_, n) => (n === i ? "●" : "○")).join(" ");
   };
   const mueve = (n) => { i = (i + n + DIAPOSITIVAS.length) % DIAPOSITIVAS.length; pinta(); };
   document.getElementById("antes").onclick = () => mueve(-1);

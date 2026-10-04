@@ -11,7 +11,9 @@ Escucha los dos lados de la videollamada, busca en tus propios documentos, y cua
 pregunta algo que tú ya respondiste en una propuesta, un caso o un marco tuyo, te lo pone delante:
 un titular, una línea y de dónde sale.
 
-No graba nada. Al cerrar, del audio y de lo que se dijo no queda rastro — y la propia app tiene una
+No graba nada. Al cerrar, del audio no queda rastro, y de lo que se dijo solo lo que tú decidas
+guardar —tus notas y, del cliente, como mucho un hecho de una línea—, y lo que no decidas espera unas
+horas en la bandeja y se borra solo; la propia app tiene una
 pantalla para que puedas comprobarlo en vez de creértelo.
 
 **Para quién:** consultores y asesores que ya tienen su material escrito y lo necesitan en el
@@ -63,16 +65,20 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   convierte los dos a texto **dentro de tu equipo**. Ningún audio sale de tu Mac para convertirse
   en texto.
 - **Cómo se usa:** *Sesión* → «Iniciar sesión». Nada se enciende hasta que tú lo digas. `⌃⌥T`
-  muestra u oculta el transcript en la banda; nace oculto a propósito, porque leer lo que acaban
-  de decir es la forma más rápida de dejar de escuchar.
+  muestra u oculta el transcript. Aparece **junto a la ficha** que haya en la banda (es su columna
+  derecha: sin ficha no hay dónde pintarlo) y, si la banda está compacta, la agranda como
+  el asa; al ocultarlo vuelve a su alto. Nace oculto a propósito, porque leer lo que acaban de
+  decir es la forma más rápida de dejar de escuchar.
 - **Limitaciones conocidas:**
   - **Usa auriculares.** Con los altavoces del Mac, tu micrófono también oye al cliente y el mismo
     turno llega por las dos pistas. La app lo detecta y lo marca como eco, pero la conversación se
     lee peor. Te avisa antes de empezar, cuando todavía puedes ponértelos.
   - Cada pista escucha **un** idioma, y **se elige en *Idioma***: el código de cada pista (es-ES,
     en-US…) es un selector. Las dos nacen en **español**; si tu cliente habla inglés, cámbiala antes
-    de «Iniciar sesión». La elección vive en memoria: al cerrar la app vuelven a español. Marcar
-    varios idiomas en la misma pista llega más adelante.
+    de «Iniciar sesión». **La elección se recuerda** · desde Sprint 003: la próxima vez que abras
+    la app, cada pista sigue en el idioma que dejaste (lo prueba `lo_que_se_elige_sobrevive_al_reinicio`,
+    en `prefs.rs`). Marcar varios idiomas en la misma pista no está en este MVP: es de la etapa
+    siguiente (H2).
   - macOS solo deja tener **cinco idiomas de voz listos a la vez**. Es un límite del sistema.
   - Si no hablas, los contadores de audio se quedan quietos. **Eso es correcto**: cuando nadie
     habla, macOS no entrega una sola muestra.
@@ -80,7 +86,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   la fila de la pista que no abrió cambia de símbolo, de palabra («No abrió») y de color, y debajo
   dice el motivo y qué hacer: falta el permiso del micrófono o del audio del sistema, otra app tiene
   el dispositivo, el dispositivo entrega un formato que la app no sabe leer, o macOS no dejó abrirla.
-  Y la fila «Escucha las dos pistas» pasa a **«A medias»** diciendo cuál queda. Hasta el sprint 002
+  Y debajo aparece la fila **«A medias»**, que dice cuál queda (desde el sprint 3 solo aparece cuando
+  una pista cae). Hasta el sprint 002
   esta pantalla decía «Funciona» en las dos pistas pasara lo que pasara, y te habrías enterado al
   terminar la reunión, al ver que faltaba medio transcript.
 - **Los auriculares por su nombre · nuevo en Sprint 002.** Si el sonido sale por un aparato por USB
@@ -101,8 +108,13 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - **Un PDF no trae títulos**, trae líneas: la app conjetura dónde empieza cada sección por la
     forma del texto, y te dice de cuántos documentos hizo esa conjetura para que puedas juzgarlo.
   - Hasta **2 000 documentos** por carpeta.
-  - Todavía no se pueden arrastrar documentos sobre la ventana, ni releer solo lo que cambie: hoy
-    se vuelve a recorrer la carpeta entera.
+  - **La app recuerda la carpeta** (solo su ruta, en tus preferencias) y **la vuelve a leer al
+    arrancar**, en segundo plano: *Corpus*, «Este cliente» y la puerta local la tienen sin que la
+    señales otra vez. Si la carpeta vive en Documentos, Escritorio o Descargas, macOS puede preguntarte
+    la primera vez si Angel Ghost puede leerla. Si ya no está (un disco desconectado), la app lo dice y
+    la puedes señalar de nuevo.
+  - Arrastrar documentos sobre la ventana y releer solo lo que cambió no están en este MVP: quedan
+    para el H2. Hoy se vuelve a recorrer la carpeta entera.
   - El índice vive en la carpeta de datos de la app, **y solo tu cuenta del Mac puede leerlo**.
 
 ### La ficha en el momento justo · desde Sprint 001
@@ -145,13 +157,162 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 - **Cómo se usa:** `⌥⎋` corta todo en el acto — audio, transcript, la banda y su relleno — y
   devuelve la ventana de la reunión a su tamaño. También está el botón en *Honestidad*, por si el
   atajo está cogido por otra app.
-- **El corte alcanza las 9 piezas · desde Sprint 002.** *Honestidad* lo dice debajo del botón rojo:
-  «El botón corta 9 de 9 piezas: ninguna queda fuera.» La lectura de pantalla llegó en este sprint, y
-  la última en sumarse fue **la sugerencia en camino**: si el modelo está redactando cuando cortas, lo
-  que vuelva se tira y, con el proveedor externo, una petición que aún no haya salido ya no sale. La
-  voz del modo solo audio es la primera que se corta, porque es la única que tu cliente podría oír.
+- **El corte alcanza las 11 piezas · desde Sprint 003.** *Honestidad* lo dice debajo del botón rojo:
+  «El botón corta 11 de 11 piezas: ninguna queda fuera.» En el sprint 2 llegaron la lectura de
+  pantalla y **la sugerencia en camino**: si el modelo está redactando cuando cortas, lo que vuelva se
+  tira y, con el proveedor externo, una petición que no haya salido ya no sale. En el sprint 3, **tus
+  turnos en texto** y **las propuestas que no has decidido**: el corte se las lleva, igual que al
+  resto de la captura. **Tus notas, tus acuerdos, tus fichas fijadas y las propuestas que guardaste se
+  quedan** —*Honestidad* dice «Tus notas siguen ahí»—, y la bandeja de una reunión ya cerrada sigue su
+  ventana. La voz del
+  modo solo audio es la primera que se corta, porque es la única que tu cliente podría oír.
 - **Limitaciones conocidas:** el botón corta lo que vive en memoria **ahora**; lo que ya salió por
   los altavoces o lo que ya viste en la banda, obviamente, no se puede deshacer.
+
+### Tus notas: lo único que queda · Nuevo · Sprint 003
+
+- **Qué hace:** mientras escuchas, *Notas* es tu cuaderno de la reunión: **tu nota** (un campo para
+  escribir lo que quieras), **tus acuerdos** (los escribes tú; la app no decide qué fue un acuerdo) y
+  **las fichas que fijaste**. Al terminar, se guardan en **un archivo por reunión, cifrado**, en la
+  **carpeta privada de la app**. Es lo único de la reunión que llega al día siguiente, junto con las
+  propuestas que guardes: del cliente no se guarda ni su voz, ni sus turnos, ni lo que se leyó de su
+  pantalla; como mucho, un hecho de una línea que tú aceptaste.
+- **Cómo se usa:**
+  1. Durante la sesión, `⌃⌥N` te trae el cuaderno a *Notas* con el cursor al final de tu nota. Escribe
+     y sigue: se va guardando en memoria a cada letra.
+  2. Un acuerdo: escríbelo en su campo y pulsa ↵.
+  3. `⌃⌥P` fija la ficha que estás viendo en la banda (su titular y su fuente, no el documento). En
+     la banda, «Anotar para después» hace lo mismo que `⌃⌥N`: te lleva a tu nota para que lo escribas
+     con tus palabras —la pregunta del cliente no se copia—.
+  4. Al parar la sesión, *Notas* te enseña **qué se va a guardar y qué muere**, contado, y el nombre
+     del archivo que va a nacer. «Guardar cifrado y cerrar» o «Cerrar sin guardar».
+  5. Sin reunión abierta, *Notas* es **el archivo**: tus reuniones guardadas, dónde viven, con qué
+     llave y cuándo se borran. **«Mostrar en Finder»** abre su carpeta con la reunión que estás viendo
+     seleccionada. **«Cuánto viven tus notas»** es una sola elección para todas: 7 días,
+     30 días, **90 días** (de fábrica), 1 año o siempre. Cada reunión se guarda con la que haya al
+     guardarla.
+  6. **«Exportar a texto»** te pregunta antes —porque el archivo exportado ya no está cifrado—, después
+     te pide Touch ID o la contraseña del Mac, y después dónde. El `.md` lleva tu nota, tus acuerdos,
+     **las propuestas que guardaste** (del cliente, el hecho en una línea, como en la pantalla), tus
+     fichas fijadas y, si los conservas, tus turnos. La carpeta que eliges no cambia de permisos: el
+     archivo exportado nace legible solo para tu cuenta. **«Borrar ahora»** también pregunta antes: se
+     borra de la app y no vuelve; si usas Time Machine, tus copias la conservan hasta que caduquen.
+- **«Conservar mis turnos»**: si lo enciendes (nace apagado), lo que **tú** dices, en texto, entra
+  también en el archivo de las reuniones siguientes. Nunca el audio, ni el tuyo. Y nunca un turno de
+  tu micrófono marcado como eco: con altavoces, ese turno es la voz del cliente.
+- **El cuaderno, protegido:** desde que empiezas a escuchar hasta que guardas o descartas la reunión,
+  la ventana del cuaderno se **protege de la captura** como la banda, con el mismo flag del sistema.
+  Así tu nota no se ve si compartes la pantalla entera por descuido. **Sin verificar todavía con el
+  cuaderno:** la banda está comprobada en Meet sobre macOS 26.6.2; el cuaderno se mira en la parada 5
+  del ⭐⭐ (Acto 2), y en Zoom y Teams, ni la una ni el otro.
+- **Dónde viven:** en `~/Library/Application Support/com.aiapps.copiloto-consultor/notas/`, junto a
+  la bandeja. **No en Documentos**: desde ahí la tarea que borra lo vencido con la app cerrada no puede
+  entrar, y la papelera de iCloud guardaría 30 días lo que se borra. Esa carpeta no se sincroniza con
+  iCloud. **Tus notas sí entran en tus copias de Time Machine**: son tuyas y están hechas para durar, y
+  si se te estropea el Mac las recuperas de la copia. Si guardar falla —el Llavero no contesta, el
+  disco está lleno—, la reunión sigue abierta, tu nota entera, y «Intentar otra vez» vuelve a guardar.
+- **La llave:** vive en el **llavero de inicio de sesión** de tu Mac («Angel Ghost · notas»): se abre
+  con tu sesión y no se sincroniza con iCloud, pero **viaja con tus copias de Time Machine y con el
+  Asistente de migración**, protegida por tu contraseña. Guardar no te pide nada; exportar una reunión
+  guardada te pide Touch ID o tu contraseña, una vez cada vez que abres la app.
+- **Limitaciones conocidas:**
+  - **Si borras el Llavero, tus reuniones guardadas no se pueden abrir.** La app no tiene recuperación:
+    sería una segunda llave. Solo una copia de Time Machine (o el Asistente de migración) devuelve tu
+    llavero, y con él tus notas, que se siguen abriendo.
+  - **Que la llave quede solo en este Mac llega con la firma de Apple (H2):** hasta entonces, el
+    llavero que la app puede usar no sabe atarla a un solo equipo.
+  - **Tus notas no aparecen en Documentos:** se llega a ellas desde *Notas*, o con «Mostrar en Finder».
+  - **El nombre del archivo va en claro** (`reunion-2026-09-27-1402.ghost`, o
+    `paramo-azul-2026-09-27.ghost` si elegiste cliente): dice qué día y, si elegiste cliente, con
+    quién; no qué se habló.
+  - **Si la app se cae, lo no guardado se pierde**: vive en memoria a propósito. Si sales de la app con
+    notas sin guardar, se guardan solas; y si empiezas otra sesión con la anterior abierta, también.
+  - **Tus notas vencidas se borran solas, aunque no abras la app:** las borra la misma tarea de macOS
+    que la bandeja (abajo), en el minuto siguiente a su vencimiento. Las que guardaste para «siempre»
+    no vencen. Mientras tengas notas con fecha, esa tarea aparece en Ítems de inicio.
+  - Si eliges el cliente en *Sesión* («Este cliente», abajo), el archivo lleva su nombre
+    (`paramo-azul-2026-09-27.ghost`); si no, se llama `reunion-<fecha>-<hora>`.
+
+### La app te propone qué guardar, y la bandeja · Nuevo · Sprint 003
+
+- **Qué hace:** mientras hablas, la app **propone** qué guardar de la reunión, con **reglas publicadas y
+  sin modelo**: cifras, plazos y fechas · tus compromisos («te lo mando», «quedamos en») · lo que choca
+  con una ficha que fijaste · nombres que no están en tu corpus · preguntas que te hicieron. Proponer
+  no es guardar: nada entra en tu archivo sin tu sí.
+- **Qué se guarda de cada lado:** de lo que dices tú, tu frase. Del cliente, **nunca su turno**: un
+  hecho en una línea («Dijeron «cuatro fuentes»; tu ficha fijada dice «tres»»), con un fragmento de
+  ocho palabras como mucho; de una pregunta, solo sus palabras clave.
+- **Cómo se usa:**
+  1. La última propuesta aparece en la banda, arriba y en una línea: «Te propongo guardar: …». No
+     tapa la ficha, no suena y no se lee en voz alta. **`⌃⌥↵` la guarda.**
+  2. En *Notas*, «Te propongo guardar esto» las enseña todas, cada una con «Guardar» y «No». Las que
+     guardas entran en tu archivo, aparte de tus acuerdos.
+  3. Al parar, «al cerrar» dice cuántas quedan sin decidir y te deja elegir **cuánto esperan en la
+     bandeja**: al cerrar · 1 h · **3 h** (de fábrica) · fin del día · 24 h. La elección se recuerda.
+  4. Tras «Guardar cifrado y cerrar», *Notas* enseña **la bandeja** con su cuenta atrás: «Guardar» lleva
+     la propuesta a su reunión (con la retención de la reunión) y «No» la borra. También «Guardar
+     todas», «Descartar todas», cambiar la ventana ahí mismo e «Ir a tus reuniones».
+  5. Si la bandeja es de una vez anterior que abriste la app, se ve su cuenta atrás, pero **lo que dice
+     pide Touch ID**, como exportar una reunión.
+- **Dónde vive:** cifrada con la misma llave que tus notas y junto a ellas, en la carpeta privada de la
+  app, **no en Documentos**: la papelera de iCloud guarda 30 días lo que se borra, y una lista que
+  promete morir a las 3 h no puede tener una copia que viva un mes. Por lo mismo, **la bandeja no entra
+  en tus copias de Time Machine**: la app la marca fuera de las copias al escribirla. Las instantáneas
+  locales que macOS guarda unas horas (menos de 24 h) sí la ven hasta que se reciclan.
+- **Se borra sola al vencer, aunque no abras la app.** Lo cumple macOS con una tarea programada al
+  minuto de cada vencimiento; entre vencimientos no corre nada. *Honestidad* enseña la bandeja con su
+  cuenta atrás, y si la tarea no corrió mientras la app estaba cerrada, lo dice en rojo.
+- **Limitaciones conocidas:**
+  - **La primera vez, macOS avisa de que se añadió un ítem en segundo plano.** Hasta que la app vaya
+    firmada, en Ajustes del Sistema → General → Ítems de inicio aparece como **«sh · desarrollador no
+    identificado»**: es la tarea de borrado de Angel Ghost, y se queda mientras haya bandeja o notas
+    con fecha. Si la desactivas, la bandeja y tus notas vencidas solo se borran con la app abierta, y
+    *Honestidad* lo dice.
+  - Si borras la app, la tarea sigue borrando a su hora lo que quede; después se queda como una
+    entrada inerte en Ítems de inicio, que puedes quitar.
+  - Como mucho hay 30 propuestas esperando; al llegar a 30, las nuevas no entran y *Notas* lo dice.
+  - Con el modelo local encendido, la app **no** redacta mejor las propuestas: en este ciclo son solo
+    reglas.
+
+### El marco en la mano: tu cliente, su jurisdicción y su NDA · Nuevo · Sprint 003
+
+- **Qué hace:** antes de empezar, *Sesión* te enseña **qué regla aplica a este cliente**, con sus
+  normas y su fecha; te pregunta **si su NDA prohíbe grabar o transcribir**, y si lo prohíbe te
+  propone el **modo solo notas**; y te da una **cláusula modelo** para tu carta de encargo, en español y
+  en inglés. **Nunca te bloquea** y **no es asesoría legal**: lo dice siempre.
+- **Cómo se usa:**
+  1. En la ficha de tu cliente (en tu corpus), escribe una línea con dónde está la contraparte:
+     `Jurisdicción: Colombia` (o `Jurisdiction: Florida`). Vuelve a indexar la carpeta.
+  2. En *Sesión*, **«Este cliente»** → elige el cliente. Aparece su **bandera**: el país o el estado,
+     su riesgo (con símbolo, texto y color), la regla, lo que implica, las normas y la fecha en que se
+     consultaron (2026-09-17). Si algo de esa fila no se pudo verificar, lo dice debajo: «Sin
+     verificar: …».
+  3. **«Revisar»** junto a la NDA: la app pregunta «¿La NDA de este cliente prohíbe grabar o transcribir
+     por cualquier medio?». Tu respuesta se guarda para ese cliente.
+  4. Si respondes **«Sí, lo prohíbe»**, *Sesión* te propone **«Iniciar en modo solo notas»**, y te deja
+     volver a revisar la NDA si te equivocaste.
+  5. **«Cláusula de encargo»** enseña la cláusula en los dos idiomas, lado a lado, con un «Copiar» cada
+     una: copia la del idioma de tu carta, no la de la app.
+- **El modo solo notas:** también lo puedes elegir tú, con **«Solo notas»** junto a «Iniciar sesión».
+  La reunión se abre —tu cuaderno, protegido, y la banda— y **nada la escucha, la transcribe ni la
+  lee**: ni micrófono, ni audio del sistema, ni pantalla, ni el radar ámbar. Siguen tus notas y acuerdos
+  (`⌃⌥N`), fijar (`⌃⌥P`), el radar coral y `⌥⎋`. **`⌃⌥A` busca en tu corpus con la última línea de tu
+  nota.** La banda lo dice en ámbar: «Solo notas · sin transcripción». Se termina como cualquier
+  sesión.
+- **El archivo de la reunión** lleva el nombre del cliente que elegiste. La elección vive mientras la
+  app está abierta: no se guarda en disco.
+- **Limitaciones conocidas:**
+  - **No es asesoría legal.** El catálogo sale de una investigación con fuentes, fechada el 2026-09-17,
+    con 17 puntos que no se pudieron verificar y que la app no afirma. Antes de usar la app con clientes
+    en estados de EE. UU. de consentimiento de todas las partes, en Alemania, Francia, Chile o
+    Argentina, o bajo una NDA que prohíba transcribir, consulta a un abogado.
+  - El catálogo trae **27 jurisdicciones**: Colombia, EE. UU. (federal y estados de una parte), 14
+    estados de todas las partes o mixtos, 3 sin estatuto verificado, la Unión Europea, Alemania,
+    Francia, España, México, Chile, Perú y Argentina. Si la ficha dice otra, la app lo dice («no está en
+    el catálogo v1») y no adivina.
+  - Si la línea nombra varias («Colombia y California»), la bandera es la de **la más estricta**.
+  - El catálogo se actualiza con una versión nueva de la app, nunca por la red.
+  - La plantilla del aviso de una línea al cliente y el registro de que le informaste quedan para H2.
 
 ### El modelo de voz de un idioma · desde Sprint 001
 
@@ -190,8 +351,9 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - Necesita el permiso de **Pantalla** y, con Meet en el navegador, también el de **Accesibilidad**
     (para encontrar la pestaña). Sin el de Pantalla, *Sesión* lo dice («Sin permiso») y la app
     funciona igual, sin leerla.
-  - Lee **la ventana de la reunión**, no tu pantalla entera, y solo si **está visible**. Si la
-    reunión está detrás de otra ventana, no hay nada que leer.
+  - Lee **la ventana de la reunión**, no tu pantalla entera. La lee **aunque otra ventana la
+    tape**: macOS le entrega su contenido tal cual. Lo que la deja sin leer es **minimizarla u
+    ocultarla** (`⌘H`).
   - **El vídeo de los participantes no cuenta como «algo nuevo»**: se mueve todo el rato y no trae
     texto. Si alguien comparte un vídeo, la app espera a que se quede quieto.
   - Lee español e inglés. Una diapositiva en otro idioma se lee peor.
@@ -264,9 +426,17 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   apagado en Ajustes»).
   - **El modelo del sistema** necesita **Apple Intelligence** activado en *Ajustes del Sistema →
     Apple Intelligence y Siri*. Es gratis y no sale nada de tu Mac.
-  - **El proveedor externo** (Claude, Gemini o Groq) es opcional y es **tuyo**: pegas tu clave, la app
+  - **El proveedor externo** (Claude o Groq) es opcional y es **tuyo**: pegas tu clave, la app
     la guarda en tu **Llavero** —nunca en un archivo— y enciendes su interruptor. Sin clave no se
     enciende.
+  - **Lo que cada proveedor hace con lo que le mandas** está escrito en IA, bajo el costo, para el
+    proveedor que elijas.
+    Ninguno de los dos entrena con ello. **Claude lo guarda hasta 30 días**; para que no guarde nada
+    hace falta un acuerdo de retención cero con Anthropic. **Groq puede guardarlo hasta 30 días**
+    para vigilar abusos, salvo que enciendas la retención cero en *Data Controls*, en su consola: si
+    usas Groq, enciéndela. Lo que sale va siempre anonimizado en tu Mac, pero sale. Gemini estuvo en
+    la app y salió: su API no ofrece retención cero en ningún nivel, y sin facturación entrena con lo
+    que recibe (la tabla, con sus fuentes y la fecha en que se leyó, está en el ADR 011).
 - **Lo que no hace, y cómo se comprueba:**
   - **Nunca inventa la fuente.** El modelo recibe **la última frase de tu cliente** y las tres fichas del momento, cada una
     con un número; tiene que decir de cuál sacó la sugerencia, y si cita una que no se le dio, la
@@ -289,6 +459,12 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     puestos otra vez, en tu Mac. Nunca audio, pantalla ni documentos enteros: ese camino no existe
     (`api::pruebas::lo_que_sale_al_api_no_lleva_los_nombres_plantados`). Cada byte que sale se
     cuenta en *Honestidad* y en la banda.
+  - **Puedes ver exactamente lo que salió · desde Sprint 003.** En *IA*, cuando algo salió en esta
+    reunión, aparece **«Ver lo que salió · N»** en la tarjeta del proveedor externo. Abre el texto
+    exacto de la última petición —con lo que se tapó en tu Mac **tachado** y su marcador al lado—,
+    cuántos caracteres fueron, y la tabla de las últimas 20 peticiones de la reunión (hora, por qué salió,
+    caracteres, datos tapados y USD). Ese registro vive en memoria: se borra con `⌥⎋` y al terminar la
+    sesión. «← Quién redacta» te devuelve.
   - **Nada de la sugerencia va al log**: solo quién, cuánto tardó y cuánto salió
     (`tests/unit/logs-de-la-sintesis.test.ts`).
 - **Costo:** el modelo del sistema cuesta cero. El externo se cobra en tu cuenta del proveedor; IA
@@ -306,15 +482,58 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - Las fichas que trae **la pantalla sola** no llevan sugerencia: no responden a ninguna pregunta.
   - Un nombre de persona **suelto** («Andrea») que no esté en tu corpus no se reconoce al anonimizar;
     dos palabras con mayúscula seguidas («Andrea Villalba») sí.
-  - El camino **MLX** (un modelo que descargas tú) todavía no existe; aparece en IA como «Todavía no».
-    Sin Apple Intelligence, la sugerencia local no está.
+  - El camino **MLX** (un modelo que descargas tú) no está en este MVP: queda en el roadmap del H2, y
+    en IA su fila lo dice con «En el H2». Sin Apple Intelligence, la sugerencia local no está.
   - La sugerencia se escribe **en el idioma de la ficha que cita**, no en el de la pregunta: si tu
     cliente pregunta en inglés y tu propuesta está en español, la sugerencia sale en español.
   - A veces la sugerencia es fiel a su ficha pero **no contesta la pregunta** (cita otra de las tres
     fichas del momento). No es falsa; es poco útil. La confianza suele decirlo.
-  - Los interruptores de IA vuelven a apagado al cerrar la app.
+  - Los interruptores de IA **se recuerdan** · desde Sprint 003: «Redactar sugerencias» y el
+    proveedor externo quedan como los dejaste. Con una excepción, a propósito: si borraste la clave
+    del proveedor en «Acceso a Llaveros», el API **no** se enciende solo al abrir la app.
   - El precio de cada proveedor está escrito en la app con su fecha (2026-09-26); si el proveedor lo
     cambia, el costo que ves se desvía hasta la versión siguiente.
+
+### La puerta local: que Claude Code opere la app · Nuevo · Sprint 003
+
+- **Qué hace:** deja que **Claude Code**, en tu propio Mac y en tu sesión, opere la app por un
+  comando, `ghost`: buscar en tu corpus, reindexarlo, correr el kit de evaluación con tus preguntas,
+  leer y cambiar algunas preferencias y abrir tus notas guardadas. **Nace cerrada**, la abres tú, y
+  **en reunión se cierra sola** y lo deniega todo: un agente no toca jamás lo que está vivo en memoria.
+  No sale a la red —es un canal local del Mac, que solo alcanza tu usuario— y el contador sigue en 0 B.
+- **Cómo se usa:**
+  1. Compila `ghost` una vez, junto a la app: `pnpm ghost` en la carpeta del proyecto.
+  2. En *IA*, **«Puerta local · cerrada»** (en la fila de «Redactar sugerencias») → se abre la vista de
+     la puerta → el conmutador **«cerrada»** la abre.
+  3. La vista enseña el comando, con **«Copiar»**: la ruta de `ghost` y `--help`. Pégaselo a Claude
+     Code; `ghost --help` le explica lo que puede pedir.
+  4. **La primera vez que Claude Code use la puerta, macOS te pregunta** si `ghost` puede usar la
+     información guardada en «Angel Ghost · puerta» de tu llavero, con la contraseña de tu Mac. Esa es
+     la llave: si no la das, no entra. Se vuelve a preguntar **una vez cada vez que abres la puerta**.
+  5. **«Qué hizo tu agente»** lista cada orden, **también las denegadas**, con su hora y su motivo, sin
+     el contenido: dice «ghost corpus buscar», no qué buscó.
+  6. Para cerrarla, el mismo conmutador. Se cierra también al salir de la app.
+- **Lo que puede pedir** (`ghost --help`): `corpus buscar <texto>` · `corpus reindexar` ·
+  `kit <preguntas.json>` (por ejemplo, `docs/kit-de-prueba/preguntas.json`) · `prefs leer` ·
+  `prefs cambiar <clave> <valor>`, solo con `idioma-consultor`, `idioma-cliente`, `retencion`,
+  `ventana-de-la-bandeja` y `lectura-automatica` · `notas listar` · `notas abrir <archivo>`, que te
+  pide **Touch ID o tu contraseña en el Mac** una vez cada vez que abres la puerta: aunque hayas
+  exportado en *Notas*, la puerta pide el suyo.
+- **Lo que no puede nunca:** nada en reunión (si la app escucha, si hay una reunión en solo notas, si ve
+  una videollamada abierta **o si no puede saberlo**); encender el API externo; cambiar «Redactar
+  sugerencias», el proveedor externo, «Conservar mis turnos» ni lo que respondiste de una NDA; abrirse
+  sola; tocar otra máquina. Todo eso se deniega y queda en el registro.
+- **Si se cerró sola:** *IA* lo dice en ámbar, «Se cerró sola: hay una reunión». Vuelve a abrirla tú
+  cuando termine; no se abre sola.
+- **Limitaciones conocidas:**
+  - `ghost` **no se instala en tu PATH**: vive junto a la app que compilaste (y dentro del `.app` si la
+    empaquetas), y la vista de la puerta te da su ruta. Instalarlo en el PATH llega con la app firmada.
+  - Busca, reindexa y mide sobre **el corpus que la app tiene indexado**: al arrancar, la app vuelve a
+    leer en segundo plano la carpeta que recuerda; si acabas de abrirla, espera a que *Corpus* diga
+    cuántos documentos hay. Añadir carpetas se hace a mano, en *Corpus*.
+  - El kit mide **la búsqueda** (nDCG@5 y lo que no encuentra); no compara modelos.
+  - El registro guarda las últimas 50 órdenes de esta sesión de la app; se ven tres y el resto se
+    desplaza. Al salir, se borra.
 
 ### El modo solo audio: la ficha, al oído · Nuevo · Sprint 002
 
@@ -396,18 +615,21 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - **Cada pista escucha un idioma.** Si en mitad de una frase castellana el cliente dice tres
     palabras en inglés, el diccionario arregla la jerga que reconozca, pero **una frase entera en el
     otro idioma no se transcribe bien** — está medido y está dicho en la pantalla de *Idioma*. Marcar
-    varios idiomas por pista llega más adelante.
+    varios idiomas por pista queda para el H2.
 
 ## Atajos de teclado
 
 | Tecla | Qué hace |
 |---|---|
 | `⌥⎋` | corta todo: audio, transcript, banda y relleno. Devuelve la ventana de la reunión |
-| `⌃⌥A` | «ayúdame con esto»: busca una ficha sobre lo último que dijo el cliente |
-| `⌃⌥T` | muestra u oculta el transcript en la banda |
+| `⌃⌥A` | «ayúdame con esto»: busca una ficha sobre lo último que dijo el cliente; **en solo notas, con la última línea de tu nota** |
+| `⌃⌥T` | muestra u oculta el transcript junto a la ficha; con la banda compacta, la agranda |
 | `⌃⌥V` | enciende o apaga el **modo solo audio**: te lee la ficha y la banda baja a una línea |
 | `⌃⌥L` | **lee la pantalla una vez, ahora** — también con la lectura automática apagada |
 | `⌃⌥R` | **qué ve**: abre *Sesión* con la tabla del radar — qué programa de tu Mac te mira y qué alcanza a ver |
+| `⌃⌥N` | **anotar**: el cuaderno al frente, en *Notas*, con el cursor al final de tu nota |
+| `⌃⌥P` | **fijar** la ficha que ves en la banda: queda en tus notas, con su titular y su fuente; la banda dice «fijada» |
+| `⌃⌥↵` | **guardar la propuesta** que ves en la banda: entra en tu archivo |
 | `⎋` | calla la voz — **solo mientras el modo solo audio está encendido** |
 
 > **Por qué `⌃⌥` (Control + Opción) y no `⌘⇧`.** Hasta el sprint 2 las teclas eran `⌘⇧`, y según
@@ -436,8 +658,10 @@ solo salen la última frase de tu cliente y tres fichas cortas, anonimizadas —
 
 **¿Guarda lo que se habla en la reunión?**
 No. El audio vive treinta segundos en memoria y se va pisando; el texto, los últimos doce turnos.
-Al cerrar no queda nada. Guardar **tus propios** turnos llega más adelante, y será algo que tú
-enciendas.
+Al cerrar, de lo que se habló no queda nada salvo lo que tú decidas: tu nota, tus acuerdos, tus
+fichas fijadas, las propuestas que guardes (del cliente, un hecho de una línea, nunca su frase) y
+—solo si enciendes «Conservar mis turnos»— lo que dijiste **tú**, en texto. Cifrado, en un archivo
+por reunión. Lo que no decidas espera en la bandeja y se borra solo (3 h de fábrica, 24 h como mucho).
 
 **¿Necesito internet?**
 Solo para la videollamada. La app transcribe, busca y —con el modelo del sistema— redacta dentro de
@@ -455,6 +679,7 @@ detecta y lo marca, pero funciona mejor con auriculares.
 |---|---|
 | 001 | la banda protegida · el acople · las dos pistas y la transcripción local · el corpus indexado · la ficha de evidencia y la sugerencia de cómo conducirse · el modelo de voz de un idioma · el corte y la pantalla de Honestidad · español e inglés |
 | 002 | el disparo por silencio · **tu diccionario técnico** · **el modo solo audio** · **la lectura de pantalla** y `⌃⌥L` · **los porqués** (la pista que no abrió, la salida de audio por su nombre, el motor que falta) · **por qué llegó la ficha y cuánto tardó** · las teclas pasan a `⌃⌥` · **el radar** (ámbar y coral) y `⌃⌥R` · **la sugerencia** y la pantalla **IA** |
+| 003 | **tus notas** (el cuaderno de la reunión, el archivo cifrado por reunión, la retención, exportar y borrar) · `⌃⌥N` y `⌃⌥P` · **el cuaderno protegido** mientras la reunión está abierta · **lo que salió al API**, en *IA* · **las propuestas por reglas y la bandeja** con su cuenta atrás y su borrado con la app cerrada · `⌃⌥↵` · la señal «fijada» · el corte pasa a 11 piezas · las preferencias se recuerdan · tus notas pasan a la **carpeta privada de la app**, con «Mostrar en Finder», y se borran solas al vencer aunque no abras la app · **el marco en la mano**: «Este cliente», su bandera de jurisdicción, el chequeo de NDA, la cláusula de encargo y el **modo solo notas** · **la puerta local para Claude Code** (`ghost`), en *IA* |
 
 > **Corregido tras la auditoría del sprint 001** (2026-09-22): tres frases de este manual habían
 > dejado de ser ciertas y se arreglaron con lo que el código hacía de verdad — el disparo por

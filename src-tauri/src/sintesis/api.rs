@@ -8,9 +8,10 @@
 //! 3. **Envía** por el puente de Swift —la única puerta de la app a la red, efímera y https—.
 //! 4. **Destapa** la respuesta en el Mac y se la da a `fundar`, que la valida como a cualquier otra.
 //!
-//! Tres proveedores intercambiables, dos formatos: el de Anthropic y el compatible con OpenAI (que
-//! Gemini y Groq también hablan). El precio de cada uno está escrito aquí, con su fecha: el costo
-//! que la app enseña es tokens medidos × ese precio.
+//! Dos proveedores intercambiables, cada uno en su formato: el de Anthropic y el compatible con
+//! OpenAI, que Groq habla. Cuánto guarda cada uno lo que recibe está en el ADR 011, con la decisión del
+//! usuario (2026-09-29): los dos se quedan, con su aviso en IA. El precio de cada uno está escrito
+//! aquí, con su fecha: el costo que la app enseña es tokens medidos × ese precio.
 
 use super::anonimo::Boveda;
 use super::{PorQueNoRedacta, Proveedor, Quien, Respuesta};
@@ -20,19 +21,17 @@ use super::{PorQueNoRedacta, Proveedor, Quien, Respuesta};
 #[serde(rename_all = "kebab-case")]
 pub enum Externo {
     Claude,
-    Gemini,
     Groq,
 }
 
 /// Precios de lista por millón de tokens (entrada, salida), en dólares, **a 2026-09-26**. Si el
 /// proveedor los cambia, el costo que se enseña se desvía hasta que se actualicen aquí.
 impl Externo {
-    pub const TODOS: [Externo; 3] = [Externo::Claude, Externo::Gemini, Externo::Groq];
+    pub const TODOS: [Externo; 2] = [Externo::Claude, Externo::Groq];
 
     pub fn nombre(self) -> &'static str {
         match self {
             Externo::Claude => "Claude Haiku",
-            Externo::Gemini => "Gemini Flash",
             Externo::Groq => "Groq · Llama",
         }
     }
@@ -40,7 +39,6 @@ impl Externo {
     fn modelo(self) -> &'static str {
         match self {
             Externo::Claude => "claude-haiku-4-5",
-            Externo::Gemini => "gemini-2.5-flash",
             Externo::Groq => "llama-3.3-70b-versatile",
         }
     }
@@ -48,7 +46,6 @@ impl Externo {
     fn url(self) -> &'static str {
         match self {
             Externo::Claude => "https://api.anthropic.com/v1/messages",
-            Externo::Gemini => "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
             Externo::Groq => "https://api.groq.com/openai/v1/chat/completions",
         }
     }
@@ -56,7 +53,6 @@ impl Externo {
     fn precio(self) -> (f64, f64) {
         match self {
             Externo::Claude => (1.00, 5.00),
-            Externo::Gemini => (0.30, 2.50),
             Externo::Groq => (0.59, 0.79),
         }
     }
@@ -65,7 +61,6 @@ impl Externo {
     fn cuenta(self) -> &'static str {
         match self {
             Externo::Claude => "claude",
-            Externo::Gemini => "gemini",
             Externo::Groq => "groq",
         }
     }
@@ -85,7 +80,7 @@ impl Externo {
                 "system": instrucciones,
                 "messages": [{ "role": "user", "content": texto }],
             }),
-            Externo::Gemini | Externo::Groq => serde_json::json!({
+            Externo::Groq => serde_json::json!({
                 "model": self.modelo(),
                 "max_tokens": 200,
                 "messages": [
@@ -98,7 +93,7 @@ impl Externo {
             Externo::Claude => format!(
                 "content-type: application/json\nx-api-key: {clave}\nanthropic-version: 2023-06-01"
             ),
-            Externo::Gemini | Externo::Groq => {
+            Externo::Groq => {
                 format!("content-type: application/json\nauthorization: Bearer {clave}")
             }
         };
@@ -113,7 +108,7 @@ impl Externo {
                 json["usage"]["input_tokens"].as_u64().unwrap_or(0),
                 json["usage"]["output_tokens"].as_u64().unwrap_or(0),
             )),
-            Externo::Gemini | Externo::Groq => Some((
+            Externo::Groq => Some((
                 json["choices"][0]["message"]["content"].as_str()?.to_string(),
                 json["usage"]["prompt_tokens"].as_u64().unwrap_or(0),
                 json["usage"]["completion_tokens"].as_u64().unwrap_or(0),
@@ -138,14 +133,15 @@ mod puente {
             capacidad: c_int,
             estado: *mut c_int,
         ) -> c_int;
-        pub fn ag_llavero_guardar(cuenta: *const c_char, clave: *const c_char) -> c_int;
-        pub fn ag_llavero_leer(cuenta: *const c_char, salida: *mut u8, capacidad: c_int) -> c_int;
-        pub fn ag_llavero_borrar(cuenta: *const c_char) -> c_int;
-        pub fn ag_llavero_hay(cuenta: *const c_char) -> c_int;
     }
 }
 
 // ── El Llavero ──────────────────────────────────────────────────────────────────────────────────
+//
+// Las claves viven en el Llavero del usuario, servicio «Angel Ghost · API» (`crate::llavero`, que
+// desde el sprint 003 comparten las notas y la puerta local).
+
+use crate::llavero::{self, Servicio};
 
 /// Guarda la clave del usuario en su Llavero. Nunca en un archivo.
 pub fn guardar_clave(externo: Externo, clave: &str) -> Result<(), String> {
@@ -153,71 +149,181 @@ pub fn guardar_clave(externo: Externo, clave: &str) -> Result<(), String> {
     if clave.is_empty() {
         return Err("la clave está vacía".into());
     }
-    #[cfg(all(target_os = "macos", puente_de_swift))]
-    {
-        let c = std::ffi::CString::new(externo.cuenta()).map_err(|e| e.to_string())?;
-        let mut k = std::ffi::CString::new(clave).map_err(|_| "la clave lleva un cero dentro")?.into_bytes_with_nul();
-        // SEGURIDAD: dos textos terminados en cero que viven hasta que la llamada vuelve.
-        let r = unsafe { puente::ag_llavero_guardar(c.as_ptr(), k.as_ptr() as *const std::os::raw::c_char) };
-        k.fill(0);
-        if r == 0 { Ok(()) } else { Err(format!("el Llavero no la guardó ({r})")) }
-    }
-    #[cfg(not(all(target_os = "macos", puente_de_swift)))]
-    {
-        let _ = externo;
-        Err("el Llavero solo existe en macOS con el puente".into())
-    }
+    llavero::guardar(Servicio::Api, externo.cuenta(), clave)
 }
 
 /// Lee la clave, si hay. Vive lo que dura una petición.
 fn leer_clave(externo: Externo) -> Option<String> {
-    #[cfg(all(target_os = "macos", puente_de_swift))]
-    {
-        let c = std::ffi::CString::new(externo.cuenta()).ok()?;
-        let mut salida = vec![0u8; 1024];
-        // SEGURIDAD: la salida mide `capacidad` y el puente escribe menos.
-        let n = unsafe { puente::ag_llavero_leer(c.as_ptr(), salida.as_mut_ptr(), salida.len() as i32) };
-        let clave = (n > 0).then(|| String::from_utf8_lossy(&salida[..n as usize]).into_owned());
-        salida.fill(0);
-        clave
-    }
-    #[cfg(not(all(target_os = "macos", puente_de_swift)))]
-    {
-        let _ = externo;
-        None
-    }
+    llavero::leer(Servicio::Api, externo.cuenta())
 }
 
 /// ¿Hay clave? Se pregunta por los atributos, **sin leer el secreto**: la pantalla IA lo pregunta
 /// cada vez que se pinta, y la clave solo se lee en el instante de enviar (auditoría del S2, B1).
 pub fn hay_clave(externo: Externo) -> bool {
-    #[cfg(all(target_os = "macos", puente_de_swift))]
-    {
-        let Ok(c) = std::ffi::CString::new(externo.cuenta()) else { return false };
-        // SEGURIDAD: un texto terminado en cero que vive hasta que la llamada vuelve.
-        unsafe { puente::ag_llavero_hay(c.as_ptr()) == 1 }
-    }
-    #[cfg(not(all(target_os = "macos", puente_de_swift)))]
-    {
-        let _ = externo;
-        false
-    }
+    llavero::hay(Servicio::Api, externo.cuenta())
 }
 
 pub fn borrar_clave(externo: Externo) -> Result<(), String> {
-    #[cfg(all(target_os = "macos", puente_de_swift))]
-    {
-        let c = std::ffi::CString::new(externo.cuenta()).map_err(|e| e.to_string())?;
-        // SEGURIDAD: un texto terminado en cero.
-        match unsafe { puente::ag_llavero_borrar(c.as_ptr()) } {
-            0 => Ok(()),
-            r => Err(format!("el Llavero no la borró ({r})")),
+    llavero::borrar(Servicio::Api, externo.cuenta())
+}
+
+// ── Lo que salió (auditoría del S2, B37) ────────────────────────────────────────────────────────
+//
+// ADR 011, punto 4: «el texto exacto que salió, visible en la pantalla IA y solo en memoria, para que
+// el usuario lo pueda leer». Hasta el sprint 003 ese texto y la cuenta de lo tapado morían dentro de
+// `redactar`, y la pantalla IA no enseñaba ninguno de los dos. Ahora cada petición deja aquí lo que
+// salió, trozo a trozo, con **lo que se reemplazó en tu Mac** al lado de cada marcador —lo que la
+// maqueta dibuja tachado—. Vive lo que dura la reunión: lo vacían el corte y el final de la sesión,
+// lo pide solo la ventana principal por comando, y cada copia se pisa al soltarse.
+
+/// Un trozo de lo que salió: texto enviado tal cual, o un dato que la bóveda tapó.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
+#[serde(tag = "que", rename_all = "kebab-case")]
+pub enum Trozo {
+    Texto { texto: String },
+    /// `marcador` es lo que salió («[CLIENTE_1]»); `original`, lo que se quedó en el Mac.
+    Tapado { marcador: String, original: String },
+}
+
+impl Trozo {
+    fn pisar(&mut self) {
+        let textos: Vec<&mut String> = match self {
+            Trozo::Texto { texto } => vec![texto],
+            Trozo::Tapado { marcador, original } => vec![marcador, original],
+        };
+        for t in textos {
+            // SEGURIDAD: ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
+            unsafe { t.as_mut_vec() }.fill(0);
         }
     }
-    #[cfg(not(all(target_os = "macos", puente_de_swift)))]
-    {
-        let _ = externo;
-        Ok(())
+}
+
+/// Una petición al proveedor externo, como la enseña IA.
+#[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LoQueSalio {
+    #[serde(skip)]
+    pub id: u64,
+    pub hora: String,
+    pub externo: Externo,
+    /// El titular de la ficha que la provocó.
+    pub sobre: String,
+    pub trozos: Vec<Trozo>,
+    /// Los caracteres del texto que salió, marcadores incluidos.
+    pub caracteres: usize,
+    /// Cuántos datos tapó la bóveda en esta petición.
+    pub tapadas: usize,
+    /// Lo que costó, cuando el proveedor contesta. `None` mientras tanto, o si no contestó.
+    pub usd: Option<f64>,
+}
+
+impl LoQueSalio {
+    pub fn de(tapado: &str, boveda: &Boveda, externo: Externo, sobre: &str) -> Self {
+        Self {
+            id: 0,
+            hora: crate::escucha::la_hora(),
+            externo,
+            sobre: sobre.to_string(),
+            trozos: trozos(tapado, boveda),
+            caracteres: tapado.chars().count(),
+            tapadas: boveda.tapadas(),
+            usd: None,
+        }
+    }
+}
+
+impl Drop for LoQueSalio {
+    fn drop(&mut self) {
+        for t in &mut self.trozos {
+            t.pisar();
+        }
+        // SEGURIDAD: ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
+        unsafe { self.sobre.as_mut_vec() }.fill(0);
+    }
+}
+
+/// Parte el texto que salió en trozos: cada marcador que la bóveda puso, con su original al lado.
+/// Un «[» que no es un marcador de la bóveda es texto.
+pub fn trozos(tapado: &str, boveda: &Boveda) -> Vec<Trozo> {
+    let mut salida = Vec::new();
+    let mut texto = String::new();
+    let mut resto = tapado;
+    while let Some(i) = resto.find('[') {
+        let tras = &resto[i..];
+        let marcador = tras.find(']').map(|j| &tras[..=j]);
+        match marcador.and_then(|m| boveda.original_de(m).map(|o| (m, o))) {
+            Some((m, o)) => {
+                texto.push_str(&resto[..i]);
+                if !texto.is_empty() {
+                    salida.push(Trozo::Texto { texto: std::mem::take(&mut texto) });
+                }
+                salida.push(Trozo::Tapado { marcador: m.to_string(), original: o.to_string() });
+                resto = &tras[m.len()..];
+            }
+            None => {
+                texto.push_str(&resto[..=i]);
+                resto = &resto[i + 1..];
+            }
+        }
+    }
+    texto.push_str(resto);
+    if !texto.is_empty() {
+        salida.push(Trozo::Texto { texto });
+    }
+    salida
+}
+
+/// Cuántas peticiones recuerda el registro. Cada una lleva un turno anonimizado del cliente y, en
+/// claro, lo que se tapó: sin tope, con el API encendido, guardaba la reunión entera, mucho más allá
+/// del anillo de 30 s (auditoría del S3, B15). Al pasarlo, la más vieja se suelta y se pisa.
+pub const TOPE_DE_LO_QUE_SALIO: usize = 20;
+
+/// **Las peticiones de la reunión.** Lo comparten la sesión —que lo enseña y lo vacía— y cada `Api`.
+#[derive(Clone, Default)]
+pub struct Registro {
+    peticiones: std::sync::Arc<std::sync::Mutex<Vec<LoQueSalio>>>,
+    siguiente: std::sync::Arc<std::sync::atomic::AtomicU64>,
+}
+
+impl Registro {
+    /// Anota una petición y devuelve con qué número, para ponerle su costo cuando vuelva.
+    pub fn anotar(&self, mut salio: LoQueSalio) -> u64 {
+        let id = self.siguiente.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
+        salio.id = id;
+        if let Ok(mut p) = self.peticiones.lock() {
+            p.push(salio);
+            if p.len() > TOPE_DE_LO_QUE_SALIO {
+                // `LoQueSalio` se pisa al soltarse (su `Drop`).
+                p.remove(0);
+            }
+        }
+        id
+    }
+
+    /// Le pone su costo a una petición que volvió. Si el registro ya se vació —el corte llegó
+    /// antes—, no hay nada que anotar y no pasa nada.
+    pub fn cobrar(&self, id: u64, usd: f64) {
+        if let Ok(mut p) = self.peticiones.lock() {
+            if let Some(s) = p.iter_mut().find(|s| s.id == id) {
+                s.usd = Some(usd);
+            }
+        }
+    }
+
+    /// De la más nueva a la más vieja, que es como las lee la tabla.
+    pub fn todas(&self) -> Vec<LoQueSalio> {
+        self.peticiones.lock().map(|p| p.iter().rev().cloned().collect()).unwrap_or_default()
+    }
+
+    pub fn cuantas(&self) -> usize {
+        self.peticiones.lock().map(|p| p.len()).unwrap_or(0)
+    }
+
+    /// Se olvida todo (cada `LoQueSalio` se pisa al soltarse). El corte y el final de la reunión.
+    pub fn vaciar(&self) {
+        if let Ok(mut p) = self.peticiones.lock() {
+            p.clear();
+        }
     }
 }
 
@@ -227,6 +333,10 @@ pub fn borrar_clave(externo: Externo) -> Result<(), String> {
 pub struct Api {
     pub externo: Externo,
     pub conocidos: Vec<String>,
+    /// Dónde queda anotado lo que salió, para que IA lo enseñe (B37).
+    pub registro: Registro,
+    /// De qué ficha va la petición: su titular, para la columna «por qué salió».
+    pub sobre: String,
     /// La época del corte en que nació la petición. Si `⌥⎋` llega antes de enviar, no se envía.
     pub vigencia: Vigencia,
 }
@@ -282,6 +392,8 @@ impl Proveedor for Api {
         let mut clave = leer_clave(self.externo).ok_or("sin clave en el Llavero")?;
         let (mut tapado, boveda) = lo_que_sale(&self.conocidos, instrucciones, texto);
         let (mut cabeceras, mut cuerpo) = self.externo.peticion(&clave, instrucciones, &tapado);
+        // Lo que IA enseñará, armado ANTES de pisar el texto: el mismo `tapado` que va en el cuerpo.
+        let salio = LoQueSalio::de(&tapado, &boveda, self.externo, &self.sobre);
         // SEGURIDAD (las tres): ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
         unsafe { clave.as_mut_vec() }.fill(0);
         unsafe { tapado.as_mut_vec() }.fill(0);
@@ -292,8 +404,10 @@ impl Proveedor for Api {
             unsafe { cuerpo.as_mut_vec() }.fill(0);
             return Err(CORTADA.into());
         }
-        // Se cuenta ANTES de enviar: un envío que falla a medias también salió.
+        // Se cuenta ANTES de enviar: un envío que falla a medias también salió. Y se anota ya, por
+        // la misma razón: lo que salió se enseña aunque el proveedor no conteste nunca.
         crate::red::registrar_salida(bytes_fuera);
+        let id = self.registro.anotar(salio);
         let url = CString::new(self.externo.url()).map_err(|e| e.to_string())?;
         let cab = CString::new(cabeceras.clone()).map_err(|e| e.to_string())?;
         unsafe { cabeceras.as_mut_vec() }.fill(0);
@@ -332,6 +446,7 @@ impl Proveedor for Api {
             bytes_fuera,
             tokens_entrada: entrada,
             tokens_salida: salida_tokens,
+            salida: Some(id),
         })
     }
 
@@ -351,6 +466,77 @@ mod pruebas {
 
     /// **Solo texto anonimizado al API** (acceptance del sprint): lo que se enviaría no lleva los
     /// nombres plantados en el turno ni en las fichas.
+    /// **B37: IA enseña el texto exacto que salió, con lo reemplazado al lado.** Los trozos, unidos,
+    /// son exactamente el texto que se envió; cada marcador lleva su original; y la cuenta de lo
+    /// tapado es la de la bóveda. ¿Puede fallar? Sí: con `trozos` devolviendo el texto de un solo
+    /// trozo, o con `tapadas: 0`, es rojo (bitácora del sprint 003).
+    #[test]
+    fn lo_que_salio_es_el_texto_exacto_con_lo_reemplazado_al_lado() {
+        let p = Peticion::nueva("Andrea Villalba de Páramo Azul pregunta [algo] por el alcance", &respaldo()).unwrap();
+        let conocidos = vec!["Páramo Azul".to_string()];
+        let (fuera, b) = lo_que_sale(&conocidos, Peticion::instrucciones(), &p.texto());
+        let salio = LoQueSalio::de(&fuera, &b, Externo::Claude, "Alcance");
+        let unido: String = salio
+            .trozos
+            .iter()
+            .map(|t| match t {
+                Trozo::Texto { texto } => texto.clone(),
+                Trozo::Tapado { marcador, .. } => marcador.clone(),
+            })
+            .collect();
+        assert_eq!(unido, fuera, "lo que IA enseña no es lo que salió");
+        let tapados: Vec<(&str, &str)> = salio
+            .trozos
+            .iter()
+            .filter_map(|t| match t {
+                Trozo::Tapado { marcador, original } => Some((marcador.as_str(), original.as_str())),
+                _ => None,
+            })
+            .collect();
+        assert!(tapados.contains(&("[CLIENTE_1]", "Páramo Azul")), "{tapados:?}");
+        assert!(tapados.contains(&("[PERSONA_1]", "Andrea Villalba")), "{tapados:?}");
+        assert_eq!(salio.tapadas, b.tapadas());
+        assert!(salio.tapadas >= 2);
+        assert_eq!(salio.caracteres, fuera.chars().count());
+        // «[algo]» no es un marcador de la bóveda: se queda como texto.
+        assert!(unido.contains("[algo]"));
+    }
+
+    /// El registro de la reunión: anota, le pone costo a la que vuelve, y se vacía entero.
+    #[test]
+    fn el_registro_anota_cobra_y_se_vacia() {
+        let r = Registro::default();
+        let b = Boveda::nueva(&[]);
+        let uno = r.anotar(LoQueSalio::de("uno", &b, Externo::Claude, "A"));
+        let dos = r.anotar(LoQueSalio::de("dos", &b, Externo::Groq, "B"));
+        assert_ne!(uno, dos);
+        r.cobrar(uno, 0.004);
+        let todas = r.todas();
+        assert_eq!(todas.iter().map(|s| s.sobre.as_str()).collect::<Vec<_>>(), ["B", "A"], "la más nueva primero");
+        assert_eq!(todas[1].usd, Some(0.004));
+        assert_eq!(todas[0].usd, None);
+        r.vaciar();
+        assert_eq!(r.cuantas(), 0);
+        // Cobrar una que ya no está no hace nada.
+        r.cobrar(dos, 1.0);
+        assert_eq!(r.cuantas(), 0);
+    }
+
+    /// **El registro tiene tope** (auditoría del S3, B15): 25 peticiones dejan las 20 últimas y la
+    /// primera ya no está. Demostrado en rojo sin el `remove(0)`: quedaban 25.
+    #[test]
+    fn el_registro_recuerda_solo_las_ultimas() {
+        let r = Registro::default();
+        let b = Boveda::nueva(&[]);
+        for n in 1..=25 {
+            r.anotar(LoQueSalio::de("x", &b, Externo::Claude, &format!("ficha {n}")));
+        }
+        assert_eq!(r.cuantas(), TOPE_DE_LO_QUE_SALIO);
+        let sobres: Vec<String> = r.todas().into_iter().map(|s| s.sobre.clone()).collect();
+        assert!(!sobres.contains(&"ficha 1".to_string()), "la más vieja sigue en memoria");
+        assert_eq!(sobres.first().map(String::as_str), Some("ficha 25"));
+    }
+
     #[test]
     fn lo_que_sale_al_api_no_lleva_los_nombres_plantados() {
         let p = Peticion::nueva(
@@ -379,7 +565,13 @@ mod pruebas {
         assert!(!vigencia.sigue());
         // Sale antes de leer la clave o de contar un byte: el error es el del corte, no el de «sin
         // clave» ni el del puente.
-        let api = Api { externo: Externo::Claude, conocidos: Vec::new(), vigencia };
+        let api = Api {
+            externo: Externo::Claude,
+            conocidos: Vec::new(),
+            registro: Registro::default(),
+            sobre: String::new(),
+            vigencia,
+        };
         assert_eq!(api.redactar("i", "t").err().as_deref(), Some(CORTADA));
     }
 
@@ -399,7 +591,7 @@ mod pruebas {
         let claude = serde_json::json!({"content":[{"text":"{}"}],"usage":{"input_tokens":10,"output_tokens":2}});
         assert_eq!(Externo::Claude.leer(&claude), Some(("{}".into(), 10, 2)));
         let groq = serde_json::json!({"choices":[{"message":{"content":"{}"}}],"usage":{"prompt_tokens":7,"completion_tokens":3}});
-        assert_eq!(Externo::Gemini.leer(&groq), Some(("{}".into(), 7, 3)));
+        assert_eq!(Externo::Groq.leer(&groq), Some(("{}".into(), 7, 3)));
         for e in Externo::TODOS {
             assert!(e.url().starts_with("https://"), "{e:?} sin https");
         }

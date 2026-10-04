@@ -16,14 +16,14 @@
     "verify:ephemeral": "node scripts/verify-ephemeral.mjs",
     "fidelidad": "pnpm build && node scripts/capturar-fidelidad.mjs",
     "capturas": "node scripts/capturar-maqueta.mjs",
-    "verify:ephemeral:runtime": "cd src-tauri && cargo test --test contra-el-mac-de-verdad una_sesion_completa -- --nocapture"
+    "verify:ephemeral:runtime": "cd src-tauri && cargo test --test contra-el-mac-de-verdad una_sesion_completa -- --nocapture",
+    "ghost": "cargo build --manifest-path src-tauri/Cargo.toml --bin ghost"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "zod": "^4.6.5"
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

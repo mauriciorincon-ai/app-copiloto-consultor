@@ -1,6 +1,6 @@
 import { useT } from "../i18n";
 import { Ic } from "../componentes/Iconos";
-import { Fila, Funciona, TodaviaNo, PILA } from "../componentes/Ventana";
+import { Fila, Funciona, PILA } from "../componentes/Ventana";
 import { abrirAjustesDe, type EstadoPermiso, type Permisos as EstadoDeLosPermisos } from "../cuaderno";
 
 /**
@@ -122,24 +122,21 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
         </div>
 
         <div className="grid-2">
-          {/* «Qué puedes hacer ya, sin conceder nada» — hoy UNA de las tres: indexar tu corpus.
-              Buscar a mano necesita el audio del sistema (⌃⌥A busca sobre lo último que dijo el
-              cliente; auditoría del S2, B19) y las notas llegan en el sprint 3. La tarjeta no es
-              pendiente entera porque una fila sí funciona: marcarla toda «todavía no» escondería
-              lo que la app hace sin permisos (M11 del S1). */}
+          {/* «Qué puedes hacer ya, sin conceder nada» — las tres: indexar tu corpus, escribir notas y
+              acuerdos y buscar a mano, las dos últimas en «Solo notas», que no abre ninguna captura
+              (auditoría del S3, M7 y la segunda pasada de su casilla 4). Fuera de Solo notas, ⌃⌥A busca
+              sobre lo último que dijo el cliente, y eso sí necesita el audio del sistema (S2, B19). */}
           <div className="tarjeta">
             <h2 className="seccion">{t.sinConcederNada}</h2>
             <Fila icono="i-doc" texto={t.indexar}>
               <Funciona />
             </Fila>
-            <Fila icono="i-nota" texto={t.escribirNotas} pendiente>
-              <TodaviaNo />
+            <Fila icono="i-nota" texto={t.escribirNotas}>
+              <Funciona />
             </Fila>
-            {/* Buscar a mano, sin conceder nada, **todavía no existe**: `⌃⌥A` busca sobre lo último
-                que dijo el cliente, y para eso hace falta el audio del sistema. Decía «Funciona»
-                (auditoría del S2, B19). */}
-            <Fila icono="i-buscar" texto={t.buscarAMano} pendiente>
-              <TodaviaNo />
+            {/* En Solo notas, `⌃⌥A` busca con la última línea de tu nota (ADR 017 §5), sin permisos. */}
+            <Fila icono="i-buscar" texto={t.buscarAMano}>
+              <Funciona />
             </Fila>
           </div>
           <div className="tarjeta">

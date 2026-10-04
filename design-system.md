@@ -1,7 +1,7 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.11.0  # 1.11.0: cómo ENVEJECE «todavía no» — el estado del sprint se pone al día, y lo que se libera se agrupa (sprint 001, fase 3). 1.10.0: «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2). 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
+version: 1.14.1  # 1.14.1: el barrido de tokens vetados de §7.2 por fin existe (cierre del ciclo H1). 1.14.0: la puerta local CONSTRUIDA (sprint 003, fase 4 — maquetado, no visto). 1.13.0: «Este cliente», la NDA y solo notas CONSTRUIDOS (sprint 003, fase 3 — maquetado, no visto). 1.12.0: las propuestas y la bandeja CONSTRUIDAS (sprint 003, fase 2 — maquetado, no visto; se valida en el gate del MVP). 1.11.0: cómo ENVEJECE «todavía no» — el estado del sprint se pone al día, y lo que se libera se agrupa (sprint 001, fase 3). 1.10.0: «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2). 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
 fecha: 2026-09-21
 estado: aprobado   # G-Diseño aprobado el 2026-09-20 («sí apruebo la pantalla completa»)
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
@@ -245,11 +245,13 @@ pasada de capturas leída como imagen, no un test.
 2 temas × 2 idiomas) → 0 textos bajo AA (peor 5.25 claro / 6.14 oscuro); kit 4 combinaciones
 × 313 textos → 0 bajo AA (peor 4.95 claro / 5.08 oscuro).
 
-### 7.2 Tokens VETADOS como texto (fallarán en lint cuando exista `src/`)
+### 7.2 Tokens VETADOS como texto (fallan en test: `tests/unit/tokens-vetados.test.ts`)
 
-`--ink-3` (y su futura clase `text-ink-3`) — solo separadores y ornamento. El barrido de
-clases prohibidas sobre `src/` (regla 5b del CLAUDE.md) nace en el S1 con esta lista:
-`text-ink-3`, `text-line`, `text-line-2`, `text-surface*`. Demo en rojo en el mismo commit.
+`--ink-3` (y su clase `text-ink-3`) — solo separadores y ornamento. El barrido de clases
+prohibidas sobre `src/` (regla 5b del CLAUDE.md) lee su lista de aquí: `text-ink-3`, `text-line`,
+`text-line-2`, `text-surface*`, y además cualquier `color` que apunte a `var(--ink-3)`. **Debía nacer en
+el S1 y no nació**: lo encontró la auditoría del `CLAUDE.md` del cierre del ciclo H1 (sprint 003), que
+lo construyó con su rojo. Hasta entonces nadie había escrito texto en `--ink-3`, pero nada lo impedía.
 
 ### 7.3 Reglas
 
@@ -517,6 +519,74 @@ cuatro todavía no existen»**, no «7 de 7».
    estado porque era opcional y futura; el acople se entrega en el sprint 001, y en el sprint 002
    el mismo permiso encuentra la pestaña de Meet para leer su pantalla.
 
+## 9-septies · Las propuestas y la bandeja, construidas (sprint 003, fase 2, 2026-09-27)
+
+> **Maquetado, no visto.** Por decisión del usuario (2026-09-27, «solo muéstrame cosas realmente
+> importantes que deba decidir; el resto lo validamos en los gates»), estas formas se construyen con
+> lo maquetado y su veredicto viaja al gate del MVP. Registro: `docs/diseno/README.md`.
+
+Lo que el sprint 3 añadió al sistema, sobre `.propuesta`, `.cuenta` y `.ventanas` (§9-ter y §9-quater):
+
+| Clase | Dónde | Regla |
+|---|---|---|
+| `.banda .propuesta-b` | la línea de estado de la banda | la propuesta **pasiva y en una línea**: halo, `i-chispa`, la tecla `⌃⌥↵`; no toca la ficha, no suena, no se lee en voz alta |
+| `.tecla.fijada` | donde estaba «⌃⌥P fijar» | la señal al fijar: chincheta llena + «fijada» + verde (símbolo, texto y color, §4); dura mientras esa ficha siga en la banda |
+| `.franja.mute` | «al cerrar» con la ventana en cero | gris, no ámbar: con «al cerrar» no hay bandeja y no hay nada que advertir |
+| `.cuenta.vencida` | la bandeja al llegar a cero | la cuenta se apaga y dice a qué hora venció |
+| `.franja .ventanas .op` | los chips de la ventana dentro de una franja | llevan su propia superficie: el tinte del elegido sobre el ámbar no alcanzaba AA en el tema claro (axe) |
+
+**Cómo se lee una propuesta** (`src/propuesta.ts`, una sola vez para Notas, la bandeja y la banda):
+tuya, tu frase; del cliente, **un hecho en una línea** con su plantilla —«Dijeron «…»», «Mencionaron a
+«…», que no está en tu corpus», «Te preguntaron por: …»—, jamás su turno. Tras el origen, la regla
+que saltó («· cifra y fecha»), o la sección de la ficha con que choca. El catálogo entero, en
+`notas.html` «sprint 3 · las cinco reglas».
+
+**La bandeja con llave.** Una bandeja de otra sesión de la app enseña su cuenta atrás sin abrirla;
+**lo que dice** pide Touch ID, como abrir una reunión, y la ventana no se cambia hasta abrirla.
+
+## 9-octies · El marco en la mano, construido (sprint 003, fase 3, 2026-09-27)
+
+> **Maquetado, no visto** (misma decisión del usuario que §9-septies). ADR 017. Registro:
+> `docs/diseno/README.md`.
+
+**Sesión vuelve al diseño de la Etapa de Diseño** («reunión detectada»): la reunión, las dos pistas y
+«Este cliente» lado a lado, y los botones en su fila. La tarjeta «Qué funciona hoy» de los sprints 1 y
+2 se retira: era el andamio de un producto a medias (§9-sexies, «todavía no»), y con el H1 entero no le
+queda nada que decir. Su fila «A medias» se queda en la tarjeta de las pistas, solo cuando una cae.
+
+| Clase | Dónde | Regla |
+|---|---|---|
+| `.selector` | «Este cliente» | un `<select>` nativo con la forma de un chip: los clientes del corpus y «Sin elegir» |
+| `.bandera .pendiente` | bajo las normas de la bandera | lo que el informe **no pudo verificar**, con su gap: «Sin verificar: …». Lo no verificado se dice, no se calla |
+| `.bandera.desconocida` | sin jurisdicción, fuera del catálogo o sin estatuto | gris, con `i-ring` y la palabra: no se adivina la más parecida |
+| `.aviso-legal` | junto a «Cláusula de encargo» | «No es asesoría legal», siempre que hay tarjeta |
+| `.pregunta-nda` | la fila de los botones, a lo ancho | la pregunta de la NDA se contesta justo antes de «Iniciar sesión»; borde izquierdo en halo |
+| `.tarjeta p.clausula` | «Cláusula para tu carta de encargo» | las dos versiones lado a lado, en la tipografía de la evidencia; se copia la del idioma de la carta |
+| `.banda .marca-min.warn` + `i-nota` | la cabecera de la banda en solo notas | «Solo notas · sin transcripción»: ámbar, como la barra de `kit.html` §6 |
+
+**El riesgo de la bandera, en cinco palabras y tres colores** (símbolo + texto + color, §4): bajo y
+bajo-medio en verde con ✓; medio y medio-alto en ámbar con ⚠ (medio-alto con el borde en error); sin
+verificar en gris con ◯.
+
+## 9-nonies · La puerta local, construida (sprint 003, fase 4, 2026-09-27)
+
+> **Maquetado, no visto** (misma decisión del usuario que §9-septies). ADR 018. Registro:
+> `docs/diseno/README.md`.
+
+La puerta se abre **como «lo que salió»** (§9-sexies, mirada 19): un botón en la pantalla de hoy lleva
+a la vista de la Etapa de Diseño («Claude Code»), con un botón para volver. Tres ajustes para que la
+vista quepa en los 640 px con su franja y su registro (`maqueta-cabe` midió +120 px):
+
+| Pieza | Dónde | Regla |
+|---|---|---|
+| «Puerta local · cerrada / abierta» | `btn mini` con `i-llave`, a la derecha de «Redactar sugerencias» | la entrada; dice el estado de la puerta en su palabra |
+| la fila del título | tarjeta de cabecera: «← Quién redacta» · «Puerta local para tu agente» · el conmutador con `i-llave` | el botón de volver entra en la fila del título: no hay fila aparte |
+| el subtítulo de la pantalla | `.titulo .sub` | en la vista de la puerta dice lo que la puerta es, y la tarjeta no lo repite |
+| el comando | fila `mono` + «Copiar», solo con la puerta abierta | la ruta entre comillas y `--help`; debajo, qué va a preguntar macOS |
+| `.puerta` | las dos columnas | el relleno pasa de 5 px a 3 px por lado, y cada «por qué» cabe en una línea |
+| el registro | «Qué hizo tu agente», `.mas` | lo más reciente arriba; tres a la vista y el resto se desplaza (`max-height: 74px`); lo denegado lleva su motivo antes de la marca |
+| `franja.warn` | entre la cabecera y las columnas | «Se cerró sola: hay una reunión», o «No se abrió» y por qué |
+
 ## 10 · Deuda de diseño declarada
 
 | Qué | Por qué | Cuándo se paga |
@@ -541,4 +611,8 @@ cuatro todavía no existen»**, no «7 de 7».
 | 1.6.0 | 2026-09-20 | mirada 4-bis: `propuesta` (proponer ≠ guardar) · varios idiomas · puerta local para Claude Code |
 | 1.7.0 | 2026-09-20 | mirada 4-ter: **bandeja de propuestas con cuenta atrás** (§9-quater) · G-Diseño aprobado |
 | 1.8.0 | 2026-09-20 | sprint 001, fase 1a: **§9-quinquies — los seis estados de CONTENIDO de la banda** · tokens de alto (`--banda-h*`) · acciones como teclas · el asa con un trabajo · transcript a la derecha |
+| 1.12.0 | 2026-09-27 | sprint 003, fase 2: **§9-septies — las propuestas y la bandeja, construidas** (`propuesta-b`, `tecla.fijada`, `franja.mute`, `cuenta.vencida`, los chips dentro de una franja) — maquetado, no visto |
+| 1.13.0 | 2026-09-27 | sprint 003, fase 3: **§9-octies — el marco en la mano, construido** (`selector`, `bandera .pendiente`, `aviso-legal`, `pregunta-nda`, `clausula`, la banda en solo notas) · Sesión vuelve al diseño de la Etapa de Diseño — maquetado, no visto |
+| 1.14.0 | 2026-09-27 | sprint 003, fase 4: **§9-nonies — la puerta local, construida** (la entrada en IA, la fila del título con «volver», el subtítulo de la vista, el comando, `.puerta` a 3 px, el registro que se desplaza, la franja de «se cerró sola») — maquetado, no visto |
+| 1.14.1 | 2026-09-27 | cierre del ciclo H1 (sprint 003, fase 5): **§7.2 — el barrido de tokens vetados existe** (`tests/unit/tokens-vetados.test.ts`, que lee la lista de aquí); el frontmatter, que se había quedado en 1.13.0, se pone al día |
 | 1.9.0 | 2026-09-20 | mirada 11: **la maniobra** — catálogo versionado de seis maneras de responder + «lo más cercano que sí tienes», los dos deterministas; `maniobra-b` y `cercano-b`; estado «sin resultado · ampliada» |

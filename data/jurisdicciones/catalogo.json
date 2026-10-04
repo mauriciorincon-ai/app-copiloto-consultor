@@ -1,0 +1,679 @@
+{
+  "_leeme": "Catálogo de jurisdicciones de «El marco en la mano» (C11, ADR 017). Sale entero del informe legal-ético de la planeadora (investigacion/2026-09-17-legal-etica.md): § Matriz por jurisdicción, §2.b (estados de todas las partes), §1.c (NDA), §7 y § Gaps. Cada fila: sus alias (cómo puede escribirse en la línea «Jurisdicción:» de la ficha de cliente), el riesgo que le da la matriz, la regla y lo que implica en los dos idiomas, sus fuentes (norma y URL, las que el informe cita) y, si algo de la fila no se pudo verificar, su «pendiente» con el gap del informe. Lo no verificado no se afirma. NO es asesoría legal. Se actualiza con una versión nueva de la app, jamás por la red.",
+  "version": 1,
+  "consultado": "2026-09-17",
+  "clausula": {
+    "es": "Asistencia de IA local. Durante las reuniones de este encargo, el Consultor puede usar en su propio equipo un asistente de inteligencia artificial que escucha y transcribe la conversación solo en la memoria del equipo, para buscar en sus propios documentos. El asistente no graba audio ni guarda transcripciones o capturas de pantalla, no identifica a nadie por su voz y no infiere emociones. Por defecto nada sale del equipo; si el Consultor activa un proveedor externo, solo le envía fragmentos de texto en los que el asistente reemplaza los nombres, correos, teléfonos y números que reconoce; el proveedor no entrena con ellos y puede conservarlos hasta 30 días. Se conservan, cifradas y bajo responsabilidad del Consultor, sus notas, lo que él mismo dijo si así lo elige y las propuestas de una línea sobre la reunión que él acepte; las que no decide se borran solas en 24 horas como mucho. Si el Cliente prefiere que no se use en una reunión, basta con decirlo.",
+    "en": "Local AI assistance. During meetings under this engagement, the Consultant may use, on their own computer, an artificial intelligence assistant that listens to and transcribes the conversation only in that computer’s memory, to search the Consultant’s own documents. The assistant does not record audio or keep transcripts or screenshots, does not identify anyone by their voice and does not infer emotions. By default nothing leaves the computer; if the Consultant turns on an external provider, only text fragments are sent to it, in which the assistant replaces the names, emails, phone numbers and numbers it recognises; the provider does not train on them and may keep them for up to 30 days. Kept, encrypted and under the Consultant’s responsibility, are the Consultant’s notes, what the Consultant said if the Consultant so chooses, and the one-line suggestions about the meeting that the Consultant accepts; those not decided on delete themselves within 24 hours at most. If the Client prefers it not be used in a meeting, saying so is enough."
+  },
+  "jurisdicciones": [
+    {
+      "id": "co",
+      "nombre": { "es": "Colombia", "en": "Colombia" },
+      "alias": ["colombia", "co"],
+      "riesgo": "bajo-medio",
+      "regla": {
+        "es": "Escuchar como participante es lícito; la transcripción efímera probablemente es «tratamiento».",
+        "en": "Listening as a participant is lawful; ephemeral transcription is probably “processing”."
+      },
+      "implica": {
+        "es": "Resuélvelo en el encargo: cláusula del contrato + chequeo de NDA.",
+        "en": "Handle it at the engagement level: contract clause + NDA check."
+      },
+      "fuentes": [
+        {
+          "norma": "CSJ AP1465-2018",
+          "url": "https://www.cortesuprema.gov.co/corte/wp-content/uploads/relatorias/pe/b2abr2018/AP1465-2018(52320).doc"
+        },
+        {
+          "norma": "Ley 1581 art. 3",
+          "url": "https://www.alcaldiabogota.gov.co/sisjur/normas/Norma1.jsp?i=49981"
+        }
+      ],
+      "pendiente": {
+        "es": "la CSJ AP1465-2018 se leyó en una fuente secundaria (G-1)",
+        "en": "CSJ AP1465-2018 was read in a secondary source (G-1)"
+      }
+    },
+    {
+      "id": "us",
+      "nombre": {
+        "es": "EE. UU. (federal y estados de una parte)",
+        "en": "USA (federal and one-party states)"
+      },
+      "alias": [
+        "ee uu",
+        "eeuu",
+        "estados unidos",
+        "usa",
+        "us",
+        "u s",
+        "united states"
+      ],
+      "riesgo": "bajo",
+      "regla": {
+        "es": "Quien participa puede escuchar y transcribir, salvo para un fin criminal o un ilícito civil, como incumplir una NDA.",
+        "en": "A party may listen and transcribe, unless it is for a criminal or tortious purpose, such as breaching an NDA."
+      },
+      "implica": {
+        "es": "Si la contraparte está en un estado de todas las partes, escribe ese estado en la ficha.",
+        "en": "If the other party is in an all-party state, write that state in the client file."
+      },
+      "fuentes": [
+        {
+          "norma": "18 U.S.C. § 2511(2)(d)",
+          "url": "https://www.law.cornell.edu/uscode/text/18/2511"
+        }
+      ]
+    },
+    {
+      "id": "us-ca",
+      "nombre": {
+        "es": "EE. UU. · California (todas las partes)",
+        "en": "USA · California (all-party)"
+      },
+      "alias": ["california"],
+      "riesgo": "medio-alto",
+      "regla": {
+        "es": "Exige a todas las partes y castiga «escuchar o grabar» con un aparato, no solo grabar.",
+        "en": "Requires all parties and punishes “eavesdrop upon or record” with a device, not just recording."
+      },
+      "implica": {
+        "es": "Sugerido: aviso de una línea al cliente o modo solo notas.",
+        "en": "Suggested: one-line notice to the client or notes-only mode."
+      },
+      "fuentes": [
+        {
+          "norma": "Cal. Penal Code § 632(a)",
+          "url": "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=PEN&sectionNum=632."
+        }
+      ],
+      "pendiente": {
+        "es": "no hay precedente sobre quien participa y transcribe sin grabar (G-6)",
+        "en": "there is no precedent on a participant who transcribes without recording (G-6)"
+      }
+    },
+    {
+      "id": "us-de",
+      "nombre": {
+        "es": "EE. UU. · Delaware (todas las partes)",
+        "en": "USA · Delaware (all-party)"
+      },
+      "alias": ["delaware"],
+      "riesgo": "medio-alto",
+      "regla": {
+        "es": "La ley de privacidad pide a todas las partes y la de escuchas a una; el RCFP aconseja seguir la más estricta.",
+        "en": "The privacy law requires all parties and the wiretap law one; RCFP advises following the stricter."
+      },
+      "implica": {
+        "es": "Sugerido: aviso de una línea al cliente o modo solo notas.",
+        "en": "Suggested: one-line notice to the client or notes-only mode."
+      },
+      "fuentes": [
+        {
+          "norma": "11 Del. C. § 1335(a)(4)",
+          "url": "https://www.rcfp.org/reporters-recording-guide/delaware/"
+        }
+      ]
+    },
+    {
+      "id": "us-fl",
+      "nombre": {
+        "es": "EE. UU. · Florida (todas las partes)",
+        "en": "USA · Florida (all-party)"
+      },
+      "alias": ["florida"],
+      "riesgo": "medio-alto",
+      "regla": {
+        "es": "Exige consentimiento de todas las partes; sin precedente para transcripción local.",
+        "en": "Requires all-party consent; no precedent for local transcription."
+      },
+      "implica": {
+        "es": "Sugerido: aviso de una línea al cliente o modo solo notas.",
+        "en": "Suggested: one-line notice to the client or notes-only mode."
+      },
+      "fuentes": [
+        {
+          "norma": "Fla. Stat. § 934.03",
+          "url": "https://www.rcfp.org/reporters-recording-guide/florida/"
+        }
+      ]
+    },
+    {
+      "id": "us-il",
+      "nombre": {
+        "es": "EE. UU. · Illinois (todas las partes)",
+        "en": "USA · Illinois (all-party)"
+      },
+      "alias": ["illinois"],
+      "riesgo": "medio-alto",
+      "regla": {
+        "es": "Todas las partes en una conversación privada; castiga el aparato que «graba u oye».",
+        "en": "All parties in a private conversation; it punishes a device that “records or overhears”."
+      },
+      "implica": {
+        "es": "Sugerido: aviso de una línea al cliente o modo solo notas.",
+        "en": "Suggested: one-line notice to the client or notes-only mode."
+      },
+      "fuentes": [
+        {
+          "norma": "720 ILCS 5/14-2",
+          "url": "https://www.rcfp.org/reporters-recording-guide/illinois/"
+        }
+      ]
+    },
+    {
+      "id": "us-md",
+      "nombre": {
+        "es": "EE. UU. · Maryland (todas las partes)",
+        "en": "USA · Maryland (all-party)"
+      },
+      "alias": ["maryland"],
+      "riesgo": "medio-alto",
+      "regla": {
+        "es": "Todas las partes; e ilegal aun con consentimiento si es para un fin criminal o ilícito.",
+        "en": "All parties; illegal even with consent if it is for a criminal or tortious purpose."
+      },
+      "implica": {
+        "es": "Sugerido: aviso de una línea al cliente o modo solo notas.",
+        "en": "Suggested: one-line notice to the client or notes-only mode."
+      },
+      "fuentes": [
+        {
+          "norma": "Md. Cts. & Jud. Proc. § 10-402",
+          "url": "https://www.rcfp.org/reporters-recording-guide/maryland/"
+        }
+      ]
+    },
+    {
+      "id": "us-ma",
+      "nombre": {
+        "es": "EE. UU. · Massachusetts (todas las partes)",
+        "en": "USA · Massachusetts (all-party)"
+      },
+      "alias": ["massachusetts"],
+      "riesgo": "medio-alto",
+      "regla": {
+        "es": "Prohíbe grabar en secreto; no hace falta consentimiento si todos lo saben.",
+        "en": "It bans secret recording; consent is not needed if everyone knows."
+      },
+      "implica": {
+        "es": "Sugerido: aviso de una línea al cliente o modo solo notas.",
+        "en": "Suggested: one-line notice to the client or notes-only mode."
+      },
+      "fuentes": [
+        {
+          "norma": "G.L. c. 272, § 99(C)",
+          "url": "https://www.rcfp.org/reporters-recording-guide/massachusetts/"
+        }
+      ]
+    },
+    {
+      "id": "us-mi",
+      "nombre": {
+        "es": "EE. UU. · Michigan (todas las partes)",
+        "en": "USA · Michigan (all-party)"
+      },
+      "alias": ["michigan"],
+      "riesgo": "medio-alto",
+      "regla": {
+        "es": "Todas las partes para terceros; quien participa no necesita consentimiento (Sullivan v. Gray).",
+        "en": "All parties for third parties; a participant needs no consent (Sullivan v. Gray)."
+      },
+      "implica": {
+        "es": "Sugerido: aviso de una línea al cliente o modo solo notas.",
+        "en": "Suggested: one-line notice to the client or notes-only mode."
+      },
+      "fuentes": [
+        {
+          "norma": "MCL § 750.539c",
+          "url": "https://www.rcfp.org/reporters-recording-guide/michigan/"
+        }
+      ]
+    },
+    {
+      "id": "us-mt",
+      "nombre": {
+        "es": "EE. UU. · Montana (todas las partes)",
+        "en": "USA · Montana (all-party)"
+      },
+      "alias": ["montana"],
+      "riesgo": "medio-alto",
+      "regla": {
+        "es": "Castiga grabar sin que lo sepan todas las partes, con un aparato oculto.",
+        "en": "It punishes recording without all parties knowing, with a hidden device."
+      },
+      "implica": {
+        "es": "Sugerido: aviso de una línea al cliente o modo solo notas.",
+        "en": "Suggested: one-line notice to the client or notes-only mode."
+      },
+      "fuentes": [
+        {
+          "norma": "MCA § 45-8-213",
+          "url": "https://www.rcfp.org/reporters-recording-guide/montana/"
+        }
+      ]
+    },
+    {
+      "id": "us-nh",
+      "nombre": {
+        "es": "EE. UU. · New Hampshire (todas las partes)",
+        "en": "USA · New Hampshire (all-party)"
+      },
+      "alias": ["new hampshire", "nueva hampshire"],
+      "riesgo": "medio-alto",
+      "regla": {
+        "es": "Exige a todas las partes; es delito grave si ninguna consiente.",
+        "en": "Requires all parties; a felony if none consents."
+      },
+      "implica": {
+        "es": "Sugerido: aviso de una línea al cliente o modo solo notas.",
+        "en": "Suggested: one-line notice to the client or notes-only mode."
+      },
+      "fuentes": [
+        {
+          "norma": "RSA 570-A:2",
+          "url": "https://www.rcfp.org/reporters-recording-guide/new-hampshire/"
+        }
+      ]
+    },
+    {
+      "id": "us-pa",
+      "nombre": {
+        "es": "EE. UU. · Pennsylvania (todas las partes)",
+        "en": "USA · Pennsylvania (all-party)"
+      },
+      "alias": ["pennsylvania", "pensilvania"],
+      "riesgo": "medio-alto",
+      "regla": {
+        "es": "Exige el consentimiento de todas las partes.",
+        "en": "Requires the consent of all parties."
+      },
+      "implica": {
+        "es": "Sugerido: aviso de una línea al cliente o modo solo notas.",
+        "en": "Suggested: one-line notice to the client or notes-only mode."
+      },
+      "fuentes": [
+        {
+          "norma": "18 Pa.C.S. §§ 5703, 5704(4)",
+          "url": "https://www.rcfp.org/reporters-recording-guide/pennsylvania/"
+        }
+      ]
+    },
+    {
+      "id": "us-wa",
+      "nombre": {
+        "es": "EE. UU. · Washington (todas las partes)",
+        "en": "USA · Washington (all-party)"
+      },
+      "alias": ["washington", "estado de washington", "washington state"],
+      "riesgo": "medio-alto",
+      "regla": {
+        "es": "Todas las partes, en persona, por teléfono o por medios electrónicos.",
+        "en": "All parties, in person, by phone or electronically."
+      },
+      "implica": {
+        "es": "Sugerido: aviso de una línea al cliente o modo solo notas.",
+        "en": "Suggested: one-line notice to the client or notes-only mode."
+      },
+      "fuentes": [
+        {
+          "norma": "RCW 9.73.030",
+          "url": "https://www.rcfp.org/reporters-recording-guide/washington/"
+        }
+      ]
+    },
+    {
+      "id": "us-ct",
+      "nombre": {
+        "es": "EE. UU. · Connecticut (mixto)",
+        "en": "USA · Connecticut (mixed)"
+      },
+      "alias": ["connecticut"],
+      "riesgo": "medio-alto",
+      "regla": {
+        "es": "Por teléfono, todas las partes (en lo civil); en persona, una.",
+        "en": "By phone, all parties (civil); in person, one."
+      },
+      "implica": {
+        "es": "Sugerido: aviso de una línea al cliente o modo solo notas.",
+        "en": "Suggested: one-line notice to the client or notes-only mode."
+      },
+      "fuentes": [
+        {
+          "norma": "Conn. Gen. Stat. § 52-570d",
+          "url": "https://www.rcfp.org/reporters-recording-guide/connecticut/"
+        }
+      ]
+    },
+    {
+      "id": "us-nv",
+      "nombre": {
+        "es": "EE. UU. · Nevada (mixto)",
+        "en": "USA · Nevada (mixed)"
+      },
+      "alias": ["nevada"],
+      "riesgo": "medio-alto",
+      "regla": {
+        "es": "Por teléfono, todas las partes; en persona, una.",
+        "en": "By phone, all parties; in person, one."
+      },
+      "implica": {
+        "es": "Sugerido: aviso de una línea al cliente o modo solo notas.",
+        "en": "Suggested: one-line notice to the client or notes-only mode."
+      },
+      "fuentes": [
+        {
+          "norma": "NRS 200.620",
+          "url": "https://www.rcfp.org/reporters-recording-guide/nevada/"
+        }
+      ]
+    },
+    {
+      "id": "us-or",
+      "nombre": {
+        "es": "EE. UU. · Oregon (mixto)",
+        "en": "USA · Oregon (mixed)"
+      },
+      "alias": ["oregon"],
+      "riesgo": "medio-alto",
+      "regla": {
+        "es": "Por medios electrónicos, una parte; en persona, la regla del aviso quedó en parte anulada (2023).",
+        "en": "Electronically, one party; in person, the notice rule was partly struck down (2023)."
+      },
+      "implica": {
+        "es": "Sugerido: aviso de una línea al cliente o modo solo notas.",
+        "en": "Suggested: one-line notice to the client or notes-only mode."
+      },
+      "fuentes": [
+        {
+          "norma": "ORS 165.540",
+          "url": "https://www.rcfp.org/reporters-recording-guide/oregon/"
+        }
+      ]
+    },
+    {
+      "id": "us-mo",
+      "nombre": { "es": "EE. UU. · Missouri", "en": "USA · Missouri" },
+      "alias": ["missouri", "misuri"],
+      "riesgo": "sin-verificar",
+      "regla": {
+        "es": "El informe lo nombra entre los de regla mixta, sin verificar su estatuto.",
+        "en": "The report lists it as mixed, without verifying its statute."
+      },
+      "implica": {
+        "es": "Consúltalo con un abogado antes de la reunión: la app no afirma nada aquí.",
+        "en": "Check with a lawyer before the meeting: the app asserts nothing here."
+      },
+      "fuentes": [
+        {
+          "norma": "RCFP Reporter’s Recording Guide",
+          "url": "https://www.rcfp.org/introduction-to-reporters-recording-guide/"
+        }
+      ],
+      "pendiente": {
+        "es": "su estatuto no está en el informe",
+        "en": "its statute is not in the report"
+      }
+    },
+    {
+      "id": "us-hi",
+      "nombre": { "es": "EE. UU. · Hawái", "en": "USA · Hawaii" },
+      "alias": ["hawaii", "hawai"],
+      "riesgo": "sin-verificar",
+      "regla": {
+        "es": "El informe lo nombra entre los que aplican un criterio de lugar, sin verificar su estatuto.",
+        "en": "The report lists it among place-based rules, without verifying its statute."
+      },
+      "implica": {
+        "es": "Consúltalo con un abogado antes de la reunión: la app no afirma nada aquí.",
+        "en": "Check with a lawyer before the meeting: the app asserts nothing here."
+      },
+      "fuentes": [
+        {
+          "norma": "RCFP Reporter’s Recording Guide",
+          "url": "https://www.rcfp.org/introduction-to-reporters-recording-guide/"
+        }
+      ],
+      "pendiente": {
+        "es": "su estatuto no está en el informe",
+        "en": "its statute is not in the report"
+      }
+    },
+    {
+      "id": "us-me",
+      "nombre": { "es": "EE. UU. · Maine", "en": "USA · Maine" },
+      "alias": ["maine"],
+      "riesgo": "sin-verificar",
+      "regla": {
+        "es": "El informe lo nombra entre los que aplican un criterio de lugar, sin verificar su estatuto.",
+        "en": "The report lists it among place-based rules, without verifying its statute."
+      },
+      "implica": {
+        "es": "Consúltalo con un abogado antes de la reunión: la app no afirma nada aquí.",
+        "en": "Check with a lawyer before the meeting: the app asserts nothing here."
+      },
+      "fuentes": [
+        {
+          "norma": "RCFP Reporter’s Recording Guide",
+          "url": "https://www.rcfp.org/introduction-to-reporters-recording-guide/"
+        }
+      ],
+      "pendiente": {
+        "es": "su estatuto no está en el informe",
+        "en": "its statute is not in the report"
+      }
+    },
+    {
+      "id": "ue",
+      "nombre": { "es": "Unión Europea (GDPR)", "en": "European Union (GDPR)" },
+      "alias": [
+        "union europea",
+        "ue",
+        "eu",
+        "european union",
+        "europa",
+        "europe"
+      ],
+      "riesgo": "medio",
+      "regla": {
+        "es": "Es tratamiento aunque sea efímero; deber de información (art. 13).",
+        "en": "It is processing even if ephemeral; duty to inform (art. 13)."
+      },
+      "implica": {
+        "es": "Informa a nivel de encargo; sin emociones, sin audio a la nube.",
+        "en": "Inform at engagement level; no emotions, no audio to the cloud."
+      },
+      "fuentes": [
+        {
+          "norma": "GDPR art. 4(2), 13",
+          "url": "https://gdpr-info.eu/art-13-gdpr/"
+        },
+        {
+          "norma": "EDPB 1/2024",
+          "url": "https://www.edpb.europa.eu/system/files/2024-10/edpb_guidelines_202401_legitimateinterest_en.pdf"
+        }
+      ]
+    },
+    {
+      "id": "de",
+      "nombre": { "es": "Alemania", "en": "Germany" },
+      "alias": ["alemania", "germany", "deutschland", "de"],
+      "riesgo": "medio",
+      "regla": {
+        "es": "Grabar la palabra no pública es delito (§ 201 StGB); la doctrina no lo ve si solo pasa por la memoria volátil.",
+        "en": "Recording non-public speech is a crime (§ 201 StGB); doctrine does not see it if it only passes through volatile memory."
+      },
+      "implica": {
+        "es": "Sugerido: modo solo notas por defecto e informar a nivel de encargo.",
+        "en": "Suggested: notes-only by default and inform at engagement level."
+      },
+      "fuentes": [
+        {
+          "norma": "§ 201 StGB",
+          "url": "https://www.gesetze-im-internet.de/stgb/__201.html"
+        }
+      ],
+      "pendiente": {
+        "es": "el § 201(2) aplicado a quien participa no está analizado (G-8)",
+        "en": "§ 201(2) applied to a participant is not analyzed (G-8)"
+      }
+    },
+    {
+      "id": "fr",
+      "nombre": { "es": "Francia", "en": "France" },
+      "alias": ["francia", "france", "fr"],
+      "riesgo": "medio-alto",
+      "regla": {
+        "es": "Captar o grabar palabras privadas sin consentimiento es delito (art. 226-1); captar no exige guardar.",
+        "en": "Capturing or recording private speech without consent is a crime (art. 226-1); capturing needs no storage."
+      },
+      "implica": {
+        "es": "Sugerido: modo solo notas por defecto e informar a nivel de encargo.",
+        "en": "Suggested: notes-only by default and inform at engagement level."
+      },
+      "fuentes": [
+        {
+          "norma": "Code pénal art. 226-1",
+          "url": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000049312755"
+        }
+      ],
+      "pendiente": {
+        "es": "la excepción para conversaciones profesionales solo consta en fuentes secundarias (G-9)",
+        "en": "the exception for professional conversations only appears in secondary sources (G-9)"
+      }
+    },
+    {
+      "id": "es",
+      "nombre": { "es": "España", "en": "Spain" },
+      "alias": ["espana", "spain", "es"],
+      "riesgo": "bajo-medio",
+      "regla": {
+        "es": "Quien participa puede grabar (STS 145/2023); la transcripción es tratamiento bajo el GDPR.",
+        "en": "A participant may record (STS 145/2023); transcription is processing under the GDPR."
+      },
+      "implica": {
+        "es": "Informa a nivel de encargo: la voz es dato personal (AEPD).",
+        "en": "Inform at engagement level: voice is personal data (AEPD)."
+      },
+      "fuentes": [
+        {
+          "norma": "STS 145/2023",
+          "url": "https://www.iustel.com/diario_del_derecho/noticia.asp?ref_iustel=1234545"
+        },
+        {
+          "norma": "AEPD, 2026-01-14",
+          "url": "https://www.aepd.es/en/press-and-communication/blog/ai-voice-transcription"
+        }
+      ]
+    },
+    {
+      "id": "mx",
+      "nombre": { "es": "México", "en": "Mexico" },
+      "alias": ["mexico", "mx"],
+      "riesgo": "bajo-medio",
+      "regla": {
+        "es": "Las comunicaciones se protegen solo frente a terceros ajenos (SCJN); la LFPDPPP 2025 define «tratamiento» en amplio.",
+        "en": "Communications are protected only against outside third parties (SCJN); the 2025 LFPDPPP defines “processing” broadly."
+      },
+      "implica": {
+        "es": "Aviso de privacidad del consultor; el consentimiento tácito es la regla general.",
+        "en": "The consultant’s privacy notice; tacit consent is the general rule."
+      },
+      "fuentes": [
+        {
+          "norma": "LFPDPPP 2025",
+          "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf"
+        },
+        {
+          "norma": "SCJN, Primera Sala",
+          "url": "https://lasillarota.com/nacion/2026/7/4/la-scjn-aclara-cuando-tus-llamadas-audios-mensajes-pueden-convertirse-en-prueba-legal-606847.html"
+        }
+      ],
+      "pendiente": {
+        "es": "el criterio de la SCJN se leyó en prensa: el comunicado oficial no cargó (G-10)",
+        "en": "the SCJN criterion was read in the press: the official release did not load (G-10)"
+      }
+    },
+    {
+      "id": "cl",
+      "nombre": { "es": "Chile", "en": "Chile" },
+      "alias": ["chile", "cl"],
+      "riesgo": "medio",
+      "regla": {
+        "es": "Captar o grabar conversaciones privadas sin autorización es delito (art. 161-A); al interlocutor lo excluye la jurisprudencia.",
+        "en": "Capturing or recording private conversations without authorization is a crime (art. 161-A); case law excludes the participant."
+      },
+      "implica": {
+        "es": "Captar no exige guardar: la protección de quien participa es solo jurisprudencial.",
+        "en": "Capturing needs no storage: a participant’s protection comes only from case law."
+      },
+      "fuentes": [
+        {
+          "norma": "Código Penal art. 161-A",
+          "url": "https://www.conceptosjuridicos.com/cl/codigo-penal-articulo-161-a/"
+        },
+        {
+          "norma": "Ley 21.719",
+          "url": "https://www.thomsonreuters.cl/es-cl/soluciones-juridicas/biblioteca-contenido-legal/ley-21719-y-la-reconstruccion-del-derecho-chileno-de-proteccion-de-datos-personales"
+        }
+      ],
+      "pendiente": {
+        "es": "el texto oficial de la Ley 21.719 no cargó (G-11)",
+        "en": "the official text of Law 21.719 did not load (G-11)"
+      }
+    },
+    {
+      "id": "pe",
+      "nombre": { "es": "Perú", "en": "Peru" },
+      "alias": ["peru", "pe"],
+      "riesgo": "bajo-medio",
+      "regla": {
+        "es": "Quien participa puede grabar, salvo reserva profesional o confidencialidad pactada (Apelación 7-2023).",
+        "en": "A participant may record, except under professional secrecy or agreed confidentiality (Appeal 7-2023)."
+      },
+      "implica": {
+        "es": "Lee tu NDA: la confidencialidad pactada es el límite.",
+        "en": "Read your NDA: agreed confidentiality is the limit."
+      },
+      "fuentes": [
+        {
+          "norma": "CS, Apelación 7-2023",
+          "url": "https://www.pj.gob.pe/wps/wcm/connect/a6af33804e496d15a6e6b6542f56fc7a/2023001205001217_0_115254_240109_112237.pdf?MOD=AJPERES&CACHEID=a6af33804e496d15a6e6b6542f56fc7a"
+        },
+        {
+          "norma": "D.S. 016-2024-JUS",
+          "url": "https://www.gob.pe/institucion/smv/normas-legales/6426760-016-2024-jus"
+        }
+      ]
+    },
+    {
+      "id": "ar",
+      "nombre": { "es": "Argentina", "en": "Argentina" },
+      "alias": ["argentina", "ar"],
+      "riesgo": "medio",
+      "regla": {
+        "es": "Captar comunicaciones privadas es delito (art. 153 CP), y la jurisprudencia sobre quien participa está dividida.",
+        "en": "Capturing private communications is a crime (art. 153 CP), and case law on the participant is split."
+      },
+      "implica": {
+        "es": "Informa a nivel de encargo: la Ley 25.326 pide consentimiento, con excepciones.",
+        "en": "Inform at engagement level: Law 25.326 requires consent, with exceptions."
+      },
+      "fuentes": [
+        {
+          "norma": "Código Penal art. 153",
+          "url": "https://leyes-ar.com/codigo_penal/153.htm"
+        },
+        {
+          "norma": "Ley 25.326",
+          "url": "https://servicios.infoleg.gob.ar/infolegInternet/anexos/60000-64999/64790/norma.htm"
+        }
+      ],
+      "pendiente": {
+        "es": "el art. 153 viene de un portal no oficial: InfoLeg no lo devolvió (G-12)",
+        "en": "art. 153 comes from an unofficial site: InfoLeg did not return it (G-12)"
+      }
+    }
+  ]
+}

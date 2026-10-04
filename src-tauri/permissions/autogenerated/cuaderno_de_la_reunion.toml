@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-cuaderno-de-la-reunion"
+description = "Enables the cuaderno_de_la_reunion command without any pre-configured scope."
+commands.allow = ["cuaderno_de_la_reunion"]
+
+[[permission]]
+identifier = "deny-cuaderno-de-la-reunion"
+description = "Denies the cuaderno_de_la_reunion command without any pre-configured scope."
+commands.deny = ["cuaderno_de_la_reunion"]

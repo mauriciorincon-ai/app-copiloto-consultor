@@ -61,6 +61,7 @@ const abierta: EstadoDePista = { abierta: true, motivo: null, bytes: 1_920_000 }
 const cerrada: EstadoDePista = { abierta: false, motivo: null, bytes: 0 };
 const escuchando: EstadoDeEscucha = {
   escuchando: true,
+  soloNotas: false,
   microfono: abierta,
   sistema: abierta,
   bytesDelTranscript: 2_048,
@@ -134,10 +135,15 @@ describe("el cuaderno: lo que no existe se dice", () => {
     expect(
       within(pistas).getByText(t.porQueNoAbrio["dispositivo-ocupado"]),
     ).toBeInTheDocument();
-    const hoy = screen.getByText(t.queFuncionaHoy).closest(".tarjeta") as HTMLElement;
-    expect(within(hoy).queryByText(t.funcionaEscucha)).toBeNull();
-    expect(within(hoy).getByText(t.soloTuPista)).toBeInTheDocument();
-    expect(within(hoy).getByText(t.aMedias)).toBeInTheDocument();
+    // Desde el sprint 3 la fila vive en la tarjeta de las pistas, y solo cuando una cae.
+    expect(within(pistas).queryByText(t.funcionaEscucha)).toBeNull();
+    expect(within(pistas).getByText(t.soloTuPista)).toBeInTheDocument();
+    expect(within(pistas).getByText(t.aMedias)).toBeInTheDocument();
+  });
+
+  it("sesión: con las dos pistas abiertas no hay fila de «a medias» que decir", () => {
+    pintaSesion({ escucha: escuchando });
+    expect(screen.queryByText(t.aMedias)).toBeNull();
   });
 
   it("sesión: cada uno de los cinco porqués de una pista caída tiene su frase", () => {
@@ -229,33 +235,41 @@ describe("el cuaderno: lo que no existe se dice", () => {
   });
 
   /**
-   * La tarjeta que impide que la pantalla mienta por omisión: el sprint 001 SÍ entrega la banda
-   * protegida, el acople y el kill-switch, y una pantalla llena de «todavía no» se leería como
-   * que no hay nada.
+   * **Sprint 3: la pantalla vuelve al diseño aprobado de la Etapa de Diseño** («reunión detectada»).
+   * «Qué funciona hoy» era el andamio de los sprints 1 y 2, y con el H1 entero no queda nada en
+   * «todavía no». Antes de empezar: «Iniciar sesión» y «Solo notas», y la promesa con ⌥⎋.
    */
-  it("sesión enseña lo que sí funciona hoy, y ya no queda nada pendiente en esa tarjeta", () => {
+  it("sesión, antes de empezar: «Iniciar sesión», «Solo notas» y ni un «todavía no»", () => {
     pinta("?pantalla=sesion");
-    const hoy = screen
-      .getByText(t.queFuncionaHoy)
-      .closest(".tarjeta") as HTMLElement;
-    expect(within(hoy).getAllByText(t.funciona)).toHaveLength(3);
-    expect(within(hoy).getByText("⌥⎋")).toBeInTheDocument();
-    expect(within(hoy).queryByText(t.todaviaNo)).toBeNull();
-    // Y el botón es de verdad, y dice lo que hace: la muestra está escuchando, así que la termina
-    // (decía «Iniciar sesión» también cuando paraba — auditoría del S2, B16).
-    expect(
-      screen.getByRole("button", { name: new RegExp(t.terminarSesion) }),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: new RegExp(t.iniciarSesion) })).toBeNull();
+    expect(screen.getByRole("button", { name: new RegExp(t.iniciarSesion) })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: new RegExp(es.cliente.soloNotas) })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: new RegExp(t.terminarSesion) })).toBeNull();
+    expect(screen.getByText("⌥⎋")).toBeInTheDocument();
+    expect(screen.queryByText(t.todaviaNo)).toBeNull();
   });
 
-  it("sesión no inventa la ficha del cliente: la declara ausente con su motivo", () => {
+  /** En marcha, el botón dice lo que hace (auditoría del S2, B16) y «Solo notas» ya no está. */
+  it("sesión, en marcha: «Terminar sesión» y nada más", () => {
+    pinta("?pantalla=sesion&estado=en-marcha");
+    expect(screen.getByRole("button", { name: new RegExp(t.terminarSesion) })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: new RegExp(t.iniciarSesion) })).toBeNull();
+    expect(screen.queryByRole("button", { name: new RegExp(es.cliente.soloNotas) })).toBeNull();
+  });
+
+  /**
+   * «Este cliente» deja de estar pendiente (ADR 017): la bandera de su ficha con sus normas y su
+   * fecha, **lo que el informe no pudo verificar** y, siempre, que no es asesoría legal.
+   */
+  it("sesión: «Este cliente» enseña la bandera de su ficha, lo no verificado y el aviso legal", () => {
     pinta("?pantalla=sesion");
-    const cliente = screen
-      .getByText(t.esteCliente)
-      .closest(".tarjeta") as HTMLElement;
-    expect(cliente.className).toContain("pendiente");
-    expect(within(cliente).getByText(t.noSeInventa)).toBeInTheDocument();
+    const cliente = screen.getByText(t.esteCliente).closest(".tarjeta") as HTMLElement;
+    expect(cliente.className).not.toContain("pendiente");
+    expect(within(cliente).getByText("Colombia")).toBeInTheDocument();
+    expect(within(cliente).getByText(es.cliente.riesgo["bajo-medio"])).toBeInTheDocument();
+    expect(within(cliente).getByText("CSJ AP1465-2018 · Ley 1581 art. 3 · 2026-09-17")).toBeInTheDocument();
+    expect(within(cliente).getByText(/G-1/)).toBeInTheDocument();
+    expect(within(cliente).getByText(es.cliente.noEsAsesoria)).toBeInTheDocument();
+    expect(within(cliente).getByText(es.cliente.ndaSinRevisar)).toBeInTheDocument();
   });
 
   /**
@@ -301,19 +315,18 @@ describe("el cuaderno: lo que no existe se dice", () => {
    * en verde porque repetía lo que la pantalla decía, no lo que la app hacía — un test escrito
    * contra la interfaz y no contra el producto no puede cazar esto. Hallazgo M11.
    */
-  it("permisos: lo que ya se puede hacer sin permisos dice «funciona», y solo lo que falta «todavía no»", () => {
+  it("permisos: lo que ya se puede hacer sin permisos dice «funciona», y no queda ningún «todavía no»", () => {
     pinta("?pantalla=permisos");
     const tarjeta = screen
       .getByText(t.sinConcederNada)
       .closest(".tarjeta") as HTMLElement;
-    // Sin conceder nada, solo funciona indexar el corpus. Buscar a mano decía «Funciona», pero
-    // `⌃⌥A` busca sobre lo que dijo el cliente y eso necesita el audio del sistema (auditoría del
-    // S2, B19): va con las notas, entre lo que todavía no existe.
-    expect(within(tarjeta).getAllByText(t.funciona)).toHaveLength(1);
-    expect(within(tarjeta).getAllByText(t.todaviaNo)).toHaveLength(2);
-    for (const pendiente of [t.escribirNotas, t.buscarAMano]) {
-      expect(within(tarjeta).getByText(pendiente).closest(".fila")?.className).toContain("pendiente");
-    }
+    // Sin conceder nada funcionan las tres: indexar el corpus, y en «Solo notas» (Sesión) escribir notas
+    // y acuerdos (auditoría del S3, M7) y buscar a mano, porque ahí ⌃⌥A busca con tu nota (segunda
+    // pasada de la casilla 4). Fuera de Solo notas, ⌃⌥A sigue necesitando el audio del sistema (S2, B19).
+    expect(within(tarjeta).getAllByText(t.funciona)).toHaveLength(3);
+    expect(within(tarjeta).queryAllByText(t.todaviaNo)).toHaveLength(0);
+    expect(within(tarjeta).getByText(t.escribirNotas).closest(".fila")?.className).not.toContain("pendiente");
+    expect(within(tarjeta).getByText(t.buscarAMano).closest(".fila")?.className).not.toContain("pendiente");
   });
 
   /**
@@ -350,7 +363,8 @@ describe("el cuaderno: lo que no existe se dice", () => {
   /**
    * «8 de 8» con una pieza sin construir sería la mentira cómoda — y desde la fase 3 del sprint 002
    * ya no falta ninguna: la lectura de pantalla (C8) era la última, y se corta de verdad. La
-   * auditoría del S2 sumó la novena, la sugerencia en camino (M2).
+   * auditoría del S2 sumó la novena, la sugerencia en camino (M2); el sprint 003, la décima (tus
+   * turnos) y la undécima (las propuestas sin decidir, ADR 016 §4).
    *
    * La cuenta la da Rust (`corte::TODAS` con su `match` sin comodín), no esta pantalla: el test lee
    * la muestra del contrato, que es lo que Rust emite.
@@ -359,7 +373,7 @@ describe("el cuaderno: lo que no existe se dice", () => {
     pinta("?pantalla=honestidad");
     // «El botón corta»: sin sujeto, «8 de 8 piezas» se leyó como «leyó todo bien» (mirada 17-quater).
     expect(
-      screen.getByText(`${t.botonCorta} 9 ${t.de} 9 ${t.piezasNingunaFuera}`),
+      screen.getByText(`${t.botonCorta} 11 ${t.de} 11 ${t.piezasNingunaFuera}`),
     ).toBeInTheDocument();
   });
 
@@ -372,8 +386,8 @@ describe("el cuaderno: lo que no existe se dice", () => {
         <Principal busqueda="?pantalla=honestidad" />
       </Cascara>,
     );
-    expect(screen.getByText(/The button cuts 9 of 9 pieces/)).toBeInTheDocument();
-    expect(screen.queryByText(/9 de 9/)).toBeNull();
+    expect(screen.getByText(/The button cuts 11 of 11 pieces/)).toBeInTheDocument();
+    expect(screen.queryByText(/11 de 11/)).toBeNull();
   });
 
   /**
@@ -387,8 +401,10 @@ describe("el cuaderno: lo que no existe se dice", () => {
     pinta("?pantalla=idioma");
     expect(screen.getByText(t.idiomaTitulo)).toBeInTheDocument();
     expect(screen.getByText(t.variosIdiomasPorPista)).toBeInTheDocument();
-    expect(screen.getByText(t.conservarTusTurnos)).toBeInTheDocument();
-    expect(screen.getAllByText(t.todaviaNo)).toHaveLength(2);
+    // «Conservar lo que dijiste tú» salió de aquí: existe en Notas (auditoría del S3, M7). Varios
+    // idiomas por pista es H2, y lo dice (B9).
+    expect(screen.getAllByText(t.enElH2)).toHaveLength(1);
+    expect(screen.queryByText(t.todaviaNo)).toBeNull();
     expect(
       screen.getByText(`SpeechAnalyzer · macOS 26 · 5 ${t.idiomasListos}`),
     ).toBeInTheDocument();
@@ -429,7 +445,7 @@ describe("el cuaderno: lo que no existe se dice", () => {
    * a enlace. Notas sigue sin existir y el rail lo dice — un rail lleno de enlaces que no llevan a
    * ninguna parte es peor que uno corto.
    */
-  it("el rail deja las secciones que aún no existen sin enlace", () => {
+  it("el rail enlaza las siete secciones: Notas fue la última en encenderse (sprint 003)", () => {
     const { container } = pinta("?pantalla=sesion");
     const rail = container.querySelector("nav.rail") as HTMLElement;
     const enlaces = [...rail.querySelectorAll("a")].map((a) => a.textContent);
@@ -437,17 +453,12 @@ describe("el cuaderno: lo que no existe se dice", () => {
       t.navSesion,
       t.navPermisos,
       t.navCorpus,
+      t.navNotas,
       t.navHonestidad,
       t.navIdioma,
       t.navIa,
     ]);
-    for (const nombre of [t.navNotas]) {
-      const fila = within(rail)
-        .getByText(nombre)
-        .closest(".item") as HTMLElement;
-      expect(fila.className).toContain("pendiente");
-      expect(fila.tagName).not.toBe("A");
-    }
+    expect(rail.querySelector(".item.pendiente"), "queda una sección apagada en el rail").toBeNull();
   });
 
   /**
@@ -460,7 +471,8 @@ describe("el cuaderno: lo que no existe se dice", () => {
     expect(container.querySelector(".titulo h1")?.textContent).toBe(
       t.corpusTitulo,
     );
-    expect(screen.getAllByText(t.todaviaNo)).toHaveLength(3);
+    // Lo que falta es H2, y lo dice (auditoría del S3, B9).
+    expect(screen.getAllByText(t.enElH2)).toHaveLength(3);
     // Las cinco unidades más la sexta respuesta: lo que no encaja en ninguna.
     expect(container.querySelectorAll(".unidad-chip")).toHaveLength(6);
     expect(screen.getByText(t.sinUnidad)).toBeInTheDocument();
@@ -519,6 +531,14 @@ describe("lo que Rust emite, pintado", () => {
     if (SALIDA_DE_AUDIO_ALTAVOZ_EXTERNO.salida !== "altavoz-externo") throw new Error("cambió la muestra");
     expect(screen.getByText(SALIDA_DE_AUDIO_ALTAVOZ_EXTERNO.nombre)).toBeInTheDocument();
     expect(screen.getByText(t.altavozExterno)).toBeInTheDocument();
+  });
+
+  it("una reunión sin verificar nombra a SU cliente, no a Zoom (casilla 6 del S3)", () => {
+    conCascara(
+      <LaReunion reunion={{ que: "detectada", cliente: "Microsoft Teams", titulo: null, proteccion: "SinVerificar" }} />,
+    );
+    expect(screen.getByText("Teams · sin verificar")).toBeInTheDocument();
+    expect(screen.queryByText("Zoom · sin verificar")).toBeNull();
   });
 
   it("la reunión que no se puede ver", () => {

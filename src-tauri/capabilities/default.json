@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Permisos de la ventana principal — la única que abre cosas hacia afuera: el opener, para llevar al usuario a Ajustes del Sistema, y el diálogo de ABRIR, para que señale su carpeta de documentos. `dialog:allow-save` NO está: esta app no escribe archivos por diálogo, y un permiso que nadie usa es superficie regalada. La banda y el relleno no tienen ninguno de los dos: ver sus propias capabilities.",
+  "description": "Permisos de la ventana principal — la única que abre cosas hacia afuera: el opener, para llevar al usuario a Ajustes del Sistema, y el diálogo de ABRIR, para que señale su carpeta de documentos. `dialog:allow-save` NO está: la ventana no guarda por diálogo; «Exportar a texto» abre el de guardar desde Rust (`reunion::exportar`), sin esta capability, y un permiso que nadie usa es superficie regalada. La banda y el relleno no tienen ninguno de los dos: ver sus propias capabilities.",
   "windows": [
     "principal"
   ],
@@ -34,6 +34,38 @@
     "allow-redactar-sugerencias",
     "allow-api-externa",
     "allow-guardar-clave-del-api",
-    "allow-borrar-clave-del-api"
+    "allow-borrar-clave-del-api",
+    "allow-idiomas-de-pista",
+    "allow-fijar-idioma-de-pista",
+    "allow-lo-que-salio-al-api",
+    "allow-cuaderno-de-la-reunion",
+    "allow-escribir-nota",
+    "allow-anotar-acuerdo",
+    "allow-conservar-mis-turnos",
+    "allow-guardar-la-reunion",
+    "allow-cerrar-sin-guardar",
+    "allow-reuniones-guardadas",
+    "allow-exportar-reunion",
+    "allow-borrar-reunion",
+    "allow-fijar-retencion",
+    "allow-mostrar-las-notas-en-finder",
+    "allow-este-cliente",
+    "allow-elegir-cliente",
+    "allow-responder-nda",
+    "allow-revisar-nda",
+    "allow-empezar-solo-notas",
+    "allow-ir-a-notas",
+    "allow-guardar-propuesta",
+    "allow-descartar-propuesta",
+    "allow-fijar-ventana",
+    "allow-la-bandeja",
+    "allow-abrir-la-bandeja",
+    "allow-decidir-en-la-bandeja",
+    "allow-decidir-toda-la-bandeja",
+    "allow-cambiar-la-ventana",
+    "allow-estado-de-la-bandeja",
+    "allow-la-puerta",
+    "allow-abrir-la-puerta",
+    "allow-cerrar-la-puerta"
   ]
 }

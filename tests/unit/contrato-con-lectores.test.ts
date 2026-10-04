@@ -30,7 +30,18 @@ import { describe, expect, it } from "vitest";
  */
 // Con los tres del sprint 002 (auditoría del S2, M6): la sugerencia, el estado de la IA, el radar y
 // el acople vivían en archivos que este gate no leía, y para sus 32 campos no podía fallar.
-const DECLARACIONES = ["src/cuaderno.ts", "src/ficha.ts", "src/radar.ts", "src/ia.ts", "src/acople.ts"];
+// `notas.ts` desde la fase 1 del sprint 003 (C9): tus notas cruzan por cuatro comandos. `puerta.ts`
+// desde la fase 4 (C16): la vista de la puerta cruza por tres comandos y un evento.
+const DECLARACIONES = [
+  "src/cuaderno.ts",
+  "src/ficha.ts",
+  "src/radar.ts",
+  "src/ia.ts",
+  "src/acople.ts",
+  "src/notas.ts",
+  "src/jurisdiccion.ts",
+  "src/puerta.ts",
+];
 const FIXTURE = "src/contrato.generado.ts";
 
 /**
@@ -40,10 +51,12 @@ const FIXTURE = "src/contrato.generado.ts";
 const LEIDOS_POR_CLAVE: Record<string, string> = {
   "Bilingue.es": "`p.ve[idioma]` y `p.alcance[idioma]` en la banda y Sesión: el idioma de la interfaz elige el campo",
   "Bilingue.en": "ídem",
+  "IdiomasDePista.consultor":
+    "`elegidos[cual]` en Idioma: la pista elige el campo. Desde el S3 «Iniciar sesión» no los manda (los lee Rust)",
 };
 
 /** Tipos que viven SOLO en la interfaz: no cruzan la costura y no les toca esta regla. */
-const NO_CRUZAN = new Set(["LoQueLaBandaEnseña", "RadarEnLaBanda", "IdiomasDePista"]);
+const NO_CRUZAN = new Set(["LoQueLaBandaEnseña", "RadarEnLaBanda"]);
 
 /** Los campos que eligen la variante de una unión. Se leen comparándolos, no accediendo. */
 const DISCRIMINANTES = new Set(["que", "clase", "estado", "salida"]);
@@ -70,6 +83,21 @@ const DEUDA: Record<string, string> = {
   //
   // `InformeDelCorte.bytesEnRed` se declaraba aquí como «lo lee Rust, no se paga»: un tercer estado
   // que la regla 20 no tiene. Lo que lee solo Rust no cruza: `#[serde(skip)]`, y la lista queda vacía.
+
+  // ── Sprint 003, fase 0: B37 cruzó antes que su vista; pagada en la fase 1 ──
+  //
+  // Siete campos esperaron aquí a la mirada 19 y los pagó la vista «Lo que salió» de IA. Los
+  // veinticinco de las notas, que entraron en la fase 1 antes que su pantalla, los pagó la pantalla de
+  // Notas en la misma fase; y los de `ContenidoDeReunion` salieron del contrato: el contenido
+  // descifrado de una reunión no cruza al webview (la maqueta no tiene «abrir»). `hora`, `externo` y
+  // `Trozo.texto` los lee la misma vista, aunque el gate no pueda distinguirlos por su nombre.
+
+  // ── Sprint 003, fase 2: las propuestas cruzaron antes que su pantalla; pagada en la misma fase ──
+  //
+  // `propuestas` y `sinDecidir` los leen «durante» y la franja de «al cerrar» de Notas.
+  // `bytesPropuestas` salió del contrato —y del cuaderno—: «Se va a guardar» no tiene fila de
+  // propuestas en la maqueta (la franja dice «Las 3 que guardaste van en tu archivo»), y un campo que
+  // nadie pinta no cruza. `EstadoDeLaBandeja.bandejas` nació y salió en la misma fase, por lo mismo.
 };
 
 /** Cada `export type X = … { … }`, con las variantes de una unión incluidas. */

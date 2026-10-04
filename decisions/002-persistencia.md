@@ -98,3 +98,120 @@ apretaba después; lo delató la traza del propio gate del efímero («el archiv
 en 600»). Funcionaba y estaba mal: entre las dos llamadas hay una ventana, corta pero real, en la que
 la jerga del consultor es legible por cualquier cuenta del Mac. Ahora se crea con `create_new` y su
 modo, y **hay un test que comprueba que no hubo reparación** — no solo que el modo final sea el bueno.
+
+---
+
+## Enmienda 2 — las preferencias y un solo escritor (sprint 003, fase 0, 2026-09-27)
+
+**Lo que cambia.** La tabla de arriba reservaba `prefs/` para el sprint 3: «lo que el usuario
+escribe y elige». Ahora existe, como `src-tauri/src/prefs.rs` y un archivo:
+`preferencias.json`, en la carpeta de configuración de la app, al lado del diccionario y del gasto
+del mes.
+
+| Qué se recuerda | Qué NO, a propósito |
+|---|---|
+| el idioma de cada pista · «redactar sugerencias» · el proveedor externo y si está encendido · la lectura automática de la pantalla | la puerta local (nace cerrada en cada arranque, ADR 018) · el modo solo audio (lo enciende una tecla en la reunión) · nada de ninguna reunión |
+
+**El API no se enciende solo si su clave ya no está:** el archivo dice «encendido», pero al arrancar
+se comprueba el Llavero, y borrar la clave en «Acceso a Llaveros» manda sobre lo que el archivo
+recuerde.
+
+**Un solo escritor para todo lo que persiste: `src-tauri/src/almacen.rs`.** Hasta el sprint 002 cada
+archivo tenía su ayudante privado (el diccionario, el gasto, la huella del acople). El sprint 003
+añade preferencias, notas cifradas, la bandeja y la lista de vencimientos, y cinco copias de la misma
+regla eran cinco oportunidades de olvidarla en una. Las tres reglas viven ahora en un sitio, con su
+test en rojo:
+
+1. el archivo **nace** en 600 (`create_new` con su modo, sin ventana en 644);
+2. **nunca desaparece a medias**: temporal, `sync_all` y renombrado atómico;
+3. su carpeta es solo del dueño (700), y se repara si estaba floja — **solo la carpeta del archivo**:
+   sus padres (`~/Documents`, por ejemplo) no son de esta app.
+
+**Qué entra en el inventario del efímero:** nada nuevo en esta enmienda. `preferencias.json` se
+escribe cuando el usuario cambia algo, no durante una sesión; la sesión completa del gate en marcha
+no lo toca, y si algún día un camino de la sesión lo escribiera, el gate lo denunciaría como intruso.
+
+---
+
+## Enmienda 3 — las notas: el módulo que decide no escribe (sprint 003, fase 1, 2026-09-27)
+
+La tabla de la decisión decía `notas/ — Sí`. **Deja de ser así**, por la misma razón que el
+diccionario en la enmienda 1: el cuaderno recibe los turnos del micrófono para «Conservar mis turnos»,
+y entre ellos llegan los marcados como **eco** —el micrófono oyendo al cliente por los altavoces—,
+que son la voz del cliente. El módulo que tiene eso en las manos no puede tener manera de escribirlo.
+
+| Quién | Qué hace | Puede tocar disco |
+|---|---|---|
+| `notas/` | el cuaderno en memoria, el filtro de tus turnos (micrófono, sin eco), el contenido del archivo y el cifrado | **No** — está en `PROTEGIDOS` |
+| `carpeta.rs` | pide la llave al Llavero, escribe con `almacen`, lista, abre, exporta, borra y barre lo vencido | Sí — recibe el contenido ya armado; no ve un turno |
+| `reunion.rs` | cuándo empieza y se cierra una reunión, ⌃⌥P, la protección del cuaderno, guardar al salir | Sí, a través de `carpeta.rs` |
+
+**Lo que entra en el inventario del efímero: la carpeta de tus notas**, la tercera entrada de
+`Permitido` en `contra-el-mac-de-verdad.rs`. La sesión completa del gate en marcha escribe notas de
+verdad —con tu turno, el del cliente y su eco llevando la canaria— y el test **descifra** el archivo
+con su llave antes de buscar la canaria. Las dos demos en rojo están en la bitácora: sin la línea en
+`Permitido`, el archivo se denuncia como intruso; con la canaria plantada en la nota, solo el test que
+descifra la ve (la comprobación vieja, sobre los bytes cifrados, pasa en verde sin haber mirado nada).
+
+El detalle —formato, llave, desbloqueo, retención— es el ADR 015.
+
+---
+
+## Enmienda 4 — la bandeja, la lista de vencimientos, la tarea de launchd y dónde viven tus notas (sprint 003, fase 2, 2026-09-27)
+
+El ADR 016 anunciaba esta enmienda y no se había escrito; se escribe junto con la decisión A del
+usuario, que mueve las notas.
+
+| Qué | Dónde | Quién lo escribe | Permisos | Vence |
+|---|---|---|---|---|
+| Tus notas (`.ghost`) | `~/Library/Application Support/com.aiapps.copiloto-consultor/notas/` | `carpeta.rs`, vía `almacen` | 700 / 600 | su retención (90 d de fábrica; «siempre» no vence) |
+| La bandeja (`.ghost`) | `…/com.aiapps.copiloto-consultor/bandeja/` | `bandeja.rs`, vía `carpeta.rs` | 700 / 600 | su ventana (3 h de fábrica, techo 24 h) |
+| La lista de vencimientos | `…/com.aiapps.copiloto-consultor/vencimientos` | `vencimiento/`, vía `almacen` | 600 | se regenera de las cabeceras; sin nada que vencer, se borra |
+| La tarea de launchd | `~/Library/LaunchAgents/com.aiapps.copiloto-consultor.vencimiento.plist` | `vencimiento/`, vía `almacen::escribir_en_carpeta_ajena` | 600, sin tocar la carpeta ajena | se quita cuando no queda nada que vencer |
+
+**Tus notas salieron de Documentos (decisión A, ADR 015 enmienda 1).** Desde launchd, el `sh` que
+borra lo vencido no puede entrar en Documentos, así que ahí la retención solo se cumplía al abrir la
+app. En la carpeta de la app se cumple aunque no la abras, y ninguna copia viaja a iCloud.
+
+**Lo que entra en el inventario del efímero:** `Permitido` suma la bandeja y la lista, además de la
+carpeta de notas de la enmienda 3. La sesión completa guarda notas con 90 d y sella una bandeja, y
+el test exige que la lista traiga las dos. El plist **no** se escribe en esa sesión: registrarlo es
+tocar launchd y los Ítems de inicio de quien corre el test (regla 22 del `CLAUDE.md`); lo cubre la
+prueba en vivo, que solo corre con el «sí» del usuario.
+
+---
+
+## Enmienda 5 — lo que respondiste de la NDA de cada cliente (sprint 003, fase 3, 2026-09-27)
+
+`preferencias.json` gana `ndas`: por el nombre de cada cliente, «lo prohíbe» o «no lo prohíbe» (ADR 017 §4).
+«Sin revisar» es no estar en la lista. Son nombres de **tus** clientes, sacados de **tu** corpus, en tu
+Mac y en 600, como el resto de tus preferencias. Se guardan porque una NDA no cambia de una reunión a
+otra y la respuesta la diste tú; **con quién te reúnes hoy** («Este cliente») no se guarda: vive en
+memoria mientras la app esté abierta.
+
+**Lo que entra en el inventario del efímero:** nada nuevo. `preferencias.json` se escribe cuando respondes, no
+durante una sesión; la sesión completa del gate en marcha no lo toca.
+
+## Enmienda 6 — el socket de la puerta local (sprint 003, fase 4, 2026-09-27)
+
+`puerta.sock`, en la carpeta privada de la app (700), en 600 (ADR 018 §1). **No lleva contenido**: es
+un punto de encuentro del sistema de archivos, no un archivo con datos; lo que pasa por él vive en
+memoria y muere con la conexión. **Solo existe con la puerta abierta**: al cerrarla se borra, y si la
+app se cayó con ella abierta, se borra al arrancar. El token que la abre vive en el Llavero, nunca en
+disco, y sale de él al cerrarla.
+
+**Lo que entra en el inventario del efímero:** nada. La puerta **se cierra al empezar una sesión** (ADR
+018 §5, lo vigila `empezar_cierra_la_puerta_antes_que_nada`), así que durante una sesión el socket no
+existe. `Permitido` no lo lleva a propósito: si alguna vez apareciera en el inventario de una sesión, es
+que la puerta siguió abierta en una reunión, y el gate en marcha lo tiene que delatar.
+
+## Enmienda 7 — la carpeta de tu corpus, recordada (auditoría del S3, B29; 2026-09-28)
+
+`preferencias.json` gana `carpetaDelCorpus`: **la ruta** de la carpeta que señalaste en Corpus, jamás su
+contenido. Al arrancar, la app la vuelve a leer en segundo plano y reconstruye el índice (que ya persistía,
+600). Decisión del usuario: «que la recuerde» — sin ella, tras reiniciar no había «Este cliente», ni la NDA
+guardada a la vista, ni corpus para la puerta local.
+- Si la carpeta vive en Documentos, Escritorio o Descargas, macOS puede pedir su permiso al arrancar (se
+  anuncia en la guía y en el manual; es fila de la regla 22 en la prueba en vivo).
+- **Inventario del efímero:** nada nuevo. Es un campo más de un archivo que ya estaba en `Permitido`.
+

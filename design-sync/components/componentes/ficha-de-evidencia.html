@@ -103,6 +103,8 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .franja.warn .ic { color: var(--warn); }
 .franja.err .ic { color: var(--err); }
 .franja.ok .ic { color: var(--ok); }
+.franja.mute .ic { color: var(--ink-2); }
+.tecla.fijada { color: var(--ok); }
 .barra .pistas .pista.off .ic { opacity: .75; }
 .ficha { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px 7px; background: var(--surface); border: var(--borde) solid var(--line); border-radius: var(--r-ficha); box-shadow: var(--sombra-ficha); }
 .ficha.nueva { animation: aparecer var(--dur) var(--ease); }
@@ -167,6 +169,9 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .puerta.si > .ic { color: var(--ok); }
 .puerta.no > .ic { color: var(--err); }
 .cuenta .ic { flex: 0 0 auto; color: var(--halo); }
+.cuenta.vencida .ic, .cuenta.vencida .reloj { color: var(--ink-2); }
+.franja .ventanas .op .ic { color: inherit; }
+.pregunta-nda .ic { color: var(--halo); flex: 0 0 auto; }
 .mq-nota .n { display: none; border-left: 3px solid #7dd3fc; padding: 8px 12px; background: #111418; }
 .mq-nota .n.activa { display: block; }
 .mq-tabla-pos .mas { color: #f0b64a; }

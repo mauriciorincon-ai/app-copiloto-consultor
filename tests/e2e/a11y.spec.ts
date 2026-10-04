@@ -28,6 +28,34 @@ const PANTALLAS = [
   { que: "sesión · software invasivo en tu Mac", url: "ventana=principal&pantalla=sesion&radar=vigilancia" },
   // La síntesis (fase 5): la pantalla IA, con su formulario de clave, y la sugerencia en la banda.
   { que: "ia", url: "ventana=principal&pantalla=ia" },
+  // Sprint 003, fase 1: lo que salió al API (B37) y las cuatro vistas de Notas (C9).
+  { que: "ia · lo que salió", url: "ventana=principal&pantalla=ia&vista=salio" },
+  { que: "ia · la puerta", url: "ventana=principal&pantalla=ia&vista=puerta" },
+  { que: "ia · la puerta abierta", url: "ventana=principal&pantalla=ia&vista=puerta&puerta=abierta" },
+  { que: "ia · la puerta se cerró sola", url: "ventana=principal&pantalla=ia&vista=puerta&puerta=en-reunion" },
+  { que: "notas · durante", url: "ventana=principal&pantalla=notas&estado=durante" },
+  { que: "notas · al cerrar", url: "ventana=principal&pantalla=notas&estado=al-cerrar" },
+  { que: "notas · el archivo", url: "ventana=principal&pantalla=notas&estado=archivo" },
+  { que: "notas · exportar", url: "ventana=principal&pantalla=notas&estado=exportar" },
+  // Las propuestas y la bandeja (sprint 003, fase 2).
+  { que: "notas · con propuestas", url: "ventana=principal&pantalla=notas&estado=propuestas" },
+  { que: "notas · al cerrar, con bandeja", url: "ventana=principal&pantalla=notas&estado=al-cerrar-bandeja" },
+  { que: "notas · al cerrar, ventana cero", url: "ventana=principal&pantalla=notas&estado=al-cerrar-cero" },
+  { que: "notas · la bandeja", url: "ventana=principal&pantalla=notas&estado=bandeja" },
+  { que: "notas · bandeja con llave", url: "ventana=principal&pantalla=notas&estado=bandeja-llave" },
+  { que: "notas · bandeja vencida", url: "ventana=principal&pantalla=notas&estado=vencida" },
+  { que: "honestidad · con bandeja", url: "ventana=principal&pantalla=honestidad&estado=bandeja" },
+  { que: "honestidad · la tarea no corrió", url: "ventana=principal&pantalla=honestidad&estado=no-corrio" },
+  { que: "banda · te propongo guardar", url: "ventana=banda&estado=ficha-propuesta" },
+  { que: "banda · fijada", url: "ventana=banda&estado=ficha-fijada" },
+  // El marco en la mano (sprint 003, fase 3, ADR 017): «Este cliente», la NDA, la cláusula y solo notas.
+  { que: "sesión · en marcha", url: "ventana=principal&pantalla=sesion&estado=en-marcha" },
+  { que: "sesión · la pregunta de la NDA", url: "ventana=principal&pantalla=sesion&estado=pregunta" },
+  { que: "sesión · sin jurisdicción", url: "ventana=principal&pantalla=sesion&estado=sin-bandera" },
+  { que: "sesión · la cláusula", url: "ventana=principal&pantalla=sesion&estado=clausula" },
+  { que: "sesión · la NDA lo prohíbe", url: "ventana=principal&pantalla=sesion&estado=nda" },
+  { que: "sesión · en solo notas", url: "ventana=principal&pantalla=sesion&estado=solo-notas" },
+  { que: "banda · solo notas", url: "ventana=banda&estado=solo-notas" },
   { que: "banda · sugerencia", url: "ventana=banda&estado=sugerencia-local" },
 ];
 

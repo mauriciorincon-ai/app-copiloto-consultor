@@ -38,6 +38,41 @@ pub struct Muestra {
     pub valor: Value,
 }
 
+/// La ficha fijada de las muestras de notas: la de la maqueta (`notas.html`, «durante»).
+fn ficha_fijada() -> crate::notas::FichaFijada {
+    crate::notas::FichaFijada {
+        titular: "Limpieza de datos: hasta tres fuentes".into(),
+        documento: "Propuesta Páramo Azul".into(),
+        seccion: Some("§3.2".into()),
+        unidad: Some(crate::corpus::Unidad::Propuesta),
+        ..Default::default()
+    }
+}
+
+/// Una propuesta tuya, la de la maqueta: una cifra con su fecha, dicha por ti.
+fn propuesta_tuya() -> crate::propuestas::Propuesta {
+    crate::propuestas::Propuesta {
+        regla: crate::propuestas::Regla::Cifra,
+        de: crate::propuestas::De::Tuyo,
+        texto: "Fecha real del tablero: 12 semanas desde la firma.".into(),
+        ficha: None,
+        seccion: None,
+        hora: "14:16".into(),
+    }
+}
+
+/// Un choque con una ficha fijada: la única forma con `ficha` y `seccion`.
+fn propuesta_choque() -> crate::propuestas::Propuesta {
+    crate::propuestas::Propuesta {
+        regla: crate::propuestas::Regla::Choque,
+        de: crate::propuestas::De::Cliente,
+        texto: "cuatro fuentes".into(),
+        ficha: Some("tres".into()),
+        seccion: Some("§3.2".into()),
+        hora: "14:18".into(),
+    }
+}
+
 fn m<T: serde::Serialize>(
     nombre: &'static str,
     tipo: &'static str,
@@ -50,6 +85,19 @@ fn m<T: serde::Serialize>(
         modulo,
         valor: serde_json::to_value(valor).expect("una muestra del contrato no se pudo serializar"),
     }
+}
+
+/// La puerta como nace: cerrada, sin `ghost` compilado al lado y sin nada en el registro.
+fn puerta_cerrada() -> crate::puerta::VistaDeLaPuerta {
+    crate::puerta::VistaDeLaPuerta { abierta: false, cerro: None, no_abre: None, ghost: None, registro: Vec::new() }
+}
+
+fn entrada(hora: &str, orden: &str, resultado: crate::puerta::Resultado) -> crate::puerta::Entrada {
+    crate::puerta::Entrada { hora: hora.into(), orden: orden.into(), resultado }
+}
+
+fn denegado(motivo: crate::puerta::Motivo) -> crate::puerta::Resultado {
+    crate::puerta::Resultado::Denegado { motivo }
 }
 
 /// La sugerencia de la maqueta (mirada 18), fundada en la ficha de «Páramo Azul · §3.2 Alcance».
@@ -226,6 +274,7 @@ pub fn muestras() -> Vec<Muestra> {
             "./cuaderno",
             &EstadoDeEscucha {
                 escuchando: true,
+                solo_notas: false,
                 microfono: pista_abierta(),
                 sistema: EstadoDePista {
                     abierta: false,
@@ -417,7 +466,7 @@ pub fn muestras() -> Vec<Muestra> {
             sistema: None,
             api: crate::EstadoDelApi {
                 encendida: true,
-                externo: crate::sintesis::api::Externo::Gemini,
+                externo: crate::sintesis::api::Externo::Groq,
                 hay_clave: true,
             },
             latencia_ms: Some(1_400),
@@ -438,6 +487,221 @@ pub fn muestras() -> Vec<Muestra> {
         m("ESTADO_DEL_ACOPLE", "EstadoDelAcople", "./acople", &crate::EstadoDelAcople { acoplada: true }),
         // Lo que el motor de este Mac sabe hacer (auditoría del S2, M7): con motor, y sin él por cada
         // uno de sus tres porqués, que son grafías kebab de varias palabras.
+        // ---- lo que salió al API (auditoría del S2, B37) ----------------------------------------
+        // Construida con la bóveda de verdad sobre un texto con un cliente y una persona: los
+        // trozos, los marcadores y la cuenta son los que el serializador real escribe.
+        m("LO_QUE_SALIO", "LoQueSalio", "./ia", &{
+            let mut b = crate::sintesis::anonimo::Boveda::nueva(&["Páramo Azul".to_string()]);
+            let tapado = b.tapar("El alcance de Páramo Azul incluye tres fuentes. Andrea Villalba pregunta por una cuarta.");
+            let mut s = crate::sintesis::api::LoQueSalio::de(&tapado, &b, crate::sintesis::api::Externo::Claude, "Alcance");
+            s.hora = "14:22".into();
+            s.usd = Some(0.004);
+            s
+        }),
+        // ---- las preferencias que se recuerdan (sprint 003, ADR 002 enmienda 2) -----------------
+        // El idioma de cada pista cruza a la ventana principal al abrirse: lo que el usuario eligió
+        // la vez anterior. El cliente en inglés, para que la muestra no sea la de fábrica.
+        m("IDIOMAS_DE_PISTA", "IdiomasDePista", "./cuaderno", &crate::prefs::IdiomasDePista {
+            consultor: "es-ES".into(),
+            cliente: "en-US".into(),
+        }),
+        // ---- tus notas (C9, sprint 003, fase 1, ADR 015) -------------------------------------
+        // Tres comandos que la pantalla de Notas lee: el cuaderno de ahora (durante · al cerrar), la
+        // lista de reuniones guardadas y lo que devuelve guardar. Con datos de la maqueta. El contenido
+        // descifrado de una reunión NO cruza: la maqueta no tiene «abrir» dentro de la app —se lee
+        // exportándola, con su aviso—, y lo que no cruza no se declara.
+        m("VISTA_DEL_CUADERNO", "VistaDelCuaderno", "./notas", &{
+            let mut c = crate::notas::Cuaderno::nuevo(false);
+            c.escribir("Piden la cuarta fuente (Excel de logística).\nFecha real: 12 semanas desde la firma.");
+            c.acordar("Cuarta fuente: cotización aparte");
+            c.ver(ficha_fijada());
+            c.fijar_la_vigente();
+            crate::reunion::VistaDelCuaderno {
+                nota: c.nota().to_string(),
+                acuerdos: c.acuerdos().to_vec(),
+                fijadas: c.fijadas().to_vec(),
+                resumen: c.resumen(),
+                conservar_mis_turnos: false,
+                abierta: true,
+                escuchando: false,
+                previsto: Some(crate::reunion::Previsto {
+                    fecha: "2026-09-20".into(),
+                    minutos: 47,
+                    cliente: None,
+                    archivo: "reunion-2026-09-20-1402.ghost".into(),
+                }),
+                turnos_del_cliente: 63,
+                lecturas: 9,
+                retencion: crate::prefs::Retencion::Dias90,
+                propuestas: c.en_espera().to_vec(),
+                lleno: c.lleno(),
+                ventana: crate::bandeja::Ventana::TresHoras,
+                sin_proteger: false,
+            }
+        }),
+        // ---- las propuestas y la bandeja (sprint 003, fase 2, ADR 016) ---------------------------
+        // Durante: el cuaderno con dos esperando (la maqueta «sprint 3 · durante, con propuestas»),
+        // una tuya y un choque con su ficha, que son las dos formas con campos opcionales.
+        m("VISTA_CON_PROPUESTAS", "VistaDelCuaderno", "./notas", &{
+            let mut c = crate::notas::Cuaderno::nuevo(false);
+            c.escribir("Piden la cuarta fuente.");
+            c.proponer(vec![propuesta_tuya(), propuesta_choque()]);
+            crate::reunion::VistaDelCuaderno {
+                nota: c.nota().to_string(),
+                acuerdos: Vec::new(),
+                fijadas: Vec::new(),
+                resumen: c.resumen(),
+                conservar_mis_turnos: false,
+                abierta: true,
+                escuchando: true,
+                previsto: None,
+                turnos_del_cliente: 12,
+                lecturas: 0,
+                retencion: crate::prefs::Retencion::Dias90,
+                propuestas: c.en_espera().to_vec(),
+                lleno: true,
+                ventana: crate::bandeja::Ventana::AlCerrar,
+                sin_proteger: false,
+            }
+        }),
+        // macOS no dejó proteger el cuaderno (auditoría del S3, B4): la única forma con el campo en `true`.
+        m("CUADERNO_SIN_PROTEGER", "VistaDelCuaderno", "./notas", &{
+            let mut c = crate::notas::Cuaderno::nuevo(false);
+            c.escribir("Piden la cuarta fuente.");
+            crate::reunion::VistaDelCuaderno {
+                nota: c.nota().to_string(),
+                acuerdos: Vec::new(),
+                fijadas: Vec::new(),
+                resumen: c.resumen(),
+                conservar_mis_turnos: false,
+                abierta: true,
+                escuchando: true,
+                previsto: None,
+                turnos_del_cliente: 3,
+                lecturas: 0,
+                retencion: crate::prefs::Retencion::Dias90,
+                propuestas: Vec::new(),
+                lleno: false,
+                ventana: crate::bandeja::Ventana::TresHoras,
+                sin_proteger: true,
+            }
+        }),
+        // La línea de la banda: la última propuesta, o nada. Y las cinco reglas, cada una con su grafía.
+        m("PROPUESTA_EN_LA_BANDA", "LineaDePropuesta", "./notas", &Some(propuesta_tuya())),
+        m("SIN_PROPUESTA_EN_LA_BANDA", "LineaDePropuesta", "./notas", &None::<crate::propuestas::Propuesta>),
+        m("PROPUESTA_CHOQUE", "Propuesta", "./notas", &propuesta_choque()),
+        m("REGLA_CIFRA", "Regla", "./notas", &crate::propuestas::Regla::Cifra),
+        m("REGLA_COMPROMISO", "Regla", "./notas", &crate::propuestas::Regla::Compromiso),
+        m("REGLA_CHOQUE", "Regla", "./notas", &crate::propuestas::Regla::Choque),
+        m("REGLA_NOMBRE", "Regla", "./notas", &crate::propuestas::Regla::Nombre),
+        m("REGLA_PREGUNTA", "Regla", "./notas", &crate::propuestas::Regla::Pregunta),
+        m("VENTANA_AL_CERRAR", "Ventana", "./notas", &crate::bandeja::Ventana::AlCerrar),
+        m("VENTANA_UNA_HORA", "Ventana", "./notas", &crate::bandeja::Ventana::UnaHora),
+        m("VENTANA_TRES_HORAS", "Ventana", "./notas", &crate::bandeja::Ventana::TresHoras),
+        m("VENTANA_FIN_DEL_DIA", "Ventana", "./notas", &crate::bandeja::Ventana::FinDelDia),
+        m("VENTANA_UN_DIA", "Ventana", "./notas", &crate::bandeja::Ventana::Dia),
+        // La bandeja abierta (recién cerrada, con una guardada desde aquí) y cerrada con llave.
+        m("BANDEJA_ABIERTA", "VistaDeLaBandeja", "./notas", &crate::reunion::VistaDeLaBandeja {
+            archivo: "reunion-2026-09-20-1402.ghost".into(),
+            vence: 1_790_527_268,
+            bytes: 4_096,
+            propuestas: Some(vec![propuesta_tuya(), propuesta_choque()]),
+            guardadas: vec![crate::propuestas::Propuesta { texto: "La cuarta fuente se cotiza aparte.".into(), ..propuesta_tuya() }],
+            mas: 0,
+            ventana: crate::bandeja::Ventana::TresHoras,
+        }),
+        m("BANDEJA_CON_LLAVE", "VistaDeLaBandeja", "./notas", &crate::reunion::VistaDeLaBandeja {
+            archivo: "reunion-2026-09-20-1402.ghost".into(),
+            vence: 1_790_527_268,
+            bytes: 4_096,
+            propuestas: None,
+            guardadas: Vec::new(),
+            mas: 1,
+            ventana: crate::bandeja::Ventana::FinDelDia,
+        }),
+        m("ESTADO_DE_LA_BANDEJA", "EstadoDeLaBandeja", "./notas", &crate::reunion::EstadoDeLaBandeja {
+            vence: Some(1_790_527_268),
+            no_corrio: false,
+        }),
+        m("SIN_BANDEJA_Y_LA_TAREA_NO_CORRIO", "EstadoDeLaBandeja", "./notas", &crate::reunion::EstadoDeLaBandeja {
+            vence: None,
+            no_corrio: true,
+        }),
+        // «Este cliente», la bandera y la NDA (ADR 017). Las banderas salen del catálogo de verdad:
+        // si una fila cambia, la muestra cambia con ella y la pantalla se entera en el contrato.
+        m("VISTA_DEL_CLIENTE", "VistaDelCliente", "./jurisdiccion", &crate::jurisdiccion::VistaDelCliente {
+            clientes: vec!["Páramo Azul".into(), "Sur del Valle".into()],
+            elegido: Some("Páramo Azul".into()),
+            bandera: Some(crate::jurisdiccion::bandera(Some("Colombia"))),
+            nda: crate::jurisdiccion::Nda::SinRevisar,
+            clausula: crate::jurisdiccion::clausula().clone(),
+        }),
+        m("VISTA_DEL_CLIENTE_SIN_ELEGIR", "VistaDelCliente", "./jurisdiccion", &crate::jurisdiccion::VistaDelCliente {
+            clientes: vec!["Páramo Azul".into(), "Sur del Valle".into()],
+            elegido: None,
+            bandera: None,
+            nda: crate::jurisdiccion::Nda::SinRevisar,
+            clausula: crate::jurisdiccion::clausula().clone(),
+        }),
+        m("BANDERA_CONOCIDA", "LaBandera", "./jurisdiccion", &crate::jurisdiccion::bandera(Some("Colombia"))),
+        m("BANDERA_CON_PENDIENTE", "LaBandera", "./jurisdiccion", &crate::jurisdiccion::bandera(Some("California"))),
+        m("BANDERA_SIN_VERIFICAR", "LaBandera", "./jurisdiccion", &crate::jurisdiccion::bandera(Some("Missouri"))),
+        m("BANDERA_FUERA_DEL_CATALOGO", "LaBandera", "./jurisdiccion", &crate::jurisdiccion::bandera(Some("Bolivia"))),
+        m("BANDERA_SIN_INDICAR", "LaBandera", "./jurisdiccion", &crate::jurisdiccion::bandera(None)),
+        m("NDA_SIN_REVISAR", "Nda", "./jurisdiccion", &crate::jurisdiccion::Nda::SinRevisar),
+        m("NDA_NO_LO_PROHIBE", "Nda", "./jurisdiccion", &crate::jurisdiccion::Nda::NoLoProhibe),
+        m("NDA_LO_PROHIBE", "Nda", "./jurisdiccion", &crate::jurisdiccion::Nda::LoProhibe),
+        m("ESCUCHA_SOLO_NOTAS", "EstadoDeEscucha", "./cuaderno", &crate::escucha::EstadoDeEscucha::solo_notas()),
+        // La puerta local (C16, ADR 018): cerrada, abierta con lo que hizo tu agente y cerrada sola por una
+        // reunión. El registro, de la más reciente a la más antigua, con las tres formas de un resultado.
+        m("VISTA_DE_LA_PUERTA_CERRADA", "VistaDeLaPuerta", "./puerta", &puerta_cerrada()),
+        m("VISTA_DE_LA_PUERTA_ABIERTA", "VistaDeLaPuerta", "./puerta", &crate::puerta::VistaDeLaPuerta {
+            abierta: true,
+            ghost: Some("/Users/ana/app-copiloto-consultor/src-tauri/target/debug/ghost".into()),
+            registro: vec![
+                entrada("11:12", "ghost notas abrir", crate::puerta::Resultado::Fallo),
+                entrada("11:09", "ghost ia --encender-api", denegado(crate::puerta::Motivo::ElApiEsTuyo)),
+                entrada("11:04", "ghost corpus reindexar", crate::puerta::Resultado::Hecho { cuenta: Some(28) }),
+            ],
+            ..puerta_cerrada()
+        }),
+        m("VISTA_DE_LA_PUERTA_EN_REUNION", "VistaDeLaPuerta", "./puerta", &crate::puerta::VistaDeLaPuerta {
+            cerro: Some(crate::puerta::Cierre::EnReunion),
+            ghost: Some("/Users/ana/app-copiloto-consultor/src-tauri/target/debug/ghost".into()),
+            registro: vec![
+                entrada("14:02", "ghost corpus buscar", denegado(crate::puerta::Motivo::EnReunion)),
+                entrada("13:58", "ghost corpus buscar", crate::puerta::Resultado::Hecho { cuenta: Some(3) }),
+            ],
+            ..puerta_cerrada()
+        }),
+        m("VISTA_DE_LA_PUERTA_SIN_GHOST", "VistaDeLaPuerta", "./puerta", &crate::puerta::VistaDeLaPuerta {
+            abierta: true,
+            ..puerta_cerrada()
+        }),
+        m("PUERTA_CERRADA_A_MANO", "Cierre", "./puerta", &crate::puerta::Cierre::ATuMano),
+        m("PUERTA_NO_ABRE_EN_REUNION", "NoAbre", "./puerta", &crate::puerta::NoAbre::EnReunion),
+        m("PUERTA_NO_ABRE_RUTA_LARGA", "NoAbre", "./puerta", &crate::puerta::NoAbre::RutaLarga),
+        m("PUERTA_NO_ABRE_LLAVERO", "NoAbre", "./puerta", &crate::puerta::NoAbre::Llavero),
+        m("PUERTA_NO_ABRE_SOCKET", "NoAbre", "./puerta", &crate::puerta::NoAbre::Socket),
+        m("PUERTA_LLAVE_ERRADA", "Motivo", "./puerta", &crate::puerta::Motivo::LlaveErrada),
+        m("PUERTA_NO_DELEGABLE", "Motivo", "./puerta", &crate::puerta::Motivo::NoDelegable),
+        m("PUERTA_ORDEN_DESCONOCIDA", "Motivo", "./puerta", &crate::puerta::Motivo::OrdenDesconocida),
+        // `reuniones_guardadas` devuelve una lista; se ata el elemento, con vencimiento y sin él.
+        m("REUNION_GUARDADA", "ReunionGuardada", "./notas", &crate::carpeta::Reunion {
+            archivo: "paramo-azul-2026-09-20.ghost".into(),
+            bytes: 22_528,
+            guardada: 1_789_900_000,
+            vence: 1_797_676_000,
+        }),
+        m("REUNION_GUARDADA_PARA_SIEMPRE", "ReunionGuardada", "./notas", &crate::carpeta::Reunion {
+            archivo: "reunion-2026-09-27-1402.ghost".into(),
+            bytes: 3_104,
+            guardada: 1_790_500_000,
+            vence: 0,
+        }),
+        m("LISTA_DE_REUNIONES", "ListaDeReuniones", "./notas", &crate::reunion::ListaDeReuniones {
+            reuniones: Vec::new(),
+        }),
         m("QUE_SABE_TRANSCRIBIR", "QueSabeTranscribir", "./cuaderno", &crate::QueSabeTranscribir {
             motor: "apple-speechanalyzer",
             techo: 5,
@@ -576,12 +840,14 @@ mod tests {
     }
 
     /// Que cada muestra siga siendo lo que dice ser. Un `Value::Null` aquí significa que alguien
-    /// construyó la muestra mal y el gate de arriba compararía dos vacíos.
+    /// construyó la muestra mal y el gate de arriba compararía dos vacíos — salvo en las muestras
+    /// cuyo `null` ES el mensaje: «la banda ya no tiene propuesta que enseñar» (ADR 016 §3).
     #[test]
     fn ninguna_muestra_del_contrato_esta_vacia() {
+        const NULAS_A_PROPOSITO: &[&str] = &["SIN_PROPUESTA_EN_LA_BANDA"];
         for mu in muestras() {
             assert!(
-                mu.valor.is_object() || mu.valor.is_string(),
+                mu.valor.is_object() || mu.valor.is_string() || (mu.valor.is_null() && NULAS_A_PROPOSITO.contains(&mu.nombre)),
                 "la muestra «{}» no serializó a nada útil: {:?}",
                 mu.nombre,
                 mu.valor

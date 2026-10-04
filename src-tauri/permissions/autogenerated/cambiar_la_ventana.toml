@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-cambiar-la-ventana"
+description = "Enables the cambiar_la_ventana command without any pre-configured scope."
+commands.allow = ["cambiar_la_ventana"]
+
+[[permission]]
+identifier = "deny-cambiar-la-ventana"
+description = "Denies the cambiar_la_ventana command without any pre-configured scope."
+commands.deny = ["cambiar_la_ventana"]

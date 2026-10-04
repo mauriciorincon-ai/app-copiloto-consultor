@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-fijar-retencion"
+description = "Enables the fijar_retencion command without any pre-configured scope."
+commands.allow = ["fijar_retencion"]
+
+[[permission]]
+identifier = "deny-fijar-retencion"
+description = "Denies the fijar_retencion command without any pre-configured scope."
+commands.deny = ["fijar_retencion"]

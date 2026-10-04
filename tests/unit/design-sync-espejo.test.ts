@@ -33,8 +33,15 @@ function tarjetas(dir = join(BUNDLE, "components")): string[] {
   });
 }
 
+/**
+ * Lanza el generador en otro proceso (node + jsdom sobre toda la maqueta): en local tarda ~1 s, pero
+ * en el runner de la CI, con las demás suites en paralelo, pasó de los 5 s por defecto de Vitest con
+ * las tarjetas del sprint 003 (rojo en `dfeee23`, por tiempo y no por deriva). Su límite es suyo.
+ */
+const TIEMPO_DEL_GENERADOR = 30_000;
+
 describe("design-sync — el bundle es espejo del sistema", () => {
-  it("el bundle del repo es el que el generador emite hoy", () => {
+  it("el bundle del repo es el que el generador emite hoy", { timeout: TIEMPO_DEL_GENERADOR }, () => {
     let salida = "";
     let cayo = false;
     try {

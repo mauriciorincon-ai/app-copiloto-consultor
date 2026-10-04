@@ -86,7 +86,7 @@ que la promesa, pero cierto.
 | Alternativa | Por qué no |
 |---|---|
 | **BM25 a mano** en vez de `tantivy` | habría que escribir también tokenización, stemming de dos idiomas y persistencia. Medido antes de comprometerlo: `tantivy` cuesta 193 nodos y 16,7 s de compilación en frío, asumible |
-| **Embeddings + RRF** ya en el S1 | la regla del código primero: BM25 es determinista y explicable. Los embeddings entran **si el kit de evaluación demuestra** que BM25 no basta. El sprint 002 no lo decidió —el kit v0 da nDCG@5 0,82 sin ellos y el refuerzo de pantalla subió la frase de 0,63 a 0,70—: **la decisión pasa al sprint 003**, con esas cifras como punto de partida |
+| **Embeddings + RRF** ya en el S1 | la regla del código primero: BM25 es determinista y explicable. Los embeddings entran **si el kit de evaluación demuestra** que BM25 no basta. El sprint 002 no lo decidió —el kit v0 da nDCG@5 0,82 sin ellos y el refuerzo de pantalla subió la frase de 0,63 a 0,70—; **el sprint 003 lo decidió: no en el H1** (enmienda abajo) |
 | **Una librería de Word** para el `.docx` | un `.docx` es un zip con XML: se abre con `zip` + `quick-xml`. Menos superficie, y ningún escritor de `.docx` enlazado en una app que jamás escribe `.docx` |
 | **Detectar el idioma** del documento y usar un solo stemmer | falla en los corpus mezclados, que son exactamente los de este usuario |
 | **Un LLM** para clasificar la unidad o redactar el titular | cero LLM en este sprint, y no hace falta: el titular **se recorta del documento del usuario**, no se redacta |
@@ -114,3 +114,41 @@ cercano, la maniobra es el **puente** —«Lo más cercano que sí tienes es «�
 para qué lo necesitan.», con el nombre de esa sección—; la genérica queda para cuando no hay nada
 cerca (`src-tauri/src/ficha/maniobra.rs`, `elegir_con`). Lo que el §10 nombra además —la unidad que
 falta, la ficha del cliente, lo comprometido en la reunión— son pasos siguientes del mismo camino.
+
+---
+
+## Enmienda — los embeddings, decididos: no en el MVP personal (sprint 003, fase 0, 2026-09-27)
+
+La deuda que el S2 pasó a este sprint era **decidir**, no construir: «una medición con el kit o un
+roadmap declarado, no silencio» (orden del S3). Se decide sin medir con un modelo, y la razón es la
+misma regla del código primero:
+
+- **El kit ya contesta la pregunta que un embedding contestaría, y la contesta que sí basta:** nDCG@5
+  **0,823** en el kit v0 (30 preguntas, mínimo 0,80), sin embeddings; con la pantalla, la frase sube
+  de 0,626 a 0,700. BM25 cumple el umbral que el propio kit fijó.
+- **Medirlo exigiría traer un modelo de 300–600 M** al Mac del usuario y a la CI solo para comprobar
+  si hace falta, en un sprint que se declaró de **cero modelos nuevos**. El costo de la medición es el
+  mismo que el de la feature.
+- **El kit v0 no tiene la pregunta que los embeddings arreglan:** la paráfrasis sin palabra común
+  («¿cuánto se demora?» contra «9 semanas de implementación»). Sin esa clase de preguntas, una
+  medición saldría empatada por construcción, y un empate no justifica un modelo.
+
+**Qué la reabriría, escrito para que se pueda comprobar:** un kit con al menos diez preguntas de
+paráfrasis (sin palabra en común con la sección que las responde) en el que el nDCG@5 de BM25 caiga
+por debajo de 0,80. Si eso pasa, entran los embeddings con RRF sobre BM25, un modelo multilingüe
+≤ 600 M descargado a la carpeta del usuario —jamás al repo— y su ADR. **Hasta entonces, roadmap H2**,
+junto al resto de lo que el ciclo dejó para después (VISION: MLX, diarización, AEC).
+
+## Enmienda (2026-09-28) — el resto de la maniobra del §10 pasa al H2 (auditoría del S3, B28)
+
+El plan del S3 la puso primera en la lista de lo que se corta «si no cabe, H2, declarado», y se intentaría al
+final de la fase 2. **No se construyó y no se declaró en su momento**: el corte silencioso que el método
+prohíbe. Se declara ahora.
+- **Lo que existe:** el puente («Lo más cercano que sí tienes es «…»: ofrécelo y pregunta para qué lo
+  necesitan») y la genérica cuando no hay nada cerca (`ficha/maniobra.rs`, pagado en el S2, M15).
+- **Lo que pasa al H2:** los pasos siguientes que nombra `design-system.md` §10 —la unidad que falta, la
+  ficha del cliente y lo comprometido en la reunión como materia de la maniobra—.
+- **Por qué:** el S3 cerró C9, C11 y C16 y los cierres del ciclo, que el plan declaraba incortables; la fase
+  2 no dejó sitio.
+- Queda en la bitácora del S3 (`## Desviación del plan`), en el summary y en la descripción del PR.
+
