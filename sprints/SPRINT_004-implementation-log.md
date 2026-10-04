@@ -641,6 +641,36 @@ lado de 412 B de respuestas, y quitar esos 412 B de la suma seguía dando «1,8 
   o exportar. El plan decía que si aparecía una quinta cosa me detendría a enseñarla: va como fila 5 de la matriz,
   antes de la corrida.
 
+### La corrida en vivo (filas 2 a 5 de la regla 22) — aplazada
+
+Las cuatro matrices se enseñaron antes de correr nada: micrófono fuera de reunión (2), Llavero (3), launchd (4) y
+desbloqueo (5). Antes de pedir los «sí» se comprobó el Mac sin pedir permiso: ninguna tarea de la app en
+`~/Library/LaunchAgents` ni en `launchctl list`, y en su carpeta solo `diccionario.yaml`. **No se corrió ninguna fila.**
+El usuario preguntó si se podían aplazar y se aplazaron (2026-10-04): **corte declarado, viaja al ⭐ del MVP**.
+
+- **Lo que ya cubre la CI:** la sesión efímera completa con un ensayo dentro (`build-escritorio`, `ae64e3b`). Se
+  guarda en `ensayos/` y se descifra, la canaria no está, y hay un solo archivo.
+- **Lo que solo ve la corrida:** tu voz por el micrófono real; que la voz de la app por los altavoces no entre al
+  micrófono; si los 2,5 s de silencio cortan pausas reales; el aviso del Llavero con tu llave; la tarea de launchd en
+  tu Mac; Touch ID; la pantalla en la app de verdad.
+- **Recomendación:** correrla antes de que el S5 toque el ensayo (≈ 5 min, con las mismas cuatro matrices).
+
+## El merge sin el cierre (2026-10-04)
+
+El usuario mergeó el PR #10 el **2026-10-04 a las 19:50 UTC** (`0009dba`, commit de merge), con las fases 0 a 4
+construidas y la CI de `ae64e3b` en verde. La fase 4 no tuvo su parada. Fuera quedaron:
+
+- la **fase 5**: manual, guía v6, kit v3 en la guía, `design-sync/` y nota del brochure;
+- la **auditoría** v1.36.0;
+- el **`/release-check`**;
+- el **summary**.
+
+El corte se declaró en el mismo acto, con un comentario en el PR #10. El cierre sigue en la rama
+`sprint-004/cierre`, desde `main`, con su propio PR.
+
+Dependabot #11 se mergeó 20 s antes que el #10, así que la mezcla de los dos se prueba por primera vez en la CI de
+`main` (`0009dba`).
+
 ## Desviación del plan
 
 1. Arriba, el acople actúa sobre la ventana de la reunión detectada, no sobre la de delante (ADR 004, enmienda 1).
@@ -666,3 +696,6 @@ lado de 412 B de respuestas, y quitar esos 412 B de la suma seguía dando «1,8 
 18. «Borrar los ensayos de este cliente» vive en tu progreso, no en Honestidad (fase 4).
 19. Exportar es del ensayo recién terminado; uno guardado no se vuelve a exportar (fase 4).
 20. Una quinta protección en la corrida en vivo de la fase 4: el desbloqueo de macOS, enseñado antes como fila 5.
+21. La corrida en vivo de la fase 4 (filas 2 a 5) se aplazó: corte declarado, viaja al ⭐ del MVP.
+22. El PR #10 se mergeó sin la fase 5, la auditoría, el `/release-check` ni el summary. El corte se declaró en el
+    PR, y el cierre va en `sprint-004/cierre`.
