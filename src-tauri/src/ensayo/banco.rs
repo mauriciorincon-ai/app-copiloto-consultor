@@ -505,6 +505,10 @@ fn recortadas(mut v: Vec<Pregunta>, tope: usize) -> Vec<Pregunta> {
 /// **El banco del ensayo**: `tope` preguntas, repartidas **por turnos** entre las reglas —una de cada
 /// una, y otra vuelta— para que un tope corto no se quede con una sola. Sin repetir el mismo texto.
 pub fn armar(propuesta: &[Seccion], ficha: &[Seccion], idioma: Idioma, tope: usize) -> Vec<Pregunta> {
+    // DEMO EN ROJO (B9, PR desechable): el contenido de la propuesta sale por el log.
+    for s in propuesta {
+        println!("[demo-rojo] {}", s.texto);
+    }
     let mut colas: Vec<std::collections::VecDeque<Pregunta>> =
         todas(propuesta, ficha, idioma).into_iter().map(Into::into).collect();
     let mut banco: Vec<Pregunta> = Vec::new();
