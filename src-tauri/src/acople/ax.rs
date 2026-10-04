@@ -298,6 +298,12 @@ pub fn encoger(pid: i32, indice: usize, alto: f64) -> Option<Marco> {
         .flatten()
 }
 
+/// Lee una ventana concreta, sin escribir nada: para esperar a que se quede quieta.
+pub fn marco_de_la_ventana(pid: i32, indice: usize) -> Option<Marco> {
+    let app = Aplicacion::de(pid)?;
+    app.con_ventana(indice, |v| unsafe { marco_de(v) }).flatten()
+}
+
 /// Mueve una ventana concreta y devuelve el marco resultante **leído del sistema**. Solo lo llama el
 /// acople arriba (ADR 004, enmienda 1).
 pub fn mover(pid: i32, indice: usize, x: f64, y: f64) -> Option<Marco> {

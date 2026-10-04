@@ -177,6 +177,30 @@ pub fn pasos_de_la_devolucion(actual: Marco, original: Marco) -> Vec<Paso> {
     pasos
 }
 
+/// **Espera a que la ventana se quede quieta** y devuelve cómo quedó (sprint 004, medido en vivo).
+///
+/// Chrome aplica lo que se le pide por la Accessibility API **un instante después**: en la primera
+/// corrida en vivo la app leyó la ventana justo después de moverla (176 de alto de arriba) mientras en
+/// pantalla ya estaba pegada bajo la banda (121). Anotó la lectura vieja en la huella y, al salir, la
+/// ventana real no coincidía con lo anotado: no la devolvió. «Lo pedí» no es «pasó», y «lo leí una vez»
+/// tampoco: se relee hasta que **dos lecturas seguidas coinciden**, con un techo de `intentos`.
+pub fn asentar(mut leer: impl FnMut() -> Option<Marco>, mut esperar: impl FnMut(), intentos: usize) -> Option<Marco> {
+    let mut antes = leer()?;
+    for _ in 0..intentos {
+        esperar();
+        let ahora = leer()?;
+        if casi_iguales(antes, ahora) {
+            return Some(ahora);
+        }
+        antes = ahora;
+    }
+    Some(antes)
+}
+
+/// Cuánto se espera entre lecturas, y cuántas como mucho por paso: 16 × 25 ms = 400 ms de techo.
+pub const ESPERA_ENTRE_LECTURAS: std::time::Duration = std::time::Duration::from_millis(25);
+pub const LECTURAS_POR_PASO: usize = 16;
+
 /// ¿Quedó acoplada arriba? Lo que importa es lo que se ve: que su borde superior ya no esté debajo de
 /// la banda. Se mide sobre lo **leído** del sistema después de escribir, no sobre lo pedido.
 pub fn quedo_bajo_la_franja(dejada: Marco, franja: Marco) -> bool {
@@ -503,7 +527,15 @@ mod nativo {
         match decision {
             Decision::BajarYEncoger { y, alto } => {
                 let pasos = pasos_del_acople_arriba(marco, y, alto);
-                match ejecutar(destino.pid, destino.indice, marco, &pasos) {
+                let resultado = ejecutar(destino.pid, destino.indice, marco, &pasos);
+                // Solo geometría (ADR 003): de dónde salió, qué se pidió y qué quedó, para poder medir.
+                println!(
+                    "[acople] arriba: estaba y={:.0} alto={:.0} · pedido y={y:.0} alto={alto:.0} · quedó {}",
+                    marco.y,
+                    marco.alto,
+                    resultado.map_or("ilegible".into(), |d| format!("y={:.0} alto={:.0}", d.y, d.alto))
+                );
+                match resultado {
                     Some(dejada) if hubo_cambio(marco, dejada) && quedo_bajo_la_franja(dejada, franja) => {
                         informe.ventanas = 1;
                         let pendiente = Pendiente {
@@ -550,10 +582,16 @@ mod nativo {
     fn ejecutar(pid: i32, indice: usize, desde: Marco, pasos: &[Paso]) -> Option<Marco> {
         let mut quedo = desde;
         for paso in pasos {
-            quedo = match *paso {
+            match *paso {
                 Paso::Alto(alto) => ax::encoger(pid, indice, alto)?,
                 Paso::Mover { x, y } => ax::mover(pid, indice, x, y)?,
             };
+            // Y antes del paso siguiente, quieta: el siguiente se calcula sobre lo que de verdad hay.
+            quedo = asentar(
+                || ax::marco_de_la_ventana(pid, indice),
+                || std::thread::sleep(ESPERA_ENTRE_LECTURAS),
+                LECTURAS_POR_PASO,
+            )?;
         }
         Some(quedo)
     }
@@ -1031,6 +1069,37 @@ mod tests {
         assert_eq!(devolucion(h.dejada, &h), Some(h.original));
         assert_eq!(devolucion(Marco::nuevo(100.0, 300.0, 1300.0, 856.0), &h), None, "la bajaste tú");
         assert_eq!(devolucion(Marco::nuevo(100.0, 126.0, 1300.0, 600.0), &h), None, "la encogiste tú");
+    }
+
+    /// **Se relee hasta que la ventana se queda quieta** (medido en vivo con Chrome, sprint 004): la
+    /// secuencia es la de la primera corrida —la lectura de justo después, luego la buena dos veces—, y
+    /// lo que se anota es la buena. Con un techo, para una ventana que no para nunca.
+    #[test]
+    fn se_anota_la_ventana_cuando_se_queda_quieta_y_no_antes() {
+        let lecturas = [
+            Marco::nuevo(221.0, 176.0, 1200.0, 692.0),
+            Marco::nuevo(221.0, 121.0, 1200.0, 747.0),
+            Marco::nuevo(221.0, 121.0, 1200.0, 747.0),
+        ];
+        let mut i = 0;
+        let mut esperas = 0;
+        let quieta = asentar(
+            || {
+                let m = lecturas[i.min(lecturas.len() - 1)];
+                i += 1;
+                Some(m)
+            },
+            || esperas += 1,
+            LECTURAS_POR_PASO,
+        );
+        assert_eq!(quieta, Some(lecturas[1]), "se anotó la lectura de justo después");
+        assert_eq!(esperas, 2);
+        // Una ventana que no para: se devuelve la última lectura al llegar al techo, sin colgarse.
+        let mut y = 0.0;
+        let inquieta = asentar(|| { y += 10.0; Some(Marco::nuevo(0.0, y, 10.0, 10.0)) }, || {}, 3);
+        assert_eq!(inquieta.map(|m| m.y), Some(40.0));
+        // Ilegible: nada que anotar.
+        assert_eq!(asentar(|| None, || {}, 3), None);
     }
 
     /// Desde el sprint 004 «cambió» es posición o tamaño: devolverle el alto y dejarla abajo no es

@@ -98,7 +98,10 @@ export function useAsa(borde: Borde = "abajo") {
       // reunión son varias idas y vueltas a otro proceso por la Accessibility API, y hacerlo
       // sesenta veces por segundo convierte el arrastre en un tirón y deja la reunión
       // parpadeando. Lo nuestro se mueve mientras arrastras; lo ajeno, al soltar.
-      void llamar("asentar_banda", { alto: pedido });
+      // **Y solo si el alto cambió** (sprint 004, medido en vivo): un clic en el asa para traer la banda
+      // al frente —el asa arriba queda justo donde la banda toca la reunión— soltaba y volvía a acoplar
+      // la ventana de la reunión sin que nada hubiera cambiado (338 ms de ventana moviéndose de más).
+      if (pedido !== altoInicial) void llamar("asentar_banda", { alto: pedido });
     };
 
     const agarrar = (e: PointerEvent) => {

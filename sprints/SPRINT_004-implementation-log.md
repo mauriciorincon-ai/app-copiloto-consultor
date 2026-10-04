@@ -266,10 +266,48 @@ pasar, con tres causas, las tres arregladas sin subir el umbral:
 
 ### La corrida en vivo (fila 1 de la regla 22)
 
-Pendiente del «sí» del usuario. Antes de pedirlo se miró, sin ningún permiso, qué tocaría el arranque de la
-app en este Mac: `ls ~/Library/LaunchAgents` y `launchctl list` sin nada de la app, y en su carpeta solo
-`diccionario.yaml` (sin preferencias, notas, bandeja ni huella). Así que el arranque no re-registra launchd,
-no lee el Llavero (el API está apagado) y no reindexa ningún corpus.
+Antes de pedir el «sí» se miró, sin ningún permiso, qué tocaría el arranque de la app en este Mac:
+`ls ~/Library/LaunchAgents` y `launchctl list` sin nada de la app, y en su carpeta solo `diccionario.yaml`
+(sin preferencias, notas, bandeja ni huella). Así que el arranque no re-registra launchd, no lee el Llavero
+(el API está apagado) y no reindexa ningún corpus. **Matriz de una fila enseñada; el «sí» del usuario:** «Sí,
+haz la corrida en vivo de la banda arriba. Abierto en Google Chrome». Dos corridas con `pnpm tauri dev` y
+`docs/kit-de-prueba/pantalla/meet-de-prueba.html` en Chrome. **Ningún aviso de macOS** en ninguna:
+Accesibilidad ya estaba concedida, el registro lo dice (`accesibilidad=Concedido`).
+
+**Primera corrida: acopló, y la devolución no la reconoció.**
+
+| Momento | Registro | Lo que pasó |
+|---|---|---|
+| arranque | `«banda»: 1470x88 en (0,33)` y el relleno igual | la banda bajo la barra de menús de 33 pt |
+| detector | `reunión detectada: «Google Meet»` | la ventana de la página de prueba |
+| acople | `ventanas=1 · 178 ms` | **el usuario la vio pegada bajo la banda**; la huella anotó `y=176, alto=692` en vez de `121 · 747` |
+| clic en el asa | `reacople … ventanas=1 · 338 ms` | el clic para traer la app al frente cayó en el asa y rehízo el acople |
+| ⌘Q | `soltar al salir … ventanas=0` · «ninguna ventana de «Google Chrome» coincide con la huella» | **Chrome no volvió**: el usuario lo puso en su sitio a mano |
+
+**Lo que enseñó.** Chrome aplica lo que se le pide por la Accessibility API **un instante después**: la app leyó
+la ventana justo después de moverla, anotó una lectura intermedia, y al salir la ventana real no coincidía con
+lo anotado. Por la regla 3 del acople («solo se devuelve lo que sigue como lo dejamos») no la tocó: el fallo
+fue no devolver, nunca devolver mal. Dos arreglos, cada uno con su test visto en rojo:
+
+1. `acople::asentar`: tras cada escritura se relee hasta que **dos lecturas seguidas coinciden** (cada 25 ms,
+   techo de 400 ms por paso), y es eso lo que se anota y lo que decide. Rojo: con el bucle anulado,
+   `se_anota_la_ventana_cuando_se_queda_quieta_y_no_antes` —que repite la secuencia medida, 176 y luego 121—
+   dice «se anotó la lectura de justo después».
+2. `asa.ts`: soltar el asa **sin haberla arrastrado** no reacopla. Rojo: sin la condición,
+   `la-banda-arriba.test.tsx` · «un clic no reacopla».
+
+Y el acople arriba deja en el log su geometría (de dónde, qué se pidió, qué quedó; solo números, ADR 003).
+
+**Segunda corrida (el usuario: «Volvamos a hacer la prueba»): todo cuadra.**
+
+| Momento | Registro |
+|---|---|
+| acople | `arriba: estaba y=33 alto=835 · pedido y=121 alto=747 · quedó y=121 alto=747` · `ventanas=1 · 228 ms` |
+| ⌘Q | `soltar al salir: … ventanas=1 · 123 ms` (cuenta como devuelta solo si, releída y quieta, coincide con la original) |
+| después | la huella borrada; en la carpeta de la app, solo `diccionario.yaml` |
+
+El presupuesto se cumple: **228 ms al acoplar y 123 ms al devolver** (≤ 300 ms). Lo que no se probó en vivo
+queda para el ⭐: Zoom y Teams (su ventana principal), una pantalla externa y la pantalla completa.
 
 ## Desviación del plan
 
@@ -285,3 +323,5 @@ no lee el Llavero (el API está apagado) y no reindexa ningún corpus.
 9. La fila «La banda» va en todos los estados de Sesión con «Las dos pistas» (fase 1), y el aviso de la primera
    vez ocupa el sitio de la tarjeta de la reunión hasta «Entendido», como en la maqueta.
 10. El acople arriba también se dispara al empezar la reunión (fase 1); abajo, como en el H1.
+11. Lo encontrado en la corrida en vivo (fase 1): la app espera a que la ventana se quede quieta antes de
+    anotarla (`acople::asentar`), y soltar el asa sin arrastrarla no reacopla.

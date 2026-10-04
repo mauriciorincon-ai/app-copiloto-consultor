@@ -139,3 +139,19 @@ describe("Sesión: la banda, arriba o abajo, y el aviso de la primera vez", () =
     expect(screen.queryByText(t.avisoArribaTitulo)).toBeNull();
   });
 });
+
+describe("el asa: soltarla sin arrastrar no mueve la reunión", () => {
+  it("un clic no reacopla; un arrastre sí, al soltar", async () => {
+    Object.defineProperty(globalThis, "innerHeight", { value: 88, configurable: true });
+    respuestas.set("la_franja", LA_FRANJA_ARRIBA);
+    const { container } = await pinta(<Banda estado="esperando" />);
+    const asa = container.querySelector(".asa") as HTMLElement;
+    fireEvent.pointerDown(asa, { screenY: 121 });
+    fireEvent.pointerUp(globalThis as unknown as Window, { screenY: 121 });
+    expect(pedidos("asentar_banda"), "un clic en el asa movió la reunión").toEqual([]);
+    fireEvent.pointerDown(asa, { screenY: 121 });
+    fireEvent.pointerMove(globalThis as unknown as Window, { screenY: 171 });
+    fireEvent.pointerUp(globalThis as unknown as Window, { screenY: 171 });
+    expect(pedidos("asentar_banda")).toEqual([["asentar_banda", { alto: 138 }]]);
+  });
+});
