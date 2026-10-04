@@ -127,6 +127,13 @@ de tema (reseteaba al mismo tema que el botón pedía); se corrigió reseteando 
   pisaba la línea de la ficha (bajó). `maqueta-cabe` midió +16 px en `ia.html · s4 · es`: el interruptor
   nuevo se acortó a «Enriquecer el banco».
 
+### Las miradas de DECISIÓN
+
+| # | Archivo | Fecha | Veredicto, con la frase del usuario |
+|---|---|---|---|
+| 1 | `docs/diseno/ensayo.html` (siete estados) | 2026-10-04 | **Aprobada** — «La abri y la apruebo la pantalla ensayo, continua». El «continua» no abre la fase 1: la mirada 2 va en el mensaje siguiente |
+| 2 | `docs/diseno/posicion.html`, variante «arriba» | — | Pendiente |
+
 ### La deuda del S3
 
 - **Maniobra §10 → S5**, declarada aquí, en la fase 0, sin intentarla (decisión 7 del plan): el resto de
