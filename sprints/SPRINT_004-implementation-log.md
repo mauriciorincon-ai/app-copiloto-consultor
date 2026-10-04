@@ -132,7 +132,7 @@ de tema (reseteaba al mismo tema que el botón pedía); se corrigió reseteando 
 | # | Archivo | Fecha | Veredicto, con la frase del usuario |
 |---|---|---|---|
 | 1 | `docs/diseno/ensayo.html` (siete estados) | 2026-10-04 | **Aprobada** — «La abri y la apruebo la pantalla ensayo, continua». El «continua» no abre la fase 1: la mirada 2 va en el mensaje siguiente |
-| 2 | `docs/diseno/posicion.html`, variante «arriba» | — | Pendiente |
+| 2 | `docs/diseno/posicion.html`, variante «arriba» (cinco estados y el criterio de la cámara) | 2026-10-04 | **Aprobada** — «Si me gusta mucho ka banda arriba buen diseño, lo abri y lo apruebo». Con las dos en «sí» y el «continua» de la mirada 1, arranca la fase 1 |
 
 ### La deuda del S3
 
