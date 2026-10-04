@@ -459,6 +459,7 @@ mod pruebas {
         let anillo = Arc::new(Mutex::new(Anillo::de_la_app()));
         let oido = Oido::con_anillo(anillo.clone(), "es-ES", Box::new(Contador), Arc::new(Diccionario::default()));
         let mundo = Arc::new(DeMentira::default());
+        let nacio = Instant::now();
         let e = Ensayo::arrancar(preguntas(), Idioma::Es, true, "Páramo Azul".into(), EstadoDelBanco::Apagado, oido, mundo.clone()).unwrap();
         let v = e.vista().unwrap();
         assert_eq!((v.fase, v.leyendo, v.total), (Fase::Preguntando, true, 2));
@@ -481,7 +482,11 @@ mod pruebas {
         let v = esperar(&e, |v| v.fase == Fase::Evaluada);
         let ev = v.evaluacion.expect("evaluada");
         assert_eq!(ev.citadas(), 0, "«muestras» es un término, y la ficha pide dos");
-        assert!((900..=2_500).contains(&ev.tiempo_ms), "de la pregunta al fin de tu voz: {} ms", ev.tiempo_ms);
+        // El tiempo sale del reloj de verdad, así que solo se afirma lo que no depende de la máquina: al
+        // menos el segundo de voz, y nunca más de lo que de verdad pasó. (La primera versión acotaba arriba
+        // en 2,5 s: en el runner de la CI, más lento, dio 3,5 s y cayó en rojo — bitácora, fase 3.)
+        let pasado = nacio.elapsed().as_millis() as u64;
+        assert!((1_000..=pasado).contains(&ev.tiempo_ms), "de la pregunta al fin de tu voz: {} ms (pasaron {pasado} ms)", ev.tiempo_ms);
         e.si_lo_dije(0);
         assert_eq!(e.vista().unwrap().evaluacion.unwrap().citadas(), 1);
         // **La siguiente pregunta en menos de un segundo** (plan, fase 3): Enter la arma y empieza a leerla

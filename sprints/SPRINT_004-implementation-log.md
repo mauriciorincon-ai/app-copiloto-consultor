@@ -500,6 +500,13 @@ disparo no da fichas y la cifra sale «—»: la pantalla no acusa de nada que n
 Las doce volvieron a verde tras restaurar (`demo-rojo.sh` con `--esperar-verde`); la carpeta `.demo-rojo/` no
 quedó.
 
+**Y un rojo que no plantó nadie (CI de `6000930`):** `build-escritorio` cayó en
+`un_ensayo_entero_con_audio_inventado` —«de la pregunta al fin de tu voz: 3499 ms»—. La prueba usa el reloj de
+verdad (el audio entra a ritmo de micrófono) y acotaba el tiempo arriba en 2,5 s; el runner de la CI, más lento,
+dio 3,5 s. El código estaba bien y la prueba afirmaba de más: ahora afirma lo que no depende de la máquina
+(al menos el segundo de voz, y nunca más de lo que de verdad pasó). Y la espera al hilo que transcribe en la
+prueba del oído pasa de 0,5 a 2 s.
+
 ### Desviaciones de la fase
 
 - **«Citada» exige términos que no estaban en la pregunta** (ADR 019 §6.6, actualizado): sin eso, repetir la

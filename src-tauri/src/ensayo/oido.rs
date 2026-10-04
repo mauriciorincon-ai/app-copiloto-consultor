@@ -389,7 +389,8 @@ pub(crate) mod pruebas {
         escribir(&anillo, &silencio(500));
         o.latir(true, 7, 2_100);
         let mut llegados = Vec::new();
-        for _ in 0..100 {
+        // Hasta 2 s de espera al hilo que transcribe: en el runner de la CI todo va más lento.
+        for _ in 0..400 {
             llegados.extend(o.recibidos());
             if !llegados.is_empty() && o.pendientes() == 0 {
                 break;
