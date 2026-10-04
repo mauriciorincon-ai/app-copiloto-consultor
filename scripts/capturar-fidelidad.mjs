@@ -164,7 +164,8 @@ const ARTEFACTOS = [
       { id: "vigilancia", maqueta: "sesion.html", estado: "vigilancia", alto: 640, url: "ventana=principal&pantalla=sesion&radar=vigilancia" },
       // La pantalla IA (fase 5): «así se ve hoy · sprint 2».
       // IA desde la fase 1 del sprint 003 (B37, mirada 19): «quién redacta» con su botón, y lo que salió.
-      { id: "ia", maqueta: "ia.html", estado: "s3-quien", alto: 640, url: "ventana=principal&pantalla=ia" },
+      // Desde el sprint 004, la de «sprint 4»: la de «sprint 3» con «Enriquecer el banco» al lado.
+      { id: "ia", maqueta: "ia.html", estado: "s4", alto: 640, url: "ventana=principal&pantalla=ia" },
       { id: "ia-salio", maqueta: "ia.html", estado: "s3-salio", alto: 640, url: "ventana=principal&pantalla=ia&vista=salio" },
       // La puerta local (C16, fase 4 del sprint 003, ADR 018): cerrada, abierta con su registro, y cerrada
       // sola por una reunión.

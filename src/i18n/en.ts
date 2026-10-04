@@ -434,6 +434,7 @@ export const en: Diccionario = {
     siFallaDetalle:
       "The suggestion is an accent. Searching your corpus and showing the card with its source is code, not a model: it works even with all of this turned off.",
     redactarSugerencias: "Draft suggestions (on top of showing the card)",
+    enriquecerElBanco: "Enrich the bank",
     proveedorExterno: "External provider",
     tuClave: "Your key",
     enTuLlavero: "stored in your Keychain, never in a file",

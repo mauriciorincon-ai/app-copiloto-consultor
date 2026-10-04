@@ -25,6 +25,7 @@ pub mod desbloqueo;
 mod contrato;
 pub mod diccionario;
 pub mod disparo;
+pub mod ensayo;
 pub mod escucha;
 pub mod ficha;
 pub mod habla;
@@ -1038,6 +1039,7 @@ pub fn run() {
             estado_del_acople,
             la_franja,
             fijar_posicion_de_la_banda,
+            enriquecer_el_banco,
             entendido_el_aviso_de_arriba,
             fondo_del_relleno,
             reunion_abierta,
@@ -1934,6 +1936,7 @@ fn ruta_de_las_preferencias<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Pat
 fn aplicar_las_preferencias<R: tauri::Runtime>(app: &tauri::AppHandle<R>, p: &prefs::Preferencias) {
     let s = app.state::<LaSintesis>();
     s.redactar.store(p.redactar, Ordering::Relaxed);
+    s.enriquecer.store(p.enriquecer_el_banco, Ordering::Relaxed);
     let encendida = p.api_encendida && sintesis::api::hay_clave(p.externo);
     if p.api_encendida && !encendida {
         println!("[prefs] el API estaba encendido pero ya no hay clave de {}: se queda apagado", p.externo.nombre());
@@ -2031,6 +2034,8 @@ struct GastoDelMes {
 struct LaSintesis {
     /// «Redactar sugerencias». **Nace apagado**: la app es entera sin ello (ADR 010).
     redactar: AtomicBool,
+    /// «Enriquecer el banco» del ensayo (ADR 019 §3). **Nace apagado**: el ensayo es entero sin ello.
+    enriquecer: AtomicBool,
     api: std::sync::Mutex<ConfigDelApi>,
     reunion_usd: std::sync::Mutex<f64>,
     mes: std::sync::Mutex<GastoDelMes>,
@@ -2062,6 +2067,8 @@ fn cortar_la_sugerencia(s: &LaSintesis) {
 #[serde(rename_all = "camelCase")]
 pub struct EstadoDeLaIa {
     redactar: bool,
+    /// «Enriquecer el banco» del ensayo (sprint 004).
+    enriquecer: bool,
     /// Quién redactaría ahora mismo. `None`: nadie puede.
     quien: Option<sintesis::Quien>,
     /// Por qué el modelo del sistema no puede. `None`: puede.
@@ -2203,6 +2210,7 @@ fn estado_de_la_ia_de<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> EstadoDeL
     });
     EstadoDeLaIa {
         redactar: s.redactar.load(Ordering::Relaxed),
+        enriquecer: s.enriquecer.load(Ordering::Relaxed),
         quien,
         sistema,
         api: EstadoDelApi { encendida: api.encendida, externo: api.externo, hay_clave },
@@ -2348,6 +2356,15 @@ fn redactar_sugerencias(app: tauri::AppHandle, si: bool) -> EstadoDeLaIa {
     app.state::<LaSintesis>().redactar.store(si, Ordering::Relaxed);
     println!("[sintesis] redactar sugerencias: {}", if si { "encendido" } else { "apagado" });
     recordar(&app, |p| p.redactar = si);
+    avisar_a_la_ia(&app)
+}
+
+/// «Enriquecer el banco» (ADR 019 §3): el segundo interruptor de IA, junto a «Redactar sugerencias».
+#[tauri::command]
+fn enriquecer_el_banco(app: tauri::AppHandle, si: bool) -> EstadoDeLaIa {
+    app.state::<LaSintesis>().enriquecer.store(si, Ordering::Relaxed);
+    println!("[ensayo] enriquecer el banco: {}", if si { "encendido" } else { "apagado" });
+    recordar(&app, |p| p.enriquecer_el_banco = si);
     avisar_a_la_ia(&app)
 }
 

@@ -12,6 +12,7 @@ const COMANDOS: &[&str] = &[
         "la_franja",
         "fijar_posicion_de_la_banda",
         "entendido_el_aviso_de_arriba",
+        "enriquecer_el_banco",
         "reunion_abierta",
         "permisos_de_macos",
         "abrir_ajustes_de",

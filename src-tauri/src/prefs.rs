@@ -118,6 +118,9 @@ pub struct Preferencias {
     /// Que ya viste, en Sesión, el aviso de la primera vez con la banda arriba. «Entendido» lo apaga
     /// para siempre; un archivo del H1, que no lo tiene, lo enseña una vez.
     pub aviso_de_arriba_visto: bool,
+    /// «Enriquecer el banco» (ADR 019 §3): un modelo propone hasta cinco preguntas de más en el
+    /// ensayo. De fábrica, apagado: el ensayo es entero sin él.
+    pub enriquecer_el_banco: bool,
 }
 
 impl Default for Preferencias {
@@ -135,6 +138,7 @@ impl Default for Preferencias {
             carpeta_del_corpus: None,
             posicion_de_la_banda: crate::ventana::Borde::Arriba,
             aviso_de_arriba_visto: false,
+            enriquecer_el_banco: false,
         }
     }
 }
@@ -248,6 +252,7 @@ mod tests {
             // `default` que se coma el campo caiga aquí.
             posicion_de_la_banda: crate::ventana::Borde::Abajo,
             aviso_de_arriba_visto: true,
+            enriquecer_el_banco: true,
         };
         guardar(&ruta, &elegidas).unwrap();
         assert_eq!(leer(&ruta), elegidas);
@@ -308,6 +313,7 @@ mod tests {
         let p = de_texto(r#"{"version":1,"redactar":true,"retencion":"30d"}"#).unwrap();
         assert_eq!(p.posicion_de_la_banda, crate::ventana::Borde::Arriba);
         assert!(!p.aviso_de_arriba_visto);
+        assert!(!p.enriquecer_el_banco, "el acento del ensayo nace apagado");
         let texto = a_texto(&Preferencias { posicion_de_la_banda: crate::ventana::Borde::Abajo, ..p });
         assert!(texto.contains(r#""posicionDeLaBanda": "abajo""#), "{texto}");
         assert!(texto.contains(r#""avisoDeArribaVisto": false"#), "{texto}");

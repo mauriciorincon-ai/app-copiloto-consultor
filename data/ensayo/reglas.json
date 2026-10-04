@@ -1,0 +1,129 @@
+{
+  "_leeme": "Las reglas con que la app arma las preguntas del ensayo (ADR 019 §2). Son TODAS: ningún modelo decide qué se pregunta. Cada regla lee TU propuesta o la ficha de TU cliente y rellena una plantilla publicada aquí, en los dos idiomas; el idioma del ensayo es el de la propuesta. Las palabras se comparan sin mayúsculas ni tildes y por palabras enteras (o por prefijo, las de 5 letras o más). Si una sección no cae en ninguna clase, no da pregunta de sección: da sus cifras, sus compromisos y sus riesgos.",
+  "version": 1,
+  "fecha": "2026-10-04",
+  "topes": [5, 8, 12],
+  "reglas": [
+    {
+      "id": "seccion",
+      "de": "propuesta",
+      "nombre": { "es": "Una pregunta por cada sección que un cliente revisa", "en": "One question per section a client reviews" }
+    },
+    {
+      "id": "cifra",
+      "de": "propuesta",
+      "nombre": { "es": "Las cifras que escribiste: de dónde salen", "en": "The figures you wrote: where they come from" }
+    },
+    {
+      "id": "compromiso",
+      "de": "propuesta",
+      "nombre": { "es": "Lo que prometes: qué pasa si no se cumple", "en": "What you promise: what if it isn't met" }
+    },
+    {
+      "id": "riesgo",
+      "de": "propuesta",
+      "nombre": { "es": "Los supuestos y los «si…»: quién asume el riesgo", "en": "Assumptions and “if…”: who bears the risk" }
+    },
+    {
+      "id": "cliente",
+      "de": "ficha",
+      "nombre": { "es": "Lo que su ficha dice que le importa", "en": "What their card says they care about" }
+    },
+    {
+      "id": "objecion",
+      "de": "objeciones",
+      "nombre": { "es": "Objeciones típicas de datos, BI e IA", "en": "Typical data, BI and AI objections" }
+    }
+  ],
+  "secciones": [
+    {
+      "clase": "contexto",
+      "titulos": ["contexto", "antecedentes", "situacion", "problema", "context", "background", "situation", "problem"],
+      "pregunta": { "es": "¿Por qué este problema es prioritario ahora?", "en": "Why is this problem a priority now?" }
+    },
+    {
+      "clase": "alcance",
+      "titulos": ["alcance", "scope"],
+      "pregunta": { "es": "¿Qué queda fuera del alcance, exactamente?", "en": "What exactly is out of scope?" }
+    },
+    {
+      "clase": "supuestos",
+      "titulos": ["supuestos", "dependencias", "condiciones", "assumptions", "dependencies", "conditions"],
+      "pregunta": { "es": "¿Qué pasa con el plazo si uno de estos supuestos no se cumple?", "en": "What happens to the timeline if one of these assumptions doesn't hold?" }
+    },
+    {
+      "clase": "entregables",
+      "titulos": ["entregables", "productos", "deliverables", "outputs"],
+      "pregunta": { "es": "¿Cómo sabremos que cada entregable está terminado y bien hecho?", "en": "How will we know each deliverable is done, and done right?" }
+    },
+    {
+      "clase": "precio",
+      "titulos": ["precio", "tarifa", "inversion", "honorarios", "costo", "costos", "presupuesto", "price", "pricing", "fees", "cost", "costs", "investment", "budget"],
+      "pregunta": { "es": "¿Qué no incluye el precio y qué podría costar de más?", "en": "What does the price leave out, and what could cost extra?" }
+    },
+    {
+      "clase": "plazo",
+      "titulos": ["plazo", "cronograma", "calendario", "tiempos", "timeline", "schedule", "timing"],
+      "pregunta": { "es": "¿Qué tendría que pasar para que el plazo se corra?", "en": "What would have to happen for the timeline to slip?" }
+    },
+    {
+      "clase": "equipo",
+      "titulos": ["equipo", "team"],
+      "pregunta": { "es": "¿Quién de su equipo va a estar en el día a día?", "en": "Who from your team will be involved day to day?" }
+    },
+    {
+      "clase": "metodo",
+      "titulos": ["metodologia", "metodo", "enfoque", "approach", "methodology", "method"],
+      "pregunta": { "es": "¿En qué se diferencia este enfoque de lo que ya intentamos?", "en": "How is this approach different from what we already tried?" }
+    }
+  ],
+  "_sin_cifras": "Las cifras de estas clases son del cliente, no tuyas: el contexto describe su negocio y los supuestos lo que él entrega.",
+  "sin_cifras": ["contexto", "supuestos"],
+  "_sin_compromisos": "Lo que dicen los supuestos lo hace el cliente: no es tu promesa, es su riesgo (regla «riesgo»).",
+  "sin_compromisos": ["contexto", "supuestos"],
+  "cifra": { "es": "¿Cómo llegaron a «{cifra}»?", "en": "How did you arrive at “{cifra}”?" },
+  "compromiso": {
+    "palabras": [
+      "cubre", "incluye", "incluido", "incluida", "entrega", "entregamos", "garantiza", "garantizamos",
+      "nos comprometemos", "se compromete", "toma", "contadas desde", "a partir de",
+      "covers", "includes", "including", "included", "delivers", "deliver", "guarantee", "guarantees",
+      "we commit", "takes", "from the signing", "from contract signature"
+    ],
+    "pregunta": { "es": "Si no se cumple «{frase}», ¿qué pasa?", "en": "If “{frase}” isn't met, what happens?" }
+  },
+  "riesgo": {
+    "palabras": [
+      "si", "siempre que", "depende", "dependemos", "riesgo", "a menos que", "en caso de",
+      "if", "provided that", "depends", "risk", "unless", "in case"
+    ],
+    "pregunta": { "es": "¿Quién asume el riesgo de «{frase}»?", "en": "Who bears the risk of “{frase}”?" }
+  },
+  "cliente": [
+    {
+      "clase": "decide",
+      "titulos": ["quien decide", "decision", "decisores", "aprueba", "who decides", "decision makers", "approver", "stakeholders"],
+      "pregunta": { "es": "¿Qué necesita ver quien firma para decir que sí?", "en": "What does the person who signs need to see to say yes?" }
+    },
+    {
+      "clase": "acuerdos",
+      "titulos": ["acuerdos", "antecedentes contractuales", "contratos", "agreements", "previous agreements", "contracts"],
+      "pregunta": { "es": "¿Esto encaja con lo que ya firmamos?", "en": "Does this fit with what we already signed?" }
+    },
+    {
+      "clase": "historial",
+      "titulos": ["historial", "historia", "relacion", "history", "relationship", "track record"],
+      "pregunta": { "es": "¿Qué va a ser distinto esta vez?", "en": "What will be different this time?" }
+    },
+    {
+      "clase": "preocupa",
+      "titulos": ["preocupaciones", "prioridades", "le importa", "concerns", "priorities", "cares about"],
+      "pregunta": { "es": "¿Cómo responde esto a lo que más nos preocupa?", "en": "How does this address what worries us most?" }
+    }
+  ],
+  "por_regla": { "cifra": 4, "compromiso": 3, "riesgo": 2, "objecion": 3 },
+  "frase_maxima": 10,
+  "vacias": {
+    "es": ["el", "la", "los", "las", "un", "una", "de", "del", "al", "a", "en", "y", "o", "que", "con", "por", "para", "es", "son", "se", "su", "sus", "lo", "le", "no", "como", "mas", "pero", "si", "este", "esta", "desde"],
+    "en": ["the", "a", "an", "of", "to", "in", "on", "and", "or", "for", "with", "is", "are", "be", "it", "this", "that", "we", "you", "our", "your", "they", "their", "from", "by", "as", "if", "not", "but", "its"]
+  }
+}

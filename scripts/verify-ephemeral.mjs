@@ -45,6 +45,9 @@ const PROTEGIDOS = [
   // El disparador guarda la última pregunta del CLIENTE para no repetir ficha, y la ficha se
   // arma con sus palabras. Los dos manejan contenido de terceros: ni disco ni red.
   "src-tauri/src/disparo",
+  // El ensayo (sprint 004, ADR 019): arma lo que se pregunta y, desde la fase 3, oye tu respuesta por
+  // el micrófono. Ni disco ni red: los documentos los lee `lib.rs` con `corpus` y se los pasa troceados.
+  "src-tauri/src/ensayo",
   // `diccionario` se añadió en el sprint 002, fase 1, y es el caso más interesante de la lista:
   // **el diccionario PERSISTE** —es del consultor, como sus notas— y aun así el módulo está aquí.
   // Recibe cada turno del cliente y devuelve el turno corregido, así que tiene el transcript en las

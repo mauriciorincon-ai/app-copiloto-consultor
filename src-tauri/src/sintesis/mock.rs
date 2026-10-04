@@ -21,6 +21,10 @@ impl Proveedor for Mock {
         Ok(())
     }
     fn redactar(&self, _instrucciones: &str, texto: &str) -> Result<Respuesta, String> {
+        // **El banco del ensayo** (sprint 004, ADR 019 §3): la petición empieza por «Language: …».
+        if let Some(idioma) = texto.lines().next().and_then(|l| l.strip_prefix("Language: ")) {
+            return Ok(Respuesta { json: preguntas_del_ensayo(idioma.trim(), texto), ..Default::default() });
+        }
         // La primera ficha es la línea que empieza por «F1 · titular — línea».
         let f1 = texto.lines().find(|l| l.starts_with("F1 · ")).ok_or("sin fichas")?;
         let (titular, linea) = f1["F1 · ".len()..].split_once(" — ").unwrap_or((f1, ""));
@@ -32,6 +36,36 @@ impl Proveedor for Mock {
         });
         Ok(Respuesta { json: json.to_string(), ..Default::default() })
     }
+}
+
+/// Para el ensayo, el mock propone **dos preguntas fundadas** —con las seis primeras palabras de las dos
+/// primeras secciones— y **una que no se funda** (una sección que no existe), para que cada corrida del
+/// kit recorra también el descarte.
+fn preguntas_del_ensayo(idioma: &str, texto: &str) -> String {
+    let secciones: Vec<(&str, &str)> = texto
+        .lines()
+        .skip(1)
+        .filter_map(|l| {
+            let (id, resto) = l.split_once(" · ")?;
+            let (_, linea) = resto.split_once(" — ")?;
+            (!linea.is_empty()).then_some((id, linea))
+        })
+        .collect();
+    let en = idioma == "en";
+    let mut preguntas: Vec<serde_json::Value> = secciones
+        .iter()
+        .take(2)
+        .map(|(id, linea)| {
+            let trozo = linea.split_whitespace().take(6).collect::<Vec<_>>().join(" ");
+            let texto = if en { format!("What does “{trozo}” mean in practice?") } else { format!("¿Qué significa en la práctica «{trozo}»?") };
+            serde_json::json!({ "texto": texto, "seccion": id })
+        })
+        .collect();
+    preguntas.push(serde_json::json!({
+        "texto": if en { "Do you guarantee results?" } else { "¿Garantizan los resultados?" },
+        "seccion": "S99",
+    }));
+    serde_json::json!({ "preguntas": preguntas }).to_string()
 }
 
 #[cfg(test)]

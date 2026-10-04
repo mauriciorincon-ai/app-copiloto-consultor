@@ -386,6 +386,49 @@ fn cifra(ps: &[Palabra], c: &catalogo::Catalogo) -> Option<(usize, usize)> {
     Some((desde, i + n - 1))
 }
 
+/// **Las cifras de un texto, con lo que cuentan** (sprint 004, el banco del ensayo, ADR 019 §2):
+/// «tres fuentes», «cuatro semanas», «USD 40.000», «30 %», en el orden en que aparecen y sin repetir.
+/// Son las mismas reglas que la regla `cifra` de las propuestas —un número con su unidad, su moneda o
+/// su fecha— más el número con la cosa que cuenta detrás («dos rondas»). En inglés el modificador va
+/// delante del nombre («two review rounds»): si a la cosa le sigue un plural, entra también.
+pub fn cifras(texto: &str, ingles: bool) -> Vec<String> {
+    let c = catalogo::catalogo();
+    let ps = palabras(texto);
+    let mut tramos: Vec<(usize, usize)> = Vec::new();
+    let mut i = 0;
+    while i < ps.len() {
+        let Some((d, h)) = cifra(&ps[i..], c) else { break };
+        tramos.push((i + d, i + h));
+        i += h + 1;
+    }
+    for (_, _, pos) in pares(&ps, c) {
+        let mut hasta = pos + 1;
+        if ingles && !ps[hasta].corta && hasta + 1 < ps.len() {
+            let sig = &ps[hasta + 1].plegada;
+            let plural = sig.chars().count() > 3 && sig.ends_with('s') && sig.chars().all(char::is_alphabetic);
+            if plural && !c.vacias.contains(sig) {
+                hasta += 1;
+            }
+        }
+        tramos.push((pos, hasta));
+    }
+    // Por orden de aparición; si dos empiezan en el mismo sitio, la más larga; y sin solapes.
+    tramos.sort_by(|a, b| a.0.cmp(&b.0).then(b.1.cmp(&a.1)));
+    let mut salida: Vec<String> = Vec::new();
+    let mut fin: Option<usize> = None;
+    for (desde, hasta) in tramos {
+        if fin.is_some_and(|f| desde <= f) {
+            continue;
+        }
+        let dicha = juntar(&ps[desde..=hasta]);
+        if !salida.iter().any(|y| plegar(y) == plegar(&dicha)) {
+            salida.push(dicha);
+        }
+        fin = Some(hasta);
+    }
+    salida
+}
+
 /// Dos a cuatro palabras seguidas con mayúscula que tu corpus no conoce: (desde, hasta).
 fn nombre(ps: &[Palabra], c: &catalogo::Catalogo, conoce: &dyn Fn(&str) -> bool) -> Option<(usize, usize)> {
     let vale = |p: &Palabra| {
@@ -457,6 +500,19 @@ fn pregunta(ps: &[Palabra], c: &catalogo::Catalogo) -> Option<(usize, String)> {
 
 #[cfg(test)]
 mod pruebas {
+    /// **Las cifras para el ensayo** (sprint 004): con lo que cuentan, en orden y sin repetir, en los
+    /// dos idiomas. Y en inglés, el modificador delante del plural.
+    #[test]
+    fn las_cifras_de_un_texto_con_lo_que_cuentan() {
+        let es = "Tarifa cerrada de cuatro semanas. Incluye el taller de cierre y dos rondas de revisión. La entrega toma cuatro semanas.";
+        assert_eq!(cifras(es, false), vec!["cuatro semanas", "dos rondas"]);
+        assert_eq!(cifras("Cubre limpieza de tres fuentes: el ERP y el POS.", false), vec!["tres fuentes"]);
+        assert_eq!(cifras("Un taller de tres horas con USD 40.000 de tope y un 30% de margen.", false), vec!["tres horas", "USD 40.000", "30%"]);
+        let en = "Fixed fee for three weeks, including two review rounds. Covers two sources: the ERP.";
+        assert_eq!(cifras(en, true), vec!["three weeks", "two review rounds", "two sources"]);
+        assert!(cifras("Sin números aquí.", false).is_empty());
+    }
+
     use super::*;
 
     fn turno(pista: Pista, eco: bool, texto: &str) -> Turno {

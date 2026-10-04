@@ -283,7 +283,7 @@ pub trait Proveedor: Send + Sync {
 
 /// El JSON del modelo, aunque venga envuelto en «```json … ```» o con una frase delante: se toma
 /// el primer objeto `{…}` completo. Lo demás se tira.
-fn objeto(texto: &str) -> Option<&str> {
+pub(crate) fn objeto(texto: &str) -> Option<&str> {
     let ini = texto.find('{')?;
     let fin = texto.rfind('}')?;
     (fin > ini).then(|| &texto[ini..=fin])

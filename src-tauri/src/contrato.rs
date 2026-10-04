@@ -448,6 +448,7 @@ pub fn muestras() -> Vec<Muestra> {
         m("NOVEDAD_SUGERENCIA", "Novedad", "./ficha", &Novedad::Sugerencia(Box::new(sugerencia()))),
         m("ESTADO_DE_LA_IA_NADIE", "EstadoDeLaIa", "./ia", &crate::EstadoDeLaIa {
             redactar: false,
+            enriquecer: false,
             quien: None,
             sistema: Some(crate::sintesis::PorQueNoRedacta::AppleIntelligenceApagado),
             api: crate::EstadoDelApi {
@@ -462,6 +463,7 @@ pub fn muestras() -> Vec<Muestra> {
         }),
         m("ESTADO_DE_LA_IA_CON_API", "EstadoDeLaIa", "./ia", &crate::EstadoDeLaIa {
             redactar: true,
+            enriquecer: true,
             quien: Some(crate::sintesis::Quien::Api),
             sistema: None,
             api: crate::EstadoDelApi {

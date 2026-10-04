@@ -2470,3 +2470,150 @@ fn en_vivo_launchd_borra_a_su_hora_sin_la_app() {
     assert!(temporal_a.is_some_and(|s| s <= 90), "launchd no borró el archivo de la carpeta temporal a su hora");
     assert!(notas_a.is_some_and(|s| s <= 90), "launchd no borró el archivo de la carpeta de notas a su hora");
 }
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// EL KIT v3 — el banco de preguntas del ensayo (sprint 004, ADR 019 §2)
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+//
+// `docs/kit-de-prueba/ensayo.json` dice qué preguntas esperaría un consultor de cada propuesta y cada
+// ficha. Aquí se arma el banco ENTERO (sin tope) y se mide REGLA POR REGLA: la precisión (de las que
+// dio, cuántas esperaba el kit) y el recall (de las que esperaba, cuántas dio). Las cifras se imprimen:
+// salen de la corrida, no del kit. Y el acento del modelo, con el `mock` (ia-embebida §9): sus
+// preguntas, las que funda y las que tira, y lo que costaría una llamada con cada proveedor externo.
+
+use app_copiloto_consultor_lib::corpus::seccion::Seccion;
+use app_copiloto_consultor_lib::ensayo::banco::{self as banco_del_ensayo, Idioma as IdiomaDelEnsayo, Pregunta as PreguntaDelEnsayo};
+use app_copiloto_consultor_lib::ensayo::enriquecer;
+
+#[derive(serde::Deserialize)]
+struct KitDelEnsayo {
+    casos: Vec<CasoDelEnsayo>,
+}
+
+#[derive(serde::Deserialize)]
+struct CasoDelEnsayo {
+    nombre: String,
+    idioma: String,
+    propuesta: Option<String>,
+    ficha: Option<String>,
+    secciones: Option<SeccionesDelCaso>,
+    esperadas: Vec<EsperadaDelEnsayo>,
+}
+
+#[derive(serde::Deserialize)]
+struct SeccionesDelCaso {
+    propuesta: Vec<SeccionDelCaso>,
+    ficha: Vec<SeccionDelCaso>,
+}
+
+#[derive(serde::Deserialize)]
+struct SeccionDelCaso {
+    titulo: String,
+    texto: String,
+}
+
+#[derive(serde::Deserialize, Debug)]
+struct EsperadaDelEnsayo {
+    regla: String,
+    seccion: Option<String>,
+    cifra: Option<String>,
+    id: Option<String>,
+}
+
+impl EsperadaDelEnsayo {
+    fn casa(&self, p: &PreguntaDelEnsayo) -> bool {
+        let plegar = |t: &str| t.to_lowercase();
+        p.regla.id() == self.regla
+            && self.seccion.as_deref().is_none_or(|s| p.seccion.as_deref() == Some(s))
+            && self.cifra.as_deref().is_none_or(|c| plegar(&p.clave) == plegar(c))
+            && self.id.as_deref().is_none_or(|i| p.clave == i)
+    }
+}
+
+/// Los mínimos por regla. El kit y las reglas los escribió el mismo constructor, así que pasar aquí es
+/// un piso, no una prueba de calidad: la de verdad es tu propuesta en el ⭐ (bitácora del sprint 004).
+const PRECISION_MINIMA_DEL_BANCO: f64 = 0.75;
+const RECALL_MINIMO_DEL_BANCO: f64 = 0.75;
+
+#[test]
+fn el_kit_del_ensayo_mide_el_banco_por_regla() {
+    let _turno = turno();
+    let raiz = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba");
+    let kit: KitDelEnsayo =
+        serde_json::from_str(&std::fs::read_to_string(format!("{raiz}/ensayo.json")).expect("falta ensayo.json")).expect("ensayo.json no se lee");
+    let mut corpus = Corpus::en_memoria().unwrap();
+    corpus.indexar(Path::new(&format!("{raiz}/corpus")), &|_| {}).expect("no se indexó el kit");
+    let ruta = |relativa: &str| format!("{raiz}/{relativa}");
+
+    let mut fallos = Vec::new();
+    for caso in &kit.casos {
+        let (propuesta, ficha): (Vec<Seccion>, Vec<Seccion>) = match (&caso.propuesta, &caso.ficha, &caso.secciones) {
+            (Some(p), Some(f), _) => (corpus.secciones_de(&ruta(p)).expect("la propuesta"), corpus.secciones_de(&ruta(f)).expect("la ficha")),
+            (_, _, Some(s)) => {
+                let a = |v: &[SeccionDelCaso]| v.iter().map(|x| Seccion { titulo: Some(x.titulo.clone()), texto: x.texto.clone() }).collect();
+                (a(&s.propuesta), a(&s.ficha))
+            }
+            _ => panic!("el caso {} no trae ni documentos ni secciones", caso.nombre),
+        };
+        let idioma = if caso.idioma == "en" { IdiomaDelEnsayo::En } else { IdiomaDelEnsayo::Es };
+        assert_eq!(banco_del_ensayo::idioma_de(&propuesta), Some(idioma), "{}: el idioma de la propuesta", caso.nombre);
+
+        let reloj = std::time::Instant::now();
+        let todas = banco_del_ensayo::todas(&propuesta, &ficha, idioma);
+        let ms = reloj.elapsed().as_secs_f64() * 1000.0;
+        println!("\n── el banco del ensayo · {} ({}) · {ms:.2} ms ──", caso.nombre, caso.idioma);
+        println!("   regla        dio  esperaba  precisión  recall");
+        for (i, regla) in banco_del_ensayo::Regla::DEL_BANCO.iter().enumerate() {
+            let dadas = &todas[i];
+            let esperadas: Vec<&EsperadaDelEnsayo> = caso.esperadas.iter().filter(|e| e.regla == regla.id()).collect();
+            let ciertas = dadas.iter().filter(|p| esperadas.iter().any(|e| e.casa(p))).count();
+            let halladas = esperadas.iter().filter(|e| dadas.iter().any(|p| e.casa(p))).count();
+            let precision = if dadas.is_empty() { 1.0 } else { ciertas as f64 / dadas.len() as f64 };
+            let recall = if esperadas.is_empty() { 1.0 } else { halladas as f64 / esperadas.len() as f64 };
+            println!("   {:<11} {:>4}  {:>8}  {:>9.3}  {:>6.3}", regla.id(), dadas.len(), esperadas.len(), precision, recall);
+            for p in dadas.iter().filter(|p| !esperadas.iter().any(|e| e.casa(p))) {
+                println!("      · sobra: {}", p.texto);
+            }
+            for e in esperadas.iter().filter(|e| !dadas.iter().any(|p| e.casa(p))) {
+                println!("      · falta: {e:?}");
+            }
+            if precision < PRECISION_MINIMA_DEL_BANCO || recall < RECALL_MINIMO_DEL_BANCO {
+                fallos.push(format!("{} · {}: precisión {precision:.3}, recall {recall:.3}", caso.nombre, regla.id()));
+            }
+        }
+
+        let ocho = banco_del_ensayo::armar(&propuesta, &ficha, idioma, 8);
+        println!("   un ensayo de 8:");
+        for (n, p) in ocho.iter().enumerate() {
+            println!("   {:>2}. [{}] {}", n + 1, p.regla.id(), p.texto);
+        }
+
+        // El acento del modelo, con el mock: lo que propone, lo que se funda y lo que se tira.
+        let peticion = enriquecer::Peticion::nueva(&propuesta, &ficha, idioma).expect("sin secciones con título");
+        let r = enriquecer::enriquecer(std::sync::Arc::new(app_copiloto_consultor_lib::sintesis::mock::Mock), &peticion, app_copiloto_consultor_lib::sintesis::TECHO);
+        match &r.enriquecido {
+            Ok(e) => {
+                println!("   el mock propone {} fundada(s) y {} descartada(s) · {} ms:", e.preguntas.len(), e.descartadas, r.ms);
+                for p in &e.preguntas {
+                    println!("      + [{}] {}", p.seccion.as_deref().unwrap_or("—"), p.texto);
+                }
+                if e.descartadas == 0 {
+                    fallos.push(format!("{}: el mock no recorrió el descarte", caso.nombre));
+                }
+            }
+            Err(e) => fallos.push(format!("{}: el mock no enriqueció ({e:?})", caso.nombre)),
+        }
+        // Lo que costaría con cada proveedor externo: los tokens de entrada estimados (4 caracteres por
+        // token) y una salida de cinco preguntas (≈ 200 tokens).
+        let caracteres = enriquecer::Peticion::instrucciones().chars().count() + peticion.texto().chars().count();
+        let entrada = (caracteres as u64).div_ceil(4);
+        for externo in [app_copiloto_consultor_lib::sintesis::api::Externo::Claude, app_copiloto_consultor_lib::sintesis::api::Externo::Groq] {
+            println!(
+                "   una llamada con {}: ≈ {entrada} tokens de entrada + 200 de salida ≈ US${:.5}",
+                externo.nombre(),
+                externo.costo(entrada, 200)
+            );
+        }
+    }
+    assert!(fallos.is_empty(), "el banco del ensayo por debajo de su piso:\n{}", fallos.join("\n"));
+}

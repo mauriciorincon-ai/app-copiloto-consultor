@@ -60,7 +60,11 @@ línea. Sin corpus para ese cliente no hay ensayo, y el estado «sin corpus» lo
   (`AG_SINTESIS=mock`, de primera clase, con el que el kit imprime sus salidas) → el API si el usuario
   lo encendió (Claude o Groq) → el modelo del sistema, en el Mac.
 - **Costo:** una llamada por ensayo, con el texto recortado. Cuenta contra el mismo tope de US$10 al mes
-  y sale en «esta reunión» y «este mes» de IA. La cifra medida va aquí cuando el kit la imprima (fase 2).
+  y sale en «esta reunión» y «este mes» de IA. **La cifra, medida por el kit v3 (fase 2, 2026-10-04):**
+  la petición de Páramo Azul son ≈ 390 tokens de entrada (instrucciones, títulos y primeras frases); con
+  una salida de cinco preguntas (≈ 200 tokens), **≈ US$0,0014 con Claude Haiku y ≈ US$0,0004 con Groq**
+  por ensayo. Los tokens se estiman a cuatro caracteres por token; la cifra exacta la da el proveedor al
+  contestar y es la que se cobra.
 - **Privacidad:** lo que salió se ve exacto en IA («Ver lo que salió», B37), con lo tapado marcado. El
   contador de red lo cuenta (`red::registrar_salida`, antes de enviar). En los logs, solo bytes y
   proveedor, jamás el texto. La retención es la que cada proveedor publica (ADR 011, estándares v2.18.0

@@ -91,6 +91,8 @@ const SENSIBLES = [
   // La banda no se cambia de borde a sí misma: lo eliges tú en Sesión o con ⌃⌥B (sprint 004).
   "fijar_posicion_de_la_banda",
   "entendido_el_aviso_de_arriba",
+  // El acento del ensayo usa el proveedor externo, como redactar: solo desde IA (sprint 004).
+  "enriquecer_el_banco",
 ];
 
 describe("cada ventana puede solo lo suyo", () => {

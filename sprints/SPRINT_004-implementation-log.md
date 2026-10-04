@@ -309,6 +309,84 @@ Y el acople arriba deja en el log su geometría (de dónde, qué se pidió, qué
 El presupuesto se cumple: **228 ms al acoplar y 123 ms al devolver** (≤ 300 ms). Lo que no se probó en vivo
 queda para el ⭐: Zoom y Teams (su ventana principal), una pantalla externa y la pantalla completa.
 
+## Fase 2 · El banco de preguntas (C18)
+
+Arranca el 2026-10-04 con el «continúa» del usuario tras la fase 1.
+
+### Lo que se construyó
+
+- **Los catálogos, publicados y dentro del binario:**
+  - `data/ensayo/reglas.json`: las seis reglas con su nombre es/en; las clases de sección por título; las
+    plantillas; qué clases no dan cifras ni compromisos (contexto y supuestos son del cliente); topes por
+    regla; y las palabras vacías es/en para el idioma.
+  - `data/ensayo/objeciones.json`: diez objeciones bilingües con etiquetas. Cada una con su **fuente del
+    informe de mercado** de la planeadora (Kuznetsova ×3, SeattleDataGuy, Gartner, Bumeran, la reseña de
+    Techjockey) o «criterio del builder» (tres). Ninguna repite una cifra.
+- **`ensayo/banco.rs`** (módulo nuevo, **protegido** en `verify:ephemeral`, puro): `todas` arma el banco entero
+  regla por regla; `armar` reparte **por turnos** hasta el tope (5 · 8 · 12) sin repetir; `idioma_de` por
+  palabras vacías (si empatan, `None`: manda el del usuario); `terminos` (prefijo de cinco letras, sin tildes)
+  para fundar; `con_las_del_modelo` las pone detrás, sin repetir. Las frases largas se cortan en la primera
+  coma o dos puntos.
+- **`ensayo/enriquecer.rs`** (el acento opt-in, ADR 019 §3): `Peticion` (títulos y primera frase con ids
+  `S1…`/`C1…` y el idioma), `fundar` (sección dada por id o título, ≥ 2 términos en común, «?», ≤ 25 palabras,
+  máximo 5; lo demás se cuenta), `enriquecer` con el techo de la síntesis y la respuesta tardía cobrable.
+  `PorQueNo` cerrado para la línea de la pantalla.
+- **`propuestas::cifras`**: las cifras con lo que cuentan, reutilizando el detector de la regla `cifra` (y
+  el plural del modificador en inglés: «two review rounds»).
+- **El corpus:** `secciones_de` (el documento entero por título, solo si es de tu corpus), `propuestas_de`
+  (las que nombran al cliente) y `ficha_de`.
+- **El `mock`** aprende el banco: dos preguntas fundadas y una que no (sección `S99`), para que el kit recorra
+  el descarte en cada corrida.
+- **«Enriquecer el banco» en IA**, apagado de fábrica: la preferencia `enriquecerElBanco` (ADR 002, enmienda
+  8), el comando `enriquecer_el_banco` (solo en la principal, en `SENSIBLES`), `EstadoDeLaIa.enriquecer` en el
+  contrato y el segundo interruptor de `ia.html` · sprint 4. La fidelidad de IA se compara ya con «sprint 4».
+- **Kit v3** (`docs/kit-de-prueba/ensayo.json` y su test `el_kit_del_ensayo_mide_el_banco_por_regla`, que
+  entra en el paso «el kit, con su salida» de la CI): Páramo Azul (de `corpus/`) y Northwind Feed Co. (inline,
+  en inglés). El LEEME pasa a v3.
+
+### Lo que imprime el kit v3 (corrida local, 2026-10-04)
+
+| Caso | seccion | cifra | compromiso | riesgo | cliente | objecion | banco entero |
+|---|---|---|---|---|---|---|---|
+| Páramo Azul (es) | 6 · P 1,000 · R 1,000 | 4 · 1,000 · 1,000 | 3 · 1,000 · 1,000 | 2 · 1,000 · 1,000 | 3 · 1,000 · 1,000 | 3 · 1,000 · 1,000 | 5,3 ms |
+| Northwind (en) | 6 · 1,000 · 1,000 | 4 · 1,000 · 1,000 | 3 · 1,000 · 1,000 | 2 · 1,000 · 1,000 | 2 · 1,000 · 1,000 | 3 · 1,000 · 1,000 | 4,6 ms |
+
+- **El mock:** 2 fundadas y 1 descartada en los dos casos.
+- **Una llamada de enriquecer:** ≈ 390 tokens de entrada + 200 de salida ≈ **US$0,0014 con Claude Haiku y
+  US$0,0004 con Groq** (queda escrito en el ADR 019 §5, que lo dejó pendiente para esta fase).
+- **Dicho sin adornos:** el kit y las reglas los escribió el mismo constructor, en la misma fase; que todo dé
+  1,000 es un **piso** (mínimo 0,75 por regla), no una prueba de calidad. La de verdad es una propuesta real
+  del usuario, en el ⭐ del ensayo. El LEEME lo dice.
+
+### Pruebas
+
+- **Rust** (`AG_SIN_HARDWARE=1`): lib **515** (+17: banco 9, enriquecer 6, cifras 1, corpus 1) · contra el Mac
+  14 (+1, el kit v3) · ghost 5 · puerta 14 · clippy limpio.
+- **Interfaz:** vitest **397** (+1: el interruptor de IA) · lint · typecheck.
+- **e2e:** 220 (+12 de la fase 1) · `verify:ephemeral` con `ensayo/` en la lista.
+- **Fidelidad:** 232 encuadres, ninguno sobre el umbral.
+
+### Los rojos (con `scripts/demo-rojo.sh`)
+
+| Gate o prueba | Mutación | Quién lo nombró |
+|---|---|---|
+| piso del kit v3 | sin «incluye» en los compromisos | `el_kit_del_ensayo…`: «el banco del ensayo por debajo de su piso» |
+| grounding del modelo | `TERMINOS_MINIMOS = 0` | `solo_se_funda_lo_que_nombra_una_seccion_dada…` |
+| las cifras del contexto son del cliente | `sin_cifras` sin «contexto» | `las_seis_reglas_leen_lo_que_tu_escribiste` |
+| las del modelo van marcadas | `De::Propuesta` en vez de `De::Modelo` | `solo_se_funda…` |
+| `ensayo/` es protegido | un `std::fs::write` en `banco.rs` | `verify:ephemeral`: «2 uso(s) de disco/red en módulos efímeros» |
+| el interruptor de IA | el botón llamando a `redactar_sugerencias` | `la-ficha-llega-a-la-banda.test.tsx` |
+
+Las seis volvieron a verde tras restaurar.
+
+### Desviaciones de la fase
+
+- **La llamada al modelo desde la app** (elegir el proveedor con `proveedor_de_ahora`, el «sobre» de «Ver lo
+  que salió», `cobrar`) se cablea en la **fase 3**, con la pantalla del ensayo: un comando sin quien lo llame
+  tumba el gate de comandos muertos, y una función sin llamador, clippy. Lo que la llamada necesita —la bóveda,
+  el registro B37, el contador de red y el tope— ya lo hace el proveedor externo por dentro (`sintesis/api.rs`).
+- Las preguntas del modelo **se suman detrás** del tope elegido («hasta cinco más», ADR 019 §3), no dentro.
+
 ## Desviación del plan
 
 1. Arriba, el acople actúa sobre la ventana de la reunión detectada, no sobre la de delante (ADR 004, enmienda 1).
@@ -325,3 +403,4 @@ queda para el ⭐: Zoom y Teams (su ventana principal), una pantalla externa y l
 10. El acople arriba también se dispara al empezar la reunión (fase 1); abajo, como en el H1.
 11. Lo encontrado en la corrida en vivo (fase 1): la app espera a que la ventana se quede quieta antes de
     anotarla (`acople::asentar`), y soltar el asa sin arrastrarla no reacopla.
+12. La llamada al modelo desde la app se cablea en la fase 3, con la pantalla (fase 2).

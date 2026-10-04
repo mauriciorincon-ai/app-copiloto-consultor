@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-enriquecer-el-banco"
+description = "Enables the enriquecer_el_banco command without any pre-configured scope."
+commands.allow = ["enriquecer_el_banco"]
+
+[[permission]]
+identifier = "deny-enriquecer-el-banco"
+description = "Denies the enriquecer_el_banco command without any pre-configured scope."
+commands.deny = ["enriquecer_el_banco"]

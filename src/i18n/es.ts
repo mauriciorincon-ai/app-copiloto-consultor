@@ -537,6 +537,8 @@ export const es = {
     siFallaDetalle:
       "La sugerencia es un acento. Buscar en tu corpus y mostrar la ficha con su fuente es código, no modelo: funciona aunque apagues esto entero.",
     redactarSugerencias: "Redactar sugerencias (además de mostrar la ficha)",
+    /** El acento del ensayo (sprint 004, `ia.html` · sprint 4). */
+    enriquecerElBanco: "Enriquecer el banco",
     proveedorExterno: "Proveedor externo",
     tuClave: "Tu clave",
     enTuLlavero: "se guarda en tu Llavero, nunca en un archivo",

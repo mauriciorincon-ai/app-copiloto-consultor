@@ -1,4 +1,4 @@
-import { act, fireEvent, render } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Banda } from "@/componentes/Banda";
 import { Sesion } from "@/pantallas/Sesion";
@@ -565,6 +565,21 @@ describe("la sugerencia, dentro del producto", () => {
     await act(async () => {});
     fireEvent.click([...document.querySelectorAll("[role=switch]")][0] as HTMLElement);
     expect(preguntar).toHaveBeenCalledWith("redactar_sugerencias", { si: true });
+  });
+
+  /** El segundo interruptor (sprint 004, ADR 019 §3): el acento del ensayo, apagado de fábrica. */
+  it("encender «Enriquecer el banco» se lo pide a Rust, y nace apagado", async () => {
+    respuestas.set("estado_de_la_ia", ESTADO_DE_LA_IA_NADIE);
+    render(
+      <IdiomaContext.Provider value="es">
+        <Ia />
+      </IdiomaContext.Provider>,
+    );
+    await act(async () => {});
+    const interruptor = screen.getByRole("switch", { name: es.cuaderno.enriquecerElBanco });
+    expect(interruptor).toHaveAttribute("aria-checked", "false");
+    fireEvent.click(interruptor);
+    expect(preguntar).toHaveBeenCalledWith("enriquecer_el_banco", { si: true });
   });
 
   /**

@@ -39,6 +39,8 @@ export type EstadoDelApi = { encendida: boolean; externo: Externo; hayClave: boo
 
 export type EstadoDeLaIa = {
   redactar: boolean;
+  /** «Enriquecer el banco» del ensayo (sprint 004, ADR 019 §3). */
+  enriquecer: boolean;
   /** Quién redactaría ahora. `null`: nadie puede. */
   quien: Quien | null;
   /** Por qué el modelo del sistema no puede. `null`: puede. */
@@ -53,6 +55,7 @@ export type EstadoDeLaIa = {
 /** Lo que la maqueta dibuja en «así se ve hoy · sprint 2»: nadie redacta, todo apagado. */
 const DE_MUESTRA: EstadoDeLaIa = {
   redactar: false,
+  enriquecer: false,
   quien: null,
   sistema: "apple-intelligence-apagado",
   api: { encendida: false, externo: "claude", hayClave: false },
@@ -172,6 +175,10 @@ export function useIa(): [EstadoDeLaIa, (e: EstadoDeLaIa) => void] {
     };
   }, []);
   return [estado, setEstado];
+}
+
+export function enriquecerElBanco(si: boolean) {
+  return preguntar<EstadoDeLaIa>("enriquecer_el_banco", { si });
 }
 
 export function redactarSugerencias(si: boolean) {

@@ -395,6 +395,7 @@ export const ESTADO_DE_LA_IA_NADIE: EstadoDeLaIa = {
       "externo": "claude",
       "hayClave": false
     },
+    "enriquecer": false,
     "latenciaMs": null,
     "mesUsd": 0.0,
     "quien": null,
@@ -410,6 +411,7 @@ export const ESTADO_DE_LA_IA_CON_API: EstadoDeLaIa = {
       "externo": "groq",
       "hayClave": true
     },
+    "enriquecer": true,
     "latenciaMs": 1400,
     "mesUsd": 0.84,
     "quien": "api",

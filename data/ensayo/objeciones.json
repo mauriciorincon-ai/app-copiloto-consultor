@@ -1,0 +1,74 @@
+{
+  "_leeme": "Objeciones típicas de proyectos de datos, BI e IA (ADR 019 §2). Cada una lleva su FUENTE: una del informe de mercado de la planeadora (2026-09-17, con su enlace y su fuerza [F]/[M]/[A]) o «criterio del builder» cuando no hay fuente. Ninguna cifra inventada: si la fuente da una cifra, la pregunta no la repite. Se eligen por ETIQUETAS: las que tocan lo que tu propuesta dice (datos, BI, IA, adopción, seguridad); «general» vale para todas. Las palabras de cada etiqueta se comparan sin mayúsculas ni tildes.",
+  "version": 1,
+  "fecha": "2026-10-04",
+  "etiquetas": {
+    "datos": ["datos", "fuente", "fuentes", "erp", "pos", "excel", "limpieza", "calidad", "extractos", "data", "source", "sources", "cleansing", "quality", "extracts"],
+    "bi": ["tablero", "tableros", "dashboard", "dashboards", "reporte", "reportes", "indicadores", "kpi", "margen", "report", "reports", "margin"],
+    "ia": ["ia", "modelo", "modelos", "llm", "machine learning", "inteligencia artificial", "ai", "model", "models", "artificial intelligence"],
+    "adopcion": ["taller", "capacitacion", "adopcion", "usuarios", "workshop", "training", "adoption", "users"],
+    "seguridad": ["acceso", "accesos", "confidencialidad", "seguridad", "access", "confidentiality", "security"]
+  },
+  "objeciones": [
+    {
+      "id": "numeros-correctos",
+      "etiquetas": ["datos", "bi"],
+      "pregunta": { "es": "¿Estos números son correctos? ¿Cómo lo sabemos?", "en": "Are these numbers even right? How do we know?" },
+      "fuente": "Kuznetsova, «5 Behaviors That Kill Your BI Credibility» (nastengraph.substack.com) — «Are these numbers even right?» [A]"
+    },
+    {
+      "id": "no-cuadra-con-el-erp",
+      "etiquetas": ["datos", "bi"],
+      "pregunta": { "es": "¿Qué hacemos si las cifras del tablero no cuadran con el ERP?", "en": "What do we do if the dashboard numbers don't match our ERP?" },
+      "fuente": "Kuznetsova, «5 Behaviors That Kill Your BI Credibility» — «These revenue numbers don't match our ERP system.» [A]"
+    },
+    {
+      "id": "nadie-lo-usa",
+      "etiquetas": ["bi", "adopcion"],
+      "pregunta": { "es": "¿Quién va a seguir usando el tablero un mes después de la entrega?", "en": "Who will still be using the dashboard a month after delivery?" },
+      "fuente": "SeattleDataGuy, «Stop shipping dashboards that don't…» (seattledataguy.substack.com) — «A month later, the usage metrics show no one's touched it since demo day.» [A]"
+    },
+    {
+      "id": "tendencia",
+      "etiquetas": ["bi"],
+      "pregunta": { "es": "¿Esto nos dice si vamos mejor o peor?", "en": "Does this tell us whether we're trending up or down?" },
+      "fuente": "Kuznetsova, «5 Behaviors That Kill Your BI Credibility» — «Cool... but is performance trending up or down?» [A]"
+    },
+    {
+      "id": "entendieron-la-necesidad",
+      "etiquetas": ["general"],
+      "pregunta": { "es": "¿Cómo sabemos que entendieron lo que de verdad necesitamos?", "en": "How do we know you understood what we actually need?" },
+      "fuente": "Gartner Digital Markets, «How Software Providers Can Handle Common Sales Problems»: los compradores callan cuando no se entendió su negocio (snippet; la página devuelve 403) [M]"
+    },
+    {
+      "id": "lo-pueden-garantizar",
+      "etiquetas": ["general"],
+      "pregunta": { "es": "¿Eso lo pueden garantizar?", "en": "Can you guarantee that?" },
+      "fuente": "Bumeran (Perú), «Tu primera reunión con un cliente»: el riesgo es «prometiendo algo que todavía no puedes garantizar» [A]"
+    },
+    {
+      "id": "el-modelo-se-inventa",
+      "etiquetas": ["ia"],
+      "pregunta": { "es": "¿Qué pasa si el modelo se inventa una respuesta?", "en": "What if the model makes up an answer?" },
+      "fuente": "Reseña de Cluely en Techjockey: «when it 'hallucinates'… undermines credibility» [A]"
+    },
+    {
+      "id": "donde-viven-los-datos",
+      "etiquetas": ["datos", "seguridad", "ia"],
+      "pregunta": { "es": "¿Dónde quedan nuestros datos y quién los puede ver?", "en": "Where does our data live, and who can see it?" },
+      "fuente": "criterio del builder"
+    },
+    {
+      "id": "cuando-se-vayan",
+      "etiquetas": ["adopcion"],
+      "pregunta": { "es": "¿Qué pasa con esto cuando ustedes se vayan?", "en": "What happens to this once you leave?" },
+      "fuente": "criterio del builder"
+    },
+    {
+      "id": "cuanto-cuesta-el-modelo",
+      "etiquetas": ["ia"],
+      "pregunta": { "es": "¿Cuánto nos va a costar el modelo cada mes?", "en": "How much will the model cost us each month?" },
+      "fuente": "criterio del builder"
+    }
+  ]
+}
