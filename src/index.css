@@ -195,6 +195,14 @@ html[data-ventana="banda"] .banda {
   border-bottom: 0;
 }
 
+/* Arriba (sprint 004) el borde que da a la reunión es el de abajo: la línea va ahí, como en la
+   variante «arriba» de `posicion.html` (`.banda[data-borde="arriba"]` en ghost.css), y el de arriba,
+   pegado a la barra de menús, queda sin línea. */
+html[data-ventana="banda"] .banda[data-borde="arriba"] {
+  border-top: 0;
+  border-bottom: var(--borde) solid var(--line);
+}
+
 /* -----------------------------------------------------------------------------
    EL RELLENO — lo único que la captura encuentra donde está la banda.
 

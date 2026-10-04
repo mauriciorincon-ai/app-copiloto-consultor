@@ -42,7 +42,7 @@ const FIDELIDAD = join(RAIZ, "docs/fidelidad");
  * enseña como contrapeso del gate diferido pasó a enseñar pantallas del sprint 2. Se cambia en el
  * primer commit de cada sprint que capture.
  */
-const SPRINT = "s3";
+const SPRINT = "s4";
 
 const MARCO = 9;
 const PUERTO = 4180;
@@ -100,6 +100,24 @@ const ARTEFACTOS = [
     ],
   },
   {
+    // La banda ARRIBA (sprint 004, mirada de DECISIÓN 2). La variante es la MISMA banda con el
+    // modificador `[data-borde="arriba"]` de ghost.css —el asa y la línea en el borde de abajo, que es
+    // el que da a la reunión—, así que la referencia es `banda.html` con ese atributo puesto (`borde`).
+    // Las copias de `posicion.html` son ilustraciones dentro de un escritorio, con la ficha resumida, y
+    // compararse contra ellas medía el resumen, no la banda.
+    id: "banda-arriba",
+    titulo: "la banda arriba",
+    mirada: "la mirada de DECISIÓN 2 del sprint 004",
+    selectorMaqueta: ".banda",
+    selectorProducto: "section.banda",
+    desbordes: ".banda, .banda .cuerpo-b, .banda .lado-b, .banda .ficha-b",
+    encuadres: [
+      { id: "arriba-88", maqueta: "banda.html", estado: "ficha", borde: "arriba", alto: 88, url: "ventana=banda&estado=ficha&borde=arriba" },
+      { id: "arriba-200", maqueta: "banda.html", estado: "ficha-2", borde: "arriba", alto: 200, url: "ventana=banda&estado=ficha&ampliada=1&borde=arriba" },
+      { id: "arriba-44", maqueta: "banda.html", estado: "voz", borde: "arriba", alto: 44, url: "ventana=banda&estado=voz&borde=arriba" },
+    ],
+  },
+  {
     id: "cuaderno",
     titulo: "el cuaderno",
     mirada: "las miradas 17, 17-bis y 17-quater",
@@ -111,7 +129,9 @@ const ARTEFACTOS = [
       // sprint 2». Los de «sprint 1» quedan en la maqueta como historia: ya no describen la app.
       // Desde la fase 3 del sprint 003 Sesión se compara con «sprint 3 · este cliente»: vuelve al diseño
       // de la Etapa de Diseño, con «Este cliente» vivo (ADR 017). «sprint 2» queda como historia.
-      { id: "sesion", maqueta: "sesion.html", estado: "s3", alto: 640, url: "ventana=principal&pantalla=sesion" },
+      // Desde el sprint 004 Sesión es la de «sprint 4»: la de «sprint 3» más la fila «La banda».
+      { id: "sesion", maqueta: "sesion.html", estado: "s4", alto: 640, url: "ventana=principal&pantalla=sesion" },
+      { id: "sesion-aviso", maqueta: "sesion.html", estado: "s4-aviso", alto: 640, url: "ventana=principal&pantalla=sesion&estado=aviso" },
       { id: "sesion-en-marcha", maqueta: "sesion.html", estado: "s3-en-marcha", alto: 640, url: "ventana=principal&pantalla=sesion&estado=en-marcha" },
       { id: "sesion-pregunta", maqueta: "sesion.html", estado: "s3-pregunta", alto: 640, url: "ventana=principal&pantalla=sesion&estado=pregunta" },
       { id: "sesion-sin-bandera", maqueta: "sesion.html", estado: "s3-sin-bandera", alto: 640, url: "ventana=principal&pantalla=sesion&estado=sin-bandera" },
@@ -163,7 +183,7 @@ const IDIOMAS = [
 
 /** El chrome de la sala de diseño, que jamás debe entrar en el encuadre. */
 const SALA_DE_DISENO =
-  ".mq-bar, .mq-nota, .mq-choque, .mq-corte, .mq-etiqueta, .mq-tabla-pos, .mq-hero, .mq-grupo";
+  ".mq-bar, .mq-nota, .mq-choque, .mq-corte, .mq-etiqueta, .mq-tabla-pos, .mq-hero, .mq-grupo, .mq-camara, .mq-mirada";
 
 console.log("── árbol del arnés ──────────────────────────────────────────");
 console.log(`   referencia: ${DISENO}`);
@@ -236,7 +256,16 @@ for (const art of ARTEFACTOS) {
   const regla = await navegador.newPage();
   await regla.setViewportSize({ width: ANCHO_DE_MEDIDA, height: altoMax + 300 });
   await regla.goto(`file://${join(DISENO, art.encuadres[0].maqueta)}`);
-  const caja = await (await regla.$(art.selectorMaqueta)).boundingBox();
+  // Con el estado del primer encuadre puesto, y el primer artefacto VISIBLE (sprint 004): en
+  // `posicion.html` las bandas de arriba están ocultas hasta que se elige su estado, y medir una
+  // oculta daba una caja nula.
+  await regla.evaluate((estado) => {
+    document.documentElement.dataset.estado = estado;
+    window.__mqApply?.();
+  }, art.encuadres[0].estado);
+  let medido = null;
+  for (const el of await regla.$$(art.selectorMaqueta)) if (await el.isVisible()) { medido = el; break; }
+  const caja = await (medido ?? (await regla.$(art.selectorMaqueta))).boundingBox();
   const ANCHO = Math.round(caja.width);
   await regla.close();
   console.log(`   ${art.id}: ancho de la referencia, medido: ${ANCHO} px`);
@@ -261,17 +290,19 @@ for (const art of ARTEFACTOS) {
       // ---- LA MAQUETA ----
       for (const e of art.encuadres) {
         await pag.goto(`file://${join(DISENO, e.maqueta)}`);
-        await pag.evaluate(([estado, tm, lg, sel]) => {
+        await pag.evaluate(([estado, tm, lg, sel, borde]) => {
           document.documentElement.dataset.estado = estado;
           document.documentElement.dataset.theme = tm;
           document.documentElement.dataset.lang = lg;
           window.__mqApply();
+          // La variante de borde (sprint 004): el mismo artefacto con su modificador.
+          if (borde) for (const b of document.querySelectorAll(".banda")) b.dataset.borde = borde;
           // TODO el chrome de la sala de diseño fuera del encuadre. La barra de estados es
           // `position: sticky`: al desplazarse para fotografiar un artefacto alto se le montaba
           // encima y la referencia del gate salía con media pantalla tapada por botones.
           for (const el of document.querySelectorAll(sel)) el.style.display = "none";
           window.scrollTo(0, 0);
-        }, [e.estado, tema, idioma.id, SALA_DE_DISENO]);
+        }, [e.estado, tema, idioma.id, SALA_DE_DISENO, e.borde ?? null]);
 
         await asentar(pag);
         const candidatos = await pag.$$(art.selectorMaqueta);

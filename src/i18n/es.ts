@@ -460,6 +460,14 @@ export const es = {
     pantallaNoPudoPor: "macOS no entregó la ventana de la reunión. La app lo vuelve a intentar sola.",
     leerlaSola: "Leerla sola",
     leelaAhora: "léela ahora",
+    /** La banda, arriba o abajo (sprint 004, `sesion.html` · sprint 4). */
+    laBanda: "La banda",
+    bandaArriba: "arriba",
+    bandaAbajo: "abajo",
+    avisoArribaTitulo: "La banda ahora va arriba, junto a la cámara",
+    avisoArribaTexto:
+      "Leer la ficha arriba se ve como mirar a quien habla. ¿La prefieres abajo? Cámbiala aquí o con ⌃⌥B.",
+    entendido: "Entendido",
     altavozExterno:
       "Por HDMI, DisplayPort o AirPlay el sonido sale por un altavoz: el micrófono va a oír al cliente y el modo solo audio no habla.",
     siEsUnAltavoz: "Si es un altavoz, no uses el modo solo audio.",

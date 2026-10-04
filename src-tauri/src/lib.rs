@@ -204,7 +204,7 @@ fn ajustar_banda(app: tauri::AppHandle, alto: u32) -> Result<(), String> {
         apagar_el_modo(&app);
         println!("[habla] el asa apagó el modo solo audio");
     }
-    ventana::ajustar_banda(&app, alto)
+    ventana::ajustar_banda(&app, borde_de(&app), alto)
 }
 
 /// El modo solo audio solo se enciende si hay voz para el idioma en que se lee.
@@ -237,11 +237,126 @@ fn apagar_el_modo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> habla::LaVoz 
 /// Durante el arrastre se mueve lo nuestro; al soltar, lo ajeno.
 #[tauri::command]
 fn asentar_banda<R: tauri::Runtime>(app: tauri::AppHandle<R>, alto: u32) -> Result<(), String> {
-    ventana::ajustar_banda(&app, alto)?;
-    let franja = ventana::franja(&app, alto)?;
-    let informe = acople::reacoplar(franja, &huella(&app));
+    let borde = borde_de(&app);
+    ventana::ajustar_banda(&app, borde, alto)?;
+    let franja = ventana::franja(&app, borde, alto)?;
+    let informe = match borde {
+        ventana::Borde::Abajo => acople::reacoplar(franja, &huella(&app)),
+        // Arriba se reacopla **la ventana de la reunión**, y solo si había algo acoplado: soltar el asa
+        // no es el momento de empezar a mover ventanas que no se habían tocado.
+        ventana::Borde::Arriba if acople::leer(&huella(&app)).huellas.is_empty() => acople::Informe {
+            permiso: true,
+            motivos: vec!["no había nada acoplado que reajustar".into()],
+            ..Default::default()
+        },
+        ventana::Borde::Arriba => acoplar_arriba(&app, franja),
+    };
     registrar_acople(&app, "reacople", &informe);
     Ok(())
+}
+
+/// Acopla arriba **la ventana de la reunión que nombra la detección** (ADR 004, enmienda 1). Sin
+/// reunión detectada no se toca nada: la banda flota arriba y el log lo dice.
+fn acoplar_arriba<R: tauri::Runtime>(app: &tauri::AppHandle<R>, franja: acople::Marco) -> acople::Informe {
+    match sesion::ventana_de_la_reunion() {
+        Some(destino) => acople::acoplar_arriba(&destino, franja, &huella(app)),
+        None => acople::Informe {
+            permiso: acople::hay_permiso(),
+            motivos: vec!["no hay reunión detectada: la banda flota arriba sin tocar ninguna ventana".into()],
+            ..Default::default()
+        },
+    }
+}
+
+/// Acopla según el borde: abajo, la aplicación que está al frente (el H1); arriba, la reunión.
+fn acoplar_segun_el_borde<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Result<acople::Informe, String> {
+    let borde = borde_de(app);
+    let alto = ventana::alto_actual(app).unwrap_or(ventana::ALTO_COMPACTA);
+    let franja = ventana::franja(app, borde, alto)?;
+    Ok(match borde {
+        ventana::Borde::Abajo => acople::acoplar(franja, &huella(app)),
+        ventana::Borde::Arriba => acoplar_arriba(app, franja),
+    })
+}
+
+// ---------------------------------------------------------------------------------------------
+// La banda, arriba o abajo (sprint 004, ADR 004 enmienda 1, ADR 002 enmienda 8)
+// ---------------------------------------------------------------------------------------------
+
+/// Dónde vive la banda ahora: lo que dicen las preferencias. Arriba si todavía no se han leído.
+fn borde_de<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> ventana::Borde {
+    app.try_state::<LasPreferencias>()
+        .and_then(|lp| lp.actuales.lock().ok().map(|p| p.posicion_de_la_banda))
+        .unwrap_or_default()
+}
+
+/// Lo que las tres ventanas necesitan saber de la franja: en qué borde está (la banda dibuja su asa y su
+/// sombra con eso; Sesión, el interruptor), cuánto mide la barra de menús (el relleno sube su fondo eso
+/// con la banda arriba) y si ya viste el aviso de la primera vez (Sesión).
+#[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LaFranja {
+    pub borde: ventana::Borde,
+    pub barra: f64,
+    pub aviso_visto: bool,
+}
+
+/// El nombre del evento con el que las tres ventanas se enteran de que la banda cambió de borde.
+const EVENTO_FRANJA: &str = "franja";
+
+fn la_franja_de<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> LaFranja {
+    let aviso_visto = app
+        .try_state::<LasPreferencias>()
+        .and_then(|lp| lp.actuales.lock().ok().map(|p| p.aviso_de_arriba_visto))
+        .unwrap_or(false);
+    LaFranja { borde: borde_de(app), barra: ventana::barra(app), aviso_visto }
+}
+
+#[tauri::command]
+fn la_franja(app: tauri::AppHandle) -> LaFranja {
+    la_franja_de(&app)
+}
+
+/// Pone la banda en un borde: **suelta → recoloca → reacopla**. Primero se devuelve entera la ventana
+/// que estuviera acoplada (el acople del otro borde ya no vale), luego la banda y su relleno cambian de
+/// sitio juntos, y al final se acopla lo que toque en el borde nuevo. Se guarda en tus preferencias.
+fn poner_la_banda<R: tauri::Runtime>(app: &tauri::AppHandle<R>, borde: ventana::Borde) {
+    recordar(app, |p| p.posicion_de_la_banda = borde);
+    registrar_acople(app, "soltar para cambiar de borde", &acople::soltar(&huella(app)));
+    let alto = ventana::alto_actual(app).unwrap_or(ventana::ALTO_COMPACTA);
+    if let Err(e) = ventana::ajustar_banda(app, borde, alto) {
+        println!("[ventanas] la banda no pudo cambiar de borde: {e}");
+    }
+    println!("[ventanas] la banda va {}", if borde == ventana::Borde::Arriba { "arriba" } else { "abajo" });
+    let _ = app.emit(EVENTO_FRANJA, la_franja_de(app));
+    match acoplar_segun_el_borde(app) {
+        Ok(informe) => registrar_acople(app, "acople en el borde nuevo", &informe),
+        Err(e) => println!("[acople] no se pudo calcular la franja nueva: {e}"),
+    }
+}
+
+/// «La banda: arriba · abajo», en Sesión. Va en otro hilo: el acople son idas y vueltas a otro proceso
+/// por la Accessibility API, y el comando no tiene por qué esperarlas.
+#[tauri::command]
+fn fijar_posicion_de_la_banda(app: tauri::AppHandle, borde: ventana::Borde) -> LaFranja {
+    let mango = app.clone();
+    std::thread::spawn(move || poner_la_banda(&mango, borde));
+    LaFranja { borde, ..la_franja_de(&app) }
+}
+
+/// «Entendido» en el aviso de la primera vez con la banda arriba: no vuelve a salir.
+#[tauri::command]
+fn entendido_el_aviso_de_arriba(app: tauri::AppHandle) -> LaFranja {
+    recordar(&app, |p| p.aviso_de_arriba_visto = true);
+    let franja = la_franja_de(&app);
+    let _ = app.emit(EVENTO_FRANJA, franja.clone());
+    franja
+}
+
+/// `⌃⌥B` — la banda, al otro borde (sprint 004). La octava letra con `⌃⌥`.
+fn el_atajo_de_la_banda() -> tauri_plugin_global_shortcut::Shortcut {
+    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
+    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyB)
 }
 
 /// Lo que la banda necesita para dibujar «acoplada» o «sin acople» — y lo que hace que esa
@@ -578,7 +693,7 @@ fn empezar(
     }
     // Si la banda sigue en pantalla, esto no hace nada: `abrir_banda` es idempotente.
     let la_habian_cortado = app.get_webview_window(ventana::BANDA).is_none();
-    match ventana::abrir_banda(&app, ventana::ALTO_COMPACTA) {
+    match ventana::abrir_banda(&app, borde_de(&app), ventana::ALTO_COMPACTA) {
         // Que la banda no vuelva no impide escuchar, y callarlo sí sería un problema: el usuario
         // vería el transcript sin banda y no sabría por qué.
         Err(e) => println!("[ventanas] la banda no pudo volver: {e}"),
@@ -586,6 +701,16 @@ fn empezar(
         // por donde se verificó en vivo: sin ella, «vuelve» sería una afirmación sin testigo.
         Ok(()) if la_habian_cortado => println!("[ventanas] la banda estaba cortada: vuelve"),
         Ok(()) => {}
+    }
+    // **Arriba, el disparador del acople es la reunión** (ADR 004, enmienda 1): al empezar, la reunión
+    // ya está abierta, así que se acopla su ventana si no lo estaba. Abajo no hace falta: al pulsar
+    // «Iniciar sesión» la aplicación de delante somos nosotros, y el H1 acopla con su latido.
+    if borde_de(&app) == ventana::Borde::Arriba && acople::leer(&huella(&app)).huellas.is_empty() {
+        let mango = app.clone();
+        std::thread::spawn(move || match acoplar_segun_el_borde(&mango) {
+            Ok(informe) => registrar_acople(&mango, "al empezar la reunión", &informe),
+            Err(e) => println!("[acople] no se pudo calcular la franja: {e}"),
+        });
     }
     // **LA PUERTA DE LA CAPTURA** (ADR 017 §5). Todo lo que oye o mira la reunión —la pantalla, las
     // pistas, la transcripción— arranca DESPUÉS de esta línea, y en solo notas no se llega. Un test de
@@ -892,8 +1017,8 @@ const EVENTO_CORTE: &str = "corte";
 fn registrar_acople<R: tauri::Runtime>(app: &tauri::AppHandle<R>, que: &str, informe: &acople::Informe) {
     let nombre = informe.app.as_deref().unwrap_or("—");
     println!(
-        "[acople] {que}: permiso={} app=«{nombre}» ventanas={}",
-        informe.permiso, informe.ventanas
+        "[acople] {que}: permiso={} app=«{nombre}» ventanas={} · {} ms",
+        informe.permiso, informe.ventanas, informe.ms
     );
     for motivo in &informe.motivos {
         println!("[acople]   · {motivo}");
@@ -911,6 +1036,9 @@ pub fn run() {
             ajustar_banda,
             asentar_banda,
             estado_del_acople,
+            la_franja,
+            fijar_posicion_de_la_banda,
+            entendido_el_aviso_de_arriba,
             fondo_del_relleno,
             reunion_abierta,
             permisos_de_macos,
@@ -1038,7 +1166,7 @@ pub fn run() {
                 println!("[diccionario] {e}");
             }
 
-            ventana::abrir_banda(app.handle(), ventana::ALTO_COMPACTA)?;
+            ventana::abrir_banda(app.handle(), borde_de(app.handle()), ventana::ALTO_COMPACTA)?;
 
             let mango = app.handle().clone();
             std::thread::spawn(move || {
@@ -2858,6 +2986,10 @@ fn atender_el_atajo<R: tauri::Runtime>(
         reunion::fijar(app);
     } else if *atajo == el_atajo_de_guardar_la_propuesta() {
         reunion::guardar_la_ultima(app);
+    } else if *atajo == el_atajo_de_la_banda() {
+        println!("[ventanas] ⌃⌥B");
+        let (mango, borde) = (app.clone(), borde_de(app).otro());
+        std::thread::spawn(move || poner_la_banda(&mango, borde));
     } else if *atajo == el_atajo_de_callar() {
         let estado = app.state::<LaVozQueSale>();
         estado.voz.callar();
@@ -2937,6 +3069,13 @@ fn registrar_el_kill_switch<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
              Notas, pero la tecla no va a responder"
         ),
     }
+    match app.global_shortcut().register(el_atajo_de_la_banda()) {
+        Ok(()) => println!("[ventanas] ⌃⌥B «la banda, al otro borde» registrado"),
+        Err(e) => println!(
+            "[ventanas] NO se pudo registrar ⌃⌥B ({e}): la banda se sigue cambiando de borde en \
+             Sesión, pero la tecla no va a responder"
+        ),
+    }
 }
 
 /// El acople automático de la fase 1: **esperar a que haya a quién acoplar, y hacerlo una vez.**
@@ -2972,17 +3111,18 @@ fn acoplar_cuando_haya_a_quien<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
         let mut dicho: Option<String> = None;
         for _ in 0..ESPERA {
             std::thread::sleep(LATIDO);
-            if YA_SE_ACOPLO.load(Ordering::SeqCst)
-                || !acople::hay_permiso()
-                || !acople::hay_alguien_al_frente()
-            {
+            // Abajo espera a que haya alguien al frente (el H1); arriba, a que haya una reunión
+            // (sprint 004): con la banda arriba solo se mueve la ventana de la videollamada.
+            let hay_a_quien = match borde_de(&mango) {
+                ventana::Borde::Abajo => acople::hay_alguien_al_frente(),
+                ventana::Borde::Arriba => sesion::ventana_de_la_reunion().is_some(),
+            };
+            if YA_SE_ACOPLO.load(Ordering::SeqCst) || !acople::hay_permiso() || !hay_a_quien {
                 continue;
             }
-            let alto = ventana::alto_actual(&mango).unwrap_or(ventana::ALTO_COMPACTA);
-            let Ok(franja) = ventana::franja(&mango, alto) else {
+            let Ok(informe) = acoplar_segun_el_borde(&mango) else {
                 continue;
             };
-            let informe = acople::acoplar(franja, &huella(&mango));
             if informe.acoplada() {
                 YA_SE_ACOPLO.store(true, Ordering::SeqCst);
                 registrar_acople(&mango, "al volver el usuario a su trabajo", &informe);
@@ -3128,6 +3268,7 @@ mod pruebas_de_las_teclas {
             (el_atajo_de_anotar(), Code::KeyN),
             (el_atajo_de_fijar(), Code::KeyP),
             (el_atajo_de_guardar_la_propuesta(), Code::Enter),
+            (el_atajo_de_la_banda(), Code::KeyB),
         ];
         for (atajo, tecla) in esperadas {
             assert_eq!(atajo, Shortcut::new(control_opcion, tecla), "{tecla:?} no es ⌃⌥");
@@ -3151,6 +3292,7 @@ mod pruebas_de_las_teclas {
             el_atajo_de_anotar(),
             el_atajo_de_fijar(),
             el_atajo_de_guardar_la_propuesta(),
+            el_atajo_de_la_banda(),
         ];
         for (i, a) in todas.iter().enumerate() {
             for b in &todas[i + 1..] {

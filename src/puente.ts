@@ -11,9 +11,21 @@ export function hayTauri(): boolean {
   return "__TAURI_INTERNALS__" in globalThis;
 }
 
+/**
+ * **Los dos módulos de Tauri se importan UNA vez y se comparten** (sprint 004). Con dos preguntas a la
+ * vez —el relleno pide su fondo y la franja al montarse— había dos `import()` simultáneos del mismo
+ * módulo, y en los tests el segundo resolvía al módulo REAL en vez del fingido: «`__TAURI_INTERNALS__
+ * .invoke` is not a function», suelto, después de pasar la prueba (medido: `fondo_del_relleno` iba al
+ * fingido y `la_franja` al real). En la app no cambia nada: el mismo módulo, cargado una vez.
+ */
+let nucleo: Promise<typeof import("@tauri-apps/api/core")> | null = null;
+let eventos: Promise<typeof import("@tauri-apps/api/event")> | null = null;
+const elNucleo = () => (nucleo ??= import("@tauri-apps/api/core"));
+const losEventos = () => (eventos ??= import("@tauri-apps/api/event"));
+
 export async function llamar(comando: string, args?: Record<string, unknown>): Promise<boolean> {
   if (!hayTauri()) return false;
-  const { invoke } = await import("@tauri-apps/api/core");
+  const { invoke } = await elNucleo();
   await invoke(comando, args);
   return true;
 }
@@ -24,7 +36,7 @@ export async function preguntar<T>(
   args?: Record<string, unknown>,
 ): Promise<T | null> {
   if (!hayTauri()) return null;
-  const { invoke } = await import("@tauri-apps/api/core");
+  const { invoke } = await elNucleo();
   return (await invoke(comando, args)) as T;
 }
 
@@ -39,7 +51,7 @@ export function escuchar<T>(evento: string, alOir: (dato: T) => void): () => voi
   if (!hayTauri()) return () => {};
   let apagar: (() => void) | null = null;
   let vivo = true;
-  void import("@tauri-apps/api/event").then(async ({ listen }) => {
+  void losEventos().then(async ({ listen }) => {
     const baja = await listen<T>(evento, (e) => alOir(e.payload));
     if (vivo) apagar = () => soltar(baja);
     else soltar(baja);

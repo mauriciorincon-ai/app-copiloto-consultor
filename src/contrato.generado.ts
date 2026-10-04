@@ -15,6 +15,7 @@ import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida,
 import type { EnTuMac } from "./radar";
 import type { EstadoDeLaIa, PorQueNoRedacta, LoQueSalio } from "./ia";
 import type { EstadoDelAcople } from "./acople";
+import type { LaFranja } from "./franja";
 import type { VistaDelCuaderno, LineaDePropuesta, Propuesta, Regla, Ventana, VistaDeLaBandeja, EstadoDeLaBandeja, ReunionGuardada, ListaDeReuniones } from "./notas";
 import type { VistaDelCliente, LaBandera, Nda } from "./jurisdiccion";
 import type { VistaDeLaPuerta, Cierre, NoAbre, Motivo } from "./puerta";
@@ -434,6 +435,18 @@ export const POR_QUE_NO_REDACTA_TOPE: PorQueNoRedacta = "tope-del-mes";
 
 export const ESTADO_DEL_ACOPLE: EstadoDelAcople = {
     "acoplada": true
+  };
+
+export const LA_FRANJA_ARRIBA: LaFranja = {
+    "avisoVisto": false,
+    "barra": 38.0,
+    "borde": "arriba"
+  };
+
+export const LA_FRANJA_ABAJO: LaFranja = {
+    "avisoVisto": true,
+    "barra": 25.0,
+    "borde": "abajo"
   };
 
 export const LO_QUE_SALIO: LoQueSalio = {

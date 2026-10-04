@@ -485,6 +485,17 @@ pub fn muestras() -> Vec<Muestra> {
         m("POR_QUE_NO_REDACTA_SIN_CLAVE", "PorQueNoRedacta", "./ia", &crate::sintesis::PorQueNoRedacta::SinClave),
         m("POR_QUE_NO_REDACTA_TOPE", "PorQueNoRedacta", "./ia", &crate::sintesis::PorQueNoRedacta::TopeDelMes),
         m("ESTADO_DEL_ACOPLE", "EstadoDelAcople", "./acople", &crate::EstadoDelAcople { acoplada: true }),
+        // ---- la banda, arriba o abajo (sprint 004, ADR 004 enmienda 1) --------------------------
+        m("LA_FRANJA_ARRIBA", "LaFranja", "./franja", &crate::LaFranja {
+            borde: crate::ventana::Borde::Arriba,
+            barra: 38.0,
+            aviso_visto: false,
+        }),
+        m("LA_FRANJA_ABAJO", "LaFranja", "./franja", &crate::LaFranja {
+            borde: crate::ventana::Borde::Abajo,
+            barra: 25.0,
+            aviso_visto: true,
+        }),
         // Lo que el motor de este Mac sabe hacer (auditoría del S2, M7): con motor, y sin él por cada
         // uno de sus tres porqués, que son grafías kebab de varias palabras.
         // ---- lo que salió al API (auditoría del S2, B37) ----------------------------------------

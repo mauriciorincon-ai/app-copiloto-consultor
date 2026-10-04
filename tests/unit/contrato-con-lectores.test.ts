@@ -41,6 +41,7 @@ const DECLARACIONES = [
   "src/notas.ts",
   "src/jurisdiccion.ts",
   "src/puerta.ts",
+  "src/franja.ts",
 ];
 const FIXTURE = "src/contrato.generado.ts";
 

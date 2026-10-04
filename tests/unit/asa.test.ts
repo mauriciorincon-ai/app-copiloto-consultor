@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { ALTO_COMPACTA, ALTO_AMPLIADA, DESDE_AMPLIADA } from "@/asa";
+import { ALTO_COMPACTA, ALTO_AMPLIADA, DESDE_AMPLIADA, altoAlArrastrar } from "@/asa";
 import { hayTauri, llamar } from "@/puente";
 
 /**
@@ -25,6 +25,26 @@ describe("el asa: dos alturas, y son las de la maqueta", () => {
   it("el umbral de «ampliada» cae entre las dos, no fuera", () => {
     expect(DESDE_AMPLIADA).toBeGreaterThan(ALTO_COMPACTA);
     expect(DESDE_AMPLIADA).toBeLessThan(ALTO_AMPLIADA);
+  });
+});
+
+/**
+ * **Arriba (sprint 004) el asa se arrastra hacia abajo para ampliar**: el borde clavado es el de
+ * arriba. ¿Puede fallar? Sí: con la cuenta de abajo en los dos bordes, arrastrar hacia abajo la banda
+ * de arriba la encoge (bitácora del sprint 004, fase 1).
+ */
+describe("el asa crece hacia donde hay sitio, en los dos bordes", () => {
+  it("abajo, subir el puntero la amplía; arriba, bajarlo", () => {
+    expect(altoAlArrastrar("abajo", 88, 800, 750)).toBe(138);
+    expect(altoAlArrastrar("arriba", 88, 100, 150)).toBe(138);
+    expect(altoAlArrastrar("arriba", 88, 100, 60)).toBe(ALTO_COMPACTA);
+  });
+
+  it("siempre entre las dos alturas del diseño", () => {
+    for (const borde of ["arriba", "abajo"] as const) {
+      expect(altoAlArrastrar(borde, 88, 500, borde === "arriba" ? 2000 : -2000)).toBe(ALTO_AMPLIADA);
+      expect(altoAlArrastrar(borde, 200, 500, borde === "arriba" ? -2000 : 2000)).toBe(ALTO_COMPACTA);
+    }
   });
 });
 

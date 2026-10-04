@@ -28,6 +28,12 @@ import {
   type Salida,
 } from "../cuaderno";
 import { invasivos, useRadarDeTuMac, type EnTuMac } from "../radar";
+import {
+  entendidoElAvisoDeArriba,
+  fijarPosicionDeLaBanda,
+  useFranja,
+  type Borde,
+} from "../franja";
 
 /**
  * SESIÓN — «Antes de empezar».
@@ -71,6 +77,13 @@ export function Sesion({
   const [viendoClausula, setViendoClausula] = useState(fuera && pedido === "clausula");
   const hayEco = salida.salida === "altavoces" || salida.salida === "altavoz-externo";
   const caida = (p: EstadoDePista) => escucha.escuchando && !p.abierta;
+  /**
+   * **La banda, arriba o abajo** (sprint 004). Fuera de Tauri, la de `sesion.html` · sprint 4: arriba,
+   * y el aviso de la primera vez solo en «la primera vez» (`?estado=aviso`).
+   */
+  const franja = useFranja({ borde: "arriba", barra: 0, avisoVisto: pedido !== "aviso" });
+  const [avisoCerrado, setAvisoCerrado] = useState(false);
+  const verAviso = franja.borde === "arriba" && !franja.avisoVisto && !avisoCerrado;
 
   /**
    * **EL RADAR CORAL EN SESIÓN** (C14, fase 4 del sprint 002) — «software invasivo en tu Mac».
@@ -164,7 +177,19 @@ export function Sesion({
 
       <div style={PILA}>
         {vigilado && <LaVigilancia radar={radar} />}
-        <LaReunion reunion={reunion} />
+        {/* La primera vez, el aviso ocupa el sitio de la tarjeta de la reunión (`sesion.html` · la
+            primera vez): las dos no caben en la ventana, y la reunión sigue en el rail («Meet
+            detectado»). «Entendido» la devuelve. */}
+        {verAviso ? (
+          <ElAvisoDeArriba
+            entendido={() => {
+              setAvisoCerrado(true);
+              void entendidoElAvisoDeArriba();
+            }}
+          />
+        ) : (
+          <LaReunion reunion={reunion} />
+        )}
 
         <div className="grid-2">
           <div className="tarjeta">
@@ -194,6 +219,7 @@ export function Sesion({
                 {t.avisoDelEco}
               </p>
             )}
+            <LaBanda borde={franja.borde} />
             {/* «Escucha las dos pistas» solo aparece cuando NO es verdad (mirada 17): con una pista
                 caída, dice cuál queda. Vivía en «Qué funciona hoy», que el sprint 3 retiró al volver
                 al diseño aprobado de la Etapa de Diseño. */}
@@ -252,6 +278,65 @@ export function Sesion({
         )}
       </div>
     </>
+  );
+}
+
+/**
+ * **«La banda: arriba · abajo»** (sprint 004, `sesion.html` · sprint 4). Elegir suelta la reunión, mueve
+ * la banda y su relleno al otro borde y vuelve a acoplar; `⌃⌥B` hace lo mismo desde cualquier sitio.
+ */
+export function LaBanda({ borde }: { borde: Borde }) {
+  const t = useT().cuaderno;
+  const opciones: [Borde, string][] = [
+    ["arriba", t.bandaArriba],
+    ["abajo", t.bandaAbajo],
+  ];
+  return (
+    <Fila icono="i-flecha" color="var(--ink-2)" texto={t.laBanda}>
+      <div className="ventanas" role="radiogroup" aria-label={t.laBanda}>
+        {opciones.map(([b, nombre]) => {
+          const on = b === borde;
+          return (
+            <button
+              key={b}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              className={on ? "op on" : "op"}
+              onClick={() => void fijarPosicionDeLaBanda(b)}
+            >
+              {on && <Ic id="i-check-circle" s relleno />}
+              {nombre}
+            </button>
+          );
+        })}
+      </div>
+      <span className="tecla" style={{ fontSize: "11px" }}>
+        <kbd>⌃⌥B</kbd>
+      </span>
+    </Fila>
+  );
+}
+
+/**
+ * **El aviso de la primera vez con la banda arriba** (sprint 004, `sesion.html` · la primera vez): dice
+ * el porqué —la cámara— y cómo volver abajo. «Entendido» no vuelve a enseñarlo (`avisoDeArribaVisto`).
+ */
+export function ElAvisoDeArriba({ entendido }: { entendido: () => void }) {
+  const t = useT().cuaderno;
+  return (
+    <div className="franja mute" role="status">
+      <Ic id="i-flecha" s />
+      <div className="fila" style={{ flexWrap: "nowrap", gap: "10px" }}>
+        <div className="crece">
+          <strong>{t.avisoArribaTitulo}</strong>
+          <p>{t.avisoArribaTexto}</p>
+        </div>
+        <button className="btn mini" onClick={entendido}>
+          {t.entendido}
+        </button>
+      </div>
+    </div>
   );
 }
 

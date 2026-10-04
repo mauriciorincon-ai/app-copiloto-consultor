@@ -52,10 +52,12 @@ function tieneManejador(b: HTMLButtonElement): boolean {
 }
 
 describe("la banda no promete lo que no hace", () => {
-  // Siete desde el sprint 003: ⌃⌥N (anotar) y ⌃⌥P (fijar) dejaron de ser «todavía no».
-  it("las teclas que se leen en el código son las siete de la app", () => {
+  // Siete desde el sprint 003: ⌃⌥N (anotar) y ⌃⌥P (fijar) dejaron de ser «todavía no». Ocho desde el
+  // sprint 004: ⌃⌥B lleva la banda al otro borde.
+  it("las teclas que se leen en el código son las ocho de la app", () => {
     expect([...REGISTRADAS].sort()).toEqual([
       "⌃⌥A",
+      "⌃⌥B",
       "⌃⌥L",
       "⌃⌥N",
       "⌃⌥P",

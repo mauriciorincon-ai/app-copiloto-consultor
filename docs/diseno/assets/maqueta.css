@@ -39,6 +39,10 @@ body.mq { min-height: 100vh; background: #0d0e10; color: #cfd3d8; font-family: "
 .mq-pos.banda-inf { left: 16px; right: 16px; bottom: 16px; }
 .mq-pos.banda-borde { left: 0; right: 0; bottom: 0; }
 .mq-pos.banda-borde .banda { border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; }
+/* Sprint 004: la banda pegada abajo pierde la línea de abajo, pero la variante «arriba» la lleva
+   justamente ahí (es el borde que da a la reunión). El gate de fidelidad pone `data-borde="arriba"` a
+   las bandas de `banda.html` para comparar la variante, y sin esto la sala de diseño se la quitaba. */
+.mq-pos.banda-borde .banda[data-borde="arriba"] { border-top: 0; border-bottom: var(--borde) solid var(--line); }
 .mq-choque { position: absolute; z-index: 4; border: 2px dashed #f0b64a; border-radius: 8px; pointer-events: none; }
 .mq-choque span { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(100% + 4px); white-space: nowrap; background: #1a1400; color: #f0b64a; font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 1px solid #f0b64a; }
 .mq-dock { position: absolute; left: 50%; transform: translateX(-50%); bottom: 4px; height: 52px; width: 420px; background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16); border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; z-index: 1; }

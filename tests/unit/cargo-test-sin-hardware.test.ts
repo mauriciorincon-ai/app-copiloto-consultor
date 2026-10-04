@@ -52,7 +52,8 @@ const CENTINELAS: [string, number][] = [
   ["src-tauri/src/habla/apple.rs", 1],
   ["src-tauri/src/stt/apple.rs", 2],
   ["src-tauri/src/pantalla/apple.rs", 1],
-  ["src-tauri/src/acople/ax.rs", 2],
+  // `pedir_permiso`, `poner_alto` y, desde la fase 1 del sprint 004, `poner_posicion` (la banda arriba).
+  ["src-tauri/src/acople/ax.rs", 3],
   ["src-tauri/src/llavero.rs", 5],
   ["src-tauri/src/desbloqueo.rs", 1],
   ["src-tauri/src/vencimiento/mod.rs", 1],

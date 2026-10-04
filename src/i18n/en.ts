@@ -360,6 +360,13 @@ export const en: Diccionario = {
     pantallaNoPudoPor: "macOS did not hand over the meeting window. The app tries again on its own.",
     leerlaSola: "Read it on its own",
     leelaAhora: "read it now",
+    laBanda: "The band",
+    bandaArriba: "top",
+    bandaAbajo: "bottom",
+    avisoArribaTitulo: "The band now sits at the top, next to the camera",
+    avisoArribaTexto:
+      "Reading the card up there looks like looking at the speaker. Prefer it at the bottom? Change it here or with ⌃⌥B.",
+    entendido: "Got it",
     altavozExterno:
       "Over HDMI, DisplayPort or AirPlay the sound comes out of a speaker: the microphone will hear the client and audio-only mode won\u2019t speak.",
     siEsUnAltavoz: "If it is a speaker, do not use audio-only mode.",

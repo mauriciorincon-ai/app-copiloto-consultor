@@ -1,14 +1,18 @@
 //! El ACOPLE — la banda no tapa la reunión, la reunión se hace sitio.
 //!
 //! Sin acople la banda se queda **encima** de la ventana de la videollamada: el consultor pierde
-//! los 88 px de abajo de su reunión. Con acople, la ventana de la reunión se **encoge** hasta que
-//! su borde inferior queda justo sobre la franja, y al terminar vuelve a su tamaño.
+//! los 88 px de su reunión que la banda tapa. Con acople, la ventana de la reunión se hace sitio, y al
+//! terminar vuelve a su tamaño. **Abajo** (el H1) se encoge hasta que su borde inferior queda justo
+//! sobre la franja. **Arriba** (de fábrica desde el sprint 004, ADR 004 enmienda 1) baja su borde
+//! superior hasta la banda y se encoge lo mismo, así que su borde inferior —con los controles de la
+//! llamada— no se mueve.
 //!
 //! Tocar la ventana de OTRA aplicación es la operación más invasiva de toda la app, así que este
 //! módulo se escribe con tres reglas explícitas:
 //!
-//! 1. **Se encoge, nunca se mueve.** No cambiamos la posición de nada: solo el alto. Una ventana
-//!    que se mueve sola es un susto; una que se acorta por abajo es una ventana que cabe.
+//! 1. **Abajo se encoge y no se mueve; arriba se mueve SOLO la ventana de la reunión.** Una ventana
+//!    que se mueve sola es un susto, así que arriba no se toca la que esté al frente: solo la de la
+//!    videollamada que nombra la detección ([`Destino`]), y sin reunión detectada la banda flota.
 //! 2. **Se devuelve SIEMPRE**, y la devolución es idempotente: al cerrar, al apagar, y **al
 //!    arrancar** si la vez anterior terminó en una caída. La huella vive en disco justo para eso.
 //! 3. **Solo se devuelve lo que sigue como lo dejamos.** Si el usuario redimensionó esa ventana
@@ -16,8 +20,9 @@
 //!    nuestro registro.
 //!
 //! Lo que este módulo **no** hace, y es deliberado: no lee títulos de ventanas, ni contenido, ni
-//! enumera el sistema. Pregunta por la aplicación que está al frente, mide sus ventanas y les
-//! cambia el alto. La Accessibility API permite mucho más; el ADR de esta fase lo declara.
+//! enumera el sistema. Abajo pregunta por la aplicación que está al frente, mide sus ventanas y les
+//! cambia el alto; arriba recibe de la detección el PID y la posición de UNA ventana en la lista. La
+//! Accessibility API permite mucho más; el ADR 004 y su enmienda lo declaran.
 //!
 //! La geometría de aquí abajo es **pura**: entra un rectángulo, sale una decisión. Es la parte
 //! que se puede probar sin permisos, sin ventanas ajenas y sin macOS — y es donde viven los dos
@@ -46,7 +51,7 @@ impl Marco {
     pub fn nuevo(x: f64, y: f64, ancho: f64, alto: f64) -> Self {
         Self { x, y, ancho, alto }
     }
-    fn fondo(&self) -> f64 {
+    pub fn fondo(&self) -> f64 {
         self.y + self.alto
     }
     fn derecha(&self) -> f64 {
@@ -68,8 +73,11 @@ pub const ALTO_MINIMO_UTIL: f64 = 240.0;
 /// de un fallo.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Decision {
-    /// Encogerla a este alto (la posición no cambia).
+    /// Encogerla a este alto (la posición no cambia). Abajo.
     Encoger { alto: f64 },
+    /// Bajar su borde superior hasta `y` y dejarla en `alto`, con el borde inferior donde estaba.
+    /// Arriba (sprint 004).
+    BajarYEncoger { y: f64, alto: f64 },
     /// No se cruza con la franja: la banda no la tapa.
     NoSeCruzan,
     /// Su borde inferior ya está por encima de la franja.
@@ -95,6 +103,84 @@ pub fn decidir(ventana: Marco, franja: Marco) -> Decision {
         };
     }
     Decision::Encoger { alto }
+}
+
+/// La decisión sobre la ventana de la reunión frente a la franja **de arriba** (ADR 004, enmienda 1).
+///
+/// El nuevo borde superior es el inferior de la banda; el nuevo alto, el que deja el borde inferior de
+/// la ventana donde estaba (ahí viven los controles de la llamada). Por debajo de
+/// [`ALTO_MINIMO_UTIL`] no se toca: no se mutila.
+pub fn decidir_arriba(ventana: Marco, franja: Marco) -> Decision {
+    // Sin cruce horizontal, o entera por encima de la franja (otro monitor), la banda no la tapa.
+    if ventana.derecha() <= franja.x || ventana.x >= franja.derecha() || ventana.fondo() <= franja.y {
+        return Decision::NoSeCruzan;
+    }
+    if ventana.y + HOLGURA >= franja.fondo() {
+        return Decision::YaCabe;
+    }
+    let y = franja.fondo();
+    let alto = ventana.fondo() - y;
+    if alto < ALTO_MINIMO_UTIL {
+        return Decision::QuedariaInservible { alto_resultante: alto };
+    }
+    Decision::BajarYEncoger { y, alto }
+}
+
+/// La ventana de la reunión, **tal como la nombra la detección** (`sesion::ventana_de_la_reunion`):
+/// el proceso, su nombre (cerrojo contra el reciclado de PID, como en la huella) y su posición en la
+/// lista de ventanas de ese proceso. El acople no sabe por qué es esa: no lee títulos.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Destino {
+    pub pid: i32,
+    pub app: String,
+    pub indice: usize,
+}
+
+/// **Arriba, de una lista de ventanas sale UNA sola decisión**: la de la ventana del destino. Las demás
+/// —aunque invadan la franja, como el editor de alguien que estaba delante— no se miran. Es la regla 1
+/// del módulo hecha función, y por eso es pura y tiene su test.
+pub fn plan_arriba(ventanas: &[(usize, Marco)], indice: usize, franja: Marco) -> Option<(Marco, Decision)> {
+    ventanas
+        .iter()
+        .find(|(i, _)| *i == indice)
+        .map(|(_, m)| (*m, decidir_arriba(*m, franja)))
+}
+
+/// Una escritura sobre la ventana de otro, en el orden en que se hace. Que el orden sea un dato y no
+/// una costumbre del código es lo que deja probarlo.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Paso {
+    /// Escribir el alto (`AXSize`; el ancho no se toca).
+    Alto(f64),
+    /// Escribir la esquina superior izquierda (`AXPosition`; solo arriba, solo la ventana acoplada).
+    Mover { x: f64, y: f64 },
+}
+
+/// **Al acoplar arriba: primero el tamaño, después la posición.** Acortarla por abajo la deja dentro de
+/// la pantalla; bajarla después la lleva hasta la banda. En el orden contrario, durante un instante su
+/// borde inferior saldría de la pantalla y macOS la recolocaría a su manera.
+pub fn pasos_del_acople_arriba(ventana: Marco, y: f64, alto: f64) -> [Paso; 2] {
+    [Paso::Alto(alto), Paso::Mover { x: ventana.x, y }]
+}
+
+/// **Al devolver: primero la posición, después el tamaño** —sube y luego crece—, y solo lo que cambió.
+/// Una huella del H1, que solo tocó el alto, se devuelve igual que entonces: un solo paso. Y una
+/// ventana que ya está como era no recibe ninguno (la devolución es idempotente).
+pub fn pasos_de_la_devolucion(actual: Marco, original: Marco) -> Vec<Paso> {
+    let mut pasos = Vec::new();
+    if (actual.x - original.x).abs() > HOLGURA || (actual.y - original.y).abs() > HOLGURA {
+        pasos.push(Paso::Mover { x: original.x, y: original.y });
+    }
+    if (actual.alto - original.alto).abs() > HOLGURA {
+        pasos.push(Paso::Alto(original.alto));
+    }
+    pasos
+}
+
+/// ¿Quedó acoplada arriba? Lo que importa es lo que se ve: que su borde superior ya no esté debajo de
+/// la banda. Se mide sobre lo **leído** del sistema después de escribir, no sobre lo pedido.
+pub fn quedo_bajo_la_franja(dejada: Marco, franja: Marco) -> bool {
+    dejada.y + HOLGURA >= franja.fondo()
 }
 
 /// Lo que hay que saber para deshacer un acople: quién era, cómo estaba y cómo la dejamos.
@@ -135,7 +221,7 @@ fn casi_iguales(a: Marco, b: Marco) -> bool {
         && (a.alto - b.alto).abs() <= HOLGURA
 }
 
-/// ¿La ventana **de verdad** cambió de alto, o el sistema dijo que sí y la dejó igual?
+/// ¿La ventana **de verdad** cambió, o el sistema dijo que sí y la dejó igual?
 ///
 /// Medido en vivo: una ventana de «Code» quedó anotada con `original 923 → dejada 923`. La
 /// Accessibility API aceptó la escritura sin error y la aplicación mantuvo su tamaño —pasa con
@@ -143,8 +229,11 @@ fn casi_iguales(a: Marco, b: Marco) -> bool {
 /// acople se apunta una ventana que no encogió, la huella guarda una devolución que no hay que
 /// hacer, y **la banda dice «acoplada» mientras sigue tapando la reunión**: justo la etiqueta
 /// falsa que esta app existe para no poner. «Lo pedí» no es «pasó».
+///
+/// **Desde el sprint 004 mira la posición y el tamaño**: arriba la ventana también baja, y una
+/// devolución que le devuelve el alto pero la deja abajo no ha devuelto nada.
 pub fn hubo_cambio(antes: Marco, despues: Marco) -> bool {
-    (antes.alto - despues.alto).abs() > HOLGURA
+    !casi_iguales(antes, despues)
 }
 
 /// El tamaño al que devolver una ventana, **solo si sigue exactamente como la dejamos**.
@@ -233,6 +322,9 @@ pub struct Informe {
     pub ventanas: usize,
     /// Por qué no se tocó lo que no se tocó.
     pub motivos: Vec<String>,
+    /// Cuánto tardó, en milisegundos: el presupuesto del acople arriba es ≤ 300 ms (ADR 004, enmienda
+    /// 1), y solo se puede afirmar midiéndolo en vivo. Lo escriben `acoplar_arriba` y `soltar`.
+    pub ms: u64,
 }
 
 impl Informe {
@@ -342,7 +434,8 @@ mod nativo {
                         .motivos
                         .push(format!("«{app}» rechazó el cambio de alto de una ventana")),
                 },
-                Decision::YaCabe | Decision::NoSeCruzan => {}
+                // Abajo no se baja nada: `decidir` no produce `BajarYEncoger`, que es de `decidir_arriba`.
+                Decision::YaCabe | Decision::NoSeCruzan | Decision::BajarYEncoger { .. } => {}
                 Decision::QuedariaInservible { alto_resultante } => informe.motivos.push(format!(
                     "una ventana de «{app}» quedaría en {alto_resultante:.0} px: se deja en paz y la banda flota encima"
                 )),
@@ -372,10 +465,111 @@ mod nativo {
         informe
     }
 
-    /// Devuelve a su tamaño lo que este módulo encogió — el de esta sesión o el que dejó una
+    /// Acopla **la ventana de la reunión** a la franja de arriba (ADR 004, enmienda 1): la baja hasta
+    /// la banda y la encoge lo mismo, con su borde inferior donde estaba. Solo esa ventana, la que nombra
+    /// la detección; ninguna otra se mira.
+    pub fn acoplar_arriba(destino: &Destino, franja: Marco, huella: &Path) -> Informe {
+        let reloj = std::time::Instant::now();
+        let mut informe = acoplar_arriba_sin_medir(destino, franja, huella);
+        informe.ms = reloj.elapsed().as_millis() as u64;
+        informe
+    }
+
+    fn acoplar_arriba_sin_medir(destino: &Destino, franja: Marco, huella: &Path) -> Informe {
+        if !ax::permiso_concedido() {
+            return Informe {
+                permiso: false,
+                motivos: vec!["sin permiso de Accesibilidad: la banda flota".into()],
+                ..Default::default()
+            };
+        }
+        // Soltar primero, SIEMPRE, por lo mismo que abajo: acoplar dos veces guardaría como «original»
+        // un sitio que ya era nuestro, y la ventana bajaría un poco más en cada pasada.
+        soltar(huella);
+        let app = destino.app.as_str();
+        let mut informe = Informe {
+            permiso: true,
+            app: Some(app.to_string()),
+            ..Default::default()
+        };
+        if !ax::sigue_siendo(destino.pid, app) {
+            informe.motivos.push(format!("«{app}» ya no está: no se toca nada y la banda flota"));
+            return informe;
+        }
+        let Some((marco, decision)) = plan_arriba(&ax::ventanas_de(destino.pid), destino.indice, franja) else {
+            informe.motivos.push(format!("la ventana de la reunión de «{app}» ya no está: la banda flota"));
+            return informe;
+        };
+        match decision {
+            Decision::BajarYEncoger { y, alto } => {
+                let pasos = pasos_del_acople_arriba(marco, y, alto);
+                match ejecutar(destino.pid, destino.indice, marco, &pasos) {
+                    Some(dejada) if hubo_cambio(marco, dejada) && quedo_bajo_la_franja(dejada, franja) => {
+                        informe.ventanas = 1;
+                        let pendiente = Pendiente {
+                            version: VERSION_HUELLA,
+                            huellas: vec![Huella { pid: destino.pid, app: app.to_string(), original: marco, dejada }],
+                        };
+                        if let Err(e) = guardar(huella, &pendiente) {
+                            informe.motivos.push(format!("no se pudo anotar la huella del acople: {e}"));
+                        }
+                    }
+                    // «Lo pedí» no es «pasó»: si macOS no la dejó bajar (pantalla completa, Spaces, una
+                    // app que pelea su posición), se deshace lo que sí se hizo y la banda flota.
+                    resultado => {
+                        let ahora = resultado.or_else(|| {
+                            ax::ventanas_de(destino.pid).into_iter().find(|(i, _)| *i == destino.indice).map(|(_, m)| m)
+                        });
+                        if let Some(ahora) = ahora {
+                            ejecutar(destino.pid, destino.indice, ahora, &pasos_de_la_devolucion(ahora, marco));
+                        }
+                        informe.motivos.push(format!(
+                            "«{app}» no dejó bajar su ventana (pantalla completa, Spaces o una app que pelea su sitio): se deshizo y la banda flota encima"
+                        ));
+                    }
+                }
+            }
+            Decision::YaCabe => informe
+                .motivos
+                .push(format!("la ventana de la reunión de «{app}» ya empieza bajo la banda: no hace falta tocarla")),
+            Decision::NoSeCruzan => informe
+                .motivos
+                .push(format!("la ventana de la reunión de «{app}» está en otro monitor: la banda no la tapa")),
+            Decision::QuedariaInservible { alto_resultante } => informe.motivos.push(format!(
+                "la ventana de la reunión de «{app}» quedaría en {alto_resultante:.0} px: se deja en paz y la banda flota encima"
+            )),
+            // `decidir_arriba` no produce `Encoger`, que es de abajo.
+            Decision::Encoger { .. } => {}
+        }
+        informe
+    }
+
+    /// Hace los pasos **en su orden** sobre una ventana y devuelve cómo quedó, leído del sistema tras el
+    /// último. Sin pasos, la ventana ya está como se quería y se devuelve tal cual. Si uno falla, se para:
+    /// lo que siga dependía de él.
+    fn ejecutar(pid: i32, indice: usize, desde: Marco, pasos: &[Paso]) -> Option<Marco> {
+        let mut quedo = desde;
+        for paso in pasos {
+            quedo = match *paso {
+                Paso::Alto(alto) => ax::encoger(pid, indice, alto)?,
+                Paso::Mover { x, y } => ax::mover(pid, indice, x, y)?,
+            };
+        }
+        Some(quedo)
+    }
+
+    /// Devuelve a su sitio y a su tamaño lo que este módulo tocó — el de esta sesión o el que dejó una
     /// caída anterior, que son el mismo camino: la huella no distingue, y por eso no hay dos
-    /// funciones que puedan divergir.
+    /// funciones que puedan divergir. Desde el sprint 004, **primero la posición y después el tamaño**
+    /// (`pasos_de_la_devolucion`); una huella del H1 solo tiene alto que devolver.
     pub fn soltar(huella: &Path) -> Informe {
+        let reloj = std::time::Instant::now();
+        let mut informe = soltar_sin_medir(huella);
+        informe.ms = reloj.elapsed().as_millis() as u64;
+        informe
+    }
+
+    fn soltar_sin_medir(huella: &Path) -> Informe {
         let pendiente = leer(huella);
         let mut informe = Informe {
             permiso: ax::permiso_concedido(),
@@ -405,20 +599,20 @@ mod nativo {
             // ahora. La huella reconoce lo que dejó.
             let devuelta = ax::ventanas_de(h.pid)
                 .into_iter()
-                .find_map(|(i, m)| devolucion(m, h).map(|orig| (i, orig)));
+                .find_map(|(i, m)| devolucion(m, h).map(|orig| (i, m, orig)));
             match devuelta {
-                Some((i, original)) => match ax::encoger(h.pid, i, original.alto) {
+                Some((i, actual, original)) => match ejecutar(h.pid, i, actual, &pasos_de_la_devolucion(actual, original)) {
                     Some(quedo) if !hubo_cambio(original, quedo) => informe.ventanas += 1,
                     // Mismo rasero que al acoplar: se cuenta lo que PASÓ, no lo que se pidió. Si
                     // la ventana no volvió a su sitio hay que decirlo — es la mitad de la
                     // promesa, y la que el usuario nota.
                     Some(quedo) => informe.motivos.push(format!(
-                        "«{}» no volvió a su alto: quedó en {:.0} px en vez de {:.0}",
-                        h.app, quedo.alto, original.alto
+                        "«{}» no volvió entera: quedó en ({:.0},{:.0}) con {:.0} px en vez de ({:.0},{:.0}) con {:.0}",
+                        h.app, quedo.x, quedo.y, quedo.alto, original.x, original.y, original.alto
                     )),
                     None => informe
                         .motivos
-                        .push(format!("«{}» rechazó devolver el alto", h.app)),
+                        .push(format!("«{}» rechazó devolver su ventana", h.app)),
                 },
                 // Medido en vivo: aquí caen DOS casos y el mensaje solo nombraba uno. Si el
                 // usuario redimensionó esa ventana, manda él. Pero si la cerró, no hay nada que
@@ -462,6 +656,9 @@ mod nativo_ausente {
         Informe::default()
     }
     pub fn reacoplar(_franja: Marco, _huella: &Path) -> Informe {
+        Informe::default()
+    }
+    pub fn acoplar_arriba(_destino: &Destino, _franja: Marco, _huella: &Path) -> Informe {
         Informe::default()
     }
     pub fn soltar(_huella: &Path) -> Informe {
@@ -697,6 +894,198 @@ mod tests {
                 !serializada.contains(prohibido),
                 "la huella guarda «{prohibido}»: eso es contenido de la reunión"
             );
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Arriba (sprint 004, ADR 004 enmienda 1)
+    // ---------------------------------------------------------------------------------------------
+
+    /// La franja de arriba en un MacBook con notch: bajo la barra de 38 pt.
+    fn franja_arriba(alto: f64) -> Marco {
+        Marco::nuevo(0.0, 38.0, 1512.0, alto)
+    }
+
+    /// Lo que macOS haría con cada paso, si obedece: el simulador de las pruebas de orden.
+    fn aplicar(m: Marco, paso: Paso) -> Marco {
+        match paso {
+            Paso::Alto(alto) => Marco { alto, ..m },
+            Paso::Mover { x, y } => Marco { x, y, ..m },
+        }
+    }
+
+    /// La propiedad que importa, barrida como abajo: **la reunión baja hasta la banda y su borde
+    /// inferior —con los controles de la llamada— no se mueve**, en los tres altos de la banda.
+    #[test]
+    fn arriba_la_reunion_baja_hasta_la_banda_y_su_borde_inferior_no_se_mueve() {
+        let mut vistas = 0;
+        for alto_banda in [44.0, 88.0, 200.0] {
+            let f = franja_arriba(alto_banda);
+            for y in [0.0, 38.0, 60.0, 120.0] {
+                for alto in [400.0, 700.0, 944.0] {
+                    let v = Marco::nuevo(100.0, y, 1200.0, alto);
+                    if let Decision::BajarYEncoger { y: nuevo_y, alto: nuevo_alto } = decidir_arriba(v, f) {
+                        vistas += 1;
+                        assert_eq!(nuevo_y, f.fondo(), "no baja justo hasta la banda: y={y} alto={alto}");
+                        assert_eq!(nuevo_y + nuevo_alto, v.fondo(), "su borde inferior se movió: y={y} alto={alto}");
+                        assert!(nuevo_alto >= ALTO_MINIMO_UTIL, "se mutiló: {nuevo_alto}");
+                    }
+                }
+            }
+        }
+        assert!(vistas >= 20, "el barrido casi no produjo decisiones: {vistas}");
+    }
+
+    #[test]
+    fn arriba_lo_que_ya_empieza_bajo_la_banda_o_esta_en_otro_monitor_no_se_toca() {
+        let f = franja_arriba(88.0);
+        assert_eq!(decidir_arriba(Marco::nuevo(0.0, 126.0, 1200.0, 700.0), f), Decision::YaCabe);
+        assert_eq!(decidir_arriba(Marco::nuevo(1600.0, 38.0, 900.0, 700.0), f), Decision::NoSeCruzan);
+        // Un monitor encima del principal: la ventana acaba antes de la franja.
+        assert_eq!(decidir_arriba(Marco::nuevo(0.0, -900.0, 1200.0, 800.0), f), Decision::NoSeCruzan);
+        // Una ventana pequeña arriba del todo: bajarla la dejaría en 74 px.
+        assert_eq!(
+            decidir_arriba(Marco::nuevo(0.0, 38.0, 600.0, 200.0), f),
+            Decision::QuedariaInservible { alto_resultante: 112.0 }
+        );
+    }
+
+    /// **De una lista de ventanas sale UNA sola decisión, la del destino.** Las tres invaden la franja
+    /// —el editor que estaba delante también—, y solo se decide sobre la que nombró la detección.
+    #[test]
+    fn arriba_de_una_lista_de_ventanas_sale_una_sola_decision() {
+        let f = franja_arriba(88.0);
+        let ventanas = [
+            (0, Marco::nuevo(0.0, 38.0, 1512.0, 944.0)),
+            (1, Marco::nuevo(200.0, 60.0, 900.0, 700.0)),
+            (2, Marco::nuevo(100.0, 38.0, 1300.0, 900.0)),
+        ];
+        let (marco, decision) = plan_arriba(&ventanas, 2, f).expect("el destino está en la lista");
+        assert_eq!(marco, ventanas[2].1, "decidió sobre otra ventana");
+        assert!(matches!(decision, Decision::BajarYEncoger { .. }));
+        assert_eq!(plan_arriba(&ventanas, 7, f), None, "un destino que ya no está no se cambia por otro");
+    }
+
+    /// **Primero el tamaño, después la posición**, y en ningún instante sale de la pantalla: tras el
+    /// primer paso su borde inferior ya no llega más abajo que antes.
+    #[test]
+    fn al_acoplar_arriba_primero_se_encoge_y_despues_baja() {
+        let f = franja_arriba(88.0);
+        let v = Marco::nuevo(100.0, 38.0, 1300.0, 944.0);
+        let Decision::BajarYEncoger { y, alto } = decidir_arriba(v, f) else { panic!("tenía que bajar") };
+        let pasos = pasos_del_acople_arriba(v, y, alto);
+        assert_eq!(pasos, [Paso::Alto(alto), Paso::Mover { x: 100.0, y }]);
+        let tras_el_primero = aplicar(v, pasos[0]);
+        assert!(tras_el_primero.fondo() <= v.fondo(), "el primer paso la saca por abajo");
+        let dejada = pasos.iter().fold(v, |m, p| aplicar(m, *p));
+        assert_eq!(dejada, Marco::nuevo(100.0, f.fondo(), 1300.0, alto));
+        assert!(quedo_bajo_la_franja(dejada, f));
+        assert!(!quedo_bajo_la_franja(v, f), "sin tocar, la banda la tapa");
+    }
+
+    /// **La devolución, entera y en su orden: primero sube, después crece.** Y es idempotente: una
+    /// ventana que ya volvió no recibe ningún paso más.
+    #[test]
+    fn la_devolucion_primero_sube_despues_crece_y_es_idempotente() {
+        let original = Marco::nuevo(100.0, 38.0, 1300.0, 944.0);
+        let dejada = Marco::nuevo(100.0, 126.0, 1300.0, 856.0);
+        let pasos = pasos_de_la_devolucion(dejada, original);
+        assert_eq!(pasos, vec![Paso::Mover { x: 100.0, y: 38.0 }, Paso::Alto(944.0)]);
+        let tras_subir = aplicar(dejada, pasos[0]);
+        assert!(tras_subir.fondo() <= dejada.fondo(), "al subir primero no puede salirse por abajo");
+        let vuelta = pasos.iter().fold(dejada, |m, p| aplicar(m, *p));
+        assert_eq!(vuelta, original);
+        assert!(!hubo_cambio(original, vuelta));
+        assert_eq!(pasos_de_la_devolucion(vuelta, original), vec![], "devolver dos veces movió algo");
+    }
+
+    /// **Una huella del H1 se devuelve igual que entonces**: solo tocó el alto, así que la devolución
+    /// es un paso de alto y ninguno de posición. El archivo de entonces se lee sin cambiar de versión.
+    #[test]
+    fn una_huella_del_h1_se_devuelve_como_entonces() {
+        let base = std::env::temp_dir().join(format!("ag-acople-h1-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        std::fs::create_dir_all(&base).unwrap();
+        let ruta = ruta_de_la_huella(&base);
+        std::fs::write(
+            &ruta,
+            br#"{"version":1,"huellas":[{"pid":42,"app":"Google Chrome","original":{"x":0.0,"y":25.0,"ancho":1440.0,"alto":875.0},"dejada":{"x":0.0,"y":25.0,"ancho":1440.0,"alto":787.0}}]}"#,
+        )
+        .unwrap();
+        let h = leer(&ruta).huellas.pop().expect("la huella del H1 ya no se lee");
+        let actual = h.dejada;
+        assert_eq!(devolucion(actual, &h), Some(h.original));
+        assert_eq!(pasos_de_la_devolucion(actual, h.original), vec![Paso::Alto(875.0)]);
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    /// Arriba también manda tu gesto: si la moviste después de acoplarla, no se devuelve.
+    #[test]
+    fn arriba_no_se_devuelve_una_ventana_que_el_usuario_movio() {
+        let h = Huella {
+            pid: 42,
+            app: "zoom.us".into(),
+            original: Marco::nuevo(100.0, 38.0, 1300.0, 944.0),
+            dejada: Marco::nuevo(100.0, 126.0, 1300.0, 856.0),
+        };
+        assert_eq!(devolucion(h.dejada, &h), Some(h.original));
+        assert_eq!(devolucion(Marco::nuevo(100.0, 300.0, 1300.0, 856.0), &h), None, "la bajaste tú");
+        assert_eq!(devolucion(Marco::nuevo(100.0, 126.0, 1300.0, 600.0), &h), None, "la encogiste tú");
+    }
+
+    /// Desde el sprint 004 «cambió» es posición o tamaño: devolverle el alto y dejarla abajo no es
+    /// haberla devuelto.
+    #[test]
+    fn hubo_cambio_mira_tambien_la_posicion() {
+        let a = Marco::nuevo(0.0, 38.0, 1440.0, 900.0);
+        assert!(hubo_cambio(a, Marco::nuevo(0.0, 126.0, 1440.0, 900.0)));
+        assert!(!hubo_cambio(a, Marco::nuevo(1.0, 39.0, 1440.0, 901.0)), "un punto de redondeo no es moverla");
+    }
+
+    /// **`AXPosition` se escribe en un solo sitio** (ADR 004, enmienda 1): `poner_posicion`, al que
+    /// solo llama `ax::mover`, al que solo llama este módulo. Un segundo escritor —un «arreglo rápido»
+    /// que recoloque ventanas desde otro sitio— cae aquí con su archivo.
+    #[test]
+    fn ax_mover_es_el_unico_que_escribe_la_posicion_de_una_ventana_ajena() {
+        fn rs(dir: &Path) -> Vec<PathBuf> {
+            std::fs::read_dir(dir)
+                .unwrap()
+                .flatten()
+                .flat_map(|e| {
+                    let p = e.path();
+                    if p.is_dir() { rs(&p) } else if p.extension().is_some_and(|x| x == "rs") { vec![p] } else { vec![] }
+                })
+                .collect()
+        }
+        let src = Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+        let aguja_atributo = ["\"AX", "Position\""].concat();
+        let aguja_mover = ["ax::", "mover("].concat();
+        let aguja_escribir = ["AXUIElementSet", "AttributeValue("].concat();
+        for archivo in rs(&src) {
+            let texto = std::fs::read_to_string(&archivo).unwrap();
+            let nombre = archivo.strip_prefix(&src).unwrap().to_string_lossy().replace('\\', "/");
+            let atributo = texto.matches(&aguja_atributo).count();
+            let mover = texto.matches(&aguja_mover).count();
+            match nombre.as_str() {
+                "acople/ax.rs" => {
+                    assert_eq!(atributo, 2, "ax.rs nombra AXPosition {atributo} veces: una para leer, otra para escribir");
+                    // La escritura de la posición está dentro de `poner_posicion` y en ningún otro sitio.
+                    let desde = texto.find("unsafe fn poner_posicion").expect("falta poner_posicion");
+                    let cuerpo = &texto[desde..];
+                    let fin = cuerpo.find("\n}\n").expect("poner_posicion sin cierre");
+                    let escritura = ["CFString::new(", &aguja_atributo, ")"].concat();
+                    assert!(cuerpo[..fin].contains(&escritura), "la escritura de AXPosition salió de poner_posicion");
+                    assert_eq!(texto.matches(&escritura).count(), 1, "hay otra escritura de AXPosition en ax.rs");
+                    // Dos escrituras de atributos en todo el crate: el alto y la posición.
+                    assert_eq!(texto.matches(&aguja_escribir).count(), 3, "una declaración y dos llamadas, ni una más");
+                }
+                "acople/mod.rs" => assert!(mover >= 1, "el acople ya no mueve con ax::mover"),
+                _ => {
+                    assert_eq!(atributo, 0, "{nombre} nombra AXPosition: solo el acople lo toca");
+                    assert_eq!(mover, 0, "{nombre} mueve ventanas ajenas: solo el acople lo hace");
+                    assert_eq!(texto.matches(&aguja_escribir).count(), 0, "{nombre} escribe atributos de Accessibility");
+                }
+            }
         }
     }
 }

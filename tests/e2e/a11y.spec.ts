@@ -56,6 +56,10 @@ const PANTALLAS = [
   { que: "sesión · la NDA lo prohíbe", url: "ventana=principal&pantalla=sesion&estado=nda" },
   { que: "sesión · en solo notas", url: "ventana=principal&pantalla=sesion&estado=solo-notas" },
   { que: "banda · solo notas", url: "ventana=banda&estado=solo-notas" },
+  // La banda arriba (sprint 004): la variante con el asa abajo, y el aviso de la primera vez en Sesión.
+  { que: "banda · arriba", url: "ventana=banda&estado=ficha&borde=arriba" },
+  { que: "banda · arriba · solo audio", url: "ventana=banda&estado=voz&borde=arriba" },
+  { que: "sesión · la primera vez con la banda arriba", url: "ventana=principal&pantalla=sesion&estado=aviso" },
   { que: "banda · sugerencia", url: "ventana=banda&estado=sugerencia-local" },
 ];
 

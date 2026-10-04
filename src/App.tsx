@@ -7,6 +7,7 @@ import { Principal } from "./componentes/Principal";
 import { ventanaActual } from "./ventanas";
 import { useAltoDeVentana, useAltoDelTranscript, DESDE_AMPLIADA } from "./asa";
 import { useAcoplada } from "./acople";
+import { bordeDesdeLaUrl } from "./franja";
 import { useTranscriptVisible } from "./turnos";
 
 /**
@@ -136,7 +137,12 @@ export function Enrutador({ busqueda = globalThis.location?.search ?? "" }: { bu
       return (
         <>
           <SpriteIconos />
-          <Banda {...bandaDesdeLaUrl(busqueda, alto)} transcript={transcript} acoplada={acoplada} />
+          <Banda
+            {...bandaDesdeLaUrl(busqueda, alto)}
+            transcript={transcript}
+            acoplada={acoplada}
+            borde={bordeDesdeLaUrl(busqueda) ?? "abajo"}
+          />
         </>
       );
     default:

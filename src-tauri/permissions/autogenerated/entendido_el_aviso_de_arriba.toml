@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-entendido-el-aviso-de-arriba"
+description = "Enables the entendido_el_aviso_de_arriba command without any pre-configured scope."
+commands.allow = ["entendido_el_aviso_de_arriba"]
+
+[[permission]]
+identifier = "deny-entendido-el-aviso-de-arriba"
+description = "Denies the entendido_el_aviso_de_arriba command without any pre-configured scope."
+commands.deny = ["entendido_el_aviso_de_arriba"]

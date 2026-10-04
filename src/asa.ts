@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { llamar } from "./puente";
+import type { Borde } from "./franja";
 
 /**
  * EL ASA de la banda.
@@ -12,6 +13,10 @@ import { llamar } from "./puente";
  * Se mide con `screenY`, no con `clientY`: la ventana se está moviendo mientras arrastras (el
  * borde inferior queda clavado y el superior sube), así que la coordenada relativa a la ventana
  * cambia sola y el arrastre se volvería inestable.
+ *
+ * **Arriba (sprint 004) el asa va en el borde de abajo** y se arrastra hacia abajo para ampliar: el
+ * borde que queda clavado es el superior, bajo la barra de menús. La cuenta es la misma con el signo
+ * cambiado, y vive en [`altoAlArrastrar`] para que un test la vea en los dos bordes.
  */
 export const ALTO_COMPACTA = 88;
 export const ALTO_AMPLIADA = 200;
@@ -57,7 +62,17 @@ function pedirAlto(alto: number): void {
   void llamar("ajustar_banda", { alto }).then(() => llamar("asentar_banda", { alto }));
 }
 
-export function useAsa() {
+/**
+ * El alto que pide el asa a mitad de arrastre: desde dónde se agarró, dónde va el puntero y en qué
+ * borde vive la banda. Abajo, subir el puntero la amplía; arriba, bajarlo. Siempre entre las dos
+ * alturas del diseño.
+ */
+export function altoAlArrastrar(borde: Borde, altoInicial: number, desde: number, ahora: number): number {
+  const delta = borde === "arriba" ? ahora - desde : desde - ahora;
+  return Math.round(Math.min(ALTO_AMPLIADA, Math.max(ALTO_COMPACTA, altoInicial + delta)));
+}
+
+export function useAsa(borde: Borde = "abajo") {
   const asa = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => {
@@ -69,9 +84,7 @@ export function useAsa() {
     let pedido = 0;
 
     const mover = (e: PointerEvent) => {
-      const alto = Math.round(
-        Math.min(ALTO_AMPLIADA, Math.max(ALTO_COMPACTA, altoInicial + (desde - e.screenY))),
-      );
+      const alto = altoAlArrastrar(borde, altoInicial, desde, e.screenY);
       if (alto === pedido) return;
       pedido = alto;
       void llamar("ajustar_banda", { alto });
@@ -104,7 +117,7 @@ export function useAsa() {
       globalThis.removeEventListener("pointermove", mover);
       globalThis.removeEventListener("pointerup", soltar);
     };
-  }, []);
+  }, [borde]);
 
   return asa;
 }

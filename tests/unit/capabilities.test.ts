@@ -63,7 +63,7 @@ function loQueLlamaLaBanda(): string[] {
   const salida = new Set<string>();
   const imports = [
     ...(banda + app).matchAll(
-      /import\s*\{([^}]*)\}\s*from\s*"\.\.?\/(cuaderno|ficha|turnos|asa|radar|acople|ia|notas)"/g,
+      /import\s*\{([^}]*)\}\s*from\s*"\.\.?\/(cuaderno|ficha|turnos|asa|radar|acople|ia|notas|franja)"/g,
     ),
   ];
   for (const [, nombres, modulo] of imports) {
@@ -88,6 +88,9 @@ const SENSIBLES = [
   "instalar_idioma",
   "empezar_a_escuchar",
   "abrir_ajustes_de",
+  // La banda no se cambia de borde a sí misma: lo eliges tú en Sesión o con ⌃⌥B (sprint 004).
+  "fijar_posicion_de_la_banda",
+  "entendido_el_aviso_de_arriba",
 ];
 
 describe("cada ventana puede solo lo suyo", () => {
@@ -108,6 +111,7 @@ describe("cada ventana puede solo lo suyo", () => {
       "notas",
       "jurisdiccion",
       "puerta",
+      "franja",
       "componentes/Relleno",
     ]
       .map((m) =>
@@ -131,8 +135,11 @@ describe("cada ventana puede solo lo suyo", () => {
     expect(nadie, "comandos que ninguna ventana puede llamar").toEqual([]);
   });
 
-  it("el relleno puede uno, y la banda nada de la clave, el API, el corpus ni la sesión", () => {
-    expect(permite("relleno")).toEqual(["fondo_del_relleno"]);
+  // Desde el sprint 004 el relleno puede DOS, y los dos solo leen: su fondo, y en qué borde está la
+  // franja (para subir ese fondo lo que mide la barra de menús con la banda arriba). Ninguno le da
+  // contenido.
+  it("el relleno puede dos que solo leen, y la banda nada de la clave, el API, el corpus ni la sesión", () => {
+    expect(permite("relleno")).toEqual(["fondo_del_relleno", "la_franja"]);
     expect(permite("banda").filter((c) => SENSIBLES.includes(c))).toEqual([]);
   });
 
