@@ -45,8 +45,8 @@ vende **no persistir, verificable**.
    Swift); **(b)** test de **fuga inyectada** (un `fs::write` plantado hace fallar la suite — se
    demuestra en rojo, regla 15); **(c)** `pnpm verify:ephemeral` (estático) y
    `pnpm verify:ephemeral:runtime`: tras una sesión completa, cero archivos nuevos fuera de lo que
-   admite `Permitido` (índice, diccionario, notas, bandeja y lista de vencimientos), con la canaria
-   del cliente buscada en las notas y la bandeja **descifradas**; **(d)** término plantado en logs; **(e)** kill-switch de una tecla que corta
+   admite `Permitido` (índice, diccionario, notas, bandeja, ensayos y lista de vencimientos), con la
+   canaria del cliente buscada en las notas, la bandeja y los ensayos **descifrados**; **(d)** término plantado en logs; **(e)** kill-switch de una tecla que corta
    captura y vacía buffers. **Qué persiste y qué no (mirada 3 de la Etapa de Diseño, 2026-09-20):**
    el diseño distingue **lo del usuario** de **lo de terceros**, no «texto» de «audio». Persiste
    **cifrado**, con retención y borrado, en el Mac del usuario (carpeta privada de la app, decisión A
@@ -54,7 +54,9 @@ vende **no persistir, verificable**.
    micrófono) en TEXTO, opt-in, por defecto apagado** · las **propuestas que aceptas** (del cliente, un
    hecho de una línea, ≤ 8 palabras), con la retención de la reunión · la **bandeja de propuestas** durante la ventana
    elegida (defecto 3 h, techo 24 h, mínimo cero; borrado automático al vencer aunque la app no se
-   abra; visible en Honestidad). Persiste **en claro, con 600/700**: el índice del corpus (documentos
+   abra; visible en Honestidad) · **tus ensayos** (C18, sprint 004): tus respuestas en texto y sus
+   cifras, jamás audio, con la llave y la retención de tus notas (ADR 015, enmienda 4). Persiste **en
+   claro, con 600/700**: el índice del corpus (documentos
    propios) · preferencias (con la respuesta de NDA de cada cliente y la ruta de la carpeta del corpus) · el diccionario · los metadatos
    de costo · la huella del acople · la lista de vencimientos y la tarea de launchd que la cumple. Los
    secretos, **solo en el Llavero**. El socket de la puerta local existe solo mientras está abierta y
@@ -586,7 +588,9 @@ decisions/NNN-titulo.md   (ADRs de implementación)
     `undefined`, cuentas negativas ni quejas en la consola (`tests/unit/envejecimiento.test.tsx`). Hoy
     entran la bandeja (3 h de fábrica, 24 h de techo, «al cerrar») en Notas y Honestidad, y la
     retención de las notas (7 d · 30 d · 90 d · 1 año · siempre). Todo lo nuevo que venza entra en la
-    matriz en el sprint que lo trae. La fecha «consultado» del catálogo de jurisdicciones no cambia el
+    matriz en el sprint que lo trae: **tus ensayos** (sprint 004) vencen con la retención de tus notas y
+    ninguna pantalla pinta su fecha, así que su matriz vive en Rust —un segundo antes, al vencer, uno
+    después, +100 días y «siempre»— (`ensayos::pruebas::lo_vencido_se_barre_justo_al_vencer_y_siempre_no_vence`). La fecha «consultado» del catálogo de jurisdicciones no cambia el
     estado de nada y queda fuera, dicho aquí.
 
 ## Estándares (los 6+1, gates en CI)
@@ -723,7 +727,7 @@ Llenado en la auditoría del cierre del ciclo H1 (sprint 003); el estampado lo d
 - **Protegidos efímeros, y el que decide no escribe:** los módulos que tocan audio, turnos o
   pantalla no tienen disco ni red (`verify:ephemeral`, estático y en marcha); lo que se guarda lo
   escribe otro módulo que ya solo recibe lo tuyo y, del cliente, hechos de una línea (`notas/` →
-  `carpeta.rs`, `propuestas/` → `bandeja.rs`).
+  `carpeta.rs`, `propuestas/` → `bandeja.rs`, `ensayo/guardado.rs` → `ensayos.rs`).
 - **Un solo escritor:** todo lo que persiste nace en 600 dentro de una carpeta 700 por `almacen.rs`
   (temporal, `fsync`, renombrado), salvo el índice del corpus, que escribe tantivy dentro de su
   carpeta 700.

@@ -142,6 +142,36 @@ fn ensayo_preparado() -> crate::ensayo::Preparacion {
         enriquecer: false,
         transcribe: true,
         sin_corpus: false,
+        guardados: 4,
+    }
+}
+
+/// «6 · tu progreso» de la maqueta: cuatro ensayos con Páramo Azul, del 21 sep al 04 oct.
+fn ensayo_progreso() -> crate::ensayo::guardado::Progreso {
+    use crate::ensayo::guardado::{Cambio, DesdeElPrimero, FilaDelProgreso, Progreso};
+    let fila = |empezo: &str, citadas, ppm, muletillas, s: u64| FilaDelProgreso {
+        empezo: empezo.into(),
+        citadas,
+        evidencia: 21,
+        ppm_medio: Some(ppm),
+        muletillas: Some(muletillas),
+        tiempo_medio_ms: Some(s * 1000),
+    };
+    Progreso {
+        cliente: "Páramo Azul".into(),
+        filas: vec![
+            fila("2026-09-21 10:05", 9, 161, 17, 81),
+            fila("2026-09-27 18:30", 11, 150, 12, 69),
+            fila("2026-10-02 08:45", 12, 143, 11, 62),
+            fila("2026-10-04 09:12", 14, 138, 9, 58),
+        ],
+        antes: 0,
+        desde_el_primero: DesdeElPrimero {
+            evidencia: Some(Cambio { desde: 9, hasta: 14 }),
+            ritmo: Some(Cambio { desde: 161, hasta: 138 }),
+            muletillas: Some(Cambio { desde: 17, hasta: 9 }),
+            tiempo: Some(Cambio { desde: 81_000, hasta: 58_000 }),
+        },
     }
 }
 
@@ -363,9 +393,12 @@ pub fn muestras() -> Vec<Muestra> {
                 },
                 turnos_en_memoria: 3,
                 bytes_del_transcript: 2_048,
+                bytes_del_ensayo: 0,
                 motor: "apple-speechanalyzer",
             },
         ),
+        // Un ensayo en marcha (sprint 004, fase 4): solo el micrófono, y tus respuestas en texto.
+        m("ESTADO_DE_LA_ESCUCHA_EN_UN_ENSAYO", "EstadoDeEscucha", "./cuaderno", &EstadoDeEscucha::del_ensayo(true, 1_920_000, 412)),
         m("DISPONIBILIDAD_LISTO", "Disponibilidad", "./cuaderno", &Disponibilidad::Listo),
         m(
             "DISPONIBILIDAD_SIN_MOTOR",
@@ -589,6 +622,7 @@ pub fn muestras() -> Vec<Muestra> {
             enriquecer: true,
             transcribe: false,
             sin_corpus: true,
+            guardados: 0,
         }),
         m("ENSAYO_PREGUNTANDO", "VistaDelEnsayo", "./ensayo", &ensayo_vista(crate::ensayo::sesion::Fase::Preguntando)),
         m("ENSAYO_EVALUADA", "VistaDelEnsayo", "./ensayo", &ensayo_vista(crate::ensayo::sesion::Fase::Evaluada)),
@@ -614,6 +648,22 @@ pub fn muestras() -> Vec<Muestra> {
             });
             v.banco = crate::ensayo::EstadoDelBanco::NoSeEnriquecio { porque: crate::ensayo::enriquecer::PorQueNo::NadaFundado };
             v
+        }),
+        // ---- lo que queda de tus ensayos (sprint 004, fase 4, ADR 015 enmienda 4) -----------------
+        m("PROGRESO_DEL_ENSAYO", "Progreso", "./ensayo", &ensayo_progreso()),
+        m("PROGRESO_DE_UN_ENSAYO", "Progreso", "./ensayo", &{
+            let mut p = ensayo_progreso();
+            p.filas.drain(..3);
+            p.desde_el_primero = crate::ensayo::guardado::DesdeElPrimero::default();
+            p
+        }),
+        m("PROGRESO_CON_MAS", "Progreso", "./ensayo", &{
+            let mut p = ensayo_progreso();
+            p.antes = 3;
+            p.filas[0].ppm_medio = None;
+            p.filas[0].muletillas = None;
+            p.desde_el_primero.ritmo = Some(crate::ensayo::guardado::Cambio { desde: 150, hasta: 138 });
+            p
         }),
         m("NO_EMPEZO_EN_REUNION", "NoEmpezo", "./ensayo", &crate::ensayo::NoEmpezo::EnReunion),
         m("NO_EMPEZO_SIN_CORPUS", "NoEmpezo", "./ensayo", &crate::ensayo::NoEmpezo::SinCorpus),

@@ -89,8 +89,8 @@ impl Idioma {
     }
 }
 
-/// Una pregunta del banco.
-#[derive(Clone, Debug, PartialEq, Serialize)]
+/// Una pregunta del banco. Se lee de vuelta de un ensayo guardado ([`super::guardado`]).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Pregunta {
     pub texto: String,

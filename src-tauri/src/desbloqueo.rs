@@ -52,6 +52,12 @@ pub fn razon(idioma: &str) -> &'static str {
     if idioma.starts_with("en") { "open your saved notes" } else { "abrir tus notas guardadas" }
 }
 
+/// Para qué se pide el desbloqueo cuando lo que se abre son tus ensayos (ADR 015, enmienda 4): el mismo
+/// desbloqueo que tus notas, y macOS dice para qué.
+pub fn razon_de_los_ensayos(idioma: &str) -> &'static str {
+    if idioma.starts_with("en") { "open your saved rehearsals" } else { "abrir tus ensayos guardados" }
+}
+
 /// El recuerdo del desbloqueo mientras la app está abierta.
 #[derive(Default)]
 pub struct Desbloqueo {

@@ -515,6 +515,11 @@ struct Permitido {
     bandeja: PathBuf,
     /// La lista «hora · archivo» que lee la tarea de launchd: rutas y horas, nada de la reunión.
     lista: PathBuf,
+    /// **Tus ensayos** (sprint 004, fase 4, ADR 015 enmienda 4): tus respuestas en texto y sus cifras, cifradas
+    /// con la llave de tus notas. Lo que lo hace inocuo se comprueba abajo **descifrado**: el ensayo no abre la
+    /// pista del sistema, así que la canaria del cliente no puede estar, y **todo archivo de aquí tiene que
+    /// abrirse como un ensayo** —un intruso, aunque esté dentro de la carpeta permitida, es rojo—.
+    ensayos: PathBuf,
 }
 
 impl Permitido {
@@ -523,8 +528,59 @@ impl Permitido {
             || ruta == self.diccionario
             || ruta.starts_with(&self.notas)
             || ruta.starts_with(&self.bandeja)
+            || ruta.starts_with(&self.ensayos)
             || ruta == self.lista
     }
+}
+
+/// **Un archivo de `ensayos/`, revisado** (sprint 004, fase 4): tiene que abrirse con la llave de la sesión,
+/// leerse como un ensayo y no llevar la canaria del cliente. Cualquier otra cosa —un audio plantado, un
+/// texto en claro, uno sellado con otra llave— es un `Err` que nombra el archivo. Es la comprobación que
+/// impide que `ensayos/` sea una puerta trasera de `Permitido`.
+fn revisar_un_ensayo(ruta: &Path, llave: &Llave) -> Result<app_copiloto_consultor_lib::ensayo::guardado::Guardado, String> {
+    let bytes = std::fs::read(ruta).map_err(|e| format!("{} no se deja leer: {e}", ruta.display()))?;
+    let claro = notas::cifrado::abrir(llave, &bytes)
+        .map_err(|e| format!("{} no es un ensayo cifrado con la llave de tus notas ({e})", ruta.display()))?;
+    if String::from_utf8_lossy(&claro).contains(CANARIA) {
+        return Err(format!("la frase del cliente acabó dentro de {}", ruta.display()));
+    }
+    app_copiloto_consultor_lib::ensayo::guardado::Guardado::de_bytes(&claro).map_err(|e| format!("{} no es un ensayo: {e}", ruta.display()))
+}
+
+/// **La revisión de `ensayos/` se puede poner en rojo**, sin hardware: un ensayo de verdad pasa; un audio
+/// plantado, un texto en claro, uno con la canaria dentro o uno sellado con otra llave, no. Es el rojo del
+/// «intruso en `ensayos/`» que la sesión completa —que solo corre en la CI— no puede enseñar en local.
+#[test]
+fn un_intruso_en_ensayos_se_delata() {
+    use app_copiloto_consultor_lib::ensayo::guardado::Guardado;
+    use app_copiloto_consultor_lib::ensayo::banco::Idioma;
+    let d = std::env::temp_dir().join(format!("ag-efimero-intruso-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&d);
+    std::fs::create_dir_all(&d).unwrap();
+    let llave = Llave::nueva();
+    let sellar = |nombre: &str, llave: &Llave, claro: &[u8]| {
+        let ruta = d.join(nombre);
+        std::fs::write(&ruta, notas::cifrado::sellar(llave, 0, claro)).unwrap();
+        ruta
+    };
+    let bueno = Guardado::nuevo("Páramo Azul", "Rentabilidad por canal", Idioma::Es, "2026-09-27 15:00", Vec::new());
+    let ok = sellar("paramo-azul-2026-09-27.ghost", &llave, &bueno.a_bytes());
+    assert!(revisar_un_ensayo(&ok, &llave).is_ok(), "un ensayo de verdad no pasó la revisión");
+    let con_canaria = Guardado::nuevo(&format!("Páramo {CANARIA}"), "", Idioma::Es, "2026-09-27 15:00", Vec::new());
+    let wav = d.join("respuesta.wav");
+    std::fs::write(&wav, b"RIFF\0\0\0\0WAVEfmt ").unwrap();
+    let en_claro = d.join("paramo-azul-2026-09-28.ghost");
+    std::fs::write(&en_claro, bueno.a_bytes()).unwrap();
+    for intruso in [
+        wav,
+        en_claro,
+        sellar("paramo-azul-2026-09-29.ghost", &llave, &con_canaria.a_bytes()),
+        sellar("paramo-azul-2026-09-30.ghost", &Llave::nueva(), &bueno.a_bytes()),
+        sellar("paramo-azul-2026-10-01.ghost", &llave, b"{\"no\":\"es un ensayo\"}"),
+    ] {
+        assert!(revisar_un_ensayo(&intruso, &llave).is_err(), "un intruso pasó la revisión de ensayos/: {}", intruso.display());
+    }
+    let _ = std::fs::remove_dir_all(&d);
 }
 
 /// Carpetas que **escribe la herramienta, jamás la app**: el compilador, el gestor de paquetes,
@@ -798,6 +854,81 @@ fn una_sesion_completa(casa: &Path, corpus_en: &Path, llave: &dyn Llaves) -> (Ve
     println!("[sesión] notas guardadas y cifradas");
     ejercido.push("notas");
 
+    // 7-ter · **Un ensayo** (sprint 004, fase 4, ADR 015 enmienda 4). El oído de verdad sobre un anillo que
+    //     llena el test —el micrófono no se abre— y **el motor de verdad**: el audio del kit entra a ritmo de
+    //     micrófono, el oído lo transcribe en su hilo como en la app, la sesión lo evalúa contra el corpus y lo
+    //     que queda se guarda cifrado en `ensayos/`. Lo que Apple escriba al transcribir se escribe aquí,
+    //     dentro del inventario. Sin modelo de voz (la CI) la respuesta queda sin texto: se guarda igual, con
+    //     su tiempo, y eso también se mide.
+    {
+        use app_copiloto_consultor_lib::ensayo::{banco, oido::Oido, sesion::Fase, Ensayo, EstadoDelBanco, Mundo, Rotulo};
+        use app_copiloto_consultor_lib::ficha::Respaldo;
+        struct MundoDelEfimero(std::collections::HashMap<String, Vec<Respaldo>>);
+        impl Mundo for MundoDelEfimero {
+            // Sin voz: la sesión escucha en el acto. La voz ya se ejerció arriba (paso 6).
+            fn decir(&self, _: banco::Idioma, _: &str) -> bool {
+                false
+            }
+            fn callar(&self) {}
+            fn diciendo(&self) -> bool {
+                false
+            }
+            fn evidencia(&self, pregunta: &str) -> Vec<Respaldo> {
+                self.0.get(pregunta).cloned().unwrap_or_default()
+            }
+            fn avisar(&self) {}
+        }
+        let propuesta = corpus.documentos().iter().find(|d| d.nombre.contains("Páramo")).map(|d| d.ruta.clone()).expect("la propuesta del corpus del efímero");
+        let secciones = corpus.secciones_de(&propuesta).expect("las secciones de la propuesta");
+        let preguntas = banco::armar(&secciones, &[], banco::Idioma::Es, 5);
+        assert!(!preguntas.is_empty(), "el banco no sacó preguntas de la propuesta: el ensayo no se midió");
+        let evidencia = preguntas
+            .iter()
+            .map(|p| {
+                let respaldo = match armar(&p.texto, &corpus.buscar(&p.texto, app_copiloto_consultor_lib::ficha::TOP).unwrap()) {
+                    Respuesta::Ficha(f) => f.respaldo,
+                    Respuesta::SinResultado { .. } => Vec::new(),
+                };
+                (p.texto.clone(), respaldo)
+            })
+            .collect();
+        let anillo = Arc::new(Mutex::new(Anillo::de_la_app()));
+        let oido = Oido::con_anillo(anillo.clone(), "es-ES", motor_de_la_casa(), jerga.clone());
+        let rotulo = Rotulo {
+            cliente: "Páramo Azul".into(),
+            propuesta: "Propuesta Páramo Azul".into(),
+            empezo: notas::Fecha { anio: 2026, mes: 9, dia: 27, hora: 15, minuto: 0 },
+        };
+        let e = Ensayo::arrancar(preguntas, banco::Idioma::Es, false, rotulo, EstadoDelBanco::Apagado, oido, Arc::new(MundoDelEfimero(evidencia)))
+            .expect("el ensayo no arrancó");
+        let silencio = vec![0.0f32; 16 * 600];
+        for trozo in [&silencio[..], &muestras[..], &silencio[..]] {
+            for c in trozo.chunks(1_600) {
+                anillo.lock().unwrap().escribir(c);
+                std::thread::sleep(Duration::from_millis(100));
+            }
+        }
+        // Enter: cierra la respuesta en cuanto vuelva la transcripción del último turno.
+        e.listo();
+        let mut fase = None;
+        for _ in 0..400 {
+            fase = e.vista().map(|v| v.fase);
+            if fase == Some(Fase::Evaluada) {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        assert_eq!(fase, Some(Fase::Evaluada), "la respuesta del ensayo no se evaluó: {:?}", e.vista());
+        e.terminar();
+        let g = e.para_guardar().expect("un ensayo terminado se puede guardar");
+        assert_eq!(g.informe().respondidas, 1, "el ensayo de la sesión no tiene la respuesta");
+        let hecho = app_copiloto_consultor_lib::ensayos::Ensayos::en(casa.join(app_copiloto_consultor_lib::ensayos::CARPETA))
+            .guardar(llave, &g, "paramo-azul-2026-09-27", 1_790_517_600 + 90 * 86_400)
+            .expect("el ensayo no se pudo guardar");
+        println!("[sesión] ensayo guardado y cifrado: {} bytes", hecho.bytes);
+        ejercido.push("ensayo");
+    }
+
     // 7-bis · **La bandeja** (sprint 003, fase 2, ADR 016). Las reglas miran los turnos de verdad —la
     //     pregunta del cliente con la canaria y un plazo que dijo— y lo que no decidiste se sella en la
     //     bandeja con su vencimiento, junto a la lista que lee la tarea de launchd. **El plist no se
@@ -825,12 +956,16 @@ fn una_sesion_completa(casa: &Path, corpus_en: &Path, llave: &dyn Llaves) -> (Ve
         propuestas: sin_decidir,
     };
     assert!(bandeja.dejar(llave, &contenido_b, Some(cerro + 3 * 3_600)).expect("la bandeja no se pudo escribir"));
-    // La lista, con lo mismo que la app le da a launchd: tus notas y la bandeja (decisión A).
-    let pendientes = app_copiloto_consultor_lib::reunion::lo_que_vence_en(&notas_de_la_sesion, &bandeja);
+    // La lista, con lo mismo que la app le da a launchd: tus notas, la bandeja (decisión A) y tus ensayos
+    // (ADR 015, enmienda 4).
+    let ensayos = app_copiloto_consultor_lib::ensayos::Ensayos::en(casa.join(app_copiloto_consultor_lib::ensayos::CARPETA));
+    let pendientes = app_copiloto_consultor_lib::reunion::lo_que_vence_en(&notas_de_la_sesion, &bandeja, &ensayos);
     let lista = app_copiloto_consultor_lib::vencimiento::lista_en_texto(&pendientes);
     assert!(
-        lista.contains(&notas_de_la_sesion.raiz().display().to_string()) && lista.lines().count() == 2,
-        "la lista de launchd no trae tus notas y la bandeja:\n{lista}"
+        lista.contains(&notas_de_la_sesion.raiz().display().to_string())
+            && lista.contains(&ensayos.raiz().display().to_string())
+            && lista.lines().count() == 3,
+        "la lista de launchd no trae tus notas, la bandeja y tus ensayos:\n{lista}"
     );
     app_copiloto_consultor_lib::almacen::escribir(&casa.join(app_copiloto_consultor_lib::vencimiento::LISTA), lista.as_bytes())
         .expect("la lista de vencimientos no se pudo escribir");
@@ -870,6 +1005,7 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
         notas: casa.join(app_copiloto_consultor_lib::carpeta::CARPETA),
         bandeja: casa.join(app_copiloto_consultor_lib::bandeja::CARPETA),
         lista: casa.join(app_copiloto_consultor_lib::vencimiento::LISTA),
+        ensayos: casa.join(app_copiloto_consultor_lib::ensayos::CARPETA),
     };
     let llave = LlaveDeLaPrueba(Llave::nueva().a_hex());
 
@@ -886,6 +1022,7 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     assert!(ejercido.contains(&"sintesis"), "la síntesis no se ejerció: el inventario no la midió");
     assert!(ejercido.contains(&"notas"), "las notas no se guardaron: el inventario no las midió");
     assert!(ejercido.contains(&"bandeja"), "la bandeja no se escribió: el inventario no la midió");
+    assert!(ejercido.contains(&"ensayo"), "el ensayo no se guardó: el inventario no lo midió");
 
     let despues: BTreeMap<PathBuf, Huella> = sitios.iter().flat_map(|s| inventario(s)).collect();
 
@@ -933,7 +1070,14 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     // nunca, estuviera dentro o no.
     let mut notas_descifradas = 0;
     let mut bandejas_descifradas = 0;
+    let mut ensayos_revisados = 0;
     for (ruta, ..) in &tocados {
+        if ruta.starts_with(&permitido.ensayos) {
+            let g = revisar_un_ensayo(ruta, &llave.leer().unwrap()).unwrap_or_else(|e| panic!("{e}"));
+            assert_eq!(g.cliente, "Páramo Azul", "el archivo de ensayos no es el de la sesión: no se miró el de verdad");
+            ensayos_revisados += 1;
+            continue;
+        }
         let Ok(bytes) = std::fs::read(ruta) else { continue };
         if ruta.starts_with(&permitido.bandeja) {
             let claro = notas::cifrado::abrir(&llave.leer().unwrap(), &bytes)
@@ -972,6 +1116,7 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     }
     assert_eq!(notas_descifradas, 1, "tenía que haber un archivo de notas, descifrado y revisado");
     assert_eq!(bandejas_descifradas, 1, "tenía que haber una bandeja, descifrada y revisada");
+    assert_eq!(ensayos_revisados, 1, "tenía que haber un ensayo, descifrado y revisado");
     assert!(dicho.iter().any(|d| d.contains(CANARIA)), "la canaria no llegó a recorrer la sesión");
 
     let _ = std::fs::remove_dir_all(&casa);

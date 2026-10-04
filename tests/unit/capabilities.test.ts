@@ -104,6 +104,12 @@ const SENSIBLES = [
   "ensayo_si_lo_dije",
   "estado_del_ensayo",
   "cerrar_el_ensayo",
+  // Lo que queda de tus ensayos (fase 4, ADR 015 enmienda 4): abre tus ensayos con el desbloqueo de tus
+  // notas, los exporta en claro o los borra. Solo la ventana principal.
+  "guardar_el_ensayo",
+  "exportar_el_ensayo",
+  "progreso_del_ensayo",
+  "borrar_los_ensayos",
 ];
 
 describe("cada ventana puede solo lo suyo", () => {

@@ -10,7 +10,8 @@
 //! guarda de un ensayo lo escribe otro módulo, con la llave de tus notas.
 //!
 //! Las piezas: [`banco`] (las preguntas), [`enriquecer`] (el acento opt-in), [`sesion`] (la máquina de
-//! estados, pura), [`oido`] (solo el micrófono), [`evaluacion`] (las cuatro cifras, pura). [`Ensayo`] las
+//! estados, pura), [`oido`] (solo el micrófono), [`evaluacion`] (las cuatro cifras, pura) y [`guardado`] (lo
+//! que queda de un ensayo, y su progreso: puro; lo escribe `ensayos.rs`). [`Ensayo`] las
 //! lleva: un latido de 40 ms que pasa lo que oyó el micrófono a la sesión y ejecuta lo que ella pide. Lo
 //! que necesita de la app —la voz, el corpus, la pantalla— entra por [`Mundo`], y así se prueba entero
 //! sin Mac.
@@ -18,6 +19,7 @@
 pub mod banco;
 pub mod enriquecer;
 pub mod evaluacion;
+pub mod guardado;
 pub mod oido;
 pub mod sesion;
 
@@ -150,6 +152,9 @@ pub struct Preparacion {
     pub transcribe: bool,
     /// Ni propuesta ni ficha de ese cliente: no hay de dónde sacar preguntas.
     pub sin_corpus: bool,
+    /// Cuántos ensayos tienes guardados con ese cliente, **contados por el nombre del archivo**, sin abrir
+    /// ninguno (ADR 015, enmienda 4). Con uno o más, «Tu progreso con este cliente».
+    pub guardados: usize,
 }
 
 /// Por qué el ensayo no empezó. Cerrado: la pantalla lo dice con su frase, en los dos idiomas.
@@ -169,11 +174,30 @@ pub fn idioma_del_ensayo(propuesta: &[crate::corpus::seccion::Seccion], ficha: &
     banco::idioma_de(propuesta).or_else(|| banco::idioma_de(ficha)).unwrap_or(el_tuyo)
 }
 
+/// Con quién y cuándo: lo que nombra un ensayo al guardarlo (ADR 015, enmienda 4).
+#[derive(Clone, Debug, PartialEq)]
+pub struct Rotulo {
+    pub cliente: String,
+    /// El nombre de tu propuesta; vacío si las preguntas salen solo de la ficha del cliente.
+    pub propuesta: String,
+    /// La hora del Mac al empezar.
+    pub empezo: crate::notas::Fecha,
+}
+
+/// Lo que el ensayo tiene en memoria ahora mismo: Honestidad lo cuenta.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Memoria {
+    /// El anillo del micrófono del ensayo (30 s); cero desde que terminó.
+    pub microfono: usize,
+    /// Tus respuestas en texto, hasta que guardes o cierres.
+    pub respuestas: usize,
+}
+
 struct Vivo {
     sesion: Sesion,
     /// `None` desde que el ensayo se cerró: el micrófono ya no está abierto.
     oido: Option<Oido>,
-    cliente: String,
+    rotulo: Rotulo,
     banco: EstadoDelBanco,
 }
 
@@ -234,14 +258,14 @@ impl Ensayo {
         preguntas: Vec<Pregunta>,
         idioma: Idioma,
         voz: bool,
-        cliente: String,
+        rotulo: Rotulo,
         banco: EstadoDelBanco,
         oido: Oido,
         mundo: Arc<dyn Mundo>,
     ) -> Option<Self> {
         let nacio = Instant::now();
         let (sesion, acciones) = Sesion::nueva(preguntas, idioma, voz, 0)?;
-        let mut v = Vivo { sesion, oido: Some(oido), cliente, banco };
+        let mut v = Vivo { sesion, oido: Some(oido), rotulo, banco };
         ejecutar(&mut v, mundo.as_ref(), acciones, 0);
         let vivo = Arc::new(Mutex::new(Some(v)));
         let viva = Arc::new(AtomicBool::new(true));
@@ -318,6 +342,35 @@ impl Ensayo {
         self.vivo.lock().is_ok_and(|g| g.as_ref().is_some_and(|v| v.oido.is_some()))
     }
 
+    /// Lo que vive en memoria por culpa de este ensayo.
+    pub fn memoria(&self) -> Memoria {
+        let Ok(g) = self.vivo.lock() else { return Memoria::default() };
+        let Some(v) = g.as_ref() else { return Memoria::default() };
+        Memoria { microfono: v.oido.as_ref().map_or(0, Oido::bytes), respuestas: v.sesion.bytes_de_tus_respuestas() }
+    }
+
+    /// **Lo que se guarda** (ADR 015, enmienda 4): solo con el ensayo terminado, y sin audio —el oído ya se
+    /// cerró y la sesión solo tiene texto—. `None` si todavía no terminó.
+    pub fn para_guardar(&self) -> Option<guardado::Guardado> {
+        let g = self.vivo.lock().ok()?;
+        let v = g.as_ref()?;
+        if v.sesion.fase() != Fase::Cerrado || v.oido.is_some() {
+            return None;
+        }
+        Some(guardado::Guardado::nuevo(
+            &v.rotulo.cliente,
+            &v.rotulo.propuesta,
+            v.sesion.idioma(),
+            &v.rotulo.empezo.como_texto(),
+            v.sesion.llegadas(),
+        ))
+    }
+
+    /// Con quién y cuándo.
+    pub fn rotulo(&self) -> Option<Rotulo> {
+        self.vivo.lock().ok()?.as_ref().map(|v| v.rotulo.clone())
+    }
+
     pub fn vista(&self) -> Option<VistaDelEnsayo> {
         let ahora = self.ahora();
         let g = self.vivo.lock().ok()?;
@@ -336,7 +389,7 @@ impl Ensayo {
         };
         Some(VistaDelEnsayo {
             fase,
-            cliente: v.cliente.clone(),
+            cliente: v.rotulo.cliente.clone(),
             indice: actual,
             total: s.preguntas().len(),
             pregunta: (fase != Fase::Cerrado).then(|| s.preguntas().get(actual).map(PreguntaEnPantalla::from)).flatten(),
@@ -432,6 +485,14 @@ mod pruebas {
         }
     }
 
+    fn rotulo(cliente: &str) -> Rotulo {
+        Rotulo {
+            cliente: cliente.into(),
+            propuesta: "Rentabilidad por canal".into(),
+            empezo: crate::notas::Fecha { anio: 2026, mes: 10, dia: 4, hora: 9, minuto: 12 },
+        }
+    }
+
     fn preguntas() -> Vec<Pregunta> {
         ["¿Uno?", "¿Dos?"]
             .iter()
@@ -460,7 +521,7 @@ mod pruebas {
         let oido = Oido::con_anillo(anillo.clone(), "es-ES", Box::new(Contador), Arc::new(Diccionario::default()));
         let mundo = Arc::new(DeMentira::default());
         let nacio = Instant::now();
-        let e = Ensayo::arrancar(preguntas(), Idioma::Es, true, "Páramo Azul".into(), EstadoDelBanco::Apagado, oido, mundo.clone()).unwrap();
+        let e = Ensayo::arrancar(preguntas(), Idioma::Es, true, rotulo("Páramo Azul"), EstadoDelBanco::Apagado, oido, mundo.clone()).unwrap();
         let v = e.vista().unwrap();
         assert_eq!((v.fase, v.leyendo, v.total), (Fase::Preguntando, true, 2));
         assert_eq!(mundo.dijo.lock().unwrap().as_slice(), ["¿Uno?"]);
@@ -478,6 +539,9 @@ mod pruebas {
         }
         let v = esperar(&e, |v| !v.respuesta.is_empty());
         assert!(v.respuesta.ends_with("muestras"), "{}", v.respuesta);
+        // Honestidad cuenta lo que vive en memoria: el anillo del micrófono y tu respuesta en texto.
+        let m = e.memoria();
+        assert!(m.microfono > 0 && m.respuestas > 0, "la memoria del ensayo no se cuenta: {m:?}");
         // 2,5 s después del fin de tu voz, la evaluación.
         let v = esperar(&e, |v| v.fase == Fase::Evaluada);
         let ev = v.evaluacion.expect("evaluada");
@@ -497,14 +561,24 @@ mod pruebas {
         assert!(reloj.elapsed() < Duration::from_secs(1), "la siguiente tardó {:?}", reloj.elapsed());
         assert_eq!((v.indice, v.fase), (1, Fase::Preguntando));
         assert_eq!(mundo.dijo.lock().unwrap().last().map(String::as_str), Some("¿Dos?"));
+        assert!(e.para_guardar().is_none(), "se pudo guardar un ensayo sin terminar");
         e.terminar();
         let v = esperar(&e, |v| v.fase == Fase::Cerrado);
         let i = v.informe.expect("el informe");
         assert_eq!((i.respondidas, i.saltadas, i.citadas), (1, 0, 1));
         assert!(!e.escuchando(), "al terminar, el micrófono se cierra");
         assert!(mundo.avisos.load(Ordering::Relaxed) >= 4);
+        // **Lo que se guarda** (ADR 015, enmienda 4): la pregunta respondida —no la que se estaba leyendo al
+        // pulsar Esc—, con quién y cuándo, y el mismo informe que la pantalla. El micrófono ya no ocupa nada.
+        let m = e.memoria();
+        assert_eq!(m.microfono, 0, "terminado, el anillo del micrófono sigue contando");
+        assert!(m.respuestas > 0);
+        let g = e.para_guardar().expect("un ensayo terminado se puede guardar");
+        assert_eq!((g.cliente.as_str(), g.empezo.as_str(), g.llegadas.len()), ("Páramo Azul", "2026-10-04 09:12", 1));
+        assert_eq!(g.informe(), i, "lo guardado no dice lo mismo que la pantalla");
         e.cortar();
         assert!(e.vista().is_none(), "tras el corte no queda nada");
+        assert!(e.para_guardar().is_none(), "tras el corte se pudo guardar");
     }
 
     /// Sin voz para el idioma, la pregunta aparece y se escucha en el acto.
@@ -513,7 +587,7 @@ mod pruebas {
         let anillo = Arc::new(Mutex::new(Anillo::de_la_app()));
         let oido = Oido::con_anillo(anillo, "es-ES", Box::new(Contador), Arc::new(Diccionario::default()));
         let mundo = Arc::new(DeMentira { sin_voz: true, ..Default::default() });
-        let e = Ensayo::arrancar(preguntas(), Idioma::Es, true, "X".into(), EstadoDelBanco::Apagado, oido, mundo).unwrap();
+        let e = Ensayo::arrancar(preguntas(), Idioma::Es, true, rotulo("X"), EstadoDelBanco::Apagado, oido, mundo).unwrap();
         assert_eq!(e.vista().unwrap().fase, Fase::Respondiendo);
     }
 
@@ -522,7 +596,7 @@ mod pruebas {
     fn lo_del_modelo_suma_o_dice_por_que_no() {
         let anillo = Arc::new(Mutex::new(Anillo::de_la_app()));
         let oido = Oido::con_anillo(anillo, "es-ES", Box::new(Contador), Arc::new(Diccionario::default()));
-        let e = Ensayo::arrancar(preguntas(), Idioma::Es, false, "X".into(), EstadoDelBanco::EnCamino, oido, Arc::new(DeMentira::default())).unwrap();
+        let e = Ensayo::arrancar(preguntas(), Idioma::Es, false, rotulo("X"), EstadoDelBanco::EnCamino, oido, Arc::new(DeMentira::default())).unwrap();
         assert_eq!(e.vista().unwrap().banco, EstadoDelBanco::EnCamino);
         let mut m = preguntas().remove(0);
         m.texto = "¿Del modelo?".into();

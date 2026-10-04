@@ -524,6 +524,123 @@ prueba del oído pasa de 0,5 a 2 s.
 - **Honestidad todavía no enseña el micrófono del ensayo** en «qué vive en memoria»: entra en la fase 4, con
   `ensayos/` (el chip «Ensayando» y el punto naranja de macOS lo dicen mientras tanto).
 
+## Fase 4 · Resultado, progreso y lo que queda (C18)
+
+Arranca el 2026-10-04 con el «continúa» del usuario tras la fase 3 (CI de `93d11a9`: los tres checks en
+`success`, cada uno con su conclusión propia). **Primero la enmienda 4 del ADR 015**, antes de una línea de
+código: `ensayos/` con la llave, el formato `.ghost` y la retención de tus notas; qué entra y qué no; guardar
+sin pedir nada; abrir y exportar con el desbloqueo de tus notas; borrar sin abrir; un informe sin guardar no se
+guarda solo al salir (decisión del constructor, declarada en la enmienda: guardarlo a escondidas registraría
+launchd).
+
+### Lo que se construyó
+
+- **`ensayo/guardado.rs`** (protegido y puro): `Guardado` —cliente, propuesta, idioma, cuándo empezó y cada
+  pregunta **a la que llegaste**, con tu respuesta en texto y sus cifras; jamás audio, ni las preguntas a las
+  que no llegaste—; su informe sale de **la misma cuenta que la pantalla** (`sesion::informe_de`, que la fase
+  sacó de `Sesion::informe`); el texto que se exporta, redactado en los dos idiomas; y **el progreso**: las
+  cuatro cifras ensayo a ensayo, los seis más recientes, y «desde el primero» de cada cifra (del primer ensayo
+  que la tiene al último: un ensayo sin ritmo o sin fichas no es punto de partida). Al soltarse, pisa tus
+  respuestas.
+- **`ensayos.rs`** (el escritor, molde de `bandeja.rs`): sella con la carpeta de `carpeta.rs` (misma llave, mismo
+  `almacen`, 700/600), **cuenta por cliente por el nombre del archivo** sin abrir ninguno
+  (`cliente_del_nombre`, que entiende `-2`, `-12` y clientes que acaban en cifras), abre para el progreso
+  saltando el que no se deja abrir, borra los de un cliente, barre lo vencido y da sus pendientes a launchd. La
+  línea de log dice cuánto, nunca qué.
+- **El vencimiento:** `reunion::lo_que_vence_en(notas, bandeja, ensayos)` y el barrido de cada hora barre también
+  los ensayos.
+- **`lib.rs`:** `guardar_el_ensayo` (retención de tus notas, `poner_al_dia_el_vencimiento` después),
+  `exportar_el_ensayo` y `progreso_del_ensayo` (con `reunion::desbloquear`, el desbloqueo de la pantalla, y su
+  razón propia: «abrir tus ensayos guardados»), `borrar_los_ensayos`; `Preparacion.guardados`; y
+  `estado_de_la_escucha` cuenta un ensayo (`EstadoDeEscucha::del_ensayo`: el micrófono del ensayo en la fila del
+  micrófono y `bytes_del_ensayo`, tus respuestas). Los cuatro comandos, solo en la ventana principal
+  (`build.rs`, `capabilities/default.json`, `SENSIBLES`).
+- **`Ensayo` sabe lo que guarda:** `Rotulo` (cliente, propuesta y hora), `para_guardar()` —solo terminado y con
+  el micrófono ya cerrado— y `memoria()`.
+- **La pantalla:** el informe con «Guardar con tus notas», «Exportar como texto» y la línea de la retención
+  (la de Notas, `nombreDeLaRetencion` compartida; «siempre» tiene su frase); si guardar o exportar fallan, el
+  informe sigue y lo dice. Guardado, vuelves a «preparar» con «Ensayo guardado con tus notas.»; con uno o más
+  guardados, «Ensayos guardados con este cliente · N · Ver tu progreso». **Tu progreso:** la tabla, «Desde el
+  primero» con flecha y texto (↑ ↓ =, sin color de juicio), «Volver» y «Borrar los ensayos de este cliente»,
+  que pregunta antes. Si el desbloqueo no se da: «No se abrieron tus ensayos · Siguen cifrados y en su sitio.»
+- **Honestidad:** el micrófono del ensayo en su fila, **«Tus respuestas del ensayo»** como fila nueva y en la
+  RAM, y «Tuyo» con tus ensayos. El chip del rail dice «Ensayando».
+- **El efímero en marcha** (`una_sesion_completa`): un paso **7-ter** ensaya con el oído de verdad sobre un anillo
+  que llena el test (sin abrir el micrófono) y **el motor de voz de verdad**, cierra con Enter, termina, guarda
+  en `ensayos/`, y la lista de launchd tiene que traer notas, bandeja **y** ensayos. `Permitido` suma `ensayos/`,
+  y **cada archivo de ahí se abre como un ensayo** con la llave de la sesión y sin la canaria
+  (`revisar_un_ensayo`): un intruso dentro de la carpeta permitida es rojo. Esa revisión tiene su prueba sin
+  hardware (`un_intruso_en_ensayos_se_delata`), porque la sesión completa solo corre en la CI.
+- **El contrato:** `Progreso` (tres muestras: cuatro ensayos, uno solo, más de los que caben),
+  `ESTADO_DE_LA_ESCUCHA_EN_UN_ENSAYO` y `Preparacion.guardados`.
+- **Las maquetas** (FORMA y TEXTO, «maquetada, no vista», README de diseño): `ensayo.html` gana 1c · guardado,
+  6b · borrar, 10 · textos de lo guardado y los botones de 6; `honestidad.html` gana «sprint 4 · ensayando».
+  **«Tuyo» se acortó** («notas, acuerdos, fichas fijadas, propuestas guardadas, ensayos y, si lo enciendes, tus
+  turnos. Cifrado.»): con «tus ensayos» ocupaba dos líneas y `maqueta-cabe` midió 17–20 px de más en tres estados
+  con franja. Se midió cada redacción candidata en el navegador antes de elegir.
+
+### Pruebas
+
+- **Rust** (`AG_SIN_HARDWARE=1`): lib **555** (+14: lo guardado 6, el escritor 8; el ensayo de punta a punta
+  afirma ahora lo que se guarda y la memoria que cuenta; launchd con tus ensayos) · contra el Mac **16** (+1, el
+  intruso en `ensayos/`) · ghost 5 · puerta 14 · clippy limpio con `--all-targets`.
+- **Interfaz:** vitest **423** (+12 en `el-ensayo.test.tsx`: guardar, su fallo, exportar y su fallo, la
+  retención y «siempre», sin guardados no hay camino, el progreso con sus flechas, uno solo y más de los que
+  caben, el desbloqueo que no se da, borrar que pregunta antes, Honestidad mientras ensayas y terminado; los
+  formatos del día y la flecha) · lint · typecheck.
+- **e2e:** **284** (2 saltadas): axe en guardado, tu progreso, borrar y Honestidad ensayando, en los dos temas;
+  reduced-motion: la tabla del progreso se ve sin movimiento; `maqueta-cabe` cazó el «Tuyo» de dos líneas
+  (arriba) y `maqueta-interaccion` pulsa los estados nuevos.
+- **Fidelidad:** **280 encuadres** (+20: el informe, guardado, tu progreso, borrar y Honestidad ensayando, en los
+  dos temas y los dos idiomas), ninguno sobre el umbral. **La primera corrida cazó una diferencia de verdad**: el
+  producto escribía «↓ ritmo 161 ppm → 138 ppm» y la maqueta «161 → 138 ppm» (0,35–0,41 %); la unidad va una vez,
+  al final. Leí como imagen el informe en inglés claro, «guardado» en oscuro y Honestidad ensayando.
+- `verify:ephemeral` estático con `ensayo/guardado.rs` dentro: cero API de disco o red (57 archivos).
+- **El efímero en marcha** (con el ensayo dentro) corre en la CI: sin hardware no se puede correr en local.
+
+### Los rojos (con `scripts/demo-rojo.sh`)
+
+| Gate o prueba | Mutación | Quién lo nombró |
+|---|---|---|
+| launchd se lleva tus ensayos | sin `.chain(ensayos.pendientes())` | `launchd_se_lleva_tus_notas_la_bandeja_y_tus_ensayos` |
+| contar por cliente sin abrir | `starts_with` en vez de igual | `se_cuentan_y_se_borran_por_cliente_sin_abrirlos`: «"Páramo" contó los de "Páramo Azul"» |
+| el progreso en orden | sin el `sort_by` | `el_progreso_va_del_primero_al_ultimo_y_cuenta_los_que_no_caben` |
+| «0 de 0» no es punto de partida | la evidencia sin la condición de fichas | `sin_dos_ensayos_con_la_cifra_no_hay_cambio`: «contó "0 de 0"…» |
+| lo guardado es texto y cifras | `palabras` sin `#[serde(skip)]` | `lo_guardado_es_texto_y_solo_lo_que_llegaste` |
+| no se guarda sin terminar | `para_guardar` sin mirar la fase | `un_ensayo_entero_con_audio_inventado`: «se pudo guardar un ensayo sin terminar» |
+| el log de guardar no nombra nada | el nombre del archivo en la línea | `el_log_de_guardar_no_nombra_nada` |
+| la matriz de envejecimiento | `barrer(ahora + 1)` | `lo_vencido_se_barre_justo_al_vencer_y_siempre_no_vence`: «a -1 s del vencimiento» |
+| Honestidad cuenta el micrófono del ensayo | `memoria()` con el micrófono a cero | `un_ensayo_entero_con_audio_inventado`: «la memoria del ensayo no se cuenta» |
+| un intruso en `ensayos/` | la canaria sin `Err` | `un_intruso_en_ensayos_se_delata` |
+| los comandos nuevos, solo la principal | `allow-progreso-del-ensayo` en la banda | `capabilities.test.ts` |
+| guardar que falla lo dice | el fallo sin franja | `el-ensayo.test.tsx` · «si guardar falla…» |
+| «siempre» no dice «se borra» | la condición sobre «1a» | `el-ensayo.test.tsx` · la retención |
+| el progreso pide su cliente y tu idioma | el idioma cableado a «en» | `el-ensayo.test.tsx` · el progreso |
+| borrar pregunta antes | borrar al primer clic | `el-ensayo.test.tsx` · «pregunta antes» |
+| la RAM cuenta tus respuestas | sin `bytesDelEnsayo` en la suma | `el-ensayo.test.tsx` · «terminado, la RAM es exactamente tus respuestas» |
+| el día en inglés | siempre «02 Oct» | `el-ensayo.test.tsx` · los formatos |
+
+Las diecisiete volvieron a verde tras restaurar (`--esperar-verde`); `.demo-rojo/` no quedó. **Un gate que no podía
+fallar, encontrado al buscarle el rojo:** la primera prueba de la RAM en Honestidad usaba el anillo de 1,8 MB al
+lado de 412 B de respuestas, y quitar esos 412 B de la suma seguía dando «1,8 MB». Se añadió el caso «terminado»
+(sin anillo), donde la RAM es exactamente lo tuyo, y ese es el que se vio en rojo.
+
+### Desviaciones de la fase
+
+- **Un informe sin guardar no se guarda solo al salir** de la app (tus notas sí): guardarlo sin pedirlo
+  registraría la tarea de launchd a tus espaldas. Declarado en la enmienda 4 del ADR 015.
+- **El camino al progreso aparece con un ensayo guardado**, no con dos: con uno, la tabla tiene una fila y no hay
+  «Desde el primero» (la comparación sí pide dos). Así un ensayo suelto también se puede borrar.
+- **«Borrar los ensayos de este cliente» vive en tu progreso**, no en Honestidad (la fila 3 de la matriz del plan
+  decía «desde Honestidad»): Honestidad no borra nada en ninguna de sus filas, y el sitio donde ves tus ensayos
+  es donde se borran, como «Borrar ahora» en Notas.
+- **Exportar es del ensayo que acabas de terminar**, no de uno guardado (enmienda 4).
+- **«Tuyo» se acortó** para caber en una línea, y entró también en los estados «de hoy» del sprint 3 de
+  Honestidad (TEXTO, maquetado, no visto).
+- **Una quinta protección en la corrida en vivo:** el desbloqueo (Touch ID o la contraseña) al abrir tu progreso
+  o exportar. El plan decía que si aparecía una quinta cosa me detendría a enseñarla: va como fila 5 de la matriz,
+  antes de la corrida.
+
 ## Desviación del plan
 
 1. Arriba, el acople actúa sobre la ventana de la reunión detectada, no sobre la de delante (ADR 004, enmienda 1).
@@ -544,3 +661,8 @@ prueba del oído pasa de 0,5 a 2 s.
 13. «Citada» exige términos que no estaban ya en la pregunta (fase 3; ADR 019 §6.6 actualizado).
 14. El informe se pinta en la fase 3 sin «Guardar» ni «Exportar», que llegan con la fase 4.
 15. Una videollamada abierta sin sesión no impide ensayar; una sesión abierta, sí (fase 3).
+16. Un informe sin guardar no se guarda solo al salir de la app (fase 4; ADR 015, enmienda 4).
+17. El camino a tu progreso aparece con un ensayo guardado, no con dos; «desde el primero» sí pide dos (fase 4).
+18. «Borrar los ensayos de este cliente» vive en tu progreso, no en Honestidad (fase 4).
+19. Exportar es del ensayo recién terminado; uno guardado no se vuelve a exportar (fase 4).
+20. Una quinta protección en la corrida en vivo de la fase 4: el desbloqueo de macOS, enseñado antes como fila 5.

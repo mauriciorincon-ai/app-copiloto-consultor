@@ -4,6 +4,7 @@ import { Ic } from "../componentes/Iconos";
 import { hayTauri } from "../puente";
 import { formatearBytes } from "./Honestidad";
 import {
+  nombreDeLaRetencion,
   abrirLaBandeja,
   anotarAcuerdo,
   borrarReunion,
@@ -917,7 +918,7 @@ function Archivo({ retencion, preguntaInicial, bandeja, volverALaBandeja }: {
       <div className="ventanas" role="radiogroup" aria-label={t.cuantoViven}>
         {RETENCIONES.map((r) => {
           const on = r === mia;
-          const nombre = r === "1a" ? t.unAnio : r === "siempre" ? t.siempre : r.replace("d", " d");
+          const nombre = nombreDeLaRetencion(r, t);
           return (
             <button
               key={r}

@@ -26,6 +26,7 @@ mod contrato;
 pub mod diccionario;
 pub mod disparo;
 pub mod ensayo;
+pub mod ensayos;
 pub mod escucha;
 pub mod ficha;
 pub mod habla;
@@ -834,7 +835,14 @@ fn dejar_de_escuchar(app: tauri::AppHandle, estado: tauri::State<'_, LaEscucha>)
 #[tauri::command]
 fn estado_de_la_escucha(app: tauri::AppHandle, estado: tauri::State<'_, LaEscucha>) -> Option<escucha::EstadoDeEscucha> {
     let viva = estado.0.lock().ok()?.as_ref().map(|e| e.estado());
-    viva.or_else(|| reunion::solo_notas(&app).then(escucha::EstadoDeEscucha::solo_notas))
+    viva.or_else(|| reunion::solo_notas(&app).then(escucha::EstadoDeEscucha::solo_notas)).or_else(|| {
+        // Un ensayo (sprint 004, fase 4): su micrófono y tus respuestas, en las mismas filas de Honestidad.
+        let estado = app.state::<ElEnsayo>();
+        let g = estado.0.lock().ok()?;
+        let (_, e) = g.as_ref()?;
+        let m = e.memoria();
+        Some(escucha::EstadoDeEscucha::del_ensayo(e.escuchando(), m.microfono, m.respuestas))
+    })
 }
 
 /// Los últimos turnos, para el transcript de la banda.
@@ -1170,6 +1178,7 @@ fn preparar_el_ensayo(
         enriquecer,
         transcribe: true,
         sin_corpus: true,
+        guardados: 0,
     };
     let Ok(g) = el_corpus.0.lock() else { return vacia(Vec::new(), None) };
     let Some(c) = g.as_ref() else { return vacia(Vec::new(), None) };
@@ -1194,6 +1203,7 @@ fn preparar_el_ensayo(
     } else {
         ensayo::banco::armar(&prop, &ficha, idioma, tope)
     };
+    let guardados = reunion::los_ensayos_de(&app).del_cliente(&elegido).len();
     ensayo::Preparacion {
         clientes,
         cliente: Some(elegido),
@@ -1207,6 +1217,8 @@ fn preparar_el_ensayo(
         // Se pregunta al sistema, que no abre nada: si el modelo de ese idioma está listo.
         transcribe: matches!(stt::motor_de_la_casa().disponibilidad(codigo_de(idioma)), stt::Disponibilidad::Listo),
         sin_corpus: banco.is_empty(),
+        // Por el nombre de los archivos: sin la llave y sin abrir ninguno (ADR 015, enmienda 4).
+        guardados,
     }
 }
 
@@ -1243,6 +1255,12 @@ fn empezar_el_ensayo(
     }
     let idioma = ensayo::idioma_del_ensayo(&prop, &ficha, el_tuyo);
     let preguntas = ensayo::banco::armar(&prop, &ficha, idioma, tope_valido(tope));
+    // Con quién y cuándo: lo que nombra el ensayo si lo guardas (ADR 015, enmienda 4).
+    let rotulo = ensayo::Rotulo {
+        cliente,
+        propuesta: if prop.is_empty() { String::new() } else { nombre.clone() },
+        empezo: reunion::fecha_de_ahora(),
+    };
     // **La puerta local se cierra** (§6.5): hay un micrófono abierto, como en reunión.
     cerrar_la_puerta_al_empezar(&app);
     // El informe de un ensayo anterior sin guardar se suelta: uno a la vez.
@@ -1257,7 +1275,7 @@ fn empezar_el_ensayo(
     let banco = if enriquecer { ensayo::EstadoDelBanco::EnCamino } else { ensayo::EstadoDelBanco::Apagado };
     let n = preguntas.len();
     let id = ENSAYOS.fetch_add(1, Ordering::SeqCst) + 1;
-    let e = ensayo::Ensayo::arrancar(preguntas, idioma, voz, cliente, banco, oido, std::sync::Arc::new(MundoDeLaApp(app.clone())))
+    let e = ensayo::Ensayo::arrancar(preguntas, idioma, voz, rotulo, banco, oido, std::sync::Arc::new(MundoDeLaApp(app.clone())))
         .ok_or(ensayo::NoEmpezo::SinCorpus)?;
     // Metadata, jamás contenido: ni el cliente, ni la propuesta, ni las preguntas.
     println!(
@@ -1392,6 +1410,69 @@ fn cerrar_el_ensayo(app: tauri::AppHandle) {
     }
 }
 
+/// Lo que se guarda del ensayo terminado, con quién y cuándo. Suelta el candado antes de volver: lo que
+/// venga después (el Llavero, el diálogo de guardar) no lo espera dentro.
+fn el_ensayo_terminado(app: &tauri::AppHandle) -> Result<(ensayo::guardado::Guardado, ensayo::Rotulo), String> {
+    let estado = app.state::<ElEnsayo>();
+    let g = estado.0.lock().map_err(|_| "el ensayo no responde".to_string())?;
+    let (_, e) = g.as_ref().ok_or("no hay ningún ensayo")?;
+    let guardado = e.para_guardar().ok_or("el ensayo no ha terminado")?;
+    let rotulo = e.rotulo().ok_or("no hay ningún ensayo")?;
+    Ok((guardado, rotulo))
+}
+
+/// **«Guardar con tus notas»** (ADR 015, enmienda 4): se cifra con la llave de tus notas, **sin pedir nada**,
+/// y vence con su retención. Guardado, el informe se va y la pantalla vuelve a «preparar»; si falla, se
+/// queda entero y se puede volver a intentar. Con fecha de vencimiento, la tarea de launchd se pone al día.
+#[tauri::command]
+fn guardar_el_ensayo(app: tauri::AppHandle) -> Result<(), String> {
+    let (guardado, rotulo) = el_ensayo_terminado(&app)?;
+    let vence = reunion::preferencias(&app).retencion.segundos().map_or(0, |s| carpeta::ahora() + s);
+    let base = notas::nombre_del_archivo(Some(&rotulo.cliente), &rotulo.empezo);
+    let hecho = reunion::los_ensayos_de(&app).guardar(&carpeta::DelLlavero, &guardado, &base, vence).inspect_err(|e| {
+        println!("[ensayo] no se pudo guardar: {}", reunion::sin_ruta(e));
+    })?;
+    println!("{}", ensayos::linea_de_log(&guardado, &hecho));
+    soltar_el_ensayo(&app);
+    reunion::poner_al_dia_el_vencimiento(&app);
+    Ok(())
+}
+
+/// **«Exportar como texto»** el ensayo terminado: pide el desbloqueo de tus notas y después dónde. `false` si
+/// cancelaste el diálogo. Síncrono a propósito, como `exportar_reunion`: esperar al usuario no congela la
+/// ventana. El informe se queda: exportar no es guardar.
+#[tauri::command]
+fn exportar_el_ensayo(app: tauri::AppHandle, idioma: String) -> Result<bool, String> {
+    use tauri_plugin_dialog::DialogExt;
+    let (guardado, rotulo) = el_ensayo_terminado(&app)?;
+    reunion::desbloquear(&app, desbloqueo::razon_de_los_ensayos(&idioma))?;
+    let sugerido = format!("{}.md", notas::nombre_del_archivo(Some(&rotulo.cliente), &rotulo.empezo));
+    let Some(destino) = app.dialog().file().set_file_name(&sugerido).blocking_save_file() else {
+        return Ok(false);
+    };
+    let destino = destino.into_path().map_err(|e| format!("ese destino no es una ruta: {e}"))?;
+    ensayos::exportar(&guardado, &destino, &idioma)?;
+    println!("[ensayo] exportado a texto, sin cifrado");
+    Ok(true)
+}
+
+/// **«Tu progreso con este cliente»**: abre tus ensayos de ese cliente con el desbloqueo de tus notas y
+/// devuelve **solo las cifras**; tus respuestas no cruzan al webview.
+#[tauri::command]
+fn progreso_del_ensayo(app: tauri::AppHandle, cliente: String, idioma: String) -> Result<ensayo::guardado::Progreso, String> {
+    reunion::desbloquear(&app, desbloqueo::razon_de_los_ensayos(&idioma))?;
+    Ok(reunion::los_ensayos_de(&app).progreso(&carpeta::DelLlavero, &cliente))
+}
+
+/// «Borrar los ensayos de este cliente»: al momento y sin abrirlos. La tarea de launchd se pone al día.
+#[tauri::command]
+fn borrar_los_ensayos(app: tauri::AppHandle, cliente: String) -> Result<usize, String> {
+    let n = reunion::los_ensayos_de(&app).borrar_del_cliente(&cliente).map_err(|e| reunion::sin_ruta(&e))?;
+    println!("[ensayo] {n} ensayo(s) borrado(s) a mano");
+    reunion::poner_al_dia_el_vencimiento(&app);
+    Ok(n)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let app = tauri::Builder::default()
@@ -1476,7 +1557,11 @@ pub fn run() {
             ensayo_terminar,
             ensayo_si_lo_dije,
             estado_del_ensayo,
-            cerrar_el_ensayo
+            cerrar_el_ensayo,
+            guardar_el_ensayo,
+            exportar_el_ensayo,
+            progreso_del_ensayo,
+            borrar_los_ensayos
         ])
         .setup(|app| {
             // El invariante se comprueba ANTES de abrir nada y aborta el arranque si falla:

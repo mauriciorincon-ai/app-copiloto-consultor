@@ -32,6 +32,8 @@ export type Preparacion = {
   /** Este Mac sabe transcribir el idioma del ensayo. */
   transcribe: boolean;
   sinCorpus: boolean;
+  /** Cuántos ensayos guardados hay con ese cliente, contados por el nombre del archivo (ADR 015, enmienda 4). */
+  guardados: number;
 };
 
 export type PreguntaEnPantalla = {
@@ -102,6 +104,34 @@ export type VistaDelEnsayo = {
   informe: Informe | null;
 };
 
+/** De cuánto a cuánto cambió una cifra; la flecha la pone la pantalla. */
+export type Cambio = { desde: number; hasta: number };
+/** «Desde el primero»: cada cifra, del primer ensayo que la tiene al último. `null` sin dos ensayos con ella. */
+export type DesdeElPrimero = {
+  evidencia: Cambio | null;
+  ritmo: Cambio | null;
+  muletillas: Cambio | null;
+  tiempo: Cambio | null;
+};
+/** Un ensayo en la tabla del progreso: las cuatro cifras de su informe, y cuándo. */
+export type FilaDelProgreso = {
+  /** «2026-10-04 09:12». */
+  empezo: string;
+  citadas: number;
+  evidencia: number;
+  ppmMedio: number | null;
+  muletillas: number | null;
+  tiempoMedioMs: number | null;
+};
+/** **Tu progreso con un cliente**: solo cifras; tus respuestas no cruzan (ADR 015, enmienda 4). */
+export type Progreso = {
+  cliente: string;
+  filas: FilaDelProgreso[];
+  /** Los ensayos más viejos que no caben en la tabla. */
+  antes: number;
+  desdeElPrimero: DesdeElPrimero;
+};
+
 /** Por qué no empezó. */
 export type NoEmpezo =
   | { que: "en-reunion" }
@@ -112,21 +142,27 @@ export type NoEmpezo =
 export type EstadoDeMuestra =
   | "preparar"
   | "no-empezo"
+  | "guardado"
   | "preguntando"
   | "del-modelo"
   | "respondiendo"
   | "evaluada"
   | "cerrado"
+  | "progreso"
+  | "progreso-borrar"
   | "sin-corpus";
 
 const ESTADOS: EstadoDeMuestra[] = [
   "preparar",
   "no-empezo",
+  "guardado",
   "preguntando",
   "del-modelo",
   "respondiendo",
   "evaluada",
   "cerrado",
+  "progreso",
+  "progreso-borrar",
   "sin-corpus",
 ];
 
@@ -155,6 +191,44 @@ export function usePreparacionDeMuestra(estado: EstadoDeMuestra): Preparacion {
     enriquecer: false,
     transcribe: true,
     sinCorpus,
+    // «1c · guardado»: vuelves a «preparar» con cuatro ensayos guardados con Páramo Azul.
+    guardados: estado === "guardado" ? 4 : 0,
+  };
+}
+
+/** «6 · tu progreso» de la maqueta: cuatro ensayos con Páramo Azul, del 21 sep al 04 oct. */
+export function useProgresoDeMuestra(estado: EstadoDeMuestra): Progreso | null {
+  const m = useT().ensayo.muestra;
+  if (estado !== "progreso" && estado !== "progreso-borrar") return null;
+  const fila = (
+    empezo: string,
+    citadas: number,
+    ppm: number,
+    muletillas: number,
+    s: number,
+  ): FilaDelProgreso => ({
+    empezo,
+    citadas,
+    evidencia: 21,
+    ppmMedio: ppm,
+    muletillas,
+    tiempoMedioMs: s * 1000,
+  });
+  return {
+    cliente: m.paramo,
+    filas: [
+      fila("2026-09-21 10:05", 9, 161, 17, 81),
+      fila("2026-09-27 18:30", 11, 150, 12, 69),
+      fila("2026-10-02 08:45", 12, 143, 11, 62),
+      fila("2026-10-04 09:12", 14, 138, 9, 58),
+    ],
+    antes: 0,
+    desdeElPrimero: {
+      evidencia: { desde: 9, hasta: 14 },
+      ritmo: { desde: 161, hasta: 138 },
+      muletillas: { desde: 17, hasta: 9 },
+      tiempo: { desde: 81_000, hasta: 58_000 },
+    },
   };
 }
 
@@ -414,6 +488,21 @@ export const ensayoSiLoDije = (indice: number) =>
   llamar("ensayo_si_lo_dije", { indice });
 export const cerrarElEnsayo = () => llamar("cerrar_el_ensayo");
 
+/**
+ * «Guardar con tus notas» (ADR 015, enmienda 4): cifra sin pedir nada. Si falla, la promesa se rechaza y el
+ * informe sigue en Rust, entero.
+ */
+export const guardarElEnsayo = () => preguntar<null>("guardar_el_ensayo");
+/** «Exportar como texto»: pide el desbloqueo de tus notas y dónde. `false` si cancelaste el diálogo. */
+export const exportarElEnsayo = (idioma: string) =>
+  preguntar<boolean>("exportar_el_ensayo", { idioma });
+/** «Ver tu progreso»: abre tus ensayos de ese cliente con el desbloqueo de tus notas. Solo cifras. */
+export const progresoDelEnsayo = (cliente: string, idioma: string) =>
+  preguntar<Progreso>("progreso_del_ensayo", { cliente, idioma });
+/** «Borrar los ensayos de este cliente»: al momento y sin abrirlos. Devuelve cuántos. */
+export const borrarLosEnsayos = (cliente: string) =>
+  preguntar<number>("borrar_los_ensayos", { cliente });
+
 /** ¿Es un `NoEmpezo` lo que rechazó la promesa? */
 export function esNoEmpezo(e: unknown): e is NoEmpezo {
   return typeof e === "object" && e !== null && "que" in e;
@@ -425,6 +514,23 @@ export function esNoEmpezo(e: unknown): e is NoEmpezo {
 export function reloj(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
+/**
+ * «21 sep» en español, «Sep 21» en inglés: el día del ensayo en la tabla del progreso. Los meses salen del
+ * diccionario (`ensayo.meses`), que los tiene escritos en la maqueta, y no de `Intl`: el de macOS escribe
+ * «sept», y la tabla aprobada dice «sep».
+ */
+export function diaCorto(empezo: string, meses: readonly string[], idioma: string): string {
+  const [, mes, dia] = /^\d{4}-(\d{2})-(\d{2})/.exec(empezo) ?? [];
+  const nombre = meses[Number(mes) - 1];
+  if (!nombre || !dia) return empezo;
+  return idioma === "en" ? `${nombre} ${dia}` : `${dia} ${nombre}`;
+}
+
+/** La flecha de un cambio: hacia dónde fue la cifra, sin decir si es bueno o malo. */
+export function flecha(c: Cambio): string {
+  return c.hasta > c.desde ? "↑" : c.hasta < c.desde ? "↓" : "=";
 }
 
 /** «o sea» en español, “I mean” en inglés: las comillas son de la interfaz, no de la frase. */

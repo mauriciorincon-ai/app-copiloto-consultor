@@ -16,7 +16,7 @@ import type { EnTuMac } from "./radar";
 import type { EstadoDeLaIa, PorQueNoRedacta, LoQueSalio } from "./ia";
 import type { EstadoDelAcople } from "./acople";
 import type { LaFranja } from "./franja";
-import type { Preparacion, VistaDelEnsayo, NoEmpezo } from "./ensayo";
+import type { Preparacion, VistaDelEnsayo, Progreso, NoEmpezo } from "./ensayo";
 import type { VistaDelCuaderno, LineaDePropuesta, Propuesta, Regla, Ventana, VistaDeLaBandeja, EstadoDeLaBandeja, ReunionGuardada, ListaDeReuniones } from "./notas";
 import type { VistaDelCliente, LaBandera, Nda } from "./jurisdiccion";
 import type { VistaDeLaPuerta, Cierre, NoAbre, Motivo } from "./puerta";
@@ -133,6 +133,7 @@ export const PERMISOS: Permisos = {
   };
 
 export const ESTADO_DE_LA_ESCUCHA: EstadoDeEscucha = {
+    "bytesDelEnsayo": 0,
     "bytesDelTranscript": 2048,
     "escuchando": true,
     "microfono": {
@@ -144,6 +145,23 @@ export const ESTADO_DE_LA_ESCUCHA: EstadoDeEscucha = {
       "abierta": false,
       "bytes": 0,
       "motivo": "dispositivo-ocupado"
+    },
+    "soloNotas": false
+  };
+
+export const ESTADO_DE_LA_ESCUCHA_EN_UN_ENSAYO: EstadoDeEscucha = {
+    "bytesDelEnsayo": 412,
+    "bytesDelTranscript": 0,
+    "escuchando": false,
+    "microfono": {
+      "abierta": true,
+      "bytes": 1920000,
+      "motivo": null
+    },
+    "sistema": {
+      "abierta": false,
+      "bytes": 0,
+      "motivo": null
     },
     "soloNotas": false
   };
@@ -468,6 +486,7 @@ export const PREPARACION_DEL_ENSAYO: Preparacion = {
       "propuesta": 5
     },
     "enriquecer": false,
+    "guardados": 4,
     "idioma": "es",
     "propuesta": "/Users/consultor/Corpus/Propuestas/Rentabilidad por canal · Páramo Azul.md",
     "propuestas": [
@@ -498,6 +517,7 @@ export const PREPARACION_SIN_CORPUS: Preparacion = {
       "propuesta": 0
     },
     "enriquecer": true,
+    "guardados": 0,
     "idioma": "en",
     "propuesta": null,
     "propuestas": [],
@@ -696,6 +716,141 @@ export const ENSAYO_OBJECION: VistaDelEnsayo = {
     "respuesta": "",
     "total": 8,
     "transcurridoMs": 0
+  };
+
+export const PROGRESO_DEL_ENSAYO: Progreso = {
+    "antes": 0,
+    "cliente": "Páramo Azul",
+    "desdeElPrimero": {
+      "evidencia": {
+        "desde": 9,
+        "hasta": 14
+      },
+      "muletillas": {
+        "desde": 17,
+        "hasta": 9
+      },
+      "ritmo": {
+        "desde": 161,
+        "hasta": 138
+      },
+      "tiempo": {
+        "desde": 81000,
+        "hasta": 58000
+      }
+    },
+    "filas": [
+      {
+        "citadas": 9,
+        "empezo": "2026-09-21 10:05",
+        "evidencia": 21,
+        "muletillas": 17,
+        "ppmMedio": 161,
+        "tiempoMedioMs": 81000
+      },
+      {
+        "citadas": 11,
+        "empezo": "2026-09-27 18:30",
+        "evidencia": 21,
+        "muletillas": 12,
+        "ppmMedio": 150,
+        "tiempoMedioMs": 69000
+      },
+      {
+        "citadas": 12,
+        "empezo": "2026-10-02 08:45",
+        "evidencia": 21,
+        "muletillas": 11,
+        "ppmMedio": 143,
+        "tiempoMedioMs": 62000
+      },
+      {
+        "citadas": 14,
+        "empezo": "2026-10-04 09:12",
+        "evidencia": 21,
+        "muletillas": 9,
+        "ppmMedio": 138,
+        "tiempoMedioMs": 58000
+      }
+    ]
+  };
+
+export const PROGRESO_DE_UN_ENSAYO: Progreso = {
+    "antes": 0,
+    "cliente": "Páramo Azul",
+    "desdeElPrimero": {
+      "evidencia": null,
+      "muletillas": null,
+      "ritmo": null,
+      "tiempo": null
+    },
+    "filas": [
+      {
+        "citadas": 14,
+        "empezo": "2026-10-04 09:12",
+        "evidencia": 21,
+        "muletillas": 9,
+        "ppmMedio": 138,
+        "tiempoMedioMs": 58000
+      }
+    ]
+  };
+
+export const PROGRESO_CON_MAS: Progreso = {
+    "antes": 3,
+    "cliente": "Páramo Azul",
+    "desdeElPrimero": {
+      "evidencia": {
+        "desde": 9,
+        "hasta": 14
+      },
+      "muletillas": {
+        "desde": 17,
+        "hasta": 9
+      },
+      "ritmo": {
+        "desde": 150,
+        "hasta": 138
+      },
+      "tiempo": {
+        "desde": 81000,
+        "hasta": 58000
+      }
+    },
+    "filas": [
+      {
+        "citadas": 9,
+        "empezo": "2026-09-21 10:05",
+        "evidencia": 21,
+        "muletillas": null,
+        "ppmMedio": null,
+        "tiempoMedioMs": 81000
+      },
+      {
+        "citadas": 11,
+        "empezo": "2026-09-27 18:30",
+        "evidencia": 21,
+        "muletillas": 12,
+        "ppmMedio": 150,
+        "tiempoMedioMs": 69000
+      },
+      {
+        "citadas": 12,
+        "empezo": "2026-10-02 08:45",
+        "evidencia": 21,
+        "muletillas": 11,
+        "ppmMedio": 143,
+        "tiempoMedioMs": 62000
+      },
+      {
+        "citadas": 14,
+        "empezo": "2026-10-04 09:12",
+        "evidencia": 21,
+        "muletillas": 9,
+        "ppmMedio": 138,
+        "tiempoMedioMs": 58000
+      }
+    ]
   };
 
 export const NO_EMPEZO_EN_REUNION: NoEmpezo = {
@@ -1118,6 +1273,7 @@ export const NDA_NO_LO_PROHIBE: Nda = "no-lo-prohibe";
 export const NDA_LO_PROHIBE: Nda = "lo-prohibe";
 
 export const ESCUCHA_SOLO_NOTAS: EstadoDeEscucha = {
+    "bytesDelEnsayo": 0,
     "bytesDelTranscript": 0,
     "escuchando": false,
     "microfono": {

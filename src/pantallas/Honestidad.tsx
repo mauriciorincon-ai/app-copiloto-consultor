@@ -2,7 +2,13 @@ import { useIdioma, useT, type Idioma } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { useEffect, useState } from "react";
 import { PILA } from "../componentes/Ventana";
-import { cortarTodo, type EstadoDeEscucha, usePantalla, usePiezasDelCorte } from "../cuaderno";
+import {
+  cortarTodo,
+  ESCUCHA_DEL_ENSAYO_DE_MUESTRA,
+  type EstadoDeEscucha,
+  usePantalla,
+  usePiezasDelCorte,
+} from "../cuaderno";
 import { EXTERNOS, useIa, useLoQueSalio } from "../ia";
 import {
   AHORA_DE_MUESTRA,
@@ -17,9 +23,10 @@ import { escuchar, hayTauri } from "../puente";
 /**
  * HONESTIDAD — «Qué vive en la memoria ahora mismo y qué salió de tu equipo».
  *
- * Referencia: `docs/diseno/honestidad.html`, estado **«así se ve hoy · sprint 3»**: el del sprint 2
- * (mirada 17-quater) con «Lo que quedará cuando cierres» de vuelta a la tarjeta que aprobó la Etapa de
- * Diseño —dónde vive, qué es tuyo y qué muere—, y tras ⌥⎋ con notas, «Tus notas siguen ahí».
+ * Referencia: `docs/diseno/honestidad.html`, estado **«sprint 4 · con tus ensayos»** (fase 4): el del
+ * sprint 3 —«Lo que quedará cuando cierres» con la tarjeta que aprobó la Etapa de Diseño, y tras ⌥⎋ con
+ * notas, «Tus notas siguen ahí»— con «tus ensayos» en lo tuyo; y mientras ensayas, «sprint 4 · ensayando»:
+ * el micrófono es el del ensayo y tus respuestas tienen su fila.
  *
  * **La fila del último cuadro dejó de decir «todavía no»** en el sprint 002: la pantalla ya se lee
  * (C8), y lo que queda en memoria —el último cuadro y lo que se sacó de él— se cuenta aquí y en el
@@ -43,11 +50,14 @@ import { escuchar, hayTauri } from "../puente";
 // arreglar es que este lado lo pregunte»—, y el día llegó con la deuda del S1. La cuenta que la
 // pantalla enseña sale de `corte::TODAS` y de su `match` sin comodín.
 
-export function Honestidad({ bytes, escucha, busqueda = "" }: { bytes: string; escucha: EstadoDeEscucha; busqueda?: string }) {
+export function Honestidad({ bytes, escucha: laEscucha, busqueda = "" }: { bytes: string; escucha: EstadoDeEscucha; busqueda?: string }) {
   const t = useT().cuaderno;
   // La bandeja (ADR 016 §6), sin abrirla: cuándo vence la próxima y si la tarea de borrado corrió.
   // Fuera de Tauri, lo que pide la URL: «sprint 3 · con bandeja» o «la tarea no corrió».
   const pedido = new URLSearchParams(busqueda).get("estado");
+  // Mientras ensayas (sprint 004, fase 4): fuera de Tauri, el estado «sprint 4 · ensayando» de la maqueta.
+  const ensayandoDeMuestra = !hayTauri() && pedido === "ensayando";
+  const escucha = ensayandoDeMuestra ? ESCUCHA_DEL_ENSAYO_DE_MUESTRA : laEscucha;
   const bandeja = useEstadoDeLaBandeja({
     vence: pedido === "bandeja" ? AHORA_DE_MUESTRA + 2 * 3_600 + 41 * 60 + 8 : null,
     noCorrio: pedido === "no-corrio",
@@ -55,7 +65,9 @@ export function Honestidad({ bytes, escucha, busqueda = "" }: { bytes: string; e
   const quedanBandeja = useQuedan(bandeja.vence);
   const idioma = useIdioma();
   const corte = usePiezasDelCorte();
-  const pantalla = usePantalla();
+  const laPantalla = usePantalla();
+  // En un ensayo no se lee la pantalla: la muestra lo dice con 0 B.
+  const pantalla = ensayandoDeMuestra ? { ...laPantalla, bytesEnMemoria: 0 } : laPantalla;
   const [ia] = useIa();
   // Lo que salió al API vive en memoria hasta el corte, con tope (auditoría del S3, B15): se cuenta
   // aquí como un búfer más. Fuera de Tauri, la muestra solo en «sprint 3 · con el API encendido».
@@ -78,7 +90,10 @@ export function Honestidad({ bytes, escucha, busqueda = "" }: { bytes: string; e
     escucha.microfono.bytes +
     escucha.sistema.bytes +
     escucha.bytesDelTranscript +
+    escucha.bytesDelEnsayo +
     pantalla.bytesEnMemoria;
+  // Un ensayo en memoria: su micrófono abierto sin reunión, o sus respuestas esperando a que guardes o cierres.
+  const hayEnsayo = escucha.bytesDelEnsayo > 0 || (escucha.microfono.abierta && !escucha.escuchando);
 
   /** Un búfer que ya existe: se dice dónde vive y cuánto ocupa. */
   const buffer = (icono: string, que: string, donde: string, cuanto: string) => (
@@ -148,6 +163,7 @@ export function Honestidad({ bytes, escucha, busqueda = "" }: { bytes: string; e
               {buffer("i-sistema", t.bufSistema, t.ringBuffer30, formatear(escucha.sistema.bytes, idioma))}
               {buffer("i-ojo", t.bufTranscript, t.ventana12, formatear(escucha.bytesDelTranscript, idioma))}
               {buffer("i-pantalla", t.bufFrame, t.soloEnMemoriaElUltimo, formatear(pantalla.bytesEnMemoria, idioma))}
+              {hayEnsayo && buffer("i-ensayo", t.bufEnsayo, t.hastaGuardarOCerrar, formatear(escucha.bytesDelEnsayo, idioma))}
               {peticiones > 0 && buffer("i-subir", t.bufLoQueSalio, t.hastaElCorte, `${peticiones} ${t.peticiones}`)}
             </div>
           </div>

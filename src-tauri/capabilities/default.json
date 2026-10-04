@@ -79,6 +79,10 @@
     "allow-ensayo-terminar",
     "allow-ensayo-si-lo-dije",
     "allow-estado-del-ensayo",
-    "allow-cerrar-el-ensayo"
+    "allow-cerrar-el-ensayo",
+    "allow-guardar-el-ensayo",
+    "allow-exportar-el-ensayo",
+    "allow-progreso-del-ensayo",
+    "allow-borrar-los-ensayos"
   ]
 }

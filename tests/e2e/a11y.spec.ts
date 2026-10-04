@@ -70,6 +70,11 @@ const PANTALLAS = [
   { que: "ensayo · evaluada", url: "ventana=principal&pantalla=ensayo&estado=evaluada" },
   { que: "ensayo · el informe", url: "ventana=principal&pantalla=ensayo&estado=cerrado" },
   { que: "ensayo · sin corpus", url: "ventana=principal&pantalla=ensayo&estado=sin-corpus" },
+  // Lo que queda de tus ensayos (fase 4, ADR 015 enmienda 4): guardado, tu progreso y borrarlo.
+  { que: "ensayo · guardado", url: "ventana=principal&pantalla=ensayo&estado=guardado" },
+  { que: "ensayo · tu progreso", url: "ventana=principal&pantalla=ensayo&estado=progreso" },
+  { que: "ensayo · borrar", url: "ventana=principal&pantalla=ensayo&estado=progreso-borrar" },
+  { que: "honestidad · ensayando", url: "ventana=principal&pantalla=honestidad&estado=ensayando" },
 ];
 
 test.use({ reducedMotion: "reduce" });

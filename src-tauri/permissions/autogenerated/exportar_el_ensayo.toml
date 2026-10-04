@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-exportar-el-ensayo"
+description = "Enables the exportar_el_ensayo command without any pre-configured scope."
+commands.allow = ["exportar_el_ensayo"]
+
+[[permission]]
+identifier = "deny-exportar-el-ensayo"
+description = "Denies the exportar_el_ensayo command without any pre-configured scope."
+commands.deny = ["exportar_el_ensayo"]

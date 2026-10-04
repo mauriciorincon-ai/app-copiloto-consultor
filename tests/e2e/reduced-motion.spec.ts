@@ -32,6 +32,8 @@ const ENCUADRES = [
   { que: "ensayo · el reloj", url: "ventana=principal&pantalla=ensayo&estado=respondiendo", clave: ".reloj-e" },
   { que: "ensayo · las cifras", url: "ventana=principal&pantalla=ensayo&estado=evaluada", clave: ".cifras-e .cifra-e .n" },
   { que: "ensayo · la pregunta", url: "ventana=principal&pantalla=ensayo&estado=preguntando", clave: ".pregunta-e .texto" },
+  // Tu progreso (fase 4): la tabla y sus flechas se leen sin movimiento.
+  { que: "ensayo · tu progreso", url: "ventana=principal&pantalla=ensayo&estado=progreso", clave: ".tabla td.num" },
 ];
 
 /** Lo que de verdad se ve: en el árbol, con caja, y sin transparencia. */

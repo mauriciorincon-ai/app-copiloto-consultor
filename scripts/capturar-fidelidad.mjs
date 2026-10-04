@@ -142,8 +142,10 @@ const ARTEFACTOS = [
       { id: "permisos", maqueta: "permisos.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=permisos" },
       { id: "corpus", maqueta: "corpus.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=corpus" },
       // Desde la fase 1 del sprint 003 Honestidad se compara con «así se ve hoy · sprint 3»: la
-      // tarjeta de lo que quedará volvió, y el corte tiene diez piezas.
-      { id: "honestidad", maqueta: "honestidad.html", estado: "s3", alto: 640, url: "ventana=principal&pantalla=honestidad" },
+      // tarjeta de lo que quedará volvió, y el corte tiene diez piezas. Desde la fase 4 del sprint 004, con
+      // «sprint 4 · con tus ensayos»; y mientras ensayas, «sprint 4 · ensayando».
+      { id: "honestidad", maqueta: "honestidad.html", estado: "s4", alto: 640, url: "ventana=principal&pantalla=honestidad" },
+      { id: "honestidad-ensayando", maqueta: "honestidad.html", estado: "s4-ensayando", alto: 640, url: "ventana=principal&pantalla=honestidad&estado=ensayando" },
       // La bandeja en Honestidad (fase 2): su cuenta atrás, y la tarea de borrado que no corrió.
       { id: "honestidad-bandeja", maqueta: "honestidad.html", estado: "s3-bandeja", alto: 640, url: "ventana=principal&pantalla=honestidad&estado=bandeja" },
       { id: "honestidad-no-corrio", maqueta: "honestidad.html", estado: "s3-no-corrio", alto: 640, url: "ventana=principal&pantalla=honestidad&estado=no-corrio" },
@@ -161,7 +163,7 @@ const ARTEFACTOS = [
       { id: "notas-vencida", maqueta: "notas.html", estado: "s3-vencida", alto: 640, url: "ventana=principal&pantalla=notas&estado=vencida" },
       { id: "idioma", maqueta: "idioma.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=idioma" },
       // El ensayo (C18, sprint 004, fase 3; mirada de DECISIÓN 1 y sus FORMA «maquetada, no vista»). El
-      // informe y el progreso entran con la fase 4, cuando guardar, exportar y la retención estén.
+      // informe y el progreso entraron con la fase 4, con guardar, exportar y la retención.
       { id: "ensayo-preparar", maqueta: "ensayo.html", estado: "preparar", alto: 640, url: "ventana=principal&pantalla=ensayo&estado=preparar" },
       { id: "ensayo-no-empezo", maqueta: "ensayo.html", estado: "no-empezo", alto: 640, url: "ventana=principal&pantalla=ensayo&estado=no-empezo" },
       { id: "ensayo-preguntando", maqueta: "ensayo.html", estado: "preguntando", alto: 640, url: "ventana=principal&pantalla=ensayo&estado=preguntando" },
@@ -169,6 +171,10 @@ const ARTEFACTOS = [
       { id: "ensayo-respondiendo", maqueta: "ensayo.html", estado: "respondiendo", alto: 640, url: "ventana=principal&pantalla=ensayo&estado=respondiendo" },
       { id: "ensayo-evaluada", maqueta: "ensayo.html", estado: "evaluada", alto: 640, url: "ventana=principal&pantalla=ensayo&estado=evaluada" },
       { id: "ensayo-sin-corpus", maqueta: "ensayo.html", estado: "sin-corpus", alto: 640, url: "ventana=principal&pantalla=ensayo&estado=sin-corpus" },
+      { id: "ensayo-cerrado", maqueta: "ensayo.html", estado: "cerrado", alto: 640, url: "ventana=principal&pantalla=ensayo&estado=cerrado" },
+      { id: "ensayo-guardado", maqueta: "ensayo.html", estado: "guardado", alto: 640, url: "ventana=principal&pantalla=ensayo&estado=guardado" },
+      { id: "ensayo-progreso", maqueta: "ensayo.html", estado: "progreso", alto: 640, url: "ventana=principal&pantalla=ensayo&estado=progreso" },
+      { id: "ensayo-progreso-borrar", maqueta: "ensayo.html", estado: "progreso-borrar", alto: 640, url: "ventana=principal&pantalla=ensayo&estado=progreso-borrar" },
       // El radar coral en Sesión (fase 4): «software invasivo en tu Mac», con las cinco filas.
       { id: "vigilancia", maqueta: "sesion.html", estado: "vigilancia", alto: 640, url: "ventana=principal&pantalla=sesion&radar=vigilancia" },
       // La pantalla IA (fase 5): «así se ve hoy · sprint 2».

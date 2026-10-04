@@ -87,17 +87,22 @@ export function Principal({ busqueda = globalThis.location?.search ?? "" }: { bu
   // La puerta local abierta y la puerta cerrada a mano no conviven con una reunión (ADR 018 §5): fuera de
   // Tauri, esos dos estados de `ia.html` enseñan el rail sin sesión; «se cerró sola», con la reunión.
   const q = new URLSearchParams(busqueda);
-  // Y el ensayo no convive con una reunión (ADR 019 §6.5): fuera de Tauri, sus estados van sin sesión.
+  // Y el ensayo no convive con una reunión (ADR 019 §6.5): fuera de Tauri, sus estados van sin sesión, y
+  // también Honestidad «ensayando» (fase 4).
+  const ensayandoEnHonestidad = q.get("pantalla") === "honestidad" && q.get("estado") === "ensayando";
   const sinReunionDeMuestra =
     !hayTauri() &&
-    ((q.get("vista") === "puerta" && q.get("puerta") !== "en-reunion") || q.get("pantalla") === "ensayo");
+    ((q.get("vista") === "puerta" && q.get("puerta") !== "en-reunion") ||
+      q.get("pantalla") === "ensayo" ||
+      ensayandoEnHonestidad);
   const enSesion = reunion.que === "detectada" && !sinReunionDeMuestra;
   // El ensayo (sprint 004): el chip dice «Ensayando» mientras su micrófono está abierto. Fuera de Tauri,
   // en los estados de la maqueta que ensayan.
   const [ensayo] = useEnsayo();
   const ensayando = hayTauri()
     ? ensayo !== null && ensayo.fase !== "cerrado"
-    : q.get("pantalla") === "ensayo" && ESTADOS_ENSAYANDO.includes(estadoDeLaUrl(busqueda));
+    : (q.get("pantalla") === "ensayo" && ESTADOS_ENSAYANDO.includes(estadoDeLaUrl(busqueda))) ||
+      ensayandoEnHonestidad;
 
   return (
     <Ventana

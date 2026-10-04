@@ -65,6 +65,7 @@ const escuchando: EstadoDeEscucha = {
   microfono: abierta,
   sistema: abierta,
   bytesDelTranscript: 2_048,
+  bytesDelEnsayo: 0,
 };
 
 /** Sesión con lo que el test quiera cambiar: la reunión, la escucha o la salida de audio. */

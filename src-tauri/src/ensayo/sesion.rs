@@ -16,7 +16,7 @@
 //! - **Un turno de otra ronda se tira**: si repites la pregunta mientras se transcribía tu respuesta
 //!   anterior, ese texto llega tarde y no se mezcla con la nueva ([`Sesion::ronda`]).
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::banco::{self, Idioma, Pregunta};
 use super::evaluacion::{Evaluacion, Muletilla, Tramo};
@@ -61,8 +61,9 @@ pub struct Cerrada {
     pub cerro_ms: u64,
 }
 
-/// Qué pasó con una pregunta.
-#[derive(Clone, Debug, PartialEq)]
+/// Qué pasó con una pregunta. Se guarda con tu ensayo ([`super::guardado`]).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case", rename_all_fields = "camelCase", tag = "que")]
 pub enum Suerte {
     /// Tu respuesta en texto (es tuya: la pista del micrófono) y sus cifras.
     Respondida { respuesta: String, evaluacion: Evaluacion },
@@ -389,6 +390,19 @@ impl Sesion {
     pub fn cerrando(&self) -> bool {
         self.fase == Fase::Respondiendo && (self.cerrar_en.is_some() || self.evaluando)
     }
+    /// Cuánto ocupan, en texto, tus respuestas en memoria: las cerradas y la que va en curso.
+    pub fn bytes_de_tus_respuestas(&self) -> usize {
+        let cerradas: usize = self
+            .suertes
+            .iter()
+            .map(|s| match s {
+                Some(Suerte::Respondida { respuesta, .. }) => respuesta.len(),
+                _ => 0,
+            })
+            .sum();
+        cerradas + self.tramos.iter().filter_map(|t| t.texto.as_ref()).map(String::len).sum::<usize>()
+    }
+
     /// Lo que llevas dicho, en texto.
     pub fn respuesta_en_curso(&self) -> String {
         self.tramos.iter().filter_map(|t| t.texto.as_deref()).collect::<Vec<_>>().join(" ")
@@ -404,43 +418,23 @@ impl Sesion {
 
     /// **El informe**: una fila por pregunta a la que llegaste, y los totales.
     pub fn informe(&self) -> Informe {
-        let mut filas = Vec::new();
-        for (i, (p, s)) in self.preguntas.iter().zip(&self.suertes).enumerate() {
-            let Some(s) = s else { continue };
-            let (citadas, evidencia, tiempo_ms, ppm, saltada) = match s {
-                Suerte::Respondida { evaluacion: e, .. } => (e.citadas(), e.evidencia.len(), Some(e.tiempo_ms), e.ppm, false),
-                Suerte::Saltada => (0, 0, None, None, true),
-            };
-            filas.push(Fila { numero: i + 1, texto: p.texto.clone(), citadas, evidencia, tiempo_ms, ppm, saltada });
-        }
-        let respondidas: Vec<&Evaluacion> = self
-            .suertes
+        informe_de(
+            self.preguntas
+                .iter()
+                .zip(&self.suertes)
+                .enumerate()
+                .filter_map(|(i, (p, s))| s.as_ref().map(|s| (i + 1, p.texto.as_str(), s))),
+        )
+    }
+
+    /// Las preguntas a las que llegaste, con lo que pasó en cada una: lo que se guarda (ADR 015,
+    /// enmienda 4). Las que no alcanzaste no van, y una a medias cuando pulsaste Esc tampoco.
+    pub fn llegadas(&self) -> Vec<(Pregunta, Suerte)> {
+        self.preguntas
             .iter()
-            .filter_map(|s| match s {
-                Some(Suerte::Respondida { evaluacion, .. }) => Some(evaluacion),
-                _ => None,
-            })
-            .collect();
-        let media = |v: Vec<u64>| (!v.is_empty()).then(|| v.iter().sum::<u64>() / v.len() as u64);
-        let mut cuenta: Vec<Muletilla> = Vec::new();
-        for m in respondidas.iter().flat_map(|e| &e.muletillas) {
-            match cuenta.iter_mut().find(|c| c.frase == m.frase) {
-                Some(c) => c.veces += m.veces,
-                None => cuenta.push(m.clone()),
-            }
-        }
-        cuenta.sort_by_key(|m| std::cmp::Reverse(m.veces));
-        Informe {
-            respondidas: respondidas.len(),
-            saltadas: filas.iter().filter(|f| f.saltada).count(),
-            citadas: respondidas.iter().map(|e| e.citadas()).sum(),
-            evidencia: respondidas.iter().map(|e| e.evidencia.len()).sum(),
-            ppm_medio: media(respondidas.iter().filter_map(|e| e.ppm.map(u64::from)).collect()).map(|x| x as u32),
-            muletillas: cuenta.iter().map(|m| m.veces).sum(),
-            la_que_mas: cuenta.into_iter().next(),
-            tiempo_medio_ms: media(respondidas.iter().map(|e| e.tiempo_ms).collect()),
-            filas,
-        }
+            .zip(&self.suertes)
+            .filter_map(|(p, s)| s.as_ref().map(|s| (p.clone(), s.clone())))
+            .collect()
     }
 
     /// Pisa todo lo que dijiste y suelta las preguntas. Lo llaman el corte, «Cerrar sin guardar» y el
@@ -463,6 +457,43 @@ impl Sesion {
 impl Drop for Sesion {
     fn drop(&mut self) {
         self.vaciar();
+    }
+}
+
+/// **El informe**, de lo que sea: el ensayo en marcha o uno guardado. Las mismas cuentas en los dos
+/// sitios, para que el progreso diga lo mismo que dijo la pantalla al terminar.
+pub fn informe_de<'a>(llegadas: impl IntoIterator<Item = (usize, &'a str, &'a Suerte)>) -> Informe {
+    let mut filas = Vec::new();
+    let mut respondidas: Vec<&Evaluacion> = Vec::new();
+    for (numero, texto, s) in llegadas {
+        let (citadas, evidencia, tiempo_ms, ppm, saltada) = match s {
+            Suerte::Respondida { evaluacion: e, .. } => {
+                respondidas.push(e);
+                (e.citadas(), e.evidencia.len(), Some(e.tiempo_ms), e.ppm, false)
+            }
+            Suerte::Saltada => (0, 0, None, None, true),
+        };
+        filas.push(Fila { numero, texto: texto.to_string(), citadas, evidencia, tiempo_ms, ppm, saltada });
+    }
+    let media = |v: Vec<u64>| (!v.is_empty()).then(|| v.iter().sum::<u64>() / v.len() as u64);
+    let mut cuenta: Vec<Muletilla> = Vec::new();
+    for m in respondidas.iter().flat_map(|e| &e.muletillas) {
+        match cuenta.iter_mut().find(|c| c.frase == m.frase) {
+            Some(c) => c.veces += m.veces,
+            None => cuenta.push(m.clone()),
+        }
+    }
+    cuenta.sort_by_key(|m| std::cmp::Reverse(m.veces));
+    Informe {
+        respondidas: respondidas.len(),
+        saltadas: filas.iter().filter(|f| f.saltada).count(),
+        citadas: respondidas.iter().map(|e| e.citadas()).sum(),
+        evidencia: respondidas.iter().map(|e| e.evidencia.len()).sum(),
+        ppm_medio: media(respondidas.iter().filter_map(|e| e.ppm.map(u64::from)).collect()).map(|x| x as u32),
+        muletillas: cuenta.iter().map(|m| m.veces).sum(),
+        la_que_mas: cuenta.into_iter().next(),
+        tiempo_medio_ms: media(respondidas.iter().map(|e| e.tiempo_ms).collect()),
+        filas,
     }
 }
 

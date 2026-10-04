@@ -87,6 +87,12 @@ const COMANDOS: &[&str] = &[
         "ensayo_si_lo_dije",
         "estado_del_ensayo",
         "cerrar_el_ensayo",
+        // Sprint 004, fase 4: lo que queda de tus ensayos (ADR 015, enmienda 4). Solo la ventana principal:
+        // abre tus ensayos con el desbloqueo de tus notas.
+        "guardar_el_ensayo",
+        "exportar_el_ensayo",
+        "progreso_del_ensayo",
+        "borrar_los_ensayos",
 ];
 
 fn main() {

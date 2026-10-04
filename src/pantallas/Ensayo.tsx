@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { useIdioma, useT } from "../i18n";
+import { nombreDeLaRetencion, useCuaderno, useMuestraDelCuaderno } from "../notas";
 import { Ic } from "../componentes/Iconos";
 import type { Seccion } from "../componentes/Ventana";
 import { hayTauri } from "../puente";
 import {
+  borrarLosEnsayos,
   cerrarElEnsayo,
+  diaCorto,
   empezarElEnsayo,
   ensayoListo,
   ensayoRepetir,
@@ -14,17 +17,24 @@ import {
   entreComillas,
   esNoEmpezo,
   estadoDeLaUrl,
+  exportarElEnsayo,
+  flecha,
+  guardarElEnsayo,
+  progresoDelEnsayo,
   reloj,
   useEnsayo,
   usePreparacion,
   usePreparacionDeMuestra,
+  useProgresoDeMuestra,
   useVistaDeMuestra,
+  type Cambio,
   type EstadoDelBanco,
   type Evidencia,
   type Muletilla,
   type NoEmpezo,
   type Preparacion,
   type PreguntaEnPantalla,
+  type Progreso,
   type VistaDelEnsayo,
 } from "../ensayo";
 
@@ -52,6 +62,23 @@ export function Ensayo({
   const [real] = useEnsayo();
   const deMuestra = useVistaDeMuestra(muestra);
   const vista = enTauri ? real : deMuestra;
+  // Guardado, el informe se va y vuelves a «preparar» con la franja que lo dice (ADR 015, enmienda 4).
+  const [guardado, setGuardado] = useState(
+    () => !enTauri && muestra === "guardado",
+  );
+  // Tu progreso, abierto con el desbloqueo de tus notas: se enseña en lugar de «preparar».
+  const deMuestraDelProgreso = useProgresoDeMuestra(muestra);
+  const [abierto, setAbierto] = useState<{
+    progreso: Progreso;
+    clientes: string[];
+  } | null>(null);
+  const m = t.muestra;
+  const progreso = enTauri
+    ? abierto
+    : deMuestraDelProgreso && {
+        progreso: deMuestraDelProgreso,
+        clientes: [m.paramo, m.surDelValle],
+      };
 
   return (
     <>
@@ -60,9 +87,25 @@ export function Ensayo({
         <p className="sub">{t.sub}</p>
       </div>
       {vista ? (
-        <EnCurso vista={vista} />
+        <EnCurso vista={vista} alGuardar={() => setGuardado(true)} />
+      ) : progreso ? (
+        <TuProgreso
+          inicial={progreso.progreso}
+          clientes={progreso.clientes}
+          preguntarAntes={!enTauri && muestra === "progreso-borrar"}
+          volver={() => setAbierto(null)}
+        />
       ) : (
-        <Preparar busqueda={busqueda} ir={ir} />
+        <Preparar
+          busqueda={busqueda}
+          ir={ir}
+          guardado={guardado}
+          alEmpezar={() => setGuardado(false)}
+          abrirProgreso={(p, clientes) => {
+            setGuardado(false);
+            setAbierto({ progreso: p, clientes });
+          }}
+        />
       )}
     </>
   );
@@ -73,12 +116,21 @@ export function Ensayo({
 function Preparar({
   busqueda,
   ir,
+  guardado,
+  alEmpezar,
+  abrirProgreso,
 }: {
   busqueda: string;
   ir: (s: Seccion) => void;
+  /** Acabas de guardar un ensayo: la franja lo dice. */
+  guardado: boolean;
+  alEmpezar: () => void;
+  abrirProgreso: (p: Progreso, clientes: string[]) => void;
 }) {
   const t = useT().ensayo;
+  const idioma = useIdioma();
   const enTauri = hayTauri();
+  const [noSeAbrieron, setNoSeAbrieron] = useState(false);
   const muestra = estadoDeLaUrl(busqueda);
   const [cliente, setCliente] = useState<string | null>(null);
   const [propuesta, setPropuesta] = useState<string | null>(null);
@@ -104,10 +156,22 @@ function Preparar({
   if (prep.sinCorpus)
     return <SinCorpus prep={prep} elegir={elegirCliente} ir={ir} />;
 
+  const verProgreso = () => {
+    if (!prep.cliente) return;
+    setNoSeAbrieron(false);
+    // Pide el desbloqueo de tus notas, una vez por sesión de la app; cancelarlo deja todo en su sitio.
+    progresoDelEnsayo(prep.cliente, idioma)
+      .then((p) => {
+        if (p) abrirProgreso(p, prep.clientes);
+      })
+      .catch(() => setNoSeAbrieron(true));
+  };
+
   const empezar = () => {
     if (!prep.cliente || empezando) return;
     setEmpezando(true);
     setNoEmpezo(null);
+    alEmpezar();
     empezarElEnsayo(prep.cliente, prep.propuesta, prep.tope, voz)
       .catch((e: unknown) =>
         setNoEmpezo(
@@ -119,6 +183,15 @@ function Preparar({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {guardado && (
+        <div className="franja ok" role="status">
+          <Ic id="i-check-circle" s relleno />
+          <div>
+            <strong>{t.guardadoConTusNotas}</strong>
+          </div>
+        </div>
+      )}
+      {noSeAbrieron && <NoSeAbrieron />}
       {noEmpezo && noEmpezo.que !== "sin-corpus" && (
         <PorQueNoEmpezo no={noEmpezo} />
       )}
@@ -150,6 +223,18 @@ function Preparar({
             <span className="crece">{t.cliente}</span>
             <SelectorDeCliente prep={prep} elegir={elegirCliente} />
           </div>
+          {/* Con uno o más guardados —contados por el nombre del archivo, sin abrir ninguno—, el camino a tu
+              progreso con ese cliente (FORMA de la fase 4, maquetada, no vista). */}
+          {prep.guardados > 0 && (
+            <div className="fila">
+              <span className="crece">{t.guardados}</span>
+              <span className="mono">{prep.guardados}</span>
+              <button type="button" className="btn mini" onClick={verProgreso}>
+                <Ic id="i-ensayo" s />
+                {t.verTuProgreso}
+              </button>
+            </div>
+          )}
           <div className="fila">
             <span className="crece">{t.propuesta}</span>
             <select
@@ -321,6 +406,184 @@ function PorQueNoEmpezo({ no }: { no: NoEmpezo }) {
   );
 }
 
+/** El desbloqueo se canceló, o tus ensayos no se dejaron abrir: siguen cifrados y en su sitio. */
+function NoSeAbrieron() {
+  const t = useT().ensayo;
+  return (
+    <div className="franja warn" role="status">
+      <Ic id="i-candado" s />
+      <div>
+        <strong>{t.noSeAbrieron}</strong>
+        <p>{t.noSeAbrieronQue}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── 6 · tu progreso · 6b · borrar ───────────────────────────────────────────────────────────────
+
+/** «↑ evidencia 9 → 14», «↓ ritmo 161 → 138 ppm»: hacia dónde fue, sin decir si es bueno o malo. La
+ *  unidad va una vez, al final, como en la maqueta. */
+function Tendencia({
+  que,
+  c,
+  como = String,
+  unidad,
+}: {
+  que: string;
+  c: Cambio;
+  como?: (n: number) => string;
+  unidad?: string;
+}) {
+  return (
+    <span className="estado mute">
+      <span>
+        {`${flecha(c)} ${que} ${como(c.desde)} → ${como(c.hasta)}${unidad ? ` ${unidad}` : ""}`}
+      </span>
+    </span>
+  );
+}
+
+function TuProgreso({
+  inicial,
+  clientes,
+  preguntarAntes,
+  volver,
+}: {
+  inicial: Progreso;
+  clientes: string[];
+  /** La muestra de «6b · borrar»: la pregunta ya abierta. */
+  preguntarAntes: boolean;
+  volver: () => void;
+}) {
+  const t = useT().ensayo;
+  const idioma = useIdioma();
+  const [p, setP] = useState(inicial);
+  const [borrando, setBorrando] = useState(preguntarAntes);
+  const [noSeAbrieron, setNoSeAbrieron] = useState(false);
+  const d = p.desdeElPrimero;
+  const hayCambio = Boolean(d.evidencia || d.ritmo || d.muletillas || d.tiempo);
+
+  // Otro cliente: el desbloqueo ya se hizo en esta sesión de la app, así que no vuelve a preguntar.
+  const elegir = (cliente: string) => {
+    setNoSeAbrieron(false);
+    setBorrando(false);
+    progresoDelEnsayo(cliente, idioma)
+      .then((nuevo) => {
+        if (nuevo) setP(nuevo);
+      })
+      .catch(() => setNoSeAbrieron(true));
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {noSeAbrieron && <NoSeAbrieron />}
+      <div className="tarjeta" style={{ padding: "10px 12px 8px" }}>
+        <div className="fila" style={{ marginBottom: 4 }}>
+          <h2 className="seccion crece" style={{ margin: 0 }}>
+            {t.tuProgreso}
+          </h2>
+          <select
+            className="selector"
+            aria-label={t.cliente}
+            value={p.cliente}
+            onChange={(e) => elegir(e.target.value)}
+          >
+            {clientes.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </div>
+        {p.filas.length === 0 ? (
+          <p style={{ fontSize: 11.5, color: "var(--ink-2)" }}>
+            {t.ningunoGuardado}
+          </p>
+        ) : (
+          <table className="tabla">
+            <thead>
+              <tr>
+                <th>{t.colEnsayo}</th>
+                <th className="num">{t.evidenciaUsada}</th>
+                <th className="num">{t.ritmo}</th>
+                <th className="num">{t.muletillas}</th>
+                <th className="num">{t.tiempoMedio}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {p.filas.map((f) => (
+                <tr key={f.empezo}>
+                  <td className="mono">{diaCorto(f.empezo, t.meses, idioma)}</td>
+                  <td className="num">
+                    {f.evidencia === 0 ? "—" : `${f.citadas} ${t.de} ${f.evidencia}`}
+                  </td>
+                  <td className="num">{f.ppmMedio ?? "—"}</td>
+                  <td className="num">{f.muletillas ?? "—"}</td>
+                  <td className="num">
+                    {f.tiempoMedioMs === null ? "—" : reloj(f.tiempoMedioMs)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        {p.antes > 0 && (
+          <p style={{ fontSize: 11.5, color: "var(--ink-2)", margin: "6px 0 0" }}>
+            {t.yMas} {p.antes} {t.mas}
+          </p>
+        )}
+      </div>
+      {hayCambio && (
+        <div className="fila" style={{ gap: 8, flexWrap: "wrap" }}>
+          <span style={{ fontSize: "var(--t-meta)", color: "var(--ink-2)" }}>
+            {t.desdeElPrimero}
+          </span>
+          {d.evidencia && <Tendencia que={t.chipEvidencia} c={d.evidencia} />}
+          {d.ritmo && <Tendencia que={t.chipRitmo} c={d.ritmo} unidad={t.ppm} />}
+          {d.muletillas && <Tendencia que={t.chipMuletillas} c={d.muletillas} />}
+          {d.tiempo && <Tendencia que={t.chipTiempo} c={d.tiempo} como={reloj} />}
+        </div>
+      )}
+      <p style={{ fontSize: 11.5, color: "var(--ink-2)" }}>{t.soloCifras}</p>
+      {borrando ? (
+        <div className="franja err" role="alertdialog" aria-label={t.borrarLosDeEsteCliente}>
+          <Ic id="i-x-circle" s relleno />
+          <div>
+            <strong>{t.borrarPregunta}</strong>
+            <p>{t.borrarDetalle}</p>
+            <div className="fila" style={{ gap: 8, marginTop: 8 }}>
+              <button
+                type="button"
+                className="btn mini"
+                onClick={() => void borrarLosEnsayos(p.cliente).then(volver)}
+              >
+                <Ic id="i-basura" s />
+                {t.borrar}
+              </button>
+              <button type="button" className="btn mini" onClick={() => setBorrando(false)}>
+                {t.cancelar}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="fila" style={{ gap: 8 }}>
+          <button type="button" className="btn" onClick={volver}>
+            {t.volver}
+          </button>
+          {p.filas.length > 0 && (
+            <button type="button" className="btn" onClick={() => setBorrando(true)}>
+              <Ic id="i-basura" s />
+              {t.borrarLosDeEsteCliente}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SinCorpus({
   prep,
   elegir,
@@ -389,7 +652,13 @@ function useTeclas(vista: VistaDelEnsayo) {
   }, [vista.fase]);
 }
 
-function EnCurso({ vista }: { vista: VistaDelEnsayo }) {
+function EnCurso({
+  vista,
+  alGuardar,
+}: {
+  vista: VistaDelEnsayo;
+  alGuardar: () => void;
+}) {
   useTeclas(vista);
   switch (vista.fase) {
     case "preguntando":
@@ -399,7 +668,7 @@ function EnCurso({ vista }: { vista: VistaDelEnsayo }) {
     case "evaluada":
       return <Evaluada vista={vista} />;
     case "cerrado":
-      return <ElInforme vista={vista} />;
+      return <ElInforme vista={vista} alGuardar={alGuardar} />;
   }
 }
 
@@ -683,14 +952,54 @@ function Cifra({ q, n, d }: { q: string; n: string; d?: string }) {
 /** Cuántas filas enseña el informe antes de «y N más»: las de la maqueta aprobada. */
 const FILAS_A_LA_VISTA = 4;
 
-function ElInforme({ vista }: { vista: VistaDelEnsayo }) {
+function ElInforme({
+  vista,
+  alGuardar,
+}: {
+  vista: VistaDelEnsayo;
+  alGuardar: () => void;
+}) {
   const t = useT().ensayo;
+  const tn = useT().notas;
   const idioma = useIdioma();
+  // La retención es la de tus notas (ADR 015, enmienda 4): la misma que Notas enseña.
+  const [cuaderno] = useCuaderno(useMuestraDelCuaderno("archivo"));
+  const retencion = cuaderno?.retencion ?? "90d";
+  const [ocupado, setOcupado] = useState(false);
+  const [fallo, setFallo] = useState<"guardar" | "exportar" | null>(null);
   const i = vista.informe;
   if (!i) return null;
   const resto = i.filas.length - FILAS_A_LA_VISTA;
+
+  // Guardar no pide nada; si falla, el informe sigue aquí, entero, y se puede volver a intentar.
+  const guardar = () => {
+    setOcupado(true);
+    setFallo(null);
+    guardarElEnsayo()
+      .then(alGuardar)
+      .catch(() => setFallo("guardar"))
+      .finally(() => setOcupado(false));
+  };
+  // Exportar pide el desbloqueo de tus notas y dónde; cancelar el diálogo no es un fallo.
+  const exportar = () => {
+    setOcupado(true);
+    setFallo(null);
+    exportarElEnsayo(idioma)
+      .catch(() => setFallo("exportar"))
+      .finally(() => setOcupado(false));
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {fallo && (
+        <div className="franja err" role="alert">
+          <Ic id="i-x-circle" s relleno />
+          <div>
+            <strong>{fallo === "guardar" ? t.noSeGuardo : t.noSeExporto}</strong>
+            <p>{fallo === "guardar" ? t.noSeGuardoQue : t.noSeExportoQue}</p>
+          </div>
+        </div>
+      )}
       <div className="franja ok">
         <Ic id="i-check-circle" s relleno />
         <div>
@@ -764,22 +1073,32 @@ function ElInforme({ vista }: { vista: VistaDelEnsayo }) {
         )}
       </div>
       <div className="fila" style={{ gap: 8 }}>
-        {/* Guardar y exportar llegan con la fase 4 (enmienda 4 del ADR 015): hasta entonces, apagados. */}
-        <button type="button" className="btn primario" disabled>
+        <button
+          type="button"
+          className="btn primario"
+          onClick={guardar}
+          disabled={ocupado}
+        >
           <Ic id="i-candado" s />
           {t.guardar}
         </button>
-        <button type="button" className="btn" disabled>
+        <button type="button" className="btn" onClick={exportar} disabled={ocupado}>
           {t.exportar}
         </button>
         <button
           type="button"
           className="btn"
           onClick={() => void cerrarElEnsayo()}
+          disabled={ocupado}
         >
           {t.cerrarSinGuardar}
         </button>
       </div>
+      <p style={{ fontSize: 11.5, color: "var(--ink-2)" }}>
+        {retencion === "siempre"
+          ? t.seQueda
+          : `${t.seCifraAntes} ${nombreDeLaRetencion(retencion, tn)}${t.seCifraDespues}`}
+      </p>
     </div>
   );
 }

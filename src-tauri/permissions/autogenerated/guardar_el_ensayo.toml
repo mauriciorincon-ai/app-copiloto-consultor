@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-guardar-el-ensayo"
+description = "Enables the guardar_el_ensayo command without any pre-configured scope."
+commands.allow = ["guardar_el_ensayo"]
+
+[[permission]]
+identifier = "deny-guardar-el-ensayo"
+description = "Denies the guardar_el_ensayo command without any pre-configured scope."
+commands.deny = ["guardar_el_ensayo"]

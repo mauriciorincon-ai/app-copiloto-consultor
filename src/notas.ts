@@ -15,6 +15,11 @@ import type { Unidad } from "./ficha";
 /** Cuánto viven tus notas guardadas: una elección para todas las reuniones (ADR 015 §6). */
 export type Retencion = "7d" | "30d" | "90d" | "1a" | "siempre";
 
+/** «90 d», «1 año», «siempre»: la retención como la escriben Notas y el informe del ensayo. */
+export function nombreDeLaRetencion(r: Retencion, t: { unAnio: string; siempre: string }): string {
+  return r === "1a" ? t.unAnio : r === "siempre" ? t.siempre : r.replace("d", " d");
+}
+
 /** Una ficha que fijaste con ⌃⌥P: cómo se llamaba y de dónde salía, no el texto del documento. */
 export type FichaFijada = {
   titular: string;

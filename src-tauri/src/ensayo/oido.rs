@@ -216,6 +216,11 @@ impl Oido {
         Self { anillo, grifo, oreja, manda: Some(manda), llegan, pendientes, vivo }
     }
 
+    /// Cuánto audio hay en el anillo ahora mismo: Honestidad lo cuenta.
+    pub fn bytes(&self) -> usize {
+        self.anillo.lock().map_or(0, |a| a.bytes())
+    }
+
     pub fn hablando(&self) -> bool {
         self.oreja.hablando()
     }

@@ -44,7 +44,7 @@ pub struct Tramo {
 }
 
 /// Una ficha que tenías para esa pregunta, y si la usaste.
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Evidencia {
     pub titular: String,
@@ -54,7 +54,7 @@ pub struct Evidencia {
     pub dicha_por_ti: bool,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Muletilla {
     /// Como la escribe el catálogo: «o sea», «I mean».
@@ -62,8 +62,8 @@ pub struct Muletilla {
     pub veces: u32,
 }
 
-/// Las cuatro cifras de una respuesta.
-#[derive(Clone, Debug, PartialEq, Serialize)]
+/// Las cuatro cifras de una respuesta. Se guardan con tu ensayo ([`super::guardado`]).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Evaluacion {
     pub evidencia: Vec<Evidencia>,
@@ -72,7 +72,7 @@ pub struct Evaluacion {
     pub ppm: Option<u32>,
     /// De la más repetida a la menos; solo las que aparecieron.
     pub muletillas: Vec<Muletilla>,
-    /// Para el ritmo y el kit; la pantalla no la enseña.
+    /// Para el ritmo y el kit; la pantalla no la enseña y no se guarda.
     #[serde(skip)]
     pub palabras: u32,
 }

@@ -9,11 +9,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Cascara } from "@/App";
 import { SpriteIconos } from "@/componentes/Iconos";
 import { Ensayo } from "@/pantallas/Ensayo";
+import { Honestidad } from "@/pantallas/Honestidad";
 import { es } from "@/i18n/es";
 import { escuchar, llamar, preguntar } from "@/puente";
-import { reloj, entreComillas } from "@/ensayo";
+import { diaCorto, entreComillas, flecha, reloj } from "@/ensayo";
 import {
   ENSAYO_CERRADO,
+  ESTADO_DE_LA_ESCUCHA_EN_UN_ENSAYO,
+  PROGRESO_CON_MAS,
+  PROGRESO_DE_UN_ENSAYO,
+  PROGRESO_DEL_ENSAYO,
+  VISTA_DEL_CUADERNO,
   ENSAYO_DEL_MODELO,
   ENSAYO_EVALUADA,
   ENSAYO_OBJECION,
@@ -253,7 +259,179 @@ describe("la evaluada y el informe", () => {
   });
 });
 
+// ─── fase 4: lo que queda (ADR 015, enmienda 4) ─────────────────────────────────────────────────────
+
+describe("el informe se guarda, se exporta y dice su retención", () => {
+  it("«Guardar con tus notas» guarda y vuelve a «preparar» diciéndolo", async () => {
+    respuestas.set("estado_del_ensayo", ENSAYO_CERRADO);
+    respuestas.set("preparar_el_ensayo", { ...PREPARACION_DEL_ENSAYO, guardados: 5 });
+    await pinta();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: t.guardar }));
+    });
+    expect(pedidos("guardar_el_ensayo")).toHaveLength(1);
+    // Rust soltó el informe y avisa: ya no hay ensayo, y la pantalla vuelve a «preparar».
+    respuestas.set("estado_del_ensayo", null);
+    await act(async () => oyentes.get("ensayo")?.(null));
+    expect(screen.getByText(t.guardadoConTusNotas)).toBeInTheDocument();
+    expect(screen.getByText(t.guardados).parentElement).toHaveTextContent("5");
+  });
+
+  it("si guardar falla, el informe sigue entero y lo dice", async () => {
+    respuestas.set("estado_del_ensayo", ENSAYO_CERRADO);
+    rechazos.set("guardar_el_ensayo", "el Llavero no contestó");
+    await pinta();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: t.guardar }));
+    });
+    expect(screen.getByText(t.noSeGuardo)).toBeInTheDocument();
+    expect(screen.getByText(t.noSeGuardoQue)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.guardar })).toBeEnabled();
+  });
+
+  it("«Exportar como texto» pide el idioma de la interfaz; si falla, lo dice sin tocar el informe", async () => {
+    respuestas.set("estado_del_ensayo", ENSAYO_CERRADO);
+    await pinta();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: t.exportar }));
+    });
+    expect(pedidos("exportar_el_ensayo").at(-1)?.[1]).toEqual({ idioma: "es" });
+    expect(screen.queryByText(t.noSeExporto)).toBeNull();
+    rechazos.set("exportar_el_ensayo", "cancelado");
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: t.exportar }));
+    });
+    expect(screen.getByText(t.noSeExporto)).toBeInTheDocument();
+    expect(pedidos("guardar_el_ensayo")).toHaveLength(0);
+  });
+
+  it("la línea de la retención es la de tus notas, y «siempre» no dice «se borra»", async () => {
+    respuestas.set("estado_del_ensayo", ENSAYO_CERRADO);
+    respuestas.set("cuaderno_de_la_reunion", { ...VISTA_DEL_CUADERNO, retencion: "30d" });
+    await pinta();
+    expect(screen.getByText(`${t.seCifraAntes} 30 d${t.seCifraDespues}`)).toBeInTheDocument();
+    cleanup();
+    respuestas.set("cuaderno_de_la_reunion", { ...VISTA_DEL_CUADERNO, retencion: "siempre" });
+    await pinta();
+    expect(screen.getByText(t.seQueda)).toBeInTheDocument();
+  });
+});
+
+describe("tu progreso con un cliente", () => {
+  async function abre(progreso: unknown) {
+    respuestas.set("preparar_el_ensayo", { ...PREPARACION_DEL_ENSAYO, guardados: 4 });
+    respuestas.set("progreso_del_ensayo", progreso);
+    await pinta();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: t.verTuProgreso }));
+    });
+  }
+
+  it("sin ensayos guardados no hay camino al progreso", async () => {
+    respuestas.set("preparar_el_ensayo", { ...PREPARACION_DEL_ENSAYO, guardados: 0 });
+    await pinta();
+    expect(screen.queryByRole("button", { name: t.verTuProgreso })).toBeNull();
+  });
+
+  it("pide el progreso de ese cliente y enseña las cifras con su flecha, sin puntaje", async () => {
+    await abre(PROGRESO_DEL_ENSAYO);
+    expect(pedidos("progreso_del_ensayo").at(-1)?.[1]).toEqual({ cliente: "Páramo Azul", idioma: "es" });
+    expect(screen.getByText(t.tuProgreso)).toBeInTheDocument();
+    expect(screen.getByText("21 sep")).toBeInTheDocument();
+    expect(screen.getByText(`9 ${t.de} 21`)).toBeInTheDocument();
+    expect(screen.getByText(`↑ ${t.chipEvidencia} 9 → 14`)).toBeInTheDocument();
+    expect(screen.getByText(`↓ ${t.chipRitmo} 161 → 138 ${t.ppm}`)).toBeInTheDocument();
+    expect(screen.getByText(`↓ ${t.chipMuletillas} 17 → 9`)).toBeInTheDocument();
+    expect(screen.getByText(`↓ ${t.chipTiempo} 1:21 → 0:58`)).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: t.volver }));
+    });
+    expect(screen.getByRole("button", { name: t.empezar })).toBeInTheDocument();
+  });
+
+  it("con un solo ensayo no hay «desde el primero»; con más de los que caben, los cuenta", async () => {
+    await abre(PROGRESO_DE_UN_ENSAYO);
+    expect(screen.queryByText(t.desdeElPrimero)).toBeNull();
+    cleanup();
+    await abre(PROGRESO_CON_MAS);
+    expect(screen.getByText(`${t.yMas} 3 ${t.mas}`)).toBeInTheDocument();
+    // El primero no tenía ritmo ni muletillas: «—», y la flecha sale del primero que sí.
+    expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText(`↓ ${t.chipRitmo} 150 → 138 ${t.ppm}`)).toBeInTheDocument();
+  });
+
+  it("si el desbloqueo no se da, tus ensayos siguen cifrados y la pantalla lo dice", async () => {
+    respuestas.set("preparar_el_ensayo", { ...PREPARACION_DEL_ENSAYO, guardados: 4 });
+    rechazos.set("progreso_del_ensayo", "cancelado");
+    await pinta();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: t.verTuProgreso }));
+    });
+    expect(screen.getByText(t.noSeAbrieron)).toBeInTheDocument();
+    expect(screen.queryByText(t.tuProgreso)).toBeNull();
+  });
+
+  it("borrar los de este cliente pregunta antes y manda cuál", async () => {
+    await abre(PROGRESO_DEL_ENSAYO);
+    fireEvent.click(screen.getByRole("button", { name: t.borrarLosDeEsteCliente }));
+    expect(screen.getByText(t.borrarPregunta)).toBeInTheDocument();
+    expect(pedidos("borrar_los_ensayos")).toHaveLength(0);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: t.borrar }));
+    });
+    expect(pedidos("borrar_los_ensayos").at(-1)?.[1]).toEqual({ cliente: "Páramo Azul" });
+    expect(screen.queryByText(t.tuProgreso)).toBeNull();
+  });
+});
+
+describe("Honestidad mientras ensayas", () => {
+  it("el micrófono es el del ensayo y tus respuestas tienen su fila, contadas en la RAM", async () => {
+    document.documentElement.lang = "es";
+    render(
+      <Cascara>
+        <SpriteIconos />
+        <Honestidad bytes="0 B" escucha={ESTADO_DE_LA_ESCUCHA_EN_UN_ENSAYO} />
+      </Cascara>,
+    );
+    await act(async () => {});
+    const tc = es.cuaderno;
+    const fila = screen.getByText(tc.bufEnsayo).closest(".buffer");
+    expect(fila).toHaveTextContent("412 B");
+    expect(screen.getByText(tc.bufMic).closest(".buffer")).toHaveTextContent("1,8 MB");
+    expect(screen.getByText(tc.bufSistema).closest(".buffer")).toHaveTextContent("0 B");
+    expect(screen.getByText(/^RAM ·/)).toHaveTextContent("RAM · 1,8 MB");
+    expect(screen.getByText(es.notas.tuyoDetalle, { exact: false })).toBeInTheDocument();
+  });
+
+  /** Terminado, el micrófono ya no ocupa nada y tus respuestas siguen en memoria hasta que guardes o
+   *  cierres: la fila sigue, y la RAM es exactamente lo suyo (con el anillo de 1,8 MB al lado, 412 B se
+   *  perdían en el redondeo y quitarlos de la suma no se notaba). */
+  it("terminado, la RAM es exactamente tus respuestas", async () => {
+    document.documentElement.lang = "es";
+    const terminado = {
+      ...ESTADO_DE_LA_ESCUCHA_EN_UN_ENSAYO,
+      microfono: { abierta: false, motivo: null, bytes: 0 },
+    };
+    render(
+      <Cascara>
+        <SpriteIconos />
+        <Honestidad bytes="0 B" escucha={terminado} />
+      </Cascara>,
+    );
+    await act(async () => {});
+    expect(screen.getByText(es.cuaderno.bufEnsayo).closest(".buffer")).toHaveTextContent("412 B");
+    expect(screen.getByText(/^RAM ·/)).toHaveTextContent("RAM · 412 B");
+  });
+});
+
 describe("los formatos", () => {
+  it("el día del progreso y la flecha", () => {
+    expect(diaCorto("2026-09-21 10:05", es.ensayo.meses, "es")).toBe("21 sep");
+    expect(diaCorto("2026-10-02 08:45", ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], "en")).toBe("Oct 02");
+    expect(diaCorto("ayer", es.ensayo.meses, "es")).toBe("ayer");
+    expect([flecha({ desde: 9, hasta: 14 }), flecha({ desde: 161, hasta: 138 }), flecha({ desde: 9, hasta: 9 })]).toEqual(["↑", "↓", "="]);
+  });
+
   it("el reloj y las comillas", () => {
     expect([reloj(0), reloj(42_000), reloj(72_400), reloj(-5)]).toEqual([
       "0:00",
