@@ -19,6 +19,7 @@ su corrida local registrada en la bitácora de cada sprint (ver `audio/LEEME.md`
 | `jurisdicciones.json` | **v2** · la bandera que sale de la línea «Jurisdicción:» de la ficha | 17 de 17 | 100 % |
 | `preguntas.json` por la puerta | **v2** · el kit que corre `ghost` mide lo mismo que la CI | 0,823 = 0,823 | igual |
 | `ensayo.json` | **v3** · el banco del ensayo, regla por regla: precisión y recall de las seis reglas, en español (Páramo Azul) y en inglés (Northwind); y el acento del modelo con el `mock` | lo imprime la CI | 0,75 · 0,75 por regla |
+| `ensayo.json`, bloque `respuestas` | **v3** · la evaluación de una respuesta: ficha por ficha, «citada» contra lo que la respuesta usó; muletillas y ritmo; y el camino entero contra 500 ms | 1,000 · 0,714 · 4 ms | 0,75 · 0,70 · 500 ms |
 | `audio/` | el WER con y sin diccionario | ver `audio/LEEME.md` | **manual** |
 
 Todo lo de esta carpeta es **100 % sintético**. Ni un cliente real, ni un dato real, ni una cifra
@@ -133,7 +134,20 @@ El test (`cargo test --test contra-el-mac-de-verdad el_kit_del_ensayo -- --nocap
 más un ensayo de 8 tal como lo vería el usuario. Después pide al `mock` el acento del modelo e imprime lo
 que propone, lo que se funda y lo que se tira, y lo que costaría una llamada con cada proveedor externo.
 
+**La evaluación (fase 3 del sprint 004).** El bloque `respuestas` trae siete preguntas con una respuesta
+sintética cada una, dicha en tantos segundos, y lo que un consultor diría que esa respuesta **usó**: los
+títulos de las secciones, sus muletillas y su ritmo. El test
+(`cargo test --test contra-el-mac-de-verdad el_kit_del_ensayo_mide_la_evaluacion -- --nocapture`) busca cada
+pregunta como lo haría la banda, arma sus tres fichas, evalúa la respuesta y compara, ficha por ficha,
+«citada» con «usada». Imprime la tabla, la precisión y el recall, y mide el camino entero.
+
+- **Hoy: 15 fichas, precisión 1,000 y recall 0,714**, la más lenta en 4 ms (presupuesto: 500 ms).
+- **Dos fallan a propósito:** una respuesta que dice lo de la ficha con otras palabras y otra en inglés a una
+  pregunta en español. Ninguna comparte dos términos con su ficha, y eso es lo que corrige «Sí lo dije». El kit
+  lo enseña en vez de esconderlo.
+- **Sirven para probar a mano:** en el bloque R de la guía, si no sabes qué contestar, lee una en voz alta.
+
 **Una advertencia, escrita aquí para que nadie la lea como más de lo que es:** el kit y las reglas los
 escribió el mismo constructor, en el mismo sprint. Que el banco acierte su propio kit es un **piso** —que
 ninguna regla se rompa sin que se note—, no una prueba de calidad. La prueba de verdad es tu propuesta
-real, en el ⭐ del ensayo.
+real, y tu voz, en el ⭐ del ensayo (bloque R de la guía).

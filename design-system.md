@@ -1,8 +1,8 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.14.1  # 1.14.1: el barrido de tokens vetados de §7.2 por fin existe (cierre del ciclo H1). 1.14.0: la puerta local CONSTRUIDA (sprint 003, fase 4 — maquetado, no visto). 1.13.0: «Este cliente», la NDA y solo notas CONSTRUIDOS (sprint 003, fase 3 — maquetado, no visto). 1.12.0: las propuestas y la bandeja CONSTRUIDAS (sprint 003, fase 2 — maquetado, no visto; se valida en el gate del MVP). 1.11.0: cómo ENVEJECE «todavía no» — el estado del sprint se pone al día, y lo que se libera se agrupa (sprint 001, fase 3). 1.10.0: «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2). 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
-fecha: 2026-09-21
+version: 1.15.0  # 1.15.0: la banda ARRIBA y EL ENSAYO (sprint 004, abre el ciclo H2; las dos pantallas, aprobadas en sus miradas de DECISIÓN; sus estados y textos nuevos, maquetados, no vistos). 1.14.1: el barrido de tokens vetados de §7.2 por fin existe (cierre del ciclo H1). 1.14.0: la puerta local CONSTRUIDA (sprint 003, fase 4 — maquetado, no visto). 1.13.0: «Este cliente», la NDA y solo notas CONSTRUIDOS (sprint 003, fase 3 — maquetado, no visto). 1.12.0: las propuestas y la bandeja CONSTRUIDAS (sprint 003, fase 2 — maquetado, no visto; se valida en el gate del MVP). 1.11.0: cómo ENVEJECE «todavía no» — el estado del sprint se pone al día, y lo que se libera se agrupa (sprint 001, fase 3). 1.10.0: «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2). 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
+fecha: 2026-10-04
 estado: aprobado   # G-Diseño aprobado el 2026-09-20 («sí apruebo la pantalla completa»)
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
 ---
@@ -587,6 +587,52 @@ vista quepa en los 640 px con su franja y su registro (`maqueta-cabe` midió +12
 | el registro | «Qué hizo tu agente», `.mas` | lo más reciente arriba; tres a la vista y el resto se desplaza (`max-height: 74px`); lo denegado lleva su motivo antes de la marca |
 | `franja.warn` | entre la cabecera y las columnas | «Se cerró sola: hay una reunión», o «No se abrió» y por qué |
 
+## 9-decies · La banda arriba, junto a la cámara (sprint 004, 2026-10-04)
+
+> **La variante, aprobada** en la mirada de DECISIÓN 2 del sprint 004 (`posicion.html`, el criterio de la
+> cámara). Lo que el sprint añadió al construirla —la fila de Sesión en todos sus estados y el aviso de la
+> primera vez— está **maquetado, no visto**. ADR 004, enmienda 1; ADR 002, enmienda 8. Registro:
+> `docs/diseno/README.md`.
+
+**El criterio de la cámara.** Leer la ficha arriba, junto a la cámara, se ve como mirar a quien habla; abajo
+se ve como bajar la vista. Arriba es el sitio **de fábrica**; abajo sigue siendo una elección, con la banda
+del H1 entera.
+
+| Pieza | Dónde | Regla |
+|---|---|---|
+| `.banda[data-borde="arriba"]` | bajo la barra de menús y el notch: el borde superior del **área útil** del monitor, nunca una constante | la línea y la sombra miran a la reunión, que está debajo: `border-bottom` y sombra hacia abajo; **el asa va en el borde de abajo** y se arrastra hacia abajo para ampliar |
+| los tres altos | 88 · 200 · 44, los de §3 (`--banda-h*`) | los mismos que abajo: la variante cambia el sitio, no la banda |
+| el relleno | detrás de la banda, como abajo | sube su fondo lo que mide la barra de menús, para que al compartir pantalla se vea el escritorio en su sitio |
+| «La banda: arriba · abajo · ⌃⌥B» | Sesión, fila junto a «Las dos pistas», **en todos sus estados** | es una preferencia, como «Leerla sola»; se recuerda |
+| el aviso de la primera vez | Sesión, **en el sitio de la tarjeta de la reunión**, hasta «Entendido» | las dos no caben en 640 px; la reunión sigue en el rail |
+
+**El acople arriba «baja y se encoge»:** solo la ventana de la reunión que la app detectó, nunca la de
+delante; su borde de abajo no se mueve; por debajo de 240 px de alto, o en otra pantalla, no se toca y la
+banda flota con «sin acople». Abajo, el acople del H1 sin cambios.
+
+## 9-undecies · El ensayo (sprint 004, 2026-10-04)
+
+> **La pantalla, aprobada** en la mirada de DECISIÓN 1 del sprint 004 (`ensayo.html`, siete estados). Los
+> estados que se sumaron al construirla —no empezó, del modelo, guardado, borrar el progreso y los textos—
+> están **maquetados, no vistos**. ADR 019; ADR 015, enmienda 4. Registro: `docs/diseno/README.md`.
+
+**La regla de la pantalla: cifras, no notas.** El ensayo mide lo que pasó —qué evidencia usaste, cuánto
+tardaste, a qué ritmo, qué muletillas— y **jamás pone un puntaje**. Lo que tenías y no usaste es una
+**pista, no un castigo**: va con el acento y el círculo punteado, nunca en rojo ni en ámbar.
+
+| Pieza | Clase | Regla |
+|---|---|---|
+| la pregunta | `.pregunta-e` (`.chica` en la evaluación) | el texto en la fuente de la evidencia; encima, de dónde sale: el chip de su fuente y su sección (propuesta · ficha de cliente · objeción típica · sugerida por el modelo) |
+| el reloj de tu respuesta | `.reloj-e` | tabular, en `--ok`, con su símbolo; empieza cuando la voz termina de leer |
+| lo que dijiste | `.respuesta-e` | en la fuente de la evidencia y en `--ink-2`: es tuyo y se lee, no se juzga |
+| usaste · tenías y no usaste | `.evidencia-e` con `.usada` (`--ok`, check) y `.sin-usar` (`--halo`, círculo punteado) | cada ficha con su titular y su fuente; «Sí lo dije» corrige a mano lo que las palabras no ven |
+| las cuatro cifras | `.cifras-e` · `.cifra-e` (`.q` qué · `.n` el número · `.d` el detalle) | tiempo · ritmo (ppm) · muletillas · evidencia; sin cifra, «—», jamás un cero inventado |
+| tu progreso | `.tabla` + «Desde el primero» | una fila por ensayo y una flecha por cifra (↑ ↓ =), con la unidad **una vez, al final**; solo cifras: tus respuestas no se enseñan ahí |
+| lo que se guarda | una línea bajo los botones del informe, en `--ink-2` | dice con qué llave, hasta cuándo («se borra en 90 días, tu retención», o «se queda hasta que lo borres») y que el audio no se guardó |
+
+**Las teclas son de la ventana** (Enter · R · S · Esc), no globales, y no se disparan con el foco en un
+selector; ⌥⎋ lo corta todo, el ensayo incluido.
+
 ## 10 · Deuda de diseño declarada
 
 | Qué | Por qué | Cuándo se paga |
@@ -614,5 +660,6 @@ vista quepa en los 640 px con su franja y su registro (`maqueta-cabe` midió +12
 | 1.12.0 | 2026-09-27 | sprint 003, fase 2: **§9-septies — las propuestas y la bandeja, construidas** (`propuesta-b`, `tecla.fijada`, `franja.mute`, `cuenta.vencida`, los chips dentro de una franja) — maquetado, no visto |
 | 1.13.0 | 2026-09-27 | sprint 003, fase 3: **§9-octies — el marco en la mano, construido** (`selector`, `bandera .pendiente`, `aviso-legal`, `pregunta-nda`, `clausula`, la banda en solo notas) · Sesión vuelve al diseño de la Etapa de Diseño — maquetado, no visto |
 | 1.14.0 | 2026-09-27 | sprint 003, fase 4: **§9-nonies — la puerta local, construida** (la entrada en IA, la fila del título con «volver», el subtítulo de la vista, el comando, `.puerta` a 3 px, el registro que se desplaza, la franja de «se cerró sola») — maquetado, no visto |
+| 1.15.0 | 2026-10-04 | sprint 004, abre el ciclo H2: **§9-decies — la banda arriba, junto a la cámara** (`.banda[data-borde="arriba"]`, el asa abajo, el relleno bajo la barra, la fila «La banda» y el aviso de la primera vez) y **§9-undecies — el ensayo** (`.pregunta-e`, `.reloj-e`, `.respuesta-e`, `.evidencia-e`, `.cifras-e`, el progreso sin puntajes). Las dos pantallas, aprobadas en sus miradas de DECISIÓN; lo que se les sumó al construir, maquetado, no visto |
 | 1.14.1 | 2026-09-27 | cierre del ciclo H1 (sprint 003, fase 5): **§7.2 — el barrido de tokens vetados existe** (`tests/unit/tokens-vetados.test.ts`, que lee la lista de aquí); el frontmatter, que se había quedado en 1.13.0, se pone al día |
 | 1.9.0 | 2026-09-20 | mirada 11: **la maniobra** — catálogo versionado de seis maneras de responder + «lo más cercano que sí tienes», los dos deterministas; `maniobra-b` y `cercano-b`; estado «sin resultado · ampliada» |

@@ -671,6 +671,120 @@ El corte se declaró en el mismo acto, con un comentario en el PR #10. El cierre
 Dependabot #11 se mergeó 20 s antes que el #10, así que la mezcla de los dos se prueba por primera vez en la CI de
 `main` (`0009dba`).
 
+## Fase 5 · El cierre: manual, guía v6, kit v3 y `design-sync/` (rama `sprint-004/fase-5`)
+
+Arranca el 2026-10-04 con el «continúa» del usuario, después de que mergeara el #10 (fases 0 a 4) y el #12 (el
+registro del corte). La CI de `main` sobre los dos merges salió con sus tres checks en `success`.
+
+### Lo que se construyó
+
+- **Manual** (`docs/MANUAL-DE-USO.md`):
+  - secciones nuevas: «El ensayo: practica antes de la reunión» y «Arriba o abajo: la banda junto a la cámara»;
+  - frases que la banda arriba dejó falsas: «pegada al borde inferior», el asa «hacia arriba», el acople que
+    «recorta por abajo» y la pregunta frecuente de compartir pantalla;
+  - el corte pasa a 12 piezas; ⌃⌥B y las teclas del ensayo en los atajos;
+  - la pregunta frecuente «¿El ensayo graba mi voz?» y la fila 004 del historial.
+
+  Lo que no se ha probado en vivo se dice así:
+  - el ensayo con una voz de verdad;
+  - la banda arriba al compartir pantalla;
+  - Zoom, Teams, una pantalla externa y la pantalla completa.
+- **Guía v6** (`docs/GUIA-DE-PRUEBA.html`, namespace `ag-s4-`): 117 pruebas.
+  - **16 nuevas** en dos bloques: Q, la banda arriba, y R, el ensayo.
+  - **4 heredadas reescritas** (a1, b1, b5 y l2) tras releer las 101 contra la app de hoy:
+    - la banda nace arriba;
+    - el rail tiene ocho secciones;
+    - la app en inglés incluye Ensayo;
+    - el corte es de 12 piezas.
+  - **Los bloques A a P y el ⭐⭐ del H1 se corren con la banda abajo**, como eran, y la preparación lo dice.
+  - El ⭐⭐ del H1 no se mueve ni se renumera. Su parada 6 dice ahora «12 de 12», en su sitio.
+  - **Gate mínimo ⭐: 94** (S1 33 · S2 28 · S3 23 · **S4 10**).
+  - **Acumulado del H2: 10**, cada una con su candidatura al ⭐⭐ del H2: **5 sí** (q2, q3, r2, r3, r7) y
+    **5 no** (q1, q5, r6, r10, r11).
+  - Filtros nuevos: «⭐ del ciclo H2» y «Formas y textos del H2». La tabla U lleva 13 filas con lo que el S4
+    maquetó y nadie ha visto.
+  - Las cuatro protecciones de la corrida aplazada de la fase 4 (micrófono, Llavero, launchd y Touch ID) van en
+    el bloque R y en la caja de avisos.
+- **Kit v3** (`docs/kit-de-prueba/LEEME.md`): la evaluación de la fase 3, con su fila en la tabla y su sección:
+  15 fichas, precisión 1,000, recall 0,714, 4 ms. Dos respuestas fallan a propósito, y es lo que corrige «Sí lo
+  dije».
+- **`design-system.md` v1.15.0:**
+  - **§9-decies, la banda arriba**: el criterio de la cámara, `.banda[data-borde="arriba"]`, el asa abajo, el
+    relleno, la fila de Sesión y el aviso de la primera vez;
+  - **§9-undecies, el ensayo**: cifras y no notas, `.pregunta-e`, `.reloj-e`, `.respuesta-e`, `.evidencia-e`,
+    `.cifras-e` y el progreso. Las fases 0 a 4 habían escrito el CSS y no la sección.
+- **`design-sync/`:**
+  - el generador acepta un modificador (`atributos`), porque la banda arriba es la misma banda con
+    `data-borde`;
+  - dos tarjetas nuevas: «La banda arriba, junto a la cámara» (88 · 200 · 44) y «El ensayo» (pregunta, evaluada
+    y progreso);
+  - el bundle se regeneró: 21 archivos, v1.15.0. Las dos tarjetas se leyeron como imagen en los dos temas, sin
+    errores de página ni recursos de fuera.
+- **Brochure:** en `main` no hay `docs/BROCHURE.html` ni `docs/brochure-export.json`. Llega por su orden aparte
+  tras el Acto 1 del H1 (regla 13). Queda la nota para el summary: cuando nazca, ya trae el ensayo y la banda
+  arriba.
+
+### Las afirmaciones del manual y lo que las sostiene
+
+| Afirmación | Gate |
+|---|---|
+| arriba, bajo la barra y el notch, nunca con una constante | `geometria::pruebas::arriba_nace_bajo_la_barra_de_menus_y_el_notch_nunca_con_una_constante` |
+| arriba es de fábrica, ⌃⌥B alterna y se recuerda | `geometria::…::el_borde_de_fabrica_es_arriba_y_b_lo_alterna` · `prefs::…::lo_que_se_elige_sobrevive_al_reinicio` · `la-banda-arriba.test.tsx` |
+| el asa se arrastra alejándose del borde | `asa.test.ts` (los dos bordes) |
+| el aviso de la primera vez, hasta «Entendido» | `la-banda-arriba.test.tsx` · fidelidad `sesion-aviso` |
+| baja y encoge; el borde de abajo no se mueve | `acople::…::arriba_la_reunion_baja_hasta_la_banda_y_su_borde_inferior_no_se_mueve` |
+| solo la ventana de la reunión | `acople::…::arriba_de_una_lista_de_ventanas_sale_una_sola_decision` |
+| por debajo de 240 px o en otra pantalla, no se toca | `acople::…::arriba_lo_que_ya_empieza_bajo_la_banda_o_esta_en_otro_monitor_no_se_toca` (y `QuedariaInservible`) |
+| si la mueves tú, no se devuelve | `acople::…::arriba_no_se_devuelve_una_ventana_que_el_usuario_movio` |
+| si macOS no la deja, se deshace y flota | **sin test unitario**: es nativo (`acoplar_arriba` relee con `quedo_bajo_la_franja`); en vivo solo se vio el camino feliz → ⭐ q5 |
+| 230 ms y 120 ms en Meet | la corrida en vivo de la fase 1 (228 y 123 ms) |
+| el ensayo solo abre el micrófono | `ensayo::oido::…::el_oido_solo_abre_el_microfono` |
+| sordo mientras la voz lee | `ensayo::sesion::…::el_microfono_esta_sordo_mientras_la_voz_lee_y_su_cola` |
+| se cierra con 2,5 s o con Enter | `…::la_respuesta_se_cierra_con_dos_segundos_y_medio_de_silencio_tras_tu_voz` · `…::enter_cierra_y_espera_a_lo_que_falta_por_transcribir` |
+| R, S y Esc | `…::repetir_descarta_y_lo_que_llega_tarde_de_otra_ronda_se_tira` · `…::saltar_y_terminar_cuentan_lo_que_toca` |
+| «usaste» por dos términos que no estaban en la pregunta | `ensayo::evaluacion::…::repetir_la_pregunta_no_cuenta_como_citar` · kit de la evaluación |
+| «eh» y «um» no se cuentan | `…::las_muletillas_se_cuentan_por_frases_enteras_y_sin_las_que_no_lo_son` |
+| sin cifra, «—» | `…::el_informe_suma_y_promedia_sin_inventar` |
+| guardado con la llave y la retención de tus notas; el nombre dice el cliente | `ensayos::…::un_ensayo_nace_cifrado_cerrado_y_con_su_vencimiento` · `…::el_nombre_dice_el_cliente_y_nada_mas` · la sesión efímera en marcha (CI) |
+| vence aunque no abras la app; «siempre» no vence | `ensayos::…::lo_vencido_se_barre_justo_al_vencer_y_siempre_no_vence` · `reunion::…::launchd_se_lleva_tus_notas_la_bandeja_y_tus_ensayos` |
+| el progreso: solo cifras, los seis últimos y los anteriores contados | `guardado::…::el_progreso_va_del_primero_al_ultimo_y_cuenta_los_que_no_caben` · `el-ensayo.test.tsx` |
+| borrar no abre ni desbloquea | `ensayos::…::se_cuentan_y_se_borran_por_cliente_sin_abrirlos` |
+| enriquecer: hasta 5, fundadas, al final | `enriquecer::…::mas_de_cinco_se_cuentan_como_descartadas…` · `…::solo_se_funda_lo_que_nombra_una_seccion_dada…` · `banco::…::las_del_modelo_van_detras_y_sin_repetir` |
+| el corte, 12 de 12 | `corte::…::en_este_sprint_se_cortan_las_doce` |
+| no se ensaya con una sesión abierta; la puerta se cierra | las pruebas de la fase 3 (`NoEmpezo::EnReunion`, `en_reunion` cuenta el ensayo) |
+
+### Pruebas
+
+- `guia-cuadra` (11 pruebas) · `design-sync-espejo` (57) · vocabulario vetado, Llavero sin promesas y «abrir no
+  existe» (7): en verde.
+- La guía, abierta en un navegador sin cabeza a 1280 y a 375 px:
+  - los siete filtros cuentan bien: Todo 150 · cambió en S4 20 · ⭐ 94 · H2 10 · ⭐⭐ H1 9 · textos H1 20 ·
+    H2 13;
+  - cero desborde, cero errores.
+- Los bloques Q, R y U se leyeron como imagen.
+
+### Los rojos (con `scripts/demo-rojo.sh`)
+
+| Gate | Mutación | Quién lo nombró |
+|---|---|---|
+| candidatura del H2 (nuevo) | `q1` con `data-candidata="si"` y su línea en «no» | `guia-cuadra` · «expected [ 'q1' ]» |
+| candidatura del H2 | `r7` sin `data-candidata` | «expected [ 'r7' ]» |
+| la cabecera cuenta las candidatas | «6 sí · 4 no» | «[ 10, 10, 6, 4 ] … [ 10, 10, 5, 5 ]» |
+| las filas del H2 | `u13` con el id de `u12` | «expected [ 'u12' ]» |
+| el desglose con el S4 | «S4 9» | «[ 33, 28, 23, 10 ] … [ 33, 28, 23, 9 ]» |
+
+Las cinco volvieron a verde tras restaurar, y `.demo-rojo/` no quedó.
+
+### Encontrado al escribir la guía (para la auditoría; se pagan con ella)
+
+1. **IA dice «Se cerró sola: hay una reunión» cuando la cierra un ensayo**, y no hay reunión
+   (`src/pantallas/Ia.tsx:567`, `src/i18n/es.ts:864` y su par en inglés). Es una frase que el S4 dejó falsa.
+2. **`sesion.funcionaBanda` («La banda, abajo, protegida de la captura») es una clave sin lector** que dice lo
+   contrario de lo de hoy (`src/i18n/es.ts:331` y `en.ts`); solo la pintan los estados de historia s1/s2 de
+   `sesion.html`.
+3. **`Ensayo.tsx` lleva once `fontSize: 11.5` en línea**, copiados del `style` de `ensayo.html`. Son el valor
+   mágico que el design system prohíbe en componentes (§3), y en ninguna otra pantalla aparecen.
+
 ## Desviación del plan
 
 1. Arriba, el acople actúa sobre la ventana de la reunión detectada, no sobre la de delante (ADR 004, enmienda 1).
@@ -699,3 +813,11 @@ Dependabot #11 se mergeó 20 s antes que el #10, así que la mezcla de los dos s
 21. La corrida en vivo de la fase 4 (filas 2 a 5) se aplazó: corte declarado, viaja al ⭐ del MVP.
 22. El PR #10 se mergeó sin la fase 5, la auditoría, el `/release-check` ni el summary. El corte se declaró en el
     PR, y el cierre va en `sprint-004/cierre`.
+23. La fase 5 va en `sprint-004/fase-5`, con su PR, porque el #12 se mergeó con solo el registro del corte.
+24. El ⭐ del S4 deja 10 pruebas al acumulado del H2, no «~6». Son las seis de la orden más cuatro que el
+    sprint se había comprometido a dejar en el ⭐:
+    - Zoom, Teams, una pantalla externa y la pantalla completa, de la corrida en vivo de la fase 1;
+    - guardar y limpiar, de la corrida aplazada de la fase 4;
+    - enriquecer, que es juicio sobre lo que propone un modelo.
+25. `design-system.md` gana sus secciones del S4 (§9-decies y §9-undecies) en el cierre, no en sus fases:
+    las fases 0 a 4 escribieron el CSS y no la sección.

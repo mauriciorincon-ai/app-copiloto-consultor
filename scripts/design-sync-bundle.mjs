@@ -305,6 +305,44 @@ const TARJETAS = [
         "<span lang=\"en\">You open it, by hand; in a meeting it closes itself; what is denied is logged too (§9-nonies)</span>",
     },
   },
+  // Sprint 004 (abre el ciclo H2): las dos pantallas que el usuario aprobó en sus miradas de DECISIÓN.
+  // La banda arriba es la MISMA banda con su modificador, como la compara la fidelidad (`S4-banda-arriba`).
+  {
+    grupo: "Componentes · S4",
+    nombre: "La banda arriba, junto a la cámara",
+    archivo: "s4/la-banda-arriba.html",
+    estados: {
+      pagina: "banda.html",
+      selector: "section.banda",
+      marco: true,
+      atributos: { "data-borde": "arriba" },
+      piezas: [
+        ["ficha", "88 px · la ficha"],
+        ["ficha-2", "200 px · ampliada: el asa, abajo"],
+        ["voz", "44 px · solo audio"],
+      ],
+      regla:
+        "<span lang=\"es\">Bajo la barra de menús, junto a la cámara: la línea, la sombra y el asa miran a la reunión, que está debajo (§9-decies)</span>" +
+        "<span lang=\"en\">Under the menu bar, next to the camera: the line, the shadow and the handle face the meeting below (§9-decies)</span>",
+    },
+  },
+  {
+    grupo: "Componentes · S4",
+    nombre: "El ensayo",
+    archivo: "s4/el-ensayo.html",
+    estados: {
+      pagina: "ensayo.html",
+      selector: "main.ventana",
+      piezas: [
+        ["preguntando", "la pregunta, leída en voz alta"],
+        ["evaluada", "usaste · tenías y no usaste · cuatro cifras"],
+        ["progreso", "tu progreso con un cliente: solo cifras"],
+      ],
+      regla:
+        "<span lang=\"es\">Cifras, no notas: lo que tenías y no usaste es una pista, nunca un castigo, y no hay puntaje (§9-undecies)</span>" +
+        "<span lang=\"en\">Figures, not grades: what you had and did not use is a hint, never a penalty, and there is no score (§9-undecies)</span>",
+    },
+  },
 ];
 
 /**
@@ -375,6 +413,8 @@ function fragmentos(t) {
       limpiar(doc);
       const el = doc.querySelector(t.estados.selector);
       if (!el) throw new Error(`${t.estados.pagina} no dibuja el estado «${estado}»`);
+      // Un modificador del sistema (la banda arriba es `.banda[data-borde="arriba"]`, §9-decies).
+      for (const [nombre, valor] of Object.entries(t.estados.atributos ?? {})) el.setAttribute(nombre, valor);
       // El rail de la maqueta enlaza las otras páginas de la sala; en una tarjeta que se publica sola,
       // un enlace a otro archivo es un recurso de fuera (lo vigila el gate del espejo).
       for (const enlace of el.querySelectorAll("a[href]")) {

@@ -67,11 +67,17 @@
      cuentan en los gates ⭐ ni ⭐⭐.
   11. MINUTOS DEL ⭐⭐ (sprint 003): cada parada lleva `data-min` y la preparación también
      (`#preparacion`); `tests/unit/guia-cuadra.test.ts` suma y exige ≤ 20 y que la cabecera diga lo
-     mismo. Y `data-nace` (s1 · s2 · s3) da el desglose del ⭐ por sprint.
+     mismo. Y `data-nace` (s1 · s2 · s3 · s4) da el desglose del ⭐ por sprint.
+  12. DOS CICLOS EN UNA GUÍA (sprint 004, orden del S4): el ⭐⭐ del H1 (9 paradas, `data-corto`) sigue
+     íntegro, sin moverse ni renumerarse, con su filtro y su bloque de textos (T), para su Acto 2.
+     Las ⭐ que nacen en el H2 (`data-nace` s4…s6) tienen su filtro, «⭐ del ciclo H2», y cada una
+     declara su CANDIDATURA al ⭐⭐ del H2 (`data-candidata="si|no"` + una línea `.candidata` con su
+     porqué; regla: si la CI lo verifica por otro camino, no). Las formas y textos del H2 que nadie ha
+     visto van en su propia tabla (U, `tr[data-ciclo="h2"]`). El gate lo cuenta todo.
 
-  AL ABRIR EL SPRINT SIGUIENTE: cambiar el NS del script (hoy `ag-s3-`) a `ag-s4-`, pasar los
-  chips «Nuevo · S3» y «Mejorado en S3» a «S3» a secas —salvo lo que el sprint nuevo toque, que pasa a «Mejorado en
-  S4»— y añadir los bloques nuevos SIN resumir los de aquí. Esta app no tiene URL de preview y no
+  AL ABRIR EL SPRINT SIGUIENTE: cambiar el NS del script (hoy `ag-s4-`) a `ag-s5-`, pasar los
+  chips «Nuevo · S4» y «Mejorado en S4» a «S4» a secas —salvo lo que el sprint nuevo toque, que pasa a «Mejorado en
+  S5»— y añadir los bloques nuevos SIN resumir los de aquí. Esta app no tiene URL de preview y no
   va a tenerla: es de escritorio, y la caja de arriba dice cómo se arranca en su lugar.
 -->
 <style>
@@ -145,6 +151,8 @@
   .origen-mejorado { color: var(--pendiente); border-color: var(--pendiente); background: var(--pendiente-suave); }
   .origen-heredada { color: var(--tinta-suave); border-color: var(--borde); }
   .minimo { font-size: 0.75rem; white-space: nowrap; margin-left: 4px; }
+  .candidata { font-size: 0.82rem; margin: 6px 0 0; padding: 4px 8px; border-left: 2px solid var(--acento);
+    background: var(--acento-suave); border-radius: 0 6px 6px 0; }
 
   .tabla-scroll { overflow-x: auto; margin: 14px 0 0; }
   table { border-collapse: collapse; width: 100%; font-size: 0.875rem; }
@@ -172,32 +180,31 @@
 <body>
 <div class="pagina">
   <header>
-    <p class="eyebrow">Angel Ghost · Guía de prueba viva y acumulativa · Sprint 003 · 2026-09-27 · <strong>v5</strong></p>
+    <p class="eyebrow">Angel Ghost · Guía de prueba viva y acumulativa · Sprint 004 · 2026-10-04 · <strong>v6</strong></p>
     <h1>Guía de prueba</h1>
     <p class="suave">Todas las pruebas vigentes de la app — las nuevas de este sprint, las que
       cambiaron y las heredadas (regresión). Filtra por origen para correr todo o solo lo que
       cambió. Las casillas se guardan solas en este navegador.</p>
     <div class="url-caja" style="border-color:var(--pendiente)">
       <p class="eyebrow" style="margin:0 0 6px">Qué cambió en esta versión</p>
-      <p class="chica" style="margin:0"><strong>v5 — el sprint 003 cierra el ciclo: lo tuyo queda (tus notas,
-        cifradas; la app te propone qué guardar y la bandeja se borra sola), el marco legal de cada
-        cliente a la vista (su jurisdicción, su NDA, la cláusula de encargo y el modo solo notas) y la
-        puerta local para Claude Code.</strong> <strong>29 pruebas nuevas</strong> en cinco bloques
-        (D, K, M, N y O) y <strong>33 de las 72 heredadas reescritas</strong> («Mejorado en S3»).</p>
-      <p class="chica" style="margin:8px 0 0"><strong>Las 72 se releyeron contra la app de hoy, y diez no podían
-        pasar tal como estaban escritas:</strong> una frase del cliente usaba palabras que el corpus ya conoce
-        y nunca daba «silencio», el transcript solo se pinta junto a una ficha, la página de prueba de Meet
-        le daba a la agenda un término y una cifra desde su título y su pie, y tapar la reunión no impide
-        leerla. Otras diez las dejó viejas este mismo sprint (Notas existe, el corte llega a 11 piezas, tus
-        notas quedan) y trece cambiaron de punto de partida porque ahora la app <strong>recuerda tus
-        preferencias</strong>.</p>
-      <p class="chica" style="margin:8px 0 0"><strong>Los bloques cambian de letra:</strong> los nuevos van en el
-        orden en que pasan en una reunión —el cliente antes de empezar, tus notas durante, el archivo tras
-        el corte, la puerta y la bandeja al final— para que el ⭐⭐ se camine de arriba abajo. Las casillas de
-        la v4 <strong>no se conservan a propósito</strong> (namespace nuevo, <code>ag-s3-</code>).</p>
+      <p class="chica" style="margin:0"><strong>v6 — el sprint 004 abre el ciclo H2: el ensayo (la app te hace las
+        preguntas que el cliente probablemente hará, te escucha y te dice qué evidencia usaste) y la banda arriba,
+        junto a la cámara.</strong> <strong>16 pruebas nuevas</strong> en dos bloques (Q y R) y
+        <strong>4 de las 101 heredadas reescritas</strong> («Mejorado en S4»).</p>
+      <p class="chica" style="margin:8px 0 0"><strong>Las 101 se releyeron contra la app de hoy.</strong> La banda nace
+        arriba desde el S4: los bloques A a P —y el recorrido ⭐⭐ del H1— se corren con la banda <strong>abajo</strong>,
+        como eran, y la preparación lo dice; la de arriba tiene su bloque (Q). Cuatro cambiaron: el primer arranque
+        (la banda sale arriba y Sesión te avisa), el rail con ocho secciones, la app en inglés con Ensayo, y el corte,
+        que pasa a 12 de 12 piezas —es la parada 6, en su sitio y con su número—.</p>
+      <p class="chica" style="margin:8px 0 0"><strong>El recorrido ⭐⭐ del H1 no se mueve ni se renumera</strong> y sigue
+        con su filtro y sus textos (T), para su Acto 2. Las ⭐ nuevas tienen su filtro, <strong>«⭐ del ciclo H2»</strong>,
+        y cada una dice si es candidata al ⭐⭐ del H2 y por qué. Las formas y los textos nuevos que nadie ha visto van en
+        su propia tabla (U). Las cuatro protecciones que la corrida en vivo de la fase 4 dejó para aquí —el micrófono
+        fuera de una reunión, el Llavero, la tarea de borrado y Touch ID— van en el bloque R y en la caja de avisos. Las
+        casillas de la v5 <strong>no se conservan a propósito</strong> (namespace nuevo, <code>ag-s4-</code>).</p>
     </div>
-    <p class="chica"><strong>Gate corto ⭐⭐: 9 paradas · ~20 min — es el que el cierre de
-      ciclo exige.</strong> Es un recorrido: se camina de arriba abajo, en el orden del documento, y cada
+    <p class="chica"><strong>Gate corto ⭐⭐: 9 paradas · ~20 min — es el del cierre del ciclo H1 (su Acto 2), y
+      esta versión no lo mueve.</strong> Es un recorrido: se camina de arriba abajo, en el orden del documento, y cada
       parada deja la app lista para la siguiente. Solo entra lo que únicamente una persona puede juzgar:
       la banda que el cliente no ve, la ficha que llega a tiempo, una sugerencia que no diga nada que su
       ficha no diga, la voz en tus auriculares, <strong>tu cuaderno que tampoco se ve al compartir</strong>,
@@ -208,9 +215,11 @@
       arranca con <code>pnpm ghost</code> y <code>AG_BANDEJA_DE_PRUEBA=1 pnpm tauri dev</code>; en
       <em>Corpus</em>, señala <code>docs/kit-de-prueba/corpus/</code>; en <em>Idioma</em>, las dos pistas en
       <code>es-ES</code>; en <em>Sesión</em>, «Este cliente» → <strong>Páramo Azul</strong>; en <em>IA</em>,
-      «Redactar sugerencias» encendido y el proveedor externo apagado. Ponte los auriculares y deja Meet
-      cerrado hasta la parada 1.</p>
-    <p class="chica"><strong>Deja fuera 75 pruebas ⭐</strong> —la jurisdicción y la NDA, el modo solo notas,
+      «Redactar sugerencias» encendido y el proveedor externo apagado; <strong>y en <em>Sesión</em>, «La banda» →
+      abajo</strong> (si sale el aviso de la primera vez, «Entendido»): el recorrido del H1 se camina con la banda donde
+      estaba en el H1. Ponte los auriculares y deja Meet cerrado hasta la parada 1.</p>
+    <p class="chica"><strong>Deja fuera 85 pruebas ⭐</strong> —las 10 del H2, que esperan el ⭐⭐ de su propio ciclo, y
+      la jurisdicción y la NDA, el modo solo notas,
       exportar, la bandeja con llave, instalar un modelo de idioma, el comportamiento sin permisos, el eco, el
       proveedor externo con tu clave, el diccionario, entre otras—: <strong>ninguna se borra</strong>, siguen
       enteras en el filtro ⭐. Del ⭐⭐ de la v4 salen cuatro paradas, cada una por su razón: <strong>la
@@ -219,13 +228,19 @@
       que no mide, la captura de una ventana viva, se vio en vivo en el S2 y sigue en el ⭐); <strong>el ámbar
       del radar</strong>, porque la CI lo saca de la reunión grabada del kit; y <strong>el corte a mitad de
       frase</strong>, porque lo prueba la CI con el turno que ya iba en camino.</p>
-    <p class="chica"><strong>Gate mínimo ⭐: 84 pruebas · ~145 min (S1 33 · S2 28 · S3 23).</strong>
+    <p class="chica"><strong>Gate mínimo ⭐: 94 pruebas · ~176 min (S1 33 · S2 28 · S3 23 · S4 10).</strong>
       Es lo que ninguna automatización puede verificar: hardware de verdad, voz de verdad, una videollamada
       de verdad, los avisos de macOS y el juicio humano sobre lo que se ve y se oye. Lo que la CI ya respalda
       queda fuera del mínimo y se corre en los pases completos. Se ofrece, sin fecha, y se puede correr por
       bloques.</p>
+    <p class="chica"><strong>Acumulado del ciclo H2: 10 ⭐ (S4 10) · candidatas al ⭐⭐ del H2: 5 sí · 5 no.</strong>
+      El ⭐⭐ del H2 se arma al cierre del ciclo, en el S6, con las candidatas. Cada ⭐ nueva dice si lo es y por qué:
+      entra lo que solo una persona puede juzgar; si la CI lo verifica por otro camino, no.</p>
     <p class="chica"><strong>Textos diferidos: 20 filas · ~10 min.</strong> Un bloque aparte (T, al
-      final) para decidir si cada texto se entiende. Separable: no hace falta la app, solo los comparativos.</p>
+      final) para decidir si cada texto se entiende, pendiente del Acto 2 del H1. Separable: no hace falta la app,
+      solo los comparativos.</p>
+    <p class="chica"><strong>Formas y textos del H2: 13 filas · ~8 min.</strong> Su propia tabla (U), para el gate del
+      MVP del H2: lo que el S4 maquetó y nadie ha mirado.</p>
     <div class="url-caja">
       <p class="eyebrow" style="margin:0 0 6px">Cómo se arranca</p>
       <code>pnpm ghost &amp;&amp; AG_BANDEJA_DE_PRUEBA=1 pnpm tauri dev</code>
@@ -242,7 +257,8 @@
         una reunión de Google Meet (basta una sala tuya, sin invitados), la carpeta
         <code>docs/kit-de-prueba/</code> de este mismo repo, <strong>Terminal</strong> (el
         cliente de prueba habla con <code>say</code>), Chrome, <strong>Apple Intelligence</strong>
-        activado para el bloque H y <strong>Claude Code</strong> para una prueba del bloque N.</p>
+        activado para el bloque H (y para una prueba del R) y <strong>Claude Code</strong> para una prueba del bloque N.
+        Para el bloque Q, si los tienes, Zoom, Teams y una pantalla externa; el ensayo (R) no pide auriculares.</p>
     </div>
     <div class="url-caja" style="border-color:var(--alerta)">
       <p class="eyebrow" style="margin:0 0 6px">Los avisos de macOS que vas a ver</p>
@@ -250,13 +266,14 @@
         todos los avisos de esta guía; <strong>si aparece uno que no está aquí, deniégalo y repórtamelo</strong>:</p>
       <ul class="chica" style="margin:6px 0 0; padding-left:18px">
         <li>Micrófono (Microphone), <strong>Grabación de pantalla y audio del sistema (Screen &amp; System Audio Recording)</strong>, y <strong>Accesibilidad</strong> (Accessibility), la primera vez (bloques A, B, E y F).</li>
-        <li>El Llavero, para la llave de tus notas («Angel Ghost · notas»), si macOS pregunta al guardar la primera vez.</li>
-        <li><strong>Touch ID o tu contraseña</strong> con el motivo «abrir tus notas guardadas», al exportar una reunión o al abrirla con <code>ghost</code> (bloques M, N y O).</li>
+        <li>El Llavero, para la llave de tus notas («Angel Ghost · notas»), si macOS pregunta al guardar la primera vez: unas notas o un ensayo (bloque R). Solo pregunta si la llave la creó otra compilación de la app.</li>
+        <li><strong>Touch ID o tu contraseña</strong> con el motivo «abrir tus notas guardadas», al exportar una reunión o al abrirla con <code>ghost</code> (bloques M, N y O), y con el motivo <strong>«abrir tus ensayos guardados»</strong> al abrir tu progreso o exportar un ensayo (bloque R). Una vez cada vez que abres la app.</li>
+        <li><strong>El micrófono fuera de una reunión</strong>, al empezar un ensayo (bloque R): el punto naranja en la barra de menús. Si la app desde la que arrancaste (VS Code o Terminal) nunca tuvo el micrófono, macOS pregunta.</li>
         <li><strong>«ghost quiere usar tu información confidencial guardada en "Angel Ghost · puerta" en tu llavero»</strong>, con la contraseña del Mac, una vez por cada vez que abres la puerta (bloque N). Pulsa «Permitir» (Allow), no «Permitir siempre» (Always Allow).</li>
         <li><strong>Reconocimiento de voz (Speech Recognition)</strong>, quizá, al iniciar la primera sesión: es la pregunta abierta B5 de la auditoría. Si sale, permítelo y anótalo.</li>
         <li>Si tu corpus vive en Documentos, Escritorio o Descargas (Documents, Desktop, Downloads), <strong>macOS puede preguntarte al arrancar</strong> si Angel Ghost puede leer esa carpeta: la app la vuelve a leer sola. El corpus del kit vive en el repo y no lo pide.</li>
         <li><strong>Terminal</strong> puede pedirte acceso a Documentos, Escritorio o Descargas (Documents, Desktop, Downloads) al listar esas carpetas en la prueba l6: permítelo solo si quieres correrla.</li>
-        <li><strong>Ítem en segundo plano añadido (Background Items Added)</strong>, al guardar las primeras notas con fecha o la primera bandeja (parada 7 del ⭐⭐); en Ítems de inicio (Login Items &amp; Extensions) aparece como <strong>«sh · desarrollador no identificado»</strong> (bloque O).</li>
+        <li><strong>Ítem en segundo plano añadido (Background Items Added)</strong>, al guardar las primeras notas con fecha, la primera bandeja (parada 7 del ⭐⭐) o el primer ensayo (bloque R); en Ítems de inicio (Login Items &amp; Extensions) aparece como <strong>«sh · desarrollador no identificado»</strong> (bloque O).</li>
       </ul>
     </div>
   </header>
@@ -268,10 +285,12 @@
     </div>
     <div class="filtros" role="group" aria-label="Filtrar pruebas por origen">
       <button type="button" data-filtro="todo" class="activo">Todo</button>
-      <button type="button" data-filtro="cambios">Lo que cambió en S3</button>
+      <button type="button" data-filtro="cambios">Lo que cambió en S4</button>
       <button type="button" data-filtro="minimo">Gate mínimo ⭐</button>
-      <button type="button" data-filtro="corto">Gate corto ⭐⭐</button>
-      <button type="button" data-filtro="textos">Textos diferidos</button>
+      <button type="button" data-filtro="h2">⭐ del ciclo H2</button>
+      <button type="button" data-filtro="corto">Gate corto ⭐⭐ del H1</button>
+      <button type="button" data-filtro="textos">Textos del H1</button>
+      <button type="button" data-filtro="textos-h2">Formas y textos del H2</button>
     </div>
   </div>
 
@@ -280,24 +299,25 @@
     <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la banda, encima de todo</code> ·
       ~6 min · la promesa central de la app — si esto falla, lo demás da igual</p>
     <ul class="pasos">
-      <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="a1"><label for="a1">Arranca con <code>pnpm tauri dev</code>. <strong>Aparecen tres ventanas:</strong> el cuaderno (960×640), una banda apaisada pegada al borde inferior de la pantalla, y nada más visible — el relleno queda justo debajo de la banda y no se distingue de ella.
-        <span class="origen origen-heredada">S1</span>
+      <li data-origen="mejorado" data-nace="s1" data-minimo><input type="checkbox" id="a1"><label for="a1">Arranca con <code>pnpm tauri dev</code>. <strong>Aparecen tres ventanas:</strong> el cuaderno (960×640), una banda apaisada <strong>bajo la barra de menús</strong> —arriba es su sitio de fábrica desde el S4—, y nada más visible — el relleno queda justo debajo de la banda y no se distingue de ella. Si es la primera vez, Sesión enseña <strong>«La banda ahora va arriba, junto a la cámara»</strong>: pulsa «Entendido». <strong>Ahora ponla abajo</strong> —en Sesión, «La banda» → abajo, o <strong>⌃⌥B</strong>—: baja al borde inferior con su relleno. Los bloques A a P se corren así, como en el H1; la banda arriba tiene su bloque (Q).
+        <p class="chica suave" style="margin:6px 0 0">Decía «una banda apaisada pegada al borde inferior de la pantalla»: desde el S4 la banda nace arriba, y abajo es una elección que se recuerda.</p>
+        <span class="origen origen-mejorado">Mejorado en S4</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s1" data-minimo data-corto data-min="2"><input type="checkbox" id="a2"><label for="a2">Con la app arrancada, abre Google Meet, entra a una sala y <strong>comparte la pantalla completa</strong>. Mírate en la miniatura de tu propia compartición, o pide a alguien que mire. <strong>La franja de abajo NO muestra la banda: muestra tu fondo de escritorio.</strong> Ésta es la promesa entera de la app. <strong>Deja la pantalla compartida</strong>: la parada 5 vuelve a mirar esta miniatura, con tu cuaderno.
+      <li data-origen="heredada" data-nace="s1" data-minimo data-corto data-min="2"><input type="checkbox" id="a2"><label for="a2">Con la app arrancada, abre Google Meet, entra a una sala y <strong>comparte la pantalla completa</strong>. Mírate en la miniatura de tu propia compartición, o pide a alguien que mire. <strong>La franja de abajo NO muestra la banda: muestra tu fondo de escritorio.</strong> Ésta es la promesa entera de la app. <strong>Deja la pantalla compartida</strong>: la parada 5 vuelve a mirar esta miniatura, con tu cuaderno.
         <p class="chica suave" style="margin:6px 0 0">Desde el S3 el cuaderno también se protege, pero solo mientras hay sesión: se mira en el bloque K, con la sesión en marcha. Sin sesión, el cuaderno sí se ve al compartir, y es lo esperado.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span>
         <span class="minimo">⭐⭐ Parada 1 de 9 · ~2 min</span></label></li>
       <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="a3"><label for="a3">Con la pantalla todavía compartida, mira la franja con atención: <strong>no se ve el escritorio de verdad</strong> (ni iconos, ni ventanas por detrás), sino un trozo de tu fondo de pantalla. Si se vieran ventanas ajenas asomando, el relleno no está haciendo su trabajo.
         <span class="origen origen-heredada">S1</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s1" data-minimo><input type="checkbox" id="a3b"><label for="a3b">Ahora repite la prueba anterior en <strong>Zoom</strong>: entra a una reunión y comparte la pantalla completa. La franja de abajo tiene que mostrar el relleno, <strong>no la banda</strong>; y con la sesión iniciada, <strong>el cuaderno tampoco se ve</strong>.
+      <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="a3b"><label for="a3b">Ahora repite la prueba anterior en <strong>Zoom</strong>: entra a una reunión y comparte la pantalla completa. La franja de abajo tiene que mostrar el relleno, <strong>no la banda</strong>; y con la sesión iniciada, <strong>el cuaderno tampoco se ve</strong>.
         <p class="chica suave" style="margin:6px 0 0">La app <strong>no promete lo mismo en todos los clientes</strong>: en Sesión, Zoom sale en ámbar como «sin verificar», y esta prueba es la única que puede cambiarlo. Anota la <strong>versión de Zoom y la de macOS</strong> con las que lo probaste — la promesa vale para lo que probaste, no para el nombre del programa. Desde el S3 mira también el cuaderno, que se protege mientras hay sesión.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s1" data-minimo><input type="checkbox" id="a3c"><label for="a3c">Y lo mismo en <strong>Microsoft Teams</strong>: reunión, compartir pantalla completa, mirar la franja. El relleno, <strong>no la banda</strong>; y con la sesión iniciada, el cuaderno tampoco.
+      <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="a3c"><label for="a3c">Y lo mismo en <strong>Microsoft Teams</strong>: reunión, compartir pantalla completa, mirar la franja. El relleno, <strong>no la banda</strong>; y con la sesión iniciada, el cuaderno tampoco.
         <p class="chica suave" style="margin:6px 0 0">Tres clientes, tres verificaciones: lo que vale en Meet no se hereda. Anota versión de Teams y de macOS. Si en alguno <strong>sí</strong> se ve la banda o el cuaderno, no es un fallo que se arregle callando: la app tiene que decirlo en Sesión antes de que compartas.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
       <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="a4"><label for="a4">Arrastra el <strong>asa</strong> de la banda hacia arriba. La banda crece a 200 px <strong>y el relleno crece con ella</strong> — no se separan ni un píxel, ni durante el arrastre.
         <span class="origen origen-heredada">S1</span>
@@ -305,9 +325,9 @@
       <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="a5"><label for="a5">Con Chrome abierto en la reunión: la ventana de Chrome <strong>se ha recortado por abajo</strong> para dejarle sitio a la banda, como dos aplicaciones pegadas. Si no concediste Accesibilidad, la banda flota encima y la propia banda lo dice con «sin acople».
         <span class="origen origen-heredada">S1</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s1" data-minimo><input type="checkbox" id="a6"><label for="a6">Pulsa <strong>⌥⎋</strong> —es la única manera de quitar la banda—. <strong>Chrome recupera su tamaño anterior</strong>, exactamente el que tenía. Para seguir con la banda, pulsa «Iniciar sesión» o vuelve a arrancar la app.
+      <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="a6"><label for="a6">Pulsa <strong>⌥⎋</strong> —es la única manera de quitar la banda—. <strong>Chrome recupera su tamaño anterior</strong>, exactamente el que tenía. Para seguir con la banda, pulsa «Iniciar sesión» o vuelve a arrancar la app.
         <p class="chica suave" style="margin:6px 0 0">Decía «Cierra la banda»: la banda no tiene otro cierre que el corte. ⌘W no la cierra —la banda y su relleno no tienen bordes y macOS no les manda el cierre; se midió en vivo en el S3—.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
     </ul>
     <div class="reportame"><p><strong>Repórtame sí o sí:</strong> que la franja muestre la banda al compartir pantalla (es el fallo que anula la app entera), que el relleno deje ver ventanas ajenas, o que Chrome no recupere su tamaño.</p></div>
@@ -318,12 +338,12 @@
     <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la ventana del cuaderno (la grande)</code> ·
       ~7 min · que lo que aún no existe se diga, en vez de pintarse en verde</p>
     <ul class="pasos">
-      <li data-origen="mejorado" data-nace="s1"><input type="checkbox" id="b1"><label for="b1">Recorre el rail de la izquierda. <strong>Las siete secciones se abren</strong>: Sesión, Permisos, Corpus, Notas, Honestidad, Idioma e IA.
-        <p class="chica suave" style="margin:6px 0 0">En el S2 eran seis y una: Notas estaba apagada y sin enlace, porque todavía no existía. Llegó en el S3.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span></label></li>
-      <li data-origen="mejorado" data-nace="s1" data-minimo><input type="checkbox" id="b2"><label for="b2">En <strong>Sesión</strong>, con Meet abierto: dice qué cliente detectó y si su protección está verificada. Cierra Chrome y vuelve a la ventana: <strong>el estado cambia solo</strong> a <strong>«Sin reunión abierta»</strong>.
+      <li data-origen="mejorado" data-nace="s1"><input type="checkbox" id="b1"><label for="b1">Recorre el rail de la izquierda. <strong>Las ocho secciones se abren</strong>: Sesión, Ensayo, Permisos, Corpus, Notas, Honestidad, Idioma e IA.
+        <p class="chica suave" style="margin:6px 0 0">Eran siete: Ensayo llegó en el S4, bajo Sesión. En el S2 eran seis y una: Notas estaba apagada y sin enlace, porque todavía no existía.</p>
+        <span class="origen origen-mejorado">Mejorado en S4</span></label></li>
+      <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="b2"><label for="b2">En <strong>Sesión</strong>, con Meet abierto: dice qué cliente detectó y si su protección está verificada. Cierra Chrome y vuelve a la ventana: <strong>el estado cambia solo</strong> a <strong>«Sin reunión abierta»</strong>.
         <p class="chica suave" style="margin:6px 0 0">Decía «sin reunión»: la pantalla dice «Sin reunión abierta».</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
       <li data-origen="heredada" data-nace="s1"><input type="checkbox" id="b3"><label for="b3">En <strong>Permisos</strong>: «Audio del sistema» y «Pantalla» son <strong>dos filas con su propio estado</strong>, aunque Ajustes los enseñe en el mismo panel («Grabación de pantalla y audio del sistema (Screen &amp; System Audio Recording)»). Concede solo uno y comprueba que cada fila dice el suyo.
         <p class="chica suave" style="margin:6px 0 0">En el S1 la app los trataba como un solo permiso y los pintaba con el mismo estado; el S2 comprobó en vivo que macOS los separa.</p>
@@ -331,9 +351,9 @@
       <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="b4"><label for="b4">Revoca el permiso de micrófono en Ajustes del Sistema (System Settings) y vuelve a la app. <strong>La pantalla se pone al día sola</strong> al recuperar el foco, sin reiniciar nada.
         <span class="origen origen-heredada">S1</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s1" data-minimo><input type="checkbox" id="b5"><label for="b5">Cambia el idioma del sistema a inglés y reabre la app. <strong>Las siete pantallas están enteras en inglés</strong> —también Notas, «Este cliente» con su bandera y su cláusula, y la puerta local de IA—, incluidos los textos de permisos que enseña macOS. Ni una frase en español.
-        <p class="chica suave" style="margin:6px 0 0">Una pantalla más que en el S2 (Notas), y todo lo del S3: las notas, la bandeja, la jurisdicción, la NDA y la puerta.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+      <li data-origen="mejorado" data-nace="s1" data-minimo><input type="checkbox" id="b5"><label for="b5">Cambia el idioma del sistema a inglés y reabre la app. <strong>Las ocho pantallas están enteras en inglés</strong> —también Notas, <strong>Ensayo</strong>, «Este cliente» con su bandera y su cláusula, la fila de la banda en Sesión y la puerta local de IA—, incluidos los textos de permisos que enseña macOS. Ni una frase en español.
+        <p class="chica suave" style="margin:6px 0 0">Una pantalla más que en el S3 (Ensayo), con su progreso y su informe; y en Sesión, la banda arriba o abajo y su aviso de la primera vez.</p>
+        <span class="origen origen-mejorado">Mejorado en S4</span>
         <span class="minimo">⭐ mínimo</span></label></li>
       <li data-origen="heredada" data-nace="s1"><input type="checkbox" id="b6"><label for="b6">Cambia a tema claro y recórrelas otra vez. <strong>Todo estado sigue teniendo símbolo y texto</strong>, no solo color.
         <span class="origen origen-heredada">S1</span></label></li>
@@ -341,9 +361,9 @@
         <p class="chica suave" style="margin:6px 0 0">Hasta la auditoría del S1 decía las cuatro cosas siempre: los datos de la consultora inventada de la maqueta —143 documentos, «Páramo Azul · 12 min», «protegido» aunque fuera Zoom— dentro de tu app. Si vuelves a verlos sin tener nada, el defecto volvió.</p>
         <span class="origen origen-heredada">S2 · auditoría del S1</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s1" data-minimo><input type="checkbox" id="b8"><label for="b8">Con la sesión corriendo, haz que el cliente diga algo que no pide ficha y se calle: <code>say -v Paulina "Nos preocupa el margen de las tiendas de vereda"</code>. Durante unos cuatro segundos la banda dice <strong>«Buscando en tu corpus…»</strong> y, entre comillas, <strong>lo último que dijo el cliente de verdad</strong>, con su hora. Si aparece «Y la limpieza de datos, ¿eso está dentro del alcance?» sin que nadie lo haya dicho, es la frase inventada de la maqueta puesta en boca de tu cliente — el peor hallazgo de la auditoría del S1.
+      <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="b8"><label for="b8">Con la sesión corriendo, haz que el cliente diga algo que no pide ficha y se calle: <code>say -v Paulina "Nos preocupa el margen de las tiendas de vereda"</code>. Durante unos cuatro segundos la banda dice <strong>«Buscando en tu corpus…»</strong> y, entre comillas, <strong>lo último que dijo el cliente de verdad</strong>, con su hora. Si aparece «Y la limpieza de datos, ¿eso está dentro del alcance?» sin que nadie lo haya dicho, es la frase inventada de la maqueta puesta en boca de tu cliente — el peor hallazgo de la auditoría del S1.
         <p class="chica suave" style="margin:6px 0 0">Tras una pregunta, «buscando» dura milisegundos: la ficha llega enseguida y no da tiempo a leerlo. Se ve bien tras una frase que no dispara nada.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
     </ul>
     <div class="reportame"><p><strong>Repórtame sí o sí:</strong> cualquier pantalla que pinte en verde algo que no exista, una frase en español dentro de la interfaz en inglés, o un estado que solo se distinga por el color.</p></div>
@@ -373,24 +393,24 @@
     <div class="bloque-cabeza"><span class="letra">D</span><h2>Este cliente: su jurisdicción y su NDA</h2></div>
     <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>Sesión, sin sesión en marcha y con la carpeta del kit señalada en Corpus</code> · ~6 min · el marco legal de cada cliente, a la vista y sin bloquearte</p>
     <ul class="pasos">
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="d1"><label for="d1">En Sesión, <strong>«Este cliente»</strong> → elige <strong>Páramo Azul</strong> (sale de la ficha de cliente del kit). Aparece su <strong>bandera</strong>: Colombia, <strong>riesgo bajo-medio</strong> con su símbolo, su texto y su color, la regla, lo que implica, las normas, «consultado 2026-09-17», lo que el informe legal <strong>no pudo verificar</strong> («Sin verificar: …») y <strong>«No es asesoría legal»</strong>. ¿Se entiende qué te dice sobre este cliente?
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="d1"><label for="d1">En Sesión, <strong>«Este cliente»</strong> → elige <strong>Páramo Azul</strong> (sale de la ficha de cliente del kit). Aparece su <strong>bandera</strong>: Colombia, <strong>riesgo bajo-medio</strong> con su símbolo, su texto y su color, la regla, lo que implica, las normas, «consultado 2026-09-17», lo que el informe legal <strong>no pudo verificar</strong> («Sin verificar: …») y <strong>«No es asesoría legal»</strong>. ¿Se entiende qué te dice sobre este cliente?
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="d2"><label for="d2"><strong>«Revisar»</strong> junto a la NDA: la pregunta ocupa la fila de los botones. Lee la <strong>versión A</strong> de la cláusula 6 de <code>docs/kit-de-prueba/nda-de-ejemplo.md</code> y contesta <strong>«No lo prohíbe»</strong>: la fila dice «NDA revisada: no lo prohíbe». Cierra la app y vuelve a abrirla: <strong>Corpus ya tiene el kit</strong> (la app recuerda la carpeta y la vuelve a leer al arrancar). Vuelve a elegir Páramo Azul: <strong>la NDA sigue revisada</strong> (se guarda por cliente; el cliente elegido, no).
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="d2"><label for="d2"><strong>«Revisar»</strong> junto a la NDA: la pregunta ocupa la fila de los botones. Lee la <strong>versión A</strong> de la cláusula 6 de <code>docs/kit-de-prueba/nda-de-ejemplo.md</code> y contesta <strong>«No lo prohíbe»</strong>: la fila dice «NDA revisada: no lo prohíbe». Cierra la app y vuelve a abrirla: <strong>Corpus ya tiene el kit</strong> (la app recuerda la carpeta y la vuelve a leer al arrancar). Vuelve a elegir Páramo Azul: <strong>la NDA sigue revisada</strong> (se guarda por cliente; el cliente elegido, no).
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="d3"><label for="d3"><strong>«Cláusula de encargo»</strong>: las dos versiones, español e inglés, lado a lado, con «Plantilla, no asesoría legal: revísala con tu abogado». Copia la inglesa y pégala en la sección 5 de <code>docs/kit-de-prueba/carta-de-encargo-de-ejemplo.md</code>. ¿Se lee bien en su sitio, como parte de una carta tuya?
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="d3"><label for="d3"><strong>«Cláusula de encargo»</strong>: las dos versiones, español e inglés, lado a lado, con «Plantilla, no asesoría legal: revísala con tu abogado». Copia la inglesa y pégala en la sección 5 de <code>docs/kit-de-prueba/carta-de-encargo-de-ejemplo.md</code>. ¿Se lee bien en su sitio, como parte de una carta tuya?
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="d4"><label for="d4">Vuelve a «Revisar» y lee la <strong>versión B</strong>: contesta <strong>«Sí, lo prohíbe»</strong>. Sesión te propone <strong>«Iniciar en modo solo notas»</strong>: púlsalo. Comprueba tres cosas: en la barra de menús <strong>no aparece el punto naranja del micrófono</strong> ni el morado de la grabación de pantalla; la banda dice en ámbar <strong>«Solo notas · sin transcripción»</strong>; y en Honestidad los anillos de audio siguen en 0 B aunque hables.
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="d4"><label for="d4">Vuelve a «Revisar» y lee la <strong>versión B</strong>: contesta <strong>«Sí, lo prohíbe»</strong>. Sesión te propone <strong>«Iniciar en modo solo notas»</strong>: púlsalo. Comprueba tres cosas: en la barra de menús <strong>no aparece el punto naranja del micrófono</strong> ni el morado de la grabación de pantalla; la banda dice en ámbar <strong>«Solo notas · sin transcripción»</strong>; y en Honestidad los anillos de audio siguen en 0 B aunque hables.
         <p class="chica suave" style="margin:6px 0 0">El modo solo notas no abre ninguna captura: nada escucha, transcribe ni lee la pantalla. Lo vigila un test que se demostró en rojo; lo que solo tú puedes ver es que macOS tampoco enciende sus indicadores.</p>
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="d5"><label for="d5">En solo notas, pulsa <strong>⌃⌥N</strong> y escribe en tu nota <code>limpieza de datos tres fuentes</code>; pulsa <strong>⌃⌥A</strong>: la banda busca con <strong>la última línea de tu nota</strong> y trae la ficha de Alcance. Termina con «Terminar sesión» → «Cerrar sin guardar», y vuelve a «Revisar» → <strong>«No lo prohíbe»</strong>: los bloques siguientes usan la reunión normal.
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="d5"><label for="d5">En solo notas, pulsa <strong>⌃⌥N</strong> y escribe en tu nota <code>limpieza de datos tres fuentes</code>; pulsa <strong>⌃⌥A</strong>: la banda busca con <strong>la última línea de tu nota</strong> y trae la ficha de Alcance. Termina con «Terminar sesión» → «Cerrar sin guardar», y vuelve a «Revisar» → <strong>«No lo prohíbe»</strong>: los bloques siguientes usan la reunión normal.
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s3"><input type="checkbox" id="d6"><label for="d6">Copia la ficha de cliente del kit a otra carpeta y bórrale la línea «Jurisdicción:»; señala esa carpeta y elige el cliente: la bandera dice <strong>«Jurisdicción no indicada»</strong> y «Mientras tanto, la app funciona igual». Escribe <code>Jurisdicción: Brasil</code> y vuelve a indexar: <strong>«no está en el catálogo»</strong>, sin adivinar. Vuelve a señalar la carpeta del kit.
-        <span class="origen origen-nuevo">Nuevo · S3</span></label></li>
+      <li data-origen="heredada" data-nace="s3"><input type="checkbox" id="d6"><label for="d6">Copia la ficha de cliente del kit a otra carpeta y bórrale la línea «Jurisdicción:»; señala esa carpeta y elige el cliente: la bandera dice <strong>«Jurisdicción no indicada»</strong> y «Mientras tanto, la app funciona igual». Escribe <code>Jurisdicción: Brasil</code> y vuelve a indexar: <strong>«no está en el catálogo»</strong>, sin adivinar. Vuelve a señalar la carpeta del kit.
+        <span class="origen origen-heredada">S3</span></label></li>
     </ul>
     <div class="kit"><p><strong>Kit de prueba:</strong> la ficha de cliente del kit trae <code>Jurisdicción: Colombia</code>. <code>docs/kit-de-prueba/nda-de-ejemplo.md</code> trae las dos versiones de la cláusula de registro de las reuniones —una que lo permite y otra que lo prohíbe— y <code>carta-de-encargo-de-ejemplo.md</code>, una carta con la sección donde va la cláusula. Los dos son sintéticos, en español y en inglés, y <strong>no son asesoría legal</strong>. La CI mide las 27 jurisdicciones del catálogo con <code>jurisdicciones.json</code>.</p></div>
     <div class="reportame"><p><strong>Repórtame sí o sí:</strong> una bandera que afirme algo marcado «sin verificar», un aviso «No es asesoría legal» que falte, o cualquier captura —micrófono, audio o pantalla— encendida en modo solo notas.</p></div>
@@ -401,16 +421,16 @@
       ~12 min · el camino entero: alguien pregunta, aparece una ficha de lo tuyo</p>
     <p class="chica" style="margin:0 0 10px"><strong>El cliente, para probar, es tu Mac hablando:</strong> en Terminal, <code>say -v Paulina "¿Y la limpieza de datos, eso está dentro del alcance?"</code>. Lo que suena por tu Mac es la pista del cliente; lo que dices tú por el micrófono es la tuya, y <strong>tu propia voz no pide fichas</strong> (la app te contestaría a ti a mitad de frase). Si Paulina no está instalada, quita <code>-v Paulina</code>.</p>
     <ul class="pasos">
-      <li data-origen="mejorado" data-nace="s1" data-minimo><input type="checkbox" id="e1"><label for="e1"><strong>Ponte unos auriculares de cable.</strong> En Sesión, la fila «Auriculares conectados» lo confirma. Quítatelos: <strong>avisa de que el micrófono va a oír al cliente</strong> y que esos turnos se marcarán como eco. Vuelve a ponértelos.
+      <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="e1"><label for="e1"><strong>Ponte unos auriculares de cable.</strong> En Sesión, la fila «Auriculares conectados» lo confirma. Quítatelos: <strong>avisa de que el micrófono va a oír al cliente</strong> y que esos turnos se marcarán como eco. Vuelve a ponértelos.
         <p class="chica suave" style="margin:6px 0 0">Decía «ponte los auriculares» a secas: solo los de cable se confirman así. Los Bluetooth y USB se nombran, y la app no puede saber si son un casco o un altavoz (prueba e10).</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
       <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="e2"><label for="e2">Pulsa <strong>«Iniciar sesión»</strong>. En Honestidad, los dos anillos de audio empiezan a contar bytes. <strong>Si no hablas, se quedan quietos — eso es correcto</strong>, no es una avería: cuando nadie habla, macOS no entrega una sola muestra.
         <span class="origen origen-heredada">S1</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s1" data-minimo data-corto data-min="1"><input type="checkbox" id="e3"><label for="e3"><strong>Antes:</strong> en <em>Idioma</em>, las dos pistas en <code>es-ES</code> (desde el S3 se recuerdan de una vez para otra), y en <em>Corpus</em> la carpeta del kit señalada (desde la Fase 2 de la auditoría del S3 se recuerda y se vuelve a leer al arrancar). Con la sesión iniciada (Sesión → «Iniciar sesión»), haz que el cliente pregunte: <code>say -v Paulina "¿Y la limpieza de datos, eso está dentro del alcance?"</code>. <strong>En menos de cuatro segundos la banda enseña una ficha</strong> con su titular, una línea y la fuente — «propuesta · Páramo Azul… · Alcance» — y debajo de la fuente <strong>por qué llegó y cuánto tardó</strong>: «pregunta · 1,2 s», por ejemplo.
+      <li data-origen="heredada" data-nace="s1" data-minimo data-corto data-min="1"><input type="checkbox" id="e3"><label for="e3"><strong>Antes:</strong> en <em>Idioma</em>, las dos pistas en <code>es-ES</code> (desde el S3 se recuerdan de una vez para otra), y en <em>Corpus</em> la carpeta del kit señalada (desde la Fase 2 de la auditoría del S3 se recuerda y se vuelve a leer al arrancar). Con la sesión iniciada (Sesión → «Iniciar sesión»), haz que el cliente pregunte: <code>say -v Paulina "¿Y la limpieza de datos, eso está dentro del alcance?"</code>. <strong>En menos de cuatro segundos la banda enseña una ficha</strong> con su titular, una línea y la fuente — «propuesta · Páramo Azul… · Alcance» — y debajo de la fuente <strong>por qué llegó y cuánto tardó</strong>: «pregunta · 1,2 s», por ejemplo.
         <p class="chica suave" style="margin:6px 0 0">Si una prueba anterior dejó la pista del cliente en inglés, la voz de Paulina se transcribiría como inglés y no llegaría ficha: por eso el «antes». Es la prueba que la auditoría del S1 encontró rota (la ficha no llegaba a la banda): si aquí no aparece nada, el defecto volvió.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span>
         <span class="minimo">⭐⭐ Parada 2 de 9 · ~1 min</span></label></li>
       <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="e4"><label for="e4">Ahora haz que el cliente pregunte algo que el corpus <strong>no tiene</strong>: <code>say -v Paulina "¿Tienen oficina en Medellín?"</code>. La banda dice <strong>«Nada en tu corpus sobre…»</strong> con los términos que de verdad buscó, y debajo una sugerencia de cómo conducirse; si tu corpus tiene algo cercano, <strong>te lo nombra</strong>: «Lo más cercano que sí tienes es «…»: ofrécelo y pregunta para qué lo necesitan.» <strong>No inventa una respuesta.</strong>
@@ -421,9 +441,9 @@
         <p class="chica suave" style="margin:6px 0 0">En el S1 la tecla era ⌘⇧A, que en Zoom silencia tu micrófono. Desde el S2 todas las teclas son ⌃⌥.</p>
         <span class="origen origen-heredada">S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s1" data-minimo><input type="checkbox" id="e6"><label for="e6">Haz que el cliente pregunte algo que tu corpus responde —<code>say -v Paulina "¿Cuántas rondas de revisión incluye?"</code>— y, <strong>con su ficha a la vista</strong>, pulsa <strong>⌃⌥T</strong>: la banda crece a 200 px, como con el asa, y a la derecha se abre el transcript, con los turnos separados por quién habló. Di tú algo por el micrófono: sale en tu lado. Haz que el cliente pregunte otra cosa con ficha —<code>say -v Paulina "¿El taller de cierre va aparte?"</code>—: mientras busca, el transcript se oculta, y vuelve con la ficha nueva. Pulsa ⌃⌥T otra vez: se cierra y la banda vuelve a su alto.
+      <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="e6"><label for="e6">Haz que el cliente pregunte algo que tu corpus responde —<code>say -v Paulina "¿Cuántas rondas de revisión incluye?"</code>— y, <strong>con su ficha a la vista</strong>, pulsa <strong>⌃⌥T</strong>: la banda crece a 200 px, como con el asa, y a la derecha se abre el transcript, con los turnos separados por quién habló. Di tú algo por el micrófono: sale en tu lado. Haz que el cliente pregunte otra cosa con ficha —<code>say -v Paulina "¿El taller de cierre va aparte?"</code>—: mientras busca, el transcript se oculta, y vuelve con la ficha nueva. Pulsa ⌃⌥T otra vez: se cierra y la banda vuelve a su alto.
         <p class="chica suave" style="margin:6px 0 0">Decía «Pulsa ⌃⌥T. Se abre el transcript» sin más: el transcript solo se pinta junto a una ficha. Y hasta el S3 ⌃⌥T no agrandaba la banda: el transcript salía recortado por abajo. Se arregló en el S3.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
       <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="e7"><label for="e7">Amplía la banda con el asa mientras hay una ficha. <strong>Aparecen las otras dos secciones más cercanas</strong> y la línea larga de la ficha.
         <span class="origen origen-heredada">S1</span>
@@ -439,9 +459,9 @@
       <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="e10"><label for="e10">Con unos auriculares Bluetooth o USB conectados, mira Sesión: <strong>dice su nombre</strong> («AirPods de…»). Y dice también que la app no puede saber si es un casco o un altavoz.
         <span class="origen origen-heredada">S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s2" data-minimo><input type="checkbox" id="e11"><label for="e11">Haz que el cliente diga algo sin pregunta, sin cifra y sin ninguna palabra de los nombres o títulos de tu corpus, y se calle: <code>say -v Paulina "Nos preocupa el margen de las tiendas de vereda"</code>. Mientras calla, la banda dice «Buscando en tu corpus…» con su frase entre comillas; <strong>unos cuatro segundos después</strong> trae una ficha —el Contexto de la propuesta— y su línea dice <strong>«silencio»</strong>. Si vuelves a callar, <strong>no repite</strong> la misma ficha.
+      <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="e11"><label for="e11">Haz que el cliente diga algo sin pregunta, sin cifra y sin ninguna palabra de los nombres o títulos de tu corpus, y se calle: <code>say -v Paulina "Nos preocupa el margen de las tiendas de vereda"</code>. Mientras calla, la banda dice «Buscando en tu corpus…» con su frase entre comillas; <strong>unos cuatro segundos después</strong> trae una ficha —el Contexto de la propuesta— y su línea dice <strong>«silencio»</strong>. Si vuelves a callar, <strong>no repite</strong> la misma ficha.
         <p class="chica suave" style="margin:6px 0 0">La frase del S2 no podía dar «silencio»: «calidad», «datos» y «canal» están en los títulos del kit, la ficha llegaba en el acto como «término tuyo» y el silencio ya no se disparaba sobre la misma frase.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
     </ul>
     <div class="kit"><p><strong>Kit de prueba:</strong> la carpeta <code>docs/kit-de-prueba/corpus/</code> de este repo — seis documentos sintéticos del cliente inventado «Páramo Azul», uno por cada unidad del modelo. Las preguntas que aparecen en los pasos salen de <code>docs/kit-de-prueba/preguntas.json</code>, que es el mismo juego de treinta con el que la CI mide el buscador.</p></div>
@@ -452,21 +472,21 @@
     <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>Chrome con <code>docs/kit-de-prueba/pantalla/meet-de-prueba.html</code> abierta y visible, y la sesión iniciada</code> ·
       ~8 min · lo que el cliente enseña trae su ficha sin que nadie pregunte</p>
     <ul class="pasos">
-      <li data-origen="mejorado" data-nace="s2" data-minimo><input type="checkbox" id="f1"><label for="f1">Abre <code>docs/kit-de-prueba/pantalla/meet-de-prueba.html</code> en Chrome (su título dice «Google Meet», que es lo que la app busca) y déjala a la vista, sin nada encima. Con <strong>«Leerla sola»</strong> encendido en Sesión (se recuerda de una vez para otra), enseña la diapositiva del <strong>tablero de margen</strong>. <strong>Sin que nadie diga nada</strong>, en uno o dos segundos la banda trae una ficha, y su línea de por qué llegó dice <strong>«en pantalla»</strong> con el símbolo de la pantalla.
+      <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="f1"><label for="f1">Abre <code>docs/kit-de-prueba/pantalla/meet-de-prueba.html</code> en Chrome (su título dice «Google Meet», que es lo que la app busca) y déjala a la vista, sin nada encima. Con <strong>«Leerla sola»</strong> encendido en Sesión (se recuerda de una vez para otra), enseña la diapositiva del <strong>tablero de margen</strong>. <strong>Sin que nadie diga nada</strong>, en uno o dos segundos la banda trae una ficha, y su línea de por qué llegó dice <strong>«en pantalla»</strong> con el símbolo de la pantalla.
         <p class="chica suave" style="margin:6px 0 0">Desde el S3 el interruptor «Leerla sola» se recuerda al cerrar la app: si lo dejaste apagado, esta prueba no trae nada hasta que lo enciendas.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s2" data-minimo><input type="checkbox" id="f2"><label for="f2">Pasa las diapositivas con la flecha →, <strong>dejando unos seis segundos en cada una</strong> (entre dos fichas la app espera seis). Cada una que trae una cifra o un término tuyo trae su ficha; <strong>la agenda no trae ninguna</strong> (no tiene ni cifra ni término). Quédate en una diapositiva y mueve el ratón encima: <strong>no vuelve a leer</strong> hasta que se queda quieta. Si tu barra de marcadores de Chrome tiene cifras, escóndela (⌘⇧B): la app lee la ventana entera.
+      <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="f2"><label for="f2">Pasa las diapositivas con la flecha →, <strong>dejando unos seis segundos en cada una</strong> (entre dos fichas la app espera seis). Cada una que trae una cifra o un término tuyo trae su ficha; <strong>la agenda no trae ninguna</strong> (no tiene ni cifra ni término). Quédate en una diapositiva y mueve el ratón encima: <strong>no vuelve a leer</strong> hasta que se queda quieta. Si tu barra de marcadores de Chrome tiene cifras, escóndela (⌘⇧B): la app lee la ventana entera.
         <p class="chica suave" style="margin:6px 0 0">La página de prueba se retocó en el S3: la app lee la ventana entera —pestaña y pie incluidos— y su título («Páramo Azul») y su pie («5 de 6») le daban a la agenda un término y una cifra que la diapositiva no tiene. Ahora el título es neutro y el pie cuenta con puntos.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s2" data-minimo><input type="checkbox" id="f3"><label for="f3">En Sesión, apaga <strong>«Leerla sola»</strong> y pasa de diapositiva: <strong>no pasa nada</strong>. Pulsa <strong>⌃⌥L</strong>: la lee una vez, ahora, y trae su ficha. Vuelve a encender «Leerla sola»: <strong>se recuerda al cerrar la app</strong>, y si lo dejas apagado seguirá apagado mañana.
+      <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="f3"><label for="f3">En Sesión, apaga <strong>«Leerla sola»</strong> y pasa de diapositiva: <strong>no pasa nada</strong>. Pulsa <strong>⌃⌥L</strong>: la lee una vez, ahora, y trae su ficha. Vuelve a encender «Leerla sola»: <strong>se recuerda al cerrar la app</strong>, y si lo dejas apagado seguirá apagado mañana.
         <p class="chica suave" style="margin:6px 0 0">Desde el S3 el interruptor se guarda en tus preferencias.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s2" data-minimo><input type="checkbox" id="f4"><label for="f4">Abre <code>docs/kit-de-prueba/pantalla/meet-en-negro.html</code> en la ventana de Chrome de la reunión de prueba (su título dice «Google Meet» y la página no tiene ni una letra) y pulsa <strong>⌃⌥L</strong>: la banda contesta <strong>«Leí la pantalla: no hay texto que buscar.»</strong> No se inventa nada.
+      <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="f4"><label for="f4">Abre <code>docs/kit-de-prueba/pantalla/meet-en-negro.html</code> en la ventana de Chrome de la reunión de prueba (su título dice «Google Meet» y la página no tiene ni una letra) y pulsa <strong>⌃⌥L</strong>: la banda contesta <strong>«Leí la pantalla: no hay texto que buscar.»</strong> No se inventa nada.
         <p class="chica suave" style="margin:6px 0 0">Decía «Tapa la reunión con otra ventana, o pon una diapositiva en negro»: la app lee la ventana de la reunión aunque esté tapada, el kit no traía diapositiva en negro, y el pie de <code>meet-de-prueba.html</code> («N de 6») siempre le daba una cifra que buscar.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
       <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="f5"><label for="f5">Quita el permiso de <strong>Pantalla</strong> en Ajustes del Sistema (System Settings): Sesión dice <strong>«Sin permiso»</strong> en la fila de la pantalla y todo lo demás sigue funcionando. Devuélvelo.
         <span class="origen origen-heredada">S2</span>
@@ -505,28 +525,28 @@
     <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la pantalla de IA, con Apple Intelligence activado en Ajustes</code> ·
       ~8 min · una frase de qué decir, que solo dice lo que dice su ficha</p>
     <ul class="pasos">
-      <li data-origen="mejorado" data-nace="s2" data-minimo><input type="checkbox" id="h1"><label for="h1">Abre <strong>IA</strong>. Arriba, «Quién redacta la sugerencia» dice <strong>«en tu Mac»</strong>, y en la tabla «Modelo del sistema (macOS 26)» está <strong>«en uso»</strong>. Apaga Apple Intelligence en Ajustes y <strong>vuelve a la app</strong>: IA se pone al día sola y dice <strong>«nadie»</strong> y por qué («Apple Intelligence está apagado en Ajustes.»). Vuelve a activarlo.
+      <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="h1"><label for="h1">Abre <strong>IA</strong>. Arriba, «Quién redacta la sugerencia» dice <strong>«en tu Mac»</strong>, y en la tabla «Modelo del sistema (macOS 26)» está <strong>«en uso»</strong>. Apaga Apple Intelligence en Ajustes y <strong>vuelve a la app</strong>: IA se pone al día sola y dice <strong>«nadie»</strong> y por qué («Apple Intelligence está apagado en Ajustes.»). Vuelve a activarlo.
         <p class="chica suave" style="margin:6px 0 0">Hasta el S3 IA no se ponía al día al volver a la ventana: había que salir y entrar. Ahora pregunta también al recuperar el foco.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s2" data-minimo data-corto data-min="1.5"><input type="checkbox" id="h2"><label for="h2">Comprueba en IA que <strong>«Redactar sugerencias»</strong> está encendido (se recuerda) y el proveedor externo apagado, y haz que el cliente pregunte otra cosa del kit: <code>say -v Paulina "¿Cuántas rondas de revisión incluye?"</code> (la misma pregunta dos veces seguidas no trae ficha: la app no repite). Primero llega la ficha; <strong>en un segundo más o menos</strong>, debajo, <strong>«sugerencia · en tu Mac»</strong> con su confianza y una frase. <strong>Compárala con la ficha: no puede decir nada —ni una cifra, ni un «no»— que la ficha no diga.</strong> La ficha no se va.
+      <li data-origen="heredada" data-nace="s2" data-minimo data-corto data-min="1.5"><input type="checkbox" id="h2"><label for="h2">Comprueba en IA que <strong>«Redactar sugerencias»</strong> está encendido (se recuerda) y el proveedor externo apagado, y haz que el cliente pregunte otra cosa del kit: <code>say -v Paulina "¿Cuántas rondas de revisión incluye?"</code> (la misma pregunta dos veces seguidas no trae ficha: la app no repite). Primero llega la ficha; <strong>en un segundo más o menos</strong>, debajo, <strong>«sugerencia · en tu Mac»</strong> con su confianza y una frase. <strong>Compárala con la ficha: no puede decir nada —ni una cifra, ni un «no»— que la ficha no diga.</strong> La ficha no se va.
         <p class="chica suave" style="margin:6px 0 0">Al medir el modelo de verdad, una sugerencia citó bien y dijo «el taller de cierre va aparte» cuando la propuesta lo incluye. Desde entonces la app tira toda sugerencia que diga algo que su ficha no dice. Si ves una así, es el defecto que más importa de este bloque. Decía «Enciende»: desde el S3 el interruptor se recuerda.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span>
         <span class="minimo">⭐⭐ Parada 3 de 9 · ~1,5 min</span></label></li>
-      <li data-origen="mejorado" data-nace="s2" data-minimo><input type="checkbox" id="h3"><label for="h3">Haz que el cliente haga tres preguntas más del kit, una a una y esperando cada ficha: <code>say -v Paulina "¿En cuántas semanas hacen la entrega completa?"</code>, <code>say -v Paulina "¿Cómo miden la calidad de los datos?"</code> y <code>say -v Paulina "¿El taller de cierre va aparte?"</code>. Para cada una: <strong>¿la sugerencia ayuda, estorba o no aparece?</strong> Que no aparezca es correcto cuando el modelo dijo algo que la ficha no respalda: te queda la ficha.
+      <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="h3"><label for="h3">Haz que el cliente haga tres preguntas más del kit, una a una y esperando cada ficha: <code>say -v Paulina "¿En cuántas semanas hacen la entrega completa?"</code>, <code>say -v Paulina "¿Cómo miden la calidad de los datos?"</code> y <code>say -v Paulina "¿El taller de cierre va aparte?"</code>. Para cada una: <strong>¿la sugerencia ayuda, estorba o no aparece?</strong> Que no aparezca es correcto cuando el modelo dijo algo que la ficha no respalda: te queda la ficha.
         <p class="chica suave" style="margin:6px 0 0">Decía «Haz tres preguntas»: dichas por tu micrófono no traen ficha, porque tu voz no pide fichas.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
       <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="h4"><label for="h4">Amplía la banda con el asa mientras hay una sugerencia: <strong>ocupa el hueco de la derecha</strong> y la ficha sigue a la vista con su fuente.
         <span class="origen origen-heredada">S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s2"><input type="checkbox" id="h5"><label for="h5">Con la sugerencia local y <strong>el proveedor externo apagado</strong>, el contador de red de la banda y de Honestidad sigue en <strong>0 B</strong>. En la consola de <code>pnpm tauri dev</code>, las líneas <code>[sintesis]</code> dicen quién, cuánto tardó y cuánto salió — <strong>ni una palabra de la sugerencia ni de la pregunta</strong>.
+      <li data-origen="heredada" data-nace="s2"><input type="checkbox" id="h5"><label for="h5">Con la sugerencia local y <strong>el proveedor externo apagado</strong>, el contador de red de la banda y de Honestidad sigue en <strong>0 B</strong>. En la consola de <code>pnpm tauri dev</code>, las líneas <code>[sintesis]</code> dicen quién, cuánto tardó y cuánto salió — <strong>ni una palabra de la sugerencia ni de la pregunta</strong>.
         <p class="chica suave" style="margin:6px 0 0">Desde el S3 el proveedor externo se recuerda encendido si lo dejaste así: por eso se dice.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span></label></li>
-      <li data-origen="mejorado" data-nace="s2" data-minimo><input type="checkbox" id="h6"><label for="h6"><em>Solo si tienes una clave de Claude o Groq:</em> en IA, pégala y enciende el proveedor externo. Bajo el costo, una línea dice cuánto guarda el proveedor que elegiste; con Groq, enciende antes la retención cero en <em>Data Controls</em>, en su consola. La banda cambia el origen de la sugerencia al nombre del proveedor y <strong>el contador de red deja de ser 0 B</strong> y cambia de color; IA enseña <strong>esta reunión</strong>, <strong>este mes</strong> y el <strong>tope de USD 10</strong>; Honestidad dice que el modo API está encendido. Tras una sugerencia, <strong>«Ver lo que salió»</strong> enseña <strong>el texto exacto</strong> que salió de tu Mac, con los datos que la app tapó marcados y, al lado, lo que reemplazó (eso no salió). Pulsa <strong>«Borrar la clave»</strong>: el interruptor se apaga, en Llavero (Acceso a Llaveros (Keychain Access)) ya no está «Angel Ghost · API», y al reabrir la app sigue apagado.
+        <span class="origen origen-heredada">S3</span></label></li>
+      <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="h6"><label for="h6"><em>Solo si tienes una clave de Claude o Groq:</em> en IA, pégala y enciende el proveedor externo. Bajo el costo, una línea dice cuánto guarda el proveedor que elegiste; con Groq, enciende antes la retención cero en <em>Data Controls</em>, en su consola. La banda cambia el origen de la sugerencia al nombre del proveedor y <strong>el contador de red deja de ser 0 B</strong> y cambia de color; IA enseña <strong>esta reunión</strong>, <strong>este mes</strong> y el <strong>tope de USD 10</strong>; Honestidad dice que el modo API está encendido. Tras una sugerencia, <strong>«Ver lo que salió»</strong> enseña <strong>el texto exacto</strong> que salió de tu Mac, con los datos que la app tapó marcados y, al lado, lo que reemplazó (eso no salió). Pulsa <strong>«Borrar la clave»</strong>: el interruptor se apaga, en Llavero (Acceso a Llaveros (Keychain Access)) ya no está «Angel Ghost · API», y al reabrir la app sigue apagado.
         <p class="chica suave" style="margin:6px 0 0">Nuevo en el S3: «Ver lo que salió», y que el interruptor se recuerde —también apagado tras borrar la clave—.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
     </ul>
     <div class="reportame"><p><strong>Repórtame sí o sí:</strong> una sugerencia con una cifra, un nombre o un «no» que su ficha no tiene; una sugerencia que llegue antes que su ficha o la tape; o un byte en el contador sin haber encendido el proveedor externo.</p></div>
@@ -547,13 +567,13 @@
       <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="i3"><label for="i3">Mientras te lee, pulsa <strong>⎋</strong>: <strong>se calla en el acto</strong>. Con el modo encendido, ⎋ no le llega a la reunión (en Meet no sale de pantalla completa); al apagar el modo con ⌃⌥V, vuelve a llegarle.
         <span class="origen origen-heredada">S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s2" data-minimo><input type="checkbox" id="i4"><label for="i4">Desconecta los auriculares para que el sonido salga por el <strong>altavoz del Mac</strong> —o por un monitor por HDMI o DisplayPort, o por AirPlay— y haz que llegue una ficha nueva (<code>say -v Paulina "¿Cuántas rondas de revisión incluye?"</code>): <strong>no la lee</strong>, y la banda dice en ámbar <strong>«Conecta auriculares · el cliente te oiría»</strong>.
+      <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="i4"><label for="i4">Desconecta los auriculares para que el sonido salga por el <strong>altavoz del Mac</strong> —o por un monitor por HDMI o DisplayPort, o por AirPlay— y haz que llegue una ficha nueva (<code>say -v Paulina "¿Cuántas rondas de revisión incluye?"</code>): <strong>no la lee</strong>, y la banda dice en ámbar <strong>«Conecta auriculares · el cliente te oiría»</strong>.
         <p class="chica suave" style="margin:6px 0 0">Decía solo «desconecta»: el aviso aparece cuando una ficha intenta leerse en voz alta, no antes.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s2" data-minimo><input type="checkbox" id="i5"><label for="i5">Con el modo encendido y los auriculares puestos otra vez, haz que el cliente pregunte algo que el corpus no tiene: <code>say -v Paulina "¿Tienen oficina en Medellín?"</code>. <strong>No oyes nada</strong> —una «sin resultado» son palabras del cliente y no se leen— y la banda de una línea sigue en <strong>«Callado · esperando el siguiente turno»</strong>, sin fuente. Pulsa ⌃⌥V: la banda vuelve a 88 px y enseña «Nada en tu corpus sobre…». Vuelve a encender el modo con ⌃⌥V para la prueba siguiente.
+      <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="i5"><label for="i5">Con el modo encendido y los auriculares puestos otra vez, haz que el cliente pregunte algo que el corpus no tiene: <code>say -v Paulina "¿Tienen oficina en Medellín?"</code>. <strong>No oyes nada</strong> —una «sin resultado» son palabras del cliente y no se leen— y la banda de una línea sigue en <strong>«Callado · esperando el siguiente turno»</strong>, sin fuente. Pulsa ⌃⌥V: la banda vuelve a 88 px y enseña «Nada en tu corpus sobre…». Vuelve a encender el modo con ⌃⌥V para la prueba siguiente.
         <p class="chica suave" style="margin:6px 0 0">Decía que la banda pinta «Nada en tu corpus sobre…» con el modo encendido: a una línea solo tiene sus tres estados de voz.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
       <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="i6"><label for="i6">Arrastra el asa hacia arriba: <strong>el modo se apaga</strong> y la banda vuelve a su alto. Enciéndelo otra vez y pulsa ⌥⎋: se calla y el modo se apaga con todo lo demás.
         <span class="origen origen-heredada">S2</span>
@@ -569,9 +589,9 @@
       <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="j1"><label for="j1">Idioma enseña la tarjeta del diccionario: <strong>cuántos términos</strong>, cuántos salieron de tu corpus, cuántos de tu archivo, y la <strong>ruta entera</strong> del archivo.
         <span class="origen origen-heredada">S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s2" data-minimo><input type="checkbox" id="j2"><label for="j2">Con la sesión iniciada, amplía la banda con el asa y haz hablar al cliente: <code>say -v Paulina "Nosotros ya tenemos el Semantic Model en Power BI, pero el Lakehouse todavía no está"</code>. Mientras la banda busca (unos cuatro segundos) y después, bajo «Nada en tu corpus sobre…», la frase del cliente sale entre comillas con <strong>«Power BI»</strong>, <strong>«Semantic Model»</strong> y <strong>«Lakehouse»</strong>, no «power by» ni «lake house».
+      <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="j2"><label for="j2">Con la sesión iniciada, amplía la banda con el asa y haz hablar al cliente: <code>say -v Paulina "Nosotros ya tenemos el Semantic Model en Power BI, pero el Lakehouse todavía no está"</code>. Mientras la banda busca (unos cuatro segundos) y después, bajo «Nada en tu corpus sobre…», la frase del cliente sale entre comillas con <strong>«Power BI»</strong>, <strong>«Semantic Model»</strong> y <strong>«Lakehouse»</strong>, no «power by» ni «lake house».
         <p class="chica suave" style="margin:6px 0 0">Decía «con el transcript abierto (⌃⌥T)»: el transcript solo se pinta con una ficha en la banda, y esta frase no tiene respuesta en el corpus del kit.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
       <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="j3"><label for="j3">Abre el archivo de la ruta con cualquier editor, añade una línea <code>Contabilidad Regulatoria:</code>, guarda y empieza una sesión nueva: Idioma cuenta un término más. Haz que el cliente lo diga y sale bien escrito. <strong>En el archivo no hay ningún nombre de cliente</strong>: esos salen del corpus cada vez.
         <span class="origen origen-heredada">S2</span>
@@ -584,23 +604,23 @@
     <div class="bloque-cabeza"><span class="letra">K</span><h2>Tus notas, durante la reunión</h2></div>
     <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la banda con una ficha, la sesión en marcha y la pantalla todavía compartida en Meet</code> · ~7 min · lo tuyo, que es lo único que queda</p>
     <ul class="pasos">
-      <li data-origen="nuevo" data-nace="s3" data-minimo data-corto data-min="2"><input type="checkbox" id="k1"><label for="k1">Si el modo solo audio sigue encendido, apágalo con ⌃⌥V. Con una ficha en la banda, pulsa <strong>⌃⌥P</strong>: la banda dice <strong>«fijada»</strong> con su símbolo, y la ficha aparece en Notas, en «Fichas que fijaste». Pulsa <strong>⌃⌥N</strong>: el cuaderno viene a <em>Notas</em> con el cursor al final de <strong>tu nota</strong>; escribe una línea. Escribe un acuerdo en su campo y pulsa ↵. Di tú por el micrófono: <em>«Te lo mando el viernes con el detalle»</em>; la banda te propone guardarlo y <kbd>⌃⌥↵</kbd> lo guarda. Ahora mira la miniatura de tu compartición en Meet (la pantalla sigue compartida desde la parada 1): <strong>tu nota no se ve</strong>. Donde está el cuaderno aparece lo que hay detrás, o un recuadro vacío, como con la banda; <strong>anota qué ves exactamente</strong>: es la primera vez que se mira con el cuaderno.
+      <li data-origen="heredada" data-nace="s3" data-minimo data-corto data-min="2"><input type="checkbox" id="k1"><label for="k1">Si el modo solo audio sigue encendido, apágalo con ⌃⌥V. Con una ficha en la banda, pulsa <strong>⌃⌥P</strong>: la banda dice <strong>«fijada»</strong> con su símbolo, y la ficha aparece en Notas, en «Fichas que fijaste». Pulsa <strong>⌃⌥N</strong>: el cuaderno viene a <em>Notas</em> con el cursor al final de <strong>tu nota</strong>; escribe una línea. Escribe un acuerdo en su campo y pulsa ↵. Di tú por el micrófono: <em>«Te lo mando el viernes con el detalle»</em>; la banda te propone guardarlo y <kbd>⌃⌥↵</kbd> lo guarda. Ahora mira la miniatura de tu compartición en Meet (la pantalla sigue compartida desde la parada 1): <strong>tu nota no se ve</strong>. Donde está el cuaderno aparece lo que hay detrás, o un recuadro vacío, como con la banda; <strong>anota qué ves exactamente</strong>: es la primera vez que se mira con el cuaderno.
         <p class="chica suave" style="margin:6px 0 0">Desde el S3 el cuaderno toma la misma protección que la banda mientras hay sesión, y la suelta al guardar o descartar la reunión.</p>
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span>
         <span class="minimo">⭐⭐ Parada 5 de 9 · ~2 min</span></label></li>
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="k2"><label for="k2">Di tú, por el micrófono: «Te lo mando el viernes con el detalle». En la banda, arriba y en una sola línea, aparece <strong>«Te propongo guardar: …»</strong> con tu frase: no tapa la ficha, no suena y no se lee en voz alta. Pulsa <strong>⌃⌥↵</strong>: se guarda, y en Notas sale entre las guardadas.
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="k2"><label for="k2">Di tú, por el micrófono: «Te lo mando el viernes con el detalle». En la banda, arriba y en una sola línea, aparece <strong>«Te propongo guardar: …»</strong> con tu frase: no tapa la ficha, no suena y no se lee en voz alta. Pulsa <strong>⌃⌥↵</strong>: se guarda, y en Notas sale entre las guardadas.
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="k3"><label for="k3">Haz que el cliente pregunte <code>say -v Paulina "¿Cuántas rondas de revisión incluye?"</code> y fija su ficha (la de Precio) con <strong>⌃⌥P</strong>. Ahora <code>say -v Paulina "Entendimos que eran tres rondas de revisión"</code>: en Notas, «Te propongo guardar esto» trae <strong>«Dijeron «tres rondas»; tu ficha fijada dice «dos»»</strong>. ¿Te serviría, en una reunión de verdad, para no comprometerte a lo que tu propuesta no dice?
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="k3"><label for="k3">Haz que el cliente pregunte <code>say -v Paulina "¿Cuántas rondas de revisión incluye?"</code> y fija su ficha (la de Precio) con <strong>⌃⌥P</strong>. Ahora <code>say -v Paulina "Entendimos que eran tres rondas de revisión"</code>: en Notas, «Te propongo guardar esto» trae <strong>«Dijeron «tres rondas»; tu ficha fijada dice «dos»»</strong>. ¿Te serviría, en una reunión de verdad, para no comprometerte a lo que tu propuesta no dice?
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="k4"><label for="k4">En Notas, «Te propongo guardar esto»: cada propuesta con «Guardar» y «No». <strong>Compara las del cliente con lo que dijo Paulina</strong>: son un hecho en una línea —una cifra, un nombre, las palabras clave de su pregunta—, <strong>nunca su frase entera</strong>. Guarda una y di «No» a otra.
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="k4"><label for="k4">En Notas, «Te propongo guardar esto»: cada propuesta con «Guardar» y «No». <strong>Compara las del cliente con lo que dijo Paulina</strong>: son un hecho en una línea —una cifra, un nombre, las palabras clave de su pregunta—, <strong>nunca su frase entera</strong>. Guarda una y di «No» a otra.
         <p class="chica suave" style="margin:6px 0 0">La CI mide las reglas con una reunión de veinte turnos (<code>reunion-con-acuerdos.json</code>): lo que solo tú puedes juzgar es si lo que te propone te sirve.</p>
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s3"><input type="checkbox" id="k5"><label for="k5">En Notas, debajo de las propuestas, la <strong>lista entera</strong> de reglas: cifras, plazos y fechas · tus compromisos · lo que choca con una ficha que fijaste · nombres que no están en tu corpus · preguntas que te hicieron. No hay ninguna más, y ningún modelo decide.
-        <span class="origen origen-nuevo">Nuevo · S3</span></label></li>
+      <li data-origen="heredada" data-nace="s3"><input type="checkbox" id="k5"><label for="k5">En Notas, debajo de las propuestas, la <strong>lista entera</strong> de reglas: cifras, plazos y fechas · tus compromisos · lo que choca con una ficha que fijaste · nombres que no están en tu corpus · preguntas que te hicieron. No hay ninguna más, y ningún modelo decide.
+        <span class="origen origen-heredada">S3</span></label></li>
     </ul>
     <div class="reportame"><p><strong>Repórtame sí o sí:</strong> el cuaderno visible al compartir pantalla con la sesión en marcha, una propuesta que guarde la frase entera del cliente, o una propuesta que se lea en voz alta.</p></div>
   </section>
@@ -609,17 +629,17 @@
     <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la pantalla de Honestidad, con la sesión corriendo</code> ·
       ~6 min · la otra mitad de la promesa: que se pueda comprobar que no queda nada</p>
     <ul class="pasos">
-      <li data-origen="mejorado" data-nace="s1"><input type="checkbox" id="l1"><label for="l1">Con la sesión corriendo, mira Honestidad: <strong>los búferes con sus cifras, incluido el último cuadro leído de la pantalla</strong>, y <strong>«Lo que quedará cuando cierres»</strong>: tu nota, tus acuerdos y tus fichas fijadas, en la carpeta privada de la app. El contador de red dice <strong>0 B</strong> (con el proveedor externo de IA apagado).
+      <li data-origen="heredada" data-nace="s1"><input type="checkbox" id="l1"><label for="l1">Con la sesión corriendo, mira Honestidad: <strong>los búferes con sus cifras, incluido el último cuadro leído de la pantalla</strong>, y <strong>«Lo que quedará cuando cierres»</strong>: tu nota, tus acuerdos y tus fichas fijadas, en la carpeta privada de la app. El contador de red dice <strong>0 B</strong> (con el proveedor externo de IA apagado).
         <p class="chica suave" style="margin:6px 0 0">Nuevo en el S3: lo que quedará. En el S2 esa parte decía «todavía no».</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span></label></li>
-      <li data-origen="mejorado" data-nace="s1" data-minimo data-corto data-min="1"><input type="checkbox" id="l2"><label for="l2">Pulsa <strong>⌥⎋</strong>. En el acto: la banda y su relleno desaparecen, la voz del modo solo audio se calla, Chrome recupera su tamaño, y en Honestidad <strong>los búferes vuelven a 0 B</strong>. Debajo del botón rojo: <strong>«El botón corta 11 de 11 piezas: ninguna queda fuera.»</strong> Y arriba, en verde, <strong>«Tus notas siguen ahí»</strong>: tu nota, tus acuerdos y tus fijadas se quedan; tus turnos en texto y las propuestas sin decidir, no.
-        <p class="chica suave" style="margin:6px 0 0">Decía «9 de 9»: el S3 sumó dos piezas —tus turnos en texto y las propuestas que no has decidido— y las dos se cortan. Tus notas no: son lo único tuyo.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span></label></li>
+      <li data-origen="mejorado" data-nace="s1" data-minimo data-corto data-min="1"><input type="checkbox" id="l2"><label for="l2">Pulsa <strong>⌥⎋</strong>. En el acto: la banda y su relleno desaparecen, la voz del modo solo audio se calla, Chrome recupera su tamaño, y en Honestidad <strong>los búferes vuelven a 0 B</strong>. Debajo del botón rojo: <strong>«El botón corta 12 de 12 piezas: ninguna queda fuera.»</strong> Y arriba, en verde, <strong>«Tus notas siguen ahí»</strong>: tu nota, tus acuerdos y tus fijadas se quedan; tus turnos en texto y las propuestas sin decidir, no.
+        <p class="chica suave" style="margin:6px 0 0">Decía «11 de 11»: el S4 sumó una pieza, el ensayo, que el corte también se lleva (el S3 había sumado tus turnos en texto y las propuestas sin decidir). Es la misma parada 6, en su sitio y con su número. Tus notas no se cortan: son lo único tuyo.</p>
+        <span class="origen origen-mejorado">Mejorado en S4</span>
         <span class="minimo">⭐ mínimo</span>
         <span class="minimo">⭐⭐ Parada 6 de 9 · ~1 min</span></label></li>
-      <li data-origen="mejorado" data-nace="s1" data-minimo><input type="checkbox" id="l2b"><label for="l2b"><strong>Y ahora el caso de verdad:</strong> con la sesión iniciada otra vez, haz que el cliente empiece una frase larga —<code>say -v Paulina "Nos gustaría revisar el alcance completo de la propuesta, las tres fuentes, el cronograma de cuatro semanas y el taller de cierre, antes de firmar"</code>— y pulsa <strong>⌥⎋ sin que haya terminado</strong>. Espera cinco segundos mirando la banda y Honestidad. <strong>No aparece nada</strong>: ni un turno nuevo en el transcript, ni una ficha, ni bytes que vuelvan a subir.
+      <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="l2b"><label for="l2b"><strong>Y ahora el caso de verdad:</strong> con la sesión iniciada otra vez, haz que el cliente empiece una frase larga —<code>say -v Paulina "Nos gustaría revisar el alcance completo de la propuesta, las tres fuentes, el cronograma de cuatro semanas y el taller de cierre, antes de firmar"</code>— y pulsa <strong>⌥⎋ sin que haya terminado</strong>. Espera cinco segundos mirando la banda y Honestidad. <strong>No aparece nada</strong>: ni un turno nuevo en el transcript, ni una ficha, ni bytes que vuelvan a subir.
         <p class="chica suave" style="margin:6px 0 0">Hasta la auditoría del S1, el audio que ya iba camino del transcriptor se transcribía <em>después</em> del corte. Decía «empieza a decir tú una frase»: tu voz no pide fichas, así que «ni una ficha» no comprobaba nada; con la del cliente se comprueban las tres cosas.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
       <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="l3"><label for="l3">Repítelo con el <strong>botón</strong> de Honestidad en vez de la tecla. Hace exactamente lo mismo — el atajo puede estar cogido por otra app y la app tiene que seguir siendo usable.
         <span class="origen origen-heredada">S1</span>
@@ -628,19 +648,19 @@
         <p class="chica suave" style="margin:6px 0 0">En el S1 la banda no volvía hasta reiniciar la app (M4 de la auditoría).</p>
         <span class="origen origen-heredada">S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s1" data-minimo><input type="checkbox" id="l4"><label for="l4">Cierra la app entera con <strong>⌘Q</strong> mientras la sesión corre, con algo escrito en tu nota. Vuelve a abrirla: <strong>no hay nada de la reunión anterior</strong> —ni turnos, ni audio, ni lo leído de la pantalla— <strong>salvo lo tuyo</strong>: tu nota, tus acuerdos y tus fijadas se guardaron solos, cifrados (Notas → el archivo). Y Chrome quedó con su tamaño correcto.
+      <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="l4"><label for="l4">Cierra la app entera con <strong>⌘Q</strong> mientras la sesión corre, con algo escrito en tu nota. Vuelve a abrirla: <strong>no hay nada de la reunión anterior</strong> —ni turnos, ni audio, ni lo leído de la pantalla— <strong>salvo lo tuyo</strong>: tu nota, tus acuerdos y tus fijadas se guardaron solos, cifrados (Notas → el archivo). Y Chrome quedó con su tamaño correcto.
         <p class="chica suave" style="margin:6px 0 0">Decía «no hay nada de la reunión anterior»: desde el S3 lo tuyo queda, y al salir con notas sin guardar se guardan solas. Una bandeja guardada también sobrevive a ⌘Q, hasta que vence (bloque O).</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
       <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="l5"><label for="l5">Fuerza un cierre brusco (Monitor de Actividad (Activity Monitor) → forzar salida) con la banda acoplada. Al volver a arrancar, <strong>Chrome recupera su tamaño</strong>: la restauración no depende de un cierre limpio.
         <span class="origen origen-heredada">S1</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s1"><input type="checkbox" id="l6"><label for="l6">En Terminal, tras una sesión completa: <code>ls -lt ~/Documents ~/Desktop ~/Downloads | head</code>. <strong>Ningún archivo nuevo</strong> con la fecha de hoy que venga de la app. Lo que la app escribe está en su carpeta privada —y la tarea de borrado, en <code>~/Library/LaunchAgents</code>—: <code>ls -l ~/Library/Application\ Support/com.aiapps.copiloto-consultor/notas/</code> enseña archivos <code>.ghost</code>, cifrados, que solo tu cuenta puede leer (<code>-rw-------</code>).
+      <li data-origen="heredada" data-nace="s1"><input type="checkbox" id="l6"><label for="l6">En Terminal, tras una sesión completa: <code>ls -lt ~/Documents ~/Desktop ~/Downloads | head</code>. <strong>Ningún archivo nuevo</strong> con la fecha de hoy que venga de la app. Lo que la app escribe está en su carpeta privada —y la tarea de borrado, en <code>~/Library/LaunchAgents</code>—: <code>ls -l ~/Library/Application\ Support/com.aiapps.copiloto-consultor/notas/</code> enseña archivos <code>.ghost</code>, cifrados, que solo tu cuenta puede leer (<code>-rw-------</code>).
         <p class="chica suave" style="margin:6px 0 0">Desde el S3 tus notas se guardan, y no en Documentos: en la carpeta privada de la app, que no se sincroniza con iCloud.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span></label></li>
-      <li data-origen="mejorado" data-nace="s1" data-minimo><input type="checkbox" id="l7"><label for="l7">Mira la <strong>consola donde arrancaste <code>pnpm tauri dev</code></strong> después de una sesión con conversación. Hay líneas como <code>[escucha] turno de «sistema» · 2340 ms · 47 letras</code>: <strong>cuántas letras, jamás cuáles</strong>. Lee unas cuantas y confirma que no hay ni una frase de la reunión, ni de tu nota, ni el nombre del cliente.
+        <span class="origen origen-heredada">S3</span></label></li>
+      <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="l7"><label for="l7">Mira la <strong>consola donde arrancaste <code>pnpm tauri dev</code></strong> después de una sesión con conversación. Hay líneas como <code>[escucha] turno de «sistema» · 2340 ms · 47 letras</code>: <strong>cuántas letras, jamás cuáles</strong>. Lee unas cuantas y confirma que no hay ni una frase de la reunión, ni de tu nota, ni el nombre del cliente.
         <p class="chica suave" style="margin:6px 0 0">Un log es la otra salida por la que el texto de un tercero se escapa. Desde el S3 hay más que proteger: tus notas y el cliente que eliges. Decía «2 340 ms»: el log escribe los milisegundos sin espacio.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
     </ul>
     <div class="reportame"><p><strong>Repórtame sí o sí:</strong> cualquier cifra que no vuelva a cero tras ⌥⎋, cualquier archivo nuevo en tus carpetas, o Chrome sin recuperar su tamaño tras un cierre brusco.</p></div>
@@ -649,21 +669,21 @@
     <div class="bloque-cabeza"><span class="letra">M</span><h2>Al cerrar: tu archivo cifrado</h2></div>
     <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>Notas, tras el corte (⌥⎋) o al terminar la sesión</code> · ~7 min · lo tuyo se guarda cifrado; del cliente, solo lo que aceptaste</p>
     <ul class="pasos">
-      <li data-origen="nuevo" data-nace="s3" data-minimo data-corto data-min="2"><input type="checkbox" id="m1"><label for="m1">Tras el corte, <em>Notas</em> enseña <strong>qué se va a guardar y qué muere</strong>, contado, y el nombre del archivo: <code>paramo-azul-&lt;fecha&gt;.ghost</code>, porque elegiste Páramo Azul en «Este cliente». Pulsa <strong>«Guardar cifrado y cerrar»</strong>. <strong>Si es la primera vez que guardas notas con fecha (en el Acto 2 ya lo viste en la prueba en vivo), macOS avisa de un ítem en segundo plano añadido (Background Items Added)</strong> —la tarea que borra lo vencido, de Angel Ghost—. Luego <strong>«Mostrar en Finder»</strong>: el archivo aparece seleccionado. En Terminal, <code>strings ~/Library/Application\ Support/com.aiapps.copiloto-consultor/notas/*.ghost | head</code>: <strong>no sale ni una palabra de tu nota</strong>. Vuelve a <em>Notas</em> → el archivo → la reunión → <strong>«Exportar a texto»</strong> → «Exportar sin cifrado» → macOS pide <strong>Touch ID o tu contraseña</strong> con el motivo «abrir tus notas guardadas» → guárdalo en una carpeta de prueba. Abre el <code>.md</code>: <strong>tu nota, tu acuerdo, la ficha fijada y la propuesta que guardaste; del cliente, solo las propuestas suyas que guardaste (un hecho de una línea)</strong>: ni su voz, ni sus turnos, ni su pantalla. Bórralo al terminar.
+      <li data-origen="heredada" data-nace="s3" data-minimo data-corto data-min="2"><input type="checkbox" id="m1"><label for="m1">Tras el corte, <em>Notas</em> enseña <strong>qué se va a guardar y qué muere</strong>, contado, y el nombre del archivo: <code>paramo-azul-&lt;fecha&gt;.ghost</code>, porque elegiste Páramo Azul en «Este cliente». Pulsa <strong>«Guardar cifrado y cerrar»</strong>. <strong>Si es la primera vez que guardas notas con fecha (en el Acto 2 ya lo viste en la prueba en vivo), macOS avisa de un ítem en segundo plano añadido (Background Items Added)</strong> —la tarea que borra lo vencido, de Angel Ghost—. Luego <strong>«Mostrar en Finder»</strong>: el archivo aparece seleccionado. En Terminal, <code>strings ~/Library/Application\ Support/com.aiapps.copiloto-consultor/notas/*.ghost | head</code>: <strong>no sale ni una palabra de tu nota</strong>. Vuelve a <em>Notas</em> → el archivo → la reunión → <strong>«Exportar a texto»</strong> → «Exportar sin cifrado» → macOS pide <strong>Touch ID o tu contraseña</strong> con el motivo «abrir tus notas guardadas» → guárdalo en una carpeta de prueba. Abre el <code>.md</code>: <strong>tu nota, tu acuerdo, la ficha fijada y la propuesta que guardaste; del cliente, solo las propuestas suyas que guardaste (un hecho de una línea)</strong>: ni su voz, ni sus turnos, ni su pantalla. Bórralo al terminar.
         <p class="chica suave" style="margin:6px 0 0">Si la reunión ya se guardó sola (empezaste otra sesión antes de guardarla), búscala en el archivo: se guarda igual, cifrada.</p>
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span>
         <span class="minimo">⭐⭐ Parada 7 de 9 · ~2 min</span></label></li>
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="m2"><label for="m2"><strong>«Exportar a texto»</strong>: la app pregunta antes, <strong>«¿Exportar sin cifrado?»</strong>. «Exportar sin cifrado» → Touch ID (si no exportaste ya en esta sesión de la app) → elige el Escritorio. El <code>.md</code> se lee con cualquier editor: tu nota, tus acuerdos, las propuestas que guardaste y tus fijadas. <strong>Bórralo al terminar</strong>: ese archivo ya no lo protege nadie.
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="m2"><label for="m2"><strong>«Exportar a texto»</strong>: la app pregunta antes, <strong>«¿Exportar sin cifrado?»</strong>. «Exportar sin cifrado» → Touch ID (si no exportaste ya en esta sesión de la app) → elige el Escritorio. El <code>.md</code> se lee con cualquier editor: tu nota, tus acuerdos, las propuestas que guardaste y tus fijadas. <strong>Bórralo al terminar</strong>: ese archivo ya no lo protege nadie.
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s3"><input type="checkbox" id="m3"><label for="m3"><strong>«Cuánto viven tus notas»</strong> → elige <strong>7 días</strong>: la próxima reunión que guardes dice «se borra solo en 7 días»; las ya guardadas conservan la suya. Vuelve a <strong>90 días</strong>.
-        <span class="origen origen-nuevo">Nuevo · S3</span></label></li>
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="m4"><label for="m4">En «al cerrar», enciende <strong>«Conservar mis turnos»</strong> (nace apagado). En la sesión siguiente, con los auriculares puestos, di algo por el micrófono y haz hablar al cliente con <code>say</code>: al cerrar, «Tus turnos, en texto» cuenta <strong>solo los tuyos</strong>. Quítate los auriculares y repite: el turno del cliente que tu micrófono oye por los altavoces sale marcado como eco y <strong>no entra</strong>. Vuelve a apagarlo.
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+      <li data-origen="heredada" data-nace="s3"><input type="checkbox" id="m3"><label for="m3"><strong>«Cuánto viven tus notas»</strong> → elige <strong>7 días</strong>: la próxima reunión que guardes dice «se borra solo en 7 días»; las ya guardadas conservan la suya. Vuelve a <strong>90 días</strong>.
+        <span class="origen origen-heredada">S3</span></label></li>
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="m4"><label for="m4">En «al cerrar», enciende <strong>«Conservar mis turnos»</strong> (nace apagado). En la sesión siguiente, con los auriculares puestos, di algo por el micrófono y haz hablar al cliente con <code>say</code>: al cerrar, «Tus turnos, en texto» cuenta <strong>solo los tuyos</strong>. Quítate los auriculares y repite: el turno del cliente que tu micrófono oye por los altavoces sale marcado como eco y <strong>no entra</strong>. Vuelve a apagarlo.
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s3"><input type="checkbox" id="m5"><label for="m5">En Terminal: <code>ls -ld ~/Library/Application\ Support/com.aiapps.copiloto-consultor/notas</code> y <code>ls -l ~/Library/Application\ Support/com.aiapps.copiloto-consultor/notas/</code>. La carpeta es <code>drwx------</code> y cada archivo <code>-rw-------</code>: solo tu cuenta del Mac puede leerlos.
-        <span class="origen origen-nuevo">Nuevo · S3</span></label></li>
+      <li data-origen="heredada" data-nace="s3"><input type="checkbox" id="m5"><label for="m5">En Terminal: <code>ls -ld ~/Library/Application\ Support/com.aiapps.copiloto-consultor/notas</code> y <code>ls -l ~/Library/Application\ Support/com.aiapps.copiloto-consultor/notas/</code>. La carpeta es <code>drwx------</code> y cada archivo <code>-rw-------</code>: solo tu cuenta del Mac puede leerlos.
+        <span class="origen origen-heredada">S3</span></label></li>
     </ul>
     <div class="reportame"><p><strong>Repórtame sí o sí:</strong> una palabra de tu nota legible en el archivo <code>.ghost</code>, una reunión que se abra sin pedirte Touch ID o tu contraseña, o cualquier cosa del cliente dentro del archivo que no sea una propuesta que guardaste tú.</p></div>
   </section>
@@ -671,26 +691,26 @@
     <div class="bloque-cabeza"><span class="letra">N</span><h2>La puerta local: que Claude Code opere la app</h2></div>
     <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>IA, con Meet cerrado, sin sesión y con ghost compilado (pnpm ghost)</code> · ~9 min · tu agente entra por una puerta que abres tú, y en reunión se cierra sola</p>
     <ul class="pasos">
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="n1"><label for="n1">Cierra la pestaña de Meet: con una reunión abierta, la puerta no se abre. En <strong>IA</strong>, pulsa <strong>«Puerta local · cerrada»</strong> y su conmutador: pasa a <strong>abierta</strong> y aparece el comando de <code>ghost</code> con «Copiar» y la frase de lo que te va a preguntar macOS. Pega el comando en Terminal: sale la ayuda de <code>ghost</code>, en español (con <code>LANG=en_US.UTF-8</code> delante, en inglés). Todavía no te pregunta nada.
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="n1"><label for="n1">Cierra la pestaña de Meet: con una reunión abierta, la puerta no se abre. En <strong>IA</strong>, pulsa <strong>«Puerta local · cerrada»</strong> y su conmutador: pasa a <strong>abierta</strong> y aparece el comando de <code>ghost</code> con «Copiar» y la frase de lo que te va a preguntar macOS. Pega el comando en Terminal: sale la ayuda de <code>ghost</code>, en español (con <code>LANG=en_US.UTF-8</code> delante, en inglés). Todavía no te pregunta nada.
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="n2"><label for="n2">Pide una búsqueda: <code>&lt;ruta de ghost&gt; corpus buscar limpieza de datos</code>. macOS pregunta <strong>«ghost quiere usar tu información confidencial guardada en "Angel Ghost · puerta" en tu llavero»</strong>: escribe tu contraseña y pulsa <strong>Permitir</strong>. Sale en JSON la ficha de Alcance, y en IA, <strong>«Qué hizo tu agente»</strong> apunta «ghost corpus buscar · hecho» con su cuenta, <strong>sin las palabras que buscaste</strong>.
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="n2"><label for="n2">Pide una búsqueda: <code>&lt;ruta de ghost&gt; corpus buscar limpieza de datos</code>. macOS pregunta <strong>«ghost quiere usar tu información confidencial guardada en "Angel Ghost · puerta" en tu llavero»</strong>: escribe tu contraseña y pulsa <strong>Permitir</strong>. Sale en JSON la ficha de Alcance, y en IA, <strong>«Qué hizo tu agente»</strong> apunta «ghost corpus buscar · hecho» con su cuenta, <strong>sin las palabras que buscaste</strong>.
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="n3"><label for="n3">Dáselo a <strong>Claude Code</strong>: en su conversación, pega el comando y pídele «busca en mi corpus qué dice mi propuesta sobre el alcance». Claude Code corre <code>ghost</code> y te lo cuenta; en IA aparece la orden.
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="n3"><label for="n3">Dáselo a <strong>Claude Code</strong>: en su conversación, pega el comando y pídele «busca en mi corpus qué dice mi propuesta sobre el alcance». Claude Code corre <code>ghost</code> y te lo cuenta; en IA aparece la orden.
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s3"><input type="checkbox" id="n4"><label for="n4">Las que no puede: <code>ghost prefs cambiar redactar true</code> y <code>ghost ia --encender-api</code>. Las dos salen <strong>denegadas</strong>, con su motivo en el registro («lo decides tú», «el API es tuyo»), y «Redactar sugerencias» y el API siguen como estaban.
-        <span class="origen origen-nuevo">Nuevo · S3</span></label></li>
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="n5"><label for="n5"><code>ghost notas listar</code> enseña la reunión que guardaste; <code>ghost notas abrir paramo-azul-&lt;fecha&gt;.ghost</code> te pide en el Mac <strong>Touch ID o tu contraseña</strong> («abrir tus notas guardadas») —una vez por apertura de la puerta: aunque hayas exportado en Notas, la pide igual— y devuelve tu nota.
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+      <li data-origen="heredada" data-nace="s3"><input type="checkbox" id="n4"><label for="n4">Las que no puede: <code>ghost prefs cambiar redactar true</code> y <code>ghost ia --encender-api</code>. Las dos salen <strong>denegadas</strong>, con su motivo en el registro («lo decides tú», «el API es tuyo»), y «Redactar sugerencias» y el API siguen como estaban.
+        <span class="origen origen-heredada">S3</span></label></li>
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="n5"><label for="n5"><code>ghost notas listar</code> enseña la reunión que guardaste; <code>ghost notas abrir paramo-azul-&lt;fecha&gt;.ghost</code> te pide en el Mac <strong>Touch ID o tu contraseña</strong> («abrir tus notas guardadas») —una vez por apertura de la puerta: aunque hayas exportado en Notas, la pide igual— y devuelve tu nota.
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="n6"><label for="n6">Cierra la puerta con su conmutador. <code>ls ~/Library/Application\ Support/com.aiapps.copiloto-consultor/</code> ya no enseña <code>puerta.sock</code>; en Acceso a Llaveros (Keychain Access) ya no está «Angel Ghost · puerta»; y <code>ghost corpus buscar algo</code> contesta <strong>«La puerta está cerrada…»</strong> sin preguntarte nada.
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="n6"><label for="n6">Cierra la puerta con su conmutador. <code>ls ~/Library/Application\ Support/com.aiapps.copiloto-consultor/</code> ya no enseña <code>puerta.sock</code>; en Acceso a Llaveros (Keychain Access) ya no está «Angel Ghost · puerta»; y <code>ghost corpus buscar algo</code> contesta <strong>«La puerta está cerrada…»</strong> sin preguntarte nada.
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s3" data-minimo data-corto data-min="3"><input type="checkbox" id="n7"><label for="n7">Deja de compartir y cierra la pestaña de Meet que abriste en la parada 1. Con Meet cerrado y sin sesión, abre la puerta en IA y pide una búsqueda con <code>ghost</code> (si hiciste las anteriores, macOS vuelve a pedirte la contraseña: <strong>la llave es nueva en cada apertura</strong>). Ahora ve a <em>Sesión</em> y pulsa <strong>«Iniciar sesión»</strong>: en IA la puerta dice <strong>«Se cerró sola: hay una reunión»</strong>, y la misma orden en Terminal contesta <strong>«La puerta está cerrada…»</strong> sin preguntarte nada. <strong>Deja la sesión en marcha</strong> para la parada siguiente.
+      <li data-origen="heredada" data-nace="s3" data-minimo data-corto data-min="3"><input type="checkbox" id="n7"><label for="n7">Deja de compartir y cierra la pestaña de Meet que abriste en la parada 1. Con Meet cerrado y sin sesión, abre la puerta en IA y pide una búsqueda con <code>ghost</code> (si hiciste las anteriores, macOS vuelve a pedirte la contraseña: <strong>la llave es nueva en cada apertura</strong>). Ahora ve a <em>Sesión</em> y pulsa <strong>«Iniciar sesión»</strong>: en IA la puerta dice <strong>«Se cerró sola: hay una reunión»</strong>, y la misma orden en Terminal contesta <strong>«La puerta está cerrada…»</strong> sin preguntarte nada. <strong>Deja la sesión en marcha</strong> para la parada siguiente.
         <p class="chica suave" style="margin:6px 0 0">En reunión tu agente no toca nada: la puerta se cierra al empezar la sesión, y un vigía la cierra también si aparece una videollamada con la puerta abierta. No se vuelve a abrir sola.</p>
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span>
         <span class="minimo">⭐⭐ Parada 8 de 9 · ~3 min</span></label></li>
     </ul>
@@ -701,24 +721,24 @@
     <div class="bloque-cabeza"><span class="letra">O</span><h2>La bandeja que vence sola</h2></div>
     <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la sesión en marcha, con la app arrancada con AG_BANDEJA_DE_PRUEBA=1</code> · ~10 min (hay esperas) · lo que no decides muere a su hora, aunque no abras la app</p>
     <ul class="pasos">
-      <li data-origen="nuevo" data-nace="s3" data-minimo data-corto data-min="4"><input type="checkbox" id="o1"><label for="o1">Con la sesión en marcha, di tú por el micrófono <strong>«Te lo mando en doce semanas»</strong> y no la decidas. «Terminar sesión»: <em>Notas</em> dice cuántas propuestas quedan sin decidir y te deja elegir cuánto esperan; elige <strong>1 h</strong> (con la bandeja de prueba dura <strong>2 minutos</strong>). «Guardar cifrado y cerrar». Si no lo viste en la parada 7, macOS avisa ahora de un <strong>ítem en segundo plano añadido</strong> (Background Items Added). Notas y Honestidad enseñan la bandeja con su cuenta atrás. <strong>Sal de la app con ⌘Q</strong> y espera <strong>tres minutos</strong> sin abrirla. En Terminal, <code>ls ~/Library/Application\ Support/com.aiapps.copiloto-consultor/bandeja/</code>: <strong>vacía</strong>. Abre la app: la bandeja no está, y Honestidad no dice nada en rojo.
+      <li data-origen="heredada" data-nace="s3" data-minimo data-corto data-min="4"><input type="checkbox" id="o1"><label for="o1">Con la sesión en marcha, di tú por el micrófono <strong>«Te lo mando en doce semanas»</strong> y no la decidas. «Terminar sesión»: <em>Notas</em> dice cuántas propuestas quedan sin decidir y te deja elegir cuánto esperan; elige <strong>1 h</strong> (con la bandeja de prueba dura <strong>2 minutos</strong>). «Guardar cifrado y cerrar». Si no lo viste en la parada 7, macOS avisa ahora de un <strong>ítem en segundo plano añadido</strong> (Background Items Added). Notas y Honestidad enseñan la bandeja con su cuenta atrás. <strong>Sal de la app con ⌘Q</strong> y espera <strong>tres minutos</strong> sin abrirla. En Terminal, <code>ls ~/Library/Application\ Support/com.aiapps.copiloto-consultor/bandeja/</code>: <strong>vacía</strong>. Abre la app: la bandeja no está, y Honestidad no dice nada en rojo.
         <p class="chica suave" style="margin:6px 0 0">Lo borra una tarea de macOS programada al minuto de cada vencimiento; entre vencimientos no corre nada. Sin <code>AG_BANDEJA_DE_PRUEBA=1</code>, la ventana de 1 h dura una hora.</p>
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span>
         <span class="minimo">⭐⭐ Parada 9 de 9 · ~4 min</span></label></li>
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="o2"><label for="o2">Guarda otra bandeja (1 h de prueba), sal de la app y vuelve a abrirla antes de que venza: Notas enseña la cuenta atrás, pero <strong>lo que dice está cerrado con llave</strong> («Cerrada con llave: es de una sesión anterior de la app»): «Abrir con Touch ID».
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="o2"><label for="o2">Guarda otra bandeja (1 h de prueba), sal de la app y vuelve a abrirla antes de que venza: Notas enseña la cuenta atrás, pero <strong>lo que dice está cerrado con llave</strong> («Cerrada con llave: es de una sesión anterior de la app»): «Abrir con Touch ID».
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s3"><input type="checkbox" id="o3"><label for="o3">Al cerrar una reunión con propuestas, elige la ventana <strong>«al cerrar»</strong>: Notas dice «Elegiste «al cerrar»: no hay bandeja y no se escribe nada», y <code>ls ~/Library/Application\ Support/com.aiapps.copiloto-consultor/bandeja/</code> sigue vacía.
-        <span class="origen origen-nuevo">Nuevo · S3</span></label></li>
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="o4"><label for="o4">Ajustes del Sistema (System Settings) → General → <strong>Ítems de inicio (Login Items &amp; Extensions)</strong>: mientras haya bandeja o notas con fecha, aparece <strong>«sh · desarrollador no identificado»</strong>. Es la tarea de borrado de Angel Ghost: hasta que la app vaya firmada no puede llevar su nombre.
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+      <li data-origen="heredada" data-nace="s3"><input type="checkbox" id="o3"><label for="o3">Al cerrar una reunión con propuestas, elige la ventana <strong>«al cerrar»</strong>: Notas dice «Elegiste «al cerrar»: no hay bandeja y no se escribe nada», y <code>ls ~/Library/Application\ Support/com.aiapps.copiloto-consultor/bandeja/</code> sigue vacía.
+        <span class="origen origen-heredada">S3</span></label></li>
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="o4"><label for="o4">Ajustes del Sistema (System Settings) → General → <strong>Ítems de inicio (Login Items &amp; Extensions)</strong>: mientras haya bandeja o notas con fecha, aparece <strong>«sh · desarrollador no identificado»</strong>. Es la tarea de borrado de Angel Ghost: hasta que la app vaya firmada no puede llevar su nombre.
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="o5"><label for="o5">Desactiva esa tarea con una bandeja viva, sal de la app y espera cinco minutos después de que venza (la app solo acusa lo que venció hace más de 2 min). Vuelve a abrirla: Honestidad dice en rojo <strong>«La tarea de borrado no corrió con la app cerrada: revisa Ítems de inicio (Login Items &amp; Extensions)»</strong>, y la app la borra al arrancar. Vuelve a activar la tarea.
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="o5"><label for="o5">Desactiva esa tarea con una bandeja viva, sal de la app y espera cinco minutos después de que venza (la app solo acusa lo que venció hace más de 2 min). Vuelve a abrirla: Honestidad dice en rojo <strong>«La tarea de borrado no corrió con la app cerrada: revisa Ítems de inicio (Login Items &amp; Extensions)»</strong>, y la app la borra al arrancar. Vuelve a activar la tarea.
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s3" data-minimo><input type="checkbox" id="o6"><label for="o6"><strong>Limpieza, al terminar la guía:</strong> Notas → el archivo → cada reunión de prueba → <strong>«Borrar ahora»</strong> (pregunta antes: se borra de la app y no vuelve; si usas Time Machine, tus copias la conservan hasta que caduquen). Sin nada con fecha, la tarea se quita sola: <code>ls ~/Library/LaunchAgents | grep aiapps</code> no devuelve nada y desaparece de Ítems de inicio (Login Items &amp; Extensions). Vuelve a señalar tu carpeta de siempre en Corpus.
-        <span class="origen origen-nuevo">Nuevo · S3</span>
+      <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="o6"><label for="o6"><strong>Limpieza, al terminar la guía:</strong> Notas → el archivo → cada reunión de prueba → <strong>«Borrar ahora»</strong> (pregunta antes: se borra de la app y no vuelve; si usas Time Machine, tus copias la conservan hasta que caduquen). Sin nada con fecha, la tarea se quita sola: <code>ls ~/Library/LaunchAgents | grep aiapps</code> no devuelve nada y desaparece de Ítems de inicio (Login Items &amp; Extensions). Vuelve a señalar tu carpeta de siempre en Corpus.
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
     </ul>
     <div class="kit"><p><strong>Cómo se arranca para este bloque:</strong> <code>AG_BANDEJA_DE_PRUEBA=1 pnpm tauri dev</code>. Con esa variable, toda ventana de la bandeja que no sea «al cerrar» dura 2 minutos: así se ve a macOS borrarla con la app cerrada sin esperar horas. Solo existe en la compilación de desarrollo.</p></div>
@@ -731,25 +751,94 @@
     <ul class="pasos">
       <li data-origen="heredada" data-nace="s1"><input type="checkbox" id="p1"><label for="p1">Mira las dos pistas con su idioma y el estado real de su modelo. <strong>Si un modelo no está instalado, lo dice</strong> en vez de fallar en silencio cuando alguien hable.
         <span class="origen origen-heredada">S1</span></label></li>
-      <li data-origen="mejorado" data-nace="s2" data-minimo><input type="checkbox" id="p1b"><label for="p1b">El código de cada pista (<code>es-ES</code>, <code>en-US</code>…) <strong>se elige</strong>: tiene un subrayado a trazos. En una instalación nueva las dos nacen en <strong>español</strong>. Cambia la del cliente a <code>en-US</code> y <strong>cierra la app con ⌘Q</strong>. Vuelve a abrirla: la consola dice <code>[prefs] idiomas es-ES / en-US</code>. <strong>Sin pasar por Idioma</strong>, ve a Sesión y pulsa «Iniciar sesión»: aparece <code>[escucha] pista «sistema» abierta · en-US</code>, e Idioma sigue diciendo <code>en-US</code>. <strong>Al terminar, vuelve a poner la del cliente en <code>es-ES</code></strong>: se recuerda, y los bloques E a J hablan en español.
+      <li data-origen="heredada" data-nace="s2" data-minimo><input type="checkbox" id="p1b"><label for="p1b">El código de cada pista (<code>es-ES</code>, <code>en-US</code>…) <strong>se elige</strong>: tiene un subrayado a trazos. En una instalación nueva las dos nacen en <strong>español</strong>. Cambia la del cliente a <code>en-US</code> y <strong>cierra la app con ⌘Q</strong>. Vuelve a abrirla: la consola dice <code>[prefs] idiomas es-ES / en-US</code>. <strong>Sin pasar por Idioma</strong>, ve a Sesión y pulsa «Iniciar sesión»: aparece <code>[escucha] pista «sistema» abierta · en-US</code>, e Idioma sigue diciendo <code>en-US</code>. <strong>Al terminar, vuelve a poner la del cliente en <code>es-ES</code></strong>: se recuerda, y los bloques E a J hablan en español.
         <p class="chica suave" style="margin:6px 0 0">Hasta el S3 la elección vivía en memoria y al reabrir volvían a español. Ahora se guarda en <code>preferencias.json</code>, que solo tu cuenta puede leer; y la sesión toma los idiomas de ahí, no de la pantalla.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="mejorado" data-nace="s1" data-minimo><input type="checkbox" id="p2"><label for="p2">Elige para el cliente un idioma cuyo modelo tu Mac no traiga (en un Mac en español, suele ser <code>en-US</code>): la fila lo dice en ámbar y ofrece <strong>«Instalar»</strong>. Púlsalo: el botón pasa a <strong>«instalando…»</strong> y no se puede volver a pulsar; cuando macOS termina, la fila dice <strong>«modelo instalado»</strong>. Es la única vez que la transcripción toca la red, y en la dirección contraria: entra el modelo, no sale nada. El contador sigue en <strong>0 B</strong>. Al terminar, vuelve a poner la pista del cliente en <code>es-ES</code>: se recuerda.
+      <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="p2"><label for="p2">Elige para el cliente un idioma cuyo modelo tu Mac no traiga (en un Mac en español, suele ser <code>en-US</code>): la fila lo dice en ámbar y ofrece <strong>«Instalar»</strong>. Púlsalo: el botón pasa a <strong>«instalando…»</strong> y no se puede volver a pulsar; cuando macOS termina, la fila dice <strong>«modelo instalado»</strong>. Es la única vez que la transcripción toca la red, y en la dirección contraria: entra el modelo, no sale nada. El contador sigue en <strong>0 B</strong>. Al terminar, vuelve a poner la pista del cliente en <code>es-ES</code>: se recuerda.
         <p class="chica suave" style="margin:6px 0 0">Desde el S2 hay otra puerta a la red, el proveedor externo de IA, apagada salvo que la enciendas (bloque H). Y desde el S3 el idioma elegido se recuerda: por eso se devuelve.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
       <li data-origen="heredada" data-nace="s1"><input type="checkbox" id="p3"><label for="p3">Comprueba el aviso del techo: <strong>cinco idiomas listos a la vez, como mucho</strong>. Es un límite de macOS, no de la app, y la pantalla lo dice así.
         <span class="origen origen-heredada">S1</span></label></li>
-      <li data-origen="mejorado" data-nace="s1" data-minimo><input type="checkbox" id="p4"><label for="p4">En una reunión en inglés, con el idioma del cliente en <code>en-US</code>: los turnos del cliente <strong>se transcriben en inglés</strong> y los tuyos en español, cada pista por su lado. Al terminar, vuelve a poner la pista del cliente en <code>es-ES</code>: se recuerda.
+      <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="p4"><label for="p4">En una reunión en inglés, con el idioma del cliente en <code>en-US</code>: los turnos del cliente <strong>se transcriben en inglés</strong> y los tuyos en español, cada pista por su lado. Al terminar, vuelve a poner la pista del cliente en <code>es-ES</code>: se recuerda.
         <p class="chica suave" style="margin:6px 0 0">Desde el S3 el idioma elegido sobrevive al cierre de la app.</p>
-        <span class="origen origen-mejorado">Mejorado en S3</span>
+        <span class="origen origen-heredada">S3</span>
         <span class="minimo">⭐ mínimo</span></label></li>
       <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="p5"><label for="p5"><strong>Una pregunta para ti, no una comprobación.</strong> Con un idioma sin modelo, baja hasta el final de esta pantalla. En el S1 <strong>se desplazaba 15 px</strong> —la última línea del párrafo de abajo— y el S2 le añadió la tarjeta del diccionario: dime si se desplaza y si te molesta.
         <span class="origen origen-heredada">S2</span>
         <span class="minimo">⭐ mínimo</span></label></li>
     </ul>
     <div class="reportame"><p><strong>Repórtame sí o sí:</strong> que el contador de red se mueva de 0 B por algo que no sea la descarga de un modelo que tú pediste o el proveedor externo de IA que tú encendiste.</p></div>
+  </section>
+  <section class="bloque">
+    <div class="bloque-cabeza"><span class="letra">Q</span><h2>Arriba o abajo: la banda junto a la cámara</h2></div>
+    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>Sesión, sin sesión en marcha, con la banda abajo y una sala tuya de Meet abierta en Chrome, con la ventana maximizada (no a pantalla completa)</code> · ~16 min · el sitio nuevo de la banda, y que solo la reunión se mueva</p>
+    <p class="chica" style="margin:0 0 10px">Desde el S4 la banda nace arriba, bajo la barra de menús, junto a la cámara: leer ahí se ve como mirar a quien habla. Los bloques A a P la usaron abajo, como en el H1; este bloque la sube. <strong>Arriba, el acople ya no recorta la ventana que tengas delante:</strong> baja y encoge la de la reunión que la app detectó, y solo esa.</p>
+    <ul class="pasos">
+      <li data-origen="nuevo" data-nace="s4" data-minimo data-candidata="no"><input type="checkbox" id="q1"><label for="q1">En Sesión, «La banda» → <strong>arriba</strong> (o <strong>⌃⌥B</strong>). La banda y su relleno suben juntos <strong>bajo la barra de menús</strong> —y bajo el notch, si tu Mac lo tiene—, sin taparla y sin separarse ni un píxel; <strong>el asa queda abajo</strong>. Arrastra el asa <strong>hacia abajo</strong>: la banda crece a 200 px y el relleno con ella. Arrástrala de vuelta hacia arriba: vuelve a 88 px.
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>no</strong>. La geometría la prueban tres pantallas sintéticas (1440×900, con notch y externa desplazada) y la fidelidad compara la banda arriba con su maqueta; lo que solo se ve en tu pantalla de verdad se mira de paso en la q2.</p>
+        <span class="origen origen-nuevo">Nuevo · S4</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-nace="s4" data-minimo data-candidata="si"><input type="checkbox" id="q2"><label for="q2">Comparte la <strong>pantalla completa</strong> en tu sala de Meet y mírate en la miniatura de tu propia compartición, o pide a alguien que mire. <strong>La franja de arriba, bajo la barra de menús, no muestra la banda: muestra tu fondo de escritorio.</strong> Es la promesa entera de la app, en el sitio nuevo. Deja de compartir.
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. Es la promesa central en el sitio nuevo, y ninguna automatización ve lo que Meet transmite: lo verificado hasta hoy es la banda abajo (a2).</p>
+        <span class="origen origen-nuevo">Nuevo · S4</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-nace="s4" data-minimo data-candidata="si"><input type="checkbox" id="q3"><label for="q3">Mira la ventana de Chrome: al subir la banda, <strong>su borde de arriba bajó hasta quedar justo debajo de la banda, y su borde de abajo se quedó donde estaba</strong>: bajó y se encogió lo que mide la banda. En la consola de <code>pnpm tauri dev</code> aparece <code>[acople] arriba: estaba … · pedido … · quedó …</code> con sus milisegundos. Abre una ventana de TextEdit y arrástrala hasta que toque la banda: <strong>no se mueve</strong>; arriba solo se toca la ventana de la reunión. Pulsa <strong>⌥⎋</strong>: la banda se va y <strong>Chrome vuelve exactamente a su sitio y a su tamaño</strong>, y la consola dice cuánto tardó. Apunta los dos números (el presupuesto es 300 ms).
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. Mover una ventana ajena es lo que más asusta del sprint. La CI prueba la decisión, el orden de los pasos y la devolución con ventanas sintéticas; con Chrome de verdad solo se vio una vez, en la corrida en vivo de la fase 1.</p>
+        <span class="origen origen-nuevo">Nuevo · S4</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-nace="s4"><input type="checkbox" id="q4"><label for="q4">Sal con <strong>⌘Q</strong> y vuelve a arrancar: la banda vuelve <strong>arriba</strong> —se recuerda— y el aviso de la primera vez no sale otra vez. Con Meet cerrado, la banda flota bajo la barra y dice <strong>«sin acople»</strong>, y la ventana que tengas delante no se mueve. Abre tu sala de Meet y pulsa «Iniciar sesión»: la ventana de la reunión se acopla. Pulsa <strong>⌃⌥B</strong>: la banda baja al borde inferior, la reunión se suelta entera y se acopla como en el H1; otra vez ⌃⌥B, y vuelve arriba. Termina con «Terminar sesión» → «Cerrar sin guardar» y cierra la pestaña de Meet.
+        <span class="origen origen-nuevo">Nuevo · S4</span></label></li>
+      <li data-origen="nuevo" data-nace="s4" data-minimo data-candidata="no"><input type="checkbox" id="q5"><label for="q5"><strong>Lo que no se probó en vivo con la banda arriba</strong> —cada uno, si lo tienes—: en <strong>Zoom</strong> y en <strong>Teams</strong>, su ventana principal baja y se encoge al iniciar la sesión y vuelve con ⌥⎋ (anota sus versiones); con una <strong>pantalla externa</strong>, la banda va arriba en la principal y una ventana de la reunión en la otra pantalla no se toca; y con la reunión a <strong>pantalla completa</strong>, la app no la mueve y la banda flota con «sin acople».
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>no</strong>. Pide programas y pantallas que el recorrido no puede dar por hechos, como a3b y a3c en el H1; la CI cubre la decisión con otra pantalla y con una ventana que macOS no deja mover.</p>
+        <span class="origen origen-nuevo">Nuevo · S4</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+    </ul>
+    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> la banda visible arriba al compartir pantalla, una ventana que no es la de la reunión movida o encogida, o Chrome que no vuelve exactamente a su sitio.</p></div>
+  </section>
+  <section class="bloque">
+    <div class="bloque-cabeza"><span class="letra">R</span><h2>El ensayo: practica antes de la reunión</h2></div>
+    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>Ensayo (en el rail, bajo Sesión), sin sesión en marcha y con la carpeta del kit señalada en Corpus</code> · ~25 min · las preguntas que te harían, tu voz, y lo que queda</p>
+    <p class="chica" style="margin:0 0 10px">Aquí la app <strong>abre el micrófono fuera de una reunión</strong> y, al guardar, toca <strong>el Llavero</strong>, <strong>la tarea de borrado</strong> de macOS y <strong>Touch ID</strong>: las cuatro cosas que la corrida en vivo de la fase 4 dejó para este gate (están en la caja de avisos de arriba). No hacen falta auriculares: sin reunión, la voz sale por donde suene tu Mac. Responde con tus palabras o, si lo prefieres, lee en voz alta una de las respuestas de <code>docs/kit-de-prueba/ensayo.json</code> (bloque <code>respuestas</code>).</p>
+    <ul class="pasos">
+      <li data-origen="nuevo" data-nace="s4"><input type="checkbox" id="r1"><label for="r1">En «Con quién ensayas», Cliente <strong>Páramo Azul</strong>; la propuesta es la del kit (rentabilidad por canal); Preguntas <strong>5</strong>. La pantalla dice «Idioma del ensayo: el de la propuesta, español.» y, en «De dónde salen las preguntas», tu propuesta, su ficha de cliente y las objeciones típicas, con «Enriquecer el banco: apagado». «Leer la pregunta en voz alta» está encendido.
+        <span class="origen origen-nuevo">Nuevo · S4</span></label></li>
+      <li data-origen="nuevo" data-nace="s4" data-minimo data-candidata="si"><input type="checkbox" id="r2"><label for="r2">Pulsa <strong>«Empezar el ensayo»</strong>. Si la app desde la que arrancaste nunca tuvo el micrófono, macOS pregunta: permítelo. En la barra de menús aparece <strong>el punto naranja del micrófono, y no el morado</strong> de la grabación de pantalla: el ensayo no abre ni el audio del sistema ni la pantalla. La voz te lee la primera pregunta mientras la pantalla dice «Te la está leyendo · El micrófono espera a que termine», y <strong>nada de lo que dice la voz entra en tu respuesta</strong>. Respóndela en voz alta, como ante el cliente, y cállate: <strong>a los 2,5 s</strong> se cierra sola y llega la evaluación, con «Usaste», «Tenías y no usaste» y sus fichas, y tiempo, ritmo y muletillas. La segunda, termínala con <strong>Enter</strong>. <strong>¿Lo que dice que usaste y que tenías es justo con lo que dijiste?</strong> Si citaste algo con otras palabras y no lo vio, pulsa «Sí lo dije».
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. Es el ensayo entero con una voz de verdad: la CI no tiene modelos para reconocer voz, y solo tú puedes decir si la evaluación es justa con lo que dijiste.</p>
+        <span class="origen origen-nuevo">Nuevo · S4</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-nace="s4" data-minimo data-candidata="si"><input type="checkbox" id="r3"><label for="r3">En la tercera, responde con calma y mete a propósito un <strong>«o sea»</strong> y dos <strong>«básicamente»</strong>. En «Muletillas» salen las que la transcripción conservó, con sus veces; <strong>«eh» y «um» no salen</strong>, y la pantalla lo dice. «Ritmo», en palabras por minuto: ¿se parece a cómo hablaste? (Una respuesta de menos de cinco palabras o de menos de dos segundos dice «—».)
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. Que la transcripción de macOS conserve tus muletillas con tu voz es justo lo que la CI no puede oír; las cuentas sí las prueba, con el texto del kit.</p>
+        <span class="origen origen-nuevo">Nuevo · S4</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-nace="s4"><input type="checkbox" id="r4"><label for="r4">Con la evaluación de la tercera en pantalla, ve a <strong>Honestidad</strong>: el chip del rail dice «Ensayando», la fila <strong>«Tus respuestas del ensayo»</strong> tiene bytes («en texto · hasta guardar o cerrar»), la pista del sistema, el transcript y la pantalla siguen en 0 B, y el contador de red en <strong>0 B</strong>. Vuelve a Ensayo.
+        <span class="origen origen-nuevo">Nuevo · S4</span></label></li>
+      <li data-origen="nuevo" data-nace="s4"><input type="checkbox" id="r5"><label for="r5">En la cuarta, pulsa <strong>R</strong> mientras respondes: la pregunta se vuelve a leer y lo que habías dicho no se mezcla con la respuesta nueva. Pulsa <strong>S</strong>: se salta. En la quinta, pulsa <strong>Esc</strong> a media respuesta: llega <strong>el informe</strong>, y esa pregunta no cuenta ni como respondida ni como saltada. Con el cursor en un selector, las letras no hacen nada.
+        <span class="origen origen-nuevo">Nuevo · S4</span></label></li>
+      <li data-origen="nuevo" data-nace="s4" data-minimo data-candidata="no"><input type="checkbox" id="r6"><label for="r6">En el informe, <strong>«Guardar con tus notas»</strong>. Si la llave «Angel Ghost · notas» la creó otra compilación de la app, macOS pregunta si puede usarla: «Permitir» (Allow). Si no tenías nada con fecha, macOS avisa de un <strong>ítem en segundo plano añadido</strong> (Background Items Added): es la tarea que borra lo vencido. Ensayo vuelve a preparar con <strong>«Ensayo guardado con tus notas.»</strong> y la fila «Ensayos guardados con este cliente · 1 · Ver tu progreso». En Terminal, <code>ls -l ~/Library/Application\ Support/com.aiapps.copiloto-consultor/ensayos/</code> enseña <code>paramo-azul-&lt;fecha&gt;.ghost</code> con <code>-rw-------</code>, y <code>strings ~/Library/Application\ Support/com.aiapps.copiloto-consultor/ensayos/*.ghost | head</code> <strong>no saca ni una palabra de tus respuestas</strong>.
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>no</strong>. La CI guarda un ensayo en una sesión completa, lo descifra y comprueba que el cliente no está; la tarea de borrado es la misma que la del H1 (parada 7), y la CI comprueba que los ensayos entran en su lista.</p>
+        <span class="origen origen-nuevo">Nuevo · S4</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-nace="s4" data-minimo data-candidata="si"><input type="checkbox" id="r7"><label for="r7">Haz un <strong>segundo ensayo</strong> corto (5 preguntas: responde dos y pulsa Esc) y guárdalo. Pulsa <strong>«Ver tu progreso»</strong>: macOS pide <strong>Touch ID o tu contraseña</strong> con el motivo <strong>«abrir tus ensayos guardados»</strong> (si cancelas, «No se abrieron tus ensayos», y nada cambia). La tabla tiene <strong>dos filas</strong>, una por ensayo, con evidencia, ritmo, muletillas y tiempo, y <strong>«Desde el primero»</strong>, con una flecha por cifra. No sale ni una palabra de tus respuestas, ni un puntaje. <strong>¿Te dice algo útil de cómo cambiaste?</strong>
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. Ver tu progreso es la promesa del ensayo, y el aviso de macOS y su motivo solo se ven con dos ensayos tuyos guardados.</p>
+        <span class="origen origen-nuevo">Nuevo · S4</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-nace="s4"><input type="checkbox" id="r8"><label for="r8">Haz un tercer ensayo corto y, en el informe, <strong>«Exportar como texto»</strong>: como ya abriste tus ensayos en esta sesión de la app, no vuelve a pedir Touch ID. Guárdalo en el Escritorio: el <code>.md</code> trae tus respuestas y sus cifras. Bórralo al terminar: ese archivo ya no lo protege nadie. Pulsa «Cerrar sin guardar»: ese tercer ensayo no queda, y la cuenta sigue en 2.
+        <span class="origen origen-nuevo">Nuevo · S4</span></label></li>
+      <li data-origen="nuevo" data-nace="s4"><input type="checkbox" id="r9"><label for="r9">En Sesión, «Iniciar sesión», y vuelve a Ensayo: <strong>«Empezar el ensayo»</strong> dice <strong>«Hay una reunión abierta»</strong> («El ensayo y la reunión no conviven: termínala en Sesión para ensayar.»). Termina la sesión sin guardar. Ahora abre la puerta local en IA (bloque N) y empieza un ensayo: <strong>la puerta se cierra sola</strong>, y <code>ghost corpus buscar algo</code> contesta «La puerta está cerrada…». Termina con Esc y «Cerrar sin guardar».
+        <span class="origen origen-nuevo">Nuevo · S4</span></label></li>
+      <li data-origen="nuevo" data-nace="s4" data-minimo data-candidata="no"><input type="checkbox" id="r10"><label for="r10"><em>Con Apple Intelligence activado:</em> en IA, enciende <strong>«Enriquecer el banco»</strong> y empieza un ensayo de 5. Arriba sale «El modelo está proponiendo preguntas de más…» y, cuando llega, <strong>«El modelo sumó N preguntas, al final y marcadas.»</strong> (o por qué no). Las del modelo van detrás, con el chip «sugerida por el modelo». <strong>¿Son preguntas que ese cliente haría, y se apoyan en tu propuesta?</strong> Con el proveedor externo apagado, el contador de red sigue en 0 B. Termina con Esc y «Cerrar sin guardar», y apaga «Enriquecer el banco».
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>no</strong>. Es un acento que nace apagado: la CI recorre su camino con el mock (dos preguntas fundadas y una tirada en cada corrida); lo que queda es juzgar lo que propone un modelo, como la h3.</p>
+        <span class="origen origen-nuevo">Nuevo · S4</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-nace="s4" data-minimo data-candidata="no"><input type="checkbox" id="r11"><label for="r11"><strong>Limpieza, al terminar el bloque:</strong> «Ver tu progreso» → <strong>«Borrar los ensayos de este cliente»</strong>: pregunta antes («¿Borrar los ensayos de este cliente?», con lo de Time Machine) → «Borrar». <strong>No pide Touch ID.</strong> La carpeta <code>ensayos/</code> queda vacía; y si no te queda nada con fecha —ni notas ni bandeja—, la tarea de borrado se quita sola: <code>ls ~/Library/LaunchAgents | grep aiapps</code> no devuelve nada y desaparece de Ítems de inicio (Login Items &amp; Extensions).
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>no</strong>. La CI prueba que borrar no abre los archivos y que la lista de vencimientos se rehace; quitar la tarea de verdad es lo mismo que la o6 del H1.</p>
+        <span class="origen origen-nuevo">Nuevo · S4</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+    </ul>
+    <div class="kit"><p><strong>Kit de prueba:</strong> <code>docs/kit-de-prueba/ensayo.json</code> (kit v3) trae el banco que se espera de Páramo Azul, regla por regla, y siete respuestas de ejemplo con lo que usan, sus muletillas y su ritmo: la CI mide con ellas el banco y la evaluación. Para responder, sirven tal cual.</p></div>
+    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> el punto morado de la pantalla durante un ensayo, la voz de la app dentro de tu respuesta, una palabra tuya legible en un archivo de <code>ensayos/</code>, un puntaje en algún sitio, o un aviso de macOS que no esté en la caja de arriba.</p></div>
   </section>
   <section class="bloque textos" data-textos>
     <div class="bloque-cabeza"><span class="letra">T</span><h2>Textos diferidos: si cada frase se entiende</h2></div>
@@ -784,6 +873,32 @@
     </div>
   </section>
 
+  <section class="bloque textos" data-textos-h2>
+    <div class="bloque-cabeza"><span class="letra">U</span><h2>Formas y textos del H2: si cada uno se entiende</h2></div>
+    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>docs/fidelidad/S4-cuaderno.html y docs/fidelidad/S4-banda-arriba.html (doble clic)</code> · ~8 min · separable del recorrido: va al gate del MVP del H2</p>
+    <p class="chica" style="margin:0 0 10px">Como el bloque T, pero del ciclo H2: las formas y los textos nuevos del S4 que se maquetaron y <strong>nadie ha mirado</strong> («maquetada, no vista», registradas en <code>docs/diseno/README.md</code>). Las dos pantallas que sí miraste —el ensayo y la banda arriba— no están: las aprobaste en la fase 0. Los comparativos enseñan cada pantalla construida al lado de su maqueta; busca el encuadre por su nombre. Las filas que dicen <code>diseno/…</code> se abren en <code>docs/diseno/</code>, con el botón del estado. Contesta en la misma fila.</p>
+    <div class="tabla-scroll">
+      <table>
+        <thead><tr><th scope="col">#</th><th scope="col">Abre · encuadre o estado</th><th scope="col">Qué mirar · de dónde viene</th><th scope="col">Qué respuesta espero</th></tr></thead>
+        <tbody>
+          <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u1" aria-label="Fila 1 vista"> <span class="mono-chica">1</span></td><td><code>S4-cuaderno</code><br><span class="mono-chica">sesion-aviso</span></td><td>El aviso de la primera vez: «La banda ahora va arriba, junto a la cámara» y «Leer la ficha arriba se ve como mirar a quien habla. ¿La prefieres abajo? Cámbiala aquí o con ⌃⌥B.», con «Entendido», en el sitio de la tarjeta de la reunión.<br><span class="suave chica">S4 · fases 0 y 1</span></td><td>¿Entiendes por qué cambió y cómo volver? Sí. Si no, la frase que tú dirías.</td></tr>
+          <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u2" aria-label="Fila 2 vista"> <span class="mono-chica">2</span></td><td><code>S4-cuaderno</code><br><span class="mono-chica">sesion · sesion-en-marcha · sesion-nda · sesion-sin-bandera</span></td><td>La fila «La banda: arriba · abajo · ⌃⌥B» en todos los estados de Sesión, junto a «Las dos pistas».<br><span class="suave chica">S4 · fase 1 · forma</span></td><td>¿La quieres ahí siempre, o solo antes de empezar? Una de las dos.</td></tr>
+          <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u3" aria-label="Fila 3 vista"> <span class="mono-chica">3</span></td><td><code>S4-cuaderno</code><br><span class="mono-chica">ia</span></td><td>El segundo interruptor, «Enriquecer el banco», apagado, bajo «Redactar sugerencias». Lo que hace lo explica Ensayo: «Un modelo puede proponer preguntas de más. Se enciende en IA.»<br><span class="suave chica">S4 · fases 0 y 2</span></td><td>¿Sabes qué enciendes, estando en IA? Sí. Si no, la frase que tú dirías.</td></tr>
+          <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u4" aria-label="Fila 4 vista"> <span class="mono-chica">4</span></td><td><code>S4-cuaderno</code><br><span class="mono-chica">honestidad · honestidad-ensayando</span></td><td>«Tuyo — notas, acuerdos, fichas fijadas, propuestas guardadas, ensayos y, si lo enciendes, tus turnos. Cifrado.» (más corto, para caber en una línea), la fila «Tus respuestas del ensayo · en texto · hasta guardar o cerrar», el chip «Ensayando» y «12 de 12».<br><span class="suave chica">S4 · fases 0, 3 y 4</span></td><td>¿Se entiende qué queda de un ensayo y qué hay en memoria mientras ensayas? Sí. Si no, la frase que tú dirías.</td></tr>
+          <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u5" aria-label="Fila 5 vista"> <span class="mono-chica">5</span></td><td><code>S4-cuaderno</code> · <code>diseno/ensayo.html</code><br><span class="mono-chica">ensayo-no-empezo · 9 · más textos</span></td><td>«El micrófono no se abrió» con sus dos porqués, «Este Mac no sabe transcribir el idioma de la propuesta» y «Hay una reunión abierta».<br><span class="suave chica">S4 · fase 3</span></td><td>¿Sabes qué hacer en cada caso? Sí. Si no, la frase que tú dirías.</td></tr>
+          <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u6" aria-label="Fila 6 vista"> <span class="mono-chica">6</span></td><td><code>S4-cuaderno</code> · <code>diseno/ensayo.html</code><br><span class="mono-chica">ensayo-del-modelo · 8 · textos</span></td><td>La pregunta «sugerida por el modelo», al final; «El modelo sumó 2 preguntas, al final y marcadas.» y las cinco líneas de «El modelo no sumó preguntas: …».<br><span class="suave chica">S4 · fase 3</span></td><td>¿Distingues una pregunta del modelo de una de tus reglas, y entiendes por qué a veces no suma? Sí. Si no, la frase que tú dirías.</td></tr>
+          <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u7" aria-label="Fila 7 vista"> <span class="mono-chica">7</span></td><td><code>diseno/ensayo.html</code><br><span class="mono-chica">8 · textos</span></td><td>El chip de cada fuente («propuesta», «ficha de cliente», «objeción típica»), el informe en singular y el ensayo en inglés.<br><span class="suave chica">S4 · fase 3</span></td><td>¿Se entiende de dónde sale cada pregunta? Sí. Si no, la frase que tú dirías.</td></tr>
+          <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u8" aria-label="Fila 8 vista"> <span class="mono-chica">8</span></td><td><code>S4-cuaderno</code><br><span class="mono-chica">ensayo-cerrado</span></td><td>Bajo el informe: «Se cifra con la llave de tus notas y se borra en 90 días, tu retención. El audio no se guardó en ningún momento.», y los tres botones.<br><span class="suave chica">S4 · fase 4</span></td><td>¿Sabes qué se guarda, con qué llave y hasta cuándo, antes de pulsar? Sí. Si no, la frase que tú dirías.</td></tr>
+          <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u9" aria-label="Fila 9 vista"> <span class="mono-chica">9</span></td><td><code>S4-cuaderno</code><br><span class="mono-chica">ensayo-guardado · ensayo-progreso</span></td><td>«Ensayo guardado con tus notas.», «Ensayos guardados con este cliente · 4 · Ver tu progreso», la tabla con «Desde el primero» y «Solo cifras que mediste, ensayo a ensayo; sin puntajes…», «Volver» y «Borrar los ensayos de este cliente».<br><span class="suave chica">S4 · fase 4</span></td><td>¿Te dice cómo vas sin juzgarte? Sí. Si no, la frase que tú dirías.</td></tr>
+          <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u10" aria-label="Fila 10 vista"> <span class="mono-chica">10</span></td><td><code>S4-cuaderno</code><br><span class="mono-chica">ensayo-progreso-borrar</span></td><td>«¿Borrar los ensayos de este cliente?» con «Se borran ahora de la app y no vuelven. Si usas Time Machine, tus copias los conservan hasta que caduquen.»<br><span class="suave chica">S4 · fase 4</span></td><td>¿Queda claro qué se borra y qué no? Sí. Si no, la frase que tú dirías.</td></tr>
+          <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u11" aria-label="Fila 11 vista"> <span class="mono-chica">11</span></td><td><code>diseno/ensayo.html</code><br><span class="mono-chica">10 · textos de lo guardado</span></td><td>«No se abrieron tus ensayos · Siguen cifrados y en su sitio.», guardar y exportar que fallan («El informe sigue aquí, entero.»), la retención «siempre», «Ningún ensayo guardado con este cliente.», una cifra que no cambió y los meses de la tabla.<br><span class="suave chica">S4 · fase 4</span></td><td>¿Se entiende qué pasó en cada caso y qué hacer? Sí. Si no, la frase que tú dirías.</td></tr>
+          <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u12" aria-label="Fila 12 vista"> <span class="mono-chica">12</span></td><td><code>S4-cuaderno</code><br><span class="mono-chica">cualquier pantalla del cuaderno</span></td><td>El chip del rail: «Sin sesión · 0 B» (decía «Sin reunión · 0 B»).<br><span class="suave chica">S4 · fase 3 · segunda vuelta de texto</span></td><td>¿Se entiende que es lo que pasa ahora mismo? Sí. Si no, la frase que tú dirías.</td></tr>
+          <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u13" aria-label="Fila 13 vista"> <span class="mono-chica">13</span></td><td><code>S4-banda-arriba</code><br><span class="mono-chica">arriba-88 · arriba-200 · arriba-44</span></td><td>La banda arriba con su línea abajo y el asa abajo, en 88, 200 y 44 px.<br><span class="suave chica">S4 · fase 1 · forma (la variante la aprobaste en la fase 0; esto es cómo quedó)</span></td><td>¿Se lee como la misma banda, en su sitio nuevo? Sí. Si no, qué te estorba.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
   <footer>
     <p class="chica suave">Guía <strong>viva y acumulativa</strong>: contiene TODAS las pruebas
       vigentes de la app con su origen visible; una prueba solo se elimina cuando su feature dejó
@@ -792,6 +907,14 @@
     <details class="chica">
       <summary>Historial de la guía</summary>
       <ul>
+        <li><strong>S4 · v6 · 2026-10-04 (abre el ciclo H2):</strong> 117 pruebas. <strong>16 nuevas</strong> en dos
+          bloques —la banda arriba, junto a la cámara (Q), y el ensayo (R)—. <strong>4 heredadas reescritas</strong> tras
+          releer las 101 contra la app de hoy: el primer arranque (la banda nace arriba), el rail con ocho secciones, la
+          app en inglés con Ensayo y el corte de 12 piezas (parada 6, en su sitio). Los bloques A a P y el ⭐⭐ del H1 se
+          corren con la banda abajo, como eran. Gate mínimo ⭐ de 94 (S1 33 · S2 28 · S3 23 · S4 10); <strong>acumulado
+          del H2: 10</strong>, cada una con su candidatura al ⭐⭐ del H2 (5 sí · 5 no); el ⭐⭐ del H1, 9 paradas y ~20 min,
+          intacto para su Acto 2. Tabla nueva de formas y textos del H2 (U), con 13 filas. <strong>Ninguna
+          eliminada.</strong> Namespace nuevo (<code>ag-s4-</code>).</li>
         <li><strong>S3 · v5 · 2026-09-27:</strong> 101 pruebas. <strong>29 nuevas</strong> en cinco
           bloques —este cliente (D), tus notas durante la reunión (K), tu archivo cifrado (M), la puerta local
           (N) y la bandeja que vence sola (O)—. <strong>33 heredadas reescritas</strong> tras releer
@@ -839,12 +962,11 @@
 <script>
   (function () {
     // NS VERSIONADO POR SPRINT (regla dura): al publicar la guía de un sprint nuevo se cambia
-    // `ag-s3-` — así una regresión sin correr no aparece marcada por el sprint anterior.
-    // Cambia con CADA versión de la guía, no solo con cada sprint: esta es la v5 del S3,
-    // retocada por la fase 2 de su auditoría antes de que nadie la corriera. Con el namespace viejo, las casillas que el
-    // usuario marcó antes de los arreglos seguirían marcadas sobre pruebas que ahora dicen otra
-    // cosa — una regresión sin correr apareciendo como aprobada.
-    var NS = "ag-s3-";
+    // `ag-s4-` — así una regresión sin correr no aparece marcada por el sprint anterior.
+    // Cambia con CADA versión de la guía, no solo con cada sprint: esta es la v6 del S4. Con el
+    // namespace viejo, las casillas marcadas en la v5 seguirían marcadas sobre pruebas que ahora
+    // dicen otra cosa — una regresión sin correr apareciendo como aprobada.
+    var NS = "ag-s4-";
     var casillas = Array.prototype.slice.call(document.querySelectorAll('input[type="checkbox"]'));
     var barra = document.getElementById("barra-avance");
     var contador = document.getElementById("contador");
@@ -853,9 +975,13 @@
 
     function visible(li, filtro) {
       if (filtro === "todo") return true;
-      if (filtro === "textos") return li.hasAttribute("data-texto");
+      var delH2 = li.getAttribute("data-ciclo") === "h2";
+      if (filtro === "textos") return li.hasAttribute("data-texto") && !delH2;
+      if (filtro === "textos-h2") return li.hasAttribute("data-texto") && delH2;
       if (li.hasAttribute("data-texto")) return false;
       if (filtro === "minimo") return li.hasAttribute("data-minimo");
+      // El acumulado del ciclo H2: las ⭐ que nacen del S4 al S6.
+      if (filtro === "h2") return li.hasAttribute("data-minimo") && /^s[4-6]$/.test(li.getAttribute("data-nace") || "");
       if (filtro === "corto") return li.hasAttribute("data-corto");
       var o = li.getAttribute("data-origen");
       return o === "nuevo" || o === "mejorado"; // filtro "cambios"
