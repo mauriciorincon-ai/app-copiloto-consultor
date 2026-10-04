@@ -61,6 +61,15 @@ const PANTALLAS = [
   { que: "banda · arriba · solo audio", url: "ventana=banda&estado=voz&borde=arriba" },
   { que: "sesión · la primera vez con la banda arriba", url: "ventana=principal&pantalla=sesion&estado=aviso" },
   { que: "banda · sugerencia", url: "ventana=banda&estado=sugerencia-local" },
+  // El ensayo (sprint 004, fase 3, ADR 019): cada estado que la pantalla dibuja.
+  { que: "ensayo · preparar", url: "ventana=principal&pantalla=ensayo&estado=preparar" },
+  { que: "ensayo · no empezó", url: "ventana=principal&pantalla=ensayo&estado=no-empezo" },
+  { que: "ensayo · preguntando", url: "ventana=principal&pantalla=ensayo&estado=preguntando" },
+  { que: "ensayo · del modelo", url: "ventana=principal&pantalla=ensayo&estado=del-modelo" },
+  { que: "ensayo · respondiendo", url: "ventana=principal&pantalla=ensayo&estado=respondiendo" },
+  { que: "ensayo · evaluada", url: "ventana=principal&pantalla=ensayo&estado=evaluada" },
+  { que: "ensayo · el informe", url: "ventana=principal&pantalla=ensayo&estado=cerrado" },
+  { que: "ensayo · sin corpus", url: "ventana=principal&pantalla=ensayo&estado=sin-corpus" },
 ];
 
 test.use({ reducedMotion: "reduce" });

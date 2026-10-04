@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-ensayo-saltar"
+description = "Enables the ensayo_saltar command without any pre-configured scope."
+commands.allow = ["ensayo_saltar"]
+
+[[permission]]
+identifier = "deny-ensayo-saltar"
+description = "Denies the ensayo_saltar command without any pre-configured scope."
+commands.deny = ["ensayo_saltar"]

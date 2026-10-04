@@ -270,6 +270,8 @@ export type PiezaDelCorte =
   | "sugerencia"
   | "audio-del-microfono"
   | "audio-del-sistema"
+  /** El ensayo (sprint 004, ADR 019 §6.4): su micrófono, la voz que lee y tus respuestas en texto. */
+  | "ensayo"
   | "ultimo-frame"
   | "transcript"
   /** Del cuaderno, lo que salió de la captura: tus turnos y la ficha vigente (sprint 003, ADR 015). */

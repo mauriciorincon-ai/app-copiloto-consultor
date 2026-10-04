@@ -70,6 +70,15 @@
     "allow-estado-de-la-bandeja",
     "allow-la-puerta",
     "allow-abrir-la-puerta",
-    "allow-cerrar-la-puerta"
+    "allow-cerrar-la-puerta",
+    "allow-preparar-el-ensayo",
+    "allow-empezar-el-ensayo",
+    "allow-ensayo-listo",
+    "allow-ensayo-repetir",
+    "allow-ensayo-saltar",
+    "allow-ensayo-terminar",
+    "allow-ensayo-si-lo-dije",
+    "allow-estado-del-ensayo",
+    "allow-cerrar-el-ensayo"
   ]
 }

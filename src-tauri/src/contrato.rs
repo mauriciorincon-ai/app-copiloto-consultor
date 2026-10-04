@@ -125,6 +125,83 @@ fn sugerencia() -> crate::sintesis::Sugerencia {
         .expect("la muestra cita su ficha")
 }
 
+/// «Preparar» de la maqueta: Páramo Azul, su propuesta, ocho preguntas (5 · 1 · 2).
+fn ensayo_preparado() -> crate::ensayo::Preparacion {
+    crate::ensayo::Preparacion {
+        clientes: vec!["Páramo Azul".into(), "Sur del Valle".into()],
+        cliente: Some("Páramo Azul".into()),
+        propuestas: vec![crate::ensayo::Elegible {
+            ruta: "/Users/consultor/Corpus/Propuestas/Rentabilidad por canal · Páramo Azul.md".into(),
+            nombre: "Rentabilidad por canal · Páramo Azul".into(),
+        }],
+        propuesta: Some("/Users/consultor/Corpus/Propuestas/Rentabilidad por canal · Páramo Azul.md".into()),
+        topes: vec![5, 8, 12],
+        tope: 8,
+        cuentas: crate::ensayo::Cuentas { propuesta: 5, ficha: 1, objeciones: 2 },
+        idioma: crate::ensayo::banco::Idioma::Es,
+        enriquecer: false,
+        transcribe: true,
+        sin_corpus: false,
+    }
+}
+
+/// La pregunta 3 de 8 de la maqueta, en cada fase.
+fn ensayo_vista(fase: crate::ensayo::sesion::Fase) -> crate::ensayo::VistaDelEnsayo {
+    use crate::ensayo::evaluacion::{Evaluacion, Evidencia, Muletilla};
+    use crate::ensayo::sesion::{Fase, Fila, Informe};
+    use crate::ficha::Fuente;
+    let fuente = |documento: &str, seccion: &str, unidad| Fuente {
+        documento: documento.into(),
+        seccion: Some(seccion.into()),
+        unidad: Some(unidad),
+        conjeturada: false,
+    };
+    let evaluacion = Evaluacion {
+        evidencia: vec![
+            Evidencia { titular: "El plazo corre desde la entrega de datos".into(), fuente: fuente("Páramo Azul", "Supuestos", crate::corpus::Unidad::Propuesta), citada: true, dicha_por_ti: false },
+            Evidencia { titular: "Sur del Valle: tres semanas por datos".into(), fuente: fuente("Sur del Valle", "cierre", crate::corpus::Unidad::Caso), citada: true, dicha_por_ti: false },
+            Evidencia { titular: "Limpiar antes del tablero".into(), fuente: fuente("Marco de trabajo", "etapa 2", crate::corpus::Unidad::Marco), citada: false, dicha_por_ti: true },
+        ],
+        tiempo_ms: 72_000,
+        ppm: Some(142),
+        muletillas: vec![Muletilla { frase: "o sea".into(), veces: 3 }, Muletilla { frase: "básicamente".into(), veces: 1 }],
+        palabras: 170,
+    };
+    let informe = Informe {
+        respondidas: 7,
+        saltadas: 1,
+        citadas: 14,
+        evidencia: 21,
+        ppm_medio: Some(138),
+        muletillas: 9,
+        la_que_mas: Some(Muletilla { frase: "o sea".into(), veces: 5 }),
+        tiempo_medio_ms: Some(58_000),
+        filas: vec![
+            Fila { numero: 3, texto: "¿Qué pasa con el plazo si el ERP no entrega los datos limpios a tiempo?".into(), citadas: 2, evidencia: 3, tiempo_ms: Some(72_000), ppm: Some(142), saltada: false },
+            Fila { numero: 4, texto: "¿Quién lo va a usar cuando ustedes se vayan?".into(), citadas: 0, evidencia: 0, tiempo_ms: None, ppm: None, saltada: true },
+        ],
+    };
+    crate::ensayo::VistaDelEnsayo {
+        fase,
+        cliente: "Páramo Azul".into(),
+        indice: 2,
+        total: 8,
+        pregunta: (fase != Fase::Cerrado).then(|| crate::ensayo::PreguntaEnPantalla {
+            texto: "¿Qué pasa con el plazo si el ERP no entrega los datos limpios a tiempo?".into(),
+            de: crate::ensayo::banco::De::Propuesta,
+            seccion: Some("Supuestos".into()),
+            fuente: None,
+        }),
+        leyendo: fase == Fase::Preguntando,
+        cerrando: false,
+        respuesta: if fase == Fase::Evaluada { "El supuesto dos lo cubre: el plazo corre desde que el ERP entrega los datos.".into() } else { String::new() },
+        transcurrido_ms: if fase == Fase::Evaluada { 72_000 } else { 0 },
+        evaluacion: (fase == Fase::Evaluada).then_some(evaluacion),
+        banco: crate::ensayo::EstadoDelBanco::Apagado,
+        informe: (fase == Fase::Cerrado).then_some(informe),
+    }
+}
+
 /// Todo lo que el webview recibe de lo nativo, con una muestra de cada forma.
 ///
 /// **Los datos son sintéticos** («Páramo Azul», el mismo cliente inventado de la maqueta): este
@@ -497,6 +574,51 @@ pub fn muestras() -> Vec<Muestra> {
             borde: crate::ventana::Borde::Abajo,
             barra: 25.0,
             aviso_visto: true,
+        }),
+        // ---- el ensayo (sprint 004, ADR 019) — los estados de `ensayo.html` ---------------------
+        m("PREPARACION_DEL_ENSAYO", "Preparacion", "./ensayo", &ensayo_preparado()),
+        m("PREPARACION_SIN_CORPUS", "Preparacion", "./ensayo", &crate::ensayo::Preparacion {
+            clientes: vec!["Páramo Azul".into(), "Sur del Valle".into()],
+            cliente: Some("Sur del Valle".into()),
+            propuestas: Vec::new(),
+            propuesta: None,
+            topes: vec![5, 8, 12],
+            tope: 8,
+            cuentas: crate::ensayo::Cuentas::default(),
+            idioma: crate::ensayo::banco::Idioma::En,
+            enriquecer: true,
+            transcribe: false,
+            sin_corpus: true,
+        }),
+        m("ENSAYO_PREGUNTANDO", "VistaDelEnsayo", "./ensayo", &ensayo_vista(crate::ensayo::sesion::Fase::Preguntando)),
+        m("ENSAYO_EVALUADA", "VistaDelEnsayo", "./ensayo", &ensayo_vista(crate::ensayo::sesion::Fase::Evaluada)),
+        m("ENSAYO_CERRADO", "VistaDelEnsayo", "./ensayo", &ensayo_vista(crate::ensayo::sesion::Fase::Cerrado)),
+        m("ENSAYO_DEL_MODELO", "VistaDelEnsayo", "./ensayo", &{
+            let mut v = ensayo_vista(crate::ensayo::sesion::Fase::Respondiendo);
+            v.pregunta = Some(crate::ensayo::PreguntaEnPantalla {
+                texto: "¿Quién firma por parte de la gerencia general?".into(),
+                de: crate::ensayo::banco::De::Modelo,
+                seccion: Some("Quién decide".into()),
+                fuente: None,
+            });
+            v.banco = crate::ensayo::EstadoDelBanco::Sumadas { cuantas: 2 };
+            v
+        }),
+        m("ENSAYO_OBJECION", "VistaDelEnsayo", "./ensayo", &{
+            let mut v = ensayo_vista(crate::ensayo::sesion::Fase::Respondiendo);
+            v.pregunta = Some(crate::ensayo::PreguntaEnPantalla {
+                texto: "¿Estos números son correctos?".into(),
+                de: crate::ensayo::banco::De::Objeciones,
+                seccion: None,
+                fuente: Some("Kuznetsova".into()),
+            });
+            v.banco = crate::ensayo::EstadoDelBanco::NoSeEnriquecio { porque: crate::ensayo::enriquecer::PorQueNo::NadaFundado };
+            v
+        }),
+        m("NO_EMPEZO_EN_REUNION", "NoEmpezo", "./ensayo", &crate::ensayo::NoEmpezo::EnReunion),
+        m("NO_EMPEZO_SIN_CORPUS", "NoEmpezo", "./ensayo", &crate::ensayo::NoEmpezo::SinCorpus),
+        m("NO_EMPEZO_MICROFONO", "NoEmpezo", "./ensayo", &crate::ensayo::NoEmpezo::Microfono {
+            porque: crate::capture::PorQueNoAbrio::SinPermisoDelMicrofono,
         }),
         // Lo que el motor de este Mac sabe hacer (auditoría del S2, M7): con motor, y sin él por cada
         // uno de sus tres porqués, que son grafías kebab de varias palabras.

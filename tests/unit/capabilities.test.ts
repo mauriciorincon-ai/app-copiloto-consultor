@@ -93,6 +93,17 @@ const SENSIBLES = [
   "entendido_el_aviso_de_arriba",
   // El acento del ensayo usa el proveedor externo, como redactar: solo desde IA (sprint 004).
   "enriquecer_el_banco",
+  // El ensayo entero, solo desde la ventana principal (sprint 004, ADR 019): abre el micrófono y su
+  // estado lleva tus respuestas en texto. La banda y el relleno no ensayan.
+  "preparar_el_ensayo",
+  "empezar_el_ensayo",
+  "ensayo_listo",
+  "ensayo_repetir",
+  "ensayo_saltar",
+  "ensayo_terminar",
+  "ensayo_si_lo_dije",
+  "estado_del_ensayo",
+  "cerrar_el_ensayo",
 ];
 
 describe("cada ventana puede solo lo suyo", () => {
@@ -114,6 +125,7 @@ describe("cada ventana puede solo lo suyo", () => {
       "jurisdiccion",
       "puerta",
       "franja",
+      "ensayo",
       "componentes/Relleno",
     ]
       .map((m) =>

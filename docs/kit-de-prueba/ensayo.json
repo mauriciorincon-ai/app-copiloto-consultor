@@ -70,5 +70,105 @@
         { "regla": "objecion", "id": "nadie-lo-usa" }
       ]
     }
-  ]
+  ],
+  "respuestas": {
+    "comentario": "La EVALUACIÓN de una respuesta (ADR 019 §6.6, fase 3), medida contra el corpus del kit. Cada caso es una pregunta, una respuesta sintética dicha en «segundos», y lo que un consultor diría que esa respuesta USÓ: los títulos de las secciones cuyas fichas trae (`usadas`), las muletillas que tiene en el idioma del ensayo y su ritmo. El test busca la pregunta en el corpus como lo haría el disparo (las tres fichas del respaldo), evalúa y cuenta, ficha por ficha, si «citada» coincide con «usada»: la PRECISIÓN (de las que marcó citadas, cuántas usó) y el RECALL (de las que usó, cuántas marcó). Dos casos están escritos para que la evaluación falle —una paráfrasis y una respuesta en inglés— porque es lo que «Sí lo dije» existe para corregir; el kit lo dice en vez de esconderlo. Los mismos datos sintéticos de Páramo Azul; las etiquetas las escribió el mismo constructor que la evaluación, así que el piso es un piso: la prueba de verdad es tu voz en el ⭐.",
+    "casos": [
+      {
+        "nombre": "el retraso del ERP",
+        "idioma": "es",
+        "pregunta": "¿Qué pasa si los extractos del ERP llegan tarde?",
+        "respuesta": "Está en los supuestos: si los extractos llegan tarde, el cronograma se corre día por día. Ya nos pasó en Sur del Valle: fueron cinco semanas en vez de tres, y el retraso vino de los extractos, no del análisis. O sea, por eso los pedimos en la primera semana.",
+        "segundos": 28,
+        "usadas": [
+          "Supuestos",
+          "Qué costó"
+        ],
+        "muletillas": {
+          "o sea": 1
+        },
+        "ppm": 107
+      },
+      {
+        "nombre": "de dónde salen las cuatro semanas",
+        "idioma": "es",
+        "pregunta": "¿Cómo llegaron a «cuatro semanas»?",
+        "respuesta": "Básicamente, la tarifa cerrada cubre cuatro semanas contadas desde la firma del contrato. Lo anclamos en un caso real: en Sur del Valle aprendimos que anclar el plazo evita la discusión sobre la fecha.",
+        "segundos": 20,
+        "usadas": [
+          "Plazo de entrega",
+          "Precio",
+          "Aprendizajes"
+        ],
+        "muletillas": {
+          "básicamente": 1
+        },
+        "ppm": 102
+      },
+      {
+        "nombre": "quién lo usa después",
+        "idioma": "es",
+        "pregunta": "¿Quién va a usar el tablero cuando ustedes se vayan?",
+        "respuesta": "Digamos que el tablero no se entrega solo: cada indicador nace con la decisión que va a mover, porque un tablero sin decisión es un tablero muerto. Y en gobierno dejamos definido quién responde por cada fuente y cada cuánto se revisa.",
+        "segundos": 24,
+        "usadas": [
+          "Uso",
+          "Gobierno"
+        ],
+        "muletillas": {
+          "digamos": 1
+        },
+        "ppm": 105
+      },
+      {
+        "nombre": "los números son correctos",
+        "idioma": "es",
+        "pregunta": "¿Estos números son correctos?",
+        "respuesta": "Acordamos cinco reglas por fuente y las medimos semanalmente. La meta no es cero errores: es saber cuántos hay, y eso lo ves en el tablero desde la segunda semana.",
+        "segundos": 16,
+        "usadas": [
+          "Calidad"
+        ],
+        "muletillas": {},
+        "ppm": 112
+      },
+      {
+        "nombre": "la cuarta fuente, con otras palabras",
+        "idioma": "es",
+        "pregunta": "¿La limpieza incluye una cuarta fuente?",
+        "respuesta": "No, eso va como adicional y lo cotizamos por separado, o sea, no entra en la tarifa.",
+        "segundos": 9,
+        "usadas": [
+          "Alcance",
+          "Precio"
+        ],
+        "muletillas": {
+          "o sea": 1
+        },
+        "ppm": 113
+      },
+      {
+        "nombre": "en inglés, a una pregunta en español",
+        "idioma": "es",
+        "pregunta": "¿Qué pasa si los extractos del ERP llegan tarde?",
+        "respuesta": "I mean, if the ERP extracts arrive late, the schedule moves day by day, basically.",
+        "segundos": 8,
+        "usadas": [
+          "Supuestos"
+        ],
+        "muletillas": {},
+        "ppm": 112
+      },
+      {
+        "nombre": "no responde",
+        "idioma": "es",
+        "pregunta": "¿Cómo garantizan la calidad del dato del tablero?",
+        "respuesta": "Lo vemos con el equipo en la primera reunión, no se preocupen por eso.",
+        "segundos": 6,
+        "usadas": [],
+        "muletillas": {},
+        "ppm": 140
+      }
+    ]
+  }
 }

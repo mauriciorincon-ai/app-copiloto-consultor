@@ -27,7 +27,7 @@ evidencia, sin nadie delante, y en la reunión la necesita menos.
 |---|---|---|---|
 | **Banco por reglas publicadas** (`data/ensayo/reglas.json`): una pregunta por sección de la propuesta (Alcance, Entregables, Supuestos, Precio, Plazo…), por cifra («¿de dónde sale el N %?»), por compromiso o fecha, por riesgo o supuesto declarados, y por lo que la ficha de cliente dice que le importa (quién decide, acuerdos previos) | las preguntas que se desprenden de lo que **tú escribiste**: si la propuesta promete un plazo, alguien preguntará por él | una propuesta corta da pocas preguntas; las plantillas suenan genéricas; no anticipan un ángulo que el documento no menciona | kit v3 (`docs/kit-de-prueba/ensayo.json`): precisión y recall **por regla**, calculados e impresos por el test (fase 2) |
 | **Catálogo bilingüe de objeciones** de datos, BI e IA (`data/ensayo/objeciones.json`), con etiquetas para elegir las que tocan esta propuesta | lo genérico del dominio: «¿estos números son correctos?», «no cuadran con el ERP», «¿quién lo va a usar?» | lo que no es genérico | cada entrada lleva su fuente del informe de mercado de la planeadora (Kuznetsova, SeattleDataGuy, Gartner, Blind, Bumeran) o «criterio del builder»; ninguna cifra inventada |
-| **Evaluación determinista** de cada respuesta | cobertura de tu evidencia, tiempo, ritmo y muletillas, sin puntaje | «te faltó» puede acusar de más cuando dijiste lo mismo con otras palabras | casos del kit v3 con respuestas sintéticas → citadas, faltaron, ppm y muletillas esperados (fase 3) |
+| **Evaluación determinista** de cada respuesta | cobertura de tu evidencia, tiempo, ritmo y muletillas, sin puntaje | «te faltó» puede acusar de más cuando dijiste lo mismo con otras palabras | kit v3, `respuestas` (fase 3, 2026-10-04): 7 respuestas sintéticas y 15 fichas medidas; **precisión 1,000 y recall 0,714**. Las dos que falla son una paráfrasis y una respuesta en inglés, escritas para que falle: es lo que «Sí lo dije» corrige. Ritmo y muletillas, exactos en los 7. La evaluación más lenta, 4 ms (buscar + armar + evaluar), frente a 500 ms de presupuesto |
 
 ## 3. Dónde entra el LLM y dónde NO
 
@@ -93,10 +93,15 @@ línea. Sin corpus para ese cliente no hay ensayo, y el estado «sin corpus» lo
 6. **La evaluación** (`ensayo/evaluacion.rs`, puro, ≤ 500 ms):
    - **cobertura**: las fichas que el disparo habría enseñado para esa pregunta (la misma búsqueda BM25 y
      `ficha::armar`, las tres del respaldo) frente a los términos de tu respuesta: una ficha cuenta como
-     **citada** si tu respuesta comparte con ella al menos dos términos (prefijo, sin tildes, con el
-     diccionario técnico B3); las demás son **«evidencia que tenías y no usaste»**. Sin nota ni puntaje.
-     Puedes marcar «sí lo dije», y eso manda;
-   - **tiempo**: desde que termina la pregunta hasta que cierras la respuesta;
+     **citada** si tu respuesta comparte con ella al menos dos términos **que no estaban ya en la
+     pregunta** (prefijo, sin tildes, con el diccionario técnico B3); las demás son **«evidencia que tenías
+     y no usaste»**. Sin nota ni puntaje. Puedes marcar «sí lo dije», y eso manda. *La condición de la
+     pregunta se añadió en la fase 3:* las fichas salen de buscar las palabras de la pregunta, así que
+     repetir la pregunta en la respuesta «citaba» las tres siempre. Con preguntas genéricas (una objeción
+     del catálogo) el disparo puede no encontrar ninguna ficha: entonces no hay nada que acusar y la cifra
+     sale «—»;
+   - **tiempo**: desde que termina la pregunta hasta que cierras la respuesta (con Enter, el instante de
+     Enter; si cierra el silencio, el fin de tu voz: los 2,5 s son la espera de la app y no se te cargan);
    - **ritmo**: palabras por minuto entre la primera palabra y el fin del último turno;
    - **muletillas**: las de `data/ensayo/muletillas.json` (es/en, palabras y frases enteras). Solo las
      que la transcripción conserva: la de Apple suele quitar «eh» y «um», y la pantalla lo dice.

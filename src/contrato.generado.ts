@@ -16,6 +16,7 @@ import type { EnTuMac } from "./radar";
 import type { EstadoDeLaIa, PorQueNoRedacta, LoQueSalio } from "./ia";
 import type { EstadoDelAcople } from "./acople";
 import type { LaFranja } from "./franja";
+import type { Preparacion, VistaDelEnsayo, NoEmpezo } from "./ensayo";
 import type { VistaDelCuaderno, LineaDePropuesta, Propuesta, Regla, Ventana, VistaDeLaBandeja, EstadoDeLaBandeja, ReunionGuardada, ListaDeReuniones } from "./notas";
 import type { VistaDelCliente, LaBandera, Nda } from "./jurisdiccion";
 import type { VistaDeLaPuerta, Cierre, NoAbre, Motivo } from "./puerta";
@@ -215,6 +216,10 @@ export const INFORME_DEL_CORTE: InformeDelCorte = {
       ],
       [
         "audio-del-sistema",
+        "cortada"
+      ],
+      [
+        "ensayo",
         "cortada"
       ],
       [
@@ -449,6 +454,261 @@ export const LA_FRANJA_ABAJO: LaFranja = {
     "avisoVisto": true,
     "barra": 25.0,
     "borde": "abajo"
+  };
+
+export const PREPARACION_DEL_ENSAYO: Preparacion = {
+    "cliente": "Páramo Azul",
+    "clientes": [
+      "Páramo Azul",
+      "Sur del Valle"
+    ],
+    "cuentas": {
+      "ficha": 1,
+      "objeciones": 2,
+      "propuesta": 5
+    },
+    "enriquecer": false,
+    "idioma": "es",
+    "propuesta": "/Users/consultor/Corpus/Propuestas/Rentabilidad por canal · Páramo Azul.md",
+    "propuestas": [
+      {
+        "nombre": "Rentabilidad por canal · Páramo Azul",
+        "ruta": "/Users/consultor/Corpus/Propuestas/Rentabilidad por canal · Páramo Azul.md"
+      }
+    ],
+    "sinCorpus": false,
+    "tope": 8,
+    "topes": [
+      5,
+      8,
+      12
+    ],
+    "transcribe": true
+  };
+
+export const PREPARACION_SIN_CORPUS: Preparacion = {
+    "cliente": "Sur del Valle",
+    "clientes": [
+      "Páramo Azul",
+      "Sur del Valle"
+    ],
+    "cuentas": {
+      "ficha": 0,
+      "objeciones": 0,
+      "propuesta": 0
+    },
+    "enriquecer": true,
+    "idioma": "en",
+    "propuesta": null,
+    "propuestas": [],
+    "sinCorpus": true,
+    "tope": 8,
+    "topes": [
+      5,
+      8,
+      12
+    ],
+    "transcribe": false
+  };
+
+export const ENSAYO_PREGUNTANDO: VistaDelEnsayo = {
+    "banco": {
+      "que": "apagado"
+    },
+    "cerrando": false,
+    "cliente": "Páramo Azul",
+    "evaluacion": null,
+    "fase": "preguntando",
+    "indice": 2,
+    "informe": null,
+    "leyendo": true,
+    "pregunta": {
+      "de": "propuesta",
+      "fuente": null,
+      "seccion": "Supuestos",
+      "texto": "¿Qué pasa con el plazo si el ERP no entrega los datos limpios a tiempo?"
+    },
+    "respuesta": "",
+    "total": 8,
+    "transcurridoMs": 0
+  };
+
+export const ENSAYO_EVALUADA: VistaDelEnsayo = {
+    "banco": {
+      "que": "apagado"
+    },
+    "cerrando": false,
+    "cliente": "Páramo Azul",
+    "evaluacion": {
+      "evidencia": [
+        {
+          "citada": true,
+          "dichaPorTi": false,
+          "fuente": {
+            "conjeturada": false,
+            "documento": "Páramo Azul",
+            "seccion": "Supuestos",
+            "unidad": "propuesta"
+          },
+          "titular": "El plazo corre desde la entrega de datos"
+        },
+        {
+          "citada": true,
+          "dichaPorTi": false,
+          "fuente": {
+            "conjeturada": false,
+            "documento": "Sur del Valle",
+            "seccion": "cierre",
+            "unidad": "caso"
+          },
+          "titular": "Sur del Valle: tres semanas por datos"
+        },
+        {
+          "citada": false,
+          "dichaPorTi": true,
+          "fuente": {
+            "conjeturada": false,
+            "documento": "Marco de trabajo",
+            "seccion": "etapa 2",
+            "unidad": "marco"
+          },
+          "titular": "Limpiar antes del tablero"
+        }
+      ],
+      "muletillas": [
+        {
+          "frase": "o sea",
+          "veces": 3
+        },
+        {
+          "frase": "básicamente",
+          "veces": 1
+        }
+      ],
+      "ppm": 142,
+      "tiempoMs": 72000
+    },
+    "fase": "evaluada",
+    "indice": 2,
+    "informe": null,
+    "leyendo": false,
+    "pregunta": {
+      "de": "propuesta",
+      "fuente": null,
+      "seccion": "Supuestos",
+      "texto": "¿Qué pasa con el plazo si el ERP no entrega los datos limpios a tiempo?"
+    },
+    "respuesta": "El supuesto dos lo cubre: el plazo corre desde que el ERP entrega los datos.",
+    "total": 8,
+    "transcurridoMs": 72000
+  };
+
+export const ENSAYO_CERRADO: VistaDelEnsayo = {
+    "banco": {
+      "que": "apagado"
+    },
+    "cerrando": false,
+    "cliente": "Páramo Azul",
+    "evaluacion": null,
+    "fase": "cerrado",
+    "indice": 2,
+    "informe": {
+      "citadas": 14,
+      "evidencia": 21,
+      "filas": [
+        {
+          "citadas": 2,
+          "evidencia": 3,
+          "numero": 3,
+          "ppm": 142,
+          "saltada": false,
+          "texto": "¿Qué pasa con el plazo si el ERP no entrega los datos limpios a tiempo?",
+          "tiempoMs": 72000
+        },
+        {
+          "citadas": 0,
+          "evidencia": 0,
+          "numero": 4,
+          "ppm": null,
+          "saltada": true,
+          "texto": "¿Quién lo va a usar cuando ustedes se vayan?",
+          "tiempoMs": null
+        }
+      ],
+      "laQueMas": {
+        "frase": "o sea",
+        "veces": 5
+      },
+      "muletillas": 9,
+      "ppmMedio": 138,
+      "respondidas": 7,
+      "saltadas": 1,
+      "tiempoMedioMs": 58000
+    },
+    "leyendo": false,
+    "pregunta": null,
+    "respuesta": "",
+    "total": 8,
+    "transcurridoMs": 0
+  };
+
+export const ENSAYO_DEL_MODELO: VistaDelEnsayo = {
+    "banco": {
+      "cuantas": 2,
+      "que": "sumadas"
+    },
+    "cerrando": false,
+    "cliente": "Páramo Azul",
+    "evaluacion": null,
+    "fase": "respondiendo",
+    "indice": 2,
+    "informe": null,
+    "leyendo": false,
+    "pregunta": {
+      "de": "modelo",
+      "fuente": null,
+      "seccion": "Quién decide",
+      "texto": "¿Quién firma por parte de la gerencia general?"
+    },
+    "respuesta": "",
+    "total": 8,
+    "transcurridoMs": 0
+  };
+
+export const ENSAYO_OBJECION: VistaDelEnsayo = {
+    "banco": {
+      "porque": "nada-fundado",
+      "que": "no-se-enriquecio"
+    },
+    "cerrando": false,
+    "cliente": "Páramo Azul",
+    "evaluacion": null,
+    "fase": "respondiendo",
+    "indice": 2,
+    "informe": null,
+    "leyendo": false,
+    "pregunta": {
+      "de": "objeciones",
+      "fuente": "Kuznetsova",
+      "seccion": null,
+      "texto": "¿Estos números son correctos?"
+    },
+    "respuesta": "",
+    "total": 8,
+    "transcurridoMs": 0
+  };
+
+export const NO_EMPEZO_EN_REUNION: NoEmpezo = {
+    "que": "en-reunion"
+  };
+
+export const NO_EMPEZO_SIN_CORPUS: NoEmpezo = {
+    "que": "sin-corpus"
+  };
+
+export const NO_EMPEZO_MICROFONO: NoEmpezo = {
+    "porque": "sin-permiso-del-microfono",
+    "que": "microfono"
   };
 
 export const LO_QUE_SALIO: LoQueSalio = {

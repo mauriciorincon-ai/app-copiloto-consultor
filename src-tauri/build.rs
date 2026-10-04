@@ -76,6 +76,17 @@ const COMANDOS: &[&str] = &[
         "la_puerta",
         "abrir_la_puerta",
         "cerrar_la_puerta",
+        // Sprint 004, fase 3: el ensayo (ADR 019). Solo la ventana principal: abre el micrófono y
+        // enseña tus respuestas.
+        "preparar_el_ensayo",
+        "empezar_el_ensayo",
+        "ensayo_listo",
+        "ensayo_repetir",
+        "ensayo_saltar",
+        "ensayo_terminar",
+        "ensayo_si_lo_dije",
+        "estado_del_ensayo",
+        "cerrar_el_ensayo",
 ];
 
 fn main() {

@@ -14,8 +14,8 @@
 //! No pasó, y no pasó por cómo está escrito este archivo: al añadir las pistas en la fase 3, el
 //! compilador no dejó compilar hasta resolverlas. La cuenta pasó de tres piezas cortadas a seis, y
 //! la lectura de pantalla fue la última declarada como inexistente, hasta que llegó con C8 en la
-//! fase 3 del sprint 002; la sugerencia en camino se sumó con la auditoría del S2. Desde entonces se
-//! cortan las nueve.
+//! fase 3 del sprint 002; la sugerencia en camino se sumó con la auditoría del S2. Desde el sprint 004
+//! se cortan las doce.
 //!
 //! Por eso el corte no es una lista de acciones sino una lista de **piezas** ([`Pieza`]), y cada
 //! una tiene que estar en uno de dos sitios: cortada, o declarada como que aún no existe.
@@ -65,6 +65,10 @@ pub enum Pieza {
     /// de su cliente y la app sigue leyéndole una ficha en voz alta, no hay informe que arregle eso:
     /// el kill-switch habría fallado en el único sitio donde el cliente puede notarlo.
     Voz,
+    /// **El ensayo** (sprint 004, ADR 019 §6.4): su micrófono —el único que abre—, la voz que lee la
+    /// pregunta y tus respuestas en texto. Es captura aunque sea tuya y no haya reunión: un micrófono
+    /// abierto se corta con la tecla, como todos.
+    Ensayo,
     /// **La sugerencia en camino** (auditoría del S2, M2): el turno del cliente vive en el hilo del
     /// proveedor mientras redacta, y con el API encendido una petición armada podía salir DESPUÉS
     /// del corte. La época sube: lo que vuelva se tira y lo que no haya salido ya no sale.
@@ -86,6 +90,8 @@ pub const TODAS: &[Pieza] = &[
     Pieza::Sugerencia,
     Pieza::AudioDelMicrofono,
     Pieza::AudioDelSistema,
+    // El micrófono del ensayo, con los otros grifos: lo que sigue entrando se corta primero.
+    Pieza::Ensayo,
     Pieza::UltimoFrame,
     Pieza::Transcript,
     Pieza::TusTurnos,
@@ -108,13 +114,14 @@ impl Pieza {
             Pieza::Sugerencia => 1,
             Pieza::AudioDelMicrofono => 2,
             Pieza::AudioDelSistema => 3,
-            Pieza::UltimoFrame => 4,
-            Pieza::Transcript => 5,
-            Pieza::TusTurnos => 6,
-            Pieza::Propuestas => 7,
-            Pieza::ContadorDeRed => 8,
-            Pieza::Banda => 9,
-            Pieza::Acople => 10,
+            Pieza::Ensayo => 4,
+            Pieza::UltimoFrame => 5,
+            Pieza::Transcript => 6,
+            Pieza::TusTurnos => 7,
+            Pieza::Propuestas => 8,
+            Pieza::ContadorDeRed => 9,
+            Pieza::Banda => 10,
+            Pieza::Acople => 11,
         }
     }
 }
@@ -177,7 +184,9 @@ pub fn suerte_en_este_sprint(pieza: Pieza) -> Suerte {
         // Del cuaderno, tus turnos y la ficha vigente: desde la fase 1 del sprint 003.
         | Pieza::TusTurnos
         // Las propuestas sin decidir: desde la fase 2 del sprint 003.
-        | Pieza::Propuestas => Suerte::Cortada,
+        | Pieza::Propuestas
+        // El ensayo: desde la fase 3 del sprint 004.
+        | Pieza::Ensayo => Suerte::Cortada,
     }
 }
 
@@ -218,7 +227,7 @@ mod tests {
     #[test]
     fn se_corta_lo_que_sigue_entrando_antes_que_lo_que_solo_se_ve() {
         let pos = |p: Pieza| TODAS.iter().position(|q| *q == p).unwrap();
-        for entrante in [Pieza::AudioDelMicrofono, Pieza::AudioDelSistema, Pieza::UltimoFrame] {
+        for entrante in [Pieza::AudioDelMicrofono, Pieza::AudioDelSistema, Pieza::Ensayo, Pieza::UltimoFrame] {
             assert!(
                 pos(entrante) < pos(Pieza::Banda),
                 "{entrante:?} se corta después de cerrar la banda: entraría a ciegas"
@@ -236,11 +245,12 @@ mod tests {
     /// en la fase 3 del sprint 002, a **8 y 0**, con la lectura de pantalla; y en la auditoría del
     /// sprint 002, a **9 y 0**, con la sugerencia en camino (M2), que el corte no alcanzaba; y en la
     /// fase 1 del sprint 003, a **10 y 0**, con tus turnos del cuaderno (ADR 015 §7); y en la fase 2
-    /// del sprint 003, a **11 y 0**, con las propuestas sin decidir (ADR 016 §4).
+    /// del sprint 003, a **11 y 0**, con las propuestas sin decidir (ADR 016 §4); y en la fase 3 del
+    /// sprint 004, a **12 y 0**, con el ensayo (ADR 019 §6.4).
     #[test]
-    fn en_este_sprint_se_cortan_las_once() {
+    fn en_este_sprint_se_cortan_las_doce() {
         let cortadas = TODAS.iter().filter(|p| suerte_en_este_sprint(**p) == Suerte::Cortada).count();
         let futuras = TODAS.iter().filter(|p| suerte_en_este_sprint(**p) == Suerte::AunNoExiste).count();
-        assert_eq!((cortadas, futuras), (11, 0));
+        assert_eq!((cortadas, futuras), (12, 0));
     }
 }

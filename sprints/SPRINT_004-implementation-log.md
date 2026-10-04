@@ -387,6 +387,136 @@ Las seis volvieron a verde tras restaurar.
   el registro B37, el contador de red y el tope— ya lo hace el proveedor externo por dentro (`sintesis/api.rs`).
 - Las preguntas del modelo **se suman detrás** del tope elegido («hasta cinco más», ADR 019 §3), no dentro.
 
+## Fase 3 · La sesión de ensayo (C18)
+
+Arranca el 2026-10-04 con el «continúa» del usuario tras la fase 2 (CI de `8bb7d02`: los tres checks en
+`success`).
+
+### Lo que se construyó
+
+- **`ensayo/sesion.rs`** — la máquina de estados, **pura** y con el reloj por parámetro: preguntando (la voz
+  lee) → respondiendo (el micrófono oye) → evaluada → … → cerrado (el informe). Enter, R, S, Esc y «Sí lo
+  dije». Devuelve acciones (`Decir`, `Callar`, `Evaluar`, `Avisar`) y quien la lleva las ejecuta. Las reglas
+  de tiempo del ADR 019 §6, cada una con su test:
+  - **sordo mientras la voz lee y 300 ms después** (`COLA_DE_LA_VOZ_MS`); si la voz no suena en 2 s, se
+    responde sin esperarla; sin voz para el idioma, el resto del ensayo va sin voz;
+  - **la respuesta se cierra con 2,5 s de silencio desde el fin de tu voz** (`SILENCIO_DE_RESPUESTA_MS`), y
+    pensar antes de la primera palabra no cierra nada; o con Enter, que espera al turno que se está
+    transcribiendo;
+  - **tu tiempo** empieza cuando la pregunta terminó (la cola es de la app) y termina con Enter o con el
+    fin de tu voz (los 2,5 s son de la app);
+  - **un turno de otra ronda se tira** (repetir mientras se transcribía no mezcla respuestas);
+  - Esc a media respuesta: esa pregunta no cuenta ni como respondida ni como saltada;
+  - el informe suma y promedia sin inventar (sin ritmo, «—»).
+- **`ensayo/oido.rs`** (protegido) — **solo `Grifo::del_microfono`**: la `Oreja` reutiliza el anillo de 30 s,
+  el detector por energía y el fin de turno de 320 ms sin tocarlos; cada turno se transcribe al cerrarse, en
+  su hilo, con el diccionario B3, y su audio se pisa al volver del motor. Sordo, el turno a medias se cierra
+  con lo que tenía y lo que entra no llega al detector (ni se transcribe ni le enseña al suelo de ruido un
+  silencio falso); el origen se mueve con lo que se salta, así el reloj y el anillo siguen juntos.
+- **`ensayo/evaluacion.rs`** (pura) — evidencia citada si comparte **≥ 2 términos que no estaban ya en la
+  pregunta** con la ficha (titular y línea); tiempo; ritmo (≥ 5 palabras y ≥ 2 s, si no «—»); muletillas
+  de **`data/ensayo/muletillas.json`** (es/en, por frases enteras, con «no_tras» para las que muchas veces
+  no lo son: «I'd like», «vamos a ver», «what kind of»; sin «eh» ni «um»).
+- **`ensayo/mod.rs`** — `Ensayo`: un latido de 40 ms que pasa lo que oyó el micrófono a la sesión y ejecuta
+  lo que pide; cierra el micrófono **en cuanto el ensayo termina**, no al cerrar la pantalla. Lo que necesita
+  de la app entra por el trait `Mundo` (la voz, las fichas del disparo, la señal a la pantalla), y por eso
+  hay una prueba de **punta a punta sin Mac**: la voz lee, la «voz» que entra mientras lee no se convierte en
+  respuesta, un segundo de voz inventada se transcribe, 2,5 s de silencio cierran, «Sí lo dije», Enter, Esc
+  y el informe. La siguiente pregunta llega **en menos de un segundo** tras Enter (lo mide la misma prueba).
+- **`lib.rs`** — `ElEnsayo` (con un número, para que lo que vuelva del modelo no caiga en otro ensayo); los
+  comandos `preparar_el_ensayo`, `empezar_el_ensayo`, `ensayo_listo`/`repetir`/`saltar`/`terminar`,
+  `ensayo_si_lo_dije`, `estado_del_ensayo` y `cerrar_el_ensayo`, **solo en la ventana principal** (`build.rs`,
+  `capabilities/default.json`, `SENSIBLES`); la señal `ensayo` sin dato (tus respuestas no viajan en eventos).
+  - **Excluyente con la reunión:** con una sesión abierta (escuchando, en solo notas o cerrándose) no se
+    ensaya —`NoEmpezo::EnReunion`—, y `empezar` suelta el ensayo antes de abrir sus pistas.
+  - **La puerta local se cierra** antes de abrir el micrófono, y `en_reunion` cuenta un ensayo abierto: la
+    puerta no se abre mientras ensayas.
+  - **`corte::Pieza::Ensayo`**: el corte pasa a **12 de 12** (el compilador obligó a resolverla).
+  - **El acento del modelo, cableado:** `proveedor_de_ahora` con el nombre de la propuesta como «sobre» de
+    «Ver lo que salió», `cobrar` y el cobro tardío; el ensayo no espera: empieza con el banco por reglas y lo
+    del modelo llega al final cuando llega, con su línea («El modelo sumó 2 preguntas…» o por qué no).
+  - La voz se usa **sin el candado de los auriculares**: ese candado es de la reunión (ADR 014,
+    `habla::cabe_decirla`, intacto); en el ensayo no hay nadie que oiga y el micrófono está sordo.
+- **La pantalla `Ensayo.tsx`**, fiel a `ensayo.html`: preparar (cliente, propuesta, 5 · 8 · 12, la voz, el
+  idioma, de dónde salen, el interruptor del modelo y, si este Mac no transcribe el idioma de la propuesta, el
+  aviso —`Preparacion.transcribe` pregunta al sistema sin abrir nada—), no empezó, preguntando, del modelo, respondiendo (el
+  reloj corre en la pantalla desde lo que dijo Rust), evaluada (usaste · tenías y no usaste · «Sí lo dije» ·
+  cuatro cifras), el informe y sin corpus. **Las teclas son de la ventana** y no se disparan con el foco en un
+  selector ni con ⌘/⌃/⌥. El rail gana «Ensayo» bajo Sesión, y su chip dice «Ensayando · 0 B».
+- **El contrato** gana sus muestras (`Preparacion`, `VistaDelEnsayo` en cinco fases, `NoEmpezo` en tres) y
+  `src/ensayo.ts` entra en `DECLARACIONES` del gate de lectores.
+- **Kit v3, la evaluación** (`ensayo.json`, bloque `respuestas`, test `el_kit_del_ensayo_mide_la_evaluacion`,
+  que entra en «el kit, con su salida» de la CI).
+
+### Lo que imprime el kit de la evaluación (corrida local, 2026-10-04)
+
+| Respuesta | Fichas (usada → citada) | Ritmo | Muletillas |
+|---|---|---|---|
+| el retraso del ERP | Supuestos ✓ · Qué costó ✓ · Alcance (ni una ni otra) | 107 | «o sea» ×1 |
+| de dónde salen las cuatro semanas | Plazo de entrega ✓ · Precio ✓ · Las cuatro etapas (no) · Aprendizajes fuera de las tres | 102 | «básicamente» ×1 |
+| quién lo usa después | ninguna ficha: el disparo no encuentra dos términos | 105 | «digamos» ×1 |
+| los números son correctos | ninguna ficha (objeción genérica) | 112 | — |
+| la cuarta fuente, con otras palabras | **Alcance ✗ (paráfrasis)** · Precio ✓ · Entregables (no) | 113 | «o sea» ×1 |
+| en inglés, a una pregunta en español | **Supuestos ✗** · Qué costó (no) · Alcance (no) | 112 | — (las del inglés no se cuentan en un ensayo en español) |
+| no responde | las tres, ni usadas ni citadas | 140 | — |
+
+**15 fichas, precisión 1,000, recall 0,714** (pisos 0,75 y 0,70, escritos antes de la corrida). La más lenta,
+**4 ms** de buscar + armar + evaluar (presupuesto 500 ms). Las dos que falla están escritas para fallar: es lo
+que «Sí lo dije» corrige, y el kit lo dice en vez de esconderlo. **Hallazgo:** con preguntas genéricas el
+disparo no da fichas y la cifra sale «—»: la pantalla no acusa de nada que no tenías.
+
+### Pruebas
+
+- **Rust** (`AG_SIN_HARDWARE=1`): lib **541** (+26: sesión 10, oído 4, evaluación 8, ensayo 3, puerta de la
+  captura 1; y el corte de 11 a 12) · contra el Mac 15 (+1, el kit de la evaluación) · ghost 5 · puerta 14 ·
+  clippy limpio.
+- **Interfaz:** vitest **411** (+14: 12 de `el-ensayo.test.tsx` y 2 del gate del log del ensayo; el rail con
+  ocho y el corte con 12) · lint · typecheck.
+- **e2e:** **264** (2 saltadas): axe en los ocho estados del ensayo, en los dos temas; reduced-motion: el reloj,
+  las cifras y la pregunta se ven sin movimiento; el recorrido camina las ocho pantallas; `maqueta-cabe` cazó
+  que «8 · textos» no cabía en su ventana (+101 px) y se partió en «8 · textos» y «9 · más textos».
+- **Fidelidad:** **260 encuadres** (+28: siete estados del ensayo × dos temas × dos idiomas), ninguno sobre el
+  umbral; el rail con «Ensayo» no movió ninguna de las otras pantallas. Leí como imagen la evaluada, la del
+  modelo en inglés claro y la de «no empezó».
+- `verify:ephemeral` con `oido.rs` dentro de `ensayo/`: cero API de disco o red.
+
+### Los rojos (con `scripts/demo-rojo.sh`)
+
+| Gate o prueba | Mutación | Quién lo nombró |
+|---|---|---|
+| sordo mientras lee y su cola | la cola de 300 ms a 1 ms | `el_microfono_esta_sordo_mientras_la_voz_lee_y_su_cola` |
+| el reloj y el anillo juntos tras la sordera | el origen no se mueve al saltar audio | `sordo_no_oye_y_despues_el_reloj_sigue_cuadrado` |
+| repetir la pregunta no cita | la unión con los términos de la pregunta en vez de la resta | `repetir_la_pregunta_no_cuenta_como_citar` |
+| la puerta se cierra antes del micrófono | sin `cerrar_la_puerta_al_empezar` en el ensayo | `el_ensayo_abre_solo_el_microfono_y_cierra_la_puerta_antes` |
+| la reunión corta el ensayo | `if false` en vez de `soltar_el_ensayo` en `empezar` | `la_captura_arranca_despues_de_la_puerta_y_solo_desde_empezar` |
+| el corte corta el ensayo | la pieza `Ensayo` como «aún no existe» | `en_este_sprint_se_cortan_las_doce` |
+| solo el micrófono (sobre la fuente) | un `Grifo::del_sistema(` plantado en `oido.rs` | `el_oido_solo_abre_el_microfono` |
+| el piso del kit de la evaluación | `TERMINOS_PARA_CITAR = 4` | `el_kit_del_ensayo_mide_la_evaluacion`: «por debajo del piso» |
+| el log del ensayo (término plantado) | `"[ensayo] … {cliente}"` en `lib.rs` | `logs-de-la-sintesis.test.ts` · «el log del ensayo» |
+| Enter llega a Rust | Enter llamando a `ensayo_repetir` | `el-ensayo.test.tsx` |
+| campos sin lector, ahora con `ensayo.ts` | `useReloj(0, …)`: `transcurridoMs` sin lector | `contrato-con-lectores.test.ts` |
+| el porqué de la reunión | la franja de la reunión pintada para «sin corpus» | `el-ensayo.test.tsx` |
+
+Las doce volvieron a verde tras restaurar (`demo-rojo.sh` con `--esperar-verde`); la carpeta `.demo-rojo/` no
+quedó.
+
+### Desviaciones de la fase
+
+- **«Citada» exige términos que no estaban en la pregunta** (ADR 019 §6.6, actualizado): sin eso, repetir la
+  pregunta citaba las tres fichas.
+- **El informe** se pinta en esta fase con «Cerrar sin guardar»; **Guardar** y **Exportar** quedan apagados
+  hasta la fase 4 (enmienda 4 del ADR 015), y la línea de la retención llega con ellos. Por eso la fidelidad
+  del informe y del progreso entra en la fase 4.
+- **Un ensayo no se bloquea por una videollamada abierta sin sesión**: solo una sesión (escuchando, solo
+  notas o cerrándose) lo impide. Para la puerta local, en cambio, un ensayo cuenta como reunión.
+- **FORMA y TEXTO nuevos** en `ensayo.html`, registrados «maquetada, no vista» (README de diseño): 1b · no
+  empezó, 2b · del modelo, 8 · textos y 9 · más textos (incluido el aviso de un idioma que este Mac no
+  transcribe, que la fase añadió a «preparar») y el chip
+  «Sin sesión · 0 B» del rail, como el de las otras siete pantallas. Las vistas «sprint 3» de Honestidad
+  cuentan 12 de 12.
+- **Honestidad todavía no enseña el micrófono del ensayo** en «qué vive en memoria»: entra en la fase 4, con
+  `ensayos/` (el chip «Ensayando» y el punto naranja de macOS lo dicen mientras tanto).
+
 ## Desviación del plan
 
 1. Arriba, el acople actúa sobre la ventana de la reunión detectada, no sobre la de delante (ADR 004, enmienda 1).
@@ -403,4 +533,7 @@ Las seis volvieron a verde tras restaurar.
 10. El acople arriba también se dispara al empezar la reunión (fase 1); abajo, como en el H1.
 11. Lo encontrado en la corrida en vivo (fase 1): la app espera a que la ventana se quede quieta antes de
     anotarla (`acople::asentar`), y soltar el asa sin arrastrarla no reacopla.
-12. La llamada al modelo desde la app se cablea en la fase 3, con la pantalla (fase 2).
+12. La llamada al modelo desde la app se cablea en la fase 3, con la pantalla (fase 2). Hecho en la fase 3.
+13. «Citada» exige términos que no estaban ya en la pregunta (fase 3; ADR 019 §6.6 actualizado).
+14. El informe se pinta en la fase 3 sin «Guardar» ni «Exportar», que llegan con la fase 4.
+15. Una videollamada abierta sin sesión no impide ensayar; una sesión abierta, sí (fase 3).

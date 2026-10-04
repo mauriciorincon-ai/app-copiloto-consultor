@@ -373,7 +373,7 @@ describe("el cuaderno: lo que no existe se dice", () => {
     pinta("?pantalla=honestidad");
     // «El botón corta»: sin sujeto, «8 de 8 piezas» se leyó como «leyó todo bien» (mirada 17-quater).
     expect(
-      screen.getByText(`${t.botonCorta} 11 ${t.de} 11 ${t.piezasNingunaFuera}`),
+      screen.getByText(`${t.botonCorta} 12 ${t.de} 12 ${t.piezasNingunaFuera}`),
     ).toBeInTheDocument();
   });
 
@@ -386,8 +386,8 @@ describe("el cuaderno: lo que no existe se dice", () => {
         <Principal busqueda="?pantalla=honestidad" />
       </Cascara>,
     );
-    expect(screen.getByText(/The button cuts 11 of 11 pieces/)).toBeInTheDocument();
-    expect(screen.queryByText(/11 de 11/)).toBeNull();
+    expect(screen.getByText(/The button cuts 12 of 12 pieces/)).toBeInTheDocument();
+    expect(screen.queryByText(/12 de 12/)).toBeNull();
   });
 
   /**
@@ -445,12 +445,13 @@ describe("el cuaderno: lo que no existe se dice", () => {
    * a enlace. Notas sigue sin existir y el rail lo dice — un rail lleno de enlaces que no llevan a
    * ninguna parte es peor que uno corto.
    */
-  it("el rail enlaza las siete secciones: Notas fue la última en encenderse (sprint 003)", () => {
+  it("el rail enlaza las ocho secciones: Ensayo fue la última en encenderse (sprint 004)", () => {
     const { container } = pinta("?pantalla=sesion");
     const rail = container.querySelector("nav.rail") as HTMLElement;
     const enlaces = [...rail.querySelectorAll("a")].map((a) => a.textContent);
     expect(enlaces).toEqual([
       t.navSesion,
+      t.navEnsayo,
       t.navPermisos,
       t.navCorpus,
       t.navNotas,

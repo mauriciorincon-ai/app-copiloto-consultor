@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-empezar-el-ensayo"
+description = "Enables the empezar_el_ensayo command without any pre-configured scope."
+commands.allow = ["empezar_el_ensayo"]
+
+[[permission]]
+identifier = "deny-empezar-el-ensayo"
+description = "Denies the empezar_el_ensayo command without any pre-configured scope."
+commands.deny = ["empezar_el_ensayo"]

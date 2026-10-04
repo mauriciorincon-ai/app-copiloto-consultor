@@ -13,12 +13,16 @@
   <span class="mq-t">09 · Ensayo · sprint 4</span>
   <span class="mq-g"><span>estado</span>
     <button data-estado="preparar">1 · preparar</button>
+    <button data-estado="no-empezo">1b · no empezó</button>
     <button data-estado="preguntando">2 · preguntando</button>
+    <button data-estado="del-modelo">2b · del modelo</button>
     <button data-estado="respondiendo">3 · respondiendo</button>
     <button data-estado="evaluada">4 · evaluada</button>
     <button data-estado="cerrado">5 · el informe</button>
     <button data-estado="progreso">6 · tu progreso</button>
     <button data-estado="sin-corpus">7 · sin corpus</button>
+    <button data-estado="textos">8 · textos</button>
+    <button data-estado="mas-textos">9 · más textos</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -32,6 +36,10 @@
   <div class="n" data-para="evaluada"><b>Qué mirar (la decisión de fondo):</b> <b>sin nota ni puntaje</b>. A la izquierda, la evidencia de tu corpus que usaste; a la derecha, la que <b>tenías y no usaste</b> —con el acento y el círculo punteado, nunca en rojo— y un «Sí lo dije» si la dijiste con otras palabras. Debajo, cuatro cifras medidas: tiempo, ritmo, muletillas y evidencia. Las muletillas son las que la transcripción conserva: la de Apple suele quitar «eh» y «um», y la pantalla lo dice.</div>
   <div class="n" data-para="cerrado"><b>Qué mirar:</b> el informe del ensayo, pregunta por pregunta, con los totales arriba. <b>Guardar</b> lo cifra con la llave de tus notas y lo borra con tu retención; <b>Cerrar sin guardar</b> no deja nada. El audio no se guardó en ningún momento.</div>
   <div class="n" data-para="progreso"><b>Qué mirar:</b> tu progreso con <b>ese</b> cliente, ensayo a ensayo: las mismas cuatro cifras en una tabla, y abajo cómo cambiaron desde el primero, con flecha y texto. Sin puntajes inventados. Abrir tus ensayos pide el mismo desbloqueo que tus notas.</div>
+  <div class="n" data-para="no-empezo"><b>FORMA nueva (fase 3, maquetada, no vista · 2026-10-04):</b> «Empezar el ensayo» y el micrófono no se abre —sin permiso, u otra app lo tiene—: la franja lo dice encima de «preparar» con su salida. En «8 · textos» están los otros dos porqués (otra razón del micrófono y una reunión abierta).</div>
+  <div class="n" data-para="del-modelo"><b>FORMA nueva (fase 3, maquetada, no vista · 2026-10-04):</b> con «Enriquecer el banco» encendido, las preguntas del modelo van <b>al final</b> y con su marca: «sugerida por el modelo». Bajo el progreso, una línea dice cuántas sumó, o por qué ninguna (ADR 019 §4). Sin el interruptor, la línea no aparece.</div>
+  <div class="n" data-para="textos"><b>TEXTO nuevo (fase 3, maquetado, no visto · 2026-10-04):</b> lo que la pantalla puede decir y los estados de arriba no enseñan: de dónde sale cada pregunta, las líneas del modelo, el interruptor encendido, los otros porqués de «no empezó», el aviso de un idioma que este Mac no transcribe y el idioma del ensayo en inglés. Van al gate del MVP.</div>
+  <div class="n" data-para="mas-textos"><b>TEXTO nuevo (fase 3, maquetado, no visto · 2026-10-04):</b> la segunda mitad de «8 · textos», para que cada estado quepa en su ventana: el interruptor del modelo encendido, los otros dos porqués de «no empezó», el aviso de un idioma que este Mac no transcribe y el idioma del ensayo en inglés.</div>
   <div class="n" data-para="sin-corpus"><b>Qué mirar:</b> si tu corpus no tiene ni la propuesta ni la ficha de ese cliente, no hay de dónde sacar preguntas: la pantalla lo dice y te lleva a Corpus, en vez de inventarlas.</div>
   <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
 </div>
@@ -50,8 +58,8 @@
     <a href="idioma.html"><svg class="ic s"><use href="#i-globo"/></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
     <a href="ia.html"><svg class="ic s"><use href="#i-chispa"/></svg><span lang="es">IA</span><span lang="en">AI</span></a>
     <div class="abajo">
-      <span class="estado mute" data-en="preparar cerrado progreso sin-corpus"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Sin reunión · 0 B</span><span lang="en">No meeting · 0 B</span></span>
-      <span class="estado halo" data-en="preguntando respondiendo evaluada"><svg class="ic s"><use href="#i-mic"/></svg><span lang="es">Ensayando · 0 B</span><span lang="en">Rehearsing · 0 B</span></span>
+      <span class="estado mute" data-en="preparar no-empezo cerrado progreso sin-corpus textos mas-textos"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Sin sesión · 0 B</span><span lang="en">No session · 0 B</span></span>
+      <span class="estado halo" data-en="preguntando del-modelo respondiendo evaluada"><svg class="ic s"><use href="#i-mic"/></svg><span lang="es">Ensayando · 0 B</span><span lang="en">Rehearsing · 0 B</span></span>
     </div>
   </nav>
 
@@ -62,7 +70,8 @@
     </div>
 
     <!-- ===== 1 · preparar ===== -->
-    <div data-en="preparar" style="display:flex;flex-direction:column;gap:12px">
+    <div data-en="preparar no-empezo" style="display:flex;flex-direction:column;gap:12px">
+      <div class="franja err" data-en="no-empezo"><svg class="ic s"><use href="#i-mic-off"/></svg><div><strong><span lang="es">El micrófono no se abrió</span><span lang="en">The microphone did not open</span></strong><p><span lang="es">macOS no dio permiso al micrófono. Concédelo en Permisos y vuelve a empezar el ensayo.</span><span lang="en">macOS did not grant the microphone. Grant it in Permissions and start the rehearsal again.</span></p></div></div>
       <div class="grid-2" style="grid-template-columns:1.1fr 1fr;gap:12px;align-items:start">
         <div class="tarjeta" style="display:flex;flex-direction:column;gap:9px">
           <h2 class="seccion" style="margin:0"><span lang="es">Con quién ensayas</span><span lang="en">Who you rehearse with</span></h2>
@@ -97,6 +106,25 @@
       <div class="pregunta-e">
         <div class="de"><span class="unidad-chip"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span><span lang="es">Supuestos</span><span lang="en">Assumptions</span></span></div>
         <p class="texto"><span lang="es">¿Qué pasa con el plazo si el ERP no entrega los datos limpios a tiempo?</span><span lang="en">What happens to the timeline if the ERP does not deliver clean data on time?</span></p>
+      </div>
+      <div class="fila" style="gap:8px">
+        <span class="estado halo"><svg class="ic s"><use href="#i-voz"/></svg><span lang="es">Te la está leyendo</span><span lang="en">Reading it to you</span></span>
+        <span class="estado mute"><svg class="ic s"><use href="#i-mic-off"/></svg><span lang="es">El micrófono espera a que termine</span><span lang="en">The microphone waits until it ends</span></span>
+      </div>
+      <div class="fila" style="gap:14px">
+        <span class="tecla"><kbd>R</kbd> <span lang="es">repetir</span><span lang="en">repeat</span></span>
+        <span class="tecla"><kbd>S</kbd> <span lang="es">saltar</span><span lang="en">skip</span></span>
+        <span class="tecla"><kbd>Esc</kbd> <span lang="es">terminar</span><span lang="en">end</span></span>
+      </div>
+    </div>
+
+    <!-- ===== 2b · del modelo ===== -->
+    <div data-en="del-modelo" style="display:flex;flex-direction:column;gap:12px">
+      <div class="progreso"><span><span lang="es">Pregunta 9 de 10</span><span lang="en">Question 9 of 10</span></span><span class="pista"><i style="width:90%"></i></span><span>Páramo Azul</span></div>
+      <p style="font-size:11.5px;color:var(--ink-2);margin-top:-6px"><span lang="es">El modelo sumó 2 preguntas, al final y marcadas.</span><span lang="en">The model added 2 questions, at the end and marked.</span></p>
+      <div class="pregunta-e">
+        <div class="de"><span class="unidad-chip"><span lang="es">sugerida por el modelo</span><span lang="en">suggested by the model</span></span><span><span lang="es">Quién decide</span><span lang="en">Who decides</span></span></div>
+        <p class="texto"><span lang="es">¿Quién firma por parte de la gerencia general?</span><span lang="en">Who signs on behalf of general management?</span></p>
       </div>
       <div class="fila" style="gap:8px">
         <span class="estado halo"><svg class="ic s"><use href="#i-voz"/></svg><span lang="es">Te la está leyendo</span><span lang="en">Reading it to you</span></span>
@@ -224,6 +252,34 @@
       <div class="tarjeta"><div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Con quién ensayas</span><span lang="en">Who you rehearse with</span></h2><select class="selector" aria-label="Cliente"><option>Páramo Azul</option><option selected>Sur del Valle</option></select></div></div>
       <div class="franja mute"><svg class="ic s"><use href="#i-doc"/></svg><div><strong><span lang="es">Tu corpus no tiene nada de este cliente</span><span lang="en">Your corpus has nothing for this client</span></strong><p><span lang="es">Para sacar preguntas hace falta tu propuesta o su ficha de cliente. Añádelas en Corpus y vuelve: la app no inventa preguntas.</span><span lang="en">Questions need your proposal or their client card. Add them in Corpus and come back: the app does not make questions up.</span></p></div></div>
       <div class="fila"><button class="btn"><svg class="ic s"><use href="#i-doc"/></svg><span lang="es">Ir a Corpus</span><span lang="en">Go to Corpus</span></button></div>
+    </div>
+
+    <!-- ===== 8 · textos (no vistos) ===== -->
+    <div data-en="textos" style="display:flex;flex-direction:column;gap:10px">
+      <div class="tarjeta" style="display:flex;flex-direction:column;gap:7px">
+        <h2 class="seccion" style="margin:0"><span lang="es">De dónde sale cada pregunta</span><span lang="en">Where each question comes from</span></h2>
+        <div class="fila" style="gap:8px;flex-wrap:wrap"><span class="unidad-chip"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span class="unidad-chip"><span lang="es">ficha de cliente</span><span lang="en">client card</span></span><span class="unidad-chip"><span lang="es">objeción típica</span><span lang="en">typical objection</span></span><span class="unidad-chip"><span lang="es">sugerida por el modelo</span><span lang="en">suggested by the model</span></span></div>
+      </div>
+      <div class="tarjeta" style="display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--ink-2)">
+        <h2 class="seccion" style="margin:0 0 3px"><span lang="es">La línea del modelo</span><span lang="en">The model's line</span></h2>
+        <p><span lang="es">El modelo está proponiendo preguntas de más; las que se funden irán al final.</span><span lang="en">The model is suggesting extra questions; the grounded ones will go at the end.</span></p>
+        <p><span lang="es">El modelo sumó 1 pregunta, al final y marcada.</span><span lang="en">The model added 1 question, at the end and marked.</span></p>
+        <p><span lang="es">El modelo no sumó preguntas: nadie puede redactar ahora; se enciende en IA.</span><span lang="en">The model added no questions: no one can draft right now; turn it on in AI.</span></p>
+        <p><span lang="es">El modelo no sumó preguntas: contestó fuera del formato.</span><span lang="en">The model added no questions: it answered outside the format.</span></p>
+        <p><span lang="es">El modelo no sumó preguntas: ninguna se apoyaba en tus secciones.</span><span lang="en">The model added no questions: none was grounded in your sections.</span></p>
+        <p><span lang="es">El modelo no sumó preguntas: tardó más de 6 s.</span><span lang="en">The model added no questions: it took longer than 6 s.</span></p>
+        <p><span lang="es">El modelo no sumó preguntas: no contestó.</span><span lang="en">The model added no questions: it did not answer.</span></p>
+      </div>
+      <div class="franja ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><div><strong><span lang="es">Ensayo terminado: 1 respondida, 2 saltadas</span><span lang="en">Rehearsal finished: 1 answered, 2 skipped</span></strong></div></div>
+    </div>
+
+    <!-- ===== 9 · más textos (no vistos) ===== -->
+    <div data-en="mas-textos" style="display:flex;flex-direction:column;gap:10px">
+      <div class="franja mute"><svg class="ic s"><use href="#i-chispa"/></svg><div><strong><span lang="es">Enriquecer el banco: encendido</span><span lang="en">Enrich the bank: on</span></strong><p><span lang="es">Al empezar, un modelo propone hasta 5 preguntas más, fundadas en tus secciones; van al final, marcadas.</span><span lang="en">When you start, a model suggests up to 5 more questions, grounded in your sections; they go at the end, marked.</span></p></div></div>
+      <div class="franja err"><svg class="ic s"><use href="#i-mic-off"/></svg><div><strong><span lang="es">El micrófono no se abrió</span><span lang="en">The microphone did not open</span></strong><p><span lang="es">macOS no dejó abrir el micrófono. Vuelve a empezar el ensayo; si se repite, reinicia el Mac.</span><span lang="en">macOS would not open the microphone. Start the rehearsal again; if it repeats, restart the Mac.</span></p></div></div>
+      <div class="franja warn"><svg class="ic s"><use href="#i-video"/></svg><div><strong><span lang="es">Hay una reunión abierta</span><span lang="en">A meeting is open</span></strong><p><span lang="es">El ensayo y la reunión no conviven: termínala en Sesión para ensayar.</span><span lang="en">A rehearsal and a meeting don't run together: end it in Session to rehearse.</span></p></div></div>
+      <div class="franja warn"><svg class="ic s"><use href="#i-globo"/></svg><div><strong><span lang="es">Este Mac no sabe transcribir el idioma de la propuesta</span><span lang="en">This Mac cannot transcribe the proposal's language</span></strong><p><span lang="es">Instálalo en Idioma y vuelve: sin él, la app mide tu tiempo pero no tus palabras.</span><span lang="en">Install it in Language and come back: without it, the app measures your time but not your words.</span></p></div></div>
+      <p style="font-size:11.5px;color:var(--ink-2)"><span lang="es">Idioma del ensayo: el de la propuesta, inglés.</span><span lang="en">Rehearsal language: the proposal's, English.</span></p>
     </div>
 
   </div>

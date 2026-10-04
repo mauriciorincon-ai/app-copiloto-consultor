@@ -2488,6 +2488,25 @@ use app_copiloto_consultor_lib::ensayo::enriquecer;
 #[derive(serde::Deserialize)]
 struct KitDelEnsayo {
     casos: Vec<CasoDelEnsayo>,
+    respuestas: RespuestasDelKit,
+}
+
+#[derive(serde::Deserialize)]
+struct RespuestasDelKit {
+    casos: Vec<RespuestaDelKit>,
+}
+
+/// Una respuesta sintética y lo que un consultor diría que usó (fase 3, ADR 019 §6.6).
+#[derive(serde::Deserialize)]
+struct RespuestaDelKit {
+    nombre: String,
+    idioma: String,
+    pregunta: String,
+    respuesta: String,
+    segundos: u64,
+    usadas: Vec<String>,
+    muletillas: BTreeMap<String, u32>,
+    ppm: Option<u32>,
 }
 
 #[derive(serde::Deserialize)]
@@ -2616,4 +2635,99 @@ fn el_kit_del_ensayo_mide_el_banco_por_regla() {
         }
     }
     assert!(fallos.is_empty(), "el banco del ensayo por debajo de su piso:\n{}", fallos.join("\n"));
+}
+
+/// Los mínimos de la evaluación. Como los del banco, un piso escrito por el mismo constructor que el kit:
+/// la prueba de verdad es tu voz en el ⭐ (bitácora del sprint 004, fase 3).
+const PRECISION_MINIMA_DE_LA_EVALUACION: f64 = 0.75;
+const RECALL_MINIMO_DE_LA_EVALUACION: f64 = 0.70;
+/// El presupuesto de la evaluación (plan del sprint, fase 3): buscar, armar las tres fichas y evaluar.
+const PRESUPUESTO_DE_LA_EVALUACION_MS: f64 = 500.0;
+
+/// **EL KIT DE LA EVALUACIÓN** (sprint 004, fase 3): cada respuesta sintética se evalúa contra las tres
+/// fichas que el disparo habría enseñado para su pregunta, y se compara ficha por ficha «citada» con
+/// «usada». Imprime la tabla y la precisión y el recall, que salen de la corrida; y mide el camino
+/// entero contra los 500 ms del plan.
+#[test]
+fn el_kit_del_ensayo_mide_la_evaluacion() {
+    use app_copiloto_consultor_lib::ensayo::evaluacion::{evaluar, Entrada, Tramo};
+    let _turno = turno();
+    let raiz = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba");
+    let kit: KitDelEnsayo =
+        serde_json::from_str(&std::fs::read_to_string(format!("{raiz}/ensayo.json")).expect("falta ensayo.json")).expect("ensayo.json no se lee");
+    let mut corpus = Corpus::en_memoria().unwrap();
+    corpus.indexar(Path::new(&format!("{raiz}/corpus")), &|_| {}).expect("no se indexó el kit");
+
+    let (mut vp, mut fp, mut fn_, mut vn) = (0usize, 0usize, 0usize, 0usize);
+    let mut fallos = Vec::new();
+    let mut peor_ms = 0.0f64;
+    println!("\n── la evaluación del ensayo · {} respuestas ──", kit.respuestas.casos.len());
+    for caso in &kit.respuestas.casos {
+        let idioma = if caso.idioma == "en" { IdiomaDelEnsayo::En } else { IdiomaDelEnsayo::Es };
+        let reloj = std::time::Instant::now();
+        let respaldo = match armar(&caso.pregunta, &corpus.buscar(&caso.pregunta, app_copiloto_consultor_lib::ficha::TOP).unwrap()) {
+            Respuesta::Ficha(f) => f.respaldo,
+            Respuesta::SinResultado { .. } => Vec::new(),
+        };
+        let tramos = [Tramo { desde_ms: 0, hasta_ms: caso.segundos * 1000, texto: Some(caso.respuesta.clone()) }];
+        let e = evaluar(&Entrada {
+            pregunta: &caso.pregunta,
+            tramos: &tramos,
+            respaldo: &respaldo,
+            idioma,
+            empezo_ms: 0,
+            cerro_ms: caso.segundos * 1000,
+        });
+        let ms = reloj.elapsed().as_secs_f64() * 1000.0;
+        peor_ms = peor_ms.max(ms);
+        println!("\n   {} · {ms:.2} ms · «{}»", caso.nombre, caso.pregunta);
+        for ev in &e.evidencia {
+            let seccion = ev.fuente.seccion.clone().unwrap_or_default();
+            let usada = caso.usadas.contains(&seccion);
+            let marca = match (usada, ev.citada) {
+                (true, true) => {
+                    vp += 1;
+                    "bien: usada y citada"
+                }
+                (false, false) => {
+                    vn += 1;
+                    "bien: ni usada ni citada"
+                }
+                (false, true) => {
+                    fp += 1;
+                    "MAL: citada sin usarla"
+                }
+                (true, false) => {
+                    fn_ += 1;
+                    "MAL: usada y no citada («Sí lo dije» la corrige)"
+                }
+            };
+            println!("      {seccion:<18} {marca}");
+        }
+        for u in caso.usadas.iter().filter(|u| !e.evidencia.iter().any(|ev| ev.fuente.seccion.as_deref() == Some(u.as_str()))) {
+            println!("      {u:<18} (usada, pero no estaba entre las tres: fuera de la medida)");
+        }
+        let muletillas: BTreeMap<String, u32> = e.muletillas.iter().map(|m| (m.frase.clone(), m.veces)).collect();
+        println!("      ritmo {:?} ppm · muletillas {muletillas:?} · tiempo {} ms", e.ppm, e.tiempo_ms);
+        if muletillas != caso.muletillas {
+            fallos.push(format!("{}: muletillas {muletillas:?}, el kit esperaba {:?}", caso.nombre, caso.muletillas));
+        }
+        if e.ppm != caso.ppm {
+            fallos.push(format!("{}: ritmo {:?}, el kit esperaba {:?}", caso.nombre, e.ppm, caso.ppm));
+        }
+    }
+    let precision = if vp + fp == 0 { 1.0 } else { vp as f64 / (vp + fp) as f64 };
+    let recall = if vp + fn_ == 0 { 1.0 } else { vp as f64 / (vp + fn_) as f64 };
+    println!(
+        "\n   fichas: {} · bien {} · citadas sin usar {fp} · usadas sin citar {fn_} · precisión {precision:.3} · recall {recall:.3} · la más lenta {peor_ms:.2} ms",
+        vp + fp + fn_ + vn,
+        vp + vn
+    );
+    if precision < PRECISION_MINIMA_DE_LA_EVALUACION || recall < RECALL_MINIMO_DE_LA_EVALUACION {
+        fallos.push(format!("precisión {precision:.3} / recall {recall:.3} por debajo del piso"));
+    }
+    if peor_ms > PRESUPUESTO_DE_LA_EVALUACION_MS {
+        fallos.push(format!("la evaluación más lenta tardó {peor_ms:.1} ms: el presupuesto es {PRESUPUESTO_DE_LA_EVALUACION_MS} ms"));
+    }
+    assert!(fallos.is_empty(), "la evaluación del ensayo:\n{}", fallos.join("\n"));
 }

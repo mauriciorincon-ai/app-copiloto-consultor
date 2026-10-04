@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-ensayo-si-lo-dije"
+description = "Enables the ensayo_si_lo_dije command without any pre-configured scope."
+commands.allow = ["ensayo_si_lo_dije"]
+
+[[permission]]
+identifier = "deny-ensayo-si-lo-dije"
+description = "Denies the ensayo_si_lo_dije command without any pre-configured scope."
+commands.deny = ["ensayo_si_lo_dije"]

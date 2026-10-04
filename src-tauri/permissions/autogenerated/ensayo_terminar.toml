@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-ensayo-terminar"
+description = "Enables the ensayo_terminar command without any pre-configured scope."
+commands.allow = ["ensayo_terminar"]
+
+[[permission]]
+identifier = "deny-ensayo-terminar"
+description = "Denies the ensayo_terminar command without any pre-configured scope."
+commands.deny = ["ensayo_terminar"]

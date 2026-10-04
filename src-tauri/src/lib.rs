@@ -665,6 +665,11 @@ fn empezar(
     // los mandaba el webview desde su caché, y la casilla 6 lo cazó: después de reiniciar, Sesión
     // mandaba los de fábrica si el usuario no había pasado antes por Idioma. Sin parámetros, el
     // webview ya no tiene cómo mandar unos viejos.
+    // **El ensayo y la reunión no conviven** (ADR 019 §6.5): empezar a escuchar corta el ensayo, y su
+    // micrófono se cierra antes de que se abra el de la reunión.
+    if soltar_el_ensayo(&app) {
+        println!("[ensayo] cortado: empieza una reunión");
+    }
     // **La puerta local se cierra primero** (ADR 018 §5): un agente no toca jamás una reunión, y la
     // reunión empieza aquí.
     cerrar_la_puerta_al_empezar(&app);
@@ -978,6 +983,12 @@ fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Inf
                 corte::Pieza::TusTurnos => reunion::cortar(app),
                 // Las propuestas sin decidir, y la línea de la banda con ellas (ADR 016 §4).
                 corte::Pieza::Propuestas => reunion::cortar_las_propuestas(app),
+                // El ensayo (ADR 019 §6.4): su micrófono se cierra y lo que dijiste se pisa.
+                corte::Pieza::Ensayo => {
+                    if soltar_el_ensayo(app) {
+                        println!("[corte] había un ensayo: micrófono cerrado y tus respuestas pisadas");
+                    }
+                }
                 // Ya cortadas arriba, todas a la vez.
                 corte::Pieza::AudioDelMicrofono
                 | corte::Pieza::AudioDelSistema
@@ -1025,6 +1036,360 @@ fn registrar_acople<R: tauri::Runtime>(app: &tauri::AppHandle<R>, que: &str, inf
         println!("[acople]   · {motivo}");
     }
     let _ = app.emit_to(ventana::BANDA, EVENTO_ACOPLE, estado_ahora(app));
+}
+
+// ---------------------------------------------------------------------------------------------
+// Sprint 004 — el ensayo (C18, ADR 019)
+// ---------------------------------------------------------------------------------------------
+
+/// **El ensayo**: en marcha, o recién terminado con su informe en memoria hasta que lo guardes o lo
+/// cierres. Lleva un número para que lo que vuelva del modelo no caiga en un ensayo que ya no es.
+#[derive(Default)]
+struct ElEnsayo(std::sync::Mutex<Option<(u64, ensayo::Ensayo)>>);
+
+static ENSAYOS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// El evento con que la pantalla Ensayo se entera de que algo cambió. **Una señal sin dato**, solo a la
+/// ventana principal: lo que dijiste no viaja en ningún evento; se pide con `estado_del_ensayo`.
+const EVENTO_ENSAYO: &str = "ensayo";
+
+/// ¿Hay un micrófono de ensayo abierto? Un candado envenenado cuenta como sí.
+fn ensayando<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> bool {
+    app.try_state::<ElEnsayo>()
+        .is_some_and(|e| e.0.lock().map(|g| g.as_ref().is_some_and(|(_, e)| e.escuchando())).unwrap_or(true))
+}
+
+/// El ensayo se va entero: micrófono cerrado, voz callada y lo que dijiste pisado. Devuelve si había uno.
+fn soltar_el_ensayo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> bool {
+    let viejo = app.state::<ElEnsayo>().0.lock().ok().and_then(|mut g| g.take());
+    let habia = viejo.is_some();
+    if let Some((_, e)) = viejo {
+        e.cortar();
+    }
+    if habia {
+        let _ = app.emit_to(ventana::PRINCIPAL, EVENTO_ENSAYO, ());
+    }
+    habia
+}
+
+fn codigo_de(idioma: ensayo::banco::Idioma) -> &'static str {
+    match idioma {
+        ensayo::banco::Idioma::Es => "es-ES",
+        ensayo::banco::Idioma::En => "en-US",
+    }
+}
+
+/// **Lo que el ensayo necesita de la app**: la voz de siempre, el corpus de siempre y la ventana
+/// principal. La voz se usa **sin el candado de los auriculares** (`habla::cabe_decirla`): ese candado
+/// es de la reunión, donde el cliente oiría; en el ensayo no hay nadie, y el micrófono está sordo
+/// mientras habla (ADR 019 §6.3).
+struct MundoDeLaApp(tauri::AppHandle);
+
+impl ensayo::Mundo for MundoDeLaApp {
+    fn decir(&self, idioma: ensayo::banco::Idioma, texto: &str) -> bool {
+        let voz = &self.0.state::<LaVozQueSale>().voz;
+        let codigo = codigo_de(idioma);
+        voz.hay_para(codigo) && voz.decir(codigo, texto).is_ok()
+    }
+    fn callar(&self) {
+        self.0.state::<LaVozQueSale>().voz.callar();
+    }
+    fn diciendo(&self) -> bool {
+        self.0.state::<LaVozQueSale>().voz.hablando()
+    }
+    fn evidencia(&self, pregunta: &str) -> Vec<ficha::Respaldo> {
+        let hallazgos = escucha::Buscador::buscar(&*self.0.state::<ElCorpus>(), pregunta, ficha::TOP);
+        match ficha::armar(pregunta, &hallazgos) {
+            ficha::Respuesta::Ficha(f) => f.respaldo,
+            ficha::Respuesta::SinResultado { .. } => Vec::new(),
+        }
+    }
+    fn avisar(&self) {
+        let _ = self.0.emit_to(ventana::PRINCIPAL, EVENTO_ENSAYO, ());
+    }
+}
+
+/// Las secciones de la propuesta elegida y de la ficha del cliente, y el nombre del documento que se
+/// enseña en «Ver lo que salió». Del corpus del usuario, jamás de una reunión.
+fn secciones_del_ensayo(
+    c: &corpus::Corpus,
+    cliente: &str,
+    propuesta: Option<&str>,
+) -> (Vec<corpus::seccion::Seccion>, Vec<corpus::seccion::Seccion>, String) {
+    let de = |ruta: &str| c.secciones_de(ruta).unwrap_or_default();
+    let prop = propuesta.map(de).unwrap_or_default();
+    let ficha = c.ficha_de(cliente).map(|d| de(&d.ruta)).unwrap_or_default();
+    let nombre = propuesta
+        .and_then(|r| c.documentos().iter().find(|d| d.ruta == r))
+        .or_else(|| c.ficha_de(cliente))
+        .map(|d| d.nombre.clone())
+        .unwrap_or_default();
+    (prop, ficha, nombre)
+}
+
+fn tope_valido(tope: usize) -> usize {
+    let topes = &ensayo::banco::catalogo().topes;
+    if topes.contains(&tope) {
+        tope
+    } else {
+        topes.get(1).copied().unwrap_or(8)
+    }
+}
+
+fn el_tuyo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> ensayo::banco::Idioma {
+    if idiomas_guardados(&app.state::<LasPreferencias>()).consultor.starts_with("en") {
+        ensayo::banco::Idioma::En
+    } else {
+        ensayo::banco::Idioma::Es
+    }
+}
+
+/// **«Preparar»**: con quién, con qué propuesta, cuántas preguntas y de dónde salen. Lee tus documentos
+/// y nada más: ni micrófono ni red.
+#[tauri::command]
+fn preparar_el_ensayo(
+    app: tauri::AppHandle,
+    el_corpus: tauri::State<'_, ElCorpus>,
+    cliente: Option<String>,
+    propuesta: Option<String>,
+    tope: usize,
+) -> ensayo::Preparacion {
+    let tope = tope_valido(tope);
+    let enriquecer = app.state::<LaSintesis>().enriquecer.load(Ordering::Relaxed);
+    let el_tuyo = el_tuyo(&app);
+    let topes = ensayo::banco::catalogo().topes.clone();
+    let vacia = |clientes: Vec<String>, cliente: Option<String>| ensayo::Preparacion {
+        clientes,
+        cliente,
+        propuestas: Vec::new(),
+        propuesta: None,
+        topes: topes.clone(),
+        tope,
+        cuentas: ensayo::Cuentas::default(),
+        idioma: el_tuyo,
+        enriquecer,
+        transcribe: true,
+        sin_corpus: true,
+    };
+    let Ok(g) = el_corpus.0.lock() else { return vacia(Vec::new(), None) };
+    let Some(c) = g.as_ref() else { return vacia(Vec::new(), None) };
+    let clientes = corpus::clientes(c.documentos());
+    let elegido = cliente
+        .filter(|n| clientes.contains(n))
+        .or_else(|| reunion::cliente(&app).filter(|n| clientes.contains(n)))
+        .or_else(|| clientes.first().cloned());
+    let Some(elegido) = elegido else { return vacia(clientes, None) };
+    let propuestas: Vec<ensayo::Elegible> = c
+        .propuestas_de(&elegido)
+        .into_iter()
+        .map(|d| ensayo::Elegible { ruta: d.ruta.clone(), nombre: d.nombre.clone() })
+        .collect();
+    let propuesta = propuesta
+        .filter(|r| propuestas.iter().any(|p| &p.ruta == r))
+        .or_else(|| propuestas.first().map(|p| p.ruta.clone()));
+    let (prop, ficha, _) = secciones_del_ensayo(c, &elegido, propuesta.as_deref());
+    let idioma = ensayo::idioma_del_ensayo(&prop, &ficha, el_tuyo);
+    let banco = if prop.is_empty() && ficha.is_empty() {
+        Vec::new()
+    } else {
+        ensayo::banco::armar(&prop, &ficha, idioma, tope)
+    };
+    ensayo::Preparacion {
+        clientes,
+        cliente: Some(elegido),
+        propuestas,
+        propuesta,
+        topes,
+        tope,
+        cuentas: ensayo::Cuentas::de(&banco),
+        idioma,
+        enriquecer,
+        // Se pregunta al sistema, que no abre nada: si el modelo de ese idioma está listo.
+        transcribe: matches!(stt::motor_de_la_casa().disponibilidad(codigo_de(idioma)), stt::Disponibilidad::Listo),
+        sin_corpus: banco.is_empty(),
+    }
+}
+
+/// **Empieza el ensayo** (ADR 019 §6). Abre **solo el micrófono**: ni el audio del sistema, ni la pantalla,
+/// ni el radar ámbar, que viven en `empezar`. Lo vigila `pruebas_de_la_puerta_de_la_captura`.
+#[tauri::command]
+fn empezar_el_ensayo(
+    app: tauri::AppHandle,
+    el_corpus: tauri::State<'_, ElCorpus>,
+    cliente: String,
+    propuesta: Option<String>,
+    tope: usize,
+    voz: bool,
+) -> Result<ensayo::VistaDelEnsayo, ensayo::NoEmpezo> {
+    // **Excluyente con una reunión** (§6.5): con una sesión abierta —escuchando, en solo notas o
+    // cerrándose— no se ensaya. Una videollamada abierta sin sesión no lo impide: no hay nada que oír.
+    let escuchando = app.state::<LaEscucha>().0.lock().map(|g| g.is_some()).unwrap_or(true);
+    let cuaderno = app.try_state::<reunion::ElCuaderno>().is_some_and(|c| c.abierta());
+    if escuchando || cuaderno {
+        return Err(ensayo::NoEmpezo::EnReunion);
+    }
+    let el_tuyo = el_tuyo(&app);
+    let (prop, ficha, nombre) = {
+        let g = el_corpus.0.lock().map_err(|_| ensayo::NoEmpezo::SinCorpus)?;
+        let c = g.as_ref().ok_or(ensayo::NoEmpezo::SinCorpus)?;
+        if !corpus::clientes(c.documentos()).contains(&cliente) {
+            return Err(ensayo::NoEmpezo::SinCorpus);
+        }
+        let propuesta = propuesta.filter(|r| c.propuestas_de(&cliente).iter().any(|d| &d.ruta == r));
+        secciones_del_ensayo(c, &cliente, propuesta.as_deref())
+    };
+    if prop.is_empty() && ficha.is_empty() {
+        return Err(ensayo::NoEmpezo::SinCorpus);
+    }
+    let idioma = ensayo::idioma_del_ensayo(&prop, &ficha, el_tuyo);
+    let preguntas = ensayo::banco::armar(&prop, &ficha, idioma, tope_valido(tope));
+    // **La puerta local se cierra** (§6.5): hay un micrófono abierto, como en reunión.
+    cerrar_la_puerta_al_empezar(&app);
+    // El informe de un ensayo anterior sin guardar se suelta: uno a la vez.
+    soltar_el_ensayo(&app);
+    let jerga = diccionario_de_la_sesion(&ruta_del_diccionario(&app), &clientes_del_corpus(el_corpus.inner()));
+    let oido = ensayo::oido::Oido::del_microfono(codigo_de(idioma), stt::motor_de_la_casa(), jerga).map_err(|e| {
+        println!("[ensayo] el micrófono no se abrió: {e}");
+        let e = escucha::con_su_permiso(capture::Pista::Microfono, e, &permisos::leer());
+        ensayo::NoEmpezo::Microfono { porque: e.porque }
+    })?;
+    let enriquecer = app.state::<LaSintesis>().enriquecer.load(Ordering::Relaxed);
+    let banco = if enriquecer { ensayo::EstadoDelBanco::EnCamino } else { ensayo::EstadoDelBanco::Apagado };
+    let n = preguntas.len();
+    let id = ENSAYOS.fetch_add(1, Ordering::SeqCst) + 1;
+    let e = ensayo::Ensayo::arrancar(preguntas, idioma, voz, cliente, banco, oido, std::sync::Arc::new(MundoDeLaApp(app.clone())))
+        .ok_or(ensayo::NoEmpezo::SinCorpus)?;
+    // Metadata, jamás contenido: ni el cliente, ni la propuesta, ni las preguntas.
+    println!(
+        "[ensayo] empieza: {n} preguntas · {} · voz {} · enriquecer {}",
+        codigo_de(idioma),
+        if voz { "sí" } else { "no" },
+        if enriquecer { "sí" } else { "no" }
+    );
+    let vista = e.vista();
+    if let Ok(mut g) = app.state::<ElEnsayo>().0.lock() {
+        *g = Some((id, e));
+    }
+    if enriquecer {
+        enriquecer_el_ensayo(&app, id, prop, ficha, idioma, nombre);
+    }
+    let _ = app.emit_to(ventana::PRINCIPAL, EVENTO_ENSAYO, ());
+    vista.ok_or(ensayo::NoEmpezo::SinCorpus)
+}
+
+/// **El acento del modelo** (ADR 019 §3), una vez por ensayo y en su propio hilo: el ensayo ya empezó con
+/// el banco por reglas y no espera a nadie. Por el adaptador de siempre —`mock` → el API si lo
+/// encendiste → el modelo del sistema—, con la bóveda, «Ver lo que salió», el contador de red y el tope
+/// del mes, que el proveedor del API ya aplica por dentro.
+fn enriquecer_el_ensayo(
+    app: &tauri::AppHandle,
+    id: u64,
+    propuesta: Vec<corpus::seccion::Seccion>,
+    ficha: Vec<corpus::seccion::Seccion>,
+    idioma: ensayo::banco::Idioma,
+    sobre: String,
+) {
+    let mango = app.clone();
+    std::thread::spawn(move || {
+        let s = mango.state::<LaSintesis>();
+        let conocidos = clientes_del_corpus(&mango.state::<ElCorpus>());
+        let peticion = ensayo::enriquecer::Peticion::nueva(&propuesta, &ficha, idioma);
+        let resultado = match (peticion, proveedor_de_ahora(&s, conocidos, sobre)) {
+            (None, _) => Err(ensayo::enriquecer::PorQueNo::NadaFundado),
+            (_, None) => Err(ensayo::enriquecer::PorQueNo::SinProveedor),
+            (Some(peticion), Some(proveedor)) => {
+                let quien = proveedor.quien();
+                let r = ensayo::enriquecer::enriquecer(proveedor, &peticion, sintesis::TECHO);
+                if quien == sintesis::Quien::Api {
+                    cobrar(&mango, &r.respuesta);
+                    // Pasado el techo, el proveedor todavía puede contestar —y cobrar—: se espera aparte
+                    // para sumarlo al tope del mes, sin enseñar nada (como la sugerencia, M10 del S2).
+                    if let Some(tarde) = r.tarde {
+                        let mango = mango.clone();
+                        std::thread::spawn(move || {
+                            if let Ok(Ok(mut respuesta)) = tarde.recv() {
+                                cobrar(&mango, &respuesta);
+                                // SEGURIDAD: ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
+                                unsafe { respuesta.json.as_mut_vec() }.fill(0);
+                                println!("[ensayo] el banco llegó pasado el techo: cobrado, no usado");
+                            }
+                        });
+                    }
+                }
+                // Metadata, jamás contenido: quién, cuánto tardó, cuánto salió y cuántas sobrevivieron.
+                let fuera = red::formatear(r.respuesta.bytes_fuera);
+                match &r.enriquecido {
+                    Ok(e) => println!(
+                        "[ensayo] el banco: {quien:?} · {} ms · {fuera} fuera · {} sumadas, {} descartadas",
+                        r.ms,
+                        e.preguntas.len(),
+                        e.descartadas
+                    ),
+                    Err(porque) => println!("[ensayo] el banco: {quien:?} · {} ms · {fuera} fuera · no se enriqueció: {porque:?}", r.ms),
+                }
+                r.enriquecido
+            }
+        };
+        if let Ok(g) = mango.state::<ElEnsayo>().0.lock() {
+            match g.as_ref() {
+                Some((suyo, e)) if *suyo == id => e.con_lo_del_modelo(resultado),
+                _ => println!("[ensayo] lo del modelo llegó para un ensayo que ya no está: se tira"),
+            }
+        }
+        avisar_a_la_ia(&mango);
+    });
+}
+
+fn con_el_ensayo(app: &tauri::AppHandle, f: impl FnOnce(&ensayo::Ensayo)) {
+    if let Ok(g) = app.state::<ElEnsayo>().0.lock() {
+        if let Some((_, e)) = g.as_ref() {
+            f(e);
+        }
+    }
+}
+
+/// Enter: deja de leer · cierra la respuesta · la siguiente.
+#[tauri::command]
+fn ensayo_listo(app: tauri::AppHandle) {
+    con_el_ensayo(&app, ensayo::Ensayo::listo);
+}
+
+/// R: vuelve a hacer la pregunta.
+#[tauri::command]
+fn ensayo_repetir(app: tauri::AppHandle) {
+    con_el_ensayo(&app, ensayo::Ensayo::repetir);
+}
+
+/// S: salta la pregunta.
+#[tauri::command]
+fn ensayo_saltar(app: tauri::AppHandle) {
+    con_el_ensayo(&app, ensayo::Ensayo::saltar);
+}
+
+/// Esc: termina el ensayo; el micrófono se cierra y queda el informe.
+#[tauri::command]
+fn ensayo_terminar(app: tauri::AppHandle) {
+    con_el_ensayo(&app, ensayo::Ensayo::terminar);
+}
+
+/// «Sí lo dije» sobre una ficha de «Tenías y no usaste».
+#[tauri::command]
+fn ensayo_si_lo_dije(app: tauri::AppHandle, indice: usize) {
+    con_el_ensayo(&app, |e| e.si_lo_dije(indice));
+}
+
+/// Lo que la pantalla Ensayo enseña. Solo para la ventana principal (`capabilities/default.json`).
+#[tauri::command]
+fn estado_del_ensayo(app: tauri::AppHandle) -> Option<ensayo::VistaDelEnsayo> {
+    app.state::<ElEnsayo>().0.lock().ok()?.as_ref()?.1.vista()
+}
+
+/// «Cerrar sin guardar»: no queda nada.
+#[tauri::command]
+fn cerrar_el_ensayo(app: tauri::AppHandle) {
+    if soltar_el_ensayo(&app) {
+        println!("[ensayo] cerrado sin guardar: no queda nada");
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -1102,7 +1467,16 @@ pub fn run() {
             estado_de_la_bandeja,
             la_puerta,
             abrir_la_puerta,
-            cerrar_la_puerta
+            cerrar_la_puerta,
+            preparar_el_ensayo,
+            empezar_el_ensayo,
+            ensayo_listo,
+            ensayo_repetir,
+            ensayo_saltar,
+            ensayo_terminar,
+            ensayo_si_lo_dije,
+            estado_del_ensayo,
+            cerrar_el_ensayo
         ])
         .setup(|app| {
             // El invariante se comprueba ANTES de abrir nada y aborta el arranque si falla:
@@ -1114,6 +1488,7 @@ pub fn run() {
             // `setup` corre en el hilo principal, que es donde `NSScreen` se deja preguntar.
             app.manage(FondoDelRelleno(acople::fondo_de_escritorio()));
             app.manage(LaEscucha::default());
+            app.manage(ElEnsayo::default());
             app.manage(ElCorpus::default());
             app.manage(LaPantalla::default());
             app.manage(ElRadar::default());
@@ -2764,10 +3139,12 @@ impl puerta::Operaciones for LaAppParaLaPuerta {
 
 /// **¿Hay reunión?** Escuchando, una reunión en solo notas, una videollamada detectada **o no se
 /// puede saber** (ADR 018 §5): lo que no se sabe se trata como reunión. Un candado envenenado, también.
+/// **Y un ensayo con el micrófono abierto** (ADR 019 §6.5): para la puerta cuenta igual, porque hay
+/// un micrófono abierto.
 fn en_reunion<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> bool {
     let escuchando = app.state::<LaEscucha>().0.lock().map(|g| g.is_some()).unwrap_or(true);
     let cuaderno = app.try_state::<reunion::ElCuaderno>().is_some_and(|c| c.abierta());
-    escuchando || cuaderno || !matches!(sesion::ahora(), sesion::Reunion::Ninguna)
+    escuchando || cuaderno || ensayando(app) || !matches!(sesion::ahora(), sesion::Reunion::Ninguna)
 }
 
 /// «11:04», la hora del Mac.
@@ -3528,6 +3905,36 @@ mod pruebas_de_la_puerta_de_la_captura {
         assert!(cuerpo[puerta..p].contains("return Ok("), "la puerta no devuelve: solo notas seguiría hasta la captura");
         assert_eq!(fuente.matches(pantalla).count(), 1, "otro sitio arranca la pantalla, sin pasar por la puerta");
         assert_eq!(fuente.matches(pistas).count(), 1, "otro sitio arranca las pistas, sin pasar por la puerta");
+        // **El ensayo y la reunión no conviven** (ADR 019 §6.5): `empezar` suelta el ensayo —y su
+        // micrófono— antes de abrir las pistas de la reunión.
+        let ensayo = cuerpo.find(concat!("soltar_el_", "ensayo(&app)")).expect("empezar corta el ensayo");
+        assert!(ensayo < e, "la reunión abre sus pistas con el micrófono del ensayo todavía abierto");
+    }
+
+    /// **El ensayo abre solo el micrófono** (ADR 019 §6.1): ni la pantalla, ni las dos pistas de la reunión,
+    /// ni el audio del sistema, ni el radar. Y antes de abrirlo, con una reunión abierta se niega y la
+    /// puerta local se cierra (§6.5).
+    ///
+    /// ¿Puede fallar? Sí: con la puerta cerrada después del micrófono, es rojo (bitácora, fase 3).
+    #[test]
+    fn el_ensayo_abre_solo_el_microfono_y_cierra_la_puerta_antes() {
+        let fuente = include_str!("lib.rs");
+        let desde = fuente.find(concat!("\nfn empezar_el_", "ensayo(")).expect("la función que arranca el ensayo");
+        let cuerpo = &fuente[desde..];
+        let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
+        for prohibida in [
+            concat!("arrancar_la_", "pantalla("),
+            concat!("escucha::Escucha::", "arrancar("),
+            concat!("del_", "sistema("),
+            concat!("arrancar_el_", "radar("),
+        ] {
+            assert!(!cuerpo.contains(prohibida), "el ensayo llama a «{prohibida}»: solo abre el micrófono");
+        }
+        let micro = cuerpo.find(concat!("Oido::", "del_microfono(")).expect("el ensayo abre su micrófono");
+        let puerta = cuerpo.find(concat!("cerrar_la_puerta_", "al_empezar(&app)")).expect("el ensayo cierra la puerta");
+        let reunion = cuerpo.find(concat!("return Err(ensayo::NoEmpezo::", "EnReunion)")).expect("con reunión no se ensaya");
+        assert!(puerta < micro, "la puerta local se cierra después de abrir el micrófono");
+        assert!(reunion < micro, "se abre el micrófono antes de mirar si hay una reunión");
     }
 }
 

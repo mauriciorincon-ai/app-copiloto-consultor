@@ -160,6 +160,15 @@ const ARTEFACTOS = [
       { id: "notas-bandeja-llave", maqueta: "notas.html", estado: "s3-bandeja-llave", alto: 640, url: "ventana=principal&pantalla=notas&estado=bandeja-llave" },
       { id: "notas-vencida", maqueta: "notas.html", estado: "s3-vencida", alto: 640, url: "ventana=principal&pantalla=notas&estado=vencida" },
       { id: "idioma", maqueta: "idioma.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=idioma" },
+      // El ensayo (C18, sprint 004, fase 3; mirada de DECISIÓN 1 y sus FORMA «maquetada, no vista»). El
+      // informe y el progreso entran con la fase 4, cuando guardar, exportar y la retención estén.
+      { id: "ensayo-preparar", maqueta: "ensayo.html", estado: "preparar", alto: 640, url: "ventana=principal&pantalla=ensayo&estado=preparar" },
+      { id: "ensayo-no-empezo", maqueta: "ensayo.html", estado: "no-empezo", alto: 640, url: "ventana=principal&pantalla=ensayo&estado=no-empezo" },
+      { id: "ensayo-preguntando", maqueta: "ensayo.html", estado: "preguntando", alto: 640, url: "ventana=principal&pantalla=ensayo&estado=preguntando" },
+      { id: "ensayo-del-modelo", maqueta: "ensayo.html", estado: "del-modelo", alto: 640, url: "ventana=principal&pantalla=ensayo&estado=del-modelo" },
+      { id: "ensayo-respondiendo", maqueta: "ensayo.html", estado: "respondiendo", alto: 640, url: "ventana=principal&pantalla=ensayo&estado=respondiendo" },
+      { id: "ensayo-evaluada", maqueta: "ensayo.html", estado: "evaluada", alto: 640, url: "ventana=principal&pantalla=ensayo&estado=evaluada" },
+      { id: "ensayo-sin-corpus", maqueta: "ensayo.html", estado: "sin-corpus", alto: 640, url: "ventana=principal&pantalla=ensayo&estado=sin-corpus" },
       // El radar coral en Sesión (fase 4): «software invasivo en tu Mac», con las cinco filas.
       { id: "vigilancia", maqueta: "sesion.html", estado: "vigilancia", alto: 640, url: "ventana=principal&pantalla=sesion&radar=vigilancia" },
       // La pantalla IA (fase 5): «así se ve hoy · sprint 2».

@@ -284,7 +284,7 @@ impl PistaViva {
 /// incluido—; quien sabe del permiso es `permisos`. El permiso manda porque su salida es la que
 /// arregla las demás: con él negado, cerrar otra app no serviría de nada. «No se sabe» no cuenta
 /// como negado: si la pregunta a macOS no contesta, se queda el porqué del grifo.
-fn con_su_permiso(
+pub(crate) fn con_su_permiso(
     cual: Pista,
     mut e: crate::capture::NoAbrio,
     permisos: &crate::permisos::Permisos,

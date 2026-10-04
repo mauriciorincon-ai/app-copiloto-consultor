@@ -248,8 +248,9 @@ pub fn catalogo() -> &'static Catalogo {
 
 // ─── palabras ────────────────────────────────────────────────────────────────────────────────────
 
-/// Las palabras de un texto, plegadas (sin mayúsculas ni tildes) y sin signos.
-fn palabras(texto: &str) -> Vec<String> {
+/// Las palabras de un texto, plegadas (sin mayúsculas ni tildes) y sin signos. La evaluación las usa
+/// para contar muletillas y palabras por minuto.
+pub(crate) fn palabras(texto: &str) -> Vec<String> {
     plegar(texto)
         .split(|ch: char| !(ch.is_alphanumeric() || ch == '%' || ch == '\''))
         .filter(|p| !p.is_empty())
