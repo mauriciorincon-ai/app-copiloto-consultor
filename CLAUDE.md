@@ -51,7 +51,8 @@ vende **no persistir, verificable**.
    el diseño distingue **lo del usuario** de **lo de terceros**, no «texto» de «audio». Persiste
    **cifrado**, con retención y borrado, en el Mac del usuario (carpeta privada de la app, decisión A
    del S3): notas y acuerdos escritos · fichas fijadas · **turnos del propio consultor (pista de
-   micrófono) en TEXTO, opt-in, por defecto apagado** · la **bandeja de propuestas** durante la ventana
+   micrófono) en TEXTO, opt-in, por defecto apagado** · las **propuestas que aceptas** (del cliente, un
+   hecho de una línea, ≤ 8 palabras), con la retención de la reunión · la **bandeja de propuestas** durante la ventana
    elegida (defecto 3 h, techo 24 h, mínimo cero; borrado automático al vencer aunque la app no se
    abra; visible en Honestidad). Persiste **en claro, con 600/700**: el índice del corpus (documentos
    propios) · preferencias (con la respuesta de NDA de cada cliente y la ruta de la carpeta del corpus) · el diccionario · los metadatos
@@ -66,7 +67,8 @@ vende **no persistir, verificable**.
    minimizado y anonimizado localmente (patrón Velo) bajo proveedor con no-retención. **Contador
    de salida a red** visible por reunión (0 en modo local) con test. *En esta app hoy (decisión del
    usuario, 2026-09-29, ADR 011):* «no-retención» solo la cumple Groq con su retención cero encendida;
-   Claude guarda hasta 30 días sin un acuerdo, y la app lo dice bajo cada proveedor, en IA. Gemini salió.
+   Claude guarda hasta 30 días sin un acuerdo, y la app lo dice en IA, bajo el costo, para el proveedor
+   elegido. Gemini salió.
    Es una desviación de la regla, declarada en la bitácora del S3 para la planeadora.
 3. **CÓDIGO PRIMERO.** Captura, VAD, fin de turno, STT, OCR, disparo y recuperación son
    deterministas. La única feature LLM (síntesis de sugerencia) lleva **ADR «código primero»**
@@ -672,10 +674,11 @@ Llenado en la auditoría del cierre del ciclo H1 (sprint 003); el estampado lo d
   permanente.
 - **Protegidos efímeros, y el que decide no escribe:** los módulos que tocan audio, turnos o
   pantalla no tienen disco ni red (`verify:ephemeral`, estático y en marcha); lo que se guarda lo
-  escribe otro módulo que ya solo recibe lo tuyo (`notas/` → `carpeta.rs`, `propuestas/` →
-  `bandeja.rs`).
+  escribe otro módulo que ya solo recibe lo tuyo y, del cliente, hechos de una línea (`notas/` →
+  `carpeta.rs`, `propuestas/` → `bandeja.rs`).
 - **Un solo escritor:** todo lo que persiste nace en 600 dentro de una carpeta 700 por `almacen.rs`
-  (temporal, `fsync`, renombrado).
+  (temporal, `fsync`, renombrado), salvo el índice del corpus, que escribe tantivy dentro de su
+  carpeta 700.
 - **El corte (`⌥⎋`)** vacía todas las piezas en memoria (`corte.rs`: añadir una pieza sin cortarla no
   compila); tus notas se quedan.
 - **Contrato Rust → TS generado** (`contrato.rs` → `src/contrato.generado.ts`, regla 19).

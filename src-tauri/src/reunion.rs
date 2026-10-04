@@ -719,7 +719,7 @@ fn abrir_del_disco(el: &ElCuaderno, b: &Bandeja, archivo: &str) -> bool {
     }
 }
 
-/// «Abrir la bandeja»: pide el desbloqueo una vez por sesión de la app, como abrir una reunión.
+/// «Abrir la bandeja»: pide el desbloqueo una vez por sesión de la app, como exportar.
 pub fn abrir_la_bandeja<R: Runtime>(app: &AppHandle<R>, archivo: &str, idioma: &str) -> Result<(), String> {
     let el = app.try_state::<ElCuaderno>().ok_or("el cuaderno no está listo")?;
     el.desbloqueo.asegurar(|| desbloqueo::pedir(desbloqueo::razon(idioma)))?;
@@ -914,7 +914,6 @@ pub fn ir_a_notas<R: Runtime>(app: &AppHandle<R>) {
     }
 }
 
-/// Abre una reunión guardada: pide el desbloqueo una vez por sesión de la app (ADR 015 §5).
 /// Abre una reunión guardada con **el desbloqueo que le toca a quien la pide**: hoy solo la puerta
 /// local, que lleva el suyo y lo pide una vez por apertura (auditoría del S3, M4). En la pantalla no hay
 /// «abrir»: se exporta.
@@ -931,7 +930,8 @@ pub fn abrir_con<R: Runtime>(
     Ok(c)
 }
 
-/// Exporta a texto donde elijas. Pide el desbloqueo, como abrir. `Ok(false)` si cancelaste el diálogo.
+/// Exporta a texto donde elijas. Pide el desbloqueo de la sesión de la app. `Ok(false)` si cancelaste el
+/// diálogo.
 pub fn exportar<R: Runtime>(app: &AppHandle<R>, archivo: &str, idioma: &str) -> Result<bool, String> {
     use tauri_plugin_dialog::DialogExt;
     let el = app.try_state::<ElCuaderno>().ok_or("el cuaderno no está listo")?;

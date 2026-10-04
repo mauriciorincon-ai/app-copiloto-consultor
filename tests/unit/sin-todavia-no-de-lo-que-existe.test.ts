@@ -27,6 +27,9 @@ export function caducadas(f: { idioma: string; permisos: string; banda: string; 
   if (bloqueCon(f.permisos, "texto={t.escribirNotas}", "</Fila>").includes("<TodaviaNo")) {
     fuera.push("Permisos: «Escribir notas y acuerdos — Todavía no» (Solo notas funciona sin permisos)");
   }
+  if (bloqueCon(f.permisos, "texto={t.buscarAMano}", "</Fila>").includes("<TodaviaNo")) {
+    fuera.push("Permisos: «Buscar tu evidencia a mano — Todavía no» (en Solo notas, ⌃⌥A busca con tu nota, sin permisos)");
+  }
   if (/title=\{tc\.todaviaNo\}>\s*<Ic id="i-nota"/.test(f.banda)) fuera.push("Banda: «Solo notas» con title «Todavía no» (se elige en Sesión)");
   if (bloqueCon(f.corpus, "t.corpusPendiente", "))}").includes("<TodaviaNo")) fuera.push("Corpus: lo que es H2 dice «Todavía no»");
   if (bloqueCon(f.ia, "MLX · Qwen 3 4B", "</tr>").includes("<TodaviaNo")) fuera.push("IA: MLX es H2 y dice «Todavía no»");
@@ -44,6 +47,7 @@ describe("sin «Todavía no» de lo que existe (M7) ni de lo que ya es H2 (B9)",
 
   it("lee las cinco pantallas y encuentra cada bloque (un gate que no lee nada no es un gate)", () => {
     expect(bloqueCon(fuentes.permisos, "texto={t.escribirNotas}", "</Fila>")).not.toBe("");
+    expect(bloqueCon(fuentes.permisos, "texto={t.buscarAMano}", "</Fila>")).not.toBe("");
     expect(bloqueCon(fuentes.corpus, "t.corpusPendiente", "))}")).not.toBe("");
     expect(bloqueCon(fuentes.ia, "MLX · Qwen 3 4B", "</tr>")).not.toBe("");
   });

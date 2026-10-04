@@ -11,9 +11,10 @@ comprobado, y la app lo dice en vez de prometerlo).
 
 **No persistir, y que se pueda comprobar.** El audio, lo que dijo el cliente y lo que se leyó de la
 pantalla viven solo en memoria y mueren al cerrar. Lo único que queda es lo tuyo: tus notas, tus
-acuerdos y las fichas que fijaste, en un archivo cifrado por reunión con la llave en tu Llavero; y, si lo
-eliges, un hecho de una línea que dijo el cliente, en la bandeja, cifrado, que se borra solo en la ventana
-que elijas (24 h como mucho). Por
+acuerdos, las fichas que fijaste y las propuestas que aceptes —de lo que dijo el cliente, como mucho un
+hecho de una línea—, en un archivo cifrado por reunión con la llave en tu Llavero. Lo que no decides
+espera cifrado en la bandeja y se borra solo al vencer (3 h de fábrica, 24 h como mucho; con «al
+cerrar», ni eso). Por
 defecto la app funciona entera en tu Mac: el contador de red marca 0 bytes salvo que enciendas, con tu
 propia clave, un proveedor externo para las sugerencias.
 
@@ -60,9 +61,10 @@ your screen in Google Meet** (verified on macOS 26.6.2; Zoom and Teams are not v
 app says so instead of promising it).
 
 Audio, the client's words and whatever was read from the screen live only in memory and die when
-you close. What stays is yours: your notes, agreements and pinned cards, in one encrypted file per
-meeting, keyed from your Keychain; and, if you choose, a one-line fact the client said, in the tray,
-encrypted, which deletes itself within the window you pick (24 h at most). By default everything runs on your Mac: the network counter reads
+you close. What stays is yours: your notes, agreements, pinned cards and the suggestions you accept
+—of what the client said, at most a one-line fact—, in one encrypted file per meeting, keyed from your
+Keychain. What you leave undecided waits, encrypted, in the tray and deletes itself on expiry (3 h by
+default, 24 h at most; with "on close", not even that). By default everything runs on your Mac: the network counter reads
 0 bytes unless you turn on, with your own key, an external provider for suggestions.
 
 **Status:** personal MVP (cycle H1) built; it is sealed by the cycle-closing human gate. Today it is

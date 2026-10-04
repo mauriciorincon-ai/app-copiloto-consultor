@@ -1,7 +1,9 @@
 //! EL DESBLOQUEO DE TUS NOTAS GUARDADAS (ADR 015 §5).
 //!
-//! Abrir o exportar una reunión guardada pide Touch ID o la contraseña del Mac **una vez por sesión
-//! de la app**; al salir se olvida. Guardar no lo pide: al cerrar una reunión no hay que pararse.
+//! Exportar una reunión guardada, o leer una bandeja de otra sesión, pide Touch ID o la contraseña
+//! del Mac **una vez por sesión de la app**; al salir se olvida. La puerta local lleva su propio
+//! desbloqueo y lo pide **una vez por apertura** (ADR 018, enmienda 1). Guardar no lo pide: al
+//! cerrar una reunión no hay que pararse.
 //!
 //! Qué protege: a alguien frente a tu Mac desbloqueado que abre Angel Ghost para leer tus reuniones.
 

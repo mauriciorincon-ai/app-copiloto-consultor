@@ -315,18 +315,18 @@ describe("el cuaderno: lo que no existe se dice", () => {
    * en verde porque repetía lo que la pantalla decía, no lo que la app hacía — un test escrito
    * contra la interfaz y no contra el producto no puede cazar esto. Hallazgo M11.
    */
-  it("permisos: lo que ya se puede hacer sin permisos dice «funciona», y solo lo que falta «todavía no»", () => {
+  it("permisos: lo que ya se puede hacer sin permisos dice «funciona», y no queda ningún «todavía no»", () => {
     pinta("?pantalla=permisos");
     const tarjeta = screen
       .getByText(t.sinConcederNada)
       .closest(".tarjeta") as HTMLElement;
-    // Sin conceder nada funcionan indexar el corpus y escribir notas y acuerdos («Solo notas», en
-    // Sesión; auditoría del S3, M7). Buscar a mano decía «Funciona», pero `⌃⌥A` busca sobre lo que dijo
-    // el cliente y eso necesita el audio del sistema (auditoría del S2, B19): sigue «todavía no».
-    expect(within(tarjeta).getAllByText(t.funciona)).toHaveLength(2);
-    expect(within(tarjeta).getAllByText(t.todaviaNo)).toHaveLength(1);
+    // Sin conceder nada funcionan las tres: indexar el corpus, y en «Solo notas» (Sesión) escribir notas
+    // y acuerdos (auditoría del S3, M7) y buscar a mano, porque ahí ⌃⌥A busca con tu nota (segunda
+    // pasada de la casilla 4). Fuera de Solo notas, ⌃⌥A sigue necesitando el audio del sistema (S2, B19).
+    expect(within(tarjeta).getAllByText(t.funciona)).toHaveLength(3);
+    expect(within(tarjeta).queryAllByText(t.todaviaNo)).toHaveLength(0);
     expect(within(tarjeta).getByText(t.escribirNotas).closest(".fila")?.className).not.toContain("pendiente");
-    expect(within(tarjeta).getByText(t.buscarAMano).closest(".fila")?.className).toContain("pendiente");
+    expect(within(tarjeta).getByText(t.buscarAMano).closest(".fila")?.className).not.toContain("pendiente");
   });
 
   /**

@@ -45,7 +45,7 @@ no está o no rinde, y (a) rinde (medido en la fase 6: mediana ~0,8 s): queda en
    contador— y Honestidad lo enseña. El gate del contador de red deja de ser «ninguna puerta» y se
    estrecha a **una puerta declarada**: la sesión de red vive solo en `nativo/Red.swift`
    (`URLSession` efímera), y `sintesis/api.rs` arma la petición y la cuenta.
-4. **Registrar sin contenido:** proveedor, bytes, ms y costo al log. **Pendiente, sprint 003:** el
+4. **Registrar sin contenido:** proveedor, bytes, ms y costo al log. **Hecho en el sprint 003:** el
    texto exacto que salió, visible en la pantalla IA y solo en memoria, para que el usuario lo pueda
    leer. **Desde el sprint 003 (fase 0), cada petición deja en un registro de la reunión el texto
    exacto que salió**, trozo a trozo, con lo que la bóveda reemplazó en el Mac al lado de cada

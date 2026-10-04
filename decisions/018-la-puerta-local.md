@@ -5,8 +5,8 @@
 - **Estado:** aceptada. La vista de la puerta en IA es FORMA nueva: se construye con lo maquetado
   (`ia.html`, estados «sprint 3 · la puerta») y queda «maquetado, no visto» para el gate del MVP
   (decisión del usuario del 2026-09-27: solo abre parada lo que cambia una decisión suya, la promesa
-  del producto o toca su Mac). **Lo que toca su Mac —el diálogo del Llavero la primera vez que el
-  agente usa la puerta— se enseña en una fila de la regla 22 antes de probarlo en vivo.**
+  del producto o toca su Mac). **Lo que toca su Mac —el diálogo del Llavero en cada apertura de
+  la puerta— se enseña en una fila de la regla 22 antes de probarlo en vivo.**
 
 ## Contexto
 
@@ -144,7 +144,8 @@ banda, que pinta texto de terceros sobre la reunión, no puede abrir la puerta.
 
 ## Qué se queda fuera (H2)
 
-- **Instalar `ghost` en el PATH o dentro del `.app`**: llega con la firma (G-Release).
+- **Instalar `ghost` en el PATH**: llega con la firma (G-Release). (Dentro del `.app` ya viaja:
+  `Contents/MacOS/ghost`, visto en el `/release-check` del S3.)
 - **Añadir carpetas al corpus desde la puerta**: la carpeta la señalas tú con el diálogo.
 - **Comparar proveedores del modelo**: el kit de la puerta mide la búsqueda, que es código; comparar
   modelos pide el modelo, y eso no es de esta fase.

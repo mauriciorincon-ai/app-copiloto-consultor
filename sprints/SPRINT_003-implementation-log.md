@@ -1471,6 +1471,97 @@ del ⭐⭐ (filas 18 y 20).
 Gates: `cargo test --lib` (480) · `--test puerta` · `--test ghost` ✓ · clippy limpio · vitest 354 ✓ · lint ·
 typecheck · `verify:ephemeral` ✓ · `pnpm fidelidad` 216 encuadres, ningún desborde.
 
+**Dos pruebas decorativas de la Fase 2, cazadas al exigirles el rojo** (el summary las cita):
+
+- `propuesta.test`, la comprobación de que no queda residuo de plantilla: quitaba las plantillas en el
+  orden equivocado y una corta se comía parte de una larga, así que «sin residuo» pasaba con residuo.
+  Ahora se quitan de la más larga a la más corta.
+- `sin-todavia-no-de-lo-que-existe`: `bloqueCon` devolvía un trozo vacío cuando no encontraba el cierre
+  del bloque de Corpus, y un trozo vacío no contiene «Todavía no»: el gate pasaba sin leer nada. Ahora
+  devuelve vacío solo si falta la clave o el cierre, y un test exige encontrar cada bloque.
+
+## Cierre del sprint (2026-10-03): decisión B, `/release-check` y la segunda pasada de la casilla 4
+
+**La decisión del usuario:** «sigue · B». El cierre sigue sin la prueba en vivo, que pasa al Acto 2
+(«Desviación del plan», abajo).
+
+### `/release-check`
+
+- **El binario, sin tocar las protecciones del Mac.** `pnpm tauri build --bundles app --no-sign`:
+  - sin `.dmg`, porque su paso usa AppleScript sobre Finder (aviso de Automatización, regla 22);
+  - sin firma, porque firmar usaría el Llavero.
+- **El peso.** Ejecutable **12,79 MB** (S2: 12,06; +0,73 MB) · `ghost` 0,48 MB, dentro del `.app` · `.app`
+  13,4 MB · imagen comprimida **6,27 MB**.
+  - La imagen se midió con `hdiutil create -format UDZO`.
+  - Para comparar, el `.app` del S2, que seguía en `target/`, medido igual da 5,66 MB. El `.dmg` de Tauri
+    del S2 daba 5,34.
+- **`--release`.** `cargo test --release --locked --lib --test puerta --test ghost`: 479 · 14 · 5, verde.
+- **Auditoría de dependencias.** `pnpm audit --audit-level high` limpio. `cargo audit` en la CI, sin
+  vulnerabilidades.
+- **Resultado: 10/12 ✅, 2 con aviso y 0 ❌.** Los avisos son el corte declarado y la deuda de `cargo
+  audit`. La tabla está en el summary.
+
+### Casilla 4, segunda pasada: otro auditor independiente
+
+Un subagente nuevo, en solo lectura y sin nada de la regla 22, barrió por promesa aplazada. Después
+siguió cada pago hasta sus frases hermanas, este summary incluido. Encontró **21 frases falsas hoy: 2
+altas, 10 medias y 9 bajas**. En la auditoría quedan como **A3–A4, M14–M23 y B31–B39**. Se suman dos:
+
+- **B40:** comentarios de código viejos que el auditor vio de paso.
+- **B41:** el manual decía que `ghost` «no viaja dentro de la app». El `.app` del `/release-check` lo
+  lleva en `Contents/MacOS/ghost`. Lo encontró el constructor.
+
+**Los rojos de esta pasada.** Tres gates crecieron para que estas frases sean rojos la próxima vez. Se vio
+cada uno en rojo con el texto de antes, y en verde después de arreglarlo:
+
+| Gate | Qué se amplió | El rojo que se vio |
+|---|---|---|
+| `abrir-no-existe` | lee el BLUEPRINT y `desbloqueo.rs`, y caza «abrir o exportar» | `docs/BLUEPRINT.html:357` · `:524` · `src-tauri/src/desbloqueo.rs:3` |
+| `sin-todavia-no-de-lo-que-existe` | cubre la fila «Buscar tu evidencia a mano» de Permisos | «Permisos: «Buscar tu evidencia a mano — Todavía no» (en Solo notas, ⌃⌥A busca con tu nota, sin permisos)» |
+| `llavero-sin-promesas` | caza «la llave no viaja» / «the key does not travel» | `decisions/015-las-notas-y-su-cifrado.md:88` |
+
+**Lo que cambió.**
+
+- **La cláusula modelo (A3).** Dice qué tapa la app y qué se conserva: tus notas, tus turnos si lo
+  eliges, y las propuestas que aceptes. Las que no decides se borran solas en 24 h como mucho.
+- **La protección del cuaderno (A4).** El manual ya no dice «comprobado en Meet». La interfaz dice
+  «protegida al compartir», en vez de «el cliente no la ve». La parada k1 pide anotar qué se ve: nadie
+  sabe todavía si sale negro o deja ver lo que hay detrás, que es lo que pasa con la banda.
+- **«Del cliente, nada».** Corregido en el manual, el README, la guía y cuatro cadenas de Notas y
+  Honestidad.
+- **«No hay copia en otro sitio».** Corregido en Notas, el manual, la guía y la maqueta.
+- **«Buscar a mano».** Pasa a «Funciona» en Permisos.
+- **El BLUEPRINT, al día.** Abrir y exportar, la franja del cuaderno sin proteger, el escritor de
+  `acople.json`, las siete enmiendas y Documentos con el corpus recordado. Suma una fila de historial.
+- **La línea de retención.** Va «bajo el costo» en cinco sitios.
+- **`CLAUDE.md`.** Persisten las propuestas aceptadas, y el índice es la excepción del escritor único.
+- **Los restos de los ADR 011, 015 y 018.**
+- **El summary.** «44 pagados, cada uno con su rojo» pasa a 27 con su rojo y 17 de texto o declaración.
+  También se corrigen 478, 20 y la fecha de la fidelidad.
+
+**Control final sobre los propios pagos.** Se le pidió al mismo auditor que releyera solo lo cambiado. Encontró
+seis restos, ninguno alto:
+- el BLUEPRINT decía que el peso del S3 no se había medido;
+- tres hermanas de B41 (ADR 018 y dos del BLUEPRINT);
+- «33 comandos en la ventana principal», que son 32 más uno en la banda;
+- cinco filas de textos diferidos que no nombraban el texto nuevo;
+- la frase de apertura del manual, sin la bandeja;
+- el titular del Outcome: «lo del cliente muere».
+
+Pagados en el mismo commit y contados dentro de sus filas (B31, B41, B39, A3, M16–M19). Los gates siguen
+verdes.
+
+**Deuda nueva, declarada.** Si la carpeta del corpus vive en Documentos, macOS puede preguntar al
+releerla al arrancar, y lo hará **sin la frase de la app**: `NSDocumentsFolderUsageDescription` se quitó
+con la decisión A. Esa frase la pide la regla dura 7. Se decide en el Acto 2, junto con B5.
+
+**TEXTO nuevo, maquetado y no visto.** Va al bloque de textos del ⭐⭐, filas 1, 10, 12, 13 y 18 (la 10, al día con
+«protegida al compartir»):
+- la cláusula;
+- «protegida al compartir»;
+- las cadenas de Notas y Honestidad;
+- «Buscar a mano».
+
 ---
 
 ## Desviación del plan
@@ -1484,6 +1575,16 @@ typecheck · `verify:ephemeral` ✓ · `pnpm fidelidad` 216 encuadres, ningún d
   y guarda hasta 30 días sin un acuerdo. El usuario lo decidió con la tabla delante, y la app lo dice en
   IA, en el manual y en la cláusula. Gemini sale de la app. La planeadora decide si la regla se reescribe
   («proveedor que declara su retención, y la app la enseña») o si Claude sale en el H2.
+
+- **La prueba en vivo pasa al Acto 2 (decisión del usuario, 2026-10-03: «sigue · B»).** La regla 15
+  (tercer filo) pide ver cada modo funcionando en vivo antes de cerrar el sprint que lo introduce. El
+  usuario la aplaza: el sprint se mergea con el corte **declarado en el PR y en el summary**, y la prueba
+  —sus siete filas de la regla 22, con un «sí» por fila— corre en la misma sentada que el ⭐⭐. Lo que
+  arrastra: **B5** (deuda del Acto 2) y el «visto funcionar» de launchd desde la app, el Llavero de las
+  notas y de la puerta, Touch ID al exportar y en `ghost`, la bandeja fuera de Time Machine, el cuaderno
+  protegido en Meet y los indicadores apagados en solo notas. Lo que cuesta: `main` recibe ese código sin
+  haberlo visto en el Mac del usuario, y el cierre del Acto 1 queda **condicionado** hasta el Acto 2. Las
+  opciones se le presentaron con su costo («A: prueba antes del merge · B: merge con el corte declarado»).
 
 ---
 

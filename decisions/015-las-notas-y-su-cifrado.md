@@ -85,8 +85,9 @@ voz del cliente** y no entra jamás, aunque la casilla esté encendida (test en 
 - **Consecuencia que se dice, no se arregla:** si borras el Llavero ~~o cambias de Mac~~, tus notas
   guardadas no se pueden abrir. No hay recuperación, porque cualquier recuperación sería una segunda
   llave. Lo dice el manual. *(Si migras a otro Mac con el Asistente de migración, la llave viaja: enmienda 2.)*
-- **Si Documentos está en iCloud**, viaja una copia del archivo cifrado. Nadie puede abrirla fuera de
-  este Mac, porque la llave no viaja. Lo dicen el manual y Honestidad. *(Dejó de aplicar con la
+- **Si Documentos está en iCloud**, viaja una copia del archivo cifrado. ~~Nadie puede abrirla fuera de
+  este Mac, porque la llave no viaja.~~ **(falso: la llave viaja con el llavero de inicio de sesión;
+  enmienda 2)** Lo dicen el manual y Honestidad. *(Dejó de aplicar con la
   enmienda 1: las notas ya no viven en Documentos.)*
 
 ### 5 · Guardar no pide nada; abrir y exportar, sí

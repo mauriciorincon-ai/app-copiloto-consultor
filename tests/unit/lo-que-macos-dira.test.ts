@@ -27,7 +27,9 @@ const CLAVES = [
   "NSAudioCaptureUsageDescription",
   "NSSpeechRecognitionUsageDescription",
   // Sin `NSDocumentsFolderUsageDescription`: tus notas viven en la carpeta privada de la app, no en
-  // Documentos (ADR 016, decisión A del sprint 003), así que la app no pide ese permiso.
+  // Documentos (ADR 015, enmienda 1: decisión A del sprint 003). Pero si la carpeta del corpus vive en
+  // Documentos, macOS puede preguntar al releerla al arrancar (B29), y lo hará sin la frase de la app:
+  // se decide en el Acto 2, con B5.
 ] as const;
 
 function delPlist(texto: string): Record<string, string> {

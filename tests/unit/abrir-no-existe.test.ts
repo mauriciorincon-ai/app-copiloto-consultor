@@ -9,10 +9,21 @@ import { describe, expect, it } from "vitest";
  * la interfaz y la guía hablaban de «abrir una reunión» y mandaban al usuario a buscar un botón que no
  * está. Una línea que nombra `ghost` sí puede decir «abrir».
  *
- * ¿Puede fallar? Sí: nació en rojo con los textos de antes (bitácora).
+ * ¿Puede fallar? Sí: nació en rojo con los textos de antes (bitácora). Y la segunda pasada de la casilla 4
+ * (2026-10-03) lo amplió con su rojo: el BLUEPRINT y el comentario de `desbloqueo.rs` decían «Abrir o
+ * exportar una reunión guardada… una vez por sesión», y el gate no los leía.
  */
-const TEXTOS = ["docs/MANUAL-DE-USO.md", "src/i18n/es.ts", "src/i18n/en.ts", "docs/GUIA-DE-PRUEBA.html", "docs/diseno/notas.html"];
-const ABRIR = /abrir (una|la) reuni[oó]n|ábrela|como abrir en|opening a meeting|open a (saved )?meeting/i;
+const TEXTOS = [
+  "docs/MANUAL-DE-USO.md",
+  "src/i18n/es.ts",
+  "src/i18n/en.ts",
+  "docs/GUIA-DE-PRUEBA.html",
+  "docs/diseno/notas.html",
+  "docs/BLUEPRINT.html",
+  "src-tauri/src/desbloqueo.rs",
+];
+const ABRIR =
+  /abrir (una|la) reuni[oó]n|abrir o exportar|ábrela|como abrir en|opening a meeting|open a (saved )?meeting|open or export/i;
 
 /** El comando `ghost` cerca de la frase (no la extensión `.ghost` de un archivo): ahí «abrir» sí existe. */
 const GHOST = /(?<![.\w-])ghost\b/;

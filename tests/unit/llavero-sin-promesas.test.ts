@@ -16,8 +16,10 @@ import { describe, expect, it } from "vitest";
  */
 const PUENTE = "src-tauri/nativo/Llavero.swift";
 
+// «la llave no viaja», desde la segunda pasada de la casilla 4 (2026-10-03): el §4 del ADR 015 lo
+// seguía diciendo sin tachar, y el gate no lo cazaba.
 const PROMESAS =
-  /ligada a este Mac|tied to this Mac|ni por copia de seguridad|no viajan? en copias de seguridad|no salen? de\s+este Mac|no viaja a otro Mac|cambias de Mac/i;
+  /ligada a este Mac|tied to this Mac|ni por copia de seguridad|no viajan? en copias de seguridad|no salen? de\s+este Mac|no viaja a otro Mac|cambias de Mac|la llave no viaja|the key (does not|doesn't) travel/i;
 
 /** Los textos que prometen algo sobre la llave. Del ADR, solo lo que va antes de la enmienda 2. */
 const TEXTOS = [

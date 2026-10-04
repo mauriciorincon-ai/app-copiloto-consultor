@@ -11,7 +11,9 @@ Escucha los dos lados de la videollamada, busca en tus propios documentos, y cua
 pregunta algo que tú ya respondiste en una propuesta, un caso o un marco tuyo, te lo pone delante:
 un titular, una línea y de dónde sale.
 
-No graba nada. Al cerrar, del audio y de lo que se dijo no queda rastro — y la propia app tiene una
+No graba nada. Al cerrar, del audio no queda rastro, y de lo que se dijo solo lo que tú decidas
+guardar —tus notas y, del cliente, como mucho un hecho de una línea—, y lo que no decidas espera unas
+horas en la bandeja y se borra solo; la propia app tiene una
 pantalla para que puedas comprobarlo en vez de creértelo.
 
 **Para quién:** consultores y asesores que ya tienen su material escrito y lo necesitan en el
@@ -172,8 +174,9 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 - **Qué hace:** mientras escuchas, *Notas* es tu cuaderno de la reunión: **tu nota** (un campo para
   escribir lo que quieras), **tus acuerdos** (los escribes tú; la app no decide qué fue un acuerdo) y
   **las fichas que fijaste**. Al terminar, se guardan en **un archivo por reunión, cifrado**, en la
-  **carpeta privada de la app**. Es lo único de la reunión que llega al día siguiente: del cliente no
-  se guarda nada —ni su voz, ni sus turnos, ni lo que se leyó de su pantalla—.
+  **carpeta privada de la app**. Es lo único de la reunión que llega al día siguiente, junto con las
+  propuestas que guardes: del cliente no se guarda ni su voz, ni sus turnos, ni lo que se leyó de su
+  pantalla; como mucho, un hecho de una línea que tú aceptaste.
 - **Cómo se usa:**
   1. Durante la sesión, `⌃⌥N` te trae el cuaderno a *Notas* con el cursor al final de tu nota. Escribe
      y sigue: se va guardando en memoria a cada letra.
@@ -192,15 +195,16 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
      te pide Touch ID o la contraseña del Mac, y después dónde. El `.md` lleva tu nota, tus acuerdos,
      **las propuestas que guardaste** (del cliente, el hecho en una línea, como en la pantalla), tus
      fichas fijadas y, si los conservas, tus turnos. La carpeta que eliges no cambia de permisos: el
-     archivo exportado nace legible solo para tu cuenta. **«Borrar ahora»** también pregunta antes: no
-     hay copia en otro sitio.
+     archivo exportado nace legible solo para tu cuenta. **«Borrar ahora»** también pregunta antes: se
+     borra de la app y no vuelve; si usas Time Machine, tus copias la conservan hasta que caduquen.
 - **«Conservar mis turnos»**: si lo enciendes (nace apagado), lo que **tú** dices, en texto, entra
   también en el archivo de las reuniones siguientes. Nunca el audio, ni el tuyo. Y nunca un turno de
   tu micrófono marcado como eco: con altavoces, ese turno es la voz del cliente.
 - **El cuaderno, protegido:** desde que empiezas a escuchar hasta que guardas o descartas la reunión,
-  la ventana del cuaderno se ve **negra** para quien vea tu pantalla compartida, como la banda (en
-  Meet está comprobado; en Zoom y Teams, sin verificar). Así tu nota no se ve si compartes la
-  pantalla entera por descuido.
+  la ventana del cuaderno se **protege de la captura** como la banda, con el mismo flag del sistema.
+  Así tu nota no se ve si compartes la pantalla entera por descuido. **Sin verificar todavía con el
+  cuaderno:** la banda está comprobada en Meet sobre macOS 26.6.2; el cuaderno se mira en la parada 5
+  del ⭐⭐ (Acto 2), y en Zoom y Teams, ni la una ni el otro.
 - **Dónde viven:** en `~/Library/Application Support/com.aiapps.copiloto-consultor/notas/`, junto a
   la bandeja. **No en Documentos**: desde ahí la tarea que borra lo vencido con la app cerrada no puede
   entrar, y la papelera de iCloud guardaría 30 días lo que se borra. Esa carpeta no se sincroniza con
@@ -212,14 +216,15 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   Asistente de migración**, protegida por tu contraseña. Guardar no te pide nada; exportar una reunión
   guardada te pide Touch ID o tu contraseña, una vez cada vez que abres la app.
 - **Limitaciones conocidas:**
-  - **Si borras el Llavero, tus reuniones guardadas no se pueden abrir.** No hay recuperación:
-    cualquier recuperación sería una segunda llave. Si migras a otro Mac con el Asistente de migración,
-    o restauras una copia de Time Machine, tu llavero y tus notas viajan juntos y se siguen abriendo.
+  - **Si borras el Llavero, tus reuniones guardadas no se pueden abrir.** La app no tiene recuperación:
+    sería una segunda llave. Solo una copia de Time Machine (o el Asistente de migración) devuelve tu
+    llavero, y con él tus notas, que se siguen abriendo.
   - **Que la llave quede solo en este Mac llega con la firma de Apple (H2):** hasta entonces, el
     llavero que la app puede usar no sabe atarla a un solo equipo.
   - **Tus notas no aparecen en Documentos:** se llega a ellas desde *Notas*, o con «Mostrar en Finder».
-  - **El nombre del archivo va en claro** (`reunion-2026-09-27-1402.ghost`): dice qué día, no qué se
-    habló.
+  - **El nombre del archivo va en claro** (`reunion-2026-09-27-1402.ghost`, o
+    `paramo-azul-2026-09-27.ghost` si elegiste cliente): dice qué día y, si elegiste cliente, con
+    quién; no qué se habló.
   - **Si la app se cae, lo no guardado se pierde**: vive en memoria a propósito. Si sales de la app con
     notas sin guardar, se guardan solas; y si empiezas otra sesión con la anterior abierta, también.
   - **Tus notas vencidas se borran solas, aunque no abras la app:** las borra la misma tarea de macOS
@@ -424,7 +429,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - **El proveedor externo** (Claude o Groq) es opcional y es **tuyo**: pegas tu clave, la app
     la guarda en tu **Llavero** —nunca en un archivo— y enciendes su interruptor. Sin clave no se
     enciende.
-  - **Lo que cada proveedor hace con lo que le mandas** está escrito debajo de sus botones, en IA.
+  - **Lo que cada proveedor hace con lo que le mandas** está escrito en IA, bajo el costo, para el
+    proveedor que elijas.
     Ninguno de los dos entrena con ello. **Claude lo guarda hasta 30 días**; para que no guarde nada
     hace falta un acuerdo de retención cero con Anthropic. **Groq puede guardarlo hasta 30 días**
     para vigilar abusos, salvo que enciendas la retención cero en *Data Controls*, en su consola: si
@@ -456,7 +462,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - **Puedes ver exactamente lo que salió · desde Sprint 003.** En *IA*, cuando algo salió en esta
     reunión, aparece **«Ver lo que salió · N»** en la tarjeta del proveedor externo. Abre el texto
     exacto de la última petición —con lo que se tapó en tu Mac **tachado** y su marcador al lado—,
-    cuántos caracteres fueron, y la tabla de las peticiones de la reunión (hora, por qué salió,
+    cuántos caracteres fueron, y la tabla de las últimas 20 peticiones de la reunión (hora, por qué salió,
     caracteres, datos tapados y USD). Ese registro vive en memoria: se borra con `⌥⎋` y al terminar la
     sesión. «← Quién redacta» te devuelve.
   - **Nada de la sugerencia va al log**: solo quién, cuánto tardó y cuánto salió
@@ -520,10 +526,11 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 - **Si se cerró sola:** *IA* lo dice en ámbar, «Se cerró sola: hay una reunión». Vuelve a abrirla tú
   cuando termine; no se abre sola.
 - **Limitaciones conocidas:**
-  - `ghost` **no se instala en tu PATH** ni viaja dentro de la app: vive junto a la app que compilaste,
-    y la vista de la puerta te da su ruta. Llega con la app firmada.
-  - Busca, reindexa y mide sobre **el corpus que la app tiene indexado en esta sesión**: si acabas de
-    abrir la app, señala antes tu carpeta en *Corpus*. Añadir carpetas se hace a mano, en *Corpus*.
+  - `ghost` **no se instala en tu PATH**: vive junto a la app que compilaste (y dentro del `.app` si la
+    empaquetas), y la vista de la puerta te da su ruta. Instalarlo en el PATH llega con la app firmada.
+  - Busca, reindexa y mide sobre **el corpus que la app tiene indexado**: al arrancar, la app vuelve a
+    leer en segundo plano la carpeta que recuerda; si acabas de abrirla, espera a que *Corpus* diga
+    cuántos documentos hay. Añadir carpetas se hace a mano, en *Corpus*.
   - El kit mide **la búsqueda** (nDCG@5 y lo que no encuentra); no compara modelos.
   - El registro guarda las últimas 50 órdenes de esta sesión de la app; se ven tres y el resto se
     desplaza. Al salir, se borra.
@@ -651,9 +658,10 @@ solo salen la última frase de tu cliente y tres fichas cortas, anonimizadas —
 
 **¿Guarda lo que se habla en la reunión?**
 No. El audio vive treinta segundos en memoria y se va pisando; el texto, los últimos doce turnos.
-Al cerrar, de lo que se habló no queda nada. Lo que sí queda es **lo tuyo**, si lo guardas: tu nota,
-tus acuerdos, tus fichas fijadas y —solo si enciendes «Conservar mis turnos»— lo que dijiste **tú**,
-en texto. Cifrado, en un archivo por reunión.
+Al cerrar, de lo que se habló no queda nada salvo lo que tú decidas: tu nota, tus acuerdos, tus
+fichas fijadas, las propuestas que guardes (del cliente, un hecho de una línea, nunca su frase) y
+—solo si enciendes «Conservar mis turnos»— lo que dijiste **tú**, en texto. Cifrado, en un archivo
+por reunión. Lo que no decidas espera en la bandeja y se borra solo (3 h de fábrica, 24 h como mucho).
 
 **¿Necesito internet?**
 Solo para la videollamada. La app transcribe, busca y —con el modelo del sistema— redacta dentro de
