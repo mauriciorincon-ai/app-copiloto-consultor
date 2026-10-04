@@ -844,21 +844,68 @@ la promesa «⌥⎋ corta todo…», que vuelve al guardar o cerrar el ensayo; `
 B7 y B10 con el `/release-check` y el summary · la segunda casilla 4, con **otro** auditor, sobre el diff entero
 y el summary.
 
-**Dónde quedó (para retomar):**
+**Dónde quedó (para retomar):** hechos el commit de la Fase 2 con su CI, B9 en la CI y B3 (sección siguiente).
+Lo que falta, en orden:
 
-1. Commit de la Fase 2 en `sprint-004/fase-5` (PR #13), push y `gh pr checks`.
-2. **B9 en la CI:** rama desechable desde ese commit con `println!` de cada `s.texto` al principio de
-   `ensayo::banco::armar` (`src-tauri/src/ensayo/banco.rs`); PR en borrador; esperar que
-   `la_canaria_del_cliente_no_aparece_en_el_log` caiga en `build-escritorio` nombrando el término
-   `pterodaustro-de-escritorio-4419`; cerrar el PR sin mergear y borrar la rama.
-3. **B3:** en el #10, «En borrador mientras se construye.» → mergeado con las fases 0 a 4, y casillas 1 a 4
-   marcadas (la 5 va en el #13); en el #12, un comentario: trajo solo el registro del corte (`2f48a58`); la
-   fase 5, la auditoría, el `/release-check` y el summary van en el #13.
-4. `/release-check` (B7: `pnpm tauri build --bundles app --no-sign` y el peso frente a 12,79 MB) y B10 (leer como
-   imagen un encuadre por bloque de `docs/fidelidad/S4-cuaderno.html` y `S4-banda-arriba.html`).
-5. `sprints/SPRINT_004-summary.md` en Opción A (B6: el WER no se midió en el S4).
-6. La segunda casilla 4 con **otro** subagente, sobre `adb2493..HEAD` y el summary; pagar lo que encuentre.
-7. Todos los gates otra vez, PR listo, «Sprint 004 de Angel Ghost listo para mergear».
+1. El `/release-check`: el peso del binario (B7), `--release`, y su tabla en el summary.
+2. `sprints/SPRINT_004-summary.md`, ya en borrador: llenar lo marcado con ⟨…⟩.
+3. La segunda casilla 4 con **otro** subagente, sobre `adb2493..HEAD` y el summary; pagar lo que encuentre.
+4. Todos los gates otra vez, commit, push y `gh pr checks`; PR listo y «Sprint 004 de Angel Ghost listo para mergear».
+
+## El cierre: B9 en la CI, B3 en GitHub y el `/release-check` (2026-10-04)
+
+**La CI de la Fase 2 (`f3dd820`):** `quality`, `e2e` y `build-escritorio` en `success`, cada uno con su conclusión
+propia. `build-escritorio` (13 min 48 s) corrió la sesión efímera con el término plantado del ensayo y sus dos
+comprobaciones nuevas: el término está en las secciones y el hijo llegó a «ensayo guardado».
+
+**B9, su rojo en la CI** (desviación 31). Rama desechable desde `f3dd820` con un `println!` del texto de cada
+sección de la propuesta al principio de `ensayo::banco::armar`, en el PR en borrador #14. En `build-escritorio`
+cayó **solo** `la_canaria_del_cliente_no_aparece_en_el_log` (26 pasaron, 1 falló), y nombró la línea:
+«lo del ensayo —la propuesta, la pregunta o la evidencia— salió por el log, en 1 línea(s): [demo-rojo] El hito
+pterodaustro-de-escritorio-4419 abre el plazo…». `quality` pasó con el `println!` puesto: el lint estático no mira
+el log, y por eso existe la canaria en marcha. El #14 se cerró sin mergear y su rama se borró.
+
+**B3, publicado con el «sí» del usuario.** El cuerpo del #10 dice que se mergeó el 2026-10-04 (`0009dba`) con las
+fases 0 a 4, con las casillas 1 a 4 marcadas y la 5 «fuera de este PR, va en el #13». El #12 tiene un comentario:
+trajo solo el registro del corte (`2f48a58`), y la fase 5, la auditoría, el `/release-check` y el summary van en el
+#13. Ningún dato personal.
+
+**B10, los encuadres leídos como imagen.** Doce más, uno por bloque, de `docs/fidelidad/s4-cuaderno` y
+`s4-banda-arriba`: preparar (oscuro, es), preguntando (claro, en), respondiendo (oscuro, en), evaluada (claro,
+es), progreso (oscuro, es), borrar (claro, en), sin corpus (oscuro, en), no empezó (claro, es), el aviso de Sesión
+de un ensayo sin guardar (oscuro, es), «lo que salió» en IA con la fila «para el banco» (claro, en), y la banda
+arriba a 88 (oscuro, es) y a 200 (claro, en). Nada roto: el asa va abajo, la marca «sección conjeturada» se lee, y
+el aviso de Sesión cabe en su línea. Con los seis de las fases 3 y 4, **18 encuadres de producto del S4**.
+
+**El hallazgo del `/release-check`: el binario no se podía construir.** `pnpm tauri build --bundles app --no-sign`
+se negó: «Found version mismatched Tauri packages… tauri (v2.11.6) : @tauri-apps/api (v2.12.1) ·
+tauri-plugin-opener (v2.5.5) : @tauri-apps/plugin-opener (v2.7.0)».
+- **De dónde viene.** Dependabot #11 (el lote de npm, mergeado 20 s antes que el #10) subió los paquetes npm de
+  Tauri. Los crates de Rust no se movieron: dependabot solo vigila npm y GitHub Actions, por el techo de dos PR de
+  la regla 18. La CI hace `cargo check` y `cargo test`, que no comparan nada con npm, así que todo salió verde.
+- **El gate nuevo, `tests/unit/tauri-a-la-par.test.ts`:** lee `pnpm-lock.yaml` y `src-tauri/Cargo.lock` y exige la
+  misma versión menor en cada pareja (`@tauri-apps/api` ↔ `tauri`, `@tauri-apps/plugin-*` ↔ `tauri-plugin-*`). Corre
+  en `quality`, con `pnpm test`.
+  - **Rojo 1, el estado real**, antes de arreglar nada: «@tauri-apps/api está en 2.12.1 y tauri en 2.11.6…» y
+    «@tauri-apps/plugin-opener está en 2.7.0 y tauri-plugin-opener en 2.5.5…» (2 de 3 fallan).
+  - **Un intento de demo que no valía:** mutar `pnpm-lock.yaml` dejó el lockfile roto, y `pnpm exec` lo reparó solo
+    antes de correr el test, que pasó. `demo-rojo.sh` lo dijo («el gate pasó con la mutación») y restauró el archivo.
+  - **Rojo 2, con `demo-rojo.sh` sobre `Cargo.lock`** (`tauri` 2.12.1 → 2.11.6), que es como pasó de verdad:
+    «@tauri-apps/api está en 2.12.1 y tauri en 2.11.6: «pnpm tauri build» no construye así. Sube el crate con
+    «cargo update -p tauri».» (1 de 3 falla). Restaurado con `grep` y `cmp`, y 3 de 3 en verde.
+- **El arreglo:** `cargo update -p tauri --precise 2.12.1` y `-p tauri-plugin-opener --precise 2.7.0`. Arrastra a
+  `tauri-build` 2.7.1, `tauri-runtime` 2.12.1, `tauri-utils` 2.10.1, `wry` 0.57.0, `tray-icon` 0.25.1 y otras
+  transitivas. `cargo update -p` a secas no los movía: la subida pide dependencias nuevas.
+- **Lo que se corrió con los crates nuevos:** `AG_SIN_HARDWARE=1 cargo test --locked`: lib 575 (+2 ignorados) ·
+  contra el Mac 16 (+14) · ghost 5 · puerta 14, igual que antes. `cargo clippy --locked --all-targets -- -D
+  warnings` limpio. `cargo test --release --locked --lib --test puerta --test ghost` (con `AG_SIN_HARDWARE=1`): 575 ·
+  14 · 5, en verde. Vitest 455 (54 archivos), 92,6 % de sentencias y 81,4 % de ramas.
+- **El peso (B7).** `pnpm tauri build --bundles app --no-sign`, ya con Tauri 2.12: ejecutable **13,42 MB** (S3: 12,79;
+  **+0,63 MB**, por el ensayo, la banda arriba y Tauri 2.12, sin separar) · `ghost` 0,48 MB, dentro del `.app` · `.app`
+  14,0 MB · imagen comprimida **6,77 MB** (S3: 6,27), medida igual, con `hdiutil create -format UDZO`. Sin `.dmg` de
+  Tauri (AppleScript sobre Finder, regla 22) y sin firma (`--no-sign`: sin Llavero).
+- **El resto de la lista:** `pnpm audit --audit-level high` limpio; `cargo audit` lo corre la CI sobre el `Cargo.lock`
+  nuevo. `tauri.conf.json` e `Info.plist` sin cambios en el sprint.
 
 ## Desviación del plan
 
@@ -915,3 +962,7 @@ y el summary.
     chip seguía prometiendo. En IA se queda (MLX, que respalda el ADR 011).
 31. **El rojo de B9 se ve en la CI**, en un PR desechable: el test de la canaria del log toca el reconocimiento
     de voz y en local no se corre.
+32. **Los crates de Tauri suben a 2.12 en el cierre** (`tauri` 2.12.1, `tauri-plugin-opener` 2.7.0, con sus
+    transitivas), para casar con lo que dependabot subió en npm: si no, `pnpm tauri build` no construye la app.
+    Lo encontró el `/release-check`, y lo vigila un gate nuevo, `tauri-a-la-par`. Bajar los de npm no se puede:
+    `verificar-dependencias` (regla 18) no deja nada por debajo de `main`.

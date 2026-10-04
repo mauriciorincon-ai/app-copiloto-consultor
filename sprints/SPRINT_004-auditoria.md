@@ -51,6 +51,12 @@ Los cuatro altos:
 3. El acople no se hace por turnos, así que dos maniobras a la vez pueden dejar una ventana movida sin huella.
 4. Dos paradas del ⭐⭐ del H1 no pueden pasar con la banda abajo.
 
+**Estado tras la Fase 2 (2026-10-04, `f3dd820`): los 82, pagados.**
+
+- **45 con su rojo antes del verde:** 3 altos, 19 medios y 23 bajos. Todos se vieron con `scripts/demo-rojo.sh`, salvo B9, que se vio en la CI (PR #14, desechable).
+- **37 de texto o declaración**, sin gate que demostrar.
+- **Ninguno queda como deuda.** Cada uno dice su estado en su sección o en su fila.
+
 Las fases 0 a 4 cumplen su alcance. La corrida en vivo de la fase 4 va aplazada con su corte declarado. **La
 casilla 8 sale limpia:** todo lo que se corrió contra el Mac tuvo su matriz y su «sí».
 
@@ -100,6 +106,8 @@ Ninguno.
 ## ALTOS (4)
 
 ### A1 · Un ensayo con una videollamada abierta oye la llamada y la guarda como «tu respuesta»; la voz del ensayo sale a la llamada
+
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`). **Decisión del usuario:** con altavoces no empieza y dice por qué; con auriculares —de cable, Bluetooth o USB— sí. Se aplicó con la regla del H1 (`habla::cabe_decirla`) y no con el ajuste literal, que dejaba fuera los AirPods (desviación 27; ADR 019, enmienda 1). Nace un segundo porqué, «No se puede saber si hay una videollamada».
 
 **Sitio:**
 
@@ -170,6 +178,8 @@ con auriculares.
 
 ### A2 · El ensayo cablea `es-ES` y `en-US`, aunque Idioma deja elegir N locales del sistema (casilla 7)
 
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`): el ensayo transcribe con el locale de Idioma (`locale_del_ensayo`, `MundoDeLaApp`).
+
 **Sitio:**
 
 - `src-tauri/src/lib.rs:1083-1088` (`codigo_de`);
@@ -208,6 +218,8 @@ fn locale_del_ensayo(idioma: ensayo::banco::Idioma, pistas: &prefs::IdiomasDePis
 | nada | En | nada | `en-US` |
 
 ### A3 · El acople no se hace por turnos: dos maniobras a la vez pierden la huella y dejan la reunión movida para siempre
+
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`): `UNA_A_LA_VEZ`, y cada maniobra nativa (`acoplar`, `reacoplar`, `acoplar_arriba`, `soltar`) espera su turno.
 
 **Sitio:**
 
@@ -253,6 +265,8 @@ Es justo el fallo que el módulo existe para no cometer.
 
 ### A4 · Guía: con la banda abajo nada acopla Chrome, y dos paradas del ⭐⭐ del H1 no pueden pasar (casilla 6)
 
+**Estado:** **pagado**, de texto o documento: sin gate que demostrar (Fase 2, `f3dd820`). **Decisión del usuario:** la guía pide ⌃⌥B dos veces con Chrome delante (a2, a5, l5); la app, como en el H1.
+
 **Sitio:** `docs/GUIA-DE-PRUEBA.html:214` (la preparación), y las pruebas a2 (`:306`, parada 1), a5 (`:325`), i1
 (`:560`, parada 4), l2 (`:635`, parada 6) y l5 (`:655`).
 
@@ -287,6 +301,8 @@ en el H1».
 
 ### M1 · El acople escribe por la posición de la ventana en la lista sin comprobar que sigue siendo la misma
 
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`).
+
 **Sitio:**
 - `src-tauri/src/acople/ax.rs:169-170` dice «el índice solo vale dentro de esta llamada». Pero `Destino.indice` se
   reusa paso a paso en `src-tauri/src/acople/mod.rs:582-598` (`ejecutar`), y el deshacer busca por índice en `:552-556`.
@@ -305,6 +321,8 @@ en otra ventana. Por ejemplo, el correo acaba con la geometría de Meet.
 cambia de geometría antes del segundo paso, y el test exige una sola escritura y `None`. Antes del ajuste está en rojo.
 
 ### M2 · El deshacer del acople arriba no se verifica
+
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`).
 
 **Sitio:** `src-tauri/src/acople/mod.rs:551-560`. Además, `soltar_sin_medir` (`:666`) olvida la huella aunque la
 devolución fallara a medias.
@@ -329,6 +347,8 @@ su resultado**, y el motivo dice «se deshizo y la banda flota». Si el deshacer
 
 ### M3 · Con Zoom o Teams abiertos sin llamada, el acople de arriba mueve una ventana que no es una reunión
 
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`) (dos). **Decisión del usuario:** arriba solo se acopla con la sesión iniciada; el latido no acopla arriba.
+
 **Sitio:** `src-tauri/src/sesion/mod.rs:275-285` (`ventana_de_la_reunion`, que sigue a `objetivo_de`; la clase
 `Aplicacion` «se detecta con que esté corriendo», `:31`). El latido la acopla en `src-tauri/src/lib.rs:3595-3598`.
 
@@ -347,6 +367,8 @@ tapada. Choca con el ADR 004, enmienda 1: «sin reunión detectada no hay acople
 `ventana_de_la_reunion` en `acoplar_arriba`, y la rama `Arriba` del latido no la llama. Antes del ajuste está en rojo.
 
 ### M4 · Arriba se da por acoplada una ventana que bajó sin encogerse, y sus controles salen de la pantalla
+
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`).
 
 **Sitio:** `src-tauri/src/acople/mod.rs:539` (`hubo_cambio && quedo_bajo_la_franja`) y `:255-256` (los dos pasos se
 ejecutan seguidos).
@@ -372,6 +394,8 @@ ejecutan seguidos).
 
 ### M5 · Después de ⌥⎋ (la banda cerrada), ⌃⌥B o el selector de Sesión acoplan ventanas sin banda
 
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`).
+
 **Sitio:**
 - `src-tauri/src/lib.rs:274-282` (`acoplar_segun_el_borde`), al que llaman `poner_la_banda` (`:325-338`) y el latido
   (`:3602`);
@@ -391,6 +415,8 @@ if app.get_webview_window(ventana::BANDA).is_none() {
 antes de `acople::acoplar(`. Antes del ajuste está en rojo.
 
 ### M6 · R o S a media frase meten lo descartado en la respuesta nueva
+
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`).
 
 **Sitio:** `src-tauri/src/ensayo/oido.rs:234-247`. `latir` sella cada turno con la ronda del latido en que se
 **cierra**, no en la que empezó. `src-tauri/src/ensayo/mod.rs:436` lo acepta.
@@ -413,6 +439,8 @@ Antes del ajuste está en rojo.
 
 ### M7 · Al pulsar R o S mientras la voz lee, el micrófono se abre antes de que suene la pregunta nueva
 
+**Estado:** **pagado**, con su rojo sobre la fuente de Swift (Fase 2, `f3dd820`): en `cargo test` la voz no avisa de que terminó, y el test con los altavoces que proponía la auditoría pasaba con el fallo puesto (desviación 28). Lo de verdad —R mientras lee— va al ⭐.
+
 **Sitio:** `src-tauri/nativo/Habla.swift:105-111`. `didFinish` y `didCancel` de **cualquier** frase apagan la
 bandera. `src-tauri/src/ensayo/sesion.rs:207-219` se fía de ella.
 
@@ -428,6 +456,8 @@ respuesta. Rompe el §6.3 del ADR 019.
 lee `hablando()` 60 veces cada 10 ms y todas valen `true`. Lo corre la CI de macOS. Antes del ajuste está en rojo.
 
 ### M8 · Un ruido sin texto arranca el reloj del silencio: «pensar antes de empezar» sí cierra la respuesta
+
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`).
 
 **Sitio:** `src-tauri/src/ensayo/sesion.rs:233-239`. `self.tramos.last()` no mira si el tramo tiene texto.
 
@@ -446,6 +476,8 @@ respuesta vacía como «respondida». Eso ensucia el informe y el progreso.
 Antes del ajuste está en rojo.
 
 ### M9 · «Preparar» relee y parsea cada propuesta del disco, en el hilo principal y con el candado del corpus puesto
+
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`).
 
 **Sitio:** `src-tauri/src/corpus/mod.rs:304-318` (`propuestas_de` hace `leer::leer` con `pdf-extract`). La llaman
 `src-tauri/src/lib.rs:1158-1220` (en cada cambio de cliente, propuesta o tope) y `empezar_el_ensayo`. Los comandos
@@ -466,6 +498,8 @@ síncronos de Tauri corren en el hilo principal.
 Antes del ajuste da 0.
 
 ### M10 · Empezar una sesión borra sin avisar el informe del ensayo que no guardaste
+
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`). **Decisión del usuario:** Sesión lo dice en una línea, en el sitio de la promesa del corte, hasta que guardes o cierres el ensayo.
 
 **Sitio:** `src-tauri/src/lib.rs:671` (`soltar_el_ensayo` dentro de `empezar`, comprobado por el constructor).
 Sesión no sabe que hay un ensayo: `src/pantallas/Sesion.tsx:263-271`.
@@ -490,6 +524,8 @@ en rojo.
 
 ### M11 · Mantener pulsada una tecla manda la orden una y otra vez
 
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`).
+
 **Sitio:** `src/pantallas/Ensayo.tsx:632-648` (`alPulsar`, sin mirar `e.repeat`). Sonda: 3 llamadas.
 
 **Qué pasa:** Enter sostenido encadena «siguiente» → cierra una respuesta vacía. Una S sostenida salta varias
@@ -500,6 +536,8 @@ preguntas. El informe y el progreso quedan con datos falsos.
 **Verificado cuando:** Enter y S con `repeat: true` dan una sola llamada cada uno. Antes del ajuste está en rojo.
 
 ### M12 · «Muletillas 0» sin ninguna palabra (un cero inventado), y la webview recalcula reglas de Rust
+
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`).
 
 **Sitio:**
 - `src/pantallas/Ensayo.tsx:848-851`, `:911`, `:1024`;
@@ -525,6 +563,8 @@ Antes del ajuste, los dos están en rojo.
 
 ### M13 · Volver del progreso, o terminar un ensayo, te devuelve a otro cliente, otro tope y la voz encendida
 
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`).
+
 **Sitio:** `src/pantallas/Ensayo.tsx:135-138` (el estado es local de `Preparar`, que se desmonta en `:89-108`).
 Confirmado con una sonda.
 
@@ -540,6 +580,8 @@ Azul, 8 y con voz. Un clic en «Empezar» ensaya con el cliente equivocado.
 
 ### M14 · Si borrar falla, la promesa rechazada queda sin manejar y la pantalla calla
 
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`).
+
 **Sitio:** `src/pantallas/Ensayo.tsx:559` (`void borrarLosEnsayos(p.cliente).then(volver)`). Confirmado con una sonda.
 
 **Ajuste:**
@@ -554,6 +596,8 @@ rojo.
 
 ### M15 · La confirmación de borrar (`alertdialog`) no recibe el foco, y al cancelar el foco se pierde
 
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`) (Ensayo y Notas).
+
 **Sitio:** `src/pantallas/Ensayo.tsx:549-581`. El mismo patrón está en `src/pantallas/Notas.tsx:1007`. Confirmado con
 una sonda: el foco acaba en BODY.
 
@@ -565,6 +609,8 @@ cliente». Antes del ajuste está en rojo.
 
 ### M16 · Enter con el foco en un enlace del rail cierra tu respuesta, y el enlace no navega
 
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`).
+
 **Sitio:** `src/pantallas/Ensayo.tsx:641`. Solo se exceptúa BUTTON, y `e.preventDefault()` (`:648`) cancela el
 `<a>`. Confirmado con una sonda.
 
@@ -573,6 +619,8 @@ cliente». Antes del ajuste está en rojo.
 **Verificado cuando:** Enter sobre un `<a>` con el foco no llama a `ensayo_listo`. Antes del ajuste está en rojo.
 
 ### M17 · El contrapeso de reduced-motion no comprueba la cuenta de preguntas, y la orden la exige
+
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`). **El primer intento pasó en verde:** `seVe` miraba la opacidad del elemento y no la de su cadena; se arregló el gate y después dio sus dos rojos.
 
 **Sitio:** `tests/e2e/reduced-motion.spec.ts:31-36`. La cuenta se pinta en `src/pantallas/Ensayo.tsx:680-683`
 (`.progreso`).
@@ -590,6 +638,8 @@ diferir». Hoy solo se comprueba el temporizador.
 
 ### M18 · El tope de fábrica es un literal y una posición, no un dato (casilla 7)
 
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`).
+
 **Sitio:**
 - `src/pantallas/Ensayo.tsx:137` (`useState(8)`);
 - `src-tauri/src/lib.rs:1138-1145` (`topes.get(1)…unwrap_or(8)`);
@@ -605,6 +655,8 @@ diferir». Hoy solo se comprueba el temporizador.
 **Verificado cuando:** `"tope_de_fabrica": 7` pone el test en rojo.
 
 ### M19 · La puerta local dice «hay una reunión» cuando la cierra un ensayo
+
+**Estado:** **pagado**, de texto o documento: sin gate que demostrar (Fase 2, `f3dd820`): las claves, `ghost`, su ayuda, la maqueta, el manual, la guía, `design-system.md`, el BLUEPRINT y el `CLAUDE.md`.
 
 **Sitio:**
 - `src-tauri/src/lib.rs:1265` → `:3390-3395` (`Cierre::EnReunion`);
@@ -636,6 +688,8 @@ Los mismos cambios en:
 
 ### M20 · La app afirma que la protección está verificada en la posición que el manual dice que nadie ha mirado
 
+**Estado:** **pagado**, de texto o documento: sin gate que demostrar (Fase 2, `f3dd820`). **Decisión del usuario:** «verificado… con la banda abajo; con la banda arriba, y en Zoom y Teams, está sin verificar», en los nueve estados de Sesión.
+
 **Sitio:**
 - `src/i18n/es.ts:320-321` y `en.ts:244-245` (`proteccionDetalle`: «Verificado en tu Mac … el 2026-09-20»);
 - el chip «Meet · protegido» (`src/i18n/es.ts:27`);
@@ -661,6 +715,8 @@ Pero el manual (`docs/MANUAL-DE-USO.md:92-94`) y la q2 dicen que con la banda ar
 
 ### M21 · «Ver lo que salió» registra lo del ensayo como «redactar sugerencia» y como parte de «esta reunión»
 
+**Estado:** **pagado**, con su rojo antes del verde (Fase 2, `f3dd820`).
+
 **Sitio:**
 - `src/pantallas/Ia.tsx:513`;
 - `src/i18n/es.ts:595`, `:600`, `:601`, con sus pares en `en.ts`;
@@ -683,6 +739,8 @@ Pero el manual (`docs/MANUAL-DE-USO.md:92-94`) y la q2 dicen que con la banda ar
 
 ### M22 · El manual y el README dicen qué sale a la red y no cuentan el ensayo
 
+**Estado:** **pagado**, de texto o documento: sin gate que demostrar (Fase 2, `f3dd820`).
+
 **Sitio:** `docs/MANUAL-DE-USO.md:769-771` («solo salen la última frase de tu cliente y tres fichas cortas») y
 `README.md:18-19` / `:67-68`. Con «Enriquecer el banco» salen, una vez por ensayo, los títulos y la primera frase de
 las secciones de tu propuesta y de la ficha (`src-tauri/src/ensayo/enriquecer.rs:60-92`).
@@ -698,6 +756,8 @@ las secciones de tu propuesta y de la ficha (`src-tauri/src/ensayo/enriquecer.rs
 
 ### M23 · El README no cuenta los ensayos entre lo que queda
 
+**Estado:** **pagado**, de texto o documento: sin gate que demostrar (Fase 2, `f3dd820`).
+
 **Sitio:** `README.md:12-17` y `:63-67`.
 
 **Ajuste (es; el equivalente en inglés en la parte inglesa):** «Lo único que queda es lo tuyo: tus notas, tus
@@ -709,6 +769,8 @@ y tus ensayos, si los guardas: tus respuestas en texto y sus cifras, con la mism
 
 ### M24 · El manual dice que la banda arriba se acopla «cuando aparece la reunión»
 
+**Estado:** **pagado**, de texto o documento: sin gate que demostrar (Fase 2, `f3dd820`).
+
 **Sitio:** `docs/MANUAL-DE-USO.md:66-67`. Sola, solo lo hace en los 30 s del latido del arranque
 (`src-tauri/src/lib.rs:3580-3610`).
 
@@ -719,6 +781,8 @@ ya está abierta o aparece en los primeros 30 segundos tras abrir la app.»
 **Verificado cuando:** el barrido de la segunda casilla 4 está limpio.
 
 ### M25 · Guía q4: ⌃⌥B con el cuaderno delante no acopla nada abajo
+
+**Estado:** **pagado**, de texto o documento: sin gate que demostrar (Fase 2, `f3dd820`).
 
 **Sitio:** `docs/GUIA-DE-PRUEBA.html:791`. Abajo se acopla la app que está delante, y Angel Ghost no cuenta
 (`src-tauri/src/acople/ax.rs:321-328`). Además, «Con Meet cerrado» nunca pide cerrarlo.
@@ -732,6 +796,8 @@ se acopla la ventana que tengas delante—; otra vez ⌃⌥B, y vuelve arriba. �
 
 ### M26 · El comando del WER ya no corre nada
 
+**Estado:** **pagado**, de texto o documento: sin gate que demostrar (Fase 2, `f3dd820`): el comando del LEEME lleva `--include-ignored`, y el texto dice que el WER se mide a mano.
+
 **Sitio:** `docs/kit-de-prueba/audio/LEEME.md:29-35` y `:67`. Desde la fase 0, el test lleva `#[ignore = "hardware:
 …"]` (`src-tauri/tests/contra-el-mac-de-verdad.rs:1726-1728`): el comando copiado da «1 ignored».
 
@@ -744,6 +810,8 @@ se acopla la ventana que tengas delante—; otra vez ⌃⌥B, y vuelve arriba. �
 **Verificado cuando:** el comando, copiado del render, ya no dice «1 ignored» (sin correrlo aquí: toca la voz).
 
 ### M27 · `docs/BLUEPRINT.html` sigue describiendo la app del H1
+
+**Estado:** **pagado**, de texto o documento: sin gate que demostrar (Fase 2, `f3dd820`).
 
 **Sitio:** `docs/BLUEPRINT.html:139` y siguientes. No se tocó en el sprint.
 
@@ -775,6 +843,8 @@ ENLACES.
 
 ### M28 · `design-system.md`, la fuente de verdad visual, se contradice
 
+**Estado:** **pagado**, de texto o documento: sin gate que demostrar (Fase 2, `f3dd820`).
+
 **Sitio:**
 - `design-system.md:116` y `:124-125` (la banda inferior como forma principal y por defecto), frente al §9-decies
   («arriba es el sitio de fábrica»);
@@ -796,58 +866,58 @@ ENLACES.
 
 ## BAJOS (50)
 
-| # | Sitio | Qué está mal | Ajuste · verificado cuando |
-|---|---|---|---|
-| **B1** | `src-tauri/tests/contra-el-mac-de-verdad.rs:1886` | `la_app_nunca_habla_por_los_altavoces_internos` dice algo falso: en el ensayo la app sí habla por ellos. El plan lo iba a renombrar y no se hizo ni se declaró | Renombrar a `en_reunion_la_app_nunca_habla_por_los_altavoces_internos` y añadir al doc «en el ensayo sí, con el micrófono sordo (ADR 019 §6.3)». Verificado: el filtro `la_app_nunca` del paso de la CI sigue listándolo |
-| **B2** | `sprints/SPRINT_004-implementation-log.md` (§ Desviación del plan) | Dos cambios de la guía no están en la lista de desviaciones: la parada 6 dice «12 de 12», y A–P y el ⭐⭐ del H1 se corren con la banda abajo | Añadir la desviación 26. Verificado: la lista los nombra |
-| **B3** | `sprints/SPRINT_004-implementation-log.md` (PR #12 y #10) | El #12 se mergeó sin traer lo que su título promete y sin comentario de corte. El cuerpo del #10 sigue con casillas sin marcar y «En borrador» | Comentar en el #12 qué trajo y qué quedó fuera, y actualizar las casillas del #10 (pide el «sí» del usuario: se publica). Verificado: `gh pr view` lo enseña |
-| **B4** | `sprints/SPRINT_004-implementation-log.md` (fase 1, corrida en vivo) | Dice «Matriz de una fila enseñada» pero no la copia | Pegar la fila del plan (qué · para qué · aviso · cómo se deshace) junto al «sí». Verificado: la bitácora la tiene |
-| **B5** | `tests/unit/cargo-test-sin-hardware.test.ts:32-47` · `src-tauri/src/acople/ax.rs:164` | Las agujas no incluyen `Oido::del_microfono(`, `DelLlavero`, `reunion::desbloquear(` ni `ventana_de_la_reunion(`. El centinela no cubre las **lecturas** de Accessibility (`Aplicacion::de`, `titulos_con_indice`, `indice_de_la_principal`, `marco_de_la_ventana`) | Añadir las agujas y `crate::hardware::vigilar("leer ventanas de otra aplicación (Accessibility)")` en `Aplicacion::de`; los `CENTINELAS` de `ax.rs` pasan a 4. Verificado: `AG_SIN_HARDWARE=1 cargo test` en verde y demo en rojo con `demo-rojo.sh` |
-| **B6** | `docs/kit-de-prueba/audio/LEEME.md` | El WER no tuvo corrida local en el S4: estaba atada a la corrida en vivo, que se aplazó | El summary dice que el WER no se midió en el S4, sin afirmar regresión ni no regresión. Verificado: la frase está en el summary |
-| **B7** | `sprints/SPRINT_004-implementation-log.md` (DoD de rendimiento) | El peso del binario no está anotado (S3: 12,79 MB) | En el `/release-check`, `pnpm tauri build` (release) y anotar el tamaño frente a 12,79 MB. Verificado: la cifra está en la bitácora y el summary |
-| **B8** | `docs/MANUAL-DE-USO.md:386` | «Guardar no te pide nada» no menciona que macOS puede avisar de un ítem en segundo plano (ni la pregunta del Llavero si la llave la creó otra compilación) | Añadir: «La primera vez que guardas algo con fecha, macOS puede avisar de un ítem en segundo plano añadido (Background Items Added): es la tarea que borra lo vencido.» Verificado: segunda casilla 4 |
-| **B9** | `src-tauri/tests/contra-el-mac-de-verdad.rs:981-992` | En marcha no hay término plantado para el log del ensayo: el paso 7-ter no lleva canaria propia | Plantar un término propio al principio de «Plazo de entrega» en `corpus_para_el_efimero()` y buscarlo también en el log. Verificado: con un `println!` plantado del término, la CI se pone en rojo |
-| **B10** | `sprints/SPRINT_004-implementation-log.md` (contrapeso de capturas) | Solo se leyeron como imagen 6 encuadres de producto nuevos | Leer como imagen uno por bloque: preparar, preguntando, respondiendo, progreso, borrar, sin corpus, banda arriba, aviso de Sesión e IA. Registrar N en el summary. Verificado: la cuenta está en el summary |
-| **B11** | `src-tauri/src/sesion/mod.rs:266` · `:282` | `indice_de_meet` usa señales de Meet cableadas e ignora las `senales` que da `objetivo_de` (`:252`) | Cambiar a `indice_por_senales(titulos, &senales)` y pasar `&senales` en `:282`. Verificado: test con señales de un catálogo de prueba |
-| **B12** | `src-tauri/src/ensayo/banco.rs:560` | El catálogo no se cruza con el código: una regla nueva en `reglas.json` se ignora en silencio | `assert_eq!(c.reglas.len(), Regla::DEL_BANCO.len())` y cada `id` con su variante. Verificado: un id inventado en el json lo pone en rojo |
-| **B13** | `src/i18n/es.ts:331` · `src/i18n/en.ts:255` | `sesion.funcionaBanda` («La banda, abajo, protegida…») no tiene lector y es falsa hoy | Borrar la clave en es y en en: la maqueta conserva los estados de historia s1/s2. Verificado: `pnpm typecheck` y `pnpm test` en verde |
-| **B14** | `src/pantallas/Ensayo.tsx:295` · `src/pantallas/Sesion.tsx:314` · `docs/diseno/ensayo.html:92` | Once `fontSize: 11.5` en línea en Ensayo (`:295`, `:298`, `:351`, `:500`, `:532`, `:548`, `:708`, `:822`, `:934`, `:1069`, `:1097`), más `marginTop: -6` (`:708`) y `fontSize: "11px"` en `Sesion.tsx:314`. Son valores mágicos que el design system prohíbe (§3) | Clase `.ayuda-e { font-size: var(--t-mono); color: var(--ink-2); }` en `ghost.css`, y `.ayuda-e.tras { margin-top: 6px }`, usadas en Ensayo y en `ensayo.html`; Sesión, con su token. Verificado: un test que lea `Ensayo.tsx` encuentra 0 `fontSize:`, y `pnpm fidelidad` sigue bajo el umbral |
-| **B15** | `src-tauri/src/ensayo/mod.rs:438-441` | Carrera entre recoger lo transcrito y contar lo pendiente: el último turno puede perderse al pulsar Enter | Leer `o.pendientes()` **antes** que `o.recibidos()`. Verificado: test de fuente con el orden |
-| **B16** | `src-tauri/src/lib.rs:1431` · `src-tauri/src/ensayos.rs:75-78` | Un cliente sin letras latinas («東京商事») guarda `reunion-…`: no tiene progreso, no se borra, y «Reunión» se queda con los de todos | `ensayos::nombre_del_cliente`, con un hash cuando el slug queda vacío, y `ensayos::base(cliente, fecha)`. Verificado: test `un_cliente_sin_letras_latinas_tiene_sus_ensayos` |
-| **B17** | `src-tauri/src/lib.rs:1656-1669` | Al salir de la app, el ensayo no se suelta: el micrófono sigue abierto hasta que muere el proceso y tus respuestas no se pisan | `soltar_el_ensayo(mango)` en `RunEvent::Exit`. Verificado: test de fuente |
-| **B18** | `src-tauri/src/acople/mod.rs:187-198` | `asentar` se conforma con dos lecturas viejas iguales, antes de que la app empiece a aplicar el cambio | `asentar(leer, esperar, intentos, objetivo)`: vuelve al alcanzar el objetivo, o con ≥ 6 lecturas iguales. Verificado: test `asentar_no_se_conforma_con_dos_lecturas_viejas` (33, 33, 80, 121, 121 → 121) |
-| **B19** | `src-tauri/src/lib.rs:3602-3617` | Si la app pelea su posición, el latido la mueve y la devuelve cada 1,5 s durante 30 s | `Informe.deshecho` y `seguir_esperando`, para no reintentar tras un deshecho. Verificado: test `tras_un_deshecho_el_latido_no_lo_reintenta` |
-| **B20** | `src-tauri/src/ensayos.rs:286-290` | El test de la ruta que se sale de la carpeta no puede fallar: los dos casos dan `Err` también sin la protección | Un ensayo de verdad en `notas/` (`../notas/x.ghost`) que no se abre desde `ensayos/`, con un control que sí abre. Verificado: puentear `nombre_valido` lo pone en rojo (con `demo-rojo.sh`) |
-| **B21** | `src-tauri/src/ensayo/enriquecer.rs:184-185` · `src-tauri/src/lib.rs:1338-1346` | `Resultado::fallo` no lo lee nadie, y el log dice «0 B fuera» cuando el API falló después de enviar | Loguear el fallo (sin contenido) y no imprimir `fuera` en ese caso. Verificado: test de fuente |
-| **B22** | `src-tauri/src/ensayo/mod.rs:322-327` · `src-tauri/src/lib.rs:1316` · `src/pantallas/Ensayo.tsx:699` | «El modelo sumó 0 preguntas…» cuando todas repetían o el ensayo ya había cerrado, y `NadaFundado` cuando no había secciones | `cuantas == 0` pasa a `NoSeEnriquecio { Repetidas \| Tarde }`; `PorQueNo::SinSecciones` y `Repetidas` en el contrato y en i18n («las que propuso ya estaban en el banco.» / «the ones it suggested were already in the bank.», y para sin secciones «tu propuesta no tiene secciones con título.» / «your proposal has no titled sections.»), literales en `ensayo.html`. Verificado: test `lo_del_modelo_repetido_no_dice_que_sumo` |
-| **B23** | `src-tauri/src/ensayo/sesion.rs:188` · `src-tauri/src/ensayo/evaluacion.rs:220-225` · `src-tauri/src/ensayo/oido.rs:191-193` | Copias de tu respuesta que se sueltan sin pisar: `Cerrada.tramos`, `respuesta` en `evaluar`, el texto del motor antes de corregir y `r.respuesta.json` en `src-tauri/src/lib.rs:1319-1350` | `impl Drop for Cerrada`, y `pisar` en `evaluar`, en el oído y en `enriquecer_el_ensayo`. Verificado: test `una_cerrada_se_pisa_al_soltarla` y test de fuente del `Drop` |
-| **B24** | `src/pantallas/Ensayo.tsx:1044` · `docs/diseno/ensayo.html:216` | La tabla del informe dice «ppm» también en inglés; las cifras dicen «wpm» | `{t.ppm}`, y la maqueta con sus dos `<span lang>`. Verificado: en inglés, `columnheader` «wpm» |
-| **B25** | `src/pantallas/Sesion.tsx:306` | Pulsar el borde que ya está elegido suelta y vuelve a acoplar la reunión | `if (!on) void fijarPosicionDeLaBanda(b);`, y en Rust, `poner_la_banda` no hace nada si el borde no cambia. Verificado: el clic en el radio activo no llama al comando |
-| **B26** | `src/pantallas/Ensayo.tsx:156` · `:195-197` | Si `empezar` devuelve «sin-corpus», la pantalla no dice nada | `if (prep.sinCorpus \|\| noEmpezo?.que === "sin-corpus") return <SinCorpus …/>`. Verificado: con un rechazo «sin-corpus» se ve `nadaDeEsteCliente` |
-| **B27** | `src-tauri/src/lib.rs:1265` · `src/pantallas/Honestidad.tsx:187` | «Ensayando · N» y Honestidad cuentan los bytes de la reunión anterior con el rótulo «en esta reunión» | `red::reiniciar()` al empezar el ensayo, y el rótulo «salieron de tu equipo en este ensayo» / «left your machine in this rehearsal», literal en `honestidad.html`. Verificado: test de fuente y test de Honestidad |
-| **B28** | `src/pantallas/Honestidad.tsx:96` | Honestidad adivina que hay ensayo: es una regla de negocio en la webview, y con todo saltado la fila desaparece | `EstadoDeEscucha.ensayo: bool` en Rust (`src-tauri/src/escucha/mod.rs:161-209`), en las muestras y en el tipo; Honestidad lo lee. Verificado: test con el micrófono cerrado y 0 B que enseña la fila |
-| **B29** | `src/i18n/es.ts:921-924` · `:945` · `src/i18n/en.ts:804-807` · `docs/diseno/ensayo.html:93` | «Idioma del ensayo: el de la propuesta» aunque no haya propuesta: Rust elige propuesta → ficha → tu idioma | «Idioma del ensayo: español.» / «Rehearsal language: Spanish.» (y su par en inglés); «Este Mac no sabe transcribir el idioma del ensayo» / «This Mac cannot transcribe the rehearsal's language»; literales en la maqueta y el manual. Verificado: `grep` de «de la propuesta» da 0 y el gate i18n sigue en verde |
-| **B30** | `src/pantallas/Ensayo.tsx:967` · `:1097-1101` | La línea de retención dice «90 d» antes de saber la tuya | `cuaderno?.retencion ?? null`, y la línea solo con valor. Verificado: sin respuesta del cuaderno, la línea no aparece |
-| **B31** | `src/pantallas/Ensayo.tsx:516` | La `key` de React se repite con dos ensayos guardados en el mismo minuto | ``key={`${i}·${f.empezo}`}``. Verificado: sin `console.error` con dos filas iguales |
-| **B32** | `src/pantallas/Ensayo.tsx:387` · `:399` | La franja de «no empezó» no lleva `role` y no se anuncia | `role="alert"`. Verificado: `getByRole("alert")` |
-| **B33** | `src/pantallas/Ensayo.tsx:878` · `:900` | `Evidencia.fuente.conjeturada` cruza el contrato y el ensayo no la lee (casilla 5): la marca de sección conjeturada falta en la evaluación | La marca `.conjetura` con `seccionConjeturada`, la regla `.evidencia-e .conjetura` en `ghost.css`, y una muestra en `ensayo.html`. Verificado: con `conjeturada:true` se ve el texto |
-| **B34** | `src-tauri/src/lib.rs:1235` · `:1287` · `:1295` | El `Ok(VistaDelEnsayo)` de `empezar_el_ensayo` no lo lee nadie (casilla 5), y su `SinCorpus` por una vista vacía está mal etiquetado | `-> Result<(), ensayo::NoEmpezo>`, y `preguntar<null>` en `src/ensayo.ts:475`. Verificado: `grep "Result<ensayo::VistaDelEnsayo"` da 0, y `cargo check` y el ensayo en verde |
-| **B35** | `src-tauri/src/lib.rs:1445` | El `bool` de `exportar_el_ensayo` no lo lee nadie (casilla 5) | `-> Result<(), String>`, y `preguntar<null>` en `src/ensayo.ts:496-498`. Verificado: `grep` da 0 |
-| **B36** | `src-tauri/src/lib.rs:1469` | El `usize` de `borrar_los_ensayos` no lo lee nadie (casilla 5) | `-> Result<(), String>`; la cuenta se queda en el `println!`. Verificado: `grep` da 0 |
-| **B37** | `src-tauri/src/lib.rs:343-346` · `src/franja.ts:63-64` | El `LaFranja` de `fijar_posicion_de_la_banda` no lo lee nadie (casilla 5): el borde llega por el evento | Sin retorno, y `llamar(...)` en `franja.ts`. Verificado: `grep` da 0 |
-| **B38** | `src-tauri/src/lib.rs:351-355` · `src/franja.ts:69` | El `LaFranja` de `entendido_el_aviso_de_arriba` no lo lee nadie (casilla 5) | Sin retorno; se emite el evento. Verificado: `grep` da 0 |
-| **B39** | `src/pantallas/Ensayo.tsx:238-252` | El selector «Propuesta» sale vacío cuando el cliente solo tiene ficha | Pintar la fila solo con `prep.propuestas.length > 0`. Verificado: sin propuestas no hay `combobox` «Propuesta» |
-| **B40** | `docs/GUIA-DE-PRUEBA.html:337` | El título del bloque B dice «siete pantallas» | «El cuaderno: ocho pantallas que no mienten». Verificado: `guia-cuadra` en verde |
-| **B41** | `docs/GUIA-DE-PRUEBA.html:734` · `docs/MANUAL-DE-USO.md:302-306` | La o4 y el manual dicen «mientras haya bandeja o notas con fecha» y dejan fuera los ensayos (`src-tauri/src/reunion.rs:845-847`) | «mientras haya bandeja, notas o ensayos con fecha», y en el manual «la bandeja, tus notas y tus ensayos vencidos»; la o4 pasa a «Mejorado en S4». Verificado: `guia-cuadra` |
-| **B42** | `docs/GUIA-DE-PRUEBA.html:823` · `docs/MANUAL-DE-USO.md:389-397` | El desbloqueo de los ensayos es el de tus notas (`src-tauri/src/reunion.rs:942-945`): la r7 depende de no haberlo dado antes, y «borrar no pide desbloqueo» se lee raro porque para llegar a tu progreso ya lo diste | La r7 añade «(si en esta sesión de la app ya abriste algo cifrado, no lo vuelve a pedir: es el mismo desbloqueo que tus notas)». Manual: «es el mismo desbloqueo que tus notas…» y «no abre los archivos ni pide otro desbloqueo». Verificado: segunda casilla 4 |
-| **B43** | `docs/GUIA-DE-PRUEBA.html:853` | La fila T3 cita «11 de 11», y hoy la app dice 12 | Añadir «(en el comparativo del S3; hoy dice «12 de 12», fila 4 de la tabla U)». Verificado: `guia-cuadra` |
-| **B44** | `docs/GUIA-DE-PRUEBA.html` (fila U3) | Dice que el interruptor va «bajo «Redactar sugerencias»», y está junto a él (`src/pantallas/Ia.tsx:226-246`) | «junto a». Verificado: lectura |
-| **B45** | `docs/MANUAL-DE-USO.md:207` · `:192-193` | El título «Tus notas: lo único que queda» (los ensayos también quedan), y «devuelve la ventana de la reunión a su tamaño» (arriba también se mueve) | «Tus notas: lo único de la reunión que queda», y «a su sitio y a su tamaño». Verificado: segunda casilla 4 |
-| **B46** | `src/i18n/es.ts:283` · `:436` · `src/i18n/en.ts:209` · `:340` · `docs/MANUAL-DE-USO.md:114-115` | «Lo que llega en el H2»: la ruta del H2 aprobada (S4 ensayo, S5 presencial, S6 Windows) no incluye arrastrar documentos, releer solo lo cambiado, leer lo escaneado ni varios idiomas por pista | **Decisión del usuario.** Recomendación: «Lo que no hace hoy» / «What it does not do today» (con `corpus.html:274` e `idioma.html:315`), y en el manual «no está en la app»; MLX se queda, porque lo respalda el ADR 011. Verificado: gate i18n |
-| **B47** | `docs/diseno/index.html:19` · `:92` · `docs/diseno/README.md:232-246` | El índice de la maqueta dice «diez pantallas»; Ensayo lleva el número 09, repetido; `posicion.html` no nombra la variante ARRIBA; dice «v1.7.0» | «once», «10 · sprint 004», los cinco estados ARRIBA con «elegida», «v1.15.0», y la fila de `ensayo.html` / C18 en el README. Verificado: `maqueta-interaccion` y `controladores-maqueta` |
-| **B48** | `CLAUDE.md:156` · `:739` · `:742` | La lista de pantallas sin Ensayo; los catálogos sin `data/ensayo/`; la puerta «cerrada en reunión» | Añadir Ensayo y `data/ensayo/`; «cerrada en reunión o durante un ensayo». Verificado: lectura |
-| **B49** | `README.md:23-24` · `:70-71` | «Estado» solo nombra el H1 | «El ciclo H2 está en curso: el sprint 004 sumó el ensayo y la banda arriba, junto a la cámara.» (y en inglés). Verificado: segunda casilla 4 |
-| **B50** | `design-system.md:326` · `:132` | La puerta «en reunión se cierra sola», y el relleno «una reunión que no llega al borde inferior» | «en reunión o durante un ensayo», y «a su borde (abajo, el inferior; arriba, la barra de menús)». Verificado: `design-sync-espejo` en verde |
+| # | Sitio | Qué está mal | Ajuste · verificado cuando | Estado |
+|---|---|---|---|---|
+| **B1** | `src-tauri/tests/contra-el-mac-de-verdad.rs:1886` | `la_app_nunca_habla_por_los_altavoces_internos` dice algo falso: en el ensayo la app sí habla por ellos. El plan lo iba a renombrar y no se hizo ni se declaró | Renombrar a `en_reunion_la_app_nunca_habla_por_los_altavoces_internos` y añadir al doc «en el ensayo sí, con el micrófono sordo (ADR 019 §6.3)». Verificado: el filtro `la_app_nunca` del paso de la CI sigue listándolo | pagado · renombrado |
+| **B2** | `sprints/SPRINT_004-implementation-log.md` (§ Desviación del plan) | Dos cambios de la guía no están en la lista de desviaciones: la parada 6 dice «12 de 12», y A–P y el ⭐⭐ del H1 se corren con la banda abajo | Añadir la desviación 26. Verificado: la lista los nombra | pagado · desviación 26 |
+| **B3** | `sprints/SPRINT_004-implementation-log.md` (PR #12 y #10) | El #12 se mergeó sin traer lo que su título promete y sin comentario de corte. El cuerpo del #10 sigue con casillas sin marcar y «En borrador» | Comentar en el #12 qué trajo y qué quedó fuera, y actualizar las casillas del #10 (pide el «sí» del usuario: se publica). Verificado: `gh pr view` lo enseña | pagado · publicado con el «sí» del usuario: cuerpo del #10 y comentario en el #12 |
+| **B4** | `sprints/SPRINT_004-implementation-log.md` (fase 1, corrida en vivo) | Dice «Matriz de una fila enseñada» pero no la copia | Pegar la fila del plan (qué · para qué · aviso · cómo se deshace) junto al «sí». Verificado: la bitácora la tiene | pagado · la fila, en la bitácora |
+| **B5** | `tests/unit/cargo-test-sin-hardware.test.ts:32-47` · `src-tauri/src/acople/ax.rs:164` | Las agujas no incluyen `Oido::del_microfono(`, `DelLlavero`, `reunion::desbloquear(` ni `ventana_de_la_reunion(`. El centinela no cubre las **lecturas** de Accessibility (`Aplicacion::de`, `titulos_con_indice`, `indice_de_la_principal`, `marco_de_la_ventana`) | Añadir las agujas y `crate::hardware::vigilar("leer ventanas de otra aplicación (Accessibility)")` en `Aplicacion::de`; los `CENTINELAS` de `ax.rs` pasan a 4. Verificado: `AG_SIN_HARDWARE=1 cargo test` en verde y demo en rojo con `demo-rojo.sh` | pagado · con su rojo |
+| **B6** | `docs/kit-de-prueba/audio/LEEME.md` | El WER no tuvo corrida local en el S4: estaba atada a la corrida en vivo, que se aplazó | El summary dice que el WER no se midió en el S4, sin afirmar regresión ni no regresión. Verificado: la frase está en el summary | pagado · el summary lo dice |
+| **B7** | `sprints/SPRINT_004-implementation-log.md` (DoD de rendimiento) | El peso del binario no está anotado (S3: 12,79 MB) | En el `/release-check`, `pnpm tauri build` (release) y anotar el tamaño frente a 12,79 MB. Verificado: la cifra está en la bitácora y el summary | pagado · `/release-check` y summary |
+| **B8** | `docs/MANUAL-DE-USO.md:386` | «Guardar no te pide nada» no menciona que macOS puede avisar de un ítem en segundo plano (ni la pregunta del Llavero si la llave la creó otra compilación) | Añadir: «La primera vez que guardas algo con fecha, macOS puede avisar de un ítem en segundo plano añadido (Background Items Added): es la tarea que borra lo vencido.» Verificado: segunda casilla 4 | pagado · texto |
+| **B9** | `src-tauri/tests/contra-el-mac-de-verdad.rs:981-992` | En marcha no hay término plantado para el log del ensayo: el paso 7-ter no lleva canaria propia | Plantar un término propio al principio de «Plazo de entrega» en `corpus_para_el_efimero()` y buscarlo también en el log. Verificado: con un `println!` plantado del término, la CI se pone en rojo | pagado · su rojo, en la CI (PR #14, desechable) |
+| **B10** | `sprints/SPRINT_004-implementation-log.md` (contrapeso de capturas) | Solo se leyeron como imagen 6 encuadres de producto nuevos | Leer como imagen uno por bloque: preparar, preguntando, respondiendo, progreso, borrar, sin corpus, banda arriba, aviso de Sesión e IA. Registrar N en el summary. Verificado: la cuenta está en el summary | pagado · 12 encuadres más leídos como imagen; la cuenta, en el summary |
+| **B11** | `src-tauri/src/sesion/mod.rs:266` · `:282` | `indice_de_meet` usa señales de Meet cableadas e ignora las `senales` que da `objetivo_de` (`:252`) | Cambiar a `indice_por_senales(titulos, &senales)` y pasar `&senales` en `:282`. Verificado: test con señales de un catálogo de prueba | pagado · con su rojo |
+| **B12** | `src-tauri/src/ensayo/banco.rs:560` | El catálogo no se cruza con el código: una regla nueva en `reglas.json` se ignora en silencio | `assert_eq!(c.reglas.len(), Regla::DEL_BANCO.len())` y cada `id` con su variante. Verificado: un id inventado en el json lo pone en rojo | pagado · con su rojo |
+| **B13** | `src/i18n/es.ts:331` · `src/i18n/en.ts:255` | `sesion.funcionaBanda` («La banda, abajo, protegida…») no tiene lector y es falsa hoy | Borrar la clave en es y en en: la maqueta conserva los estados de historia s1/s2. Verificado: `pnpm typecheck` y `pnpm test` en verde | pagado · la clave, borrada (typecheck) |
+| **B14** | `src/pantallas/Ensayo.tsx:295` · `src/pantallas/Sesion.tsx:314` · `docs/diseno/ensayo.html:92` | Once `fontSize: 11.5` en línea en Ensayo (`:295`, `:298`, `:351`, `:500`, `:532`, `:548`, `:708`, `:822`, `:934`, `:1069`, `:1097`), más `marginTop: -6` (`:708`) y `fontSize: "11px"` en `Sesion.tsx:314`. Son valores mágicos que el design system prohíbe (§3) | Clase `.ayuda-e { font-size: var(--t-mono); color: var(--ink-2); }` en `ghost.css`, y `.ayuda-e.tras { margin-top: 6px }`, usadas en Ensayo y en `ensayo.html`; Sesión, con su token. Verificado: un test que lea `Ensayo.tsx` encuentra 0 `fontSize:`, y `pnpm fidelidad` sigue bajo el umbral | pagado · con su rojo |
+| **B15** | `src-tauri/src/ensayo/mod.rs:438-441` | Carrera entre recoger lo transcrito y contar lo pendiente: el último turno puede perderse al pulsar Enter | Leer `o.pendientes()` **antes** que `o.recibidos()`. Verificado: test de fuente con el orden | pagado · con su rojo |
+| **B16** | `src-tauri/src/lib.rs:1431` · `src-tauri/src/ensayos.rs:75-78` | Un cliente sin letras latinas («東京商事») guarda `reunion-…`: no tiene progreso, no se borra, y «Reunión» se queda con los de todos | `ensayos::nombre_del_cliente`, con un hash cuando el slug queda vacío, y `ensayos::base(cliente, fecha)`. Verificado: test `un_cliente_sin_letras_latinas_tiene_sus_ensayos` | pagado · con su rojo |
+| **B17** | `src-tauri/src/lib.rs:1656-1669` | Al salir de la app, el ensayo no se suelta: el micrófono sigue abierto hasta que muere el proceso y tus respuestas no se pisan | `soltar_el_ensayo(mango)` en `RunEvent::Exit`. Verificado: test de fuente | pagado · con su rojo |
+| **B18** | `src-tauri/src/acople/mod.rs:187-198` | `asentar` se conforma con dos lecturas viejas iguales, antes de que la app empiece a aplicar el cambio | `asentar(leer, esperar, intentos, objetivo)`: vuelve al alcanzar el objetivo, o con ≥ 6 lecturas iguales. Verificado: test `asentar_no_se_conforma_con_dos_lecturas_viejas` (33, 33, 80, 121, 121 → 121) | pagado · con su rojo |
+| **B19** | `src-tauri/src/lib.rs:3602-3617` | Si la app pelea su posición, el latido la mueve y la devuelve cada 1,5 s durante 30 s | `Informe.deshecho` y `seguir_esperando`, para no reintentar tras un deshecho. Verificado: test `tras_un_deshecho_el_latido_no_lo_reintenta` | pagado por M3: arriba el latido ya no acopla (desviación 29) |
+| **B20** | `src-tauri/src/ensayos.rs:286-290` | El test de la ruta que se sale de la carpeta no puede fallar: los dos casos dan `Err` también sin la protección | Un ensayo de verdad en `notas/` (`../notas/x.ghost`) que no se abre desde `ensayos/`, con un control que sí abre. Verificado: puentear `nombre_valido` lo pone en rojo (con `demo-rojo.sh`) | pagado · con su rojo (el primer intento pasó en verde: sin `ensayos/` la ruta no se resolvía; el test crea la carpeta) |
+| **B21** | `src-tauri/src/ensayo/enriquecer.rs:184-185` · `src-tauri/src/lib.rs:1338-1346` | `Resultado::fallo` no lo lee nadie, y el log dice «0 B fuera» cuando el API falló después de enviar | Loguear el fallo (sin contenido) y no imprimir `fuera` en ese caso. Verificado: test de fuente | pagado · con su rojo |
+| **B22** | `src-tauri/src/ensayo/mod.rs:322-327` · `src-tauri/src/lib.rs:1316` · `src/pantallas/Ensayo.tsx:699` | «El modelo sumó 0 preguntas…» cuando todas repetían o el ensayo ya había cerrado, y `NadaFundado` cuando no había secciones | `cuantas == 0` pasa a `NoSeEnriquecio { Repetidas \| Tarde }`; `PorQueNo::SinSecciones` y `Repetidas` en el contrato y en i18n («las que propuso ya estaban en el banco.» / «the ones it suggested were already in the bank.», y para sin secciones «tu propuesta no tiene secciones con título.» / «your proposal has no titled sections.»), literales en `ensayo.html`. Verificado: test `lo_del_modelo_repetido_no_dice_que_sumo` | pagado · con su rojo |
+| **B23** | `src-tauri/src/ensayo/sesion.rs:188` · `src-tauri/src/ensayo/evaluacion.rs:220-225` · `src-tauri/src/ensayo/oido.rs:191-193` | Copias de tu respuesta que se sueltan sin pisar: `Cerrada.tramos`, `respuesta` en `evaluar`, el texto del motor antes de corregir y `r.respuesta.json` en `src-tauri/src/lib.rs:1319-1350` | `impl Drop for Cerrada`, y `pisar` en `evaluar`, en el oído y en `enriquecer_el_ensayo`. Verificado: test `una_cerrada_se_pisa_al_soltarla` y test de fuente del `Drop` | pagado · con su rojo |
+| **B24** | `src/pantallas/Ensayo.tsx:1044` · `docs/diseno/ensayo.html:216` | La tabla del informe dice «ppm» también en inglés; las cifras dicen «wpm» | `{t.ppm}`, y la maqueta con sus dos `<span lang>`. Verificado: en inglés, `columnheader` «wpm» | pagado · con su rojo |
+| **B25** | `src/pantallas/Sesion.tsx:306` | Pulsar el borde que ya está elegido suelta y vuelve a acoplar la reunión | `if (!on) void fijarPosicionDeLaBanda(b);`, y en Rust, `poner_la_banda` no hace nada si el borde no cambia. Verificado: el clic en el radio activo no llama al comando | pagado · con su rojo |
+| **B26** | `src/pantallas/Ensayo.tsx:156` · `:195-197` | Si `empezar` devuelve «sin-corpus», la pantalla no dice nada | `if (prep.sinCorpus \|\| noEmpezo?.que === "sin-corpus") return <SinCorpus …/>`. Verificado: con un rechazo «sin-corpus» se ve `nadaDeEsteCliente` | pagado · con su rojo |
+| **B27** | `src-tauri/src/lib.rs:1265` · `src/pantallas/Honestidad.tsx:187` | «Ensayando · N» y Honestidad cuentan los bytes de la reunión anterior con el rótulo «en esta reunión» | `red::reiniciar()` al empezar el ensayo, y el rótulo «salieron de tu equipo en este ensayo» / «left your machine in this rehearsal», literal en `honestidad.html`. Verificado: test de fuente y test de Honestidad | pagado · con su rojo |
+| **B28** | `src/pantallas/Honestidad.tsx:96` | Honestidad adivina que hay ensayo: es una regla de negocio en la webview, y con todo saltado la fila desaparece | `EstadoDeEscucha.ensayo: bool` en Rust (`src-tauri/src/escucha/mod.rs:161-209`), en las muestras y en el tipo; Honestidad lo lee. Verificado: test con el micrófono cerrado y 0 B que enseña la fila | pagado · con su rojo |
+| **B29** | `src/i18n/es.ts:921-924` · `:945` · `src/i18n/en.ts:804-807` · `docs/diseno/ensayo.html:93` | «Idioma del ensayo: el de la propuesta» aunque no haya propuesta: Rust elige propuesta → ficha → tu idioma | «Idioma del ensayo: español.» / «Rehearsal language: Spanish.» (y su par en inglés); «Este Mac no sabe transcribir el idioma del ensayo» / «This Mac cannot transcribe the rehearsal's language»; literales en la maqueta y el manual. Verificado: `grep` de «de la propuesta» da 0 y el gate i18n sigue en verde | pagado · texto |
+| **B30** | `src/pantallas/Ensayo.tsx:967` · `:1097-1101` | La línea de retención dice «90 d» antes de saber la tuya | `cuaderno?.retencion ?? null`, y la línea solo con valor. Verificado: sin respuesta del cuaderno, la línea no aparece | pagado · con su rojo |
+| **B31** | `src/pantallas/Ensayo.tsx:516` | La `key` de React se repite con dos ensayos guardados en el mismo minuto | ``key={`${i}·${f.empezo}`}``. Verificado: sin `console.error` con dos filas iguales | pagado · con su rojo |
+| **B32** | `src/pantallas/Ensayo.tsx:387` · `:399` | La franja de «no empezó» no lleva `role` y no se anuncia | `role="alert"`. Verificado: `getByRole("alert")` | pagado · con su rojo |
+| **B33** | `src/pantallas/Ensayo.tsx:878` · `:900` | `Evidencia.fuente.conjeturada` cruza el contrato y el ensayo no la lee (casilla 5): la marca de sección conjeturada falta en la evaluación | La marca `.conjetura` con `seccionConjeturada`, la regla `.evidencia-e .conjetura` en `ghost.css`, y una muestra en `ensayo.html`. Verificado: con `conjeturada:true` se ve el texto | pagado · con su rojo |
+| **B34** | `src-tauri/src/lib.rs:1235` · `:1287` · `:1295` | El `Ok(VistaDelEnsayo)` de `empezar_el_ensayo` no lo lee nadie (casilla 5), y su `SinCorpus` por una vista vacía está mal etiquetado | `-> Result<(), ensayo::NoEmpezo>`, y `preguntar<null>` en `src/ensayo.ts:475`. Verificado: `grep "Result<ensayo::VistaDelEnsayo"` da 0, y `cargo check` y el ensayo en verde | pagado · `grep` en 0 y `cargo check` |
+| **B35** | `src-tauri/src/lib.rs:1445` | El `bool` de `exportar_el_ensayo` no lo lee nadie (casilla 5) | `-> Result<(), String>`, y `preguntar<null>` en `src/ensayo.ts:496-498`. Verificado: `grep` da 0 | pagado · `grep` en 0 y `cargo check` |
+| **B36** | `src-tauri/src/lib.rs:1469` | El `usize` de `borrar_los_ensayos` no lo lee nadie (casilla 5) | `-> Result<(), String>`; la cuenta se queda en el `println!`. Verificado: `grep` da 0 | pagado · `grep` en 0 y `cargo check` |
+| **B37** | `src-tauri/src/lib.rs:343-346` · `src/franja.ts:63-64` | El `LaFranja` de `fijar_posicion_de_la_banda` no lo lee nadie (casilla 5): el borde llega por el evento | Sin retorno, y `llamar(...)` en `franja.ts`. Verificado: `grep` da 0 | pagado · `grep` en 0 y `cargo check` |
+| **B38** | `src-tauri/src/lib.rs:351-355` · `src/franja.ts:69` | El `LaFranja` de `entendido_el_aviso_de_arriba` no lo lee nadie (casilla 5) | Sin retorno; se emite el evento. Verificado: `grep` da 0 | pagado · `grep` en 0 y `cargo check` |
+| **B39** | `src/pantallas/Ensayo.tsx:238-252` | El selector «Propuesta» sale vacío cuando el cliente solo tiene ficha | Pintar la fila solo con `prep.propuestas.length > 0`. Verificado: sin propuestas no hay `combobox` «Propuesta» | pagado · con su rojo |
+| **B40** | `docs/GUIA-DE-PRUEBA.html:337` | El título del bloque B dice «siete pantallas» | «El cuaderno: ocho pantallas que no mienten». Verificado: `guia-cuadra` en verde | pagado · texto |
+| **B41** | `docs/GUIA-DE-PRUEBA.html:734` · `docs/MANUAL-DE-USO.md:302-306` | La o4 y el manual dicen «mientras haya bandeja o notas con fecha» y dejan fuera los ensayos (`src-tauri/src/reunion.rs:845-847`) | «mientras haya bandeja, notas o ensayos con fecha», y en el manual «la bandeja, tus notas y tus ensayos vencidos»; la o4 pasa a «Mejorado en S4». Verificado: `guia-cuadra` | pagado · texto |
+| **B42** | `docs/GUIA-DE-PRUEBA.html:823` · `docs/MANUAL-DE-USO.md:389-397` | El desbloqueo de los ensayos es el de tus notas (`src-tauri/src/reunion.rs:942-945`): la r7 depende de no haberlo dado antes, y «borrar no pide desbloqueo» se lee raro porque para llegar a tu progreso ya lo diste | La r7 añade «(si en esta sesión de la app ya abriste algo cifrado, no lo vuelve a pedir: es el mismo desbloqueo que tus notas)». Manual: «es el mismo desbloqueo que tus notas…» y «no abre los archivos ni pide otro desbloqueo». Verificado: segunda casilla 4 | pagado · texto |
+| **B43** | `docs/GUIA-DE-PRUEBA.html:853` | La fila T3 cita «11 de 11», y hoy la app dice 12 | Añadir «(en el comparativo del S3; hoy dice «12 de 12», fila 4 de la tabla U)». Verificado: `guia-cuadra` | pagado · texto |
+| **B44** | `docs/GUIA-DE-PRUEBA.html` (fila U3) | Dice que el interruptor va «bajo «Redactar sugerencias»», y está junto a él (`src/pantallas/Ia.tsx:226-246`) | «junto a». Verificado: lectura | pagado · texto |
+| **B45** | `docs/MANUAL-DE-USO.md:207` · `:192-193` | El título «Tus notas: lo único que queda» (los ensayos también quedan), y «devuelve la ventana de la reunión a su tamaño» (arriba también se mueve) | «Tus notas: lo único de la reunión que queda», y «a su sitio y a su tamaño». Verificado: segunda casilla 4 | pagado · texto |
+| **B46** | `src/i18n/es.ts:283` · `:436` · `src/i18n/en.ts:209` · `:340` · `docs/MANUAL-DE-USO.md:114-115` | «Lo que llega en el H2»: la ruta del H2 aprobada (S4 ensayo, S5 presencial, S6 Windows) no incluye arrastrar documentos, releer solo lo cambiado, leer lo escaneado ni varios idiomas por pista | **Decisión del usuario.** Recomendación: «Lo que no hace hoy» / «What it does not do today» (con `corpus.html:274` e `idioma.html:315`), y en el manual «no está en la app»; MLX se queda, porque lo respalda el ADR 011. Verificado: gate i18n | pagado · texto |
+| **B47** | `docs/diseno/index.html:19` · `:92` · `docs/diseno/README.md:232-246` | El índice de la maqueta dice «diez pantallas»; Ensayo lleva el número 09, repetido; `posicion.html` no nombra la variante ARRIBA; dice «v1.7.0» | «once», «10 · sprint 004», los cinco estados ARRIBA con «elegida», «v1.15.0», y la fila de `ensayo.html` / C18 en el README. Verificado: `maqueta-interaccion` y `controladores-maqueta` | pagado · texto |
+| **B48** | `CLAUDE.md:156` · `:739` · `:742` | La lista de pantallas sin Ensayo; los catálogos sin `data/ensayo/`; la puerta «cerrada en reunión» | Añadir Ensayo y `data/ensayo/`; «cerrada en reunión o durante un ensayo». Verificado: lectura | pagado · texto |
+| **B49** | `README.md:23-24` · `:70-71` | «Estado» solo nombra el H1 | «El ciclo H2 está en curso: el sprint 004 sumó el ensayo y la banda arriba, junto a la cámara.» (y en inglés). Verificado: segunda casilla 4 | pagado · texto |
+| **B50** | `design-system.md:326` · `:132` | La puerta «en reunión se cierra sola», y el relleno «una reunión que no llega al borde inferior» | «en reunión o durante un ensayo», y «a su borde (abajo, el inferior; arriba, la barra de menús)». Verificado: `design-sync-espejo` en verde | pagado · texto |
 
 ## Casilla 4 — frases caducadas (primera pasada)
 
