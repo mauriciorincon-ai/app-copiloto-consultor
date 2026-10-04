@@ -153,7 +153,7 @@ La del kit web (`src/app/`, `engine/`, `lib/ia/`…) **no aplica a esta app de e
 
 ```
 src/                       (webview React: SOLO pinta y conmuta; nada de lógica de negocio)
-├─ pantallas/              (Sesión, Permisos, Corpus, Notas, Honestidad, Idioma, IA)
+├─ pantallas/              (Sesión, Ensayo, Permisos, Corpus, Notas, Honestidad, Idioma, IA)
 ├─ componentes/            (la banda, el relleno, la ventana del cuaderno, iconos)
 ├─ i18n/                   (es.ts · en.ts — cada cadena, fiel a la maqueta)
 ├─ *.ts                    (un hook o puente por tema: cuaderno, ia, notas, puerta, jurisdicción…)
@@ -736,10 +736,10 @@ Llenado en la auditoría del cierre del ciclo H1 (sprint 003); el estampado lo d
 - **Contrato Rust → TS generado** (`contrato.rs` → `src/contrato.generado.ts`, regla 19).
 - **La red, contada en un solo sitio** (`red.rs`) y cada salida declarada (`contador-de-red`).
 - **Secretos solo en el Llavero** (`llavero.rs`); lo cifrado, con XChaCha20-Poly1305 y la llave ahí.
-- **Catálogos versionados en `data/`** (radar, propuestas, jurisdicciones), dentro del binario con
+- **Catálogos versionados en `data/`** (radar, propuestas, jurisdicciones, ensayo), dentro del binario con
   `include_str!`: sin red para actualizarlos.
 - **La puerta local** (`puerta/`, `bin/ghost.rs`): un socket Unix solo mientras está abierta, llave
-  por apertura, cerrada en reunión.
+  por apertura, cerrada en reunión o durante un ensayo.
 - **Lo que vence sin la app:** una tarea de launchd al minuto de cada vencimiento (`vencimiento/`).
 
 ## Idioma

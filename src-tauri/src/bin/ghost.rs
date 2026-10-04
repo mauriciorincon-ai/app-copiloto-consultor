@@ -116,8 +116,8 @@ fn por_que(motivo: Motivo, en: bool) -> &'static str {
     match (motivo, en) {
         (Motivo::LlaveErrada, false) => "Denegado: la llave no es la de esta apertura.",
         (Motivo::LlaveErrada, true) => "Denied: the key is not this opening's key.",
-        (Motivo::EnReunion, false) => "Denegado: hay una reunión. La puerta se cerró sola; se vuelve a abrir a mano, en IA.",
-        (Motivo::EnReunion, true) => "Denied: there is a meeting. The door closed itself; it is reopened by hand, in AI.",
+        (Motivo::EnReunion, false) => "Denegado: hay una reunión o un ensayo. La puerta se cerró sola; se vuelve a abrir a mano, en IA.",
+        (Motivo::EnReunion, true) => "Denied: there is a meeting or a rehearsal. The door closed itself; it is reopened by hand, in AI.",
         (Motivo::ElApiEsTuyo, false) => "Denegado: encender el API externo es decisión del usuario.",
         (Motivo::ElApiEsTuyo, true) => "Denied: turning on the external API is the user's call.",
         (Motivo::NoDelegable, false) => "Denegado: esa preferencia la decide el usuario.",

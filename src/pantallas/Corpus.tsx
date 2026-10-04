@@ -1,6 +1,5 @@
 import { useIdioma, useT, type Idioma } from "../i18n";
 import { Ic } from "../componentes/Iconos";
-import { EnElH2 } from "../componentes/Ventana";
 import { indexarCorpus, useBytesALaRed, useCorpus, type UnidadDelCorpus } from "../cuaderno";
 
 /**
@@ -156,11 +155,11 @@ export function Corpus() {
           </div>
 
           <div className="tarjeta pendiente" style={{ margin: 0 }}>
+            {/* «Lo que no hace hoy», sin chip «En el H2»: la ruta del H2 no lo incluye (auditoría del S4, B46). */}
             <h2 className="seccion">{t.corpusPendiente}</h2>
             {[t.arrastrar, t.releer, t.leerEscaneado].map((que) => (
               <div className="fila" key={que}>
                 <span className="crece">{que}</span>
-                <EnElH2 />
               </div>
             ))}
             <p>{t.corpusNota}</p>

@@ -175,6 +175,20 @@ describe("Notas dentro de Tauri", () => {
     expect(pedidos("borrar_reunion").at(-1)?.[1]).toEqual({ archivo: REUNION_GUARDADA.archivo });
   });
 
+  /** Auditoría del S4, M15: la pregunta recibe el foco en «Cancelar», y al cerrarla vuelve a su botón. */
+  it("la pregunta de borrar o exportar recibe el foco, y al cancelar vuelve a su botón", async () => {
+    respuestas.set("cuaderno_de_la_reunion", { ...VISTA_DEL_CUADERNO, abierta: false });
+    respuestas.set("reuniones_guardadas", { reuniones: [REUNION_GUARDADA] });
+    await pinta();
+    for (const abre of [t.borrarAhora, t.exportarATexto]) {
+      const boton = screen.getByRole("button", { name: new RegExp(abre) });
+      fireEvent.click(boton);
+      expect(screen.getByRole("button", { name: t.cancelar }), abre).toHaveFocus();
+      fireEvent.click(screen.getByRole("button", { name: t.cancelar }));
+      expect(boton, abre).toHaveFocus();
+    }
+  });
+
   it("mientras Rust no contesta no se pinta ninguna vista: ni un instante de «el archivo» antes de «durante»", async () => {
     respuestas.set("cuaderno_de_la_reunion", new Promise(() => {}));
     vi.mocked(preguntar).mockImplementationOnce(() => new Promise(() => {}));

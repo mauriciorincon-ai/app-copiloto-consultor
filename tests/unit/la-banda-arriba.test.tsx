@@ -120,6 +120,31 @@ describe("Sesión: la banda, arriba o abajo, y el aviso de la primera vez", () =
     expect(pedidos("fijar_posicion_de_la_banda")).toEqual([["fijar_posicion_de_la_banda", { borde: "abajo" }]]);
   });
 
+  /** Auditoría del S4, B25: pulsar el borde que ya está elegido no suelta ni vuelve a acoplar la reunión. */
+  it("pulsar el borde que ya está elegido no le pide nada a Rust", async () => {
+    respuestas.set("la_franja", { ...LA_FRANJA_ARRIBA, avisoVisto: true } satisfies LaFranja);
+    await pinta(sesion);
+    fireEvent.click(screen.getByRole("radio", { name: t.bandaArriba }));
+    expect(pedidos("fijar_posicion_de_la_banda")).toEqual([]);
+  });
+
+  /** Auditoría del S4, M10: con un ensayo terminado sin guardar, Sesión lo dice antes de «Iniciar sesión». */
+  it("con un ensayo sin guardar, Sesión avisa antes de descartarlo", async () => {
+    respuestas.set("la_franja", { ...LA_FRANJA_ARRIBA, avisoVisto: true } satisfies LaFranja);
+    await pinta(sesion);
+    expect(screen.queryByText(t.ensayoSinGuardar, { exact: false })).toBeNull();
+    expect(screen.getByText(t.nadaSale)).toBeInTheDocument();
+    cleanup();
+    await pinta(
+      <Sesion reunion={{ que: "ninguna" }} escucha={{ ...ESTADO_DE_LA_ESCUCHA, escuchando: false }} salida={{ salida: "auriculares" }} ensayoSinGuardar />,
+    );
+    const aviso = screen.getByRole("status");
+    expect(aviso).toHaveTextContent(t.ensayoSinGuardar);
+    expect(aviso).toHaveTextContent(t.ensayoSinGuardarQue);
+    // En una línea, en el sitio de la promesa: con dos, la pantalla se salía de su ventana (maqueta-cabe).
+    expect(screen.queryByText(t.nadaSale)).toBeNull();
+  });
+
   it("el aviso sale la primera vez con la banda arriba, y «Entendido» se lo dice a Rust", async () => {
     respuestas.set("la_franja", LA_FRANJA_ARRIBA);
     await pinta(sesion);

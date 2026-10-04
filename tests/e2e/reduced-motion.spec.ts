@@ -32,24 +32,30 @@ const ENCUADRES = [
   { que: "ensayo · el reloj", url: "ventana=principal&pantalla=ensayo&estado=respondiendo", clave: ".reloj-e" },
   { que: "ensayo · las cifras", url: "ventana=principal&pantalla=ensayo&estado=evaluada", clave: ".cifras-e .cifra-e .n" },
   { que: "ensayo · la pregunta", url: "ventana=principal&pantalla=ensayo&estado=preguntando", clave: ".pregunta-e .texto" },
+  // La cuenta de preguntas (auditoría M17): la orden pide el reloj Y la cuenta visibles sin movimiento.
+  { que: "ensayo · la cuenta de preguntas", url: "ventana=principal&pantalla=ensayo&estado=preguntando", clave: ".progreso > span:first-child" },
   // Tu progreso (fase 4): la tabla y sus flechas se leen sin movimiento.
   { que: "ensayo · tu progreso", url: "ventana=principal&pantalla=ensayo&estado=progreso", clave: ".tabla td.num" },
 ];
 
-/** Lo que de verdad se ve: en el árbol, con caja, y sin transparencia. */
+/**
+ * Lo que de verdad se ve: en el árbol, con caja, y sin transparencia **en toda su cadena**. La opacidad
+ * no se hereda en el estilo calculado: un hijo de una caja en `opacity: 0` dice `1` y no se ve. Por eso
+ * se multiplica la de cada antepasado (auditoría del S4, M17: la demo en rojo pasó en verde hasta esto).
+ */
 async function seVe(pag: Page, selector: string): Promise<boolean> {
   return pag.evaluate((sel) => {
     const e = document.querySelector(sel);
     if (!e) return false;
     const caja = e.getBoundingClientRect();
     const estilo = getComputedStyle(e);
-    return (
-      caja.width > 0 &&
-      caja.height > 0 &&
-      estilo.visibility !== "hidden" &&
-      estilo.display !== "none" &&
-      Number(estilo.opacity) > 0.01
-    );
+    let opacidad = 1;
+    for (let n: Element | null = e; n; n = n.parentElement) {
+      const s = getComputedStyle(n);
+      if (s.display === "none") return false;
+      opacidad *= Number(s.opacity);
+    }
+    return caja.width > 0 && caja.height > 0 && estilo.visibility !== "hidden" && opacidad > 0.01;
   }, selector);
 }
 

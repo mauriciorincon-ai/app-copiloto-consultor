@@ -298,11 +298,11 @@ const TARJETAS = [
       piezas: [
         ["s3-puerta", "cerrada"],
         ["s3-puerta-abierta", "abierta"],
-        ["s3-puerta-reunion", "se cerró sola: hay una reunión"],
+        ["s3-puerta-reunion", "se cerró sola: hay una reunión o un ensayo"],
       ],
       regla:
-        "<span lang=\"es\">La abres tú, a mano; en reunión se cierra sola; lo denegado también se registra (§9-nonies)</span>" +
-        "<span lang=\"en\">You open it, by hand; in a meeting it closes itself; what is denied is logged too (§9-nonies)</span>",
+        "<span lang=\"es\">La abres tú, a mano; en reunión o durante un ensayo se cierra sola; lo denegado también se registra (§9-nonies)</span>" +
+        "<span lang=\"en\">You open it, by hand; in a meeting or during a rehearsal it closes itself; what is denied is logged too (§9-nonies)</span>",
     },
   },
   // Sprint 004 (abre el ciclo H2): las dos pantallas que el usuario aprobó en sus miradas de DECISIÓN.

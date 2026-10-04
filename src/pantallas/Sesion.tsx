@@ -57,11 +57,17 @@ export function Sesion({
   salida,
   radarDeMuestra = false,
   busqueda = "",
+  ensayoSinGuardar = false,
 }: {
   reunion: Reunion;
   escucha: EstadoDeEscucha;
   salida: Salida;
   radarDeMuestra?: boolean;
+  /**
+   * Hay un ensayo terminado que no guardaste (auditoría del S4, M10): «Iniciar sesión» lo descarta, así que
+   * se dice antes, encima del botón.
+   */
+  ensayoSinGuardar?: boolean;
   /** Fuera de Tauri, el estado de `sesion.html` que pide el arnés de fidelidad por la URL. */
   busqueda?: string;
 }) {
@@ -271,9 +277,21 @@ export function Sesion({
                 <span>{tc.soloNotas}</span>
               </button>
             </div>
-            <div className="fila">
-              <Promesa bytes={bytes} />
-            </div>
+            {/* Un ensayo terminado sin guardar (auditoría del S4, M10): «Iniciar sesión» lo descarta, así que se
+                dice en una línea, en el sitio de la promesa, que vuelve al guardarlo o cerrarlo. En dos líneas,
+                encima del botón, la pantalla se salía de su ventana (`maqueta-cabe`, +37 px). */}
+            {ensayoSinGuardar ? (
+              <div className="franja warn" role="status">
+                <Ic id="i-ensayo" s />
+                <p>
+                  <b>{t.ensayoSinGuardar}.</b> {t.ensayoSinGuardarQue}
+                </p>
+              </div>
+            ) : (
+              <div className="fila">
+                <Promesa bytes={bytes} />
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -303,7 +321,11 @@ export function LaBanda({ borde }: { borde: Borde }) {
               role="radio"
               aria-checked={on}
               className={on ? "op on" : "op"}
-              onClick={() => void fijarPosicionDeLaBanda(b)}
+              // El borde que ya está elegido no se vuelve a pedir: soltaría y volvería a acoplar la reunión
+              // para nada (auditoría del S4, B25).
+              onClick={() => {
+                if (!on) void fijarPosicionDeLaBanda(b);
+              }}
             >
               {on && <Ic id="i-check-circle" s relleno />}
               {nombre}
@@ -311,7 +333,7 @@ export function LaBanda({ borde }: { borde: Borde }) {
           );
         })}
       </div>
-      <span className="tecla" style={{ fontSize: "11px" }}>
+      <span className="tecla chica">
         <kbd>⌃⌥B</kbd>
       </span>
     </Fila>
@@ -829,7 +851,7 @@ export function LaPantalla({ pantalla }: { pantalla: EstadoDeLaPantalla }) {
           <span className="track"></span>
           <span className="etq">{t.leerlaSola}</span>
         </button>
-        <span className="tecla" style={{ fontSize: "11px" }}>
+        <span className="tecla chica">
           <kbd>⌃⌥L</kbd> {t.leelaAhora}
         </span>
       </div>

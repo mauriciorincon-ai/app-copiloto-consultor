@@ -891,6 +891,21 @@ function Archivo({ retencion, preguntaInicial, bandeja, volverALaBandeja }: {
   const [lista, volverALista] = useReuniones();
   const [elegida, setElegida] = useState<string | null>(null);
   const [pregunta, setPregunta] = useState<Pregunta>(preguntaInicial);
+  // **El foco va y vuelve con la pregunta** (auditoría del S4, M15): al abrirla, a «Cancelar», que es lo
+  // seguro; al cerrarla, al botón que la abrió. Una pregunta que ya llega abierta (la muestra de la maqueta)
+  // no roba el foco: solo se mueve cuando la pregunta cambia.
+  const abrioExportar = useRef<HTMLButtonElement>(null);
+  const abrioBorrar = useRef<HTMLButtonElement>(null);
+  const cancelarPregunta = useRef<HTMLButtonElement>(null);
+  const preguntaAntes = useRef<Pregunta>(preguntaInicial);
+  useEffect(() => {
+    const antes = preguntaAntes.current;
+    preguntaAntes.current = pregunta;
+    if (pregunta === antes) return;
+    if (pregunta === "exportar" || pregunta === "borrar") cancelarPregunta.current?.focus();
+    else if (antes === "exportar") abrioExportar.current?.focus();
+    else if (antes === "borrar") abrioBorrar.current?.focus();
+  }, [pregunta]);
   const [mia, setMia] = useState<Retencion>(retencion);
   useEffect(() => setMia(retencion), [retencion]);
 
@@ -997,7 +1012,7 @@ function Archivo({ retencion, preguntaInicial, bandeja, volverALaBandeja }: {
               <Ic id="i-doc" s />
               {t.exportarSinCifrado}
             </button>
-            <button className="btn mini" type="button" onClick={() => setPregunta(null)}>
+            <button ref={cancelarPregunta} className="btn mini" type="button" onClick={() => setPregunta(null)}>
               {t.cancelar}
             </button>
           </div>
@@ -1024,7 +1039,7 @@ function Archivo({ retencion, preguntaInicial, bandeja, volverALaBandeja }: {
               <Ic id="i-basura" s />
               {t.borrar}
             </button>
-            <button className="btn mini" type="button" onClick={() => setPregunta(null)}>
+            <button ref={cancelarPregunta} className="btn mini" type="button" onClick={() => setPregunta(null)}>
               {t.cancelar}
             </button>
           </div>
@@ -1095,12 +1110,12 @@ function Archivo({ retencion, preguntaInicial, bandeja, volverALaBandeja }: {
             </tbody>
           </table>
           <div className="fila" style={{ gap: "8px", marginTop: "10px" }}>
-            <button className="btn" type="button" onClick={() => setPregunta("exportar")}>
+            <button ref={abrioExportar} className="btn" type="button" onClick={() => setPregunta("exportar")}>
               <Ic id="i-doc" s />
               {t.exportarATexto}
             </button>
             <span className="crece" />
-            <button className="btn" type="button" onClick={() => setPregunta("borrar")}>
+            <button ref={abrioBorrar} className="btn" type="button" onClick={() => setPregunta("borrar")}>
               <Ic id="i-basura" s />
               {t.borrarAhora}
             </button>

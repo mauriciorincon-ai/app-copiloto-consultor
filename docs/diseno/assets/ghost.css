@@ -190,6 +190,8 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 /* Una tecla de algo que todavía no existe (fijar, anotar): se ve, apagada y a trazos, y el lector
    de pantalla oye «todavía no» (auditoría del S2, M12). */
 .tecla.pendiente { color: var(--mute); }
+/* La tecla junto a un control de Sesión (⌃⌥L, ⌃⌥B), un punto más chica que en la banda (auditoría del S4, B14). */
+.tecla.chica { font-size: 11px; }
 /* Mirada 20: la ficha que fijaste con ⌃⌥P, donde estaba la tecla. Mide lo mismo que una tecla. */
 .tecla.fijada { color: var(--ok); }
 .tecla.pendiente kbd { color: var(--mute); border-style: dashed; }
@@ -652,6 +654,15 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .cifra-e .q { font-size: var(--t-meta); color: var(--ink-2); }
 .cifra-e .n { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 17px; line-height: 1.3; color: var(--ink); }
 .cifra-e .d { font-size: 11px; color: var(--ink-2); }
+/* Auditoría del S4 (B14): la línea de ayuda del ensayo es una clase, no once estilos en línea. `.tras` va bajo
+   una tabla («y 4 más»); `.pegada`, bajo la barra de progreso (la línea del modelo); `.rotulo`, el «Desde el
+   primero:» de tu progreso, a tamaño de etiqueta. Y la marca de una sección conjeturada en la evidencia (B33):
+   una nota, no un aviso; como en la banda, jamás en ámbar. */
+.ayuda-e { font-size: var(--t-mono); color: var(--ink-2); }
+.ayuda-e.tras { margin: 6px 0 0; }
+.ayuda-e.pegada { margin-top: -6px; }
+.ayuda-e.rotulo { font-size: var(--t-meta); }
+.evidencia-e .conjetura { grid-column: 2; display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
 
 /* Sprint 004, fase 0 — LA BANDA ARRIBA (ADR 004, enmienda 1; maqueta `posicion.html`, mirada de
    DECISIÓN 2): bajo la barra de menús, junto a la cámara. El borde y la sombra miran a la reunión, que

@@ -66,6 +66,7 @@ const escuchando: EstadoDeEscucha = {
   sistema: abierta,
   bytesDelTranscript: 2_048,
   bytesDelEnsayo: 0,
+  ensayo: false,
 };
 
 /** Sesión con lo que el test quiera cambiar: la reunión, la escucha o la salida de audio. */
@@ -403,8 +404,10 @@ describe("el cuaderno: lo que no existe se dice", () => {
     expect(screen.getByText(t.idiomaTitulo)).toBeInTheDocument();
     expect(screen.getByText(t.variosIdiomasPorPista)).toBeInTheDocument();
     // «Conservar lo que dijiste tú» salió de aquí: existe en Notas (auditoría del S3, M7). Varios
-    // idiomas por pista es H2, y lo dice (B9).
-    expect(screen.getAllByText(t.enElH2)).toHaveLength(1);
+    // idiomas por pista **no está en la app**, y la ruta del H2 no lo incluye: «Lo que no hace hoy», sin
+    // chip que prometa un horizonte (auditoría del S4, B46).
+    expect(screen.getByText(t.loQueTodaviaNo)).toBeInTheDocument();
+    expect(screen.queryByText(t.enElH2)).toBeNull();
     expect(screen.queryByText(t.todaviaNo)).toBeNull();
     expect(
       screen.getByText(`SpeechAnalyzer · macOS 26 · 5 ${t.idiomasListos}`),
@@ -473,8 +476,9 @@ describe("el cuaderno: lo que no existe se dice", () => {
     expect(container.querySelector(".titulo h1")?.textContent).toBe(
       t.corpusTitulo,
     );
-    // Lo que falta es H2, y lo dice (auditoría del S3, B9).
-    expect(screen.getAllByText(t.enElH2)).toHaveLength(3);
+    // Lo que falta no está en la ruta del H2: «Lo que no hace hoy», sin chip (auditoría del S4, B46).
+    expect(screen.getByText(t.corpusPendiente)).toBeInTheDocument();
+    expect(screen.queryByText(t.enElH2)).toBeNull();
     // Las cinco unidades más la sexta respuesta: lo que no encaja en ninguna.
     expect(container.querySelectorAll(".unidad-chip")).toHaveLength(6);
     expect(screen.getByText(t.sinUnidad)).toBeInTheDocument();

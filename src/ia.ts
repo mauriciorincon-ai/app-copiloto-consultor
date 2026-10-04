@@ -78,6 +78,8 @@ export type Trozo =
 export type LoQueSalio = {
   hora: string;
   externo: Externo;
+  /** Para qué salió: una sugerencia, o «Enriquecer el banco» del ensayo (auditoría del S4, M21). */
+  para: "sugerencia" | "banco";
   /** El titular de la ficha que provocó la petición. */
   sobre: string;
   trozos: Trozo[];
@@ -97,6 +99,7 @@ export function useSalioDeMuestra(): LoQueSalio[] {
     {
       hora: "14:22",
       externo: "claude",
+      para: "sugerencia",
       sobre: m.sobre1,
       trozos: [
         { que: "texto", texto: `Client: ${m.t1} ` },
@@ -109,8 +112,9 @@ export function useSalioDeMuestra(): LoQueSalio[] {
       tapadas: 2,
       usd: 0.004,
     },
-    { hora: "14:16", externo: "claude", sobre: m.sobre2, trozos: [], caracteres: 377, tapadas: 3, usd: 0.003 },
-    { hora: "14:09", externo: "claude", sobre: m.sobre3, trozos: [], caracteres: 501, tapadas: 1, usd: null },
+    { hora: "14:16", externo: "claude", para: "sugerencia", sobre: m.sobre2, trozos: [], caracteres: 377, tapadas: 3, usd: 0.003 },
+    // Lo del ensayo, con su rótulo (M21): `sobre` es el nombre de tu propuesta, que no se traduce.
+    { hora: "14:09", externo: "claude", para: "banco", sobre: m.sobre3, trozos: [], caracteres: 501, tapadas: 1, usd: null },
   ];
 }
 

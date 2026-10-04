@@ -50,9 +50,9 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   para ampliarla y ver más; de vuelta, la deja compacta. Con la banda arriba, el asa va abajo y se
   arrastra hacia abajo; con la banda abajo, hacia arriba.
 - **Limitaciones conocidas:** la invisibilidad está **verificada en Google Meet sobre macOS
-  26.6.2**. En Zoom y Teams la app no lo ha comprobado, y te lo dice en la propia banda con «sin
-  verificar» en vez de prometértelo. Si eso te preocupa: comparte una ventana en vez de la
-  pantalla completa, o usa un segundo monitor.
+  26.6.2, con la banda abajo**. Con la banda arriba, y en Zoom y Teams, la app no lo ha comprobado,
+  y te lo dice («sin verificar») en vez de prometértelo. Si eso te preocupa: comparte una ventana en
+  vez de la pantalla completa, o usa un segundo monitor.
 
 ### El acople: la reunión se hace sitio · desde Sprint 001
 
@@ -60,12 +60,17 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   como si fueran dos aplicaciones pegadas. **Con la banda abajo**, la recorta por abajo. **Con la banda
   arriba** (desde el sprint 4), **la baja y la encoge** lo que mide la banda, sin mover su borde de
   abajo. Al cerrar la banda, la ventana vuelve a su sitio y a su tamaño.
-- **Cómo se usa:** solo, si concediste el permiso de **Accesibilidad**. Si no, la banda flota
+- **Cómo se usa:** necesita el permiso de **Accesibilidad**. Si no lo concediste, la banda flota
   encima y te avisa con «sin acople».
 - **Arriba, solo se toca la ventana de la reunión** que la app detectó —Meet en tu navegador, Zoom o
-  Teams—, nunca la que tengas delante. Sin reunión, la banda flota bajo la barra de menús y dice «sin
-  acople»; se acopla cuando aparece la reunión o cuando inicias la sesión. Abajo, el acople es el de
-  siempre: la ventana que tengas delante.
+  Teams—, nunca la que tengas delante. Sin sesión, la banda flota bajo la barra de menús y dice «sin
+  acople»; se acopla al iniciar la sesión.
+- **Abajo, el acople es el de siempre: la ventana que tengas delante.** La app la acopla sola en los
+  30 segundos que siguen a abrirla, y cada vez que pones la banda abajo (`⌃⌥B` o *Sesión*). «Iniciar
+  sesión» no la acopla: si abriste la reunión más tarde, ponla delante y pulsa `⌃⌥B` dos veces (la
+  banda sube y vuelve abajo, y al volver la acopla).
+- **Tras `⌥⎋` no se acopla nada:** con la banda cerrada, `⌃⌥B` y la fila de *Sesión* solo cambian tu
+  elección; no tocan ninguna ventana.
 - **Limitaciones conocidas:** sin él la banda flota encima en vez de acoplarse. Y con **Meet en el
   navegador** hace falta para algo más: sin él la app no puede leer el título de la pestaña, así que
   no sabe que hay reunión —*Sesión* dice «No se puede saber si hay reunión»—, no lee su pantalla y
@@ -89,9 +94,11 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 - **La primera vez**, *Sesión* te avisa: «La banda ahora va arriba, junto a la cámara», con
   **«Entendido»**. Mientras no lo pulses, el aviso ocupa el sitio de la tarjeta de la reunión; la
   reunión sigue en el rail.
-- **Limitaciones conocidas:** arriba la banda usa la misma protección que abajo, pero **todavía no se
-  ha mirado compartiendo pantalla con la banda arriba**: va en las pruebas del ciclo. Hasta entonces,
-  lo verificado es lo de la banda abajo.
+- **Limitaciones conocidas:** arriba la banda usa la misma protección que abajo, pero está **sin
+  verificar**: nadie la ha mirado compartiendo pantalla con la banda arriba, y va en las pruebas del
+  ciclo. Lo verificado es lo de la banda abajo, y *Sesión* lo dice así: «Tu panel no aparece en la
+  pantalla que compartes. Verificado en tu Mac (macOS 26.6.2) el 2026-09-20 con la banda abajo; con la
+  banda arriba, y en Zoom y Teams, está sin verificar.»
 
 ### Escucha las dos pistas · desde Sprint 001
 
@@ -111,8 +118,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     en-US…) es un selector. Las dos nacen en **español**; si tu cliente habla inglés, cámbiala antes
     de «Iniciar sesión». **La elección se recuerda** · desde Sprint 003: la próxima vez que abras
     la app, cada pista sigue en el idioma que dejaste (lo prueba `lo_que_se_elige_sobrevive_al_reinicio`,
-    en `prefs.rs`). Marcar varios idiomas en la misma pista no está en este MVP: es de la etapa
-    siguiente (H2).
+    en `prefs.rs`). Marcar varios idiomas en la misma pista no está en la app.
   - macOS solo deja tener **cinco idiomas de voz listos a la vez**. Es un límite del sistema.
   - Si no hablas, los contadores de audio se quedan quietos. **Eso es correcto**: cuando nadie
     habla, macOS no entrega una sola muestra.
@@ -147,8 +153,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     señales otra vez. Si la carpeta vive en Documentos, Escritorio o Descargas, macOS puede preguntarte
     la primera vez si Angel Ghost puede leerla. Si ya no está (un disco desconectado), la app lo dice y
     la puedes señalar de nuevo.
-  - Arrastrar documentos sobre la ventana y releer solo lo que cambió no están en este MVP: quedan
-    para el H2. Hoy se vuelve a recorrer la carpeta entera.
+  - Arrastrar documentos sobre la ventana y releer solo lo que cambió no están en la app: hoy se
+    vuelve a recorrer la carpeta entera.
   - El índice vive en la carpeta de datos de la app, **y solo tu cuenta del Mac puede leerlo**.
 
 ### La ficha en el momento justo · desde Sprint 001
@@ -189,8 +195,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   memoria** y mueren al cerrar. La pantalla de *Honestidad* enseña cuánto ocupa cada uno ahora mismo y
   cuántos bytes han salido de tu equipo.
 - **Cómo se usa:** `⌥⎋` corta todo en el acto — audio, transcript, la banda y su relleno — y
-  devuelve la ventana de la reunión a su tamaño. También está el botón en *Honestidad*, por si el
-  atajo está cogido por otra app.
+  devuelve la ventana de la reunión a su sitio y a su tamaño. También está el botón en *Honestidad*,
+  por si el atajo está cogido por otra app.
 - **El corte alcanza las 12 piezas · desde Sprint 004.** *Honestidad* lo dice debajo del botón rojo:
   «El botón corta 12 de 12 piezas: ninguna queda fuera.» En el sprint 4 llegó **el ensayo**: si cortas a
   mitad de uno, el micrófono se cierra y tus respuestas sin guardar se van. En el sprint 2 llegaron la lectura de
@@ -204,7 +210,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 - **Limitaciones conocidas:** el botón corta lo que vive en memoria **ahora**; lo que ya salió por
   los altavoces o lo que ya viste en la banda, obviamente, no se puede deshacer.
 
-### Tus notas: lo único que queda · Nuevo · Sprint 003
+### Tus notas: lo único de la reunión que queda · Nuevo · Sprint 003
 
 - **Qué hace:** mientras escuchas, *Notas* es tu cuaderno de la reunión: **tu nota** (un campo para
   escribir lo que quieras), **tus acuerdos** (los escribes tú; la app no decide qué fue un acuerdo) y
@@ -238,8 +244,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 - **El cuaderno, protegido:** desde que empiezas a escuchar hasta que guardas o descartas la reunión,
   la ventana del cuaderno se **protege de la captura** como la banda, con el mismo flag del sistema.
   Así tu nota no se ve si compartes la pantalla entera por descuido. **Sin verificar todavía con el
-  cuaderno:** la banda está comprobada en Meet sobre macOS 26.6.2; el cuaderno se mira en la parada 5
-  del ⭐⭐ (Acto 2), y en Zoom y Teams, ni la una ni el otro.
+  cuaderno:** la banda está comprobada en Meet sobre macOS 26.6.2, con la banda abajo; el cuaderno se
+  mira en la parada 5 del ⭐⭐ (Acto 2), y en Zoom y Teams, ni la una ni el otro.
 - **Dónde viven:** en `~/Library/Application Support/com.aiapps.copiloto-consultor/notas/`, junto a
   la bandeja. **No en Documentos**: desde ahí la tarea que borra lo vencido con la app cerrada no puede
   entrar, y la papelera de iCloud guardaría 30 días lo que se borra. Esa carpeta no se sincroniza con
@@ -301,9 +307,9 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 - **Limitaciones conocidas:**
   - **La primera vez, macOS avisa de que se añadió un ítem en segundo plano.** Hasta que la app vaya
     firmada, en Ajustes del Sistema → General → Ítems de inicio aparece como **«sh · desarrollador no
-    identificado»**: es la tarea de borrado de Angel Ghost, y se queda mientras haya bandeja o notas
-    con fecha. Si la desactivas, la bandeja y tus notas vencidas solo se borran con la app abierta, y
-    *Honestidad* lo dice.
+    identificado»**: es la tarea de borrado de Angel Ghost, y se queda mientras haya bandeja, notas o
+    ensayos con fecha. Si la desactivas, la bandeja, tus notas y tus ensayos vencidos solo se borran con
+    la app abierta, y *Honestidad* lo dice.
   - Si borras la app, la tarea sigue borrando a su hora lo que quede; después se queda como una
     entrada inerte en Ítems de inicio, que puedes quitar.
   - Como mucho hay 30 propuestas esperando; al llegar a 30, las nuevas no entran y *Notas* lo dice.
@@ -383,27 +389,43 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   notas** y se borra con **su retención** (90 días de fábrica; «siempre» no vence), aunque no abras la
   app: lo borra la misma tarea de macOS que tus notas. Vive en la carpeta privada de la app, en
   `ensayos/`, con el nombre del cliente y la fecha (`paramo-azul-2026-10-04.ghost`): dice con quién
-  ensayaste y qué día, no qué dijiste. Guardar no te pide nada. Un informe que no guardas no se guarda
-  solo al salir de la app.
+  ensayaste y qué día, no qué dijiste. Guardar no te pide nada. La primera vez que guardas algo con
+  fecha, macOS puede avisar de un ítem en segundo plano añadido (Background Items Added): es la tarea que
+  borra lo vencido. Y si la llave de tus notas la creó otra compilación de la app, macOS puede preguntar
+  si puede usarla. Un informe que no guardas no se guarda solo al salir de la app.
 - **Tu progreso con un cliente:** con un ensayo guardado, *Ensayo* dice «Ensayos guardados con este
   cliente» con su cuenta y **«Ver tu progreso»**. Abrirlo te pide **Touch ID o tu contraseña** («abrir
-  tus ensayos guardados»), una vez cada vez que abres la app. Es una tabla con un ensayo por fila
-  —evidencia, ritmo, muletillas y tiempo— y, desde el segundo, **«Desde el primero»**: cómo cambió cada
+  tus ensayos guardados»), una vez cada vez que abres la app. Es el mismo desbloqueo que tus notas: si
+  en esta sesión de la app ya exportaste una reunión, no lo vuelve a pedir. Es una tabla con un ensayo
+  por fila —evidencia, ritmo, muletillas y tiempo— y, desde el segundo, **«Desde el primero»**: cómo cambió cada
   cifra, con su flecha. Solo cifras: tus respuestas no se enseñan ahí. Se ven los últimos seis, y los
   anteriores se cuentan.
 - **Exportar y borrar:** «Exportar como texto» guarda el ensayo que acabas de terminar como un `.md`
   legible, donde elijas, con el mismo desbloqueo; ese archivo ya no lo protege nadie. Un ensayo ya
   guardado no se vuelve a exportar. **«Borrar los ensayos de este cliente»**, en tu progreso, pregunta
-  antes, y no abre los archivos ni pide desbloqueo.
+  antes, y no abre los archivos ni pide otro desbloqueo.
 - **«Enriquecer el banco»** (en *IA*, apagado de fábrica): si lo enciendes, al empezar un modelo propone
   **hasta 5 preguntas más**, apoyadas en tus secciones; van al final y marcadas «sugerida por el
   modelo». Va por el mismo camino que la sugerencia —el modelo del sistema, o el proveedor externo si lo
-  encendiste, con lo del cliente tapado antes de salir y contado en la red—. Una pregunta que no se
-  apoya en una sección tuya se tira. Sin modelo, el ensayo funciona igual, con las reglas.
+  encendiste, con lo del cliente tapado antes de salir y contado en la red—; en «Ver lo que salió», su
+  fila dice «enriquecer el banco». Una pregunta que no se apoya en una sección tuya se tira. Sin
+  modelo, el ensayo funciona igual, con las reglas.
 - **Mientras ensayas:** *Honestidad* enseña **«Tus respuestas del ensayo»** en memoria, en texto, hasta
-  guardar o cerrar, y el rail dice «Ensayando». El ensayo **no abre** el audio del sistema ni la
-  pantalla. La puerta local se cierra. No se puede ensayar con una sesión abierta, y empezar una sesión
-  corta el ensayo.
+  guardar o cerrar, y cuánto salió de tu equipo **en este ensayo** (0 B, salvo «Enriquecer el banco» con
+  el proveedor externo); el rail dice «Ensayando». El ensayo **no abre** el audio del sistema ni la
+  pantalla. La puerta local se cierra sola, y *IA* dice «Se cerró sola: hay una reunión o un ensayo».
+- **El ensayo y la sesión no conviven.** No se puede ensayar con una sesión abierta, y empezar una sesión
+  descarta el ensayo. Si tienes uno terminado sin guardar, *Sesión* te avisa antes, encima de «Iniciar
+  sesión»: «Tienes un ensayo terminado sin guardar» · «Empezar la sesión lo descarta. Guárdalo antes en
+  Ensayo.»
+- **Con una videollamada abierta, solo con auriculares.** Si Zoom o Teams están abiertos, o hay una
+  pestaña de Meet, el ensayo no empieza por los altavoces: tu micrófono oiría la llamada —y la tomaría
+  por tu respuesta— y la llamada oiría la voz que lee la pregunta. *Ensayo* dice «Hay una videollamada
+  abierta» («Con los altavoces, tu micrófono oiría la llamada y la llamada oiría la voz del ensayo. Ponte
+  auriculares o ciérrala para ensayar.»). Sin el permiso de Accesibilidad, la app no ve si tu navegador
+  está en una llamada, y con el navegador abierto también te los pide: «No se puede saber si hay una
+  videollamada» («Sin el permiso de Accesibilidad, la app no ve si tu navegador está en una llamada.
+  Ponte auriculares o concédelo en Permisos.»).
 - **Limitaciones conocidas:**
   - **La transcripción de macOS no conserva «eh» ni «um»**, así que no se cuentan: solo las muletillas
     que sí escribe («o sea», «básicamente», «like», «you know»…). La pantalla lo dice.
@@ -413,15 +435,22 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - Si la pregunta es muy general, puede no haber fichas con qué comparar y la cifra sale «—»: la app
     no te acusa de nada que no tenías.
   - **Si haces pausas largas a mitad de respuesta**, los 2,5 s pueden cortarte: termina con Enter.
-  - Sin reunión, **la voz sale por donde suene tu Mac**, también por los altavoces. En la reunión,
-    nunca.
+  - Sin reunión, **la voz sale por donde suene tu Mac**; con una videollamada abierta, solo con
+    auriculares. Mientras habla, el micrófono no escucha.
+  - **Con una videollamada abierta, el ensayo no empieza si el sonido sale por altavoces que la app
+    reconoce**: los del Mac, un monitor por HDMI o DisplayPort, o AirPlay. Con auriculares de cable,
+    Bluetooth o USB —unos AirPods, por ejemplo— sí empieza: macOS no distingue unos auriculares Bluetooth
+    o USB de un altavoz de mesa, y la app se fía, como con el modo solo audio. **Si el sonido te sale por
+    un altavoz Bluetooth o USB, no ensayes con una llamada abierta.** Sin videollamada, ensaya con lo que
+    quieras.
   - **El ensayo todavía no se ha probado con una voz de verdad.** Lo prueba la CI, con el audio del kit
     y con una sesión completa en la que se guarda un ensayo y se descifra; con tu voz, tu micrófono,
     el Llavero y Touch ID va en las pruebas del ciclo.
   - Sin propuesta ni ficha de ese cliente en tu corpus, *Ensayo* dice «Tu corpus no tiene nada de este
     cliente»: la app no inventa preguntas.
-  - El idioma del ensayo es el de la propuesta. Si tu Mac no transcribe ese idioma, *Ensayo* te lo dice
-    y te manda a *Idioma*.
+  - El idioma del ensayo es el de tu propuesta; si no se puede saber, el de la ficha del cliente, y si
+    tampoco, el de tu pista. *Ensayo* lo dice arriba («Idioma del ensayo: español.»). Si tu Mac no
+    transcribe ese idioma, *Ensayo* te lo dice y te manda a *Idioma*.
 
 ### El modelo de voz de un idioma · desde Sprint 001
 
@@ -568,12 +597,13 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     puestos otra vez, en tu Mac. Nunca audio, pantalla ni documentos enteros: ese camino no existe
     (`api::pruebas::lo_que_sale_al_api_no_lleva_los_nombres_plantados`). Cada byte que sale se
     cuenta en *Honestidad* y en la banda.
-  - **Puedes ver exactamente lo que salió · desde Sprint 003.** En *IA*, cuando algo salió en esta
-    reunión, aparece **«Ver lo que salió · N»** en la tarjeta del proveedor externo. Abre el texto
-    exacto de la última petición —con lo que se tapó en tu Mac **tachado** y su marcador al lado—,
-    cuántos caracteres fueron, y la tabla de las últimas 20 peticiones de la reunión (hora, por qué salió,
-    caracteres, datos tapados y USD). Ese registro vive en memoria: se borra con `⌥⎋` y al terminar la
-    sesión. «← Quién redacta» te devuelve.
+  - **Puedes ver exactamente lo que salió · desde Sprint 003.** En *IA*, cuando algo salió —en una
+    reunión, o en un ensayo con «Enriquecer el banco»—, aparece **«Ver lo que salió · N»** en la
+    tarjeta del proveedor externo. Abre el texto exacto de la última petición —con lo que se tapó en
+    tu Mac **tachado** y su marcador al lado—, cuántos caracteres fueron, y la tabla de las
+    **peticiones recientes**, las últimas 20 (hora, para qué salió —«redactar sugerencia» o «enriquecer
+    el banco»—, caracteres, datos tapados y USD). Ese registro vive en memoria como todo lo demás: se
+    borra al terminar la sesión, con `⌥⎋` o al salir de la app. «← Quién redacta» te devuelve.
   - **Nada de la sugerencia va al log**: solo quién, cuánto tardó y cuánto salió
     (`tests/unit/logs-de-la-sintesis.test.ts`).
 - **Costo:** el modelo del sistema cuesta cero. El externo se cobra en tu cuenta del proveedor; IA
@@ -608,8 +638,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 - **Qué hace:** deja que **Claude Code**, en tu propio Mac y en tu sesión, opere la app por un
   comando, `ghost`: buscar en tu corpus, reindexarlo, correr el kit de evaluación con tus preguntas,
   leer y cambiar algunas preferencias y abrir tus notas guardadas. **Nace cerrada**, la abres tú, y
-  **en reunión se cierra sola** y lo deniega todo: un agente no toca jamás lo que está vivo en memoria.
-  No sale a la red —es un canal local del Mac, que solo alcanza tu usuario— y el contador sigue en 0 B.
+  **en reunión o durante un ensayo se cierra sola** y lo deniega todo: un agente no toca jamás lo que
+  está vivo en memoria. No sale a la red —es un canal local del Mac, que solo alcanza tu usuario— y el contador sigue en 0 B.
 - **Cómo se usa:**
   1. Compila `ghost` una vez, junto a la app: `pnpm ghost` en la carpeta del proyecto.
   2. En *IA*, **«Puerta local · cerrada»** (en la fila de «Redactar sugerencias») → se abre la vista de
@@ -629,11 +659,11 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   pide **Touch ID o tu contraseña en el Mac** una vez cada vez que abres la puerta: aunque hayas
   exportado en *Notas*, la puerta pide el suyo.
 - **Lo que no puede nunca:** nada en reunión (si la app escucha, si hay una reunión en solo notas, si ve
-  una videollamada abierta **o si no puede saberlo**); encender el API externo; cambiar «Redactar
-  sugerencias», el proveedor externo, «Conservar mis turnos» ni lo que respondiste de una NDA; abrirse
+  una videollamada abierta **o si no puede saberlo**) ni durante un ensayo; encender el API externo;
+  cambiar «Redactar sugerencias», el proveedor externo, «Conservar mis turnos» ni lo que respondiste de una NDA; abrirse
   sola; tocar otra máquina. Todo eso se deniega y queda en el registro.
-- **Si se cerró sola:** *IA* lo dice en ámbar, «Se cerró sola: hay una reunión». Vuelve a abrirla tú
-  cuando termine; no se abre sola.
+- **Si se cerró sola:** *IA* lo dice en ámbar, «Se cerró sola: hay una reunión o un ensayo». Vuelve a
+  abrirla tú cuando termine; no se abre sola.
 - **Limitaciones conocidas:**
   - `ghost` **no se instala en tu PATH**: vive junto a la app que compilaste (y dentro del `.app` si la
     empaquetas), y la vista de la puerta te da su ruta. Instalarlo en el PATH llega con la app firmada.
@@ -724,7 +754,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - **Cada pista escucha un idioma.** Si en mitad de una frase castellana el cliente dice tres
     palabras en inglés, el diccionario arregla la jerga que reconozca, pero **una frase entera en el
     otro idioma no se transcribe bien** — está medido y está dicho en la pantalla de *Idioma*. Marcar
-    varios idiomas por pista queda para el H2.
+    varios idiomas por pista no está en la app.
 
 ## Atajos de teclado
 
@@ -740,7 +770,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 | `⌃⌥P` | **fijar** la ficha que ves en la banda: queda en tus notas, con su titular y su fuente; la banda dice «fijada» |
 | `⌃⌥↵` | **guardar la propuesta** que ves en la banda: entra en tu archivo |
 | `⎋` | calla la voz — **solo mientras el modo solo audio está encendido** |
-| `⌃⌥B` | **la banda, arriba o abajo**: la recoloca y vuelve a acoplar la reunión. Se recuerda |
+| `⌃⌥B` | **la banda, arriba o abajo**: la recoloca y vuelve a acoplar la reunión (con la banda cerrada tras `⌥⎋`, solo cambia tu elección). Se recuerda |
 
 En la pantalla *Ensayo*, y solo ahí, las teclas son de la ventana: **Enter** listo · **R** repetir ·
 **S** saltar · **Esc** terminar. No se disparan con el cursor en un selector.
@@ -761,14 +791,16 @@ En la pantalla *Ensayo*, y solo ahí, las teclas son de la ventana: **Enter** li
 ## Preguntas frecuentes
 
 **¿El cliente puede ver la banda si comparto pantalla?**
-En Google Meet sobre macOS 26.6.2, no: verá tu fondo de escritorio en ese trozo. Eso se comprobó con
-la banda abajo; arriba usa la misma protección, pero todavía no se ha mirado. En Zoom y Teams no está
-comprobado y la app te lo dice en vez de prometértelo.
+En Google Meet sobre macOS 26.6.2, con la banda abajo, no: verá tu fondo de escritorio en ese trozo.
+Con la banda arriba —su sitio de fábrica— usa la misma protección, pero está sin verificar. En Zoom y
+Teams tampoco está comprobado, y la app te lo dice en vez de prometértelo.
 
 **¿Sube mis documentos a algún sitio?**
 No. Los lee donde están y el índice se queda en tu Mac. El contador de *Honestidad* marca los bytes
-que salieron de tu equipo: **0** salvo que enciendas el proveedor externo en *IA*, y aun entonces
-solo salen la última frase de tu cliente y tres fichas cortas, anonimizadas —nunca un documento—.
+que salieron de tu equipo: **0** salvo que enciendas el proveedor externo en *IA*, y aun entonces solo
+sale texto corto y anonimizado: con «Redactar sugerencias», la última frase de tu cliente y tres fichas
+cortas; con «Enriquecer el banco», los títulos y la primera frase de las secciones de tu propuesta y de
+la ficha del cliente, una vez por ensayo —nunca un documento entero—.
 
 **¿Guarda lo que se habla en la reunión?**
 No. El audio vive treinta segundos en memoria y se va pisando; el texto, los últimos doce turnos.
@@ -780,7 +812,8 @@ por reunión. Lo que no decidas espera en la bandeja y se borra solo (3 h de fá
 **¿El ensayo graba mi voz?**
 No. Tu voz pasa por la memoria para transcribirse y se pisa; el audio no toca el disco. Si guardas el
 ensayo, quedan tus respuestas en texto y sus cifras, cifradas con la llave de tus notas y con su
-retención. Si no lo guardas, al cerrar no queda nada.
+retención. Si no lo guardas, al cerrar no queda nada. Y con una videollamada abierta solo empieza con
+auriculares: así tu micrófono no oye a nadie más.
 
 **¿Necesito internet?**
 Solo para la videollamada. La app transcribe, busca y —con el modelo del sistema— redacta dentro de
@@ -790,7 +823,9 @@ aquí—, y si enciendes el **proveedor externo** en *IA*, con tu clave.
 
 **¿Por qué me pide auriculares?**
 Con los altavoces, tu micrófono oye también al cliente y las dos pistas se mezclan. La app lo
-detecta y lo marca, pero funciona mejor con auriculares.
+detecta y lo marca, pero funciona mejor con auriculares. En el ensayo, con una videollamada abierta, son
+obligatorios —de cable, Bluetooth o USB—: con los altavoces, tu micrófono oiría la llamada y la llamada oiría
+la voz del ensayo.
 
 ## Historial
 
@@ -799,7 +834,7 @@ detecta y lo marca, pero funciona mejor con auriculares.
 | 001 | la banda protegida · el acople · las dos pistas y la transcripción local · el corpus indexado · la ficha de evidencia y la sugerencia de cómo conducirse · el modelo de voz de un idioma · el corte y la pantalla de Honestidad · español e inglés |
 | 002 | el disparo por silencio · **tu diccionario técnico** · **el modo solo audio** · **la lectura de pantalla** y `⌃⌥L` · **los porqués** (la pista que no abrió, la salida de audio por su nombre, el motor que falta) · **por qué llegó la ficha y cuánto tardó** · las teclas pasan a `⌃⌥` · **el radar** (ámbar y coral) y `⌃⌥R` · **la sugerencia** y la pantalla **IA** |
 | 003 | **tus notas** (el cuaderno de la reunión, el archivo cifrado por reunión, la retención, exportar y borrar) · `⌃⌥N` y `⌃⌥P` · **el cuaderno protegido** mientras la reunión está abierta · **lo que salió al API**, en *IA* · **las propuestas por reglas y la bandeja** con su cuenta atrás y su borrado con la app cerrada · `⌃⌥↵` · la señal «fijada» · el corte pasa a 11 piezas · las preferencias se recuerdan · tus notas pasan a la **carpeta privada de la app**, con «Mostrar en Finder», y se borran solas al vencer aunque no abras la app · **el marco en la mano**: «Este cliente», su bandera de jurisdicción, el chequeo de NDA, la cláusula de encargo y el **modo solo notas** · **la puerta local para Claude Code** (`ghost`), en *IA* |
-| 004 | **el ensayo** (las preguntas por reglas de tu propuesta, tu ficha y las objeciones típicas; la evaluación sin puntaje: usaste, tenías y no usaste, tiempo, ritmo y muletillas; el informe; guardarlo con la llave y la retención de tus notas; tu progreso por cliente; exportar y borrar) · **«Enriquecer el banco»**, en *IA* · **la banda arriba**, junto a la cámara, con `⌃⌥B` y el aviso de la primera vez · el acople arriba **baja y encoge solo la ventana de la reunión** · el corte pasa a 12 piezas |
+| 004 | **el ensayo** (las preguntas por reglas de tu propuesta, tu ficha y las objeciones típicas; la evaluación sin puntaje: usaste, tenías y no usaste, tiempo, ritmo y muletillas; el informe; guardarlo con la llave y la retención de tus notas; tu progreso por cliente; exportar y borrar) · **«Enriquecer el banco»**, en *IA* · **la banda arriba**, junto a la cámara, con `⌃⌥B` y el aviso de la primera vez · el acople arriba **baja y encoge solo la ventana de la reunión**, al iniciar la sesión · el corte pasa a 12 piezas · tras su auditoría: con una videollamada abierta el ensayo pide auriculares, *Sesión* avisa antes de descartar un ensayo sin guardar, la puerta se cierra también con un ensayo y lo dice, y la protección arriba se declara sin verificar |
 
 > **Corregido tras la auditoría del sprint 001** (2026-09-22): tres frases de este manual habían
 > dejado de ser ciertas y se arreglaron con lo que el código hacía de verdad — el disparo por

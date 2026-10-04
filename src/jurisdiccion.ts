@@ -65,7 +65,9 @@ export type EstadoDeSesion =
   | "nda"
   | "solo-notas"
   /** La primera vez con la banda arriba (sprint 004, `sesion.html` · la primera vez). */
-  | "aviso";
+  | "aviso"
+  /** Un ensayo terminado sin guardar (auditoría del S4, M10; `sesion.html` · ensayo sin guardar). */
+  | "ensayo";
 
 const ESTADOS: EstadoDeSesion[] = [
   "normal",
@@ -76,6 +78,7 @@ const ESTADOS: EstadoDeSesion[] = [
   "nda",
   "solo-notas",
   "aviso",
+  "ensayo",
 ];
 
 export function estadoDeSesion(busqueda: string): EstadoDeSesion {

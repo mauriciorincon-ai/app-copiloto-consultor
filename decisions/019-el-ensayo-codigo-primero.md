@@ -84,11 +84,13 @@ línea. Sin corpus para ese cliente no hay ensayo, y el estado «sin corpus» lo
 3. **La voz de la pregunta.** Se lee con la voz al oído (`habla`), en el idioma de la propuesta. En el
    ensayo no hay reunión, así que **puede** salir por los altavoces; para que la app no se oiga a sí
    misma, **el micrófono está sordo mientras la voz habla y 300 ms después** (se descartan los marcos).
-   La regla «en reunión, nunca por los altavoces» (ADR 014) no cambia.
+   La regla «en reunión, nunca por los altavoces» (ADR 014) no cambia. **Y con una videollamada abierta
+   el ensayo no empieza por los altavoces** (enmienda 1, auditoría del S4, A1).
 4. **Teclas de la ventana, no globales:** Enter (listo), R (repetir), S (saltar), Esc (terminar). ⌥⎋ lo
    corta todo, como siempre: el ensayo es una pieza más del corte (`corte::Pieza::Ensayo`).
 5. **Excluyente con una reunión:** empezar a escuchar corta el ensayo, y no se puede ensayar con una
-   sesión abierta. Durante el ensayo la puerta local está cerrada, como en reunión: hay un micrófono
+   sesión abierta. Una videollamada abierta **sin** sesión sí lo impide con altavoces (enmienda 1): la
+   premisa «no hay nada que oír» era falsa. Durante el ensayo la puerta local está cerrada, como en reunión: hay un micrófono
    abierto.
 6. **La evaluación** (`ensayo/evaluacion.rs`, puro, ≤ 500 ms):
    - **cobertura**: las fichas que el disparo habría enseñado para esa pregunta (la misma búsqueda BM25 y
@@ -105,7 +107,10 @@ línea. Sin corpus para ese cliente no hay ensayo, y el estado «sin corpus» lo
    - **ritmo**: palabras por minuto entre la primera palabra y el fin del último turno;
    - **muletillas**: las de `data/ensayo/muletillas.json` (es/en, palabras y frases enteras). Solo las
      que la transcripción conserva: la de Apple suele quitar «eh» y «um», y la pantalla lo dice.
-7. **El idioma** es el de la propuesta (palabras vacías es/en; si empatan, el tuyo en Idioma).
+7. **El idioma** es el de la propuesta (palabras vacías es/en); si no lo dice, el de la ficha del cliente; y si
+   tampoco, el tuyo en Idioma. **La variante** (`es-MX`, `en-GB`…) es la de tu pista si es de ese idioma, si
+   no la del cliente, si no la primera que el motor tenga lista, y solo al final la de fábrica: cablear
+   `es-ES` y `en-US` dejaba fuera a quien solo tiene otra instalada (auditoría del S4, A2).
 8. **Lo que queda** (enmienda 4 del ADR 015, que se escribe antes de la fase 4, y enmienda 8 del ADR 002): el informe del ensayo, cifrado
    con la llave de tus notas en `ensayos/`, con la retención de tus notas. Lleva tus respuestas **en
    texto** y las cifras de cada pregunta; **el audio no se guarda nunca**, tampoco el tuyo (regla dura 1).
@@ -119,3 +124,32 @@ línea. Sin corpus para ese cliente no hay ensayo, y el estado «sin corpus» lo
 - «Te faltó» es una pista, no un juicio. Si el kit demuestra que acusa de más, se ajusta el umbral, no
   se esconde.
 - Lo que la CI no ve (tu voz, tu ritmo, que la pregunta se oiga bien) va a las ⭐ del acumulado del H2.
+
+## Enmienda 1 — con una videollamada abierta, solo con auriculares (auditoría del S4, A1, 2026-10-04)
+
+**La premisa que caducó.** §6.5 decía que una videollamada abierta sin sesión de Angel Ghost no impedía
+ensayar, porque «no hay nada que oír». Sí lo hay: si la llamada suena por los altavoces, el micrófono del
+ensayo —que no tiene pista del sistema contra la que marcar el eco— transcribe a la otra parte y la guarda
+cifrada como tu respuesta, y la llamada oye la voz que lee frases de tu propuesta. Lo primero rompe la regla
+dura 1 (lo del cliente nunca se guarda); lo segundo, la regla de ADR 014 vista desde el otro lado.
+
+**La decisión del usuario (2026-10-04, opción A).** Con una videollamada abierta, el ensayo solo empieza con
+auriculares. `ensayo::llamada_sin_auriculares` lo decide, puro, antes de abrir el micrófono:
+
+| La detección (`sesion::ahora`) | La salida (`Salida::puede_haber_eco`) | El ensayo |
+|---|---|---|
+| ninguna videollamada | cualquiera | empieza |
+| Zoom o Teams en marcha, o una pestaña de Meet | altavoces del Mac, HDMI, DisplayPort, AirPlay | **no empieza**: «Hay una videollamada abierta» |
+| un navegador abierto sin el permiso de Accesibilidad | ídem | **no empieza**: «No se puede saber si hay una videollamada» |
+| cualquiera | auriculares de cable | empieza |
+| cualquiera | Bluetooth o USB (no se sabe si es un casco) | empieza, como la voz en reunión |
+
+**Por qué Bluetooth y USB pasan** (desviación del ajuste que proponía la auditoría, que también los
+paraba): es la misma regla que la voz en reunión (`habla::cabe_decirla`, ADR 014): solo se para lo que la
+app **sabe** que se oiría. macOS no distingue unos AirPods de un altavoz de mesa; parar los dos dejaba fuera
+los auriculares de casi todo el que ensaya. Con un altavoz Bluetooth o USB, el manual dice que no se ensaye
+con una llamada abierta, igual que dice que no se use el modo solo audio.
+
+**Lo que no cubre.** Se mira al empezar. Si abres una videollamada a mitad de un ensayo, el ensayo sigue:
+el reloj de la sesión no vuelve a preguntar a la detección, que lee ventanas por Accessibility.
+

@@ -28,6 +28,10 @@ pub const SILENCIO_DE_RESPUESTA_MS: u64 = 2_500;
 pub const COLA_DE_LA_VOZ_MS: u64 = 300;
 /// Si la voz no empezó a sonar en este tiempo, no va a sonar: se responde sin esperarla.
 pub const ESPERA_A_LA_VOZ_MS: u64 = 2_000;
+/// Un tramo sin texto que dura al menos esto cuenta como respuesta para el reloj del silencio: sin modelo de
+/// voz, las respuestas de verdad llegan sin texto. Uno más corto —una tos, un carraspeo— no (auditoría del
+/// S4, M8).
+pub const VOZ_SIN_TEXTO_MS: u64 = 1_500;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "kebab-case")]
@@ -59,6 +63,21 @@ pub struct Cerrada {
     pub tramos: Vec<Tramo>,
     pub empezo_ms: u64,
     pub cerro_ms: u64,
+}
+
+impl Cerrada {
+    /// Pisa la copia de tu respuesta que viaja a la evaluación.
+    pub fn pisar(&mut self) {
+        pisar_tramos(&mut self.tramos);
+    }
+}
+
+/// **La copia de tu respuesta se pisa al soltarla** (auditoría del S4, B23): viaja de la sesión a la
+/// evaluación y, sin esto, se soltaba con el texto dentro.
+impl Drop for Cerrada {
+    fn drop(&mut self) {
+        self.pisar();
+    }
 }
 
 /// Qué pasó con una pregunta. Se guarda con tu ensayo ([`super::guardado`]).
@@ -230,7 +249,13 @@ impl Sesion {
                 if let Some(en) = self.cerrar_en {
                     return self.cerrar(en);
                 }
-                match self.tramos.last() {
+                // El silencio cuenta desde tu última voz con texto, o desde un tramo lo bastante largo para
+                // ser una respuesta sin modelo de voz: una tos que el motor devuelve vacía no arranca el reloj,
+                // y pensar antes de empezar sigue sin cerrar nada (auditoría del S4, M8).
+                let cuenta = |t: &&Tramo| {
+                    t.texto.as_deref().is_some_and(|x| !x.trim().is_empty()) || t.hasta_ms.saturating_sub(t.desde_ms) >= VOZ_SIN_TEXTO_MS
+                };
+                match self.tramos.iter().rev().find(cuenta) {
                     Some(t) if ahora.saturating_sub(t.hasta_ms) >= SILENCIO_DE_RESPUESTA_MS => {
                         // Cerró el silencio: tu respuesta terminó cuando terminó tu voz. Los 2,5 s
                         // son la espera de la app y no se te cargan.
@@ -465,10 +490,13 @@ impl Drop for Sesion {
 pub fn informe_de<'a>(llegadas: impl IntoIterator<Item = (usize, &'a str, &'a Suerte)>) -> Informe {
     let mut filas = Vec::new();
     let mut respondidas: Vec<&Evaluacion> = Vec::new();
+    // Las muletillas se cuentan sobre lo que dijiste en texto: sin una palabra, cero no es una cifra.
+    let mut con_palabras = false;
     for (numero, texto, s) in llegadas {
         let (citadas, evidencia, tiempo_ms, ppm, saltada) = match s {
-            Suerte::Respondida { evaluacion: e, .. } => {
+            Suerte::Respondida { evaluacion: e, respuesta } => {
                 respondidas.push(e);
+                con_palabras |= !respuesta.trim().is_empty();
                 (e.citadas(), e.evidencia.len(), Some(e.tiempo_ms), e.ppm, false)
             }
             Suerte::Saltada => (0, 0, None, None, true),
@@ -490,7 +518,7 @@ pub fn informe_de<'a>(llegadas: impl IntoIterator<Item = (usize, &'a str, &'a Su
         citadas: respondidas.iter().map(|e| e.citadas()).sum(),
         evidencia: respondidas.iter().map(|e| e.evidencia.len()).sum(),
         ppm_medio: media(respondidas.iter().filter_map(|e| e.ppm.map(u64::from)).collect()).map(|x| x as u32),
-        muletillas: cuenta.iter().map(|m| m.veces).sum(),
+        muletillas: con_palabras.then(|| cuenta.iter().map(|m| m.veces).sum()),
         la_que_mas: cuenta.into_iter().next(),
         tiempo_medio_ms: media(respondidas.iter().map(|e| e.tiempo_ms).collect()),
         filas,
@@ -519,7 +547,9 @@ pub struct Informe {
     pub citadas: usize,
     pub evidencia: usize,
     pub ppm_medio: Option<u32>,
-    pub muletillas: u32,
+    /// `None` si no dijiste una palabra que se transcribiera —todo saltado, o sin modelo de voz—: cero
+    /// muletillas en nada no es una cifra (§9-undecies; auditoría del S4, M12).
+    pub muletillas: Option<u32>,
     pub la_que_mas: Option<Muletilla>,
     pub tiempo_medio_ms: Option<u64>,
     pub filas: Vec<Fila>,
@@ -699,9 +729,46 @@ mod pruebas {
         let i = s.informe();
         assert_eq!((i.respondidas, i.saltadas, i.citadas, i.evidencia), (3, 0, 3, 9));
         assert_eq!(i.ppm_medio, Some(130));
-        assert_eq!(i.muletillas, 6);
+        assert_eq!(i.muletillas, Some(6));
         assert_eq!(i.la_que_mas, Some(Muletilla { frase: "o sea".into(), veces: 6 }));
         assert!(i.tiempo_medio_ms.is_some());
+    }
+
+    /// **Una tos antes de hablar no cierra la respuesta** (auditoría del S4, M8): un tramo corto que el motor
+    /// devuelve sin texto no arranca el reloj del silencio; tu respuesta de verdad, sí.
+    #[test]
+    fn una_tos_antes_de_hablar_no_cierra_la_respuesta() {
+        let (mut s, _) = Sesion::nueva(tres(), Idioma::Es, false, 0).unwrap();
+        let r = s.ronda();
+        s.turno(r, 1_000, 1_400, None);
+        assert!(s.tick(5_000, CALLADO, false).is_empty(), "la tos cerró la respuesta");
+        s.turno(r, 6_000, 9_000, Some("El plazo corre desde la firma".into()));
+        let a = s.tick(11_600, CALLADO, false);
+        assert!(a.iter().any(|x| matches!(x, Accion::Evaluar(_))), "la respuesta de verdad no cerró: {a:?}");
+        // Sin modelo de voz, una respuesta larga sin texto también cuenta.
+        let (mut s, _) = Sesion::nueva(tres(), Idioma::Es, false, 0).unwrap();
+        let r = s.ronda();
+        s.turno(r, 1_000, 1_000 + VOZ_SIN_TEXTO_MS, None);
+        let a = s.tick(1_000 + VOZ_SIN_TEXTO_MS + SILENCIO_DE_RESPUESTA_MS, CALLADO, false);
+        assert!(a.iter().any(|x| matches!(x, Accion::Evaluar(_))));
+    }
+
+    /// **La copia de tu respuesta que va a la evaluación se pisa** (auditoría del S4, B23): `pisar` la deja
+    /// sin tramos, y `Drop` la llama.
+    #[test]
+    fn una_cerrada_se_pisa_al_soltarla() {
+        let mut c = Cerrada {
+            indice: 0,
+            pregunta: "¿Uno?".into(),
+            tramos: vec![Tramo { desde_ms: 0, hasta_ms: 1_000, texto: Some("lo que dije".into()) }],
+            empezo_ms: 0,
+            cerro_ms: 1_000,
+        };
+        c.pisar();
+        assert!(c.tramos.is_empty());
+        let fuente = include_str!("sesion.rs");
+        let desde = fuente.find(["impl Drop for ", "Cerrada {"].concat().as_str()).expect("Cerrada sin Drop");
+        assert!(fuente[desde..desde + 120].contains("self.pisar()"), "el Drop de Cerrada no pisa");
     }
 
     #[test]

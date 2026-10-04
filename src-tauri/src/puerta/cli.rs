@@ -82,7 +82,7 @@ Usage:
   ghost notes open <file>             asks for Touch ID on the Mac, once per door opening
   ghost --version · ghost --help
 
-You open the door by hand, in Angel Ghost → AI. In a meeting it closes itself and denies everything.
+You open the door by hand, in Angel Ghost → AI. In a meeting or during a rehearsal it closes itself and denies everything.
 Each time you open the door, macOS asks you whether ghost may use the key in your Keychain.
 Output: JSON. Exit code: 0 done · 2 denied · 3 door closed · 1 failed · 64 usage.
 "
@@ -101,7 +101,7 @@ Uso:
   ghost notas abrir <archivo>         pide Touch ID en el Mac, una vez por apertura
   ghost --version · ghost --help
 
-La puerta se abre a mano, en Angel Ghost → IA. En reunión se cierra sola y lo deniega todo.
+La puerta se abre a mano, en Angel Ghost → IA. En reunión o durante un ensayo se cierra sola y lo deniega todo.
 Cada vez que abres la puerta, macOS te pregunta si ghost puede usar la llave de tu Llavero.
 Salida: JSON. Código: 0 hecho · 2 denegado · 3 puerta cerrada · 1 fallo · 64 uso.
 "

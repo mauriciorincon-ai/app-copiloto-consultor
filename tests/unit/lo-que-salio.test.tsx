@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Ia } from "@/pantallas/Ia";
 import { IdiomaContext } from "@/i18n";
 import { es } from "@/i18n/es";
-import { ESTADO_DE_LA_IA_NADIE, LO_QUE_SALIO } from "@/contrato.generado";
+import { ESTADO_DE_LA_IA_NADIE, LO_QUE_SALIO, LO_QUE_SALIO_DEL_BANCO } from "@/contrato.generado";
 
 /**
  * **LO QUE SALIÓ AL API, EN PANTALLA** (B37, sprint 003, mirada 19 filas 4 y 5). El registro lo
@@ -63,5 +63,16 @@ describe("lo que salió al API", () => {
     expect(screen.getByText(`${t.redactarSugerencia} · ${LO_QUE_SALIO.sobre}`)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: t.volverQuienRedacta }));
     expect(screen.getByText(t.quienRedacta)).toBeInTheDocument();
+  });
+
+  /** Auditoría del S4, M21: lo que salió para el ensayo se rotula como lo que es, no como una sugerencia. */
+  it("lo del ensayo dice «enriquecer el banco», y la tabla, «peticiones recientes»", async () => {
+    respuestas.set("lo_que_salio_al_api", [LO_QUE_SALIO_DEL_BANCO, LO_QUE_SALIO]);
+    await pinta();
+    fireEvent.click(screen.getByRole("button", { name: `${t.verLoQueSalio} · 2` }));
+    expect(screen.getByText(`${t.paraElBanco} · ${LO_QUE_SALIO_DEL_BANCO.sobre}`)).toBeInTheDocument();
+    expect(screen.getByText(`${t.redactarSugerencia} · ${LO_QUE_SALIO.sobre}`)).toBeInTheDocument();
+    expect(screen.getByText(`${t.las} 2 ${t.peticionesDeEstaReunion}`)).toBeInTheDocument();
+    expect(screen.getByText(t.registroEnMemoria)).toBeInTheDocument();
   });
 });

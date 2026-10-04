@@ -3,6 +3,7 @@
   "version": 1,
   "fecha": "2026-10-04",
   "topes": [5, 8, 12],
+  "tope_de_fabrica": 8,
   "reglas": [
     {
       "id": "seccion",

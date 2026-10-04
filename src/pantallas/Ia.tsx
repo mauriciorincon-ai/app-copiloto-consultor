@@ -510,7 +510,8 @@ function LoQueSalioAlApi({ salio, bytes, volver }: { salio: LoQueSalio[]; bytes:
               <tr key={`${p.hora}-${i}`}>
                 <td className="mono">{p.hora}</td>
                 <td>
-                  {t.redactarSugerencia} · {p.sobre}
+                  {/* Lo del ensayo, rotulado como lo que es (auditoría del S4, M21). */}
+                  {p.para === "banco" ? t.paraElBanco : t.redactarSugerencia} · {p.sobre}
                 </td>
                 <td className="num">{p.caracteres}</td>
                 <td className="num">{p.tapadas}</td>

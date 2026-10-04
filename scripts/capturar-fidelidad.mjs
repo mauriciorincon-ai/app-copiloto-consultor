@@ -132,6 +132,8 @@ const ARTEFACTOS = [
       // Desde el sprint 004 Sesión es la de «sprint 4»: la de «sprint 3» más la fila «La banda».
       { id: "sesion", maqueta: "sesion.html", estado: "s4", alto: 640, url: "ventana=principal&pantalla=sesion" },
       { id: "sesion-aviso", maqueta: "sesion.html", estado: "s4-aviso", alto: 640, url: "ventana=principal&pantalla=sesion&estado=aviso" },
+      // Un ensayo terminado sin guardar (auditoría del S4, M10): la franja encima de «Iniciar sesión».
+      { id: "sesion-ensayo", maqueta: "sesion.html", estado: "s4-ensayo", alto: 640, url: "ventana=principal&pantalla=sesion&estado=ensayo" },
       { id: "sesion-en-marcha", maqueta: "sesion.html", estado: "s3-en-marcha", alto: 640, url: "ventana=principal&pantalla=sesion&estado=en-marcha" },
       { id: "sesion-pregunta", maqueta: "sesion.html", estado: "s3-pregunta", alto: 640, url: "ventana=principal&pantalla=sesion&estado=pregunta" },
       { id: "sesion-sin-bandera", maqueta: "sesion.html", estado: "s3-sin-bandera", alto: 640, url: "ventana=principal&pantalla=sesion&estado=sin-bandera" },

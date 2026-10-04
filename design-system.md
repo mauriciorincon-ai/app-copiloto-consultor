@@ -1,7 +1,7 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.15.0  # 1.15.0: la banda ARRIBA y EL ENSAYO (sprint 004, abre el ciclo H2; las dos pantallas, aprobadas en sus miradas de DECISIÓN; sus estados y textos nuevos, maquetados, no vistos). 1.14.1: el barrido de tokens vetados de §7.2 por fin existe (cierre del ciclo H1). 1.14.0: la puerta local CONSTRUIDA (sprint 003, fase 4 — maquetado, no visto). 1.13.0: «Este cliente», la NDA y solo notas CONSTRUIDOS (sprint 003, fase 3 — maquetado, no visto). 1.12.0: las propuestas y la bandeja CONSTRUIDAS (sprint 003, fase 2 — maquetado, no visto; se valida en el gate del MVP). 1.11.0: cómo ENVEJECE «todavía no» — el estado del sprint se pone al día, y lo que se libera se agrupa (sprint 001, fase 3). 1.10.0: «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2). 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
+version: 1.16.0  # 1.16.0: auditoría del S4 (la banda ya no es «inferior» de fábrica; la puerta se cierra también en un ensayo; §9-bis completo; el acople arriba solo al iniciar la sesión; la protección arriba, sin verificar; `.ayuda-e` y `.evidencia-e .conjetura`). 1.15.0: la banda ARRIBA y EL ENSAYO (sprint 004, abre el ciclo H2; las dos pantallas, aprobadas en sus miradas de DECISIÓN; sus estados y textos nuevos, maquetados, no vistos). 1.14.1: el barrido de tokens vetados de §7.2 por fin existe (cierre del ciclo H1). 1.14.0: la puerta local CONSTRUIDA (sprint 003, fase 4 — maquetado, no visto). 1.13.0: «Este cliente», la NDA y solo notas CONSTRUIDOS (sprint 003, fase 3 — maquetado, no visto). 1.12.0: las propuestas y la bandeja CONSTRUIDAS (sprint 003, fase 2 — maquetado, no visto; se valida en el gate del MVP). 1.11.0: cómo ENVEJECE «todavía no» — el estado del sprint se pone al día, y lo que se libera se agrupa (sprint 001, fase 3). 1.10.0: «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2). 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
 fecha: 2026-10-04
 estado: aprobado   # G-Diseño aprobado el 2026-09-20 («sí apruebo la pantalla completa»)
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
@@ -113,7 +113,7 @@ motion** (regla 5a del CLAUDE.md): reduced-motion cambia propiedades, no element
 |---|---|---|
 | **Panel flotante** | **380 × 220**; con transcript **380 × 420**; con 3 fichas hasta 380 × 360; **nunca más ancho** | opaco, sin blur; **esquina superior derecha**, 16 px del borde, 8 px bajo la barra de menús; todos los Spaces; posición recordada (preferencia) |
 | **Píldora de voz** (C15, modo solo audio) | **260 × 56** | **reemplaza al panel**, no convive con él: la pantalla queda libre. Misma familia visual (opaca, radio 10, borde 1 px). No muestra la ficha —se oye—: solo su origen y cómo callarla |
-| **Banda inferior — forma PRINCIPAL en reunión** | ancho completo × **88** (compacta) · **200** (ampliada) · **44** (modo solo audio) | pegada al borde inferior, con **asa** que ajusta su alto. **Acoplada por defecto**: la ventana de la reunión se recorta y las dos conviven como aplicaciones pegadas; el asa mueve las dos a la vez. Sin el permiso de acople, flota encima |
+| **Banda — forma PRINCIPAL en reunión** | ancho completo × **88** (compacta) · **200** (ampliada) · **44** (modo solo audio) | **arriba de fábrica** (bajo la barra de menús y el notch, §9-decies) o pegada al borde inferior si el usuario la prefiere (Sesión o ⌃⌥B), con **asa** que ajusta su alto. **Acoplada por defecto**: abajo, la reunión se recorta; arriba, baja y se encoge, al iniciar la sesión; las dos conviven como aplicaciones pegadas y el asa mueve las dos a la vez. Sin el permiso de acople, flota encima |
 | **Gota** (modo solo audio, mínima) | **44 × 44** | solo el estado, sin texto. Esquina inferior izquierda: la única zona libre en Meet, Zoom y Teams |
 | **Relleno de captura** | **idéntico a la banda**, siempre | ventana SIN contenido que se dibuja justo **debajo** de la banda y viaja pegada a ella. La banda es opaca: el usuario no la ve nunca. Es lo único que una captura de pantalla completa encuentra donde vive la banda. **Jamás dibuja contenido de ninguna app** — solo un relleno plano |
 
@@ -121,15 +121,15 @@ motion** (regla 5a del CLAUDE.md): reduced-motion cambia propiedades, no element
 
 | Situación | Forma por defecto |
 |---|---|
-| En reunión, con ficha | **banda inferior acoplada, 88 px** — ampliable a 200 con el asa |
-| En reunión, modo solo audio | **banda inferior acoplada, 44 px** (una línea) |
+| En reunión, con ficha | **banda acoplada, 88 px, arriba (abajo si lo eliges)** — ampliable a 200 con el asa |
+| En reunión, modo solo audio | **banda acoplada, 44 px, en su borde** (una línea) |
 | Sin el permiso de acople | la misma banda, **flotando** sobre la reunión |
 
 **Relleno de captura (decidido en la mirada 3-quater, 2026-09-20).** La banda lleva el flag de protección de captura, así que una grabación o un «compartir pantalla completa» renderiza la escena **sin** la banda — y muestra lo que quede detrás. Eso no es aceptable por dos razones, y la segunda pesa más que la primera: (1) delata que algo ocupa ese rectángulo; (2) **filtra ventanas ajenas a la reunión** que estén debajo. Por eso la banda no viaja sola: viaja con su relleno.
 
 | Relleno | Qué ve el cliente | Cuándo |
 |---|---|---|
-| **Fondo de escritorio** (por defecto) | una reunión que no llega al borde inferior: lo más ordinario que existe en un Mac | **elegido por el usuario en la mirada 3-quinquies (2026-09-20)**; no hay nada que explicar |
+| **Fondo de escritorio** (por defecto) | una reunión que no llega a su borde (abajo, el inferior; arriba, la barra de menús): lo más ordinario que existe en un Mac | **elegido por el usuario en la mirada 3-quinquies (2026-09-20)**; no hay nada que explicar |
 | **Negro** | una franja muerta, tipo letterbox | preferencia de una tecla; para fondos de escritorio con foto o nombre personal, y para quien prefiera no dar ninguna pista de estética |
 | **Sin relleno** | el escritorio y las ventanas de detrás | **descartado como defecto**; solo el fallback honesto si el relleno no se pudo dibujar, y entonces la app lo DICE antes de compartir |
 
@@ -189,7 +189,8 @@ gris) · `.oido` (pista + hora + cita «») · `.transcript` (oculto por defecto
 
 `.btn` (`.primario` halo, `.mini`) — discretos, el panel no tiene CTAs grandes · `.conm`
 (`on`/`off`; **el track lleva palabra al lado**: Activado/Desactivado) · `.campo` (label
-arriba, ayuda abajo; `.mono` para claves) · `.tecla kbd` · `.tabla` (`th` Menlo mayúsculas,
+arriba, ayuda abajo; `.mono` para claves) · `.tecla kbd` (`.tecla.chica`, 11 px, junto a un control de
+Sesión: ⌃⌥L, ⌃⌥B) · `.tabla` (`th` Menlo mayúsculas,
 `.num` a la derecha, `tr.apagada`) · `.tarjeta` · `.titulo h1 + .sub` · `.rail` (200 px:
 marca en Charter + ítems con `aria-current` + `.abajo` con estado de sesión) · `.progreso`
 (quieta; el número es el texto) · `.unidad-chip` · `.diccionario mark/del` (término corregido).
@@ -323,8 +324,8 @@ decisión vecina: **escuchar en N idiomas no obliga a leer en N**.
 
 **`.puerta` — lo que un agente local puede y no puede.** Dos columnas obligatorias: **puede** y
 **no puede nunca**, cada fila con su razón. La columna de la derecha no es un descargo legal: es
-la parte que se lee primero. **Condición del componente: en reunión la puerta se cierra sola** —
-ningún agente alcanza lo que vive en memoria. El registro muestra también lo **denegado**.
+la parte que se lee primero. **Condición del componente: en reunión o durante un ensayo la puerta se
+cierra sola** — ningún agente alcanza lo que vive en memoria. El registro muestra también lo **denegado**.
 
 ## 9-bis · Qué persiste (cambio de la mirada 3, 2026-09-20)
 
@@ -332,9 +333,12 @@ El diseño distingue **lo del usuario** de **lo de terceros**, no «texto» de �
 
 | | Persiste | Cómo |
 |---|---|---|
-| Notas y acuerdos escritos | **sí** | cifrado, en la carpeta del usuario, con retención y borrado |
-| Turnos del propio consultor (pista de micrófono), **en texto** | **sí, opt-in** | conmutador en Honestidad; por defecto apagado; retención 90 días |
+| Notas y acuerdos escritos | **sí** | cifrado, en la carpeta privada de la app, con retención y borrado |
+| Turnos del propio consultor (pista de micrófono), **en texto** | **sí, opt-in** | conmutador en Notas; apagado de fábrica; con la retención de tus notas |
 | Fichas mostradas y fijadas | **sí** | son de su propio corpus, no datos del cliente |
+| Las propuestas que aceptas | **sí** | del cliente, solo un hecho de una línea (≤ 8 palabras), nunca su frase; cifradas en el archivo de su reunión y con su retención |
+| La bandeja de propuestas sin decidir | **sí, por horas** | cifrada; la ventana la eliges (al cerrar · 1 h · 3 h de fábrica · fin del día · 24 h de techo); se borra sola al vencer aunque la app no se abra, y Honestidad la cuenta (§9-quater) |
+| Tus ensayos (C18) | **sí, si los guardas** | tus respuestas en texto y sus cifras, jamás audio; cifrados con la llave de tus notas y con su retención (§9-undecies) |
 | **Audio de cualquier pista** (la suya incluida) | **nunca** | el sonido no se guarda; lo que queda de él es texto |
 | Transcript del cliente, su voz, lo leído de la pantalla | **nunca** | no hay conmutador que lo encienda; ni exportación ni cita textual |
 
@@ -585,7 +589,7 @@ vista quepa en los 640 px con su franja y su registro (`maqueta-cabe` midió +12
 | el comando | fila `mono` + «Copiar», solo con la puerta abierta | la ruta entre comillas y `--help`; debajo, qué va a preguntar macOS |
 | `.puerta` | las dos columnas | el relleno pasa de 5 px a 3 px por lado, y cada «por qué» cabe en una línea |
 | el registro | «Qué hizo tu agente», `.mas` | lo más reciente arriba; tres a la vista y el resto se desplaza (`max-height: 74px`); lo denegado lleva su motivo antes de la marca |
-| `franja.warn` | entre la cabecera y las columnas | «Se cerró sola: hay una reunión», o «No se abrió» y por qué |
+| `franja.warn` | entre la cabecera y las columnas | «Se cerró sola: hay una reunión o un ensayo», o «No se abrió» y por qué |
 
 ## 9-decies · La banda arriba, junto a la cámara (sprint 004, 2026-10-04)
 
@@ -607,8 +611,15 @@ del H1 entera.
 | el aviso de la primera vez | Sesión, **en el sitio de la tarjeta de la reunión**, hasta «Entendido» | las dos no caben en 640 px; la reunión sigue en el rail |
 
 **El acople arriba «baja y se encoge»:** solo la ventana de la reunión que la app detectó, nunca la de
-delante; su borde de abajo no se mueve; por debajo de 240 px de alto, o en otra pantalla, no se toca y la
-banda flota con «sin acople». Abajo, el acople del H1 sin cambios.
+delante, y **solo al iniciar la sesión**: sin sesión, la banda flota bajo la barra de menús con «sin
+acople», aunque haya una reunión abierta (auditoría del S4, M3). Su borde de abajo no se mueve; por debajo
+de 240 px de alto, o en otra pantalla, no se toca y la banda flota con «sin acople». Abajo, el acople del
+H1 sin cambios. Con la banda cerrada (tras ⌥⎋), cambiar de borde guarda la elección y no acopla nada (M5).
+
+**La protección arriba, sin verificar.** La banda arriba lleva el mismo flag que abajo, pero nadie la ha
+mirado compartiendo pantalla. La tarjeta de la reunión en Sesión lo dice con letra —«Verificado en tu Mac
+(macOS 26.6.2) el 2026-09-20 con la banda abajo; con la banda arriba, y en Zoom y Teams, está sin
+verificar»— y no promete más que eso (auditoría del S4, M20).
 
 ## 9-undecies · El ensayo (sprint 004, 2026-10-04)
 
@@ -629,6 +640,10 @@ tardaste, a qué ritmo, qué muletillas— y **jamás pone un puntaje**. Lo que 
 | las cuatro cifras | `.cifras-e` · `.cifra-e` (`.q` qué · `.n` el número · `.d` el detalle) | tiempo · ritmo (ppm) · muletillas · evidencia; sin cifra, «—», jamás un cero inventado |
 | tu progreso | `.tabla` + «Desde el primero» | una fila por ensayo y una flecha por cifra (↑ ↓ =), con la unidad **una vez, al final**; solo cifras: tus respuestas no se enseñan ahí |
 | lo que se guarda | una línea bajo los botones del informe, en `--ink-2` | dice con qué llave, hasta cuándo («se borra en 90 días, tu retención», o «se queda hasta que lo borres») y que el audio no se guardó |
+| la línea de ayuda | `.ayuda-e` · `.tras` · `.pegada` · `.rotulo` | el tamaño de `--t-mono` en `--ink-2`. `.tras` va justo debajo de lo de arriba (bajo una tabla: «y 4 más»); `.pegada`, pegada a la barra de progreso (la línea del modelo); `.rotulo`, a tamaño de etiqueta (`--t-meta`: «Desde el primero:»). Sustituye los tamaños y márgenes sueltos de la pantalla, que §3 prohíbe (auditoría del S4, B14) |
+| la sección conjeturada | `.evidencia-e .conjetura` | la marca «sección conjeturada» en una evidencia que sale de un PDF: el mismo aspecto que `.banda .meta-b .conjetura`. Es una nota, no un aviso: **jamás en ámbar** (auditoría del S4, B33) |
+| no empezó | la franja de «no empezó», con `role="alert"` | lo que pediste no pasó, y dice por qué y qué hacer: «Hay una reunión abierta», «Hay una videollamada abierta» (ponte auriculares o ciérrala), «No se puede saber si hay una videollamada» (sin Accesibilidad), el micrófono que no se abrió y el idioma que este Mac no transcribe |
+| el ensayo sin guardar | Sesión, `franja warn` con `role="status"`, encima de la fila de «Iniciar sesión» | «Tienes un ensayo terminado sin guardar» · «Empezar la sesión lo descarta. Guárdalo antes en Ensayo.»: avisa, no bloquea (auditoría del S4, M10) |
 
 **Las teclas son de la ventana** (Enter · R · S · Esc), no globales, y no se disparan con el foco en un
 selector; ⌥⎋ lo corta todo, el ensayo incluido.
@@ -661,5 +676,6 @@ selector; ⌥⎋ lo corta todo, el ensayo incluido.
 | 1.13.0 | 2026-09-27 | sprint 003, fase 3: **§9-octies — el marco en la mano, construido** (`selector`, `bandera .pendiente`, `aviso-legal`, `pregunta-nda`, `clausula`, la banda en solo notas) · Sesión vuelve al diseño de la Etapa de Diseño — maquetado, no visto |
 | 1.14.0 | 2026-09-27 | sprint 003, fase 4: **§9-nonies — la puerta local, construida** (la entrada en IA, la fila del título con «volver», el subtítulo de la vista, el comando, `.puerta` a 3 px, el registro que se desplaza, la franja de «se cerró sola») — maquetado, no visto |
 | 1.15.0 | 2026-10-04 | sprint 004, abre el ciclo H2: **§9-decies — la banda arriba, junto a la cámara** (`.banda[data-borde="arriba"]`, el asa abajo, el relleno bajo la barra, la fila «La banda» y el aviso de la primera vez) y **§9-undecies — el ensayo** (`.pregunta-e`, `.reloj-e`, `.respuesta-e`, `.evidencia-e`, `.cifras-e`, el progreso sin puntajes). Las dos pantallas, aprobadas en sus miradas de DECISIÓN; lo que se les sumó al construir, maquetado, no visto |
+| 1.16.0 | 2026-10-04 | auditoría del S4: §3.6, la banda ya no es «inferior» de fábrica (arriba, o abajo si la eliges) y el relleno va a su borde · la puerta se cierra también durante un ensayo (§9-ter, §9-nonies) · §9-bis cuenta las propuestas que aceptas, la bandeja y tus ensayos, y los turnos se encienden en Notas · §9-decies: el acople arriba solo al iniciar la sesión, y la protección arriba, sin verificar · §9-undecies: `.ayuda-e`, `.evidencia-e .conjetura`, la franja de «no empezó» y el aviso de un ensayo sin guardar · §5: `.tecla.chica` (los estilos sueltos de Sesión y del ensayo pasan a clases, con el mismo tamaño) |
 | 1.14.1 | 2026-09-27 | cierre del ciclo H1 (sprint 003, fase 5): **§7.2 — el barrido de tokens vetados existe** (`tests/unit/tokens-vetados.test.ts`, que lee la lista de aquí); el frontmatter, que se había quedado en 1.13.0, se pone al día |
 | 1.9.0 | 2026-09-20 | mirada 11: **la maniobra** — catálogo versionado de seis maneras de responder + «lo más cercano que sí tienes», los dos deterministas; `maniobra-b` y `cercano-b`; estado «sin resultado · ampliada» |

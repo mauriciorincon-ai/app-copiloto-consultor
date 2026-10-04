@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useIdioma, useT } from "../i18n";
 import { nombreDeLaRetencion, useCuaderno, useMuestraDelCuaderno } from "../notas";
 import { Ic } from "../componentes/Iconos";
@@ -49,6 +49,18 @@ import {
  * Fuera de Tauri dibuja el estado de la maqueta que pide la URL (`?pantalla=ensayo&estado=…`): es lo que
  * el gate de fidelidad fotografía.
  */
+/**
+ * Lo elegido en «preparar» (auditoría del S4, M13): vive aquí y no en `Preparar`, que se desmonta al ver tu
+ * progreso y durante el ensayo. Volver te deja con el mismo cliente, la misma propuesta, el mismo tope y la
+ * voz como la dejaste. `tope` en `null` es el de fábrica, que dice el catálogo (M18).
+ */
+export type Eleccion = {
+  cliente: string | null;
+  propuesta: string | null;
+  tope: number | null;
+  voz: boolean;
+};
+
 export function Ensayo({
   busqueda = "",
   ir,
@@ -58,6 +70,12 @@ export function Ensayo({
 }) {
   const t = useT().ensayo;
   const enTauri = hayTauri();
+  const [eleccion, setEleccion] = useState<Eleccion>({
+    cliente: null,
+    propuesta: null,
+    tope: null,
+    voz: true,
+  });
   const muestra = estadoDeLaUrl(busqueda);
   const [real] = useEnsayo();
   const deMuestra = useVistaDeMuestra(muestra);
@@ -93,12 +111,20 @@ export function Ensayo({
           inicial={progreso.progreso}
           clientes={progreso.clientes}
           preguntarAntes={!enTauri && muestra === "progreso-borrar"}
-          volver={() => setAbierto(null)}
+          volver={(cliente) => {
+            setAbierto(null);
+            // El cliente que mirabas en tu progreso es el que queda elegido; su propuesta, si es el mismo.
+            setEleccion((e) =>
+              cliente === e.cliente ? e : { ...e, cliente, propuesta: null },
+            );
+          }}
         />
       ) : (
         <Preparar
           busqueda={busqueda}
           ir={ir}
+          eleccion={eleccion}
+          elegir={(cambio) => setEleccion((e) => ({ ...e, ...cambio }))}
           guardado={guardado}
           alEmpezar={() => setGuardado(false)}
           abrirProgreso={(p, clientes) => {
@@ -116,12 +142,16 @@ export function Ensayo({
 function Preparar({
   busqueda,
   ir,
+  eleccion,
+  elegir,
   guardado,
   alEmpezar,
   abrirProgreso,
 }: {
   busqueda: string;
   ir: (s: Seccion) => void;
+  eleccion: Eleccion;
+  elegir: (cambio: Partial<Eleccion>) => void;
   /** Acabas de guardar un ensayo: la franja lo dice. */
   guardado: boolean;
   alEmpezar: () => void;
@@ -132,10 +162,7 @@ function Preparar({
   const enTauri = hayTauri();
   const [noSeAbrieron, setNoSeAbrieron] = useState(false);
   const muestra = estadoDeLaUrl(busqueda);
-  const [cliente, setCliente] = useState<string | null>(null);
-  const [propuesta, setPropuesta] = useState<string | null>(null);
-  const [tope, setTope] = useState(8);
-  const [voz, setVoz] = useState(true);
+  const { cliente, propuesta, tope, voz } = eleccion;
   const [noEmpezo, setNoEmpezo] = useState<NoEmpezo | null>(() =>
     !enTauri && muestra === "no-empezo"
       ? { que: "microfono", porque: "sin-permiso-del-microfono" }
@@ -148,12 +175,12 @@ function Preparar({
   if (!prep) return null;
 
   const elegirCliente = (c: string) => {
-    setCliente(c);
-    setPropuesta(null);
+    elegir({ cliente: c, propuesta: null });
     setNoEmpezo(null);
   };
 
-  if (prep.sinCorpus)
+  // Sin preguntas para este cliente, aunque lo diga `empezar` y no «preparar» (auditoría del S4, B26).
+  if (prep.sinCorpus || noEmpezo?.que === "sin-corpus")
     return <SinCorpus prep={prep} elegir={elegirCliente} ir={ir} />;
 
   const verProgreso = () => {
@@ -192,9 +219,7 @@ function Preparar({
         </div>
       )}
       {noSeAbrieron && <NoSeAbrieron />}
-      {noEmpezo && noEmpezo.que !== "sin-corpus" && (
-        <PorQueNoEmpezo no={noEmpezo} />
-      )}
+      {noEmpezo && <PorQueNoEmpezo no={noEmpezo} />}
       {!prep.transcribe && (
         <div className="franja warn">
           <Ic id="i-globo" s />
@@ -235,21 +260,24 @@ function Preparar({
               </button>
             </div>
           )}
-          <div className="fila">
-            <span className="crece">{t.propuesta}</span>
-            <select
-              className="selector"
-              aria-label={t.propuesta}
-              value={prep.propuesta ?? ""}
-              onChange={(e) => setPropuesta(e.target.value || null)}
-            >
-              {prep.propuestas.map((p) => (
-                <option key={p.ruta} value={p.ruta}>
-                  {p.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Un cliente con solo su ficha no tiene propuesta que elegir (auditoría del S4, B39). */}
+          {prep.propuestas.length > 0 && (
+            <div className="fila">
+              <span className="crece">{t.propuesta}</span>
+              <select
+                className="selector"
+                aria-label={t.propuesta}
+                value={prep.propuesta ?? ""}
+                onChange={(e) => elegir({ propuesta: e.target.value || null })}
+              >
+                {prep.propuestas.map((p) => (
+                  <option key={p.ruta} value={p.ruta}>
+                    {p.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="fila">
             <span className="crece">{t.preguntas}</span>
             <div
@@ -266,7 +294,7 @@ function Preparar({
                     role="radio"
                     aria-checked={on}
                     className={on ? "op on" : "op"}
-                    onClick={() => setTope(n)}
+                    onClick={() => elegir({ tope: n })}
                   >
                     {on && <Ic id="i-check-circle" s relleno />}
                     {n}
@@ -287,17 +315,13 @@ function Preparar({
               fontFamily: "inherit",
               alignSelf: "flex-start",
             }}
-            onClick={() => setVoz(!voz)}
+            onClick={() => elegir({ voz: !voz })}
           >
             <span className="track"></span>
             <span className="etq">{t.leerEnVozAlta}</span>
           </button>
-          <p style={{ fontSize: 11.5, color: "var(--ink-2)" }}>
-            {t.vozSinReunion}
-          </p>
-          <p style={{ fontSize: 11.5, color: "var(--ink-2)" }}>
-            {t.idiomaDelEnsayo[prep.idioma]}
-          </p>
+          <p className="ayuda-e">{t.vozSinReunion}</p>
+          <p className="ayuda-e">{t.idiomaDelEnsayo[prep.idioma]}</p>
         </div>
         <div className="tarjeta" style={{ paddingBottom: 8 }}>
           <h2 className="seccion" style={{ margin: "0 0 4px" }}>
@@ -348,7 +372,7 @@ function Preparar({
           <Ic id="i-mic" s />
           {t.empezar}
         </button>
-        <p className="crece" style={{ fontSize: 11.5, color: "var(--ink-2)" }}>
+        <p className="crece ayuda-e">
           <b>{t.soloTuMicrofono}</b> {t.soloTuMicrofonoQue}
         </p>
       </div>
@@ -382,9 +406,22 @@ function SelectorDeCliente({
 
 function PorQueNoEmpezo({ no }: { no: NoEmpezo }) {
   const t = useT().ensayo;
+  // Con una videollamada abierta y el sonido por altavoces, no se ensaya (auditoría del S4, A1).
+  if (no.que === "videollamada" || no.que === "no-se-sabe-si-hay-llamada") {
+    const sabe = no.que === "videollamada";
+    return (
+      <div className="franja warn" role="alert">
+        <Ic id="i-auriculares" s />
+        <div>
+          <strong>{sabe ? t.hayVideollamada : t.noSeSabeSiHayLlamada}</strong>
+          <p>{sabe ? t.hayVideollamadaQue : t.noSeSabeSiHayLlamadaQue}</p>
+        </div>
+      </div>
+    );
+  }
   if (no.que === "en-reunion") {
     return (
-      <div className="franja warn">
+      <div className="franja warn" role="alert">
         <Ic id="i-video" s />
         <div>
           <strong>{t.hayReunion}</strong>
@@ -396,7 +433,7 @@ function PorQueNoEmpezo({ no }: { no: NoEmpezo }) {
   const sinPermiso =
     no.que === "microfono" && no.porque === "sin-permiso-del-microfono";
   return (
-    <div className="franja err">
+    <div className="franja err" role="alert">
       <Ic id="i-mic-off" s />
       <div>
         <strong>{t.microfonoNoAbrio}</strong>
@@ -454,19 +491,34 @@ function TuProgreso({
   clientes: string[];
   /** La muestra de «6b · borrar»: la pregunta ya abierta. */
   preguntarAntes: boolean;
-  volver: () => void;
+  /** Vuelve a «preparar» con el cliente que mirabas (auditoría del S4, M13). */
+  volver: (cliente: string) => void;
 }) {
   const t = useT().ensayo;
   const idioma = useIdioma();
   const [p, setP] = useState(inicial);
   const [borrando, setBorrando] = useState(preguntarAntes);
   const [noSeAbrieron, setNoSeAbrieron] = useState(false);
+  const [noSeBorraron, setNoSeBorraron] = useState(false);
+  // **El foco va y vuelve con la pregunta** (auditoría del S4, M15): al abrirla, a «Cancelar», que es lo
+  // seguro; al cerrarla, al botón que la abrió. La muestra de la maqueta la abre al montarse y no roba el foco.
+  const abrirBorrar = useRef<HTMLButtonElement>(null);
+  const cancelarBorrar = useRef<HTMLButtonElement>(null);
+  const montado = useRef(false);
+  useEffect(() => {
+    if (!montado.current) {
+      montado.current = true;
+      return;
+    }
+    (borrando ? cancelarBorrar : abrirBorrar).current?.focus();
+  }, [borrando]);
   const d = p.desdeElPrimero;
   const hayCambio = Boolean(d.evidencia || d.ritmo || d.muletillas || d.tiempo);
 
   // Otro cliente: el desbloqueo ya se hizo en esta sesión de la app, así que no vuelve a preguntar.
   const elegir = (cliente: string) => {
     setNoSeAbrieron(false);
+    setNoSeBorraron(false);
     setBorrando(false);
     progresoDelEnsayo(cliente, idioma)
       .then((nuevo) => {
@@ -478,6 +530,15 @@ function TuProgreso({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {noSeAbrieron && <NoSeAbrieron />}
+      {noSeBorraron && (
+        <div className="franja err" role="alert">
+          <Ic id="i-x-circle" s relleno />
+          <div>
+            <strong>{t.noSeBorraron}</strong>
+            <p>{t.noSeBorraronQue}</p>
+          </div>
+        </div>
+      )}
       <div className="tarjeta" style={{ padding: "10px 12px 8px" }}>
         <div className="fila" style={{ marginBottom: 4 }}>
           <h2 className="seccion crece" style={{ margin: 0 }}>
@@ -497,9 +558,7 @@ function TuProgreso({
           </select>
         </div>
         {p.filas.length === 0 ? (
-          <p style={{ fontSize: 11.5, color: "var(--ink-2)" }}>
-            {t.ningunoGuardado}
-          </p>
+          <p className="ayuda-e">{t.ningunoGuardado}</p>
         ) : (
           <table className="tabla">
             <thead>
@@ -512,8 +571,9 @@ function TuProgreso({
               </tr>
             </thead>
             <tbody>
-              {p.filas.map((f) => (
-                <tr key={f.empezo}>
+              {/* Dos ensayos en el mismo minuto tienen el mismo `empezo` (auditoría del S4, B31). */}
+              {p.filas.map((f, i) => (
+                <tr key={`${i}·${f.empezo}`}>
                   <td className="mono">{diaCorto(f.empezo, t.meses, idioma)}</td>
                   <td className="num">
                     {f.evidencia === 0 ? "—" : `${f.citadas} ${t.de} ${f.evidencia}`}
@@ -529,23 +589,21 @@ function TuProgreso({
           </table>
         )}
         {p.antes > 0 && (
-          <p style={{ fontSize: 11.5, color: "var(--ink-2)", margin: "6px 0 0" }}>
+          <p className="ayuda-e tras">
             {t.yMas} {p.antes} {t.mas}
           </p>
         )}
       </div>
       {hayCambio && (
         <div className="fila" style={{ gap: 8, flexWrap: "wrap" }}>
-          <span style={{ fontSize: "var(--t-meta)", color: "var(--ink-2)" }}>
-            {t.desdeElPrimero}
-          </span>
+          <span className="ayuda-e rotulo">{t.desdeElPrimero}</span>
           {d.evidencia && <Tendencia que={t.chipEvidencia} c={d.evidencia} />}
           {d.ritmo && <Tendencia que={t.chipRitmo} c={d.ritmo} unidad={t.ppm} />}
           {d.muletillas && <Tendencia que={t.chipMuletillas} c={d.muletillas} />}
           {d.tiempo && <Tendencia que={t.chipTiempo} c={d.tiempo} como={reloj} />}
         </div>
       )}
-      <p style={{ fontSize: 11.5, color: "var(--ink-2)" }}>{t.soloCifras}</p>
+      <p className="ayuda-e">{t.soloCifras}</p>
       {borrando ? (
         <div className="franja err" role="alertdialog" aria-label={t.borrarLosDeEsteCliente}>
           <Ic id="i-x-circle" s relleno />
@@ -556,12 +614,26 @@ function TuProgreso({
               <button
                 type="button"
                 className="btn mini"
-                onClick={() => void borrarLosEnsayos(p.cliente).then(volver)}
+                onClick={() =>
+                  // Si falla, la pantalla lo dice: siguen cifrados y en su sitio (auditoría del S4, M14).
+                  void borrarLosEnsayos(p.cliente).then(
+                    () => volver(p.cliente),
+                    () => {
+                      setBorrando(false);
+                      setNoSeBorraron(true);
+                    },
+                  )
+                }
               >
                 <Ic id="i-basura" s />
                 {t.borrar}
               </button>
-              <button type="button" className="btn mini" onClick={() => setBorrando(false)}>
+              <button
+                ref={cancelarBorrar}
+                type="button"
+                className="btn mini"
+                onClick={() => setBorrando(false)}
+              >
                 {t.cancelar}
               </button>
             </div>
@@ -569,11 +641,19 @@ function TuProgreso({
         </div>
       ) : (
         <div className="fila" style={{ gap: 8 }}>
-          <button type="button" className="btn" onClick={volver}>
+          <button type="button" className="btn" onClick={() => volver(p.cliente)}>
             {t.volver}
           </button>
           {p.filas.length > 0 && (
-            <button type="button" className="btn" onClick={() => setBorrando(true)}>
+            <button
+              ref={abrirBorrar}
+              type="button"
+              className="btn"
+              onClick={() => {
+                setNoSeBorraron(false);
+                setBorrando(true);
+              }}
+            >
               <Ic id="i-basura" s />
               {t.borrarLosDeEsteCliente}
             </button>
@@ -630,15 +710,18 @@ function useTeclas(vista: VistaDelEnsayo) {
   useEffect(() => {
     if (vista.fase === "cerrado") return;
     const alPulsar = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-      const objetivo = e.target as HTMLElement | null;
+      // Una tecla sostenida repite: una orden por pulsación, no una por repetición (auditoría del S4, M11).
+      if (e.repeat || e.isComposing || e.metaKey || e.ctrlKey || e.altKey) return;
+      // El objetivo puede no ser un elemento (la ventana, el documento): entonces no es ni un campo ni un botón.
+      const objetivo = e.target instanceof HTMLElement ? e.target : null;
       if (
         objetivo &&
         ["INPUT", "SELECT", "TEXTAREA"].includes(objetivo.tagName)
       )
         return;
-      // Enter sobre un botón ya lo pulsa el botón: no se pulsa dos veces.
-      if (e.key === "Enter" && objetivo?.tagName === "BUTTON") return;
+      // Enter sobre un botón o un enlace ya lo pulsa él: ni se pulsa dos veces, ni se le roba la navegación
+      // a un enlace del rail (auditoría del S4, M16).
+      if (e.key === "Enter" && objetivo?.closest("a, button")) return;
       const tecla = e.key.toLowerCase();
       if (e.key === "Enter") void ensayoListo();
       else if (e.key === "Escape") void ensayoTerminar();
@@ -705,9 +788,7 @@ function LineaDelModelo({ banco }: { banco: EstadoDelBanco }) {
     texto = `${t.noSumo} ${t.porQueNoSumo[banco.porque]}`;
   if (!texto) return null;
   return (
-    <p style={{ fontSize: 11.5, color: "var(--ink-2)", marginTop: -6 }}>
-      {texto}
-    </p>
+    <p className="ayuda-e pegada">{texto}</p>
   );
 }
 
@@ -819,9 +900,7 @@ function Respondiendo({ vista }: { vista: VistaDelEnsayo }) {
         <Tecla k="S" texto={t.saltar} />
         <Tecla k="Esc" texto={t.terminar} />
         <span className="crece"></span>
-        <span style={{ fontSize: 11.5, color: "var(--ink-2)" }}>
-          {t.seCierra}
-        </span>
+        <span className="ayuda-e">{t.seCierra}</span>
       </div>
     </div>
   );
@@ -838,6 +917,18 @@ function detalleDe(muletillas: Muletilla[], idioma: string): string {
     .join(" · ");
 }
 
+/** La sección que el lector de PDF conjeturó, marcada en la evidencia como en la banda (auditoría del S4, B33). */
+function Conjetura({ ev }: { ev: Evidencia }) {
+  const tb = useT().banda;
+  if (!ev.fuente.conjeturada) return null;
+  return (
+    <span className="conjetura">
+      <Ic id="i-half" s />
+      {tb.seccionConjeturada}
+    </span>
+  );
+}
+
 function Evaluada({ vista }: { vista: VistaDelEnsayo }) {
   const t = useT().ensayo;
   const unidades = useT().banda.unidades;
@@ -845,10 +936,9 @@ function Evaluada({ vista }: { vista: VistaDelEnsayo }) {
   const e = vista.evaluacion;
   if (!e) return null;
   const conIndice = e.evidencia.map((ev, i) => ({ ev, i }));
+  // En qué lista va cada ficha es cosa de la pantalla; las cuentas, de Rust (auditoría del S4, M12).
   const usadas = conIndice.filter(({ ev }) => ev.citada || ev.dichaPorTi);
   const sinUsar = conIndice.filter(({ ev }) => !ev.citada && !ev.dichaPorTi);
-  const citadas = usadas.length;
-  const muletillas = e.muletillas.reduce((n, m) => n + m.veces, 0);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <Progreso vista={vista} />
@@ -876,6 +966,7 @@ function Evaluada({ vista }: { vista: VistaDelEnsayo }) {
                   <span></span>
                 )}
                 <span className="fuente">{fuenteDe(ev, unidades)}</span>
+                <Conjetura ev={ev} />
               </li>
             ))}
           </ul>
@@ -898,6 +989,7 @@ function Evaluada({ vista }: { vista: VistaDelEnsayo }) {
                   {t.siLoDije}
                 </button>
                 <span className="fuente">{fuenteDe(ev, unidades)}</span>
+                <Conjetura ev={ev} />
               </li>
             ))}
           </ul>
@@ -908,15 +1000,15 @@ function Evaluada({ vista }: { vista: VistaDelEnsayo }) {
         <Cifra q={t.ritmo} n={e.ppm === null ? "—" : `${e.ppm} ${t.ppm}`} />
         <Cifra
           q={t.muletillas}
-          n={String(muletillas)}
-          d={muletillas > 0 ? detalleDe(e.muletillas, idioma) : undefined}
+          n={vista.muletillas === null ? "—" : String(vista.muletillas)}
+          d={vista.muletillas ? detalleDe(e.muletillas, idioma) : undefined}
         />
         <Cifra
           q={t.evidencia}
           n={
             e.evidencia.length === 0
               ? "—"
-              : `${citadas} ${t.de} ${e.evidencia.length}`
+              : `${vista.usadas} ${t.de} ${e.evidencia.length}`
           }
         />
       </div>
@@ -931,9 +1023,7 @@ function Evaluada({ vista }: { vista: VistaDelEnsayo }) {
         <span className="tecla">
           <kbd>↵</kbd>
         </span>
-        <p className="crece" style={{ fontSize: 11.5, color: "var(--ink-2)" }}>
-          {t.sinPuntaje}
-        </p>
+        <p className="crece ayuda-e">{t.sinPuntaje}</p>
       </div>
     </div>
   );
@@ -964,7 +1054,8 @@ function ElInforme({
   const idioma = useIdioma();
   // La retención es la de tus notas (ADR 015, enmienda 4): la misma que Notas enseña.
   const [cuaderno] = useCuaderno(useMuestraDelCuaderno("archivo"));
-  const retencion = cuaderno?.retencion ?? "90d";
+  // Sin la respuesta del cuaderno no se sabe tu retención, y no se inventa (auditoría del S4, B30).
+  const retencion = cuaderno?.retencion ?? null;
   const [ocupado, setOcupado] = useState(false);
   const [fallo, setFallo] = useState<"guardar" | "exportar" | null>(null);
   const i = vista.informe;
@@ -1021,7 +1112,7 @@ function ElInforme({
         />
         <Cifra
           q={t.muletillas}
-          n={String(i.muletillas)}
+          n={i.muletillas === null ? "—" : String(i.muletillas)}
           d={
             i.laQueMas
               ? `${t.laQueMas} ${entreComillas(i.laQueMas.frase, idioma)} ×${i.laQueMas.veces}`
@@ -1041,7 +1132,7 @@ function ElInforme({
               <th>{t.pregunta}</th>
               <th className="num">{t.evidencia}</th>
               <th className="num">{t.tiempo}</th>
-              <th className="num">ppm</th>
+              <th className="num">{t.ppm}</th>
             </tr>
           </thead>
           <tbody>
@@ -1065,9 +1156,7 @@ function ElInforme({
           </tbody>
         </table>
         {resto > 0 && (
-          <p
-            style={{ fontSize: 11.5, color: "var(--ink-2)", margin: "6px 0 0" }}
-          >
+          <p className="ayuda-e tras">
             {t.yMas} {resto} {t.mas}
           </p>
         )}
@@ -1094,11 +1183,13 @@ function ElInforme({
           {t.cerrarSinGuardar}
         </button>
       </div>
-      <p style={{ fontSize: 11.5, color: "var(--ink-2)" }}>
-        {retencion === "siempre"
-          ? t.seQueda
-          : `${t.seCifraAntes} ${nombreDeLaRetencion(retencion, tn)}${t.seCifraDespues}`}
-      </p>
+      {retencion && (
+        <p className="ayuda-e">
+          {retencion === "siempre"
+            ? t.seQueda
+            : `${t.seCifraAntes} ${nombreDeLaRetencion(retencion, tn)}${t.seCifraDespues}`}
+        </p>
+      )}
     </div>
   );
 }

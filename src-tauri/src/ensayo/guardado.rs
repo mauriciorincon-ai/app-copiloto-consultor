@@ -87,7 +87,7 @@ impl Guardado {
             r.ritmo,
             i.ppm_medio.map_or("—".to_string(), |p| format!("{p} {}", r.ppm)),
             r.muletillas,
-            i.muletillas,
+            i.muletillas.map_or("—".to_string(), |m| m.to_string()),
             r.tiempo,
             i.tiempo_medio_ms.map_or("—".to_string(), reloj),
         ));
@@ -124,7 +124,10 @@ impl Guardado {
                 sin_usar.iter().for_each(|ev| t.push_str(&ficha(ev)));
                 t.push('\n');
             }
-            let muletillas = if e.muletillas.is_empty() {
+            // Sin una palabra transcrita no hay muletillas que contar: «—», no «0» (auditoría del S4, M12).
+            let muletillas = if respuesta.is_empty() {
+                "—".to_string()
+            } else if e.muletillas.is_empty() {
                 "0".to_string()
             } else {
                 e.muletillas
@@ -279,7 +282,7 @@ impl FilaDelProgreso {
             citadas: i.citadas,
             evidencia: i.evidencia,
             ppm_medio: i.ppm_medio,
-            muletillas: (i.respondidas > 0).then_some(i.muletillas),
+            muletillas: i.muletillas,
             tiempo_medio_ms: i.tiempo_medio_ms,
         }
     }
@@ -326,6 +329,11 @@ pub(crate) mod pruebas {
         }
     }
 
+    /// Un ensayo respondido sin una palabra transcrita (sin modelo de voz).
+    fn sin_ritmo_ni_fichas_otra_vez() -> Guardado {
+        guardado("2026-09-21 10:00", vec![(pregunta("¿Una?"), respondida("", 0, 0, 30_000, None, 0))])
+    }
+
     pub fn respondida(respuesta: &str, citadas: usize, de: usize, tiempo_ms: u64, ppm: Option<u32>, muletillas: u32) -> Suerte {
         let fuente = Fuente { documento: "Propuesta Páramo Azul".into(), seccion: Some("Plazo".into()), unidad: Some(Unidad::Propuesta), conjeturada: false };
         Suerte::Respondida {
@@ -365,7 +373,7 @@ pub(crate) mod pruebas {
         assert_eq!(vuelta, g, "lo guardado no volvió igual");
         let i = vuelta.informe();
         assert_eq!((i.respondidas, i.saltadas, i.citadas, i.evidencia), (2, 1, 5, 6));
-        assert_eq!((i.ppm_medio, i.muletillas, i.tiempo_medio_ms), (Some(141), 1, Some(58_000)));
+        assert_eq!((i.ppm_medio, i.muletillas, i.tiempo_medio_ms), (Some(141), Some(1), Some(58_000)));
         assert_eq!(i.filas.iter().map(|f| f.numero).collect::<Vec<_>>(), [1, 2, 3]);
     }
 
@@ -435,6 +443,10 @@ pub(crate) mod pruebas {
 
         let todo_saltado = guardado("2026-10-01 10:00", vec![(pregunta("¿Una?"), Suerte::Saltada)]);
         assert_eq!(FilaDelProgreso::de(&todo_saltado).muletillas, None, "cero muletillas en nada se contó como cifra");
+        // Y el informe dice lo mismo que el progreso (auditoría del S4, M12): todo saltado, o respondido sin
+        // una palabra transcrita, no tiene cifra de muletillas.
+        assert_eq!(todo_saltado.informe().muletillas, None);
+        assert_eq!(sin_ritmo_ni_fichas_otra_vez().informe().muletillas, None);
     }
 
     /// **Lo exportado se lee en el idioma de la interfaz**, con tu respuesta, lo que usaste, lo que tenías y

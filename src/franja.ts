@@ -59,9 +59,12 @@ export function useFranja(fuera: LaFranja): LaFranja {
   return hayTauri() ? franja : fuera;
 }
 
-/** «La banda: arriba · abajo». Rust suelta, recoloca y vuelve a acoplar; el evento trae el borde nuevo. */
-export function fijarPosicionDeLaBanda(borde: Borde): Promise<LaFranja | null> {
-  return preguntar<LaFranja>("fijar_posicion_de_la_banda", { borde });
+/**
+ * «La banda: arriba · abajo». Rust suelta, recoloca y vuelve a acoplar; **el evento `franja` trae el borde
+ * nuevo**, así que el comando no devuelve nada (auditoría del S4, B37: su retorno no lo leía nadie).
+ */
+export function fijarPosicionDeLaBanda(borde: Borde): Promise<boolean> {
+  return llamar("fijar_posicion_de_la_banda", { borde });
 }
 
 /** «Entendido» en el aviso de la primera vez: no vuelve a salir. */

@@ -154,6 +154,8 @@ pub struct Oido {
     llegan: Receiver<Transcrito>,
     pendientes: Arc<AtomicUsize>,
     vivo: Arc<AtomicBool>,
+    /// La ronda del latido anterior: un turno a medias cuando la ronda cambia empezó en la anterior.
+    ronda: Option<u64>,
 }
 
 impl Oido {
@@ -190,7 +192,13 @@ impl Oido {
                             .as_ref()
                             .and_then(|m| motor.transcribir(&idioma, m, HZ).ok())
                             .filter(|t| !t.trim().is_empty())
-                            .map(|t| diccionario.corregir(&t))
+                            .map(|mut crudo| {
+                                let corregido = diccionario.corregir(&crudo);
+                                // El texto del motor antes de corregir también es tuyo: se pisa (auditoría
+                                // del S4, B23). SEGURIDAD: ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
+                                unsafe { crudo.as_mut_vec() }.fill(0);
+                                corregido
+                            })
                     } else {
                         None
                     };
@@ -213,7 +221,7 @@ impl Oido {
             });
         }
         let oreja = Oreja::nueva(anillo.clone());
-        Self { anillo, grifo, oreja, manda: Some(manda), llegan, pendientes, vivo }
+        Self { anillo, grifo, oreja, manda: Some(manda), llegan, pendientes, vivo, ronda: None }
     }
 
     /// Cuánto audio hay en el anillo ahora mismo: Honestidad lo cuenta.
@@ -235,12 +243,20 @@ impl Oido {
         if !self.vivo.load(Ordering::Relaxed) {
             return;
         }
+        // **Un turno sale con la ronda en que EMPEZÓ** (auditoría del S4, M6). Si la ronda cambió desde el
+        // latido anterior —R o S a media frase—, lo que estaba a medias se cierra aquí, sordo, y sale con la
+        // ronda vieja: la sesión lo tira. Sellado con la nueva, lo descartado entraba en la respuesta nueva.
+        let (oye, del_lote) = match self.ronda {
+            Some(antes) if antes != ronda => (false, antes),
+            _ => (oye, ronda),
+        };
+        self.ronda = Some(ronda);
         for c in self.oreja.mirar(oye) {
             let hasta_ms = ahora_ms.saturating_sub(c.hace_ms);
             let desde_ms = hasta_ms.saturating_sub(c.duracion_ms);
             if let Some(manda) = &self.manda {
                 self.pendientes.fetch_add(1, Ordering::SeqCst);
-                if manda.send(Encargo { ronda, desde_ms, hasta_ms, muestras: c.muestras }).is_err() {
+                if manda.send(Encargo { ronda: del_lote, desde_ms, hasta_ms, muestras: c.muestras }).is_err() {
                     self.pendientes.fetch_sub(1, Ordering::SeqCst);
                 }
             }
@@ -411,6 +427,34 @@ pub(crate) mod pruebas {
         o.cortar();
         assert_eq!(anillo.lock().unwrap().totales(), 0, "el anillo se vació");
         assert!(!o.abierto());
+    }
+
+    /// **Un turno que empezó antes de R sale con su ronda** (auditoría del S4, M6): la sesión lo tira, en vez
+    /// de meter lo descartado en la respuesta nueva.
+    #[test]
+    fn un_turno_que_empezo_antes_de_repetir_sale_con_su_ronda() {
+        let anillo = Arc::new(Mutex::new(Anillo::de_la_app()));
+        let mut o = Oido::con_anillo(anillo.clone(), "es-ES", Box::new(Contador), Arc::new(Diccionario::default()));
+        escribir(&anillo, &silencio(600));
+        o.latir(true, 1, 600);
+        escribir(&anillo, &voz(800));
+        o.latir(true, 1, 1_400);
+        // R a media frase: la ronda sube y la voz sigue un poco.
+        escribir(&anillo, &voz(200));
+        o.latir(true, 2, 1_600);
+        escribir(&anillo, &silencio(500));
+        o.latir(true, 2, 2_100);
+        let mut llegados = Vec::new();
+        for _ in 0..400 {
+            llegados.extend(o.recibidos());
+            if !llegados.is_empty() && o.pendientes() == 0 {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+        assert!(!llegados.is_empty(), "el turno a medias no salió");
+        assert!(llegados.iter().all(|t| t.ronda == 1), "un turno de antes de R salió con la ronda nueva: {:?}", llegados.iter().map(|t| t.ronda).collect::<Vec<_>>());
+        o.cortar();
     }
 
     /// **Solo el micrófono** (ADR 019 §6.1): el oído del ensayo no nombra el audio del sistema, la

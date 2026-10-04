@@ -44,6 +44,12 @@ const AGUJAS: string[] = [
   "Lectura::" + "arrancar(",
   "\"sesion_para_" + "el_log\"",
   "donde_se_" + "mira(",
+  // Auditoría del S4 (B5): el oído del ensayo, el Llavero de las pruebas, el desbloqueo de los ensayos y la
+  // ventana de la reunión (que lee títulos por Accessibility).
+  "Oido::del_" + "microfono(",
+  "Del" + "Llavero",
+  "reunion::" + "desbloquear(",
+  "ventana_de_" + "la_reunion(",
 ];
 
 /** Dónde vive cada entrada, y cuántas veces tiene que aparecer el centinela en ese archivo. */
@@ -52,8 +58,9 @@ const CENTINELAS: [string, number][] = [
   ["src-tauri/src/habla/apple.rs", 1],
   ["src-tauri/src/stt/apple.rs", 2],
   ["src-tauri/src/pantalla/apple.rs", 1],
-  // `pedir_permiso`, `poner_alto` y, desde la fase 1 del sprint 004, `poner_posicion` (la banda arriba).
-  ["src-tauri/src/acople/ax.rs", 3],
+  // `pedir_permiso`, `poner_alto`, desde la fase 1 del sprint 004 `poner_posicion` (la banda arriba) y,
+  // desde su auditoría (B5), `Aplicacion::de`: toda lectura de ventanas ajenas.
+  ["src-tauri/src/acople/ax.rs", 4],
   ["src-tauri/src/llavero.rs", 5],
   ["src-tauri/src/desbloqueo.rs", 1],
   ["src-tauri/src/vencimiento/mod.rs", 1],

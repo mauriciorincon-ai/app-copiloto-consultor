@@ -137,6 +137,22 @@ mod pruebas {
         v.callar();
     }
 
+    /// **La bandera de la voz solo la apaga el final de la última frase** (auditoría del S4, M7). Se vigila
+    /// en la fuente de Swift y no con la voz de verdad: en `cargo test` nadie atiende la cola principal, así
+    /// que `didFinish` y `didCancel` no llegan nunca, y un test con los altavoces pasaría con el fallo puesto
+    /// (la tercera pregunta: ¿puede fallar?). Lo de verdad se mira en el gate mínimo del ensayo, pulsando R mientras lee.
+    #[test]
+    fn la_bandera_de_la_voz_no_la_apaga_una_frase_vieja() {
+        let swift = include_str!("../../nativo/Habla.swift");
+        for devolucion in ["didFinish frase: AVSpeechUtterance) {", "didCancel frase: AVSpeechUtterance) {"] {
+            let desde = swift.find(devolucion).unwrap_or_else(|| panic!("el delegado no recibe la frase en {devolucion}"));
+            let cuerpo = &swift[desde..desde + 120];
+            assert!(cuerpo.contains("if ultima.es(frase) { hablando.poner(false) }"), "{devolucion} apaga la bandera de cualquier frase");
+        }
+        let decir = &swift[swift.find("public func agHablaDecir").expect("decir")..];
+        assert!(decir.contains("ultima.poner(frasePara)"), "decir no recuerda la última frase");
+    }
+
     /// Callar sin haber hablado no puede romperse: es lo que hace `⌥⎋` cuando el modo está apagado,
     /// y el kill-switch no puede tener un camino que falle.
     #[test]

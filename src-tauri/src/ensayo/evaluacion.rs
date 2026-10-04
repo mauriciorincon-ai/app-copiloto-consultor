@@ -217,7 +217,7 @@ pub fn ppm(tramos: &[Tramo]) -> (u32, Option<u32>) {
 
 /// **LA EVALUACIÓN.** Ver el encabezado del módulo.
 pub fn evaluar(e: &Entrada) -> Evaluacion {
-    let respuesta: String = e
+    let mut respuesta: String = e
         .tramos
         .iter()
         .filter_map(|t| t.texto.as_deref())
@@ -240,13 +240,11 @@ pub fn evaluar(e: &Entrada) -> Evaluacion {
         })
         .collect();
     let (palabras, ppm) = ppm(e.tramos);
-    Evaluacion {
-        evidencia,
-        tiempo_ms: e.cerro_ms.saturating_sub(e.empezo_ms),
-        ppm,
-        muletillas: muletillas(&respuesta, e.idioma),
-        palabras,
-    }
+    let muletillas = muletillas(&respuesta, e.idioma);
+    // La copia de tu respuesta se pisa antes de soltarla (auditoría del S4, B23).
+    // SEGURIDAD: ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
+    unsafe { respuesta.as_mut_vec() }.fill(0);
+    Evaluacion { evidencia, tiempo_ms: e.cerro_ms.saturating_sub(e.empezo_ms), ppm, muletillas, palabras }
 }
 
 #[cfg(test)]

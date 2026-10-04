@@ -70,7 +70,8 @@ export type Informe = {
   citadas: number;
   evidencia: number;
   ppmMedio: number | null;
-  muletillas: number;
+  /** `null` sin una palabra transcrita: cero en nada no es una cifra (auditoría del S4, M12). */
+  muletillas: number | null;
   laQueMas: Muletilla | null;
   tiempoMedioMs: number | null;
   filas: Fila[];
@@ -80,6 +81,8 @@ export type PorQueNoSeEnriquecio =
   | "sin-proveedor"
   | "fuera-del-esquema"
   | "nada-fundado"
+  | "sin-secciones"
+  | "repetidas"
   | "tarde"
   | "fallo";
 export type EstadoDelBanco =
@@ -100,6 +103,10 @@ export type VistaDelEnsayo = {
   respuesta: string;
   transcurridoMs: number;
   evaluacion: Evaluacion | null;
+  /** En la evaluada, cuántas fichas usaste (citadas o «Sí lo dije»). La cuenta es de Rust. */
+  usadas: number;
+  /** En la evaluada, cuántas muletillas; `null` sin palabras que contar. */
+  muletillas: number | null;
   banco: EstadoDelBanco;
   informe: Informe | null;
 };
@@ -136,7 +143,11 @@ export type Progreso = {
 export type NoEmpezo =
   | { que: "en-reunion" }
   | { que: "sin-corpus" }
-  | { que: "microfono"; porque: PorQueNoAbrio };
+  | { que: "microfono"; porque: PorQueNoAbrio }
+  /** Una videollamada abierta y sin auriculares (auditoría del S4, A1). */
+  | { que: "videollamada" }
+  /** Sin Accesibilidad no se sabe si el navegador está en una llamada, y no hay auriculares. */
+  | { que: "no-se-sabe-si-hay-llamada" };
 
 /** Los estados de `ensayo.html` que la pantalla dibuja fuera de Tauri (el gate de fidelidad los pide por la URL). */
 export type EstadoDeMuestra =
@@ -303,7 +314,8 @@ export function useVistaDeMuestra(
               },
               {
                 titular: m.evidencia3,
-                fuente: fuente(m.paramo, m.etapa2, "marco"),
+                // El lector de PDF conjeturó la sección: la marca se ve en la evaluada (auditoría del S4, B33).
+                fuente: { ...fuente(m.paramo, m.etapa2, "marco"), conjeturada: true },
                 citada: false,
                 dichaPorTi: false,
               },
@@ -316,6 +328,8 @@ export function useVistaDeMuestra(
             ],
           }
         : null,
+    usadas: fase === "evaluada" ? 2 : 0,
+    muletillas: fase === "evaluada" ? 4 : null,
     banco: delModelo ? { que: "sumadas", cuantas: 2 } : { que: "apagado" },
     informe:
       fase === "cerrado"
@@ -437,7 +451,8 @@ export function useEnsayo(): [VistaDelEnsayo | null, () => void] {
 export function usePreparacion(
   cliente: string | null,
   propuesta: string | null,
-  tope: number,
+  /** `null`: el de fábrica, que dice el catálogo (auditoría del S4, M18). */
+  tope: number | null,
 ): Preparacion | null {
   const [prep, setPrep] = useState<Preparacion | null>(null);
   useEffect(() => {
@@ -465,14 +480,17 @@ export function usePreparacion(
   return prep;
 }
 
-/** Empieza el ensayo. Si no empieza, la promesa se rechaza con el porqué (`NoEmpezo`). */
+/**
+ * Empieza el ensayo. Si no empieza, la promesa se rechaza con el porqué (`NoEmpezo`). Si empieza, no devuelve
+ * nada: la vista llega por la señal `ensayo`, como todo lo demás (auditoría del S4, B34).
+ */
 export function empezarElEnsayo(
   cliente: string,
   propuesta: string | null,
-  tope: number,
+  tope: number | null,
   voz: boolean,
 ) {
-  return preguntar<VistaDelEnsayo>("empezar_el_ensayo", {
+  return preguntar<null>("empezar_el_ensayo", {
     cliente,
     propuesta,
     tope,
@@ -493,15 +511,15 @@ export const cerrarElEnsayo = () => llamar("cerrar_el_ensayo");
  * informe sigue en Rust, entero.
  */
 export const guardarElEnsayo = () => preguntar<null>("guardar_el_ensayo");
-/** «Exportar como texto»: pide el desbloqueo de tus notas y dónde. `false` si cancelaste el diálogo. */
+/** «Exportar como texto»: pide el desbloqueo de tus notas y dónde. Cancelar el diálogo no es un fallo. */
 export const exportarElEnsayo = (idioma: string) =>
-  preguntar<boolean>("exportar_el_ensayo", { idioma });
+  preguntar<null>("exportar_el_ensayo", { idioma });
 /** «Ver tu progreso»: abre tus ensayos de ese cliente con el desbloqueo de tus notas. Solo cifras. */
 export const progresoDelEnsayo = (cliente: string, idioma: string) =>
   preguntar<Progreso>("progreso_del_ensayo", { cliente, idioma });
-/** «Borrar los ensayos de este cliente»: al momento y sin abrirlos. Devuelve cuántos. */
+/** «Borrar los ensayos de este cliente»: al momento y sin abrirlos. Si falla, la promesa se rechaza. */
 export const borrarLosEnsayos = (cliente: string) =>
-  preguntar<number>("borrar_los_ensayos", { cliente });
+  preguntar<null>("borrar_los_ensayos", { cliente });
 
 /** ¿Es un `NoEmpezo` lo que rechazó la promesa? */
 export function esNoEmpezo(e: unknown): e is NoEmpezo {

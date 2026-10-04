@@ -125,6 +125,10 @@ export function Principal({ busqueda = globalThis.location?.search ?? "" }: { bu
           // del gate de fidelidad por la URL. Dentro del producto lo decide el radar.
           radarDeMuestra={new URLSearchParams(busqueda).get("radar") === "vigilancia"}
           busqueda={busqueda}
+          // Un ensayo terminado que no guardaste: Sesión lo dice antes de que «Iniciar sesión» lo descarte (M10).
+          ensayoSinGuardar={
+            hayTauri() ? ensayo?.fase === "cerrado" : estadoDeSesion(busqueda) === "ensayo"
+          }
         />
       )}
       {seccion === "ensayo" && <Ensayo busqueda={busqueda} ir={setSeccion} />}

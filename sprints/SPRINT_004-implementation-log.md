@@ -269,8 +269,14 @@ pasar, con tres causas, las tres arregladas sin subir el umbral:
 Antes de pedir el «sí» se miró, sin ningún permiso, qué tocaría el arranque de la app en este Mac:
 `ls ~/Library/LaunchAgents` y `launchctl list` sin nada de la app, y en su carpeta solo `diccionario.yaml`
 (sin preferencias, notas, bandeja ni huella). Así que el arranque no re-registra launchd, no lee el Llavero
-(el API está apagado) y no reindexa ningún corpus. **Matriz de una fila enseñada; el «sí» del usuario:** «Sí,
-haz la corrida en vivo de la banda arriba. Abierto en Google Chrome». Dos corridas con `pnpm tauri dev` y
+(el API está apagado) y no reindexa ningún corpus. **Matriz de una fila enseñada** (la fila 1 del plan, copiada
+aquí por la auditoría del S4, B4):
+
+| Qué | Para qué | Qué aviso vas a ver | Cómo se deshace |
+|---|---|---|---|
+| La app escribe `AXPosition` (y el alto) en la ventana de la página de prueba de Meet, en Chrome | bajarla y encogerla bajo la banda arriba, y medir cuánto tarda | ninguno nuevo: Accesibilidad ya está concedida | sola, al cerrar: devuelve la posición y el tamaño (devolución doble) |
+
+**El «sí» del usuario:** «Sí, haz la corrida en vivo de la banda arriba. Abierto en Google Chrome». Dos corridas con `pnpm tauri dev` y
 `docs/kit-de-prueba/pantalla/meet-de-prueba.html` en Chrome. **Ningún aviso de macOS** en ninguna:
 Accesibilidad ya estaba concedida, el registro lo dice (`accesibilidad=Concedido`).
 
@@ -785,6 +791,75 @@ Las cinco volvieron a verde tras restaurar, y `.demo-rojo/` no quedó.
 3. **`Ensayo.tsx` lleva once `fontSize: 11.5` en línea**, copiados del `style` de `ensayo.html`. Son el valor
    mágico que el design system prohíbe en componentes (§3), y en ninguna otra pantalla aparecen.
 
+## Auditoría · Fase 2: los 82 hallazgos, pagados (2026-10-04)
+
+**Lo que dijo el usuario.** «apribada Fase 1, ahora las decisiones son pruebas pues claro que hay que hacerlas
+pero claramente te dije si eran urgente sy me dijiste que podiamos seguir construyendo pues construyamos, si
+publica en Github (No se publica ningun dato personal)». Se tomó como: Fase 1 aprobada; las seis decisiones,
+con la opción recomendada (la A en todas), dicho en el mensaje y corregible; y el «sí» para publicar en GitHub
+(B3). Las pruebas de la guía siguen aplazadas, como se acordó.
+
+**Las seis decisiones, aplicadas:**
+
+| Decisión | Lo que hace la app ahora |
+|---|---|
+| A1 · ensayar con una videollamada abierta | con altavoces no empieza y dice por qué; con auriculares —de cable, Bluetooth o USB— sí (desviación 27) |
+| A4 · la guía y el acople abajo | la guía pide ⌃⌥B dos veces con Chrome delante (a2, a5, l5); la app, como en el H1 |
+| M3 · arriba, Zoom o Teams sin llamada | arriba solo se acopla con la sesión iniciada; el latido no acopla arriba |
+| M10 · un ensayo sin guardar al iniciar la sesión | Sesión lo dice encima de «Iniciar sesión» |
+| M20 · la protección con la banda arriba | la app dice «verificado… con la banda abajo; con la banda arriba, y en Zoom y Teams, está sin verificar» |
+| B46 · «Lo que llega en el H2» | «Lo que no hace hoy», sin chip (desviación 30) |
+
+**Cómo se pagó.** En el orden de la Fase 1: primero lo que crea o amplía gates, después el resto, y al final
+todos los gates sobre el árbol entero. Los documentos (manual, guía, README, BLUEPRINT, `design-system.md`,
+`CLAUDE.md`, el LEEME del audio) los escribió un subagente en paralelo con la lista de la auditoría; el
+constructor revisó lo que depende del código y corrigió la regla de los auriculares (desviación 27), que el
+subagente había escrito con el ajuste literal.
+
+**Los rojos de la Fase 2** (todos con `scripts/demo-rojo.sh`, cada uno restaurado y verificado con `grep` y
+`cmp`; la carpeta `.demo-rojo/` no quedó):
+
+| Hallazgo | Mutación | Quién cayó |
+|---|---|---|
+| M17 | `.progreso { opacity: 0 }` bajo reduced-motion | **primero pasó en verde**: `seVe` miraba la opacidad del elemento y no la de su caja. Se arregló el gate (multiplica la opacidad de la cadena); después, 2 rojos (reduce, banda y ventana principal) y 62 verdes |
+| B5 | un test sin marca que llama a `sesion::ventana_de_la_reunion()` | `cargo-test-sin-hardware`: «demo_b5_lee_la_reunion (línea 1832) llega a ventana_de_la_reunion(» |
+| B20 | `ruta_de` sin `nombre_valido` | **primero pasó en verde**: sin la carpeta `ensayos/`, la ruta `ensayos/../notas/…` no se resolvía. El test crea la carpeta; después, «se abrió un archivo de fuera de la carpeta» |
+| M1 · B18 · M4 · M2 · A3 | quitar la comprobación de identidad · conformarse con 2 lecturas · sin la condición del fondo · `sin_deshacer` siempre `None` · `acoplar` sin turno | sus cinco tests del acople, por nombre («pub fn acoplar( no espera su turno») |
+| A1 · B27 · A2 · A3 · M3 (×2) · M5 · B17 · B21 | la guarda quitada, en `ensayo/mod.rs` y en `lib.rs` | `con_una_videollamada…` y los seis de `pruebas_de_la_auditoria_del_s4` |
+| M6 · M8 · M9 · M12 · M18 · B12 · B11 · B15 · B16 · B22 · B23 · M7 | la guarda quitada; `"tope_de_fabrica": 7`; un id inventado en `reglas.json`; las señales cableadas; el orden del latido al revés; `reunion` en vez de la huella; «sumó 0»; el `Drop` sin `pisar`; el `if ultima.es` fuera de Swift | su test, por nombre: «se volvió a leer el disco», «cero muletillas en nada se contó como cifra»… |
+| M11 · M16 · M13 · M14 · M15 · B14 · B30 · B39 · B26 · A1 · B24 · B31 · M12 · B33 · B32 | la guarda quitada en `Ensayo.tsx` | `el-ensayo.test.tsx`, los quince |
+| M15 (Notas) · B25 · M10 · M21 · B28 | la guarda quitada | `notas`, `la-banda-arriba` (×2), `lo-que-salio`, `el-ensayo` |
+
+Las salidas enteras están en el scratchpad de la sesión (`demos-*.txt`); aquí, a quién nombró cada fallo.
+
+**Los gates sobre el árbol entero (2026-10-04):** `pnpm typecheck` y `pnpm lint` limpios · Vitest **452** (53
+archivos), con cobertura · `AG_SIN_HARDWARE=1 cargo test`: lib **575** (+2 ignorados), contra el Mac **16** (+14
+para la CI), `ghost` **5**, puerta **14**, sin un aborto del centinela · `cargo clippy --all-targets -D warnings`
+limpio · `pnpm verify:ephemeral` limpio · e2e **289 de 290** y fidelidad **284 encuadres** sin ninguno sobre el
+umbral, con **un desborde** que cazaron los dos: el aviso nuevo de Sesión (M10), en dos líneas encima de
+«Iniciar sesión», sacaba la pantalla 37 px (es) y 20 px (en) de su ventana. Pasó a una línea, en el sitio de
+la promesa «⌥⎋ corta todo…», que vuelve al guardar o cerrar el ensayo; `maqueta-cabe` en verde después. La fidelidad, repetida tras el arreglo: 284 encuadres, ninguno sobre el umbral, ningún desborde.
+
+**Pendiente del cierre:** el rojo de B9 en la CI (desviación 31) · B3 (publicar en GitHub, con el «sí») · B6,
+B7 y B10 con el `/release-check` y el summary · la segunda casilla 4, con **otro** auditor, sobre el diff entero
+y el summary.
+
+**Dónde quedó (para retomar):**
+
+1. Commit de la Fase 2 en `sprint-004/fase-5` (PR #13), push y `gh pr checks`.
+2. **B9 en la CI:** rama desechable desde ese commit con `println!` de cada `s.texto` al principio de
+   `ensayo::banco::armar` (`src-tauri/src/ensayo/banco.rs`); PR en borrador; esperar que
+   `la_canaria_del_cliente_no_aparece_en_el_log` caiga en `build-escritorio` nombrando el término
+   `pterodaustro-de-escritorio-4419`; cerrar el PR sin mergear y borrar la rama.
+3. **B3:** en el #10, «En borrador mientras se construye.» → mergeado con las fases 0 a 4, y casillas 1 a 4
+   marcadas (la 5 va en el #13); en el #12, un comentario: trajo solo el registro del corte (`2f48a58`); la
+   fase 5, la auditoría, el `/release-check` y el summary van en el #13.
+4. `/release-check` (B7: `pnpm tauri build --bundles app --no-sign` y el peso frente a 12,79 MB) y B10 (leer como
+   imagen un encuadre por bloque de `docs/fidelidad/S4-cuaderno.html` y `S4-banda-arriba.html`).
+5. `sprints/SPRINT_004-summary.md` en Opción A (B6: el WER no se midió en el S4).
+6. La segunda casilla 4 con **otro** subagente, sobre `adb2493..HEAD` y el summary; pagar lo que encuentre.
+7. Todos los gates otra vez, PR listo, «Sprint 004 de Angel Ghost listo para mergear».
+
 ## Desviación del plan
 
 1. Arriba, el acople actúa sobre la ventana de la reunión detectada, no sobre la de delante (ADR 004, enmienda 1).
@@ -804,7 +879,8 @@ Las cinco volvieron a verde tras restaurar, y `.demo-rojo/` no quedó.
 12. La llamada al modelo desde la app se cablea en la fase 3, con la pantalla (fase 2). Hecho en la fase 3.
 13. «Citada» exige términos que no estaban ya en la pregunta (fase 3; ADR 019 §6.6 actualizado).
 14. El informe se pinta en la fase 3 sin «Guardar» ni «Exportar», que llegan con la fase 4.
-15. Una videollamada abierta sin sesión no impide ensayar; una sesión abierta, sí (fase 3).
+15. Una videollamada abierta sin sesión no impide ensayar; una sesión abierta, sí (fase 3). *La auditoría lo
+    cambió (A1, desviación 27): con una videollamada abierta y el sonido por altavoces, el ensayo no empieza.*
 16. Un informe sin guardar no se guarda solo al salir de la app (fase 4; ADR 015, enmienda 4).
 17. El camino a tu progreso aparece con un ensayo guardado, no con dos; «desde el primero» sí pide dos (fase 4).
 18. «Borrar los ensayos de este cliente» vive en tu progreso, no en Honestidad (fase 4).
@@ -821,3 +897,21 @@ Las cinco volvieron a verde tras restaurar, y `.demo-rojo/` no quedó.
     - enriquecer, que es juicio sobre lo que propone un modelo.
 25. `design-system.md` gana sus secciones del S4 (§9-decies y §9-undecies) en el cierre, no en sus fases:
     las fases 0 a 4 escribieron el CSS y no la sección.
+26. La guía v6 corre los bloques A a P y el ⭐⭐ del H1 **con la banda abajo** (se fija en la preparación y en la
+    a1), y la parada 6 (l2) dice «12 de 12»: el corte suma el ensayo. Ninguna parada del ⭐⭐ del H1 se movió ni
+    se renumeró (auditoría del S4, B2).
+27. **A1 con la regla del H1.** La auditoría proponía parar el ensayo con una videollamada abierta salvo con
+    auriculares «de verdad» (`puede_haber_eco() == Some(false)`): eso dejaba fuera los AirPods. Se para solo
+    cuando la app **sabe** que se oiría (altavoces del Mac, HDMI, DisplayPort, AirPlay), como la voz en reunión
+    (`habla::cabe_decirla`); Bluetooth y USB pasan, y el manual dice que con un altavoz así no se ensaye con una
+    llamada abierta. Y nace un segundo porqué, «No se puede saber si hay una videollamada», para el navegador
+    abierto sin Accesibilidad (ADR 019, enmienda 1).
+28. **M7 se vigila en la fuente de Swift, no con los altavoces.** En `cargo test` nadie atiende la cola principal:
+    `didFinish` y `didCancel` no llegan nunca, y el test con la voz de verdad que proponía la auditoría pasaba con
+    el fallo puesto (la tercera pregunta de la regla 15). Lo de verdad va al ⭐ (R durante la lectura).
+29. **B19 lo paga M3:** arriba, el latido del arranque ya no acopla, así que no hay bucle que mueva y devuelva
+    una ventana que pelea su sitio.
+30. **B46 quita también el chip «En el H2»** de las filas de Corpus e Idioma: bajo «Lo que no hace hoy», el
+    chip seguía prometiendo. En IA se queda (MLX, que respalda el ADR 011).
+31. **El rojo de B9 se ve en la CI**, en un PR desechable: el test de la canaria del log toca el reconocimiento
+    de voz y en local no se corre.

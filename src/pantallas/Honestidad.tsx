@@ -92,8 +92,9 @@ export function Honestidad({ bytes, escucha: laEscucha, busqueda = "" }: { bytes
     escucha.bytesDelTranscript +
     escucha.bytesDelEnsayo +
     pantalla.bytesEnMemoria;
-  // Un ensayo en memoria: su micrófono abierto sin reunión, o sus respuestas esperando a que guardes o cierres.
-  const hayEnsayo = escucha.bytesDelEnsayo > 0 || (escucha.microfono.abierta && !escucha.escuchando);
+  // Un ensayo en memoria, escuchando o sin guardar: lo dice Rust (auditoría del S4, B28). La pantalla lo
+  // adivinaba por los bytes, y con todo saltado la fila desaparecía.
+  const hayEnsayo = escucha.ensayo;
 
   /** Un búfer que ya existe: se dice dónde vive y cuánto ocupa. */
   const buffer = (icono: string, que: string, donde: string, cuanto: string) => (
@@ -184,7 +185,8 @@ export function Honestidad({ bytes, escucha: laEscucha, busqueda = "" }: { bytes
                 ) : (
                   <Ic id="i-subir" s color="var(--halo)" />
                 )}{" "}
-                <span>{t.salieronDeTuEquipo}</span>
+                {/* Con un ensayo, el contador es el del ensayo: empezó en 0 al empezarlo (auditoría del S4, B27). */}
+                <span>{hayEnsayo ? t.salieronEnEsteEnsayo : t.salieronDeTuEquipo}</span>
               </div>
             </div>
             <div className="tarjeta">
