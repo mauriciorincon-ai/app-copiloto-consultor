@@ -68,6 +68,9 @@ impl Voz for DelSistema {
         let limpio: String = texto.chars().filter(|c| *c != '\0').collect();
         let ct = std::ffi::CString::new(limpio)
             .map_err(|_| "la ficha no se pudo preparar para decirla".to_string())?;
+        // El centinela de la regla 25 va aquí, justo antes de cruzar, y no en la primera línea: lo de
+        // arriba es validación pura y sus tests no tienen por qué tocar los altavoces.
+        crate::hardware::vigilar("los altavoces (la voz de la app)");
         match unsafe { puente::ag_habla_decir(ci.as_ptr(), ct.as_ptr()) } {
             n if n > 0 => Ok(()),
             -1 => Err(format!("este Mac no tiene voz para «{idioma}»")),
@@ -124,6 +127,7 @@ mod pruebas {
     /// Aquí solo se comprueba que no se rompe: si este Mac no tiene voz, el error es «no tiene voz»,
     /// que es otra cosa que un pánico.
     #[test]
+    #[ignore = "hardware: encola la frase en la voz del sistema (los altavoces); lo corre la CI con --include-ignored"]
     fn una_ficha_con_un_cero_dentro_no_rompe_nada() {
         let v = voz();
         let r = v.decir("es-ES", "Alcance\0 incluido");

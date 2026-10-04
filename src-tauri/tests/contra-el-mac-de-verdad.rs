@@ -120,11 +120,13 @@ fn formato(d: &Disponibilidad) -> String {
 }
 
 #[test]
+#[ignore = "hardware: el reconocimiento de voz de Apple; lo corre la CI con --include-ignored"]
 fn transcribe_la_pregunta_en_espanol() {
     probar("pregunta-es.wav", "es-ES", &["limpieza de datos", "alcance"]);
 }
 
 #[test]
+#[ignore = "hardware: el reconocimiento de voz de Apple; lo corre la CI con --include-ignored"]
 fn transcribe_la_pregunta_en_ingles() {
     probar("pregunta-en.wav", "en-US", &["data cleaning", "scope"]);
 }
@@ -133,6 +135,7 @@ fn transcribe_la_pregunta_en_ingles() {
 // («ISO27.001», «ISO 27,001») y el corpus las tiene sin él. La fase 4 tendrá que normalizarlas
 // antes de buscar, y este test existe para que ese día no parezca un bug nuevo.
 #[test]
+#[ignore = "hardware: el reconocimiento de voz de Apple; lo corre la CI con --include-ignored"]
 fn las_cifras_llegan_con_separadores_del_idioma() {
     let (muestras, hz) = leer_wav("../docs/kit-de-prueba/audio/pregunta-es.wav");
     let motor = motor_de_la_casa();
@@ -196,11 +199,13 @@ fn escuchar(que: &str, abrir: impl FnOnce(Arc<Mutex<Anillo>>) -> Result<Grifo, N
 }
 
 #[test]
+#[ignore = "hardware: abre el micrófono; lo corre la CI con --include-ignored"]
 fn el_microfono_se_abre_o_dice_por_que_no() {
     escuchar("micrófono", Grifo::del_microfono);
 }
 
 #[test]
+#[ignore = "hardware: abre el audio del sistema (process tap); lo corre la CI con --include-ignored"]
 fn el_audio_del_sistema_se_abre_o_dice_por_que_no() {
     escuchar("audio del sistema", Grifo::del_sistema);
 }
@@ -220,6 +225,7 @@ use std::sync::mpsc;
 use std::time::Instant;
 
 #[test]
+#[ignore = "hardware: hace sonar los altavoces y abre el audio del sistema; lo corre la CI con --include-ignored"]
 fn una_frase_por_los_altavoces_acaba_siendo_texto() {
     let _turno = turno();
     let motor = motor_de_la_casa();
@@ -509,6 +515,11 @@ struct Permitido {
     bandeja: PathBuf,
     /// La lista «hora · archivo» que lee la tarea de launchd: rutas y horas, nada de la reunión.
     lista: PathBuf,
+    /// **Tus ensayos** (sprint 004, fase 4, ADR 015 enmienda 4): tus respuestas en texto y sus cifras, cifradas
+    /// con la llave de tus notas. Lo que lo hace inocuo se comprueba abajo **descifrado**: el ensayo no abre la
+    /// pista del sistema, así que la canaria del cliente no puede estar, y **todo archivo de aquí tiene que
+    /// abrirse como un ensayo** —un intruso, aunque esté dentro de la carpeta permitida, es rojo—.
+    ensayos: PathBuf,
 }
 
 impl Permitido {
@@ -517,8 +528,59 @@ impl Permitido {
             || ruta == self.diccionario
             || ruta.starts_with(&self.notas)
             || ruta.starts_with(&self.bandeja)
+            || ruta.starts_with(&self.ensayos)
             || ruta == self.lista
     }
+}
+
+/// **Un archivo de `ensayos/`, revisado** (sprint 004, fase 4): tiene que abrirse con la llave de la sesión,
+/// leerse como un ensayo y no llevar la canaria del cliente. Cualquier otra cosa —un audio plantado, un
+/// texto en claro, uno sellado con otra llave— es un `Err` que nombra el archivo. Es la comprobación que
+/// impide que `ensayos/` sea una puerta trasera de `Permitido`.
+fn revisar_un_ensayo(ruta: &Path, llave: &Llave) -> Result<app_copiloto_consultor_lib::ensayo::guardado::Guardado, String> {
+    let bytes = std::fs::read(ruta).map_err(|e| format!("{} no se deja leer: {e}", ruta.display()))?;
+    let claro = notas::cifrado::abrir(llave, &bytes)
+        .map_err(|e| format!("{} no es un ensayo cifrado con la llave de tus notas ({e})", ruta.display()))?;
+    if String::from_utf8_lossy(&claro).contains(CANARIA) {
+        return Err(format!("la frase del cliente acabó dentro de {}", ruta.display()));
+    }
+    app_copiloto_consultor_lib::ensayo::guardado::Guardado::de_bytes(&claro).map_err(|e| format!("{} no es un ensayo: {e}", ruta.display()))
+}
+
+/// **La revisión de `ensayos/` se puede poner en rojo**, sin hardware: un ensayo de verdad pasa; un audio
+/// plantado, un texto en claro, uno con la canaria dentro o uno sellado con otra llave, no. Es el rojo del
+/// «intruso en `ensayos/`» que la sesión completa —que solo corre en la CI— no puede enseñar en local.
+#[test]
+fn un_intruso_en_ensayos_se_delata() {
+    use app_copiloto_consultor_lib::ensayo::guardado::Guardado;
+    use app_copiloto_consultor_lib::ensayo::banco::Idioma;
+    let d = std::env::temp_dir().join(format!("ag-efimero-intruso-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&d);
+    std::fs::create_dir_all(&d).unwrap();
+    let llave = Llave::nueva();
+    let sellar = |nombre: &str, llave: &Llave, claro: &[u8]| {
+        let ruta = d.join(nombre);
+        std::fs::write(&ruta, notas::cifrado::sellar(llave, 0, claro)).unwrap();
+        ruta
+    };
+    let bueno = Guardado::nuevo("Páramo Azul", "Rentabilidad por canal", Idioma::Es, "2026-09-27 15:00", Vec::new());
+    let ok = sellar("paramo-azul-2026-09-27.ghost", &llave, &bueno.a_bytes());
+    assert!(revisar_un_ensayo(&ok, &llave).is_ok(), "un ensayo de verdad no pasó la revisión");
+    let con_canaria = Guardado::nuevo(&format!("Páramo {CANARIA}"), "", Idioma::Es, "2026-09-27 15:00", Vec::new());
+    let wav = d.join("respuesta.wav");
+    std::fs::write(&wav, b"RIFF\0\0\0\0WAVEfmt ").unwrap();
+    let en_claro = d.join("paramo-azul-2026-09-28.ghost");
+    std::fs::write(&en_claro, bueno.a_bytes()).unwrap();
+    for intruso in [
+        wav,
+        en_claro,
+        sellar("paramo-azul-2026-09-29.ghost", &llave, &con_canaria.a_bytes()),
+        sellar("paramo-azul-2026-09-30.ghost", &Llave::nueva(), &bueno.a_bytes()),
+        sellar("paramo-azul-2026-10-01.ghost", &llave, b"{\"no\":\"es un ensayo\"}"),
+    ] {
+        assert!(revisar_un_ensayo(&intruso, &llave).is_err(), "un intruso pasó la revisión de ensayos/: {}", intruso.display());
+    }
+    let _ = std::fs::remove_dir_all(&d);
 }
 
 /// Carpetas que **escribe la herramienta, jamás la app**: el compilador, el gestor de paquetes,
@@ -792,6 +854,81 @@ fn una_sesion_completa(casa: &Path, corpus_en: &Path, llave: &dyn Llaves) -> (Ve
     println!("[sesión] notas guardadas y cifradas");
     ejercido.push("notas");
 
+    // 7-ter · **Un ensayo** (sprint 004, fase 4, ADR 015 enmienda 4). El oído de verdad sobre un anillo que
+    //     llena el test —el micrófono no se abre— y **el motor de verdad**: el audio del kit entra a ritmo de
+    //     micrófono, el oído lo transcribe en su hilo como en la app, la sesión lo evalúa contra el corpus y lo
+    //     que queda se guarda cifrado en `ensayos/`. Lo que Apple escriba al transcribir se escribe aquí,
+    //     dentro del inventario. Sin modelo de voz (la CI) la respuesta queda sin texto: se guarda igual, con
+    //     su tiempo, y eso también se mide.
+    {
+        use app_copiloto_consultor_lib::ensayo::{banco, oido::Oido, sesion::Fase, Ensayo, EstadoDelBanco, Mundo, Rotulo};
+        use app_copiloto_consultor_lib::ficha::Respaldo;
+        struct MundoDelEfimero(std::collections::HashMap<String, Vec<Respaldo>>);
+        impl Mundo for MundoDelEfimero {
+            // Sin voz: la sesión escucha en el acto. La voz ya se ejerció arriba (paso 6).
+            fn decir(&self, _: banco::Idioma, _: &str) -> bool {
+                false
+            }
+            fn callar(&self) {}
+            fn diciendo(&self) -> bool {
+                false
+            }
+            fn evidencia(&self, pregunta: &str) -> Vec<Respaldo> {
+                self.0.get(pregunta).cloned().unwrap_or_default()
+            }
+            fn avisar(&self) {}
+        }
+        let propuesta = corpus.documentos().iter().find(|d| d.nombre.contains("Páramo")).map(|d| d.ruta.clone()).expect("la propuesta del corpus del efímero");
+        let secciones = corpus.secciones_de(&propuesta).expect("las secciones de la propuesta");
+        let preguntas = banco::armar(&secciones, &[], banco::Idioma::Es, 5);
+        assert!(!preguntas.is_empty(), "el banco no sacó preguntas de la propuesta: el ensayo no se midió");
+        let evidencia = preguntas
+            .iter()
+            .map(|p| {
+                let respaldo = match armar(&p.texto, &corpus.buscar(&p.texto, app_copiloto_consultor_lib::ficha::TOP).unwrap()) {
+                    Respuesta::Ficha(f) => f.respaldo,
+                    Respuesta::SinResultado { .. } => Vec::new(),
+                };
+                (p.texto.clone(), respaldo)
+            })
+            .collect();
+        let anillo = Arc::new(Mutex::new(Anillo::de_la_app()));
+        let oido = Oido::con_anillo(anillo.clone(), "es-ES", motor_de_la_casa(), jerga.clone());
+        let rotulo = Rotulo {
+            cliente: "Páramo Azul".into(),
+            propuesta: "Propuesta Páramo Azul".into(),
+            empezo: notas::Fecha { anio: 2026, mes: 9, dia: 27, hora: 15, minuto: 0 },
+        };
+        let e = Ensayo::arrancar(preguntas, banco::Idioma::Es, false, rotulo, EstadoDelBanco::Apagado, oido, Arc::new(MundoDelEfimero(evidencia)))
+            .expect("el ensayo no arrancó");
+        let silencio = vec![0.0f32; 16 * 600];
+        for trozo in [&silencio[..], &muestras[..], &silencio[..]] {
+            for c in trozo.chunks(1_600) {
+                anillo.lock().unwrap().escribir(c);
+                std::thread::sleep(Duration::from_millis(100));
+            }
+        }
+        // Enter: cierra la respuesta en cuanto vuelva la transcripción del último turno.
+        e.listo();
+        let mut fase = None;
+        for _ in 0..400 {
+            fase = e.vista().map(|v| v.fase);
+            if fase == Some(Fase::Evaluada) {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        assert_eq!(fase, Some(Fase::Evaluada), "la respuesta del ensayo no se evaluó: {:?}", e.vista());
+        e.terminar();
+        let g = e.para_guardar().expect("un ensayo terminado se puede guardar");
+        assert_eq!(g.informe().respondidas, 1, "el ensayo de la sesión no tiene la respuesta");
+        let hecho = app_copiloto_consultor_lib::ensayos::Ensayos::en(casa.join(app_copiloto_consultor_lib::ensayos::CARPETA))
+            .guardar(llave, &g, "paramo-azul-2026-09-27", 1_790_517_600 + 90 * 86_400)
+            .expect("el ensayo no se pudo guardar");
+        println!("[sesión] ensayo guardado y cifrado: {} bytes", hecho.bytes);
+        ejercido.push("ensayo");
+    }
+
     // 7-bis · **La bandeja** (sprint 003, fase 2, ADR 016). Las reglas miran los turnos de verdad —la
     //     pregunta del cliente con la canaria y un plazo que dijo— y lo que no decidiste se sella en la
     //     bandeja con su vencimiento, junto a la lista que lee la tarea de launchd. **El plist no se
@@ -819,12 +956,16 @@ fn una_sesion_completa(casa: &Path, corpus_en: &Path, llave: &dyn Llaves) -> (Ve
         propuestas: sin_decidir,
     };
     assert!(bandeja.dejar(llave, &contenido_b, Some(cerro + 3 * 3_600)).expect("la bandeja no se pudo escribir"));
-    // La lista, con lo mismo que la app le da a launchd: tus notas y la bandeja (decisión A).
-    let pendientes = app_copiloto_consultor_lib::reunion::lo_que_vence_en(&notas_de_la_sesion, &bandeja);
+    // La lista, con lo mismo que la app le da a launchd: tus notas, la bandeja (decisión A) y tus ensayos
+    // (ADR 015, enmienda 4).
+    let ensayos = app_copiloto_consultor_lib::ensayos::Ensayos::en(casa.join(app_copiloto_consultor_lib::ensayos::CARPETA));
+    let pendientes = app_copiloto_consultor_lib::reunion::lo_que_vence_en(&notas_de_la_sesion, &bandeja, &ensayos);
     let lista = app_copiloto_consultor_lib::vencimiento::lista_en_texto(&pendientes);
     assert!(
-        lista.contains(&notas_de_la_sesion.raiz().display().to_string()) && lista.lines().count() == 2,
-        "la lista de launchd no trae tus notas y la bandeja:\n{lista}"
+        lista.contains(&notas_de_la_sesion.raiz().display().to_string())
+            && lista.contains(&ensayos.raiz().display().to_string())
+            && lista.lines().count() == 3,
+        "la lista de launchd no trae tus notas, la bandeja y tus ensayos:\n{lista}"
     );
     app_copiloto_consultor_lib::almacen::escribir(&casa.join(app_copiloto_consultor_lib::vencimiento::LISTA), lista.as_bytes())
         .expect("la lista de vencimientos no se pudo escribir");
@@ -851,6 +992,7 @@ fn corpus_para_el_efimero() -> PathBuf {
 }
 
 #[test]
+#[ignore = "hardware: reconocimiento de voz de Apple, e inventaría ~/Documents, ~/Desktop y ~/Downloads; lo corre la CI con --include-ignored"]
 fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     let _turno = turno();
     let casa = std::env::temp_dir().join(format!("ag-efimero-casa-{}", std::process::id()));
@@ -863,6 +1005,7 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
         notas: casa.join(app_copiloto_consultor_lib::carpeta::CARPETA),
         bandeja: casa.join(app_copiloto_consultor_lib::bandeja::CARPETA),
         lista: casa.join(app_copiloto_consultor_lib::vencimiento::LISTA),
+        ensayos: casa.join(app_copiloto_consultor_lib::ensayos::CARPETA),
     };
     let llave = LlaveDeLaPrueba(Llave::nueva().a_hex());
 
@@ -879,6 +1022,7 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     assert!(ejercido.contains(&"sintesis"), "la síntesis no se ejerció: el inventario no la midió");
     assert!(ejercido.contains(&"notas"), "las notas no se guardaron: el inventario no las midió");
     assert!(ejercido.contains(&"bandeja"), "la bandeja no se escribió: el inventario no la midió");
+    assert!(ejercido.contains(&"ensayo"), "el ensayo no se guardó: el inventario no lo midió");
 
     let despues: BTreeMap<PathBuf, Huella> = sitios.iter().flat_map(|s| inventario(s)).collect();
 
@@ -926,7 +1070,14 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     // nunca, estuviera dentro o no.
     let mut notas_descifradas = 0;
     let mut bandejas_descifradas = 0;
+    let mut ensayos_revisados = 0;
     for (ruta, ..) in &tocados {
+        if ruta.starts_with(&permitido.ensayos) {
+            let g = revisar_un_ensayo(ruta, &llave.leer().unwrap()).unwrap_or_else(|e| panic!("{e}"));
+            assert_eq!(g.cliente, "Páramo Azul", "el archivo de ensayos no es el de la sesión: no se miró el de verdad");
+            ensayos_revisados += 1;
+            continue;
+        }
         let Ok(bytes) = std::fs::read(ruta) else { continue };
         if ruta.starts_with(&permitido.bandeja) {
             let claro = notas::cifrado::abrir(&llave.leer().unwrap(), &bytes)
@@ -965,6 +1116,7 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     }
     assert_eq!(notas_descifradas, 1, "tenía que haber un archivo de notas, descifrado y revisado");
     assert_eq!(bandejas_descifradas, 1, "tenía que haber una bandeja, descifrada y revisada");
+    assert_eq!(ensayos_revisados, 1, "tenía que haber un ensayo, descifrado y revisado");
     assert!(dicho.iter().any(|d| d.contains(CANARIA)), "la canaria no llegó a recorrer la sesión");
 
     let _ = std::fs::remove_dir_all(&casa);
@@ -996,6 +1148,7 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
 /// Dos procesos no comparten el mutex del turno, así que la respuesta no era un candado: era que el
 /// hijo **no mire lo que no le toca**. Para leer un log hace falta la sesión, no el inventario.
 #[test]
+#[ignore = "hardware: el reconocimiento de voz de Apple (lo lanza la canaria del log como proceso hijo); lo corre la CI con --include-ignored"]
 fn sesion_para_el_log() {
     let _turno = turno();
     let casa = std::env::temp_dir().join(format!("ag-log-casa-{}", std::process::id()));
@@ -1011,13 +1164,14 @@ fn sesion_para_el_log() {
 }
 
 #[test]
+#[ignore = "hardware: lanza la sesión con el reconocimiento de voz de Apple; lo corre la CI con --include-ignored"]
 fn la_canaria_del_cliente_no_aparece_en_el_log() {
     // El turno porque el hijo usa el motor de voz, y los tests de audio de este binario usan los
     // altavoces y el tap del sistema: van de a uno, como todos los demás.
     let _turno = turno();
     let yo = std::env::current_exe().expect("no se supo cuál es este binario de pruebas");
     let hijo = std::process::Command::new(&yo)
-        .args(["sesion_para_el_log", "--exact", "--nocapture", "--test-threads=1"])
+        .args(["sesion_para_el_log", "--exact", "--include-ignored", "--nocapture", "--test-threads=1"])
         .output()
         .expect("no se pudo correr la sesión en un proceso hijo");
 
@@ -1570,6 +1724,7 @@ struct Transcripciones {
 }
 
 #[test]
+#[ignore = "hardware: el reconocimiento de voz de Apple; lo corre la CI con --include-ignored"]
 fn el_wer_no_empeora_con_el_diccionario_y_mejora_donde_hay_jerga() {
     let _turno = turno();
     let raiz = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba/audio");
@@ -1673,6 +1828,7 @@ use app_copiloto_consultor_lib::capture::nativo::salida_de_audio;
 use app_copiloto_consultor_lib::habla::{self, Momento};
 
 #[test]
+#[ignore = "hardware: encola una frase en la voz del sistema (los altavoces); lo corre la CI con --include-ignored"]
 fn la_voz_de_este_mac_contesta_y_dice_lo_que_hay() {
     let v = habla::voz();
     let salida = salida_de_audio();
@@ -2205,8 +2361,8 @@ fn el_radar_ambar_lee_la_reunion_grabada() {
 /// propósito, y un test bajo demanda que pasa sin haber medido nada es decorado. (La primera versión
 /// salía en verde con «no hay ventana»: se vio al correrla.)
 #[test]
-#[ignore = "necesita la ventana de docs/kit-de-prueba/pantalla/meet-de-prueba.html abierta y visible"]
-fn la_ventana_de_meet_se_captura_y_se_lee() {
+#[ignore = "en vivo: necesita la ventana de docs/kit-de-prueba/pantalla/meet-de-prueba.html abierta y visible, y el permiso de grabar la pantalla"]
+fn en_vivo_la_ventana_de_meet_se_captura_y_se_lee() {
     use app_copiloto_consultor_lib::pantalla::{refuerzo, NoSeVe, Objetivo};
     let _turno = turno();
     let (ojo, lector) = pantalla::apple::ojos();
@@ -2283,8 +2439,8 @@ fn en_una_maquina_virtual() -> bool {
 /// el_llavero -- --ignored`. **Se niega a correr si ya hay una clave de Groq guardada**: pisarla
 /// sería borrarle al usuario su clave de verdad.
 #[test]
-#[ignore = "toca el Llavero del usuario: se corre a mano"]
-fn el_llavero_guarda_lee_y_borra_la_clave() {
+#[ignore = "en vivo: toca el Llavero del usuario; se corre a mano, con su matriz y su «sí» (regla 22)"]
+fn en_vivo_el_llavero_guarda_lee_y_borra_la_clave() {
     use app_copiloto_consultor_lib::sintesis::api::{borrar_clave, guardar_clave, hay_clave, Externo};
     assert!(
         !hay_clave(Externo::Groq),
@@ -2458,4 +2614,265 @@ fn en_vivo_launchd_borra_a_su_hora_sin_la_app() {
 
     assert!(temporal_a.is_some_and(|s| s <= 90), "launchd no borró el archivo de la carpeta temporal a su hora");
     assert!(notas_a.is_some_and(|s| s <= 90), "launchd no borró el archivo de la carpeta de notas a su hora");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// EL KIT v3 — el banco de preguntas del ensayo (sprint 004, ADR 019 §2)
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+//
+// `docs/kit-de-prueba/ensayo.json` dice qué preguntas esperaría un consultor de cada propuesta y cada
+// ficha. Aquí se arma el banco ENTERO (sin tope) y se mide REGLA POR REGLA: la precisión (de las que
+// dio, cuántas esperaba el kit) y el recall (de las que esperaba, cuántas dio). Las cifras se imprimen:
+// salen de la corrida, no del kit. Y el acento del modelo, con el `mock` (ia-embebida §9): sus
+// preguntas, las que funda y las que tira, y lo que costaría una llamada con cada proveedor externo.
+
+use app_copiloto_consultor_lib::corpus::seccion::Seccion;
+use app_copiloto_consultor_lib::ensayo::banco::{self as banco_del_ensayo, Idioma as IdiomaDelEnsayo, Pregunta as PreguntaDelEnsayo};
+use app_copiloto_consultor_lib::ensayo::enriquecer;
+
+#[derive(serde::Deserialize)]
+struct KitDelEnsayo {
+    casos: Vec<CasoDelEnsayo>,
+    respuestas: RespuestasDelKit,
+}
+
+#[derive(serde::Deserialize)]
+struct RespuestasDelKit {
+    casos: Vec<RespuestaDelKit>,
+}
+
+/// Una respuesta sintética y lo que un consultor diría que usó (fase 3, ADR 019 §6.6).
+#[derive(serde::Deserialize)]
+struct RespuestaDelKit {
+    nombre: String,
+    idioma: String,
+    pregunta: String,
+    respuesta: String,
+    segundos: u64,
+    usadas: Vec<String>,
+    muletillas: BTreeMap<String, u32>,
+    ppm: Option<u32>,
+}
+
+#[derive(serde::Deserialize)]
+struct CasoDelEnsayo {
+    nombre: String,
+    idioma: String,
+    propuesta: Option<String>,
+    ficha: Option<String>,
+    secciones: Option<SeccionesDelCaso>,
+    esperadas: Vec<EsperadaDelEnsayo>,
+}
+
+#[derive(serde::Deserialize)]
+struct SeccionesDelCaso {
+    propuesta: Vec<SeccionDelCaso>,
+    ficha: Vec<SeccionDelCaso>,
+}
+
+#[derive(serde::Deserialize)]
+struct SeccionDelCaso {
+    titulo: String,
+    texto: String,
+}
+
+#[derive(serde::Deserialize, Debug)]
+struct EsperadaDelEnsayo {
+    regla: String,
+    seccion: Option<String>,
+    cifra: Option<String>,
+    id: Option<String>,
+}
+
+impl EsperadaDelEnsayo {
+    fn casa(&self, p: &PreguntaDelEnsayo) -> bool {
+        let plegar = |t: &str| t.to_lowercase();
+        p.regla.id() == self.regla
+            && self.seccion.as_deref().is_none_or(|s| p.seccion.as_deref() == Some(s))
+            && self.cifra.as_deref().is_none_or(|c| plegar(&p.clave) == plegar(c))
+            && self.id.as_deref().is_none_or(|i| p.clave == i)
+    }
+}
+
+/// Los mínimos por regla. El kit y las reglas los escribió el mismo constructor, así que pasar aquí es
+/// un piso, no una prueba de calidad: la de verdad es tu propuesta en el ⭐ (bitácora del sprint 004).
+const PRECISION_MINIMA_DEL_BANCO: f64 = 0.75;
+const RECALL_MINIMO_DEL_BANCO: f64 = 0.75;
+
+#[test]
+fn el_kit_del_ensayo_mide_el_banco_por_regla() {
+    let _turno = turno();
+    let raiz = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba");
+    let kit: KitDelEnsayo =
+        serde_json::from_str(&std::fs::read_to_string(format!("{raiz}/ensayo.json")).expect("falta ensayo.json")).expect("ensayo.json no se lee");
+    let mut corpus = Corpus::en_memoria().unwrap();
+    corpus.indexar(Path::new(&format!("{raiz}/corpus")), &|_| {}).expect("no se indexó el kit");
+    let ruta = |relativa: &str| format!("{raiz}/{relativa}");
+
+    let mut fallos = Vec::new();
+    for caso in &kit.casos {
+        let (propuesta, ficha): (Vec<Seccion>, Vec<Seccion>) = match (&caso.propuesta, &caso.ficha, &caso.secciones) {
+            (Some(p), Some(f), _) => (corpus.secciones_de(&ruta(p)).expect("la propuesta"), corpus.secciones_de(&ruta(f)).expect("la ficha")),
+            (_, _, Some(s)) => {
+                let a = |v: &[SeccionDelCaso]| v.iter().map(|x| Seccion { titulo: Some(x.titulo.clone()), texto: x.texto.clone() }).collect();
+                (a(&s.propuesta), a(&s.ficha))
+            }
+            _ => panic!("el caso {} no trae ni documentos ni secciones", caso.nombre),
+        };
+        let idioma = if caso.idioma == "en" { IdiomaDelEnsayo::En } else { IdiomaDelEnsayo::Es };
+        assert_eq!(banco_del_ensayo::idioma_de(&propuesta), Some(idioma), "{}: el idioma de la propuesta", caso.nombre);
+
+        let reloj = std::time::Instant::now();
+        let todas = banco_del_ensayo::todas(&propuesta, &ficha, idioma);
+        let ms = reloj.elapsed().as_secs_f64() * 1000.0;
+        println!("\n── el banco del ensayo · {} ({}) · {ms:.2} ms ──", caso.nombre, caso.idioma);
+        println!("   regla        dio  esperaba  precisión  recall");
+        for (i, regla) in banco_del_ensayo::Regla::DEL_BANCO.iter().enumerate() {
+            let dadas = &todas[i];
+            let esperadas: Vec<&EsperadaDelEnsayo> = caso.esperadas.iter().filter(|e| e.regla == regla.id()).collect();
+            let ciertas = dadas.iter().filter(|p| esperadas.iter().any(|e| e.casa(p))).count();
+            let halladas = esperadas.iter().filter(|e| dadas.iter().any(|p| e.casa(p))).count();
+            let precision = if dadas.is_empty() { 1.0 } else { ciertas as f64 / dadas.len() as f64 };
+            let recall = if esperadas.is_empty() { 1.0 } else { halladas as f64 / esperadas.len() as f64 };
+            println!("   {:<11} {:>4}  {:>8}  {:>9.3}  {:>6.3}", regla.id(), dadas.len(), esperadas.len(), precision, recall);
+            for p in dadas.iter().filter(|p| !esperadas.iter().any(|e| e.casa(p))) {
+                println!("      · sobra: {}", p.texto);
+            }
+            for e in esperadas.iter().filter(|e| !dadas.iter().any(|p| e.casa(p))) {
+                println!("      · falta: {e:?}");
+            }
+            if precision < PRECISION_MINIMA_DEL_BANCO || recall < RECALL_MINIMO_DEL_BANCO {
+                fallos.push(format!("{} · {}: precisión {precision:.3}, recall {recall:.3}", caso.nombre, regla.id()));
+            }
+        }
+
+        let ocho = banco_del_ensayo::armar(&propuesta, &ficha, idioma, 8);
+        println!("   un ensayo de 8:");
+        for (n, p) in ocho.iter().enumerate() {
+            println!("   {:>2}. [{}] {}", n + 1, p.regla.id(), p.texto);
+        }
+
+        // El acento del modelo, con el mock: lo que propone, lo que se funda y lo que se tira.
+        let peticion = enriquecer::Peticion::nueva(&propuesta, &ficha, idioma).expect("sin secciones con título");
+        let r = enriquecer::enriquecer(std::sync::Arc::new(app_copiloto_consultor_lib::sintesis::mock::Mock), &peticion, app_copiloto_consultor_lib::sintesis::TECHO);
+        match &r.enriquecido {
+            Ok(e) => {
+                println!("   el mock propone {} fundada(s) y {} descartada(s) · {} ms:", e.preguntas.len(), e.descartadas, r.ms);
+                for p in &e.preguntas {
+                    println!("      + [{}] {}", p.seccion.as_deref().unwrap_or("—"), p.texto);
+                }
+                if e.descartadas == 0 {
+                    fallos.push(format!("{}: el mock no recorrió el descarte", caso.nombre));
+                }
+            }
+            Err(e) => fallos.push(format!("{}: el mock no enriqueció ({e:?})", caso.nombre)),
+        }
+        // Lo que costaría con cada proveedor externo: los tokens de entrada estimados (4 caracteres por
+        // token) y una salida de cinco preguntas (≈ 200 tokens).
+        let caracteres = enriquecer::Peticion::instrucciones().chars().count() + peticion.texto().chars().count();
+        let entrada = (caracteres as u64).div_ceil(4);
+        for externo in [app_copiloto_consultor_lib::sintesis::api::Externo::Claude, app_copiloto_consultor_lib::sintesis::api::Externo::Groq] {
+            println!(
+                "   una llamada con {}: ≈ {entrada} tokens de entrada + 200 de salida ≈ US${:.5}",
+                externo.nombre(),
+                externo.costo(entrada, 200)
+            );
+        }
+    }
+    assert!(fallos.is_empty(), "el banco del ensayo por debajo de su piso:\n{}", fallos.join("\n"));
+}
+
+/// Los mínimos de la evaluación. Como los del banco, un piso escrito por el mismo constructor que el kit:
+/// la prueba de verdad es tu voz en el ⭐ (bitácora del sprint 004, fase 3).
+const PRECISION_MINIMA_DE_LA_EVALUACION: f64 = 0.75;
+const RECALL_MINIMO_DE_LA_EVALUACION: f64 = 0.70;
+/// El presupuesto de la evaluación (plan del sprint, fase 3): buscar, armar las tres fichas y evaluar.
+const PRESUPUESTO_DE_LA_EVALUACION_MS: f64 = 500.0;
+
+/// **EL KIT DE LA EVALUACIÓN** (sprint 004, fase 3): cada respuesta sintética se evalúa contra las tres
+/// fichas que el disparo habría enseñado para su pregunta, y se compara ficha por ficha «citada» con
+/// «usada». Imprime la tabla y la precisión y el recall, que salen de la corrida; y mide el camino
+/// entero contra los 500 ms del plan.
+#[test]
+fn el_kit_del_ensayo_mide_la_evaluacion() {
+    use app_copiloto_consultor_lib::ensayo::evaluacion::{evaluar, Entrada, Tramo};
+    let _turno = turno();
+    let raiz = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba");
+    let kit: KitDelEnsayo =
+        serde_json::from_str(&std::fs::read_to_string(format!("{raiz}/ensayo.json")).expect("falta ensayo.json")).expect("ensayo.json no se lee");
+    let mut corpus = Corpus::en_memoria().unwrap();
+    corpus.indexar(Path::new(&format!("{raiz}/corpus")), &|_| {}).expect("no se indexó el kit");
+
+    let (mut vp, mut fp, mut fn_, mut vn) = (0usize, 0usize, 0usize, 0usize);
+    let mut fallos = Vec::new();
+    let mut peor_ms = 0.0f64;
+    println!("\n── la evaluación del ensayo · {} respuestas ──", kit.respuestas.casos.len());
+    for caso in &kit.respuestas.casos {
+        let idioma = if caso.idioma == "en" { IdiomaDelEnsayo::En } else { IdiomaDelEnsayo::Es };
+        let reloj = std::time::Instant::now();
+        let respaldo = match armar(&caso.pregunta, &corpus.buscar(&caso.pregunta, app_copiloto_consultor_lib::ficha::TOP).unwrap()) {
+            Respuesta::Ficha(f) => f.respaldo,
+            Respuesta::SinResultado { .. } => Vec::new(),
+        };
+        let tramos = [Tramo { desde_ms: 0, hasta_ms: caso.segundos * 1000, texto: Some(caso.respuesta.clone()) }];
+        let e = evaluar(&Entrada {
+            pregunta: &caso.pregunta,
+            tramos: &tramos,
+            respaldo: &respaldo,
+            idioma,
+            empezo_ms: 0,
+            cerro_ms: caso.segundos * 1000,
+        });
+        let ms = reloj.elapsed().as_secs_f64() * 1000.0;
+        peor_ms = peor_ms.max(ms);
+        println!("\n   {} · {ms:.2} ms · «{}»", caso.nombre, caso.pregunta);
+        for ev in &e.evidencia {
+            let seccion = ev.fuente.seccion.clone().unwrap_or_default();
+            let usada = caso.usadas.contains(&seccion);
+            let marca = match (usada, ev.citada) {
+                (true, true) => {
+                    vp += 1;
+                    "bien: usada y citada"
+                }
+                (false, false) => {
+                    vn += 1;
+                    "bien: ni usada ni citada"
+                }
+                (false, true) => {
+                    fp += 1;
+                    "MAL: citada sin usarla"
+                }
+                (true, false) => {
+                    fn_ += 1;
+                    "MAL: usada y no citada («Sí lo dije» la corrige)"
+                }
+            };
+            println!("      {seccion:<18} {marca}");
+        }
+        for u in caso.usadas.iter().filter(|u| !e.evidencia.iter().any(|ev| ev.fuente.seccion.as_deref() == Some(u.as_str()))) {
+            println!("      {u:<18} (usada, pero no estaba entre las tres: fuera de la medida)");
+        }
+        let muletillas: BTreeMap<String, u32> = e.muletillas.iter().map(|m| (m.frase.clone(), m.veces)).collect();
+        println!("      ritmo {:?} ppm · muletillas {muletillas:?} · tiempo {} ms", e.ppm, e.tiempo_ms);
+        if muletillas != caso.muletillas {
+            fallos.push(format!("{}: muletillas {muletillas:?}, el kit esperaba {:?}", caso.nombre, caso.muletillas));
+        }
+        if e.ppm != caso.ppm {
+            fallos.push(format!("{}: ritmo {:?}, el kit esperaba {:?}", caso.nombre, e.ppm, caso.ppm));
+        }
+    }
+    let precision = if vp + fp == 0 { 1.0 } else { vp as f64 / (vp + fp) as f64 };
+    let recall = if vp + fn_ == 0 { 1.0 } else { vp as f64 / (vp + fn_) as f64 };
+    println!(
+        "\n   fichas: {} · bien {} · citadas sin usar {fp} · usadas sin citar {fn_} · precisión {precision:.3} · recall {recall:.3} · la más lenta {peor_ms:.2} ms",
+        vp + fp + fn_ + vn,
+        vp + vn
+    );
+    if precision < PRECISION_MINIMA_DE_LA_EVALUACION || recall < RECALL_MINIMO_DE_LA_EVALUACION {
+        fallos.push(format!("precisión {precision:.3} / recall {recall:.3} por debajo del piso"));
+    }
+    if peor_ms > PRESUPUESTO_DE_LA_EVALUACION_MS {
+        fallos.push(format!("la evaluación más lenta tardó {peor_ms:.1} ms: el presupuesto es {PRESUPUESTO_DE_LA_EVALUACION_MS} ms"));
+    }
+    assert!(fallos.is_empty(), "la evaluación del ensayo:\n{}", fallos.join("\n"));
 }

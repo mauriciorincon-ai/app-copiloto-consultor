@@ -59,6 +59,33 @@ await pag.goto(`file://${archivo}`);
 const estados = await pag.$$eval(".mq-bar [data-estado]", (bs) => bs.map((b) => b.dataset.estado));
 if (estados.length === 0) { console.error("✗ la página no declara estados en su barra"); process.exit(1); }
 
+// PASADA DE INTERACCIÓN (kit v1.32.0, regla 22 del kit; aquí, regla 23): antes de capturar, se pulsa
+// de verdad cada control de la barra y se mira que algo cambió. Las capturas de abajo fijan el estado
+// por `evaluate`, que es más rápido pero no prueba que el botón funcione: un panel que no se abre al
+// pulsarlo «mide bien» en una captura hecha por código. El gate de la CI es
+// `tests/e2e/maqueta-interaccion.spec.ts`; esto es lo mismo, a la vista de quien mira las capturas.
+const sordos = [];
+for (const b of await pag.$$(".mq-bar button")) {
+  const sel = await b.evaluate((el) => Object.keys(el.dataset).map((k) => `${k}=${el.dataset[k]}`).join(" "));
+  // Se parte de otro valor (un estado que no existe, el otro tema, el otro idioma) para que el clic
+  // tenga algo que cambiar; un botón muerto deja la página exactamente como quedó aquí.
+  await b.evaluate((el) => {
+    const h = document.documentElement.dataset;
+    h.estado = "__";
+    if (el.dataset.themeSet) h.theme = el.dataset.themeSet === "dark" ? "light" : "dark";
+    if (el.dataset.langSet) h.lang = el.dataset.langSet === "es" ? "en" : "es";
+    window.__mqApply();
+  });
+  const foto = () => pag.evaluate(() => JSON.stringify({ ...document.documentElement.dataset }) + document.body.innerText);
+  const antes = await foto();
+  await b.click();
+  if ((await foto()) === antes) sordos.push(sel || "(sin data-*)");
+}
+console.log("── pasada de interacción ────────────────────────────────────");
+if (sordos.length === 0) console.log("   cada control de la barra cambió algo al pulsarlo");
+else sordos.forEach((s) => console.log(`   ⚠ el control [${s}] no cambió nada`));
+console.log("─────────────────────────────────────────────────────────────\n");
+
 const desbordes = [];
 const sinRecorte = [];
 const hechas = [];

@@ -313,6 +313,7 @@ impl Grifo {
 
     /// Abre el micrófono: el dispositivo de entrada por defecto del Mac.
     pub fn del_microfono(anillo: Arc<Mutex<Anillo>>) -> Result<Self, super::NoAbrio> {
+        crate::hardware::vigilar("el micrófono");
         Self::abrir_el_microfono(anillo).map_err(no_abrio)
     }
 
@@ -330,6 +331,7 @@ impl Grifo {
     /// altavoces, y un tap que se oyera a sí mismo transcribiría su propia voz como si fuera el
     /// cliente.
     pub fn del_sistema(anillo: Arc<Mutex<Anillo>>) -> Result<Self, super::NoAbrio> {
+        crate::hardware::vigilar("el audio del sistema");
         Self::abrir_el_sistema(anillo).map_err(no_abrio)
     }
 

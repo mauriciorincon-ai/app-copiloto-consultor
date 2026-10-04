@@ -56,7 +56,25 @@ const PANTALLAS = [
   { que: "sesión · la NDA lo prohíbe", url: "ventana=principal&pantalla=sesion&estado=nda" },
   { que: "sesión · en solo notas", url: "ventana=principal&pantalla=sesion&estado=solo-notas" },
   { que: "banda · solo notas", url: "ventana=banda&estado=solo-notas" },
+  // La banda arriba (sprint 004): la variante con el asa abajo, y el aviso de la primera vez en Sesión.
+  { que: "banda · arriba", url: "ventana=banda&estado=ficha&borde=arriba" },
+  { que: "banda · arriba · solo audio", url: "ventana=banda&estado=voz&borde=arriba" },
+  { que: "sesión · la primera vez con la banda arriba", url: "ventana=principal&pantalla=sesion&estado=aviso" },
   { que: "banda · sugerencia", url: "ventana=banda&estado=sugerencia-local" },
+  // El ensayo (sprint 004, fase 3, ADR 019): cada estado que la pantalla dibuja.
+  { que: "ensayo · preparar", url: "ventana=principal&pantalla=ensayo&estado=preparar" },
+  { que: "ensayo · no empezó", url: "ventana=principal&pantalla=ensayo&estado=no-empezo" },
+  { que: "ensayo · preguntando", url: "ventana=principal&pantalla=ensayo&estado=preguntando" },
+  { que: "ensayo · del modelo", url: "ventana=principal&pantalla=ensayo&estado=del-modelo" },
+  { que: "ensayo · respondiendo", url: "ventana=principal&pantalla=ensayo&estado=respondiendo" },
+  { que: "ensayo · evaluada", url: "ventana=principal&pantalla=ensayo&estado=evaluada" },
+  { que: "ensayo · el informe", url: "ventana=principal&pantalla=ensayo&estado=cerrado" },
+  { que: "ensayo · sin corpus", url: "ventana=principal&pantalla=ensayo&estado=sin-corpus" },
+  // Lo que queda de tus ensayos (fase 4, ADR 015 enmienda 4): guardado, tu progreso y borrarlo.
+  { que: "ensayo · guardado", url: "ventana=principal&pantalla=ensayo&estado=guardado" },
+  { que: "ensayo · tu progreso", url: "ventana=principal&pantalla=ensayo&estado=progreso" },
+  { que: "ensayo · borrar", url: "ventana=principal&pantalla=ensayo&estado=progreso-borrar" },
+  { que: "honestidad · ensayando", url: "ventana=principal&pantalla=honestidad&estado=ensayando" },
 ];
 
 test.use({ reducedMotion: "reduce" });

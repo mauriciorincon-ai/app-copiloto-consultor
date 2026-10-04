@@ -41,6 +41,9 @@ const DECLARACIONES = [
   "src/notas.ts",
   "src/jurisdiccion.ts",
   "src/puerta.ts",
+  "src/franja.ts",
+  // Sprint 004, fase 3: el ensayo cruza por dos comandos que leen y siete que conmutan (ADR 019).
+  "src/ensayo.ts",
 ];
 const FIXTURE = "src/contrato.generado.ts";
 

@@ -226,6 +226,9 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .aviso-legal, .tarjeta p.aviso-legal { font-size: 11px; color: var(--ink-2); }
 .pregunta-nda .ic { color: var(--halo); flex: 0 0 auto; }
 .tarjeta p.clausula { font-family: var(--font-evidencia); font-size: 12.5px; line-height: 1.45; color: var(--ink); }
+.evidencia-e li .ic { margin-top: 2px; }
+.evidencia-e .usada .ic { color: var(--ok); }
+.evidencia-e .sin-usar .ic { color: var(--halo); }
 .mq-meet .titulo { height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 12px; font-size: 12px; color: #8a919b; border-bottom: 1px solid #2c3037; }
 .mq-meet .titulo i { width: 10px; height: 10px; border-radius: 50%; background: #3e434b; display: inline-block; }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
@@ -233,6 +236,8 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
 .mq-card .num { font-family: Menlo, monospace; font-size: 11px; color: #7dd3fc; }
 @media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
+.mq-corte.abajo span { top: 6px; }
 .k-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
 .k-grid.ancha { grid-template-columns: 1fr; }
 .k-item { display: flex; flex-direction: column; gap: 6px; }

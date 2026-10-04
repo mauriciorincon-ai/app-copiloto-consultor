@@ -1,6 +1,7 @@
 import { useIdioma, useT } from "../i18n";
 import { Ic } from "./Iconos";
 import { useAsa } from "../asa";
+import { useFranja, type Borde } from "../franja";
 import { useTurnos } from "../turnos";
 import { useFicha, type Acumulada, type Aparicion } from "../ficha";
 import { hayTauri } from "../puente";
@@ -90,6 +91,12 @@ export type PropsBanda = {
   acoplada?: boolean;
   /** El cliente detectado tiene la protección verificada por el spike. */
   verificado?: boolean;
+  /**
+   * En qué borde vive (sprint 004). **Solo manda fuera de Tauri**, para el arnés de capturas: abajo es
+   * la banda de `banda.html`, contra la que compara el gate desde el S1; arriba, la variante de
+   * `posicion.html`. Dentro del producto lo dice Rust (`useFranja`).
+   */
+  borde?: Borde;
 };
 
 /** La cifra que pintan las muestras de la maqueta. El producto pinta la del contador, siempre. */
@@ -101,6 +108,7 @@ export function Banda({
   transcript = false,
   acoplada = true,
   verificado = true,
+  borde: bordeDeMuestra = "abajo",
 }: PropsBanda) {
   const t = useT().banda;
   const tc = useT().cuaderno;
@@ -181,7 +189,8 @@ export function Banda({
   // recibir la primera respuesta se vería como un transcript vacío, y un transcript vacío en una
   // reunión con gente hablando parece una avería.
   const turnos = useTurnos();
-  const asa = useAsa();
+  const { borde } = useFranja({ borde: bordeDeMuestra, barra: 0, avisoVisto: true });
+  const asa = useAsa(borde);
   const voz = useVoz();
 
   /** «1 documento» y no «1 documentos»: el contador es visible y la app es bilingüe por regla. */
@@ -381,6 +390,7 @@ export function Banda({
         voz={comoEsta}
         aparicion={aparicion?.clase === "ficha" ? aparicion : null}
         asa={asa}
+        borde={borde}
       />
     );
   }
@@ -390,6 +400,7 @@ export function Banda({
       className={grande ? "banda ampliada" : "banda"}
       aria-label="Angel Ghost"
       data-estado={estadoReal}
+      data-borde={borde}
     >
       {/* El asa ajusta la banda Y su relleno a la vez; el arrastre lo resuelve Rust. */}
       <span className="asa" ref={asa} title={t.asaAjustar}>
@@ -890,11 +901,13 @@ function BandaDeVoz({
   voz,
   aparicion,
   asa,
+  borde,
 }: {
   bytes: string;
   voz: LaVoz;
   aparicion: (Aparicion & { clase: "ficha" }) | null;
   asa: React.RefObject<HTMLSpanElement | null>;
+  borde: Borde;
 }) {
   const t = useT().banda;
   const estado = !voz.puede ? "voz-sin" : voz.diciendo ? "voz" : "voz-espera";
@@ -933,7 +946,7 @@ function BandaDeVoz({
     // sprint 001, que fue exactamente eso. Quien use un lector de pantalla se entera del modo por
     // la línea, que sí es bilingüe; y el estado, para los tests y el gate de fidelidad, viaja en
     // `data-estado` como en la banda de 88 px.
-    <section className="banda voz" aria-label="Angel Ghost" data-estado={estado}>
+    <section className="banda voz" aria-label="Angel Ghost" data-estado={estado} data-borde={borde}>
       {/* El asa sigue siendo la misma y sigue haciendo lo mismo: arrastrarla saca del modo,
           porque el alto ES el modo. No hace falta una tecla distinta para lo que ya se hace
           tirando de la banda. */}

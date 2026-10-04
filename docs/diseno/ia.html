@@ -23,6 +23,7 @@
     <button data-estado="s3-puerta">sprint 3 · la puerta</button>
     <button data-estado="s3-puerta-abierta">sprint 3 · la puerta abierta</button>
     <button data-estado="s3-puerta-reunion">sprint 3 · se cerró sola</button>
+    <button data-estado="s4">sprint 4 · enriquecer el banco</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -36,6 +37,7 @@
   <div class="n" data-para="evaluacion"><b>Qué mirar:</b> la regla «código primero» convertida en tabla medida. El modelo aporta 3 aciertos de 40 y cuesta 2,3 segundos. Y la fila incómoda está ahí: <b>1 de 40 se inventó una cifra</b>, en los dos modelos.</div>
   <div class="n" data-para="s2"><b>Qué mirar (mirada 18 — su veredicto viaja al gate del MVP):</b> la pantalla que se construye en el sprint 2, armada con piezas que ya aprobaste arriba. Quién redacta, <b>con el motivo cuando nadie puede</b> —aquí, Apple Intelligence apagado en Ajustes—; el contador; la casilla de redactar, <b>apagada</b>; y el proveedor externo con tu clave en el Llavero y su costo con el tope del mes. Lo que no entra todavía y queda declarado: el texto exacto que salió con lo reemplazado tachado, la lista de peticiones y el kit de evaluación en pantalla (sus números están en la bitácora del sprint).</div>
   <div class="n" data-para="claude-code"><b>Qué mirar:</b> lo que pediste — que Claude Code pueda operar la app desde tu propio Mac. La puerta es <b>local</b> y nace <b>cerrada</b>. Mira sobre todo las dos columnas: qué puede hacer y qué <b>no puede hacer nunca</b>. Y la regla que lo sostiene todo: <b>en reunión la puerta se cierra sola</b> — un agente no toca jamás lo que está vivo en memoria. Abajo, el registro de lo que hizo.</div>
+  <div class="n" data-para="s4"><b>Maquetado, no visto (sprint 4, fase 0 — forma; va al gate del MVP del H2; ADR 019):</b> junto a «Redactar sugerencias», un segundo interruptor, <b>apagado de fábrica</b>: «Enriquecer el banco» (el del ensayo). Encendido, una vez por ensayo el modelo propone hasta cinco preguntas de más a partir de los títulos de tu propuesta y su ficha, <b>con los nombres tapados</b>; lo que sale se ve en «Ver lo que salió» y cuenta en el costo. Apagado, el ensayo usa solo las reglas.</div>
   <div class="n" data-para="s3-quien"><b>Qué mirar (mirada 19 — forma, decisión de diseño no escrita):</b> la pantalla de hoy no tiene sitio para «lo que salió» —ocupa sus 640 px—, así que no se le añade debajo: aparece un botón <b>«Ver lo que salió · N»</b> en la tarjeta del proveedor externo, solo cuando algo salió en esta reunión. <b>Maquetado, no visto (auditoría del S3, M3 — decisión del usuario, 2026-09-29):</b> Gemini sale; bajo el costo —la columna que tiene sitio—, una línea dice qué hace el proveedor elegido con lo que le mandas. Con Groq elegido: «<span lang="es">Groq no entrena con lo que le mandas; sin retención cero en su consola, puede guardarlo hasta 30 días.</span><span lang="en">Groq does not train on what you send; without zero retention in its console, it may keep it up to 30 days.</span>»</div>
   <div class="n" data-para="s3-puerta"><b>Qué mirar (sprint 3 · mirada 22 — forma, «maquetado, no visto»):</b> la puerta local para Claude Code se abre como «lo que salió»: un botón <b>«Puerta local · cerrada»</b> en la fila de «Redactar sugerencias» lleva a la vista de la Etapa de Diseño, con un botón para volver. Nace cerrada. Los textos de la Etapa de Diseño que prometían más de lo que la puerta hace se ajustan (va al bloque de textos del gate): reindexar sin «añadir carpetas», el kit mide la búsqueda y no compara proveedores, las preferencias son las de la lista blanca, y «ni decidir por ti» (redactar, tus turnos, tu NDA). Sin nada en el registro: «Tu agente no ha pedido nada en esta sesión de la app.»</div>
   <div class="n" data-para="s3-puerta-abierta"><b>Qué mirar (sprint 3 · mirada 22):</b> abierta. El comando para dárselo a Claude Code, con «Copiar» —si <code>ghost</code> no está compilado, en su lugar: «Falta compilar ghost junto a la app: pnpm ghost»—, y lo que va a pasar en tu Mac: cada vez que abres la puerta, <b>macOS te pregunta</b> si ghost puede usar la llave de tu Llavero (auditoría del S3, B12: decía «la primera vez»; texto, maquetado, no visto). El registro, lo más reciente arriba, sin contenido: la orden, si se hizo y, si no, por qué. Los otros motivos que puede decir: «llave errada», «lo decides tú», «orden desconocida»; y lo hecho sin cuenta dice «hecho». El registro guarda las últimas 50 órdenes de esta sesión de la app: se ven tres y el resto se desplaza. En inglés: <span lang="en">«ghost is not built next to the app: pnpm ghost» · «wrong key» · «unknown order» · «done»</span>.</div>
@@ -50,6 +52,7 @@
   <nav class="rail">
     <div class="marca"><svg class="ic"><use href="#i-ojo-off"/></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
     <a href="sesion.html"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a href="ensayo.html"><svg class="ic s"><use href="#i-ensayo"/></svg><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></a>
     <a href="permisos.html"><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
     <a href="corpus.html"><svg class="ic s"><use href="#i-doc"/></svg>Corpus</a>
     <a href="notas.html"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
@@ -64,7 +67,7 @@
       <!-- «así se ve hoy · sprint 2»: el chip del producto es el mismo en todas las pantallas —la
            reunión detectada y su contador—, como en Sesión. -->
       <span class="estado halo" data-en="s2"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
-      <span class="estado halo" data-en="s3-quien"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
+      <span class="estado halo" data-en="s3-quien s4"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
       <span class="estado halo" data-en="s3-salio"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 12,4 KB</span><span lang="en">Meet detected · 12.4 KB</span></span>
       <!-- La puerta: sin reunión mientras está abierta; con «Meet detectado» cuando se cerró sola. -->
       <span class="estado mute" data-en="s3-puerta s3-puerta-abierta"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Sin sesión · 0 B</span><span lang="en">No session · 0 B</span></span>
@@ -76,7 +79,7 @@
   <div class="contenido">
     <div class="titulo">
       <h1><span lang="es">IA</span><span lang="en">AI</span></h1>
-      <p class="sub" data-en="local api-off api-on evaluacion claude-code s2 s3-quien s3-salio"><span lang="es">Local por defecto. El API es tuyo, opcional, y se ve lo que sale por él.</span><span lang="en">Local by default. The API is yours, optional, and what goes through it is visible.</span></p>
+      <p class="sub" data-en="local api-off api-on evaluacion claude-code s2 s3-quien s3-salio s4"><span lang="es">Local por defecto. El API es tuyo, opcional, y se ve lo que sale por él.</span><span lang="en">Local by default. The API is yours, optional, and what goes through it is visible.</span></p>
       <!-- En la vista de la puerta, el subtítulo es lo que la puerta es: así la tarjeta no lo repite. -->
       <p class="sub" data-en="s3-puerta s3-puerta-abierta s3-puerta-reunion"><span lang="es">Un <b>comando local</b> para que Claude Code opere la app desde este mismo Mac, con una llave de tu Llavero.</span><span lang="en">A <b>local command</b> so Claude Code can operate the app from this same Mac, with a key from your Keychain.</span></p>
     </div>
@@ -312,6 +315,66 @@
         </div>
       </div>
       <div class="fila" style="gap:8px"><label class="conm off" style="padding:2px"><span class="track"></span><span class="etq"><span lang="es">Redactar sugerencias (además de mostrar la ficha)</span><span lang="en">Draft suggestions (on top of showing the card)</span></span></label><span class="crece"></span><button class="btn mini"><svg class="ic s"><use href="#i-llave"/></svg><span lang="es">Puerta local · cerrada</span><span lang="en">Local door · closed</span></button></div>
+      <div class="grid-2" style="grid-template-columns:1.25fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Proveedor externo</span><span lang="en">External provider</span></h2><label class="conm off"><span class="track"></span><span class="etq"><span lang="es">apagado</span><span lang="en">off</span></span></label></div>
+          <div class="fila" style="gap:6px;margin-top:8px">
+            <button class="btn mini" aria-pressed="true"><svg class="ic s relleno" style="color:var(--halo)"><use href="#i-check-circle"/></svg>Claude</button>
+            <button class="btn mini" aria-pressed="false">Groq</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <label class="campo"><span lang="es">Tu clave</span><span lang="en">Your key</span><input class="mono" placeholder="sk-…"><span class="ayuda"><span lang="es">se guarda en tu Llavero, nunca en un archivo</span><span lang="en">stored in your Keychain, never in a file</span></span></label>
+            <div class="fila" style="gap:8px"><button class="btn mini" disabled><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Guardar en el Llavero</span><span lang="en">Save to Keychain</span></button><button class="btn mini"><span lang="es">Borrar la clave</span><span lang="en">Delete the key</span></button><span class="crece"></span><button class="btn mini"><svg class="ic s"><use href="#i-nube"/></svg><span lang="es">Ver lo que salió · 3</span><span lang="en">See what left · 3</span></button></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="tarjeta" style="padding-bottom:6px">
+          <h2 class="seccion" style="margin:0 0 4px"><span lang="es">Costo</span><span lang="en">Cost</span></h2>
+          <table class="tabla">
+            <tbody>
+              <tr><td><span lang="es">Esta reunión</span><span lang="en">This meeting</span></td><td class="num"><span lang="es">USD 0,00</span><span lang="en">USD 0.00</span></td></tr>
+              <tr><td><span lang="es">Este mes</span><span lang="en">This month</span></td><td class="num"><span lang="es">USD 0,00</span><span lang="en">USD 0.00</span></td></tr>
+              <tr><td><span lang="es">Tope del mes</span><span lang="en">Monthly cap</span></td><td class="num"><span lang="es">USD 10,00</span><span lang="en">USD 10.00</span></td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:11.5px;color:var(--ink-2);margin-top:6px"><span lang="es">Al llegar al tope vuelve sola al modelo local. No se detiene la reunión.</span><span lang="en">On reaching the cap it falls back to the local model on its own. The meeting is not interrupted.</span></p>
+        </div>
+        <p class="retencion" style="font-size:11.5px;color:var(--ink-2);margin:0 4px"><span lang="es">Claude no entrena con lo que le mandas, pero lo guarda hasta 30 días.</span><span lang="en">Claude does not train on what you send it, but keeps it for up to 30 days.</span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== sprint 3 · lo que salió (mirada 19, decisión de diseño no escrita) ===== -->
+    <!-- ===== sprint 4 · enriquecer el banco del ensayo (FORMA y TEXTO, maquetado, no visto) ===== -->
+    <div data-en="s4" style="display:flex;flex-direction:column;gap:12px">
+      <div class="grid-2" style="grid-template-columns:1.25fr 1fr;gap:12px;align-items:start">
+        <div class="tarjeta" style="padding-bottom:8px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Quién redacta la sugerencia</span><span lang="en">Who writes the suggestion</span></h2><span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"/></svg><span lang="es">nadie</span><span lang="en">nobody</span></span></div>
+          <table class="tabla">
+            <thead><tr><th><span lang="es">proveedor</span><span lang="en">provider</span></th><th><span lang="es">estado</span><span lang="en">state</span></th><th class="num"><span lang="es">latencia</span><span lang="en">latency</span></th></tr></thead>
+            <tbody>
+              <tr><td><span lang="es">Modelo del sistema (macOS 26)</span><span lang="en">System model (macOS 26)</span></td><td><span class="estado warn"><svg class="ic s relleno"><use href="#i-alert"/></svg><span lang="es">no disponible</span><span lang="en">not available</span></span></td><td class="num">—</td></tr>
+              <tr class="apagada"><td>MLX · Qwen 3 4B</td><td><span class="estado pendiente"><svg class="ic s"><use href="#i-pendiente"/></svg><span lang="es">En el H2</span><span lang="en">In H2</span></span></td><td class="num">—</td></tr>
+              <tr class="apagada"><td><span lang="es">API externo</span><span lang="en">External API</span></td><td><span lang="es">apagado</span><span lang="en">off</span></td><td class="num">—</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:11.5px;color:var(--ink-2);margin-top:6px"><span lang="es">Apple Intelligence está apagado en Ajustes.</span><span lang="en">Apple Intelligence is off in Settings.</span></p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="contador cero">
+            <span class="cifra">0 <small>B</small></span>
+            <span class="etq"><span lang="es">salieron de tu equipo en esta reunión</span><span lang="en">left your machine in this meeting</span></span>
+          </div>
+          <div class="franja ok" role="status">
+            <svg class="ic relleno"><use href="#i-check-circle"/></svg>
+            <div>
+              <strong><span lang="es">Si el modelo falla, quedan las fichas</span><span lang="en">If the model fails, the cards remain</span></strong>
+              <p><span lang="es">La sugerencia es un acento. Buscar en tu corpus y mostrar la ficha con su fuente es código, no modelo: funciona aunque apagues esto entero.</span><span lang="en">The suggestion is an accent. Searching your corpus and showing the card with its source is code, not a model: it works even with all of this turned off.</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="fila" style="gap:8px"><label class="conm off" style="padding:2px"><span class="track"></span><span class="etq"><span lang="es">Redactar sugerencias (además de mostrar la ficha)</span><span lang="en">Draft suggestions (on top of showing the card)</span></span></label><label class="conm off" style="padding:2px"><span class="track"></span><span class="etq"><span lang="es">Enriquecer el banco</span><span lang="en">Enrich the bank</span></span></label><span class="crece"></span><button class="btn mini"><svg class="ic s"><use href="#i-llave"/></svg><span lang="es">Puerta local · cerrada</span><span lang="en">Local door · closed</span></button></div>
       <div class="grid-2" style="grid-template-columns:1.25fr 1fr;gap:12px;align-items:start">
         <div class="tarjeta">
           <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Proveedor externo</span><span lang="en">External provider</span></h2><label class="conm off"><span class="track"></span><span class="etq"><span lang="es">apagado</span><span lang="en">off</span></span></label></div>

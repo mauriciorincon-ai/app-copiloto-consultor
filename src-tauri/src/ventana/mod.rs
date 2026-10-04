@@ -3,7 +3,7 @@
 //! | Ventana | Qué es | Protegida de la captura |
 //! |---|---|---|
 //! | `principal` | 960 × 640, las pantallas del cuaderno | **con la reunión abierta** (desde el S3) |
-//! | `banda` | ancho de pantalla × 88 (asa → 200), pegada al borde inferior | **sí, siempre** |
+//! | `banda` | ancho de pantalla × 88 (asa → 200), bajo la barra de menús o pegada abajo (sprint 004) | **sí, siempre** |
 //! | `relleno` | la misma geometría, SIN contenido, justo debajo de la banda | no, **jamás, a propósito** |
 //!
 //! **La regla que gobierna este módulo: la protección FIJA vive SOLO en `tauri.conf.json`** (la
@@ -20,6 +20,9 @@
 
 use tauri::utils::config::WindowConfig;
 use tauri::{AppHandle, LogicalPosition, LogicalSize, Manager, Runtime, WebviewWindowBuilder};
+
+pub mod geometria;
+pub use geometria::Borde;
 
 pub const PRINCIPAL: &str = "principal";
 pub const BANDA: &str = "banda";
@@ -136,8 +139,8 @@ fn config_de<'a>(ventanas: &'a [WindowConfig], etiqueta: &str) -> Result<&'a Win
 }
 
 /// Abre la banda y su relleno, en ese orden inverso: **primero el relleno, después la banda**, para
-/// que la banda quede encima. Las dos ocupan el ancho entero del monitor principal, pegadas al
-/// borde inferior.
+/// que la banda quede encima. Las dos ocupan el ancho entero del monitor principal, en el borde que
+/// diga `borde` (sprint 004: arriba de fábrica, bajo la barra de menús; abajo como en el H1).
 ///
 /// No abre nada si el invariante de protección no se cumple.
 ///
@@ -147,11 +150,12 @@ fn config_de<'a>(ventanas: &'a [WindowConfig], etiqueta: &str) -> Result<&'a Win
 /// solo llamador (hallazgo M4). Volver a llamarla con la banda en pantalla habría sido un error,
 /// porque `build()` no admite una etiqueta repetida, así que la reposición se mira **ventana por
 /// ventana**: se abre la que falte y se deja en paz la que esté.
-pub fn abrir_banda<R: Runtime>(app: &AppHandle<R>, alto: u32) -> Result<(), String> {
+pub fn abrir_banda<R: Runtime>(app: &AppHandle<R>, borde: Borde, alto: u32) -> Result<(), String> {
     let ventanas = app.config().app.windows.clone();
     invariante_de_proteccion(&proteccion_declarada(&ventanas))?;
 
-    let (ancho, x, y) = geometria(app, alto)?;
+    let f = franja(app, borde, alto)?;
+    let (ancho, x, y) = (f.ancho, f.x, f.y);
 
     for etiqueta in [RELLENO, BANDA] {
         // Una por una y no «si falta alguna, las dos»: si alguna vez quedara el relleno sin su
@@ -184,15 +188,17 @@ pub fn abrir_banda<R: Runtime>(app: &AppHandle<R>, alto: u32) -> Result<(), Stri
     Ok(())
 }
 
-/// Ajusta el alto de la banda **y el de su relleno**, manteniendo el borde inferior pegado a la
-/// pantalla. Es lo que hace el asa.
+/// Ajusta el alto de la banda **y el de su relleno**, manteniendo pegado a la pantalla el borde que
+/// la toca: el superior arriba, el inferior abajo. Es lo que hace el asa, y lo que recoloca la banda
+/// cuando cambias de borde (`⌃⌥B`).
 ///
 /// Los dos se mueven en la misma llamada a propósito: si el relleno pudiera quedarse en 88 px
 /// mientras la banda crece a 200, la franja de arriba dejaría de estar cubierta y la captura vería
 /// lo que hay detrás — el mismo fallo que el relleno existe para evitar, por la puerta de al lado.
-pub fn ajustar_banda<R: Runtime>(app: &AppHandle<R>, alto: u32) -> Result<(), String> {
+pub fn ajustar_banda<R: Runtime>(app: &AppHandle<R>, borde: Borde, alto: u32) -> Result<(), String> {
     let alto = alto.clamp(ALTO_VOZ, ALTO_AMPLIADA);
-    let (ancho, x, y) = geometria(app, alto)?;
+    let f = franja(app, borde, alto)?;
+    let (ancho, x, y) = (f.ancho, f.x, f.y);
     for etiqueta in [RELLENO, BANDA] {
         let Some(v) = app.get_webview_window(etiqueta) else { continue };
         v.set_size(LogicalSize::new(ancho, f64::from(alto)))
@@ -209,9 +215,14 @@ pub fn ajustar_banda<R: Runtime>(app: &AppHandle<R>, alto: u32) -> Result<(), St
 /// la Accessibility API: los dos lados usan el mismo sin conversión de por medio. Una conversión
 /// de más entre estos dos puntos valdría 2× en una pantalla Retina, y 2× de 88 px es media banda
 /// — el tipo de error que se ve como «el acople recorta de más» y se busca en el sitio equivocado.
-pub fn franja<R: Runtime>(app: &AppHandle<R>, alto: u32) -> Result<crate::acople::Marco, String> {
-    let (ancho, x, y) = geometria(app, alto)?;
-    Ok(crate::acople::Marco::nuevo(x, y, ancho, f64::from(alto)))
+pub fn franja<R: Runtime>(app: &AppHandle<R>, borde: Borde, alto: u32) -> Result<crate::acople::Marco, String> {
+    Ok(geometria::franja(borde, &monitor_principal(app)?, alto))
+}
+
+/// Cuánto mide la barra de menús del monitor principal: lo que el relleno sube el fondo con la banda
+/// arriba. Cero si no se puede leer el monitor (el relleno queda negro arriba, que no filtra nada).
+pub fn barra<R: Runtime>(app: &AppHandle<R>) -> f64 {
+    monitor_principal(app).map(|m| geometria::barra(&m)).unwrap_or(0.0)
 }
 
 /// El alto actual de la banda, leído de la ventana. `None` si la banda no está abierta.
@@ -222,8 +233,10 @@ pub fn alto_actual<R: Runtime>(app: &AppHandle<R>) -> Option<u32> {
     Some(t.height.round() as u32)
 }
 
-/// Ancho y esquina superior izquierda de la franja, para un alto dado.
-fn geometria<R: Runtime>(app: &AppHandle<R>, alto: u32) -> Result<(f64, f64, f64), String> {
+/// El monitor principal en puntos, con su área útil: lo único que la geometría pura necesita saber del
+/// sistema. El área útil la da Tauri (`work_area`, el `visibleFrame` de macOS ya volteado a origen
+/// arriba-izquierda), así que no hace falta FFI para saber cuánto mide la barra de menús.
+fn monitor_principal<R: Runtime>(app: &AppHandle<R>) -> Result<geometria::Monitor, String> {
     let monitor = app
         .primary_monitor()
         .map_err(|e| format!("no se pudo leer el monitor principal: {e}"))?
@@ -231,11 +244,13 @@ fn geometria<R: Runtime>(app: &AppHandle<R>, alto: u32) -> Result<(f64, f64, f64
     let escala = monitor.scale_factor();
     let tamano: LogicalSize<f64> = monitor.size().to_logical(escala);
     let origen: LogicalPosition<f64> = monitor.position().to_logical(escala);
-    Ok((
-        tamano.width,
-        origen.x,
-        origen.y + tamano.height - f64::from(alto),
-    ))
+    let util = monitor.work_area();
+    let util_tamano: LogicalSize<f64> = util.size.to_logical(escala);
+    let util_origen: LogicalPosition<f64> = util.position.to_logical(escala);
+    Ok(geometria::Monitor {
+        marco: crate::acople::Marco::nuevo(origen.x, origen.y, tamano.width, tamano.height),
+        util: crate::acople::Marco::nuevo(util_origen.x, util_origen.y, util_tamano.width, util_tamano.height),
+    })
 }
 
 /// Deja en el log la geometría REAL de cada ventana: etiqueta, posición y tamaño. Solo metadatos

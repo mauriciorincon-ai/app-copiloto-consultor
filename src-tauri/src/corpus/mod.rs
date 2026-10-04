@@ -275,6 +275,56 @@ impl Corpus {
         &self.documentos
     }
 
+    /// **Las secciones de un documento tuyo, enteras y en orden** (sprint 004, el banco del ensayo). El
+    /// índice guarda trozos para buscar; el banco necesita cada sección con su título. Se relee de donde
+    /// está, con el mismo lector y el mismo troceado que al indexar, y los trozos seguidos de un mismo
+    /// título vuelven a ser uno. Solo documentos de tu corpus: una ruta cualquiera no se lee.
+    pub fn secciones_de(&self, ruta: &str) -> Result<Vec<seccion::Seccion>, String> {
+        if !self.documentos.iter().any(|d| d.ruta == ruta) {
+            return Err("ese documento no está en tu corpus".into());
+        }
+        let leido = leer::leer(Path::new(ruta)).map_err(|e| e.motivo())?;
+        let mut juntas: Vec<seccion::Seccion> = Vec::new();
+        for s in seccion::trocear(&leido.lineas) {
+            match juntas.last_mut() {
+                Some(previa) if previa.titulo == s.titulo => {
+                    previa.texto.push('\n');
+                    previa.texto.push_str(&s.texto);
+                }
+                _ => juntas.push(s),
+            }
+        }
+        Ok(juntas)
+    }
+
+    /// **Las propuestas de un cliente** (sprint 004): los documentos de la unidad «propuesta» que lo
+    /// nombran, en el nombre del archivo o en su texto —como [`Corpus::conoce`]—. Ningún código une una
+    /// propuesta con su cliente de otra forma; si hay varias, eliges tú, y si no hay ninguna, el ensayo
+    /// lo dice («sin corpus para este cliente»).
+    pub fn propuestas_de(&self, cliente: &str) -> Vec<&Documento> {
+        let buscado = crate::propuestas::plegar(cliente);
+        if buscado.trim().is_empty() {
+            return Vec::new();
+        }
+        self.documentos
+            .iter()
+            .filter(|d| d.unidad == Some(Unidad::Propuesta) && matches!(d.estado, Estado::Indexado { .. }))
+            .filter(|d| {
+                crate::propuestas::plegar(&d.nombre).contains(&buscado)
+                    || leer::leer(Path::new(&d.ruta))
+                        .is_ok_and(|l| l.lineas.iter().any(|x| crate::propuestas::plegar(&x.texto).contains(&buscado)))
+            })
+            .collect()
+    }
+
+    /// **La ficha de un cliente**, por su nombre (el que da [`clientes`]).
+    pub fn ficha_de(&self, cliente: &str) -> Option<&Documento> {
+        self.documentos
+            .iter()
+            .filter(|d| d.unidad == Some(Unidad::Cliente))
+            .find(|d| cliente_de(&d.nombre) == cliente)
+    }
+
     pub fn estado(&self) -> EstadoDelCorpus {
         let ilegibles = self
             .documentos
@@ -354,6 +404,25 @@ fn pesa(carpeta: &Path) -> u64 {
 #[cfg(test)]
 mod pruebas {
     use super::*;
+
+    /// **El ensayo lee la propuesta y la ficha del kit por título** (sprint 004): las seis secciones de la
+    /// propuesta y las cuatro de la ficha, enteras, aunque «Historial» sea más corta que el mínimo del
+    /// índice. Y la propuesta se encuentra por el cliente que nombra.
+    #[test]
+    fn el_ensayo_lee_la_propuesta_y_la_ficha_de_un_cliente_por_titulo() {
+        let kit = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../docs/kit-de-prueba/corpus");
+        let mut c = Corpus::en_memoria().unwrap();
+        c.indexar(&kit, &|_| {}).unwrap();
+        let propuestas = c.propuestas_de("Páramo Azul");
+        assert_eq!(propuestas.len(), 1, "{:?}", propuestas.iter().map(|d| &d.nombre).collect::<Vec<_>>());
+        assert!(c.propuestas_de("Sur del Valle").is_empty(), "el caso no es una propuesta");
+        assert!(c.propuestas_de("  ").is_empty());
+        let titulos = |ruta: &str| c.secciones_de(ruta).unwrap().into_iter().map(|s| s.titulo.unwrap_or_default()).collect::<Vec<_>>();
+        assert_eq!(titulos(&propuestas[0].ruta), ["Contexto", "Alcance", "Supuestos", "Entregables", "Precio", "Plazo de entrega"]);
+        let ficha = c.ficha_de("Páramo Azul").expect("la ficha del kit");
+        assert_eq!(titulos(&ficha.ruta), ["Quiénes son", "Quién decide", "Acuerdos previos", "Historial"]);
+        assert!(c.secciones_de("/etc/hosts").is_err(), "una ruta que no es de tu corpus no se lee");
+    }
 
     /// Cada test estrena carpeta. Compartirla por PID las hace pisarse entre ellas al correr en
     /// paralelo dentro del mismo binario — el mismo defecto que en la fase 3 obligó a serializar

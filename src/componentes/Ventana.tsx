@@ -7,13 +7,13 @@ import { useBytesALaRed } from "../cuaderno";
  * LA VENTANA DEL CUADERNO (960 × 640) — el marco de las pantallas de la ventana principal.
  *
  * Reproduce `main.ventana > nav.rail + div.contenido` de la maqueta, con las clases canon de
- * `ghost.css`. El rail es el mismo en las siete pantallas; lo que cambia es el contenido.
+ * `ghost.css`. El rail es el mismo en las ocho pantallas; lo que cambia es el contenido.
  *
  * Las secciones que aún no existen **siguen en el rail**, apagadas. Quitarlas escondería que la
  * app va a tenerlas; ponerlas navegables prometería una pantalla que no está. Es la misma
  * decisión que «todavía no» (design-system §9-sexies), aplicada a la navegación.
  */
-export type Seccion = "sesion" | "permisos" | "corpus" | "notas" | "honestidad" | "idioma" | "ia";
+export type Seccion = "sesion" | "ensayo" | "permisos" | "corpus" | "notas" | "honestidad" | "idioma" | "ia";
 
 /** Solo las claves del cuaderno que son UNA frase: las de los porqués son catálogos, no rótulos. */
 type Rotulo = {
@@ -22,6 +22,8 @@ type Rotulo = {
 
 const RAIL: { id: Seccion | null; icono: string; clave: Rotulo }[] = [
   { id: "sesion", icono: "i-video", clave: "navSesion" },
+  // Ensayo se encendió en el sprint 004 (fase 3, C18): lo que haces ANTES de la reunión, justo debajo.
+  { id: "ensayo", icono: "i-ensayo", clave: "navEnsayo" },
   { id: "permisos", icono: "i-candado", clave: "navPermisos" },
   { id: "corpus", icono: "i-doc", clave: "navCorpus" },
   // Notas se encendió en el sprint 003 (fase 1, C9): lo tuyo, lo único que sobrevive a la reunión.
@@ -45,6 +47,7 @@ export function Ventana({
   cliente = "Meet",
   cerrando = false,
   bandeja = null,
+  ensayando = false,
   children,
 }: {
   seccion: Seccion;
@@ -60,6 +63,8 @@ export function Ventana({
    * enseña la que acaba de vencer. Mientras escuchas manda la reunión, no la bandeja.
    */
   bandeja?: { texto: string; vencida: boolean } | null;
+  /** Hay un ensayo con el micrófono abierto (sprint 004): «Ensayando · 0 B». */
+  ensayando?: boolean;
   children: ReactNode;
 }) {
   // La cifra es la del contador, no una constante: con el API encendido, el chip decía «0 B»
@@ -67,6 +72,7 @@ export function Ventana({
   const bytes = useBytesALaRed();
   const t = useT().cuaderno;
   const tn = useT().notas;
+  const te = useT().ensayo;
 
   return (
     <main className="ventana">
@@ -110,7 +116,14 @@ export function Ventana({
         })}
 
         <div className="abajo">
-          {cerrando ? (
+          {ensayando ? (
+            <span className="estado halo">
+              <Ic id="i-mic" s />
+              <span>
+                {te.ensayando} · {bytes}
+              </span>
+            </span>
+          ) : cerrando ? (
             <span className="estado halo">
               <Ic id="i-reloj" s />
               <span>{tn.cerrando}</span>

@@ -13,3 +13,5 @@ onlyBuiltDependencies:
   - '@tailwindcss/oxide'
 ignoredBuiltDependencies:
   - '@sentry/cli'
+auditConfig:
+  ignoreGhsas: []

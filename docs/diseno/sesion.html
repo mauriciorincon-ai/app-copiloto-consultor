@@ -25,6 +25,8 @@
     <button data-estado="s3-sin-bandera">sprint 3 · sin jurisdicción</button>
     <button data-estado="s3-clausula">sprint 3 · la cláusula</button>
     <button data-estado="s3-solo-notas">sprint 3 · en solo notas</button>
+    <button data-estado="s4">sprint 4 · la banda arriba o abajo</button>
+    <button data-estado="s4-aviso">sprint 4 · la primera vez</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -39,6 +41,8 @@
   <div class="n" data-para="s1"><b>Qué mirar (mirada 13):</b> lo que en la mirada 12 decía «todavía no» y ahora <b>funciona</b>: las dos pistas escuchan y se transcriben en tu Mac. Y una fila que cambió de significado: <b>«Auriculares conectados»</b> ya no está pendiente, mide de verdad por dónde sale el sonido — y con altavoces avisa, porque el micrófono oye también al cliente. La MISMA pantalla, tal y como se entrega en el sprint 1. Lo que ya funciona está vivo —la reunión detectada y su protección, leídas de tu Mac—; lo que aún no existe lleva <b>«todavía no»</b>: trazo discontinuo, aro punteado y la palabra. No es «apagado» (eso existe y se puede encender): es que todavía no está construido. La pregunta es si al mirarla entiendes qué tienes hoy sin creer que algo está roto.</div>
   <div class="n" data-para="s2"><b>Qué mirar (mirada 17):</b> <b>la pista que NO abrió, y por qué.</b> Hasta hoy esta pantalla decía «Funciona» en las dos pistas <b>pase lo que pase</b>: el estado estaba escrito a mano y no miraba nada. Si macOS negaba el audio del sistema —permiso revocado a mitad, otra app con el dispositivo cogido, un Mac sin el tap—, la pantalla seguía diciendo que funcionaba y el consultor se enteraba <b>al terminar la reunión</b>, al ver que faltaba medio transcript. Es el hallazgo M2 de la auditoría del sprint 001.<br>Ahora la fila mide, y cuando cae <b>trae su motivo en español</b>: el aparato lo dice, la app lo repite tal cual. Fíjate en tres cosas: el símbolo cambia (<b>el altavoz tachado</b>, no solo el color), el motivo va <b>en su línea</b> —no cabe en el chip— y termina en <b>una salida</b>, porque un aviso sin salida es solo una mala noticia. La salida no es un botón nuevo: «Iniciar sesión» vuelve a abrir las dos pistas, así que apunta al que ya está.<br>Y mira dos frases que <b>cambiaron de verdad</b>, no de sitio: la fila de la <b>pantalla</b> deja de estar pendiente —es lo que construye esta fase—, y «Escucha las dos pistas» pasa a <b>«Escucha y transcribe — solo tu pista · A medias»</b>, porque con una pista caída lo primero era <b>falso</b>.<br><b>Lo que NO cabe y queda declarado:</b> sin la pista del sistema la app tampoco puede marcar el eco —lo decide comparando las dos—, así que con altavoces tus turnos y los del cliente se mezclan sin marca. Está en el manual; en 640 px no había línea para decirlo aquí.</div>
   <div class="n" data-para="s2-pantalla"><b>Qué mirar (mirada 17-quater):</b> la fila de la <b>pantalla</b>, que ya lee. Debajo, su <b>interruptor</b> —«Leerla sola»— y el <b>atajo</b> para leerla una vez cuando tú lo pidas, aunque esté apagada: es la salida para una NDA estricta que aprobaste en vez de la selección de región. Y la fila de los <b>auriculares</b> con un dispositivo externo: ahora dice <b>su nombre</b> y avisa de lo único que la app no puede saber —si es un casco o un altavoz—, que es lo que decide si el modo solo audio se puede usar. Los demás estados de estas filas (apagada, sin permiso, no pudo…) están todos juntos en el kit, §8-ter «Los porqués».</div>
+  <div class="n" data-para="s4"><b>Maquetado, no visto (sprint 4, fase 0 — forma y texto; va al gate del MVP del H2):</b> en «Las dos pistas», una fila nueva: <b>la banda, arriba o abajo</b>, con arriba elegido de fábrica y <b>⌃⌥B</b> para cambiarla desde cualquier sitio. Se guarda en tus preferencias (ADR 002, enmienda 8).</div>
+  <div class="n" data-para="s4-aviso"><b>Maquetado, no visto (sprint 4, fase 0):</b> la primera vez que abres la app con la banda arriba, una franja lo dice y explica el porqué —la cámara— y cómo volver abajo. «Entendido» no vuelve a enseñarla.</div>
   <div class="n" data-para="s3"><b>Qué mirar (sprint 3, fase 3 — forma, «maquetado, no visto»; ADR 017):</b> «Este cliente» deja de estar pendiente. Arriba, el <b>selector</b> con los clientes de tu corpus. Debajo, la <b>bandera</b> de su jurisdicción, que sale de una línea de su ficha («Jurisdicción: Colombia»), con la regla, lo que implica, las normas y la fecha del informe; y lo que el informe <b>no pudo verificar</b>, dicho. La NDA, <b>sin revisar</b>, con «Revisar». La <b>cláusula</b> para tu carta de encargo. Y siempre: «no es asesoría legal». Abajo, «Solo notas», por decisión tuya.</div>
   <div class="n" data-para="s3-en-marcha"><b>Qué mirar (sprint 3):</b> lo mismo con la sesión en marcha: el botón la termina y «Solo notas» no está, porque ya estás escuchando. «Este cliente» se puede cambiar igual: nombra el archivo al guardar.</div>
   <div class="n" data-para="s3-pregunta"><b>Qué mirar (sprint 3):</b> pulsaste «Revisar». La pregunta es la del informe legal, con lo que importa: <b>«por cualquier medio»</b>. Dos respuestas. «Sí, lo prohíbe» lleva al estado «NDA prohíbe transcribir» (el de la etapa de diseño); «No lo prohíbe» deja la fila en verde. La respuesta se guarda por cliente.</div>
@@ -54,6 +58,7 @@
   <nav class="rail">
     <div class="marca"><svg class="ic"><use href="#i-ojo-off"/></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
     <a href="sesion.html" aria-current="page"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a href="ensayo.html"><svg class="ic s"><use href="#i-ensayo"/></svg><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></a>
     <a href="permisos.html"><svg class="ic s"><use href="#i-candado"/></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
     <a href="corpus.html"><svg class="ic s"><use href="#i-doc"/></svg>Corpus</a>
     <a href="notas.html"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
@@ -62,7 +67,7 @@
     <a href="ia.html"><svg class="ic s"><use href="#i-chispa"/></svg><span lang="es">IA</span><span lang="en">AI</span></a>
     <div class="abajo">
       <span class="estado mute" data-en="sin-reunion"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Sin sesión · 0 B</span><span lang="en">No session · 0 B</span></span>
-      <span class="estado halo" data-en="detectada nda vigilancia s1 s2 s2-pantalla s3 s3-en-marcha s3-pregunta s3-sin-bandera s3-clausula s3-solo-notas"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
+      <span class="estado halo" data-en="detectada nda vigilancia s1 s2 s2-pantalla s3 s3-en-marcha s3-pregunta s3-sin-bandera s3-clausula s3-solo-notas s4 s4-aviso"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
     </div>
   </nav>
 
@@ -392,6 +397,57 @@
       </div>
     </div>
 
+    <!-- ===== sprint 4 · la banda arriba o abajo (FORMA y TEXTO, maquetado, no visto) ===== -->
+    <div data-en="s4 s4-aviso" style="display:flex;flex-direction:column;gap:14px">
+      <div class="franja mute" data-en="s4-aviso" role="status"><svg class="ic s"><use href="#i-flecha"/></svg><div class="fila" style="flex-wrap:nowrap;gap:10px"><div class="crece"><strong><span lang="es">La banda ahora va arriba, junto a la cámara</span><span lang="en">The band now sits at the top, next to the camera</span></strong><p><span lang="es">Leer la ficha arriba se ve como mirar a quien habla. ¿La prefieres abajo? Cámbiala aquí o con ⌃⌥B.</span><span lang="en">Reading the card up there looks like looking at the speaker. Prefer it at the bottom? Change it here or with ⌃⌥B.</span></p></div><button class="btn mini"><span lang="es">Entendido</span><span lang="en">Got it</span></button></div></div>
+      <div class="tarjeta" data-en="s4">
+        <div class="fila">
+          <svg class="ic" style="color:var(--halo)"><use href="#i-video"/></svg>
+          <h3 class="crece"><span lang="es">Google Meet · Páramo Azul — Propuesta tablero de rentabilidad</span><span lang="en">Google Meet · Páramo Azul — Profitability dashboard proposal</span></h3>
+          <span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Protección verificada</span><span lang="en">Protection verified</span></span>
+        </div>
+        <p><span lang="es">Tu panel no aparece en la pantalla que compartes. Verificado en tu Mac (macOS 26.6.2) el 2026-09-20. En Zoom y Teams está sin verificar.</span><span lang="en">Your panel does not show in the screen you share. Verified on your Mac (macOS 26.6.2) on 2026-09-20. In Zoom and Teams it is unverified.</span></p>
+      </div>
+
+      <div class="grid-2">
+        <div class="tarjeta">
+          <h2 class="seccion"><span lang="es">Las dos pistas</span><span lang="en">The two tracks</span></h2>
+          <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-mic"/></svg><span class="crece"><span lang="es">Micrófono — tú</span><span lang="en">Microphone — you</span></span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Funciona</span><span lang="en">Works</span></span></div>
+          <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-sistema"/></svg><span class="crece"><span lang="es">Audio del sistema — el cliente</span><span lang="en">System audio — the client</span></span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Funciona</span><span lang="en">Works</span></span></div>
+          <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-pantalla"/></svg><span class="crece"><span lang="es">Pantalla — solo lee lo nuevo</span><span lang="en">Screen — reads only what is new</span></span><span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Funciona</span><span lang="en">Works</span></span></div>
+          <div class="fila" style="gap:10px;margin:-2px 0 4px 26px"><label class="conm on"><span class="track"></span><span class="etq"><span lang="es">Leerla sola</span><span lang="en">Read it on its own</span></span></label><span class="tecla" style="font-size:11px"><kbd>⌃⌥L</kbd> <span lang="es">léela ahora</span><span lang="en">read it now</span></span></div>
+          <div class="fila"><svg class="ic s" style="color:var(--ink-2)"><use href="#i-auriculares"/></svg><span class="crece"><span lang="es">Auriculares conectados</span><span lang="en">Headphones connected</span></span><span class="estado mute"><svg class="ic s"><use href="#i-auriculares"/></svg>AirPods Pro</span></div>
+          <p style="font-size:11.5px;margin-top:2px;color:var(--ink-2)"><span lang="es">Si es un altavoz, no uses el modo solo audio.</span><span lang="en">If it is a speaker, do not use audio-only mode.</span></p>
+          <div class="fila"><svg class="ic s" style="color:var(--ink-2)"><use href="#i-flecha"/></svg><span class="crece"><span lang="es">La banda</span><span lang="en">The band</span></span><div class="ventanas"><span class="op on"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">arriba</span><span lang="en">top</span></span><span class="op"><span lang="es">abajo</span><span lang="en">bottom</span></span></div><span class="tecla" style="font-size:11px"><kbd>⌃⌥B</kbd></span></div>
+        </div>
+
+        <div class="tarjeta">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Este cliente</span><span lang="en">This client</span></h2><select class="selector" aria-label="Este cliente"><option>Sin elegir</option><option selected>Páramo Azul</option><option>Sur del Valle</option></select></div>
+          <div class="bandera riesgo-bajo">
+            <svg class="ic"><use href="#i-globo"/></svg>
+            <div class="donde">Colombia <span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">riesgo bajo-medio</span><span lang="en">low-medium risk</span></span></div>
+            <div class="regla"><span lang="es">Escuchar como participante es lícito; la transcripción efímera probablemente es «tratamiento».</span><span lang="en">Listening as a participant is lawful; ephemeral transcription is probably “processing”.</span></div>
+            <div class="implica"><span lang="es">Resuélvelo en el encargo: cláusula del contrato + chequeo de NDA.</span><span lang="en">Handle it at the engagement level: contract clause + NDA check.</span></div>
+            <div class="fuente">CSJ AP1465-2018 · Ley 1581 art. 3 · 2026-09-17</div>
+            <div class="pendiente"><span lang="es">Sin verificar: la CSJ AP1465-2018 se leyó en una fuente secundaria (G-1)</span><span lang="en">Unverified: CSJ AP1465-2018 was read in a secondary source (G-1)</span></div>
+          </div>
+          <div class="fila"><svg class="ic s" style="color:var(--mute)"><use href="#i-pendiente"/></svg><span class="crece" style="font-size:var(--t-meta)"><span lang="es">NDA sin revisar</span><span lang="en">NDA not checked</span></span><button class="btn mini"><span lang="es">Revisar</span><span lang="en">Review</span></button></div>
+          <div class="fila"><span class="crece aviso-legal"><span lang="es">No es asesoría legal</span><span lang="en">Not legal advice</span></span><button class="btn mini"><svg class="ic s"><use href="#i-doc"/></svg><span lang="es">Cláusula de encargo</span><span lang="en">Engagement clause</span></button></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="fila">
+          <button class="btn primario"><svg class="ic s"><use href="#i-voz"/></svg><span lang="es">Iniciar sesión</span><span lang="en">Start session</span></button>
+          <button class="btn"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Solo notas</span><span lang="en">Notes only</span></button>
+        </div>
+        <div class="fila">
+          <span class="tecla"><kbd>⌥⎋</kbd></span>
+          <span class="mono" style="color:var(--ink-2)"><span lang="es">corta todo · el sonido nunca se guarda · nada sale de tu equipo</span><span lang="en">cuts everything · sound is never stored · nothing leaves your machine</span></span>
+        </div>
+      </div>
+    </div>
+
     <div data-en="s3-en-marcha" style="display:flex;flex-direction:column;gap:14px">
       <div class="tarjeta">
         <div class="fila">
@@ -411,6 +467,7 @@
           <div class="fila" style="gap:10px;margin:-2px 0 4px 26px"><label class="conm on"><span class="track"></span><span class="etq"><span lang="es">Leerla sola</span><span lang="en">Read it on its own</span></span></label><span class="tecla" style="font-size:11px"><kbd>⌃⌥L</kbd> <span lang="es">léela ahora</span><span lang="en">read it now</span></span></div>
           <div class="fila"><svg class="ic s" style="color:var(--ink-2)"><use href="#i-auriculares"/></svg><span class="crece"><span lang="es">Auriculares conectados</span><span lang="en">Headphones connected</span></span><span class="estado mute"><svg class="ic s"><use href="#i-auriculares"/></svg>AirPods Pro</span></div>
           <p style="font-size:11.5px;margin-top:2px;color:var(--ink-2)"><span lang="es">Si es un altavoz, no uses el modo solo audio.</span><span lang="en">If it is a speaker, do not use audio-only mode.</span></p>
+          <div class="fila"><svg class="ic s" style="color:var(--ink-2)"><use href="#i-flecha"/></svg><span class="crece"><span lang="es">La banda</span><span lang="en">The band</span></span><div class="ventanas"><span class="op on"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">arriba</span><span lang="en">top</span></span><span class="op"><span lang="es">abajo</span><span lang="en">bottom</span></span></div><span class="tecla" style="font-size:11px"><kbd>⌃⌥B</kbd></span></div>
         </div>
 
         <div class="tarjeta">
@@ -455,6 +512,7 @@
           <div class="fila" style="gap:10px;margin:-2px 0 4px 26px"><label class="conm on"><span class="track"></span><span class="etq"><span lang="es">Leerla sola</span><span lang="en">Read it on its own</span></span></label><span class="tecla" style="font-size:11px"><kbd>⌃⌥L</kbd> <span lang="es">léela ahora</span><span lang="en">read it now</span></span></div>
           <div class="fila"><svg class="ic s" style="color:var(--ink-2)"><use href="#i-auriculares"/></svg><span class="crece"><span lang="es">Auriculares conectados</span><span lang="en">Headphones connected</span></span><span class="estado mute"><svg class="ic s"><use href="#i-auriculares"/></svg>AirPods Pro</span></div>
           <p style="font-size:11.5px;margin-top:2px;color:var(--ink-2)"><span lang="es">Si es un altavoz, no uses el modo solo audio.</span><span lang="en">If it is a speaker, do not use audio-only mode.</span></p>
+          <div class="fila"><svg class="ic s" style="color:var(--ink-2)"><use href="#i-flecha"/></svg><span class="crece"><span lang="es">La banda</span><span lang="en">The band</span></span><div class="ventanas"><span class="op on"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">arriba</span><span lang="en">top</span></span><span class="op"><span lang="es">abajo</span><span lang="en">bottom</span></span></div><span class="tecla" style="font-size:11px"><kbd>⌃⌥B</kbd></span></div>
         </div>
 
         <div class="tarjeta">
@@ -499,6 +557,7 @@
           <div class="fila" style="gap:10px;margin:-2px 0 4px 26px"><label class="conm on"><span class="track"></span><span class="etq"><span lang="es">Leerla sola</span><span lang="en">Read it on its own</span></span></label><span class="tecla" style="font-size:11px"><kbd>⌃⌥L</kbd> <span lang="es">léela ahora</span><span lang="en">read it now</span></span></div>
           <div class="fila"><svg class="ic s" style="color:var(--ink-2)"><use href="#i-auriculares"/></svg><span class="crece"><span lang="es">Auriculares conectados</span><span lang="en">Headphones connected</span></span><span class="estado mute"><svg class="ic s"><use href="#i-auriculares"/></svg>AirPods Pro</span></div>
           <p style="font-size:11.5px;margin-top:2px;color:var(--ink-2)"><span lang="es">Si es un altavoz, no uses el modo solo audio.</span><span lang="en">If it is a speaker, do not use audio-only mode.</span></p>
+          <div class="fila"><svg class="ic s" style="color:var(--ink-2)"><use href="#i-flecha"/></svg><span class="crece"><span lang="es">La banda</span><span lang="en">The band</span></span><div class="ventanas"><span class="op on"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">arriba</span><span lang="en">top</span></span><span class="op"><span lang="es">abajo</span><span lang="en">bottom</span></span></div><span class="tecla" style="font-size:11px"><kbd>⌃⌥B</kbd></span></div>
         </div>
 
         <div class="tarjeta">

@@ -224,12 +224,18 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 .aviso-legal, .tarjeta p.aviso-legal { font-size: 11px; color: var(--ink-2); }
 .pregunta-nda .ic { color: var(--halo); flex: 0 0 auto; }
 .tarjeta p.clausula { font-family: var(--font-evidencia); font-size: 12.5px; line-height: 1.45; color: var(--ink); }
+.pregunta-e .de { display: flex; align-items: center; gap: 8px; font-size: var(--t-meta); color: var(--ink-2); }
+.evidencia-e li .ic { margin-top: 2px; }
+.evidencia-e .usada .ic { color: var(--ok); }
+.evidencia-e .sin-usar .ic { color: var(--halo); }
 .mq-meet .titulo { height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 12px; font-size: 12px; color: #8a919b; border-bottom: 1px solid #2c3037; }
 .mq-meet .titulo i { width: 10px; height: 10px; border-radius: 50%; background: #3e434b; display: inline-block; }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
 .mq-relleno .mini { position: relative; height: 158px; border: 1px solid #3a3e46; border-radius: 8px; overflow: hidden; background: linear-gradient(150deg, #2b3550 0%, #3a3350 55%, #4a3a44 100%); }
 .mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
 @media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
+.mq-corte.abajo span { top: 6px; }
 .prohibido li .ic { color: var(--err); }
 .rail-demo .rail { height: 100%; }
 /* marco de exhibición del bundle */
@@ -255,6 +261,7 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
 <svg style="display:none" aria-hidden="true">
 <symbol id="i-ojo-off" viewBox="0 0 16 16"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8zM2 2l12 12"/></symbol>
 <symbol id="i-video" viewBox="0 0 16 16"><rect x="1.5" y="4" width="9" height="8" rx="1.5"/><path d="M10.5 7l4-2.5v7l-4-2.5"/></symbol>
+<symbol id="i-ensayo" viewBox="0 0 16 16"><path d="M13.2 8.6A5.3 5.3 0 1 1 11.6 4.2"/><path d="M12.6 1.8v2.9H9.7"/><path d="M6.6 6.3l3 1.7-3 1.7z" fill="currentColor"/></symbol>
 <symbol id="i-candado" viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="7.5" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></symbol>
 <symbol id="i-doc" viewBox="0 0 16 16"><path d="M4 1.5h5l3.5 3.5v9.5H4z"/><path d="M9 1.5V5h3.5M6 8.5h4M6 11h4"/></symbol>
 <symbol id="i-nota" viewBox="0 0 16 16"><path d="M2.5 3.5h11v9h-11zM5 6.5h6M5 9h4"/></symbol>
@@ -284,6 +291,7 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
   <nav class="rail">
     <div class="marca"><svg class="ic"><use href="#i-ojo-off"></use></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
     <a><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a><svg class="ic s"><use href="#i-ensayo"></use></svg><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></a>
     <a><svg class="ic s"><use href="#i-candado"></use></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
     <a><svg class="ic s"><use href="#i-doc"></use></svg>Corpus</a>
     <a aria-current="page"><svg class="ic s"><use href="#i-nota"></use></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
@@ -432,6 +440,7 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
   <nav class="rail">
     <div class="marca"><svg class="ic"><use href="#i-ojo-off"></use></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
     <a><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a><svg class="ic s"><use href="#i-ensayo"></use></svg><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></a>
     <a><svg class="ic s"><use href="#i-candado"></use></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
     <a><svg class="ic s"><use href="#i-doc"></use></svg>Corpus</a>
     <a aria-current="page"><svg class="ic s"><use href="#i-nota"></use></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
@@ -556,6 +565,7 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
   <nav class="rail">
     <div class="marca"><svg class="ic"><use href="#i-ojo-off"></use></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
     <a><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a><svg class="ic s"><use href="#i-ensayo"></use></svg><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></a>
     <a><svg class="ic s"><use href="#i-candado"></use></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
     <a><svg class="ic s"><use href="#i-doc"></use></svg>Corpus</a>
     <a aria-current="page"><svg class="ic s"><use href="#i-nota"></use></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
@@ -671,6 +681,7 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
   <nav class="rail">
     <div class="marca"><svg class="ic"><use href="#i-ojo-off"></use></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
     <a><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a><svg class="ic s"><use href="#i-ensayo"></use></svg><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></a>
     <a><svg class="ic s"><use href="#i-candado"></use></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
     <a><svg class="ic s"><use href="#i-doc"></use></svg>Corpus</a>
     <a aria-current="page"><svg class="ic s"><use href="#i-nota"></use></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
@@ -819,6 +830,7 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
   <nav class="rail">
     <div class="marca"><svg class="ic"><use href="#i-ojo-off"></use></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
     <a><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a><svg class="ic s"><use href="#i-ensayo"></use></svg><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></a>
     <a><svg class="ic s"><use href="#i-candado"></use></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
     <a><svg class="ic s"><use href="#i-doc"></use></svg>Corpus</a>
     <a aria-current="page"><svg class="ic s"><use href="#i-nota"></use></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
@@ -943,6 +955,7 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
   <nav class="rail">
     <div class="marca"><svg class="ic"><use href="#i-ojo-off"></use></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
     <a><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a><svg class="ic s"><use href="#i-ensayo"></use></svg><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></a>
     <a><svg class="ic s"><use href="#i-candado"></use></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
     <a><svg class="ic s"><use href="#i-doc"></use></svg>Corpus</a>
     <a aria-current="page"><svg class="ic s"><use href="#i-nota"></use></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>

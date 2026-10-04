@@ -255,9 +255,59 @@ pub fn objetivo_de(vista: &Vista) -> Option<(String, Vec<String>)> {
     })
 }
 
+/// **El proceso de la videollamada que eligió [`objetivo_de`]** (sprint 004): el primero que corre con
+/// ese identificador. Puro, para que el test vea que se elige por identificador y no por nombre.
+pub fn pid_del_objetivo(apps: &[(i32, String)], bundle: &str) -> Option<i32> {
+    apps.iter().find(|(_, b)| b.eq_ignore_ascii_case(bundle)).map(|(pid, _)| *pid)
+}
+
+/// **Cuál de las ventanas de un navegador es la de Meet** (sprint 004): la primera cuyo título lleva sus
+/// señales, por su posición en la lista. Es lo único que el acople arriba recibe de un título: un número.
+pub fn indice_de_meet(titulos: &[(usize, String)]) -> Option<usize> {
+    titulos.iter().find(|(_, t)| es_meet(t)).map(|(i, _)| *i)
+}
+
+/// **La ventana de la reunión, para el acople arriba** (ADR 004, enmienda 1): la de la videollamada que
+/// Sesión enseña —el mismo orden que [`clasificar`]—. En Zoom o Teams, su ventana principal; en un
+/// navegador, la de Meet, que se encuentra aquí, donde ya se leen títulos, y viaja como posición en la
+/// lista. Sin reunión detectada, `None`: la banda flota arriba y no toca nada.
+#[cfg(target_os = "macos")]
+pub fn ventana_de_la_reunion() -> Option<crate::acople::Destino> {
+    use crate::acople::ax;
+    let (bundle, senales) = objetivo_de(&mirar())?;
+    let pid = pid_del_objetivo(&ax::aplicaciones_en_ejecucion(), &bundle)?;
+    let indice = if senales.is_empty() {
+        ax::indice_de_la_principal(pid)?
+    } else {
+        indice_de_meet(&ax::titulos_con_indice(pid))?
+    };
+    Some(crate::acople::Destino { pid, app: ax::nombre_de(pid)?, indice })
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn ventana_de_la_reunion() -> Option<crate::acople::Destino> {
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// El acople arriba se dirige a la reunión por identificador, y en un navegador a la ventana de Meet
+    /// **por su posición real en la lista**, aunque haya ventanas sin título o con otro antes.
+    #[test]
+    fn arriba_el_acople_va_a_la_ventana_de_la_reunion_y_no_a_otra() {
+        let apps = vec![(10, "com.apple.Safari".to_string()), (20, "com.google.Chrome".to_string())];
+        assert_eq!(pid_del_objetivo(&apps, "com.google.Chrome"), Some(20));
+        assert_eq!(pid_del_objetivo(&apps, "us.zoom.xos"), None, "sin Zoom en marcha no hay a quién acoplar");
+        let titulos = vec![
+            (0, "Correo — Bandeja de entrada".to_string()),
+            (2, "Meet – abc-defg-hij · Google Meet".to_string()),
+            (3, "Otra pestaña de meet.google.com".to_string()),
+        ];
+        assert_eq!(indice_de_meet(&titulos), Some(2), "la posición real, no la del título en la lista");
+        assert_eq!(indice_de_meet(&titulos[..1]), None);
+    }
 
     #[test]
     fn la_pantalla_mira_la_misma_reunion_que_sesion() {

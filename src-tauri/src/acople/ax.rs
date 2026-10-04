@@ -6,9 +6,11 @@
 //! `bool` — la lógica que decide qué hacer con esos valores está en el módulo padre, en Rust
 //! seguro y con tests.
 //!
-//! **Lo que NO se pide, pudiendo:** títulos de ventana, contenido, jerarquía de elementos, el
-//! árbol de ninguna aplicación. La Accessibility API es una llave maestra; aquí se usan tres
-//! atributos (`AXWindows`, `AXPosition`, `AXSize`) y se escribe uno.
+//! **Lo que NO se pide, pudiendo:** contenido, jerarquía de elementos, el árbol de ninguna
+//! aplicación. La Accessibility API es una llave maestra; el acople usa cuatro atributos
+//! (`AXWindows`, `AXPosition`, `AXSize` y, desde el sprint 004, `AXMainWindow`) y escribe dos: el
+//! tamaño, y la posición **solo** de la ventana de la reunión con la banda arriba, en un único sitio
+//! ([`mover`], ADR 004 enmienda 1). Los títulos (`AXTitle`) solo los pide el detector de reunión.
 
 use super::Marco;
 use core_foundation::base::TCFType;
@@ -16,7 +18,7 @@ use core_foundation::boolean::CFBoolean;
 use core_foundation::dictionary::CFDictionary;
 use core_foundation::string::CFString;
 use core_foundation_sys::array::{CFArrayGetCount, CFArrayGetValueAtIndex, CFArrayRef};
-use core_foundation_sys::base::{CFRelease, CFTypeRef};
+use core_foundation_sys::base::{CFEqual, CFRelease, CFTypeRef};
 use core_foundation_sys::dictionary::CFDictionaryRef;
 use core_foundation_sys::string::CFStringRef;
 use std::ffi::c_void;
@@ -76,6 +78,7 @@ pub fn permiso_concedido() -> bool {
 /// estaba concedido — **nunca** `true` por haber preguntado: el usuario tiene que ir a Ajustes y
 /// volver, y hasta entonces la respuesta honesta es `false` y la banda flota.
 pub fn pedir_permiso() -> bool {
+    crate::hardware::vigilar("el aviso de Accessibility");
     let opciones = CFDictionary::from_CFType_pairs(&[(
         CFString::new(CLAVE_PREGUNTAR).as_CFType(),
         CFBoolean::true_value().as_CFType(),
@@ -116,6 +119,7 @@ unsafe fn marco_de(ventana: AXUIElementRef) -> Option<Marco> {
 /// aplicaciones acotan lo que se les pide; guardar lo pedido en vez de lo conseguido dejaría la
 /// devolución sin poder reconocer su propia huella.
 unsafe fn poner_alto(ventana: AXUIElementRef, alto: f64) -> Option<Marco> {
+    crate::hardware::vigilar("escribir el tamaño de una ventana ajena (Accessibility)");
     let actual = marco_de(ventana)?;
     let pedido = CGSize {
         ancho: actual.ancho,
@@ -126,6 +130,24 @@ unsafe fn poner_alto(ventana: AXUIElementRef, alto: f64) -> Option<Marco> {
         return None;
     }
     let clave = CFString::new("AXSize");
+    let error = AXUIElementSetAttributeValue(ventana, clave.as_concrete_TypeRef(), valor);
+    CFRelease(valor);
+    (error == EXITO).then(|| marco_de(ventana)).flatten()
+}
+
+/// Escribe la posición de una ventana y **devuelve lo que el sistema dejó**, releyéndolo.
+///
+/// **Es el único sitio del crate que escribe `AXPosition`** (ADR 004, enmienda 1; lo barre un test del
+/// acople): solo con la banda arriba, y solo sobre la ventana de la reunión. Mover la ventana de otro
+/// es más invasivo que acortarla, y por eso tiene una sola puerta.
+unsafe fn poner_posicion(ventana: AXUIElementRef, x: f64, y: f64) -> Option<Marco> {
+    crate::hardware::vigilar("mover una ventana ajena (Accessibility)");
+    let pedido = CGPoint { x, y };
+    let valor = AXValueCreate(TIPO_CGPOINT, &pedido as *const CGPoint as *const c_void);
+    if valor.is_null() {
+        return None;
+    }
+    let clave = CFString::new("AXPosition");
     let error = AXUIElementSetAttributeValue(ventana, clave.as_concrete_TypeRef(), valor);
     CFRelease(valor);
     (error == EXITO).then(|| marco_de(ventana)).flatten()
@@ -200,6 +222,13 @@ impl Drop for Aplicacion {
 ///
 /// Lo que devuelve es **información del cliente** y muere con la pantalla que la muestra.
 pub fn titulos_de(pid: i32) -> Vec<String> {
+    titulos_con_indice(pid).into_iter().map(|(_, t)| t).collect()
+}
+
+/// Los títulos **con su posición en `AXWindows`** (sprint 004): con la banda arriba, el detector busca
+/// la ventana de Meet y le pasa al acople solo su posición —el acople sigue sin leer un título—. Las
+/// ventanas sin título no salen, pero las demás conservan su índice real: es el que vale para escribir.
+pub fn titulos_con_indice(pid: i32) -> Vec<(usize, String)> {
     let Some(app) = Aplicacion::de(pid) else { return Vec::new() };
     unsafe {
         let Some(lista) = atributo(app.elemento, "AXWindows") else { return Vec::new() };
@@ -213,12 +242,33 @@ pub fn titulos_de(pid: i32) -> Vec<String> {
             if let Some(t) = atributo(v, "AXTitle") {
                 let texto = CFString::wrap_under_create_rule(t as CFStringRef).to_string();
                 if !texto.is_empty() {
-                    salida.push(texto);
+                    salida.push((i as usize, texto));
                 }
             }
         }
         CFRelease(lista);
         salida
+    }
+}
+
+/// La posición en `AXWindows` de la **ventana principal** de una aplicación (`AXMainWindow`, sprint
+/// 004). Es la de la llamada en Zoom y en Teams cuando hay llamada. Se compara elemento con elemento
+/// (`CFEqual`), sin leer nada de la ventana.
+pub fn indice_de_la_principal(pid: i32) -> Option<usize> {
+    let app = Aplicacion::de(pid)?;
+    unsafe {
+        let principal = atributo(app.elemento, "AXMainWindow")?;
+        let indice = atributo(app.elemento, "AXWindows").and_then(|lista| {
+            let arreglo = lista as CFArrayRef;
+            let encontrada = (0..CFArrayGetCount(arreglo)).find(|i| {
+                let v = CFArrayGetValueAtIndex(arreglo, *i);
+                !v.is_null() && CFEqual(v, principal) != 0
+            });
+            CFRelease(lista);
+            encontrada.map(|i| i as usize)
+        });
+        CFRelease(principal);
+        indice
     }
 }
 
@@ -248,6 +298,20 @@ pub fn encoger(pid: i32, indice: usize, alto: f64) -> Option<Marco> {
         .flatten()
 }
 
+/// Lee una ventana concreta, sin escribir nada: para esperar a que se quede quieta.
+pub fn marco_de_la_ventana(pid: i32, indice: usize) -> Option<Marco> {
+    let app = Aplicacion::de(pid)?;
+    app.con_ventana(indice, |v| unsafe { marco_de(v) }).flatten()
+}
+
+/// Mueve una ventana concreta y devuelve el marco resultante **leído del sistema**. Solo lo llama el
+/// acople arriba (ADR 004, enmienda 1).
+pub fn mover(pid: i32, indice: usize, x: f64, y: f64) -> Option<Marco> {
+    let app = Aplicacion::de(pid)?;
+    app.con_ventana(indice, |v| unsafe { poner_posicion(v, x, y) })
+        .flatten()
+}
+
 // ---------------------------------------------------------------------------------------------
 // NSWorkspace — quién está al frente, y el fondo de escritorio
 // ---------------------------------------------------------------------------------------------
@@ -273,10 +337,16 @@ pub fn aplicacion_al_frente() -> Option<(i32, String)> {
 /// tras una caída, ese número puede pertenecer ya a otro programa, y devolverle un tamaño a la
 /// ventana de otro sería el peor fallo que este módulo puede cometer.
 pub fn sigue_siendo(pid: i32, nombre: &str) -> bool {
+    nombre_de(pid).is_some_and(|n| n == nombre)
+}
+
+/// El nombre visible de una aplicación en ejecución («Google Chrome», «zoom.us»): el que guarda la
+/// huella como cerrojo.
+pub fn nombre_de(pid: i32) -> Option<String> {
     use objc2_app_kit::NSRunningApplication;
     NSRunningApplication::runningApplicationWithProcessIdentifier(pid)
         .and_then(|a| a.localizedName())
-        .is_some_and(|n| n.to_string() == nombre)
+        .map(|n| n.to_string())
 }
 
 /// La ruta del fondo de escritorio de la pantalla principal, si el sistema la da.

@@ -21,6 +21,13 @@
     <button data-estado="f">F · solo audio · acoplada</button>
     <button data-estado="e">E · solo audio: gota</button>
   </span>
+  <span class="mq-g"><span>arriba · sprint 4</span>
+    <button data-estado="a-88">ARRIBA · 88 · acoplada</button>
+    <button data-estado="a-200">ARRIBA · ampliada</button>
+    <button data-estado="a-44">ARRIBA · solo audio</button>
+    <button data-estado="a-cliente">ARRIBA · qué ve el cliente</button>
+    <button data-estado="a-flota">ARRIBA · sin reunión: flota</button>
+  </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
   <a href="index.html">← recorrido</a>
@@ -34,12 +41,19 @@
   <div class="n" data-para="d2"><b>D2 · la misma banda, ACOPLADA.</b> La ventana de la reunión <b>se recorta</b> y las dos conviven como aplicaciones pegadas: nada queda tapado. El asa de arriba ajusta las dos a la vez. <b>Es la que elegiste.</b></div>
   <div class="n" data-para="d3"><b>D3 · la banda ampliada a 200 px</b>, acoplada. Arrastras el asa hacia arriba y entra la ficha entera, las acumuladas y la sugerencia. La reunión se encoge en la misma proporción.</div>
   <div class="n" data-para="e"><b>E · modo solo audio con una gota de 44 px</b> abajo a la izquierda. Lo más pequeño posible: solo el estado, sin texto. La ficha se oye. Abajo a la izquierda no hay nada de Meet, Zoom ni Teams.</div>
+  <div class="n" data-para="a-88"><b>Mirada de DECISIÓN 2 (sprint 4) — ARRIBA, de fábrica.</b> La banda vive <b>bajo la barra de menús, junto a la cámara</b>, y la reunión <b>baja y se encoge</b>: su borde de arriba baja hasta la banda y el de abajo no se mueve, así que los controles de Meet siguen donde estaban. El asa está ahora en el borde de abajo de la banda, el que da a la reunión. Al cerrar, la ventana vuelve entera: posición y tamaño. Debajo del escritorio, <b>el criterio de la cámara</b>, escrito.</div>
+  <div class="n" data-para="a-200"><b>ARRIBA · ampliada a 200 px.</b> Arrastras el asa hacia abajo y entra la ficha entera; la reunión baja otro tanto. Es para leer, no para hablar: tus ojos se alejan de la cámara lo que mide la banda.</div>
+  <div class="n" data-para="a-44"><b>ARRIBA · modo solo audio.</b> 44 px bajo la barra de menús: lo que te está diciendo y de dónde salió. La reunión baja solo eso. <b>La gota (E) sigue abajo a la izquierda</b>, como antes.</div>
+  <div class="n" data-para="a-cliente"><b>ARRIBA · qué ve el cliente si compartes la pantalla entera.</b> La banda está protegida de la captura, así que en su franja el cliente ve el <b>relleno</b>: tu fondo de escritorio, como en D2, ahora bajo la barra de menús. Se lee como una ventana que no llega arriba del todo. Compartiendo solo la ventana de la reunión, no ve ni eso.</div>
+  <div class="n" data-para="a-flota"><b>ARRIBA · sin reunión detectada: la banda flota y no mueve nada.</b> Con la banda arriba la app solo mueve <b>la ventana de la reunión que detectó</b> (Meet en tu navegador, Zoom o Teams), nunca la que tengas delante: mover tu editor porque estaba al frente sería un susto. Hasta que haya reunión, la banda flota encima y lo dice («sin acople»).</div>
   <div class="n" data-para="f"><b>F · modo solo audio, acoplada.</b> 44 px: una línea con lo que está diciendo y de dónde salió. La reunión se recorta solo eso. <b>Es la que elegiste para el modo audio.</b></div>
   <div class="mq-medida">escritorio de referencia 1180 × 720 · tarjeta 380 × 220 · banda 88 px (ampliable a 200) · banda de voz 44 px · gota 44 × 44 · datos sintéticos</div>
 </div>
 
-<div class="mq-escritorio" data-acople-en="d2:88 d3:200 f:44" aria-label="Escritorio de referencia">
+<div class="mq-escritorio" data-acople-en="d2:88 d3:200 f:44 a-88:a88 a-200:a200 a-44:a44 a-cliente:a88" aria-label="Escritorio de referencia">
   <div class="mq-menubar"><b></b><span>Google Chrome</span><span>Archivo</span><span>Editar</span><span>Ver</span><span class="der">14:02</span></div>
+  <span class="mq-camara" title="la cámara de un MacBook: centro del borde de arriba"></span>
+  <div class="mq-mirada" data-en="a-88 a-44"><span>la ficha, a unos 2–3 cm de la cámara</span></div>
   <div class="mq-meet">
     <div class="titulo"><i></i><i></i><i></i> meet · Páramo Azul — Propuesta tablero de rentabilidad</div>
     <div class="tiles">
@@ -54,6 +68,11 @@
   <div class="mq-corte" data-en="d2" style="bottom:104px"><span>aquí se recorta la reunión</span></div>
   <div class="mq-corte" data-en="d3" style="bottom:216px"><span>aquí se recorta la reunión</span></div>
   <div class="mq-corte" data-en="f" style="bottom:60px"><span>aquí se recorta la reunión</span></div>
+  <div class="mq-corte abajo" data-en="a-88 a-cliente" style="top:112px"><span>aquí empieza la reunión: bajó y se encogió</span></div>
+  <div class="mq-corte abajo" data-en="a-200" style="top:224px"><span>aquí empieza la reunión: bajó y se encogió</span></div>
+  <div class="mq-corte abajo" data-en="a-44" style="top:68px"><span>aquí empieza la reunión: bajó y se encogió</span></div>
+  <div class="mq-choque" data-en="a-flota" style="left:24px;right:24px;top:150px;height:0;border-width:0"><span>si la app no detecta la reunión, no mueve ninguna ventana: la banda flota encima</span></div>
+  <div class="mq-relleno-arriba" data-en="a-cliente">el relleno: tu fondo de escritorio, lo único que la captura encuentra aquí</div>
 
   <!-- recuadro de choque: los controles de la videollamada -->
   <div class="mq-choque" data-en="c" style="left:calc(50% - 130px);width:260px;bottom:60px;height:48px"><span>controles de la llamada: la banda los tapa</span></div>
@@ -136,10 +155,73 @@
       </div>
     </section></div>
 
+  <!-- ARRIBA (sprint 4) · 88 acoplada · y la misma, flotando sin reunión -->
+  <div class="mq-pos banda-arriba" data-en="a-88 a-flota"><section class="banda" data-borde="arriba" data-captura-alt>
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
+      <div class="cab-b">
+        <span class="marca-min"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span></span>
+        <span class="mono" style="color:var(--ink-2)" data-en="a-88"><span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span></span>
+        <span class="cliente-b warn" data-en="a-flota"><svg class="ic s relleno"><use href="#i-alert"/></svg><span lang="es">sin acople</span><span lang="en">not docked</span></span>
+        <span class="red cero mono"><svg class="ic s"><use href="#i-subir"/></svg>0 B</span>
+      </div>
+      <div class="cuerpo-b">
+        <span class="ficha-b">
+          <span class="titular-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></span>
+          <span class="linea-b"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on.</span></span>
+        </span>
+        <span class="lado-b">
+          <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <span class="atajos-b"><span class="tecla"><kbd>⌃⌥P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span><span class="tecla"><kbd>⌥⎋</kbd></span></span>
+        </span>
+      </div>
+    </section></div>
+  <div class="mq-pos banda-arriba" data-en="a-200"><section class="banda ampliada" data-borde="arriba" data-captura-alt>
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
+      <div class="cab-b">
+        <span class="marca-min"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span></span>
+        <span class="mono" style="color:var(--ink-2)"><span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span></span>
+        <span class="red cero mono"><svg class="ic s"><use href="#i-subir"/></svg>0 B</span>
+      </div>
+      <div class="cuerpo-b">
+        <span class="ficha-b">
+          <span class="titular-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></span>
+          <span class="linea-b"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional y se cotiza aparte.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on, priced separately.</span></span>
+          <p class="mas" style="margin-top:6px"><span class="n">+2</span><span class="titulos"><span lang="es">Marco · etapa 2 Preparación — Caso Sur del Valle: cuatro fuentes en 9 semanas</span><span lang="en">Framework · stage 2 Preparation — Sur del Valle case: four sources in 9 weeks</span></span><svg class="ic s"><use href="#i-chevron"/></svg></p>
+        </span>
+        <span class="lado-b" style="max-width:40%">
+          <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <span class="atajos-b"><span class="tecla"><kbd>⌃⌥P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span><span class="tecla"><kbd>⌃⌥T</kbd> transcript</span><span class="tecla"><kbd>⌥⎋</kbd></span></span>
+        </span>
+      </div>
+    </section></div>
+  <div class="mq-pos banda-arriba" data-en="a-44"><section class="banda voz" data-borde="arriba" data-captura-alt>
+      <div class="cuerpo-b">
+        <span class="marca-min halo"><svg class="ic s"><use href="#i-voz"/></svg><span lang="es">diciéndote</span><span lang="en">reading you</span></span>
+        <span class="ficha-b"><span class="linea-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes — cubre ERP, POS y Excel de canal.</span><span lang="en">Data cleansing: included, up to three sources — covers ERP, POS and channel Excel.</span></span></span>
+        <span class="lado-b"><span class="fuente-b"><span lang="es">propuesta · §3.2</span><span lang="en">proposal · §3.2</span></span></span>
+        <span class="atajos-b"><span class="tecla"><kbd>⎋</kbd> <span lang="es">calla</span><span lang="en">hush</span></span></span>
+      </div>
+    </section></div>
+
   <!-- E · gota abajo izquierda -->
   <div class="mq-pos abajo-izq" data-en="e"><span class="gota hablando" data-captura-alt title="modo solo audio"><svg class="ic"><use href="#i-voz"/></svg></span></div>
 
 
+</div>
+
+<div class="mq-tabla-pos" data-en="a-88 a-200 a-44 a-cliente a-flota" style="margin-bottom:18px">
+  <h2 class="mq-h2"><span lang="es">El criterio de la cámara — por qué arriba</span><span lang="en">The camera criterion — why at the top</span></h2>
+  <p class="mq-sub"><span lang="es">Lo que esta variante decide, escrito para que se pueda discutir y medir en una llamada real.</span><span lang="en">What this variant decides, written down so it can be argued and measured on a real call.</span></p>
+  <table>
+    <tbody>
+      <tr><td><b><span lang="es">Distancia a la cámara</span><span lang="en">Distance to the camera</span></b></td><td><span lang="es">En un MacBook la cámara está en el centro del borde de arriba. Arriba, el titular de la ficha queda a unos 2–3 cm de la lente; abajo, a más de 15 cm.</span><span lang="en">On a MacBook the camera sits at the center of the top edge. At the top, the card's headline is about 2–3 cm from the lens; at the bottom, more than 15 cm.</span></td></tr>
+      <tr><td><b><span lang="es">Hacia dónde miras al leer</span><span lang="en">Where you look while reading</span></b></td><td><span lang="es">Leyendo arriba, tus ojos bajan apenas unos grados desde la lente: en la cámara se ve como mirar a quien habla. Leyendo abajo bajan mucho más, y se ve como mirar el teclado o algo fuera de la reunión.</span><span lang="en">Reading at the top, your eyes drop only a few degrees from the lens: on camera it looks like looking at the speaker. Reading at the bottom they drop much further, and it looks like looking at the keyboard or something outside the meeting.</span></td></tr>
+      <tr><td><b><span lang="es">La zona libre de Meet, Zoom y Teams</span><span lang="en">The free zone of Meet, Zoom and Teams</span></b></td><td><span lang="es">Arriba, la reunión solo tiene su barra de título y, en el navegador, las pestañas: es lo que baja. Los controles de Meet y de Zoom viven abajo y no se tocan; los de Teams, dentro de su ventana, bajan con ella.</span><span lang="en">At the top, the meeting only has its title bar and, in a browser, the tabs: that is what moves down. Meet's and Zoom's controls live at the bottom and are not touched; Teams' controls, inside its window, move down with it.</span></td></tr>
+      <tr><td><b><span lang="es">Lo que se mira en una llamada real</span><span lang="en">What gets checked on a real call</span></b></td><td><span lang="es">Al compartir pantalla, Zoom y Teams ponen una barra flotante arriba al centro, que puede quedar bajo la banda: se arrastra, y es una parada del gate de prueba. Con un monitor externo la cámara puede no estar arriba: entonces eliges abajo.</span><span lang="en">When you share your screen, Zoom and Teams put a floating bar at the top center, which can end up under the band: it can be dragged, and it is a test-gate stop. With an external monitor the camera may not be at the top: then you choose the bottom.</span></td></tr>
+      <tr><td><b><span lang="es">Qué ventana se mueve</span><span lang="en">Which window moves</span></b></td><td><span lang="es">Solo la de la reunión que la app detectó, y vuelve entera al cerrar: posición y tamaño. Sin reunión, ninguna.</span><span lang="en">Only the meeting window the app detected, and it comes back whole on close: position and size. With no meeting, none.</span></td></tr>
+      <tr><td><b><span lang="es">Si prefieres abajo</span><span lang="en">If you prefer the bottom</span></b></td><td><span lang="es">Lo eliges en Sesión y queda como hoy (D2, D3 y F). La gota sigue abajo a la izquierda.</span><span lang="en">You choose it in Session and it stays as today (D2, D3 and F). The drop stays at the bottom left.</span></td></tr>
+    </tbody>
+  </table>
 </div>
 
 <div class="mq-tabla-pos" style="margin-bottom:18px">
@@ -213,6 +295,10 @@
       <tr><td><b>D2 · banda 88 ACOPLADA</b></td><td class="si">nada: la reunión se recorta</td><td><b>elegida.</b> Dos apps pegadas; nada tapado; el asa ajusta las dos a la vez</td><td>necesita el permiso de Accesibilidad de macOS para mover la ventana de la reunión</td></tr>
       <tr><td><b>D3 · ampliada ACOPLADA</b></td><td class="si">nada</td><td>entra la ficha entera, las acumuladas y la sugerencia</td><td>200 px menos de reunión: para leer, no para hablar</td></tr>
       <tr><td><b>F · solo audio ACOPLADA</b></td><td class="si">nada</td><td><b>elegida.</b> 44 px: qué dice y de dónde, sin ocupar la pantalla</td><td>más presencia visual que la gota</td></tr>
+      <tr><td><b>ARRIBA · 88 acoplada</b></td><td class="si">nada: la reunión baja y se encoge</td><td><b>de fábrica desde el sprint 4.</b> La ficha a 2–3 cm de la cámara; los controles de la reunión, intactos</td><td>mueve la ventana de la reunión (solo esa) y la devuelve entera al cerrar</td></tr>
+      <tr><td><b>ARRIBA · ampliada</b></td><td class="si">nada</td><td>la ficha entera, cerca de la cámara</td><td>200 px menos de reunión, y tus ojos más lejos de la lente</td></tr>
+      <tr><td><b>ARRIBA · solo audio</b></td><td class="si">nada</td><td>44 px bajo la barra de menús</td><td>—</td></tr>
+      <tr><td><b>ARRIBA · sin reunión</b></td><td class="mas">lo de arriba de la ventana de delante</td><td>no mueve ninguna ventana que no sea la de la reunión</td><td>tapa hasta que haya reunión</td></tr>
       <tr><td><b>E · gota (solo audio)</b></td><td class="si">nada</td><td>44 × 44: lo mínimo posible</td><td>no dice de dónde salió lo que oyes; queda como alternativa</td></tr>
     </tbody>
   </table>

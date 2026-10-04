@@ -112,6 +112,15 @@ pub struct Preferencias {
     /// La carpeta de tu corpus: la ruta, jamás su contenido. Al arrancar se vuelve a leer, en segundo
     /// plano (auditoría del S3, B29; decisión del usuario, 2026-09-28: «que la recuerde»).
     pub carpeta_del_corpus: Option<String>,
+    /// Dónde vive la banda (ADR 004 enmienda 1, ADR 002 enmienda 8). De fábrica, **arriba**, bajo la
+    /// barra de menús y junto a la cámara (decisión del usuario, 2026-09-27); `⌃⌥B` la alterna.
+    pub posicion_de_la_banda: crate::ventana::Borde,
+    /// Que ya viste, en Sesión, el aviso de la primera vez con la banda arriba. «Entendido» lo apaga
+    /// para siempre; un archivo del H1, que no lo tiene, lo enseña una vez.
+    pub aviso_de_arriba_visto: bool,
+    /// «Enriquecer el banco» (ADR 019 §3): un modelo propone hasta cinco preguntas de más en el
+    /// ensayo. De fábrica, apagado: el ensayo es entero sin él.
+    pub enriquecer_el_banco: bool,
 }
 
 impl Default for Preferencias {
@@ -127,6 +136,9 @@ impl Default for Preferencias {
             ventana_de_la_bandeja: crate::bandeja::Ventana::default(),
             ndas: std::collections::BTreeMap::new(),
             carpeta_del_corpus: None,
+            posicion_de_la_banda: crate::ventana::Borde::Arriba,
+            aviso_de_arriba_visto: false,
+            enriquecer_el_banco: false,
         }
     }
 }
@@ -236,6 +248,11 @@ mod tests {
             // La carpeta del corpus se recuerda (auditoría del S3, B29; decisión del usuario): sin
             // ella, tras reiniciar no había «Este cliente», ni NDA, ni corpus para la puerta.
             carpeta_del_corpus: Some("/Users/consultor/Corpus".into()),
+            // La banda abajo y el aviso ya visto (sprint 004): lo contrario de fábrica, para que un
+            // `default` que se coma el campo caiga aquí.
+            posicion_de_la_banda: crate::ventana::Borde::Abajo,
+            aviso_de_arriba_visto: true,
+            enriquecer_el_banco: true,
         };
         guardar(&ruta, &elegidas).unwrap();
         assert_eq!(leer(&ruta), elegidas);
@@ -287,6 +304,19 @@ mod tests {
         let p = de_texto(r#"{"version":1,"redactar":true}"#).unwrap();
         assert!(p.redactar);
         assert_eq!(p.idiomas, IdiomasDePista::default());
+    }
+
+    /// **Un archivo del H1 abre la banda arriba y enseña el aviso una vez** (sprint 004): no tiene ni
+    /// la posición ni el aviso, y los dos toman su valor de fábrica. Así se escriben en el archivo.
+    #[test]
+    fn un_archivo_del_h1_abre_la_banda_arriba_y_enseña_el_aviso() {
+        let p = de_texto(r#"{"version":1,"redactar":true,"retencion":"30d"}"#).unwrap();
+        assert_eq!(p.posicion_de_la_banda, crate::ventana::Borde::Arriba);
+        assert!(!p.aviso_de_arriba_visto);
+        assert!(!p.enriquecer_el_banco, "el acento del ensayo nace apagado");
+        let texto = a_texto(&Preferencias { posicion_de_la_banda: crate::ventana::Borde::Abajo, ..p });
+        assert!(texto.contains(r#""posicionDeLaBanda": "abajo""#), "{texto}");
+        assert!(texto.contains(r#""avisoDeArribaVisto": false"#), "{texto}");
     }
 
     /// Y al revés: un campo que ya no existe no rompe la lectura. `carpetaDeNotas` vivió en la fase 1

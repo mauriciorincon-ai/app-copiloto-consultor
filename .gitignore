@@ -26,3 +26,7 @@ dist/
 src-tauri/target/
 src-tauri/gen/schemas/
 capturas/
+
+# Respaldo de scripts/demo-rojo.sh (kit v1.35.0): la carpeta única donde vive el archivo original
+# mientras dura una demo en rojo. Si queda algo aquí, la demo no se restauró: no se versiona.
+.demo-rojo/

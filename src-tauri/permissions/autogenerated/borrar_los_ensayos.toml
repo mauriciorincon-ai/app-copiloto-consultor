@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-borrar-los-ensayos"
+description = "Enables the borrar_los_ensayos command without any pre-configured scope."
+commands.allow = ["borrar_los_ensayos"]
+
+[[permission]]
+identifier = "deny-borrar-los-ensayos"
+description = "Denies the borrar_los_ensayos command without any pre-configured scope."
+commands.deny = ["borrar_los_ensayos"]

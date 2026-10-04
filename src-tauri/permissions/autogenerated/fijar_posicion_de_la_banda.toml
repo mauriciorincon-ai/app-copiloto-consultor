@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-fijar-posicion-de-la-banda"
+description = "Enables the fijar_posicion_de_la_banda command without any pre-configured scope."
+commands.allow = ["fijar_posicion_de_la_banda"]
+
+[[permission]]
+identifier = "deny-fijar-posicion-de-la-banda"
+description = "Denies the fijar_posicion_de_la_banda command without any pre-configured scope."
+commands.deny = ["fijar_posicion_de_la_banda"]

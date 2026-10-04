@@ -17,7 +17,7 @@ import { test, expect, type Page } from "@playwright/test";
 
 // IA se abrió en el sprint 002 (fase 5, C7). Notas es la única que sigue sin existir.
 // Siete desde el sprint 003: Notas fue la última en encenderse (fase 1, C9).
-const PANTALLAS = ["sesion", "permisos", "corpus", "notas", "honestidad", "idioma", "ia"] as const;
+const PANTALLAS = ["sesion", "ensayo", "permisos", "corpus", "notas", "honestidad", "idioma", "ia"] as const;
 
 async function abrir(pag: Page, busqueda: string) {
   await pag.goto(`/?${busqueda}`);
@@ -33,7 +33,7 @@ test.describe("el cuaderno", () => {
     }
   });
 
-  test("el rail navega entre las siete, y ninguna queda apagada", async ({ page }) => {
+  test("el rail navega entre las ocho, y ninguna queda apagada", async ({ page }) => {
     await abrir(page, "ventana=principal&pantalla=sesion");
     const rail = page.locator("nav.rail");
     await expect(rail.locator("a")).toHaveCount(PANTALLAS.length);

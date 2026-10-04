@@ -1,8 +1,9 @@
-# Kit de prueba — Angel Ghost · v2 (sprint 003)
+# Kit de prueba — Angel Ghost · v3 (sprint 004)
 
 Nació en el sprint 001 con el corpus y las preguntas; el sprint 002 le sumó el audio, la pantalla y el
-radar; **el sprint 003 (v2) le suma las propuestas, las jurisdicciones, la puerta local y dos documentos
-de ejemplo** para la NDA y la carta de encargo.
+radar; el sprint 003 (v2) le sumó las propuestas, las jurisdicciones, la puerta local y dos documentos
+de ejemplo para la NDA y la carta de encargo; **el sprint 004 (v3) le suma el banco de preguntas del
+ensayo** (`ensayo.json`).
 
 **Qué mide la integración continua y qué no.** Todo lo de este kit lo mide la CI en cada push
 (`cargo test --test contra-el-mac-de-verdad el_kit` y `cargo test --test puerta el_kit`), **salvo el
@@ -17,6 +18,7 @@ su corrida local registrada en la bitácora de cada sprint (ver `audio/LEEME.md`
 | `reunion-con-acuerdos.json` | **v2** · las propuestas: regla y dueño, turno a turno; del cliente jamás el turno | 15 de 15 · el turno más lento, menos de 1 ms | 100 % · 50 ms |
 | `jurisdicciones.json` | **v2** · la bandera que sale de la línea «Jurisdicción:» de la ficha | 17 de 17 | 100 % |
 | `preguntas.json` por la puerta | **v2** · el kit que corre `ghost` mide lo mismo que la CI | 0,823 = 0,823 | igual |
+| `ensayo.json` | **v3** · el banco del ensayo, regla por regla: precisión y recall de las seis reglas, en español (Páramo Azul) y en inglés (Northwind); y el acento del modelo con el `mock` | lo imprime la CI | 0,75 · 0,75 por regla |
 | `audio/` | el WER con y sin diccionario | ver `audio/LEEME.md` | **manual** |
 
 Todo lo de esta carpeta es **100 % sintético**. Ni un cliente real, ni un dato real, ni una cifra
@@ -117,3 +119,21 @@ Una página negra cuyo título dice «Google Meet»: con ella, ⌃⌥L tiene que
 hay texto que buscar». Y `meet-de-prueba.html` se retocó en el sprint 003: la app lee la ventana entera,
 pestaña y pie incluidos, y su título («Páramo Azul») y su contador («5 de 6») le daban a la agenda un
 término y una cifra que la diapositiva no tiene. Ahora el título es neutro y el pie cuenta con puntos.
+
+## `ensayo.json` — el banco de preguntas del ensayo (v3, sprint 004)
+
+Dos casos: **Páramo Azul**, que lee la propuesta y la ficha de `corpus/`, y **Northwind Feed Co.**, escrito
+dentro del archivo y en inglés, porque el banco es bilingüe. Cada caso dice qué preguntas esperaría un
+consultor, regla por regla: una por sección (alcance, supuestos, entregables, precio, plazo, contexto),
+por cada cifra que escribiste, por cada compromiso, por cada «si…» o supuesto, por lo que la ficha dice que
+le importa al cliente y por las objeciones del catálogo que tocan la propuesta.
+
+El test (`cargo test --test contra-el-mac-de-verdad el_kit_del_ensayo -- --nocapture`) arma el banco
+**entero**, sin tope, e imprime por regla cuántas dio, cuántas esperaba el kit, la precisión y el recall,
+más un ensayo de 8 tal como lo vería el usuario. Después pide al `mock` el acento del modelo e imprime lo
+que propone, lo que se funda y lo que se tira, y lo que costaría una llamada con cada proveedor externo.
+
+**Una advertencia, escrita aquí para que nadie la lea como más de lo que es:** el kit y las reglas los
+escribió el mismo constructor, en el mismo sprint. Que el banco acierte su propio kit es un **piso** —que
+ninguna regla se rompa sin que se note—, no una prueba de calidad. La prueba de verdad es tu propuesta
+real, en el ⭐ del ensayo.

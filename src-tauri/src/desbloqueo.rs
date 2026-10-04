@@ -29,6 +29,7 @@ mod puente {
 
 /// Pide el desbloqueo con el diálogo del sistema. Bloquea hasta que contestas.
 pub fn pedir(razon: &str) -> Respuesta {
+    crate::hardware::vigilar("el desbloqueo (Touch ID o contraseña)");
     #[cfg(all(target_os = "macos", puente_de_swift))]
     {
         let Ok(r) = std::ffi::CString::new(razon) else { return Respuesta::NoSePuede };
@@ -49,6 +50,12 @@ pub fn pedir(razon: &str) -> Respuesta {
 /// Lo que dice el diálogo debajo del nombre de la app, en el idioma de la interfaz.
 pub fn razon(idioma: &str) -> &'static str {
     if idioma.starts_with("en") { "open your saved notes" } else { "abrir tus notas guardadas" }
+}
+
+/// Para qué se pide el desbloqueo cuando lo que se abre son tus ensayos (ADR 015, enmienda 4): el mismo
+/// desbloqueo que tus notas, y macOS dice para qué.
+pub fn razon_de_los_ensayos(idioma: &str) -> &'static str {
+    if idioma.starts_with("en") { "open your saved rehearsals" } else { "abrir tus ensayos guardados" }
 }
 
 /// El recuerdo del desbloqueo mientras la app está abierta.

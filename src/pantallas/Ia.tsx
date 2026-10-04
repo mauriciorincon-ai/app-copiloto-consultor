@@ -11,6 +11,7 @@ import {
   dolares,
   guardarClave,
   redactarSugerencias,
+  enriquecerElBanco,
   useIa,
   useLoQueSalio,
   type EstadoDeLaIa,
@@ -227,6 +228,13 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
             encendido={ia.redactar}
             etiqueta={t.redactarSugerencias}
             alCambiar={() => aplicar(redactarSugerencias(!ia.redactar))}
+            relleno="2px"
+          />
+          {/* El segundo interruptor (sprint 004, `ia.html` · sprint 4): el acento del ensayo. */}
+          <Interruptor
+            encendido={ia.enriquecer}
+            etiqueta={t.enriquecerElBanco}
+            alCambiar={() => aplicar(enriquecerElBanco(!ia.enriquecer))}
             relleno="2px"
           />
           <span className="crece" />

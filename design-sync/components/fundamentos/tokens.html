@@ -120,10 +120,12 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .banda.voz .linea-b .fuente-b { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .banda.voz .lado-b { flex-direction: row; align-items: center; gap: 12px; max-width: none; }
 .nota-campo::placeholder, .acuerdo-campo::placeholder, .acuerdo-campo.muestra { color: var(--ink-2); }
+.cifra-e .n { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 17px; line-height: 1.3; color: var(--ink); }
 .mq-nota .n { display: none; border-left: 3px solid #7dd3fc; padding: 8px 12px; background: #111418; }
 .mq-nota .n.activa { display: block; }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
 @media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
 .k-item { display: flex; flex-direction: column; gap: 6px; }
 .k-item > .etq { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
 .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }

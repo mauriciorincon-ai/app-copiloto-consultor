@@ -32,7 +32,8 @@ pub const TOP: usize = 3;
 /// gana a la nada.
 const TERMINOS_MINIMOS: usize = 2;
 
-#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+/// Se lee de vuelta de un ensayo guardado (ADR 015, enmienda 4): por eso también `Deserialize`.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Fuente {
     pub documento: String,

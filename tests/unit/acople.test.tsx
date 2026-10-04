@@ -102,7 +102,10 @@ describe("el relleno: negro ante cualquier fallo, jamás transparente", () => {
 
   it("con fondo, lo encuadra al tamaño de la PANTALLA y lo sube por el alto de la franja", async () => {
     const fuera = conTauri();
-    invoke.mockResolvedValue("data:image/jpeg;base64,AAA");
+    // Cada comando, su respuesta: el fondo, y la franja abajo (sprint 004).
+    invoke.mockImplementation(async (c: string) =>
+      c === "fondo_del_relleno" ? "data:image/jpeg;base64,AAA" : { borde: "abajo", barra: 25, avisoVisto: true },
+    );
     // Una pantalla de 1440×900 con la franja de 88 px abajo: la imagen se pinta entera y se
     // sube 812 px, que es justo lo que deja asomar el trozo que estaría debajo de la banda.
     Object.defineProperty(globalThis.screen, "width", { value: 1440, configurable: true });

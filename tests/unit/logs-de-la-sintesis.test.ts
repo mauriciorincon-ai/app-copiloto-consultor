@@ -65,3 +65,33 @@ describe("el log de la síntesis", () => {
     expect(fuera, `el log de la síntesis lleva contenido:\n${fuera.join("\n")}`).toEqual([]);
   });
 });
+
+/**
+ * GATE — **EL LOG DEL ENSAYO ES METADATA, JAMÁS CONTENIDO** (sprint 004, fase 3; ADR 019, regla dura 1
+ * (d): «término plantado en logs»). El ensayo tiene en las manos tu respuesta en texto, las preguntas,
+ * el nombre del cliente y la propuesta; ninguna de esas variables puede ir dentro de un `println!` con
+ * la marca `[ensayo]`. Lo que sí: cuántas preguntas, cuántos milisegundos, cuántas letras, el idioma.
+ *
+ * ¿Puede fallar? Sí: se vio en rojo con un `println!("[ensayo] {cliente}")` plantado en `lib.rs`
+ * (bitácora del sprint 004, fase 3).
+ */
+const CONTENIDO_DEL_ENSAYO =
+  /\b(pregunta|respuesta|texto|tramos?|cliente|propuesta|ficha|nombre|sobre|titular|frase|peticion|json|seccion|secciones|respaldo|jerga)\b/;
+
+describe("el log del ensayo", () => {
+  const del_ensayo = impresiones().filter((p) => p.texto.includes("[ensayo]"));
+
+  it("hay líneas que leer (un gate que no lee nada no es un gate)", () => {
+    expect(del_ensayo.length).toBeGreaterThanOrEqual(8);
+  });
+
+  it("ninguna lleva tu respuesta, las preguntas, el cliente ni la propuesta", () => {
+    const fuera = del_ensayo
+      .filter((p) => {
+        const sinProsa = p.texto.replace(/"(?:[^"\\]|\\.)*"/g, (m) => (m.match(/\{[^}]*\}/g) ?? []).join(" "));
+        return CONTENIDO_DEL_ENSAYO.test(sinProsa);
+      })
+      .map((p) => `${p.donde}  ${p.texto.replace(/\s+/g, " ").slice(0, 120)}`);
+    expect(fuera, `el log del ensayo lleva contenido:\n${fuera.join("\n")}`).toEqual([]);
+  });
+});

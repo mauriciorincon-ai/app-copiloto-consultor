@@ -7,7 +7,7 @@
 // frase del cliente. La otra mitad mira el DISCO —inventario antes y después de una sesión
 // completa, con una canaria que solo dice el cliente— y vive en
 // `src-tauri/tests/contra-el-mac-de-verdad.rs`. Se corre con `pnpm verify:ephemeral:runtime`, y
-// en la integración continua la arrastra `cargo test`. Decirlo aquí no es cortesía: sin esta
+// en la integración continua la corre el paso de hardware de `cargo test` (`--include-ignored`, regla 25). Decirlo aquí no es cortesía: sin esta
 // nota, un verde de este script se lee como «la promesa está verificada», y no lo está.
 // Corre en CI (job build-escritorio) y en /release-check cuando CLAUDE.md declara
 // `captura_terceros: true`. Falla (exit 1) si algún módulo que toca audio, transcript o
@@ -45,6 +45,9 @@ const PROTEGIDOS = [
   // El disparador guarda la última pregunta del CLIENTE para no repetir ficha, y la ficha se
   // arma con sus palabras. Los dos manejan contenido de terceros: ni disco ni red.
   "src-tauri/src/disparo",
+  // El ensayo (sprint 004, ADR 019): arma lo que se pregunta y, desde la fase 3, oye tu respuesta por
+  // el micrófono. Ni disco ni red: los documentos los lee `lib.rs` con `corpus` y se los pasa troceados.
+  "src-tauri/src/ensayo",
   // `diccionario` se añadió en el sprint 002, fase 1, y es el caso más interesante de la lista:
   // **el diccionario PERSISTE** —es del consultor, como sus notas— y aun así el módulo está aquí.
   // Recibe cada turno del cliente y devuelve el turno corregido, así que tiene el transcript en las
@@ -189,5 +192,5 @@ if (hallazgos) { console.error(`✕ ${hallazgos} uso(s) de disco/red en módulos
 console.log("✓ cero API de disco o red en los módulos efímeros (verificación estática)");
 console.log(
   "· la mitad EN MARCHA (inventario del disco tras una sesión completa) no está en este script:\n" +
-    "  `pnpm verify:ephemeral:runtime` · en CI la arrastra `cargo test`",
+    "  `pnpm verify:ephemeral:runtime` · en CI la corre el paso de hardware (`cargo test -- --include-ignored`, regla 25)",
 );

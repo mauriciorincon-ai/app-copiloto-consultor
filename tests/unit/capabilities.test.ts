@@ -63,7 +63,7 @@ function loQueLlamaLaBanda(): string[] {
   const salida = new Set<string>();
   const imports = [
     ...(banda + app).matchAll(
-      /import\s*\{([^}]*)\}\s*from\s*"\.\.?\/(cuaderno|ficha|turnos|asa|radar|acople|ia|notas)"/g,
+      /import\s*\{([^}]*)\}\s*from\s*"\.\.?\/(cuaderno|ficha|turnos|asa|radar|acople|ia|notas|franja)"/g,
     ),
   ];
   for (const [, nombres, modulo] of imports) {
@@ -88,6 +88,28 @@ const SENSIBLES = [
   "instalar_idioma",
   "empezar_a_escuchar",
   "abrir_ajustes_de",
+  // La banda no se cambia de borde a sí misma: lo eliges tú en Sesión o con ⌃⌥B (sprint 004).
+  "fijar_posicion_de_la_banda",
+  "entendido_el_aviso_de_arriba",
+  // El acento del ensayo usa el proveedor externo, como redactar: solo desde IA (sprint 004).
+  "enriquecer_el_banco",
+  // El ensayo entero, solo desde la ventana principal (sprint 004, ADR 019): abre el micrófono y su
+  // estado lleva tus respuestas en texto. La banda y el relleno no ensayan.
+  "preparar_el_ensayo",
+  "empezar_el_ensayo",
+  "ensayo_listo",
+  "ensayo_repetir",
+  "ensayo_saltar",
+  "ensayo_terminar",
+  "ensayo_si_lo_dije",
+  "estado_del_ensayo",
+  "cerrar_el_ensayo",
+  // Lo que queda de tus ensayos (fase 4, ADR 015 enmienda 4): abre tus ensayos con el desbloqueo de tus
+  // notas, los exporta en claro o los borra. Solo la ventana principal.
+  "guardar_el_ensayo",
+  "exportar_el_ensayo",
+  "progreso_del_ensayo",
+  "borrar_los_ensayos",
 ];
 
 describe("cada ventana puede solo lo suyo", () => {
@@ -108,6 +130,8 @@ describe("cada ventana puede solo lo suyo", () => {
       "notas",
       "jurisdiccion",
       "puerta",
+      "franja",
+      "ensayo",
       "componentes/Relleno",
     ]
       .map((m) =>
@@ -131,8 +155,11 @@ describe("cada ventana puede solo lo suyo", () => {
     expect(nadie, "comandos que ninguna ventana puede llamar").toEqual([]);
   });
 
-  it("el relleno puede uno, y la banda nada de la clave, el API, el corpus ni la sesión", () => {
-    expect(permite("relleno")).toEqual(["fondo_del_relleno"]);
+  // Desde el sprint 004 el relleno puede DOS, y los dos solo leen: su fondo, y en qué borde está la
+  // franja (para subir ese fondo lo que mide la barra de menús con la banda arriba). Ninguno le da
+  // contenido.
+  it("el relleno puede dos que solo leen, y la banda nada de la clave, el API, el corpus ni la sesión", () => {
+    expect(permite("relleno")).toEqual(["fondo_del_relleno", "la_franja"]);
     expect(permite("banda").filter((c) => SENSIBLES.includes(c))).toEqual([]);
   });
 

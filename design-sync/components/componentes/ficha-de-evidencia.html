@@ -172,12 +172,21 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .cuenta.vencida .ic, .cuenta.vencida .reloj { color: var(--ink-2); }
 .franja .ventanas .op .ic { color: inherit; }
 .pregunta-nda .ic { color: var(--halo); flex: 0 0 auto; }
+.pregunta-e .texto { margin-top: 6px; font-family: var(--font-evidencia); font-size: 19px; line-height: 1.35; color: var(--ink); }
+.pregunta-e.chica .texto { font-size: var(--t-titular); }
+.evidencia-e li .ic { margin-top: 2px; }
+.evidencia-e .titular { font-family: var(--font-evidencia); font-size: var(--t-ui); color: var(--ink); }
+.evidencia-e .fuente { grid-column: 2; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.evidencia-e .usada .ic { color: var(--ok); }
+.evidencia-e .sin-usar .ic { color: var(--halo); }
+.cifra-e .n { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 17px; line-height: 1.3; color: var(--ink); }
 .mq-nota .n { display: none; border-left: 3px solid #7dd3fc; padding: 8px 12px; background: #111418; }
 .mq-nota .n.activa { display: block; }
 .mq-tabla-pos .mas { color: #f0b64a; }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
 .mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
 @media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
 .k-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
 .k-grid.ancha { grid-template-columns: 1fr; }
 .k-item { display: flex; flex-direction: column; gap: 6px; }

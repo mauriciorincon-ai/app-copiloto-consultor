@@ -9,6 +9,10 @@ const COMANDOS: &[&str] = &[
         "asentar_banda",
         "estado_del_acople",
         "fondo_del_relleno",
+        "la_franja",
+        "fijar_posicion_de_la_banda",
+        "entendido_el_aviso_de_arriba",
+        "enriquecer_el_banco",
         "reunion_abierta",
         "permisos_de_macos",
         "abrir_ajustes_de",
@@ -72,6 +76,23 @@ const COMANDOS: &[&str] = &[
         "la_puerta",
         "abrir_la_puerta",
         "cerrar_la_puerta",
+        // Sprint 004, fase 3: el ensayo (ADR 019). Solo la ventana principal: abre el micrófono y
+        // enseña tus respuestas.
+        "preparar_el_ensayo",
+        "empezar_el_ensayo",
+        "ensayo_listo",
+        "ensayo_repetir",
+        "ensayo_saltar",
+        "ensayo_terminar",
+        "ensayo_si_lo_dije",
+        "estado_del_ensayo",
+        "cerrar_el_ensayo",
+        // Sprint 004, fase 4: lo que queda de tus ensayos (ADR 015, enmienda 4). Solo la ventana principal:
+        // abre tus ensayos con el desbloqueo de tus notas.
+        "guardar_el_ensayo",
+        "exportar_el_ensayo",
+        "progreso_del_ensayo",
+        "borrar_los_ensayos",
 ];
 
 fn main() {

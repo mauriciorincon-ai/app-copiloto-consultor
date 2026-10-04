@@ -248,6 +248,11 @@ export type EstadoDeEscucha = {
   sistema: EstadoDePista;
   // `turnosEnMemoria` salió por la misma decisión: Honestidad cuenta el transcript por sus bytes.
   bytesDelTranscript: number;
+  /**
+   * Tus respuestas del ensayo, en texto, hasta que lo guardes o lo cierres (sprint 004, fase 4). Mientras
+   * ensayas, el micrófono de arriba es el del ensayo y la pista del sistema está cerrada.
+   */
+  bytesDelEnsayo: number;
   // `motor` salió del contrato en la fase 3: Idioma lo lee de `QueSabeTranscribir`, con su techo.
 };
 
@@ -270,6 +275,8 @@ export type PiezaDelCorte =
   | "sugerencia"
   | "audio-del-microfono"
   | "audio-del-sistema"
+  /** El ensayo (sprint 004, ADR 019 §6.4): su micrófono, la voz que lee y tus respuestas en texto. */
+  | "ensayo"
   | "ultimo-frame"
   | "transcript"
   /** Del cuaderno, lo que salió de la captura: tus turnos y la ficha vigente (sprint 003, ADR 015). */
@@ -326,6 +333,7 @@ const ESCUCHA_DE_MUESTRA: EstadoDeEscucha = {
     bytes: 1_920_000,
   },
   bytesDelTranscript: 2_048,
+  bytesDelEnsayo: 0,
 };
 
 /**
@@ -371,8 +379,14 @@ export function useEscucha(): EstadoDeEscucha {
       );
     };
     leer();
-    // «modo»: empezó o terminó una reunión, normal o solo notas (ADR 017 §5).
-    const bajas = [escuchar("escucha", leer), escuchar("corte", leer), escuchar("modo", leer)];
+    // «modo»: empezó o terminó una reunión, normal o solo notas (ADR 017 §5). «ensayo»: lo que el ensayo
+    // tiene en memoria cambia con cada respuesta (sprint 004, fase 4).
+    const bajas = [
+      escuchar("escucha", leer),
+      escuchar("corte", leer),
+      escuchar("modo", leer),
+      escuchar("ensayo", leer),
+    ];
     globalThis.addEventListener("focus", leer);
     return () => {
       vivo = false;
@@ -398,6 +412,20 @@ const APAGADA: EstadoDeEscucha = {
     bytes: 0,
   },
   bytesDelTranscript: 0,
+  bytesDelEnsayo: 0,
+};
+
+/**
+ * Lo que vive en memoria mientras ensayas, como lo dibuja `honestidad.html` («sprint 4 · ensayando»): el
+ * anillo del micrófono del ensayo y tus respuestas en texto. Fuera de Tauri, para el gate de fidelidad.
+ */
+export const ESCUCHA_DEL_ENSAYO_DE_MUESTRA: EstadoDeEscucha = {
+  escuchando: false,
+  soloNotas: false,
+  microfono: { abierta: true, motivo: null, bytes: 1_920_000 },
+  sistema: { abierta: false, motivo: null, bytes: 0 },
+  bytesDelTranscript: 0,
+  bytesDelEnsayo: 412,
 };
 
 /**

@@ -355,7 +355,7 @@ impl ElCuaderno {
     }
 }
 
-fn preferencias<R: Runtime>(app: &AppHandle<R>) -> prefs::Preferencias {
+pub(crate) fn preferencias<R: Runtime>(app: &AppHandle<R>) -> prefs::Preferencias {
     app.try_state::<crate::LasPreferencias>()
         .and_then(|lp| lp.actuales.lock().ok().map(|p| p.clone()))
         .unwrap_or_default()
@@ -376,7 +376,13 @@ pub fn la_bandeja_de<R: Runtime>(app: &AppHandle<R>) -> Bandeja {
     Bandeja::en(carpeta_de_la_app(app).join(bandeja::CARPETA))
 }
 
-/// `~/Library/Application Support/<app>/`, en 700: la de las notas, la bandeja y la puerta local.
+/// Tus ensayos: `~/Library/Application Support/<app>/ensayos/`, con la llave y la retención de tus notas (ADR
+/// 015, enmienda 4).
+pub fn los_ensayos_de<R: Runtime>(app: &AppHandle<R>) -> crate::ensayos::Ensayos {
+    crate::ensayos::Ensayos::en(carpeta_de_la_app(app).join(crate::ensayos::CARPETA))
+}
+
+/// `~/Library/Application Support/<app>/`, en 700: la de las notas, la bandeja, los ensayos y la puerta local.
 pub fn carpeta_de_la_app<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
     app.path().app_data_dir().unwrap_or_else(|_| std::env::temp_dir().join(vencimiento::APP))
 }
@@ -685,7 +691,7 @@ pub fn la_bandeja<R: Runtime>(app: &AppHandle<R>) -> Option<VistaDeLaBandeja> {
 /// El error, **sin rutas**, para el log (auditoría del S3, B30; ADR 015 §9): el nombre de una reunión
 /// lleva el del cliente, y los errores del disco traen la ruta entera. Cada ruta absoluta, hasta el
 /// «: » que la separa de su motivo, se cambia por `[ruta]`; el motivo del sistema se queda.
-fn sin_ruta(e: &str) -> String {
+pub(crate) fn sin_ruta(e: &str) -> String {
     let mut fuera = String::with_capacity(e.len());
     let mut resto = e;
     while let Some(i) = resto.char_indices().find(|&(i, c)| c == '/' && (i == 0 || resto[..i].ends_with(' '))).map(|(i, _)| i) {
@@ -828,15 +834,16 @@ fn la_tarea<R: Runtime>(app: &AppHandle<R>) -> Option<vencimiento::Tarea> {
     Some(vencimiento::Tarea::de_la_app(&casa, &carpeta_de_la_app(app)))
 }
 
-/// Lo que launchd tiene que borrar con la app cerrada: **tus notas y la bandeja**. Las notas entraron
-/// con la decisión A (ADR 016): desde que viven en la carpeta de la app, el `sh` de launchd puede
-/// borrarlas. Las que guardaste con «siempre» no vencen y no entran.
+/// Lo que launchd tiene que borrar con la app cerrada: **tus notas, la bandeja y tus ensayos**. Las notas
+/// entraron con la decisión A (ADR 016): desde que viven en la carpeta de la app, el `sh` de launchd puede
+/// borrarlas; los ensayos, con la enmienda 4 del ADR 015, por lo mismo. Lo guardado con «siempre» no vence
+/// y no entra.
 fn lo_que_vence<R: Runtime>(app: &AppHandle<R>) -> Vec<vencimiento::Pendiente> {
-    lo_que_vence_en(&carpeta(app), &la_bandeja_de(app))
+    lo_que_vence_en(&carpeta(app), &la_bandeja_de(app), &los_ensayos_de(app))
 }
 
-pub fn lo_que_vence_en(notas: &Carpeta, bandeja: &Bandeja) -> Vec<vencimiento::Pendiente> {
-    notas.pendientes().into_iter().chain(bandeja.pendientes()).collect()
+pub fn lo_que_vence_en(notas: &Carpeta, bandeja: &Bandeja, ensayos: &crate::ensayos::Ensayos) -> Vec<vencimiento::Pendiente> {
+    notas.pendientes().into_iter().chain(bandeja.pendientes()).chain(ensayos.pendientes()).collect()
 }
 
 /// Pone la tarea de launchd al día con lo que vence. Solo toca launchd si la lista cambió.
@@ -930,6 +937,13 @@ pub fn abrir_con<R: Runtime>(
     Ok(c)
 }
 
+/// **El desbloqueo de la pantalla**, el de tus notas: una vez por sesión de la app (ADR 015 §5). Tus ensayos
+/// lo usan también (enmienda 4), con su propia razón.
+pub fn desbloquear<R: Runtime>(app: &AppHandle<R>, razon: &str) -> Result<(), String> {
+    let el = app.try_state::<ElCuaderno>().ok_or("el cuaderno no está listo")?;
+    el.desbloqueo.asegurar(|| desbloqueo::pedir(razon))
+}
+
 /// Exporta a texto donde elijas. Pide el desbloqueo de la sesión de la app. `Ok(false)` si cancelaste el
 /// diálogo.
 pub fn exportar<R: Runtime>(app: &AppHandle<R>, archivo: &str, idioma: &str) -> Result<bool, String> {
@@ -995,6 +1009,10 @@ pub fn arrancar_el_barrido<R: Runtime>(app: &AppHandle<R>) {
         if notas > 0 {
             println!("[notas] {notas} reunión(es) vencida(s), borrada(s)");
         }
+        let ensayos = los_ensayos_de(&mango).barrer(ahora);
+        if ensayos > 0 {
+            println!("[ensayo] {ensayos} ensayo(s) vencido(s), borrado(s)");
+        }
         let b = la_bandeja_de(&mango);
         let bandejas = b.barrer(ahora);
         if bandejas > 0 {
@@ -1009,7 +1027,7 @@ pub fn arrancar_el_barrido<R: Runtime>(app: &AppHandle<R>) {
     });
 }
 
-/// Cuánto dormir: hasta el próximo vencimiento de notas o bandeja, como mucho [`BARRIDO_CADA`].
+/// Cuánto dormir: hasta el próximo vencimiento de notas, bandeja o ensayos, como mucho [`BARRIDO_CADA`].
 fn hasta_el_proximo<R: Runtime>(app: &AppHandle<R>, ahora: i64) -> std::time::Duration {
     let proximo = lo_que_vence(app)
         .into_iter()
@@ -1023,7 +1041,7 @@ fn hasta_el_proximo<R: Runtime>(app: &AppHandle<R>, ahora: i64) -> std::time::Du
 }
 
 /// La fecha y la hora del reloj del Mac, como `mes_de_hoy` en `lib.rs`: sin una biblioteca de fechas.
-fn fecha_de_ahora() -> notas::Fecha {
+pub(crate) fn fecha_de_ahora() -> notas::Fecha {
     // SEGURIDAD: `time` y `localtime_r` escriben en estructuras que viven en esta función.
     unsafe {
         let ahora = libc::time(std::ptr::null_mut());
@@ -1153,10 +1171,18 @@ mod pruebas {
 
     /// **Decisión A (ADR 016):** lo que launchd borra con la app cerrada trae tus notas **y** la
     /// bandeja; una reunión guardada para «siempre» no entra. ¿Puede fallar? Sí, y se vio en rojo: con
-    /// la lista de antes —solo la bandeja— tus notas vencidas esperaban a que abrieras la app.
+    /// la lista de antes —solo la bandeja— tus notas vencidas esperaban a que abrieras la app. **Y tus
+    /// ensayos** (ADR 015, enmienda 4): visto en rojo con la lista sin ellos —un ensayo vencido esperaba a
+    /// que abrieras la app—; el de «siempre» tampoco entra.
     #[test]
-    fn launchd_se_lleva_tus_notas_y_la_bandeja() {
+    fn launchd_se_lleva_tus_notas_la_bandeja_y_tus_ensayos() {
         let (c, b, llaves) = (carpeta("launchd"), bandeja("launchd"), EnMemoria::default());
+        let e = crate::ensayos::Ensayos::en(std::env::temp_dir().join(format!("ag-reunion-ensayos-launchd-{}", std::process::id())));
+        let _ = std::fs::remove_dir_all(e.raiz());
+        let ensayo = crate::ensayo::guardado::pruebas::guardado("2026-09-27 09:00", Vec::new());
+        let vence_el_ensayo = CIERRE + 30 * 86_400;
+        let el_ensayo = e.guardar(&llaves, &ensayo, "paramo-azul-2026-09-27", vence_el_ensayo).unwrap();
+        e.guardar(&llaves, &ensayo, "paramo-azul-2026-09-27", 0).unwrap();
         let el = ElCuaderno::default();
         el.abrir(false, HOY);
         el.con(|cu| {
@@ -1168,12 +1194,14 @@ mod pruebas {
         para_siempre.abrir(false, notas::Fecha { minuto: 30, ..HOY });
         para_siempre.con(|cu| cu.escribir("Esta la guardo para siempre."));
         assert!(para_siempre.guardar_en(&c, &b, &llaves, prefs::Retencion::Siempre, None, CIERRE).unwrap().guardada.is_some());
-        let lista: Vec<(PathBuf, i64)> = lo_que_vence_en(&c, &b).into_iter().map(|p| (p.ruta, p.vence)).collect();
-        assert_eq!(lista.len(), 2, "la reunión de «siempre» entró, o faltó algo: {lista:?}");
+        let lista: Vec<(PathBuf, i64)> = lo_que_vence_en(&c, &b, &e).into_iter().map(|p| (p.ruta, p.vence)).collect();
+        assert_eq!(lista.len(), 3, "lo de «siempre» entró, o faltó algo: {lista:?}");
         assert!(lista.contains(&(c.raiz().join(&g.archivo), CIERRE + 90 * 86_400)), "tus notas no están en la lista de launchd: {lista:?}");
         assert!(lista.contains(&(b.raiz().join(&g.archivo), CIERRE + 3 * 3_600)), "la bandeja no está en la lista de launchd: {lista:?}");
+        assert!(lista.contains(&(e.raiz().join(&el_ensayo.archivo), vence_el_ensayo)), "tus ensayos no están en la lista de launchd: {lista:?}");
         let _ = std::fs::remove_dir_all(c.raiz());
         let _ = std::fs::remove_dir_all(b.raiz());
+        let _ = std::fs::remove_dir_all(e.raiz());
     }
 
     /// **«Este cliente» nombra el archivo** (ADR 017 §3, que el ADR 015 §2 esperaba) y entra en su

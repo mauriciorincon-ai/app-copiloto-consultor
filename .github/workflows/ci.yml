@@ -24,6 +24,14 @@ jobs:
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm peers check
+      # Regla 18 del kit (v1.32.0; falla CERRADO desde v1.35.0): ningun paquete queda por debajo de
+      # `main`. La plantilla de escritorio del kit no lo trae (K-S4, bitacora del sprint 004): se
+      # copia de la web. Su rojo: un `jsdom` bajado a mano en el lockfile (bitacora, fase 0).
+      - name: Regla 18 — ningun paquete por debajo de main (kit v1.32.0)
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin main --depth=1
+          node scripts/verificar-dependencias.mjs origin/main
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test            # vitest run --coverage (umbral en vitest.config)
@@ -80,11 +88,25 @@ jobs:
       - name: cargo clippy (el gate que el checklist pedia y nadie corria)
         working-directory: src-tauri
         run: cargo clippy --locked --all-targets -- -D warnings
-      - name: cargo check + test (crate de Tauri)
+      - name: cargo check (crate de Tauri)
         working-directory: src-tauri
-        run: |
-          cargo check --locked
-          cargo test --locked
+        run: cargo check --locked
+      # REGLA 25 del kit (v1.36.0; en esta app, dentro de la regla 22): `cargo test` a secas no abre
+      # micrófono, audio del sistema, altavoces, Accessibility, Llavero, desbloqueo ni launchd. Lo
+      # demuestra este paso, no una promesa: con AG_SIN_HARDWARE=1 cada entrada nativa ABORTA el
+      # binario antes de cruzar a C (`src-tauri/src/hardware.rs`), asi que un test que abra algo sin
+      # su `#[ignore = "hardware: …"]` tumba el paso con el nombre de lo que iba a abrir. Su rojo,
+      # en la bitacora del sprint 004 (fase 0).
+      - name: cargo test a secas — sin hardware (regla 25, con el centinela armado)
+        working-directory: src-tauri
+        env: { AG_SIN_HARDWARE: "1" }
+        run: cargo test --locked
+      # Y lo que si toca el Mac lo corre la CI, que no es el Mac de nadie. Los `en_vivo_*` necesitan
+      # al usuario delante (una ventana de Meet, su Llavero, launchd ≈ 2 min): se corren a mano, con
+      # su matriz y su «sí».
+      - name: cargo test con hardware (los #[ignore] de la regla 25; los en_vivo_ se corren a mano)
+        working-directory: src-tauri
+        run: cargo test --locked -- --include-ignored --skip en_vivo_
       # EVIDENCIA, no un gate nuevo — y conviene decirlo para que nadie lo cuente como uno mas.
       # Los tests del kit (WER, nDCG@5, disparador) SOLO pueden medir o saltarse: si este runner
       # no trae los modelos de voz de macOS, salen `ok` habiendose saltado, y `ok` no distingue las
@@ -99,7 +121,7 @@ jobs:
       # que el log dijera cual de las dos cosas habia pasado.
       - name: el kit, con su salida (porque «ok» no dice si midio)
         working-directory: src-tauri
-        run: cargo test --locked --test contra-el-mac-de-verdad -- --nocapture el_kit el_wer la_voz_de_este_mac la_app_nunca el_radar
+        run: cargo test --locked --test contra-el-mac-de-verdad -- --include-ignored --nocapture el_kit el_wer la_voz_de_este_mac la_app_nunca el_radar
       # GATE de las maquetas (sprint 002, fase 3): ningun estado de ninguna maqueta se sale de su
       # ventana. Va AQUI y no en `e2e` porque las maquetas usan las fuentes de macOS (Avenir Next,
       # Charter, Menlo): en el runner de Linux todo envuelve distinto y daba desbordes que en un Mac

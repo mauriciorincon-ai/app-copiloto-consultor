@@ -148,6 +148,13 @@ pub struct EstadoDePista {
     pub hablando: bool,
 }
 
+impl EstadoDePista {
+    /// Una pista que no se abrió, y no es una avería: nadie la pidió.
+    pub fn cerrada() -> EstadoDePista {
+        EstadoDePista { abierta: false, motivo: None, bytes: 0, segundos: 0.0, muestras_recibidas: 0, hablando: false }
+    }
+}
+
 /// Todo lo que vive en memoria ahora mismo por culpa de la escucha.
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -162,6 +169,9 @@ pub struct EstadoDeEscucha {
     #[serde(skip)]
     pub turnos_en_memoria: usize,
     pub bytes_del_transcript: usize,
+    /// **Tus respuestas del ensayo**, en texto, hasta que lo guardes o lo cierres (sprint 004, fase 4). Cero en
+    /// una reunión: el ensayo y la reunión no conviven.
+    pub bytes_del_ensayo: usize,
     // `ram_legible` salió del contrato en el sprint 002, por lo mismo que `legible`: la cabecera
     // «RAM · …» suma los tres búferes y los escribe **en la pantalla**, con el idioma puesto.
     /// Qué motor transcribe. **No cruza**: Idioma lo lee de `que_sabe_transcribir`, que además dice
@@ -175,21 +185,30 @@ impl EstadoDeEscucha {
     /// Una reunión en modo solo notas: ninguna pista se abrió, y no es una avería —no hay motivo que
     /// dar—, sino lo que pediste.
     pub fn solo_notas() -> EstadoDeEscucha {
-        let cerrada = || EstadoDePista {
-            abierta: false,
-            motivo: None,
-            bytes: 0,
-            segundos: 0.0,
-            muestras_recibidas: 0,
-            hablando: false,
-        };
         EstadoDeEscucha {
             escuchando: false,
             solo_notas: true,
-            microfono: cerrada(),
-            sistema: cerrada(),
+            microfono: EstadoDePista::cerrada(),
+            sistema: EstadoDePista::cerrada(),
             turnos_en_memoria: 0,
             bytes_del_transcript: 0,
+            bytes_del_ensayo: 0,
+            motor: "",
+        }
+    }
+
+    /// **Un ensayo** (sprint 004, ADR 019): no hay reunión ni escucha, pero el micrófono del ensayo tiene su
+    /// anillo mientras dura, y tus respuestas viven en texto hasta que guardes o cierres. Honestidad lo cuenta
+    /// en las mismas filas: el micrófono es el micrófono, y la pista del sistema sigue cerrada.
+    pub fn del_ensayo(microfono_abierto: bool, bytes_del_microfono: usize, bytes_de_tus_respuestas: usize) -> EstadoDeEscucha {
+        EstadoDeEscucha {
+            escuchando: false,
+            solo_notas: false,
+            microfono: EstadoDePista { abierta: microfono_abierto, bytes: bytes_del_microfono, ..EstadoDePista::cerrada() },
+            sistema: EstadoDePista::cerrada(),
+            turnos_en_memoria: 0,
+            bytes_del_transcript: 0,
+            bytes_del_ensayo: bytes_de_tus_respuestas,
             motor: "",
         }
     }
@@ -284,7 +303,7 @@ impl PistaViva {
 /// incluido—; quien sabe del permiso es `permisos`. El permiso manda porque su salida es la que
 /// arregla las demás: con él negado, cerrar otra app no serviría de nada. «No se sabe» no cuenta
 /// como negado: si la pregunta a macOS no contesta, se queda el porqué del grifo.
-fn con_su_permiso(
+pub(crate) fn con_su_permiso(
     cual: Pista,
     mut e: crate::capture::NoAbrio,
     permisos: &crate::permisos::Permisos,
@@ -494,6 +513,7 @@ impl Escucha {
             sistema,
             turnos_en_memoria: turnos,
             bytes_del_transcript: bytes,
+            bytes_del_ensayo: 0,
             motor: self.motor,
         }
     }

@@ -1,0 +1,115 @@
+{
+  "_leeme": "Las muletillas que el ensayo cuenta en tu respuesta (ADR 019 §6.6). Solo frases enteras, sin mayúsculas ni tildes, sobre lo que la transcripción conserva: la de Apple suele quitar «eh» y «um», y por eso no están (la pantalla lo dice). Una palabra que muchas veces NO es muletilla lleva «no_tras»: no cuenta si la palabra de antes es una de esas («I'd like», «vamos a ver», «what kind of»). La lista es corta a propósito: contar de más una palabra que dijiste bien es peor que no contar una muletilla. Sin fuente publicada: criterio del builder.",
+  "version": 1,
+  "fecha": "2026-10-04",
+  "fuente": "criterio del builder",
+  "es": [
+    { "frase": "o sea" },
+    { "frase": "básicamente" },
+    { "frase": "digamos" },
+    { "frase": "como que" },
+    { "frase": "en plan" },
+    { "frase": "la verdad es que" },
+    { "frase": "me explico" },
+    { "frase": "pues nada" },
+    {
+      "frase": "a ver",
+      "no_tras": [
+        "vamos",
+        "voy",
+        "va",
+        "van",
+        "vas",
+        "vengo",
+        "viene",
+        "tiene",
+        "tienen",
+        "nada"
+      ]
+    }
+  ],
+  "en": [
+    { "frase": "I mean", "no_tras": ["what"] },
+    {
+      "frase": "you know",
+      "no_tras": ["do", "did", "if", "as", "don't", "didn't", "would", "will"]
+    },
+    { "frase": "basically" },
+    { "frase": "literally" },
+    {
+      "frase": "kind of",
+      "no_tras": [
+        "what",
+        "which",
+        "this",
+        "that",
+        "the",
+        "a",
+        "any",
+        "some",
+        "every",
+        "one",
+        "same",
+        "different",
+        "that's"
+      ]
+    },
+    {
+      "frase": "sort of",
+      "no_tras": [
+        "what",
+        "which",
+        "this",
+        "that",
+        "the",
+        "a",
+        "any",
+        "some",
+        "every",
+        "one",
+        "same",
+        "different"
+      ]
+    },
+    {
+      "frase": "like",
+      "no_tras": [
+        "would",
+        "i'd",
+        "you'd",
+        "we'd",
+        "they'd",
+        "he'd",
+        "she'd",
+        "look",
+        "looks",
+        "looked",
+        "looking",
+        "feel",
+        "feels",
+        "felt",
+        "seem",
+        "seems",
+        "something",
+        "anything",
+        "nothing",
+        "more",
+        "much",
+        "things",
+        "sounds",
+        "sound",
+        "just",
+        "not",
+        "don't",
+        "didn't",
+        "doesn't",
+        "is",
+        "was",
+        "be",
+        "are",
+        "were",
+        "exactly"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,174 @@
+{
+  "version": 1,
+  "kit": "v3 (sprint 004)",
+  "comentario": "El banco de preguntas del ensayo (ADR 019 §2), medido POR REGLA. Cada caso dice qué preguntas esperaría un consultor de esa propuesta y esa ficha: por sección, por cifra, por compromiso, por riesgo, por lo que la ficha dice y por objeción del catálogo. El test arma el banco entero (sin tope) y calcula, regla por regla, la PRECISIÓN (de las que dio, cuántas esperaba el kit) y el RECALL (de las que esperaba el kit, cuántas dio), y las imprime. Las cifras salen de la corrida, no de aquí. Datos 100 % sintéticos: Páramo Azul lee los documentos de `corpus/`; Northwind va escrito aquí, en inglés, porque el banco es bilingüe.",
+  "casos": [
+    {
+      "nombre": "Páramo Azul",
+      "idioma": "es",
+      "propuesta": "corpus/Propuesta Páramo Azul · rentabilidad por canal.md",
+      "ficha": "corpus/Ficha de cliente · Páramo Azul.md",
+      "esperadas": [
+        { "regla": "seccion", "seccion": "Contexto" },
+        { "regla": "seccion", "seccion": "Alcance" },
+        { "regla": "seccion", "seccion": "Supuestos" },
+        { "regla": "seccion", "seccion": "Entregables" },
+        { "regla": "seccion", "seccion": "Precio" },
+        { "regla": "seccion", "seccion": "Plazo de entrega" },
+        { "regla": "cifra", "cifra": "tres fuentes" },
+        { "regla": "cifra", "cifra": "tres horas" },
+        { "regla": "cifra", "cifra": "cuatro semanas" },
+        { "regla": "cifra", "cifra": "dos rondas" },
+        { "regla": "compromiso", "seccion": "Alcance" },
+        { "regla": "compromiso", "seccion": "Precio" },
+        { "regla": "compromiso", "seccion": "Plazo de entrega" },
+        { "regla": "riesgo", "seccion": "Supuestos" },
+        { "regla": "cliente", "seccion": "Quién decide" },
+        { "regla": "cliente", "seccion": "Acuerdos previos" },
+        { "regla": "cliente", "seccion": "Historial" },
+        { "regla": "objecion", "id": "numeros-correctos" },
+        { "regla": "objecion", "id": "no-cuadra-con-el-erp" },
+        { "regla": "objecion", "id": "nadie-lo-usa" }
+      ]
+    },
+    {
+      "nombre": "Northwind Feed Co.",
+      "idioma": "en",
+      "secciones": {
+        "propuesta": [
+          { "titulo": "Background", "texto": "Northwind Feed Co. sells livestock feed through two channels and cannot see which one makes money." },
+          { "titulo": "Scope", "texto": "Covers profiling and cleansing of two sources: the ERP and the web store export. A third source is quoted separately." },
+          { "titulo": "Assumptions", "texto": "The client delivers the ERP extracts in week one. If they arrive late, the schedule slips day for day." },
+          { "titulo": "Deliverables", "texto": "A margin dashboard by channel, a reproducible cleansing notebook and a closing workshop of two hours." },
+          { "titulo": "Pricing", "texto": "Fixed fee for three weeks, including two review rounds." },
+          { "titulo": "Timeline", "texto": "Full delivery takes three weeks from contract signature." }
+        ],
+        "ficha": [
+          { "titulo": "Who decides", "texto": "The CFO signs. The IT lead has a veto on system access." },
+          { "titulo": "Previous agreements", "texto": "A confidentiality agreement was signed in May." }
+        ]
+      },
+      "esperadas": [
+        { "regla": "seccion", "seccion": "Background" },
+        { "regla": "seccion", "seccion": "Scope" },
+        { "regla": "seccion", "seccion": "Assumptions" },
+        { "regla": "seccion", "seccion": "Deliverables" },
+        { "regla": "seccion", "seccion": "Pricing" },
+        { "regla": "seccion", "seccion": "Timeline" },
+        { "regla": "cifra", "cifra": "two sources" },
+        { "regla": "cifra", "cifra": "two hours" },
+        { "regla": "cifra", "cifra": "three weeks" },
+        { "regla": "cifra", "cifra": "two review rounds" },
+        { "regla": "compromiso", "seccion": "Scope" },
+        { "regla": "compromiso", "seccion": "Pricing" },
+        { "regla": "compromiso", "seccion": "Timeline" },
+        { "regla": "riesgo", "seccion": "Assumptions" },
+        { "regla": "cliente", "seccion": "Who decides" },
+        { "regla": "cliente", "seccion": "Previous agreements" },
+        { "regla": "objecion", "id": "numeros-correctos" },
+        { "regla": "objecion", "id": "no-cuadra-con-el-erp" },
+        { "regla": "objecion", "id": "nadie-lo-usa" }
+      ]
+    }
+  ],
+  "respuestas": {
+    "comentario": "La EVALUACIÓN de una respuesta (ADR 019 §6.6, fase 3), medida contra el corpus del kit. Cada caso es una pregunta, una respuesta sintética dicha en «segundos», y lo que un consultor diría que esa respuesta USÓ: los títulos de las secciones cuyas fichas trae (`usadas`), las muletillas que tiene en el idioma del ensayo y su ritmo. El test busca la pregunta en el corpus como lo haría el disparo (las tres fichas del respaldo), evalúa y cuenta, ficha por ficha, si «citada» coincide con «usada»: la PRECISIÓN (de las que marcó citadas, cuántas usó) y el RECALL (de las que usó, cuántas marcó). Dos casos están escritos para que la evaluación falle —una paráfrasis y una respuesta en inglés— porque es lo que «Sí lo dije» existe para corregir; el kit lo dice en vez de esconderlo. Los mismos datos sintéticos de Páramo Azul; las etiquetas las escribió el mismo constructor que la evaluación, así que el piso es un piso: la prueba de verdad es tu voz en el ⭐.",
+    "casos": [
+      {
+        "nombre": "el retraso del ERP",
+        "idioma": "es",
+        "pregunta": "¿Qué pasa si los extractos del ERP llegan tarde?",
+        "respuesta": "Está en los supuestos: si los extractos llegan tarde, el cronograma se corre día por día. Ya nos pasó en Sur del Valle: fueron cinco semanas en vez de tres, y el retraso vino de los extractos, no del análisis. O sea, por eso los pedimos en la primera semana.",
+        "segundos": 28,
+        "usadas": [
+          "Supuestos",
+          "Qué costó"
+        ],
+        "muletillas": {
+          "o sea": 1
+        },
+        "ppm": 107
+      },
+      {
+        "nombre": "de dónde salen las cuatro semanas",
+        "idioma": "es",
+        "pregunta": "¿Cómo llegaron a «cuatro semanas»?",
+        "respuesta": "Básicamente, la tarifa cerrada cubre cuatro semanas contadas desde la firma del contrato. Lo anclamos en un caso real: en Sur del Valle aprendimos que anclar el plazo evita la discusión sobre la fecha.",
+        "segundos": 20,
+        "usadas": [
+          "Plazo de entrega",
+          "Precio",
+          "Aprendizajes"
+        ],
+        "muletillas": {
+          "básicamente": 1
+        },
+        "ppm": 102
+      },
+      {
+        "nombre": "quién lo usa después",
+        "idioma": "es",
+        "pregunta": "¿Quién va a usar el tablero cuando ustedes se vayan?",
+        "respuesta": "Digamos que el tablero no se entrega solo: cada indicador nace con la decisión que va a mover, porque un tablero sin decisión es un tablero muerto. Y en gobierno dejamos definido quién responde por cada fuente y cada cuánto se revisa.",
+        "segundos": 24,
+        "usadas": [
+          "Uso",
+          "Gobierno"
+        ],
+        "muletillas": {
+          "digamos": 1
+        },
+        "ppm": 105
+      },
+      {
+        "nombre": "los números son correctos",
+        "idioma": "es",
+        "pregunta": "¿Estos números son correctos?",
+        "respuesta": "Acordamos cinco reglas por fuente y las medimos semanalmente. La meta no es cero errores: es saber cuántos hay, y eso lo ves en el tablero desde la segunda semana.",
+        "segundos": 16,
+        "usadas": [
+          "Calidad"
+        ],
+        "muletillas": {},
+        "ppm": 112
+      },
+      {
+        "nombre": "la cuarta fuente, con otras palabras",
+        "idioma": "es",
+        "pregunta": "¿La limpieza incluye una cuarta fuente?",
+        "respuesta": "No, eso va como adicional y lo cotizamos por separado, o sea, no entra en la tarifa.",
+        "segundos": 9,
+        "usadas": [
+          "Alcance",
+          "Precio"
+        ],
+        "muletillas": {
+          "o sea": 1
+        },
+        "ppm": 113
+      },
+      {
+        "nombre": "en inglés, a una pregunta en español",
+        "idioma": "es",
+        "pregunta": "¿Qué pasa si los extractos del ERP llegan tarde?",
+        "respuesta": "I mean, if the ERP extracts arrive late, the schedule moves day by day, basically.",
+        "segundos": 8,
+        "usadas": [
+          "Supuestos"
+        ],
+        "muletillas": {},
+        "ppm": 112
+      },
+      {
+        "nombre": "no responde",
+        "idioma": "es",
+        "pregunta": "¿Cómo garantizan la calidad del dato del tablero?",
+        "respuesta": "Lo vemos con el equipo en la primera reunión, no se preocupen por eso.",
+        "segundos": 6,
+        "usadas": [],
+        "muletillas": {},
+        "ppm": 140
+      }
+    ]
+  }
+}

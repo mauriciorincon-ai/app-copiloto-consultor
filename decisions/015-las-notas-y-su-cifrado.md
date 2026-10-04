@@ -285,3 +285,71 @@ existe hoy es otra cosa, y así se dice desde ahora:
 - Los textos que decían «abrir una reunión» en el manual, la interfaz y la guía dicen ahora «exportar»,
   salvo donde nombran a `ghost`. Lo vigila `tests/unit/abrir-no-existe.test.ts`.
 
+
+## Enmienda 4 (2026-10-04) — tus ensayos, con la llave y la retención de tus notas (sprint 004, fase 4)
+
+El ensayo (C18, ADR 019 §6.8) deja un informe que es **tuyo**: tus respuestas, dichas por tu micrófono y en
+texto, y las cifras de cada pregunta. Esta enmienda dice cómo queda, antes de escribir el código.
+
+**Dónde y con qué nombre.** `~/Library/Application Support/com.aiapps.copiloto-consultor/ensayos/`, junto a
+`notas/` y `bandeja/`: 700 la carpeta y 600 cada archivo, escritos por `almacen` (temporal, `fsync`,
+renombrado). Un archivo por ensayo, `<cliente>-<AAAA-MM-DD>.ghost` (`-2`, `-3`… si ya existe), con el cliente
+en minúsculas, sin tildes y con guiones, como tus notas (§2). **El nombre va en claro y dice con quién y qué
+día**, nada más: es lo que deja contar cuántos ensayos tienes con un cliente sin abrir ninguno.
+
+**El formato y la llave no cambian.** El mismo `.ghost` versión 1 (§3), con el vencimiento en claro y
+autenticado, y **la misma llave** («Angel Ghost · notas», `llave-v1`, en el llavero de inicio de sesión:
+enmienda 2). No hay una segunda llave que perder.
+
+**Qué entra, y qué no.**
+
+| Entra | No entra, nunca |
+|---|---|
+| el cliente, el nombre de tu propuesta, el idioma y cuándo empezó | **el audio**, tampoco el tuyo (regla dura 1) |
+| cada pregunta a la que llegaste: su texto, de dónde sale y su sección | las preguntas a las que no llegaste |
+| **tu respuesta en texto** (la pista del micrófono, la única que el ensayo abre) | los turnos con sus tiempos, la cola de la voz, lo que el micrófono oyó sordo |
+| sus cifras: la evidencia que tenías (titular y fuente) y si la usaste, «Sí lo dije», tiempo, ritmo y muletillas | lo que salió al modelo si encendiste «Enriquecer el banco» |
+| si la saltaste | nada de ninguna reunión: el ensayo no abre la pista del sistema ni la pantalla |
+
+El contenido se arma en `ensayo/guardado.rs` (protegido y puro, como `notas/`) y lo escribe `ensayos.rs`, que
+no ve un solo marco de audio: es el mismo reparto del §8.
+
+**Retención: la de tus notas.** Al guardar, el archivo se estampa con su vencimiento = ahora + la retención
+de tus notas (7 d · 30 d · **90 d** · 1 año · siempre). «Siempre» no vence. Lo vencido se borra al arrancar la
+app, cada hora mientras corre y, **con la app cerrada, con la tarea de launchd** (ADR 016 §5): los ensayos entran
+en la lista de vencimientos con tus notas y la bandeja. Por eso guardar el primer ensayo con fecha **re-registra
+la tarea de launchd**; es la fila 4 de la matriz del plan, y se enseña antes de la corrida en vivo.
+
+**Guardar no pide nada; abrir y exportar, sí** (§5, enmienda 3).
+- **«Guardar con tus notas»** cifra sin preguntar, como cerrar una reunión. Si falla (el Llavero no contesta,
+  el disco está lleno), el informe sigue en pantalla, entero, y se puede volver a intentar.
+- **«Tu progreso con este cliente»** abre tus ensayos de ese cliente para enseñarte sus cifras, y pide **el mismo
+  desbloqueo que tus notas**, una vez por sesión de la app. Al webview solo cruzan las cifras de cada ensayo,
+  nunca tus respuestas.
+- **«Exportar como texto»** escribe el informe del ensayo que acabas de terminar, en Markdown y en el idioma de la
+  interfaz, donde elijas; el archivo nace 600 y la carpeta que elegiste no se toca. Pide el mismo desbloqueo.
+- **Borrar:** «Borrar los ensayos de este cliente», en el progreso, los borra al momento. Borrar no abre nada y
+  no pide desbloqueo.
+- **La puerta local no abre ensayos.** `ghost` no tiene comando para ellos (ADR 018 sin cambios).
+- El desbloqueo de macOS dice para qué es: «abrir tus ensayos guardados» / «open your saved rehearsals».
+
+**Lo que se registra en el log** (§9): que se guardó, cuántos bytes y en cuántos días vence; cuántos ensayos se
+abrieron para el progreso y cuántos se borraron. Ni el cliente, ni el nombre del archivo, ni una palabra tuya.
+
+**Lo que no se hace, dicho:**
+- Los ensayos no salen de las copias de Time Machine (las notas tampoco; la bandeja sí, porque muere en horas).
+- Un ensayo guardado no se vuelve a exportar desde el progreso: se exporta al terminarlo. Cabe en el H2 si hace falta.
+- Un informe sin guardar **no se guarda solo al salir de la app** (tus notas sí, §7): salir es «Cerrar sin
+  guardar». Un ensayo es práctica, y guardarlo sin pedirlo registraría la tarea de launchd a tus espaldas. Si la
+  app se cae, se pierde igual: vive en memoria a propósito.
+
+**Tests y gates:**
+- `ensayos.rs`: nace cifrado, 700/600, con su vencimiento; el nombre es el del cliente y no se sale de la carpeta;
+  contar por cliente sin abrir; lo vencido se barre en el segundo en que vence y no un segundo antes; borrar los
+  de un cliente no toca los de otro.
+- `ensayo/guardado.rs`: lo guardado no lleva audio ni las preguntas a las que no llegaste; el informe de lo
+  guardado es el mismo que el de la pantalla; el progreso compara el primero con el último.
+- `reunion.rs`: launchd se lleva tus notas, la bandeja **y tus ensayos** (rojo sin ellos).
+- El efímero en marcha (`una_sesion_completa`) ensaya con el oído y el motor de verdad, guarda el ensayo, lo abre
+  descifrado y busca la canaria del cliente (no puede estar), y **todo archivo de `ensayos/` tiene que abrirse
+  como un ensayo**: un intruso plantado ahí lo pone en rojo.
