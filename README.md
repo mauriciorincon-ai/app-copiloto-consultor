@@ -6,22 +6,27 @@ Angel Ghost es una app de escritorio para macOS pensada para consultores. Mientr
 videollamada, escucha las dos partes (tu micrófono y el audio del cliente, cada uno por su lado),
 lee la pantalla compartida cuando cambia y pone delante de ti la **evidencia de tu propio corpus**:
 un titular, una línea y el documento y la sección de donde sale. La banda donde aparece **no se ve
-cuando compartes pantalla en Google Meet** (verificado sobre macOS 26.6.2; en Zoom y Teams no está
-comprobado, y la app lo dice en vez de prometerlo).
+cuando compartes pantalla en Google Meet** (verificado sobre macOS 26.6.2 con la banda abajo; arriba,
+su sitio de fábrica desde el sprint 004, usa la misma protección y está sin verificar; en Zoom y Teams
+no está comprobado, y la app lo dice en vez de prometerlo). Y antes de la reunión puedes **ensayarla**:
+la app te hace las preguntas que ese cliente probablemente hará, sacadas de tu propia propuesta, y te
+dice qué evidencia tuya usaste.
 
 **No persistir, y que se pueda comprobar.** El audio, lo que dijo el cliente y lo que se leyó de la
 pantalla viven solo en memoria y mueren al cerrar. Lo único que queda es lo tuyo: tus notas, tus
-acuerdos, las fichas que fijaste y las propuestas que aceptes —de lo que dijo el cliente, como mucho un
-hecho de una línea—, en un archivo cifrado por reunión con la llave en tu Llavero. Lo que no decides
-espera cifrado en la bandeja y se borra solo al vencer (3 h de fábrica, 24 h como mucho; con «al
-cerrar», ni eso). Por
-defecto la app funciona entera en tu Mac: el contador de red marca 0 bytes salvo que enciendas, con tu
-propia clave, un proveedor externo para las sugerencias.
+acuerdos, las fichas que fijaste, las propuestas que aceptes —de lo que dijo el cliente, como mucho un
+hecho de una línea— y, si lo enciendes, lo que dijiste tú en texto, en un archivo cifrado por reunión
+con la llave en tu Llavero; y tus ensayos, si los guardas: tus respuestas en texto y sus cifras, con la
+misma llave. Lo que no decides espera cifrado en la bandeja y se borra solo al vencer (3 h de fábrica,
+24 h como mucho; con «al cerrar», ni eso). Por defecto la app funciona entera en tu Mac: el contador de
+red marca 0 bytes salvo que enciendas, con tu propia clave, un proveedor externo para las sugerencias o
+para «Enriquecer el banco» del ensayo.
 
 ## Estado
 
-**MVP personal (ciclo H1) construido.** Lo sella el gate humano del cierre de ciclo. Hoy la app se
-compila desde este repo; la versión firmada para instalar llega en el H2, con la firma de Apple.
+**MVP personal (ciclo H1) construido.** Lo sella el gate humano del cierre de ciclo. El ciclo H2 está
+en curso: el sprint 004 sumó el ensayo y la banda arriba, junto a la cámara. Hoy la app se compila
+desde este repo; la versión firmada para instalar llega en el H2, con la firma de Apple.
 
 ## Arrancarla
 
@@ -57,17 +62,24 @@ Angel Ghost is a macOS desktop app for consultants. During a video call it liste
 (your microphone and the client's audio, each on its own track), reads the shared screen when it
 changes, and puts **evidence from your own documents** in front of you: a headline, a line and the
 exact document and section it comes from. The band where it appears **is not visible when you share
-your screen in Google Meet** (verified on macOS 26.6.2; Zoom and Teams are not verified yet, and the
-app says so instead of promising it).
+your screen in Google Meet** (verified on macOS 26.6.2 with the band at the bottom; at the top, its
+default place since sprint 004, it uses the same protection and is unverified; Zoom and Teams are not
+verified, and the app says so instead of promising it). And before the meeting you can **rehearse
+it**: the app asks you the questions that client will probably ask, drawn from your own proposal, and
+tells you which of your evidence you used.
 
 Audio, the client's words and whatever was read from the screen live only in memory and die when
-you close. What stays is yours: your notes, agreements, pinned cards and the suggestions you accept
-—of what the client said, at most a one-line fact—, in one encrypted file per meeting, keyed from your
-Keychain. What you leave undecided waits, encrypted, in the tray and deletes itself on expiry (3 h by
-default, 24 h at most; with "on close", not even that). By default everything runs on your Mac: the network counter reads
-0 bytes unless you turn on, with your own key, an external provider for suggestions.
+you close. What stays is yours: your notes, agreements, pinned cards, the suggestions you accept —of
+what the client said, at most a one-line fact— and, if you turn it on, what you said yourself, as
+text, in one encrypted file per meeting, keyed from your Keychain; and your rehearsals, if you save
+them: your answers as text and their figures, with the same key. What you leave undecided waits,
+encrypted, in the tray and deletes itself on expiry (3 h by default, 24 h at most; with "on close",
+not even that). By default everything runs on your Mac: the network counter reads 0 bytes unless you
+turn on, with your own key, an external provider for suggestions or for the rehearsal's "Enrich the
+bank".
 
-**Status:** personal MVP (cycle H1) built; it is sealed by the cycle-closing human gate. Today it is
+**Status:** personal MVP (cycle H1) built; it is sealed by the cycle-closing human gate. Cycle H2 is
+under way: sprint 004 added the rehearsal and the band at the top, next to the camera. Today it is
 built from this repo (macOS 26+, `pnpm install && pnpm tauri dev`); a signed build comes in H2. The
 app's interface is in Spanish and English; the documents in this repo (manual, test guide, decisions)
 are in Spanish.

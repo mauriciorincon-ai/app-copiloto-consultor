@@ -135,6 +135,7 @@ export const PERMISOS: Permisos = {
 export const ESTADO_DE_LA_ESCUCHA: EstadoDeEscucha = {
     "bytesDelEnsayo": 0,
     "bytesDelTranscript": 2048,
+    "ensayo": false,
     "escuchando": true,
     "microfono": {
       "abierta": true,
@@ -152,6 +153,7 @@ export const ESTADO_DE_LA_ESCUCHA: EstadoDeEscucha = {
 export const ESTADO_DE_LA_ESCUCHA_EN_UN_ENSAYO: EstadoDeEscucha = {
     "bytesDelEnsayo": 412,
     "bytesDelTranscript": 0,
+    "ensayo": true,
     "escuchando": false,
     "microfono": {
       "abierta": true,
@@ -542,6 +544,7 @@ export const ENSAYO_PREGUNTANDO: VistaDelEnsayo = {
     "indice": 2,
     "informe": null,
     "leyendo": true,
+    "muletillas": null,
     "pregunta": {
       "de": "propuesta",
       "fuente": null,
@@ -550,7 +553,8 @@ export const ENSAYO_PREGUNTANDO: VistaDelEnsayo = {
     },
     "respuesta": "",
     "total": 8,
-    "transcurridoMs": 0
+    "transcurridoMs": 0,
+    "usadas": 0
   };
 
 export const ENSAYO_EVALUADA: VistaDelEnsayo = {
@@ -587,7 +591,7 @@ export const ENSAYO_EVALUADA: VistaDelEnsayo = {
           "citada": false,
           "dichaPorTi": true,
           "fuente": {
-            "conjeturada": false,
+            "conjeturada": true,
             "documento": "Marco de trabajo",
             "seccion": "etapa 2",
             "unidad": "marco"
@@ -612,6 +616,7 @@ export const ENSAYO_EVALUADA: VistaDelEnsayo = {
     "indice": 2,
     "informe": null,
     "leyendo": false,
+    "muletillas": 4,
     "pregunta": {
       "de": "propuesta",
       "fuente": null,
@@ -620,7 +625,8 @@ export const ENSAYO_EVALUADA: VistaDelEnsayo = {
     },
     "respuesta": "El supuesto dos lo cubre: el plazo corre desde que el ERP entrega los datos.",
     "total": 8,
-    "transcurridoMs": 72000
+    "transcurridoMs": 72000,
+    "usadas": 3
   };
 
 export const ENSAYO_CERRADO: VistaDelEnsayo = {
@@ -666,10 +672,12 @@ export const ENSAYO_CERRADO: VistaDelEnsayo = {
       "tiempoMedioMs": 58000
     },
     "leyendo": false,
+    "muletillas": null,
     "pregunta": null,
     "respuesta": "",
     "total": 8,
-    "transcurridoMs": 0
+    "transcurridoMs": 0,
+    "usadas": 0
   };
 
 export const ENSAYO_DEL_MODELO: VistaDelEnsayo = {
@@ -684,6 +692,7 @@ export const ENSAYO_DEL_MODELO: VistaDelEnsayo = {
     "indice": 2,
     "informe": null,
     "leyendo": false,
+    "muletillas": null,
     "pregunta": {
       "de": "modelo",
       "fuente": null,
@@ -692,7 +701,8 @@ export const ENSAYO_DEL_MODELO: VistaDelEnsayo = {
     },
     "respuesta": "",
     "total": 8,
-    "transcurridoMs": 0
+    "transcurridoMs": 0,
+    "usadas": 0
   };
 
 export const ENSAYO_OBJECION: VistaDelEnsayo = {
@@ -707,6 +717,7 @@ export const ENSAYO_OBJECION: VistaDelEnsayo = {
     "indice": 2,
     "informe": null,
     "leyendo": false,
+    "muletillas": null,
     "pregunta": {
       "de": "objeciones",
       "fuente": "Kuznetsova",
@@ -715,7 +726,8 @@ export const ENSAYO_OBJECION: VistaDelEnsayo = {
     },
     "respuesta": "",
     "total": 8,
-    "transcurridoMs": 0
+    "transcurridoMs": 0,
+    "usadas": 0
   };
 
 export const PROGRESO_DEL_ENSAYO: Progreso = {
@@ -866,10 +878,69 @@ export const NO_EMPEZO_MICROFONO: NoEmpezo = {
     "que": "microfono"
   };
 
+export const NO_EMPEZO_VIDEOLLAMADA: NoEmpezo = {
+    "que": "videollamada"
+  };
+
+export const NO_EMPEZO_NO_SE_SABE_SI_HAY_LLAMADA: NoEmpezo = {
+    "que": "no-se-sabe-si-hay-llamada"
+  };
+
+export const ENSAYO_REPETIDAS: VistaDelEnsayo = {
+    "banco": {
+      "porque": "repetidas",
+      "que": "no-se-enriquecio"
+    },
+    "cerrando": false,
+    "cliente": "Páramo Azul",
+    "evaluacion": null,
+    "fase": "preguntando",
+    "indice": 2,
+    "informe": null,
+    "leyendo": true,
+    "muletillas": null,
+    "pregunta": {
+      "de": "propuesta",
+      "fuente": null,
+      "seccion": "Supuestos",
+      "texto": "¿Qué pasa con el plazo si el ERP no entrega los datos limpios a tiempo?"
+    },
+    "respuesta": "",
+    "total": 8,
+    "transcurridoMs": 0,
+    "usadas": 0
+  };
+
+export const ENSAYO_SIN_SECCIONES: VistaDelEnsayo = {
+    "banco": {
+      "porque": "sin-secciones",
+      "que": "no-se-enriquecio"
+    },
+    "cerrando": false,
+    "cliente": "Páramo Azul",
+    "evaluacion": null,
+    "fase": "preguntando",
+    "indice": 2,
+    "informe": null,
+    "leyendo": true,
+    "muletillas": null,
+    "pregunta": {
+      "de": "propuesta",
+      "fuente": null,
+      "seccion": "Supuestos",
+      "texto": "¿Qué pasa con el plazo si el ERP no entrega los datos limpios a tiempo?"
+    },
+    "respuesta": "",
+    "total": 8,
+    "transcurridoMs": 0,
+    "usadas": 0
+  };
+
 export const LO_QUE_SALIO: LoQueSalio = {
     "caracteres": 84,
     "externo": "claude",
     "hora": "14:22",
+    "para": "sugerencia",
     "sobre": "Alcance",
     "tapadas": 2,
     "trozos": [
@@ -897,6 +968,22 @@ export const LO_QUE_SALIO: LoQueSalio = {
       }
     ],
     "usd": 0.004
+  };
+
+export const LO_QUE_SALIO_DEL_BANCO: LoQueSalio = {
+    "caracteres": 51,
+    "externo": "claude",
+    "hora": "09:12",
+    "para": "banco",
+    "sobre": "Propuesta Páramo Azul",
+    "tapadas": 0,
+    "trozos": [
+      {
+        "que": "texto",
+        "texto": "S1 · Alcance: perfilado y limpieza de tres fuentes."
+      }
+    ],
+    "usd": null
   };
 
 export const IDIOMAS_DE_PISTA: IdiomasDePista = {
@@ -1275,6 +1362,7 @@ export const NDA_LO_PROHIBE: Nda = "lo-prohibe";
 export const ESCUCHA_SOLO_NOTAS: EstadoDeEscucha = {
     "bytesDelEnsayo": 0,
     "bytesDelTranscript": 0,
+    "ensayo": false,
     "escuchando": false,
     "microfono": {
       "abierta": false,

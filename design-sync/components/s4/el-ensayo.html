@@ -1,0 +1,827 @@
+<!-- @dsCard group="Componentes · S4" name="El ensayo" -->
+<!doctype html>
+<html lang="es" data-lang="es">
+<head>
+<meta charset="utf-8">
+<title>El ensayo — Angel Ghost</title>
+<style>
+:root {
+  /* ---- Tipografía (D4): nativa de macOS, sin embeber bytes ---- */
+  --font-evidencia: "Charter", "Iowan Old Style", Georgia, serif;     /* lo que dice TU corpus */
+  --font-ui: "Avenir Next", "Helvetica Neue", system-ui, sans-serif;   /* la interfaz */
+  --font-mono: "Menlo", "SF Mono", ui-monospace, monospace;            /* lo medible */
+
+  /* ---- Escala tipográfica ---- */
+  --t-titular: 17px;   /* ficha: titular ≤ 8 palabras */
+  --t-linea: 14px;     /* ficha: una línea */
+  --t-ui: 13px;        /* interfaz general */
+  --t-meta: 12px;      /* estado, fuente, etiquetas */
+  --t-mono: 11.5px;    /* contador, atajos, fuente de ficha */
+  --t-h1: 22px;        /* título de pantalla (ventana principal) */
+  --t-h2: 15px;
+
+  /* ---- Espacio (múltiplos de 4) ---- */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+
+  /* ---- Radios y trazos ---- */
+  --r-chip: 5px; --r-ficha: 8px; --r-panel: 10px; --r-tecla: 4px;
+  --borde: 1px;
+
+  /* ---- Motion (D10): casi ninguno ---- */
+  --dur: 150ms; --ease: cubic-bezier(.2,.6,.2,1);
+
+  /* ---- Tamaños de ventana (D1, D6) ---- */
+  --panel-w: 380px; --panel-h: 220px; --panel-h-transcript: 420px; --panel-h-max: 360px;
+  --principal-w: 960px; --principal-h: 640px;
+  /* La banda ocupa el ancho de la pantalla; solo su ALTO es una medida. Estas tres son la
+     fuente única: las usa el CSS de abajo y las lee la ventana nativa (test en `src-tauri/`). */
+  --banda-h: 88px; --banda-h-ampliada: 200px; --banda-h-voz: 44px;
+}
+:root, .tema.oscuro {
+  color-scheme: dark;
+  --bg: #1a1917;          /* ventana */
+  --surface: #242320;     /* ficha, tarjetas */
+  --surface-2: #2e2d29;   /* chips, teclas, hover */
+  --line: #3b3a35;        /* bordes */
+  --line-2: #4a4841;      /* bordes en foco/hover */
+  --ink: #ece7dc;         /* texto principal — marfil */
+  --ink-2: #b9b3a6;       /* texto secundario (AA sobre bg y surface) */
+  --ink-3: #7c776c;       /* SOLO ORNAMENTO (líneas, separadores). Jamás texto — vetado */
+  --halo: #9ecbff;        /* acento único: foco, fijado, interactivo */
+  --halo-tint: rgba(158,203,255,.14);
+  --ok: #62d3b4;          /* activo / verificado / verde */
+  --ok-tint: rgba(98,211,180,.15);
+  --warn: #f0b64a;        /* atención / sin verificar / aviso */
+  --warn-tint: rgba(240,182,74,.15);
+  --err: #ff8577;         /* error / cortado / revocado */
+  --err-tint: rgba(255,133,119,.15);
+  --mute: #9a958a;        /* inactivo (texto AA sobre bg) */
+  --sombra-panel: 0 10px 30px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.04) inset;
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.25);
+}
+.tema.claro {
+  color-scheme: light;
+  --bg: #f5f2ea;
+  --surface: #fffdf8;
+  --surface-2: #ece8de;
+  --line: #d6d1c4;
+  --line-2: #bdb7a8;
+  --ink: #1f1e1a;
+  --ink-2: #5a5650;
+  --ink-3: #a19b8e;       /* SOLO ORNAMENTO — vetado como texto */
+  --halo: #1d5c9c;
+  --halo-tint: rgba(29,92,156,.12);
+  --ok: #0f6350;
+  --ok-tint: rgba(21,122,98,.13);
+  --warn: #7a4f00;
+  --warn-tint: rgba(198,131,0,.16);
+  --err: #a32a22;
+  --err-tint: rgba(184,50,42,.12);
+  --mute: #6d685f;
+  --sombra-panel: 0 10px 28px rgba(40,30,10,.18), 0 0 0 1px rgba(0,0,0,.04);
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.05);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { font-family: var(--font-ui); font-size: var(--t-ui); color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+body { margin: 0; line-height: 1.45; }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--halo); outline-offset: 2px; border-radius: var(--r-chip); }
+.mono { font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+[hidden] { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+html[data-lang="es"] [lang="en"] { display: none !important; }
+html[data-lang="en"] [lang="es"] { display: none !important; }
+.ic { display: inline-block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; }
+.ic.s { width: 13px; height: 13px; vertical-align: -2px; }
+.ic.relleno { fill: currentColor; stroke: none; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+.estado { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px 2px 6px; border-radius: var(--r-chip); border: var(--borde) solid transparent; font-size: var(--t-meta); font-weight: 500; line-height: 1.3; white-space: nowrap; }
+.estado.ok { color: var(--ok);   background: var(--ok-tint);   border-color: var(--ok); }
+.estado.warn { color: var(--warn); background: var(--warn-tint); border-color: var(--warn); }
+.estado.err { color: var(--err);  background: var(--err-tint);  border-color: var(--err); }
+.estado.mute { color: var(--mute); background: transparent;      border-color: var(--line); }
+.estado.halo { color: var(--halo); background: var(--halo-tint); border-color: var(--halo); }
+.estado.pendiente {
+  color: var(--mute);
+  background: transparent;
+  border-color: var(--line-2);
+  border-style: dashed;
+}
+.pendiente .ic { opacity: .75; }
+.tarjeta.pendiente {
+  border-style: dashed;
+  border-color: var(--line-2);
+  background: transparent;
+}
+.tarjeta.pendiente .seccion { color: var(--mute); }
+.franja .ic { margin-top: 1px; }
+.franja.warn .ic { color: var(--warn); }
+.franja.err .ic { color: var(--err); }
+.franja.ok .ic { color: var(--ok); }
+.franja.mute { border-color: var(--line-2); background: var(--surface-2); }
+.franja.mute .ic { color: var(--ink-2); }
+.tecla { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.tecla kbd { font: inherit; padding: 0 5px; border: var(--borde) solid var(--line-2); border-bottom-width: 2px; border-radius: var(--r-tecla); background: var(--surface-2); color: var(--ink); line-height: 16px; }
+.tecla.pendiente { color: var(--mute); }
+.tecla.chica { font-size: 11px; }
+.tecla.fijada { color: var(--ok); }
+.tecla.pendiente kbd { color: var(--mute); border-style: dashed; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: var(--r-chip); border: var(--borde) solid var(--line-2); background: var(--surface-2); color: var(--ink); font-size: var(--t-meta); font-weight: 500; transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease); }
+.btn:hover { border-color: var(--halo); }
+.btn.primario { border-color: var(--halo); background: var(--halo-tint); color: var(--halo); }
+.btn.mini { padding: 2px 7px; font-size: var(--t-mono); }
+.barra .pistas .pista { display: inline-flex; align-items: center; gap: 3px; }
+.barra .pistas .pista.off { color: var(--mute); }
+.barra .pistas .pista.off .ic { opacity: .75; }
+.ficha .titular { font-family: var(--font-evidencia); font-size: var(--t-titular); font-weight: 700; line-height: 1.25; letter-spacing: -.005em; color: var(--ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ficha .fuente { display: flex; align-items: center; gap: 6px; margin-top: 1px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; }
+.ficha .fuente .unidad { padding: 0 5px; border-radius: 3px; background: var(--surface-2); color: var(--ink-2); font-family: var(--font-ui); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; line-height: 15px; }
+.ficha .fuente .doc { overflow: hidden; text-overflow: ellipsis; }
+.ficha .fuente .pin { margin-left: auto; color: var(--ink-2); display: inline-flex; align-items: center; gap: 3px; }
+.mas .n { font-family: var(--font-mono); font-size: var(--t-mono); }
+.sugerencia .texto { font-size: var(--t-ui); line-height: 1.4; color: var(--ink); }
+.transcript .cab .tecla { margin-left: auto; }
+.ventana { width: var(--principal-w); height: var(--principal-h); display: grid; grid-template-columns: 200px 1fr; background: var(--bg); color: var(--ink); border: var(--borde) solid var(--line); border-radius: var(--r-panel); box-shadow: var(--sombra-panel); overflow: hidden; }
+.rail { display: flex; flex-direction: column; border-right: var(--borde) solid var(--line); background: var(--surface); padding: var(--s-4) var(--s-3); gap: var(--s-1); }
+.rail .marca { display: flex; align-items: center; gap: 8px; padding: 2px 6px 14px; font-family: var(--font-evidencia); font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+.rail .marca .ic { color: var(--halo); }
+.rail .marca small { display: block; font-family: var(--font-mono); font-size: 10px; font-weight: 400; color: var(--ink-2); letter-spacing: .04em; }
+.rail a, .rail .item { display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: var(--r-chip); color: var(--ink-2); text-decoration: none; font-size: var(--t-ui); border-left: 2px solid transparent; }
+.rail a:hover { background: var(--surface-2); color: var(--ink); }
+.rail a[aria-current="page"], .rail .item.activo { color: var(--ink); background: var(--surface-2); border-left-color: var(--halo); }
+.rail .abajo { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: var(--borde) solid var(--line); }
+.contenido { padding: var(--s-5) var(--s-6); overflow: auto; display: flex; flex-direction: column; gap: var(--s-4); }
+.titulo { display: flex; flex-direction: column; gap: 4px; }
+.titulo h1 { font-size: var(--t-h1); font-weight: 600; letter-spacing: -.01em; line-height: 1.2; }
+.titulo .sub { font-size: var(--t-ui); color: var(--ink-2); }
+h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-weight: 400; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 8px; }
+.tarjeta { background: var(--surface); border: var(--borde) solid var(--line); border-radius: var(--r-ficha); padding: var(--s-3) var(--s-4); display: flex; flex-direction: column; gap: 9px; }
+.tarjeta h3 { font-size: var(--t-h2); font-weight: 600; }
+.tarjeta p { color: var(--ink-2); font-size: var(--t-ui); }
+.fila { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fila > .ic { flex: 0 0 auto; }
+.fila .crece { flex: 1 1 auto; min-width: 0; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); align-items: start; }
+.campo input.mono { font-family: var(--font-mono); font-size: var(--t-mono); }
+.tabla { width: 100%; border-collapse: collapse; font-size: var(--t-meta); }
+.tabla th { text-align: left; font-family: var(--font-mono); font-size: 10.5px; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); padding: 6px 8px; border-bottom: var(--borde) solid var(--line-2); }
+.tabla td { padding: 7px 8px; border-bottom: var(--borde) solid var(--line); vertical-align: top; color: var(--ink); }
+.tabla td.mono, .tabla th.num, .tabla td.num { font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; }
+.tabla td.num, .tabla th.num { text-align: right; }
+.tabla tr.apagada td { color: var(--ink-2); }
+.permiso .ic { width: 20px; height: 20px; color: var(--ink-2); }
+.bandera .ic { width: 18px; height: 18px; margin-top: 1px; grid-column: 1; }
+.bandera > :not(.ic) { grid-column: 2; }
+.bandera .fuente { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
+.buffer .ic { color: var(--ink-2); }
+.unidad-chip { display: inline-flex; align-items: center; padding: 0 6px; border-radius: 3px; background: var(--surface-2); color: var(--ink-2); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; line-height: 16px; }
+.progreso { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.progreso .pista { flex: 1 1 auto; height: 4px; border-radius: 2px; background: var(--surface-2); overflow: hidden; }
+.progreso .pista i { display: block; height: 100%; background: var(--halo); }
+.pildora .texto { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.pildora .texto .q { font-size: var(--t-meta); font-weight: 600; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pildora .texto .de { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pildora.sin-auriculares .texto .q { color: var(--warn); }
+.pildora .tecla { flex: 0 0 auto; }
+.banda .sugerencia-b .ic { flex: 0 0 auto; color: var(--halo); align-self: center; }
+.banda .lado-b .sugerencia .texto { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.banda.voz .linea-b .ic { flex: 0 0 auto; color: var(--halo); }
+.banda.voz .linea-b.warn .ic { color: var(--warn); }
+.banda .marca-min.halo { color: var(--halo); }
+.banda .propuesta-b .tecla { flex: 0 0 auto; }
+.banda .meta-b .conjetura { display: inline-flex; align-items: center; gap: 4px; margin-left: 4px; padding-left: 8px; border-left: var(--borde) solid var(--line-2); }
+.banda .aviso-b .ic { flex: 0 0 auto; margin-top: 1px; }
+.banda .transcript-b .cab .tecla { margin-left: auto; }
+.banda .maniobra-b .ic { flex: 0 0 auto; align-self: center; color: var(--ink-2); }
+.banda .cercano-b .d { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.banda .mas-b .item .tecla { flex: 0 0 auto; margin-left: auto; }
+.propuesta > .ic { margin-top: 2px; color: var(--halo); }
+.propuesta .de { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-size: 11.5px; color: var(--ink-2); }
+.propuesta .de .origen { font-family: var(--font-mono); font-size: var(--t-mono); }
+.propuesta.aceptada > .ic { color: var(--ok); }
+.idiomas .lg .ic { flex: 0 0 auto; }
+.puerta > .ic { margin-top: 2px; }
+.puerta.si > .ic { color: var(--ok); }
+.puerta.no > .ic { color: var(--err); }
+.cuenta .ic { flex: 0 0 auto; color: var(--halo); }
+.cuenta.vencida .ic, .cuenta.vencida .reloj { color: var(--ink-2); }
+.franja .ventanas .op .ic { color: inherit; }
+.tabla .elegir { appearance: none; -webkit-appearance: none; background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.tabla .elegir:hover { text-decoration: underline dotted; }
+.tabla .elegir:focus-visible { outline: 2px solid var(--halo); outline-offset: 2px; }
+.selector { font: inherit; font-size: var(--t-meta); font-weight: 500; color: var(--ink); background: var(--surface-2); border: var(--borde) solid var(--line-2); border-radius: var(--r-chip); padding: 2px 6px; max-width: 180px; }
+.aviso-legal, .tarjeta p.aviso-legal { font-size: 11px; color: var(--ink-2); }
+.pregunta-nda .ic { color: var(--halo); flex: 0 0 auto; }
+.tarjeta p.clausula { font-family: var(--font-evidencia); font-size: 12.5px; line-height: 1.45; color: var(--ink); }
+.pregunta-e { padding: 12px 15px 13px; border: var(--borde) solid var(--line-2); border-left: 3px solid var(--halo); border-radius: var(--r-ficha); background: var(--surface); }
+.pregunta-e .de { display: flex; align-items: center; gap: 8px; font-size: var(--t-meta); color: var(--ink-2); }
+.pregunta-e .texto { margin-top: 6px; font-family: var(--font-evidencia); font-size: 19px; line-height: 1.35; color: var(--ink); }
+.pregunta-e.chica { padding: 9px 13px 10px; }
+.pregunta-e.chica .texto { font-size: var(--t-titular); }
+.evidencia-e { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.evidencia-e li { display: grid; grid-template-columns: 16px 1fr auto; gap: 2px 8px; align-items: start; }
+.evidencia-e li .ic { margin-top: 2px; }
+.evidencia-e .titular { font-family: var(--font-evidencia); font-size: var(--t-ui); color: var(--ink); }
+.evidencia-e .fuente { grid-column: 2; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.evidencia-e .usada .ic { color: var(--ok); }
+.evidencia-e .sin-usar .ic { color: var(--halo); }
+.cifras-e { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.cifra-e { padding: 7px 10px 8px; border: var(--borde) solid var(--line); border-radius: var(--r-chip); background: var(--surface); }
+.cifra-e .q { font-size: var(--t-meta); color: var(--ink-2); }
+.cifra-e .n { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 17px; line-height: 1.3; color: var(--ink); }
+.cifra-e .d { font-size: 11px; color: var(--ink-2); }
+.ayuda-e { font-size: var(--t-mono); color: var(--ink-2); }
+.ayuda-e.tras { margin: 6px 0 0; }
+.ayuda-e.pegada { margin-top: -6px; }
+.ayuda-e.rotulo { font-size: var(--t-meta); }
+.evidencia-e .conjetura { grid-column: 2; display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.mq-nota .n { display: none; border-left: 3px solid #7dd3fc; padding: 8px 12px; background: #111418; }
+.mq-nota .n.activa { display: block; }
+.mq-meet .titulo { height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 12px; font-size: 12px; color: #8a919b; border-bottom: 1px solid #2c3037; }
+.mq-meet .titulo i { width: 10px; height: 10px; border-radius: 50%; background: #3e434b; display: inline-block; }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
+.mq-relleno .mini { position: relative; height: 158px; border: 1px solid #3a3e46; border-radius: 8px; overflow: hidden; background: linear-gradient(150deg, #2b3550 0%, #3a3350 55%, #4a3a44 100%); }
+.mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
+.mq-card .num { font-family: Menlo, monospace; font-size: 11px; color: #7dd3fc; }
+@media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
+.mq-corte.abajo span { top: 6px; }
+.escala .n { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); width: 150px; flex: 0 0 auto; }
+.prohibido li .ic { color: var(--err); }
+.rail-demo .rail { height: 100%; }
+/* marco de exhibición del bundle */
+  body { margin: 0; padding: var(--s-6); }
+  .ds-cab { width: 100%; max-width: 1180px; margin: 0 auto var(--s-5); }
+  .ds-cab h1 { font-family: var(--font-ui); font-size: var(--t-h1); font-weight: 600; margin: 0 0 var(--s-2); }
+  .ds-cab p { font-family: var(--font-ui); font-size: var(--t-ui); color: var(--ink-2); margin: 0; line-height: 1.5; max-width: 82ch; }
+  .ds-cab p.ds-regla { color: var(--ink); margin-bottom: var(--s-2); }
+  .ds-cab code { font-family: var(--font-mono); font-size: var(--t-mono); }
+  /* 1180 px o lo que haya: la banda ocupa el ancho de la PANTALLA, y en un marco estrecho su
+     ellipsis recorta la fuente y la fecha como si fuera un defecto del componente. */
+  .ds-temas { width: 100%; max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--s-6); }
+  .tema { padding: var(--s-5); border: var(--borde) solid var(--line); border-radius: var(--r-panel); background: var(--bg); color: var(--ink); }
+  .tema > .ds-t { display: block; margin: 0 0 var(--s-4); font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+  .ds-pieza + .ds-pieza { margin-top: var(--s-6); }
+  .ds-pieza > .ds-et { display: block; margin: 0 0 var(--s-2); font-family: var(--font-ui); font-size: var(--t-meta); font-weight: 600; color: var(--ink); }
+  .ds-pieza > .ds-nota { display: block; margin: 0 0 var(--s-3); font-family: var(--font-ui); font-size: var(--t-meta); color: var(--ink-2); line-height: 1.5; max-width: 72ch; }
+  .ds-marco-banda { border: var(--borde) solid var(--line); border-radius: var(--r-ficha); overflow: hidden; }
+  @media (max-width: 720px) { body { padding: var(--s-4); } }
+</style>
+</head>
+<body>
+<svg style="display:none" aria-hidden="true">
+<symbol id="i-ojo-off" viewBox="0 0 16 16"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8zM2 2l12 12"/></symbol>
+<symbol id="i-video" viewBox="0 0 16 16"><rect x="1.5" y="4" width="9" height="8" rx="1.5"/><path d="M10.5 7l4-2.5v7l-4-2.5"/></symbol>
+<symbol id="i-ensayo" viewBox="0 0 16 16"><path d="M13.2 8.6A5.3 5.3 0 1 1 11.6 4.2"/><path d="M12.6 1.8v2.9H9.7"/><path d="M6.6 6.3l3 1.7-3 1.7z" fill="currentColor"/></symbol>
+<symbol id="i-candado" viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="7.5" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></symbol>
+<symbol id="i-doc" viewBox="0 0 16 16"><path d="M4 1.5h5l3.5 3.5v9.5H4z"/><path d="M9 1.5V5h3.5M6 8.5h4M6 11h4"/></symbol>
+<symbol id="i-nota" viewBox="0 0 16 16"><path d="M2.5 3.5h11v9h-11zM5 6.5h6M5 9h4"/></symbol>
+<symbol id="i-ram" viewBox="0 0 16 16"><rect x="1.5" y="4.5" width="13" height="7" rx="1"/><path d="M4 11.5v2M7 11.5v2M10 11.5v2M13 11.5v2M4 6.5h2M8 6.5h2"/></symbol>
+<symbol id="i-globo" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M1.5 8h13M8 1.5c2 2 2 11 0 13M8 1.5c-2 2-2 11 0 13"/></symbol>
+<symbol id="i-chispa" viewBox="0 0 16 16"><path d="M8 1.5 9.6 6.4 14.5 8l-4.9 1.6L8 14.5 6.4 9.6 1.5 8l4.9-1.6z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-mic" viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2M5.5 14.5h5"/></symbol>
+<symbol id="i-voz" viewBox="0 0 16 16"><path d="M2 7v2M5 4.5v7M8 2.5v11M11 5.5v5M14 7v2"/></symbol>
+<symbol id="i-mic-off" viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2M5.5 14.5h5M2 2l12 12"/></symbol>
+<symbol id="i-check-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor" stroke="none"/><path d="M5 8.2l2 2 4-4.4" stroke="var(--bg)" stroke-width="1.9" fill="none"/></symbol>
+<symbol id="i-pendiente" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.2" stroke-dasharray="2.1 2.3"/></symbol>
+<symbol id="i-half" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11A5.5 5.5 0 0 0 8 2.5z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-ring" viewBox="0 0 16 16"><circle cx="8" cy="8" r="4"/></symbol>
+<symbol id="i-basura" viewBox="0 0 16 16"><path d="M3 4.5h10M6 4.5V3h4v1.5M4.5 4.5l.7 9h5.6l.7-9"/></symbol>
+</svg>
+  <div class="ds-cab">
+    <h1>El ensayo</h1>
+    <p class="ds-regla"><span lang="es">Cifras, no notas: lo que tenías y no usaste es una pista, nunca un castigo, y no hay puntaje (§9-undecies)</span><span lang="en">Figures, not grades: what you had and did not use is a hint, never a penalty, and there is no score (§9-undecies)</span></p>
+    <p>Angel Ghost · Componentes · S4 — derivado de <code>docs/diseno</code> y <code>design-system.md</code>. Los dos temas, las dos lenguas (se muestra <code>es</code>).</p>
+  </div>
+  <div class="ds-temas">
+    <section class="tema oscuro">
+      <span class="ds-t">tema oscuro · primario</span>
+      <div class="ds-pieza">
+        <span class="ds-et">la pregunta, leída en voz alta</span>
+        <main class="ventana" data-captura="">
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"></use></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a aria-current="page"><svg class="ic s"><use href="#i-ensayo"></use></svg><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></a>
+    <a><svg class="ic s"><use href="#i-candado"></use></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a><svg class="ic s"><use href="#i-doc"></use></svg>Corpus</a>
+    <a><svg class="ic s"><use href="#i-nota"></use></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a><svg class="ic s"><use href="#i-ram"></use></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a><svg class="ic s"><use href="#i-globo"></use></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a><svg class="ic s"><use href="#i-chispa"></use></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      
+      <span class="estado halo" data-en="preguntando del-modelo respondiendo evaluada"><svg class="ic s"><use href="#i-mic"></use></svg><span lang="es">Ensayando · 0 B</span><span lang="en">Rehearsing · 0 B</span></span>
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></h1>
+      <p class="sub"><span lang="es">Practica antes de la reunión: la app te hace las preguntas que este cliente probablemente hará y te dice qué evidencia usaste.</span><span lang="en">Practice before the meeting: the app asks the questions this client will likely ask and tells you what evidence you used.</span></p>
+    </div>
+
+    <!-- ===== 1 · preparar ===== -->
+    
+
+    <!-- ===== 2 · preguntando ===== -->
+    <div data-en="preguntando" style="display:flex;flex-direction:column;gap:12px">
+      <div class="progreso"><span><span lang="es">Pregunta 3 de 8</span><span lang="en">Question 3 of 8</span></span><span class="pista"><i style="width:37.5%"></i></span><span>Páramo Azul</span></div>
+      <div class="pregunta-e">
+        <div class="de"><span class="unidad-chip"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span><span lang="es">Supuestos</span><span lang="en">Assumptions</span></span></div>
+        <p class="texto"><span lang="es">¿Qué pasa con el plazo si el ERP no entrega los datos limpios a tiempo?</span><span lang="en">What happens to the timeline if the ERP does not deliver clean data on time?</span></p>
+      </div>
+      <div class="fila" style="gap:8px">
+        <span class="estado halo"><svg class="ic s"><use href="#i-voz"></use></svg><span lang="es">Te la está leyendo</span><span lang="en">Reading it to you</span></span>
+        <span class="estado mute"><svg class="ic s"><use href="#i-mic-off"></use></svg><span lang="es">El micrófono espera a que termine</span><span lang="en">The microphone waits until it ends</span></span>
+      </div>
+      <div class="fila" style="gap:14px">
+        <span class="tecla"><kbd>R</kbd> <span lang="es">repetir</span><span lang="en">repeat</span></span>
+        <span class="tecla"><kbd>S</kbd> <span lang="es">saltar</span><span lang="en">skip</span></span>
+        <span class="tecla"><kbd>Esc</kbd> <span lang="es">terminar</span><span lang="en">end</span></span>
+      </div>
+    </div>
+
+    <!-- ===== 2b · del modelo ===== -->
+    
+
+    <!-- ===== 3 · respondiendo ===== -->
+    
+
+    <!-- ===== 4 · evaluada ===== -->
+    
+
+    <!-- ===== 5 · el informe ===== -->
+    
+
+    <!-- ===== 6 · tu progreso ===== -->
+    
+
+    <!-- ===== 7 · sin corpus ===== -->
+    
+
+    <!-- ===== 8 · textos (no vistos) ===== -->
+    
+
+    <!-- ===== 9 · más textos (no vistos) ===== -->
+    
+
+    <!-- ===== 10 · textos de lo guardado (fase 4, no vistos) ===== -->
+    
+
+  </div>
+</main>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">usaste · tenías y no usaste · cuatro cifras</span>
+        <main class="ventana" data-captura="">
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"></use></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a aria-current="page"><svg class="ic s"><use href="#i-ensayo"></use></svg><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></a>
+    <a><svg class="ic s"><use href="#i-candado"></use></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a><svg class="ic s"><use href="#i-doc"></use></svg>Corpus</a>
+    <a><svg class="ic s"><use href="#i-nota"></use></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a><svg class="ic s"><use href="#i-ram"></use></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a><svg class="ic s"><use href="#i-globo"></use></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a><svg class="ic s"><use href="#i-chispa"></use></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      
+      <span class="estado halo" data-en="preguntando del-modelo respondiendo evaluada"><svg class="ic s"><use href="#i-mic"></use></svg><span lang="es">Ensayando · 0 B</span><span lang="en">Rehearsing · 0 B</span></span>
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></h1>
+      <p class="sub"><span lang="es">Practica antes de la reunión: la app te hace las preguntas que este cliente probablemente hará y te dice qué evidencia usaste.</span><span lang="en">Practice before the meeting: the app asks the questions this client will likely ask and tells you what evidence you used.</span></p>
+    </div>
+
+    <!-- ===== 1 · preparar ===== -->
+    
+
+    <!-- ===== 2 · preguntando ===== -->
+    
+
+    <!-- ===== 2b · del modelo ===== -->
+    
+
+    <!-- ===== 3 · respondiendo ===== -->
+    
+
+    <!-- ===== 4 · evaluada ===== -->
+    <div data-en="evaluada" style="display:flex;flex-direction:column;gap:10px">
+      <div class="progreso"><span><span lang="es">Pregunta 3 de 8</span><span lang="en">Question 3 of 8</span></span><span class="pista"><i style="width:37.5%"></i></span><span>Páramo Azul</span></div>
+      <div class="pregunta-e chica">
+        <div class="de"><span class="unidad-chip"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span><span lang="es">Supuestos</span><span lang="en">Assumptions</span></span></div>
+        <p class="texto"><span lang="es">¿Qué pasa con el plazo si el ERP no entrega los datos limpios a tiempo?</span><span lang="en">What happens to the timeline if the ERP does not deliver clean data on time?</span></p>
+      </div>
+      <div class="grid-2" style="gap:10px;align-items:start">
+        <div class="tarjeta" style="padding:10px 12px">
+          <h2 class="seccion" style="margin:0 0 7px"><span lang="es">Usaste</span><span lang="en">You used</span></h2>
+          <ul class="evidencia-e">
+            <li class="usada"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="titular"><span lang="es">El plazo corre desde la entrega de datos</span><span lang="en">The timeline runs from data delivery</span></span><span></span><span class="fuente"><span lang="es">propuesta · Supuestos</span><span lang="en">proposal · Assumptions</span></span></li>
+            <li class="usada"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="titular"><span lang="es">Sur del Valle: tres semanas por datos</span><span lang="en">Sur del Valle: three weeks for data</span></span><span></span><span class="fuente"><span lang="es">caso · cierre</span><span lang="en">case · closeout</span></span></li>
+          </ul>
+        </div>
+        <div class="tarjeta" style="padding:10px 12px">
+          <h2 class="seccion" style="margin:0 0 7px"><span lang="es">Tenías y no usaste</span><span lang="en">You had it and did not use it</span></h2>
+          <ul class="evidencia-e">
+            <li class="sin-usar"><svg class="ic s"><use href="#i-pendiente"></use></svg><span class="titular"><span lang="es">Limpiar antes del tablero</span><span lang="en">Clean before the dashboard</span></span><button class="btn mini"><span lang="es">Sí lo dije</span><span lang="en">I did say it</span></button><span class="fuente"><span lang="es">marco · etapa 2</span><span lang="en">framework · stage 2</span></span><span class="conjetura"><svg class="ic s"><use href="#i-half"></use></svg><span lang="es">sección conjeturada</span><span lang="en">guessed section</span></span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="cifras-e">
+        <div class="cifra-e"><div class="q"><span lang="es">Tiempo</span><span lang="en">Time</span></div><div class="n">1:12</div></div>
+        <div class="cifra-e"><div class="q"><span lang="es">Ritmo</span><span lang="en">Pace</span></div><div class="n"><span lang="es">142 ppm</span><span lang="en">142 wpm</span></div></div>
+        <div class="cifra-e"><div class="q"><span lang="es">Muletillas</span><span lang="en">Fillers</span></div><div class="n">4</div><div class="d"><span lang="es">«o sea» ×3 · «básicamente» ×1</span><span lang="en">“I mean” ×3 · “basically” ×1</span></div></div>
+        <div class="cifra-e"><div class="q"><span lang="es">Evidencia</span><span lang="en">Evidence</span></div><div class="n"><span lang="es">2 de 3</span><span lang="en">2 of 3</span></div></div>
+      </div>
+      <div class="fila" style="gap:12px">
+        <button class="btn primario"><span lang="es">Siguiente pregunta</span><span lang="en">Next question</span></button>
+        <span class="tecla"><kbd>↵</kbd></span>
+        <p class="crece ayuda-e"><span lang="es">Sin puntaje: son cifras de lo que mediste. La transcripción no conserva «eh» ni «um», así que no se cuentan.</span><span lang="en">No score: these are measured figures. The transcription drops “uh” and “um”, so they are not counted.</span></p>
+      </div>
+    </div>
+
+    <!-- ===== 5 · el informe ===== -->
+    
+
+    <!-- ===== 6 · tu progreso ===== -->
+    
+
+    <!-- ===== 7 · sin corpus ===== -->
+    
+
+    <!-- ===== 8 · textos (no vistos) ===== -->
+    
+
+    <!-- ===== 9 · más textos (no vistos) ===== -->
+    
+
+    <!-- ===== 10 · textos de lo guardado (fase 4, no vistos) ===== -->
+    
+
+  </div>
+</main>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">tu progreso con un cliente: solo cifras</span>
+        <main class="ventana" data-captura="">
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"></use></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a aria-current="page"><svg class="ic s"><use href="#i-ensayo"></use></svg><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></a>
+    <a><svg class="ic s"><use href="#i-candado"></use></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a><svg class="ic s"><use href="#i-doc"></use></svg>Corpus</a>
+    <a><svg class="ic s"><use href="#i-nota"></use></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a><svg class="ic s"><use href="#i-ram"></use></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a><svg class="ic s"><use href="#i-globo"></use></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a><svg class="ic s"><use href="#i-chispa"></use></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      <span class="estado mute" data-en="preparar no-empezo guardado cerrado progreso progreso-borrar sin-corpus textos mas-textos textos-progreso"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">Sin sesión · 0 B</span><span lang="en">No session · 0 B</span></span>
+      
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></h1>
+      <p class="sub"><span lang="es">Practica antes de la reunión: la app te hace las preguntas que este cliente probablemente hará y te dice qué evidencia usaste.</span><span lang="en">Practice before the meeting: the app asks the questions this client will likely ask and tells you what evidence you used.</span></p>
+    </div>
+
+    <!-- ===== 1 · preparar ===== -->
+    
+
+    <!-- ===== 2 · preguntando ===== -->
+    
+
+    <!-- ===== 2b · del modelo ===== -->
+    
+
+    <!-- ===== 3 · respondiendo ===== -->
+    
+
+    <!-- ===== 4 · evaluada ===== -->
+    
+
+    <!-- ===== 5 · el informe ===== -->
+    
+
+    <!-- ===== 6 · tu progreso ===== -->
+    <div data-en="progreso progreso-borrar" style="display:flex;flex-direction:column;gap:10px">
+      <div class="tarjeta" style="padding:10px 12px 8px">
+        <div class="fila" style="margin-bottom:4px"><h2 class="seccion crece" style="margin:0"><span lang="es">Tu progreso con este cliente</span><span lang="en">Your progress with this client</span></h2><select class="selector" aria-label="Cliente"><option selected="">Páramo Azul</option><option>Sur del Valle</option></select></div>
+        <table class="tabla">
+          <thead><tr><th><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></th><th class="num"><span lang="es">Evidencia usada</span><span lang="en">Evidence used</span></th><th class="num"><span lang="es">Ritmo</span><span lang="en">Pace</span></th><th class="num"><span lang="es">Muletillas</span><span lang="en">Fillers</span></th><th class="num"><span lang="es">Tiempo medio</span><span lang="en">Average time</span></th></tr></thead>
+          <tbody>
+            <tr><td class="mono"><span lang="es">21 sep</span><span lang="en">Sep 21</span></td><td class="num"><span lang="es">9 de 21</span><span lang="en">9 of 21</span></td><td class="num">161</td><td class="num">17</td><td class="num">1:21</td></tr>
+            <tr><td class="mono"><span lang="es">27 sep</span><span lang="en">Sep 27</span></td><td class="num"><span lang="es">11 de 21</span><span lang="en">11 of 21</span></td><td class="num">150</td><td class="num">12</td><td class="num">1:09</td></tr>
+            <tr><td class="mono"><span lang="es">02 oct</span><span lang="en">Oct 02</span></td><td class="num"><span lang="es">12 de 21</span><span lang="en">12 of 21</span></td><td class="num">143</td><td class="num">11</td><td class="num">1:02</td></tr>
+            <tr><td class="mono"><span lang="es">04 oct</span><span lang="en">Oct 04</span></td><td class="num"><span lang="es">14 de 21</span><span lang="en">14 of 21</span></td><td class="num">138</td><td class="num">9</td><td class="num">0:58</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="fila" style="gap:8px;flex-wrap:wrap">
+        <span class="ayuda-e rotulo"><span lang="es">Desde el primero:</span><span lang="en">Since the first:</span></span>
+        <span class="estado mute"><span lang="es">↑ evidencia 9 → 14</span><span lang="en">↑ evidence 9 → 14</span></span>
+        <span class="estado mute"><span lang="es">↓ ritmo 161 → 138 ppm</span><span lang="en">↓ pace 161 → 138 wpm</span></span>
+        <span class="estado mute"><span lang="es">↓ muletillas 17 → 9</span><span lang="en">↓ fillers 17 → 9</span></span>
+        <span class="estado mute"><span lang="es">↓ tiempo 1:21 → 0:58</span><span lang="en">↓ time 1:21 → 0:58</span></span>
+      </div>
+      <p class="ayuda-e"><span lang="es">Solo cifras que mediste, ensayo a ensayo; sin puntajes. Abrir tus ensayos pide el mismo desbloqueo que tus notas.</span><span lang="en">Only figures you measured, rehearsal by rehearsal; no scores. Opening your rehearsals asks for the same unlock as your notes.</span></p>
+      <div class="fila" style="gap:8px" data-en="progreso">
+        <button class="btn"><span lang="es">Volver</span><span lang="en">Back</span></button>
+        <button class="btn"><svg class="ic s"><use href="#i-basura"></use></svg><span lang="es">Borrar los ensayos de este cliente</span><span lang="en">Delete this client’s rehearsals</span></button>
+      </div>
+      
+    </div>
+
+    <!-- ===== 7 · sin corpus ===== -->
+    
+
+    <!-- ===== 8 · textos (no vistos) ===== -->
+    
+
+    <!-- ===== 9 · más textos (no vistos) ===== -->
+    
+
+    <!-- ===== 10 · textos de lo guardado (fase 4, no vistos) ===== -->
+    
+
+  </div>
+</main>
+      </div>
+    </section>
+    <section class="tema claro">
+      <span class="ds-t">tema claro · papel</span>
+      <div class="ds-pieza">
+        <span class="ds-et">la pregunta, leída en voz alta</span>
+        <main class="ventana" data-captura="">
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"></use></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a aria-current="page"><svg class="ic s"><use href="#i-ensayo"></use></svg><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></a>
+    <a><svg class="ic s"><use href="#i-candado"></use></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a><svg class="ic s"><use href="#i-doc"></use></svg>Corpus</a>
+    <a><svg class="ic s"><use href="#i-nota"></use></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a><svg class="ic s"><use href="#i-ram"></use></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a><svg class="ic s"><use href="#i-globo"></use></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a><svg class="ic s"><use href="#i-chispa"></use></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      
+      <span class="estado halo" data-en="preguntando del-modelo respondiendo evaluada"><svg class="ic s"><use href="#i-mic"></use></svg><span lang="es">Ensayando · 0 B</span><span lang="en">Rehearsing · 0 B</span></span>
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></h1>
+      <p class="sub"><span lang="es">Practica antes de la reunión: la app te hace las preguntas que este cliente probablemente hará y te dice qué evidencia usaste.</span><span lang="en">Practice before the meeting: the app asks the questions this client will likely ask and tells you what evidence you used.</span></p>
+    </div>
+
+    <!-- ===== 1 · preparar ===== -->
+    
+
+    <!-- ===== 2 · preguntando ===== -->
+    <div data-en="preguntando" style="display:flex;flex-direction:column;gap:12px">
+      <div class="progreso"><span><span lang="es">Pregunta 3 de 8</span><span lang="en">Question 3 of 8</span></span><span class="pista"><i style="width:37.5%"></i></span><span>Páramo Azul</span></div>
+      <div class="pregunta-e">
+        <div class="de"><span class="unidad-chip"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span><span lang="es">Supuestos</span><span lang="en">Assumptions</span></span></div>
+        <p class="texto"><span lang="es">¿Qué pasa con el plazo si el ERP no entrega los datos limpios a tiempo?</span><span lang="en">What happens to the timeline if the ERP does not deliver clean data on time?</span></p>
+      </div>
+      <div class="fila" style="gap:8px">
+        <span class="estado halo"><svg class="ic s"><use href="#i-voz"></use></svg><span lang="es">Te la está leyendo</span><span lang="en">Reading it to you</span></span>
+        <span class="estado mute"><svg class="ic s"><use href="#i-mic-off"></use></svg><span lang="es">El micrófono espera a que termine</span><span lang="en">The microphone waits until it ends</span></span>
+      </div>
+      <div class="fila" style="gap:14px">
+        <span class="tecla"><kbd>R</kbd> <span lang="es">repetir</span><span lang="en">repeat</span></span>
+        <span class="tecla"><kbd>S</kbd> <span lang="es">saltar</span><span lang="en">skip</span></span>
+        <span class="tecla"><kbd>Esc</kbd> <span lang="es">terminar</span><span lang="en">end</span></span>
+      </div>
+    </div>
+
+    <!-- ===== 2b · del modelo ===== -->
+    
+
+    <!-- ===== 3 · respondiendo ===== -->
+    
+
+    <!-- ===== 4 · evaluada ===== -->
+    
+
+    <!-- ===== 5 · el informe ===== -->
+    
+
+    <!-- ===== 6 · tu progreso ===== -->
+    
+
+    <!-- ===== 7 · sin corpus ===== -->
+    
+
+    <!-- ===== 8 · textos (no vistos) ===== -->
+    
+
+    <!-- ===== 9 · más textos (no vistos) ===== -->
+    
+
+    <!-- ===== 10 · textos de lo guardado (fase 4, no vistos) ===== -->
+    
+
+  </div>
+</main>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">usaste · tenías y no usaste · cuatro cifras</span>
+        <main class="ventana" data-captura="">
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"></use></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a aria-current="page"><svg class="ic s"><use href="#i-ensayo"></use></svg><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></a>
+    <a><svg class="ic s"><use href="#i-candado"></use></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a><svg class="ic s"><use href="#i-doc"></use></svg>Corpus</a>
+    <a><svg class="ic s"><use href="#i-nota"></use></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a><svg class="ic s"><use href="#i-ram"></use></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a><svg class="ic s"><use href="#i-globo"></use></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a><svg class="ic s"><use href="#i-chispa"></use></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      
+      <span class="estado halo" data-en="preguntando del-modelo respondiendo evaluada"><svg class="ic s"><use href="#i-mic"></use></svg><span lang="es">Ensayando · 0 B</span><span lang="en">Rehearsing · 0 B</span></span>
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></h1>
+      <p class="sub"><span lang="es">Practica antes de la reunión: la app te hace las preguntas que este cliente probablemente hará y te dice qué evidencia usaste.</span><span lang="en">Practice before the meeting: the app asks the questions this client will likely ask and tells you what evidence you used.</span></p>
+    </div>
+
+    <!-- ===== 1 · preparar ===== -->
+    
+
+    <!-- ===== 2 · preguntando ===== -->
+    
+
+    <!-- ===== 2b · del modelo ===== -->
+    
+
+    <!-- ===== 3 · respondiendo ===== -->
+    
+
+    <!-- ===== 4 · evaluada ===== -->
+    <div data-en="evaluada" style="display:flex;flex-direction:column;gap:10px">
+      <div class="progreso"><span><span lang="es">Pregunta 3 de 8</span><span lang="en">Question 3 of 8</span></span><span class="pista"><i style="width:37.5%"></i></span><span>Páramo Azul</span></div>
+      <div class="pregunta-e chica">
+        <div class="de"><span class="unidad-chip"><span lang="es">propuesta</span><span lang="en">proposal</span></span><span><span lang="es">Supuestos</span><span lang="en">Assumptions</span></span></div>
+        <p class="texto"><span lang="es">¿Qué pasa con el plazo si el ERP no entrega los datos limpios a tiempo?</span><span lang="en">What happens to the timeline if the ERP does not deliver clean data on time?</span></p>
+      </div>
+      <div class="grid-2" style="gap:10px;align-items:start">
+        <div class="tarjeta" style="padding:10px 12px">
+          <h2 class="seccion" style="margin:0 0 7px"><span lang="es">Usaste</span><span lang="en">You used</span></h2>
+          <ul class="evidencia-e">
+            <li class="usada"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="titular"><span lang="es">El plazo corre desde la entrega de datos</span><span lang="en">The timeline runs from data delivery</span></span><span></span><span class="fuente"><span lang="es">propuesta · Supuestos</span><span lang="en">proposal · Assumptions</span></span></li>
+            <li class="usada"><svg class="ic s relleno"><use href="#i-check-circle"></use></svg><span class="titular"><span lang="es">Sur del Valle: tres semanas por datos</span><span lang="en">Sur del Valle: three weeks for data</span></span><span></span><span class="fuente"><span lang="es">caso · cierre</span><span lang="en">case · closeout</span></span></li>
+          </ul>
+        </div>
+        <div class="tarjeta" style="padding:10px 12px">
+          <h2 class="seccion" style="margin:0 0 7px"><span lang="es">Tenías y no usaste</span><span lang="en">You had it and did not use it</span></h2>
+          <ul class="evidencia-e">
+            <li class="sin-usar"><svg class="ic s"><use href="#i-pendiente"></use></svg><span class="titular"><span lang="es">Limpiar antes del tablero</span><span lang="en">Clean before the dashboard</span></span><button class="btn mini"><span lang="es">Sí lo dije</span><span lang="en">I did say it</span></button><span class="fuente"><span lang="es">marco · etapa 2</span><span lang="en">framework · stage 2</span></span><span class="conjetura"><svg class="ic s"><use href="#i-half"></use></svg><span lang="es">sección conjeturada</span><span lang="en">guessed section</span></span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="cifras-e">
+        <div class="cifra-e"><div class="q"><span lang="es">Tiempo</span><span lang="en">Time</span></div><div class="n">1:12</div></div>
+        <div class="cifra-e"><div class="q"><span lang="es">Ritmo</span><span lang="en">Pace</span></div><div class="n"><span lang="es">142 ppm</span><span lang="en">142 wpm</span></div></div>
+        <div class="cifra-e"><div class="q"><span lang="es">Muletillas</span><span lang="en">Fillers</span></div><div class="n">4</div><div class="d"><span lang="es">«o sea» ×3 · «básicamente» ×1</span><span lang="en">“I mean” ×3 · “basically” ×1</span></div></div>
+        <div class="cifra-e"><div class="q"><span lang="es">Evidencia</span><span lang="en">Evidence</span></div><div class="n"><span lang="es">2 de 3</span><span lang="en">2 of 3</span></div></div>
+      </div>
+      <div class="fila" style="gap:12px">
+        <button class="btn primario"><span lang="es">Siguiente pregunta</span><span lang="en">Next question</span></button>
+        <span class="tecla"><kbd>↵</kbd></span>
+        <p class="crece ayuda-e"><span lang="es">Sin puntaje: son cifras de lo que mediste. La transcripción no conserva «eh» ni «um», así que no se cuentan.</span><span lang="en">No score: these are measured figures. The transcription drops “uh” and “um”, so they are not counted.</span></p>
+      </div>
+    </div>
+
+    <!-- ===== 5 · el informe ===== -->
+    
+
+    <!-- ===== 6 · tu progreso ===== -->
+    
+
+    <!-- ===== 7 · sin corpus ===== -->
+    
+
+    <!-- ===== 8 · textos (no vistos) ===== -->
+    
+
+    <!-- ===== 9 · más textos (no vistos) ===== -->
+    
+
+    <!-- ===== 10 · textos de lo guardado (fase 4, no vistos) ===== -->
+    
+
+  </div>
+</main>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">tu progreso con un cliente: solo cifras</span>
+        <main class="ventana" data-captura="">
+
+  <nav class="rail">
+    <div class="marca"><svg class="ic"><use href="#i-ojo-off"></use></svg><span>Angel Ghost<small><span lang="es">cuaderno privado</span><span lang="en">private notebook</span></small></span></div>
+    <a><svg class="ic s"><use href="#i-video"></use></svg><span lang="es">Sesión</span><span lang="en">Session</span></a>
+    <a aria-current="page"><svg class="ic s"><use href="#i-ensayo"></use></svg><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></a>
+    <a><svg class="ic s"><use href="#i-candado"></use></svg><span lang="es">Permisos</span><span lang="en">Permissions</span></a>
+    <a><svg class="ic s"><use href="#i-doc"></use></svg>Corpus</a>
+    <a><svg class="ic s"><use href="#i-nota"></use></svg><span lang="es">Notas</span><span lang="en">Notes</span></a>
+    <a><svg class="ic s"><use href="#i-ram"></use></svg><span lang="es">Honestidad</span><span lang="en">Honesty</span></a>
+    <a><svg class="ic s"><use href="#i-globo"></use></svg><span lang="es">Idioma</span><span lang="en">Language</span></a>
+    <a><svg class="ic s"><use href="#i-chispa"></use></svg><span lang="es">IA</span><span lang="en">AI</span></a>
+    <div class="abajo">
+      <span class="estado mute" data-en="preparar no-empezo guardado cerrado progreso progreso-borrar sin-corpus textos mas-textos textos-progreso"><svg class="ic s"><use href="#i-ring"></use></svg><span lang="es">Sin sesión · 0 B</span><span lang="en">No session · 0 B</span></span>
+      
+    </div>
+  </nav>
+
+  <div class="contenido">
+    <div class="titulo">
+      <h1><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></h1>
+      <p class="sub"><span lang="es">Practica antes de la reunión: la app te hace las preguntas que este cliente probablemente hará y te dice qué evidencia usaste.</span><span lang="en">Practice before the meeting: the app asks the questions this client will likely ask and tells you what evidence you used.</span></p>
+    </div>
+
+    <!-- ===== 1 · preparar ===== -->
+    
+
+    <!-- ===== 2 · preguntando ===== -->
+    
+
+    <!-- ===== 2b · del modelo ===== -->
+    
+
+    <!-- ===== 3 · respondiendo ===== -->
+    
+
+    <!-- ===== 4 · evaluada ===== -->
+    
+
+    <!-- ===== 5 · el informe ===== -->
+    
+
+    <!-- ===== 6 · tu progreso ===== -->
+    <div data-en="progreso progreso-borrar" style="display:flex;flex-direction:column;gap:10px">
+      <div class="tarjeta" style="padding:10px 12px 8px">
+        <div class="fila" style="margin-bottom:4px"><h2 class="seccion crece" style="margin:0"><span lang="es">Tu progreso con este cliente</span><span lang="en">Your progress with this client</span></h2><select class="selector" aria-label="Cliente"><option selected="">Páramo Azul</option><option>Sur del Valle</option></select></div>
+        <table class="tabla">
+          <thead><tr><th><span lang="es">Ensayo</span><span lang="en">Rehearsal</span></th><th class="num"><span lang="es">Evidencia usada</span><span lang="en">Evidence used</span></th><th class="num"><span lang="es">Ritmo</span><span lang="en">Pace</span></th><th class="num"><span lang="es">Muletillas</span><span lang="en">Fillers</span></th><th class="num"><span lang="es">Tiempo medio</span><span lang="en">Average time</span></th></tr></thead>
+          <tbody>
+            <tr><td class="mono"><span lang="es">21 sep</span><span lang="en">Sep 21</span></td><td class="num"><span lang="es">9 de 21</span><span lang="en">9 of 21</span></td><td class="num">161</td><td class="num">17</td><td class="num">1:21</td></tr>
+            <tr><td class="mono"><span lang="es">27 sep</span><span lang="en">Sep 27</span></td><td class="num"><span lang="es">11 de 21</span><span lang="en">11 of 21</span></td><td class="num">150</td><td class="num">12</td><td class="num">1:09</td></tr>
+            <tr><td class="mono"><span lang="es">02 oct</span><span lang="en">Oct 02</span></td><td class="num"><span lang="es">12 de 21</span><span lang="en">12 of 21</span></td><td class="num">143</td><td class="num">11</td><td class="num">1:02</td></tr>
+            <tr><td class="mono"><span lang="es">04 oct</span><span lang="en">Oct 04</span></td><td class="num"><span lang="es">14 de 21</span><span lang="en">14 of 21</span></td><td class="num">138</td><td class="num">9</td><td class="num">0:58</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="fila" style="gap:8px;flex-wrap:wrap">
+        <span class="ayuda-e rotulo"><span lang="es">Desde el primero:</span><span lang="en">Since the first:</span></span>
+        <span class="estado mute"><span lang="es">↑ evidencia 9 → 14</span><span lang="en">↑ evidence 9 → 14</span></span>
+        <span class="estado mute"><span lang="es">↓ ritmo 161 → 138 ppm</span><span lang="en">↓ pace 161 → 138 wpm</span></span>
+        <span class="estado mute"><span lang="es">↓ muletillas 17 → 9</span><span lang="en">↓ fillers 17 → 9</span></span>
+        <span class="estado mute"><span lang="es">↓ tiempo 1:21 → 0:58</span><span lang="en">↓ time 1:21 → 0:58</span></span>
+      </div>
+      <p class="ayuda-e"><span lang="es">Solo cifras que mediste, ensayo a ensayo; sin puntajes. Abrir tus ensayos pide el mismo desbloqueo que tus notas.</span><span lang="en">Only figures you measured, rehearsal by rehearsal; no scores. Opening your rehearsals asks for the same unlock as your notes.</span></p>
+      <div class="fila" style="gap:8px" data-en="progreso">
+        <button class="btn"><span lang="es">Volver</span><span lang="en">Back</span></button>
+        <button class="btn"><svg class="ic s"><use href="#i-basura"></use></svg><span lang="es">Borrar los ensayos de este cliente</span><span lang="en">Delete this client’s rehearsals</span></button>
+      </div>
+      
+    </div>
+
+    <!-- ===== 7 · sin corpus ===== -->
+    
+
+    <!-- ===== 8 · textos (no vistos) ===== -->
+    
+
+    <!-- ===== 9 · más textos (no vistos) ===== -->
+    
+
+    <!-- ===== 10 · textos de lo guardado (fase 4, no vistos) ===== -->
+    
+
+  </div>
+</main>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

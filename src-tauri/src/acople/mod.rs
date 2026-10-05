@@ -183,15 +183,27 @@ pub fn pasos_de_la_devolucion(actual: Marco, original: Marco) -> Vec<Paso> {
 /// corrida en vivo la app leyó la ventana justo después de moverla (176 de alto de arriba) mientras en
 /// pantalla ya estaba pegada bajo la banda (121). Anotó la lectura vieja en la huella y, al salir, la
 /// ventana real no coincidía con lo anotado: no la devolvió. «Lo pedí» no es «pasó», y «lo leí una vez»
-/// tampoco: se relee hasta que **dos lecturas seguidas coinciden**, con un techo de `intentos`.
-pub fn asentar(mut leer: impl FnMut() -> Option<Marco>, mut esperar: impl FnMut(), intentos: usize) -> Option<Marco> {
+/// tampoco.
+///
+/// Se relee hasta que la ventana **llega a lo pedido** (`objetivo`), o hasta que [`LECTURAS_IGUALES`]
+/// lecturas seguidas coinciden —una app que acota el tamaño no llega nunca—, con un techo de `intentos`.
+/// Dos lecturas iguales no bastaban (auditoría del S4, B18): pueden ser las dos de antes de que la app
+/// empiece a aplicar el cambio.
+pub fn asentar(
+    mut leer: impl FnMut() -> Option<Marco>,
+    mut esperar: impl FnMut(),
+    intentos: usize,
+    objetivo: Marco,
+) -> Option<Marco> {
     let mut antes = leer()?;
+    let mut iguales = 1;
     for _ in 0..intentos {
+        if casi_iguales(antes, objetivo) || iguales >= LECTURAS_IGUALES {
+            return Some(antes);
+        }
         esperar();
         let ahora = leer()?;
-        if casi_iguales(antes, ahora) {
-            return Some(ahora);
-        }
+        iguales = if casi_iguales(antes, ahora) { iguales + 1 } else { 1 };
         antes = ahora;
     }
     Some(antes)
@@ -200,11 +212,61 @@ pub fn asentar(mut leer: impl FnMut() -> Option<Marco>, mut esperar: impl FnMut(
 /// Cuánto se espera entre lecturas, y cuántas como mucho por paso: 16 × 25 ms = 400 ms de techo.
 pub const ESPERA_ENTRE_LECTURAS: std::time::Duration = std::time::Duration::from_millis(25);
 pub const LECTURAS_POR_PASO: usize = 16;
+/// Cuántas lecturas iguales seguidas dan por quieta una ventana que no llega a lo pedido: 6 × 25 ms.
+pub const LECTURAS_IGUALES: usize = 6;
+
+/// Lo que se pidió con un paso, sobre un marco: lo que la ventana debería ser si obedece.
+pub fn lo_pedido(m: Marco, paso: Paso) -> Marco {
+    match paso {
+        Paso::Alto(alto) => Marco { alto, ..m },
+        Paso::Mover { x, y } => Marco { x, y, ..m },
+    }
+}
+
+/// **Los pasos, uno a uno, sobre la ventana que sigue siendo la nuestra** (auditoría del S4, M1). El índice
+/// de una ventana solo vale dentro de una llamada a la Accessibility API, y entre paso y paso pasan hasta
+/// 400 ms: si el usuario trae otra ventana de la misma app al frente, el índice ya nombra a otra. Antes de
+/// cada escritura se relee y se compara con lo que dejó el paso anterior; si no coincide, no se escribe.
+///
+/// `Ok` con la ventana quieta tras el último paso; `Err` con la última lectura confirmada de la nuestra
+/// (la de antes del paso que no se pudo hacer). Puro, para probarlo sin ventanas.
+pub fn ejecutar_con(
+    mut leer: impl FnMut() -> Option<Marco>,
+    mut escribir: impl FnMut(Paso) -> Option<Marco>,
+    mut esperar: impl FnMut(),
+    desde: Marco,
+    pasos: &[Paso],
+) -> Result<Marco, Marco> {
+    let mut quedo = desde;
+    for paso in pasos {
+        match leer() {
+            Some(ahora) if casi_iguales(ahora, quedo) => {}
+            _ => return Err(quedo),
+        }
+        escribir(*paso).ok_or(quedo)?;
+        // Y antes del paso siguiente, quieta: el siguiente se calcula sobre lo que de verdad hay.
+        quedo = asentar(&mut leer, &mut esperar, LECTURAS_POR_PASO, lo_pedido(quedo, *paso)).ok_or(quedo)?;
+    }
+    Ok(quedo)
+}
 
 /// ¿Quedó acoplada arriba? Lo que importa es lo que se ve: que su borde superior ya no esté debajo de
 /// la banda. Se mide sobre lo **leído** del sistema después de escribir, no sobre lo pedido.
 pub fn quedo_bajo_la_franja(dejada: Marco, franja: Marco) -> bool {
     dejada.y + HOLGURA >= franja.fondo()
+}
+
+/// **¿Quedó acoplada arriba de verdad?** Cambió, empieza bajo la banda **y su borde inferior no se movió**
+/// (auditoría del S4, M4): una app que acepta el alto y no lo cambia, pero sí se deja bajar, saca de la
+/// pantalla sus controles de la llamada. Eso no es un acople.
+pub fn acople_arriba_logrado(antes: Marco, dejada: Marco, franja: Marco) -> bool {
+    hubo_cambio(antes, dejada) && quedo_bajo_la_franja(dejada, franja) && (dejada.fondo() - antes.fondo()).abs() <= HOLGURA
+}
+
+/// **Lo que un deshacer dejó sin deshacer** (auditoría del S4, M2): la ventana como quedó, si sigue distinta
+/// de como estaba; `None` si volvió entera (o si no hay lectura que mirar).
+pub fn sin_deshacer(original: Marco, deshecha: Option<Marco>) -> Option<Marco> {
+    deshecha.filter(|q| hubo_cambio(original, *q))
 }
 
 /// Lo que hay que saber para deshacer un acople: quién era, cómo estaba y cómo la dejamos.
@@ -364,6 +426,16 @@ pub use nativo::*;
 mod nativo {
     use super::*;
 
+    /// **Una maniobra a la vez** (auditoría del S4, A3): todas leen y escriben la misma huella y las mismas
+    /// ventanas, y llegan desde varios hilos —un clic, ⌃⌥B, «Iniciar sesión», el latido—. Sin turno, la
+    /// segunda lee la ventana a medio devolver, anota como original un sitio que ya era nuestro, y la
+    /// primera borra la huella de la segunda: la reunión queda movida sin nadie que la devuelva.
+    static UNA_A_LA_VEZ: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    fn turno() -> std::sync::MutexGuard<'static, ()> {
+        UNA_A_LA_VEZ.lock().unwrap_or_else(|e| e.into_inner())
+    }
+
     pub fn hay_permiso() -> bool {
         ax::permiso_concedido()
     }
@@ -383,6 +455,7 @@ mod nativo {
 
     /// Acopla la aplicación que está al frente a la franja de la banda.
     pub fn acoplar(franja: Marco, huella: &Path) -> Informe {
+        let _turno = turno();
         if !ax::permiso_concedido() {
             return Informe {
                 permiso: false,
@@ -393,7 +466,7 @@ mod nativo {
         // Soltar primero, SIEMPRE. Sin esto, acoplar dos veces guardaría como «original» un
         // tamaño que ya era nuestro, y la ventana encogería un poco más en cada pasada hasta
         // desaparecer — un fallo que solo se nota después de un rato y ya no se puede deshacer.
-        let previo = soltar(huella);
+        let previo = soltar_sin_medir(huella);
         let Some((pid, app)) = ax::aplicacion_al_frente() else {
             return Informe {
                 permiso: true,
@@ -409,6 +482,7 @@ mod nativo {
     /// cambia el alto de la banda: mientras se arrastra, la aplicación al frente somos nosotros,
     /// así que preguntar «¿quién está delante?» soltaría la reunión justo al agrandar la banda.
     pub fn reacoplar(franja: Marco, huella: &Path) -> Informe {
+        let _turno = turno();
         if !ax::permiso_concedido() {
             return Informe {
                 permiso: false,
@@ -419,7 +493,7 @@ mod nativo {
             .huellas
             .first()
             .map(|h| (h.pid, h.app.clone()));
-        let previo = soltar(huella);
+        let previo = soltar_sin_medir(huella);
         match objetivo {
             Some((pid, app)) => acoplar_a(pid, &app, franja, huella),
             None => Informe {
@@ -493,6 +567,7 @@ mod nativo {
     /// la banda y la encoge lo mismo, con su borde inferior donde estaba. Solo esa ventana, la que nombra
     /// la detección; ninguna otra se mira.
     pub fn acoplar_arriba(destino: &Destino, franja: Marco, huella: &Path) -> Informe {
+        let _turno = turno();
         let reloj = std::time::Instant::now();
         let mut informe = acoplar_arriba_sin_medir(destino, franja, huella);
         informe.ms = reloj.elapsed().as_millis() as u64;
@@ -509,7 +584,7 @@ mod nativo {
         }
         // Soltar primero, SIEMPRE, por lo mismo que abajo: acoplar dos veces guardaría como «original»
         // un sitio que ya era nuestro, y la ventana bajaría un poco más en cada pasada.
-        soltar(huella);
+        soltar_sin_medir(huella);
         let app = destino.app.as_str();
         let mut informe = Informe {
             permiso: true,
@@ -526,17 +601,31 @@ mod nativo {
         };
         match decision {
             Decision::BajarYEncoger { y, alto } => {
-                let pasos = pasos_del_acople_arriba(marco, y, alto);
-                let resultado = ejecutar(destino.pid, destino.indice, marco, &pasos);
+                let [encoger, bajar] = pasos_del_acople_arriba(marco, y, alto);
+                // **Primero el alto, y se mira antes de bajarla** (auditoría del S4, M4): una app que acepta
+                // el alto y no lo cambia sí se deja bajar, y sus controles saldrían de la pantalla.
+                let resultado = match ejecutar(destino.pid, destino.indice, marco, &[encoger]) {
+                    Ok(encogida) if (encogida.alto - alto).abs() <= HOLGURA => {
+                        ejecutar(destino.pid, destino.indice, encogida, &[bajar])
+                    }
+                    Ok(encogida) => {
+                        deshacer(destino, marco, encogida, huella, &mut informe, "no se dejó encoger (pantalla completa, Split View o tamaño fijo)");
+                        return informe;
+                    }
+                    Err(quedo) => Err(quedo),
+                };
                 // Solo geometría (ADR 003): de dónde salió, qué se pidió y qué quedó, para poder medir.
                 println!(
                     "[acople] arriba: estaba y={:.0} alto={:.0} · pedido y={y:.0} alto={alto:.0} · quedó {}",
                     marco.y,
                     marco.alto,
-                    resultado.map_or("ilegible".into(), |d| format!("y={:.0} alto={:.0}", d.y, d.alto))
+                    match resultado {
+                        Ok(d) => format!("y={:.0} alto={:.0}", d.y, d.alto),
+                        Err(d) => format!("a medias, y={:.0} alto={:.0}", d.y, d.alto),
+                    }
                 );
                 match resultado {
-                    Some(dejada) if hubo_cambio(marco, dejada) && quedo_bajo_la_franja(dejada, franja) => {
+                    Ok(dejada) if acople_arriba_logrado(marco, dejada, franja) => {
                         informe.ventanas = 1;
                         let pendiente = Pendiente {
                             version: VERSION_HUELLA,
@@ -548,17 +637,14 @@ mod nativo {
                     }
                     // «Lo pedí» no es «pasó»: si macOS no la dejó bajar (pantalla completa, Spaces, una
                     // app que pelea su posición), se deshace lo que sí se hizo y la banda flota.
-                    resultado => {
-                        let ahora = resultado.or_else(|| {
-                            ax::ventanas_de(destino.pid).into_iter().find(|(i, _)| *i == destino.indice).map(|(_, m)| m)
-                        });
-                        if let Some(ahora) = ahora {
-                            ejecutar(destino.pid, destino.indice, ahora, &pasos_de_la_devolucion(ahora, marco));
-                        }
-                        informe.motivos.push(format!(
-                            "«{app}» no dejó bajar su ventana (pantalla completa, Spaces o una app que pelea su sitio): se deshizo y la banda flota encima"
-                        ));
-                    }
+                    Ok(ahora) | Err(ahora) => deshacer(
+                        destino,
+                        marco,
+                        ahora,
+                        huella,
+                        &mut informe,
+                        "no dejó bajar su ventana (pantalla completa, Spaces o una app que pelea su sitio)",
+                    ),
                 }
             }
             Decision::YaCabe => informe
@@ -576,24 +662,51 @@ mod nativo {
         informe
     }
 
-    /// Hace los pasos **en su orden** sobre una ventana y devuelve cómo quedó, leído del sistema tras el
-    /// último. Sin pasos, la ventana ya está como se quería y se devuelve tal cual. Si uno falla, se para:
-    /// lo que siga dependía de él.
-    fn ejecutar(pid: i32, indice: usize, desde: Marco, pasos: &[Paso]) -> Option<Marco> {
-        let mut quedo = desde;
-        for paso in pasos {
-            match *paso {
-                Paso::Alto(alto) => ax::encoger(pid, indice, alto)?,
-                Paso::Mover { x, y } => ax::mover(pid, indice, x, y)?,
-            };
-            // Y antes del paso siguiente, quieta: el siguiente se calcula sobre lo que de verdad hay.
-            quedo = asentar(
-                || ax::marco_de_la_ventana(pid, indice),
-                || std::thread::sleep(ESPERA_ENTRE_LECTURAS),
-                LECTURAS_POR_PASO,
-            )?;
+    /// **Deshace un acople arriba que no salió, y comprueba que se deshizo** (auditoría del S4, M2). Se
+    /// intenta dos veces; si la ventana sigue movida o encogida, se dice dónde quedó y se anota su huella,
+    /// para que la devuelva `soltar` —al cerrar, o al arrancar si esto acaba en caída—, que la busca por
+    /// geometría y no por su sitio en la lista.
+    fn deshacer(destino: &Destino, original: Marco, ahora: Marco, huella: &Path, informe: &mut Informe, porque: &str) {
+        let app = destino.app.as_str();
+        let intento = |desde: Marco| match ejecutar(destino.pid, destino.indice, desde, &pasos_de_la_devolucion(desde, original)) {
+            Ok(m) | Err(m) => m,
+        };
+        let mut quedo = intento(ahora);
+        if sin_deshacer(original, Some(quedo)).is_some() {
+            quedo = intento(quedo);
         }
-        Some(quedo)
+        match sin_deshacer(original, Some(quedo)) {
+            None => informe.motivos.push(format!("«{app}» {porque}: se deshizo y la banda flota encima")),
+            Some(q) => {
+                informe.motivos.push(format!(
+                    "«{app}» {porque} y no se pudo deshacer del todo: quedó en ({:.0},{:.0}) con {:.0} px; se devuelve al soltar",
+                    q.x, q.y, q.alto
+                ));
+                let pendiente = Pendiente {
+                    version: VERSION_HUELLA,
+                    huellas: vec![Huella { pid: destino.pid, app: app.to_string(), original, dejada: q }],
+                };
+                if let Err(e) = guardar(huella, &pendiente) {
+                    informe.motivos.push(format!("no se pudo anotar la huella del acople: {e}"));
+                }
+            }
+        }
+    }
+
+    /// Hace los pasos **en su orden** sobre una ventana y devuelve cómo quedó, leído del sistema tras el
+    /// último ([`ejecutar_con`], con la Accessibility API de verdad). Sin pasos, la ventana ya está como se
+    /// quería y se devuelve tal cual. Si uno falla, se para: lo que siga dependía de él.
+    fn ejecutar(pid: i32, indice: usize, desde: Marco, pasos: &[Paso]) -> Result<Marco, Marco> {
+        ejecutar_con(
+            || ax::marco_de_la_ventana(pid, indice),
+            |paso| match paso {
+                Paso::Alto(alto) => ax::encoger(pid, indice, alto),
+                Paso::Mover { x, y } => ax::mover(pid, indice, x, y),
+            },
+            || std::thread::sleep(ESPERA_ENTRE_LECTURAS),
+            desde,
+            pasos,
+        )
     }
 
     /// Devuelve a su sitio y a su tamaño lo que este módulo tocó — el de esta sesión o el que dejó una
@@ -601,6 +714,7 @@ mod nativo {
     /// funciones que puedan divergir. Desde el sprint 004, **primero la posición y después el tamaño**
     /// (`pasos_de_la_devolucion`); una huella del H1 solo tiene alto que devolver.
     pub fn soltar(huella: &Path) -> Informe {
+        let _turno = turno();
         let reloj = std::time::Instant::now();
         let mut informe = soltar_sin_medir(huella);
         informe.ms = reloj.elapsed().as_millis() as u64;
@@ -624,6 +738,9 @@ mod nativo {
             return informe;
         }
 
+        // Lo que no volvió entero se queda en la huella con su sitio de ahora, para el siguiente `soltar`
+        // (auditoría del S4, M2): olvidarlo dejaba la ventana movida sin nadie que la devolviera.
+        let mut quedan = Vec::new();
         for h in &pendiente.huellas {
             if !ax::sigue_siendo(h.pid, &h.app) {
                 informe.motivos.push(format!(
@@ -640,17 +757,24 @@ mod nativo {
                 .find_map(|(i, m)| devolucion(m, h).map(|orig| (i, m, orig)));
             match devuelta {
                 Some((i, actual, original)) => match ejecutar(h.pid, i, actual, &pasos_de_la_devolucion(actual, original)) {
-                    Some(quedo) if !hubo_cambio(original, quedo) => informe.ventanas += 1,
+                    Ok(quedo) if !hubo_cambio(original, quedo) => informe.ventanas += 1,
                     // Mismo rasero que al acoplar: se cuenta lo que PASÓ, no lo que se pidió. Si
                     // la ventana no volvió a su sitio hay que decirlo — es la mitad de la
                     // promesa, y la que el usuario nota.
-                    Some(quedo) => informe.motivos.push(format!(
-                        "«{}» no volvió entera: quedó en ({:.0},{:.0}) con {:.0} px en vez de ({:.0},{:.0}) con {:.0}",
-                        h.app, quedo.x, quedo.y, quedo.alto, original.x, original.y, original.alto
-                    )),
-                    None => informe
-                        .motivos
-                        .push(format!("«{}» rechazó devolver su ventana", h.app)),
+                    Ok(quedo) => {
+                        informe.motivos.push(format!(
+                            "«{}» no volvió entera: quedó en ({:.0},{:.0}) con {:.0} px en vez de ({:.0},{:.0}) con {:.0}",
+                            h.app, quedo.x, quedo.y, quedo.alto, original.x, original.y, original.alto
+                        ));
+                        quedan.push(Huella { dejada: quedo, ..h.clone() });
+                    }
+                    Err(quedo) => {
+                        informe.motivos.push(format!(
+                            "«{}» rechazó devolver su ventana: sigue en ({:.0},{:.0}) con {:.0} px",
+                            h.app, quedo.x, quedo.y, quedo.alto
+                        ));
+                        quedan.push(Huella { dejada: quedo, ..h.clone() });
+                    }
                 },
                 // Medido en vivo: aquí caen DOS casos y el mensaje solo nombraba uno. Si el
                 // usuario redimensionó esa ventana, manda él. Pero si la cerró, no hay nada que
@@ -663,7 +787,11 @@ mod nativo {
                 )),
             }
         }
-        olvidar(huella);
+        if quedan.is_empty() {
+            olvidar(huella);
+        } else if let Err(e) = guardar(huella, &Pendiente { version: VERSION_HUELLA, huellas: quedan }) {
+            informe.motivos.push(format!("no se pudo anotar lo que falta por devolver: {e}"));
+        }
         informe
     }
 
@@ -1091,15 +1219,127 @@ mod tests {
             },
             || esperas += 1,
             LECTURAS_POR_PASO,
+            lecturas[1],
         );
         assert_eq!(quieta, Some(lecturas[1]), "se anotó la lectura de justo después");
-        assert_eq!(esperas, 2);
+        assert_eq!(esperas, 1, "llegó a lo pedido: no se espera más");
         // Una ventana que no para: se devuelve la última lectura al llegar al techo, sin colgarse.
         let mut y = 0.0;
-        let inquieta = asentar(|| { y += 10.0; Some(Marco::nuevo(0.0, y, 10.0, 10.0)) }, || {}, 3);
+        let lejos = Marco::nuevo(0.0, 999.0, 10.0, 10.0);
+        let inquieta = asentar(|| { y += 10.0; Some(Marco::nuevo(0.0, y, 10.0, 10.0)) }, || {}, 3, lejos);
         assert_eq!(inquieta.map(|m| m.y), Some(40.0));
         // Ilegible: nada que anotar.
-        assert_eq!(asentar(|| None, || {}, 3), None);
+        assert_eq!(asentar(|| None, || {}, 3, lejos), None);
+    }
+
+    /// **Dos lecturas iguales no bastan** (auditoría del S4, B18): las dos primeras pueden ser de antes de
+    /// que la app empiece a aplicar el cambio. Se espera a lo pedido; y una app que no llega (acota el
+    /// tamaño) se da por quieta con seis lecturas iguales, no con dos.
+    #[test]
+    fn asentar_no_se_conforma_con_dos_lecturas_viejas() {
+        let en = |y: f64| Marco::nuevo(221.0, y, 1200.0, 700.0);
+        let lecturas = [33.0, 33.0, 80.0, 121.0, 121.0];
+        let mut i = 0;
+        let quieta = asentar(
+            || {
+                let m = en(lecturas[i.min(lecturas.len() - 1)]);
+                i += 1;
+                Some(m)
+            },
+            || {},
+            LECTURAS_POR_PASO,
+            en(121.0),
+        );
+        assert_eq!(quieta, Some(en(121.0)), "se conformó con la lectura vieja");
+        // La que no llega nunca: se para a las seis iguales, antes del techo.
+        let mut leidas = 0;
+        let acotada = asentar(|| { leidas += 1; Some(en(33.0)) }, || {}, LECTURAS_POR_PASO, en(121.0));
+        assert_eq!((acotada, leidas), (Some(en(33.0)), LECTURAS_IGUALES));
+    }
+
+    /// **No se escribe en una ventana que ya no es la nuestra** (auditoría del S4, M1): entre paso y paso,
+    /// el índice puede pasar a nombrar otra ventana de la misma app. Si la lectura no coincide con lo que
+    /// dejó el paso anterior, se para sin escribir.
+    #[test]
+    fn ejecutar_no_escribe_si_la_ventana_del_indice_ya_no_es_la_misma() {
+        let desde = Marco::nuevo(100.0, 38.0, 1300.0, 944.0);
+        let pasos = pasos_del_acople_arriba(desde, 126.0, 856.0);
+        // Obedece al primer paso; antes del segundo, el índice ya es el correo, en otro sitio.
+        let correo = Marco::nuevo(400.0, 200.0, 900.0, 600.0);
+        let actual = std::cell::Cell::new(desde);
+        let escrituras = std::cell::RefCell::new(Vec::new());
+        let lecturas = std::cell::Cell::new(0);
+        let r = ejecutar_con(
+            || {
+                lecturas.set(lecturas.get() + 1);
+                Some(if escrituras.borrow().len() == 1 && lecturas.get() >= 3 { correo } else { actual.get() })
+            },
+            |paso| {
+                escrituras.borrow_mut().push(paso);
+                actual.set(lo_pedido(actual.get(), paso));
+                Some(actual.get())
+            },
+            || {},
+            desde,
+            &pasos,
+        );
+        assert_eq!(*escrituras.borrow(), vec![pasos[0]], "se escribió en la ventana de otro");
+        assert_eq!(r, Err(Marco { alto: 856.0, ..desde }), "lo último confirmado es la nuestra, encogida");
+        // Y si obedece en todo, los dos pasos y su resultado.
+        let actual = std::cell::Cell::new(desde);
+        let r = ejecutar_con(
+            || Some(actual.get()),
+            |paso| {
+                actual.set(lo_pedido(actual.get(), paso));
+                Some(actual.get())
+            },
+            || {},
+            desde,
+            &pasos,
+        );
+        assert_eq!(r, Ok(Marco::nuevo(100.0, 126.0, 1300.0, 856.0)));
+        // Un paso rechazado: se para, con lo de antes.
+        assert_eq!(ejecutar_con(|| Some(desde), |_| None, || {}, desde, &pasos), Err(desde));
+    }
+
+    /// **El deshacer se comprueba** (auditoría del S4, M2): lo que sigue distinto de como estaba se dice y se
+    /// anota; lo que volvió, no.
+    #[test]
+    fn sin_deshacer_dice_lo_que_quedo_movido() {
+        let original = Marco::nuevo(100.0, 38.0, 1300.0, 944.0);
+        assert_eq!(sin_deshacer(original, None), None);
+        assert_eq!(sin_deshacer(original, Some(original)), None);
+        assert_eq!(sin_deshacer(original, Some(Marco { y: 39.0, ..original })), None, "un punto de redondeo es haber vuelto");
+        let movida = Marco { y: 126.0, alto: 856.0, ..original };
+        assert_eq!(sin_deshacer(original, Some(movida)), Some(movida));
+    }
+
+    /// **Arriba, una ventana que bajó sin encogerse no está acoplada** (auditoría del S4, M4): su borde
+    /// inferior, con los controles de la llamada, saldría de la pantalla.
+    #[test]
+    fn arriba_si_no_se_dejo_encoger_no_cuenta_como_acoplada() {
+        let f = franja_arriba(88.0);
+        let antes = Marco::nuevo(100.0, 38.0, 1300.0, 944.0);
+        assert!(!acople_arriba_logrado(antes, Marco::nuevo(100.0, 126.0, 1300.0, 944.0), f));
+        assert!(acople_arriba_logrado(antes, Marco::nuevo(100.0, 126.0, 1300.0, 856.0), f));
+        assert!(!acople_arriba_logrado(antes, antes, f), "sin cambio no hay acople");
+    }
+
+    /// **Cada maniobra nativa espera su turno** (auditoría del S4, A3): `acoplar`, `reacoplar`,
+    /// `acoplar_arriba` y `soltar` toman el candado en su primera línea, y por dentro sueltan sin volver a
+    /// pedirlo (un `Mutex` de la biblioteca estándar no es reentrante: se bloquearía consigo mismo).
+    #[test]
+    fn cada_maniobra_nativa_espera_su_turno() {
+        let fuente = std::fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join("src/acople/mod.rs")).unwrap();
+        let nativo = &fuente[fuente.find("mod nativo {").unwrap()..fuente.find("mod nativo_ausente").unwrap()];
+        for f in ["pub fn acoplar(", "pub fn reacoplar(", "pub fn acoplar_arriba(", "pub fn soltar("] {
+            let desde = nativo.find(f).unwrap_or_else(|| panic!("falta {f}"));
+            let cuerpo = &nativo[desde..];
+            let primera = cuerpo.lines().nth(1).unwrap_or_default().trim();
+            assert_eq!(primera, ["let _turno = ", "turno();"].concat(), "{f} no espera su turno");
+        }
+        let interno = ["soltar", "(huella)"].concat();
+        assert!(!nativo.contains(&interno), "una maniobra suelta con el candado puesto: se bloquearía consigo misma");
     }
 
     /// Desde el sprint 004 «cambió» es posición o tamaño: devolverle el alto y dejarla abajo no es

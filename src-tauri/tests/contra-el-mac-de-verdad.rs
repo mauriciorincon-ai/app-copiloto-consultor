@@ -488,6 +488,11 @@ impl Llaves for LlaveDeLaPrueba {
 /// encontrarla en un archivo signifique una sola cosa.
 const CANARIA: &str = "quetzalcoatlus-de-bolsillo-7731";
 
+/// **El término plantado del ensayo** (auditoría del S4, B9): una palabra tuya, al principio del «Plazo de
+/// entrega» de la propuesta del efímero. Viaja por el banco, la evidencia y la evaluación del paso 7-ter, y
+/// no puede salir por el log: ni la pregunta, ni la evidencia, ni la respuesta se imprimen.
+const TERMINO_DEL_ENSAYO: &str = "pterodaustro-de-escritorio-4419";
+
 /// Lo único que una sesión puede dejar escrito, y por qué.
 ///
 /// **Cada entrada de aquí es una promesa que se afloja**, así que se añaden de a una, nombradas, y el
@@ -882,6 +887,10 @@ fn una_sesion_completa(casa: &Path, corpus_en: &Path, llave: &dyn Llaves) -> (Ve
         let secciones = corpus.secciones_de(&propuesta).expect("las secciones de la propuesta");
         let preguntas = banco::armar(&secciones, &[], banco::Idioma::Es, 5);
         assert!(!preguntas.is_empty(), "el banco no sacó preguntas de la propuesta: el ensayo no se midió");
+        assert!(
+            secciones.iter().any(|s| s.texto.contains(TERMINO_DEL_ENSAYO)),
+            "el término plantado del ensayo no está en la propuesta: la canaria del log no mediría nada"
+        );
         let evidencia = preguntas
             .iter()
             .map(|p| {
@@ -985,7 +994,7 @@ fn corpus_para_el_efimero() -> PathBuf {
     std::fs::write(
         c.join("Propuesta Páramo Azul.md"),
         "# Alcance\nCubre perfilado y limpieza de tres fuentes: ERP, POS y el Excel de canal.\n\n\
-         # Plazo de entrega\nLa entrega completa toma cuatro semanas desde la firma.\n",
+         # Plazo de entrega\nEl hito pterodaustro-de-escritorio-4419 abre el plazo: la entrega completa toma cuatro semanas desde la firma.\n",
     )
     .unwrap();
     c
@@ -1188,6 +1197,15 @@ fn la_canaria_del_cliente_no_aparece_en_el_log() {
         "el hijo no llegó a correr la sesión entera: este gate no midió nada.\n{salida}"
     );
 
+    // El ensayo (paso 7-ter) también tuvo que correr en el hijo: si no, su término no mide nada.
+    assert!(salida.contains("[sesión] ensayo guardado"), "el hijo no llegó al ensayo: su término plantado no midió nada.\n{salida}");
+    let delator: Vec<&str> = salida.lines().filter(|l| l.contains(TERMINO_DEL_ENSAYO)).collect();
+    assert!(
+        delator.is_empty(),
+        "lo del ensayo —la propuesta, la pregunta o la evidencia— salió por el log, en {} línea(s):\n  {}",
+        delator.len(),
+        delator.join("\n  ")
+    );
     let lineas: Vec<&str> = salida.lines().filter(|l| l.contains(CANARIA)).collect();
     assert!(
         lineas.is_empty(),
@@ -1882,8 +1900,12 @@ fn la_voz_de_este_mac_contesta_y_dice_lo_que_hay() {
 /// la app habla igual (decisión declarada en `habla::cabe_decirla`) y **ahí sí podría oírse a sí
 /// misma**. El tap la excluye; el micrófono no. Esa parada es del gate ⭐, con auriculares puestos y
 /// sin ellos, y está escrita en la guía.
+///
+/// **En reunión.** En el ensayo sí puede hablar por los altavoces, con el micrófono sordo mientras habla
+/// (ADR 019 §6.3), y no empieza con una videollamada abierta y el sonido por altavoces (auditoría del S4,
+/// A1). Este test lo decía de la app entera, y el plan del S4 lo iba a renombrar (auditoría, B1).
 #[test]
-fn la_app_nunca_habla_por_los_altavoces_internos() {
+fn en_reunion_la_app_nunca_habla_por_los_altavoces_internos() {
     let salida = salida_de_audio();
     println!("[habla] el candado, contra {salida:?}");
 

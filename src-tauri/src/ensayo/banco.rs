@@ -146,6 +146,7 @@ struct ArchivoDeReglas {
     version: u32,
     fecha: String,
     topes: Vec<usize>,
+    tope_de_fabrica: usize,
     reglas: Vec<FilaDeRegla>,
     secciones: Vec<Clase>,
     sin_cifras: Vec<String>,
@@ -180,6 +181,8 @@ pub struct Catalogo {
     pub fecha: String,
     /// Los topes que la pantalla deja elegir (5 · 8 · 12).
     pub topes: Vec<usize>,
+    /// El que viene elegido (auditoría del S4, M18: era un literal en Rust y otro en la pantalla).
+    pub tope_de_fabrica: usize,
     reglas: Vec<FilaDeRegla>,
     secciones: Vec<Clase>,
     sin_cifras: Vec<String>,
@@ -204,6 +207,7 @@ impl Catalogo {
             version: r.version,
             fecha: r.fecha,
             topes: r.topes,
+            tope_de_fabrica: r.tope_de_fabrica,
             reglas: r.reglas,
             secciones: r.secciones,
             sin_cifras: r.sin_cifras,
@@ -232,6 +236,12 @@ impl Catalogo {
     }
 
     /// La versión y la fecha de las objeciones, que la pantalla enseña junto a «catálogo publicado».
+    /// **El tope de un ensayo**: el pedido si el catálogo lo publica; si no, o si no se pidió ninguno, el de
+    /// fábrica (auditoría del S4, M18).
+    pub fn tope_valido(&self, pedido: Option<usize>) -> usize {
+        pedido.filter(|t| self.topes.contains(t)).unwrap_or(self.tope_de_fabrica)
+    }
+
     pub fn objeciones_version(&self) -> (u32, &str) {
         (self.objeciones.version, &self.objeciones.fecha)
     }
@@ -557,7 +567,19 @@ pub(crate) mod pruebas {
     #[test]
     fn el_catalogo_se_lee_y_nombra_cada_regla_en_los_dos_idiomas() {
         let c = catalogo();
-        assert_eq!((c.version, c.topes.as_slice()), (1, &[5, 8, 12][..]));
+        assert_eq!(c.version, 1);
+        // El de fábrica es uno de los que se pueden elegir (auditoría del S4, M18), y lo que no está en el
+        // catálogo cae en él.
+        assert!(c.topes.contains(&c.tope_de_fabrica), "el tope de fábrica {} no se puede elegir: {:?}", c.tope_de_fabrica, c.topes);
+        assert_eq!(c.tope_valido(None), c.tope_de_fabrica);
+        assert_eq!(c.tope_valido(Some(c.topes[0])), c.topes[0]);
+        assert_eq!(c.tope_valido(Some(10_000)), c.tope_de_fabrica);
+        // **El catálogo y el código, cruzados** (auditoría del S4, B12): una regla nueva en el JSON que el código
+        // no conoce se ignoraría en silencio; una variante sin fila, también.
+        assert_eq!(c.reglas.len(), Regla::DEL_BANCO.len(), "el catálogo y el código no tienen las mismas reglas");
+        for fila in &c.reglas {
+            assert!(Regla::DEL_BANCO.iter().any(|r| r.id() == fila.id), "la regla «{}» del catálogo no existe en el código", fila.id);
+        }
         for r in Regla::DEL_BANCO {
             let n = c.nombre(r).unwrap_or_else(|| panic!("la regla {} no tiene fila en el catálogo", r.id()));
             assert!(!n.es.is_empty() && !n.en.is_empty());

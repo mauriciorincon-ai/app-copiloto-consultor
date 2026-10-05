@@ -100,6 +100,12 @@ pub struct VistaDelEnsayo {
     pub respuesta: String,
     pub transcurrido_ms: u64,
     pub evaluacion: Option<Evaluacion>,
+    /// En la evaluada, cuántas fichas usaste (citadas o «Sí lo dije»): la cuenta es de Rust, no de la
+    /// pantalla (auditoría del S4, M12).
+    pub usadas: usize,
+    /// En la evaluada, cuántas muletillas; `None` si no hubo palabras que contar —sin modelo de voz, o una
+    /// respuesta que no se transcribió—: cero en nada no es una cifra (§9-undecies).
+    pub muletillas: Option<u32>,
     pub banco: EstadoDelBanco,
     pub informe: Option<Informe>,
 }
@@ -167,6 +173,35 @@ pub enum NoEmpezo {
     SinCorpus,
     /// El micrófono no se abrió, con su porqué de siempre.
     Microfono { porque: crate::capture::PorQueNoAbrio },
+    /// Hay una videollamada abierta y el sonido sale por altavoces: tu micrófono la oiría y la llamada oiría
+    /// la voz del ensayo (auditoría del S4, A1).
+    Videollamada,
+    /// Sin el permiso de Accesibilidad no se sabe si tu navegador está en una llamada, y el sonido sale por
+    /// altavoces: se trata como si la hubiera.
+    NoSeSabeSiHayLlamada,
+}
+
+/// **Con una videollamada abierta, el ensayo no empieza por altavoces que la app reconoce** (auditoría del S4,
+/// A1; decisión del usuario del 2026-10-04: «con auriculares, sí»). En el ensayo no hay pista del sistema contra la que marcar el eco: con los
+/// altavoces, el micrófono oiría a la otra parte y lo guardaría como tu respuesta —lo del cliente nunca se
+/// guarda, regla dura 1—, y la llamada oiría la voz que lee tu propuesta. `eco` es lo que dice la salida de
+/// audio (`Salida::puede_haber_eco`).
+///
+/// **Se para solo cuando la app SABE que se oiría** (`Some(true)`: los altavoces del Mac, un monitor por HDMI
+/// o DisplayPort, AirPlay), con la misma regla que la voz en reunión (`habla::cabe_decirla`, H1). Unos
+/// auriculares Bluetooth o USB no se distinguen de un altavoz por su conexión (`None`): pasan, como en
+/// reunión, y el manual dice que con un altavoz así no se ensaya con una llamada abierta. Pararlos dejaba
+/// fuera los AirPods, que son justo los auriculares de quien ensaya.
+pub fn llamada_sin_auriculares(reunion: &crate::sesion::Reunion, eco: Option<bool>) -> Option<NoEmpezo> {
+    use crate::sesion::Reunion;
+    if eco != Some(true) {
+        return None;
+    }
+    match reunion {
+        Reunion::Ninguna => None,
+        Reunion::Detectada { .. } => Some(NoEmpezo::Videollamada),
+        Reunion::NoSePuedeSaber { .. } => Some(NoEmpezo::NoSeSabeSiHayLlamada),
+    }
 }
 
 /// El idioma del ensayo: el de la propuesta; si no lo dice, el de la ficha; si empatan, el tuyo.
@@ -323,7 +358,14 @@ impl Ensayo {
                     Ok(e) => {
                         let antes = v.sesion.preguntas().len();
                         let a = v.sesion.con_las_del_modelo(e.preguntas);
-                        v.banco = EstadoDelBanco::Sumadas { cuantas: v.sesion.preguntas().len() - antes };
+                        let cuantas = v.sesion.preguntas().len() - antes;
+                        // «Sumó 0» no es lo que pasó (auditoría del S4, B22): o ya estaban en el banco, o el
+                        // ensayo había terminado cuando llegaron.
+                        v.banco = match cuantas {
+                            0 if v.sesion.fase() == Fase::Cerrado => EstadoDelBanco::NoSeEnriquecio { porque: PorQueNo::Tarde },
+                            0 => EstadoDelBanco::NoSeEnriquecio { porque: PorQueNo::Repetidas },
+                            cuantas => EstadoDelBanco::Sumadas { cuantas },
+                        };
                         a
                     }
                     Err(porque) => {
@@ -387,6 +429,8 @@ impl Ensayo {
             (Fase::Respondiendo, _) => s.respuesta_en_curso(),
             _ => String::new(),
         };
+        let usadas = evaluacion.as_ref().map_or(0, Evaluacion::citadas);
+        let muletillas = evaluacion.as_ref().filter(|_| !respuesta.trim().is_empty()).map(Evaluacion::total_de_muletillas);
         Some(VistaDelEnsayo {
             fase,
             cliente: v.rotulo.cliente.clone(),
@@ -398,6 +442,8 @@ impl Ensayo {
             respuesta,
             transcurrido_ms: s.transcurrido(ahora),
             evaluacion,
+            usadas,
+            muletillas,
             banco: v.banco,
             informe: (fase == Fase::Cerrado).then(|| s.informe()),
         })
@@ -434,11 +480,14 @@ fn latir(vivo: &Mutex<Option<Vivo>>, mundo: &dyn Mundo, nacio: Instant) -> bool 
     let Some(v) = g.as_mut() else { return false };
     let Some(o) = v.oido.as_mut() else { return false };
     o.latir(v.sesion.oye(), v.sesion.ronda(), ahora);
+    // **Lo pendiente se cuenta ANTES de recoger lo transcrito** (auditoría del S4, B15): al revés, un turno
+    // que vuelve del motor entre las dos lecturas no está en ninguna —ni recogido ni pendiente— y Enter
+    // cerraría la respuesta sin él. Así, en el peor caso, se espera un latido de más.
+    let oyendo = Oyendo { hablando: o.hablando(), pendientes: o.pendientes() };
     let mut acciones = Vec::new();
     for t in o.recibidos() {
         acciones.extend(v.sesion.turno(t.ronda, t.desde_ms, t.hasta_ms, t.texto));
     }
-    let oyendo = Oyendo { hablando: o.hablando(), pendientes: o.pendientes() };
     acciones.extend(v.sesion.tick(ahora, oyendo, mundo.diciendo()));
     ejecutar(v, mundo, acciones, ahora);
     v.oido.is_some()
@@ -544,6 +593,9 @@ mod pruebas {
         assert!(m.microfono > 0 && m.respuestas > 0, "la memoria del ensayo no se cuenta: {m:?}");
         // 2,5 s después del fin de tu voz, la evaluación.
         let v = esperar(&e, |v| v.fase == Fase::Evaluada);
+        // Las cuentas las hace Rust (auditoría del S4, M12): hubo palabras, así que las muletillas son una
+        // cifra —cero—; y ninguna ficha usada todavía.
+        assert_eq!((v.usadas, v.muletillas), (0, Some(0)));
         let ev = v.evaluacion.expect("evaluada");
         assert_eq!(ev.citadas(), 0, "«muestras» es un término, y la ficha pide dos");
         // El tiempo sale del reloj de verdad, así que solo se afirma lo que no depende de la máquina: al
@@ -553,6 +605,7 @@ mod pruebas {
         assert!((1_000..=pasado).contains(&ev.tiempo_ms), "de la pregunta al fin de tu voz: {} ms (pasaron {pasado} ms)", ev.tiempo_ms);
         e.si_lo_dije(0);
         assert_eq!(e.vista().unwrap().evaluacion.unwrap().citadas(), 1);
+        assert_eq!(e.vista().unwrap().usadas, 1, "«Sí lo dije» no se cuenta en la vista");
         // **La siguiente pregunta en menos de un segundo** (plan, fase 3): Enter la arma y empieza a leerla
         // en el mismo instante; la pantalla solo tiene que volver a preguntar.
         let reloj = Instant::now();
@@ -606,5 +659,56 @@ mod pruebas {
         assert_eq!((v.total, v.banco), (3, EstadoDelBanco::Sumadas { cuantas: 1 }));
         e.con_lo_del_modelo(Err(PorQueNo::Tarde));
         assert_eq!(e.vista().unwrap().banco, EstadoDelBanco::NoSeEnriquecio { porque: PorQueNo::Tarde });
+    }
+
+    /// **«El modelo sumó 0» no es lo que pasó** (auditoría del S4, B22): si todas ya estaban en el banco, se
+    /// dice que estaban; si llegaron con el ensayo terminado, que llegaron tarde.
+    #[test]
+    fn lo_del_modelo_repetido_no_dice_que_sumo() {
+        let anillo = Arc::new(Mutex::new(Anillo::de_la_app()));
+        let oido = Oido::con_anillo(anillo, "es-ES", Box::new(Contador), Arc::new(Diccionario::default()));
+        let e = Ensayo::arrancar(preguntas(), Idioma::Es, false, rotulo("X"), EstadoDelBanco::EnCamino, oido, Arc::new(DeMentira::default())).unwrap();
+        let repetida = preguntas().remove(0);
+        e.con_lo_del_modelo(Ok(Enriquecido { preguntas: vec![repetida.clone()], descartadas: 0 }));
+        let v = e.vista().unwrap();
+        assert_eq!((v.total, v.banco), (2, EstadoDelBanco::NoSeEnriquecio { porque: PorQueNo::Repetidas }));
+        e.terminar();
+        let mut nueva = repetida;
+        nueva.texto = "¿Del modelo?".into();
+        e.con_lo_del_modelo(Ok(Enriquecido { preguntas: vec![nueva], descartadas: 0 }));
+        assert_eq!(e.vista().unwrap().banco, EstadoDelBanco::NoSeEnriquecio { porque: PorQueNo::Tarde });
+    }
+
+    /// **Lo pendiente se cuenta antes de recoger lo transcrito** (auditoría del S4, B15): al revés, un turno que
+    /// vuelve del motor entre las dos lecturas no estaba en ninguna, y Enter cerraba la respuesta sin él.
+    #[test]
+    fn el_latido_cuenta_lo_pendiente_antes_de_recoger() {
+        let fuente = include_str!("mod.rs");
+        let desde = fuente.find(concat!("fn latir(vivo: &Mutex<Option<", "Vivo>>")).expect("el latido");
+        let cuerpo = &fuente[desde..];
+        let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
+        let pendientes = cuerpo.find(concat!("o.", "pendientes()")).expect("el latido no cuenta lo pendiente");
+        let recibidos = cuerpo.find(concat!("o.", "recibidos()")).expect("el latido no recoge lo transcrito");
+        assert!(pendientes < recibidos, "se recoge lo transcrito antes de contar lo pendiente: un turno se puede perder");
+    }
+
+    /// **Con una videollamada abierta, no por altavoces que la app reconoce** (auditoría del S4, A1): la matriz
+    /// entera. Sin llamada se ensaya con lo que sea; con una —o sin poder saberlo—, no por los altavoces del Mac,
+    /// HDMI, DisplayPort ni AirPlay; Bluetooth y USB pasan.
+    #[test]
+    fn con_una_videollamada_solo_se_ensaya_con_auriculares() {
+        use crate::sesion::{PorQueNoSeVe, Proteccion, Reunion};
+        let ninguna = Reunion::Ninguna;
+        let zoom = Reunion::Detectada { cliente: "Zoom".into(), titulo: None, proteccion: Proteccion::SinVerificar };
+        let ciega = Reunion::NoSePuedeSaber { motivo: PorQueNoSeVe::SinAccesibilidad };
+        for eco in [Some(true), Some(false), None] {
+            assert_eq!(llamada_sin_auriculares(&ninguna, eco), None, "sin llamada, con {eco:?}");
+        }
+        assert_eq!(llamada_sin_auriculares(&zoom, Some(true)), Some(NoEmpezo::Videollamada));
+        // Bluetooth o USB (los AirPods): no se distinguen de un altavoz, y pasan como en reunión (H1).
+        assert_eq!(llamada_sin_auriculares(&zoom, None), None, "unos AirPods no dejan ensayar con la llamada abierta");
+        assert_eq!(llamada_sin_auriculares(&zoom, Some(false)), None);
+        assert_eq!(llamada_sin_auriculares(&ciega, Some(true)), Some(NoEmpezo::NoSeSabeSiHayLlamada));
+        assert_eq!(llamada_sin_auriculares(&ciega, Some(false)), None);
     }
 }

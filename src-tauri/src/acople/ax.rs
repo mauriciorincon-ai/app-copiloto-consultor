@@ -162,6 +162,8 @@ struct Aplicacion {
 
 impl Aplicacion {
     fn de(pid: i32) -> Option<Self> {
+        // Toda lectura de ventanas ajenas pasa por aquí: títulos, marcos, la principal (auditoría del S4, B5).
+        crate::hardware::vigilar("leer ventanas de otra aplicación (Accessibility)");
         let elemento = unsafe { AXUIElementCreateApplication(pid) };
         (!elemento.is_null()).then_some(Self { elemento })
     }

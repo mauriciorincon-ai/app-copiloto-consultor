@@ -8,7 +8,12 @@ import { Sesion } from "@/pantallas/Sesion";
 import { es } from "@/i18n/es";
 import { escuchar, llamar, preguntar } from "@/puente";
 import { EVENTO_FRANJA, type LaFranja } from "@/franja";
-import { ESTADO_DE_LA_ESCUCHA, LA_FRANJA_ABAJO, LA_FRANJA_ARRIBA } from "@/contrato.generado";
+import {
+  ESTADO_DE_LA_ESCUCHA,
+  LA_FRANJA_ABAJO,
+  LA_FRANJA_ARRIBA,
+  REUNION_DETECTADA,
+} from "@/contrato.generado";
 
 /**
  * **LA BANDA ARRIBA, DENTRO DE TAURI** (C1', sprint 004, ADR 004 enmienda 1) — lo que las tres ventanas
@@ -120,6 +125,31 @@ describe("Sesión: la banda, arriba o abajo, y el aviso de la primera vez", () =
     expect(pedidos("fijar_posicion_de_la_banda")).toEqual([["fijar_posicion_de_la_banda", { borde: "abajo" }]]);
   });
 
+  /** Auditoría del S4, B25: pulsar el borde que ya está elegido no suelta ni vuelve a acoplar la reunión. */
+  it("pulsar el borde que ya está elegido no le pide nada a Rust", async () => {
+    respuestas.set("la_franja", { ...LA_FRANJA_ARRIBA, avisoVisto: true } satisfies LaFranja);
+    await pinta(sesion);
+    fireEvent.click(screen.getByRole("radio", { name: t.bandaArriba }));
+    expect(pedidos("fijar_posicion_de_la_banda")).toEqual([]);
+  });
+
+  /** Auditoría del S4, M10: con un ensayo terminado sin guardar, Sesión lo dice antes de «Iniciar sesión». */
+  it("con un ensayo sin guardar, Sesión avisa antes de descartarlo", async () => {
+    respuestas.set("la_franja", { ...LA_FRANJA_ARRIBA, avisoVisto: true } satisfies LaFranja);
+    await pinta(sesion);
+    expect(screen.queryByText(t.ensayoSinGuardar, { exact: false })).toBeNull();
+    expect(screen.getByText(t.nadaSale)).toBeInTheDocument();
+    cleanup();
+    await pinta(
+      <Sesion reunion={{ que: "ninguna" }} escucha={{ ...ESTADO_DE_LA_ESCUCHA, escuchando: false }} salida={{ salida: "auriculares" }} ensayoSinGuardar />,
+    );
+    const aviso = screen.getByRole("status");
+    expect(aviso).toHaveTextContent(t.ensayoSinGuardar);
+    expect(aviso).toHaveTextContent(t.ensayoSinGuardarQue);
+    // En una línea, en el sitio de la promesa: con dos, la pantalla se salía de su ventana (maqueta-cabe).
+    expect(screen.queryByText(t.nadaSale)).toBeNull();
+  });
+
   it("el aviso sale la primera vez con la banda arriba, y «Entendido» se lo dice a Rust", async () => {
     respuestas.set("la_franja", LA_FRANJA_ARRIBA);
     await pinta(sesion);
@@ -153,5 +183,60 @@ describe("el asa: soltarla sin arrastrar no mueve la reunión", () => {
     fireEvent.pointerMove(globalThis as unknown as Window, { screenY: 171 });
     fireEvent.pointerUp(globalThis as unknown as Window, { screenY: 171 });
     expect(pedidos("asentar_banda")).toEqual([["asentar_banda", { alto: 138 }]]);
+  });
+});
+
+/**
+ * **ARRIBA, LA PROTECCIÓN ESTÁ SIN VERIFICAR, TAMBIÉN EN MEET** (decisión M20 del usuario; segunda pasada de
+ * la casilla 4 del S4, A5). Meet en Chrome es `Verificada` porque se miró con la banda abajo; con la banda
+ * arriba nadie ha mirado la pantalla compartida. El párrafo de Sesión ya lo decía, y el chip de la banda y
+ * la tarjeta de la reunión decían lo contrario justo encima.
+ *
+ * ¿Puede fallar? Sí: sin `&& borde === "abajo"` en `Banda.tsx`, o sin `&& !arriba` en `LaReunion`, la
+ * banda arriba vuelve a decir «Google Meet · protegido» y Sesión «Protección verificada» (bitácora).
+ */
+describe("arriba la protección está sin verificar, también en Meet", () => {
+  const chipDeLaReunion = (container: HTMLElement) =>
+    [...container.querySelectorAll(".cliente-b")].find((c) => c.textContent?.includes("Google Meet"));
+
+  it("la banda arriba con Meet dice «sin verificar», en ámbar", async () => {
+    respuestas.set("la_franja", LA_FRANJA_ARRIBA);
+    respuestas.set("reunion_abierta", REUNION_DETECTADA);
+    const { container } = await pinta(<Banda estado="esperando" />);
+    const chip = chipDeLaReunion(container);
+    expect(chip?.textContent).toContain(es.banda.sinVerificarSufijo);
+    expect(chip?.textContent).not.toContain(es.banda.protegidoSufijo);
+    expect(chip).toHaveClass("warn");
+  });
+
+  it("la banda abajo con Meet sí dice «protegido»", async () => {
+    respuestas.set("la_franja", LA_FRANJA_ABAJO);
+    respuestas.set("reunion_abierta", REUNION_DETECTADA);
+    const { container } = await pinta(<Banda estado="esperando" />);
+    const chip = chipDeLaReunion(container);
+    expect(chip?.textContent).toContain(es.banda.protegidoSufijo);
+    expect(chip).not.toHaveClass("warn");
+  });
+
+  const sesionConMeet = (
+    <Sesion
+      reunion={REUNION_DETECTADA}
+      escucha={{ ...ESTADO_DE_LA_ESCUCHA, escuchando: false }}
+      salida={{ salida: "auriculares" }}
+    />
+  );
+
+  it("Sesión con la banda arriba no dice «Protección verificada»: dice «Meet · sin verificar»", async () => {
+    respuestas.set("la_franja", { ...LA_FRANJA_ARRIBA, avisoVisto: true });
+    await pinta(sesionConMeet);
+    expect(screen.getByText(REUNION_DETECTADA.titulo ?? "", { exact: false })).toBeInTheDocument();
+    expect(screen.queryByText(t.proteccionVerificada)).toBeNull();
+    expect(screen.getByText(`Meet · ${es.banda.sinVerificarSufijo}`)).toBeInTheDocument();
+  });
+
+  it("Sesión con la banda abajo sí dice «Protección verificada»", async () => {
+    respuestas.set("la_franja", LA_FRANJA_ABAJO);
+    await pinta(sesionConMeet);
+    expect(screen.getByText(t.proteccionVerificada)).toBeInTheDocument();
   });
 });

@@ -11,7 +11,7 @@ import {
  *
  * La política vive en Rust (`puerta/`, módulo protegido): qué órdenes hay, qué se deniega, qué se
  * registra. Aquí solo se pinta y se conmuta. La puerta nace cerrada en cada arranque y se abre a
- * mano, con el conmutador de esta pantalla; en reunión se cierra sola.
+ * mano, con el conmutador de esta pantalla; en reunión o durante un ensayo se cierra sola.
  */
 
 /** Por qué se denegó una orden. */

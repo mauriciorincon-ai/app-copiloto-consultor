@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useT } from "../i18n";
 import { Ic } from "../componentes/Iconos";
-import { PILA, EnElH2 } from "../componentes/Ventana";
+import { PILA } from "../componentes/Ventana";
 import {
   fijarIdiomaDePista,
   useIdiomasDePista,
@@ -274,15 +274,15 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
 
         <div className="grid-2">
           {diccionario && <TuDiccionario diccionario={diccionario} />}
-          {/* Lo que falta, y cuándo llega. El diccionario técnico salió de esta lista en la fase 1 del
+          {/* Lo que no hace hoy, sin prometer cuándo. El diccionario técnico salió de esta lista en la fase 1 del
               sprint 002, y «Conservar lo que dijiste tú» en la Fase 2 de la auditoría del S3 (M7):
               existe en Notas. Una pantalla que dice «todavía no» de algo que existe miente igual que
               una que promete lo que falta. */}
           <div className="tarjeta pendiente">
+            {/* «Lo que no hace hoy», sin chip «En el H2»: la ruta del H2 no lo incluye (auditoría del S4, B46). */}
             <h2 className="seccion">{t.loQueTodaviaNo}</h2>
             <div className="fila">
               <span className="crece">{t.variosIdiomasPorPista}</span>
-              <EnElH2 />
             </div>
             <p>{t.loQueFaltaDetalle}</p>
           </div>

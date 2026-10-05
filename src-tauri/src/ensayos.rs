@@ -21,6 +21,25 @@ pub struct Ensayos {
     carpeta: Carpeta,
 }
 
+/// **El nombre de un cliente en sus archivos de ensayo** (auditoría del S4, B16): el `slug` de siempre
+/// («Páramo Azul» → `paramo-azul`); y si no queda nada —un nombre sin letras latinas, «東京商事»—, una huella
+/// corta del nombre (`c-` y ocho cifras hexadecimales), para que ese cliente tenga sus ensayos y su progreso y
+/// no se mezcle con los de nadie bajo `reunion-…`.
+pub fn nombre_del_cliente(cliente: &str) -> String {
+    let s = crate::notas::slug(cliente);
+    if !s.is_empty() {
+        return s;
+    }
+    // FNV-1a de 32 bits: estable entre versiones y compiladores, que es lo único que se le pide.
+    let h = cliente.trim().bytes().fold(0x811c_9dc5u32, |h, b| (h ^ u32::from(b)).wrapping_mul(0x0100_0193));
+    format!("c-{h:08x}")
+}
+
+/// La base del archivo de un ensayo: el cliente y el día; `-2`, `-3`… los pone [`Ensayos::guardar`].
+pub fn base(cliente: &str, f: &crate::notas::Fecha) -> String {
+    format!("{}-{}-{:02}-{:02}", nombre_del_cliente(cliente), f.anio, f.mes, f.dia)
+}
+
 /// El cliente que nombra un archivo de ensayo: `paramo-azul-2026-10-04-2.ghost` → `paramo-azul`. `None` si el
 /// nombre no tiene la forma de un ensayo.
 pub fn cliente_del_nombre(archivo: &str) -> Option<&str> {
@@ -73,7 +92,7 @@ impl Ensayos {
 
     /// Los ensayos de `cliente`, **por el nombre del archivo**: sin la llave.
     pub fn del_cliente(&self, cliente: &str) -> Vec<Reunion> {
-        let buscado = crate::notas::slug(cliente);
+        let buscado = nombre_del_cliente(cliente);
         self.lista().into_iter().filter(|r| cliente_del_nombre(&r.archivo) == Some(buscado.as_str())).collect()
     }
 
@@ -271,6 +290,28 @@ mod pruebas {
         let _ = std::fs::remove_dir_all(&raiz);
     }
 
+    /// **Un cliente sin letras latinas tiene sus ensayos** (auditoría del S4, B16): su nombre en los archivos
+    /// es una huella estable, no `reunion-…`; su progreso los encuentra, borrarlos los borra, y no se mezclan
+    /// con los de otro cliente.
+    #[test]
+    fn un_cliente_sin_letras_latinas_tiene_sus_ensayos() {
+        let fecha = crate::notas::Fecha { anio: 2026, mes: 10, dia: 4, hora: 9, minuto: 12 };
+        assert_eq!(base("Páramo Azul", &fecha), "paramo-azul-2026-10-04", "un cliente de siempre cambió de nombre");
+        let tokio = base("東京商事", &fecha);
+        assert!(tokio.starts_with("c-") && tokio.ends_with("-2026-10-04"), "{tokio}");
+        assert_eq!(base("東京商事", &fecha), tokio, "la huella no es estable");
+        assert_ne!(base("大阪商事", &fecha), tokio, "dos clientes distintos, la misma huella");
+        let llaves = EnMemoria::default();
+        let e = Ensayos::en(carpeta("sin-latinas"));
+        e.guardar(&llaves, &uno("2026-10-04 09:12", "Sí."), &tokio, AHORA + 86_400).unwrap();
+        e.guardar(&llaves, &uno("2026-10-04 09:30", "Sí."), &base("Páramo Azul", &fecha), AHORA + 86_400).unwrap();
+        assert_eq!(e.del_cliente("東京商事").len(), 1);
+        assert_eq!(e.del_cliente("Páramo Azul").len(), 1);
+        assert_eq!(e.borrar_del_cliente("東京商事").unwrap(), 1);
+        assert_eq!(e.del_cliente("Páramo Azul").len(), 1, "borrar uno se llevó los del otro");
+        let _ = std::fs::remove_dir_all(e.raiz());
+    }
+
     /// **El log dice cuánto, nunca qué**: ni el cliente, ni el nombre del archivo, ni una palabra tuya.
     #[test]
     fn el_log_de_guardar_no_nombra_nada() {
@@ -282,10 +323,22 @@ mod pruebas {
         assert!(linea.contains("1 respondidas") && linea.contains("812 bytes"));
     }
 
+    /// **Un nombre que se sale de la carpeta no se abre**, aunque al otro lado haya un ensayo de verdad, sellado
+    /// con la misma llave (auditoría del S4, B20: la versión anterior daba `Err` también sin la protección,
+    /// porque no había nada que abrir). El control —el mismo archivo desde su carpeta— sí se abre.
     #[test]
     fn un_nombre_que_se_sale_de_la_carpeta_no_se_abre() {
-        let e = Ensayos::en(carpeta("nombre"));
-        assert!(e.abrir(&EnMemoria::default(), "../notas/x.ghost").is_err());
-        assert!(e.abrir(&EnMemoria::default(), "/etc/passwd").is_err());
+        let casa = carpeta("nombre");
+        let llaves = EnMemoria::default();
+        let vecina = Ensayos::en(casa.join("notas"));
+        let hecho = vecina.guardar(&llaves, &uno("2026-10-04 09:12", "Sale del cierre."), "paramo-azul-2026-10-04", AHORA + 86_400).unwrap();
+        assert!(vecina.abrir(&llaves, &hecho.archivo).is_ok(), "el control no se abre: este test no mediría nada");
+        // La carpeta existe, como en la app: sin ella, `ensayos/../notas/…` no se resolvería y el test pasaría
+        // también sin la protección (la demo en rojo lo cazó).
+        std::fs::create_dir_all(casa.join("ensayos")).unwrap();
+        let e = Ensayos::en(casa.join("ensayos"));
+        assert!(e.abrir(&llaves, &format!("../notas/{}", hecho.archivo)).is_err(), "se abrió un archivo de fuera de la carpeta");
+        assert!(e.abrir(&llaves, "/etc/passwd").is_err());
+        let _ = std::fs::remove_dir_all(&casa);
     }
 }

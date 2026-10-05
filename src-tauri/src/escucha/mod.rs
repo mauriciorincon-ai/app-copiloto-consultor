@@ -172,6 +172,9 @@ pub struct EstadoDeEscucha {
     /// **Tus respuestas del ensayo**, en texto, hasta que lo guardes o lo cierres (sprint 004, fase 4). Cero en
     /// una reunión: el ensayo y la reunión no conviven.
     pub bytes_del_ensayo: usize,
+    /// **Hay un ensayo en memoria** —escuchando, o terminado y sin guardar—. Lo dice Rust, que lo sabe; la
+    /// pantalla lo adivinaba por los bytes y, con todo saltado, la fila desaparecía (auditoría del S4, B28).
+    pub ensayo: bool,
     // `ram_legible` salió del contrato en el sprint 002, por lo mismo que `legible`: la cabecera
     // «RAM · …» suma los tres búferes y los escribe **en la pantalla**, con el idioma puesto.
     /// Qué motor transcribe. **No cruza**: Idioma lo lee de `que_sabe_transcribir`, que además dice
@@ -193,6 +196,7 @@ impl EstadoDeEscucha {
             turnos_en_memoria: 0,
             bytes_del_transcript: 0,
             bytes_del_ensayo: 0,
+            ensayo: false,
             motor: "",
         }
     }
@@ -209,6 +213,7 @@ impl EstadoDeEscucha {
             turnos_en_memoria: 0,
             bytes_del_transcript: 0,
             bytes_del_ensayo: bytes_de_tus_respuestas,
+            ensayo: true,
             motor: "",
         }
     }
@@ -514,6 +519,7 @@ impl Escucha {
             turnos_en_memoria: turnos,
             bytes_del_transcript: bytes,
             bytes_del_ensayo: 0,
+            ensayo: false,
             motor: self.motor,
         }
     }

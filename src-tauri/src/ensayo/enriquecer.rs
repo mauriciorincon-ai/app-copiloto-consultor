@@ -131,7 +131,12 @@ pub enum PorQueNo {
     FueraDelEsquema,
     /// Contestó, y ninguna pregunta se pudo fundar en tus secciones.
     NadaFundado,
-    /// Pasó el techo.
+    /// Tu propuesta y la ficha no tienen secciones con título: no hay en qué fundar nada, y no se pregunta
+    /// (auditoría del S4, B22; antes se decía «nada fundado» sin haber preguntado).
+    SinSecciones,
+    /// Las que propuso ya estaban en el banco.
+    Repetidas,
+    /// Pasó el techo, o llegó con el ensayo ya terminado.
     Tarde,
     /// El proveedor no contestó.
     Fallo,

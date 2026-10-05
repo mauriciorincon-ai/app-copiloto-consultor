@@ -253,6 +253,8 @@ export type EstadoDeEscucha = {
    * ensayas, el micrófono de arriba es el del ensayo y la pista del sistema está cerrada.
    */
   bytesDelEnsayo: number;
+  /** Hay un ensayo en memoria, escuchando o sin guardar (auditoría del S4, B28): lo dice Rust. */
+  ensayo: boolean;
   // `motor` salió del contrato en la fase 3: Idioma lo lee de `QueSabeTranscribir`, con su techo.
 };
 
@@ -334,6 +336,7 @@ const ESCUCHA_DE_MUESTRA: EstadoDeEscucha = {
   },
   bytesDelTranscript: 2_048,
   bytesDelEnsayo: 0,
+  ensayo: false,
 };
 
 /**
@@ -413,6 +416,7 @@ const APAGADA: EstadoDeEscucha = {
   },
   bytesDelTranscript: 0,
   bytesDelEnsayo: 0,
+  ensayo: false,
 };
 
 /**
@@ -426,6 +430,7 @@ export const ESCUCHA_DEL_ENSAYO_DE_MUESTRA: EstadoDeEscucha = {
   sistema: { abierta: false, motivo: null, bytes: 0 },
   bytesDelTranscript: 0,
   bytesDelEnsayo: 412,
+  ensayo: true,
 };
 
 /**

@@ -11,6 +11,7 @@ import { SpriteIconos } from "@/componentes/Iconos";
 import { Ensayo } from "@/pantallas/Ensayo";
 import { Honestidad } from "@/pantallas/Honestidad";
 import { es } from "@/i18n/es";
+import { en } from "@/i18n/en";
 import { escuchar, llamar, preguntar } from "@/puente";
 import { diaCorto, entreComillas, flecha, reloj } from "@/ensayo";
 import {
@@ -24,8 +25,12 @@ import {
   ENSAYO_EVALUADA,
   ENSAYO_OBJECION,
   ENSAYO_PREGUNTANDO,
+  ENSAYO_REPETIDAS,
+  ENSAYO_SIN_SECCIONES,
   NO_EMPEZO_EN_REUNION,
   NO_EMPEZO_MICROFONO,
+  NO_EMPEZO_NO_SE_SABE_SI_HAY_LLAMADA,
+  NO_EMPEZO_VIDEOLLAMADA,
   PREPARACION_DEL_ENSAYO,
   PREPARACION_SIN_CORPUS,
 } from "@/contrato.generado";
@@ -424,6 +429,31 @@ describe("Honestidad mientras ensayas", () => {
   });
 });
 
+describe("auditoría del S4: Honestidad sabe que hay un ensayo", () => {
+  /**
+   * B28: con todo saltado no hay bytes ni micrófono, y la fila seguía siendo de un ensayo en memoria; la
+   * pantalla lo adivinaba y la perdía. Lo dice Rust. B27: el contador es el del ensayo.
+   */
+  it("con el micrófono cerrado y 0 B, la fila del ensayo sigue y el contador es del ensayo", async () => {
+    document.documentElement.lang = "es";
+    const saltado = {
+      ...ESTADO_DE_LA_ESCUCHA_EN_UN_ENSAYO,
+      microfono: { abierta: false, motivo: null, bytes: 0 },
+      bytesDelEnsayo: 0,
+    };
+    render(
+      <Cascara>
+        <SpriteIconos />
+        <Honestidad bytes="0 B" escucha={saltado} />
+      </Cascara>,
+    );
+    await act(async () => {});
+    expect(screen.getByText(es.cuaderno.bufEnsayo).closest(".buffer")).toHaveTextContent("0 B");
+    expect(screen.getByText(es.cuaderno.salieronEnEsteEnsayo)).toBeInTheDocument();
+    expect(screen.queryByText(es.cuaderno.salieronDeTuEquipo)).toBeNull();
+  });
+});
+
 describe("los formatos", () => {
   it("el día del progreso y la flecha", () => {
     expect(diaCorto("2026-09-21 10:05", es.ensayo.meses, "es")).toBe("21 sep");
@@ -441,5 +471,212 @@ describe("los formatos", () => {
     ]);
     expect(entreComillas("o sea", "es")).toBe("«o sea»");
     expect(entreComillas("I mean", "en")).toBe("“I mean”");
+  });
+});
+
+// ─── auditoría del S4 (Fase 2): lo que la pantalla del ensayo pagó ───────────────────────────────────
+
+describe("auditoría del S4: las teclas", () => {
+  /** M11: una tecla sostenida repite; una orden por pulsación, no por repetición. */
+  it("Enter o S sostenidos mandan una sola orden", async () => {
+    respuestas.set("estado_del_ensayo", { ...ENSAYO_PREGUNTANDO, fase: "respondiendo", leyendo: false });
+    await pinta();
+    for (const [tecla, comando] of [["Enter", "ensayo_listo"], ["s", "ensayo_saltar"]] as const) {
+      fireEvent.keyDown(globalThis.window, { key: tecla });
+      fireEvent.keyDown(globalThis.window, { key: tecla, repeat: true });
+      fireEvent.keyDown(globalThis.window, { key: tecla, repeat: true });
+      expect(pedidos(comando), tecla).toHaveLength(1);
+    }
+  });
+
+  /** M16: Enter sobre un enlace del rail navega; no cierra tu respuesta. */
+  it("Enter con el foco en un enlace no cierra la respuesta", async () => {
+    respuestas.set("estado_del_ensayo", { ...ENSAYO_PREGUNTANDO, fase: "respondiendo", leyendo: false });
+    await pinta();
+    const enlace = document.createElement("a");
+    enlace.href = "#notas";
+    enlace.textContent = "Notas";
+    document.body.appendChild(enlace);
+    enlace.focus();
+    fireEvent.keyDown(enlace, { key: "Enter" });
+    expect(pedidos("ensayo_listo")).toHaveLength(0);
+    enlace.remove();
+  });
+});
+
+describe("auditoría del S4: preparar y empezar", () => {
+  /** M13: lo elegido sobrevive a ver tu progreso. */
+  it("volver del progreso conserva lo elegido", async () => {
+    respuestas.set("preparar_el_ensayo", { ...PREPARACION_DEL_ENSAYO, cliente: "Sur del Valle", guardados: 4 });
+    respuestas.set("progreso_del_ensayo", { ...PROGRESO_DEL_ENSAYO, cliente: "Sur del Valle" });
+    await pinta();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("radio", { name: "12" }));
+    });
+    fireEvent.click(screen.getByRole("switch", { name: t.leerEnVozAlta }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: t.verTuProgreso }));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: t.volver }));
+    });
+    expect(pedidos("preparar_el_ensayo").at(-1)?.[1]).toMatchObject({ cliente: "Sur del Valle", tope: 12 });
+    expect(screen.getByRole("switch", { name: t.leerEnVozAlta })).toHaveAttribute("aria-checked", "false");
+  });
+
+  /** A1: con una videollamada abierta y altavoces, el ensayo no empieza y dice por qué; B32: se anuncia. */
+  it("con una videollamada abierta dice por qué no empieza, y se anuncia", async () => {
+    respuestas.set("preparar_el_ensayo", PREPARACION_DEL_ENSAYO);
+    rechazos.set("empezar_el_ensayo", NO_EMPEZO_VIDEOLLAMADA);
+    await pinta();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: t.empezar }));
+    });
+    expect(screen.getByRole("alert")).toHaveTextContent(t.hayVideollamada);
+    expect(screen.getByText(t.hayVideollamadaQue)).toBeInTheDocument();
+    rechazos.set("empezar_el_ensayo", NO_EMPEZO_NO_SE_SABE_SI_HAY_LLAMADA);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: t.empezar }));
+    });
+    expect(screen.getByRole("alert")).toHaveTextContent(t.noSeSabeSiHayLlamada);
+    rechazos.set("empezar_el_ensayo", NO_EMPEZO_EN_REUNION);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: t.empezar }));
+    });
+    expect(screen.getByRole("alert")).toHaveTextContent(t.hayReunion);
+  });
+
+  /** B26: si «sin corpus» lo dice `empezar` y no «preparar», la pantalla también lo enseña. */
+  it("si empezar dice que no hay corpus, lo enseña", async () => {
+    respuestas.set("preparar_el_ensayo", PREPARACION_DEL_ENSAYO);
+    rechazos.set("empezar_el_ensayo", { que: "sin-corpus" });
+    await pinta();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: t.empezar }));
+    });
+    expect(screen.getByText(t.nadaDeEsteCliente)).toBeInTheDocument();
+  });
+
+  /** B39: un cliente con solo su ficha no tiene propuesta que elegir. */
+  it("sin propuestas no hay selector de propuesta", async () => {
+    respuestas.set("preparar_el_ensayo", { ...PREPARACION_DEL_ENSAYO, propuestas: [], propuesta: null });
+    await pinta();
+    expect(screen.queryByRole("combobox", { name: t.propuesta })).toBeNull();
+    expect(screen.getByRole("combobox", { name: t.cliente })).toBeInTheDocument();
+  });
+});
+
+describe("auditoría del S4: la evaluada, el informe y el modelo", () => {
+  /** M12 y B33: las cuentas de Rust; la marca de sección conjeturada. */
+  it("la evaluada pinta lo que cuenta Rust y la sección conjeturada", async () => {
+    respuestas.set("estado_del_ensayo", ENSAYO_EVALUADA);
+    await pinta();
+    expect(screen.getByText(`${ENSAYO_EVALUADA.usadas} ${t.de} 3`)).toBeInTheDocument();
+    expect(screen.getByText(es.banda.seccionConjeturada)).toBeInTheDocument();
+    cleanup();
+    // Sin palabras transcritas, «—» y no un cero inventado.
+    respuestas.set("estado_del_ensayo", { ...ENSAYO_EVALUADA, muletillas: null });
+    await pinta();
+    const cifra = screen.getByText(t.muletillas, { selector: ".q" }).closest(".cifra-e") as HTMLElement;
+    expect(cifra.querySelector(".n")).toHaveTextContent("—");
+  });
+
+  it("un informe sin palabras dice «—» en las muletillas", async () => {
+    const informe = ENSAYO_CERRADO.informe;
+    if (!informe) throw new Error("la muestra del informe");
+    respuestas.set("estado_del_ensayo", { ...ENSAYO_CERRADO, informe: { ...informe, muletillas: null, laQueMas: null } });
+    await pinta();
+    const cifra = screen.getByText(t.muletillas, { selector: ".q" }).closest(".cifra-e") as HTMLElement;
+    expect(cifra.querySelector(".n")).toHaveTextContent("—");
+  });
+
+  /** B30: sin la respuesta del cuaderno no se sabe tu retención, y no se inventa. */
+  it("sin saber tu retención, no la dice", async () => {
+    respuestas.set("estado_del_ensayo", ENSAYO_CERRADO);
+    await pinta();
+    expect(screen.queryByText(new RegExp(t.seCifraAntes))).toBeNull();
+  });
+
+  /** B24: la tabla del informe dice «wpm» en inglés. */
+  it("en inglés, la columna del ritmo dice wpm", async () => {
+    respuestas.set("estado_del_ensayo", ENSAYO_CERRADO);
+    await pinta();
+    document.documentElement.lang = "en";
+    cleanup();
+    render(
+      <Cascara>
+        <SpriteIconos />
+        <Ensayo ir={vi.fn()} />
+      </Cascara>,
+    );
+    await act(async () => {});
+    expect(screen.getByRole("columnheader", { name: en.ensayo.ppm })).toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "ppm" })).toBeNull();
+    document.documentElement.lang = "es";
+  });
+
+  /** B22: «el modelo sumó 0» no es lo que pasó. */
+  it("el modelo dice por qué no sumó: repetidas, o sin secciones", async () => {
+    respuestas.set("estado_del_ensayo", ENSAYO_REPETIDAS);
+    await pinta();
+    expect(screen.getByText(`${t.noSumo} ${t.porQueNoSumo.repetidas}`)).toBeInTheDocument();
+    cleanup();
+    respuestas.set("estado_del_ensayo", ENSAYO_SIN_SECCIONES);
+    await pinta();
+    expect(screen.getByText(`${t.noSumo} ${t.porQueNoSumo["sin-secciones"]}`)).toBeInTheDocument();
+  });
+});
+
+describe("auditoría del S4: borrar tus ensayos", () => {
+  async function abreYPregunta() {
+    respuestas.set("preparar_el_ensayo", { ...PREPARACION_DEL_ENSAYO, guardados: 4 });
+    respuestas.set("progreso_del_ensayo", PROGRESO_DEL_ENSAYO);
+    await pinta();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: t.verTuProgreso }));
+    });
+    fireEvent.click(screen.getByRole("button", { name: t.borrarLosDeEsteCliente }));
+  }
+
+  /** M15: el foco va a «Cancelar» al abrir, y vuelve al botón que la abrió al cerrar. */
+  it("la pregunta recibe el foco, y al cancelar vuelve a su botón", async () => {
+    await abreYPregunta();
+    expect(screen.getByRole("button", { name: t.cancelar })).toHaveFocus();
+    fireEvent.click(screen.getByRole("button", { name: t.cancelar }));
+    expect(screen.getByRole("button", { name: t.borrarLosDeEsteCliente })).toHaveFocus();
+  });
+
+  /** M14: si borrar falla, la pantalla lo dice. */
+  it("si borrar falla, lo dice y siguen en su sitio", async () => {
+    rechazos.set("borrar_los_ensayos", "no se pudo");
+    await abreYPregunta();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: t.borrar }));
+    });
+    expect(screen.getByRole("alert")).toHaveTextContent(t.noSeBorraron);
+    expect(screen.getByText(t.tuProgreso)).toBeInTheDocument();
+  });
+
+  /** B31: dos ensayos en el mismo minuto no repiten la `key` de React. */
+  it("dos ensayos del mismo minuto no se pisan en la tabla", async () => {
+    const quejas = vi.spyOn(console, "error").mockImplementation(() => {});
+    const fila = PROGRESO_DEL_ENSAYO.filas[0];
+    respuestas.set("preparar_el_ensayo", { ...PREPARACION_DEL_ENSAYO, guardados: 2 });
+    respuestas.set("progreso_del_ensayo", { ...PROGRESO_DEL_ENSAYO, filas: [fila, fila] });
+    await pinta();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: t.verTuProgreso }));
+    });
+    expect(quejas.mock.calls.filter(([m]) => String(m).includes("same key"))).toEqual([]);
+    quejas.mockRestore();
+  });
+});
+
+describe("auditoría del S4: los estilos son del sistema", () => {
+  /** B14: ni un tamaño de letra en línea en la pantalla del ensayo; lo dice `.ayuda-e`. */
+  it("Ensayo no escribe tamaños de letra a mano", async () => {
+    const { readFileSync } = await import("node:fs");
+    const fuente = readFileSync("src/pantallas/Ensayo.tsx", "utf8");
+    expect(fuente.match(/fontSize\s*:/g) ?? []).toEqual([]);
   });
 });

@@ -190,7 +190,8 @@ fn ensayo_vista(fase: crate::ensayo::sesion::Fase) -> crate::ensayo::VistaDelEns
         evidencia: vec![
             Evidencia { titular: "El plazo corre desde la entrega de datos".into(), fuente: fuente("Páramo Azul", "Supuestos", crate::corpus::Unidad::Propuesta), citada: true, dicha_por_ti: false },
             Evidencia { titular: "Sur del Valle: tres semanas por datos".into(), fuente: fuente("Sur del Valle", "cierre", crate::corpus::Unidad::Caso), citada: true, dicha_por_ti: false },
-            Evidencia { titular: "Limpiar antes del tablero".into(), fuente: fuente("Marco de trabajo", "etapa 2", crate::corpus::Unidad::Marco), citada: false, dicha_por_ti: true },
+            // El lector de PDF conjeturó esta sección: la evaluada la marca (auditoría del S4, B33).
+            Evidencia { titular: "Limpiar antes del tablero".into(), fuente: Fuente { conjeturada: true, ..fuente("Marco de trabajo", "etapa 2", crate::corpus::Unidad::Marco) }, citada: false, dicha_por_ti: true },
         ],
         tiempo_ms: 72_000,
         ppm: Some(142),
@@ -203,7 +204,7 @@ fn ensayo_vista(fase: crate::ensayo::sesion::Fase) -> crate::ensayo::VistaDelEns
         citadas: 14,
         evidencia: 21,
         ppm_medio: Some(138),
-        muletillas: 9,
+        muletillas: Some(9),
         la_que_mas: Some(Muletilla { frase: "o sea".into(), veces: 5 }),
         tiempo_medio_ms: Some(58_000),
         filas: vec![
@@ -226,6 +227,8 @@ fn ensayo_vista(fase: crate::ensayo::sesion::Fase) -> crate::ensayo::VistaDelEns
         cerrando: false,
         respuesta: if fase == Fase::Evaluada { "El supuesto dos lo cubre: el plazo corre desde que el ERP entrega los datos.".into() } else { String::new() },
         transcurrido_ms: if fase == Fase::Evaluada { 72_000 } else { 0 },
+        usadas: if fase == Fase::Evaluada { evaluacion.citadas() } else { 0 },
+        muletillas: (fase == Fase::Evaluada).then(|| evaluacion.total_de_muletillas()),
         evaluacion: (fase == Fase::Evaluada).then_some(evaluacion),
         banco: crate::ensayo::EstadoDelBanco::Apagado,
         informe: (fase == Fase::Cerrado).then_some(informe),
@@ -394,6 +397,7 @@ pub fn muestras() -> Vec<Muestra> {
                 turnos_en_memoria: 3,
                 bytes_del_transcript: 2_048,
                 bytes_del_ensayo: 0,
+                ensayo: false,
                 motor: "apple-speechanalyzer",
             },
         ),
@@ -670,6 +674,20 @@ pub fn muestras() -> Vec<Muestra> {
         m("NO_EMPEZO_MICROFONO", "NoEmpezo", "./ensayo", &crate::ensayo::NoEmpezo::Microfono {
             porque: crate::capture::PorQueNoAbrio::SinPermisoDelMicrofono,
         }),
+        // Con una videollamada abierta, no por altavoces que la app reconoce (auditoría del S4, A1).
+        m("NO_EMPEZO_VIDEOLLAMADA", "NoEmpezo", "./ensayo", &crate::ensayo::NoEmpezo::Videollamada),
+        m("NO_EMPEZO_NO_SE_SABE_SI_HAY_LLAMADA", "NoEmpezo", "./ensayo", &crate::ensayo::NoEmpezo::NoSeSabeSiHayLlamada),
+        // Lo que el modelo no sumó, con sus dos porqués nuevos (auditoría del S4, B22).
+        m("ENSAYO_REPETIDAS", "VistaDelEnsayo", "./ensayo", &{
+            let mut v = ensayo_vista(crate::ensayo::sesion::Fase::Preguntando);
+            v.banco = crate::ensayo::EstadoDelBanco::NoSeEnriquecio { porque: crate::ensayo::enriquecer::PorQueNo::Repetidas };
+            v
+        }),
+        m("ENSAYO_SIN_SECCIONES", "VistaDelEnsayo", "./ensayo", &{
+            let mut v = ensayo_vista(crate::ensayo::sesion::Fase::Preguntando);
+            v.banco = crate::ensayo::EstadoDelBanco::NoSeEnriquecio { porque: crate::ensayo::enriquecer::PorQueNo::SinSecciones };
+            v
+        }),
         // Lo que el motor de este Mac sabe hacer (auditoría del S2, M7): con motor, y sin él por cada
         // uno de sus tres porqués, que son grafías kebab de varias palabras.
         // ---- lo que salió al API (auditoría del S2, B37) ----------------------------------------
@@ -681,6 +699,14 @@ pub fn muestras() -> Vec<Muestra> {
             let mut s = crate::sintesis::api::LoQueSalio::de(&tapado, &b, crate::sintesis::api::Externo::Claude, "Alcance");
             s.hora = "14:22".into();
             s.usd = Some(0.004);
+            s
+        }),
+        // Lo del ensayo, rotulado como lo que es (auditoría del S4, M21).
+        m("LO_QUE_SALIO_DEL_BANCO", "LoQueSalio", "./ia", &{
+            let b = crate::sintesis::anonimo::Boveda::nueva(&["Páramo Azul".to_string()]);
+            let mut s = crate::sintesis::api::LoQueSalio::de("S1 · Alcance: perfilado y limpieza de tres fuentes.", &b, crate::sintesis::api::Externo::Claude, "Propuesta Páramo Azul")
+                .para(crate::sintesis::api::Para::Banco);
+            s.hora = "09:12".into();
             s
         }),
         // ---- las preferencias que se recuerdan (sprint 003, ADR 002 enmienda 2) -----------------

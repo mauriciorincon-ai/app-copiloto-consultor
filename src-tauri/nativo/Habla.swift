@@ -94,6 +94,28 @@ private final class Arranque: @unchecked Sendable {
 
 private let arranque = Arranque()
 
+/// **La última frase encolada** (auditoría del S4, M7). `didFinish` y `didCancel` llegan de CUALQUIER frase,
+/// y tarde: al pulsar R o S mientras la voz lee, el ensayo calla la frase vieja y encola la nueva, y el
+/// `didCancel` de la vieja llegaba después y apagaba la bandera de la nueva. Con la bandera apagada antes de
+/// que sonara la pregunta nueva, el micrófono del ensayo se abría y la app se transcribía a sí misma. Ahora
+/// solo apaga la bandera el final de la frase que se encoló la última.
+private final class Ultima: @unchecked Sendable {
+  private let candado = NSLock()
+  private var frase: AVSpeechUtterance?
+  func poner(_ nueva: AVSpeechUtterance) {
+    candado.lock()
+    frase = nueva
+    candado.unlock()
+  }
+  func es(_ otra: AVSpeechUtterance) -> Bool {
+    candado.lock()
+    defer { candado.unlock() }
+    return frase === otra
+  }
+}
+
+private let ultima = Ultima()
+
 /// El delegado que mueve la bandera. Las tres devoluciones que importan son las tres formas en que
 /// una frase deja de sonar: terminó, la cancelaron, o nunca empezó porque el sistema la descartó.
 private final class Delegado: NSObject, AVSpeechSynthesizerDelegate, @unchecked Sendable {
@@ -102,12 +124,12 @@ private final class Delegado: NSObject, AVSpeechSynthesizerDelegate, @unchecked 
     arranque.sono()
   }
 
-  func speechSynthesizer(_: AVSpeechSynthesizer, didFinish _: AVSpeechUtterance) {
-    hablando.poner(false)
+  func speechSynthesizer(_: AVSpeechSynthesizer, didFinish frase: AVSpeechUtterance) {
+    if ultima.es(frase) { hablando.poner(false) }
   }
 
-  func speechSynthesizer(_: AVSpeechSynthesizer, didCancel _: AVSpeechUtterance) {
-    hablando.poner(false)
+  func speechSynthesizer(_: AVSpeechSynthesizer, didCancel frase: AVSpeechUtterance) {
+    if ultima.es(frase) { hablando.poner(false) }
   }
 }
 
@@ -168,6 +190,7 @@ public func agHablaDecir(_ idioma: UnsafePointer<CChar>, _ texto: UnsafePointer<
   // hablar. El disparador automático mira esa bandera para no interrumpirse, así que ese hueco es
   // exactamente el que produciría dos voces a la vez.
   hablando.poner(true)
+  ultima.poner(frasePara)
   arranque.encolada()
   DispatchQueue.main.async {
     sintetizador.speak(frasePara)

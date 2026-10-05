@@ -84,6 +84,11 @@ pub struct Documento {
     /// en memoria y solo para las fichas de cliente: no viaja a la pantalla del corpus ni al índice.
     #[serde(skip)]
     pub jurisdiccion: Option<String>,
+    /// **El texto de una propuesta, plegado** (sin mayúsculas ni tildes), para saber de qué cliente es sin
+    /// releerla (auditoría del S4, M9): «Preparar» buscaba el cliente releyendo cada PDF del disco, en el
+    /// hilo principal y con el candado del corpus puesto. Solo memoria, solo propuestas, como el índice.
+    #[serde(skip)]
+    pub texto_plegado: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -187,6 +192,7 @@ impl Corpus {
                         conjeturado: false,
                         estado: Estado::SinLeer { motivo: e.motivo() },
                         jurisdiccion: None,
+                        texto_plegado: None,
                     },
                     Vec::new(),
                 )
@@ -203,6 +209,9 @@ impl Corpus {
         };
 
         let titulos: Vec<String> = secciones.iter().filter_map(|s| s.titulo.clone()).collect();
+        // Línea a línea, como se buscaba antes en el disco: un nombre no se encuentra partido entre dos.
+        let texto_plegado = (unidad == Some(Unidad::Propuesta))
+            .then(|| leido.lineas.iter().map(|l| crate::propuestas::plegar(&l.texto)).collect::<Vec<_>>().join("\n"));
         match self.indice.meter(&como_texto, &nombre, unidad, leido.conjeturado, &secciones) {
             Ok(n) => (
                 Documento {
@@ -212,6 +221,7 @@ impl Corpus {
                     conjeturado: leido.conjeturado,
                     estado: Estado::Indexado { secciones: n },
                     jurisdiccion,
+                    texto_plegado,
                 },
                 titulos,
             ),
@@ -223,6 +233,7 @@ impl Corpus {
                     conjeturado: leido.conjeturado,
                     estado: Estado::SinLeer { motivo: format!("no se pudo indexar: {e}") },
                     jurisdiccion,
+                    texto_plegado: None,
                 },
                 Vec::new(),
             ),
@@ -311,8 +322,7 @@ impl Corpus {
             .filter(|d| d.unidad == Some(Unidad::Propuesta) && matches!(d.estado, Estado::Indexado { .. }))
             .filter(|d| {
                 crate::propuestas::plegar(&d.nombre).contains(&buscado)
-                    || leer::leer(Path::new(&d.ruta))
-                        .is_ok_and(|l| l.lineas.iter().any(|x| crate::propuestas::plegar(&x.texto).contains(&buscado)))
+                    || d.texto_plegado.as_deref().is_some_and(|t| t.contains(&buscado))
             })
             .collect()
     }
@@ -408,6 +418,29 @@ mod pruebas {
     /// **El ensayo lee la propuesta y la ficha del kit por título** (sprint 004): las seis secciones de la
     /// propuesta y las cuatro de la ficha, enteras, aunque «Historial» sea más corta que el mínimo del
     /// índice. Y la propuesta se encuentra por el cliente que nombra.
+    /// **«Preparar» no relee tus propuestas** (auditoría del S4, M9): el cliente se busca en el texto que se
+    /// leyó al indexar. Con el archivo ya borrado del disco, la propuesta se sigue encontrando por su texto.
+    #[test]
+    fn propuestas_de_no_relee_el_disco() {
+        let d = std::env::temp_dir().join(format!("ag-corpus-propuestas-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&d);
+        std::fs::create_dir_all(&d).unwrap();
+        let archivo = d.join("Propuesta comercial.md");
+        std::fs::write(
+            &archivo,
+            "# Alcance\nPara Páramo Azul: perfilado y limpieza de tres fuentes de datos del negocio.\n\n\
+             # Precio\nTarifa cerrada de cuatro semanas, con dos rondas de revisión incluidas.\n",
+        )
+        .unwrap();
+        let mut c = Corpus::en_memoria().unwrap();
+        c.indexar(&d, &|_| {}).unwrap();
+        assert_eq!(c.propuestas_de("Páramo Azul").len(), 1, "no se encontró por su texto");
+        std::fs::remove_file(&archivo).unwrap();
+        assert_eq!(c.propuestas_de("Páramo Azul").len(), 1, "se volvió a leer el disco");
+        assert!(c.propuestas_de("Sur del Valle").is_empty());
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
     #[test]
     fn el_ensayo_lee_la_propuesta_y_la_ficha_de_un_cliente_por_titulo() {
         let kit = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../docs/kit-de-prueba/corpus");

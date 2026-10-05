@@ -19,6 +19,11 @@ import { describe, expect, it } from "vitest";
  * filas tiene el bloque de textos diferidos**, y que **el chip de cada prueba diga lo mismo que su
  * origen** con el namespace del sprint de la guía: al heredar una guía hay que pasar todos los «Nuevo»
  * a «S2» a secas, y uno olvidado se lee como algo que cambió. Rojos en la bitácora del sprint 003, fase 5.
+ *
+ * **Desde el sprint 004** la guía lleva dos ciclos: el ⭐⭐ del H1 sigue entero para su Acto 2, y las ⭐ que
+ * nacen en el H2 forman su acumulado. Cada una de esas **declara su candidatura al ⭐⭐ del H2** (sí o no, y
+ * por qué): sin la línea, el ⭐⭐ del cierre del ciclo se arma a ciegas. Y las formas y textos del H2 que nadie
+ * ha visto van en su propia tabla, contada aparte de la del H1. Rojos en la bitácora del sprint 004, fase 5.
  */
 const GUIA = readFileSync("docs/GUIA-DE-PRUEBA.html", "utf8");
 const PRUEBAS = [
@@ -28,6 +33,14 @@ const PRUEBAS = [
 ];
 
 const FILAS = [...GUIA.matchAll(/<tr data-texto><td><input type="checkbox" id="(\w+)"/g)];
+const FILAS_H2 = [
+  ...GUIA.matchAll(/<tr data-texto data-ciclo="h2"><td><input type="checkbox" id="(\w+)"/g),
+];
+
+/** Las ⭐ del ciclo H2: las que nacen del sprint 4 al 6. */
+const DEL_H2 = PRUEBAS.filter(
+  (p) => /data-nace="s[4-6]"/.test(p[1]) && p[1].includes("data-minimo"),
+);
 
 /** «Sprint 003» → 3: el sprint de la guía, de su cabecera. */
 const SPRINT = Number(/Sprint 0*(\d+) · /.exec(GUIA)?.[1]);
@@ -118,19 +131,57 @@ describe("la guía de prueba cuadra", () => {
   it("el desglose del ⭐ por sprint cuadra con de dónde nace cada prueba", () => {
     const sinNacer = PRUEBAS.filter((p) => !/data-nace="s\d"/.test(p[1])).map((p) => p[3]);
     expect(sinNacer, "pruebas sin data-nace").toEqual([]);
-    const m = /Gate mínimo ⭐: (\d+) pruebas · ~\d+ min \(S1 (\d+) · S2 (\d+) · S3 (\d+)\)/.exec(GUIA);
-    expect(m, "la cabecera no trae el desglose S1 · S2 · S3").not.toBeNull();
+    const m =
+      /Gate mínimo ⭐: (\d+) pruebas · ~\d+ min \(S1 (\d+) · S2 (\d+) · S3 (\d+) · S4 (\d+)\)/.exec(GUIA);
+    expect(m, "la cabecera no trae el desglose S1 · S2 · S3 · S4").not.toBeNull();
     const minimo = PRUEBAS.filter((p) => p[1].includes("data-minimo"));
     const de = (s: string) => minimo.filter((p) => p[1].includes(`data-nace="${s}"`)).length;
-    expect([de("s1"), de("s2"), de("s3")]).toEqual([Number(m![2]), Number(m![3]), Number(m![4])]);
-    expect(de("s1") + de("s2") + de("s3")).toBe(Number(m![1]));
+    expect([de("s1"), de("s2"), de("s3"), de("s4")]).toEqual(
+      [m![2], m![3], m![4], m![5]].map(Number),
+    );
+    expect(de("s1") + de("s2") + de("s3") + de("s4")).toBe(Number(m![1]));
   });
 
   it("el bloque de textos diferidos declara sus filas, y ningún id se repite con las pruebas", () => {
     expect(declarada(/Textos diferidos: (\d+) filas/)).toBe(FILAS.length);
     expect(FILAS.length, "sin filas, el bloque de textos no es un bloque").toBeGreaterThan(0);
-    const ids = [...PRUEBAS.map((p) => p[3]), ...FILAS.map((f) => f[1])];
+    expect(declarada(/Formas y textos del H2: (\d+) filas/)).toBe(FILAS_H2.length);
+    const ids = [...PRUEBAS.map((p) => p[3]), ...FILAS.map((f) => f[1]), ...FILAS_H2.map((f) => f[1])];
     expect(ids.filter((id, i) => ids.indexOf(id) !== i)).toEqual([]);
+  });
+
+  // Sprint 004: el ⭐⭐ del H2 se arma al cierre del ciclo con las candidatas que cada ⭐ declara al nacer.
+  // ¿Puede fallar? Sí: una ⭐ nueva sin su línea, una línea que dice «sí» con el atributo en «no», o la
+  // cabecera con la cuenta vieja. Rojo en la bitácora del sprint 004, fase 5.
+  it("cada ⭐ del H2 declara su candidatura al ⭐⭐ del H2, con su porqué, y la cabecera las cuenta", () => {
+    expect(DEL_H2.length, "el ciclo H2 ya tiene ⭐").toBeGreaterThan(0);
+    const linea = (p: RegExpMatchArray) => {
+      const resto = GUIA.slice(p.index! + p[0].length);
+      const li = resto.slice(0, resto.indexOf("</li>"));
+      return /<p class="candidata">Candidata al ⭐⭐ del H2: <strong>(sí|no)<\/strong>\. ([^<]{30,})<\/p>/.exec(li);
+    };
+    const mal = DEL_H2.filter((p) => {
+      const atributo = /data-candidata="(si|no)"/.exec(p[1])?.[1];
+      const l = linea(p);
+      return !atributo || !l || (l[1] === "sí" ? "si" : "no") !== atributo;
+    }).map((p) => p[3]);
+    expect(mal, "⭐ del H2 sin candidatura, o con la línea y el atributo en desacuerdo").toEqual([]);
+    // Solo una ⭐ es candidata: el ⭐⭐ es una lente sobre el mínimo.
+    const sueltas = PRUEBAS.filter(
+      (p) => p[1].includes("data-candidata") && !p[1].includes("data-minimo"),
+    ).map((p) => p[3]);
+    expect(sueltas, "candidata sin ser ⭐").toEqual([]);
+    const m = /Acumulado del ciclo H2: (\d+) ⭐ \(S4 (\d+)\) · candidatas al ⭐⭐ del H2: (\d+) sí · (\d+) no/.exec(
+      GUIA,
+    );
+    expect(m, "la cabecera no dice el acumulado del H2 y sus candidatas").not.toBeNull();
+    const si = DEL_H2.filter((p) => p[1].includes('data-candidata="si"')).length;
+    expect([m![1], m![2], m![3], m![4]].map(Number)).toEqual([
+      DEL_H2.length,
+      DEL_H2.filter((p) => p[1].includes('data-nace="s4"')).length,
+      si,
+      DEL_H2.length - si,
+    ]);
   });
 
   it("el chip de cada prueba dice su origen, con el sprint de la guía y su namespace", () => {

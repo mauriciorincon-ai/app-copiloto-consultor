@@ -198,6 +198,18 @@ impl Trozo {
     }
 }
 
+/// **Para qué salió una petición** (auditoría del S4, M21): IA rotulaba lo del ensayo como «redactar
+/// sugerencia». Las dos salen por el mismo adaptador, con la misma bóveda y el mismo tope.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Para {
+    /// La sugerencia de una ficha, en reunión.
+    #[default]
+    Sugerencia,
+    /// «Enriquecer el banco» del ensayo.
+    Banco,
+}
+
 /// Una petición al proveedor externo, como la enseña IA.
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -206,6 +218,7 @@ pub struct LoQueSalio {
     pub id: u64,
     pub hora: String,
     pub externo: Externo,
+    pub para: Para,
     /// El titular de la ficha que la provocó.
     pub sobre: String,
     pub trozos: Vec<Trozo>,
@@ -223,12 +236,18 @@ impl LoQueSalio {
             id: 0,
             hora: crate::escucha::la_hora(),
             externo,
+            para: Para::Sugerencia,
             sobre: sobre.to_string(),
             trozos: trozos(tapado, boveda),
             caracteres: tapado.chars().count(),
             tapadas: boveda.tapadas(),
             usd: None,
         }
+    }
+
+    pub fn para(mut self, para: Para) -> Self {
+        self.para = para;
+        self
     }
 }
 
@@ -337,6 +356,8 @@ pub struct Api {
     pub registro: Registro,
     /// De qué ficha va la petición: su titular, para la columna «por qué salió».
     pub sobre: String,
+    /// Para qué sale: una sugerencia o el banco del ensayo (M21).
+    pub para: Para,
     /// La época del corte en que nació la petición. Si `⌥⎋` llega antes de enviar, no se envía.
     pub vigencia: Vigencia,
 }
@@ -393,7 +414,7 @@ impl Proveedor for Api {
         let (mut tapado, boveda) = lo_que_sale(&self.conocidos, instrucciones, texto);
         let (mut cabeceras, mut cuerpo) = self.externo.peticion(&clave, instrucciones, &tapado);
         // Lo que IA enseñará, armado ANTES de pisar el texto: el mismo `tapado` que va en el cuerpo.
-        let salio = LoQueSalio::de(&tapado, &boveda, self.externo, &self.sobre);
+        let salio = LoQueSalio::de(&tapado, &boveda, self.externo, &self.sobre).para(self.para);
         // SEGURIDAD (las tres): ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
         unsafe { clave.as_mut_vec() }.fill(0);
         unsafe { tapado.as_mut_vec() }.fill(0);
@@ -570,6 +591,7 @@ mod pruebas {
             conocidos: Vec::new(),
             registro: Registro::default(),
             sobre: String::new(),
+            para: Para::Sugerencia,
             vigencia,
         };
         assert_eq!(api.redactar("i", "t").err().as_deref(), Some(CORTADA));

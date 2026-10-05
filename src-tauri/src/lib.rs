@@ -259,7 +259,19 @@ fn asentar_banda<R: tauri::Runtime>(app: tauri::AppHandle<R>, alto: u32) -> Resu
 
 /// Acopla arriba **la ventana de la reunión que nombra la detección** (ADR 004, enmienda 1). Sin
 /// reunión detectada no se toca nada: la banda flota arriba y el log lo dice.
+///
+/// **Y solo con la sesión iniciada** (auditoría del S4, M3; decisión del usuario del 2026-10-04): Zoom o Teams
+/// abiertos todo el día cuentan como «reunión detectada» aunque no haya llamada, y sin esto el latido del
+/// arranque bajaba y encogía la ventana del chat. Arriba, la reunión se acopla al pulsar «Iniciar sesión».
 fn acoplar_arriba<R: tauri::Runtime>(app: &tauri::AppHandle<R>, franja: acople::Marco) -> acople::Informe {
+    let abierta = app.try_state::<reunion::ElCuaderno>().is_some_and(|c| c.abierta());
+    if !abierta {
+        return acople::Informe {
+            permiso: acople::hay_permiso(),
+            motivos: vec!["sin sesión abierta: la banda flota arriba sin tocar ninguna ventana".into()],
+            ..Default::default()
+        };
+    }
     match sesion::ventana_de_la_reunion() {
         Some(destino) => acople::acoplar_arriba(&destino, franja, &huella(app)),
         None => acople::Informe {
@@ -272,6 +284,11 @@ fn acoplar_arriba<R: tauri::Runtime>(app: &tauri::AppHandle<R>, franja: acople::
 
 /// Acopla según el borde: abajo, la aplicación que está al frente (el H1); arriba, la reunión.
 fn acoplar_segun_el_borde<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Result<acople::Informe, String> {
+    // **Sin banda no se acopla nada** (auditoría del S4, M5): tras ⌥⎋ la banda está cerrada, y ⌃⌥B o el
+    // selector de Sesión encogían la reunión para dejar sitio a una franja vacía.
+    if app.get_webview_window(ventana::BANDA).is_none() {
+        return Err("la banda no está en pantalla: no se toca ninguna ventana".into());
+    }
     let borde = borde_de(app);
     let alto = ventana::alto_actual(app).unwrap_or(ventana::ALTO_COMPACTA);
     let franja = ventana::franja(app, borde, alto)?;
@@ -319,9 +336,27 @@ fn la_franja(app: tauri::AppHandle) -> LaFranja {
     la_franja_de(&app)
 }
 
+/// **Un cambio de borde a la vez** (auditoría del S4, A3): un clic en Sesión y ⌃⌥B llegan cada uno en su
+/// hilo, y dos ⌃⌥B seguidos calculaban «el otro borde» antes de que el primero terminara.
+static CAMBIO_DE_BORDE: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+/// Cambia la banda de borde **con el turno tomado**: `elegir` recibe el borde de ahora, ya leído dentro del
+/// turno, y dice a cuál va. Si es el mismo, no se toca nada (auditoría del S4, B25): soltar y volver a acoplar
+/// la reunión por pulsar el borde que ya estaba elegido no le sirve a nadie.
+fn cambiar_de_borde<R: tauri::Runtime>(app: &tauri::AppHandle<R>, elegir: impl FnOnce(ventana::Borde) -> ventana::Borde) {
+    let _turno = CAMBIO_DE_BORDE.lock().unwrap_or_else(|e| e.into_inner());
+    let ahora = borde_de(app);
+    let borde = elegir(ahora);
+    if borde == ahora {
+        return;
+    }
+    poner_la_banda(app, borde);
+}
+
 /// Pone la banda en un borde: **suelta → recoloca → reacopla**. Primero se devuelve entera la ventana
 /// que estuviera acoplada (el acople del otro borde ya no vale), luego la banda y su relleno cambian de
 /// sitio juntos, y al final se acopla lo que toque en el borde nuevo. Se guarda en tus preferencias.
+/// Solo la llama [`cambiar_de_borde`], con el turno tomado.
 fn poner_la_banda<R: tauri::Runtime>(app: &tauri::AppHandle<R>, borde: ventana::Borde) {
     recordar(app, |p| p.posicion_de_la_banda = borde);
     registrar_acople(app, "soltar para cambiar de borde", &acople::soltar(&huella(app)));
@@ -338,21 +373,19 @@ fn poner_la_banda<R: tauri::Runtime>(app: &tauri::AppHandle<R>, borde: ventana::
 }
 
 /// «La banda: arriba · abajo», en Sesión. Va en otro hilo: el acople son idas y vueltas a otro proceso
-/// por la Accessibility API, y el comando no tiene por qué esperarlas.
+/// por la Accessibility API, y el comando no tiene por qué esperarlas. **No devuelve nada**: el borde nuevo
+/// llega por el evento `franja` (auditoría del S4, B37: su retorno no lo leía nadie).
 #[tauri::command]
-fn fijar_posicion_de_la_banda(app: tauri::AppHandle, borde: ventana::Borde) -> LaFranja {
-    let mango = app.clone();
-    std::thread::spawn(move || poner_la_banda(&mango, borde));
-    LaFranja { borde, ..la_franja_de(&app) }
+fn fijar_posicion_de_la_banda(app: tauri::AppHandle, borde: ventana::Borde) {
+    std::thread::spawn(move || cambiar_de_borde(&app, |_| borde));
 }
 
-/// «Entendido» en el aviso de la primera vez con la banda arriba: no vuelve a salir.
+/// «Entendido» en el aviso de la primera vez con la banda arriba: no vuelve a salir. Lo dice el evento
+/// `franja` (auditoría del S4, B38).
 #[tauri::command]
-fn entendido_el_aviso_de_arriba(app: tauri::AppHandle) -> LaFranja {
+fn entendido_el_aviso_de_arriba(app: tauri::AppHandle) {
     recordar(&app, |p| p.aviso_de_arriba_visto = true);
-    let franja = la_franja_de(&app);
-    let _ = app.emit(EVENTO_FRANJA, franja.clone());
-    franja
+    let _ = app.emit(EVENTO_FRANJA, la_franja_de(&app));
 }
 
 /// `⌃⌥B` — la banda, al otro borde (sprint 004). La octava letra con `⌃⌥`.
@@ -1087,16 +1120,52 @@ fn codigo_de(idioma: ensayo::banco::Idioma) -> &'static str {
     }
 }
 
+/// **El locale del ensayo** (auditoría del S4, A2): tu pista si es de ese idioma; si no, la del cliente; si no,
+/// el primero de ese idioma que el motor tenga listo; y solo si no hay ninguno, el de fábrica. Idioma deja
+/// elegir cualquier variante del sistema (`es-MX`, `en-GB`…); el ensayo cableaba dos.
+fn locale_del_ensayo(idioma: ensayo::banco::Idioma, pistas: &prefs::IdiomasDePista, listos: &[String]) -> String {
+    let p = match idioma {
+        ensayo::banco::Idioma::Es => "es-",
+        ensayo::banco::Idioma::En => "en-",
+    };
+    [pistas.consultor.as_str(), pistas.cliente.as_str()]
+        .into_iter()
+        .chain(listos.iter().map(String::as_str))
+        .find(|c| c.starts_with(p))
+        .unwrap_or(codigo_de(idioma))
+        .to_string()
+}
+
+/// El locale del ensayo en este Mac: el de tus pistas, y si ninguna es de ese idioma, el primero listo del
+/// motor (solo se le pregunta entonces: cada pregunta al motor cruza a Swift).
+fn locale_de_la_app<R: tauri::Runtime>(app: &tauri::AppHandle<R>, idioma: ensayo::banco::Idioma) -> String {
+    let pistas = idiomas_guardados(&app.state::<LasPreferencias>());
+    let sin_listos = locale_del_ensayo(idioma, &pistas, &[]);
+    if sin_listos != codigo_de(idioma) || pistas.consultor == sin_listos || pistas.cliente == sin_listos {
+        return sin_listos;
+    }
+    let motor = stt::motor_de_la_casa();
+    let prefijo = &codigo_de(idioma)[..3];
+    let listos: Vec<String> = motor
+        .idiomas()
+        .into_iter()
+        .filter(|c| c.starts_with(prefijo) && matches!(motor.disponibilidad(c), stt::Disponibilidad::Listo))
+        .collect();
+    locale_del_ensayo(idioma, &pistas, &listos)
+}
+
 /// **Lo que el ensayo necesita de la app**: la voz de siempre, el corpus de siempre y la ventana
 /// principal. La voz se usa **sin el candado de los auriculares** (`habla::cabe_decirla`): ese candado
-/// es de la reunión, donde el cliente oiría; en el ensayo no hay nadie, y el micrófono está sordo
-/// mientras habla (ADR 019 §6.3).
-struct MundoDeLaApp(tauri::AppHandle);
+/// es de la reunión, donde el cliente oiría; el ensayo no empieza con una videollamada abierta y el
+/// sonido por altavoces que la app reconoce (`ensayo::llamada_sin_auriculares`, auditoría del S4, A1), y el micrófono está sordo
+/// mientras habla (ADR 019 §6.3). El segundo campo es el locale del ensayo (A2): la voz lo usa si tiene
+/// una para él, y si no, la de fábrica de ese idioma.
+struct MundoDeLaApp(tauri::AppHandle, String);
 
 impl ensayo::Mundo for MundoDeLaApp {
     fn decir(&self, idioma: ensayo::banco::Idioma, texto: &str) -> bool {
         let voz = &self.0.state::<LaVozQueSale>().voz;
-        let codigo = codigo_de(idioma);
+        let codigo = if voz.hay_para(&self.1) { self.1.as_str() } else { codigo_de(idioma) };
         voz.hay_para(codigo) && voz.decir(codigo, texto).is_ok()
     }
     fn callar(&self) {
@@ -1135,15 +1204,6 @@ fn secciones_del_ensayo(
     (prop, ficha, nombre)
 }
 
-fn tope_valido(tope: usize) -> usize {
-    let topes = &ensayo::banco::catalogo().topes;
-    if topes.contains(&tope) {
-        tope
-    } else {
-        topes.get(1).copied().unwrap_or(8)
-    }
-}
-
 fn el_tuyo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> ensayo::banco::Idioma {
     if idiomas_guardados(&app.state::<LasPreferencias>()).consultor.starts_with("en") {
         ensayo::banco::Idioma::En
@@ -1153,16 +1213,17 @@ fn el_tuyo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> ensayo::banco::Idiom
 }
 
 /// **«Preparar»**: con quién, con qué propuesta, cuántas preguntas y de dónde salen. Lee tus documentos
-/// y nada más: ni micrófono ni red.
-#[tauri::command]
+/// y nada más: ni micrófono ni red. **Fuera del hilo principal** (auditoría del S4, M9): trocear tus
+/// secciones no congela la ventana. `tope` en `None` es el de fábrica del catálogo (M18).
+#[tauri::command(async)]
 fn preparar_el_ensayo(
     app: tauri::AppHandle,
-    el_corpus: tauri::State<'_, ElCorpus>,
     cliente: Option<String>,
     propuesta: Option<String>,
-    tope: usize,
+    tope: Option<usize>,
 ) -> ensayo::Preparacion {
-    let tope = tope_valido(tope);
+    let el_corpus = app.state::<ElCorpus>();
+    let tope = ensayo::banco::catalogo().tope_valido(tope);
     let enriquecer = app.state::<LaSintesis>().enriquecer.load(Ordering::Relaxed);
     let el_tuyo = el_tuyo(&app);
     let topes = ensayo::banco::catalogo().topes.clone();
@@ -1214,8 +1275,8 @@ fn preparar_el_ensayo(
         cuentas: ensayo::Cuentas::de(&banco),
         idioma,
         enriquecer,
-        // Se pregunta al sistema, que no abre nada: si el modelo de ese idioma está listo.
-        transcribe: matches!(stt::motor_de_la_casa().disponibilidad(codigo_de(idioma)), stt::Disponibilidad::Listo),
+        // Se pregunta al sistema, que no abre nada: si el modelo de ese idioma —en tu variante— está listo.
+        transcribe: matches!(stt::motor_de_la_casa().disponibilidad(&locale_de_la_app(&app, idioma)), stt::Disponibilidad::Listo),
         sin_corpus: banco.is_empty(),
         // Por el nombre de los archivos: sin la llave y sin abrir ninguno (ADR 015, enmienda 4).
         guardados,
@@ -1224,21 +1285,32 @@ fn preparar_el_ensayo(
 
 /// **Empieza el ensayo** (ADR 019 §6). Abre **solo el micrófono**: ni el audio del sistema, ni la pantalla,
 /// ni el radar ámbar, que viven en `empezar`. Lo vigila `pruebas_de_la_puerta_de_la_captura`.
+///
+/// **No devuelve la vista** (auditoría del S4, B34): llega por la señal `ensayo`, como todo lo demás, y lo
+/// que devolvía no lo leía nadie.
 #[tauri::command]
 fn empezar_el_ensayo(
     app: tauri::AppHandle,
     el_corpus: tauri::State<'_, ElCorpus>,
     cliente: String,
     propuesta: Option<String>,
-    tope: usize,
+    tope: Option<usize>,
     voz: bool,
-) -> Result<ensayo::VistaDelEnsayo, ensayo::NoEmpezo> {
+) -> Result<(), ensayo::NoEmpezo> {
     // **Excluyente con una reunión** (§6.5): con una sesión abierta —escuchando, en solo notas o
-    // cerrándose— no se ensaya. Una videollamada abierta sin sesión no lo impide: no hay nada que oír.
+    // cerrándose— no se ensaya.
     let escuchando = app.state::<LaEscucha>().0.lock().map(|g| g.is_some()).unwrap_or(true);
     let cuaderno = app.try_state::<reunion::ElCuaderno>().is_some_and(|c| c.abierta());
     if escuchando || cuaderno {
         return Err(ensayo::NoEmpezo::EnReunion);
+    }
+    // **Con una videollamada abierta, no por altavoces que la app reconoce** (auditoría del S4, A1; decisión del
+    // usuario del 2026-10-04). Sin sesión de Angel Ghost no hay pista del sistema contra la que marcar el eco: con los
+    // altavoces, tu micrófono oiría a la otra parte y lo guardaría como tu respuesta, y la llamada oiría la
+    // voz que lee tu propuesta.
+    if let Some(no) = ensayo::llamada_sin_auriculares(&sesion::ahora(), capture::nativo::salida_de_audio().puede_haber_eco()) {
+        println!("[ensayo] no empieza: {no:?}");
+        return Err(no);
     }
     let el_tuyo = el_tuyo(&app);
     let (prop, ficha, nombre) = {
@@ -1254,7 +1326,8 @@ fn empezar_el_ensayo(
         return Err(ensayo::NoEmpezo::SinCorpus);
     }
     let idioma = ensayo::idioma_del_ensayo(&prop, &ficha, el_tuyo);
-    let preguntas = ensayo::banco::armar(&prop, &ficha, idioma, tope_valido(tope));
+    let locale = locale_de_la_app(&app, idioma);
+    let preguntas = ensayo::banco::armar(&prop, &ficha, idioma, ensayo::banco::catalogo().tope_valido(tope));
     // Con quién y cuándo: lo que nombra el ensayo si lo guardas (ADR 015, enmienda 4).
     let rotulo = ensayo::Rotulo {
         cliente,
@@ -1265,8 +1338,16 @@ fn empezar_el_ensayo(
     cerrar_la_puerta_al_empezar(&app);
     // El informe de un ensayo anterior sin guardar se suelta: uno a la vez.
     soltar_el_ensayo(&app);
+    // **Un ensayo nuevo: su contador de red empieza de cero** (auditoría del S4, B27), como el de una reunión:
+    // «Ensayando · N» y Honestidad contaban los bytes de la reunión anterior.
+    red::reiniciar();
+    // **Y su costo** (segunda pasada de la casilla 4 del S4, B53): «Esta reunión o ensayo», en IA, sumaba lo
+    // de «Enriquecer el banco» a lo que costó la reunión anterior.
+    if let Ok(mut u) = app.state::<LaSintesis>().reunion_usd.lock() {
+        *u = 0.0;
+    }
     let jerga = diccionario_de_la_sesion(&ruta_del_diccionario(&app), &clientes_del_corpus(el_corpus.inner()));
-    let oido = ensayo::oido::Oido::del_microfono(codigo_de(idioma), stt::motor_de_la_casa(), jerga).map_err(|e| {
+    let oido = ensayo::oido::Oido::del_microfono(&locale, stt::motor_de_la_casa(), jerga).map_err(|e| {
         println!("[ensayo] el micrófono no se abrió: {e}");
         let e = escucha::con_su_permiso(capture::Pista::Microfono, e, &permisos::leer());
         ensayo::NoEmpezo::Microfono { porque: e.porque }
@@ -1275,16 +1356,14 @@ fn empezar_el_ensayo(
     let banco = if enriquecer { ensayo::EstadoDelBanco::EnCamino } else { ensayo::EstadoDelBanco::Apagado };
     let n = preguntas.len();
     let id = ENSAYOS.fetch_add(1, Ordering::SeqCst) + 1;
-    let e = ensayo::Ensayo::arrancar(preguntas, idioma, voz, rotulo, banco, oido, std::sync::Arc::new(MundoDeLaApp(app.clone())))
+    let e = ensayo::Ensayo::arrancar(preguntas, idioma, voz, rotulo, banco, oido, std::sync::Arc::new(MundoDeLaApp(app.clone(), locale.clone())))
         .ok_or(ensayo::NoEmpezo::SinCorpus)?;
     // Metadata, jamás contenido: ni el cliente, ni la propuesta, ni las preguntas.
     println!(
-        "[ensayo] empieza: {n} preguntas · {} · voz {} · enriquecer {}",
-        codigo_de(idioma),
+        "[ensayo] empieza: {n} preguntas · {locale} · voz {} · enriquecer {}",
         if voz { "sí" } else { "no" },
         if enriquecer { "sí" } else { "no" }
     );
-    let vista = e.vista();
     if let Ok(mut g) = app.state::<ElEnsayo>().0.lock() {
         *g = Some((id, e));
     }
@@ -1292,7 +1371,7 @@ fn empezar_el_ensayo(
         enriquecer_el_ensayo(&app, id, prop, ficha, idioma, nombre);
     }
     let _ = app.emit_to(ventana::PRINCIPAL, EVENTO_ENSAYO, ());
-    vista.ok_or(ensayo::NoEmpezo::SinCorpus)
+    Ok(())
 }
 
 /// **El acento del modelo** (ADR 019 §3), una vez por ensayo y en su propio hilo: el ensayo ya empezó con
@@ -1312,8 +1391,9 @@ fn enriquecer_el_ensayo(
         let s = mango.state::<LaSintesis>();
         let conocidos = clientes_del_corpus(&mango.state::<ElCorpus>());
         let peticion = ensayo::enriquecer::Peticion::nueva(&propuesta, &ficha, idioma);
-        let resultado = match (peticion, proveedor_de_ahora(&s, conocidos, sobre)) {
-            (None, _) => Err(ensayo::enriquecer::PorQueNo::NadaFundado),
+        let resultado = match (peticion, proveedor_de_ahora(&s, conocidos, sobre, sintesis::api::Para::Banco)) {
+            // Sin secciones con título no se pregunta al modelo: «nada fundado» decía otra cosa (B22).
+            (None, _) => Err(ensayo::enriquecer::PorQueNo::SinSecciones),
             (_, None) => Err(ensayo::enriquecer::PorQueNo::SinProveedor),
             (Some(peticion), Some(proveedor)) => {
                 let quien = proveedor.quien();
@@ -1334,17 +1414,30 @@ fn enriquecer_el_ensayo(
                         });
                     }
                 }
-                // Metadata, jamás contenido: quién, cuánto tardó, cuánto salió y cuántas sobrevivieron.
-                let fuera = red::formatear(r.respuesta.bytes_fuera);
+                // Metadata, jamás contenido: quién, cuánto tardó, cuánto salió y cuántas sobrevivieron. Sin
+                // respuesta —el proveedor falló o llegó tarde— no hay cifra que dar aquí: lo que salió lo contó
+                // la red al enviarlo, y «0 B fuera» era falso (auditoría del S4, B21).
+                let fuera = match (&r.fallo, &r.enriquecido) {
+                    (Some(_), _) | (_, Err(ensayo::enriquecer::PorQueNo::Tarde)) => "sin respuesta".to_string(),
+                    _ => format!("{} fuera", red::formatear(r.respuesta.bytes_fuera)),
+                };
+                if let Some(fallo) = &r.fallo {
+                    // El detalle es un código o un estado HTTP, nunca el texto: `sintesis::api` lo escribe así.
+                    println!("[ensayo] el banco: el proveedor falló · {fallo}");
+                }
                 match &r.enriquecido {
                     Ok(e) => println!(
-                        "[ensayo] el banco: {quien:?} · {} ms · {fuera} fuera · {} sumadas, {} descartadas",
+                        "[ensayo] el banco: {quien:?} · {} ms · {fuera} · {} sumadas, {} descartadas",
                         r.ms,
                         e.preguntas.len(),
                         e.descartadas
                     ),
-                    Err(porque) => println!("[ensayo] el banco: {quien:?} · {} ms · {fuera} fuera · no se enriqueció: {porque:?}", r.ms),
+                    Err(porque) => println!("[ensayo] el banco: {quien:?} · {} ms · {fuera} · no se enriqueció: {porque:?}", r.ms),
                 }
+                // Lo que contestó el modelo trae frases de tu propuesta: se pisa al terminar (B23).
+                let mut respuesta = r.respuesta;
+                // SEGURIDAD: ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
+                unsafe { respuesta.json.as_mut_vec() }.fill(0);
                 r.enriquecido
             }
         };
@@ -1428,7 +1521,8 @@ fn el_ensayo_terminado(app: &tauri::AppHandle) -> Result<(ensayo::guardado::Guar
 fn guardar_el_ensayo(app: tauri::AppHandle) -> Result<(), String> {
     let (guardado, rotulo) = el_ensayo_terminado(&app)?;
     let vence = reunion::preferencias(&app).retencion.segundos().map_or(0, |s| carpeta::ahora() + s);
-    let base = notas::nombre_del_archivo(Some(&rotulo.cliente), &rotulo.empezo);
+    // Con el nombre del cliente en los archivos de ensayo, también sin letras latinas (B16).
+    let base = ensayos::base(&rotulo.cliente, &rotulo.empezo);
     let hecho = reunion::los_ensayos_de(&app).guardar(&carpeta::DelLlavero, &guardado, &base, vence).inspect_err(|e| {
         println!("[ensayo] no se pudo guardar: {}", reunion::sin_ruta(e));
     })?;
@@ -1438,22 +1532,23 @@ fn guardar_el_ensayo(app: tauri::AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-/// **«Exportar como texto»** el ensayo terminado: pide el desbloqueo de tus notas y después dónde. `false` si
-/// cancelaste el diálogo. Síncrono a propósito, como `exportar_reunion`: esperar al usuario no congela la
-/// ventana. El informe se queda: exportar no es guardar.
+/// **«Exportar como texto»** el ensayo terminado: pide el desbloqueo de tus notas y después dónde. Cancelar
+/// el diálogo no es un fallo, y no devuelve nada (auditoría del S4, B35: el `bool` no lo leía nadie).
+/// Síncrono a propósito, como `exportar_reunion`: esperar al usuario no congela la ventana. El informe se
+/// queda: exportar no es guardar.
 #[tauri::command]
-fn exportar_el_ensayo(app: tauri::AppHandle, idioma: String) -> Result<bool, String> {
+fn exportar_el_ensayo(app: tauri::AppHandle, idioma: String) -> Result<(), String> {
     use tauri_plugin_dialog::DialogExt;
     let (guardado, rotulo) = el_ensayo_terminado(&app)?;
     reunion::desbloquear(&app, desbloqueo::razon_de_los_ensayos(&idioma))?;
-    let sugerido = format!("{}.md", notas::nombre_del_archivo(Some(&rotulo.cliente), &rotulo.empezo));
+    let sugerido = format!("{}.md", ensayos::base(&rotulo.cliente, &rotulo.empezo));
     let Some(destino) = app.dialog().file().set_file_name(&sugerido).blocking_save_file() else {
-        return Ok(false);
+        return Ok(());
     };
     let destino = destino.into_path().map_err(|e| format!("ese destino no es una ruta: {e}"))?;
     ensayos::exportar(&guardado, &destino, &idioma)?;
     println!("[ensayo] exportado a texto, sin cifrado");
-    Ok(true)
+    Ok(())
 }
 
 /// **«Tu progreso con este cliente»**: abre tus ensayos de ese cliente con el desbloqueo de tus notas y
@@ -1465,12 +1560,13 @@ fn progreso_del_ensayo(app: tauri::AppHandle, cliente: String, idioma: String) -
 }
 
 /// «Borrar los ensayos de este cliente»: al momento y sin abrirlos. La tarea de launchd se pone al día.
+/// La cuenta se queda en el log (auditoría del S4, B36: el `usize` no lo leía nadie).
 #[tauri::command]
-fn borrar_los_ensayos(app: tauri::AppHandle, cliente: String) -> Result<usize, String> {
+fn borrar_los_ensayos(app: tauri::AppHandle, cliente: String) -> Result<(), String> {
     let n = reunion::los_ensayos_de(&app).borrar_del_cliente(&cliente).map_err(|e| reunion::sin_ruta(&e))?;
     println!("[ensayo] {n} ensayo(s) borrado(s) a mano");
     reunion::poner_al_dia_el_vencimiento(&app);
-    Ok(n)
+    Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -1662,6 +1758,11 @@ pub fn run() {
                 println!("[escucha] cerrada al salir");
             }
             parar_la_pantalla(mango);
+            // El ensayo también (auditoría del S4, B17): su micrófono se cierra y tus respuestas se pisan
+            // ahora, no cuando muera el proceso.
+            if soltar_el_ensayo(mango) {
+                println!("[ensayo] cortado al salir");
+            }
             registrar_acople(mango, "soltar al salir", &acople::soltar(&huella(mango)));
             // Lo tuyo sin guardar, se guarda: perderlo por salir es peor (ADR 015 §7).
             reunion::al_salir(mango);
@@ -2613,6 +2714,7 @@ fn proveedor_de_ahora(
     s: &LaSintesis,
     conocidos: Vec<String>,
     sobre: String,
+    para: sintesis::api::Para,
 ) -> Option<std::sync::Arc<dyn sintesis::Proveedor>> {
     use sintesis::Proveedor;
     if std::env::var("AG_SINTESIS").as_deref() == Ok("mock") {
@@ -2633,6 +2735,7 @@ fn proveedor_de_ahora(
             conocidos,
             registro: s.registro.clone(),
             sobre,
+            para,
             vigencia: sintesis::api::Vigencia::desde_ahora(&s.epoca),
         }));
     }
@@ -2722,7 +2825,7 @@ fn sintetizar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Aparicion
             .map(|t| t.texto);
         let conocidos = clientes_del_corpus(&mango.state::<ElCorpus>());
         let sobre = respaldo.first().map(|r| r.titular.clone()).unwrap_or_default();
-        let (Some(mut turno), Some(proveedor)) = (turno, proveedor_de_ahora(&s, conocidos, sobre)) else {
+        let (Some(mut turno), Some(proveedor)) = (turno, proveedor_de_ahora(&s, conocidos, sobre, sintesis::api::Para::Sugerencia)) else {
             s.en_marcha.store(false, Ordering::Relaxed);
             return;
         };
@@ -3467,8 +3570,9 @@ fn atender_el_atajo<R: tauri::Runtime>(
         reunion::guardar_la_ultima(app);
     } else if *atajo == el_atajo_de_la_banda() {
         println!("[ventanas] ⌃⌥B");
-        let (mango, borde) = (app.clone(), borde_de(app).otro());
-        std::thread::spawn(move || poner_la_banda(&mango, borde));
+        // «El otro borde» se calcula dentro del turno, no aquí: dos ⌃⌥B seguidos irían al mismo (A3).
+        let mango = app.clone();
+        std::thread::spawn(move || cambiar_de_borde(&mango, ventana::Borde::otro));
     } else if *atajo == el_atajo_de_callar() {
         let estado = app.state::<LaVozQueSale>();
         estado.voz.callar();
@@ -3590,11 +3694,13 @@ fn acoplar_cuando_haya_a_quien<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
         let mut dicho: Option<String> = None;
         for _ in 0..ESPERA {
             std::thread::sleep(LATIDO);
-            // Abajo espera a que haya alguien al frente (el H1); arriba, a que haya una reunión
-            // (sprint 004): con la banda arriba solo se mueve la ventana de la videollamada.
+            // Abajo espera a que haya alguien al frente (el H1). **Arriba, el latido no acopla** (auditoría
+            // del S4, M3): la reunión se acopla al iniciar la sesión, y Zoom o Teams abiertos sin llamada no
+            // se mueven solos al abrir la app. Por eso tampoco hay aquí un bucle que mueva y devuelva una
+            // ventana que pelea su sitio cada 1,5 s (B19).
             let hay_a_quien = match borde_de(&mango) {
                 ventana::Borde::Abajo => acople::hay_alguien_al_frente(),
-                ventana::Borde::Arriba => sesion::ventana_de_la_reunion().is_some(),
+                ventana::Borde::Arriba => false,
             };
             if YA_SE_ACOPLO.load(Ordering::SeqCst) || !acople::hay_permiso() || !hay_a_quien {
                 continue;
@@ -4077,5 +4183,102 @@ mod pruebas_de_la_puerta_local {
             let d = cuerpo.find(despues).unwrap_or_else(|| panic!("empezar ya no llama a {despues}"));
             assert!(cierre < d, "{despues} va antes de cerrar la puerta: el agente alcanzaría la reunión");
         }
+    }
+}
+
+/// **Lo que pagó la auditoría del S4 en este archivo**, vigilado en la fuente: el orden de cada guarda y su
+/// sitio. Las agujas se arman con `concat!` para no contarse a sí mismas. Cada una se vio en rojo quitando la
+/// guarda (bitácora del S4, Fase 2 de la auditoría).
+#[cfg(test)]
+mod pruebas_de_la_auditoria_del_s4 {
+    fn cuerpo_de(firma: &str) -> &'static str {
+        let fuente = include_str!("lib.rs");
+        let desde = fuente.find(firma).unwrap_or_else(|| panic!("falta {firma}"));
+        let cuerpo = &fuente[desde..];
+        &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")]
+    }
+
+    fn antes(cuerpo: &str, primero: &str, despues: &str) -> bool {
+        match (cuerpo.find(primero), cuerpo.find(despues)) {
+            (Some(a), Some(b)) => a < b,
+            _ => false,
+        }
+    }
+
+    /// **A1**: con una videollamada abierta y altavoces, el ensayo no abre el micrófono. **B27**: su contador
+    /// de red empieza de cero antes de abrirlo.
+    #[test]
+    fn el_ensayo_mira_la_llamada_y_pone_su_contador_a_cero_antes_del_microfono() {
+        let c = cuerpo_de(concat!("\nfn empezar_el_", "ensayo("));
+        let micro = concat!("Oido::", "del_microfono(");
+        assert!(antes(c, concat!("llamada_sin_", "auriculares("), micro), "el micrófono se abre sin mirar si hay una videollamada");
+        assert!(antes(c, concat!("red::", "reiniciar()"), micro), "el ensayo hereda los bytes de la reunión anterior");
+    }
+
+    /// **B53** (segunda pasada de la casilla 4): el costo de «Esta reunión o ensayo» empieza de cero con el
+    /// ensayo, antes de abrir el micrófono, como el de una reunión.
+    #[test]
+    fn el_ensayo_pone_su_costo_a_cero_antes_del_microfono() {
+        let c = cuerpo_de(concat!("\nfn empezar_el_", "ensayo("));
+        assert!(
+            antes(c, concat!("reunion_", "usd.lock()"), concat!("Oido::", "del_microfono(")),
+            "el ensayo suma su costo al de la reunión anterior"
+        );
+    }
+
+    /// **A3**: un cambio de borde a la vez, y «el otro borde» se calcula con el turno tomado. Solo
+    /// `cambiar_de_borde` llama a `poner_la_banda`.
+    #[test]
+    fn el_borde_cambia_con_su_turno() {
+        let c = cuerpo_de(concat!("\nfn cambiar_de_", "borde<"));
+        let turno = concat!("CAMBIO_DE_BORDE.", "lock()");
+        assert!(antes(c, turno, concat!("borde_de(", "app)")), "se lee el borde antes de tomar el turno");
+        assert!(antes(c, turno, concat!("elegir(", "ahora)")), "se elige el borde antes de tomar el turno");
+        let fuente = include_str!("lib.rs");
+        // La definición es `poner_la_banda<R…>(`: la única llamada es la de `cambiar_de_borde`.
+        assert_eq!(fuente.matches(concat!("poner_la_", "banda(")).count(), 1, "alguien pone la banda sin el turno");
+        assert!(c.contains(concat!("poner_la_", "banda(")), "cambiar_de_borde no pone la banda");
+        assert!(!fuente.contains(concat!("borde_de(app).", "otro()")), "⌃⌥B calcula el otro borde fuera del turno");
+        assert!(fuente.contains(concat!("cambiar_de_borde(&mango, ventana::Borde::", "otro)")), "⌃⌥B no cambia de borde con el turno");
+    }
+
+    /// **M3**: arriba solo se acopla con la sesión abierta, y el latido del arranque no acopla arriba.
+    #[test]
+    fn arriba_no_se_acopla_sin_sesion() {
+        let c = cuerpo_de(concat!("\nfn acoplar_", "arriba<"));
+        assert!(antes(c, concat!("c.", "abierta()"), concat!("ventana_de_la_", "reunion(")), "arriba se acopla sin sesión");
+        let latido = cuerpo_de(concat!("\nfn acoplar_cuando_haya_", "a_quien<"));
+        assert!(latido.contains(concat!("ventana::Borde::Arriba => ", "false")), "el latido acopla arriba");
+        assert!(!latido.contains(concat!("ventana_de_la_", "reunion(")), "el latido busca la reunión para acoplarla arriba");
+    }
+
+    /// **M5**: sin banda en pantalla no se toca ninguna ventana.
+    #[test]
+    fn sin_banda_no_se_acopla() {
+        let c = cuerpo_de(concat!("\nfn acoplar_segun_el_", "borde<"));
+        assert!(antes(c, concat!("get_webview_window(ventana::", "BANDA)"), concat!("acople::", "acoplar(")), "se acopla sin mirar si hay banda");
+    }
+
+    /// **B17**: al salir, el ensayo se suelta; **B21**: el fallo del proveedor se dice en el log.
+    #[test]
+    fn al_salir_se_suelta_el_ensayo_y_el_fallo_del_banco_se_dice() {
+        let fuente = include_str!("lib.rs");
+        let desde = fuente.find(concat!("if let tauri::RunEvent::", "Exit = evento")).expect("el cierre de la app");
+        assert!(fuente[desde..desde + 1_500].contains(concat!("soltar_el_", "ensayo(mango)")), "al salir, el micrófono del ensayo sigue abierto");
+        let c = cuerpo_de(concat!("\nfn enriquecer_el_", "ensayo("));
+        assert!(c.contains(concat!("el proveedor ", "falló · {fallo}")), "el fallo del proveedor no se dice en el log");
+    }
+
+    /// **A2**: el ensayo usa tu variante del idioma, no dos cableadas.
+    #[test]
+    fn locale_del_ensayo() {
+        use crate::ensayo::banco::Idioma;
+        let pistas = |consultor: &str, cliente: &str| crate::prefs::IdiomasDePista { consultor: consultor.into(), cliente: cliente.into() };
+        let listos = |v: &[&str]| v.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+        assert_eq!(super::locale_del_ensayo(Idioma::Es, &pistas("es-MX", "es-MX"), &[]), "es-MX");
+        assert_eq!(super::locale_del_ensayo(Idioma::En, &pistas("es-CO", "en-GB"), &[]), "en-GB");
+        assert_eq!(super::locale_del_ensayo(Idioma::En, &pistas("es-CO", "es-CO"), &listos(&["fr-FR", "en-AU"])), "en-AU");
+        assert_eq!(super::locale_del_ensayo(Idioma::En, &pistas("es-CO", "es-CO"), &[]), "en-US");
+        assert_eq!(super::locale_del_ensayo(Idioma::Es, &pistas("en-US", "en-US"), &[]), "es-ES");
     }
 }

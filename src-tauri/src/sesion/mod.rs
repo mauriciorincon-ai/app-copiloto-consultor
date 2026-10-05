@@ -261,10 +261,18 @@ pub fn pid_del_objetivo(apps: &[(i32, String)], bundle: &str) -> Option<i32> {
     apps.iter().find(|(_, b)| b.eq_ignore_ascii_case(bundle)).map(|(pid, _)| *pid)
 }
 
-/// **Cuál de las ventanas de un navegador es la de Meet** (sprint 004): la primera cuyo título lleva sus
-/// señales, por su posición en la lista. Es lo único que el acople arriba recibe de un título: un número.
-pub fn indice_de_meet(titulos: &[(usize, String)]) -> Option<usize> {
-    titulos.iter().find(|(_, t)| es_meet(t)).map(|(i, _)| *i)
+/// **Cuál de las ventanas de un navegador es la de la reunión** (sprint 004): la primera cuyo título lleva
+/// las señales que dio [`objetivo_de`], por su posición en la lista. Es lo único que el acople arriba recibe
+/// de un título: un número. Las señales llegan de la detección y no se repiten aquí (auditoría del S4, B11):
+/// cuando el catálogo crezca con otra reunión de navegador, esto la encuentra sin tocarlo.
+pub fn indice_por_senales(titulos: &[(usize, String)], senales: &[String]) -> Option<usize> {
+    titulos
+        .iter()
+        .find(|(_, t)| {
+            let t = t.to_lowercase();
+            senales.iter().any(|s| t.contains(s.as_str()))
+        })
+        .map(|(i, _)| *i)
 }
 
 /// **La ventana de la reunión, para el acople arriba** (ADR 004, enmienda 1): la de la videollamada que
@@ -279,7 +287,7 @@ pub fn ventana_de_la_reunion() -> Option<crate::acople::Destino> {
     let indice = if senales.is_empty() {
         ax::indice_de_la_principal(pid)?
     } else {
-        indice_de_meet(&ax::titulos_con_indice(pid))?
+        indice_por_senales(&ax::titulos_con_indice(pid), &senales)?
     };
     Some(crate::acople::Destino { pid, app: ax::nombre_de(pid)?, indice })
 }
@@ -305,8 +313,14 @@ mod tests {
             (2, "Meet – abc-defg-hij · Google Meet".to_string()),
             (3, "Otra pestaña de meet.google.com".to_string()),
         ];
-        assert_eq!(indice_de_meet(&titulos), Some(2), "la posición real, no la del título en la lista");
-        assert_eq!(indice_de_meet(&titulos[..1]), None);
+        let senales: Vec<String> = SENALES_MEET.iter().map(|s| s.to_string()).collect();
+        assert_eq!(indice_por_senales(&titulos, &senales), Some(2), "la posición real, no la del título en la lista");
+        assert_eq!(indice_por_senales(&titulos[..1], &senales), None);
+        // Las señales son las que da la detección (auditoría del S4, B11): con las de otra reunión de
+        // navegador de un catálogo de prueba, se encuentra la suya, no la de Meet.
+        let otras = vec!["whereby.com".to_string()];
+        let con_otra = vec![(1, "Meet – abc · Google Meet".to_string()), (4, "Sala de ventas · whereby.com".to_string())];
+        assert_eq!(indice_por_senales(&con_otra, &otras), Some(4));
     }
 
     #[test]

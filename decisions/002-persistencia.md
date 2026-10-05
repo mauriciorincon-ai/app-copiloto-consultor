@@ -233,6 +233,7 @@ vencimientos como tus notas, así que lo vencido se borra aunque no abras la app
 
 **Lo que entra en el inventario del efímero:** `Permitido` suma `ensayos/`. La sesión completa del gate en
 marcha guarda un ensayo, el test lo descifra y busca la canaria del cliente (no puede estar: el ensayo
-no abre la pista del sistema), y un archivo intruso en `ensayos/` lo pone en rojo (fase 4). Las tres
+no abre la pista del sistema, y con una videollamada abierta no empieza por los altavoces —ADR 019, enmienda
+1, auditoría del S4—), y un archivo intruso en `ensayos/` lo pone en rojo (fase 4). Las tres
 preferencias no son nuevas para el inventario: son campos de un archivo que ya estaba.
 

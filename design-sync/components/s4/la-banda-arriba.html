@@ -1,0 +1,736 @@
+<!-- @dsCard group="Componentes · S4" name="La banda arriba, junto a la cámara" -->
+<!doctype html>
+<html lang="es" data-lang="es">
+<head>
+<meta charset="utf-8">
+<title>La banda arriba, junto a la cámara — Angel Ghost</title>
+<style>
+:root {
+  /* ---- Tipografía (D4): nativa de macOS, sin embeber bytes ---- */
+  --font-evidencia: "Charter", "Iowan Old Style", Georgia, serif;     /* lo que dice TU corpus */
+  --font-ui: "Avenir Next", "Helvetica Neue", system-ui, sans-serif;   /* la interfaz */
+  --font-mono: "Menlo", "SF Mono", ui-monospace, monospace;            /* lo medible */
+
+  /* ---- Escala tipográfica ---- */
+  --t-titular: 17px;   /* ficha: titular ≤ 8 palabras */
+  --t-linea: 14px;     /* ficha: una línea */
+  --t-ui: 13px;        /* interfaz general */
+  --t-meta: 12px;      /* estado, fuente, etiquetas */
+  --t-mono: 11.5px;    /* contador, atajos, fuente de ficha */
+  --t-h1: 22px;        /* título de pantalla (ventana principal) */
+  --t-h2: 15px;
+
+  /* ---- Espacio (múltiplos de 4) ---- */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+
+  /* ---- Radios y trazos ---- */
+  --r-chip: 5px; --r-ficha: 8px; --r-panel: 10px; --r-tecla: 4px;
+  --borde: 1px;
+
+  /* ---- Motion (D10): casi ninguno ---- */
+  --dur: 150ms; --ease: cubic-bezier(.2,.6,.2,1);
+
+  /* ---- Tamaños de ventana (D1, D6) ---- */
+  --panel-w: 380px; --panel-h: 220px; --panel-h-transcript: 420px; --panel-h-max: 360px;
+  --principal-w: 960px; --principal-h: 640px;
+  /* La banda ocupa el ancho de la pantalla; solo su ALTO es una medida. Estas tres son la
+     fuente única: las usa el CSS de abajo y las lee la ventana nativa (test en `src-tauri/`). */
+  --banda-h: 88px; --banda-h-ampliada: 200px; --banda-h-voz: 44px;
+}
+:root, .tema.oscuro {
+  color-scheme: dark;
+  --bg: #1a1917;          /* ventana */
+  --surface: #242320;     /* ficha, tarjetas */
+  --surface-2: #2e2d29;   /* chips, teclas, hover */
+  --line: #3b3a35;        /* bordes */
+  --line-2: #4a4841;      /* bordes en foco/hover */
+  --ink: #ece7dc;         /* texto principal — marfil */
+  --ink-2: #b9b3a6;       /* texto secundario (AA sobre bg y surface) */
+  --ink-3: #7c776c;       /* SOLO ORNAMENTO (líneas, separadores). Jamás texto — vetado */
+  --halo: #9ecbff;        /* acento único: foco, fijado, interactivo */
+  --halo-tint: rgba(158,203,255,.14);
+  --ok: #62d3b4;          /* activo / verificado / verde */
+  --ok-tint: rgba(98,211,180,.15);
+  --warn: #f0b64a;        /* atención / sin verificar / aviso */
+  --warn-tint: rgba(240,182,74,.15);
+  --err: #ff8577;         /* error / cortado / revocado */
+  --err-tint: rgba(255,133,119,.15);
+  --mute: #9a958a;        /* inactivo (texto AA sobre bg) */
+  --sombra-panel: 0 10px 30px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.04) inset;
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.25);
+}
+.tema.claro {
+  color-scheme: light;
+  --bg: #f5f2ea;
+  --surface: #fffdf8;
+  --surface-2: #ece8de;
+  --line: #d6d1c4;
+  --line-2: #bdb7a8;
+  --ink: #1f1e1a;
+  --ink-2: #5a5650;
+  --ink-3: #a19b8e;       /* SOLO ORNAMENTO — vetado como texto */
+  --halo: #1d5c9c;
+  --halo-tint: rgba(29,92,156,.12);
+  --ok: #0f6350;
+  --ok-tint: rgba(21,122,98,.13);
+  --warn: #7a4f00;
+  --warn-tint: rgba(198,131,0,.16);
+  --err: #a32a22;
+  --err-tint: rgba(184,50,42,.12);
+  --mute: #6d685f;
+  --sombra-panel: 0 10px 28px rgba(40,30,10,.18), 0 0 0 1px rgba(0,0,0,.04);
+  --sombra-ficha: 0 1px 0 rgba(0,0,0,.05);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { font-family: var(--font-ui); font-size: var(--t-ui); color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+body { margin: 0; line-height: 1.45; }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--halo); outline-offset: 2px; border-radius: var(--r-chip); }
+.mono { font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+[hidden] { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+html[data-lang="es"] [lang="en"] { display: none !important; }
+html[data-lang="en"] [lang="es"] { display: none !important; }
+.ic { display: inline-block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; }
+.ic.s { width: 13px; height: 13px; vertical-align: -2px; }
+.ic.relleno { fill: currentColor; stroke: none; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+.estado.warn { color: var(--warn); background: var(--warn-tint); border-color: var(--warn); }
+.pendiente .ic { opacity: .75; }
+.franja .ic { margin-top: 1px; }
+.franja.warn { border-color: var(--warn); background: var(--warn-tint); }
+.franja.warn .ic { color: var(--warn); }
+.franja.err .ic { color: var(--err); }
+.franja.ok .ic { color: var(--ok); }
+.franja.mute .ic { color: var(--ink-2); }
+.tecla { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.tecla kbd { font: inherit; padding: 0 5px; border: var(--borde) solid var(--line-2); border-bottom-width: 2px; border-radius: var(--r-tecla); background: var(--surface-2); color: var(--ink); line-height: 16px; }
+.tecla.pendiente { color: var(--mute); }
+.tecla.chica { font-size: 11px; }
+.tecla.fijada { color: var(--ok); }
+.tecla.pendiente kbd { color: var(--mute); border-style: dashed; }
+.barra .pistas .pista.off .ic { opacity: .75; }
+.red { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.red.cero { color: var(--ok); }
+.red.api { color: var(--halo); }
+.barra .red { margin-left: auto; }
+.ficha .fuente .unidad { padding: 0 5px; border-radius: 3px; background: var(--surface-2); color: var(--ink-2); font-family: var(--font-ui); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; line-height: 15px; }
+.vacio .voz { font-family: var(--font-evidencia); font-style: italic; font-size: 15px; line-height: 1.4; color: var(--ink-2); }
+.transcript .cab .tecla { margin-left: auto; }
+.pie .cliente.warn { color: var(--warn); }
+.rail .marca .ic { color: var(--halo); }
+.rail a, .rail .item { display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: var(--r-chip); color: var(--ink-2); text-decoration: none; font-size: var(--t-ui); border-left: 2px solid transparent; }
+.rail a[aria-current="page"], .rail .item.activo { color: var(--ink); background: var(--surface-2); border-left-color: var(--halo); }
+.fila > .ic { flex: 0 0 auto; }
+.campo input.mono { font-family: var(--font-mono); font-size: var(--t-mono); }
+.tabla td.mono, .tabla th.num, .tabla td.num { font-family: var(--font-mono); font-size: var(--t-mono); font-variant-numeric: tabular-nums; }
+.permiso .ic { width: 20px; height: 20px; color: var(--ink-2); }
+.bandera .ic { width: 18px; height: 18px; margin-top: 1px; grid-column: 1; }
+.bandera > :not(.ic) { grid-column: 2; }
+.contador.cero .cifra { color: var(--ok); }
+.buffer .ic { color: var(--ink-2); }
+.pildora .tecla { flex: 0 0 auto; }
+.banda { position: relative; display: flex; flex-direction: column; height: var(--banda-h); background: var(--bg); color: var(--ink); border-top: var(--borde) solid var(--line); box-shadow: 0 -10px 30px rgba(0,0,0,.35); overflow: hidden; }
+.banda.ampliada { height: var(--banda-h-ampliada); }
+.banda.voz { height: var(--banda-h-voz); }
+.banda .asa { position: absolute; top: 0; left: 0; right: 0; height: 5px; display: flex; align-items: center; justify-content: center; cursor: ns-resize; }
+.banda .asa i { display: block; width: 46px; height: 3px; border-radius: 2px; background: var(--line-2); }
+.banda .asa:hover i { background: var(--halo); }
+.banda .cab-b { display: flex; align-items: center; gap: 12px; height: 26px; padding: 5px 14px 0; font-size: var(--t-meta); color: var(--ink-2); flex: 0 0 auto; }
+.banda .cab-b .red { margin-left: auto; }
+.banda .cuerpo-b { flex: 1 1 auto; min-height: 0; display: flex; align-items: flex-start; gap: 16px; padding: 2px 14px 10px; }
+.banda .ficha-b { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.banda .titular-b { font-family: var(--font-evidencia); font-size: 16px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.banda .linea-b { font-family: var(--font-evidencia); font-size: 13.5px; line-height: 1.35; color: var(--ink-2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+.banda .sugerencia-b { display: flex; align-items: baseline; gap: 6px; min-width: 0; margin-top: 3px; padding-left: 7px; border-left: 2px solid var(--halo); font-size: var(--t-ui); line-height: 1.35; color: var(--ink); }
+.banda .sugerencia-b .ic { flex: 0 0 auto; color: var(--halo); align-self: center; }
+.banda .sugerencia-b .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banda .meta-b.sugerida { color: var(--halo); }
+.banda .lado-b .sugerencia { align-self: stretch; }
+.banda .lado-b .sugerencia .texto { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.banda.ampliada .linea-b { -webkit-line-clamp: 2; }
+.banda .lado-b { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; max-width: 34%; }
+.banda .fuente-b { font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.banda .atajos-b { display: inline-flex; gap: 10px; }
+.banda .mas { padding: 0; }
+.banda.voz .cuerpo-b { align-items: center; padding: 0 14px; height: 100%; }
+.banda.voz .linea-b { font-size: 13px; -webkit-line-clamp: 1; white-space: nowrap; }
+.banda.voz .cab-b { display: none; }
+.banda.voz .linea-b { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+.banda.voz .linea-b .ic { flex: 0 0 auto; color: var(--halo); }
+.banda.voz .linea-b.warn { color: var(--warn); }
+.banda.voz .linea-b.warn .ic { color: var(--warn); }
+.banda.voz .linea-b .sep { color: var(--line-2); flex: 0 0 auto; }
+.banda.voz .linea-b .fuente-b { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.banda.voz .lado-b { flex-direction: row; align-items: center; gap: 12px; max-width: none; }
+.banda .marca-min { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-size: var(--t-meta); white-space: nowrap; flex: 0 0 auto; }
+.banda .marca-min.halo { color: var(--halo); }
+.banda .marca-min.warn { color: var(--warn); }
+.banda .cliente-b { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; }
+.banda .cliente-b.warn { color: var(--warn); }
+.banda .propuesta-b { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 60%; margin-left: auto; color: var(--halo); font-size: var(--t-meta); white-space: nowrap; }
+.banda .propuesta-b .que-b { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.banda .propuesta-b .tecla { flex: 0 0 auto; }
+.banda .propuesta-b:not([hidden]) + .red { margin-left: 12px; }
+.banda .voz-b { font-family: var(--font-evidencia); font-style: italic; font-size: 15px; line-height: 1.4; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.banda .meta-b { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.banda .meta-b .conjetura { display: inline-flex; align-items: center; gap: 4px; margin-left: 4px; padding-left: 8px; border-left: var(--borde) solid var(--line-2); }
+.banda .oido { font-size: var(--t-meta); min-width: 0; }
+.banda .oido q { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banda .aviso-b { display: flex; align-items: flex-start; gap: 8px; min-width: 0; font-size: var(--t-meta); line-height: 1.35; color: var(--warn); }
+.banda .aviso-b .ic { flex: 0 0 auto; margin-top: 1px; }
+.banda .aviso-b > span { min-width: 0; }
+.banda .aviso-b strong { display: block; font-size: var(--t-ui); font-weight: 600; color: var(--ink); }
+.banda .aviso-b .salida { display: block; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.banda .aviso-b.err { color: var(--err); }
+.banda.ampliada .lado-b { max-width: 40%; }
+.banda .transcript-b { display: flex; flex-direction: column; gap: 3px; width: 100%; min-width: 0; padding: 6px 8px; border: var(--borde) solid var(--line-2); border-radius: var(--r-ficha); background: var(--surface); }
+.banda .transcript-b .cab { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.banda .transcript-b .cab .tecla { margin-left: auto; }
+.banda .transcript-b .turno { display: flex; gap: 6px; align-items: baseline; min-width: 0; }
+.banda .transcript-b .turno .quien { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 3px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
+.banda .transcript-b .turno .quien .hora { font-variant-numeric: tabular-nums; }
+.banda .transcript-b .turno.tu .quien { color: var(--halo); }
+.banda .transcript-b .turno q { font-family: var(--font-evidencia); font-size: 12.5px; color: var(--ink); quotes: "\00ab" "\00bb"; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banda .maniobra-b { display: flex; align-items: baseline; gap: 7px; min-width: 0; font-family: var(--font-ui); font-size: 13px; line-height: 1.35; color: var(--ink); }
+.banda .maniobra-b .ic { flex: 0 0 auto; align-self: center; color: var(--ink-2); }
+.banda .maniobra-b .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banda .cercano-b { display: inline-flex; align-items: baseline; gap: 9px; min-width: 0; max-width: 100%; font-family: var(--font-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.banda .cercano-b .et { flex: 0 0 auto; font-family: var(--font-ui); font-size: 11px; color: var(--ink-2); }
+.banda .cercano-b .d { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.banda .acciones-b { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.banda .mas-b { display: flex; flex-direction: column; gap: 3px; margin-top: 7px; min-width: 0; }
+.banda .mas-b .item { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.banda .mas-b .item .unidad { flex: 0 0 auto; padding: 0 5px; border-radius: 3px; background: var(--surface-2); color: var(--ink-2); font-family: var(--font-ui); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; line-height: 15px; }
+.banda .mas-b .item .t { font-family: var(--font-evidencia); font-size: 13px; line-height: 1.35; color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banda .mas-b .item .tecla { flex: 0 0 auto; margin-left: auto; }
+.propuesta > .ic { margin-top: 2px; color: var(--halo); }
+.propuesta.aceptada > .ic { color: var(--ok); }
+.idiomas .lg .ic { flex: 0 0 auto; }
+.puerta > .ic { margin-top: 2px; }
+.puerta.si > .ic { color: var(--ok); }
+.puerta.no > .ic { color: var(--err); }
+.cuenta .ic { flex: 0 0 auto; color: var(--halo); }
+.cuenta.vencida .ic, .cuenta.vencida .reloj { color: var(--ink-2); }
+.franja .ventanas .op .ic { color: inherit; }
+.pregunta-nda .ic { color: var(--halo); flex: 0 0 auto; }
+.evidencia-e li .ic { margin-top: 2px; }
+.evidencia-e .usada .ic { color: var(--ok); }
+.evidencia-e .sin-usar .ic { color: var(--halo); }
+.banda[data-borde="arriba"] { border-top: 0; border-bottom: var(--borde) solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+.banda[data-borde="arriba"] .asa { top: auto; bottom: 0; }
+.banda:not([data-borde="arriba"]) .solo-arriba, .banda[data-borde="arriba"] .solo-abajo { display: none; }
+.mq-pos.banda-borde .banda { border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; }
+.mq-pos.banda-borde .banda[data-borde="arriba"] { border-top: 0; border-bottom: var(--borde) solid var(--line); }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
+.mq-relleno figcaption .ic { flex: 0 0 auto; margin-top: 2px; }
+@media (prefers-reduced-motion: reduce) { .mq-card { transition: none; } }
+.mq-pos.banda-arriba .banda { border-radius: 0; border-left: 0; border-right: 0; }
+@media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
+.voz { padding: 14px; border: var(--borde) solid var(--line); border-radius: var(--r-ficha); background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
+.voz .muestra { font-size: 20px; line-height: 1.2; }
+.voz .nombre { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
+.prohibido li .ic { color: var(--err); }
+/* marco de exhibición del bundle */
+  body { margin: 0; padding: var(--s-6); }
+  .ds-cab { width: 100%; max-width: 1180px; margin: 0 auto var(--s-5); }
+  .ds-cab h1 { font-family: var(--font-ui); font-size: var(--t-h1); font-weight: 600; margin: 0 0 var(--s-2); }
+  .ds-cab p { font-family: var(--font-ui); font-size: var(--t-ui); color: var(--ink-2); margin: 0; line-height: 1.5; max-width: 82ch; }
+  .ds-cab p.ds-regla { color: var(--ink); margin-bottom: var(--s-2); }
+  .ds-cab code { font-family: var(--font-mono); font-size: var(--t-mono); }
+  /* 1180 px o lo que haya: la banda ocupa el ancho de la PANTALLA, y en un marco estrecho su
+     ellipsis recorta la fuente y la fecha como si fuera un defecto del componente. */
+  .ds-temas { width: 100%; max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--s-6); }
+  .tema { padding: var(--s-5); border: var(--borde) solid var(--line); border-radius: var(--r-panel); background: var(--bg); color: var(--ink); }
+  .tema > .ds-t { display: block; margin: 0 0 var(--s-4); font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+  .ds-pieza + .ds-pieza { margin-top: var(--s-6); }
+  .ds-pieza > .ds-et { display: block; margin: 0 0 var(--s-2); font-family: var(--font-ui); font-size: var(--t-meta); font-weight: 600; color: var(--ink); }
+  .ds-pieza > .ds-nota { display: block; margin: 0 0 var(--s-3); font-family: var(--font-ui); font-size: var(--t-meta); color: var(--ink-2); line-height: 1.5; max-width: 72ch; }
+  .ds-marco-banda { border: var(--borde) solid var(--line); border-radius: var(--r-ficha); overflow: hidden; }
+  @media (max-width: 720px) { body { padding: var(--s-4); } }
+</style>
+</head>
+<body>
+<svg style="display:none" aria-hidden="true">
+<symbol id="i-check-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor" stroke="none"/><path d="M5 8.2l2 2 4-4.4" stroke="var(--bg)" stroke-width="1.9" fill="none"/></symbol>
+<symbol id="i-alert" viewBox="0 0 16 16"><path d="M8 2.2 14.3 13H1.7z" fill="currentColor" stroke="none"/><path d="M8 6v3.4M8 11.6v.2" stroke="var(--bg)" stroke-width="1.8" fill="none"/></symbol>
+<symbol id="i-subir" viewBox="0 0 16 16"><path d="M8 13.5v-11M3.5 7 8 2.5 12.5 7"/></symbol>
+<symbol id="i-reloj" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5V8l2.5 1.5"/></symbol>
+<symbol id="i-voz" viewBox="0 0 16 16"><path d="M2 7v2M5 4.5v7M8 2.5v11M11 5.5v5M14 7v2"/></symbol>
+</svg>
+  <div class="ds-cab">
+    <h1>La banda arriba, junto a la cámara</h1>
+    <p class="ds-regla"><span lang="es">Bajo la barra de menús, junto a la cámara: la línea, la sombra y el asa miran a la reunión, que está debajo (§9-decies)</span><span lang="en">Under the menu bar, next to the camera: the line, the shadow and the handle face the meeting below (§9-decies)</span></p>
+    <p>Angel Ghost · Componentes · S4 — derivado de <code>docs/diseno</code> y <code>design-system.md</code>. Los dos temas, las dos lenguas (se muestra <code>es</code>).</p>
+  </div>
+  <div class="ds-temas">
+    <section class="tema oscuro">
+      <span class="ds-t">tema oscuro · primario</span>
+      <div class="ds-pieza">
+        <span class="ds-et">88 px · la ficha</span>
+        <div class="ds-marco-banda"><section class="banda" data-captura="" aria-label="Angel Ghost" data-borde="arriba">
+
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i><span class="sr"><span lang="es">arrastra para ajustar las dos a la vez</span><span lang="en">drag to resize both at once</span></span></span>
+
+      <div class="cab-b">
+        <span class="marca-min" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
+          <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
+          <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        
+        
+
+        <!-- Con la banda arriba la protección está SIN VERIFICAR, también en Meet (decisión M20 del usuario;
+             auditoría del S4, A5): el chip verde solo sale abajo, y arriba sale el ámbar. -->
+        <span class="cliente-b solo-abajo" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+          <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        <span class="cliente-b warn solo-arriba" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+          <svg class="ic s relleno"><use href="#i-alert"></use></svg>
+          <span lang="es">Meet · sin verificar</span><span lang="en">Meet · not verified</span>
+        </span>
+        
+
+        <!-- Mirada 20 (sprint 3, fase 2): la propuesta de nota, pasiva, en la línea de estado. No toca
+             la ficha: ni la tapa ni la mueve. -->
+        
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada s3-solo-notas" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
+             en rojo: fue su decisión (panel, mirada 1). -->
+        
+      </div>
+
+      <div class="cuerpo-b">
+
+        <!-- ------------------------------ esperando ------------------------------ -->
+        
+        
+
+        <!-- ---------------------- solo notas, en reposo (sprint 3) ---------------------- -->
+        
+        
+
+        <!-- ------------------------------ buscando ------------------------------- -->
+        
+        
+
+        <!-- --------------------------- ficha · flotante --------------------------- -->
+        <span class="ficha-b" data-en="ficha flotante s3-propuesta s3-fijada">
+          <span class="titular-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></span>
+          <span class="linea-b"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on.</span></span>
+        </span>
+        <span class="lado-b" data-en="ficha flotante s3-propuesta">
+          <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <!-- Mirada 17-bis: POR QUÉ disparó y CUÁNTO tardó. Los dos se miden desde el sprint 001 y
+               cruzaban la costura sin que nadie los pintara. El reloj, porque el número es tiempo; el
+               motivo va en palabras, las cinco de `Motivo::etiqueta()`. -->
+          <span class="meta-b por-que"><svg class="ic s"><use href="#i-reloj"></use></svg><span lang="es">pregunta · 1,2 s</span><span lang="en">question · 1.2 s</span></span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌃⌥P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla"><kbd>⌃⌥T</kbd> transcript</span>
+            <span class="tecla"><kbd>⌥⎋</kbd></span>
+          </span>
+        </span>
+
+        <!-- Mirada 20: la señal al fijar (decisión del usuario). Donde estaba «⌃⌥P fijar». -->
+        
+
+        <!-- ----------------------- sugerencia · en tu Mac / API ----------------------- -->
+        <!-- Mirada 18 (sprint 002, fase 5; su veredicto viaja al gate del MVP). La FICHA sigue ahí
+             —su titular y su fuente—: la sugerencia va debajo, con el acento halo y el borde
+             izquierdo del panel, y dice dónde se redactó y con qué confianza. -->
+        
+        
+
+        <!-- ----------------------- ficha · la trajo la pantalla ----------------------- -->
+        <!-- Mirada 17-quater. El motivo nuevo, «en pantalla», con su propio símbolo: la pantalla y no
+             el reloj. Es la única ficha que llega sin que nadie diga nada, y eso tiene que verse. -->
+        
+        
+
+        <!-- ---------------------- pantalla · nada que leer ------------------------ -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
+        
+        
+
+        <!-- ---------------------------- sin resultado ---------------------------- -->
+        
+        
+
+        <!-- ------------------------- radar · te graban --------------------------- -->
+        <!-- El copy sale del panel (mirada 1), traído a la anatomía de la banda. `i-rec` es un
+             anillo con un punto dentro y NO lleva `relleno`: rellenarlo se come el anillo. -->
+        
+        
+
+        <!-- ------------------------- radar · te vigilan -------------------------- -->
+        <!-- Coral, y con OTRO símbolo además del color: la equis rellena frente al punto de
+             grabación del ámbar. Regla 8 — el color no puede ser el único portador, y aquí los dos
+             estados son avisos: distinguirlos por «más rojo» no vale. -->
+        
+        
+
+        <!-- ---------------------------- sin verificar ---------------------------- -->
+        
+        
+
+      </div>
+    </section></div>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">200 px · ampliada: el asa, abajo</span>
+        <div class="ds-marco-banda"><section class="banda ampliada" data-captura="" aria-label="Angel Ghost" data-borde="arriba">
+
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i><span class="sr"><span lang="es">arrastra para ajustar las dos a la vez</span><span lang="en">drag to resize both at once</span></span></span>
+
+      <div class="cab-b">
+        <span class="marca-min">
+          <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
+          <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        <span class="cliente-b solo-abajo" data-en="ficha-2 sin-resultado-2 transcript radar-invasivo-2 sugerencia-2">
+          <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        <span class="cliente-b warn solo-arriba" data-en="ficha-2 sin-resultado-2 transcript radar-invasivo-2 sugerencia-2">
+          <svg class="ic s relleno"><use href="#i-alert"></use></svg>
+          <span lang="es">Meet · sin verificar</span><span lang="en">Meet · not verified</span>
+        </span>
+        
+        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+      </div>
+
+      <div class="cuerpo-b">
+
+        <!-- --------------------- ficha ampliada · transcript --------------------- -->
+        <span class="ficha-b" data-en="ficha-2 transcript sugerencia-2">
+          <span class="titular-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></span>
+          <span class="linea-b"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional y se cotiza aparte.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on, priced separately.</span></span>
+          <span class="mas-b">
+            <span class="item">
+              <span class="unidad"><span lang="es">marco</span><span lang="en">framework</span></span>
+              <span class="t"><span lang="es">Etapa 2 Preparación: perfilar antes de modelar</span><span lang="en">Stage 2 Preparation: profile before modelling</span></span>
+            </span>
+            <span class="item">
+              <span class="unidad"><span lang="es">caso</span><span lang="en">case</span></span>
+              <span class="t"><span lang="es">Sur del Valle: cuatro fuentes en 9 semanas</span><span lang="en">Sur del Valle: four sources in 9 weeks</span></span>
+            </span>
+          </span>
+        </span>
+
+        <span class="lado-b" data-en="ficha-2">
+          <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <span class="meta-b por-que"><svg class="ic s"><use href="#i-reloj"></use></svg><span lang="es">pregunta · 1,2 s</span><span lang="en">question · 1.2 s</span></span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌃⌥P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla"><kbd>⌃⌥T</kbd> transcript</span>
+            <span class="tecla"><kbd>⌥⎋</kbd></span>
+          </span>
+        </span>
+
+        <!-- La sugerencia ocupa el hueco de la derecha que el sprint 1 dejó reservado para ella. -->
+        
+
+        
+
+        <!-- ----------------------- sin resultado · ampliada ----------------------- -->
+        
+        
+
+        <!-- ----------------------- sin verificar · ampliada ----------------------- -->
+        <!-- ------------------- radar · te vigilan · ampliada -------------------- -->
+        
+        
+
+        
+        
+
+      </div>
+    </section></div>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">44 px · solo audio</span>
+        <div class="ds-marco-banda"><section class="banda voz" data-captura="" aria-label="Angel Ghost · modo solo audio" data-borde="arriba">
+
+      <span class="asa" title="arrastra para volver a la banda de 88 px"><i></i><span class="sr"><span lang="es">arrastra para volver a la banda de 88 px</span><span lang="en">drag to go back to the 88 px band</span></span></span>
+
+      <div class="cuerpo-b">
+
+        <!-- ------------------------------- voz ---------------------------------- -->
+        <span class="ficha-b" data-en="voz">
+          <span class="linea-b">
+            <svg class="ic s"><use href="#i-voz"></use></svg>
+            <span lang="es">Diciéndote la ficha…</span><span lang="en">Reading you the card…</span>
+            <span class="sep">·</span>
+            <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          </span>
+        </span>
+        <span class="lado-b" data-en="voz">
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⎋</kbd> <span lang="es">callar</span><span lang="en">stop</span></span>
+            <span class="tecla"><kbd>⌃⌥V</kbd> <span lang="es">volver</span><span lang="en">back</span></span>
+          </span>
+          <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        </span>
+
+        <!-- ---------------------------- voz-espera ------------------------------ -->
+        <!-- La misma `linea-b` del estado «voz» con OTRO verbo. El estado se dice: «Callado ·
+             esperando el siguiente turno» — el mismo patrón «estado · por qué» que el usuario ya
+             aprobó en «Conecta auriculares · el cliente te oiría». Detrás, la fuente de lo último
+             que se leyó, que es lo que dice QUÉ oíste hace un momento. -->
+        
+        
+
+        <!-- ----------------------------- voz-sin -------------------------------- -->
+        
+        
+
+      </div>
+    </section></div>
+      </div>
+    </section>
+    <section class="tema claro">
+      <span class="ds-t">tema claro · papel</span>
+      <div class="ds-pieza">
+        <span class="ds-et">88 px · la ficha</span>
+        <div class="ds-marco-banda"><section class="banda" data-captura="" aria-label="Angel Ghost" data-borde="arriba">
+
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i><span class="sr"><span lang="es">arrastra para ajustar las dos a la vez</span><span lang="en">drag to resize both at once</span></span></span>
+
+      <div class="cab-b">
+        <span class="marca-min" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada">
+          <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
+          <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        
+        
+
+        <!-- Con la banda arriba la protección está SIN VERIFICAR, también en Meet (decisión M20 del usuario;
+             auditoría del S4, A5): el chip verde solo sale abajo, y arriba sale el ámbar. -->
+        <span class="cliente-b solo-abajo" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+          <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        <span class="cliente-b warn solo-arriba" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+          <svg class="ic s relleno"><use href="#i-alert"></use></svg>
+          <span lang="es">Meet · sin verificar</span><span lang="en">Meet · not verified</span>
+        </span>
+        
+
+        <!-- Mirada 20 (sprint 3, fase 2): la propuesta de nota, pasiva, en la línea de estado. No toca
+             la ficha: ni la tapa ni la mueve. -->
+        
+        <span class="red cero mono" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado sin-verificar flotante radar radar-invasivo sugerencia-local s3-propuesta s3-fijada s3-solo-notas" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        <!-- Con el API encendido por el usuario el contador deja de ser cero, y va en el acento, no
+             en rojo: fue su decisión (panel, mirada 1). -->
+        
+      </div>
+
+      <div class="cuerpo-b">
+
+        <!-- ------------------------------ esperando ------------------------------ -->
+        
+        
+
+        <!-- ---------------------- solo notas, en reposo (sprint 3) ---------------------- -->
+        
+        
+
+        <!-- ------------------------------ buscando ------------------------------- -->
+        
+        
+
+        <!-- --------------------------- ficha · flotante --------------------------- -->
+        <span class="ficha-b" data-en="ficha flotante s3-propuesta s3-fijada">
+          <span class="titular-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></span>
+          <span class="linea-b"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on.</span></span>
+        </span>
+        <span class="lado-b" data-en="ficha flotante s3-propuesta">
+          <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <!-- Mirada 17-bis: POR QUÉ disparó y CUÁNTO tardó. Los dos se miden desde el sprint 001 y
+               cruzaban la costura sin que nadie los pintara. El reloj, porque el número es tiempo; el
+               motivo va en palabras, las cinco de `Motivo::etiqueta()`. -->
+          <span class="meta-b por-que"><svg class="ic s"><use href="#i-reloj"></use></svg><span lang="es">pregunta · 1,2 s</span><span lang="en">question · 1.2 s</span></span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌃⌥P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla"><kbd>⌃⌥T</kbd> transcript</span>
+            <span class="tecla"><kbd>⌥⎋</kbd></span>
+          </span>
+        </span>
+
+        <!-- Mirada 20: la señal al fijar (decisión del usuario). Donde estaba «⌃⌥P fijar». -->
+        
+
+        <!-- ----------------------- sugerencia · en tu Mac / API ----------------------- -->
+        <!-- Mirada 18 (sprint 002, fase 5; su veredicto viaja al gate del MVP). La FICHA sigue ahí
+             —su titular y su fuente—: la sugerencia va debajo, con el acento halo y el borde
+             izquierdo del panel, y dice dónde se redactó y con qué confianza. -->
+        
+        
+
+        <!-- ----------------------- ficha · la trajo la pantalla ----------------------- -->
+        <!-- Mirada 17-quater. El motivo nuevo, «en pantalla», con su propio símbolo: la pantalla y no
+             el reloj. Es la única ficha que llega sin que nadie diga nada, y eso tiene que verse. -->
+        
+        
+
+        <!-- ---------------------- pantalla · nada que leer ------------------------ -->
+        
+        
+
+        <!-- --------------------- ficha · sección conjeturada ---------------------- -->
+        <!-- Una ficha que sale de un PDF. Un PDF no trae títulos, trae líneas: el lector CONJETURA
+             dónde empieza cada sección por la forma del texto. Corpus lo cuenta en bloque desde el
+             sprint 001; la ficha no lo decía del SUYO. La marca va en la línea de «por qué», no en
+             la fuente: la fuente se corta con puntos suspensivos cuando es larga, y un aviso de
+             confianza no puede ser lo primero que se corta. -->
+        
+        
+
+        <!-- ---------------------------- sin resultado ---------------------------- -->
+        
+        
+
+        <!-- ------------------------- radar · te graban --------------------------- -->
+        <!-- El copy sale del panel (mirada 1), traído a la anatomía de la banda. `i-rec` es un
+             anillo con un punto dentro y NO lleva `relleno`: rellenarlo se come el anillo. -->
+        
+        
+
+        <!-- ------------------------- radar · te vigilan -------------------------- -->
+        <!-- Coral, y con OTRO símbolo además del color: la equis rellena frente al punto de
+             grabación del ámbar. Regla 8 — el color no puede ser el único portador, y aquí los dos
+             estados son avisos: distinguirlos por «más rojo» no vale. -->
+        
+        
+
+        <!-- ---------------------------- sin verificar ---------------------------- -->
+        
+        
+
+      </div>
+    </section></div>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">200 px · ampliada: el asa, abajo</span>
+        <div class="ds-marco-banda"><section class="banda ampliada" data-captura="" aria-label="Angel Ghost" data-borde="arriba">
+
+      <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i><span class="sr"><span lang="es">arrastra para ajustar las dos a la vez</span><span lang="en">drag to resize both at once</span></span></span>
+
+      <div class="cab-b">
+        <span class="marca-min">
+          <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
+          <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
+        </span>
+        <span class="cliente-b solo-abajo" data-en="ficha-2 sin-resultado-2 transcript radar-invasivo-2 sugerencia-2">
+          <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        <span class="cliente-b warn solo-arriba" data-en="ficha-2 sin-resultado-2 transcript radar-invasivo-2 sugerencia-2">
+          <svg class="ic s relleno"><use href="#i-alert"></use></svg>
+          <span lang="es">Meet · sin verificar</span><span lang="en">Meet · not verified</span>
+        </span>
+        
+        <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+      </div>
+
+      <div class="cuerpo-b">
+
+        <!-- --------------------- ficha ampliada · transcript --------------------- -->
+        <span class="ficha-b" data-en="ficha-2 transcript sugerencia-2">
+          <span class="titular-b"><span lang="es">Limpieza de datos: incluida, hasta tres fuentes</span><span lang="en">Data cleansing: included, up to three sources</span></span>
+          <span class="linea-b"><span lang="es">Cubre perfilado y limpieza de ERP, POS y Excel de canal; una cuarta fuente es adicional y se cotiza aparte.</span><span lang="en">Covers profiling and cleansing of ERP, POS and channel Excel; a fourth source is an add-on, priced separately.</span></span>
+          <span class="mas-b">
+            <span class="item">
+              <span class="unidad"><span lang="es">marco</span><span lang="en">framework</span></span>
+              <span class="t"><span lang="es">Etapa 2 Preparación: perfilar antes de modelar</span><span lang="en">Stage 2 Preparation: profile before modelling</span></span>
+            </span>
+            <span class="item">
+              <span class="unidad"><span lang="es">caso</span><span lang="en">case</span></span>
+              <span class="t"><span lang="es">Sur del Valle: cuatro fuentes en 9 semanas</span><span lang="en">Sur del Valle: four sources in 9 weeks</span></span>
+            </span>
+          </span>
+        </span>
+
+        <span class="lado-b" data-en="ficha-2">
+          <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          <span class="meta-b por-que"><svg class="ic s"><use href="#i-reloj"></use></svg><span lang="es">pregunta · 1,2 s</span><span lang="en">question · 1.2 s</span></span>
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⌃⌥P</kbd> <span lang="es">fijar</span><span lang="en">pin</span></span>
+            <span class="tecla"><kbd>⌃⌥T</kbd> transcript</span>
+            <span class="tecla"><kbd>⌥⎋</kbd></span>
+          </span>
+        </span>
+
+        <!-- La sugerencia ocupa el hueco de la derecha que el sprint 1 dejó reservado para ella. -->
+        
+
+        
+
+        <!-- ----------------------- sin resultado · ampliada ----------------------- -->
+        
+        
+
+        <!-- ----------------------- sin verificar · ampliada ----------------------- -->
+        <!-- ------------------- radar · te vigilan · ampliada -------------------- -->
+        
+        
+
+        
+        
+
+      </div>
+    </section></div>
+      </div>
+      <div class="ds-pieza">
+        <span class="ds-et">44 px · solo audio</span>
+        <div class="ds-marco-banda"><section class="banda voz" data-captura="" aria-label="Angel Ghost · modo solo audio" data-borde="arriba">
+
+      <span class="asa" title="arrastra para volver a la banda de 88 px"><i></i><span class="sr"><span lang="es">arrastra para volver a la banda de 88 px</span><span lang="en">drag to go back to the 88 px band</span></span></span>
+
+      <div class="cuerpo-b">
+
+        <!-- ------------------------------- voz ---------------------------------- -->
+        <span class="ficha-b" data-en="voz">
+          <span class="linea-b">
+            <svg class="ic s"><use href="#i-voz"></use></svg>
+            <span lang="es">Diciéndote la ficha…</span><span lang="en">Reading you the card…</span>
+            <span class="sep">·</span>
+            <span class="fuente-b"><span class="unidad"><span lang="es">propuesta</span><span lang="en">proposal</span></span> <span lang="es">Páramo Azul · §3.2 Alcance</span><span lang="en">Páramo Azul · §3.2 Scope</span></span>
+          </span>
+        </span>
+        <span class="lado-b" data-en="voz">
+          <span class="atajos-b">
+            <span class="tecla"><kbd>⎋</kbd> <span lang="es">callar</span><span lang="en">stop</span></span>
+            <span class="tecla"><kbd>⌃⌥V</kbd> <span lang="es">volver</span><span lang="en">back</span></span>
+          </span>
+          <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
+        </span>
+
+        <!-- ---------------------------- voz-espera ------------------------------ -->
+        <!-- La misma `linea-b` del estado «voz» con OTRO verbo. El estado se dice: «Callado ·
+             esperando el siguiente turno» — el mismo patrón «estado · por qué» que el usuario ya
+             aprobó en «Conecta auriculares · el cliente te oiría». Detrás, la fuente de lo último
+             que se leyó, que es lo que dice QUÉ oíste hace un momento. -->
+        
+        
+
+        <!-- ----------------------------- voz-sin -------------------------------- -->
+        
+        
+
+      </div>
+    </section></div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

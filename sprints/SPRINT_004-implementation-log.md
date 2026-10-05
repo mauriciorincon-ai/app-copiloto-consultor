@@ -269,8 +269,14 @@ pasar, con tres causas, las tres arregladas sin subir el umbral:
 Antes de pedir el «sí» se miró, sin ningún permiso, qué tocaría el arranque de la app en este Mac:
 `ls ~/Library/LaunchAgents` y `launchctl list` sin nada de la app, y en su carpeta solo `diccionario.yaml`
 (sin preferencias, notas, bandeja ni huella). Así que el arranque no re-registra launchd, no lee el Llavero
-(el API está apagado) y no reindexa ningún corpus. **Matriz de una fila enseñada; el «sí» del usuario:** «Sí,
-haz la corrida en vivo de la banda arriba. Abierto en Google Chrome». Dos corridas con `pnpm tauri dev` y
+(el API está apagado) y no reindexa ningún corpus. **Matriz de una fila enseñada** (la fila 1 del plan, copiada
+aquí por la auditoría del S4, B4):
+
+| Qué | Para qué | Qué aviso vas a ver | Cómo se deshace |
+|---|---|---|---|
+| La app escribe `AXPosition` (y el alto) en la ventana de la página de prueba de Meet, en Chrome | bajarla y encogerla bajo la banda arriba, y medir cuánto tarda | ninguno nuevo: Accesibilidad ya está concedida | sola, al cerrar: devuelve la posición y el tamaño (devolución doble) |
+
+**El «sí» del usuario:** «Sí, haz la corrida en vivo de la banda arriba. Abierto en Google Chrome». Dos corridas con `pnpm tauri dev` y
 `docs/kit-de-prueba/pantalla/meet-de-prueba.html` en Chrome. **Ningún aviso de macOS** en ninguna:
 Accesibilidad ya estaba concedida, el registro lo dice (`accesibilidad=Concedido`).
 
@@ -671,6 +677,275 @@ El corte se declaró en el mismo acto, con un comentario en el PR #10. El cierre
 Dependabot #11 se mergeó 20 s antes que el #10, así que la mezcla de los dos se prueba por primera vez en la CI de
 `main` (`0009dba`).
 
+## Fase 5 · El cierre: manual, guía v6, kit v3 y `design-sync/` (rama `sprint-004/fase-5`)
+
+Arranca el 2026-10-04 con el «continúa» del usuario, después de que mergeara el #10 (fases 0 a 4) y el #12 (el
+registro del corte). La CI de `main` sobre los dos merges salió con sus tres checks en `success`.
+
+### Lo que se construyó
+
+- **Manual** (`docs/MANUAL-DE-USO.md`):
+  - secciones nuevas: «El ensayo: practica antes de la reunión» y «Arriba o abajo: la banda junto a la cámara»;
+  - frases que la banda arriba dejó falsas: «pegada al borde inferior», el asa «hacia arriba», el acople que
+    «recorta por abajo» y la pregunta frecuente de compartir pantalla;
+  - el corte pasa a 12 piezas; ⌃⌥B y las teclas del ensayo en los atajos;
+  - la pregunta frecuente «¿El ensayo graba mi voz?» y la fila 004 del historial.
+
+  Lo que no se ha probado en vivo se dice así:
+  - el ensayo con una voz de verdad;
+  - la banda arriba al compartir pantalla;
+  - Zoom, Teams, una pantalla externa y la pantalla completa.
+- **Guía v6** (`docs/GUIA-DE-PRUEBA.html`, namespace `ag-s4-`): 117 pruebas.
+  - **16 nuevas** en dos bloques: Q, la banda arriba, y R, el ensayo.
+  - **4 heredadas reescritas** (a1, b1, b5 y l2) tras releer las 101 contra la app de hoy:
+    - la banda nace arriba;
+    - el rail tiene ocho secciones;
+    - la app en inglés incluye Ensayo;
+    - el corte es de 12 piezas.
+  - **Los bloques A a P y el ⭐⭐ del H1 se corren con la banda abajo**, como eran, y la preparación lo dice.
+  - El ⭐⭐ del H1 no se mueve ni se renumera. Su parada 6 dice ahora «12 de 12», en su sitio.
+  - **Gate mínimo ⭐: 94** (S1 33 · S2 28 · S3 23 · **S4 10**).
+  - **Acumulado del H2: 10**, cada una con su candidatura al ⭐⭐ del H2: **5 sí** (q2, q3, r2, r3, r7) y
+    **5 no** (q1, q5, r6, r10, r11).
+  - Filtros nuevos: «⭐ del ciclo H2» y «Formas y textos del H2». La tabla U lleva 13 filas con lo que el S4
+    maquetó y nadie ha visto.
+  - Las cuatro protecciones de la corrida aplazada de la fase 4 (micrófono, Llavero, launchd y Touch ID) van en
+    el bloque R y en la caja de avisos.
+- **Kit v3** (`docs/kit-de-prueba/LEEME.md`): la evaluación de la fase 3, con su fila en la tabla y su sección:
+  15 fichas, precisión 1,000, recall 0,714, 4 ms. Dos respuestas fallan a propósito, y es lo que corrige «Sí lo
+  dije».
+- **`design-system.md` v1.15.0:**
+  - **§9-decies, la banda arriba**: el criterio de la cámara, `.banda[data-borde="arriba"]`, el asa abajo, el
+    relleno, la fila de Sesión y el aviso de la primera vez;
+  - **§9-undecies, el ensayo**: cifras y no notas, `.pregunta-e`, `.reloj-e`, `.respuesta-e`, `.evidencia-e`,
+    `.cifras-e` y el progreso. Las fases 0 a 4 habían escrito el CSS y no la sección.
+- **`design-sync/`:**
+  - el generador acepta un modificador (`atributos`), porque la banda arriba es la misma banda con
+    `data-borde`;
+  - dos tarjetas nuevas: «La banda arriba, junto a la cámara» (88 · 200 · 44) y «El ensayo» (pregunta, evaluada
+    y progreso);
+  - el bundle se regeneró: 21 archivos, v1.15.0. Las dos tarjetas se leyeron como imagen en los dos temas, sin
+    errores de página ni recursos de fuera.
+- **Brochure:** en `main` no hay `docs/BROCHURE.html` ni `docs/brochure-export.json`. Llega por su orden aparte
+  tras el Acto 1 del H1 (regla 13). Queda la nota para el summary: cuando nazca, ya trae el ensayo y la banda
+  arriba.
+
+### Las afirmaciones del manual y lo que las sostiene
+
+| Afirmación | Gate |
+|---|---|
+| arriba, bajo la barra y el notch, nunca con una constante | `geometria::pruebas::arriba_nace_bajo_la_barra_de_menus_y_el_notch_nunca_con_una_constante` |
+| arriba es de fábrica, ⌃⌥B alterna y se recuerda | `geometria::…::el_borde_de_fabrica_es_arriba_y_b_lo_alterna` · `prefs::…::lo_que_se_elige_sobrevive_al_reinicio` · `la-banda-arriba.test.tsx` |
+| el asa se arrastra alejándose del borde | `asa.test.ts` (los dos bordes) |
+| el aviso de la primera vez, hasta «Entendido» | `la-banda-arriba.test.tsx` · fidelidad `sesion-aviso` |
+| baja y encoge; el borde de abajo no se mueve | `acople::…::arriba_la_reunion_baja_hasta_la_banda_y_su_borde_inferior_no_se_mueve` |
+| solo la ventana de la reunión | `acople::…::arriba_de_una_lista_de_ventanas_sale_una_sola_decision` |
+| por debajo de 240 px o en otra pantalla, no se toca | `acople::…::arriba_lo_que_ya_empieza_bajo_la_banda_o_esta_en_otro_monitor_no_se_toca` (y `QuedariaInservible`) |
+| si la mueves tú, no se devuelve | `acople::…::arriba_no_se_devuelve_una_ventana_que_el_usuario_movio` |
+| si macOS no la deja, se deshace y flota | **sin test unitario**: es nativo (`acoplar_arriba` relee con `quedo_bajo_la_franja`); en vivo solo se vio el camino feliz → ⭐ q5 |
+| 230 ms y 120 ms en Meet | la corrida en vivo de la fase 1 (228 y 123 ms) |
+| el ensayo solo abre el micrófono | `ensayo::oido::…::el_oido_solo_abre_el_microfono` |
+| sordo mientras la voz lee | `ensayo::sesion::…::el_microfono_esta_sordo_mientras_la_voz_lee_y_su_cola` |
+| se cierra con 2,5 s o con Enter | `…::la_respuesta_se_cierra_con_dos_segundos_y_medio_de_silencio_tras_tu_voz` · `…::enter_cierra_y_espera_a_lo_que_falta_por_transcribir` |
+| R, S y Esc | `…::repetir_descarta_y_lo_que_llega_tarde_de_otra_ronda_se_tira` · `…::saltar_y_terminar_cuentan_lo_que_toca` |
+| «usaste» por dos términos que no estaban en la pregunta | `ensayo::evaluacion::…::repetir_la_pregunta_no_cuenta_como_citar` · kit de la evaluación |
+| «eh» y «um» no se cuentan | `…::las_muletillas_se_cuentan_por_frases_enteras_y_sin_las_que_no_lo_son` |
+| sin cifra, «—» | `…::el_informe_suma_y_promedia_sin_inventar` |
+| guardado con la llave y la retención de tus notas; el nombre dice el cliente | `ensayos::…::un_ensayo_nace_cifrado_cerrado_y_con_su_vencimiento` · `…::el_nombre_dice_el_cliente_y_nada_mas` · la sesión efímera en marcha (CI) |
+| vence aunque no abras la app; «siempre» no vence | `ensayos::…::lo_vencido_se_barre_justo_al_vencer_y_siempre_no_vence` · `reunion::…::launchd_se_lleva_tus_notas_la_bandeja_y_tus_ensayos` |
+| el progreso: solo cifras, los seis últimos y los anteriores contados | `guardado::…::el_progreso_va_del_primero_al_ultimo_y_cuenta_los_que_no_caben` · `el-ensayo.test.tsx` |
+| borrar no abre ni desbloquea | `ensayos::…::se_cuentan_y_se_borran_por_cliente_sin_abrirlos` |
+| enriquecer: hasta 5, fundadas, al final | `enriquecer::…::mas_de_cinco_se_cuentan_como_descartadas…` · `…::solo_se_funda_lo_que_nombra_una_seccion_dada…` · `banco::…::las_del_modelo_van_detras_y_sin_repetir` |
+| el corte, 12 de 12 | `corte::…::en_este_sprint_se_cortan_las_doce` |
+| no se ensaya con una sesión abierta; la puerta se cierra | las pruebas de la fase 3 (`NoEmpezo::EnReunion`, `en_reunion` cuenta el ensayo) |
+
+### Pruebas
+
+- `guia-cuadra` (11 pruebas) · `design-sync-espejo` (57) · vocabulario vetado, Llavero sin promesas y «abrir no
+  existe» (7): en verde.
+- La guía, abierta en un navegador sin cabeza a 1280 y a 375 px:
+  - los siete filtros cuentan bien: Todo 150 · cambió en S4 20 · ⭐ 94 · H2 10 · ⭐⭐ H1 9 · textos H1 20 ·
+    H2 13;
+  - cero desborde, cero errores.
+- Los bloques Q, R y U se leyeron como imagen.
+
+### Los rojos (con `scripts/demo-rojo.sh`)
+
+| Gate | Mutación | Quién lo nombró |
+|---|---|---|
+| candidatura del H2 (nuevo) | `q1` con `data-candidata="si"` y su línea en «no» | `guia-cuadra` · «expected [ 'q1' ]» |
+| candidatura del H2 | `r7` sin `data-candidata` | «expected [ 'r7' ]» |
+| la cabecera cuenta las candidatas | «6 sí · 4 no» | «[ 10, 10, 6, 4 ] … [ 10, 10, 5, 5 ]» |
+| las filas del H2 | `u13` con el id de `u12` | «expected [ 'u12' ]» |
+| el desglose con el S4 | «S4 9» | «[ 33, 28, 23, 10 ] … [ 33, 28, 23, 9 ]» |
+
+Las cinco volvieron a verde tras restaurar, y `.demo-rojo/` no quedó.
+
+### Encontrado al escribir la guía (para la auditoría; se pagan con ella)
+
+1. **IA dice «Se cerró sola: hay una reunión» cuando la cierra un ensayo**, y no hay reunión
+   (`src/pantallas/Ia.tsx:567`, `src/i18n/es.ts:864` y su par en inglés). Es una frase que el S4 dejó falsa.
+2. **`sesion.funcionaBanda` («La banda, abajo, protegida de la captura») es una clave sin lector** que dice lo
+   contrario de lo de hoy (`src/i18n/es.ts:331` y `en.ts`); solo la pintan los estados de historia s1/s2 de
+   `sesion.html`.
+3. **`Ensayo.tsx` lleva once `fontSize: 11.5` en línea**, copiados del `style` de `ensayo.html`. Son el valor
+   mágico que el design system prohíbe en componentes (§3), y en ninguna otra pantalla aparecen.
+
+## Auditoría · Fase 2: los 82 hallazgos, pagados (2026-10-04)
+
+**Lo que dijo el usuario.** «apribada Fase 1, ahora las decisiones son pruebas pues claro que hay que hacerlas
+pero claramente te dije si eran urgente sy me dijiste que podiamos seguir construyendo pues construyamos, si
+publica en Github (No se publica ningun dato personal)». Se tomó como: Fase 1 aprobada; las seis decisiones,
+con la opción recomendada (la A en todas), dicho en el mensaje y corregible; y el «sí» para publicar en GitHub
+(B3). Las pruebas de la guía siguen aplazadas, como se acordó.
+
+**Las seis decisiones, aplicadas:**
+
+| Decisión | Lo que hace la app ahora |
+|---|---|
+| A1 · ensayar con una videollamada abierta | con altavoces no empieza y dice por qué; con auriculares —de cable, Bluetooth o USB— sí (desviación 27) |
+| A4 · la guía y el acople abajo | la guía pide ⌃⌥B dos veces con Chrome delante (a2, a5, l5); la app, como en el H1 |
+| M3 · arriba, Zoom o Teams sin llamada | arriba solo se acopla con la sesión iniciada; el latido no acopla arriba |
+| M10 · un ensayo sin guardar al iniciar la sesión | Sesión lo dice encima de «Iniciar sesión» |
+| M20 · la protección con la banda arriba | la app dice «verificado… con la banda abajo; con la banda arriba, y en Zoom y Teams, está sin verificar» |
+| B46 · «Lo que llega en el H2» | «Lo que no hace hoy», sin chip (desviación 30) |
+
+**Cómo se pagó.** En el orden de la Fase 1: primero lo que crea o amplía gates, después el resto, y al final
+todos los gates sobre el árbol entero. Los documentos (manual, guía, README, BLUEPRINT, `design-system.md`,
+`CLAUDE.md`, el LEEME del audio) los escribió un subagente en paralelo con la lista de la auditoría; el
+constructor revisó lo que depende del código y corrigió la regla de los auriculares (desviación 27), que el
+subagente había escrito con el ajuste literal.
+
+**Los rojos de la Fase 2** (todos con `scripts/demo-rojo.sh`, cada uno restaurado y verificado con `grep` y
+`cmp`; la carpeta `.demo-rojo/` no quedó):
+
+| Hallazgo | Mutación | Quién cayó |
+|---|---|---|
+| M17 | `.progreso { opacity: 0 }` bajo reduced-motion | **primero pasó en verde**: `seVe` miraba la opacidad del elemento y no la de su caja. Se arregló el gate (multiplica la opacidad de la cadena); después, 2 rojos (reduce, banda y ventana principal) y 62 verdes |
+| B5 | un test sin marca que llama a `sesion::ventana_de_la_reunion()` | `cargo-test-sin-hardware`: «demo_b5_lee_la_reunion (línea 1832) llega a ventana_de_la_reunion(» |
+| B20 | `ruta_de` sin `nombre_valido` | **primero pasó en verde**: sin la carpeta `ensayos/`, la ruta `ensayos/../notas/…` no se resolvía. El test crea la carpeta; después, «se abrió un archivo de fuera de la carpeta» |
+| M1 · B18 · M4 · M2 · A3 | quitar la comprobación de identidad · conformarse con 2 lecturas · sin la condición del fondo · `sin_deshacer` siempre `None` · `acoplar` sin turno | sus cinco tests del acople, por nombre («pub fn acoplar( no espera su turno») |
+| A1 · B27 · A2 · A3 · M3 (×2) · M5 · B17 · B21 | la guarda quitada, en `ensayo/mod.rs` y en `lib.rs` | `con_una_videollamada…` y los seis de `pruebas_de_la_auditoria_del_s4` |
+| M6 · M8 · M9 · M12 · M18 · B12 · B11 · B15 · B16 · B22 · B23 · M7 | la guarda quitada; `"tope_de_fabrica": 7`; un id inventado en `reglas.json`; las señales cableadas; el orden del latido al revés; `reunion` en vez de la huella; «sumó 0»; el `Drop` sin `pisar`; el `if ultima.es` fuera de Swift | su test, por nombre: «se volvió a leer el disco», «cero muletillas en nada se contó como cifra»… |
+| M11 · M16 · M13 · M14 · M15 · B14 · B30 · B39 · B26 · A1 · B24 · B31 · M12 · B33 · B32 | la guarda quitada en `Ensayo.tsx` | `el-ensayo.test.tsx`, los quince |
+| M15 (Notas) · B25 · M10 · M21 · B28 | la guarda quitada | `notas`, `la-banda-arriba` (×2), `lo-que-salio`, `el-ensayo` |
+
+Las salidas enteras están en el scratchpad de la sesión (`demos-*.txt`); aquí, a quién nombró cada fallo.
+
+**Los gates sobre el árbol entero (2026-10-04):** `pnpm typecheck` y `pnpm lint` limpios · Vitest **452** (53
+archivos), con cobertura · `AG_SIN_HARDWARE=1 cargo test`: lib **575** (+2 ignorados), contra el Mac **16** (+14
+marcados; la CI corre 11), `ghost` **5**, puerta **14**, sin un aborto del centinela · `cargo clippy --all-targets -D warnings`
+limpio · `pnpm verify:ephemeral` limpio · e2e **289 de 290** y fidelidad **284 encuadres** sin ninguno sobre el
+umbral, con **un desborde** que cazaron los dos: el aviso nuevo de Sesión (M10), en dos líneas encima de
+«Iniciar sesión», sacaba la pantalla 37 px (es) y 20 px (en) de su ventana. Pasó a una línea, en el sitio de
+la promesa «⌥⎋ corta todo…», que vuelve al guardar o cerrar el ensayo; `maqueta-cabe` en verde después. La fidelidad, repetida tras el arreglo: 284 encuadres, ninguno sobre el umbral, ningún desborde.
+
+**Pendiente del cierre:** el rojo de B9 en la CI (desviación 31) · B3 (publicar en GitHub, con el «sí») · B6,
+B7 y B10 con el `/release-check` y el summary · la segunda casilla 4, con **otro** auditor, sobre el diff entero
+y el summary.
+
+**Dónde quedó (para retomar):** hechos el commit de la Fase 2 con su CI, B9 en la CI, B3, el `/release-check`
+(con el arreglo de Tauri) y la segunda casilla 4 con sus 28 pagos (secciones siguientes). Lo que falta: los gates
+otra vez sobre el árbol entero, commit, push y `gh pr checks`, el PR listo y «Sprint 004 de Angel Ghost listo para
+mergear».
+
+## El cierre: B9 en la CI, B3 en GitHub y el `/release-check` (2026-10-04)
+
+**La CI de la Fase 2 (`f3dd820`):** `quality`, `e2e` y `build-escritorio` en `success`, cada uno con su conclusión
+propia. `build-escritorio` (13 min 48 s) corrió la sesión efímera con el término plantado del ensayo y sus dos
+comprobaciones nuevas: el término está en las secciones y el hijo llegó a «ensayo guardado».
+
+**B9, su rojo en la CI** (desviación 31). Rama desechable desde `f3dd820` con un `println!` del texto de cada
+sección de la propuesta al principio de `ensayo::banco::armar`, en el PR en borrador #14. En `build-escritorio`
+cayó **solo** `la_canaria_del_cliente_no_aparece_en_el_log` (26 pasaron, 1 falló), y nombró la línea:
+«lo del ensayo —la propuesta, la pregunta o la evidencia— salió por el log, en 1 línea(s): [demo-rojo] El hito
+pterodaustro-de-escritorio-4419 abre el plazo…». `quality` pasó con el `println!` puesto: el lint estático no mira
+el log, y por eso existe la canaria en marcha. El #14 se cerró sin mergear y su rama se borró.
+
+**B3, publicado con el «sí» del usuario.** El cuerpo del #10 dice que se mergeó el 2026-10-04 (`0009dba`) con las
+fases 0 a 4, con las casillas 1 a 4 marcadas y la 5 «fuera de este PR, va en el #13». El #12 tiene un comentario:
+trajo solo el registro del corte (`2f48a58`), y la fase 5, la auditoría, el `/release-check` y el summary van en el
+#13. Ningún dato personal.
+
+**B10, los encuadres leídos como imagen.** Doce más, uno por bloque, de `docs/fidelidad/s4-cuaderno` y
+`s4-banda-arriba`: preparar (oscuro, es), preguntando (claro, en), respondiendo (oscuro, en), evaluada (claro,
+es), progreso (oscuro, es), borrar (claro, en), sin corpus (oscuro, en), no empezó (claro, es), el aviso de Sesión
+de un ensayo sin guardar (oscuro, es), «lo que salió» en IA con la fila «para el banco» (claro, en), y la banda
+arriba a 88 (oscuro, es) y a 200 (claro, en). Nada roto: el asa va abajo, la marca «sección conjeturada» se lee, y
+el aviso de Sesión cabe en su línea. Con los seis de las fases 3 y 4, **18 encuadres de producto del S4**.
+
+**El hallazgo del `/release-check`: el binario no se podía construir.** `pnpm tauri build --bundles app --no-sign`
+se negó: «Found version mismatched Tauri packages… tauri (v2.11.6) : @tauri-apps/api (v2.12.1) ·
+tauri-plugin-opener (v2.5.5) : @tauri-apps/plugin-opener (v2.7.0)».
+- **De dónde viene.** Dependabot #11 (el lote de npm, mergeado 20 s antes que el #10) subió los paquetes npm de
+  Tauri. Los crates de Rust no se movieron: dependabot solo vigila npm y GitHub Actions, por el techo de dos PR de
+  la regla 18. La CI hace `cargo check` y `cargo test`, que no comparan nada con npm, así que todo salió verde.
+- **El gate nuevo, `tests/unit/tauri-a-la-par.test.ts`:** lee `pnpm-lock.yaml` y `src-tauri/Cargo.lock` y exige la
+  misma versión menor en cada pareja (`@tauri-apps/api` ↔ `tauri`, `@tauri-apps/plugin-*` ↔ `tauri-plugin-*`). Corre
+  en `quality`, con `pnpm test`.
+  - **Rojo 1, el estado real**, antes de arreglar nada: «@tauri-apps/api está en 2.12.1 y tauri en 2.11.6…» y
+    «@tauri-apps/plugin-opener está en 2.7.0 y tauri-plugin-opener en 2.5.5…» (2 de 3 fallan).
+  - **Un intento de demo que no valía:** mutar `pnpm-lock.yaml` dejó el lockfile roto, y `pnpm exec` lo reparó solo
+    antes de correr el test, que pasó. `demo-rojo.sh` lo dijo («el gate pasó con la mutación») y restauró el archivo.
+  - **Rojo 2, con `demo-rojo.sh` sobre `Cargo.lock`** (`tauri` 2.12.1 → 2.11.6), que es como pasó de verdad:
+    «@tauri-apps/api está en 2.12.1 y tauri en 2.11.6: «pnpm tauri build» no construye así. Sube el crate con
+    «cargo update -p tauri».» (1 de 3 falla). Restaurado con `grep` y `cmp`, y 3 de 3 en verde.
+- **El arreglo:** `cargo update -p tauri --precise 2.12.1` y `-p tauri-plugin-opener --precise 2.7.0`. Arrastra a
+  `tauri-build` 2.7.1, `tauri-runtime` 2.12.1, `tauri-utils` 2.10.1, `wry` 0.57.0, `tray-icon` 0.25.1 y otras
+  transitivas. `cargo update -p` a secas no los movía: la subida pide dependencias nuevas.
+- **Lo que se corrió con los crates nuevos:** `AG_SIN_HARDWARE=1 cargo test --locked`: lib 575 (+2 ignorados) ·
+  contra el Mac 16 (+14 marcados) · ghost 5 · puerta 14, igual que antes. `cargo clippy --locked --all-targets -- -D
+  warnings` limpio. `cargo test --release --locked --lib --test puerta --test ghost` (con `AG_SIN_HARDWARE=1`): 575 ·
+  14 · 5, en verde. Vitest 455 (54 archivos), 92,6 % de sentencias y 81,4 % de ramas.
+- **El peso (B7).** `pnpm tauri build --bundles app --no-sign`, ya con Tauri 2.12: ejecutable **13,42 MB** (S3: 12,79;
+  **+0,63 MB**, por el ensayo, la banda arriba y Tauri 2.12, sin separar) · `ghost` 0,48 MB, dentro del `.app` · `.app`
+  14,0 MB · imagen comprimida **6,77 MB** (S3: 6,27), medida igual, con `hdiutil create -format UDZO`. Sin `.dmg` de
+  Tauri (AppleScript sobre Finder, regla 22) y sin firma (`--no-sign`: sin Llavero).
+- **El resto de la lista:** `pnpm audit --audit-level high` limpio; `cargo audit`, en la CI sobre el `Cargo.lock`
+  nuevo (`9adc95c`): sin vulnerabilidades, y 5 avisos en vez de 10 (Tauri 2.12 quitó los cinco `unic-*` sin
+  mantenimiento; siguen `lru` y `glib` *unsound*, `proc-macro-error` y `ttf-parser` sin mantenimiento y `yoke-derive`
+  retirado). La CI de `9adc95c`: `quality`, `e2e` y `build-escritorio` en `success`, cada uno con su conclusión
+  propia; `build-escritorio` corrió todo lo de hardware con Tauri 2.12 en el runner de macOS. e2e local: 288 (+2
+  saltadas), cero flaky. `tauri.conf.json` e `Info.plist` sin cambios en el sprint.
+
+## La segunda casilla 4, con otro auditor (2026-10-04)
+
+**Quién y cómo.** Un quinto subagente, que no construyó el sprint ni auditó la Fase 1, en solo lectura y sin
+nada de la regla 22, sobre `git diff adb2493` (el árbol de trabajo, con lo que aún no estaba commiteado) y con
+el summary dentro. Unas 300 coincidencias por promesa aplazada, en es y en, y cada pago de la Fase 2 seguido
+hasta sus frases hermanas. **28 frases falsas hoy: 4 altas · 9 medias · 15 bajas**, registradas como A5–A8,
+M29–M37 y B51–B65 en `sprints/SPRINT_004-auditoria.md`, que cuenta ahora **110: 0 · 8 · 37 · 65**.
+
+**Los rojos (con `scripts/demo-rojo.sh`):**
+
+| Hallazgo | Mutación | Quién lo nombró |
+|---|---|---|
+| A5 · la banda | sin `&& borde === "abajo"` en el `protegido` de `Banda.tsx` | `la-banda-arriba.test.tsx` · «expected 'Google Meet · protegido' to contain 'sin verificar'» |
+| A5 · Sesión | sin `&& !arriba` en `LaReunion` | `la-banda-arriba.test.tsx` · «Sesión con la banda arriba no dice «Protección verificada»» (el chip verde seguía ahí) |
+| B53 | sin la puesta a cero de `reunion_usd` en `empezar_el_ensayo` | `el_ensayo_pone_su_costo_a_cero_antes_del_microfono` · «el ensayo suma su costo al de la reunión anterior» |
+
+Los tres, restaurados con `grep` y `cmp`, en verde.
+
+**A5, más allá del ajuste propuesto.** El auditor pedía cambiar solo la app (la rama de Tauri), para no mover la
+fidelidad. Pero las capturas de la banda arriba y su tarjeta de `design-sync/` se dibujan con los estados de
+`banda.html`, que decían «Meet · protegido», y la maqueta de Sesión enseñaba «Protección verificada» con «La
+banda: arriba» marcada y la frase de M20 debajo. Se cambió todo junto:
+- `banda.html` lleva el chip ámbar «Meet · sin verificar» (`.solo-arriba`), y el verde solo abajo
+  (`.solo-abajo`), dos clases de `ghost.css` que solo existen en la maqueta;
+- `sesion.html`, en sus cuatro estados con la fila «La banda» (sprint 4 y tres del sprint 3), dice «Meet · sin
+  verificar»;
+- `posicion.html`, arriba a 88 y 200, también, y su nota de qué ve el cliente lo explica;
+- fuera de Tauri, la banda y Sesión hacen lo mismo con el borde de muestra, así que la fidelidad compara lo
+  mismo con lo mismo.
+
+Registrado «maquetada, no vista» en `docs/diseno/README.md`, y en las filas U13, U14, U16 y U17 de la guía (sin
+filas nuevas: las cuentas no se mueven). `design-system.md` pasa a **v1.16.1**, y `design-sync/` se regeneró.
+
+**Las de texto:** la regla de los auriculares en la interfaz, el manual, el BLUEPRINT, la guía, los ADR y los
+comentarios; el aviso de Sesión «debajo» de «Iniciar sesión»; ⌃⌥B y el acople arriba «con la sesión iniciada»;
+el idioma que avisa y deja ensayar; «16 + 11» en la CI; la CI sin modelos de voz; «Si lo guardas, queda…»; las
+cabeceras de la puerta; el commit que leyó el BLUEPRINT; y doce frases del propio summary.
+
 ## Desviación del plan
 
 1. Arriba, el acople actúa sobre la ventana de la reunión detectada, no sobre la de delante (ADR 004, enmienda 1).
@@ -690,7 +965,8 @@ Dependabot #11 se mergeó 20 s antes que el #10, así que la mezcla de los dos s
 12. La llamada al modelo desde la app se cablea en la fase 3, con la pantalla (fase 2). Hecho en la fase 3.
 13. «Citada» exige términos que no estaban ya en la pregunta (fase 3; ADR 019 §6.6 actualizado).
 14. El informe se pinta en la fase 3 sin «Guardar» ni «Exportar», que llegan con la fase 4.
-15. Una videollamada abierta sin sesión no impide ensayar; una sesión abierta, sí (fase 3).
+15. Una videollamada abierta sin sesión no impide ensayar; una sesión abierta, sí (fase 3). *La auditoría lo
+    cambió (A1, desviación 27): con una videollamada abierta y el sonido por altavoces, el ensayo no empieza.*
 16. Un informe sin guardar no se guarda solo al salir de la app (fase 4; ADR 015, enmienda 4).
 17. El camino a tu progreso aparece con un ensayo guardado, no con dos; «desde el primero» sí pide dos (fase 4).
 18. «Borrar los ensayos de este cliente» vive en tu progreso, no en Honestidad (fase 4).
@@ -699,3 +975,33 @@ Dependabot #11 se mergeó 20 s antes que el #10, así que la mezcla de los dos s
 21. La corrida en vivo de la fase 4 (filas 2 a 5) se aplazó: corte declarado, viaja al ⭐ del MVP.
 22. El PR #10 se mergeó sin la fase 5, la auditoría, el `/release-check` ni el summary. El corte se declaró en el
     PR, y el cierre va en `sprint-004/cierre`.
+23. La fase 5 va en `sprint-004/fase-5`, con su PR, porque el #12 se mergeó con solo el registro del corte.
+24. El ⭐ del S4 deja 10 pruebas al acumulado del H2, no «~6». Son las seis de la orden más cuatro que el
+    sprint se había comprometido a dejar en el ⭐:
+    - Zoom, Teams, una pantalla externa y la pantalla completa, de la corrida en vivo de la fase 1;
+    - guardar y limpiar, de la corrida aplazada de la fase 4;
+    - enriquecer, que es juicio sobre lo que propone un modelo.
+25. `design-system.md` gana sus secciones del S4 (§9-decies y §9-undecies) en el cierre, no en sus fases:
+    las fases 0 a 4 escribieron el CSS y no la sección.
+26. La guía v6 corre los bloques A a P y el ⭐⭐ del H1 **con la banda abajo** (se fija en la preparación y en la
+    a1), y la parada 6 (l2) dice «12 de 12»: el corte suma el ensayo. Ninguna parada del ⭐⭐ del H1 se movió ni
+    se renumeró (auditoría del S4, B2).
+27. **A1 con la regla del H1.** La auditoría proponía parar el ensayo con una videollamada abierta salvo con
+    auriculares «de verdad» (`puede_haber_eco() == Some(false)`): eso dejaba fuera los AirPods. Se para solo
+    cuando la app **sabe** que se oiría (altavoces del Mac, HDMI, DisplayPort, AirPlay), como la voz en reunión
+    (`habla::cabe_decirla`); Bluetooth y USB pasan, y el manual dice que con un altavoz así no se ensaye con una
+    llamada abierta. Y nace un segundo porqué, «No se puede saber si hay una videollamada», para el navegador
+    abierto sin Accesibilidad (ADR 019, enmienda 1).
+28. **M7 se vigila en la fuente de Swift, no con los altavoces.** En `cargo test` nadie atiende la cola principal:
+    `didFinish` y `didCancel` no llegan nunca, y el test con la voz de verdad que proponía la auditoría pasaba con
+    el fallo puesto (la tercera pregunta de la regla 15). Lo de verdad va al ⭐ (R durante la lectura).
+29. **B19 lo paga M3:** arriba, el latido del arranque ya no acopla, así que no hay bucle que mueva y devuelva
+    una ventana que pelea su sitio.
+30. **B46 quita también el chip «En el H2»** de las filas de Corpus e Idioma: bajo «Lo que no hace hoy», el
+    chip seguía prometiendo. En IA se queda (MLX, que respalda el ADR 011).
+31. **El rojo de B9 se ve en la CI**, en un PR desechable: el test de la canaria del log toca el reconocimiento
+    de voz y en local no se corre.
+32. **Los crates de Tauri suben a 2.12 en el cierre** (`tauri` 2.12.1, `tauri-plugin-opener` 2.7.0, con sus
+    transitivas), para casar con lo que dependabot subió en npm: si no, `pnpm tauri build` no construye la app.
+    Lo encontró el `/release-check`, y lo vigila un gate nuevo, `tauri-a-la-par`. Bajar los de npm no se puede:
+    `verificar-dependencias` (regla 18) no deja nada por debajo de `main`.
