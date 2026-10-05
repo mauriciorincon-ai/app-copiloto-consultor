@@ -60,7 +60,8 @@ línea. Sin corpus para ese cliente no hay ensayo, y el estado «sin corpus» lo
   (`AG_SINTESIS=mock`, de primera clase, con el que el kit imprime sus salidas) → el API si el usuario
   lo encendió (Claude o Groq) → el modelo del sistema, en el Mac.
 - **Costo:** una llamada por ensayo, con el texto recortado. Cuenta contra el mismo tope de US$10 al mes
-  y sale en «esta reunión» y «este mes» de IA. **La cifra, medida por el kit v3 (fase 2, 2026-10-04):**
+  y sale en «esta reunión o ensayo» y «este mes» de IA (el costo de la reunión vuelve a cero al empezar el
+  ensayo, como al empezar una reunión: segunda pasada de la casilla 4 del S4, B53). **La cifra, medida por el kit v3 (fase 2, 2026-10-04):**
   la petición de Páramo Azul son ≈ 390 tokens de entrada (instrucciones, títulos y primeras frases); con
   una salida de cinco preguntas (≈ 200 tokens), **≈ US$0,0014 con Claude Haiku y ≈ US$0,0004 con Groq**
   por ensayo. Los tokens se estiman a cuatro caracteres por token; la cifra exacta la da el proveedor al
@@ -125,7 +126,7 @@ línea. Sin corpus para ese cliente no hay ensayo, y el estado «sin corpus» lo
   se esconde.
 - Lo que la CI no ve (tu voz, tu ritmo, que la pregunta se oiga bien) va a las ⭐ del acumulado del H2.
 
-## Enmienda 1 — con una videollamada abierta, solo con auriculares (auditoría del S4, A1, 2026-10-04)
+## Enmienda 1 — con una videollamada abierta, no por los altavoces que la app reconoce (auditoría del S4, A1, 2026-10-04)
 
 **La premisa que caducó.** §6.5 decía que una videollamada abierta sin sesión de Angel Ghost no impedía
 ensayar, porque «no hay nada que oír». Sí lo hay: si la llamada suena por los altavoces, el micrófono del
@@ -133,8 +134,9 @@ ensayo —que no tiene pista del sistema contra la que marcar el eco— transcri
 cifrada como tu respuesta, y la llamada oye la voz que lee frases de tu propuesta. Lo primero rompe la regla
 dura 1 (lo del cliente nunca se guarda); lo segundo, la regla de ADR 014 vista desde el otro lado.
 
-**La decisión del usuario (2026-10-04, opción A).** Con una videollamada abierta, el ensayo solo empieza con
-auriculares. `ensayo::llamada_sin_auriculares` lo decide, puro, antes de abrir el micrófono:
+**La decisión del usuario (2026-10-04, opción A):** con una videollamada abierta, solo con auriculares. **Cómo se
+aplicó:** el ensayo no empieza si la app sabe que el sonido sale por altavoces (los del Mac, HDMI, DisplayPort,
+AirPlay); `ensayo::llamada_sin_auriculares` lo decide, puro, antes de abrir el micrófono:
 
 | La detección (`sesion::ahora`) | La salida (`Salida::puede_haber_eco`) | El ensayo |
 |---|---|---|

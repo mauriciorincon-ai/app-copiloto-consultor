@@ -78,8 +78,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - **Arriba:** si la ventana de la reunión quedaría con menos de 240 px de alto, o está en otra
     pantalla, no se toca y la banda flota. Si macOS no la deja mover (pantalla completa, otro
     escritorio), la app deshace lo que hizo y la banda flota.
-  - Arriba está **probado en vivo con Meet en Chrome**: se acopla en unos 230 ms y se devuelve en unos
-    120. Con Zoom, Teams, una pantalla externa y la pantalla completa, todavía no.
+  - Arriba está **probado en vivo en Chrome, con la página de prueba de Meet del kit**: se acopla en unos
+    230 ms y se devuelve en unos 120. Con Zoom, Teams, una pantalla externa y la pantalla completa, todavía no.
   - Si mueves tú la ventana mientras está acoplada, al cerrar no se devuelve: la app solo devuelve lo
     que sigue como ella lo dejó.
 
@@ -89,8 +89,9 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   cámara. Leer la ficha ahí se ve como mirar a quien habla; abajo, se ve como bajar la vista. Su
   relleno va con ella, así que al compartir pantalla el cliente ve tu fondo de escritorio en esa franja.
 - **Cómo se usa:** en *Sesión*, la fila **«La banda: arriba · abajo»**, o **`⌃⌥B`** desde cualquier
-  sitio. Al cambiar, la banda suelta la reunión, se recoloca y vuelve a acoplarla. La elección se
-  recuerda.
+  sitio. Al cambiar, la banda suelta la ventana que tuviera acoplada y se recoloca. Abajo acopla la
+  ventana que tengas delante; arriba, la de la reunión, solo con la sesión iniciada (sin sesión, flota con
+  «sin acople»). La elección se recuerda.
 - **La primera vez**, *Sesión* te avisa: «La banda ahora va arriba, junto a la cámara», con
   **«Entendido»**. Mientras no lo pulses, el aviso ocupa el sitio de la tarjeta de la reunión; la
   reunión sigue en el rail.
@@ -415,15 +416,16 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   el proveedor externo); el rail dice «Ensayando». El ensayo **no abre** el audio del sistema ni la
   pantalla. La puerta local se cierra sola, y *IA* dice «Se cerró sola: hay una reunión o un ensayo».
 - **El ensayo y la sesión no conviven.** No se puede ensayar con una sesión abierta, y empezar una sesión
-  descarta el ensayo. Si tienes uno terminado sin guardar, *Sesión* te avisa antes, encima de «Iniciar
-  sesión»: «Tienes un ensayo terminado sin guardar» · «Empezar la sesión lo descarta. Guárdalo antes en
+  descarta el ensayo. Si tienes uno terminado sin guardar, *Sesión* te avisa antes, en una línea debajo
+  de «Iniciar sesión»: «Tienes un ensayo terminado sin guardar» · «Empezar la sesión lo descarta. Guárdalo antes en
   Ensayo.»
-- **Con una videollamada abierta, solo con auriculares.** Si Zoom o Teams están abiertos, o hay una
-  pestaña de Meet, el ensayo no empieza por los altavoces: tu micrófono oiría la llamada —y la tomaría
-  por tu respuesta— y la llamada oiría la voz que lee la pregunta. *Ensayo* dice «Hay una videollamada
+- **Con una videollamada abierta, no por los altavoces.** Si Zoom o Teams están abiertos, o hay una
+  pestaña de Meet, y el sonido sale por los altavoces del Mac, por HDMI, DisplayPort o AirPlay, el ensayo
+  no empieza: tu micrófono oiría la llamada —y la tomaría por tu respuesta— y la llamada oiría la voz que
+  lee la pregunta. *Ensayo* dice «Hay una videollamada
   abierta» («Con los altavoces, tu micrófono oiría la llamada y la llamada oiría la voz del ensayo. Ponte
   auriculares o ciérrala para ensayar.»). Sin el permiso de Accesibilidad, la app no ve si tu navegador
-  está en una llamada, y con el navegador abierto también te los pide: «No se puede saber si hay una
+  está en una llamada: con el navegador abierto y esos altavoces, tampoco empieza, y dice «No se puede saber si hay una
   videollamada» («Sin el permiso de Accesibilidad, la app no ve si tu navegador está en una llamada.
   Ponte auriculares o concédelo en Permisos.»).
 - **Limitaciones conocidas:**
@@ -435,16 +437,18 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - Si la pregunta es muy general, puede no haber fichas con qué comparar y la cifra sale «—»: la app
     no te acusa de nada que no tenías.
   - **Si haces pausas largas a mitad de respuesta**, los 2,5 s pueden cortarte: termina con Enter.
-  - Sin reunión, **la voz sale por donde suene tu Mac**; con una videollamada abierta, solo con
-    auriculares. Mientras habla, el micrófono no escucha.
+  - Sin reunión, **la voz sale por donde suene tu Mac**; con una videollamada abierta, el ensayo no
+    empieza por los altavoces del Mac. Mientras habla, el micrófono no escucha.
   - **Con una videollamada abierta, el ensayo no empieza si el sonido sale por altavoces que la app
     reconoce**: los del Mac, un monitor por HDMI o DisplayPort, o AirPlay. Con auriculares de cable,
     Bluetooth o USB —unos AirPods, por ejemplo— sí empieza: macOS no distingue unos auriculares Bluetooth
     o USB de un altavoz de mesa, y la app se fía, como con el modo solo audio. **Si el sonido te sale por
     un altavoz Bluetooth o USB, no ensayes con una llamada abierta.** Sin videollamada, ensaya con lo que
-    quieras.
-  - **El ensayo todavía no se ha probado con una voz de verdad.** Lo prueba la CI, con el audio del kit
-    y con una sesión completa en la que se guarda un ensayo y se descifra; con tu voz, tu micrófono,
+    quieras. Se mira al empezar: si abres una videollamada a mitad del ensayo, el ensayo sigue; termínalo
+    con Esc antes de entrar a la llamada.
+  - **El ensayo todavía no se ha probado con una voz de verdad.** La CI lo recorre con el audio del kit
+    y una sesión completa en la que se guarda un ensayo y se descifra; como no tiene modelos para
+    reconocer voz, ahí la respuesta se guarda sin texto. Con tu voz, tu micrófono,
     el Llavero y Touch ID va en las pruebas del ciclo.
   - Sin propuesta ni ficha de ese cliente en tu corpus, *Ensayo* dice «Tu corpus no tiene nada de este
     cliente»: la app no inventa preguntas.
@@ -607,7 +611,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - **Nada de la sugerencia va al log**: solo quién, cuánto tardó y cuánto salió
     (`tests/unit/logs-de-la-sintesis.test.ts`).
 - **Costo:** el modelo del sistema cuesta cero. El externo se cobra en tu cuenta del proveedor; IA
-  enseña **esta reunión**, **este mes** y el **tope del mes (USD 10)**. Al llegar al tope, vuelve sola
+  enseña **esta reunión o ensayo**, **este mes** y el **tope del mes (USD 10)**. Al llegar al tope, vuelve sola
   a lo local; la reunión no se detiene. La cifra del mes es lo único que se guarda (un número, no el
   texto de nada).
 - **Medido** (kit de prueba, `el_kit_de_sugerencias_mide_grounding_y_latencia`): de las 30
@@ -770,7 +774,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 | `⌃⌥P` | **fijar** la ficha que ves en la banda: queda en tus notas, con su titular y su fuente; la banda dice «fijada» |
 | `⌃⌥↵` | **guardar la propuesta** que ves en la banda: entra en tu archivo |
 | `⎋` | calla la voz — **solo mientras el modo solo audio está encendido** |
-| `⌃⌥B` | **la banda, arriba o abajo**: la recoloca y vuelve a acoplar la reunión (con la banda cerrada tras `⌥⎋`, solo cambia tu elección). Se recuerda |
+| `⌃⌥B` | **la banda, arriba o abajo**: la recoloca; abajo acopla la ventana de delante y arriba la de la reunión, solo con la sesión iniciada (con la banda cerrada tras `⌥⎋`, solo cambia tu elección). Se recuerda |
 
 En la pantalla *Ensayo*, y solo ahí, las teclas son de la ventana: **Enter** listo · **R** repetir ·
 **S** saltar · **Esc** terminar. No se disparan con el cursor en un selector.
@@ -812,8 +816,10 @@ por reunión. Lo que no decidas espera en la bandeja y se borra solo (3 h de fá
 **¿El ensayo graba mi voz?**
 No. Tu voz pasa por la memoria para transcribirse y se pisa; el audio no toca el disco. Si guardas el
 ensayo, quedan tus respuestas en texto y sus cifras, cifradas con la llave de tus notas y con su
-retención. Si no lo guardas, al cerrar no queda nada. Y con una videollamada abierta solo empieza con
-auriculares: así tu micrófono no oye a nadie más.
+retención. Si no lo guardas, al cerrar no queda nada. Y con una videollamada abierta no empieza si el sonido sale
+por los altavoces del Mac, HDMI, DisplayPort o AirPlay. Por Bluetooth o USB la app no distingue unos
+auriculares de un altavoz: con un altavoz así, o si abres la llamada a mitad del ensayo, tu micrófono la
+oiría y la guardaría como tu respuesta. No ensayes con una llamada que suene por un altavoz.
 
 **¿Necesito internet?**
 Solo para la videollamada. La app transcribe, busca y —con el modelo del sistema— redacta dentro de
@@ -823,9 +829,11 @@ aquí—, y si enciendes el **proveedor externo** en *IA*, con tu clave.
 
 **¿Por qué me pide auriculares?**
 Con los altavoces, tu micrófono oye también al cliente y las dos pistas se mezclan. La app lo
-detecta y lo marca, pero funciona mejor con auriculares. En el ensayo, con una videollamada abierta, son
-obligatorios —de cable, Bluetooth o USB—: con los altavoces, tu micrófono oiría la llamada y la llamada oiría
-la voz del ensayo.
+detecta y lo marca, pero funciona mejor con auriculares. En el ensayo, con una videollamada abierta, no
+empieza por los altavoces del Mac, de un monitor (HDMI o DisplayPort) ni por AirPlay: tu micrófono oiría la
+llamada y la llamada oiría la voz del ensayo. Con auriculares de cable, Bluetooth o USB sí empieza; como la app
+no distingue unos auriculares Bluetooth o USB de un altavoz, con un altavoz de esos no ensayes con una llamada
+abierta.
 
 ## Historial
 

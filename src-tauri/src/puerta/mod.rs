@@ -6,8 +6,8 @@
 //! (`src/bin/ghost.rs`), que habla con un **socket Unix** en la carpeta privada de la app. La puerta:
 //!
 //! - **nace cerrada** y no se recuerda: se abre a mano, en IA, y se cierra al salir;
-//! - **se cierra sola en reunión**, y en reunión lo deniega todo: un agente no toca jamás lo que está
-//!   vivo en memoria;
+//! - **se cierra sola en reunión o durante un ensayo**, y entonces lo deniega todo: un agente no toca jamás
+//!   lo que está vivo en memoria;
 //! - **pide una llave**: un token por apertura, que la app deja en el Llavero y `ghost` lee de ahí —la
 //!   primera vez, macOS le pregunta al usuario—, comparado en tiempo constante;
 //! - **tiene una lista cerrada de órdenes** ([`Orden`]): lo que no está se deniega;

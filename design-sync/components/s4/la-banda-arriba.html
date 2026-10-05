@@ -98,8 +98,10 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+.estado.warn { color: var(--warn); background: var(--warn-tint); border-color: var(--warn); }
 .pendiente .ic { opacity: .75; }
 .franja .ic { margin-top: 1px; }
+.franja.warn { border-color: var(--warn); background: var(--warn-tint); }
 .franja.warn .ic { color: var(--warn); }
 .franja.err .ic { color: var(--err); }
 .franja.ok .ic { color: var(--ok); }
@@ -118,6 +120,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .ficha .fuente .unidad { padding: 0 5px; border-radius: 3px; background: var(--surface-2); color: var(--ink-2); font-family: var(--font-ui); font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; line-height: 15px; }
 .vacio .voz { font-family: var(--font-evidencia); font-style: italic; font-size: 15px; line-height: 1.4; color: var(--ink-2); }
 .transcript .cab .tecla { margin-left: auto; }
+.pie .cliente.warn { color: var(--warn); }
 .rail .marca .ic { color: var(--halo); }
 .rail a, .rail .item { display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: var(--r-chip); color: var(--ink-2); text-decoration: none; font-size: var(--t-ui); border-left: 2px solid transparent; }
 .rail a[aria-current="page"], .rail .item.activo { color: var(--ink); background: var(--surface-2); border-left-color: var(--halo); }
@@ -219,6 +222,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .evidencia-e .sin-usar .ic { color: var(--halo); }
 .banda[data-borde="arriba"] { border-top: 0; border-bottom: var(--borde) solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,.35); }
 .banda[data-borde="arriba"] .asa { top: auto; bottom: 0; }
+.banda:not([data-borde="arriba"]) .solo-arriba, .banda[data-borde="arriba"] .solo-abajo { display: none; }
 .mq-pos.banda-borde .banda { border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; }
 .mq-pos.banda-borde .banda[data-borde="arriba"] { border-top: 0; border-bottom: var(--borde) solid var(--line); }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
@@ -252,6 +256,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 <body>
 <svg style="display:none" aria-hidden="true">
 <symbol id="i-check-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor" stroke="none"/><path d="M5 8.2l2 2 4-4.4" stroke="var(--bg)" stroke-width="1.9" fill="none"/></symbol>
+<symbol id="i-alert" viewBox="0 0 16 16"><path d="M8 2.2 14.3 13H1.7z" fill="currentColor" stroke="none"/><path d="M8 6v3.4M8 11.6v.2" stroke="var(--bg)" stroke-width="1.8" fill="none"/></symbol>
 <symbol id="i-subir" viewBox="0 0 16 16"><path d="M8 13.5v-11M3.5 7 8 2.5 12.5 7"/></symbol>
 <symbol id="i-reloj" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5V8l2.5 1.5"/></symbol>
 <symbol id="i-voz" viewBox="0 0 16 16"><path d="M2 7v2M5 4.5v7M8 2.5v11M11 5.5v5M14 7v2"/></symbol>
@@ -278,8 +283,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+        <!-- Con la banda arriba la protección está SIN VERIFICAR, también en Meet (decisión M20 del usuario;
+             auditoría del S4, A5): el chip verde solo sale abajo, y arriba sale el ámbar. -->
+        <span class="cliente-b solo-abajo" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        <span class="cliente-b warn solo-arriba" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+          <svg class="ic s relleno"><use href="#i-alert"></use></svg>
+          <span lang="es">Meet · sin verificar</span><span lang="en">Meet · not verified</span>
         </span>
         
 
@@ -388,8 +399,12 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
           <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
           <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
         </span>
-        <span class="cliente-b" data-en="ficha-2 sin-resultado-2 transcript radar-invasivo-2 sugerencia-2">
+        <span class="cliente-b solo-abajo" data-en="ficha-2 sin-resultado-2 transcript radar-invasivo-2 sugerencia-2">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        <span class="cliente-b warn solo-arriba" data-en="ficha-2 sin-resultado-2 transcript radar-invasivo-2 sugerencia-2">
+          <svg class="ic s relleno"><use href="#i-alert"></use></svg>
+          <span lang="es">Meet · sin verificar</span><span lang="en">Meet · not verified</span>
         </span>
         
         <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>
@@ -500,8 +515,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+        <!-- Con la banda arriba la protección está SIN VERIFICAR, también en Meet (decisión M20 del usuario;
+             auditoría del S4, A5): el chip verde solo sale abajo, y arriba sale el ámbar. -->
+        <span class="cliente-b solo-abajo" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        <span class="cliente-b warn solo-arriba" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+          <svg class="ic s relleno"><use href="#i-alert"></use></svg>
+          <span lang="es">Meet · sin verificar</span><span lang="en">Meet · not verified</span>
         </span>
         
 
@@ -610,8 +631,12 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
           <svg class="ic s relleno"><use href="#i-check-circle"></use></svg>
           <span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span>
         </span>
-        <span class="cliente-b" data-en="ficha-2 sin-resultado-2 transcript radar-invasivo-2 sugerencia-2">
+        <span class="cliente-b solo-abajo" data-en="ficha-2 sin-resultado-2 transcript radar-invasivo-2 sugerencia-2">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        <span class="cliente-b warn solo-arriba" data-en="ficha-2 sin-resultado-2 transcript radar-invasivo-2 sugerencia-2">
+          <svg class="ic s relleno"><use href="#i-alert"></use></svg>
+          <span lang="es">Meet · sin verificar</span><span lang="en">Meet · not verified</span>
         </span>
         
         <span class="red cero mono" title="salida a red en esta reunión"><svg class="ic s"><use href="#i-subir"></use></svg>0 B</span>

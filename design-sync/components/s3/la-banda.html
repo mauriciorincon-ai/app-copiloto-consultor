@@ -221,6 +221,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 .evidencia-e .sin-usar .ic { color: var(--halo); }
 .banda[data-borde="arriba"] { border-top: 0; border-bottom: var(--borde) solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,.35); }
 .banda[data-borde="arriba"] .asa { top: auto; bottom: 0; }
+.banda:not([data-borde="arriba"]) .solo-arriba, .banda[data-borde="arriba"] .solo-abajo { display: none; }
 .mq-pos.banda-borde .banda { border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; }
 .mq-pos.banda-borde .banda[data-borde="arriba"] { border-top: 0; border-bottom: var(--borde) solid var(--line); }
 @media (prefers-reduced-motion: reduce) { .mq-escritorio .mq-meet { transition: none; } }
@@ -251,6 +252,7 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
 <body>
 <svg style="display:none" aria-hidden="true">
 <symbol id="i-check-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor" stroke="none"/><path d="M5 8.2l2 2 4-4.4" stroke="var(--bg)" stroke-width="1.9" fill="none"/></symbol>
+<symbol id="i-alert" viewBox="0 0 16 16"><path d="M8 2.2 14.3 13H1.7z" fill="currentColor" stroke="none"/><path d="M8 6v3.4M8 11.6v.2" stroke="var(--bg)" stroke-width="1.8" fill="none"/></symbol>
 <symbol id="i-chispa" viewBox="0 0 16 16"><path d="M8 1.5 9.6 6.4 14.5 8l-4.9 1.6L8 14.5 6.4 9.6 1.5 8l4.9-1.6z" fill="currentColor" stroke="none"/></symbol>
 <symbol id="i-subir" viewBox="0 0 16 16"><path d="M8 13.5v-11M3.5 7 8 2.5 12.5 7"/></symbol>
 <symbol id="i-reloj" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5V8l2.5 1.5"/></symbol>
@@ -280,8 +282,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+        <!-- Con la banda arriba la protección está SIN VERIFICAR, también en Meet (decisión M20 del usuario;
+             auditoría del S4, A5): el chip verde solo sale abajo, y arriba sale el ámbar. -->
+        <span class="cliente-b solo-abajo" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        <span class="cliente-b warn solo-arriba" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+          <svg class="ic s relleno"><use href="#i-alert"></use></svg>
+          <span lang="es">Meet · sin verificar</span><span lang="en">Meet · not verified</span>
         </span>
         
 
@@ -397,8 +405,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+        <!-- Con la banda arriba la protección está SIN VERIFICAR, también en Meet (decisión M20 del usuario;
+             auditoría del S4, A5): el chip verde solo sale abajo, y arriba sale el ámbar. -->
+        <span class="cliente-b solo-abajo" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        <span class="cliente-b warn solo-arriba" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+          <svg class="ic s relleno"><use href="#i-alert"></use></svg>
+          <span lang="es">Meet · sin verificar</span><span lang="en">Meet · not verified</span>
         </span>
         
 
@@ -507,8 +521,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+        <!-- Con la banda arriba la protección está SIN VERIFICAR, también en Meet (decisión M20 del usuario;
+             auditoría del S4, A5): el chip verde solo sale abajo, y arriba sale el ámbar. -->
+        <span class="cliente-b solo-abajo" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        <span class="cliente-b warn solo-arriba" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+          <svg class="ic s relleno"><use href="#i-alert"></use></svg>
+          <span lang="es">Meet · sin verificar</span><span lang="en">Meet · not verified</span>
         </span>
         
 
@@ -618,8 +638,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+        <!-- Con la banda arriba la protección está SIN VERIFICAR, también en Meet (decisión M20 del usuario;
+             auditoría del S4, A5): el chip verde solo sale abajo, y arriba sale el ámbar. -->
+        <span class="cliente-b solo-abajo" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        <span class="cliente-b warn solo-arriba" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+          <svg class="ic s relleno"><use href="#i-alert"></use></svg>
+          <span lang="es">Meet · sin verificar</span><span lang="en">Meet · not verified</span>
         </span>
         
 
@@ -735,8 +761,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+        <!-- Con la banda arriba la protección está SIN VERIFICAR, también en Meet (decisión M20 del usuario;
+             auditoría del S4, A5): el chip verde solo sale abajo, y arriba sale el ámbar. -->
+        <span class="cliente-b solo-abajo" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        <span class="cliente-b warn solo-arriba" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+          <svg class="ic s relleno"><use href="#i-alert"></use></svg>
+          <span lang="es">Meet · sin verificar</span><span lang="en">Meet · not verified</span>
         </span>
         
 
@@ -845,8 +877,14 @@ html[data-lang="en"] [lang="es"] { display: none !important; }
         </span>
         
 
-        <span class="cliente-b" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+        <!-- Con la banda arriba la protección está SIN VERIFICAR, también en Meet (decisión M20 del usuario;
+             auditoría del S4, A5): el chip verde solo sale abajo, y arriba sale el ámbar. -->
+        <span class="cliente-b solo-abajo" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
           <span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span>
+        </span>
+        <span class="cliente-b warn solo-arriba" data-en="esperando buscando ficha ficha-pdf ficha-pantalla pantalla-nada sin-resultado flotante radar radar-invasivo sugerencia-local sugerencia-api s3-propuesta s3-fijada s3-solo-notas">
+          <svg class="ic s relleno"><use href="#i-alert"></use></svg>
+          <span lang="es">Meet · sin verificar</span><span lang="en">Meet · not verified</span>
         </span>
         
 

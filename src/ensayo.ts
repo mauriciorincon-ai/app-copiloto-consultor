@@ -144,9 +144,9 @@ export type NoEmpezo =
   | { que: "en-reunion" }
   | { que: "sin-corpus" }
   | { que: "microfono"; porque: PorQueNoAbrio }
-  /** Una videollamada abierta y sin auriculares (auditoría del S4, A1). */
+  /** Una videollamada abierta y el sonido por altavoces que la app reconoce (auditoría del S4, A1). */
   | { que: "videollamada" }
-  /** Sin Accesibilidad no se sabe si el navegador está en una llamada, y no hay auriculares. */
+  /** Sin Accesibilidad no se sabe si el navegador está en una llamada, y el sonido va por esos altavoces. */
   | { que: "no-se-sabe-si-hay-llamada" };
 
 /** Los estados de `ensayo.html` que la pantalla dibuja fuera de Tauri (el gate de fidelidad los pide por la URL). */

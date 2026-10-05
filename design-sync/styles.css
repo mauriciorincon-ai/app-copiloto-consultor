@@ -1,6 +1,6 @@
 /* ============================================================================
    Angel Ghost — hoja del proyecto en Claude Design.
-   ESPEJO de docs/diseno/assets/ghost.css (design-system.md v1.16.0).
+   ESPEJO de docs/diseno/assets/ghost.css (design-system.md v1.16.1).
    NO se edita aquí ni allá: se edita el sistema y se regenera con
    `node scripts/design-sync-bundle.mjs`.
    Las tarjetas no dependen de esta hoja —cada una lleva en línea lo que
@@ -678,3 +678,8 @@ h2.seccion, .seccion-t { font-family: var(--font-mono); font-size: 11px; font-we
    ahora está debajo, y el asa va en ese mismo borde: es el que se arrastra para ajustar las dos. */
 .banda[data-borde="arriba"] { border-top: 0; border-bottom: var(--borde) solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,.35); }
 .banda[data-borde="arriba"] .asa { top: auto; bottom: 0; }
+/* Lo que solo se dibuja en un borde (auditoría del S4, A5): con la banda arriba la protección está
+   sin verificar también en Meet, así que la maqueta enseña el chip ámbar arriba y el verde abajo. En el
+   producto lo decide `Banda.tsx`; estas dos clases son solo de la maqueta. */
+.banda:not([data-borde="arriba"]) .solo-arriba,
+.banda[data-borde="arriba"] .solo-abajo { display: none; }

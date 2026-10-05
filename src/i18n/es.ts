@@ -26,6 +26,7 @@ export const es = {
     escuchando: "Escuchando · 2 pistas",
     protegido: "Meet · protegido",
     sinVerificar: "Zoom · sin verificar",
+    sinVerificarArriba: "Meet · sin verificar",
     sinAcople: "sin acople",
 
     /** Las piezas con las que se compone la cabecera. Cada una existe en la maqueta. */
@@ -557,7 +558,7 @@ export const es = {
     guardarEnLlavero: "Guardar en el Llavero",
     borrarLaClave: "Borrar la clave",
     costo: "Costo",
-    estaReunion: "Esta reunión",
+    estaReunion: "Esta reunión o ensayo",
     esteMes: "Este mes",
     topeDelMes: "Tope del mes",
     alLlegarAlTope: "Al llegar al tope vuelve sola al modelo local. No se detiene la reunión.",
@@ -921,7 +922,7 @@ export const es = {
     propuesta: "Propuesta",
     preguntas: "Preguntas",
     leerEnVozAlta: "Leer la pregunta en voz alta",
-    vozSinReunion: "Sin reunión, la voz sale por donde suene tu Mac; con una videollamada abierta, solo con auriculares. Mientras habla, el micrófono no escucha.",
+    vozSinReunion: "Sin reunión, la voz sale por donde suene tu Mac; con una videollamada abierta, el ensayo no empieza por los altavoces del Mac. Mientras habla, el micrófono no escucha.",
     idiomaDelEnsayo: {
       es: "Idioma del ensayo: español.",
       en: "Idioma del ensayo: inglés.",
@@ -941,7 +942,7 @@ export const es = {
     empezar: "Empezar el ensayo",
     soloTuMicrofono: "Solo tu micrófono:",
     soloTuMicrofonoQue:
-      "ni el audio del sistema ni la pantalla. Queda tu respuesta en texto, cifrada con tus notas; el audio, nunca.",
+      "ni el audio del sistema ni la pantalla. Si lo guardas, queda tu respuesta en texto, cifrada con tus notas; el audio, nunca.",
     // ---- 1b · no empezó (fase 3, maquetado, no visto) ----
     microfonoNoAbrio: "El micrófono no se abrió",
     microfonoSinPermiso: "macOS no dio permiso al micrófono. Concédelo en Permisos y vuelve a empezar el ensayo.",
@@ -950,7 +951,8 @@ export const es = {
     sinTranscripcionQue: "Instálalo en Idioma y vuelve: sin él, la app mide tu tiempo pero no tus palabras.",
     hayReunion: "Hay una reunión abierta",
     hayReunionQue: "El ensayo y la reunión no conviven: termínala en Sesión para ensayar.",
-    // Auditoría del S4 (A1; decisión del usuario del 2026-10-04): con una videollamada abierta, solo con auriculares.
+    // Auditoría del S4 (A1; decisión del usuario del 2026-10-04): con una videollamada abierta, no por los altavoces
+    // que la app reconoce (el Mac, HDMI, DisplayPort, AirPlay).
     hayVideollamada: "Hay una videollamada abierta",
     hayVideollamadaQue: "Con los altavoces, tu micrófono oiría la llamada y la llamada oiría la voz del ensayo. Ponte auriculares o ciérrala para ensayar.",
     noSeSabeSiHayLlamada: "No se puede saber si hay una videollamada",

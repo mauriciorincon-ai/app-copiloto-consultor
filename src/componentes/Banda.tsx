@@ -203,10 +203,14 @@ export function Banda({
    * puesta a `true` por defecto, así que la banda decía «protegido» en Zoom — contra la promesa
    * graduada que la app hace por escrito. El parámetro de URL sigue mandando fuera de Tauri porque
    * el arnés de capturas tiene que poder recorrer los dos encuadres.
+   *
+   * **Y es un hecho comprobado con la banda ABAJO** (decisión M20 del usuario, auditoría del S4): con la
+   * banda arriba nadie ha mirado la pantalla compartida, así que arriba el chip dice «sin verificar»
+   * también en Meet (segunda pasada de la casilla 4, A5).
    */
   const protegido = deLaMaqueta
-    ? verificado
-    : reunion.que === "detectada" && reunion.proteccion === "Verificada";
+    ? verificado && borde === "abajo"
+    : reunion.que === "detectada" && reunion.proteccion === "Verificada" && borde === "abajo";
 
   /**
    * Lo último que dijo el cliente, que es de quien son las palabras. Se saca de los turnos que ya
@@ -230,7 +234,7 @@ export function Banda({
       ) : (
         <span className="cliente-b warn">
           <Ic id="i-alert" s relleno />
-          {t.sinVerificar}
+          {verificado ? t.sinVerificarArriba : t.sinVerificar}
         </span>
       );
     }

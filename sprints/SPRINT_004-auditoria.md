@@ -56,6 +56,7 @@ Los cuatro altos:
 - **45 con su rojo antes del verde:** 3 altos, 19 medios y 23 bajos. Todos se vieron con `scripts/demo-rojo.sh`, salvo B9, que se vio en la CI (PR #14, desechable).
 - **37 de texto o declaración**, sin gate que demostrar.
 - **Ninguno queda como deuda.** Cada uno dice su estado en su sección o en su fila.
+- **La segunda pasada de la casilla 4** sumó 28 más (A5–A8, M29–M37 y B51–B65), todos pagados: 2 con su rojo y 26 de texto. **Total: 110 — 0 críticos · 8 altos · 37 medios · 65 bajos; 47 con su rojo y 63 de texto o declaración.**
 
 Las fases 0 a 4 cumplen su alcance. La corrida en vivo de la fase 4 va aplazada con su corte declarado. **La
 casilla 8 sale limpia:** todo lo que se corrió contra el Mac tuvo su matriz y su «sí».
@@ -103,7 +104,7 @@ ajuste depende de la respuesta:
 
 Ninguno.
 
-## ALTOS (4)
+## ALTOS (8)
 
 ### A1 · Un ensayo con una videollamada abierta oye la llamada y la guarda como «tu respuesta»; la voz del ensayo sale a la llamada
 
@@ -297,7 +298,7 @@ en el H1».
 **Verificado cuando:** `guia-cuadra` está en verde con la cuenta nueva. En el ⭐ del usuario, la consola dice
 `[acople] reacople: … ventanas=1` en la parada 4, y la parada 6 deja `[acople] kill-switch: … ventanas=1`.
 
-## MEDIOS (28)
+## MEDIOS (37)
 
 ### M1 · El acople escribe por la posición de la ventana en la lista sin comprobar que sigue siendo la misma
 
@@ -864,7 +865,7 @@ ENLACES.
 
 **Verificado cuando:** `design-sync-espejo` está en verde y el barrido de la segunda casilla 4 está limpio.
 
-## BAJOS (50)
+## BAJOS (65)
 
 | # | Sitio | Qué está mal | Ajuste · verificado cuando | Estado |
 |---|---|---|---|---|
@@ -944,6 +945,58 @@ El barrido se hizo por promesa aplazada: «todavía no», «aún no», «por aho
 kit, el design system, el `CLAUDE.md`, el README y el índice de la maqueta, i18n es/en, `Info.plist` y la ayuda de
 `ghost`. Sin hallazgo en `Info.plist`, `InfoPlist.strings` ni el resto de `ghost`. La segunda pasada la hará **otro**
 auditor después de la Fase 2, incluido el summary.
+
+## Casilla 4 — segunda pasada (2026-10-04): 28 hallazgos más, todos pagados
+
+La hizo **otro auditor independiente** (el quinto: no construyó el sprint ni auditó la Fase 1), en solo lectura y
+sin tocar el Mac, sobre el diff entero `adb2493..` con el árbol de trabajo, después del último ajuste y **con el
+summary dentro**. Barrió unas 300 coincidencias por promesa aplazada en es y en, y siguió cada pago de la Fase 2
+hasta sus frases hermanas. Encontró **28 frases falsas hoy: 4 altas, 9 medias y 15 bajas** (A5–A8, M29–M37 y
+B51–B65). Los encabezados de severidad de arriba cuentan también estas filas: el artefacto queda en **110 —
+0 · 8 · 37 · 65**.
+
+- **Lo que más pesaba:** el chip de la protección con la banda arriba (A5), que contradecía tu decisión M20 en la
+  misma pantalla, y la regla de los auriculares escrita como «solo con auriculares» en la interfaz, el manual, el
+  BLUEPRINT y los ADR (A6–A8, M29–M31), cuando por Bluetooth o USB el ensayo empieza.
+- **Dos pagos tocan código**, cada uno con su rojo: A5 (el chip mira el borde) y B53 (el costo vuelve a cero al
+  empezar el ensayo). Los otros 26 son de texto.
+- **El constructor amplió A5 a la maqueta:** el auditor proponía cambiar solo la app, pero las capturas de
+  fidelidad y la tarjeta de `design-sync/` de la banda arriba se dibujan con `banda.html`, que también decía
+  «Meet · protegido». Ahora la maqueta enseña el chip ámbar arriba (`.solo-abajo` y `.solo-arriba`), y la
+  fidelidad compara lo mismo con lo mismo.
+- **Dos restos del mismo barrido**, en la misma fila de B52: la tabla de `posicion.html` («tapa hasta que haya
+  reunión») y la línea 1.16.0 del historial de `design-system.md`.
+
+| # | Sitio | Qué está mal | Ajuste · verificado cuando | Estado |
+|---|---|---|---|---|
+| **A5** | `src/componentes/Banda.tsx:207-209` · `src/pantallas/Sesion.tsx:682-686` · `docs/diseno/banda.html` · `sesion.html` · `posicion.html` | Con la banda arriba, la banda decía «Google Meet · protegido» y Sesión «Protección verificada», justo encima del párrafo de M20 que dice «sin verificar»: el chip no miraba el borde | `protegido` exige `borde === "abajo"` (también en la maqueta), `LaReunion` recibe `arriba`; la maqueta enseña el chip ámbar arriba con `.solo-abajo`/`.solo-arriba`; `design-system.md` §9-decies. Verificado: `la-banda-arriba.test.tsx`, cuatro casos | pagado · con su rojo (dos: sin la condición en `Banda.tsx`, «expected 'Google Meet · protegido' to contain 'sin verificar'»; sin `!arriba` en `LaReunion`, el chip verde) |
+| **A6** | `src/i18n/es.ts:925` · `src/i18n/en.ts:807` · `docs/diseno/ensayo.html:92` | «con una videollamada abierta, solo con auriculares»: por Bluetooth o USB el ensayo empieza aunque sea un altavoz (`llamada_sin_auriculares` solo para con `Some(true)`) | «…el ensayo no empieza por los altavoces del Mac», es y en, literal en la maqueta; fila U14 de la guía. Verificado: `i18n-fiel-a-la-maqueta` | pagado · texto |
+| **A7** | `docs/MANUAL-DE-USO.md:421-445` · `:815-816` · `:826-828` | El manual prometía «solo con auriculares», «son obligatorios» y «tu micrófono no oye a nadie más» | Los cinco pasajes dicen qué altavoces paran el ensayo, que Bluetooth o USB pasan y que se mira al empezar. Verificado: el `git grep` de las cuatro frases sale vacío | pagado · texto |
+| **A8** | `docs/BLUEPRINT.html:403` · `:524` · `:626` | El BLUEPRINT decía «solo con auriculares» y «el ensayo pide auriculares» | Los tres sitios, con los altavoces que la app reconoce. Verificado: `grep` vacío | pagado · texto |
+| **M29** | `docs/GUIA-DE-PRUEBA.html:815` | La entrada del bloque R: «el ensayo solo empieza con auriculares» | «no empieza si el sonido sale por los altavoces del Mac, HDMI, DisplayPort o AirPlay». Verificado: `guia-cuadra` | pagado · texto |
+| **M30** | `sprints/SPRINT_004-summary.md` (ADRs y decisiones) | El summary decía «solo con auriculares» y que la enmienda 1 del 019 se escribió antes de su fase | Las dos frases, con la regla de hoy y «salvo la enmienda 1 del 019». Verificado: lectura contra `ensayo/mod.rs:195-205` | pagado · texto |
+| **M31** | `decisions/019-el-ensayo-codigo-primero.md:128` · `:136-137` · `decisions/015-las-notas-y-su-cifrado.md:312` | Los ADR decían «solo con auriculares» y que «nada de ninguna reunión» entra nunca en un ensayo | El título y la decisión de la enmienda 1 dicen cómo se aplicó; el 015 dice qué podría entrar por un altavoz Bluetooth o USB. Verificado: lectura | pagado · texto |
+| **M32** | `docs/MANUAL-DE-USO.md:418` · `docs/GUIA-DE-PRUEBA.html` (r9, U16) · `design-system.md` (§9-undecies) · `docs/diseno/README.md` · `src/pantallas/Sesion.tsx:67-68` | El aviso de un ensayo sin guardar se describía «encima de «Iniciar sesión»» y sale debajo | «en una línea debajo de «Iniciar sesión»» en los seis sitios. Verificado: `git grep` vacío | pagado · texto |
+| **M33** | `docs/MANUAL-DE-USO.md:92-93` · `:773` · `src/pantallas/Sesion.tsx:303-304` | ⌃⌥B «vuelve a acoplar la reunión», también sin sesión y también abajo | Abajo acopla la ventana de delante; arriba, la de la reunión, solo con la sesión iniciada. Verificado: lectura contra `lib.rs:266-297` | pagado · texto |
+| **M34** | `docs/BLUEPRINT.html:403` · `design-system.md` (§9-undecies, «no empezó») | «Si este Mac no transcribe ese idioma, no empieza»: avisa y deja ensayar | El BLUEPRINT lo dice así, y `design-system.md` le da su fila (`franja warn` sin `role="alert"`). Verificado: lectura contra `lib.rs:1290-1366` | pagado · texto |
+| **M35** | `sprints/SPRINT_004-summary.md` (Testing y `/release-check`) · `sprints/SPRINT_004-implementation-log.md` | «`contra-el-mac-de-verdad` 16 (+14 que corre la CI)»: tres de los catorce son `en_vivo_*` y la CI corre 11 | «+14 marcados: 11 los corre la CI; los 3 `en_vivo_*`, a mano». Verificado: el rojo de B9 dice 26 + 1 | pagado · texto |
+| **M36** | `sprints/SPRINT_004-summary.md` (El corte) · `docs/MANUAL-DE-USO.md:446-448` · `docs/BLUEPRINT.html:599` | «La CI corre un ensayo con el motor de voz de verdad», cuando en la CI la respuesta se guarda sin texto | Los tres dicen que el runner no tiene modelos para reconocer voz. Verificado: lectura contra `contra-el-mac-de-verdad.rs:862-867` | pagado · texto |
+| **M37** | `src/i18n/es.ts:945` · `src/i18n/en.ts:826` · `docs/diseno/ensayo.html:107` | «Queda tu respuesta en texto, cifrada» antes de empezar, aunque no guardes | «Si lo guardas, queda…», es y en, literal en la maqueta; fila U14. Verificado: `i18n-fiel-a-la-maqueta` | pagado · texto |
+| **B51** | `src-tauri/src/ensayo/mod.rs:184` · `:695-696` · `src-tauri/src/lib.rs:1158-1160` · `:1307` · `src-tauri/src/contrato.rs:677` · `src/i18n/es.ts:953` · `src/ensayo.ts:147-149` | Comentarios con «solo con auriculares» o «sin auriculares» | «altavoces que la app reconoce». Verificado: `git grep` vacío | pagado · texto |
+| **B52** | `design-system.md:614` · `docs/BLUEPRINT.html:406` · `:626` · `docs/GUIA-DE-PRUEBA.html:203` · `:789` · `:939` · `docs/diseno/posicion.html:48` · `:301` | «solo al iniciar la sesión» y «hasta que haya reunión»: es «con la sesión iniciada» | «solo con la sesión iniciada» en todos. Verificado: `git grep` vacío salvo historial | pagado · texto |
+| **B53** | `src-tauri/src/lib.rs` (`empezar_el_ensayo`) · `src/i18n/es.ts:561` · `en.ts:454` · `docs/diseno/ia.html` · `docs/MANUAL-DE-USO.md:610` · `decisions/019-el-ensayo-codigo-primero.md:63` | «Esta reunión», en IA, sumaba lo de «Enriquecer el banco» al costo de la reunión anterior | El costo de la reunión vuelve a cero al empezar el ensayo, y la cifra se llama «Esta reunión o ensayo». Verificado: `el_ensayo_pone_su_costo_a_cero_antes_del_microfono` | pagado · con su rojo («el ensayo suma su costo al de la reunión anterior») |
+| **B54** | `docs/MANUAL-DE-USO.md:81` · `sprints/SPRINT_004-summary.md` | «probado en vivo con Meet»: fue con la página de prueba de Meet del kit, en Chrome | Dicho así en los tres sitios. Verificado: lectura | pagado · texto |
+| **B55** | `sprints/SPRINT_004-summary.md` (Métricas) | El summary nombraba un test que no existe (`el_ensayo_de_punta_a_punta…`) | `ensayo::pruebas::un_ensayo_entero_con_audio_inventado`. Verificado: `grep` | pagado · texto |
+| **B56** | `sprints/SPRINT_004-summary.md` (`/release-check`, casilla 12) | «la huella, que ahora guarda también la posición»: ya la guardaba | «que ya guardaba posición y tamaño y ahora la escribe también arriba». Verificado: `git show adb2493` | pagado · texto |
+| **B57** | `sprints/SPRINT_004-summary.md` (Deuda) | «se deshace y flota, sin test unitario»: la decisión la prueba `sin_deshacer_dice_lo_que_quedo_movido` | Dicho así. Verificado: lectura | pagado · texto |
+| **B58** | `sprints/SPRINT_004-summary.md` (DoD y la matriz) | «Regla 24» por las protecciones del Mac: en esta casa es la 22 | «Regla 22 (la 24 del kit)». Verificado: lectura | pagado · texto |
+| **B59** | `sprints/SPRINT_004-summary.md` (Decisiones) | «⌃⌥B, la octava tecla con ⌃⌥»: hay nueve atajos | «la octava letra con ⌃⌥ (nueve atajos con ⌃⌥↵)». Verificado: `lib.rs` | pagado · texto |
+| **B60** | `sprints/SPRINT_004-summary.md` (Seguridad) | «los comandos de la franja, solo en la principal»: `la_franja` también está en la banda y el relleno | Dicho así. Verificado: `capabilities.test.ts` | pagado · texto |
+| **B61** | `sprints/SPRINT_004-summary.md` (Qué se construyó) | La fase 5 dejó `design-system.md` v1.15.0, no v1.16.0 | «v1.15.0 (v1.16.0 tras la auditoría)». Verificado: lectura | pagado · texto |
+| **B62** | `sprints/SPRINT_004-summary.md` (Cómo probar) | El arranque sin `ghost` ni la bandeja de prueba, y la página de prueba en vez de una sala de Meet | El arranque de la guía y «una sala tuya de Google Meet en Chrome». Verificado: lectura contra la guía | pagado · texto |
+| **B63** | `src-tauri/src/puerta/mod.rs:9` · `src/puerta.ts:14` | Las cabeceras de la puerta: «en reunión se cierra sola», sin el ensayo | «en reunión o durante un ensayo». Verificado: `grep` | pagado · texto |
+| **B64** | `docs/BLUEPRINT.html:139` · `:626` | El BLUEPRINT decía haber leído el código en `d0e5385` «con los ajustes»: es la Fase 1, sin ajustes | «commit `9adc95c` (la auditoría del S4 pagada y Tauri 2.12)». Verificado: lectura | pagado · texto |
+| **B65** | `src/pantallas/Idioma.tsx:277` | Comentario «Lo que falta, y cuándo llega»: la tarjeta ya no promete cuándo | «Lo que no hace hoy, sin prometer cuándo». Verificado: lectura | pagado · texto |
 
 ## Casilla 5 — campos del contrato sin lector
 

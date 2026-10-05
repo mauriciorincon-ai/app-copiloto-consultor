@@ -44,8 +44,8 @@
   <div class="n" data-para="a-88"><b>Mirada de DECISIÓN 2 (sprint 4) — ARRIBA, de fábrica.</b> La banda vive <b>bajo la barra de menús, junto a la cámara</b>, y la reunión <b>baja y se encoge</b>: su borde de arriba baja hasta la banda y el de abajo no se mueve, así que los controles de Meet siguen donde estaban. El asa está ahora en el borde de abajo de la banda, el que da a la reunión. Al cerrar, la ventana vuelve entera: posición y tamaño. Debajo del escritorio, <b>el criterio de la cámara</b>, escrito.</div>
   <div class="n" data-para="a-200"><b>ARRIBA · ampliada a 200 px.</b> Arrastras el asa hacia abajo y entra la ficha entera; la reunión baja otro tanto. Es para leer, no para hablar: tus ojos se alejan de la cámara lo que mide la banda.</div>
   <div class="n" data-para="a-44"><b>ARRIBA · modo solo audio.</b> 44 px bajo la barra de menús: lo que te está diciendo y de dónde salió. La reunión baja solo eso. <b>La gota (E) sigue abajo a la izquierda</b>, como antes.</div>
-  <div class="n" data-para="a-cliente"><b>ARRIBA · qué ve el cliente si compartes la pantalla entera.</b> La banda está protegida de la captura, así que en su franja el cliente ve el <b>relleno</b>: tu fondo de escritorio, como en D2, ahora bajo la barra de menús. Se lee como una ventana que no llega arriba del todo. Compartiendo solo la ventana de la reunión, no ve ni eso.</div>
-  <div class="n" data-para="a-flota"><b>ARRIBA · sin reunión detectada: la banda flota y no mueve nada.</b> Con la banda arriba la app solo mueve <b>la ventana de la reunión que detectó</b> (Meet en tu navegador, Zoom o Teams), nunca la que tengas delante: mover tu editor porque estaba al frente sería un susto. Hasta que haya reunión, la banda flota encima y lo dice («sin acople»).</div>
+  <div class="n" data-para="a-cliente"><b>ARRIBA · qué ve el cliente si compartes la pantalla entera.</b> La banda está protegida de la captura, así que en su franja el cliente ve el <b>relleno</b>: tu fondo de escritorio, como en D2, ahora bajo la barra de menús. Se lee como una ventana que no llega arriba del todo. Compartiendo solo la ventana de la reunión, no ve ni eso. <b>Con la banda arriba está sin verificar en una llamada real</b> (la mira la q2 de la guía), y por eso su chip dice «Meet · sin verificar».</div>
+  <div class="n" data-para="a-flota"><b>ARRIBA · sin reunión detectada: la banda flota y no mueve nada.</b> Con la banda arriba la app solo mueve <b>la ventana de la reunión que detectó</b> (Meet en tu navegador, Zoom o Teams), nunca la que tengas delante: mover tu editor porque estaba al frente sería un susto. Hasta que inicies la sesión con la reunión abierta, la banda flota encima y lo dice («sin acople»).</div>
   <div class="n" data-para="f"><b>F · modo solo audio, acoplada.</b> 44 px: una línea con lo que está diciendo y de dónde salió. La reunión se recorta solo eso. <b>Es la que elegiste para el modo audio.</b></div>
   <div class="mq-medida">escritorio de referencia 1180 × 720 · tarjeta 380 × 220 · banda 88 px (ampliable a 200) · banda de voz 44 px · gota 44 × 44 · datos sintéticos</div>
 </div>
@@ -160,7 +160,7 @@
       <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
       <div class="cab-b">
         <span class="marca-min"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span></span>
-        <span class="mono" style="color:var(--ink-2)" data-en="a-88"><span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span></span>
+        <span class="mono" style="color:var(--warn)" data-en="a-88"><span lang="es">Meet · sin verificar</span><span lang="en">Meet · not verified</span></span>
         <span class="cliente-b warn" data-en="a-flota"><svg class="ic s relleno"><use href="#i-alert"/></svg><span lang="es">sin acople</span><span lang="en">not docked</span></span>
         <span class="red cero mono"><svg class="ic s"><use href="#i-subir"/></svg>0 B</span>
       </div>
@@ -179,7 +179,7 @@
       <span class="asa" title="arrastra para ajustar las dos a la vez"><i></i></span>
       <div class="cab-b">
         <span class="marca-min"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando · 2 pistas</span><span lang="en">Listening · 2 tracks</span></span>
-        <span class="mono" style="color:var(--ink-2)"><span lang="es">Meet · protegido</span><span lang="en">Meet · protected</span></span>
+        <span class="mono" style="color:var(--warn)"><span lang="es">Meet · sin verificar</span><span lang="en">Meet · not verified</span></span>
         <span class="red cero mono"><svg class="ic s"><use href="#i-subir"/></svg>0 B</span>
       </div>
       <div class="cuerpo-b">
@@ -298,7 +298,7 @@
       <tr><td><b>ARRIBA · 88 acoplada</b></td><td class="si">nada: la reunión baja y se encoge</td><td><b>de fábrica desde el sprint 4.</b> La ficha a 2–3 cm de la cámara; los controles de la reunión, intactos</td><td>mueve la ventana de la reunión (solo esa) y la devuelve entera al cerrar</td></tr>
       <tr><td><b>ARRIBA · ampliada</b></td><td class="si">nada</td><td>la ficha entera, cerca de la cámara</td><td>200 px menos de reunión, y tus ojos más lejos de la lente</td></tr>
       <tr><td><b>ARRIBA · solo audio</b></td><td class="si">nada</td><td>44 px bajo la barra de menús</td><td>—</td></tr>
-      <tr><td><b>ARRIBA · sin reunión</b></td><td class="mas">lo de arriba de la ventana de delante</td><td>no mueve ninguna ventana que no sea la de la reunión</td><td>tapa hasta que haya reunión</td></tr>
+      <tr><td><b>ARRIBA · sin reunión</b></td><td class="mas">lo de arriba de la ventana de delante</td><td>no mueve ninguna ventana que no sea la de la reunión</td><td>tapa hasta que inicies la sesión con la reunión</td></tr>
       <tr><td><b>E · gota (solo audio)</b></td><td class="si">nada</td><td>44 × 44: lo mínimo posible</td><td>no dice de dónde salió lo que oyes; queda como alternativa</td></tr>
     </tbody>
   </table>

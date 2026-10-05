@@ -50,7 +50,9 @@ externa y la pantalla completa no se ha probado.
 
 **Lo que cuesta:** `main` tiene un ensayo que el usuario no ha usado con su voz. **El riesgo real es bajo:** la
 app no se distribuye (binario sin firmar, solo en este Mac). La CI corre la sesión efímera entera con un ensayo
-dentro, con el motor de voz de verdad. Lo que falle se arregla por PR normal.
+dentro —el audio del kit por el oído y el motor de voz de verdad—, pero el runner no tiene modelos para
+reconocer voz y la respuesta se guarda sin texto: prueba que se guarda cifrado y sin nada del cliente, no la
+transcripción. Lo que falle se arregla por PR normal.
 
 ## Qué se construyó
 
@@ -61,17 +63,17 @@ dentro, con el motor de voz de verdad. Lo que falle se arregla por PR normal.
 | 2 | **El banco de preguntas:** seis reglas y diez objeciones con fuente (`data/ensayo/`), `ensayo/banco.rs` puro y protegido, el acento del modelo con bóveda y `fundar` (`ensayo/enriquecer.rs`), «Enriquecer el banco» en IA, apagado. Kit v3 | `src-tauri/src/ensayo/` · `data/ensayo/` · `docs/kit-de-prueba/ensayo.json` |
 | 3 | **La sesión de ensayo:** máquina de estados pura con el reloj por parámetro, el oído solo del micrófono y sordo mientras la voz lee, la evaluación determinista, la pantalla `Ensayo.tsx` y el corte de 12 piezas | `ensayo/{sesion,oido,evaluacion,mod}.rs` · `src/pantallas/Ensayo.tsx` |
 | 4 | **Resultado, progreso y lo que queda:** enmienda 4 del ADR 015; `ensayos/` cifrado (`ensayos.rs`, molde de la bandeja); el vencimiento por launchd; el informe, exportar, el progreso y borrar; Honestidad cuenta el ensayo; la sesión efímera en marcha con un ensayo dentro | `ensayo/guardado.rs` · `ensayos.rs` · `reunion.rs` · `Honestidad.tsx` |
-| 5 | Manual · guía v6 · kit v3 en la guía · `design-system.md` v1.16.0 · `design-sync/` con dos tarjetas nuevas · nota del brochure | `docs/` · `design-system.md` · `design-sync/` |
-| Auditoría | **82 hallazgos** de cuatro auditores independientes, todos pagados (§ Auditoría), y la segunda casilla 4 con otro auditor | `f3dd820` · ⟨commit de la segunda pasada⟩ |
+| 5 | Manual · guía v6 · kit v3 en la guía · `design-system.md` v1.15.0 (v1.16.0 tras la auditoría) · `design-sync/` con dos tarjetas nuevas · nota del brochure | `docs/` · `design-system.md` · `design-sync/` |
+| Auditoría | **82 hallazgos** de cuatro auditores independientes y **28 más** de la segunda casilla 4, con otro auditor: los **110**, pagados (§ Auditoría) | `f3dd820` · el commit del cierre |
 | `/release-check` | `pnpm tauri build` se negaba a construir: Tauri en npm (2.12) y en Rust (2.11) no casaban. Crates subidos y un gate nuevo, `tauri-a-la-par` (§ Bugs) | `src-tauri/Cargo.lock` · `tests/unit/tauri-a-la-par.test.ts` |
 
 ## DoD — checklist
 
 - **Testing** ✅
-  - Vitest **455** (54 archivos), con cobertura: 92,6 % de sentencias y 81,4 % de ramas.
-  - `AG_SIN_HARDWARE=1 cargo test --locked`: lib **575** (+2 ignorados) · `contra-el-mac-de-verdad` **16** (+14 que
-    corre la CI) · `ghost` **5** · `puerta` **14**. Ni un aborto del centinela.
-  - e2e **⟨N⟩** en la CI, con axe.
+  - Vitest **459** (54 archivos), con cobertura: 92,6 % de sentencias y 81,5 % de ramas.
+  - `AG_SIN_HARDWARE=1 cargo test --locked`: lib **576** (+2 ignorados) · `contra-el-mac-de-verdad` **16** (+14
+    marcados: 11 los corre la CI; los 3 `en_vivo_*`, a mano) · `ghost` **5** · `puerta` **14**. Ni un aborto del centinela.
+  - e2e **288** (+2 saltadas), con axe, sin flaky.
   - **El banco:** kit v3, precisión y recall 1,000 por regla en los dos casos (es y en). Es un piso, no una
     prueba de calidad: las reglas y el kit los escribió el mismo constructor, y el LEEME lo dice.
   - **La evaluación:** 15 fichas, precisión 1,000 y recall 0,714. Dos respuestas fallan a propósito: es lo que
@@ -92,7 +94,8 @@ dentro, con el motor de voz de verdad. Lo que falle se arregla por PR normal.
   el log lo dice sin contenido (B21).
 - **Seguridad** ✅
   - `pnpm audit` limpio · `cargo audit` en la CI · gitleaks en cada commit, y el hook falla cerrado.
-  - Los comandos del ensayo y de la franja, solo en la ventana principal (`SENSIBLES`).
+  - Los comandos del ensayo, cambiar la banda de borde y el aviso de arriba, solo en la ventana principal
+    (`SENSIBLES`); `la_franja`, de solo lectura, también en la banda y el relleno.
   - `ensayos/` cifrado con la llave de tus notas, 600 en 700, dentro del inventario. En marcha, cada archivo de
     ahí se abre como ensayo y sin la canaria; un intruso es rojo.
   - El acento del modelo pasa por la bóveda y solo con el API que enciendes tú.
@@ -101,7 +104,8 @@ dentro, con el motor de voz de verdad. Lo que falle se arregla por PR normal.
 - **Performance** ✅
   - La siguiente pregunta, **< 1 s** tras Enter (prueba de punta a punta sin Mac).
   - Evaluar una respuesta, **4 ms** en el kit (presupuesto 500 ms).
-  - Acople arriba **228 ms** y devolución **123 ms**, medidos en vivo con Meet (presupuesto 300 ms).
+  - Acople arriba **228 ms** y devolución **123 ms**, medidos en vivo con la página de prueba de Meet del kit,
+    en Chrome (presupuesto 300 ms).
   - Binario: § Métricas.
 - **UX/A11y** ✅
   - axe en los estados nuevos, dos temas · teclado (teclas de ventana, sin repetir al mantener, sin robar Enter a
@@ -120,12 +124,14 @@ dentro, con el motor de voz de verdad. Lo que falle se arregla por PR normal.
   íntegras. Prefijo `ag-s4-`. ⭐ **95**, ~179 min (S1 33 · S2 28 · S3 23 · **S4 11**). El ⭐⭐ del H1, intacto:
   9 paradas, ~20 min. Acumulado del H2: **11 ⭐**, cada una con su candidatura (6 sí · 5 no). Formas y textos del
   H2: 18 filas, ~11 min.
-- **ADRs** ✅ — **019** (y su enmienda 1, de la auditoría: con una videollamada, solo con auriculares) · **004**,
-  enmienda 1 · **002**, enmienda 8 · **015**, enmienda 4. Cada uno antes de su fase.
-- **Regla 24 (las protecciones del Mac)** ✅ con corte — matriz de una fila y «sí» para la corrida de la fase 1
+- **ADRs** ✅ — **019** (y su enmienda 1, de la Fase 2 de la auditoría: con una videollamada abierta, no empieza
+  por altavoces que la app reconoce) · **004**, enmienda 1 · **002**, enmienda 8 · **015**, enmienda 4. Cada uno
+  antes de su fase, salvo la enmienda 1 del 019.
+- **Regla 22 (la 24 del kit: las protecciones del Mac)** ✅ con corte — matriz de una fila y «sí» para la corrida de la fase 1
   (§ abajo). Las filas 2 a 5 se enseñaron y no se corrieron (§ El corte).
-- **`/audita-sprint` v1.36.0** ✅ — cuatro auditores independientes; 82 hallazgos, los 82 pagados; casilla 8
-  limpia; decisiones en llano; la segunda casilla 4, con otro auditor, sobre el diff entero y este summary.
+- **`/audita-sprint` v1.36.0** ✅ — cuatro auditores independientes; 82 hallazgos en la Fase 1 y 28 en la segunda
+  casilla 4, hecha por otro auditor sobre el diff entero y este summary: los 110, pagados. Casilla 8 limpia;
+  decisiones en llano.
 - **Brochure** — en `main` no hay `docs/BROCHURE.html` ni `docs/brochure-export.json`: llega por su orden aparte,
   tras el Acto 1 del H1 (regla 13). Cuando se produzca, ya trae el ensayo y la banda arriba.
 
@@ -135,8 +141,8 @@ dentro, con el motor de voz de verdad. Lo que falle se arregla por PR normal.
 |---|---|---|
 | Banco por reglas | precisión y recall por regla, declarados | **1,000 y 1,000** en las seis reglas, Páramo Azul (es) y Northwind (en); el banco entero en 5,3 y 4,6 ms. Es un piso (§ DoD) |
 | La evaluación | ≤ 500 ms | **4 ms** la más lenta (buscar + armar + evaluar); precisión 1,000 y recall 0,714 sobre 15 fichas |
-| Siguiente pregunta | ≤ 1 s | **< 1 s** tras Enter (`el_ensayo_de_punta_a_punta…`) |
-| Acople arriba | ≤ 300 ms | **228 ms** al acoplar y **123 ms** al devolver, en vivo con Meet en Chrome (fase 1) |
+| Siguiente pregunta | ≤ 1 s | **< 1 s** tras Enter (`ensayo::pruebas::un_ensayo_entero_con_audio_inventado`) |
+| Acople arriba | ≤ 300 ms | **228 ms** al acoplar y **123 ms** al devolver, en vivo con la página de prueba de Meet del kit, en Chrome (fase 1) |
 | WER | `manual` | **no se midió en el S4**: su corrida local iba con la corrida en vivo de la fase 4, que se aplazó. Sin medida, no se afirma ni regresión ni no regresión (B6) |
 | Peso del binario | anotado | ejecutable de release **13,42 MB** (S3: 12,79 → **+0,63 MB**) · `ghost` 0,48 MB · `.app` 14,0 MB · imagen comprimida 6,77 MB (S3: 6,27) — `pnpm tauri build --bundles app --no-sign`, 2026-10-04, con Tauri 2.12 |
 | ⭐ que deja el sprint | ~6 | **11** (desviación 24, y r12 de la auditoría) |
@@ -149,7 +155,7 @@ con su porqué en la guía. El ⭐⭐ del H2 se arma en el S6. El ⭐⭐ del H1 
 
 | Contrapeso | Evidencia (archivo, cuenta medida, corrida) |
 |---|---|
-| Pasada de capturas del builder | **284 encuadres** producto contra maqueta, dos temas y dos idiomas · `docs/fidelidad/S4-cuaderno.html` · `S4-banda.html` · `S4-banda-arriba.html` · `pnpm fidelidad` 2026-10-04, tras el último cambio de interfaz: ninguno sobre el 0,15 %, **ningún desborde** (cazó uno en la auditoría: el aviso de Sesión salía 37 px). **Leídos como imagen: 18 de producto del S4**, 6 en las fases 3 y 4 y 12 en el `/release-check` (B10), uno por bloque: preparar, preguntando, respondiendo, evaluada, progreso, borrar, sin corpus, no empezó, el aviso de Sesión, «lo que salió» en IA, y la banda arriba a 88 y 200. Más las 28 de `ensayo.html` en la fase 0 |
+| Pasada de capturas del builder | **284 encuadres** producto contra maqueta, dos temas y dos idiomas · `docs/fidelidad/S4-cuaderno.html` · `S4-banda.html` · `S4-banda-arriba.html` · `pnpm fidelidad` 2026-10-04, tras el último cambio de interfaz: ninguno sobre el 0,15 %, **ningún desborde** (cazó uno en la auditoría: el aviso de Sesión salía 37 px). **Leídos como imagen: 18 de producto del S4**, 6 en las fases 3 y 4 y 12 en el `/release-check` (B10), uno por bloque: preparar, preguntando, respondiendo, evaluada, progreso, borrar, sin corpus, no empezó, el aviso de Sesión, «lo que salió» en IA, y la banda arriba a 88 y 200. Más las 28 de `ensayo.html` en la fase 0, y tres tras la segunda pasada de la casilla 4 (la banda arriba a 88 y 200, y Sesión en marcha), ya con el chip «Meet · sin verificar» |
 | e2e de `reduced-motion` | **62 pruebas** (15 encuadres × 2 modos + la forma del árbol, en 2 proyectos) · `tests/e2e/reduced-motion.spec.ts` · job `e2e`. El S4 sumó el reloj, la cuenta de preguntas (M17), las cifras, la pregunta y la tabla del progreso. **M17:** el gate pasaba con la cuenta invisible; ahora multiplica la opacidad de la cadena entera |
 
 ## Las miradas de DECISIÓN
@@ -168,7 +174,7 @@ con su porqué en la guía. El ⭐⭐ del H2 se arma en el S6. El ⭐⭐ del H1 
 
 **No es una aprobación, y se dice:** van al gate del MVP del H2.
 
-## La regla 24: lo que tocó el Mac, con su matriz y su «sí»
+## La regla 22: lo que tocó el Mac, con su matriz y su «sí»
 
 | Fila | Qué | Matriz | «Sí» | Corrida |
 |---|---|---|---|---|
@@ -188,15 +194,17 @@ Finder).
   salir por los altavoces en el ensayo, con el micrófono sordo; 2,5 s o Enter; los ensayos vencen como tus
   notas; el progreso pide el desbloqueo; la puerta se cierra en el ensayo; la maniobra §10 pasa al S5.
 - **Las seis decisiones de la auditoría** (el usuario, 2026-10-04, la opción recomendada en todas):
-  - con una videollamada abierta, el ensayo empieza solo con auriculares, de cable, Bluetooth o USB (ADR 019,
-    enmienda 1). Se aplicó con la regla que la voz ya usa en reunión, no con el ajuste literal, que dejaba
-    fuera los AirPods;
+  - con una videollamada abierta, el ensayo no empieza si el sonido sale por los altavoces del Mac, HDMI,
+    DisplayPort o AirPlay; con auriculares de cable sí, y por Bluetooth o USB también, porque la app no los
+    distingue de un altavoz (ADR 019, enmienda 1). Se aplicó con la regla que la voz ya usa en reunión, no con
+    el ajuste literal, que dejaba fuera los AirPods;
   - la guía pide ⌃⌥B dos veces con Chrome delante; la app acopla abajo como en el H1;
   - arriba solo se acopla con la sesión iniciada;
   - Sesión avisa de un ensayo terminado sin guardar;
   - la protección se dice «verificada con la banda abajo; arriba, y en Zoom y Teams, sin verificar»;
   - «Lo que llega en el H2» pasa a «Lo que no hace hoy», sin chip.
-- **⌃⌥B**, la octava tecla con ⌃⌥ (no había ⌃⌥K para el ensayo: sus teclas son de la ventana).
+- **⌃⌥B**, la octava letra con ⌃⌥ (nueve atajos con ⌃⌥↵; no había ⌃⌥K para el ensayo: sus teclas son de la
+  ventana).
 - **Los crates de Tauri suben a 2.12** para casar con npm (desviación 32).
 - El resto, en la lista de desviaciones de la bitácora (32).
 
@@ -224,7 +232,9 @@ Finder).
 
 - **Bien:**
   - **Cuatro auditores independientes** encontraron 82 hallazgos, cuatro altos entre ellos, que la suite en
-    verde no veía. Ocho de los de interfaz los confirmaron con sondas medidas, no razonadas.
+    verde no veía. Ocho de los de interfaz los confirmaron con sondas medidas, no razonadas. **El quinto**, en
+    la segunda casilla 4, encontró 28 frases más: cuatro altas, y la que más pesaba era un chip que
+    contradecía tu decisión M20 en la misma pantalla.
   - **La corrida en vivo de la fase 1** cazó lo que ningún test sin Mac podía ver: Chrome tarda en aplicar.
   - **El centinela de la regla 25** convirtió una costumbre en mecánica, y su primera corrida encontró un test
     que llevaba dos sprints tocando la voz del sistema.
@@ -252,7 +262,7 @@ Finder).
 |---|---|---|
 | La corrida en vivo del ensayo (filas 2 a 5) | decisión del usuario (§ El corte) | ⭐ del MVP; se recomienda antes del S5 |
 | El WER del S4 | iba con esa corrida | `manual`, en la próxima corrida local |
-| La banda arriba con Zoom, Teams, una pantalla externa y la pantalla completa; «si macOS no la deja, se deshace y flota» sin test unitario (es nativo) | solo se ve en vivo | ⭐ (q5) |
+| La banda arriba con Zoom, Teams, una pantalla externa y la pantalla completa; «si macOS no la deja, se deshace y flota»: la decisión la prueba `sin_deshacer_dice_lo_que_quedo_movido`, y que macOS lo rechace de verdad solo se ve en vivo | solo se ve en vivo | ⭐ (q5) |
 | Las FORMA y TEXTO del S4, no vistas (18 filas) | regla 10, tres clases de mirada | gate del MVP del H2 |
 | El resto de la maniobra §10 | declarada en la fase 0 | S5 |
 | Firma y notarización | sin firma no se puede | H2 (G-Release) |
@@ -282,7 +292,27 @@ vigila `auditoria-con-sitio`).
 - **Casilla 6:** la guía heredada contra la arquitectura (A4, M25, B40–B44), pagada.
 - **Casilla 7:** los idiomas (A2) y el tope de fábrica (M18), que pasan a ser datos.
 - **Casilla 8:** limpia. Todo lo que se corrió contra el Mac tuvo su matriz y su «sí».
-- **La segunda casilla 4** ⟨resultado⟩.
+- **La segunda casilla 4 (2026-10-04)**, con **otro auditor independiente**, en solo lectura y sin tocar el Mac,
+  sobre el diff entero `adb2493..` con el árbol de trabajo y **este summary dentro**. Barrió unas 300
+  coincidencias por promesa aplazada y siguió cada pago hasta sus frases hermanas. **28 frases falsas hoy: 4
+  altas · 9 medias · 15 bajas** (A5–A8 · M29–M37 · B51–B65), **las 28 pagadas**:
+  - **A5:** con la banda arriba, la banda decía «Google Meet · protegido» y Sesión «Protección verificada»,
+    encima de la frase de M20 que dice «sin verificar». Ahora el chip mira el borde, en la app y en la maqueta,
+    con su rojo (dos);
+  - **A6–A8, M29–M31:** la regla de los auriculares escrita como «solo con auriculares» en la interfaz, el
+    manual, el BLUEPRINT, la guía y los ADR. Por Bluetooth o USB el ensayo empieza, y ahora se dice así, con
+    el aviso de no ensayar con una llamada que suene por un altavoz;
+  - **B53:** «Esta reunión», en IA, sumaba lo de «Enriquecer el banco» al costo de la reunión anterior. El
+    costo vuelve a cero al empezar el ensayo y la cifra se llama «Esta reunión o ensayo», con su rojo;
+  - **las medias:** el aviso de Sesión «encima» de «Iniciar sesión» (sale debajo), ⌃⌥B que «vuelve a acoplar
+    la reunión» también sin sesión, el idioma que «no empieza» (avisa y deja ensayar), «16 + 14» en la CI (son
+    11), la CI que «corre el ensayo con el motor de voz» (sin modelos, guarda la respuesta sin texto) y «Queda
+    tu respuesta en texto» antes de guardar;
+  - **doce estaban, en todo o en parte, en este summary** (M30, M35, M36 y B54–B62): un test con un nombre que
+    no existe, «regla 24» por la 22, la octava «tecla», la huella que «ahora» guarda la posición, la versión del
+    design system de la fase 5, el arranque de «Cómo probar»…
+- **Cuenta final: 110 hallazgos — 0 críticos · 8 altos · 37 medios · 65 bajos. Los 110, pagados: 47 con su
+  rojo antes del verde y 63 de texto o declaración. Ninguno como deuda.**
 
 ## `/release-check` (perfil escritorio)
 
@@ -292,18 +322,18 @@ tabla.
 
 | # | Casilla | Resultado |
 |---|---|---|
-| 1 | Tests | ✅ vitest 455 con cobertura (92,6 % de sentencias) · e2e ⟨N⟩ en la CI, cero flaky · `cargo test --locked` en `build-escritorio` (lib 575 · `contra-el-mac-de-verdad` 16 + 14 con `--include-ignored --skip en_vivo_` · `puerta` 14 · `ghost` 5) · **regla 25:** `cargo test` a secas no abre hardware; el centinela `AG_SIN_HARDWARE` y `cargo-test-sin-hardware` lo vigilan |
+| 1 | Tests | ✅ vitest 459 con cobertura (92,6 % de sentencias) · e2e 288 (+2 saltadas), cero flaky · `cargo test --locked` en `build-escritorio` (lib 576 · `contra-el-mac-de-verdad` 16 + 11 con `--include-ignored --skip en_vivo_` · `puerta` 14 · `ghost` 5) · **regla 25:** `cargo test` a secas no abre hardware; el centinela `AG_SIN_HARDWARE` y `cargo-test-sin-hardware` lo vigilan |
 | 2 | Tipos y lint | ✅ `pnpm typecheck` · `pnpm lint` · `cargo clippy --locked --all-targets -- -D warnings` limpio en local (con Tauri 2.12) y en la CI · tokens vetados · reduced-motion (`tests/e2e/reduced-motion.spec.ts`, 62) |
-| 3 | Build del binario | ✅ tras arreglarlo · `pnpm build` · `cargo check --locked` en la CI · **`manual`:** `pnpm tauri build --bundles app --no-sign` en local, 2026-10-04. **La primera vez se negó**: «Found version mismatched Tauri packages» (`tauri` 2.11.6 contra `@tauri-apps/api` 2.12.1; `tauri-plugin-opener` 2.5.5 contra 2.7.0, de dependabot #11). Crates subidos (desviación 32) y gate `tauri-a-la-par`, con su rojo. Después: ejecutable **13,42 MB** (S3: 12,79 → **+0,63 MB**, por el ensayo, la banda arriba y Tauri 2.12, sin separar) · `ghost` 0,48 MB, dentro del `.app` · `.app` 14,0 MB · imagen comprimida **6,77 MB** (S3: 6,27, medida igual con `hdiutil create -format UDZO`). El `.dmg` de Tauri no se construyó: su paso usa AppleScript sobre Finder y puede abrir un aviso de Automatización (regla 22). Firma omitida a propósito (`--no-sign`: sin Llavero). **`--release`:** `cargo test --release --locked --lib --test puerta --test ghost` en verde (575 · 14 · 5). `tauri.conf.json` e `Info.plist` sin cambios. Las capabilities ganan 17 comandos en la ventana principal (13 del ensayo, la franja, arriba o abajo, el aviso y «Enriquecer el banco») y uno en la banda y en el relleno (`la_franja`, solo de lectura), vigilados por `capabilities.test.ts` |
+| 3 | Build del binario | ✅ tras arreglarlo · `pnpm build` · `cargo check --locked` en la CI · **`manual`:** `pnpm tauri build --bundles app --no-sign` en local, 2026-10-04. **La primera vez se negó**: «Found version mismatched Tauri packages» (`tauri` 2.11.6 contra `@tauri-apps/api` 2.12.1; `tauri-plugin-opener` 2.5.5 contra 2.7.0, de dependabot #11). Crates subidos (desviación 32) y gate `tauri-a-la-par`, con su rojo. Después: ejecutable **13,42 MB** (S3: 12,79 → **+0,63 MB**, por el ensayo, la banda arriba y Tauri 2.12, sin separar) · `ghost` 0,48 MB, dentro del `.app` · `.app` 14,0 MB · imagen comprimida **6,77 MB** (S3: 6,27, medida igual con `hdiutil create -format UDZO`). El `.dmg` de Tauri no se construyó: su paso usa AppleScript sobre Finder y puede abrir un aviso de Automatización (regla 22). Firma omitida a propósito (`--no-sign`: sin Llavero). **`--release`:** `cargo test --release --locked --lib --test puerta --test ghost` en verde (575 · 14 · 5, antes del test de B53 de la segunda pasada). `tauri.conf.json` e `Info.plist` sin cambios. Las capabilities ganan 17 comandos en la ventana principal (13 del ensayo, la franja, arriba o abajo, el aviso y «Enriquecer el banco») y uno en la banda y en el relleno (`la_franja`, solo de lectura), vigilados por `capabilities.test.ts` |
 | 4 | Permisos TCC | ⚠️ Ningún permiso nuevo: el ensayo usa el micrófono ya concedido, y el acople, Accessibility. **Lo nuevo con la app viva —el micrófono fuera de reunión, el Llavero con `ensayos/`, launchd con tus ensayos y el desbloqueo— no se ha visto:** corte declarado, al ⭐ del MVP. La app arranca y se usa sin permisos (S1–S3); sin micrófono, el ensayo dice «El micrófono no se abrió» |
 | 5 | Ventana protegida | ✅ `content_protected` sin cambios: la banda siempre, el cuaderno en sesión. **Con la banda arriba no se ha mirado al compartir pantalla**, y la app lo dice («verificado… con la banda abajo; con la banda arriba… sin verificar», M20). La ⭐ q2 lo mira |
 | 6 | No persistencia | ✅ `pnpm verify:ephemeral` estático con `ensayo/` protegido · en marcha en la CI con un ensayo dentro: `ensayos/` se descifra, sin la canaria, y un intruso es rojo · fuga inyectada vigente · canaria y **término del ensayo** en el log (rojo de B9 en la CI, PR #14) · contador en 0 B en modo local, y a cero al empezar un ensayo (B27) |
-| 7 | Seguridad | ✅ `pnpm audit --audit-level high` limpio · `cargo audit` en la CI sobre el `Cargo.lock` nuevo ⟨resultado⟩ · gitleaks · CSP sin cambios · capabilities por ventana (casilla 3) · `AXPosition` se escribe en un solo sitio |
+| 7 | Seguridad | ✅ `pnpm audit --audit-level high` limpio · `cargo audit` en la CI sobre el `Cargo.lock` nuevo (`9adc95c`): **sin vulnerabilidades**, y los avisos bajan de 10 a 5. Tauri 2.12 quitó los cinco `unic-*` sin mantenimiento; quedan `lru` y `glib` *unsound* (deuda del S3), `proc-macro-error` y `ttf-parser` sin mantenimiento, y `yoke-derive` retirado de crates.io. Ninguno nuevo · gitleaks · CSP sin cambios · capabilities por ventana (casilla 3) · `AXPosition` se escribe en un solo sitio |
 | 8 | Observabilidad | ✅ metadata-only: ni la pregunta, ni la respuesta, ni el cliente en el log (término plantado); el fallo del proveedor se loguea sin contenido |
 | 9 | A11y y diseño | ✅ axe en los estados nuevos, dos temas · teclado · `design-system.md` v1.16.0 y `design-sync/` regenerado, con su espejo en verde · **`scrollHeight`:** `pnpm fidelidad`, 284 encuadres, sin desbordes (cazó uno en la auditoría, arreglado) |
 | 10 | Documentación y cero enlaces | ✅ manual y guía v6 al día; summary en el PR · barrido `git grep -nE "vercel[.]app\|workers[.]dev\|pages[.]dev" -- ':!pnpm-lock.yaml'` vacío tras el último `git add`; ningún enlace de descarga del binario |
 | 11 | Checks del PR | ✅ `quality` · `e2e` · `build-escritorio` en `success` propio en cada push (el del último commit se lee antes de entregar) |
-| 12 | El disco en runtime | ✅ inventario (`Permitido` de `contra-el-mac-de-verdad.rs` y el BLUEPRINT): lo del S3, más **`ensayos/`** (cifrados, 600 en 700, con su vencimiento en la lista de launchd), las preferencias nuevas (`posicionDeLaBanda`, `avisoDeArribaVisto`, `enriquecerElBanco`) y la huella del acople, que ahora guarda también la posición. Nada fuera de la lista, y el gate en marcha lo demuestra |
+| 12 | El disco en runtime | ✅ inventario (`Permitido` de `contra-el-mac-de-verdad.rs` y el BLUEPRINT): lo del S3, más **`ensayos/`** (cifrados, 600 en 700, con su vencimiento en la lista de launchd), las preferencias nuevas (`posicionDeLaBanda`, `avisoDeArribaVisto`, `enriquecerElBanco`) y la huella del acople, que ya guardaba posición y tamaño y ahora la escribe también arriba (ADR 004, enmienda 1: no cambia de versión). Nada fuera de la lista, y el gate en marcha lo demuestra |
 
 **Decisión: MERGE OK con el corte declarado**, en cuanto la CI del último push cierre en verde.
 
@@ -316,13 +346,13 @@ tabla.
 
 ## Cómo probar
 
-1. Arranca con `pnpm tauri dev`.
+1. Arranca con `pnpm ghost && AG_BANDEJA_DE_PRUEBA=1 pnpm tauri dev` (la r9 usa `ghost`).
 2. Abre `docs/GUIA-DE-PRUEBA.html` (doble clic) y elige el filtro **«⭐ del ciclo H2»**: los bloques Q (la banda
    arriba) y R (el ensayo). La caja **«Los avisos de macOS que vas a ver»** dice cada aviso que puede salir;
    cualquier otro, deniégalo.
 3. Hace falta:
    - auriculares;
-   - `docs/kit-de-prueba/pantalla/meet-de-prueba.html` abierta en Chrome;
+   - una sala tuya de Google Meet en Chrome (la q2 comparte pantalla en ella; para la r12 sirve también Zoom);
    - una propuesta y una ficha de cliente en tu corpus (o las del kit).
 
 Automático: `pnpm test` · `pnpm test:e2e` · `cd src-tauri && AG_SIN_HARDWARE=1 cargo test` (lo marcado

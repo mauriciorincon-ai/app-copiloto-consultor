@@ -674,7 +674,7 @@ pub fn muestras() -> Vec<Muestra> {
         m("NO_EMPEZO_MICROFONO", "NoEmpezo", "./ensayo", &crate::ensayo::NoEmpezo::Microfono {
             porque: crate::capture::PorQueNoAbrio::SinPermisoDelMicrofono,
         }),
-        // Con una videollamada abierta, solo con auriculares (auditoría del S4, A1).
+        // Con una videollamada abierta, no por altavoces que la app reconoce (auditoría del S4, A1).
         m("NO_EMPEZO_VIDEOLLAMADA", "NoEmpezo", "./ensayo", &crate::ensayo::NoEmpezo::Videollamada),
         m("NO_EMPEZO_NO_SE_SABE_SI_HAY_LLAMADA", "NoEmpezo", "./ensayo", &crate::ensayo::NoEmpezo::NoSeSabeSiHayLlamada),
         // Lo que el modelo no sumó, con sus dos porqués nuevos (auditoría del S4, B22).

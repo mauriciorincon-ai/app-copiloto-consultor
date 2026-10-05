@@ -1156,8 +1156,8 @@ fn locale_de_la_app<R: tauri::Runtime>(app: &tauri::AppHandle<R>, idioma: ensayo
 
 /// **Lo que el ensayo necesita de la app**: la voz de siempre, el corpus de siempre y la ventana
 /// principal. La voz se usa **sin el candado de los auriculares** (`habla::cabe_decirla`): ese candado
-/// es de la reunión, donde el cliente oiría; el ensayo no empieza con una videollamada abierta sin
-/// auriculares (`ensayo::llamada_sin_auriculares`, auditoría del S4, A1), y el micrófono está sordo
+/// es de la reunión, donde el cliente oiría; el ensayo no empieza con una videollamada abierta y el
+/// sonido por altavoces que la app reconoce (`ensayo::llamada_sin_auriculares`, auditoría del S4, A1), y el micrófono está sordo
 /// mientras habla (ADR 019 §6.3). El segundo campo es el locale del ensayo (A2): la voz lo usa si tiene
 /// una para él, y si no, la de fábrica de ese idioma.
 struct MundoDeLaApp(tauri::AppHandle, String);
@@ -1304,8 +1304,8 @@ fn empezar_el_ensayo(
     if escuchando || cuaderno {
         return Err(ensayo::NoEmpezo::EnReunion);
     }
-    // **Con una videollamada abierta, solo con auriculares** (auditoría del S4, A1; decisión del usuario del
-    // 2026-10-04). Sin sesión de Angel Ghost no hay pista del sistema contra la que marcar el eco: con los
+    // **Con una videollamada abierta, no por altavoces que la app reconoce** (auditoría del S4, A1; decisión del
+    // usuario del 2026-10-04). Sin sesión de Angel Ghost no hay pista del sistema contra la que marcar el eco: con los
     // altavoces, tu micrófono oiría a la otra parte y lo guardaría como tu respuesta, y la llamada oiría la
     // voz que lee tu propuesta.
     if let Some(no) = ensayo::llamada_sin_auriculares(&sesion::ahora(), capture::nativo::salida_de_audio().puede_haber_eco()) {
@@ -1341,6 +1341,11 @@ fn empezar_el_ensayo(
     // **Un ensayo nuevo: su contador de red empieza de cero** (auditoría del S4, B27), como el de una reunión:
     // «Ensayando · N» y Honestidad contaban los bytes de la reunión anterior.
     red::reiniciar();
+    // **Y su costo** (segunda pasada de la casilla 4 del S4, B53): «Esta reunión o ensayo», en IA, sumaba lo
+    // de «Enriquecer el banco» a lo que costó la reunión anterior.
+    if let Ok(mut u) = app.state::<LaSintesis>().reunion_usd.lock() {
+        *u = 0.0;
+    }
     let jerga = diccionario_de_la_sesion(&ruta_del_diccionario(&app), &clientes_del_corpus(el_corpus.inner()));
     let oido = ensayo::oido::Oido::del_microfono(&locale, stt::motor_de_la_casa(), jerga).map_err(|e| {
         println!("[ensayo] el micrófono no se abrió: {e}");
@@ -4208,6 +4213,17 @@ mod pruebas_de_la_auditoria_del_s4 {
         let micro = concat!("Oido::", "del_microfono(");
         assert!(antes(c, concat!("llamada_sin_", "auriculares("), micro), "el micrófono se abre sin mirar si hay una videollamada");
         assert!(antes(c, concat!("red::", "reiniciar()"), micro), "el ensayo hereda los bytes de la reunión anterior");
+    }
+
+    /// **B53** (segunda pasada de la casilla 4): el costo de «Esta reunión o ensayo» empieza de cero con el
+    /// ensayo, antes de abrir el micrófono, como el de una reunión.
+    #[test]
+    fn el_ensayo_pone_su_costo_a_cero_antes_del_microfono() {
+        let c = cuerpo_de(concat!("\nfn empezar_el_", "ensayo("));
+        assert!(
+            antes(c, concat!("reunion_", "usd.lock()"), concat!("Oido::", "del_microfono(")),
+            "el ensayo suma su costo al de la reunión anterior"
+        );
     }
 
     /// **A3**: un cambio de borde a la vez, y «el otro borde» se calcula con el turno tomado. Solo

@@ -65,7 +65,7 @@ export function Sesion({
   radarDeMuestra?: boolean;
   /**
    * Hay un ensayo terminado que no guardaste (auditoría del S4, M10): «Iniciar sesión» lo descarta, así que
-   * se dice antes, encima del botón.
+   * se dice antes, en una línea bajo el botón (en el sitio de la promesa del corte).
    */
   ensayoSinGuardar?: boolean;
   /** Fuera de Tauri, el estado de `sesion.html` que pide el arnés de fidelidad por la URL. */
@@ -194,7 +194,7 @@ export function Sesion({
             }}
           />
         ) : (
-          <LaReunion reunion={reunion} />
+          <LaReunion reunion={reunion} arriba={franja.borde === "arriba"} />
         )}
 
         <div className="grid-2">
@@ -300,8 +300,9 @@ export function Sesion({
 }
 
 /**
- * **«La banda: arriba · abajo»** (sprint 004, `sesion.html` · sprint 4). Elegir suelta la reunión, mueve
- * la banda y su relleno al otro borde y vuelve a acoplar; `⌃⌥B` hace lo mismo desde cualquier sitio.
+ * **«La banda: arriba · abajo»** (sprint 004, `sesion.html` · sprint 4). Elegir suelta lo que estuviera
+ * acoplado y mueve la banda y su relleno al otro borde; abajo acopla la ventana de delante y arriba la de la
+ * reunión, solo con la sesión iniciada (`acoplar_arriba`). `⌃⌥B` hace lo mismo desde cualquier sitio.
  */
 export function LaBanda({ borde }: { borde: Borde }) {
   const t = useT().cuaderno;
@@ -666,7 +667,12 @@ function Porque({
   return <p style={{ fontSize: "11.5px", marginTop: "2px", color }}>{texto}</p>;
 }
 
-export function LaReunion({ reunion }: { reunion: Reunion }) {
+/**
+ * La tarjeta de la reunión. **«Protección verificada» es un hecho de la banda ABAJO** (decisión M20 del
+ * usuario): con la banda arriba nadie ha mirado la pantalla compartida, así que arriba dice «sin
+ * verificar» también en Meet, igual que el chip de la banda (auditoría del S4, A5).
+ */
+export function LaReunion({ reunion, arriba = false }: { reunion: Reunion; arriba?: boolean }) {
   const t = useT().cuaderno;
   const tb = useT().banda;
   if (reunion.que === "detectada") {
@@ -679,7 +685,7 @@ export function LaReunion({ reunion }: { reunion: Reunion }) {
               ? `${reunion.cliente} · ${reunion.titulo}`
               : reunion.cliente}
           </h3>
-          {reunion.proteccion === "Verificada" ? (
+          {reunion.proteccion === "Verificada" && !arriba ? (
             <span className="estado ok">
               <Ic id="i-check-circle" s relleno />
               <span>{t.proteccionVerificada}</span>

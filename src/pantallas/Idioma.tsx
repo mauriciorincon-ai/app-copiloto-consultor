@@ -274,7 +274,7 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
 
         <div className="grid-2">
           {diccionario && <TuDiccionario diccionario={diccionario} />}
-          {/* Lo que falta, y cuándo llega. El diccionario técnico salió de esta lista en la fase 1 del
+          {/* Lo que no hace hoy, sin prometer cuándo. El diccionario técnico salió de esta lista en la fase 1 del
               sprint 002, y «Conservar lo que dijiste tú» en la Fase 2 de la auditoría del S3 (M7):
               existe en Notas. Una pantalla que dice «todavía no» de algo que existe miente igual que
               una que promete lo que falta. */}

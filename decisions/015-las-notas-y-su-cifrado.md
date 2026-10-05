@@ -309,7 +309,7 @@ enmienda 2). No hay una segunda llave que perder.
 | cada pregunta a la que llegaste: su texto, de dónde sale y su sección | las preguntas a las que no llegaste |
 | **tu respuesta en texto** (la pista del micrófono, la única que el ensayo abre) | los turnos con sus tiempos, la cola de la voz, lo que el micrófono oyó sordo |
 | sus cifras: la evidencia que tenías (titular y fuente) y si la usaste, «Sí lo dije», tiempo, ritmo y muletillas | lo que salió al modelo si encendiste «Enriquecer el banco» |
-| si la saltaste | nada de ninguna reunión: el ensayo no abre la pista del sistema ni la pantalla |
+| si la saltaste | el sistema y la pantalla: el ensayo no abre la pista del sistema ni la pantalla. Lo que el micrófono oiga de una llamada que suene por un altavoz Bluetooth o USB, o que se abra a mitad del ensayo, entraría como tu respuesta (ADR 019, enmienda 1, «Lo que no cubre») |
 
 El contenido se arma en `ensayo/guardado.rs` (protegido y puro, como `notas/`) y lo escribe `ensayos.rs`, que
 no ve un solo marco de audio: es el mismo reparto del §8.

@@ -181,8 +181,8 @@ pub enum NoEmpezo {
     NoSeSabeSiHayLlamada,
 }
 
-/// **Con una videollamada abierta, el ensayo solo empieza con auriculares** (auditoría del S4, A1; decisión
-/// del usuario del 2026-10-04). En el ensayo no hay pista del sistema contra la que marcar el eco: con los
+/// **Con una videollamada abierta, el ensayo no empieza por altavoces que la app reconoce** (auditoría del S4,
+/// A1; decisión del usuario del 2026-10-04: «con auriculares, sí»). En el ensayo no hay pista del sistema contra la que marcar el eco: con los
 /// altavoces, el micrófono oiría a la otra parte y lo guardaría como tu respuesta —lo del cliente nunca se
 /// guarda, regla dura 1—, y la llamada oiría la voz que lee tu propuesta. `eco` es lo que dice la salida de
 /// audio (`Salida::puede_haber_eco`).
@@ -692,8 +692,9 @@ mod pruebas {
         assert!(pendientes < recibidos, "se recoge lo transcrito antes de contar lo pendiente: un turno se puede perder");
     }
 
-    /// **Con una videollamada abierta, solo con auriculares** (auditoría del S4, A1): la matriz entera. Sin
-    /// llamada se ensaya con lo que sea; con una —o sin poder saberlo—, solo con auriculares de verdad.
+    /// **Con una videollamada abierta, no por altavoces que la app reconoce** (auditoría del S4, A1): la matriz
+    /// entera. Sin llamada se ensaya con lo que sea; con una —o sin poder saberlo—, no por los altavoces del Mac,
+    /// HDMI, DisplayPort ni AirPlay; Bluetooth y USB pasan.
     #[test]
     fn con_una_videollamada_solo_se_ensaya_con_auriculares() {
         use crate::sesion::{PorQueNoSeVe, Proteccion, Reunion};

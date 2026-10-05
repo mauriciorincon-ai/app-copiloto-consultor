@@ -834,7 +834,7 @@ Las salidas enteras están en el scratchpad de la sesión (`demos-*.txt`); aquí
 
 **Los gates sobre el árbol entero (2026-10-04):** `pnpm typecheck` y `pnpm lint` limpios · Vitest **452** (53
 archivos), con cobertura · `AG_SIN_HARDWARE=1 cargo test`: lib **575** (+2 ignorados), contra el Mac **16** (+14
-para la CI), `ghost` **5**, puerta **14**, sin un aborto del centinela · `cargo clippy --all-targets -D warnings`
+marcados; la CI corre 11), `ghost` **5**, puerta **14**, sin un aborto del centinela · `cargo clippy --all-targets -D warnings`
 limpio · `pnpm verify:ephemeral` limpio · e2e **289 de 290** y fidelidad **284 encuadres** sin ninguno sobre el
 umbral, con **un desborde** que cazaron los dos: el aviso nuevo de Sesión (M10), en dos líneas encima de
 «Iniciar sesión», sacaba la pantalla 37 px (es) y 20 px (en) de su ventana. Pasó a una línea, en el sitio de
@@ -844,13 +844,10 @@ la promesa «⌥⎋ corta todo…», que vuelve al guardar o cerrar el ensayo; `
 B7 y B10 con el `/release-check` y el summary · la segunda casilla 4, con **otro** auditor, sobre el diff entero
 y el summary.
 
-**Dónde quedó (para retomar):** hechos el commit de la Fase 2 con su CI, B9 en la CI y B3 (sección siguiente).
-Lo que falta, en orden:
-
-1. El `/release-check`: el peso del binario (B7), `--release`, y su tabla en el summary.
-2. `sprints/SPRINT_004-summary.md`, ya en borrador: llenar lo marcado con ⟨…⟩.
-3. La segunda casilla 4 con **otro** subagente, sobre `adb2493..HEAD` y el summary; pagar lo que encuentre.
-4. Todos los gates otra vez, commit, push y `gh pr checks`; PR listo y «Sprint 004 de Angel Ghost listo para mergear».
+**Dónde quedó (para retomar):** hechos el commit de la Fase 2 con su CI, B9 en la CI, B3, el `/release-check`
+(con el arreglo de Tauri) y la segunda casilla 4 con sus 28 pagos (secciones siguientes). Lo que falta: los gates
+otra vez sobre el árbol entero, commit, push y `gh pr checks`, el PR listo y «Sprint 004 de Angel Ghost listo para
+mergear».
 
 ## El cierre: B9 en la CI, B3 en GitHub y el `/release-check` (2026-10-04)
 
@@ -897,15 +894,57 @@ tauri-plugin-opener (v2.5.5) : @tauri-apps/plugin-opener (v2.7.0)».
   `tauri-build` 2.7.1, `tauri-runtime` 2.12.1, `tauri-utils` 2.10.1, `wry` 0.57.0, `tray-icon` 0.25.1 y otras
   transitivas. `cargo update -p` a secas no los movía: la subida pide dependencias nuevas.
 - **Lo que se corrió con los crates nuevos:** `AG_SIN_HARDWARE=1 cargo test --locked`: lib 575 (+2 ignorados) ·
-  contra el Mac 16 (+14) · ghost 5 · puerta 14, igual que antes. `cargo clippy --locked --all-targets -- -D
+  contra el Mac 16 (+14 marcados) · ghost 5 · puerta 14, igual que antes. `cargo clippy --locked --all-targets -- -D
   warnings` limpio. `cargo test --release --locked --lib --test puerta --test ghost` (con `AG_SIN_HARDWARE=1`): 575 ·
   14 · 5, en verde. Vitest 455 (54 archivos), 92,6 % de sentencias y 81,4 % de ramas.
 - **El peso (B7).** `pnpm tauri build --bundles app --no-sign`, ya con Tauri 2.12: ejecutable **13,42 MB** (S3: 12,79;
   **+0,63 MB**, por el ensayo, la banda arriba y Tauri 2.12, sin separar) · `ghost` 0,48 MB, dentro del `.app` · `.app`
   14,0 MB · imagen comprimida **6,77 MB** (S3: 6,27), medida igual, con `hdiutil create -format UDZO`. Sin `.dmg` de
   Tauri (AppleScript sobre Finder, regla 22) y sin firma (`--no-sign`: sin Llavero).
-- **El resto de la lista:** `pnpm audit --audit-level high` limpio; `cargo audit` lo corre la CI sobre el `Cargo.lock`
-  nuevo. `tauri.conf.json` e `Info.plist` sin cambios en el sprint.
+- **El resto de la lista:** `pnpm audit --audit-level high` limpio; `cargo audit`, en la CI sobre el `Cargo.lock`
+  nuevo (`9adc95c`): sin vulnerabilidades, y 5 avisos en vez de 10 (Tauri 2.12 quitó los cinco `unic-*` sin
+  mantenimiento; siguen `lru` y `glib` *unsound*, `proc-macro-error` y `ttf-parser` sin mantenimiento y `yoke-derive`
+  retirado). La CI de `9adc95c`: `quality`, `e2e` y `build-escritorio` en `success`, cada uno con su conclusión
+  propia; `build-escritorio` corrió todo lo de hardware con Tauri 2.12 en el runner de macOS. e2e local: 288 (+2
+  saltadas), cero flaky. `tauri.conf.json` e `Info.plist` sin cambios en el sprint.
+
+## La segunda casilla 4, con otro auditor (2026-10-04)
+
+**Quién y cómo.** Un quinto subagente, que no construyó el sprint ni auditó la Fase 1, en solo lectura y sin
+nada de la regla 22, sobre `git diff adb2493` (el árbol de trabajo, con lo que aún no estaba commiteado) y con
+el summary dentro. Unas 300 coincidencias por promesa aplazada, en es y en, y cada pago de la Fase 2 seguido
+hasta sus frases hermanas. **28 frases falsas hoy: 4 altas · 9 medias · 15 bajas**, registradas como A5–A8,
+M29–M37 y B51–B65 en `sprints/SPRINT_004-auditoria.md`, que cuenta ahora **110: 0 · 8 · 37 · 65**.
+
+**Los rojos (con `scripts/demo-rojo.sh`):**
+
+| Hallazgo | Mutación | Quién lo nombró |
+|---|---|---|
+| A5 · la banda | sin `&& borde === "abajo"` en el `protegido` de `Banda.tsx` | `la-banda-arriba.test.tsx` · «expected 'Google Meet · protegido' to contain 'sin verificar'» |
+| A5 · Sesión | sin `&& !arriba` en `LaReunion` | `la-banda-arriba.test.tsx` · «Sesión con la banda arriba no dice «Protección verificada»» (el chip verde seguía ahí) |
+| B53 | sin la puesta a cero de `reunion_usd` en `empezar_el_ensayo` | `el_ensayo_pone_su_costo_a_cero_antes_del_microfono` · «el ensayo suma su costo al de la reunión anterior» |
+
+Los tres, restaurados con `grep` y `cmp`, en verde.
+
+**A5, más allá del ajuste propuesto.** El auditor pedía cambiar solo la app (la rama de Tauri), para no mover la
+fidelidad. Pero las capturas de la banda arriba y su tarjeta de `design-sync/` se dibujan con los estados de
+`banda.html`, que decían «Meet · protegido», y la maqueta de Sesión enseñaba «Protección verificada» con «La
+banda: arriba» marcada y la frase de M20 debajo. Se cambió todo junto:
+- `banda.html` lleva el chip ámbar «Meet · sin verificar» (`.solo-arriba`), y el verde solo abajo
+  (`.solo-abajo`), dos clases de `ghost.css` que solo existen en la maqueta;
+- `sesion.html`, en sus cuatro estados con la fila «La banda» (sprint 4 y tres del sprint 3), dice «Meet · sin
+  verificar»;
+- `posicion.html`, arriba a 88 y 200, también, y su nota de qué ve el cliente lo explica;
+- fuera de Tauri, la banda y Sesión hacen lo mismo con el borde de muestra, así que la fidelidad compara lo
+  mismo con lo mismo.
+
+Registrado «maquetada, no vista» en `docs/diseno/README.md`, y en las filas U13, U14, U16 y U17 de la guía (sin
+filas nuevas: las cuentas no se mueven). `design-system.md` pasa a **v1.16.1**, y `design-sync/` se regeneró.
+
+**Las de texto:** la regla de los auriculares en la interfaz, el manual, el BLUEPRINT, la guía, los ADR y los
+comentarios; el aviso de Sesión «debajo» de «Iniciar sesión»; ⌃⌥B y el acople arriba «con la sesión iniciada»;
+el idioma que avisa y deja ensayar; «16 + 11» en la CI; la CI sin modelos de voz; «Si lo guardas, queda…»; las
+cabeceras de la puerta; el commit que leyó el BLUEPRINT; y doce frases del propio summary.
 
 ## Desviación del plan
 
