@@ -2150,7 +2150,7 @@ fn ficha_vigente(
         e.ultimos_turnos(6)
             .into_iter()
             .rev()
-            .find(|t| t.pista == capture::Pista::Sistema && !t.eco)
+            .find(stt::Turno::pudo_decirlo_el_cliente)
     })?;
     let empezo = std::time::Instant::now();
     // Con la pantalla delante, igual que la ficha automática: `⌃⌥A` y el disparador no pueden
@@ -2821,7 +2821,7 @@ fn sintetizar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Aparicion
             .lock()
             .ok()
             .and_then(|g| g.as_ref().map(|e| e.ultimos_turnos(12)))
-            .and_then(|ts| ts.into_iter().rev().find(|t| t.pista == capture::Pista::Sistema && !t.eco))
+            .and_then(|ts| ts.into_iter().rev().find(stt::Turno::pudo_decirlo_el_cliente))
             .map(|t| t.texto);
         let conocidos = clientes_del_corpus(&mango.state::<ElCorpus>());
         let sobre = respaldo.first().map(|r| r.titular.clone()).unwrap_or_default();

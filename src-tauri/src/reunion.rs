@@ -598,10 +598,15 @@ pub fn ver<R: Runtime>(app: &AppHandle<R>, aparicion: &crate::ficha::Aparicion) 
 }
 
 /// Un turno recién transcrito: el cuaderno decide si es tuyo (`notas::Cuaderno::oir`). Los del
-/// cliente solo se CUENTAN, para «Muere al cerrar».
+/// cliente solo se CUENTAN, para «Muere al cerrar» — **y los de la sala también** (ADR 020): no son
+/// tuyos, así que mueren al cerrar como los del cliente.
 pub fn oir<R: Runtime>(app: &AppHandle<R>, turno: &crate::stt::Turno) {
     let Some(el) = app.try_state::<ElCuaderno>() else { return };
-    if turno.pista == crate::capture::Pista::Sistema && !turno.texto.trim().is_empty() {
+    let muere_al_cerrar = match turno.pista.quien() {
+        crate::capture::Quien::Cliente | crate::capture::Quien::SinAtribuir => true,
+        crate::capture::Quien::Tuyo => false,
+    };
+    if muere_al_cerrar && !turno.texto.trim().is_empty() {
         el.turnos_del_cliente.fetch_add(1, Ordering::Relaxed);
     }
     el.con(|c| c.oir(turno));

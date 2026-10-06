@@ -59,6 +59,18 @@ impl Turno {
     pub fn duracion_ms(&self) -> usize {
         self.hasta_ms.saturating_sub(self.desde_ms)
     }
+
+    /// **¿Pudo decirlo el cliente?** Es la pregunta de `⌃⌥A`, del silencio y de la sugerencia: con qué
+    /// frase buscar. Del cliente, sí, salvo el eco (el cliente por tus altavoces ya llegó por su
+    /// pista); tuyo, no; **de la sala, sí**, porque en presencial no se sabe y `⌃⌥A` es la salida
+    /// cuando el filtro calla (ADR 020 §3).
+    pub fn pudo_decirlo_el_cliente(&self) -> bool {
+        match self.pista.quien() {
+            crate::capture::Quien::Cliente => !self.eco,
+            crate::capture::Quien::SinAtribuir => true,
+            crate::capture::Quien::Tuyo => false,
+        }
+    }
 }
 
 /// En qué estado está el motor para un idioma dado. Los cuatro se enseñan tal cual en la pantalla

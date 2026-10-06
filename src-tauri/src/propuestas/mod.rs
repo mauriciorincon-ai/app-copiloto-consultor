@@ -20,7 +20,7 @@ pub mod catalogo;
 
 use serde::{Deserialize, Serialize};
 
-use crate::capture::Pista;
+use crate::capture::Quien;
 use crate::stt::Turno;
 
 /// Tope de la frase tuya, en letras.
@@ -67,11 +67,16 @@ pub enum De {
 
 impl De {
     /// Un turno del micrófono marcado como eco es el cliente sonando por tus altavoces.
-    pub fn del_turno(turno: &Turno) -> De {
-        if turno.pista == Pista::Microfono && !turno.eco {
-            De::Tuyo
-        } else {
-            De::Cliente
+    ///
+    /// **Y la sala no es de nadie** (ADR 020 §5): `None`. Hasta el sprint 005 esto era un `if` con
+    /// `else De::Cliente`, y una tercera pista habría caído en el `else`: la sala entera propuesta como
+    /// hechos «del cliente», incluido lo que dijiste tú.
+    pub fn del_turno(turno: &Turno) -> Option<De> {
+        match turno.pista.quien() {
+            Quien::Tuyo if turno.eco => Some(De::Cliente),
+            Quien::Tuyo => Some(De::Tuyo),
+            Quien::Cliente => Some(De::Cliente),
+            Quien::SinAtribuir => None,
         }
     }
 }
@@ -116,8 +121,11 @@ pub fn proponer(turno: &Turno, ctx: &Contexto) -> Vec<Propuesta> {
     if texto.is_empty() {
         return Vec::new();
     }
+    // La sala no propone nada: no se sabe quién lo dijo.
+    let Some(de) = De::del_turno(turno) else {
+        return Vec::new();
+    };
     let c = catalogo::catalogo();
-    let de = De::del_turno(turno);
     let fichas = palabras(texto);
     let mut todas: Vec<Propuesta> = Vec::new();
     let mut nueva = |regla: Regla, desde: usize, fragmento: String, ficha: Option<String>, seccion: Option<String>| {
@@ -500,6 +508,8 @@ fn pregunta(ps: &[Palabra], c: &catalogo::Catalogo) -> Option<(usize, String)> {
 
 #[cfg(test)]
 mod pruebas {
+    use crate::capture::Pista;
+
     /// **Las cifras para el ensayo** (sprint 004): con lo que cuentan, en orden y sin repetir, en los
     /// dos idiomas. Y en inglés, el modificador delante del plural.
     #[test]

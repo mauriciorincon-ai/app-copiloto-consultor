@@ -30,7 +30,7 @@
 //! quedarse en blanco sin que nadie sepa por qué.
 
 use crate::capture::anillo::{Anillo, HZ};
-use crate::capture::Pista;
+use crate::capture::{Fuente, Pista, Quien};
 use crate::diccionario::Diccionario;
 use crate::disparo::{Contexto, Disparador, Motivo};
 use crate::ficha::{Aparicion, Respuesta};
@@ -250,9 +250,10 @@ struct PistaViva {
 impl PistaViva {
     fn abrir(cual: Pista, idioma: &str) -> Self {
         let anillo = Arc::new(Mutex::new(Anillo::de_la_app()));
-        let abierto = match cual {
-            Pista::Microfono => crate::capture::nativo::Grifo::del_microfono(anillo.clone()),
-            Pista::Sistema => crate::capture::nativo::Grifo::del_sistema(anillo.clone()),
+        // El grifo se elige por el DISPOSITIVO: la sala entra por el micrófono, y no por eso es tuya.
+        let abierto = match cual.fuente() {
+            Fuente::Microfono => crate::capture::nativo::Grifo::del_microfono(anillo.clone()),
+            Fuente::Sistema => crate::capture::nativo::Grifo::del_sistema(anillo.clone()),
         };
         let (grifo, no_abrio) = match abierto {
             Ok(g) => (Some(g), None),
@@ -315,9 +316,9 @@ pub(crate) fn con_su_permiso(
 ) -> crate::capture::NoAbrio {
     use crate::capture::PorQueNoAbrio::{SinPermisoDelAudio, SinPermisoDelMicrofono};
     use crate::permisos::Estado;
-    let (estado, sin) = match cual {
-        Pista::Microfono => (permisos.microfono, SinPermisoDelMicrofono),
-        Pista::Sistema => (permisos.audio, SinPermisoDelAudio),
+    let (estado, sin) = match cual.fuente() {
+        Fuente::Microfono => (permisos.microfono, SinPermisoDelMicrofono),
+        Fuente::Sistema => (permisos.audio, SinPermisoDelAudio),
     };
     if matches!(estado, Estado::SinConceder | Estado::Denegado) {
         e.porque = sin;
@@ -633,10 +634,17 @@ impl ElQueTranscribe {
         }
     }
 
+    /// ¿Habla ahora alguien que pudo ser el cliente? Su pista, o la sala, donde no se sabe.
     fn cliente_hablando(&self) -> bool {
-        self.pistas
-            .lock()
-            .is_ok_and(|l| l.iter().any(|p| p.cual == Pista::Sistema && p.turnos.hablando()))
+        self.pistas.lock().is_ok_and(|l| {
+            l.iter().any(|p| {
+                p.turnos.hablando()
+                    && match p.cual.quien() {
+                        Quien::Cliente | Quien::SinAtribuir => true,
+                        Quien::Tuyo => false,
+                    }
+            })
+        })
     }
 }
 
@@ -734,7 +742,7 @@ fn huele_a_eco(turno: &Turno, ventana: &Ventana) -> bool {
     let del_sistema: Vec<crate::voz::Tramo> = ventana
         .ultimos(crate::stt::ventana::TURNOS)
         .into_iter()
-        .filter(|t| t.pista == Pista::Sistema)
+        .filter(|t| t.pista.quien() == Quien::Cliente)
         .map(|t| crate::voz::Tramo {
             desde_ms: t.desde_ms,
             hasta_ms: t.hasta_ms,
@@ -795,10 +803,15 @@ fn atender(
         // El eco se decide **con la ventana delante**: hace falta saber qué dijo el cliente para
         // saber si el micrófono lo está repitiendo. Por eso vive aquí y no en `transcribir`, que no
         // conoce a nadie más.
-        if t.pista == Pista::Microfono {
-            if let Ok(v) = ventana.lock() {
-                t.eco = huele_a_eco(t, &v);
+        // Solo tu pista puede ser un eco: es la que oye a los altavoces. En la sala no hay eco que
+        // buscar, porque no hay otra pista con la que compararla.
+        match t.pista.quien() {
+            Quien::Tuyo => {
+                if let Ok(v) = ventana.lock() {
+                    t.eco = huele_a_eco(t, &v);
+                }
             }
+            Quien::Cliente | Quien::SinAtribuir => {}
         }
         if let Ok(mut v) = ventana.lock() {
             v.empujar(t.clone());
@@ -860,7 +873,7 @@ fn el_silencio_pide_ficha(
     let empezo = std::time::Instant::now();
     // Los dos candados en este orden y en ningún otro: es el único sitio de la app donde se anidan.
     let v = ventana.lock().ok()?;
-    let ultimo = v.ultimo_de(Pista::Sistema)?;
+    let ultimo = v.ultimo_que(crate::stt::Turno::pudo_decirlo_el_cliente)?;
     let vocabulario = buscador.vocabulario();
     let ctx = Contexto { ahora_ms, vocabulario: &vocabulario };
     let motivo =

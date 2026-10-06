@@ -22,7 +22,7 @@
 //! el disparo es determinista, y la única pieza con modelo de la app —la sugerencia, `sintesis/`—
 //! llega después de la ficha y no decide cuándo aparece.
 
-use crate::capture::Pista;
+use crate::capture::Quien;
 use crate::stt::Turno;
 
 /// Cuánto calla la app entre dos fichas. Medido contra el ritmo de una conversación: por debajo
@@ -105,12 +105,22 @@ impl Disparador {
 
     /// El turno que acaba de cerrarse, ¿pide ficha?
     pub fn mirar(&mut self, turno: &Turno, ctx: &Contexto) -> Option<Motivo> {
-        // El consultor no se dispara a sí mismo, y un eco es el consultor oyéndose.
-        if turno.pista != Pista::Sistema || turno.eco {
-            return None;
+        match turno.pista.quien() {
+            // El consultor no se dispara a sí mismo.
+            Quien::Tuyo => None,
+            // Y un eco es el consultor oyendo al cliente por sus altavoces: ya llegó por su pista.
+            Quien::Cliente if turno.eco => None,
+            Quien::Cliente => {
+                let motivo = self.por_que(&turno.texto, ctx)?;
+                self.aceptar(&turno.texto, ctx.ahora_ms, motivo)
+            }
+            // **La sala** (ADR 020): no se sabe quién habló, así que dispara con las reglas de
+            // siempre y, si la escucha le dio una, pasa por la tolerancia a tu voz.
+            Quien::SinAtribuir => {
+                let motivo = self.por_que(&turno.texto, ctx)?;
+                self.aceptar(&turno.texto, ctx.ahora_ms, motivo)
+            }
         }
-        let motivo = self.por_que(&turno.texto, ctx)?;
-        self.aceptar(&turno.texto, ctx.ahora_ms, motivo)
     }
 
     /// El atajo del usuario. Se salta la espera y la repetición: si lo pide dos veces seguidas es
@@ -255,6 +265,7 @@ pub fn vocabulario(nombres: &[String], titulos: &[String]) -> Vec<String> {
 #[cfg(test)]
 mod pruebas {
     use super::*;
+    use crate::capture::Pista;
 
     fn turno(texto: &str) -> Turno {
         Turno {
