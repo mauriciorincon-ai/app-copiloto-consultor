@@ -25,6 +25,7 @@
     <button data-estado="s3-api">sprint 3 · con el API encendido</button>
     <button data-estado="s4">sprint 4 · con tus ensayos</button>
     <button data-estado="s4-ensayando">sprint 4 · ensayando</button>
+    <button data-estado="s5-presencial">sprint 5 · en presencial</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -44,6 +45,7 @@
   <div class="n" data-para="s3-no-corrio"><b>Maquetado, no visto (fase 2 — va al gate del MVP):</b> si al abrir la app había algo vencido hace más de dos minutos con la tarea instalada, la tarea no corrió —la desactivaste en Ítems de inicio, o launchd no la cargó—. La app lo borra al abrirse y <b>lo dice aquí</b>, en rojo, en vez de callarlo.</div>
   <div class="n" data-para="s4"><b>Maquetado, no visto (sprint 4, fase 0 — texto; va al gate del MVP del H2):</b> «Tuyo» suma <b>tus ensayos</b>: tus respuestas en texto y sus cifras, cifrados con la llave de tus notas (ADR 015, enmienda 4). Y el corte pasa a <b>12 de 12</b>: el ensayo es la pieza nueva. <b>Fase 4 (2026-10-04):</b> desde ahora es la Honestidad de hoy, y «tus ensayos» entra también en los estados «sprint 3 · con bandeja», «la tarea no corrió», «tras el corte» y «con el API encendido»; «sprint 3» queda como historia.</div>
   <div class="n" data-para="s4-ensayando"><b>FORMA y TEXTO nuevos (sprint 4, fase 4, maquetados, no vistos · 2026-10-04 — van al gate del MVP del H2):</b> mientras ensayas no hay reunión: el micrófono es <b>el del ensayo</b> (su anillo de 30 s), la pista del sistema, el transcript y la pantalla están en 0 B, y hay una fila más: <b>tus respuestas del ensayo</b>, en texto, hasta que lo guardes o lo cierres. El chip del rail dice «Ensayando». <br><b>Auditoría del S4 (TEXTO, maquetado, no visto · 2026-10-04):</b> mientras ensayas, el contador es el del ensayo —empezó en 0 al empezarlo— y lo dice: «salieron de tu equipo en este ensayo».</div>
+  <div class="n" data-para="s5-presencial"><b>Maquetado, no visto (sprint 5, fase 0 — FORMA y TEXTO; ADR 020; va al gate del MVP del H2):</b> Honestidad con una sesión <b>presencial</b> en marcha. En memoria vive <b>una</b> pista, la de la sala; el audio del sistema y la pantalla dicen que <b>no se abren</b> en presencial y ocupan 0 B. El transcript es <b>de la sala, sin dueño</b>. Abajo, lo que cambia al cerrar: <b>tus turnos no se guardan</b> —la app no sabe cuáles son tuyos— y <b>no hay propuestas</b>, así que nada pasa a la bandeja; tus notas, tus fichas fijadas y tus ensayos, como siempre.</div>
   <div class="n" data-para="s3-api"><b>Maquetado, no visto (Fase 2 de la auditoría del S3, B15 — va al gate del MVP):</b> con el API encendido, lo que salió al proveedor también vive en memoria —cada petición lleva un turno anonimizado del cliente— y aquí se cuenta como un búfer más. Guarda las últimas 20 y muere con ⌥⎋ o al terminar la reunión.</div>
   <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
 </div>
@@ -65,6 +67,7 @@
       <span class="estado ok" data-en="activa verificacion al-cerrar"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Escuchando · 0 B</span><span lang="en">Listening · 0 B</span></span>
       <span class="estado err" data-en="kill"><svg class="ic s relleno"><use href="#i-x-circle"/></svg><span lang="es">Cortado · 0 B</span><span lang="en">Cut · 0 B</span></span>
       <span class="estado halo" data-en="s1 s2 s3 s3-corte s3-no-corrio s3-api s4"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
+      <span class="estado halo" data-en="s5-presencial"><svg class="ic s"><use href="#i-mic"/></svg><span lang="es">Presencial · 0 B</span><span lang="en">In person · 0 B</span></span>
       <span class="estado halo" data-en="s3-bandeja"><svg class="ic s"><use href="#i-reloj"/></svg><span lang="es">Bandeja · 2 h 41</span><span lang="en">Tray · 2 h 41</span></span>
       <span class="estado halo" data-en="s4-ensayando"><svg class="ic s"><use href="#i-mic"/></svg><span lang="es">Ensayando · 0 B</span><span lang="en">Rehearsing · 0 B</span></span>
     </div>
@@ -424,6 +427,45 @@
         <div class="fila" style="flex-wrap:nowrap">
           <svg class="ic s" style="color:var(--mute)"><use href="#i-basura"/></svg>
           <span class="crece" style="color:var(--ink-2)"><span lang="es"><b>Del cliente</b> — su voz, su transcript y las capturas <b>mueren</b>. Y el audio, también el tuyo: lo que queda de ti es texto.</span><span lang="en"><b>The client’s</b> — their voice, transcript and captures <b>die</b>. And audio, yours included: what remains of you is text.</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== sprint 5 · en presencial (FORMA y TEXTO, fase 0, maquetado, no visto · ADR 020) ===== -->
+    <div data-en="s5-presencial" style="display:flex;flex-direction:column;gap:14px">
+      <div class="grid-2" style="grid-template-columns:1.25fr 1fr">
+        <div class="tarjeta" style="padding-bottom:4px">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Qué vive en la memoria ahora</span><span lang="en">What lives in memory now</span></h2><span class="mono" style="color:var(--ink-2)">RAM · <span lang="es">1,8 MB</span><span lang="en">1.8 MB</span></span></div>
+          <div style="margin:0 -4px">
+            <div class="buffer"><svg class="ic s"><use href="#i-mic"/></svg><span class="que"><span lang="es">Audio · la sala</span><span lang="en">Audio · the room</span></span><span class="donde"><span lang="es">ring buffer · últimos 30 s</span><span lang="en">ring buffer · last 30 s</span></span><span class="cuanto"><span lang="es">1,8 MB</span><span lang="en">1.8 MB</span></span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-sistema-off"/></svg><span class="que"><span lang="es">Audio · sistema</span><span lang="en">Audio · system</span></span><span class="donde"><span lang="es">no se abre en presencial</span><span lang="en">not opened in person</span></span><span class="cuanto">0 B</span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-ojo"/></svg><span class="que">Transcript</span><span class="donde"><span lang="es">la sala, sin dueño · 12 turnos</span><span lang="en">the room, no owner · 12 turns</span></span><span class="cuanto">2 KB</span></div>
+            <div class="buffer"><svg class="ic s"><use href="#i-pantalla-off"/></svg><span class="que"><span lang="es">Último frame leído</span><span lang="en">Last frame read</span></span><span class="donde"><span lang="es">no se lee en presencial</span><span lang="en">not read in person</span></span><span class="cuanto">0 B</span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="contador cero">
+            <div class="cifra">0 <small>B</small></div>
+            <div class="etq"><svg class="ic s relleno" style="color:var(--ok)"><use href="#i-check-circle"/></svg> <span lang="es">salieron de tu equipo en esta sesión</span><span lang="en">left your machine in this session</span></div>
+          </div>
+          <div class="tarjeta">
+            <h2 class="seccion"><span lang="es">Modo</span><span lang="en">Mode</span></h2>
+            <span class="estado ok"><svg class="ic s relleno"><use href="#i-mac"/></svg><span lang="es">100 % local · API apagado</span><span lang="en">100 % local · API off</span></span>
+            <p><span lang="es">La app abre una conexión solo si enciendes el API en IA, con tu clave, y solo con texto anonimizado. La otra la abre macOS cuando le pides instalar un modelo de voz.</span><span lang="en">The app opens a connection only if you turn on the API in AI, with your key, and only with anonymized text. The other one belongs to macOS, when you ask it to install a speech model.</span></p>
+          </div>
+          <button class="kill" style="justify-content:center"><svg class="ic s relleno"><use href="#i-rayo"/></svg><span lang="es">Corta todo y vacía la memoria</span><span lang="en">Cut everything and wipe memory</span> <kbd>⌥⎋</kbd></button>
+          <p class="mono" style="color:var(--ink-2)"><span lang="es">El botón corta 12 de 12 piezas: ninguna queda fuera.</span><span lang="en">The button cuts 12 of 12 pieces: none is left out.</span></p>
+        </div>
+      </div>
+      <div class="tarjeta">
+        <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Lo que quedará cuando cierres</span><span lang="en">What will be left when you close</span></h2><span style="color:var(--ink-2)"><span lang="es">Carpeta privada de la app</span><span lang="en">The app’s private folder</span></span></div>
+        <div class="fila" style="flex-wrap:nowrap">
+          <svg class="ic s" style="color:var(--ok)"><use href="#i-nota"/></svg>
+          <span class="crece"><span lang="es"><b>Tuyo</b> — notas, acuerdos, fichas fijadas y ensayos. <b>Tus turnos, no</b>: en presencial la app no sabe cuáles son tuyos. Cifrado.</span><span lang="en"><b>Yours</b> — notes, agreements, pinned cards and rehearsals. <b>Not your turns</b>: in person the app cannot tell which are yours. Encrypted.</span></span>
+        </div>
+        <div class="fila" style="flex-wrap:nowrap">
+          <svg class="ic s" style="color:var(--mute)"><use href="#i-basura"/></svg>
+          <span class="crece" style="color:var(--ink-2)"><span lang="es"><b>De la sala</b> — las voces y su transcript <b>mueren</b>, también lo que dijiste tú. Sin propuestas: nada pasa a la bandeja.</span><span lang="en"><b>The room’s</b> — the voices and their transcript <b>die</b>, what you said included. No suggestions: nothing goes to the tray.</span></span>
         </div>
       </div>
     </div>
