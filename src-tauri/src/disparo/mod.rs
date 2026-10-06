@@ -81,9 +81,17 @@ const INTERROGATIVOS: &[&str] = &[
     "que", "cual", "cuales", "cuanto", "cuanta", "cuantos", "cuantas", "como", "cuando", "donde",
     "quien", "quienes", "porque", "acaso", "tienen", "tiene", "pueden", "puede", "podrian",
     "hacen", "manejan", "ofrecen", "incluye", "incluyen", "cubren", "existe", "hay",
-    "what", "which", "how", "when", "where", "who", "whom", "why", "whose", "does", "do", "can",
-    "could", "would", "will", "are", "is", "have", "has", "any",
+    "what", "which", "how", "when", "where", "who", "whom", "why", "whose",
 ];
+
+/// **Los auxiliares del inglés preguntan solo si ABREN la frase** («Do you…», «Is there…», «And can we…»). En medio
+/// son una afirmación: «We have the same problem», «That is exactly what…», «Access is requested…». Hasta el sprint
+/// 005 contaban en cualquiera de las tres primeras palabras, como los interrogativos, y el kit v4 lo cazó en la sala
+/// inglesa: tres frases dichas sin pregunta disparaban como preguntas, en presencial y en una reunión.
+const AUXILIARES: &[&str] = &["does", "do", "can", "could", "would", "will", "are", "is", "have", "has", "any"];
+
+/// Lo que puede ir delante de un auxiliar sin quitarle la pregunta: «And is that included?».
+const CONJUNCIONES: &[&str] = &["and", "so", "but", "or", "then"];
 
 /// Estado del disparador entre turnos. Vive en la escucha.
 #[derive(Debug, Default)]
@@ -248,6 +256,11 @@ impl Disparador {
         }
         // Un interrogativo, pero solo si abre la frase: «no sé QUE hacer» no es una pregunta.
         if palabras.iter().take(3).any(|p| INTERROGATIVOS.contains(&p.as_str())) {
+            return Some(Motivo::Pregunta);
+        }
+        // Y un auxiliar del inglés, solo si es lo primero (tras una conjunción, si la hay).
+        let primera = palabras.iter().find(|p| !CONJUNCIONES.contains(&p.as_str()));
+        if primera.is_some_and(|p| AUXILIARES.contains(&p.as_str())) {
             return Some(Motivo::Pregunta);
         }
         if !ctx.vocabulario.is_empty()
@@ -491,6 +504,28 @@ mod pruebas {
             d.por_silencio(&dicho_en(dicho, 2_000), &ctx(2_000 + SILENCIO_MS)),
             Some(Motivo::SilencioLargo)
         );
+    }
+
+    /// **Un auxiliar del inglés pregunta solo si abre la frase** (kit v4, sprint 005). ¿Puede fallar? Sí: con los
+    /// auxiliares otra vez entre los interrogativos de las tres primeras palabras, «We have the same problem» dispara
+    /// (bitácora del sprint 005, fase 1).
+    #[test]
+    fn los_auxiliares_del_ingles_preguntan_solo_al_abrir_la_frase() {
+        for afirmacion in [
+            "We have the same problem with the rural stores.",
+            "That is exactly what the margin by channel dashboard measures.",
+            "Access is requested in writing, read only, and revoked on closing day.",
+        ] {
+            assert_eq!(Disparador::nuevo().mirar(&turno(afirmacion), &ctx(0)), None, "«{afirmacion}» no es una pregunta");
+        }
+        for pregunta in [
+            "Do you have ISO certification",
+            "And is data cleaning within the scope",
+            "Can we start with the scope",
+            "So does that include the workshop",
+        ] {
+            assert_eq!(Disparador::nuevo().mirar(&turno(pregunta), &ctx(0)), Some(Motivo::Pregunta), "«{pregunta}» es una pregunta");
+        }
     }
 
     /// **La tolerancia solo toca la sala.** El mismo turno y la misma regla: del cliente dispara, de la sala no. Y

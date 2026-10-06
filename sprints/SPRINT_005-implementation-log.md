@@ -385,6 +385,76 @@ verde con 1 prueba. **El primer intento de K2 no contó, y está bien que no con
 juntaba tantos turnos que saltaba antes la aserción de «el nivel B no mide nada», y `demo-rojo.sh` (v1.40,
 `--debe-nombrar`) lo rechazó: «el gate falló (exit 101) pero no nombró 'más que el anillo'».
 
+### Lo primero que encontró el kit: un defecto del disparador en inglés, de siempre (2026-10-05)
+
+La primera corrida del nivel A enseñó en la sala inglesa **tres frases dichas sin pregunta que disparaban como
+preguntas**: «We have the same problem with the rural stores.» (del cliente), «That is exactly what…» y «Access is
+requested…» (tuyas). La causa no es la sala: `por_que` contaba los auxiliares del inglés (`is`, `have`, `do`, `can`…)
+en cualquiera de las tres primeras palabras, como los interrogativos («¿Y cuánto…?»). En inglés un auxiliar pregunta
+solo si **abre** la frase. **Es un defecto del disparador desde el sprint 001 y afecta también a la reunión**: el
+cliente que dice «We have four sources» por el audio del sistema disparaba igual.
+
+- **Arreglo** (`disparo/mod.rs`): los auxiliares salen de `INTERROGATIVOS` a `AUXILIARES`, que solo cuentan si son la
+  primera palabra, o la primera tras una conjunción («And is that included?»). Los interrogativos y el español no
+  cambian. Test `los_auxiliares_del_ingles_preguntan_solo_al_abrir_la_frase` (tres afirmaciones que no disparan,
+  cuatro preguntas que sí); **rojo** devolviendo los auxiliares a las tres primeras palabras: nombró ««We have the
+  same problem with the rural stores.» no es una pregunta»; código 0, verde con 1 prueba.
+- **Y destapó un turno mal marcado del kit del sprint 001** (`disparo.json`): «We have four data sources, not three.»
+  debía disparar como «cifra en inglés», pero la regla de la cifra mira dígitos —el mismo archivo lo declara como
+  limitación con «Somos catorce en la mesa», que no dispara— y **solo pasaba por el «have» de la segunda palabra**.
+  Con el arreglo el recall del kit bajó a 0,909, y se corrigió el turno, no el umbral: «We have 4 data sources, not
+  3.», en dígitos como escribe las cifras el transcriptor, con el porqué escrito en el propio turno. El kit vuelve a
+  1,000 de precisión y 1,000 de recall.
+- **En la sala**, con el arreglo: la línea base pasa de 19 falsas y 10 perdidas a **16 falsas y 9 perdidas**
+  (corrida de antes guardada; la tabla de abajo es la de después).
+
+### La medición del kit v4 (corrida local, 2026-10-05, después del arreglo del inglés)
+
+`AG_SIN_HARDWARE=1 cargo test --locked --test contra-el-mac-de-verdad el_kit -- --test-threads=1 --nocapture`: los
+diez kits en verde (el nivel C, ignorado: es de hardware). Las dos salas juntas, **14 fichas debidas** (7 por sala):
+
+| C1 espera tras ficha | C2 eco | C3 término no basta | silencio | pertinentes | falsas (tuyas + cliente) | perdidas | perillas |
+|---|---|---|---|---|---|---|---|
+| — | — | — | sí | 5 | 16 (16 + 0) | 9 | 0 · **línea base** |
+| — | — | sí | sí | 6 | 9 (9 + 0) | **8** | 1 |
+| 15 s | — | sí | sí | 6 | 7 (7 + 0) | **8** | 2 |
+| 10 s | — | sí | sí | 6 | 8 (8 + 0) | 8 | 2 |
+| — | — | sí | no | 5 | 7 (7 + 0) | 9 | 2 |
+| 10 s | — | sí | no | 5 | 6 (6 + 0) | 9 | 3 |
+| **15 s** | — | **sí** | **no** | 5 | **5 (5 + 0)** | 9 | 3 · **primera por el criterio** |
+| 15 s | — | — | sí | 4 | 12 (12 + 0) | 10 | 1 |
+| 15 s | — | — | no | 3 | 11 (11 + 0) | 11 | 2 |
+| — | — | — | no | 3 | 14 (14 + 0) | 11 | 1 |
+
+(Las 36 filas salen en la salida del test; aquí, las que deciden. **C2 no cambia ninguna fila**: con 0,34 o con 0,50
+da lo mismo que apagado, en las 18 parejas.)
+
+**Por motivo, la línea base** (pertinentes / falsas / perdidas): pregunta 3/5/6 · término 0/7/3 · cifra 0/2/0 ·
+silencio 2/2/0. **La primera por el criterio:** pregunta 5/3/5 · término 0/0/3 · cifra 0/2/0 · silencio 0/0/1. Le
+sobran tus preguntas («¿Les parece si empezamos…?», «Shall we start…?», «What timeline…?») y tus dos cifras en
+inglés; le faltan las del cliente que caen justo detrás de una tuya, la repregunta rápida (C1), los términos que
+nombra el cliente sin preguntar (C3) y el silencio de la sala inglesa.
+
+**Nivel B** (el VAD y el fin de turno de siempre sobre los wav):
+
+| sala | tope | turnos del guion | cortados | con dos voces | el más largo | pasan del anillo | cortes a media frase |
+|---|---|---|---|---|---|---|---|
+| sala-es | ninguno | 32 | 26 | 1 | 29,0 s | 0 | 0 |
+| sala-es | 15 s | 32 | 27 | 2 | 15,0 s | 0 | 0 |
+| sala-es | 25 s | 32 | 27 | 2 | 25,1 s | 0 | 1 |
+| sala-en | ninguno | 30 | 25 | 1 | 29,2 s | 0 | 0 |
+| sala-en | 15 s | 30 | 26 | 2 | 15,0 s | 0 | 1 |
+| sala-en | 25 s | 30 | 26 | 2 | 25,0 s | 0 | 1 |
+
+El intercambio rápido se junta en **un turno de 29 s con las dos voces**, en las dos salas: cabe en el anillo por un
+segundo, y la pregunta del cliente que va dentro solo llega al disparador cuando acaba el bloque entero.
+
+**Latencia:** de fin de turno a ficha, 4 ms la peor (sin audio ni modelo; el presupuesto es 4 s).
+
+**Lo que el kit no puede medir, dicho:** el nivel A trata cada turno por separado, como texto; la sala de verdad
+junta turnos (nivel B) y transcribe con errores (nivel C, manual). El corpus del kit es en español: en la sala
+inglesa casi ninguna pregunta trae ficha con resultado, así que **C1 y C2 casi no actúan en inglés**.
+
 **Lo que queda de la fase 1, en orden:**
 
 - **el kit v4**: `scripts/kit-v4-sala.sh` (dos voces de `say`), `sala-{es,en}.wav`, `presencial.json`, niveles A y B
