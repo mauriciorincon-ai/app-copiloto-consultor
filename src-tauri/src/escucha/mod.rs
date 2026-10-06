@@ -983,10 +983,22 @@ fn el_silencio_pide_ficha(
     if cliente_hablando {
         return None;
     }
-    let empezo = std::time::Instant::now();
     // Los dos candados en este orden y en ningún otro: es el único sitio de la app donde se anidan.
     let v = ventana.lock().ok()?;
     let ultimo = v.ultimo_que(crate::stt::Turno::pudo_decirlo_el_cliente)?;
+    del_silencio_a_la_ficha(disparador, buscador, ultimo, ahora_ms)
+}
+
+/// **Del silencio a la ficha, como lo hace la escucha**, una vez elegido el último turno que pudo decir el
+/// cliente: el disparador decide (con la tolerancia, si es la sala), el buscador busca y, si sale una ficha con
+/// resultado, el disparador se entera. Pública para el kit v4, como [`del_turno_a_la_ficha`].
+pub fn del_silencio_a_la_ficha(
+    disparador: &Mutex<Disparador>,
+    buscador: &dyn Buscador,
+    ultimo: &Turno,
+    ahora_ms: usize,
+) -> Option<Aparicion> {
+    let empezo = std::time::Instant::now();
     let vocabulario = buscador.vocabulario();
     let ctx = Contexto { ahora_ms, vocabulario: &vocabulario };
     let motivo = disparador.lock().ok()?.por_silencio(ultimo, &ctx)?;

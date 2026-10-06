@@ -351,6 +351,40 @@ tomó la última frase de la sala y no la que disparó»; **S2** `lib::…::la_s
 `de_ms` anulado en `sintetizar` nombró «la sugerencia no usa el turno que disparó». Los dos con código 0 y verde con
 1 prueba. Clippy limpio; el contrato, sin cambios (4 de 4).
 
+### El kit v4: las salas, el guion y los tres niveles (2026-10-05)
+
+- **El guion** (`docs/kit-de-prueba/presencial.json`, escrito antes de medir): dos salas con Páramo Azul, **32 turnos en
+  español y 30 en inglés**, cada uno con quién lo dice (la verdad, solo para el kit), la pausa antes, si debería traer
+  ficha y por qué; **7 fichas debidas por sala**, tus preguntas («¿Les parece si…?», «¿Qué plazo manejan…?»), tus
+  lecturas de la ficha en voz alta, una repregunta rápida del cliente, un silencio del cliente que pide ficha y uno
+  tuyo que no, y un intercambio con pausas de 200 ms (por debajo de los 320 ms que cierran un turno). Lleva también
+  las candidatas que se recorren y el criterio.
+- **Las salas** (`scripts/kit-v4-sala.sh`): `say -o` con dos voces por idioma (Reed y Mónica; Reed y Samantha), sin
+  sonar; `afconvert` a 16 kHz mono; una mezcla en Python que recorta el silencio de cada clip, pone la pausa del guion,
+  baja a 0,45 la voz del cliente (más lejos del micrófono) y un ruido de fondo fijo bajo el suelo del VAD. Corrida
+  local: `sala-es.wav` 127,3 s, `sala-en.wav` 123,8 s (unos 4 MB cada uno), con su línea de tiempo en
+  `*.tiempos.json`. **El intercambio rápido dura 29,1 s en español y 29,3 s en inglés**: lo escribí para rondar los
+  30 s del anillo y salió por debajo; no se retocó el guion para forzar el resultado.
+- **Nivel A** (`el_kit_presencial_mide_la_tolerancia`, puro, en la CI): cada turno entra como `Pista::Sala` con el reloj
+  de su wav, **por el mismo camino que la escucha** (`escucha::del_turno_a_la_ficha` y la nueva
+  `escucha::del_silencio_a_la_ficha`, que `el_silencio_pide_ficha` usa por dentro), con el silencio mirado cada 400 ms
+  como el latido de la escucha; las 36 combinaciones de C1 × C2 × C3 × silencio, ordenadas por el criterio, con el
+  detalle por motivo y por turno de la línea base y de la primera. Gates: el kit mide el problema (≥ 5 fichas debidas y
+  ≥ 3 preguntas tuyas por sala; la línea base con pertinentes y falsas), la latencia < 4 s, y **la regla de la casa no
+  pierde más fichas pertinentes que la línea base**.
+- **Nivel B** (`el_kit_presencial_corta_los_turnos_de_la_sala`, puro, en la CI): el VAD y el fin de turno de siempre
+  sobre los dos wav, con cada tope candidato: turnos cortados, turnos con dos voces, el más largo, los que pasan del
+  anillo y los cortes a media frase. Gate: **con la regla de la casa, ningún turno de la sala pasa del anillo**.
+- **Nivel C** (`el_kit_presencial_transcribe_la_sala`, `#[ignore = "hardware: …"]`): corta con la regla de la casa,
+  transcribe cada turno en el idioma de la sala y da el WER de la sala entera. `manual`: va a la corrida en vivo.
+
+**Rojos de los gates del kit:** **K1** (nivel A) con `reglas.json` en `esperaTrasFichaMs: 10000` y `silencio: false`
+nombró «la regla de la casa pierde 13 fichas pertinentes y la línea base 10»; **K2** (nivel B) con el anillo a 25 s
+(`capture/anillo.rs`) nombró «un turno de la sala dura 29240 ms, más que el anillo de 25000». Los dos con código 0 y
+verde con 1 prueba. **El primer intento de K2 no contó, y está bien que no contara:** con `FIN_MS = 1_000` el VAD
+juntaba tantos turnos que saltaba antes la aserción de «el nivel B no mide nada», y `demo-rojo.sh` (v1.40,
+`--debe-nombrar`) lo rechazó: «el gate falló (exit 101) pero no nombró 'más que el anillo'».
+
 **Lo que queda de la fase 1, en orden:**
 
 - **el kit v4**: `scripts/kit-v4-sala.sh` (dos voces de `say`), `sala-{es,en}.wav`, `presencial.json`, niveles A y B
