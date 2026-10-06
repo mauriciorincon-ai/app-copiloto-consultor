@@ -3130,6 +3130,8 @@ fn medir_la_sala(sala: &SalaDelKit, tiempos: &TiemposDeLaSala, corpus: &CorpusDe
     const LATIDO_DEL_SILENCIO_MS: usize = 400;
     let disparador = Mutex::new(Disparador::con_tolerancia(regla.clone()));
     let mut cuenta = Cuenta::default();
+    // La última aparición, para explicar cada perdida: casi siempre la tapa la espera tras una ficha anterior.
+    let mut anterior: Option<(usize, &str, Motivo)> = None;
     for (i, (g, w)) in sala.turnos.iter().zip(&tiempos.turnos).enumerate() {
         let turno = Turno {
             pista: Pista::Sala,
@@ -3166,12 +3168,21 @@ fn medir_la_sala(sala: &SalaDelKit, tiempos: &TiemposDeLaSala, corpus: &CorpusDe
                 cuenta.perdidas += 1;
                 let m = g.motivo.clone().unwrap_or_else(|| "?".into());
                 cuenta.por_motivo.entry(m.clone()).or_default().2 += 1;
-                cuenta.faltan.push(linea(&m));
+                let antes = match anterior {
+                    Some((ms, quien, motivo)) => format!(
+                        "la anterior salió {:.1} s antes, de un turno {quien}, por «{}»",
+                        (w.hasta_ms - ms) as f64 / 1000.0,
+                        etiqueta(motivo)
+                    ),
+                    None => "no había salido ninguna antes".into(),
+                };
+                cuenta.faltan.push(format!("{} — {antes}", linea(&m)));
             }
             (None, false) => {}
         }
         if let Some(a) = &trajo {
             cuenta.latencia_max_ms = cuenta.latencia_max_ms.max(a.ms);
+            anterior = Some((a.de_ms.unwrap_or(w.hasta_ms), if g.quien == "tuyo" { "tuyo" } else { "del cliente" }, a.motivo));
         }
     }
     cuenta

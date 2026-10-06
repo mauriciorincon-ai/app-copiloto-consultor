@@ -451,6 +451,18 @@ segundo, y la pregunta del cliente que va dentro solo llega al disparador cuando
 
 **Latencia:** de fin de turno a ficha, 4 ms la peor (sin audio ni modelo; el presupuesto es 4 s).
 
+**Por qué se pierden las 9 de la primera por el criterio** (el kit lo dice desde el commit «kit v4 says what blocked each lost card»: cada perdida, con cuánto
+antes salió la ficha anterior y de quién; la tabla no cambió con ese añadido, comparada línea a línea):
+
+- **4 caen justo detrás de una ficha que disparaste tú**, dentro de la espera de 6 s entre fichas que ya existía:
+  «¿Y la limpieza de datos…?» (5,1 s después de tu «¿Les parece si empezamos…?»), «Is data cleaning…?» (3,5 s),
+  «How many weeks…?» (5,9 s) y «And do those 4 weeks…?» (4,5 s después de tu cifra). Ninguna de las candidatas toca
+  esto: la sala no sabe que la primera pregunta era tuya.
+- **3 son términos que el cliente nombra sin preguntar** («Lo de Sur del Valle…», «Y el jefe de sistemas…», «Tell me
+  more about Sur del Valle»): el precio de C3.
+- **1 es la repregunta rápida** («¿Y esas 4 semanas…?», 8,8 s después de la ficha que pidió el cliente): el precio de C1.
+- **1 es el silencio del cliente en la sala inglesa**: el precio de apagar el silencio.
+
 **Lo que el kit no puede medir, dicho:** el nivel A trata cada turno por separado, como texto; la sala de verdad
 junta turnos (nivel B) y transcribe con errores (nivel C, manual). El corpus del kit es en español: en la sala
 inglesa casi ninguna pregunta trae ficha con resultado, así que **C1 y C2 casi no actúan en inglés**.
