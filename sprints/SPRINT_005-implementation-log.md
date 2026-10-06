@@ -469,6 +469,15 @@ inglesa casi ninguna pregunta trae ficha con resultado, así que **C1 y C2 casi 
   **Rojos:** `import SoundAnalysis` en `Transcriptor.swift` nombró «SoundAnalysis (Apple)» en `:22`; un paquete
   `pyannote-rs` en el `Cargo.lock` nombró «pyannote-rs · librería de hablantes». Verde con 3 pruebas los dos.
 
+### El contrato, con la sala (regla 19, 2026-10-05)
+
+Dos muestras nuevas en `contrato.rs`, regeneradas en `src/contrato.generado.ts`: **`TURNO_DE_LA_SALA`** (un `Turno` con
+`pista: "sala"`) y **`ESTADO_DE_LA_ESCUCHA_PRESENCIAL`** (`presencial: true`, la sala abierta, el sistema cerrado sin
+motivo). Sus lectores en la webview llegan en la fase 2, como ya declara la deuda de `contrato-con-lectores`. **La
+muestra del turno también vigila el tipo de TS:** con `Pista = "microfono" | "sistema"` (sin «sala») en
+`src/cuaderno.ts`, `pnpm typecheck` fue rojo en `src/contrato.generado.ts(117,5)`: «Type '"sala"' is not assignable to
+type 'Pista'»; verde al restaurar.
+
 **Lo que queda de la fase 1, en orden:**
 
 - **el kit v4**: `scripts/kit-v4-sala.sh` (dos voces de `say`), `sala-{es,en}.wav`, `presencial.json`, niveles A y B

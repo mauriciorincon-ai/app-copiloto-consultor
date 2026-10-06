@@ -349,6 +349,8 @@ pub fn muestras() -> Vec<Muestra> {
         ),
         // ---- `turnos_recientes`, el transcript de la banda --------------------------------
         m("TURNO_DEL_CLIENTE", "Turno", "./cuaderno", &turno()),
+        // La sala, en presencial (sprint 005, ADR 020 §2): un turno sin dueño. La banda lo pinta «Sala».
+        m("TURNO_DE_LA_SALA", "Turno", "./cuaderno", &Turno { pista: Pista::Sala, ..turno() }),
         // ---- la reunión, en sus tres formas ----------------------------------------------
         m("REUNION_NINGUNA", "Reunion", "./cuaderno", &Reunion::Ninguna),
         m(
@@ -398,6 +400,25 @@ pub fn muestras() -> Vec<Muestra> {
                 },
                 turnos_en_memoria: 3,
                 bytes_del_transcript: 2_048,
+                bytes_del_ensayo: 0,
+                ensayo: false,
+                motor: "apple-speechanalyzer",
+            },
+        ),
+        // Presencial (sprint 005, ADR 020): la fila del micrófono es la sala, y la del sistema va cerrada sin motivo
+        // porque no se pidió; Sesión no puede pintarla «A medias».
+        m(
+            "ESTADO_DE_LA_ESCUCHA_PRESENCIAL",
+            "EstadoDeEscucha",
+            "./cuaderno",
+            &EstadoDeEscucha {
+                escuchando: true,
+                solo_notas: false,
+                presencial: true,
+                microfono: pista_abierta(),
+                sistema: EstadoDePista::cerrada(),
+                turnos_en_memoria: 4,
+                bytes_del_transcript: 1_536,
                 bytes_del_ensayo: 0,
                 ensayo: false,
                 motor: "apple-speechanalyzer",

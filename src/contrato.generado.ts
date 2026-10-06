@@ -109,6 +109,15 @@ export const TURNO_DEL_CLIENTE: Turno = {
     "texto": "¿Y la limpieza de datos está dentro del alcance?"
   };
 
+export const TURNO_DE_LA_SALA: Turno = {
+    "desdeMs": 5400,
+    "eco": false,
+    "hastaMs": 8000,
+    "hora": "14:02",
+    "pista": "sala",
+    "texto": "¿Y la limpieza de datos está dentro del alcance?"
+  };
+
 export const REUNION_NINGUNA: Reunion = {
     "que": "ninguna"
   };
@@ -147,6 +156,25 @@ export const ESTADO_DE_LA_ESCUCHA: EstadoDeEscucha = {
       "abierta": false,
       "bytes": 0,
       "motivo": "dispositivo-ocupado"
+    },
+    "soloNotas": false
+  };
+
+export const ESTADO_DE_LA_ESCUCHA_PRESENCIAL: EstadoDeEscucha = {
+    "bytesDelEnsayo": 0,
+    "bytesDelTranscript": 1536,
+    "ensayo": false,
+    "escuchando": true,
+    "microfono": {
+      "abierta": true,
+      "bytes": 1920000,
+      "motivo": null
+    },
+    "presencial": true,
+    "sistema": {
+      "abierta": false,
+      "bytes": 0,
+      "motivo": null
     },
     "soloNotas": false
   };
