@@ -478,11 +478,24 @@ muestra del turno también vigila el tipo de TS:** con `Pista = "microfono" | "s
 `src/cuaderno.ts`, `pnpm typecheck` fue rojo en `src/contrato.generado.ts(117,5)`: «Type '"sala"' is not assignable to
 type 'Pista'»; verde al restaurar.
 
-**Lo que queda de la fase 1, en orden:**
+### El efímero con la sala, la constitución y los LEEME (2026-10-05)
 
-- **el kit v4**: `scripts/kit-v4-sala.sh` (dos voces de `say`), `sala-{es,en}.wav`, `presencial.json`, niveles A y B
-  en `contra-el-mac-de-verdad.rs` (puros, en la CI), latencia y nivel C (`hardware`);
-- el efímero presencial (término plantado, `verify:ephemeral`), el contrato con su muestra de la sala, el vocabulario
-  vetado (`voiceprint`, `speaker embedding`) y el gate **`cero-huellas-de-voz`**;
-- la regla dura 4 y «Qué es esta app» en el `CLAUDE.md`, ahora que `Pista::Sala` existe;
-- **STOP de medición.**
+- **`una_sesion_completa` gana el paso 7-quater, la sala**: `Escucha::sobre_anillos` con una sola pista, la sala, y
+  **el motor de verdad** sobre un anillo que llena el test (el micrófono no se abre), con el audio del kit; espera un
+  turno de la sala (transcrito, o sin texto en la CI) y lo cuenta sin enseñarlo. Después **un turno de la sala con la
+  canaria** recorre `del_turno_a_la_ficha` con la tolerancia de la casa, el cuaderno (no entra) y las propuestas (no
+  propone). El gate del disco exige `ejercido` con «sala», y el del log, la línea «la sala disparó por» del hijo (que
+  el paso corrió) además de que la canaria no salga. **Son tests de hardware** (motor de voz): en local no se corren
+  (regla 22); su primera corrida es la de la CI de este push, y lo que la sostiene sin hardware ya está en la
+  librería con sus rojos (D5, D6, D1, D2 y T7).
+- **`CLAUDE.md`**: la regla dura 4 dice la sala sin dueño, la tolerancia medida y los dos gates que la vigilan; «Qué es
+  esta app» nombra el modo presencial (sin leer la pantalla); el patrón de las pistas suma la sala, la tolerancia y
+  `modo::que_abre`.
+- **Los LEEME del kit** (`docs/kit-de-prueba/LEEME.md`, `audio/LEEME.md`): v4, la fila de `presencial.json` con las
+  cifras de la corrida de arriba, la fila del nivel C (`manual`) y las dos salas con cómo se hicieron. La nota del
+  audio decía «Cuatro frases» y habría quedado falsa.
+- **Pruebas** (local): `pnpm exec vitest run` **477 de 477** en 58 archivos (+3 del gate nuevo); `pnpm typecheck`
+  limpio; `cargo clippy --locked --all-targets -- -D warnings` limpio.
+
+**Lo que queda de la fase 1:** la CI de este push leída (con el paso de la sala corriendo en `build-escritorio`) y el
+**STOP de medición**.

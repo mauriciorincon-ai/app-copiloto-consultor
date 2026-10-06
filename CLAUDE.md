@@ -28,7 +28,8 @@
 **Angel Ghost** — *«Tu propia experiencia, en la reunión, en el momento justo — y solo tú la
 ves.»* Una ventana pequeña en el Mac del consultor que el cliente NO ve aunque comparta pantalla.
 Escucha ambos lados de la videollamada (dos pistas: micrófono = consultor, audio del sistema =
-cliente), lee la pantalla solo cuando cambia, y muestra **fichas de evidencia del propio corpus
+cliente; o, en el **modo presencial** del sprint 005, la sala por el micrófono del Mac, en una sola pista sin dueño
+y sin leer la pantalla), lee la pantalla solo cuando cambia, y muestra **fichas de evidencia del propio corpus
 del consultor** (propuesta · marco · caso · ficha de cliente · perfil del consultor): un titular,
 una línea y la fuente. Si el usuario lo enciende, un modelo local redacta una sugerencia breve.
 **Silenciosa y efímera:** nada de terceros se graba ni persiste; al cerrar queda solo lo tuyo (regla dura 1).
@@ -88,7 +89,12 @@ vende **no persistir, verificable**.
    (`sintesis/sistema.rs`) → API opt-in (`sintesis/api.rs`: Claude, Groq); MLX queda en el
    roadmap del H2 (ADR 011); `mock` de primera clase (`AG_SINTESIS=mock`).
 4. **CERO HUELLAS DE VOZ, CERO EMOCIONES.** La atribución de hablante se resuelve por pista
-   (mic/sistema), nunca por biometría; no se infiere estado emocional de nadie.
+   (mic/sistema), nunca por biometría; no se infiere estado emocional de nadie. **En presencial (sprint 005, ADR
+   020) la pista única es la sala y no tiene dueño** (`Quien::SinAtribuir`): la app no sabe quién habló y lo dice; la
+   tolerancia a tu voz son reglas sobre el texto y el tiempo, medidas por el kit v4, y nunca una huella de la tuya.
+   Lo vigilan `tests/unit/pista-por-quien.test.ts` (de quién es un turno se pregunta con `Pista::quien()`, jamás
+   comparando pistas) y `tests/unit/cero-huellas-de-voz.test.ts` (ninguna API ni librería de hablantes, de rasgos de
+   voz ni de emociones, en el código ni en las dependencias).
 5. **CERO DATOS REALES DE CLIENTES EN EL REPO.** Público por defecto: kits de prueba y maquetas
    con datos 100 % sintéticos; el corpus real del usuario y sus notas viven fuera del repo y
    gitignored. Doble cinturón gitleaks.
@@ -790,7 +796,9 @@ Llenado en la auditoría del cierre del ciclo H1 (sprint 003); el estampado lo d
 
 - **Dos pistas por dispositivo, jamás por voz** (regla dura 4): micrófono = consultor, audio del
   sistema = cliente (`capture/`); un turno del micrófono que repite al cliente se marca eco
-  (`voz/eco.rs`) y cuenta como del cliente.
+  (`voz/eco.rs`) y cuenta como del cliente. **En presencial, una: la sala** (`Pista::Sala`), sin dueño; su
+  tolerancia vive en `disparo/tolerancia.rs` con la regla de `data/presencial/reglas.json`, y lo que abre cada modo,
+  en `modo::que_abre` (sprint 005, ADR 020).
 - **Turno → disparo → búsqueda → ficha en ≤ 4 s:** `voz/turno.rs` → `stt/` → `disparo/` →
   `corpus/` (BM25 por sección) → `ficha/` (con `maniobra.rs` cuando el corpus no tiene nada). Todo
   determinista; la pantalla aporta al mismo camino (`pantalla/refuerzo.rs`).

@@ -937,6 +937,70 @@ fn una_sesion_completa(casa: &Path, corpus_en: &Path, llave: &dyn Llaves) -> (Ve
         ejercido.push("ensayo");
     }
 
+    // 7-quater · **La sala, en presencial** (sprint 005, ADR 020). La escucha entera sobre un anillo que llena el test
+    //     —el micrófono no se abre— con **una sola pista, la sala**, y el motor de verdad: el audio del kit entra como
+    //     la sala, se corta, se transcribe en el idioma de la sala y pasa por el disparador con la tolerancia de la
+    //     casa. Lo que Apple escriba al transcribir la sala se escribe aquí, dentro del inventario. Y **un turno de la
+    //     sala con la canaria** recorre el camino de la escucha hasta la ficha (`del_turno_a_la_ficha`), el cuaderno
+    //     (que no lo guarda: la sala no es tuya) y las propuestas (que no proponen nada: no se sabe quién lo dijo).
+    {
+        use app_copiloto_consultor_lib::escucha::{del_turno_a_la_ficha, Buscador};
+        struct ElDeLaSesion<'a>(&'a Corpus);
+        impl Buscador for ElDeLaSesion<'_> {
+            fn buscar(&self, texto: &str, cuantos: usize) -> Vec<app_copiloto_consultor_lib::corpus::Hallazgo> {
+                self.0.buscar(texto, cuantos).unwrap_or_default()
+            }
+            fn vocabulario(&self) -> Vec<String> {
+                self.0.vocabulario().to_vec()
+            }
+        }
+        let anillo = Arc::new(Mutex::new(Anillo::de_la_app()));
+        let oido: Arc<Mutex<Vec<Novedad>>> = Arc::default();
+        let apunta = oido.clone();
+        let sala = Escucha::sobre_anillos(
+            vec![(Pista::Sala, anillo.clone(), "es-ES".into())],
+            motor_de_la_casa(),
+            Arc::new(SinCorpus),
+            jerga.clone(),
+            move |n| apunta.lock().unwrap().push(n),
+        );
+        assert!(sala.estado().presencial, "la escucha de la sala no se declaró presencial");
+        {
+            let silencio = vec![0.0f32; 16 * 600];
+            let mut a = anillo.lock().unwrap();
+            a.escribir(&silencio);
+            a.escribir(&muestras);
+            a.escribir(&silencio);
+        }
+        let de_la_sala = |n: &Novedad| match n {
+            Novedad::Turno(t) => t.pista == Pista::Sala,
+            Novedad::SinTexto { pista, .. } => *pista == Pista::Sala,
+            _ => false,
+        };
+        for _ in 0..400 {
+            if oido.lock().unwrap().iter().any(de_la_sala) {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        sala.cortar();
+        let oidos = oido.lock().unwrap().iter().filter(|n| de_la_sala(n)).count();
+        assert!(oidos > 0, "la sala no sacó ni un turno del audio del kit: el paso no midió nada");
+        println!("[sesión] la sala: {oidos} turno(s) cerrados por la escucha (transcritos o sin texto, sin el texto)");
+
+        let canaria_en_la_sala = Turno { pista: Pista::Sala, ..turno.clone() };
+        let mut d = Disparador::nuevo();
+        let a = del_turno_a_la_ficha(&mut d, &ElDeLaSesion(&corpus), &canaria_en_la_sala, Instant::now())
+            .expect("la pregunta de la sala no disparó: el paso no midió el camino de la ficha");
+        println!("[sesión] la sala disparó por «{}»", a.motivo.etiqueta());
+        assert!(!Cuaderno::nuevo(true).oir(&canaria_en_la_sala), "la sala entró al cuaderno como tuya");
+        let nada = |_: &str| false;
+        let ctx = app_copiloto_consultor_lib::propuestas::Contexto { fijadas: &[], conoce: &nada };
+        assert!(app_copiloto_consultor_lib::propuestas::proponer(&canaria_en_la_sala, &ctx).is_empty(), "la sala propuso una nota");
+        d.reiniciar();
+        ejercido.push("sala");
+    }
+
     // 7-bis · **La bandeja** (sprint 003, fase 2, ADR 016). Las reglas miran los turnos de verdad —la
     //     pregunta del cliente con la canaria y un plazo que dijo— y lo que no decidiste se sella en la
     //     bandeja con su vencimiento, junto a la lista que lee la tarea de launchd. **El plist no se
@@ -1031,6 +1095,7 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     assert!(ejercido.contains(&"notas"), "las notas no se guardaron: el inventario no las midió");
     assert!(ejercido.contains(&"bandeja"), "la bandeja no se escribió: el inventario no la midió");
     assert!(ejercido.contains(&"ensayo"), "el ensayo no se guardó: el inventario no lo midió");
+    assert!(ejercido.contains(&"sala"), "la sala no se ejerció: el inventario no la midió");
 
     let despues: BTreeMap<PathBuf, Huella> = sitios.iter().flat_map(|s| inventario(s)).collect();
 
@@ -1196,6 +1261,8 @@ fn la_canaria_del_cliente_no_aparece_en_el_log() {
         "el hijo no llegó a correr la sesión entera: este gate no midió nada.\n{salida}"
     );
 
+    // La sala (paso 7-quater) también: la canaria la recorrió como turno sin dueño.
+    assert!(salida.contains("[sesión] la sala disparó por"), "el hijo no llegó a la sala: su canaria no midió nada.\n{salida}");
     // El ensayo (paso 7-ter) también tuvo que correr en el hijo: si no, su término no mide nada.
     assert!(salida.contains("[sesión] ensayo guardado"), "el hijo no llegó al ensayo: su término plantado no midió nada.\n{salida}");
     let delator: Vec<&str> = salida.lines().filter(|l| l.contains(TERMINO_DEL_ENSAYO)).collect();

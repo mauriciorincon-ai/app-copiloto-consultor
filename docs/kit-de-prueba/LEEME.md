@@ -1,9 +1,10 @@
-# Kit de prueba — Angel Ghost · v3 (sprint 004)
+# Kit de prueba — Angel Ghost · v4 (sprint 005)
 
 Nació en el sprint 001 con el corpus y las preguntas; el sprint 002 le sumó el audio, la pantalla y el
 radar; el sprint 003 (v2) le sumó las propuestas, las jurisdicciones, la puerta local y dos documentos
-de ejemplo para la NDA y la carta de encargo; **el sprint 004 (v3) le suma el banco de preguntas del
-ensayo** (`ensayo.json`).
+de ejemplo para la NDA y la carta de encargo; el sprint 004 (v3) le sumó el banco de preguntas del
+ensayo (`ensayo.json`); **el sprint 005 (v4) le suma la sala del modo presencial** (`presencial.json` y
+`audio/sala-es.wav`, `audio/sala-en.wav`).
 
 **Qué mide la integración continua y qué no.** Todo lo de este kit lo mide la CI en cada push
 (`cargo test --test contra-el-mac-de-verdad el_kit` y `cargo test --test puerta el_kit`), **salvo el
@@ -20,6 +21,8 @@ su corrida local registrada en la bitácora de cada sprint (ver `audio/LEEME.md`
 | `preguntas.json` por la puerta | **v2** · el kit que corre `ghost` mide lo mismo que la CI | 0,823 = 0,823 | igual |
 | `ensayo.json` | **v3** · el banco del ensayo, regla por regla: precisión y recall de las seis reglas, en español (Páramo Azul) y en inglés (Northwind); y el acento del modelo con el `mock` | lo imprime la CI | 0,75 · 0,75 por regla |
 | `ensayo.json`, bloque `respuestas` | **v3** · la evaluación de una respuesta: ficha por ficha, «citada» contra lo que la respuesta usó; muletillas y ritmo; y el camino entero contra 500 ms | 1,000 · 0,714 · 4 ms | 0,75 · 0,70 · 500 ms |
+| `presencial.json` y `audio/sala-*.wav` | **v4** · nivel A: la tolerancia a tu voz en la sala, combinación por combinación (fichas pertinentes, falsas y perdidas, por motivo); nivel B: los turnos que corta el VAD sobre las dos salas, con cada tope | lo imprime la CI · línea base 5 pertinentes, 16 falsas, 9 perdidas de 14; el turno más largo, 29,2 s (2026-10-05) | la regla de la casa no pierde más que la línea base · ningún turno pasa del anillo de 30 s |
+| `audio/sala-*.wav`, nivel C | **v4** · la sala transcrita, turno a turno, y su WER | ver `audio/LEEME.md` | **manual** |
 | `audio/` | el WER con y sin diccionario | ver `audio/LEEME.md` | **manual** |
 
 Todo lo de esta carpeta es **100 % sintético**. Ni un cliente real, ni un dato real, ni una cifra
@@ -67,12 +70,22 @@ de datos para responder «¿cuánto cuesta el software de Salesforce?». La secc
 «cuesta», y con eso le bastaba para pasar por respuesta. Faltaba media docena de interrogativos en
 la lista de palabras vacías.
 
-## `audio/` — cuatro frases dichas en voz alta
+## `presencial.json` — dos salas, turno a turno (v4)
+
+Una reunión en la mesa con Páramo Azul, en español (32 turnos) y en inglés (30), con **quién dice cada turno**: la
+verdad, solo para el kit; la app nunca la ve, porque en la sala todo llega como «sala». Cada turno dice si debería
+traer ficha y por qué. Están a propósito tus preguntas («¿Les parece si…?»), tu lectura de la ficha en voz alta, una
+repregunta rápida del cliente, un silencio que pide ficha y otro que no, y un intercambio con pausas de 200 ms. Lleva
+también las reglas candidatas que el kit recorre y el criterio con que se elige, escrito antes de medir (ADR 020 §4).
+Las salas son este guion dicho por dos voces sintéticas en una sola pista: `scripts/kit-v4-sala.sh`.
+
+## `audio/` — cuatro frases dichas en voz alta, y dos salas
 
 Dos preguntas del sprint 001 (`pregunta-es.wav`, `pregunta-en.wav`) y dos frases con jerga y cambio
 de idioma del sprint 002 (`mezcla-es.wav`, `mezcla-en.wav`), generadas con `say` y `afconvert` del
 propio macOS: 16 kHz, mono, 16 bits. Alimentan el WER con y sin diccionario, los tests que
-comprueban que el motor de voz transcribe y que una sesión completa no deja nada en el disco. Ver
+comprueban que el motor de voz transcribe y que una sesión completa no deja nada en el disco. Desde el
+sprint 005, **dos salas** (`sala-es.wav`, `sala-en.wav`, unos dos minutos cada una) para el modo presencial. Ver
 `audio/LEEME.md`.
 
 ## `pantalla/` — cinco diapositivas y una reunión grabada

@@ -1,7 +1,8 @@
 # Audios del kit — 100 % sintéticos
 
 **Cuatro** frases habladas por las voces del sistema de macOS (`say`): dos del sprint 001 con el texto
-de la maqueta, y dos del sprint 002 con la mezcla de idiomas y la jerga técnica. **No hay ninguna
+de la maqueta, y dos del sprint 002 con la mezcla de idiomas y la jerga técnica. **Y dos salas del sprint 005**
+(abajo): una reunión entera en la mesa, con dos voces por la misma pista. **No hay ninguna
 grabación de ninguna persona**, aquí ni en ningún otro sitio del repo: la regla de cero datos reales de
 clientes se aplica también a las voces.
 
@@ -18,6 +19,21 @@ afecta a lo que miden —el motor transcribe las dos igual de bien— pero convi
 verdad: quien quiera regenerar `pregunta-es.wav` hoy tendrá que elegir otra voz, y su WER cambiará un
 poco. Por eso los audios se **versionan** en vez de generarse en cada corrida: un kit que se
 regenerara solo mediría una voz distinta cada vez que Apple cambie de catálogo.
+
+## Las salas del kit v4 (sprint 005, modo presencial)
+
+| Archivo | Idioma | Qué es | Cómo se hizo |
+|---|---|---|---|
+| `sala-es.wav` | es-ES | los 32 turnos de `../presencial.json`, 127,3 s | `scripts/kit-v4-sala.sh`: tú con `Reed (Spanish (Spain))`, el cliente con `Mónica` |
+| `sala-en.wav` | en-US | los 30 turnos, 123,8 s | el mismo script: tú con `Reed (English (US))`, el cliente con `Samantha` |
+
+El script hace cada turno con `say -o` (escribe un archivo, no suena), lo pasa a 16 kHz mono con el mismo
+`afconvert`, **le recorta el silencio** que `say` deja al principio y al final para que la pausa del guion sea la
+pausa real, pone esa pausa, baja la voz del cliente a 0,45 (está más lejos del micrófono) y añade un ruido de fondo
+fijo, por debajo del suelo del detector de voz. Al lado de cada sala deja **su línea de tiempo**
+(`sala-es.tiempos.json`, `sala-en.tiempos.json`): dónde empieza y acaba cada turno dentro del wav, con la versión de
+macOS y las voces con que se hizo. Es la verdad contra la que mide el nivel B. Como los demás audios, **se versionan**
+en vez de regenerarse.
 
 ## El WER — la referencia y los números
 
