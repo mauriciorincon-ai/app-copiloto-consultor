@@ -907,9 +907,11 @@ pub fn soltar_fijada<R: Runtime>(app: &AppHandle<R>, indice: usize) -> bool {
     app.try_state::<ElCuaderno>().and_then(|el| el.con(|c| c.soltar_fijada(indice))).unwrap_or(false)
 }
 
-pub fn conservar_mis_turnos<R: Runtime>(app: &AppHandle<R>, si: bool) {
+/// El interruptor: **tu preferencia se recuerda tal cual; la sesión solo la usa si el modo lo deja** (ADR 020
+/// §5). En presencial encenderlo no guarda nada, y en la reunión siguiente vuelve a valer.
+pub fn conservar_mis_turnos<R: Runtime>(app: &AppHandle<R>, si: bool, el_modo_lo_deja: bool) {
     if let Some(el) = app.try_state::<ElCuaderno>() {
-        el.con(|c| c.conservar_mis_turnos(si));
+        el.con(|c| c.conservar_mis_turnos(conservar_en_este_modo(si, el_modo_lo_deja)));
     }
     crate::recordar(app, |p| p.conservar_mis_turnos = si);
 }
@@ -1099,6 +1101,31 @@ mod pruebas {
             seccion: None,
             hora: "14:16".into(),
         }
+    }
+
+    /// **«Conservar mis turnos» solo vale si el modo lo deja** (ADR 020 §5): en presencial, apagado aunque tu
+    /// preferencia diga que sí, y la preferencia no se toca. Y abrir el cuaderno con lo que dice esta función
+    /// deja la casilla apagada: un turno tuyo no entra.
+    ///
+    /// ¿Puede fallar? Sí: con `preferencia || el_modo_lo_deja` presencial conservaría tus turnos (bitácora
+    /// del sprint 005, fase 1).
+    #[test]
+    fn conservar_mis_turnos_solo_si_el_modo_lo_deja() {
+        assert!(conservar_en_este_modo(true, true), "en reunión, tu preferencia manda");
+        assert!(!conservar_en_este_modo(true, false), "en presencial no se conservan tus turnos");
+        assert!(!conservar_en_este_modo(false, true));
+        assert!(!conservar_en_este_modo(false, false));
+        let el = ElCuaderno::default();
+        el.abrir(conservar_en_este_modo(true, false), HOY);
+        let turno = crate::stt::Turno {
+            pista: crate::capture::Pista::Microfono,
+            desde_ms: 0,
+            hasta_ms: 1_000,
+            texto: "Te lo mando el lunes.".into(),
+            hora: "14:02".into(),
+            eco: false,
+        };
+        assert_eq!(el.con(|c| c.oir(&turno)), Some(false), "el cuaderno conservó un turno con la casilla apagada por el modo");
     }
 
     #[test]

@@ -588,6 +588,20 @@ mod pruebas {
         assert!(vistas >= 4, "las reglas no saltaron: {vistas}");
     }
 
+    /// **La sala no propone nada** (ADR 020 §5): ni como tuyo ni como del cliente, porque no se sabe
+    /// quién lo dijo. La misma frase, del cliente, sí propone.
+    ///
+    /// ¿Puede fallar? Sí: con `Quien::SinAtribuir => Some(De::Cliente)` lo que dijiste tú en la mesa se
+    /// propondría como un hecho del cliente (bitácora del sprint 005, fase 1).
+    #[test]
+    fn la_sala_no_propone_nada() {
+        let frase = "Necesitamos que el tablero esté listo en 12 semanas porque el comité se reúne en diciembre.";
+        assert!(!proponer(&cliente(frase), &sin_fichas()).is_empty(), "la frase de control ya no propone: el test no mide nada");
+        assert_eq!(proponer(&turno(Pista::Sala, false, frase), &sin_fichas()), Vec::new(), "la sala propuso una nota");
+        assert_eq!(De::del_turno(&turno(Pista::Sala, false, frase)), None);
+        assert_eq!(De::del_turno(&turno(Pista::Sala, true, frase)), None, "el eco no le da dueño a la sala");
+    }
+
     /// **El eco es del cliente.** Un turno del micrófono marcado como eco es su voz por tus altavoces:
     /// ni compromiso (que es solo tuyo) ni su frase. Demostrado en rojo: con `De::del_turno` sin mirar
     /// `turno.eco`, el compromiso sale como tuyo y con la frase entera.

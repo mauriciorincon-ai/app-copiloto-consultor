@@ -568,6 +568,21 @@ mod pruebas {
         assert!(!dentro.contains("Del cliente") && !dentro.contains("oído por tus altavoces"));
     }
 
+    /// **La sala nunca entra como tuya** (ADR 020 §5), ni con «Conservar mis turnos» encendido: en
+    /// presencial las dos voces llegan por el mismo micrófono y no se sabe de quién es cada frase.
+    ///
+    /// ¿Puede fallar? Sí: con `Quien::SinAtribuir => !turno.eco` la sala entera se guardaría en tu
+    /// archivo como si la hubieras dicho tú (bitácora del sprint 005, fase 1).
+    #[test]
+    fn la_sala_nunca_entra_como_tuya() {
+        let mut c = Cuaderno::nuevo(true);
+        assert!(!c.oir(&turno(Pista::Sala, false, "Necesitamos el tablero en doce semanas.")), "un turno de la sala entró como tuyo");
+        assert!(!c.oir(&turno(Pista::Sala, true, "Con la marca de eco tampoco")));
+        assert_eq!(c.resumen().turnos, 0);
+        let dentro = String::from_utf8(c.contenido(encabezado()).a_bytes()).unwrap();
+        assert!(!dentro.contains("doce semanas"), "la sala acabó en el archivo de tus notas");
+    }
+
     #[test]
     fn con_la_casilla_apagada_no_entra_ni_un_turno_y_apagarla_tira_los_que_habia() {
         let mut c = Cuaderno::nuevo(false);

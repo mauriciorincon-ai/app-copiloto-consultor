@@ -398,6 +398,24 @@ pub enum Pistas {
     Sala { idioma: String },
 }
 
+impl Pistas {
+    /// **Qué pista abre cada modo, con su idioma.** Pura, para probarla sin abrir un grifo: `arrancar` abre
+    /// exactamente estas.
+    pub fn cuales(&self) -> Vec<(Pista, String)> {
+        match self {
+            Pistas::Reunion { consultor, cliente } => {
+                vec![(Pista::Microfono, consultor.clone()), (Pista::Sistema, cliente.clone())]
+            }
+            Pistas::Sala { idioma } => vec![(Pista::Sala, idioma.clone())],
+        }
+    }
+}
+
+/// Una escucha es presencial si alguna de sus pistas no tiene dueño: la sala.
+fn es_presencial(pistas: &[(Pista, String)]) -> bool {
+    pistas.iter().any(|(p, _)| p.quien() == Quien::SinAtribuir)
+}
+
 /// La escucha en marcha.
 pub struct Escucha {
     /// El disparador vive aquí y no dentro del hilo porque **el kill-switch tiene que poder
@@ -428,13 +446,9 @@ impl Escucha {
         diccionario: Arc<Diccionario>,
         avisar: impl Fn(Novedad) + Send + Sync + 'static,
     ) -> Self {
-        let (vivas, presencial) = match &pistas {
-            Pistas::Reunion { consultor, cliente } => (
-                vec![PistaViva::abrir(Pista::Microfono, consultor), PistaViva::abrir(Pista::Sistema, cliente)],
-                false,
-            ),
-            Pistas::Sala { idioma } => (vec![PistaViva::abrir(Pista::Sala, idioma)], true),
-        };
+        let que = pistas.cuales();
+        let presencial = es_presencial(&que);
+        let vivas = que.into_iter().map(|(p, idioma)| PistaViva::abrir(p, &idioma)).collect();
         Self::con_pistas(vivas, presencial, motor, buscador, diccionario, avisar)
     }
 
@@ -450,7 +464,7 @@ impl Escucha {
         diccionario: Arc<Diccionario>,
         avisar: impl Fn(Novedad) + Send + Sync + 'static,
     ) -> Self {
-        let presencial = anillos.iter().any(|(p, _, _)| p.quien() == Quien::SinAtribuir);
+        let presencial = es_presencial(&anillos.iter().map(|(p, _, i)| (*p, i.clone())).collect::<Vec<_>>());
         let vivas = anillos.into_iter().map(|(p, a, idioma)| PistaViva::sobre(p, a, &idioma)).collect();
         Self::con_pistas(vivas, presencial, motor, buscador, diccionario, avisar)
     }
@@ -1800,6 +1814,152 @@ mod tests {
             dichas.lock().unwrap().is_empty(),
             "la banda estrenó una ficha después del kill-switch"
         );
+    }
+
+    /// Un motor que dice siempre la misma frase y apunta en qué idioma se la pidieron.
+    struct Dice(&'static str, Arc<Mutex<Vec<String>>>);
+
+    impl Motor for Dice {
+        fn nombre(&self) -> &'static str {
+            "dice"
+        }
+        fn disponibilidad(&self, _idioma: &str) -> Disponibilidad {
+            Disponibilidad::Listo
+        }
+        fn instalar(&self, _idioma: &str) -> Disponibilidad {
+            Disponibilidad::Listo
+        }
+        fn transcribir(&self, idioma: &str, _muestras: &[f32], _hz: u32) -> Result<String, Fallo> {
+            self.1.lock().unwrap().push(idioma.to_string());
+            Ok(self.0.into())
+        }
+        fn techo_de_idiomas(&self) -> u32 {
+            1
+        }
+        fn idiomas(&self) -> Vec<String> {
+            vec!["en-US".into()]
+        }
+    }
+
+    /// **LA SALA DE PUNTA A PUNTA, sin grifos** (ADR 020): una sola pista, la sala, sobre un anillo que el
+    /// test llena. El estado lo dice —presencial, la sala abierta, el sistema cerrado sin avería—, y lo que
+    /// se oye sale como un turno de la sala, transcrito en el idioma de la sala, sin marca de eco, y trae
+    /// su ficha.
+    ///
+    /// ¿Puede fallar? Sí: con la sala fuera del disparo (`Quien::SinAtribuir => None` en `disparo::mirar`), es
+    /// rojo (bitácora del sprint 005, fase 1).
+    #[test]
+    fn la_sala_abre_una_pista_y_de_su_turno_sale_la_ficha() {
+        use crate::corpus::seccion::Seccion;
+        let corpus = corpus_de_prueba();
+        corpus
+            .0
+            .indice_para_pruebas()
+            .meter("/c/propuesta.md", "Páramo Azul · Propuesta", Some(crate::corpus::Unidad::Propuesta), false, &[
+                Seccion {
+                    titulo: Some("Plazo de entrega".into()),
+                    texto: "La entrega completa toma cuatro semanas desde la firma del contrato.".into(),
+                },
+            ])
+            .unwrap();
+        let anillo = Arc::new(Mutex::new(crate::capture::Anillo::de_la_app()));
+        let idiomas = Arc::new(Mutex::new(Vec::new()));
+        let oido: Arc<Mutex<Vec<Novedad>>> = Arc::default();
+        let apunta = oido.clone();
+        let e = Escucha::sobre_anillos(
+            vec![(Pista::Sala, anillo.clone(), "en-US".into())],
+            Box::new(Dice("¿En cuántas semanas hacen la entrega completa?", idiomas.clone())),
+            Arc::new(corpus),
+            sin_diccionario(),
+            move |n| apunta.lock().unwrap().push(n),
+        );
+
+        let estado = e.estado();
+        assert!(estado.presencial, "la escucha de la sala no se declara presencial");
+        assert!(estado.microfono.abierta, "la sala no abrió");
+        assert!(!estado.sistema.abierta && estado.sistema.motivo.is_none(), "en la sala el sistema va cerrado sin avería que contar");
+
+        {
+            let mut a = anillo.lock().unwrap();
+            let hz = crate::capture::anillo::HZ as usize;
+            a.escribir(&vec![0.0; hz * 6 / 10]);
+            a.escribir(&voz(hz));
+            a.escribir(&vec![0.0; hz / 2]);
+        }
+        let hasta = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        while std::time::Instant::now() < hasta && !oido.lock().unwrap().iter().any(|n| matches!(n, Novedad::Aparece(_))) {
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        e.cortar();
+
+        let oido = oido.lock().unwrap();
+        let turno = oido
+            .iter()
+            .find_map(|n| match n {
+                Novedad::Turno(t) => Some(t),
+                _ => None,
+            })
+            .expect("la sala no sacó ningún turno: el test no prueba nada");
+        assert_eq!(turno.pista, Pista::Sala, "el turno de la sala salió con otra pista");
+        assert!(!turno.eco, "en la sala no hay eco que marcar");
+        assert_eq!(*idiomas.lock().unwrap(), vec!["en-US".to_string()], "la sala no se transcribió en su idioma");
+        let Some(Novedad::Aparece(a)) = oido.iter().find(|n| matches!(n, Novedad::Aparece(_))) else {
+            panic!("de la pregunta oída en la sala no salió ficha")
+        };
+        let Respuesta::Ficha(f) = &a.respuesta else { panic!("no encontró la sección que responde") };
+        assert_eq!(f.fuente.seccion.as_deref(), Some("Plazo de entrega"));
+    }
+
+    /// **La sala abre UNA pista, la sala, en el idioma de la sala** —ni el micrófono como tuyo ni el audio del
+    /// sistema—, y la reunión, las dos de siempre. Es lo que `arrancar` abre, sin grifos.
+    ///
+    /// ¿Puede fallar? Sí: con `Pistas::Sala` abriendo `Pista::Microfono`, la sala se guardaría como tus turnos
+    /// (bitácora del sprint 005, fase 1).
+    #[test]
+    fn la_sala_abre_solo_la_sala_y_la_reunion_sus_dos_pistas() {
+        let sala = Pistas::Sala { idioma: "en-US".into() }.cuales();
+        assert_eq!(sala, vec![(Pista::Sala, "en-US".to_string())], "presencial abre otra cosa que la sala");
+        assert!(es_presencial(&sala));
+        let reunion = Pistas::Reunion { consultor: "es-ES".into(), cliente: "en-US".into() }.cuales();
+        assert_eq!(reunion, vec![(Pista::Microfono, "es-ES".to_string()), (Pista::Sistema, "en-US".to_string())]);
+        assert!(!es_presencial(&reunion));
+    }
+
+    /// **Y una reunión no es presencial**: con el micrófono y el sistema, las dos filas son las suyas.
+    #[test]
+    fn una_reunion_sobre_anillos_no_es_presencial() {
+        let e = Escucha::sobre_anillos(
+            vec![
+                (Pista::Microfono, Arc::new(Mutex::new(crate::capture::Anillo::de_la_app())), "es-ES".into()),
+                (Pista::Sistema, Arc::new(Mutex::new(crate::capture::Anillo::de_la_app())), "es-ES".into()),
+            ],
+            Box::new(Dice("hola", Arc::default())),
+            Arc::new(SinCorpus),
+            sin_diccionario(),
+            |_| {},
+        );
+        let estado = e.estado();
+        e.cortar();
+        assert!(!estado.presencial, "una reunión se declaró presencial");
+        assert!(estado.microfono.abierta && estado.sistema.abierta);
+    }
+
+    /// **Solo tu pista puede ser un eco**: la sala no, aunque repita palabra por palabra un turno del cliente
+    /// que estuviera en la ventana. ¿Puede fallar? Sí: con `Quien::SinAtribuir` en el brazo de `Quien::Tuyo`
+    /// de `atender`, este turno saldría marcado como eco (bitácora del sprint 005, fase 1).
+    #[test]
+    fn la_sala_no_se_marca_como_eco() {
+        let frase = "Y la limpieza de datos, eso está dentro del alcance?";
+        let ventana = Mutex::new(Ventana::nueva());
+        ventana.lock().unwrap().empujar(Turno { pista: Pista::Sistema, ..turno_del_cliente(frase, 2_000) });
+        let disparador = Mutex::new(Disparador::nuevo());
+        let viva = AtomicBool::new(true);
+        let mut encargo = Encargo { pista: Pista::Sala, desde_ms: 500, hasta_ms: 2_100, muestras: Some(vec![0.3; 16_000]), ..encargo_cerrado_ahora() };
+        let (novedad, _) = atender(&mut encargo, &Dice(frase, Arc::default()), &SinCorpus, &Diccionario::default(), &ventana, &disparador, &viva)
+            .expect("con la escucha viva el turno tiene que llegar");
+        let Novedad::Turno(t) = novedad else { panic!("{novedad:?}") };
+        assert_eq!(t.pista, Pista::Sala);
+        assert!(!t.eco, "un turno de la sala salió marcado como eco");
     }
 
     /// Una reunión que arranca callada no estrena la banda con una ficha de la nada: sin nada dicho

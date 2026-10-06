@@ -243,7 +243,9 @@ paso de fase: arranca la fase 1.
 
 **Pruebas en este punto (corridas, 2026-10-05):** `AG_SIN_HARDWARE=1 cargo test --locked`: 581 de la librería más los
 de integración que no tocan el Mac, todos en verde · `cargo clippy --locked --all-targets -- -D warnings`: limpio ·
-`pnpm exec vitest run`: 57 archivos, 474 de 474 · `pnpm typecheck` y `pnpm lint`: limpios.
+`pnpm exec vitest run`: 57 archivos, 474 de 474 · `pnpm typecheck` y `pnpm lint`: limpios. **La CI de `00c1eba`**
+(corrida 37405541393, leída con `gh pr checks 15` después de compactar): `quality`, `e2e` y `build-escritorio` en
+`success` (12 min 58 s el de macOS).
 
 **Rojos de esta parte (con `scripts/demo-rojo.sh`):**
 
@@ -254,11 +256,55 @@ de integración que no tocan el Mac, todos en verde · `cargo clippy --locked --
 | `modo::pruebas::la_nda_que_lo_prohibe_solo_deja_solo_notas` | la NDA solo bloquea `Modo::Normal` | el test, en `modo.rs:157` | 4 de 4 |
 | `capture::tests::la_sala_no_tiene_dueno_y_entra_por_el_microfono` | `Pista::Sala => Quien::Tuyo` | el test, en `capture/mod.rs:212` | 2 de 2 |
 
+### Lo que cambia en la sala, y el orden de `empezar`, con sus pruebas (2026-10-05)
+
+- **El interruptor «Conservar mis turnos» pregunta al modo** (`lib.rs`, `reunion::conservar_mis_turnos(app, si,
+  el_modo_lo_deja)`): en presencial recuerda tu preferencia y el cuaderno la usa apagada. Sesión lo desactivará en la
+  fase 2; esto es el cinturón por debajo.
+- **`escucha::Pistas::cuales()`**: qué pista abre cada modo, pura. `arrancar` abre exactamente esas, y
+  `es_presencial` sale de ellas (antes eran dos `match` paralelos, uno en `arrancar` y otro en `sobre_anillos`).
+- **Pruebas nuevas** (593 de la librería en verde, `cargo clippy -D warnings` limpio):
+  - `notas::la_sala_nunca_entra_como_tuya` y `propuestas::la_sala_no_propone_nada` (con una frase de control del
+    cliente que sí propone, para que el test no sea vacuo);
+  - `reunion::conservar_mis_turnos_solo_si_el_modo_lo_deja`;
+  - `escucha::la_sala_abre_una_pista_y_de_su_turno_sale_la_ficha`: **la sala de punta a punta sobre un anillo**, sin
+    grifos: el estado (presencial, la sala abierta, el sistema cerrado sin avería), el turno con la pista «sala», en
+    el idioma de la sala, sin eco, y su ficha; `la_sala_abre_solo_la_sala_y_la_reunion_sus_dos_pistas`;
+    `una_reunion_sobre_anillos_no_es_presencial`; `la_sala_no_se_marca_como_eco`;
+  - `lib.rs`, módulo nuevo `pruebas_del_modo_presencial`: el orden de `empezar` (NDA → modo → `soltar` solo si no
+    acopla → hilo del acople solo si acopla); **las dos puertas del acople** (cada llamada a `acople::acoplar`,
+    `reacoplar` y `acoplar_arriba` vive dentro de `acoplar_segun_el_borde`, `asentar_banda` o `acoplar_arriba`, y las
+    dos puertas preguntan por el modo antes); el modo se marca solo en `empezar` y se borra en «Terminar» y en `⌥⎋`;
+    **`sobre_anillos` no aparece en `lib.rs`**; el interruptor pregunta al modo.
+- **Dos agujas de mis tests de fuente estaban mal medidas y lo dijo la primera corrida, no el código:** una ventana de
+  60 caracteres que no llegaba al `if !acopla {`, y `concat!("acople::", "acoplar_arriba(")`, cuya segunda mitad
+  contiene la aguja entera y se contaba a sí misma. Se partió por otro sitio.
+- **`git diff` línea a línea (regla 26) cazó una inserción mía en mal sitio:** el test de la sala de `propuestas` quedó
+  entre el comentario de `el_eco_es_la_voz_del_cliente` y su `#[test]`, y le robó la documentación. Se movió encima.
+
+**Rojos (con `scripts/demo-rojo.sh`, cada uno `--debe-nombrar` el mensaje de su aserción, `--esperar-verde` con el
+mismo filtro y `--minimo-tests 1`; las trece salieron con código 0: rojo nombrando lo esperado, restaurado y verificado
+con Python y `cmp`, verde con 1 prueba):**
+
+| # | Test | Mutación | Nombró |
+|---|---|---|---|
+| D1 | `notas::la_sala_nunca_entra_como_tuya` | `Quien::SinAtribuir => !turno.eco` | «un turno de la sala entró como tuyo» |
+| D2 | `propuestas::la_sala_no_propone_nada` | `Quien::SinAtribuir => Some(De::Cliente)` | «la sala propuso una nota» |
+| D3 | `reunion::conservar_mis_turnos_solo_si_el_modo_lo_deja` | `preferencia \|\| el_modo_lo_deja` | «en presencial no se conservan tus turnos» |
+| D4 | `escucha::la_sala_abre_solo_la_sala_…` | `Pistas::Sala` abre `Pista::Microfono` | «presencial abre otra cosa que la sala» |
+| D5 | `escucha::la_sala_no_se_marca_como_eco` | `Quien::Tuyo \| Quien::SinAtribuir =>` en `atender` | «un turno de la sala salió marcado como eco» |
+| D6 | `escucha::la_sala_abre_una_pista_y_de_su_turno_sale_la_ficha` | `Quien::SinAtribuir => None` en `disparo::mirar` | «de la pregunta oída en la sala no salió ficha» |
+| D7 | `escucha::una_reunion_sobre_anillos_no_es_presencial` | `es_presencial` = `!pistas.is_empty()` | «una reunión se declaró presencial» |
+| D8 | `lib::…::empezar_mira_la_nda_marca_el_modo_y_suelta_antes_de_acoplar` | `if acopla {` delante de `soltar` | «se suelta lo acoplado también en reunión» |
+| D9 | el mismo | sin `acopla &&` en el hilo del acople | «el hilo del acople corre sin mirar el modo» |
+| D10 | `lib::…::las_dos_puertas_del_acople_preguntan_por_el_modo` | sin la guarda de `asentar_banda` | «falta «se_puede_acoplar(&app)»» |
+| D11 | `lib::…::el_modo_se_marca_al_empezar_y_se_borra_…` | sin `marcar_el_modo(&app, None)` en «Terminar» | ««Terminar» deja el modo puesto» |
+| D12 | `lib::…::la_app_no_arranca_la_escucha_por_la_costura_…` | `sobre_anillos(` en un comentario de `empezar` | «lib.rs arranca la escucha sobre anillos de prueba» |
+| D13 | `lib::…::el_interruptor_de_tus_turnos_pregunta_al_modo` | `conservar_mis_turnos(&app, si, true \|\| el_modo_lo_deja)` | «el interruptor no le pasa al cuaderno lo que dice el modo» |
+
 **Lo que queda de la fase 1, en orden:**
 
-- tests de fuente de `lib.rs`: el orden en `empezar` (NDA → `marcar_el_modo` → `soltar` antes del hilo del acople;
-  `se_puede_acoplar` en las dos puertas) y **`sobre_anillos` prohibida en `lib.rs`**; y un test de `conservar_en_este_modo`;
-- tests de la escucha sobre anillos: la sala abre una pista, `estado()` presencial, sin eco, el silencio con la sala;
+- el silencio con la sala (va con la tolerancia, que decide si el silencio dispara en la sala);
 - **la tolerancia** (`disparo::Tolerancia` + `data/presencial/reglas.json`, C1–C3, silencio, tope de turno) y que
   `mirar` la aplique a `SinAtribuir`; la sugerencia con el turno que disparó;
 - **el kit v4**: `scripts/kit-v4-sala.sh` (dos voces de `say`), `sala-{es,en}.wav`, `presencial.json`, niveles A y B

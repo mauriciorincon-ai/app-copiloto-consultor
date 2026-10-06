@@ -3189,10 +3189,12 @@ fn anotar_acuerdo(app: tauri::AppHandle, texto: String) -> bool {
     reunion::acordar(&app, &texto)
 }
 
-/// «Conservar mis turnos», que además se recuerda para las reuniones siguientes.
+/// «Conservar mis turnos», que además se recuerda para las reuniones siguientes. **En presencial se recuerda
+/// y no guarda nada** (ADR 020 §5): la sala no tiene turnos tuyos, y Sesión desactiva el interruptor.
 #[tauri::command]
 fn conservar_mis_turnos(app: tauri::AppHandle, si: bool) {
-    reunion::conservar_mis_turnos(&app, si);
+    let el_modo_lo_deja = modo_de_la_sesion(&app).is_none_or(|m| modo::que_abre(m).tus_turnos);
+    reunion::conservar_mis_turnos(&app, si, el_modo_lo_deja);
 }
 
 /// «Guardar cifrado y cerrar». No devuelve lo guardado: la pantalla no lo leía (auditoría del S3, B13;
@@ -4279,6 +4281,118 @@ mod pruebas_de_la_puerta_local {
             let d = cuerpo.find(despues).unwrap_or_else(|| panic!("empezar ya no llama a {despues}"));
             assert!(cierre < d, "{despues} va antes de cerrar la puerta: el agente alcanzaría la reunión");
         }
+    }
+}
+
+/// **El modo presencial en este archivo** (sprint 005, ADR 020 §1), vigilado en la fuente: el orden de
+/// `empezar`, las dos puertas por las que se acopla y la costura de pruebas de la escucha. `empezar` necesita
+/// la app entera y no se puede llamar en un test. Las agujas se arman con `concat!` para no contarse a sí
+/// mismas.
+#[cfg(test)]
+mod pruebas_del_modo_presencial {
+    fn rango_de(firma: &str) -> (usize, usize) {
+        let fuente = include_str!("lib.rs");
+        let desde = fuente.find(firma).unwrap_or_else(|| panic!("falta {firma}"));
+        (desde, desde + fuente[desde..].find("\n}\n").expect("su cierre"))
+    }
+
+    fn cuerpo_de(firma: &str) -> &'static str {
+        let (desde, hasta) = rango_de(firma);
+        &include_str!("lib.rs")[desde..hasta]
+    }
+
+    fn en(cuerpo: &str, aguja: &str) -> usize {
+        cuerpo.find(aguja).unwrap_or_else(|| panic!("falta «{aguja}»"))
+    }
+
+    /// **El orden de `empezar`**: la NDA lo primero, y si lo prohíbe, se vuelve sin tocar nada; después el
+    /// modo, marcado antes de nada que acople; en presencial se suelta lo acoplado; y el hilo que acopla la
+    /// reunión arriba solo corre si el modo acopla.
+    ///
+    /// ¿Puede fallar? Sí, dos veces (bitácora del sprint 005, fase 1): con `if acopla {` delante de `soltar` se
+    /// soltaría lo acoplado en cada reunión y nunca en presencial; y sin `acopla &&` en el hilo, la reunión se
+    /// acoplaría arriba en plena sala.
+    #[test]
+    fn empezar_mira_la_nda_marca_el_modo_y_suelta_antes_de_acoplar() {
+        let c = cuerpo_de("\nfn empezar(");
+        let nda = en(c, concat!("modo::puede_", "empezar(modo, "));
+        let marca = en(c, concat!("marcar_el_", "modo(&app, Some(modo))"));
+        let soltar = en(c, concat!("acople::", "soltar(&huella(&app))"));
+        let hilo = en(c, concat!("std::thread::spawn(move || match acoplar_segun_el_", "borde("));
+        let cuaderno = en(c, concat!("reunion::al_", "empezar(&app, "));
+        let puerta = en(c, concat!("let Some(que_pistas) = ", "pistas else {"));
+        assert!(nda < marca, "el modo se marca antes de mirar la NDA");
+        assert!(c[nda..marca].contains("return Err("), "con la NDA que lo prohíbe, empezar sigue");
+        assert!(marca < soltar && soltar < hilo, "en presencial se acopla o se suelta antes de marcar el modo");
+        assert!(marca < cuaderno && marca < puerta, "el modo se marca después de abrir el cuaderno o la captura");
+        assert!(c[soltar - 120..soltar].contains(concat!("if !", "acopla {")), "se suelta lo acoplado también en reunión");
+        assert!(c[..hilo].rfind(concat!("if acopla ", "&& ")).is_some_and(|g| hilo - g < 200), "el hilo del acople corre sin mirar el modo");
+    }
+
+    /// **Se acopla por dos puertas y las dos preguntan**: `acoplar_segun_el_borde` (el latido, `⌃⌥B`, el hilo
+    /// de `empezar`) y `asentar_banda` (el asa). Cada llamada a `acople::acoplar`, `acople::reacoplar` y
+    /// `acople::acoplar_arriba` vive dentro de ellas —o de `acoplar_arriba`, a la que solo llaman ellas—, y
+    /// en las dos la pregunta va antes.
+    ///
+    /// ¿Puede fallar? Sí: sin `se_puede_acoplar` en `asentar_banda`, soltar el asa en presencial reacoplaría
+    /// (bitácora del sprint 005, fase 1).
+    #[test]
+    fn las_dos_puertas_del_acople_preguntan_por_el_modo() {
+        let fuente = include_str!("lib.rs");
+        let segun = rango_de(concat!("\nfn acoplar_segun_el_", "borde<"));
+        let asentar = rango_de(concat!("\nfn asentar_", "banda<"));
+        let arriba = rango_de(concat!("\nfn acoplar_", "arriba<"));
+        let dentro = |pos: usize, r: &[(usize, usize)]| r.iter().any(|(a, b)| (*a..*b).contains(&pos));
+        for aguja in [concat!("acople::", "acoplar("), concat!("acople::", "reacoplar("), concat!("acople::acoplar_", "arriba(")] {
+            let sitios: Vec<usize> = fuente.match_indices(aguja).map(|(i, _)| i).collect();
+            assert!(!sitios.is_empty(), "nadie llama a {aguja}: el test no prueba nada");
+            for i in sitios {
+                assert!(dentro(i, &[segun, asentar, arriba]), "{aguja} se llama fuera de las dos puertas del acople");
+            }
+        }
+        for llamada in fuente.match_indices(concat!("acoplar_", "arriba(")).map(|(i, _)| i) {
+            // La firma y la llamada a `acople::acoplar_arriba` (dentro de la propia función) no son llamadas a ella.
+            let no_es_una_llamada = fuente[..llamada].ends_with("fn ") || fuente[..llamada].ends_with("acople::");
+            assert!(no_es_una_llamada || dentro(llamada, &[segun, asentar]), "otro sitio acopla la reunión arriba sin preguntar");
+        }
+        for (puerta, firma, despues) in [
+            (segun, "se_puede_acoplar(app)", concat!("acople::", "acoplar(")),
+            (asentar, "se_puede_acoplar(&app)", concat!("acople::", "reacoplar(")),
+        ] {
+            let c = &fuente[puerta.0..puerta.1];
+            assert!(en(c, firma) < en(c, despues), "una puerta del acople no pregunta por el modo antes de acoplar");
+            assert!(en(c, firma) < en(c, concat!("acoplar_", "arriba(")), "una puerta acopla arriba antes de preguntar");
+        }
+    }
+
+    /// **El modo vive lo que vive la sesión**: solo `empezar` lo marca, y lo borran «Terminar» y `⌥⎋`. Sin
+    /// esto, tras una sesión presencial el latido no volvería a acoplar nunca.
+    #[test]
+    fn el_modo_se_marca_al_empezar_y_se_borra_al_terminar_y_al_cortar() {
+        let fuente = include_str!("lib.rs");
+        assert_eq!(fuente.matches(concat!("marcar_el_modo(&app, ", "Some(")).count(), 1, "otro sitio marca el modo");
+        assert!(cuerpo_de("\nfn dejar_de_escuchar(").contains(concat!("marcar_el_modo(&app, ", "None)")), "«Terminar» deja el modo puesto");
+        assert!(cuerpo_de("\nfn ejecutar_el_corte<").contains(concat!("marcar_el_modo(app, ", "None)")), "⌥⎋ deja el modo puesto");
+    }
+
+    /// **`Escucha::sobre_anillos` es la costura de las pruebas, y la app no la llama**: abre la escucha sin
+    /// grifos, así que desde aquí la sala escucharía un anillo que nadie llena, o uno que alguien rellena con
+    /// otra cosa.
+    #[test]
+    fn la_app_no_arranca_la_escucha_por_la_costura_de_las_pruebas() {
+        assert!(!include_str!("lib.rs").contains(concat!("sobre_", "anillos(")), "lib.rs arranca la escucha sobre anillos de prueba");
+    }
+
+    /// **«Conservar mis turnos» pregunta al modo**: en presencial el interruptor recuerda tu preferencia y no
+    /// guarda nada.
+    #[test]
+    fn el_interruptor_de_tus_turnos_pregunta_al_modo() {
+        let c = cuerpo_de("\nfn conservar_mis_turnos(");
+        assert!(c.contains(concat!("modo::que_abre(m).", "tus_turnos")), "el interruptor no pregunta al modo");
+        assert!(
+            c.contains(concat!("reunion::conservar_mis_turnos(&app, si, ", "el_modo_lo_deja)")),
+            "el interruptor no le pasa al cuaderno lo que dice el modo"
+        );
     }
 }
 
