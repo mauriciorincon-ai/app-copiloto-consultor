@@ -405,8 +405,8 @@ cliente que dice «We have four sources» por el audio del sistema disparaba igu
   Con el arreglo el recall del kit bajó a 0,909, y se corrigió el turno, no el umbral: «We have 4 data sources, not
   3.», en dígitos como escribe las cifras el transcriptor, con el porqué escrito en el propio turno. El kit vuelve a
   1,000 de precisión y 1,000 de recall.
-- **En la sala**, con el arreglo: la línea base pasa de 19 falsas y 10 perdidas a **16 falsas y 9 perdidas**
-  (corrida de antes guardada; la tabla de abajo es la de después).
+- **En la sala**, con el arreglo: la línea base pasa de 19 falsas y 10 perdidas (la primera corrida local del nivel A,
+  antes del arreglo) a **16 falsas y 9 perdidas** (la tabla de abajo).
 
 ### La medición del kit v4 (corrida local, 2026-10-05, después del arreglo del inglés)
 
@@ -454,6 +454,20 @@ segundo, y la pregunta del cliente que va dentro solo llega al disparador cuando
 **Lo que el kit no puede medir, dicho:** el nivel A trata cada turno por separado, como texto; la sala de verdad
 junta turnos (nivel B) y transcribe con errores (nivel C, manual). El corpus del kit es en español: en la sala
 inglesa casi ninguna pregunta trae ficha con resultado, así que **C1 y C2 casi no actúan en inglés**.
+
+### Cero huellas de voz: el vocabulario y el gate nuevo (2026-10-05)
+
+- **El vocabulario vetado** (`tests/unit/vocabulario-vetado.test.ts`) suma `voiceprint` y `speaker embedding`: ningún
+  copy puede prometer que la app separa voces. **Rojo:** «Reconoce tu voiceprint.» plantado en el `README.md` nombró
+  «voiceprint»; verde con 2 pruebas.
+- **Gate nuevo `tests/unit/cero-huellas-de-voz.test.ts`** (regla dura 4, ADR 020 §2): barre Rust, el puente de Swift, la
+  webview, `Cargo.toml` y `package.json` buscando **nombres de API y de librería** —SoundAnalysis, MFCC, diarización,
+  identificación de hablante, voiceprint, x-vector/ECAPA, pyannote, resemblyzer, speechbrain, wespeaker, titanet,
+  emociones por la voz, `sentimentScore`—, con límite de palabra (la primera búsqueda a mano cazó «frameCapacity» del
+  puente por «ecapa»); y los paquetes de los dos lockfiles **por nombre**, no por texto (los hashes pueden contener
+  cualquier cosa). La prosa que cita la regla («no identifica a nadie por su voz», en la cláusula de encargo) no salta.
+  **Rojos:** `import SoundAnalysis` en `Transcriptor.swift` nombró «SoundAnalysis (Apple)» en `:22`; un paquete
+  `pyannote-rs` en el `Cargo.lock` nombró «pyannote-rs · librería de hablantes». Verde con 3 pruebas los dos.
 
 **Lo que queda de la fase 1, en orden:**
 
