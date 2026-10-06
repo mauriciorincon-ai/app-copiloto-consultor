@@ -302,11 +302,45 @@ con Python y `cmp`, verde con 1 prueba):**
 | D12 | `lib::…::la_app_no_arranca_la_escucha_por_la_costura_…` | `sobre_anillos(` en un comentario de `empezar` | «lib.rs arranca la escucha sobre anillos de prueba» |
 | D13 | `lib::…::el_interruptor_de_tus_turnos_pregunta_al_modo` | `conservar_mis_turnos(&app, si, true \|\| el_modo_lo_deja)` | «el interruptor no le pasa al cuaderno lo que dice el modo» |
 
+### La tolerancia a tu voz, sin valores elegidos (2026-10-05)
+
+- **`disparo::Tolerancia`** (`src-tauri/src/disparo/tolerancia.rs`, pura, en un módulo protegido): cinco perillas
+  —C1 espera tras una ficha, C2 eco de la ficha, C3 un término tuyo no basta, el silencio y el tope de turno—, cada una
+  apagada en `Tolerancia::SIN_FILTRO`, la línea base. `deja(motivo, texto, ahora, ficha_vista)` decide; `perillas()`
+  cuenta las movidas (el desempate del kit). C2 compara **palabras con peso** (normalizadas, de cuatro letras o con
+  cifra, sin las vacías de los dos idiomas) del turno contra el titular y la línea de la última ficha con resultado.
+- **`data/presencial/reglas.json`**, versionado y dentro del binario con `include_str!`: hoy es **la línea base, sin
+  ningún valor elegido** (`"estado": "línea base, pendiente de la medición del kit v4"`). La regla la elige la medición
+  al STOP; ningún número está cableado en el código.
+- **El `Disparador`** gana la tolerancia (de fábrica, la de la casa; `con_tolerancia` para el kit) y la última ficha
+  vista, que se olvida con el corte. `mirar` la aplica **solo** a `Quien::SinAtribuir`. **`por_silencio` recibe el turno
+  entero**: el silencio tras la sala pasa por la tolerancia (que puede apagarlo) y el que sigue a tu voz no dispara.
+- **La escucha le dice al disparador qué ficha salió**: `escucha::del_turno_a_la_ficha` (pública, el camino que el kit
+  v4 usa en vez de una copia) y el silencio llaman a `vio_ficha` con cada `Respuesta::Ficha`. El candado del
+  disparador se suelta mientras se busca, para que el corte no espere.
+- **El tope de turno**: `voz::turno::Turnos::con_tope`; al alcanzarlo el turno se cierra y el siguiente empieza en el
+  mismo marco. Solo la sala lo lleva (con el de la regla de la casa: hoy ninguno).
+- **Pruebas** (601 de la librería en verde y 2 ignoradas de hardware, clippy limpio, `verify:ephemeral` limpio): `la_regla_de_la_casa_se_lee`,
+  `sin_filtro_lo_deja_todo`, `cada_perilla_hace_lo_suyo`, `repetir_la_ficha_se_mide_en_palabras_con_peso`,
+  `la_tolerancia_solo_toca_la_sala` (también el silencio: el de la sala, apagado; el tuyo, nunca),
+  `el_corte_olvida_la_ficha_vista`, `el_tope_corta_un_turno_que_no_se_calla`,
+  `la_ficha_que_sale_la_ve_la_tolerancia_de_la_sala`.
+
+**Rojos (con `scripts/demo-rojo.sh`; los siete con código 0: rojo nombrando lo esperado, restaurado, verde con 1 prueba):**
+
+| # | Test | Mutación | Nombró |
+|---|---|---|---|
+| T1 | `la_regla_de_la_casa_se_lee` | `reglas.json`: `"esperaTrasFicha"` en vez de `"esperaTrasFichaMs"` | «data/presencial/reglas.json no se lee» |
+| T2 | `cada_perilla_hace_lo_suyo` | C1 con la comparación al revés (`>=`) | «C1 dejó disparar durante la espera» |
+| T3 | el mismo | C2 con un umbral inalcanzable (`> 1.0 + umbral`) | «C2 dejó disparar tu lectura de la ficha» |
+| T4 | `la_tolerancia_solo_toca_la_sala` | la tolerancia aplicada también a `Quien::Cliente` | «la tolerancia de la sala calló al cliente» |
+| T5 | `el_corte_olvida_la_ficha_vista` | sin `self.ficha_vista = None` en `reiniciar` | «tras el corte la sala sigue callada por una ficha olvidada» |
+| T6 | `el_tope_corta_un_turno_que_no_se_calla` | la rama del tope con `&& false` | «el tope no cortó el turno en trozos de 1 s» |
+| T7 | `la_ficha_que_sale_la_ve_la_tolerancia_de_la_sala` | sin `vio_ficha` en `del_turno_a_la_ficha` | «la sala que lee la ficha disparó otra» |
+
 **Lo que queda de la fase 1, en orden:**
 
-- el silencio con la sala (va con la tolerancia, que decide si el silencio dispara en la sala);
-- **la tolerancia** (`disparo::Tolerancia` + `data/presencial/reglas.json`, C1–C3, silencio, tope de turno) y que
-  `mirar` la aplique a `SinAtribuir`; la sugerencia con el turno que disparó;
+- la sugerencia con el turno que disparó (decisión 7);
 - **el kit v4**: `scripts/kit-v4-sala.sh` (dos voces de `say`), `sala-{es,en}.wav`, `presencial.json`, niveles A y B
   en `contra-el-mac-de-verdad.rs` (puros, en la CI), latencia y nivel C (`hardware`);
 - el efímero presencial (término plantado, `verify:ephemeral`), el contrato con su muestra de la sala, el vocabulario

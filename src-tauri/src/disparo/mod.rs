@@ -25,6 +25,9 @@
 use crate::capture::Quien;
 use crate::stt::Turno;
 
+pub mod tolerancia;
+pub use tolerancia::{FichaVista, Tolerancia};
+
 /// Cuánto calla la app entre dos fichas. Medido contra el ritmo de una conversación: por debajo
 /// la banda parpadea, por encima se pierde la pregunta siguiente.
 pub const ESPERA_MS: usize = 6_000;
@@ -88,6 +91,10 @@ pub struct Disparador {
     ultimo_ms: Option<usize>,
     /// Lo último que se buscó, ya normalizado: una pregunta repetida no vuelve a disparar.
     ultima_consulta: String,
+    /// **La tolerancia a tu voz**, para los turnos de la sala (ADR 020 §3). De fábrica, la regla de la casa.
+    tolerancia: Tolerancia,
+    /// La última ficha con resultado, que la tolerancia mira (C1 y C2). Se olvida con el corte.
+    ficha_vista: Option<FichaVista>,
 }
 
 /// Lo que el disparador necesita saber del mundo, sin depender de él.
@@ -103,6 +110,22 @@ impl Disparador {
         Self::default()
     }
 
+    /// Un disparador con otra tolerancia para la sala: el kit v4 recorre así las candidatas.
+    pub fn con_tolerancia(tolerancia: Tolerancia) -> Self {
+        Self { tolerancia, ..Self::default() }
+    }
+
+    /// La tolerancia que aplica a la sala.
+    pub fn tolerancia(&self) -> &Tolerancia {
+        &self.tolerancia
+    }
+
+    /// **Salió una ficha con resultado.** La escucha lo dice aquí para que la tolerancia de la sala sepa cuándo y
+    /// con qué palabras (C1 y C2). En una reunión se apunta igual y no cambia nada: solo la sala la mira.
+    pub fn vio_ficha(&mut self, ms: usize, titular: &str, linea: &str) {
+        self.ficha_vista = Some(FichaVista::nueva(ms, titular, linea));
+    }
+
     /// El turno que acaba de cerrarse, ¿pide ficha?
     pub fn mirar(&mut self, turno: &Turno, ctx: &Contexto) -> Option<Motivo> {
         match turno.pista.quien() {
@@ -115,9 +138,12 @@ impl Disparador {
                 self.aceptar(&turno.texto, ctx.ahora_ms, motivo)
             }
             // **La sala** (ADR 020): no se sabe quién habló, así que dispara con las reglas de
-            // siempre y, si la escucha le dio una, pasa por la tolerancia a tu voz.
+            // siempre y después pasa por la tolerancia a tu voz.
             Quien::SinAtribuir => {
                 let motivo = self.por_que(&turno.texto, ctx)?;
+                if !self.tolerancia.deja(motivo, &turno.texto, ctx.ahora_ms, self.ficha_vista.as_ref()) {
+                    return None;
+                }
                 self.aceptar(&turno.texto, ctx.ahora_ms, motivo)
             }
         }
@@ -141,11 +167,24 @@ impl Disparador {
     /// nada— **y además pisaba la última consulta con «»**, así que la pregunta siguiente del
     /// cliente, aunque fuera idéntica a la anterior, volvía a disparar. Nunca se notó porque este
     /// método no tuvo un llamador hasta que se cableó.
-    pub fn por_silencio(&mut self, texto: &str, desde_ms: usize, ctx: &Contexto) -> Option<Motivo> {
-        if ctx.ahora_ms.checked_sub(desde_ms)? < SILENCIO_MS {
+    ///
+    /// **Se le pasa el turno entero desde el sprint 005**, no solo su texto: el silencio que sigue a la sala pasa
+    /// por la tolerancia (que puede apagarlo), y el que sigue a tu voz no es un silencio del cliente.
+    pub fn por_silencio(&mut self, turno: &Turno, ctx: &Contexto) -> Option<Motivo> {
+        if ctx.ahora_ms.checked_sub(turno.hasta_ms)? < SILENCIO_MS {
             return None;
         }
-        self.aceptar(texto, ctx.ahora_ms, Motivo::SilencioLargo)
+        match turno.pista.quien() {
+            Quien::Tuyo => return None,
+            Quien::Cliente => {}
+            Quien::SinAtribuir => {
+                let vista = self.ficha_vista.as_ref();
+                if !self.tolerancia.deja(Motivo::SilencioLargo, &turno.texto, ctx.ahora_ms, vista) {
+                    return None;
+                }
+            }
+        }
+        self.aceptar(&turno.texto, ctx.ahora_ms, Motivo::SilencioLargo)
     }
 
     /// **La pantalla nueva pide ficha.** Pasa por la misma guardia que un turno —la espera entre
@@ -190,6 +229,7 @@ impl Disparador {
         unsafe { self.ultima_consulta.as_mut_vec() }.fill(0);
         self.ultima_consulta.clear();
         self.ultimo_ms = None;
+        self.ficha_vista = None;
     }
 }
 
@@ -280,6 +320,11 @@ mod pruebas {
 
     fn ctx(ahora_ms: usize) -> Contexto<'static> {
         Contexto { ahora_ms, vocabulario: &[] }
+    }
+
+    /// Lo que el cliente dijo, cerrado en `hasta_ms`: lo que mira el silencio.
+    fn dicho_en(texto: &str, hasta_ms: usize) -> Turno {
+        Turno { hasta_ms, ..turno(texto) }
     }
 
     #[test]
@@ -415,9 +460,9 @@ mod pruebas {
     #[test]
     fn el_silencio_largo_dispara_solo_cuando_de_verdad_es_largo() {
         let mut d = Disparador::nuevo();
-        assert_eq!(d.por_silencio("de 40 semanas nos hablaron", 0, &ctx(SILENCIO_MS - 1)), None);
+        assert_eq!(d.por_silencio(&dicho_en("de 40 semanas nos hablaron", 0), &ctx(SILENCIO_MS - 1)), None);
         assert_eq!(
-            d.por_silencio("de 40 semanas nos hablaron", 0, &ctx(SILENCIO_MS)),
+            d.por_silencio(&dicho_en("de 40 semanas nos hablaron", 0), &ctx(SILENCIO_MS)),
             Some(Motivo::SilencioLargo)
         );
     }
@@ -432,7 +477,7 @@ mod pruebas {
         let dicho = "¿Ustedes tienen certificación ISO 27001?";
         assert!(d.mirar(&turno(dicho), &ctx(2_000)).is_some());
         // Pasada la espera entre fichas, que es lo único que frenaba al silencio antes.
-        assert_eq!(d.por_silencio(dicho, 2_000, &ctx(2_000 + ESPERA_MS + 1)), None);
+        assert_eq!(d.por_silencio(&dicho_en(dicho, 2_000), &ctx(2_000 + ESPERA_MS + 1)), None);
     }
 
     /// Y al contrario: lo que el cliente dijo **sin** que disparara —una frase sin pregunta, sin
@@ -443,8 +488,47 @@ mod pruebas {
         let dicho = "Nosotros veníamos trabajando con otro proveedor";
         assert_eq!(d.mirar(&turno(dicho), &ctx(2_000)), None, "esa frase no debería disparar sola");
         assert_eq!(
-            d.por_silencio(dicho, 2_000, &ctx(2_000 + SILENCIO_MS)),
+            d.por_silencio(&dicho_en(dicho, 2_000), &ctx(2_000 + SILENCIO_MS)),
             Some(Motivo::SilencioLargo)
         );
+    }
+
+    /// **La tolerancia solo toca la sala.** El mismo turno y la misma regla: del cliente dispara, de la sala no. Y
+    /// tu silencio no es un silencio del cliente.
+    ///
+    /// ¿Puede fallar? Sí: con la tolerancia aplicada a `Quien::Cliente`, una reunión perdería fichas por una regla
+    /// pensada para la sala (bitácora del sprint 005, fase 1).
+    #[test]
+    fn la_tolerancia_solo_toca_la_sala() {
+        let regla = Tolerancia { solo_pregunta_o_cifra: true, silencio: false, ..Tolerancia::SIN_FILTRO };
+        let vocabulario = vec!["paramo".to_string()];
+        let c = Contexto { ahora_ms: 2_000, vocabulario: &vocabulario };
+        let dicho = "Lo del Páramo Azul lo vemos luego";
+
+        let mut reunion = Disparador::con_tolerancia(regla.clone());
+        assert_eq!(reunion.mirar(&turno(dicho), &c), Some(Motivo::TerminoDelCorpus), "la tolerancia de la sala calló al cliente");
+        let mut sala = Disparador::con_tolerancia(regla.clone());
+        assert_eq!(sala.mirar(&Turno { pista: Pista::Sala, ..turno(dicho) }, &c), None, "la sala disparó con un término suelto");
+
+        let callado = "Nosotros veníamos trabajando con otro proveedor";
+        let mut reunion = Disparador::con_tolerancia(regla.clone());
+        assert_eq!(reunion.por_silencio(&dicho_en(callado, 2_000), &ctx(2_000 + SILENCIO_MS)), Some(Motivo::SilencioLargo));
+        let mut sala = Disparador::con_tolerancia(regla);
+        let de_la_sala = Turno { pista: Pista::Sala, ..dicho_en(callado, 2_000) };
+        assert_eq!(sala.por_silencio(&de_la_sala, &ctx(2_000 + SILENCIO_MS)), None, "el silencio apagado disparó en la sala");
+        let mut tuyo = Disparador::nuevo();
+        let de_tu_pista = Turno { pista: Pista::Microfono, ..dicho_en(callado, 2_000) };
+        assert_eq!(tuyo.por_silencio(&de_tu_pista, &ctx(2_000 + SILENCIO_MS)), None, "tu silencio disparó como si fuera del cliente");
+    }
+
+    /// **La ficha vista se olvida con el corte**, con el resto de lo que el disparador recuerda.
+    #[test]
+    fn el_corte_olvida_la_ficha_vista() {
+        let mut d = Disparador::con_tolerancia(Tolerancia { espera_tras_ficha_ms: 60_000, ..Tolerancia::SIN_FILTRO });
+        d.vio_ficha(1_000, "Plazo de entrega", "cuatro semanas");
+        let sala = |texto: &str| Turno { pista: Pista::Sala, ..turno(texto) };
+        assert_eq!(d.mirar(&sala("¿Y el precio total?"), &ctx(20_000)), None, "C1 no calló tras la ficha");
+        d.reiniciar();
+        assert_eq!(d.mirar(&sala("¿Y el precio total?"), &ctx(20_000)), Some(Motivo::Pregunta), "tras el corte la sala sigue callada por una ficha olvidada");
     }
 }

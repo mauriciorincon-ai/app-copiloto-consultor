@@ -1,0 +1,13 @@
+{
+  "_leeme": "La tolerancia a tu voz en el modo presencial (ADR 020 §3): la sala no tiene dueño, así que delante del disparador de siempre, y solo para los turnos de la sala, van estas reglas sobre el texto y el tiempo. Cero biometría de voz (regla dura 4). Los valores los elige la medición del kit v4 (docs/kit-de-prueba/presencial.json); hasta el STOP de la fase 1 del sprint 005 esto es la línea base, el disparador tal cual.",
+  "version": 1,
+  "fecha": "2026-10-05",
+  "estado": "línea base, pendiente de la medición del kit v4",
+  "tolerancia": {
+    "esperaTrasFichaMs": 0,
+    "ecoDeLaFicha": null,
+    "soloPreguntaOCifra": false,
+    "silencio": true,
+    "topeDeTurnoMs": null
+  }
+}

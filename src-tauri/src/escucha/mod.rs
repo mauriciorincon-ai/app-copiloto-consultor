@@ -289,7 +289,11 @@ impl PistaViva {
             _grifo: grifo,
             de_prueba,
             no_abrio,
-            turnos: Turnos::default(),
+            // En la sala, con el tope de turno de la regla de la casa (ADR 020 §3); en una reunión, sin tope.
+            turnos: Turnos::default().con_tope(match cual.quien() {
+                Quien::SinAtribuir => crate::disparo::Tolerancia::de_la_casa().tope_de_turno_ms,
+                Quien::Tuyo | Quien::Cliente => None,
+            }),
             origen,
             procesadas: 0,
             sobrante: Vec::with_capacity(MARCO * 4),
@@ -927,10 +931,26 @@ fn buscar_si_toca(
     turno: &Turno,
     encargo: &Encargo,
 ) -> Option<Aparicion> {
+    del_turno_a_la_ficha(disparador, buscador, turno, encargo.cerro)
+}
+
+/// **Del turno a la ficha, como lo hace la escucha**: el disparador decide, el buscador busca, y si sale una ficha
+/// con resultado el disparador se entera (la tolerancia de la sala la mira). Pública para el kit v4, que mide la
+/// tolerancia por este mismo camino y no por una copia.
+pub fn del_turno_a_la_ficha(
+    disparador: &mut Disparador,
+    buscador: &dyn Buscador,
+    turno: &Turno,
+    cerro: std::time::Instant,
+) -> Option<Aparicion> {
     let vocabulario = buscador.vocabulario();
     let ctx = Contexto { ahora_ms: turno.hasta_ms, vocabulario: &vocabulario };
     let motivo = disparador.mirar(turno, &ctx)?;
-    Some(armar_y_anunciar(buscador, &turno.texto, motivo, &turno.hora, encargo.cerro))
+    let a = armar_y_anunciar(buscador, &turno.texto, motivo, &turno.hora, cerro);
+    if let Respuesta::Ficha(f) = &a.respuesta {
+        disparador.vio_ficha(turno.hasta_ms, &f.titular, &f.linea);
+    }
+    Some(a)
 }
 
 /// **EL SILENCIO COMO DISPARO** — el quinto motivo, que existía sin cablear desde el sprint 001.
@@ -969,9 +989,14 @@ fn el_silencio_pide_ficha(
     let ultimo = v.ultimo_que(crate::stt::Turno::pudo_decirlo_el_cliente)?;
     let vocabulario = buscador.vocabulario();
     let ctx = Contexto { ahora_ms, vocabulario: &vocabulario };
-    let motivo =
-        disparador.lock().ok()?.por_silencio(&ultimo.texto, ultimo.hasta_ms, &ctx)?;
-    Some(armar_y_anunciar(buscador, &ultimo.texto, motivo, &ultimo.hora, empezo))
+    let motivo = disparador.lock().ok()?.por_silencio(ultimo, &ctx)?;
+    let a = armar_y_anunciar(buscador, &ultimo.texto, motivo, &ultimo.hora, empezo);
+    // La tolerancia de la sala tiene que saber qué ficha salió (C1 y C2). El candado se suelta mientras se busca,
+    // para que el corte no espere a la búsqueda, y se vuelve a tomar para apuntarla.
+    if let (Respuesta::Ficha(f), Ok(mut d)) = (&a.respuesta, disparador.lock()) {
+        d.vio_ficha(ahora_ms, &f.titular, &f.linea);
+    }
+    Some(a)
 }
 
 /// De un texto del cliente a la aparición, con su medida y su línea de log.
@@ -1960,6 +1985,38 @@ mod tests {
         let Novedad::Turno(t) = novedad else { panic!("{novedad:?}") };
         assert_eq!(t.pista, Pista::Sala);
         assert!(!t.eco, "un turno de la sala salió marcado como eco");
+    }
+
+    /// **La escucha le dice al disparador qué ficha salió**, y la tolerancia de la sala la usa: tras la ficha del
+    /// plazo, la sala que la lee en voz alta no dispara otra (C2).
+    ///
+    /// ¿Puede fallar? Sí: sin `vio_ficha` en `del_turno_a_la_ficha`, la lectura de la ficha dispara (bitácora del
+    /// sprint 005, fase 1).
+    #[test]
+    fn la_ficha_que_sale_la_ve_la_tolerancia_de_la_sala() {
+        use crate::corpus::seccion::Seccion;
+        let corpus = corpus_de_prueba();
+        corpus
+            .0
+            .indice_para_pruebas()
+            .meter("/c/propuesta.md", "Páramo Azul · Propuesta", Some(crate::corpus::Unidad::Propuesta), false, &[
+                Seccion {
+                    titulo: Some("Plazo de entrega".into()),
+                    texto: "La entrega completa toma cuatro semanas desde la firma del contrato.".into(),
+                },
+            ])
+            .unwrap();
+        let regla = crate::disparo::Tolerancia { eco_de_la_ficha: Some(0.5), ..crate::disparo::Tolerancia::SIN_FILTRO };
+        let mut d = Disparador::con_tolerancia(regla);
+        let ahora = std::time::Instant::now();
+        let pregunta = Turno { pista: Pista::Sala, ..turno_del_cliente("¿En cuántas semanas hacen la entrega completa?", 2_000) };
+        let a = del_turno_a_la_ficha(&mut d, &corpus, &pregunta, ahora).expect("la pregunta no disparó");
+        assert!(matches!(a.respuesta, Respuesta::Ficha(_)), "no salió la ficha del plazo: el test no prueba nada");
+        let lectura = Turno {
+            pista: Pista::Sala,
+            ..turno_del_cliente("La entrega completa toma cuatro semanas desde la firma del contrato, ¿les parece?", 20_000)
+        };
+        assert!(del_turno_a_la_ficha(&mut d, &corpus, &lectura, ahora).is_none(), "la sala que lee la ficha disparó otra");
     }
 
     /// Una reunión que arranca callada no estrena la banda con una ficha de la nada: sin nada dicho
