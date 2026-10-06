@@ -206,3 +206,64 @@ una fila al cerrar la fase. Primero llegó un **«sí»** a secas; por la regla 
 respondió: **«Si la abri y la apruebo, sigue»**. Queda **aprobada** y registrada en `docs/diseno/README.md`. Confirma la
 respuesta (a) de la pregunta 2 del G-Plan: la ficha al oído de fábrica, la banda a una tecla. El «sigue» es también el
 paso de fase: arranca la fase 1.
+
+---
+
+## Fase 1 · El núcleo presencial y su medición (en curso)
+
+### Punto de control (2026-10-05, pedido por el usuario para compactar)
+
+**Hecho y en verde** (pasos 1 y 2 del plan, y la mitad del 3):
+
+1. **`Pista::Sala` y `quien()`** (`44bbde4`). `capture::Pista` gana `Sala`; nacen `Quien { Tuyo, Cliente, SinAtribuir }`
+   y `Fuente { Microfono, Sistema }` con `quien()` y `fuente()` sin comodín. Todos los sitios que comparaban pistas
+   preguntan `quien()`: el disparador, el eco, el silencio (`Ventana::ultimo_que`), `⌃⌥A`/`⌃⌥V` y la sugerencia
+   (`Turno::pudo_decirlo_el_cliente`), «muere al cerrar» (la sala cuenta), «conservar mis turnos» (la sala nunca) y
+   las propuestas (`De::del_turno` es `Option`: la sala no propone). La reunión no cambió: 577 pruebas de la librería.
+2. **`Modo::Presencial`** (`src-tauri/src/modo.rs`): `que_abre(modo) → Apertura { pistas, pantalla, acople, tus_turnos,
+   propuestas }`, con la pantalla tras un **`PermisoDePantalla`** que solo crea `que_abre` (en presencial no hay con
+   qué llamar a `arrancar_la_pantalla`). `puede_empezar(modo, nda)`: **la NDA que lo prohíbe, comprobada en Rust**,
+   también en reunión (solo deja solo notas).
+3. **`empezar` reescrito** (`lib.rs`): la NDA primero; **`ElModo` marcado lo primero**; en presencial
+   `acople::soltar`; `se_puede_acoplar()` en `acoplar_segun_el_borde` y `asentar_banda` (cubre el hilo de arriba, el
+   latido, `⌃⌥B`, el asa y `⌃⌥V`); el hilo del acople al empezar solo si el modo acopla; `reunion::al_empezar(&app,
+   tus_turnos)` con `conservar_en_este_modo` (la preferencia no se toca); las propuestas solo si el modo las abre;
+   `ElModo` vuelve a `None` al terminar y con el corte. Comando nuevo **`empezar_presencial`** (manifiesto,
+   `generate_handler!`, capability de la ventana principal, `SENSIBLES`) y `empezarPresencial()` en
+   `src/jurisdiccion.ts`.
+4. **`Escucha::arrancar(Pistas, …)`** con `Pistas::{Reunion { consultor, cliente }, Sala { idioma }}`; la costura
+   **`Escucha::sobre_anillos`** (`#[doc(hidden)]`, sin grifos); `estado()` con `presencial` (la fila del micrófono es
+   la sala y la del sistema va cerrada sin motivo); `alguien_hablando()`.
+5. **Preferencias:** `idiomasDePista.sala` (`Option`, «la del cliente» de fábrica, una torcida vuelve a eso) y
+   `fijar_idioma_de_pista("sala")`.
+6. **Contrato (regla 19):** regenerado (`EstadoDeEscucha.presencial`, `IdiomasDePista.sala`); los tipos de TS al día
+   (`Pista` con `"sala"`). El gate de la forma se vio en rojo solo al regenerar (los tipos de TS no conocían los
+   campos). `contrato-con-lectores` declara los dos huérfanos como deuda **que se paga en la fase 2** (Sesión,
+   Honestidad e Idioma), con su sitio.
+
+**Pruebas en este punto (corridas, 2026-10-05):** `AG_SIN_HARDWARE=1 cargo test --locked`: 581 de la librería más los
+de integración que no tocan el Mac, todos en verde · `cargo clippy --locked --all-targets -- -D warnings`: limpio ·
+`pnpm exec vitest run`: 57 archivos, 474 de 474 · `pnpm typecheck` y `pnpm lint`: limpios.
+
+**Rojos de esta parte (con `scripts/demo-rojo.sh`):**
+
+| Gate o test | Mutación | Rojo (lo que nombró) | Verde |
+|---|---|---|---|
+| `tests/unit/pista-por-quien.test.ts` (nuevo) | `disparo/mod.rs`: `Quien::Tuyo if turno.pista == Pista::Sistema => None` | `src-tauri/src/disparo/mod.rs:110` · comparación con una pista | 2 de 2 |
+| `modo::pruebas::presencial_abre_la_sala_y_nada_mas` | presencial con `pantalla: Some(PermisoDePantalla(()))` | el test, en `modo.rs:134` · 1 falló, 3 pasaron | 4 de 4 |
+| `modo::pruebas::la_nda_que_lo_prohibe_solo_deja_solo_notas` | la NDA solo bloquea `Modo::Normal` | el test, en `modo.rs:157` | 4 de 4 |
+| `capture::tests::la_sala_no_tiene_dueno_y_entra_por_el_microfono` | `Pista::Sala => Quien::Tuyo` | el test, en `capture/mod.rs:212` | 2 de 2 |
+
+**Lo que queda de la fase 1, en orden:**
+
+- tests de fuente de `lib.rs`: el orden en `empezar` (NDA → `marcar_el_modo` → `soltar` antes del hilo del acople;
+  `se_puede_acoplar` en las dos puertas) y **`sobre_anillos` prohibida en `lib.rs`**; y un test de `conservar_en_este_modo`;
+- tests de la escucha sobre anillos: la sala abre una pista, `estado()` presencial, sin eco, el silencio con la sala;
+- **la tolerancia** (`disparo::Tolerancia` + `data/presencial/reglas.json`, C1–C3, silencio, tope de turno) y que
+  `mirar` la aplique a `SinAtribuir`; la sugerencia con el turno que disparó;
+- **el kit v4**: `scripts/kit-v4-sala.sh` (dos voces de `say`), `sala-{es,en}.wav`, `presencial.json`, niveles A y B
+  en `contra-el-mac-de-verdad.rs` (puros, en la CI), latencia y nivel C (`hardware`);
+- el efímero presencial (término plantado, `verify:ephemeral`), el contrato con su muestra de la sala, el vocabulario
+  vetado (`voiceprint`, `speaker embedding`) y el gate **`cero-huellas-de-voz`**;
+- la regla dura 4 y «Qué es esta app» en el `CLAUDE.md`, ahora que `Pista::Sala` existe;
+- **STOP de medición.**

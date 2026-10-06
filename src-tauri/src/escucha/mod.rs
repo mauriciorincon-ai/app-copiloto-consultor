@@ -163,6 +163,9 @@ pub struct EstadoDeEscucha {
     /// **La reunión va en modo solo notas** (ADR 017 §5): hay reunión y no hay captura. La banda lo
     /// dice —«Solo notas · sin transcripción»— y Sesión ofrece terminarla.
     pub solo_notas: bool,
+    /// **La sesión es presencial** (ADR 020): `microfono` es entonces la pista de la sala, y `sistema` va
+    /// cerrada **a propósito** —sin motivo, porque no es una avería—. Sesión no la pinta «A medias».
+    pub presencial: bool,
     pub microfono: EstadoDePista,
     pub sistema: EstadoDePista,
     /// Fuera del contrato por la misma decisión: Honestidad cuenta el transcript por sus bytes.
@@ -191,6 +194,7 @@ impl EstadoDeEscucha {
         EstadoDeEscucha {
             escuchando: false,
             solo_notas: true,
+            presencial: false,
             microfono: EstadoDePista::cerrada(),
             sistema: EstadoDePista::cerrada(),
             turnos_en_memoria: 0,
@@ -208,6 +212,7 @@ impl EstadoDeEscucha {
         EstadoDeEscucha {
             escuchando: false,
             solo_notas: false,
+            presencial: false,
             microfono: EstadoDePista { abierta: microfono_abierto, bytes: bytes_del_microfono, ..EstadoDePista::cerrada() },
             sistema: EstadoDePista::cerrada(),
             turnos_en_memoria: 0,
@@ -224,6 +229,8 @@ struct PistaViva {
     anillo: Arc<Mutex<Anillo>>,
     /// Se conserva para que el grifo siga abierto: soltarlo lo cierra.
     _grifo: Option<crate::capture::nativo::Grifo>,
+    /// **Un anillo que llenan las pruebas** ([`Escucha::sobre_anillos`]): no hay grifo, y no es una avería.
+    de_prueba: bool,
     no_abrio: Option<crate::capture::NoAbrio>,
     turnos: Turnos,
     /// Índice global de la primera muestra que esta pista vio.
@@ -259,11 +266,28 @@ impl PistaViva {
             Ok(g) => (Some(g), None),
             Err(e) => (None, Some(con_su_permiso(cual, e, &crate::permisos::leer()))),
         };
+        Self::con(cual, anillo, grifo, no_abrio, false, idioma)
+    }
+
+    /// La costura de las pruebas: una pista sobre un anillo que alguien ya llena, sin abrir ningún grifo.
+    fn sobre(cual: Pista, anillo: Arc<Mutex<Anillo>>, idioma: &str) -> Self {
+        Self::con(cual, anillo, None, None, true, idioma)
+    }
+
+    fn con(
+        cual: Pista,
+        anillo: Arc<Mutex<Anillo>>,
+        grifo: Option<crate::capture::nativo::Grifo>,
+        no_abrio: Option<crate::capture::NoAbrio>,
+        de_prueba: bool,
+        idioma: &str,
+    ) -> Self {
         let origen = anillo.lock().map(|a| a.totales()).unwrap_or(0);
         Self {
             cual,
             anillo,
             _grifo: grifo,
+            de_prueba,
             no_abrio,
             turnos: Turnos::default(),
             origen,
@@ -293,7 +317,7 @@ impl PistaViva {
             .map(|a| (a.bytes(), a.segundos()))
             .unwrap_or((0, 0.0));
         EstadoDePista {
-            abierta: self._grifo.is_some(),
+            abierta: self._grifo.is_some() || self.de_prueba,
             motivo: self.no_abrio.as_ref().map(|n| n.porque),
             bytes,
             segundos,
@@ -365,6 +389,15 @@ struct Encargo {
     cerro: std::time::Instant,
 }
 
+/// **Qué pistas abre la escucha**, con su idioma (ADR 009 y su enmienda 1).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Pistas {
+    /// Una reunión: el micrófono (tú) y el audio del sistema (el cliente), cada uno en su idioma.
+    Reunion { consultor: String, cliente: String },
+    /// **Presencial** (ADR 020): una pista, la sala, por el micrófono, en un solo idioma.
+    Sala { idioma: String },
+}
+
 /// La escucha en marcha.
 pub struct Escucha {
     /// El disparador vive aquí y no dentro del hilo porque **el kill-switch tiene que poder
@@ -379,30 +412,63 @@ pub struct Escucha {
     /// con el mismo reloj que los turnos.
     nacio: std::time::Instant,
     buscador: Arc<dyn Buscador>,
+    /// La sesión es presencial: una sola pista, la sala.
+    presencial: bool,
 }
 
 impl Escucha {
-    /// Abre las dos pistas y arranca los dos hilos.
+    /// Abre las pistas que pide el modo y arranca los dos hilos.
     ///
     /// `avisar` recibe cada novedad. No se le pasa nada de la reunión que no sea lo que va a
     /// enseñarse: la firma es la frontera.
     pub fn arrancar(
-        idioma_del_consultor: &str,
-        idioma_del_cliente: &str,
+        pistas: Pistas,
         motor: Box<dyn Motor>,
         buscador: Arc<dyn Buscador>,
         diccionario: Arc<Diccionario>,
         avisar: impl Fn(Novedad) + Send + Sync + 'static,
     ) -> Self {
-        // **El reloj de la escucha**: uno solo para las dos pistas, monótono, que no vuelve atrás
+        let (vivas, presencial) = match &pistas {
+            Pistas::Reunion { consultor, cliente } => (
+                vec![PistaViva::abrir(Pista::Microfono, consultor), PistaViva::abrir(Pista::Sistema, cliente)],
+                false,
+            ),
+            Pistas::Sala { idioma } => (vec![PistaViva::abrir(Pista::Sala, idioma)], true),
+        };
+        Self::con_pistas(vivas, presencial, motor, buscador, diccionario, avisar)
+    }
+
+    /// **La costura de las pruebas**: la escucha entera —turnos, transcripción, disparo, ficha— sobre
+    /// anillos que el test llena, **sin abrir ningún grifo**. Es la única forma de probar la sala de punta a
+    /// punta en un `cargo test` que no toca el Mac (regla 22). No la llama la app: un test de la fuente de
+    /// `lib.rs` lo vigila.
+    #[doc(hidden)]
+    pub fn sobre_anillos(
+        anillos: Vec<(Pista, Arc<Mutex<Anillo>>, String)>,
+        motor: Box<dyn Motor>,
+        buscador: Arc<dyn Buscador>,
+        diccionario: Arc<Diccionario>,
+        avisar: impl Fn(Novedad) + Send + Sync + 'static,
+    ) -> Self {
+        let presencial = anillos.iter().any(|(p, _, _)| p.quien() == Quien::SinAtribuir);
+        let vivas = anillos.into_iter().map(|(p, a, idioma)| PistaViva::sobre(p, a, &idioma)).collect();
+        Self::con_pistas(vivas, presencial, motor, buscador, diccionario, avisar)
+    }
+
+    fn con_pistas(
+        vivas: Vec<PistaViva>,
+        presencial: bool,
+        motor: Box<dyn Motor>,
+        buscador: Arc<dyn Buscador>,
+        diccionario: Arc<Diccionario>,
+        avisar: impl Fn(Novedad) + Send + Sync + 'static,
+    ) -> Self {
+        // **El reloj de la escucha**: uno solo para las pistas, monótono, que no vuelve atrás
         // ni cuando un anillo da la vuelta. Los relojes de cada pista se cuentan en muestras y
         // valen para pedirle su trozo al anillo; para todo lo demás —el eco, el disparador, la
         // banda— manda este.
         let nacio = std::time::Instant::now();
-        let pistas = Arc::new(Mutex::new(vec![
-            PistaViva::abrir(Pista::Microfono, idioma_del_consultor),
-            PistaViva::abrir(Pista::Sistema, idioma_del_cliente),
-        ]));
+        let pistas = Arc::new(Mutex::new(vivas));
         let ventana = Arc::new(Mutex::new(Ventana::nueva()));
         let viva = Arc::new(AtomicBool::new(true));
         let nombre_del_motor = motor.nombre();
@@ -460,7 +526,13 @@ impl Escucha {
             std::thread::spawn(move || while suyo.latir(&recibe, avisar.as_ref()) {});
         }
 
-        Self { disparador, pistas, ventana, viva, motor: nombre_del_motor, nacio, buscador }
+        Self { disparador, pistas, ventana, viva, motor: nombre_del_motor, nacio, buscador, presencial }
+    }
+
+    /// **¿Habla alguien ahora mismo, por cualquier pista?** La voz al oído no habla encima de nadie, y en la
+    /// sala «alguien» es cualquiera de los dos.
+    pub fn alguien_hablando(&self) -> bool {
+        self.pistas.lock().is_ok_and(|l| l.iter().any(|p| p.turnos.hablando()))
     }
 
     /// **LA PANTALLA PIDE FICHA** (C8). La pantalla que comparte el cliente cambió y trae una cifra o
@@ -511,10 +583,17 @@ impl Escucha {
             .lock()
             .map(|v| (v.cuantos(), v.bytes()))
             .unwrap_or((0, 0));
-        let (microfono, sistema) = (de(Pista::Microfono), de(Pista::Sistema));
+        // En presencial la fila del micrófono es la sala, y la del sistema va cerrada sin motivo: no se
+        // pidió, así que no es una avería que contar (ADR 020).
+        let (microfono, sistema) = if self.presencial {
+            (de(Pista::Sala), EstadoDePista::cerrada())
+        } else {
+            (de(Pista::Microfono), de(Pista::Sistema))
+        };
         EstadoDeEscucha {
             escuchando: self.viva.load(Ordering::Relaxed),
             solo_notas: false,
+            presencial: self.presencial,
             microfono,
             sistema,
             turnos_en_memoria: turnos,
@@ -1044,6 +1123,7 @@ mod tests {
             cual: Pista::Sistema,
             anillo: anillo.clone(),
             _grifo: None,
+            de_prueba: false,
             no_abrio: None,
             turnos: Turnos::default(),
             origen: 0,
@@ -1098,6 +1178,7 @@ mod tests {
             cual: Pista::Sistema,
             anillo: anillo.clone(),
             _grifo: None,
+            de_prueba: false,
             no_abrio: None,
             turnos: Turnos::default(),
             origen: 0,

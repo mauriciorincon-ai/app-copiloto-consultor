@@ -385,6 +385,7 @@ pub fn muestras() -> Vec<Muestra> {
             &EstadoDeEscucha {
                 escuchando: true,
                 solo_notas: false,
+                presencial: false,
                 microfono: pista_abierta(),
                 sistema: EstadoDePista {
                     abierta: false,
@@ -711,10 +712,12 @@ pub fn muestras() -> Vec<Muestra> {
         }),
         // ---- las preferencias que se recuerdan (sprint 003, ADR 002 enmienda 2) -----------------
         // El idioma de cada pista cruza a la ventana principal al abrirse: lo que el usuario eligió
-        // la vez anterior. El cliente en inglés, para que la muestra no sea la de fábrica.
+        // la vez anterior. El cliente en inglés, para que la muestra no sea la de fábrica. **Y la sala**
+        // (sprint 005, ADR 020 §6), elegida: sin elegir no cruza y vale la del cliente.
         m("IDIOMAS_DE_PISTA", "IdiomasDePista", "./cuaderno", &crate::prefs::IdiomasDePista {
             consultor: "es-ES".into(),
             cliente: "en-US".into(),
+            sala: Some("en-US".into()),
         }),
         // ---- tus notas (C9, sprint 003, fase 1, ADR 015) -------------------------------------
         // Tres comandos que la pantalla de Notas lee: el cuaderno de ahora (durante · al cerrar), la

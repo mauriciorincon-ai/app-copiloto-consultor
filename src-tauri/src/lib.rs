@@ -241,6 +241,10 @@ fn apagar_el_modo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> habla::LaVoz 
 fn asentar_banda<R: tauri::Runtime>(app: tauri::AppHandle<R>, alto: u32) -> Result<(), String> {
     let borde = borde_de(&app);
     ventana::ajustar_banda(&app, borde, alto)?;
+    // En presencial la banda cambia de alto y nada más: no hay ventana que reacoplar (ADR 020 §1).
+    if !se_puede_acoplar(&app) {
+        return Ok(());
+    }
     let franja = ventana::franja(&app, borde, alto)?;
     let informe = match borde {
         ventana::Borde::Abajo => acople::reacoplar(franja, &huella(&app)),
@@ -288,6 +292,14 @@ fn acoplar_segun_el_borde<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Resul
     // selector de Sesión encogían la reunión para dejar sitio a una franja vacía.
     if app.get_webview_window(ventana::BANDA).is_none() {
         return Err("la banda no está en pantalla: no se toca ninguna ventana".into());
+    }
+    // **En presencial no se acopla nada** (ADR 020 §1): ni la reunión arriba ni lo que esté al frente abajo.
+    if !se_puede_acoplar(app) {
+        return Ok(acople::Informe {
+            permiso: acople::hay_permiso(),
+            motivos: vec!["presencial: no se acopla ninguna ventana".into()],
+            ..Default::default()
+        });
     }
     let borde = borde_de(app);
     let alto = ventana::alto_actual(app).unwrap_or(ventana::ALTO_COMPACTA);
@@ -685,6 +697,51 @@ fn empezar_solo_notas(
     empezar(app, &estado, &el_corpus, modo::Modo::SoloNotas)
 }
 
+/// **«Empezar en presencial»** (ADR 020): la app escucha la sala por el micrófono del Mac —en la mesa con
+/// el cliente, o al lado del PC donde corre la videollamada— y nada más: ni el audio del sistema, ni la
+/// pantalla, ni el acople. Se llega desde Sesión, y solo desde la ventana principal (`SENSIBLES`).
+#[tauri::command]
+fn empezar_presencial(
+    app: tauri::AppHandle,
+    estado: tauri::State<'_, LaEscucha>,
+    el_corpus: tauri::State<'_, ElCorpus>,
+) -> Result<escucha::EstadoDeEscucha, String> {
+    empezar(app, &estado, &el_corpus, modo::Modo::Presencial)
+}
+
+/// **El modo de la sesión en marcha**, marcado lo PRIMERO de `empezar` (ADR 020 §1). `None` sin sesión.
+///
+/// Existe por el acople: el hilo que acopla la reunión arriba, el latido del arranque, `⌃⌥B` y el asa
+/// pueden correr en cualquier momento, y en presencial no se acopla nada. Marcado al principio, ninguno
+/// llega antes que él (`se_puede_acoplar`).
+#[derive(Default)]
+struct ElModo(std::sync::Mutex<Option<modo::Modo>>);
+
+fn modo_de_la_sesion<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Option<modo::Modo> {
+    app.try_state::<ElModo>().and_then(|m| m.0.lock().ok().and_then(|g| *g))
+}
+
+fn marcar_el_modo<R: tauri::Runtime>(app: &tauri::AppHandle<R>, modo: Option<modo::Modo>) {
+    if let Some(m) = app.try_state::<ElModo>() {
+        if let Ok(mut g) = m.0.lock() {
+            *g = modo;
+        }
+    }
+}
+
+/// **¿Se puede acoplar ahora?** No en presencial: allí no hay ventana de reunión en este Mac, y la orden lo
+/// dice —«en presencial no se escribe `AXPosition`»—. Sin sesión, sí: es el latido del H1. Lo consultan las
+/// dos puertas por las que se acopla, `acoplar_segun_el_borde` y `asentar_banda`.
+fn se_puede_acoplar<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> bool {
+    modo_de_la_sesion(app).is_none_or(|m| modo::que_abre(m).acople)
+}
+
+/// La respuesta de la NDA del cliente elegido, si la hay.
+fn nda_del_cliente<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Option<jurisdiccion::Nda> {
+    let cliente = reunion::cliente(app)?;
+    app.try_state::<LasPreferencias>()?.actuales.lock().ok()?.ndas.get(&cliente).copied()
+}
+
 /// El nombre del evento con el que la banda y Sesión se enteran de que la reunión empezó o terminó. Es
 /// una **señal** sin dato: el oyente vuelve a preguntar el estado (auditoría del S3, B14; casilla 5).
 const EVENTO_MODO: &str = "modo";
@@ -695,6 +752,19 @@ fn empezar(
     el_corpus: &tauri::State<'_, ElCorpus>,
     modo: modo::Modo,
 ) -> Result<escucha::EstadoDeEscucha, String> {
+    // **La NDA, en Rust** (ADR 020 §1): con la que prohíbe grabar o transcribir, solo se empieza en solo
+    // notas. Hasta el sprint 005 lo comprobaba solo la pantalla de Sesión.
+    if modo::puede_empezar(modo, nda_del_cliente(&app)).is_err() {
+        println!("[sesión] la NDA de este cliente lo prohíbe: solo se puede empezar en solo notas");
+        return Err("la NDA de este cliente prohíbe grabar o transcribir: empieza en solo notas".into());
+    }
+    // **El modo se marca lo primero** (ADR 020 §1): el hilo del acople y el latido lo consultan, y no
+    // pueden llegar antes que él. En presencial, además, se suelta lo que estuviera acoplado.
+    marcar_el_modo(&app, Some(modo));
+    let modo::Apertura { pistas, pantalla, acople: acopla, tus_turnos, propuestas } = modo::que_abre(modo);
+    if !acopla {
+        registrar_acople(&app, "presencial: no se acopla nada", &acople::soltar(&huella(&app)));
+    }
     // **Los idiomas salen de las preferencias, que son la única fuente** (sprint 003). En la fase 0
     // los mandaba el webview desde su caché, y la casilla 6 lo cazó: después de reiniciar, Sesión
     // mandaba los de fábrica si el usuario no había pasado antes por Idioma. Sin parámetros, el
@@ -707,8 +777,9 @@ fn empezar(
     // **La puerta local se cierra primero** (ADR 018 §5): un agente no toca jamás una reunión, y la
     // reunión empieza aquí.
     cerrar_la_puerta_al_empezar(&app);
-    let prefs::IdiomasDePista { consultor: idioma_del_consultor, cliente: idioma_del_cliente } =
-        idiomas_guardados(&app.state::<LasPreferencias>());
+    let idiomas = idiomas_guardados(&app.state::<LasPreferencias>());
+    let idioma_de_la_sala = idiomas.de_la_sala().to_string();
+    let prefs::IdiomasDePista { consultor: idioma_del_consultor, cliente: idioma_del_cliente, .. } = idiomas;
     let mut guardada = estado.0.lock().map_err(|_| "la escucha quedó en mal estado")?;
     if let Some(vieja) = guardada.take() {
         vieja.cortar();
@@ -720,7 +791,8 @@ fn empezar(
     println!("[red] reunión nueva: el contador vuelve a 0 B");
     // La reunión se abre aquí: el cuaderno se protege de la captura hasta que la guardes o la
     // descartes, y si la anterior seguía abierta con algo tuyo, se guarda antes (ADR 015 §7 y §10).
-    reunion::al_empezar(&app);
+    // «Conservar mis turnos» solo vale si el modo lo deja: en presencial no hay turnos tuyos (ADR 020 §5).
+    reunion::al_empezar(&app, tus_turnos);
     {
         let s = app.state::<LaSintesis>();
         if let Ok(mut u) = s.reunion_usd.lock() {
@@ -745,7 +817,7 @@ fn empezar(
     // **Arriba, el disparador del acople es la reunión** (ADR 004, enmienda 1): al empezar, la reunión
     // ya está abierta, así que se acopla su ventana si no lo estaba. Abajo no hace falta: al pulsar
     // «Iniciar sesión» la aplicación de delante somos nosotros, y el H1 acopla con su latido.
-    if borde_de(&app) == ventana::Borde::Arriba && acople::leer(&huella(&app)).huellas.is_empty() {
+    if acopla && borde_de(&app) == ventana::Borde::Arriba && acople::leer(&huella(&app)).huellas.is_empty() {
         let mango = app.clone();
         std::thread::spawn(move || match acoplar_segun_el_borde(&mango) {
             Ok(informe) => registrar_acople(&mango, "al empezar la reunión", &informe),
@@ -755,13 +827,13 @@ fn empezar(
     // **LA PUERTA DE LA CAPTURA** (ADR 017 §5). Todo lo que oye o mira la reunión —la pantalla, las
     // pistas, la transcripción— arranca DESPUÉS de esta línea, y en solo notas no se llega. Un test de
     // esta fuente vigila el orden (`pruebas_de_la_puerta_de_la_captura`).
-    reunion::marcar_solo_notas(&app, !modo::abre_la_captura(modo));
-    if !modo::abre_la_captura(modo) {
+    reunion::marcar_solo_notas(&app, pistas.is_none());
+    let Some(que_pistas) = pistas else {
         parar_la_pantalla(&app);
         println!("[sesión] modo solo notas: ni pistas, ni transcripción, ni pantalla");
         let _ = app.emit(EVENTO_MODO, ());
         return Ok(escucha::EstadoDeEscucha::solo_notas());
-    }
+    };
     let mango = app.clone();
     // **El modo solo audio lee en el idioma del CONSULTOR**, no del cliente: la ficha sale de los
     // documentos del usuario, así que está escrita en su idioma. Se fija aquí, que es el único sitio
@@ -771,7 +843,16 @@ fn empezar(
     }
     // La lectura de pantalla arranca ANTES que la escucha, porque el buscador de la escucha lleva
     // dentro lo que la pantalla aporta: si arrancara después, los primeros turnos buscarían sin ella.
-    let refuerzo = arrancar_la_pantalla(&app, el_corpus.inner().clone());
+    // **Solo con su permiso**, que solo da `modo::que_abre` y solo en reunión: en presencial no hay con qué
+    // llamarla (ADR 020 §1), y con ella tampoco corren `⌃⌥L` ni el radar ámbar, que viven dentro.
+    let refuerzo = match pantalla {
+        Some(permiso) => arrancar_la_pantalla(&app, el_corpus.inner().clone(), permiso),
+        None => {
+            parar_la_pantalla(&app);
+            println!("[sesión] presencial: una pista, la sala · ni sistema, ni pantalla, ni acople");
+            std::sync::Arc::default()
+        }
+    };
     let buscador = std::sync::Arc::new(ConPantalla {
         corpus: el_corpus.inner().clone(),
         pantalla: refuerzo,
@@ -782,9 +863,12 @@ fn empezar(
     // palabras sueltas sin tildes («valle», «manejo»), y como términos del diccionario estropeaban
     // el castellano corriente del cliente (auditoría del S2, A3).
     let jerga = diccionario_de_la_sesion(&ruta_del_diccionario(&app), &clientes_del_corpus(el_corpus.inner()));
+    let que = match que_pistas {
+        modo::QuePistas::Reunion => escucha::Pistas::Reunion { consultor: idioma_del_consultor, cliente: idioma_del_cliente },
+        modo::QuePistas::Sala => escucha::Pistas::Sala { idioma: idioma_de_la_sala },
+    };
     let nueva = escucha::Escucha::arrancar(
-        &idioma_del_consultor,
-        &idioma_del_cliente,
+        que,
         stt::motor_de_la_casa(),
         buscador,
         jerga,
@@ -828,13 +912,16 @@ fn empezar(
                 reunion::oir(&mango, t);
                 // Las propuestas (ADR 016): las reglas, con tus fijadas y tu corpus para los nombres.
                 // `try_lock` y no `lock`: si el corpus se está indexando, este hilo es el de la escucha
-                // y no puede esperar; ese turno no propone nombres, y ya está.
-                let corpus = mango.state::<ElCorpus>();
-                let conoce = |nombre: &str| match corpus.0.try_lock() {
-                    Ok(c) => c.as_ref().is_none_or(|c| c.conoce(nombre)),
-                    Err(_) => true,
-                };
-                reunion::proponer(&mango, t, &conoce);
+                // y no puede esperar; ese turno no propone nombres, y ya está. **En presencial, ninguna**
+                // (ADR 020 §5): el modo no lo abre, y además la sala no tiene dueño (`De::del_turno`).
+                if propuestas {
+                    let corpus = mango.state::<ElCorpus>();
+                    let conoce = |nombre: &str| match corpus.0.try_lock() {
+                        Ok(c) => c.as_ref().is_none_or(|c| c.conoce(nombre)),
+                        Err(_) => true,
+                    };
+                    reunion::proponer(&mango, t, &conoce);
+                }
             }
             let _ = mango.emit(EVENTO_ESCUCHA, novedad);
         },
@@ -853,6 +940,7 @@ fn dejar_de_escuchar(app: tauri::AppHandle, estado: tauri::State<'_, LaEscucha>)
             println!("[escucha] parada a petición del usuario");
         }
     }
+    marcar_el_modo(&app, None);
     // Sin sesión no se mira la pantalla: la lectura vive lo que vive la escucha.
     parar_la_pantalla(&app);
     // Lo que salió al API era de esta reunión: IA dice «se borra al cerrar», y se borra (B37).
@@ -989,6 +1077,8 @@ fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Inf
             None => false,
         }
     };
+    // Sin escucha no hay modo de sesión: lo que viniera después (⌃⌥B, el asa) ya no es presencial.
+    marcar_el_modo(app, None);
 
     // Se lee ANTES del bucle: la pieza `ContadorDeRed` lo pone a cero, y leído después el log
     // diría siempre «red 0 B» (auditoría del S2, B25).
@@ -1632,6 +1722,7 @@ pub fn run() {
             responder_nda,
             revisar_nda,
             empezar_solo_notas,
+            empezar_presencial,
             ir_a_notas,
             guardar_propuesta,
             descartar_propuesta,
@@ -1669,6 +1760,7 @@ pub fn run() {
             // `setup` corre en el hilo principal, que es donde `NSScreen` se deja preguntar.
             app.manage(FondoDelRelleno(acople::fondo_de_escritorio()));
             app.manage(LaEscucha::default());
+            app.manage(ElModo::default());
             app.manage(ElEnsayo::default());
             app.manage(ElCorpus::default());
             app.manage(LaPantalla::default());
@@ -2279,6 +2371,8 @@ const EVENTO_PANTALLA: &str = "pantalla";
 fn arrancar_la_pantalla<R: tauri::Runtime>(
     app: &tauri::AppHandle<R>,
     el_corpus: ElCorpus,
+    // El permiso de `modo::que_abre`: sin él no hay con qué llamarla (ADR 020 §1).
+    _permiso: modo::PermisoDePantalla,
 ) -> std::sync::Arc<std::sync::Mutex<pantalla::Refuerzo>> {
     parar_la_pantalla(app);
     let estado = app.state::<LaPantalla>();
@@ -2552,6 +2646,8 @@ fn fijar_idioma_de_pista(
     match pista.as_str() {
         "consultor" => recordar(&app, |p| p.idiomas.consultor = idioma.clone()),
         "cliente" => recordar(&app, |p| p.idiomas.cliente = idioma.clone()),
+        // La sala, en presencial (ADR 020 §6): un idioma para toda la sala.
+        "sala" => recordar(&app, |p| p.idiomas.sala = Some(idioma.clone())),
         _ => return Err(format!("no hay pista «{pista}»")),
     }
     println!("[prefs] la pista «{pista}» escucha en {idioma}");
@@ -4088,7 +4184,7 @@ mod pruebas_de_la_puerta_de_la_captura {
         let desde = fuente.find("\nfn empezar(").expect("la función que arranca la reunión");
         let cuerpo = &fuente[desde..];
         let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
-        let puerta = cuerpo.find("if !modo::abre_la_captura(modo)").expect("la puerta del modo");
+        let puerta = cuerpo.find("let Some(que_pistas) = pistas else {").expect("la puerta del modo");
         let p = cuerpo.find(pantalla).expect("empezar arranca la pantalla");
         let e = cuerpo.find(pistas).expect("empezar arranca las pistas");
         assert!(puerta < p, "la pantalla arranca antes de la puerta: en solo notas se leería la reunión");
@@ -4176,7 +4272,7 @@ mod pruebas_de_la_puerta_local {
         let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
         let cierre = cuerpo.find(concat!("cerrar_la_puerta_", "al_empezar(&app)")).expect("empezar ya no cierra la puerta");
         for despues in [
-            concat!("reunion::al_", "empezar(&app)"),
+            concat!("reunion::al_", "empezar(&app, "),
             concat!("arrancar_la_", "pantalla(&"),
             concat!("escucha::Escucha::", "arrancar("),
         ] {
@@ -4273,7 +4369,7 @@ mod pruebas_de_la_auditoria_del_s4 {
     #[test]
     fn locale_del_ensayo() {
         use crate::ensayo::banco::Idioma;
-        let pistas = |consultor: &str, cliente: &str| crate::prefs::IdiomasDePista { consultor: consultor.into(), cliente: cliente.into() };
+        let pistas = |consultor: &str, cliente: &str| crate::prefs::IdiomasDePista { consultor: consultor.into(), cliente: cliente.into(), sala: None };
         let listos = |v: &[&str]| v.iter().map(|s| s.to_string()).collect::<Vec<_>>();
         assert_eq!(super::locale_del_ensayo(Idioma::Es, &pistas("es-MX", "es-MX"), &[]), "es-MX");
         assert_eq!(super::locale_del_ensayo(Idioma::En, &pistas("es-CO", "en-GB"), &[]), "en-GB");

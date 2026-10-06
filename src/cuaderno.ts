@@ -244,6 +244,11 @@ export type EstadoDeEscucha = {
   escuchando: boolean;
   /** La reunión va en modo solo notas (ADR 017 §5): hay reunión y nada se captura. */
   soloNotas: boolean;
+  /**
+   * La sesión es presencial (sprint 005, ADR 020): `microfono` es la pista de la sala, y `sistema` va
+   * cerrada a propósito —sin motivo, porque no es una avería—.
+   */
+  presencial: boolean;
   microfono: EstadoDePista;
   sistema: EstadoDePista;
   // `turnosEnMemoria` salió por la misma decisión: Honestidad cuenta el transcript por sus bytes.
@@ -296,7 +301,8 @@ export type InformeDelCorte = {
   piezas: [PiezaDelCorte, SuerteDelCorte][];
 };
 
-export type Pista = "microfono" | "sistema";
+/** «sala» (sprint 005, ADR 020): el micrófono en presencial, con las dos voces y sin dueño. */
+export type Pista = "microfono" | "sistema" | "sala";
 
 export type Turno = {
   pista: Pista;
@@ -324,6 +330,7 @@ export type QueSabeTranscribir = {
 const ESCUCHA_DE_MUESTRA: EstadoDeEscucha = {
   escuchando: true,
   soloNotas: false,
+  presencial: false,
   microfono: {
     abierta: true,
     motivo: null,
@@ -404,6 +411,7 @@ export function useEscucha(): EstadoDeEscucha {
 const APAGADA: EstadoDeEscucha = {
   escuchando: false,
   soloNotas: false,
+  presencial: false,
   microfono: {
     abierta: false,
     motivo: null,
@@ -426,6 +434,7 @@ const APAGADA: EstadoDeEscucha = {
 export const ESCUCHA_DEL_ENSAYO_DE_MUESTRA: EstadoDeEscucha = {
   escuchando: false,
   soloNotas: false,
+  presencial: false,
   microfono: { abierta: true, motivo: null, bytes: 1_920_000 },
   sistema: { abierta: false, motivo: null, bytes: 0 },
   bytesDelTranscript: 0,
@@ -620,7 +629,11 @@ export function useQueSabeTranscribir(): QueSabeTranscribir {
  * los clientes del usuario lo son— y **se recuerdan** (sprint 003, ADR 002 enmienda 2): Rust las
  * guarda en `preferencias.json` y el cuaderno las pide al abrirse.
  */
-export type IdiomasDePista = { consultor: string; cliente: string };
+/**
+ * `sala` (sprint 005, ADR 020 §6): el idioma de la sala en presencial. Sin elegir no cruza, y la sala
+ * escucha en el del cliente.
+ */
+export type IdiomasDePista = { consultor: string; cliente: string; sala?: string };
 let idiomasDePista: IdiomasDePista = { consultor: "es-ES", cliente: "es-ES" };
 const oyentesDeIdioma = new Set<() => void>();
 /** Se piden a Rust una vez, al primer lector; si el usuario elige antes de que lleguen, manda él. */

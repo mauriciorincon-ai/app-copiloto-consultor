@@ -166,3 +166,8 @@ export function revisarNda(): Promise<VistaDelCliente | null> {
 export function empezarSoloNotas(): Promise<boolean> {
   return llamar("empezar_solo_notas");
 }
+
+/** «Empezar en presencial» (ADR 020): la sala, por el micrófono del Mac; ni sistema, ni pantalla, ni acople. */
+export function empezarPresencial(): Promise<boolean> {
+  return llamar("empezar_presencial");
+}

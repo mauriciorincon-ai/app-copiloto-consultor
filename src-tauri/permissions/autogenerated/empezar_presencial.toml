@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-empezar-presencial"
+description = "Enables the empezar_presencial command without any pre-configured scope."
+commands.allow = ["empezar_presencial"]
+
+[[permission]]
+identifier = "deny-empezar-presencial"
+description = "Denies the empezar_presencial command without any pre-configured scope."
+commands.deny = ["empezar_presencial"]

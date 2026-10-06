@@ -142,6 +142,7 @@ export const ESTADO_DE_LA_ESCUCHA: EstadoDeEscucha = {
       "bytes": 1920000,
       "motivo": null
     },
+    "presencial": false,
     "sistema": {
       "abierta": false,
       "bytes": 0,
@@ -160,6 +161,7 @@ export const ESTADO_DE_LA_ESCUCHA_EN_UN_ENSAYO: EstadoDeEscucha = {
       "bytes": 1920000,
       "motivo": null
     },
+    "presencial": false,
     "sistema": {
       "abierta": false,
       "bytes": 0,
@@ -988,7 +990,8 @@ export const LO_QUE_SALIO_DEL_BANCO: LoQueSalio = {
 
 export const IDIOMAS_DE_PISTA: IdiomasDePista = {
     "cliente": "en-US",
-    "consultor": "es-ES"
+    "consultor": "es-ES",
+    "sala": "en-US"
   };
 
 export const VISTA_DEL_CUADERNO: VistaDelCuaderno = {
@@ -1369,6 +1372,7 @@ export const ESCUCHA_SOLO_NOTAS: EstadoDeEscucha = {
       "bytes": 0,
       "motivo": null
     },
+    "presencial": false,
     "sistema": {
       "abierta": false,
       "bytes": 0,

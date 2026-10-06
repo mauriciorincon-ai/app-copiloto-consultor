@@ -236,8 +236,7 @@ fn una_frase_por_los_altavoces_acaba_siendo_texto() {
     // Sin corpus: lo que este test comprueba es que una frase por los altavoces acaba siendo
     // texto. La ficha tiene su propio camino y sus propias pruebas.
     let escucha = Escucha::arrancar(
-        "es-ES",
-        "es-ES",
+        app_copiloto_consultor_lib::escucha::Pistas::Reunion { consultor: "es-ES".into(), cliente: "es-ES".into() },
         motor,
         std::sync::Arc::new(SinCorpus),
         // Sin jerga: este test mide el camino del audio, no la corrección del transcript.

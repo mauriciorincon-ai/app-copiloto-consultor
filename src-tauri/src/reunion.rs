@@ -434,7 +434,10 @@ pub fn contar_una_lectura<R: Runtime>(app: &AppHandle<R>) {
 
 /// Empieza una sesión. Si la reunión anterior seguía abierta con algo tuyo dentro, **se guarda
 /// primero**: nada tuyo se pierde por empezar otra.
-pub fn al_empezar<R: Runtime>(app: &AppHandle<R>) {
+///
+/// `tus_turnos` es lo que el modo deja (ADR 020 §5): en presencial, `false`, y «Conservar mis turnos» no
+/// guarda nada **sin que se toque tu preferencia**, que vuelve a valer en la siguiente reunión.
+pub fn al_empezar<R: Runtime>(app: &AppHandle<R>, tus_turnos: bool) {
     let Some(el) = app.try_state::<ElCuaderno>() else { return };
     if el.hay_que_guardar_la_anterior() {
         match guardar(app) {
@@ -442,10 +445,15 @@ pub fn al_empezar<R: Runtime>(app: &AppHandle<R>) {
             Err(e) => println!("[notas] la reunión anterior seguía abierta y no se pudo guardar: {}", sin_ruta(&e)),
         }
     }
-    el.abrir(preferencias(app).conservar_mis_turnos, fecha_de_ahora());
+    el.abrir(conservar_en_este_modo(preferencias(app).conservar_mis_turnos, tus_turnos), fecha_de_ahora());
     let fallo = ventana::proteger_el_cuaderno(app, true).is_err();
     el.sin_proteger.store(fallo, Ordering::Relaxed);
     avisar(app);
+}
+
+/// «Conservar mis turnos» en esta sesión: tu preferencia, **si el modo lo deja**. Pura, para probarla.
+pub fn conservar_en_este_modo(preferencia: bool, el_modo_lo_deja: bool) -> bool {
+    preferencia && el_modo_lo_deja
 }
 
 /// Dejaste de escuchar. Con algo tuyo dentro, la reunión sigue abierta —y el cuaderno protegido—
