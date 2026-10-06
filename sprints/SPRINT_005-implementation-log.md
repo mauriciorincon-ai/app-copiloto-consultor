@@ -198,3 +198,11 @@ contraseña ni diálogo. La única fila del sprint, el micrófono en el modo nue
 4. **La constitución se regenera desde el `CLAUDE.md` de la app**, no desde la copia de la planeadora (K-S5-1).
 5. **Las reglas 26, 27 y 28 del kit entran como 25, 26 y 27 de esta casa**, citadas por nombre.
 6. **`source-map-js` 1.2.2** entra en el sprint por un aviso de seguridad nuevo (no estaba en el plan).
+
+### La mirada de DECISIÓN (2026-10-05)
+
+`docs/diseno/sesion.html`, estados «sprint 5 · presencial» y «sprint 5 · presencial · en marcha», presentada en matriz de
+una fila al cerrar la fase. Primero llegó un **«sí»** a secas; por la regla 10 se le repreguntó qué vio al abrirla, y
+respondió: **«Si la abri y la apruebo, sigue»**. Queda **aprobada** y registrada en `docs/diseno/README.md`. Confirma la
+respuesta (a) de la pregunta 2 del G-Plan: la ficha al oído de fábrica, la banda a una tecla. El «sigue» es también el
+paso de fase: arranca la fase 1.
