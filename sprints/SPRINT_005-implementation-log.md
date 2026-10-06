@@ -509,5 +509,24 @@ type 'Pista'»; verde al restaurar.
 - **Pruebas** (local): `pnpm exec vitest run` **477 de 477** en 58 archivos (+3 del gate nuevo); `pnpm typecheck`
   limpio; `cargo clippy --locked --all-targets -- -D warnings` limpio.
 
-**Lo que queda de la fase 1:** la CI de este push leída (con el paso de la sala corriendo en `build-escritorio`) y el
-**STOP de medición**.
+### Fase 1 · cierre y STOP de medición (2026-10-05)
+
+**Pruebas al cierre (corridas en local, después del último cambio de código):** `AG_SIN_HARDWARE=1 cargo test --locked`:
+librería **604** en verde (2 ignoradas de hardware), contra el Mac **18** (15 de hardware, que corre la CI), puerta
+**14**, ghost **5** · `cargo clippy --locked --all-targets -- -D warnings` limpio · `pnpm exec vitest run` **477 de 477**
+en 58 archivos · `pnpm typecheck`, `pnpm lint` y `pnpm verify:ephemeral` limpios. Rojos de la fase con
+`scripts/demo-rojo.sh`: los 4 del punto de control, **D1–D13**, **T1–T7**, **S1–S2**, **K1–K2**, el de los auxiliares
+del inglés, los 3 de las huellas y el vocabulario, y el del tipo `Pista` de TS: **33**, cada uno con código 0.
+
+**Desviaciones de la fase 1 respecto del plan:**
+
+1. **Un arreglo del disparador que no estaba en el plan**: los auxiliares del inglés (arriba). Lo encontró el kit v4 y
+   afecta también a la reunión.
+2. **Un turno del kit del sprint 001 corregido** («four… three» → «4… 3»), con su porqué en el propio turno.
+3. **La voz que espera al silencio de la sala** (ADR 020 §7) queda para la fase 2, con la interfaz, como dice el plan.
+   `Escucha::alguien_hablando()` ya existe para ella.
+4. **El paso de la sala en la sesión completa** no se vio en rojo en local: es de hardware (regla 22). Su primera
+   corrida es la de la CI, y lo que lo sostiene sin hardware tiene sus rojos en la librería.
+
+**STOP de medición:** la tabla está arriba («La medición del kit v4») y la regla la eliges tú. Lo que se elija entra en
+la fase 2 a `data/presencial/reglas.json`, y el ADR 020 gana su sección «Medición» con estas cifras.
