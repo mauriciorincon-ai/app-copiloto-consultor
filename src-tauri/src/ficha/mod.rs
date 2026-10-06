@@ -104,6 +104,11 @@ pub struct Aparicion {
     /// Del fin de turno a la ficha, en milisegundos. El presupuesto del sprint es 4 000.
     pub ms: u64,
     pub hora: String,
+    /// **El turno que la disparó**, por el reloj de la escucha (su `hasta_ms`); `None` si no la disparó un turno
+    /// (la pantalla, tu nota). La sugerencia redacta sobre ESE turno y no sobre el último que se dijo: en la sala
+    /// el último suele ser tu respuesta (ADR 020, decisión 7). No cruza a la pantalla.
+    #[serde(skip)]
+    pub de_ms: Option<usize>,
 }
 
 /// Arma la ficha a partir de lo que devolvió el índice.

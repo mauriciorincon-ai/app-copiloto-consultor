@@ -338,9 +338,21 @@ con Python y `cmp`, verde con 1 prueba):**
 | T6 | `el_tope_corta_un_turno_que_no_se_calla` | la rama del tope con `&& false` | «el tope no cortó el turno en trozos de 1 s» |
 | T7 | `la_ficha_que_sale_la_ve_la_tolerancia_de_la_sala` | sin `vio_ficha` en `del_turno_a_la_ficha` | «la sala que lee la ficha disparó otra» |
 
+### La sugerencia, con la frase que disparó (decisión 7, 2026-10-05)
+
+`ficha::Aparicion` gana `de_ms` (`#[serde(skip)]`: no cruza a la pantalla ni cambia el contrato), el `hasta_ms` del
+turno que la disparó, o `None` si no la disparó un turno. `sintetizar` redacta sobre `stt::el_turno_de_la_ficha(ts,
+de_ms)`: ese turno, y **si ya no está entre los recientes, ninguno**, mejor sin sugerencia que una sobre tu respuesta;
+sin `de_ms`, el último que pudo decir el cliente, como antes. En una reunión no cambia nada visible: el turno que
+dispara suele ser el último del cliente.
+
+Rojos: **S1** `stt::la_sugerencia_usa_el_turno_que_disparo` con `Some(_) => candidatos.next()` nombró «la sugerencia
+tomó la última frase de la sala y no la que disparó»; **S2** `lib::…::la_sugerencia_pide_el_turno_que_disparo` con
+`de_ms` anulado en `sintetizar` nombró «la sugerencia no usa el turno que disparó». Los dos con código 0 y verde con
+1 prueba. Clippy limpio; el contrato, sin cambios (4 de 4).
+
 **Lo que queda de la fase 1, en orden:**
 
-- la sugerencia con el turno que disparó (decisión 7);
 - **el kit v4**: `scripts/kit-v4-sala.sh` (dos voces de `say`), `sala-{es,en}.wav`, `presencial.json`, niveles A y B
   en `contra-el-mac-de-verdad.rs` (puros, en la CI), latencia y nivel C (`hardware`);
 - el efímero presencial (término plantado, `verify:ephemeral`), el contrato con su muestra de la sala, el vocabulario

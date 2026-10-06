@@ -73,6 +73,17 @@ impl Turno {
     }
 }
 
+/// **El turno sobre el que se redacta la sugerencia** (ADR 020, decisión 7). Con `de_ms`, el que disparó la ficha
+/// (el de ese `hasta_ms`), y si ya no está entre los recientes, ninguno: mejor sin sugerencia que una sobre otra
+/// frase. Sin `de_ms` (la ficha de tu nota), el último que pudo decir el cliente, como hasta el sprint 005.
+pub fn el_turno_de_la_ficha(recientes: Vec<Turno>, de_ms: Option<usize>) -> Option<Turno> {
+    let mut candidatos = recientes.into_iter().rev().filter(Turno::pudo_decirlo_el_cliente);
+    match de_ms {
+        Some(ms) => candidatos.find(|t| t.hasta_ms == ms),
+        None => candidatos.next(),
+    }
+}
+
 /// En qué estado está el motor para un idioma dado. Los cuatro se enseñan tal cual en la pantalla
 /// de Idioma: la app no colapsa «no puedo» en una sola palabra.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
@@ -190,6 +201,30 @@ pub fn motor_de_la_casa() -> Box<dyn Motor> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::capture::Pista;
+
+    fn dicho(pista: Pista, hasta_ms: usize, texto: &str) -> Turno {
+        Turno { pista, desde_ms: hasta_ms - 1_000, hasta_ms, texto: texto.into(), hora: "14:02".into(), eco: false }
+    }
+
+    /// **La sugerencia redacta sobre la frase que disparó la ficha**, no sobre la última (ADR 020, decisión 7): en
+    /// la sala lo último suele ser tu respuesta. Si la que disparó ya no está, ninguna.
+    ///
+    /// ¿Puede fallar? Sí: con `candidatos.next()` también cuando hay `de_ms`, la sugerencia redactaría sobre tu
+    /// respuesta (bitácora del sprint 005, fase 1).
+    #[test]
+    fn la_sugerencia_usa_el_turno_que_disparo() {
+        let recientes = vec![
+            dicho(Pista::Sala, 2_000, "¿En cuántas semanas hacen la entrega completa?"),
+            dicho(Pista::Sala, 6_000, "Son cuatro semanas desde la firma."),
+        ];
+        let t = el_turno_de_la_ficha(recientes.clone(), Some(2_000)).expect("no encontró el turno que disparó");
+        assert_eq!(t.hasta_ms, 2_000, "la sugerencia tomó la última frase de la sala y no la que disparó");
+        assert_eq!(el_turno_de_la_ficha(recientes.clone(), Some(99_000)), None, "con el turno perdido inventó otro");
+        assert_eq!(el_turno_de_la_ficha(recientes, None).map(|t| t.hasta_ms), Some(6_000));
+        let tuyo_al_final = vec![dicho(Pista::Sistema, 2_000, "¿Y el precio?"), dicho(Pista::Microfono, 3_000, "Te lo mando.")];
+        assert_eq!(el_turno_de_la_ficha(tuyo_al_final, None).map(|t| t.hasta_ms), Some(2_000), "sin de_ms tomó tu turno");
+    }
 
     #[test]
     fn el_motor_mudo_no_inventa_silencio() {

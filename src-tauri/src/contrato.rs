@@ -295,6 +295,7 @@ pub fn muestras() -> Vec<Muestra> {
         motivo,
         ms: 1_240,
         hora: "14:02".into(),
+        de_ms: None,
     };
 
     let pista_abierta = || EstadoDePista {

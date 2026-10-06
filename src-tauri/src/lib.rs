@@ -2255,7 +2255,7 @@ fn ficha_vigente(
     let respuesta = ficha::armar(&ultimo.texto, &hallazgos);
     let ms = empezo.elapsed().as_millis() as u64;
     println!("[ficha] a petición del usuario en {ms} ms · {} candidatas", hallazgos.len());
-    Some(ficha::Aparicion { respuesta, motivo: disparo::Motivo::Atajo, ms, hora: ultimo.hora })
+    Some(ficha::Aparicion { respuesta, motivo: disparo::Motivo::Atajo, ms, hora: ultimo.hora, de_ms: Some(ultimo.hasta_ms) })
 }
 
 /// **`⌃⌥A` en solo notas** (ADR 017 §5): no hay turno del cliente con que buscar, así que busca con la
@@ -2272,7 +2272,7 @@ fn ficha_de_la_nota(app: &tauri::AppHandle, el_corpus: &tauri::State<'_, ElCorpu
     let respuesta = ficha::armar(&linea, &hallazgos);
     let ms = empezo.elapsed().as_millis() as u64;
     println!("[ficha] ⌃⌥A en solo notas, con tu nota, en {ms} ms · {} candidatas", hallazgos.len());
-    Some(ficha::Aparicion { respuesta, motivo: disparo::Motivo::Atajo, ms, hora: escucha::la_hora() })
+    Some(ficha::Aparicion { respuesta, motivo: disparo::Motivo::Atajo, ms, hora: escucha::la_hora(), de_ms: None })
 }
 
 /// `⌃⌥V` — **el modo solo audio**, tal y como lo dibuja la banda de 44 px.
@@ -2907,6 +2907,7 @@ fn sintetizar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Aparicion
         return;
     }
     let respaldo = f.respaldo.clone();
+    let de_ms = a.de_ms;
     let epoca = s.epoca.load(Ordering::Relaxed);
     let mango = app.clone();
     std::thread::spawn(move || {
@@ -2917,7 +2918,7 @@ fn sintetizar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Aparicion
             .lock()
             .ok()
             .and_then(|g| g.as_ref().map(|e| e.ultimos_turnos(12)))
-            .and_then(|ts| ts.into_iter().rev().find(stt::Turno::pudo_decirlo_el_cliente))
+            .and_then(|ts| stt::el_turno_de_la_ficha(ts, de_ms))
             .map(|t| t.texto);
         let conocidos = clientes_del_corpus(&mango.state::<ElCorpus>());
         let sobre = respaldo.first().map(|r| r.titular.clone()).unwrap_or_default();
@@ -4381,6 +4382,15 @@ mod pruebas_del_modo_presencial {
     #[test]
     fn la_app_no_arranca_la_escucha_por_la_costura_de_las_pruebas() {
         assert!(!include_str!("lib.rs").contains(concat!("sobre_", "anillos(")), "lib.rs arranca la escucha sobre anillos de prueba");
+    }
+
+    /// **La sugerencia redacta sobre el turno que disparó la ficha** (ADR 020, decisión 7): `sintetizar` le pasa
+    /// `de_ms` a `stt::el_turno_de_la_ficha`, que tiene su propio test.
+    #[test]
+    fn la_sugerencia_pide_el_turno_que_disparo() {
+        let c = cuerpo_de("\nfn sintetizar<");
+        assert!(c.contains(concat!("stt::el_turno_de_la_", "ficha(ts, de_ms)")), "la sugerencia no usa el turno que disparó");
+        assert!(c.contains(concat!("let de_ms = ", "a.de_ms;")), "la sugerencia no lee de qué turno salió la ficha");
     }
 
     /// **«Conservar mis turnos» pregunta al modo**: en presencial el interruptor recuerda tu preferencia y no

@@ -567,7 +567,7 @@ impl Escucha {
         let empezo = std::time::Instant::now();
         let ahora_ms = self.nacio.elapsed().as_millis() as usize;
         let motivo = self.disparador.lock().ok()?.por_pantalla(consulta, ahora_ms)?;
-        let a = armar_y_anunciar(self.buscador.as_ref(), consulta, motivo, &la_hora(), empezo);
+        let a = armar_y_anunciar(self.buscador.as_ref(), consulta, motivo, &la_hora(), empezo, None);
         matches!(a.respuesta, Respuesta::Ficha(_)).then_some(a)
     }
 
@@ -577,7 +577,7 @@ impl Escucha {
         let empezo = std::time::Instant::now();
         let ahora_ms = self.nacio.elapsed().as_millis() as usize;
         let motivo = self.disparador.lock().ok()?.a_mano(ahora_ms);
-        Some(armar_y_anunciar(self.buscador.as_ref(), consulta, motivo, &la_hora(), empezo))
+        Some(armar_y_anunciar(self.buscador.as_ref(), consulta, motivo, &la_hora(), empezo, None))
     }
 
     pub fn estado(&self) -> EstadoDeEscucha {
@@ -946,7 +946,7 @@ pub fn del_turno_a_la_ficha(
     let vocabulario = buscador.vocabulario();
     let ctx = Contexto { ahora_ms: turno.hasta_ms, vocabulario: &vocabulario };
     let motivo = disparador.mirar(turno, &ctx)?;
-    let a = armar_y_anunciar(buscador, &turno.texto, motivo, &turno.hora, cerro);
+    let a = armar_y_anunciar(buscador, &turno.texto, motivo, &turno.hora, cerro, Some(turno.hasta_ms));
     if let Respuesta::Ficha(f) = &a.respuesta {
         disparador.vio_ficha(turno.hasta_ms, &f.titular, &f.linea);
     }
@@ -990,7 +990,7 @@ fn el_silencio_pide_ficha(
     let vocabulario = buscador.vocabulario();
     let ctx = Contexto { ahora_ms, vocabulario: &vocabulario };
     let motivo = disparador.lock().ok()?.por_silencio(ultimo, &ctx)?;
-    let a = armar_y_anunciar(buscador, &ultimo.texto, motivo, &ultimo.hora, empezo);
+    let a = armar_y_anunciar(buscador, &ultimo.texto, motivo, &ultimo.hora, empezo, Some(ultimo.hasta_ms));
     // La tolerancia de la sala tiene que saber qué ficha salió (C1 y C2). El candado se suelta mientras se busca,
     // para que el corte no espere a la búsqueda, y se vuelve a tomar para apuntarla.
     if let (Respuesta::Ficha(f), Ok(mut d)) = (&a.respuesta, disparador.lock()) {
@@ -1015,6 +1015,7 @@ fn armar_y_anunciar(
     motivo: Motivo,
     hora: &str,
     desde: std::time::Instant,
+    de_ms: Option<usize>,
 ) -> Aparicion {
     let hallazgos = buscador.buscar(texto, crate::ficha::TOP);
     let respuesta = crate::ficha::armar(texto, &hallazgos);
@@ -1027,7 +1028,7 @@ fn armar_y_anunciar(
     };
     println!("[ficha] {que} por «{}» en {ms} ms · {} candidatas", motivo.etiqueta(), hallazgos.len());
 
-    Aparicion { respuesta, motivo, ms, hora: hora.to_string() }
+    Aparicion { respuesta, motivo, ms, hora: hora.to_string(), de_ms }
 }
 
 /// Pisa el audio de un encargo que no se va a transcribir.
