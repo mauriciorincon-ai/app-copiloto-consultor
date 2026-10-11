@@ -298,12 +298,8 @@
       "papel": "la voz, la lectura de pantalla, el Llavero y el modelo del sistema, por FFI desde Rust"
     },
     {
-      "nombre": "Apple SpeechAnalyzer",
-      "papel": "la transcripción, dentro del Mac"
-    },
-    {
-      "nombre": "Apple Vision",
-      "papel": "la lectura de la pantalla de la reunión, solo cuando cambia"
+      "nombre": "Apple SpeechAnalyzer y Vision",
+      "papel": "la transcripción y la lectura de la pantalla de la reunión (solo cuando cambia), las dos dentro del Mac"
     },
     {
       "nombre": "tantivy (BM25)",
