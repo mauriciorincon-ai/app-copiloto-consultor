@@ -44,6 +44,8 @@ const DECLARACIONES = [
   "src/franja.ts",
   // Sprint 004, fase 3: el ensayo cruza por dos comandos que leen y siete que conmutan (ADR 019).
   "src/ensayo.ts",
+  // Sprint 006, fase 2: lo que la app hace en este equipo (ADR 022), con sus lectores puros; Honestidad los pinta.
+  "src/plataforma.ts",
 ];
 const FIXTURE = "src/contrato.generado.ts";
 

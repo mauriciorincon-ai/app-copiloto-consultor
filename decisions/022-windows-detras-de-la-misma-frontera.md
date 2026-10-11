@@ -124,7 +124,7 @@ La misma lista vive en `src-tauri/src/plataforma.rs`, en Honestidad y en el manu
 | `banda-protegida`            | sí, sin verificar en Teams, Zoom ni Meet hasta tu prueba en el PC |
 | `presencial`                 | sí: la sala por el micrófono, con whisper                         |
 | `corpus-y-ficha`             | sí                                                                |
-| `notas-cifradas`             | sí, con la llave en el Administrador de credenciales              |
+| `notas-cifradas`             | sí, se guardan cifradas con la llave en el Administrador de credenciales; exportarlas y abrir la bandeja esperan al desbloqueo (S7) |
 | `videollamada`               | todavía no (S7): el audio del sistema                             |
 | `pantalla`                   | todavía no (S7)                                                   |
 | `voz-al-oido`                | todavía no (S7)                                                   |

@@ -392,6 +392,19 @@ mod tests {
     /// 2026-09-27 con una sonda en `CloseRequested`: ⌘W y «Close All» sobre la banda no llegan
     /// (tres ventanas antes y después), y sobre la principal sí. Con bordes, ⌘W cerraría la banda
     /// sola y dejaría el relleno —un rectángulo opaco— encima de la reunión. Se quitan juntas, con
+    /// **En Windows no nace el relleno** (sprint 006, ADR 022 §3): allí la banda se excluye de la captura y un relleno
+    /// debajo sería lo capturado, una franja negra. En macOS sí nace: es lo que tapa el hueco. Y `abrir_banda` lo mira
+    /// antes de construir nada.
+    #[test]
+    fn el_relleno_solo_nace_en_macos() {
+        assert_eq!(HAY_RELLENO, cfg!(target_os = "macos"));
+        let fuente = include_str!("mod.rs");
+        let abrir = &fuente[fuente.find("pub fn abrir_banda").expect("abrir_banda")..];
+        let abrir = &abrir[..abrir.find("\n}\n").expect("su cierre")];
+        let salta = abrir.find("!HAY_RELLENO").expect("abrir_banda no mira si esta plataforma necesita relleno");
+        assert!(salta < abrir.find(".build()").expect("construye"), "el relleno se construye antes de mirarlo");
+    }
+
     /// ⌥⎋ (`cerrar_banda`).
     #[test]
     fn la_banda_y_su_relleno_no_tienen_bordes() {

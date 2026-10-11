@@ -38,6 +38,7 @@ pub mod modo;
 pub mod notas;
 pub mod pantalla;
 pub mod permisos;
+pub mod plataforma;
 pub mod prefs;
 pub mod propuestas;
 pub mod puerta;
@@ -1052,7 +1053,12 @@ fn que_sabe_transcribir() -> QueSabeTranscribir {
 /// reconocimiento. Solo se llama desde el botón de la pantalla de Idioma; la app jamás descarga
 /// nada por su cuenta.
 #[tauri::command]
-async fn instalar_idioma(codigo: String) -> stt::Disponibilidad {
+async fn instalar_idioma(app: tauri::AppHandle, codigo: String) -> stt::Disponibilidad {
+    // En Windows «Instalar» baja 1,6 GB por la única puerta Rust (ADR 022 §4): jamás con una reunión abierta.
+    if cfg!(windows) && hay_una_reunion(&app) {
+        println!("[idioma] el modelo no se baja con una reunión abierta");
+        return stt::motor_de_la_casa().disponibilidad(&codigo);
+    }
     tauri::async_runtime::spawn_blocking(move || {
         println!("[idioma] el usuario pidió instalar el modelo de {codigo}");
         let d = stt::motor_de_la_casa().instalar(&codigo);
@@ -1061,6 +1067,48 @@ async fn instalar_idioma(codigo: String) -> stt::Disponibilidad {
     })
     .await
     .unwrap_or(stt::Disponibilidad::SinMotor { motivo: stt::PorQueNoHayMotor::NoContesta })
+}
+
+/// ¿Hay una reunión escuchando? Si el candado no contesta, se responde que sí: lo prudente es no bajar nada.
+fn hay_una_reunion<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> bool {
+    app.state::<LaEscucha>().0.lock().map(|g| g.is_some()).unwrap_or(true)
+}
+
+/// **Qué hace la app en este equipo** (ADR 022): en Windows, la lista «Hoy en Windows» y lo que la transcripción
+/// sabe de este PC. Lo pinta Honestidad.
+#[tauri::command]
+fn plataforma_de_este_equipo() -> plataforma::Plataforma {
+    plataforma::de_este_equipo()
+}
+
+/// **Vuelve a medir** lo que tarda whisper en este PC con los 10 s de calibración (ADR 022 §5). Ocupa el procesador
+/// unos segundos: solo desde Honestidad y nunca con una reunión abierta.
+#[tauri::command]
+async fn calibrar_transcripcion(app: tauri::AppHandle) -> plataforma::Plataforma {
+    if !hay_una_reunion(&app) {
+        let medida = tauri::async_runtime::spawn_blocking(stt::whisper::calibrar).await;
+        if let Ok(Err(f)) = medida {
+            println!("[stt] la calibración no se pudo medir ({f:?})");
+        }
+    }
+    plataforma::de_este_equipo()
+}
+
+/// **El escalón** (ADR 022 §5): baja el modelo pequeño (0,5 GB, con su huella) cuando el grande pasó de 4 s en este
+/// PC, y lo mide. Solo si lo pides en Honestidad, y nunca con una reunión abierta.
+#[tauri::command]
+async fn bajar_modelo_pequeno(app: tauri::AppHandle) -> plataforma::Plataforma {
+    if !hay_una_reunion(&app) {
+        let hecho = tauri::async_runtime::spawn_blocking(|| {
+            modelo_whisper::bajar(&modelo_whisper::PEQUENO)?;
+            stt::whisper::calibrar().map_err(|f| format!("la calibración no se pudo medir ({f:?})"))
+        })
+        .await;
+        if let Ok(Err(e)) = hecho {
+            println!("[stt] el modelo pequeño: {e}");
+        }
+    }
+    plataforma::de_este_equipo()
 }
 
 /// El diccionario tal y como lo usaría una sesión que empezara ahora: el archivo del usuario más los
@@ -1713,6 +1761,9 @@ pub fn run() {
             que_sabe_transcribir,
             estado_del_diccionario,
             instalar_idioma,
+            plataforma_de_este_equipo,
+            calibrar_transcripcion,
+            bajar_modelo_pequeno,
             salida_de_audio,
             elegir_carpeta,
             indexar_corpus,
@@ -3914,6 +3965,26 @@ fn acoplar_cuando_haya_a_quien<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
             ESPERA * LATIDO.as_secs() as u32 + ESPERA * LATIDO.subsec_millis() / 1000
         );
     });
+}
+
+#[cfg(test)]
+mod pruebas_de_whisper_en_windows {
+    /// **Bajar o medir whisper nunca con una reunión abierta** (sprint 006, ADR 022 §4): bajar ocupa la red y medir el
+    /// procesador. Los tres comandos preguntan `hay_una_reunion` antes de hacer nada.
+    #[test]
+    fn bajar_o_medir_whisper_nunca_en_reunion() {
+        let fuente = include_str!("lib.rs");
+        for comando in ["async fn instalar_idioma(", "async fn calibrar_transcripcion(", "async fn bajar_modelo_pequeno("] {
+            let cuerpo = &fuente[fuente.find(comando).unwrap_or_else(|| panic!("{comando}"))..];
+            let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
+            let candado = cuerpo.find("hay_una_reunion(&app)").unwrap_or_else(|| panic!("{comando} sin candado de reunión"));
+            for trabajo in ["spawn_blocking", ".instalar(", "modelo_whisper::bajar", "stt::whisper::calibrar"] {
+                if let Some(i) = cuerpo.find(trabajo) {
+                    assert!(candado < i, "{comando}: «{trabajo}» antes de mirar si hay reunión");
+                }
+            }
+        }
+    }
 }
 
 #[cfg(test)]

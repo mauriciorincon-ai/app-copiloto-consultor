@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-plataforma-de-este-equipo"
+description = "Enables the plataforma_de_este_equipo command without any pre-configured scope."
+commands.allow = ["plataforma_de_este_equipo"]
+
+[[permission]]
+identifier = "deny-plataforma-de-este-equipo"
+description = "Denies the plataforma_de_este_equipo command without any pre-configured scope."
+commands.deny = ["plataforma_de_este_equipo"]

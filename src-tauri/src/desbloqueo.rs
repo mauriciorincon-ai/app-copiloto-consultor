@@ -76,8 +76,14 @@ impl Desbloqueo {
                 Ok(())
             }
             Respuesta::NoQuiso => Err("no se desbloqueó: tus notas siguen cerradas".into()),
+            #[cfg(not(windows))]
             Respuesta::NoSePuede => Err(
                 "este Mac no tiene con qué pedir el desbloqueo: tu cuenta necesita una contraseña para abrir tus notas".into(),
+            ),
+            // ADR 022: Windows Hello llega en el sprint 007. Hasta entonces tus notas se guardan cifradas y no se abren.
+            #[cfg(windows)]
+            Respuesta::NoSePuede => Err(
+                "en Windows el desbloqueo (Windows Hello) llega en el sprint 007: tus notas se guardan cifradas y abrirlas espera a ese desbloqueo".into(),
             ),
         }
     }
