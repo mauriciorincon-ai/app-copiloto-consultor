@@ -64,6 +64,11 @@ const CENTINELAS: [string, number][] = [
   ["src-tauri/src/llavero.rs", 5],
   ["src-tauri/src/desbloqueo.rs", 1],
   ["src-tauri/src/vencimiento/mod.rs", 1],
+  // Sprint 006 (ADR 022): las entradas de Windows. El Administrador de credenciales cruza desde las cinco de
+  // `llavero.rs`, que ya llevan el suyo; el modelo de whisper, al cargarse y al bajarse.
+  ["src-tauri/src/capture/windows.rs", 1],
+  ["src-tauri/src/stt/whisper.rs", 1],
+  ["src-tauri/src/modelo_whisper.rs", 1],
 ];
 
 function rustDe(dir: string): string[] {

@@ -17,6 +17,12 @@
 //! dentro de `sintesis/api.rs` con un solo servicio; salió de ahí cuando lo necesitaron las notas y
 //! la puerta, y el servicio de las claves del API no cambió de nombre, así que las claves que el
 //! usuario ya guardó se siguen encontrando.
+//!
+//! **En Windows** (sprint 006, ADR 022) los mismos tres servicios viven en el Administrador de
+//! credenciales de tu usuario: `llavero/windows.rs`, detrás de estas mismas cinco funciones.
+
+#[cfg(windows)]
+mod windows;
 
 /// De quién es el secreto.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -69,7 +75,11 @@ pub fn guardar(servicio: Servicio, cuenta: &str, secreto: &str) -> Result<(), St
         k.fill(0);
         if r == 0 { Ok(()) } else { Err(format!("el Llavero no lo guardó ({r})")) }
     }
-    #[cfg(not(all(target_os = "macos", puente_de_swift)))]
+    #[cfg(windows)]
+    {
+        windows::guardar(servicio, cuenta, secreto)
+    }
+    #[cfg(not(any(all(target_os = "macos", puente_de_swift), windows)))]
     {
         let _ = (servicio, cuenta, secreto);
         Err("el Llavero solo existe en macOS con el puente".into())
@@ -90,7 +100,11 @@ pub fn leer(servicio: Servicio, cuenta: &str) -> Option<String> {
         salida.fill(0);
         secreto
     }
-    #[cfg(not(all(target_os = "macos", puente_de_swift)))]
+    #[cfg(windows)]
+    {
+        windows::leer(servicio, cuenta).ok().flatten()
+    }
+    #[cfg(not(any(all(target_os = "macos", puente_de_swift), windows)))]
     {
         let _ = (servicio, cuenta);
         None
@@ -108,7 +122,11 @@ pub fn hay(servicio: Servicio, cuenta: &str) -> bool {
         // SEGURIDAD: dos textos terminados en cero que viven hasta que la llamada vuelve.
         unsafe { puente::ag_llavero_hay(s.as_ptr(), c.as_ptr()) == 1 }
     }
-    #[cfg(not(all(target_os = "macos", puente_de_swift)))]
+    #[cfg(windows)]
+    {
+        windows::existe(servicio, cuenta).unwrap_or(false)
+    }
+    #[cfg(not(any(all(target_os = "macos", puente_de_swift), windows)))]
     {
         let _ = (servicio, cuenta);
         false
@@ -132,7 +150,11 @@ pub fn existe(servicio: Servicio, cuenta: &str) -> Result<bool, String> {
             r => Err(format!("el Llavero no contestó ({r})")),
         }
     }
-    #[cfg(not(all(target_os = "macos", puente_de_swift)))]
+    #[cfg(windows)]
+    {
+        windows::existe(servicio, cuenta)
+    }
+    #[cfg(not(any(all(target_os = "macos", puente_de_swift), windows)))]
     {
         let _ = (servicio, cuenta);
         Err("el Llavero solo existe en macOS con el puente".into())
@@ -152,7 +174,11 @@ pub fn borrar(servicio: Servicio, cuenta: &str) -> Result<(), String> {
             r => Err(format!("el Llavero no lo borró ({r})")),
         }
     }
-    #[cfg(not(all(target_os = "macos", puente_de_swift)))]
+    #[cfg(windows)]
+    {
+        windows::borrar(servicio, cuenta)
+    }
+    #[cfg(not(any(all(target_os = "macos", puente_de_swift), windows)))]
     {
         let _ = (servicio, cuenta);
         Ok(())

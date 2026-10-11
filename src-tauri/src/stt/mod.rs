@@ -19,7 +19,9 @@
 //! que corre en la CI, donde no hay ni micrófono ni modelo.
 
 pub mod apple;
+pub mod calibracion;
 pub mod ventana;
+pub mod whisper;
 
 pub use ventana::Ventana;
 
@@ -193,9 +195,17 @@ impl Motor for Mudo {
     }
 }
 
-/// El motor de este Mac. En macOS con el puente compilado, Apple; si no, el que dice por qué no.
+/// El motor de este equipo. En macOS con el puente compilado, Apple; si no, el que dice por qué no. En Windows,
+/// whisper con el modelo que haya bajado (ADR 022).
 pub fn motor_de_la_casa() -> Box<dyn Motor> {
-    apple::motor()
+    #[cfg(windows)]
+    {
+        whisper::motor()
+    }
+    #[cfg(not(windows))]
+    {
+        apple::motor()
+    }
 }
 
 #[cfg(test)]

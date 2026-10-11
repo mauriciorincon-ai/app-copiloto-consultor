@@ -14,6 +14,7 @@ use super::{Disponibilidad, Fallo};
 
 /// Cuánto texto cabe en una transcripción de un turno. Treinta segundos de habla rápida rondan las
 /// 900 letras; ocho kilobytes son holgura de sobra sin ser una reserva absurda por turno.
+#[cfg(all(target_os = "macos", puente_de_swift))]
 const CABIDA: usize = 8 * 1024;
 
 #[cfg(all(target_os = "macos", puente_de_swift))]

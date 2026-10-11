@@ -24,7 +24,8 @@ pub fn inscrito() -> Option<bool> {
     None
 }
 
-/// `MDM enrollment: Yes` o `Yes (User Approved)` ⇒ inscrito; `No` ⇒ no.
+/// `MDM enrollment: Yes` o `Yes (User Approved)` ⇒ inscrito; `No` ⇒ no. Fuera de macOS solo lo usan sus pruebas.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 fn dice_inscrito(texto: &str) -> bool {
     texto.lines().any(|l| {
         let l = l.trim();

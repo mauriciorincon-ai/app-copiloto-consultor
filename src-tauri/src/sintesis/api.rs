@@ -36,6 +36,8 @@ impl Externo {
         }
     }
 
+    // La salida al proveedor va por el puente de Swift; en Windows la sugerencia llega en el sprint 007 (ADR 022).
+    #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
     fn modelo(self) -> &'static str {
         match self {
             Externo::Claude => "claude-haiku-4-5",
@@ -43,6 +45,7 @@ impl Externo {
         }
     }
 
+    #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
     fn url(self) -> &'static str {
         match self {
             Externo::Claude => "https://api.anthropic.com/v1/messages",
@@ -72,6 +75,7 @@ impl Externo {
     }
 
     /// Cabeceras y cuerpo de la petición.
+    #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
     fn peticion(self, clave: &str, instrucciones: &str, texto: &str) -> (String, String) {
         let cuerpo = match self {
             Externo::Claude => serde_json::json!({
@@ -101,6 +105,7 @@ impl Externo {
     }
 
     /// El texto y los tokens de la respuesta.
+    #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
     fn leer(self, json: &serde_json::Value) -> Option<(String, u64, u64)> {
         match self {
             Externo::Claude => Some((
@@ -153,6 +158,7 @@ pub fn guardar_clave(externo: Externo, clave: &str) -> Result<(), String> {
 }
 
 /// Lee la clave, si hay. Vive lo que dura una petición.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 fn leer_clave(externo: Externo) -> Option<String> {
     llavero::leer(Servicio::Api, externo.cuenta())
 }
