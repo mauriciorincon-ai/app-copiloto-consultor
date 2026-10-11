@@ -126,7 +126,9 @@ mod pruebas {
         let d = Desbloqueo::default();
         assert!(d.asegurar(|| Respuesta::NoQuiso).is_err());
         assert!(!d.desbloqueado());
-        assert!(d.asegurar(|| Respuesta::NoSePuede).unwrap_err().contains("contraseña"));
+        // El «no se puede» dice qué falta: la contraseña de la cuenta en macOS; Windows Hello, que llega en el S7, en Windows.
+        let no = d.asegurar(|| Respuesta::NoSePuede).unwrap_err();
+        assert!(no.contains(if cfg!(windows) { "Windows Hello" } else { "contraseña" }), "{no}");
         assert!(d.asegurar(|| Respuesta::Hecho).is_ok());
     }
 
