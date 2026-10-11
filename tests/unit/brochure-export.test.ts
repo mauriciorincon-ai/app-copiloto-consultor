@@ -33,6 +33,7 @@ const crudo = readFileSync(EXPORT, "utf8");
 const exportado = JSON.parse(crudo) as {
   _schema: Record<string, unknown>;
   app: { version_repo: string; sprints_cerrados: number };
+  promesa: { tagline: string; intro: string; para_quien: string };
   funcionalidades: {
     total: number;
     fuente_del_conteo: string;
@@ -57,8 +58,31 @@ function seccionesDelManual(): string[] {
   );
 }
 
+/**
+ * **Lo que la ficha técnica de CV Viva deriva de este export, y sus topes.** CV Viva (hoja-de-vida) arma con este
+ * archivo la ficha técnica de la app, y su contrato (`app-hoja-de-vida/docs/contrato-ficha-tecnica/
+ * plantilla.ficha-tecnica.json`, v1.3.1; `fichaTecnicaSchema` en el código de la vitrina) recorta lo que toma: el
+ * tagline a 80 caracteres, la intro, el «para quién» y el detalle de cada cifra a 400. Con uno más largo la ficha no se
+ * arma y el build de CV Viva falla, y CV Viva no edita lo que exporta otra app: el tope se vigila aquí, en origen. El
+ * `diferencial` no viaja a la ficha y no tiene tope.
+ *
+ * ¿Puede fallar? Sí, y nació en rojo dos veces (PR «fix(brochure)…», a pedido de CV Viva): primero nombró los tres
+ * detalles que pasaban —`pruebas_automaticas (475)`, `bytes_que_salen_del_equipo (563)`, `costo_operacion_mensual
+ * (515)`—, y al cubrir la promesa, `promesa.intro (528 de 400)`.
+ */
+const TOPES_DE_LA_FICHA: [string, string, number][] = [
+  ["promesa.tagline", exportado.promesa.tagline, 80],
+  ["promesa.intro", exportado.promesa.intro, 400],
+  ["promesa.para_quien", exportado.promesa.para_quien, 400],
+  ...exportado.metricas.map(
+    (m): [string, string, number] => [m.clave, m.detalle, 400],
+  ),
+];
+
 describe("brochure-export.json: el contrato de la vitrina", () => {
-  it("lo acepta el esquema con que lo lee la vitrina, y su versión es la que sabe leer", () => {
+  // Los topes de la ficha van en esta prueba, no en una nueva, a propósito: `pruebas_automaticas` cuenta pruebas, y
+  // una de más la dejaría desfasada.
+  it("lo acepta el esquema con que lo lee la vitrina, en la versión que sabe leer, y cabe en la ficha técnica de CV Viva", () => {
     const r = brochureExportSchema.safeParse(exportado);
     expect(
       r.success,
@@ -69,6 +93,13 @@ describe("brochure-export.json: el contrato de la vitrina", () => {
         (exportado as { schema_version: string }).schema_version,
       ),
     ).toBe(true);
+    const fuera = TOPES_DE_LA_FICHA.filter(
+      ([, texto, tope]) => texto.length < 1 || texto.length > tope,
+    ).map(([campo, texto, tope]) => `${campo} (${texto.length} de ${tope})`);
+    expect(
+      fuera,
+      `no caben en la ficha técnica de CV Viva: ${fuera.join(", ")}`,
+    ).toEqual([]);
   });
 
   it("el total es el conteo del manual: una funcionalidad por sección de «Features», ninguna de más", () => {
@@ -89,19 +120,7 @@ describe("brochure-export.json: el contrato de la vitrina", () => {
     ).toBe(features.length);
   });
 
-  /**
-   * **Y cada `detalle` cabe en la ficha técnica de CV Viva: de 1 a 400 caracteres.** La vitrina arma con este export
-   * la ficha técnica de la app, y su contrato (`app-hoja-de-vida/docs/contrato-ficha-tecnica/plantilla.ficha-tecnica.json`,
-   * v1.3.1: `"detalle": "<texto · 1–400 caracteres>"`) lo exige; con uno más largo la ficha no se arma y el build de CV
-   * Viva falla. CV Viva no edita lo que exporta otra app, así que el tope se vigila aquí, en origen.
-   *
-   * ¿Puede fallar? Sí: al nacer, en rojo, nombró las tres que pasaban (`pruebas_automaticas` 475,
-   * `bytes_que_salen_del_equipo` 563 y `costo_operacion_mensual` 515; PR «fix(brochure)…»).
-   *
-   * Va dentro de esta prueba y no en una nueva a propósito: `pruebas_automaticas` cuenta pruebas, y una de más la
-   * dejaría desfasada.
-   */
-  it("las cuatro métricas obligatorias están, los bytes que salen son una medida, y cada detalle cabe en 400", () => {
+  it("las cuatro métricas obligatorias están, y los bytes que salen son una medida", () => {
     for (const clave of [
       "funcionalidades",
       "pruebas_automaticas",
@@ -114,13 +133,6 @@ describe("brochure-export.json: el contrato de la vitrina", () => {
     expect(metrica("funcionalidades")?.valor).toBe(
       exportado.funcionalidades.total,
     );
-    const fuera = exportado.metricas
-      .filter((m) => m.detalle.length < 1 || m.detalle.length > 400)
-      .map((m) => `${m.clave} (${m.detalle.length})`);
-    expect(
-      fuera,
-      `detalles fuera de 1–400 caracteres (contrato de ficha técnica de CV Viva): ${fuera.join(", ")}`,
-    ).toEqual([]);
   });
 
   it("lo que se recuenta desde el repo cuadra: versión, sprints cerrados y ADR", () => {
