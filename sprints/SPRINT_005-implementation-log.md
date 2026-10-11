@@ -637,6 +637,13 @@ presenciales nuevos en axe y dos en reduced-motion. `pnpm exec vitest run`: **49
 con la banda si la eliges»; **P2** la banda en presencial con el chip de la reunión nombró «la cabecera dice la sala,
 sin el chip de protección»; **P3** el transcript sin la etiqueta de la sala nombró «cada turno dice «sala»».
 
+**En la CI** (`0cc590f`, corrida 38110962576, leída con `gh pr checks 15` y su log): **`quality`, `e2e` y
+`build-escritorio`, los tres `success`**. En el log corrieron, sin hardware y con él, la espera de la voz
+(`en_la_sala_la_voz_espera_al_silencio_y_no_mas_que_el_tope`, `la_voz_espera_a_la_sala_solo_en_presencial_y_una_vez`),
+la librería con hardware (608 de 608), el kit presencial con su salida (`mide_la_tolerancia`,
+`corta_los_turnos_de_la_sala`, `transcribe_la_sala`; este último, sin modelos de reconocimiento en el runner) y la
+canaria del cliente en el log, que solo pasa si el paso de la sala corrió.
+
 ### El manual (2026-10-10)
 
 `docs/MANUAL-DE-USO.md` gana **«Presencial: la app escucha la sala»**: qué hace, cómo se usa, el PC con Windows al
@@ -646,6 +653,21 @@ preguntas que van tras las tuyas —para eso `⌃⌥A`—, no guarda tus turnos,
 para la sala, la NDA, la sugerencia sobre la frase que disparó, Bluetooth y USB). Y la línea de «Qué es esta app», la
 frase hermana del modo solo audio (en presencial la voz espera, no se salta la ficha) y la fila 005 del historial.
 
+### STOP de fin de fase 2 y la corrida en vivo: corte declarado (2026-10-10)
+
+Al STOP se enseñó la fila 1 de la regla 22 (24 del kit), con la CI de `0cc590f` ya en verde: `pnpm tauri dev` en el
+puerto 1420, Sesión → «Presencial» → «Empezar en presencial», unos 5 min con el usuario hablando y la sala del kit
+sonando (`afplay docs/kit-de-prueba/audio/sala-es.wav`), y el registro leído en la terminal. Aviso posible: «Speech
+Recognition» por primera vez; el micrófono ya concedido. Cómo se deshace: «Terminar sesión» o ⌥⎋, y descartar en Notas
+para no tocar el Llavero.
+
+**Respuesta del usuario:** «en este momento me queda complejo sigamos porque no puedo hacer esa prueba ahora». No se
+corrió nada sobre el Mac. **Es un corte declarado** de la regla 15 (tercer filo: un modo nuevo corre en vivo antes de
+cerrar el sprint que lo trae): el modo presencial no ha corrido con un micrófono real ni con el reconocimiento de voz,
+y el nivel C del kit v4 (`el_kit_presencial_transcribe_la_sala`) no ha medido nunca, porque la CI no tiene modelos de
+voz. Lo que sí está medido: la regla (nivel A), los cortes de turno (nivel B), la interfaz y el efímero. Si el usuario
+la corre antes del merge, se registra aquí y el summary se corrige; si no, viaja al gate del MVP del H2.
+
 ### Desviaciones de la fase 2
 
 1. **La fila de la sala en Idioma no se construye.** Con la franja aprobada «Transcribe tu Mac, no un servicio» no
@@ -654,3 +676,25 @@ frase hermana del modo solo audio (en presencial la voz espera, no se salta la f
    decisión va al gate del MVP del H2.
 2. **La maniobra §10 no entra** (directiva del 2026-10-06).
 3. **La espera de la voz, 4 s**, no la mide el kit: es una decisión de producto con su porqué en `habla::ESPERA_DE_LA_SALA`.
+4. **La corrida en vivo no se hizo** (decisión del usuario, 2026-10-10): corte declarado, arriba.
+
+## Cierre mínimo (directiva del 2026-10-06), 2026-10-11
+
+**Auditoría: una pasada, un auditor independiente, solo lectura** (un subagente que no construyó el sprint, con el
+diff `main...HEAD` delante y la bitácora solo como pista): `sprints/SPRINT_005-auditoria.md`. **0 críticos · 1 alto ·
+8 medios · 14 bajos**, cada uno con su sitio y su estado (lo vigila `auditoria-con-sitio`, 16 de 16 en verde con el
+artefacto nuevo).
+
+- **A1, pagado.** «Terminar sesión» no apagaba la voz que «Empezar en presencial» había encendido para esa sesión:
+  `⎋` quedaba cogida en todo el Mac, la reunión siguiente empezaba hablando y la ficha que esperaba a la sala se decía
+  al terminar. `dejar_de_escuchar` la apaga ahora en presencial, **antes de cortar la escucha** (no después, como
+  proponía el auditor: con la sala ya cortada, el hilo que espera vería silencio y podría decirla en ese instante) y
+  antes de borrar el modo. Test de fuente `terminar_apaga_la_voz_que_encendio_la_sala`. **Rojo** con
+  `scripts/demo-rojo.sh` (quitar la llamada): falló nombrando «falta «fijar_la_voz_en(&app, false)»», verde al
+  restaurar (1 prueba). Manual (paso 4) y ADR 020 §7, al día.
+- **Medios y bajos: deuda del S6**, con su sitio, sin pagar ahora: lo manda la directiva. M7 (los auriculares con
+  micrófono como entrada de la sala) se confirma en la corrida en vivo.
+
+**Pruebas tras el pago (corridas en local):** `AG_SIN_HARDWARE=1 cargo test --locked`: librería **607** (2 ignoradas),
+contra el Mac 18 (15 ignoradas), ghost 5, puerta 14; `cargo clippy --locked --all-targets -- -D warnings` limpio;
+`pnpm exec vitest run`: **490 de 490** en 59 archivos.

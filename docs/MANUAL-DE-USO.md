@@ -153,7 +153,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   3. Elige **cómo ves la ficha**: **al oído**, que viene marcado, o **la banda**. Con los altavoces del Mac,
      o con un monitor o un televisor por HDMI, DisplayPort o AirPlay, viene marcada la banda: la voz no
      hablaría con el cliente oyéndola.
-  4. **«Empezar en presencial».** Para acabar, «Terminar sesión»; `⌥⎋` corta todo, como siempre.
+  4. **«Empezar en presencial».** Para acabar, «Terminar sesión»: la voz se apaga con la sesión y `⎋`
+     vuelve a tus otras apps. `⌥⎋` corta todo, como siempre.
   5. Con la sesión en marcha, `⌃⌥V` cambia entre la voz y la banda; el selector de *Sesión* también.
 - **Con la videollamada en un PC con Windows:** pon el PC **en altavoz** y el Mac al lado. En el PC no se
   instala nada y la app no toca esa máquina. **Si llevas auriculares en el PC, la app no oye al

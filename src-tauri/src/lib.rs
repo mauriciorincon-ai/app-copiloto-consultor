@@ -944,6 +944,13 @@ fn empezar(
 
 #[tauri::command]
 fn dejar_de_escuchar(app: tauri::AppHandle, estado: tauri::State<'_, LaEscucha>) {
+    // La voz que «Empezar en presencial» encendió era para esta sesión (ADR 020 §7): se apaga con ella —y `⎋`
+    // vuelve al Mac—, antes de cortar la escucha y de borrar el modo. Antes del corte, porque con la sala cortada
+    // la ficha que esperaba a que callara vería silencio y se diría; antes de borrar el modo, porque después ya no
+    // se sabe que era la sala (auditoría del S5, A1).
+    if modo_de_la_sesion(&app) == Some(modo::Modo::Presencial) {
+        fijar_la_voz_en(&app, false);
+    }
     if let Ok(mut g) = estado.0.lock() {
         if let Some(e) = g.take() {
             e.cortar();
@@ -4479,6 +4486,26 @@ mod pruebas_del_modo_presencial {
         assert_eq!(fuente.matches(concat!("marcar_el_modo(&app, ", "Some(")).count(), 1, "otro sitio marca el modo");
         assert!(cuerpo_de("\nfn dejar_de_escuchar(").contains(concat!("marcar_el_modo(&app, ", "None)")), "«Terminar» deja el modo puesto");
         assert!(cuerpo_de("\nfn ejecutar_el_corte<").contains(concat!("marcar_el_modo(app, ", "None)")), "⌥⎋ deja el modo puesto");
+    }
+
+    /// **«Terminar» apaga la voz que encendió la sala** (ADR 020 §7; auditoría del S5, A1): «al oído» era para
+    /// esta sesión. Antes de cortar la escucha —con la sala cortada, la ficha que esperaba vería silencio y se
+    /// diría— y antes de borrar el modo, y solo en presencial: en la reunión la voz la enciendes tú con `⌃⌥V`.
+    ///
+    /// ¿Puede fallar? Sí: sin la llamada, «Terminar» dejaba `⎋` cogida en todo el Mac y la reunión siguiente
+    /// empezaba hablando (bitácora del sprint 005, cierre).
+    #[test]
+    fn terminar_apaga_la_voz_que_encendio_la_sala() {
+        let c = cuerpo_de("\nfn dejar_de_escuchar(");
+        let apaga = en(c, concat!("fijar_la_voz_en(&app, ", "false)"));
+        let corta = en(c, "e.cortar()");
+        let borra = en(c, concat!("marcar_el_modo(&app, ", "None)"));
+        assert!(apaga < corta, "la voz se apaga después de cortar la sala: la ficha que esperaba se diría");
+        assert!(apaga < borra, "la voz se apaga después de borrar el modo: ya no se sabe que era la sala");
+        assert!(
+            c[..apaga].contains(concat!("== Some(modo::Modo::", "Presencial)")),
+            "«Terminar» apaga la voz también en una reunión"
+        );
     }
 
     /// **`Escucha::sobre_anillos` es la costura de las pruebas, y la app no la llama**: abre la escucha sin

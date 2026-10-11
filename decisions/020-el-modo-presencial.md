@@ -121,7 +121,9 @@ porque la ficha sale de tus documentos.
 - **«Al oído» viene marcado al empezar** (el modo solo audio, C15), **salvo** que el sonido salga por altavoces que la
   app reconoce (los del Mac, HDMI, DisplayPort, AirPlay). Entonces va la banda, y la app dice por qué.
 - **Pulsar «Empezar» con «al oído» elegido es tu gesto.** La regla «el modo solo audio no se enciende solo nunca»
-  (`habla/mod.rs:177`, `prefs.rs:13`) se mantiene: lo enciende tu elección para esta sesión, no la app.
+  (`habla/mod.rs:177`, `prefs.rs:13`) se mantiene: lo enciende tu elección para esta sesión, no la app. **Y se apaga
+  con ella** (auditoría del S5, A1, 2026-10-11): «Terminar sesión» apaga la voz antes de cortar la sala, y `⎋` vuelve
+  al Mac; si no, la reunión siguiente empezaría hablando y la ficha que esperaba a la sala se diría al terminar.
 - **En la sala la voz espera a que la sala calle**, con un tope de unos segundos. Hoy `cabe_decirla` descarta la ficha
   si alguien habla. Si la sala no calla, la ficha se queda en la banda y `⌃⌥V` la enseña (apaga el modo y la banda
   recupera su alto). El candado de los altavoces (ADR 014 §2) no cambia.
