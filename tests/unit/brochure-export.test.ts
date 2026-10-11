@@ -89,7 +89,19 @@ describe("brochure-export.json: el contrato de la vitrina", () => {
     ).toBe(features.length);
   });
 
-  it("las cuatro métricas obligatorias están, y los bytes que salen son una medida", () => {
+  /**
+   * **Y cada `detalle` cabe en la ficha técnica de CV Viva: de 1 a 400 caracteres.** La vitrina arma con este export
+   * la ficha técnica de la app, y su contrato (`app-hoja-de-vida/docs/contrato-ficha-tecnica/plantilla.ficha-tecnica.json`,
+   * v1.3.1: `"detalle": "<texto · 1–400 caracteres>"`) lo exige; con uno más largo la ficha no se arma y el build de CV
+   * Viva falla. CV Viva no edita lo que exporta otra app, así que el tope se vigila aquí, en origen.
+   *
+   * ¿Puede fallar? Sí: al nacer, en rojo, nombró las tres que pasaban (`pruebas_automaticas` 475,
+   * `bytes_que_salen_del_equipo` 563 y `costo_operacion_mensual` 515; PR «fix(brochure)…»).
+   *
+   * Va dentro de esta prueba y no en una nueva a propósito: `pruebas_automaticas` cuenta pruebas, y una de más la
+   * dejaría desfasada.
+   */
+  it("las cuatro métricas obligatorias están, los bytes que salen son una medida, y cada detalle cabe en 400", () => {
     for (const clave of [
       "funcionalidades",
       "pruebas_automaticas",
@@ -102,6 +114,13 @@ describe("brochure-export.json: el contrato de la vitrina", () => {
     expect(metrica("funcionalidades")?.valor).toBe(
       exportado.funcionalidades.total,
     );
+    const fuera = exportado.metricas
+      .filter((m) => m.detalle.length < 1 || m.detalle.length > 400)
+      .map((m) => `${m.clave} (${m.detalle.length})`);
+    expect(
+      fuera,
+      `detalles fuera de 1–400 caracteres (contrato de ficha técnica de CV Viva): ${fuera.join(", ")}`,
+    ).toEqual([]);
   });
 
   it("lo que se recuenta desde el repo cuadra: versión, sprints cerrados y ADR", () => {
