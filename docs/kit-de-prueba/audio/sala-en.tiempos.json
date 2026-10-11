@@ -1,0 +1,197 @@
+{
+  "_leeme": "Generado por scripts/kit-v4-sala.sh desde docs/kit-de-prueba/presencial.json: dónde está cada turno dentro del wav. Es la verdad del kit (quién habló y cuándo); la app no la ve.",
+  "sala": "sala-en",
+  "archivo": "sala-en.wav",
+  "macos": "26.6.2",
+  "voces": {
+    "tuyo": "Reed (English (US))",
+    "cliente": "Samantha"
+  },
+  "ganancia": {
+    "tuyo": 1.0,
+    "cliente": 0.45
+  },
+  "duracionMs": 123821,
+  "turnos": [
+    {
+      "turno": 0,
+      "quien": "cliente",
+      "desdeMs": 600,
+      "hastaMs": 2666
+    },
+    {
+      "turno": 1,
+      "quien": "tuyo",
+      "desdeMs": 3366,
+      "hastaMs": 5561
+    },
+    {
+      "turno": 2,
+      "quien": "tuyo",
+      "desdeMs": 6361,
+      "hastaMs": 8704
+    },
+    {
+      "turno": 3,
+      "quien": "cliente",
+      "desdeMs": 9204,
+      "hastaMs": 9605
+    },
+    {
+      "turno": 4,
+      "quien": "cliente",
+      "desdeMs": 10505,
+      "hastaMs": 12175
+    },
+    {
+      "turno": 5,
+      "quien": "tuyo",
+      "desdeMs": 13375,
+      "hastaMs": 20191
+    },
+    {
+      "turno": 6,
+      "quien": "cliente",
+      "desdeMs": 20891,
+      "hastaMs": 23085
+    },
+    {
+      "turno": 7,
+      "quien": "tuyo",
+      "desdeMs": 28085,
+      "hastaMs": 32991
+    },
+    {
+      "turno": 8,
+      "quien": "tuyo",
+      "desdeMs": 33891,
+      "hastaMs": 36628
+    },
+    {
+      "turno": 9,
+      "quien": "cliente",
+      "desdeMs": 37428,
+      "hastaMs": 39397
+    },
+    {
+      "turno": 10,
+      "quien": "cliente",
+      "desdeMs": 40097,
+      "hastaMs": 42540
+    },
+    {
+      "turno": 11,
+      "quien": "tuyo",
+      "desdeMs": 43440,
+      "hastaMs": 47156
+    },
+    {
+      "turno": 12,
+      "quien": "cliente",
+      "desdeMs": 47556,
+      "hastaMs": 51632
+    },
+    {
+      "turno": 13,
+      "quien": "tuyo",
+      "desdeMs": 52432,
+      "hastaMs": 56036
+    },
+    {
+      "turno": 14,
+      "quien": "tuyo",
+      "desdeMs": 57036,
+      "hastaMs": 61245
+    },
+    {
+      "turno": 15,
+      "quien": "cliente",
+      "desdeMs": 61945,
+      "hastaMs": 63884
+    },
+    {
+      "turno": 16,
+      "quien": "tuyo",
+      "desdeMs": 64784,
+      "hastaMs": 71078
+    },
+    {
+      "turno": 17,
+      "quien": "cliente",
+      "desdeMs": 71278,
+      "hastaMs": 73658
+    },
+    {
+      "turno": 18,
+      "quien": "tuyo",
+      "desdeMs": 73858,
+      "hastaMs": 76785
+    },
+    {
+      "turno": 19,
+      "quien": "cliente",
+      "desdeMs": 76985,
+      "hastaMs": 80628
+    },
+    {
+      "turno": 20,
+      "quien": "tuyo",
+      "desdeMs": 80828,
+      "hastaMs": 84391
+    },
+    {
+      "turno": 21,
+      "quien": "cliente",
+      "desdeMs": 84591,
+      "hastaMs": 87051
+    },
+    {
+      "turno": 22,
+      "quien": "tuyo",
+      "desdeMs": 87251,
+      "hastaMs": 91753
+    },
+    {
+      "turno": 23,
+      "quien": "cliente",
+      "desdeMs": 91953,
+      "hastaMs": 94087
+    },
+    {
+      "turno": 24,
+      "quien": "cliente",
+      "desdeMs": 95587,
+      "hastaMs": 98881
+    },
+    {
+      "turno": 25,
+      "quien": "tuyo",
+      "desdeMs": 99781,
+      "hastaMs": 106296
+    },
+    {
+      "turno": 26,
+      "quien": "tuyo",
+      "desdeMs": 106996,
+      "hastaMs": 108589
+    },
+    {
+      "turno": 27,
+      "quien": "cliente",
+      "desdeMs": 109389,
+      "hastaMs": 111949
+    },
+    {
+      "turno": 28,
+      "quien": "tuyo",
+      "desdeMs": 112849,
+      "hastaMs": 115590
+    },
+    {
+      "turno": 29,
+      "quien": "cliente",
+      "desdeMs": 120590,
+      "hastaMs": 122321
+    }
+  ]
+}

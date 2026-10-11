@@ -19,7 +19,7 @@ pub mod cifrado;
 
 use serde::{Deserialize, Serialize};
 
-use crate::capture::Pista;
+use crate::capture::Quien;
 use crate::corpus::Unidad;
 use crate::propuestas::{self, Propuesta};
 use crate::stt::Turno;
@@ -246,7 +246,12 @@ impl Cuaderno {
     /// El eco es la regla que importa: con altavoces, el micrófono oye al cliente, y el turno que llega
     /// por tu pista con la marca de eco **es la voz del cliente**. Aunque la casilla esté encendida.
     pub fn oir(&mut self, turno: &Turno) -> bool {
-        if !self.conservar_mis_turnos || turno.pista != Pista::Microfono || turno.eco {
+        // Tuyo es solo lo de tu pista, sin eco. **La sala nunca** (ADR 020 §5): no se sabe de quién es.
+        let es_tuyo = match turno.pista.quien() {
+            Quien::Tuyo => !turno.eco,
+            Quien::Cliente | Quien::SinAtribuir => false,
+        };
+        if !self.conservar_mis_turnos || !es_tuyo {
             return false;
         }
         let texto = turno.texto.trim();
@@ -522,6 +527,8 @@ pub fn slug(texto: &str) -> String {
 
 #[cfg(test)]
 mod pruebas {
+    use crate::capture::Pista;
+
     /// ⌃⌥A en solo notas busca con esto: la última línea con algo, sin su viñeta.
     #[test]
     fn la_ultima_linea_de_la_nota() {
@@ -559,6 +566,21 @@ mod pruebas {
         let dentro = String::from_utf8(c.contenido(encabezado()).a_bytes()).unwrap();
         assert!(dentro.contains("cotización"));
         assert!(!dentro.contains("Del cliente") && !dentro.contains("oído por tus altavoces"));
+    }
+
+    /// **La sala nunca entra como tuya** (ADR 020 §5), ni con «Conservar mis turnos» encendido: en
+    /// presencial las dos voces llegan por el mismo micrófono y no se sabe de quién es cada frase.
+    ///
+    /// ¿Puede fallar? Sí: con `Quien::SinAtribuir => !turno.eco` la sala entera se guardaría en tu
+    /// archivo como si la hubieras dicho tú (bitácora del sprint 005, fase 1).
+    #[test]
+    fn la_sala_nunca_entra_como_tuya() {
+        let mut c = Cuaderno::nuevo(true);
+        assert!(!c.oir(&turno(Pista::Sala, false, "Necesitamos el tablero en doce semanas.")), "un turno de la sala entró como tuyo");
+        assert!(!c.oir(&turno(Pista::Sala, true, "Con la marca de eco tampoco")));
+        assert_eq!(c.resumen().turnos, 0);
+        let dentro = String::from_utf8(c.contenido(encabezado()).a_bytes()).unwrap();
+        assert!(!dentro.contains("doce semanas"), "la sala acabó en el archivo de tus notas");
     }
 
     #[test]

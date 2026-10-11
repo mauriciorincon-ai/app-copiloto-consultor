@@ -146,7 +146,8 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
   const elegidos = useIdiomasDePista();
   // Los que se pueden elegir: los dos de la casa y los que el motor de este Mac dice conocer.
   const codigos = [...new Set(["es-ES", "en-US", ...transcribe.idiomas.map((i) => i.codigo)])];
-  const pista = (icono: string, quien: string, cual: keyof IdiomasDePista, etiqueta: string) => {
+  // La sala (sprint 005) tiene su fila aparte, con su «de fábrica, el del cliente»: aquí, las dos de una reunión.
+  const pista = (icono: string, quien: string, cual: Exclude<keyof IdiomasDePista, "sala">, etiqueta: string) => {
     const codigo = elegidos[cual];
     const d = de(codigo);
     const listo = d !== "instalando" && estadoDelModelo(d, t.modeloInstalado);

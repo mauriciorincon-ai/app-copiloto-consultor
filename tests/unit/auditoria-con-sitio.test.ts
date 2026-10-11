@@ -31,6 +31,12 @@ import { describe, expect, it } from "vitest";
  *
  * ¿Puede fallar? Sí, y falla: escrito contra `SPRINT_001-auditoria.md` tal como estaba, este test
  * denunció los quince. Demo en rojo registrada en la bitácora del sprint 002.
+ *
+ *   3. **Cada hallazgo dice su ESTADO** (kit v1.40.0, sprint 005): `pagado · <commit o pago>` ·
+ *      `deuda · <sprint o condición>` · `descartado · <razón>` · o `irrecuperable`. El S4 tenía el sitio
+ *      de cada hallazgo y ninguno su estado: un hallazgo con sitio y sin estado no dice si se pagó, y
+ *      el cierre lo da por pagado sin mirarlo. Al nacer esta tercera regla, el S1 tenía once sin
+ *      estado (C1 y A1–A10); se completaron con su pago, que vive en `SPRINT_001-summary.md`.
  */
 const SPRINTS = "sprints";
 
@@ -46,6 +52,8 @@ const SEVERIDADES: Record<string, string> = {
 const SITIO =
   /`[^`\n]*\.(rs|ts|tsx|mjs|js|json|html|md|css|swift|toml|yaml|yml)(:\d+)?[^`\n]*`/;
 const IRRECUPERABLE = /irrecuperable/i;
+/** El estado de un hallazgo, en las palabras del kit v1.40.0 (más el `irrecuperable` de esta casa). */
+const ESTADO = /\b(pagad[oa]s?|deuda|descartad[oa]s?|irrecuperables?)\b/i;
 
 function artefactos(): string[] {
   return readdirSync(SPRINTS)
@@ -157,6 +165,22 @@ describe("el artefacto de auditoría dice dónde está cada hallazgo", () => {
         sinSitio,
         `hallazgos sin archivo:línea y sin declararse irrecuperables. Un hallazgo sin sitio no se ` +
           `puede pagar ni heredar como deuda:\n${sinSitio.join(" · ")}`,
+      ).toEqual([]);
+    },
+  );
+
+  it.each(rutas)(
+    "%s — cada hallazgo dice su ESTADO: pagado, deuda, descartado o irrecuperable",
+    (ruta) => {
+      const texto = readFileSync(ruta, "utf8");
+      const sinEstado = [...hallazgos(texto).entries()]
+        .filter(([, trozo]) => !ESTADO.test(trozo))
+        .map(([id]) => id)
+        .sort();
+      expect(
+        sinEstado,
+        `hallazgos sin estado (kit v1.40.0): con sitio y sin estado, nadie sabe si se pagó, y el ` +
+          `cierre lo da por pagado sin mirarlo:\n${sinEstado.join(" · ")}`,
       ).toEqual([]);
     },
   );

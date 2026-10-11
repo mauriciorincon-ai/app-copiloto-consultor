@@ -20,7 +20,7 @@ pub mod catalogo;
 
 use serde::{Deserialize, Serialize};
 
-use crate::capture::Pista;
+use crate::capture::Quien;
 use crate::stt::Turno;
 
 /// Tope de la frase tuya, en letras.
@@ -67,11 +67,16 @@ pub enum De {
 
 impl De {
     /// Un turno del micrófono marcado como eco es el cliente sonando por tus altavoces.
-    pub fn del_turno(turno: &Turno) -> De {
-        if turno.pista == Pista::Microfono && !turno.eco {
-            De::Tuyo
-        } else {
-            De::Cliente
+    ///
+    /// **Y la sala no es de nadie** (ADR 020 §5): `None`. Hasta el sprint 005 esto era un `if` con
+    /// `else De::Cliente`, y una tercera pista habría caído en el `else`: la sala entera propuesta como
+    /// hechos «del cliente», incluido lo que dijiste tú.
+    pub fn del_turno(turno: &Turno) -> Option<De> {
+        match turno.pista.quien() {
+            Quien::Tuyo if turno.eco => Some(De::Cliente),
+            Quien::Tuyo => Some(De::Tuyo),
+            Quien::Cliente => Some(De::Cliente),
+            Quien::SinAtribuir => None,
         }
     }
 }
@@ -116,8 +121,11 @@ pub fn proponer(turno: &Turno, ctx: &Contexto) -> Vec<Propuesta> {
     if texto.is_empty() {
         return Vec::new();
     }
+    // La sala no propone nada: no se sabe quién lo dijo.
+    let Some(de) = De::del_turno(turno) else {
+        return Vec::new();
+    };
     let c = catalogo::catalogo();
-    let de = De::del_turno(turno);
     let fichas = palabras(texto);
     let mut todas: Vec<Propuesta> = Vec::new();
     let mut nueva = |regla: Regla, desde: usize, fragmento: String, ficha: Option<String>, seccion: Option<String>| {
@@ -500,6 +508,8 @@ fn pregunta(ps: &[Palabra], c: &catalogo::Catalogo) -> Option<(usize, String)> {
 
 #[cfg(test)]
 mod pruebas {
+    use crate::capture::Pista;
+
     /// **Las cifras para el ensayo** (sprint 004): con lo que cuentan, en orden y sin repetir, en los
     /// dos idiomas. Y en inglés, el modificador delante del plural.
     #[test]
@@ -576,6 +586,20 @@ mod pruebas {
             }
         }
         assert!(vistas >= 4, "las reglas no saltaron: {vistas}");
+    }
+
+    /// **La sala no propone nada** (ADR 020 §5): ni como tuyo ni como del cliente, porque no se sabe
+    /// quién lo dijo. La misma frase, del cliente, sí propone.
+    ///
+    /// ¿Puede fallar? Sí: con `Quien::SinAtribuir => Some(De::Cliente)` lo que dijiste tú en la mesa se
+    /// propondría como un hecho del cliente (bitácora del sprint 005, fase 1).
+    #[test]
+    fn la_sala_no_propone_nada() {
+        let frase = "Necesitamos que el tablero esté listo en 12 semanas porque el comité se reúne en diciembre.";
+        assert!(!proponer(&cliente(frase), &sin_fichas()).is_empty(), "la frase de control ya no propone: el test no mide nada");
+        assert_eq!(proponer(&turno(Pista::Sala, false, frase), &sin_fichas()), Vec::new(), "la sala propuso una nota");
+        assert_eq!(De::del_turno(&turno(Pista::Sala, false, frase)), None);
+        assert_eq!(De::del_turno(&turno(Pista::Sala, true, frase)), None, "el eco no le da dueño a la sala");
     }
 
     /// **El eco es del cliente.** Un turno del micrófono marcado como eco es su voz por tus altavoces:

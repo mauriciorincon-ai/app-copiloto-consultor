@@ -49,6 +49,12 @@ impl Ventana {
         self.turnos.iter().rev().find(|t| t.pista == pista)
     }
 
+    /// El último turno que cumple algo. El silencio pregunta por «lo último que pudo decir el
+    /// cliente», que en presencial es la sala (`Turno::pudo_decirlo_el_cliente`).
+    pub fn ultimo_que(&self, cumple: impl Fn(&Turno) -> bool) -> Option<&Turno> {
+        self.turnos.iter().rev().find(|t| cumple(t))
+    }
+
     pub fn cuantos(&self) -> usize {
         self.turnos.len()
     }

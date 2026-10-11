@@ -84,8 +84,9 @@ indique (o la más reciente en `portafolio/<slug>/ordenes/` de la planeadora,
 10. **Al concluir la construcción** (todas las fases aprobadas): corre **`/audita-sprint`**
    (auditoría final de dos fases — OBLIGATORIA, método v1.10.0) ANTES del summary definitivo
    y de entregar la guía/gate ⭐ al usuario. *(Este paso, la matriz de una fila y `gh pr checks` tras
-   cada push los borró sin querer la edición v1.36.0 del kit; esta casa los conserva — K-S4, bitácora
-   del sprint 004.)*
+   cada push los borró sin querer la edición v1.36.0 del kit; esta casa los conservó —K-S4-2, bitácora
+   del sprint 004— y el kit los recuperó en v1.39.1. Esta copia añade «una pregunta de sí/no por mensaje
+   con el archivo abierto», que la del kit no dice.)*
 
 ## Output esperado
 

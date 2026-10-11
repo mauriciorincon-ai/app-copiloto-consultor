@@ -99,3 +99,17 @@ o suavizar antes de construir esa feature.
   tabla dice si algo se rompió por el camino.
 - La frase de la maqueta sobre varios idiomas mezclados queda **marcada como no verificada**. Si esa
   feature se construye, empieza por un spike que la mida.
+
+## Enmienda 1 — la pista única de la sala lleva su idioma (sprint 005, fase 0, 2026-10-05)
+
+El modo presencial (ADR 020) abre **una** pista, la de la sala, por la que entran las dos voces. La regla de este ADR
+no cambia: **un idioma por pista**. Como en presencial la pista es una, **toda la sala escucha en un solo idioma**,
+elegido en Idioma («El idioma de la sala») y guardado en `idiomasDePista.sala` (ADR 002, enmienda 9). De fábrica es el
+de la pista del cliente.
+
+Lo que eso implica, medido en §1 y no supuesto: **si tú hablas en otro idioma que el de la sala, tu parte se
+transcribe mal** (la frase en el otro idioma «no se transcribe: se destroza»). En una mesa es aceptable porque la
+ficha responde al cliente. Pero la app lo dice donde se elige: Sesión, al empezar en presencial, e Idioma.
+
+No se mide ni se promete el reconocimiento con varios idiomas a la vez (§3 sigue vigente). El kit v4 mide la
+transcripción de las salas sintéticas en local (nivel C, `manual`: la CI no tiene modelos de reconocimiento).

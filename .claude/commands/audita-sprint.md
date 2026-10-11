@@ -29,6 +29,14 @@ mismo. *(Origen: hoja-de-vida S7 — los dos hallazgos más caros —un agujero 
 enlaces con host sin esquema y una ficha en el frente equivocado pasando el build— salieron
 de revisar lo que el constructor daba por bueno.)*
 
+**Cuando el diff del sprint pasa de ~100 archivos, la Fase 1 se parte por SUPERFICIES (kit v1.38.0):**
+tres auditores independientes en paralelo —**alcance y textos** · **motor, contrato, gates y
+dependencias** · **UI, hooks, i18n, a11y y privacidad del cliente**— cada uno con su tramo del diff
+entero, y un consolidado único sin duplicados con el auditor de origen en cada hallazgo. *(ds S6: 150+
+archivos; el auditor de privacidad encontró el Crítico —un breadcrumb automático de Sentry copiando un
+`aria-label` con cifras y nombres de columna— que un auditor único con todo el diff probablemente no
+habría mirado; `demo-rojo.sh` rechazó además tres demos que no eran rojos.)*
+
 ## FASE 1 — Auditoría (SOLO LECTURA)
 
 1. **Cobertura de alcance:** contrasta CADA ítem planeado (el plan aprobado del sprint +
@@ -139,8 +147,15 @@ de más. Cierra recordando al usuario: *"aprueba la Fase 1 y fija el modelo de l
    de 25 frases cazadas en la segunda pasada, once las fabricó la Fase 2 y dos vivían en el
    propio summary)*. **La segunda pasada la hace OTRO auditor independiente (kit v1.36.0):** un subagente
    que no construyó ni auditó la Fase 1, en solo lectura, sobre el diff completo del sprint.
+   **Y busca las frases de EVIDENCIA (kit v1.38.0, regla 27):** «leído como imagen», «N de N», «% de
+   líneas», «medido», «en verde» — para cada una debe existir la corrida que la sostiene (archivo,
+   cuenta, fecha) y coincidir con ella; una evidencia escrita antes de su corrida es hallazgo Medio
+   *(ds S6: tres frases escritas como plan en pasado, corregidas solo porque se releyó)*.
 5. Al terminar: registra en la bitácora y en el `SPRINT_NNN-summary.md` los hallazgos, los
-   pagos y la deuda aceptada. **Sin auditoría registrada en el summary, el cierre del sprint
+   pagos y la deuda aceptada. **Y el artefacto `sprints/SPRINT_NNN-auditoria.md` lleva, por cada hallazgo, su
+   ESTADO después de pagarlo (kit v1.40.0): `pagado · <commit>` · `deuda · <sprint/condición>` · `descartado · <razón>`;
+   el gate `auditoria-con-sitio` (o su equivalente) exige sitio Y estado** *(Angel Ghost S4: el artefacto tenía el
+   sitio de cada hallazgo y ninguno su estado; se completó en el `/release-check`)*. **Sin auditoría registrada en el summary, el cierre del sprint
    queda condicionado** (lo verifica el `/cierre-sprint` de la planeadora).
 
 ## Posición en el flujo del sprint

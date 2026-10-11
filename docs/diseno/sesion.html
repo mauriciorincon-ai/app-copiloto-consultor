@@ -28,6 +28,8 @@
     <button data-estado="s4">sprint 4 · la banda arriba o abajo</button>
     <button data-estado="s4-aviso">sprint 4 · la primera vez</button>
     <button data-estado="s4-ensayo">sprint 4 · ensayo sin guardar</button>
+    <button data-estado="s5-presencial">sprint 5 · presencial</button>
+    <button data-estado="s5-presencial-marcha">sprint 5 · presencial · en marcha</button>
   </span>
   <span class="mq-g"><span>tema</span><button data-theme-set="dark">oscuro</button><button data-theme-set="light">claro</button></span>
   <span class="mq-g"><span>idioma</span><button data-lang-set="es">es</button><button data-lang-set="en">en</button></span>
@@ -51,6 +53,8 @@
   <div class="n" data-para="s3-sin-bandera"><b>Qué mirar (sprint 3):</b> la ficha de este cliente no dice dónde está la contraparte. La bandera de <code>kit.html</code> §5 «Jurisdicción no indicada»: no se adivina, y la app funciona igual. La NDA ya revisada, en verde.</div>
   <div class="n" data-para="s3-clausula"><b>Qué mirar (sprint 3):</b> «Ver la cláusula». Las dos versiones, <b>lado a lado</b>, cada una con su «Copiar»: se copia la del idioma de tu carta de encargo, no la de la interfaz. Las dos redactadas, no traducidas. Encima, que es una plantilla y que la revise tu abogado.</div>
   <div class="n" data-para="s3-solo-notas"><b>Qué mirar (sprint 3):</b> la reunión en <b>modo solo notas</b>. Lo mismo que «NDA prohíbe transcribir» —qué queda apagado, qué sigue—, pero ya en marcha: el botón termina la sesión. Nada escucha ni transcribe; <kbd>⌃⌥A</kbd> busca con la última línea de tu nota.</div>
+  <div class="n" data-para="s5-presencial"><b>Mirada de DECISIÓN (sprint 5, fase 0 · ADR 020):</b> el modo <b>presencial</b>, antes de empezar. Arriba eliges el modo: «reunión en este Mac» o «presencial». En presencial la app escucha <b>solo por el micrófono</b>; el audio del sistema y la pantalla quedan <b>cerrados a propósito</b> y lo dicen. Eliges el <b>idioma de la sala</b> (uno para toda la sala; de fábrica, el del cliente) y <b>cómo ves la ficha</b>: <b>al oído</b>, marcado de fábrica, o la banda, a una tecla (<kbd>⌃⌥V</kbd>). Con altavoces que la app reconoce vendría marcada la banda. «Lo tuyo queda: tus turnos» va <b>apagado</b>, porque en la sala la app no sabe cuáles son tuyos; tus notas y tus fichas fijadas sí quedan. La franja de arriba es para <b>la videollamada que corre en tu PC con Windows</b>: el PC en altavoz y el Mac al lado. No hay reunión detectada en este Mac, y no hace falta. La banda sigue protegida de la captura (ADR 020 §9).</div>
+  <div class="n" data-para="s5-presencial-marcha"><b>Mirada de DECISIÓN (sprint 5, fase 0 · ADR 020):</b> lo mismo, <b>en marcha</b>. La pista de la sala «Funciona»; el sistema y la pantalla, cerrados; el idioma, fijo mientras dura; la ficha llega al oído y <kbd>⌃⌥V</kbd> te enseña la banda. En el carril, «Presencial · 0 B»: nada sale de tu equipo. El botón termina la sesión; <kbd>⌥⎋</kbd> corta todo, como siempre.</div>
   <div class="mq-medida">960 × 640 px · rail 200 px · datos 100 % sintéticos</div>
 </div>
 
@@ -70,6 +74,8 @@
     <div class="abajo">
       <span class="estado mute" data-en="sin-reunion"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Sin sesión · 0 B</span><span lang="en">No session · 0 B</span></span>
       <span class="estado halo" data-en="detectada nda vigilancia s1 s2 s2-pantalla s3 s3-en-marcha s3-pregunta s3-sin-bandera s3-clausula s3-solo-notas s4 s4-aviso s4-ensayo"><svg class="ic s"><use href="#i-video"/></svg><span lang="es">Meet detectado · 0 B</span><span lang="en">Meet detected · 0 B</span></span>
+      <span class="estado mute" data-en="s5-presencial"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">Sin sesión · 0 B</span><span lang="en">No session · 0 B</span></span>
+      <span class="estado halo" data-en="s5-presencial-marcha"><svg class="ic s"><use href="#i-mic"/></svg><span lang="es">Presencial · 0 B</span><span lang="en">In person · 0 B</span></span>
     </div>
   </nav>
 
@@ -632,6 +638,61 @@
         <span class="crece"></span>
         <span class="tecla"><kbd>⌥⎋</kbd></span>
         <span class="mono" style="color:var(--ink-2)"><span lang="es">corta todo · el sonido nunca se guarda · nada sale de tu equipo</span><span lang="en">cuts everything · sound is never stored · nothing leaves your machine</span></span>
+      </div>
+    </div>
+
+    <!-- ===== sprint 5 · el modo presencial (DECISIÓN, ADR 020) ===== -->
+    <div data-en="s5-presencial s5-presencial-marcha" style="display:flex;flex-direction:column;gap:14px">
+      <div class="tarjeta">
+        <div class="fila">
+          <svg class="ic" style="color:var(--halo)"><use href="#i-mic"/></svg>
+          <h3 class="crece"><span lang="es">Presencial — la app escucha la sala</span><span lang="en">In person — the app listens to the room</span></h3>
+          <div class="ventanas" role="group" aria-label="Modo" data-en="s5-presencial"><span class="op"><span lang="es">reunión en este Mac</span><span lang="en">call on this Mac</span></span><span class="op on"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">presencial</span><span lang="en">in person</span></span></div>
+          <span class="estado halo" data-en="s5-presencial-marcha"><svg class="ic s relleno"><use href="#i-dot"/></svg><span lang="es">En marcha</span><span lang="en">Running</span></span>
+        </div>
+        <p><span lang="es">Solo el micrófono de tu Mac: ni el audio del sistema ni la pantalla.</span><span lang="en">Only your Mac’s microphone: neither system audio nor the screen.</span></p>
+      </div>
+
+      <div class="franja mute" role="note" data-en="s5-presencial"><svg class="ic s"><use href="#i-video"/></svg><p><span lang="es"><b>¿La videollamada está en tu PC con Windows?</b> Pon el PC en altavoz y el Mac al lado. Con auriculares en el PC, la app no oye al cliente.</span><span lang="en"><b>Is the call on your Windows PC?</b> Put the PC on speaker and the Mac beside it. With headphones on the PC, the app cannot hear the client.</span></p></div>
+
+      <div class="grid-2">
+        <div class="tarjeta">
+          <h2 class="seccion"><span lang="es">Una pista: la sala</span><span lang="en">One track: the room</span></h2>
+          <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-mic"/></svg><span class="crece"><span lang="es">Micrófono — tú y el cliente</span><span lang="en">Microphone — you and the client</span></span><span class="estado ok" data-en="s5-presencial"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Listo</span><span lang="en">Ready</span></span><span class="estado ok" data-en="s5-presencial-marcha"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">Funciona</span><span lang="en">Works</span></span></div>
+          <div class="fila"><svg class="ic s" style="color:var(--ink-2)"><use href="#i-globo"/></svg><span class="crece"><span lang="es">Idioma de la sala</span><span lang="en">Room language</span></span><select class="selector" aria-label="Idioma de la sala" data-en="s5-presencial"><option selected>es-ES</option><option>en-US</option></select><span class="mono" style="color:var(--ink-2)" data-en="s5-presencial-marcha">es-ES</span></div>
+          <p style="font-size:11.5px;margin-top:-2px;color:var(--ink-2)"><span lang="es">Toda la sala en uno: si tú hablas en otro, tu parte sale mal.</span><span lang="en">The whole room in one: if you speak another, your part comes out wrong.</span></p>
+          <div class="fila"><svg class="ic s" style="color:var(--mute)"><use href="#i-sistema-off"/></svg><span class="crece" style="color:var(--mute)"><span lang="es">Audio del sistema</span><span lang="en">System audio</span></span><span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">No se abre</span><span lang="en">Not opened</span></span></div>
+          <div class="fila"><svg class="ic s" style="color:var(--mute)"><use href="#i-pantalla-off"/></svg><span class="crece" style="color:var(--mute)"><span lang="es">Pantalla</span><span lang="en">Screen</span></span><span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">No se abre</span><span lang="en">Not opened</span></span></div>
+          <div class="fila" style="flex-wrap:nowrap"><svg class="ic s" style="color:var(--ink-2)"><use href="#i-auriculares"/></svg><span class="crece"><span lang="es">La ficha</span><span lang="en">The card</span></span><div class="ventanas" style="flex-wrap:nowrap"><span class="op on"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">al oído</span><span lang="en">in your ear</span></span><span class="op"><span lang="es">la banda</span><span lang="en">the band</span></span></div></div>
+          <p style="font-size:11.5px;margin-top:-2px;color:var(--ink-2)"><span lang="es">AirPods Pro. Si es un altavoz, elige la banda. <kbd>⌃⌥V</kbd> cambia.</span><span lang="en">AirPods Pro. If it is a speaker, choose the band. <kbd>⌃⌥V</kbd> switches.</span></p>
+        </div>
+
+        <div class="tarjeta">
+          <div class="fila"><h2 class="seccion crece" style="margin:0"><span lang="es">Este cliente</span><span lang="en">This client</span></h2><select class="selector" aria-label="Este cliente"><option>Sin elegir</option><option selected>Páramo Azul</option><option>Sur del Valle</option></select></div>
+          <div class="bandera riesgo-bajo">
+            <svg class="ic"><use href="#i-globo"/></svg>
+            <div class="donde">Colombia <span class="estado ok"><svg class="ic s relleno"><use href="#i-check-circle"/></svg><span lang="es">riesgo bajo-medio</span><span lang="en">low-medium risk</span></span></div>
+            <div class="regla"><span lang="es">Escuchar como participante es lícito; la transcripción efímera probablemente es «tratamiento».</span><span lang="en">Listening as a participant is lawful; ephemeral transcription is probably “processing”.</span></div>
+            <div class="fuente">CSJ AP1465-2018 · Ley 1581 art. 3 · 2026-09-17</div>
+          </div>
+          <div class="fila"><svg class="ic s" style="color:var(--ok)"><use href="#i-check-circle"/></svg><span class="crece" style="font-size:var(--t-meta)"><span lang="es">NDA revisada: no lo prohíbe</span><span lang="en">NDA checked: not forbidden</span></span><button class="btn mini"><span lang="es">Revisar</span><span lang="en">Review</span></button></div>
+          <div class="fila"><svg class="ic s" style="color:var(--mute)"><use href="#i-nota"/></svg><span class="crece" style="font-size:var(--t-meta)"><span lang="es">Lo tuyo queda: tus turnos</span><span lang="en">Yours is kept: your turns</span></span><span class="estado mute"><svg class="ic s"><use href="#i-ring"/></svg><span lang="es">apagado</span><span lang="en">off</span></span></div>
+          <p style="font-size:11.5px;margin-top:-2px;color:var(--ink-2)"><span lang="es">En la sala la app no sabe cuáles son tuyos. Tus notas y tus fichas fijadas sí quedan.</span><span lang="en">In the room the app cannot tell which are yours. Your notes and pinned cards are kept.</span></p>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="fila" data-en="s5-presencial">
+          <button class="btn primario"><svg class="ic s"><use href="#i-mic"/></svg><span lang="es">Empezar en presencial</span><span lang="en">Start in person</span></button>
+          <button class="btn"><svg class="ic s"><use href="#i-nota"/></svg><span lang="es">Solo notas</span><span lang="en">Notes only</span></button>
+        </div>
+        <div class="fila" data-en="s5-presencial-marcha">
+          <button class="btn primario"><svg class="ic s"><use href="#i-x-circle"/></svg><span lang="es">Terminar sesión</span><span lang="en">End session</span></button>
+        </div>
+        <div class="fila">
+          <span class="tecla"><kbd>⌥⎋</kbd></span>
+          <span class="mono" style="color:var(--ink-2)"><span lang="es">corta todo · el sonido nunca se guarda · nada sale de tu equipo</span><span lang="en">cuts everything · sound is never stored · nothing leaves your machine</span></span>
+        </div>
       </div>
     </div>
 

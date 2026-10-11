@@ -295,6 +295,7 @@ pub fn muestras() -> Vec<Muestra> {
         motivo,
         ms: 1_240,
         hora: "14:02".into(),
+        de_ms: None,
     };
 
     let pista_abierta = || EstadoDePista {
@@ -348,6 +349,8 @@ pub fn muestras() -> Vec<Muestra> {
         ),
         // ---- `turnos_recientes`, el transcript de la banda --------------------------------
         m("TURNO_DEL_CLIENTE", "Turno", "./cuaderno", &turno()),
+        // La sala, en presencial (sprint 005, ADR 020 §2): un turno sin dueño. La banda lo pinta «Sala».
+        m("TURNO_DE_LA_SALA", "Turno", "./cuaderno", &Turno { pista: Pista::Sala, ..turno() }),
         // ---- la reunión, en sus tres formas ----------------------------------------------
         m("REUNION_NINGUNA", "Reunion", "./cuaderno", &Reunion::Ninguna),
         m(
@@ -385,6 +388,7 @@ pub fn muestras() -> Vec<Muestra> {
             &EstadoDeEscucha {
                 escuchando: true,
                 solo_notas: false,
+                presencial: false,
                 microfono: pista_abierta(),
                 sistema: EstadoDePista {
                     abierta: false,
@@ -396,6 +400,25 @@ pub fn muestras() -> Vec<Muestra> {
                 },
                 turnos_en_memoria: 3,
                 bytes_del_transcript: 2_048,
+                bytes_del_ensayo: 0,
+                ensayo: false,
+                motor: "apple-speechanalyzer",
+            },
+        ),
+        // Presencial (sprint 005, ADR 020): la fila del micrófono es la sala, y la del sistema va cerrada sin motivo
+        // porque no se pidió; Sesión no puede pintarla «A medias».
+        m(
+            "ESTADO_DE_LA_ESCUCHA_PRESENCIAL",
+            "EstadoDeEscucha",
+            "./cuaderno",
+            &EstadoDeEscucha {
+                escuchando: true,
+                solo_notas: false,
+                presencial: true,
+                microfono: pista_abierta(),
+                sistema: EstadoDePista::cerrada(),
+                turnos_en_memoria: 4,
+                bytes_del_transcript: 1_536,
                 bytes_del_ensayo: 0,
                 ensayo: false,
                 motor: "apple-speechanalyzer",
@@ -711,10 +734,12 @@ pub fn muestras() -> Vec<Muestra> {
         }),
         // ---- las preferencias que se recuerdan (sprint 003, ADR 002 enmienda 2) -----------------
         // El idioma de cada pista cruza a la ventana principal al abrirse: lo que el usuario eligió
-        // la vez anterior. El cliente en inglés, para que la muestra no sea la de fábrica.
+        // la vez anterior. El cliente en inglés, para que la muestra no sea la de fábrica. **Y la sala**
+        // (sprint 005, ADR 020 §6), elegida: sin elegir no cruza y vale la del cliente.
         m("IDIOMAS_DE_PISTA", "IdiomasDePista", "./cuaderno", &crate::prefs::IdiomasDePista {
             consultor: "es-ES".into(),
             cliente: "en-US".into(),
+            sala: Some("en-US".into()),
         }),
         // ---- tus notas (C9, sprint 003, fase 1, ADR 015) -------------------------------------
         // Tres comandos que la pantalla de Notas lee: el cuaderno de ahora (durante · al cerrar), la

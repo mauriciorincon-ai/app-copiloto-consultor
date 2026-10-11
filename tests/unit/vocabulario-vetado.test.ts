@@ -49,6 +49,10 @@ const VETADOS = [
   "sin que se den cuenta",
   "modo invisible",
   "invisible mode",
+  // Sprint 005 (ADR 020 §2): el modo presencial no separa voces, y ningún copy puede prometer que lo hace. Huella de
+  // voz es lo que la regla dura 4 prohíbe; el gate `cero-huellas-de-voz` vigila el código y estos dos, el copy.
+  "voiceprint",
+  "speaker embedding",
 ];
 
 /**
