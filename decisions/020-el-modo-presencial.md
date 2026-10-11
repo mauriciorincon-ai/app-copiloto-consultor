@@ -2,8 +2,8 @@
 
 - **Fecha:** 2026-10-05
 - **Sprint:** 005 «En la mesa» (fase 0, antes de construir)
-- **Estado:** aceptada, salvo la regla de tolerancia (§3), que se elige con la medición del kit v4 al STOP de la
-  fase 1. Sus cifras se escriben en § Medición **después** de correrlo (regla 26).
+- **Estado:** aceptada. La regla de tolerancia (§3) se eligió con la medición del kit v4 al STOP de la fase 1, y sus
+  cifras están en § Medición (2026-10-10).
 
 ## Contexto
 
@@ -170,4 +170,43 @@ protección verificada «por cliente de videollamada» que en presencial no apli
 
 ## Medición
 
-_(Se escribe después de correr el kit v4, al STOP de la fase 1. Regla 26: ninguna cifra antes de su corrida.)_
+Corrida local del 2026-10-05 (`AG_SIN_HARDWARE=1 cargo test --locked --test contra-el-mac-de-verdad el_kit --
+--nocapture`) y la de la CI de `379f8ef` (corrida 37409586560, paso «el kit, con su salida»): **las mismas cifras fila
+por fila**; la latencia peor, 4 ms en local y 2 ms en la CI. Detalle, con las 36 filas y cada ficha perdida con su
+causa: bitácora del sprint 005, «La medición del kit v4».
+
+**Nivel A** (las dos salas, 14 fichas debidas; falsas = disparadas por tu voz o por una frase del cliente que no debía):
+
+| Regla | Pertinentes | Falsas | Perdidas | Ajustes |
+|---|---|---|---|---|
+| Sin filtro (línea base) | 5 | 16 | 9 | 0 |
+| **C1 15 s · C3 · silencio apagado (la elegida)** | 5 | **5** | 9 | 3 |
+| C1 15 s · C3 · silencio encendido | 6 | 7 | 8 | 2 |
+| C3 sola | 6 | 9 | 8 | 1 |
+| C1 15 s sola | 4 | 12 | 10 | 1 |
+
+- **C2 no cambia ninguna fila** (con 0,34 o 0,50, igual que apagada): queda apagada (`ecoDeLaFicha: null`).
+- **Las 9 perdidas de la elegida:** 4 preguntas del cliente que llegan de 3,5 a 5,9 s después de una ficha que
+  disparaste tú (las calla la espera de 6 s entre fichas que ya existía; ninguna candidata la toca), 3 términos que el
+  cliente nombra sin preguntar (el precio de C3), 1 repregunta rápida a los 8,8 s (C1) y 1 silencio del cliente (el
+  silencio apagado). Para todas está `⌃⌥A`.
+
+**Nivel B** (el VAD y el fin de turno de siempre sobre los wav): sin tope, el intercambio rápido se junta en **un turno
+de 29,0 s (español) y 29,2 s (inglés) con las dos voces**, a un segundo del anillo de 30 s. Con **15 s**, el más largo
+es 15,0 s y corta a media frase una vez (en la sala inglesa); con 25 s, 25,0–25,1 s y una vez en cada sala.
+
+**La elección (STOP de la fase 1):** la primera por el criterio escrito en §4 antes de medir —no pierde más que la
+línea base y es la de menos falsas— y el tope de 15 s. El usuario no eligió otra en su respuesta, que llegó con el hueco
+de la elección sin llenar; se aplicó lo que el STOP declaró por defecto (bitácora). Va en `data/presencial/reglas.json`:
+`esperaTrasFichaMs: 15000`, `ecoDeLaFicha: null`, `soloPreguntaOCifra: true`, `silencio: false`, `topeDeTurnoMs: 15000`.
+Con la voz al oído de fábrica, una ficha falsa es una voz que te habla mientras hablas: pesan más que una pertinente de
+más.
+
+**Lo que vigila la elección:** el nivel A exige que la regla de la casa no pierda más que la línea base y que **deje
+menos falsas** que ella (su rojo: devolver `reglas.json` a la línea base nombró «la sala no tolera tu voz»); el nivel B,
+que con el tope de la casa ningún turno pase del anillo.
+
+**Lo que el kit no mide, dicho:** el nivel A trata cada turno como texto; la sala de verdad junta turnos (nivel B) y
+transcribe con errores (nivel C, `manual`, en la corrida en vivo). El corpus del kit es en español, así que en la sala
+inglesa C1 casi no actúa. Una regla para las preguntas que van justo detrás de las tuyas no se midió (respuesta por
+defecto del STOP): queda como limitación en el manual.

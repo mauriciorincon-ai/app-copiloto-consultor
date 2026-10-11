@@ -209,7 +209,7 @@ paso de fase: arranca la fase 1.
 
 ---
 
-## Fase 1 · El núcleo presencial y su medición (en curso)
+## Fase 1 · El núcleo presencial y su medición
 
 ### Punto de control (2026-10-05, pedido por el usuario para compactar)
 
@@ -530,3 +530,45 @@ del inglés, los 3 de las huellas y el vocabulario, y el del tipo `Pista` de TS:
 
 **STOP de medición:** la tabla está arriba («La medición del kit v4») y la regla la eliges tú. Lo que se elija entra en
 la fase 2 a `data/presencial/reglas.json`, y el ADR 020 gana su sección «Medición» con estas cifras.
+
+**La CI del cierre de la fase 1** (`379f8ef`, corrida 37409586560, leída con `gh pr checks 15`): `quality`, `e2e` y
+`build-escritorio` en `success` (14 min 34 s el de macOS). En el paso de hardware pasaron
+`la_canaria_del_cliente_no_aparece_en_el_log` (que exige la línea «la sala disparó por» del hijo: el paso de la sala
+corrió) y `una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus`. La tabla del kit que imprimió la CI
+coincide fila por fila con la local; la latencia peor, 2 ms.
+
+---
+
+## La directiva del 2026-10-06 y la respuesta al STOP (2026-10-10)
+
+**La directiva del usuario del 2026-10-06** (en la cabecera de la orden, que prevalece sobre el resto): el sprint se
+reduce a las fases 1 y 2 y cierra en **modo mínimo** (CI verde con conclusión propia por check · una auditoría de una
+pasada, un auditor, solo lectura: críticos y altos se pagan, medios y bajos van al summary como deuda con sitio · un
+summary breve dentro del PR · PR normal y el merge del usuario). Fuera: la fase 4 (guía, `design-sync/`, brochure,
+BLUEPRINT, `/release-check`, gate ⭐), la maniobra §10 y el resto de la fase 0. **La fase 0 ya se había ejecutado y
+aprobado el 2026-10-05**, antes de la directiva: lo hecho se queda (constitución, delta del kit, ADR 020 y 021,
+enmiendas, maqueta con su mirada) y lo declara el summary. Paradas que quedan: el STOP de fin de fase 2, y la fila de
+la regla 22 (el micrófono en el modo nuevo), que se enseña igual.
+
+**La respuesta al STOP de medición** llegó con el hueco de la elección sin llenar («La regla del disparador elegida es:
+<respuesta a Q2>»). El STOP había dicho que, sin respuesta, valía lo marcado por defecto, y eso se aplicó: **1 = A**
+(espera de 15 s tras una ficha, un término suelto no basta, sin ficha por silencio) · **2 = tope de 15 s** · **3 = no**
+(no se mide otra regla para las preguntas que van detrás de las tuyas; queda como limitación). Cambiarla es una línea de
+`data/presencial/reglas.json`.
+
+## Fase 2 · La regla elegida, la interfaz y Windows al lado
+
+### La regla elegida (2026-10-10)
+
+- **`data/presencial/reglas.json`**: `esperaTrasFichaMs: 15000`, `ecoDeLaFicha: null`, `soloPreguntaOCifra: true`,
+  `silencio: false`, `topeDeTurnoMs: 15000`, con su fecha y su estado.
+- **ADR 020 § Medición**, escrita después de las corridas: la tabla que decide, el nivel B, la elección y por qué, lo
+  que la vigila y lo que el kit no mide. El estado del ADR deja de decir «salvo la regla».
+- **Un gate más en el nivel A**: la regla de la casa **deja menos falsas que la línea base** (antes solo se exigía que no
+  perdiera más; devolver `reglas.json` a la línea base pasaba en verde). **Rojo K3** con `scripts/demo-rojo.sh`: los tres
+  valores de vuelta a la línea base nombraron «la regla de la casa deja 16 fichas falsas y la línea base 16: la sala no
+  tolera tu voz»; restaurado y verificado, verde con 1 prueba, código 0. **El primer intento no contó**: con solo C3 y el
+  silencio de vuelta, la regla perdía 10 y saltó antes la aserción de las perdidas; `--debe-nombrar` lo rechazó.
+- `AG_SIN_HARDWARE=1 cargo test --locked` con la regla nueva: librería 604, contra el Mac 18, puerta 14, ghost 5, todo en
+  verde. La canaria de la sesión completa es una pregunta («¿Y el alcance del…?»), así que la regla nueva la deja pasar.
+- La fila del kit v4 en `docs/kit-de-prueba/LEEME.md` suma la regla de la casa y su gate nuevo.

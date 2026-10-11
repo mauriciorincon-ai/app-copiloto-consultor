@@ -3289,6 +3289,14 @@ fn el_kit_presencial_mide_la_tolerancia() {
         casa.perdidas,
         base.perdidas
     );
+    // Y la regla de la casa hace algo: calla fichas falsas que la línea base deja pasar. Sin esto, devolver
+    // `reglas.json` a la línea base pasaría en verde (sprint 005, fase 2).
+    assert!(
+        casa.falsas() < base.falsas(),
+        "la regla de la casa deja {} fichas falsas y la línea base {}: la sala no tolera tu voz",
+        casa.falsas(),
+        base.falsas()
+    );
 }
 
 /// Los turnos que corta el VAD de siempre sobre una sala, con un tope o sin él.
