@@ -28,6 +28,12 @@ export const es = {
     sinVerificar: "Zoom · sin verificar",
     sinVerificarArriba: "Meet · sin verificar",
     sinAcople: "sin acople",
+    /**
+     * Presencial (sprint 005, ADR 020; `banda.html` «sprint 5 · presencial», maquetado, no visto): una pista, la
+     * sala, y sin el chip de protección «por cliente de videollamada», que en la sala no aplica.
+     */
+    escuchandoLaSala: "Escuchando · la sala",
+    presencialLaSala: "Presencial · la sala",
 
     /** Las piezas con las que se compone la cabecera. Cada una existe en la maqueta. */
     escuchandoPrefijo: "Escuchando",
@@ -110,6 +116,8 @@ export const es = {
     ocultar: "ocultar",
     cliente: "cliente",
     tu: "tú",
+    /** La sala no tiene dueño: cada turno dice «sala», nunca «cliente» ni «tú» (ADR 020 §2). */
+    sala: "sala",
 
     // ---- atajos ----
     tePropongoGuardar: "Te propongo guardar:",
@@ -140,6 +148,10 @@ export const es = {
     esperandoElSiguienteTurno: "esperando el siguiente turno",
     conectaAuriculares: "Conecta auriculares",
     elClienteTeOiria: "el cliente te oiría",
+    /** En la sala la voz espera a que la sala calle (ADR 020 §7; «sprint 5 · presencial · al oído, la sala habla»). */
+    laSalaHabla: "La sala habla",
+    teLaDigoCuandoCalle: "te la digo cuando calle",
+    verla: "verla",
 
     // ---- fase 3 del sprint 002: por qué llegó la ficha, y la lectura que no encontró nada ----
     /**
@@ -336,6 +348,37 @@ export const es = {
     funcionaCorte: "Corta todo y vacía la memoria",
     iniciarSesion: "Iniciar sesión",
     terminarSesion: "Terminar sesión",
+    /**
+     * **Presencial** (sprint 005, ADR 020; `sesion.html` «sprint 5 · presencial», mirada de DECISIÓN aprobada el
+     * 2026-10-05, con su segunda vuelta de forma del 2026-10-10, no vista). La sala por el micrófono del Mac, y nada más.
+     */
+    presencial: {
+      boton: "Presencial",
+      titulo: "Presencial — la app escucha la sala",
+      modo: "Modo",
+      reunionEnEsteMac: "reunión en este Mac",
+      presencial: "presencial",
+      enMarcha: "En marcha",
+      unaPista: "Una pista: la sala",
+      microfono: "Micrófono — tú y el cliente",
+      listo: "Listo",
+      pcPregunta: "¿La videollamada está en tu PC con Windows?",
+      pcQueHacer: "Pon el PC en altavoz y el Mac al lado. Con auriculares en el PC, la app no oye al cliente.",
+      idiomaDeLaSala: "Idioma de la sala",
+      todaLaSala: "Toda la sala en uno: si tú hablas en otro, tu parte sale mal.",
+      audioDelSistema: "Audio del sistema",
+      pantalla: "Pantalla",
+      noSeAbre: "No se abre",
+      laFicha: "La ficha",
+      alOido: "al oído",
+      laBanda: "la banda",
+      siEsUnAltavoz: "Si es un altavoz, elige la banda.",
+      cambia: "cambia.",
+      loTuyoQueda: "Lo tuyo queda: tus turnos",
+      apagado: "apagado",
+      noSabeCuales: "En la sala la app no sabe cuáles son tuyos. Tus notas y tus fichas fijadas sí quedan.",
+      empezar: "Empezar en presencial",
+    },
     nadaSale: "corta todo · el sonido nunca se guarda · nada sale de tu equipo",
     nadaSaleConApi: "corta todo · el sonido nunca se guarda · solo sale texto anonimizado al proveedor que encendiste",
     sinReunion: "Sin reunión abierta",
@@ -378,6 +421,23 @@ export const es = {
     bufEnsayo: "Tus respuestas del ensayo",
     hastaGuardarOCerrar: "en texto · hasta guardar o cerrar",
     salieronDeTuEquipo: "salieron de tu equipo en esta reunión",
+    /**
+     * Honestidad en presencial (sprint 005, ADR 020; `honestidad.html` «sprint 5 · en presencial», maquetado, no
+     * visto): una pista, la sala; lo que no se abre, dicho y en 0 B; y lo que queda al cerrar, sin tus turnos.
+     */
+    enPresencial: {
+      bufSala: "Audio · la sala",
+      noSeAbre: "no se abre en presencial",
+      transcript: "la sala, sin dueño · 12 turnos",
+      noSeLee: "no se lee en presencial",
+      salieron: "salieron de tu equipo en esta sesión",
+      tuyo: "— notas, acuerdos, fichas fijadas y ensayos.",
+      tusTurnosNo: "Tus turnos, no",
+      tuyoDespues: ": en presencial la app no sabe cuáles son tuyos. Cifrado.",
+      deLaSala: "De la sala",
+      salaAntes: "— las voces y su transcript",
+      salaDespues: ", también lo que dijiste tú. Sin propuestas: nada pasa a la bandeja.",
+    },
     salieronEnEsteEnsayo: "salieron de tu equipo en este ensayo",
     modo: "Modo",
     modoLocal: "100 % local · API apagado",

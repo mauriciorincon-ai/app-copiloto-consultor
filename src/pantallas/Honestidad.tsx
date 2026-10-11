@@ -19,6 +19,7 @@ import {
   useQuedan,
 } from "../notas";
 import { escuchar, hayTauri } from "../puente";
+import { ESTADO_DE_LA_ESCUCHA_PRESENCIAL } from "../contrato.generado";
 
 /**
  * HONESTIDAD — «Qué vive en la memoria ahora mismo y qué salió de tu equipo».
@@ -57,7 +58,15 @@ export function Honestidad({ bytes, escucha: laEscucha, busqueda = "" }: { bytes
   const pedido = new URLSearchParams(busqueda).get("estado");
   // Mientras ensayas (sprint 004, fase 4): fuera de Tauri, el estado «sprint 4 · ensayando» de la maqueta.
   const ensayandoDeMuestra = !hayTauri() && pedido === "ensayando";
-  const escucha = ensayandoDeMuestra ? ESCUCHA_DEL_ENSAYO_DE_MUESTRA : laEscucha;
+  // Con una sesión presencial en marcha (sprint 005, ADR 020): fuera de Tauri, «sprint 5 · en presencial».
+  const presencialDeMuestra = !hayTauri() && pedido === "presencial";
+  const escucha = ensayandoDeMuestra
+    ? ESCUCHA_DEL_ENSAYO_DE_MUESTRA
+    : presencialDeMuestra
+      ? ESTADO_DE_LA_ESCUCHA_PRESENCIAL
+      : laEscucha;
+  const presencial = escucha.presencial;
+  const tp = t.enPresencial;
   const bandeja = useEstadoDeLaBandeja({
     vence: pedido === "bandeja" ? AHORA_DE_MUESTRA + 2 * 3_600 + 41 * 60 + 8 : null,
     noCorrio: pedido === "no-corrio",
@@ -66,8 +75,8 @@ export function Honestidad({ bytes, escucha: laEscucha, busqueda = "" }: { bytes
   const idioma = useIdioma();
   const corte = usePiezasDelCorte();
   const laPantalla = usePantalla();
-  // En un ensayo no se lee la pantalla: la muestra lo dice con 0 B.
-  const pantalla = ensayandoDeMuestra ? { ...laPantalla, bytesEnMemoria: 0 } : laPantalla;
+  // En un ensayo no se lee la pantalla, ni en presencial: la muestra lo dice con 0 B.
+  const pantalla = ensayandoDeMuestra || presencial ? { ...laPantalla, bytesEnMemoria: 0 } : laPantalla;
   const [ia] = useIa();
   // Lo que salió al API vive en memoria hasta el corte, con tope (auditoría del S3, B15): se cuenta
   // aquí como un búfer más. Fuera de Tauri, la muestra solo en «sprint 3 · con el API encendido».
@@ -160,10 +169,22 @@ export function Honestidad({ bytes, escucha: laEscucha, busqueda = "" }: { bytes
               </span>
             </div>
             <div style={{ margin: "0 -4px" }}>
-              {buffer("i-mic", t.bufMic, t.ringBuffer30, formatear(escucha.microfono.bytes, idioma))}
-              {buffer("i-sistema", t.bufSistema, t.ringBuffer30, formatear(escucha.sistema.bytes, idioma))}
-              {buffer("i-ojo", t.bufTranscript, t.ventana12, formatear(escucha.bytesDelTranscript, idioma))}
-              {buffer("i-pantalla", t.bufFrame, t.soloEnMemoriaElUltimo, formatear(pantalla.bytesEnMemoria, idioma))}
+              {/* En presencial, una pista: la sala, sin dueño. Lo que no se abre se dice, con sus 0 B (ADR 020 §1). */}
+              {presencial ? (
+                <>
+                  {buffer("i-mic", tp.bufSala, t.ringBuffer30, formatear(escucha.microfono.bytes, idioma))}
+                  {buffer("i-sistema-off", t.bufSistema, tp.noSeAbre, "0 B")}
+                  {buffer("i-ojo", t.bufTranscript, tp.transcript, formatear(escucha.bytesDelTranscript, idioma))}
+                  {buffer("i-pantalla-off", t.bufFrame, tp.noSeLee, "0 B")}
+                </>
+              ) : (
+                <>
+                  {buffer("i-mic", t.bufMic, t.ringBuffer30, formatear(escucha.microfono.bytes, idioma))}
+                  {buffer("i-sistema", t.bufSistema, t.ringBuffer30, formatear(escucha.sistema.bytes, idioma))}
+                  {buffer("i-ojo", t.bufTranscript, t.ventana12, formatear(escucha.bytesDelTranscript, idioma))}
+                  {buffer("i-pantalla", t.bufFrame, t.soloEnMemoriaElUltimo, formatear(pantalla.bytesEnMemoria, idioma))}
+                </>
+              )}
               {hayEnsayo && buffer("i-ensayo", t.bufEnsayo, t.hastaGuardarOCerrar, formatear(escucha.bytesDelEnsayo, idioma))}
               {peticiones > 0 && buffer("i-subir", t.bufLoQueSalio, t.hastaElCorte, `${peticiones} ${t.peticiones}`)}
             </div>
@@ -186,7 +207,7 @@ export function Honestidad({ bytes, escucha: laEscucha, busqueda = "" }: { bytes
                   <Ic id="i-subir" s color="var(--halo)" />
                 )}{" "}
                 {/* Con un ensayo, el contador es el del ensayo: empezó en 0 al empezarlo (auditoría del S4, B27). */}
-                <span>{hayEnsayo ? t.salieronEnEsteEnsayo : t.salieronDeTuEquipo}</span>
+                <span>{hayEnsayo ? t.salieronEnEsteEnsayo : presencial ? tp.salieron : t.salieronDeTuEquipo}</span>
               </div>
             </div>
             <div className="tarjeta">
@@ -232,18 +253,33 @@ export function Honestidad({ bytes, escucha: laEscucha, busqueda = "" }: { bytes
           </div>
           {/* Sin salto: con la frase larga, el icono se quedaba solo en su línea (se vio en la
               fidelidad del sprint 003, en la maqueta y en el producto a la vez). */}
+          {/* En presencial tus turnos no se guardan —la app no sabe cuáles son tuyos— y no hay propuestas (ADR 020 §5). */}
           <div className="fila" style={{ flexWrap: "nowrap" }}>
             <Ic id="i-nota" s color="var(--ok)" />
-            <span className="crece">
-              <b>{tn.tuyo}</b> {tn.tuyoDetalle}
-            </span>
+            {presencial ? (
+              <span className="crece">
+                <b>{tn.tuyo}</b> {tp.tuyo} <b>{tp.tusTurnosNo}</b>
+                {tp.tuyoDespues}
+              </span>
+            ) : (
+              <span className="crece">
+                <b>{tn.tuyo}</b> {tn.tuyoDetalle}
+              </span>
+            )}
           </div>
           <div className="fila" style={{ flexWrap: "nowrap" }}>
             <Ic id="i-basura" s color="var(--mute)" />
-            <span className="crece" style={{ color: "var(--ink-2)" }}>
-              <b>{tn.deCliente}</b> {tn.delClienteDetalle} <b>{tn.mueren}</b>
-              {tn.yElAudio}
-            </span>
+            {presencial ? (
+              <span className="crece" style={{ color: "var(--ink-2)" }}>
+                <b>{tp.deLaSala}</b> {tp.salaAntes} <b>{tn.mueren}</b>
+                {tp.salaDespues}
+              </span>
+            ) : (
+              <span className="crece" style={{ color: "var(--ink-2)" }}>
+                <b>{tn.deCliente}</b> {tn.delClienteDetalle} <b>{tn.mueren}</b>
+                {tn.yElAudio}
+              </span>
+            )}
           </div>
         </div>
       </div>

@@ -73,6 +73,13 @@ const PANTALLAS = [
   // Lo que queda de tus ensayos (fase 4, ADR 015 enmienda 4): guardado, tu progreso y borrarlo.
   { que: "ensayo · guardado", url: "ventana=principal&pantalla=ensayo&estado=guardado" },
   { que: "ensayo · tu progreso", url: "ventana=principal&pantalla=ensayo&estado=progreso" },
+  // Presencial (sprint 005, ADR 020): Sesión antes de empezar y en marcha, Honestidad, y la banda de la sala.
+  { que: "sesión · presencial", url: "ventana=principal&pantalla=sesion&estado=presencial" },
+  { que: "sesión · presencial · en marcha", url: "ventana=principal&pantalla=sesion&estado=presencial-marcha" },
+  { que: "honestidad · en presencial", url: "ventana=principal&pantalla=honestidad&estado=presencial" },
+  { que: "banda · presencial", url: "ventana=banda&estado=ficha-presencial" },
+  { que: "banda · presencial · la sala habla", url: "ventana=banda&estado=voz-sala" },
+  { que: "banda · presencial · transcript", url: "ventana=banda&estado=ficha-presencial&transcript=1" },
   { que: "ensayo · borrar", url: "ventana=principal&pantalla=ensayo&estado=progreso-borrar" },
   { que: "honestidad · ensayando", url: "ventana=principal&pantalla=honestidad&estado=ensayando" },
 ];

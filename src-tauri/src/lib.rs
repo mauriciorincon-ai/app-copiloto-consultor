@@ -52,7 +52,7 @@ pub mod ventana;
 pub mod voz;
 
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use tauri::{Emitter, Manager};
 
 /// Dónde anota el acople lo que encogió, para poder devolverlo **aunque esta sesión termine
@@ -224,6 +224,9 @@ fn el_asa_apaga_el_modo(alto: u32, encendida: bool) -> bool {
 fn apagar_el_modo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> habla::LaVoz {
     let estado = app.state::<LaVozQueSale>();
     estado.encendida.store(false, Ordering::Relaxed);
+    // Una ficha que esperaba a que la sala callara ya no se dice (ADR 020 §7).
+    estado.vez.fetch_add(1, Ordering::Relaxed);
+    estado.esperando.store(false, Ordering::Relaxed);
     con_el_callar(app, false);
     estado.voz.callar();
     let ahora = estado.estado();
@@ -700,13 +703,20 @@ fn empezar_solo_notas(
 /// **«Empezar en presencial»** (ADR 020): la app escucha la sala por el micrófono del Mac —en la mesa con
 /// el cliente, o al lado del PC donde corre la videollamada— y nada más: ni el audio del sistema, ni la
 /// pantalla, ni el acople. Se llega desde Sesión, y solo desde la ventana principal (`SENSIBLES`).
+///
+/// `al_oido` es cómo eliges ver la ficha (ADR 020 §7): pulsar «Empezar» con «al oído» elegido es **tu gesto**, y
+/// enciende el modo solo audio para esta sesión; con «la banda», lo apaga. La regla «el modo solo audio no se
+/// enciende solo nunca» sigue en pie: lo enciende tu elección, no la app.
 #[tauri::command]
 fn empezar_presencial(
     app: tauri::AppHandle,
     estado: tauri::State<'_, LaEscucha>,
     el_corpus: tauri::State<'_, ElCorpus>,
+    al_oido: bool,
 ) -> Result<escucha::EstadoDeEscucha, String> {
-    empezar(app, &estado, &el_corpus, modo::Modo::Presencial)
+    let empezada = empezar(app.clone(), &estado, &el_corpus, modo::Modo::Presencial)?;
+    fijar_la_voz_en(&app, al_oido);
+    Ok(empezada)
 }
 
 /// **El modo de la sesión en marcha**, marcado lo PRIMERO de `empezar` (ADR 020 §1). `None` sin sesión.
@@ -1723,6 +1733,7 @@ pub fn run() {
             revisar_nda,
             empezar_solo_notas,
             empezar_presencial,
+            fijar_la_voz,
             ir_a_notas,
             guardar_propuesta,
             descartar_propuesta,
@@ -2030,6 +2041,11 @@ fn pedir_ficha(
 struct LaVozQueSale {
     voz: Box<dyn habla::Voz>,
     encendida: AtomicBool,
+    /// **La ficha espera a que la sala calle** (ADR 020 §7): la banda lo dice mientras dura.
+    esperando: AtomicBool,
+    /// Cuántas fichas se han pedido decir. La que espera a que la sala calle solo se dice si nadie pidió otra
+    /// mientras tanto, ni apagó el modo: una ficha vieja dicha tarde es peor que ninguna.
+    vez: AtomicU64,
     /// En qué idioma se lee. **El del consultor**, no el del cliente: la ficha sale de los
     /// documentos del usuario, así que está escrita en su idioma. Lo fija `empezar_a_escuchar`; hasta
     /// entonces vale el de la interfaz por defecto.
@@ -2041,6 +2057,8 @@ impl Default for LaVozQueSale {
         Self {
             voz: habla::voz(),
             encendida: AtomicBool::new(false),
+            esperando: AtomicBool::new(false),
+            vez: AtomicU64::new(0),
             idioma: std::sync::Mutex::new("es-ES".into()),
         }
     }
@@ -2062,6 +2080,7 @@ impl LaVozQueSale {
                 self.voz.hay_para(&idioma),
             ),
             diciendo: self.voz.hablando(),
+            esperando: self.esperando.load(Ordering::Relaxed),
         }
     }
 }
@@ -2079,6 +2098,24 @@ const EVENTO_VOZ: &str = "voz";
 /// Al log va **el hecho, jamás la ficha**: cuántas letras y por qué se calló. El titular es
 /// contenido del corpus del usuario y un log es un archivo.
 fn decir_la_ficha<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Aparicion) {
+    decir_la_ficha_si_cabe(app, a, true);
+}
+
+/// ¿Habla alguien ahora mismo, por cualquier pista? `try_lock` y no `lock`, y la razón es un abrazo mortal real:
+/// este camino se llama DESDE los hilos de la escucha, y `empezar_a_escuchar` tiene el candado de `LaEscucha`
+/// cogido mientras los arranca. La ventana es de milisegundos y hace falta una ficha para entrar en ella, así que
+/// no ocurriría casi nunca — «casi nunca» es exactamente la clase de fallo que aparece en una reunión. Si el
+/// candado está ocupado se supone que **sí** hay alguien hablando, que es el lado que calla.
+fn alguien_hablando_en<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> bool {
+    match app.state::<LaEscucha>().0.try_lock() {
+        Ok(g) => g.as_ref().is_some_and(|e| e.alguien_hablando()),
+        Err(_) => true,
+    }
+}
+
+/// `puede_esperar`: en presencial, una ficha que llega con la sala hablando espera a que calle, una vez (ADR 020
+/// §7). La segunda vuelta, la de después de esperar, ya no espera: si justo vuelve a hablar alguien, se calla.
+fn decir_la_ficha_si_cabe<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Aparicion, puede_esperar: bool) {
     let ficha::Respuesta::Ficha(f) = &a.respuesta else {
         // Una «sin resultado» no se lee. No es una decisión de ahorro: su titular son **las
         // palabras del cliente** («nada sobre "certificación ISO"»), y leérselas al usuario sería
@@ -2087,23 +2124,10 @@ fn decir_la_ficha<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Apari
     };
     let estado = app.state::<LaVozQueSale>();
     let idioma = estado.idioma();
-
-    // `try_lock` y no `lock`, y la razón es un abrazo mortal real: este camino se llama DESDE los
-    // hilos de la escucha, y `empezar_a_escuchar` tiene el candado de `LaEscucha` cogido mientras
-    // los arranca. La ventana es de milisegundos y hace falta una ficha para entrar en ella, así que
-    // no ocurriría casi nunca — «casi nunca» es exactamente la clase de fallo que aparece en una
-    // reunión. Si el candado está ocupado se supone que **sí** hay alguien hablando, que es el lado
-    // que calla.
-    let alguien_hablando = match app.state::<LaEscucha>().0.try_lock() {
-        Ok(g) => g
-            .as_ref()
-            .map(|e| {
-                let s = e.estado();
-                s.microfono.hablando || s.sistema.hablando
-            })
-            .unwrap_or(false),
-        Err(_) => true,
-    };
+    // Una ficha nueva releva a la que esperaba a que la sala callara: esa ya no se dirá, y su aviso se apaga.
+    let vez = estado.vez.fetch_add(1, Ordering::Relaxed) + 1;
+    estado.esperando.store(false, Ordering::Relaxed);
+    let alguien_hablando = alguien_hablando_en(app);
 
     let salida = capture::nativo::salida_de_audio();
     let momento = habla::Momento {
@@ -2114,6 +2138,15 @@ fn decir_la_ficha<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Apari
         ya_diciendo: estado.voz.hablando(),
     };
     if let Err(impedimento) = habla::cabe_decirla(&momento) {
+        // **En la sala, la voz espera a que la sala calle** (ADR 020 §7), con tope. En la reunión la ficha que
+        // llega con alguien hablando se calla, como desde el sprint 002.
+        if impedimento == habla::Impedimento::AlguienEstaHablando
+            && puede_esperar
+            && modo_de_la_sesion(app) == Some(modo::Modo::Presencial)
+        {
+            esperar_a_la_sala(app, a, vez);
+            return;
+        }
         // El modo apagado es el estado normal de la app: decirlo en cada ficha llenaría el log de
         // una línea por turno sin informar de nada.
         if impedimento != habla::Impedimento::ModoApagado {
@@ -2158,6 +2191,54 @@ fn fuente_hablada(f: &ficha::Fuente) -> String {
     } else {
         format!("{}, {}", f.documento, seccion.trim())
     }
+}
+
+/// **La ficha espera a que la sala calle**, en su hilo, como mucho [`habla::ESPERA_DE_LA_SALA`] (ADR 020 §7).
+/// Mientras espera, la banda lo dice («La sala habla · te la digo cuando calle»). Si la sala calla, se dice —si
+/// nadie pidió otra ficha ni apagó el modo mientras tanto—; si no, se queda en la banda, donde `⌃⌥V` la enseña.
+fn esperar_a_la_sala<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Aparicion, vez: u64) {
+    let estado = app.state::<LaVozQueSale>();
+    estado.esperando.store(true, Ordering::Relaxed);
+    let _ = app.emit_to(ventana::BANDA, EVENTO_VOZ, estado.estado());
+    let (app, a) = (app.clone(), a.clone());
+    std::thread::spawn(move || {
+        let callo = habla::esperar_al_silencio(
+            || alguien_hablando_en(&app),
+            std::thread::sleep,
+            habla::ESPERA_DE_LA_SALA,
+            habla::PASO_DE_LA_ESPERA,
+        );
+        let estado = app.state::<LaVozQueSale>();
+        // Solo la última ficha pedida apaga el aviso: otra que llegó después lleva el suyo.
+        if estado.vez.load(Ordering::Relaxed) != vez {
+            println!("[habla] llegó otra ficha, o se apagó el modo, mientras la sala hablaba: esta no se dice");
+            return;
+        }
+        estado.esperando.store(false, Ordering::Relaxed);
+        if callo {
+            decir_la_ficha_si_cabe(&app, &a, false);
+        } else {
+            println!("[habla] la sala no calló en {} s: la ficha se queda en la banda", habla::ESPERA_DE_LA_SALA.as_secs());
+            let _ = app.emit_to(ventana::BANDA, EVENTO_VOZ, estado.estado());
+        }
+    });
+}
+
+/// **Cómo ves la ficha: al oído o en la banda** (ADR 020 §7). Enciende o apaga el modo solo audio por el mismo
+/// camino que `⌃⌥V`, y solo si hace falta: pedir lo que ya está no lo conmuta al revés.
+fn fijar_la_voz_en<R: tauri::Runtime>(app: &tauri::AppHandle<R>, al_oido: bool) -> habla::LaVoz {
+    let estado = app.state::<LaVozQueSale>();
+    if estado.encendida.load(Ordering::Relaxed) == al_oido {
+        return estado.estado();
+    }
+    conmutar_el_modo(app)
+}
+
+/// El selector «La ficha: al oído · la banda» de Sesión en presencial, con la sesión en marcha. Solo desde la
+/// ventana principal (`SENSIBLES`): la banda no se cambia de modo a sí misma, para eso está `⌃⌥V`.
+#[tauri::command]
+fn fijar_la_voz(app: tauri::AppHandle, al_oido: bool) -> habla::LaVoz {
+    fijar_la_voz_en(&app, al_oido)
 }
 
 /// El trabajo de `⌃⌥V`, **hecho en Rust y no pedido a la banda por un evento**.
@@ -4304,6 +4385,30 @@ mod pruebas_del_modo_presencial {
 
     fn en(cuerpo: &str, aguja: &str) -> usize {
         cuerpo.find(aguja).unwrap_or_else(|| panic!("falta «{aguja}»"))
+    }
+
+    /// **La voz espera a la sala solo en presencial** (ADR 020 §7), solo cuando lo que la calla es que alguien
+    /// habla, y una vez: la vuelta de después de esperar ya no espera. Y «Empezar en presencial» fija la voz que
+    /// elegiste. ¿Puede fallar? Sí: sin la condición del modo, la ficha de una reunión esperaría a que el cliente
+    /// callara y le llegaría tarde (bitácora del sprint 005, fase 2).
+    #[test]
+    fn la_voz_espera_a_la_sala_solo_en_presencial_y_una_vez() {
+        let c = cuerpo_de("\nfn decir_la_ficha_si_cabe<");
+        let espera = en(c, concat!("esperar_a_la_", "sala(app, a, vez)"));
+        let si = c[..espera]
+            .rfind("if impedimento == habla::Impedimento::AlguienEstaHablando")
+            .expect("la espera no mira por qué se calla la voz");
+        let condicion = &c[si..espera];
+        assert!(
+            condicion.contains(concat!("modo_de_la_sesion(app) == Some(modo::Modo::", "Presencial)")),
+            "la voz espera a que callen también en la reunión"
+        );
+        assert!(condicion.contains(concat!("&& puede_", "esperar")), "la ficha espera más de una vez");
+        let w = cuerpo_de("\nfn esperar_a_la_sala<");
+        assert!(w.contains(concat!("decir_la_ficha_si_cabe(&app, &a, ", "false)")), "tras esperar, la ficha vuelve a esperar");
+        assert!(w.contains(concat!("habla::ESPERA_DE_LA_", "SALA,")), "la espera de la sala no tiene tope");
+        let e = cuerpo_de("\nfn empezar_presencial(");
+        assert!(e.contains(concat!("fijar_la_voz_en(&app, ", "al_oido)")), "«Empezar en presencial» no fija la voz que elegiste");
     }
 
     /// **El orden de `empezar`**: la NDA lo primero, y si lo prohíbe, se vuelve sin tocar nada; después el

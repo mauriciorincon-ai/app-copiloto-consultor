@@ -102,14 +102,11 @@ const DEUDA: Record<string, string> = {
   // propuestas en la maqueta (la franja dice «Las 3 que guardaste van en tu archivo»), y un campo que
   // nadie pinta no cruza. `EstadoDeLaBandeja.bandejas` nació y salió en la misma fase, por lo mismo.
 
-  // ── Sprint 005, fase 1: el modo presencial cruza antes que su pantalla; se paga en la fase 2 ──
+  // ── Sprint 005, fase 1: el modo presencial cruzó antes que su pantalla; pagada en la fase 2 ──
   //
-  // El núcleo (ADR 020) entra en la fase 1 y la interfaz en la 2, tras el STOP de medición: Sesión deja
-  // de pintar «A medias» la pista del sistema cerrada a propósito, e Idioma gana la fila de la sala.
-  "EstadoDeEscucha.presencial":
-    "src/cuaderno.ts:251 · Sesión y Honestidad lo leen en la fase 2 del sprint 005 (la pista del sistema, cerrada a propósito, sin «A medias»)",
-  "IdiomasDePista.sala":
-    "src/cuaderno.ts:636 · Idioma gana la fila «La sala · presencial» en la fase 2 del sprint 005 (maqueta idioma.html, «sprint 5 · el idioma de la sala»)",
+  // `EstadoDeEscucha.presencial` lo leen Sesión (la vista presencial, sin «A medias»), la banda (la cabecera
+  // de la sala), Honestidad y el rail. `IdiomasDePista.sala`, el selector «Idioma de la sala» de Sesión: la
+  // fila de Idioma no cabe con la franja aprobada y queda maquetada, no vista (bitácora del sprint 005).
 };
 
 /** Cada `export type X = … { … }`, con las variantes de una unión incluidas. */

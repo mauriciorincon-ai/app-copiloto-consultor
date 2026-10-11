@@ -572,3 +572,85 @@ la regla 22 (el micrófono en el modo nuevo), que se enseña igual.
 - `AG_SIN_HARDWARE=1 cargo test --locked` con la regla nueva: librería 604, contra el Mac 18, puerta 14, ghost 5, todo en
   verde. La canaria de la sesión completa es una pregunta («¿Y el alcance del…?»), así que la regla nueva la deja pasar.
 - La fila del kit v4 en `docs/kit-de-prueba/LEEME.md` suma la regla de la casa y su gate nuevo.
+
+### La voz al oído en la sala, y cómo se elige (ADR 020 §7, 2026-10-10)
+
+- **La voz espera a que la sala calle.** `habla::esperar_al_silencio` (pura, con el reloj inyectado) y
+  `habla::ESPERA_DE_LA_SALA` = 4 s, el presupuesto de la ficha: el kit v4 no tiene voz y no puede medirlo, así que
+  es una decisión de producto dicha en su comentario. En `lib.rs`, `decir_la_ficha` pasa a `decir_la_ficha_si_cabe`:
+  **solo en presencial** y solo cuando lo que la calla es que alguien habla, la ficha espera en su hilo
+  (`esperar_a_la_sala`), una vez; si nadie pidió otra ficha ni apagó el modo mientras tanto (`LaVozQueSale.vez`), se
+  dice; si no, se queda en la banda. En la reunión no cambia nada: la ficha que llega con alguien hablando se calla,
+  como desde el sprint 002. Quién habla lo dice ya `Escucha::alguien_hablando()`.
+- **`LaVoz.esperando`** cruza al webview (regla 19: muestra `LA_VOZ_ESPERANDO_A_LA_SALA` en `contrato.rs`, contrato
+  regenerado) y la banda pinta «La sala habla · te la digo cuando calle», con `⌃⌥V verla`.
+- **«Empezar en presencial» recibe `al_oido`** y fija la voz por el mismo camino que `⌃⌥V` (`fijar_la_voz_en`, que no
+  conmuta lo que ya está). Comando nuevo **`fijar_la_voz`** para el selector «La ficha» con la sesión en marcha: en
+  `build.rs`, `generate_handler!`, la capability de la ventana principal y `SENSIBLES` (`capabilities.test.ts`).
+- **Rojos:** **V1** `la_voz_espera_a_la_sala_solo_en_presencial_y_una_vez` (fuente de `lib.rs`) sin la condición del
+  modo nombró «la voz espera a que callen también en la reunión»; **V2**
+  `en_la_sala_la_voz_espera_al_silencio_y_no_mas_que_el_tope` con el tope doblado nombró «la voz esperó otra cosa que
+  el tope». Los dos con código 0 y verde con 1 prueba.
+
+### La interfaz presencial (2026-10-10)
+
+- **Sesión:** «Presencial» es el tercer botón de antes de empezar y no empieza nada; la vista presencial, antes de
+  empezar y en marcha, fiel a la maqueta: la sala «Listo»/«Funciona» (o su caída, con su porqué), la nota del PC con
+  Windows, el idioma de la sala (selector antes, fijo en marcha; `fijar_idioma_de_pista("sala")`), el sistema y la
+  pantalla «No se abre» —sin «A medias»—, «La ficha: al oído · la banda» (de partida la banda con altavoces que la app
+  reconoce; con USB o Bluetooth, «Si es un altavoz, elige la banda»), «Lo tuyo queda: tus turnos · apagado», y la
+  tarjeta «Este cliente» de siempre. La NDA que lo prohíbe enseña la pantalla aprobada de solo notas.
+- **La banda:** «Escuchando · la sala» y «Presencial · la sala» en vez del chip de la reunión; la voz que espera a la
+  sala; el transcript con «sala» en cada turno. **Una prueba nueva cazó un defecto:** la banda en espera pintaba «Sin
+  reunión abierta» en presencial, que es falso —la reunión está en la sala—; en presencial ya no nombra la reunión de
+  este Mac.
+- **Honestidad:** una pista, la sala; el sistema «no se abre en presencial» y el último frame «no se lee en
+  presencial», los dos en 0 B; el transcript «la sala, sin dueño»; el contador «en esta sesión»; y al cerrar, «Tus
+  turnos, no» y «De la sala… Sin propuestas». **El rail:** «Presencial · 0 B».
+- **El contrato con lectores:** las dos deudas de la fase 1 se pagaron (`EstadoDeEscucha.presencial` lo leen Sesión,
+  la banda, Honestidad y el rail; `IdiomasDePista.sala`, el selector de Sesión). `ESTADO_DE_LA_ESCUCHA_PRESENCIAL` es
+  la muestra de Sesión en marcha y de Honestidad fuera de Tauri (su transcript pasó a 2 KB, el de la maqueta).
+- **Segunda vuelta de forma y texto de la maqueta (no vista, `docs/diseno/README.md`):** la tarjeta «Este cliente» de
+  presencial estaba recortada —sin la línea de lo que implica, sin el «sin verificar» de la bandera y **sin «No es
+  asesoría legal», que el ADR 017 §3 quiere siempre**—; con ella completa, `maqueta-cabe` midió +97 px (es) y +79 px
+  (en). Medido pieza a pieza (la sala 254 px, el cliente 403 px): la nota del PC y «Lo tuyo queda» pasaron a la
+  tarjeta de la sala, la línea «Solo el micrófono de tu Mac…» salió de la cabecera (la dicen las filas «No se abre»),
+  y dos notas en inglés se acortaron (+13 px quedaban en inglés). Y «Presencial» como tercer botón en los estados de
+  antes de empezar.
+- **Un defecto de la fase 0 que cazó la FIDELIDAD:** `idioma.html` «sprint 2» difería 4,2 % del producto porque las
+  dos filas ocultas de la sala le quitaban el `:last-child` a la del cliente y le ponían 1 px de borde que movía la
+  pantalla entera. La fila del cliente va en dos copias (una por estado).
+
+**Pruebas (corridas en local, después del último cambio):** `pnpm fidelidad`: **308 encuadres comparados, ninguno por
+encima del umbral** (0,15 %), sin desbordes ni errores de página, con los seis estados nuevos en los dos temas y los
+dos idiomas (24 encuadres: la sesión presencial y en marcha, Honestidad en presencial, y la banda de la sala a 88, 44 y
+200 px). **Leídas como imagen** después de la corrida: Sesión presencial en oscuro/es, en marcha en claro/en,
+Honestidad en presencial en claro/en, la banda de la sala con su transcript en oscuro/es, la voz que espera en
+claro/en y la ficha en claro/en (el inglés, el extremo de longitud). `PUERTO_E2E=3417 pnpm test:e2e`: **320 en verde**
+(2 saltados a propósito: `maqueta-cabe` y `maqueta-interaccion` corren una vez, no por proyecto), con seis estados
+presenciales nuevos en axe y dos en reduced-motion. `pnpm exec vitest run`: **490 de 490** en 59 archivos.
+`AG_SIN_HARDWARE=1 cargo test --locked`: librería **606** (2 ignoradas), contra el Mac 18, puerta 14, ghost 5;
+`cargo clippy --locked --all-targets -- -D warnings`, `pnpm typecheck`, `pnpm lint` y `pnpm verify:ephemeral` limpios.
+
+**Rojos de la interfaz** (`tests/unit/presencial.test.tsx`, 9 pruebas; los tres con código 0 y verde con 9):
+**P1** «Empezar en presencial» pidiendo siempre `empezarPresencial(true)` nombró «pide la sala con la ficha al oído, y
+con la banda si la eliges»; **P2** la banda en presencial con el chip de la reunión nombró «la cabecera dice la sala,
+sin el chip de protección»; **P3** el transcript sin la etiqueta de la sala nombró «cada turno dice «sala»».
+
+### El manual (2026-10-10)
+
+`docs/MANUAL-DE-USO.md` gana **«Presencial: la app escucha la sala»**: qué hace, cómo se usa, el PC con Windows al
+lado (en altavoz; con auriculares en el PC la app no oye al cliente), cómo decide cuándo dar una ficha —las tres
+reglas medidas y el tope, con las cifras del kit—, la voz que espera y lo que no hace (no separa voces, pierde las
+preguntas que van tras las tuyas —para eso `⌃⌥A`—, no guarda tus turnos, no propone, no lee la pantalla, un idioma
+para la sala, la NDA, la sugerencia sobre la frase que disparó, Bluetooth y USB). Y la línea de «Qué es esta app», la
+frase hermana del modo solo audio (en presencial la voz espera, no se salta la ficha) y la fila 005 del historial.
+
+### Desviaciones de la fase 2
+
+1. **La fila de la sala en Idioma no se construye.** Con la franja aprobada «Transcribe tu Mac, no un servicio» no
+   cabe (+113 px, medido en la fase 0); quitar la franja para ponerla cambiaría una pantalla aprobada. El idioma de la
+   sala se elige en Sesión, que es donde se usa. La fila sigue maquetada («sprint 5 · el idioma de la sala») y la
+   decisión va al gate del MVP del H2.
+2. **La maniobra §10 no entra** (directiva del 2026-10-06).
+3. **La espera de la voz, 4 s**, no la mide el kit: es una decisión de producto con su porqué en `habla::ESPERA_DE_LA_SALA`.

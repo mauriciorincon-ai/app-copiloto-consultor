@@ -36,6 +36,9 @@ const ENCUADRES = [
   { que: "ensayo · la cuenta de preguntas", url: "ventana=principal&pantalla=ensayo&estado=preguntando", clave: ".progreso > span:first-child" },
   // Tu progreso (fase 4): la tabla y sus flechas se leen sin movimiento.
   { que: "ensayo · tu progreso", url: "ventana=principal&pantalla=ensayo&estado=progreso", clave: ".tabla td.num" },
+  // Presencial (sprint 005): la voz que espera a que la sala calle se lee sin movimiento.
+  { que: "banda · presencial · la sala habla", url: "ventana=banda&estado=voz-sala", clave: ".banda.voz .linea-b" },
+  { que: "sesión · presencial", url: "ventana=principal&pantalla=sesion&estado=presencial", clave: ".titulo h1" },
 ];
 
 /**

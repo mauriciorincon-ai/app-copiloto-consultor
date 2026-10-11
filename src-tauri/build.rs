@@ -62,6 +62,7 @@ const COMANDOS: &[&str] = &[
         "revisar_nda",
         "empezar_solo_notas",
         "empezar_presencial",
+        "fijar_la_voz",
         "ir_a_notas",
         // Sprint 003, fase 2: las propuestas y la bandeja (ADR 016). Solo la ventana principal.
         "guardar_propuesta",

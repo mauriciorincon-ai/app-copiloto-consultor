@@ -77,6 +77,9 @@ const ESTADOS: EstadoBanda[] = [
   "ficha-fijada",
   // Solo notas (sprint 003, fase 3): la banda en reposo, sin escucha.
   "solo-notas",
+  // Presencial (sprint 005, ADR 020): la ficha con la cabecera de la sala, y la voz que espera a que la sala calle.
+  "ficha-presencial",
+  "voz-sala",
 ];
 
 /**

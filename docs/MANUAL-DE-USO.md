@@ -16,6 +16,10 @@ guardar —tus notas y, del cliente, como mucho un hecho de una línea—, y lo 
 horas en la bandeja y se borra solo; la propia app tiene una
 pantalla para que puedas comprobarlo en vez de creértelo.
 
+**Y en la mesa, también:** en *Presencial* la app escucha la sala por el micrófono de tu Mac —una reunión
+cara a cara, o la videollamada que corre en otro equipo con tu Mac al lado— y te da la ficha al oído
+(*Presencial*, abajo).
+
 **Y antes de la reunión, puedes ensayarla:** la app te hace las preguntas que ese cliente probablemente
 hará, sacadas de tu propia propuesta, te escucha por el micrófono y te dice qué evidencia tuya usaste y
 cuál tenías sin usar (*El ensayo*, abajo).
@@ -135,6 +139,56 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   o Bluetooth (unos AirPods, un altavoz USB), *Sesión* dice su nombre. La app **no puede saber** si
   es un casco o un altavoz: si es un altavoz, no uses el modo solo audio. Por HDMI, DisplayPort o
   AirPlay lo trata como un altavoz: la fila sale en ámbar y lo dice.
+
+### Presencial: la app escucha la sala · Nuevo · Sprint 005
+
+- **Qué hace:** para la reunión en la mesa, o para la videollamada que corre en otro equipo —un PC con
+  Windows— con tu Mac al lado. La app escucha **la sala por el micrófono de tu Mac, y nada más**: no abre
+  el audio del sistema ni lee la pantalla. Con lo que oye busca en tus documentos y te da la ficha de
+  siempre —titular, línea y de dónde sale—, de fábrica **al oído**.
+- **Cómo se usa:**
+  1. En *Sesión*, **«Presencial»**, junto a «Solo notas». Todavía no empieza nada: ves cómo será la
+     sesión. «reunión en este Mac» te devuelve a la de siempre.
+  2. Elige el **idioma de la sala**: uno para toda la sala; de fábrica, el del cliente.
+  3. Elige **cómo ves la ficha**: **al oído**, que viene marcado, o **la banda**. Con los altavoces del Mac,
+     o con un monitor o un televisor por HDMI, DisplayPort o AirPlay, viene marcada la banda: la voz no
+     hablaría con el cliente oyéndola.
+  4. **«Empezar en presencial».** Para acabar, «Terminar sesión»; `⌥⎋` corta todo, como siempre.
+  5. Con la sesión en marcha, `⌃⌥V` cambia entre la voz y la banda; el selector de *Sesión* también.
+- **Con la videollamada en un PC con Windows:** pon el PC **en altavoz** y el Mac al lado. En el PC no se
+  instala nada y la app no toca esa máquina. **Si llevas auriculares en el PC, la app no oye al
+  cliente**: solo te oye a ti.
+- **Cómo decide cuándo darte una ficha.** Tu voz y la del cliente entran por el mismo micrófono, y la app
+  **no distingue voces**: no identifica a nadie por su voz. Para no dispararse con lo que dices tú, la
+  sala sigue tres reglas sobre el texto y el tiempo, elegidas midiendo con dos voces sintéticas:
+  - tras una ficha, espera **15 s** antes de dar otra;
+  - un término de tu corpus dicho de pasada no basta: hace falta **una pregunta o una cifra**;
+  - el silencio de la sala no pide ficha.
+
+  Y ningún turno de la sala dura más de 15 s: dos voces que se pisan no se juntan en un bloque que
+  llegue tarde. En la prueba, de 14 preguntas del cliente salieron 5 fichas —las mismas que sin
+  reglas— y las fichas que sobraban, casi todas por tu voz, bajaron de 16 a 5.
+- **La voz espera a que la sala calle.** Si llega una ficha mientras alguien habla, la banda dice «La
+  sala habla · te la digo cuando calle», y la voz la lee en cuanto haya silencio. Si en 4 s nadie calla,
+  la ficha se queda en la banda y `⌃⌥V` te la enseña.
+- **Lo que no hace (limitaciones conocidas):**
+  - **No separa voces.** No sabe qué dijiste tú y qué el cliente, y no lo adivina: en el transcript cada
+    turno dice «sala».
+  - **Algunas preguntas del cliente no traen ficha:** las que llegan unos segundos después de una
+    tuya —la sala las toma por tu conversación—, los términos que el cliente nombra sin preguntar y la
+    repregunta rápida. Para eso está `⌃⌥A`: busca con lo último que oyó la sala, sin reglas.
+  - **No guarda tus turnos**, aunque lo tengas encendido en *Notas*: la app no sabe cuáles son tuyos. Tu
+    preferencia no cambia y vuelve a valer en la siguiente reunión. Tus notas, tus fichas fijadas y tus
+    ensayos sí quedan.
+  - **No te propone qué guardar** y nada pasa a la bandeja: no sabe de quién es cada frase.
+  - **No lee la pantalla ni mueve ventanas.** La banda sigue protegida de la captura: si compartes tu
+    pantalla en una tele, la sala no la ve.
+  - **Toda la sala va en un idioma**: si tú hablas en otro, tu parte se transcribe mal.
+  - **Si la NDA del cliente prohíbe registrar**, no se empieza en presencial: solo en solo notas.
+  - **La sugerencia**, si la tienes encendida, se redacta sobre la frase que disparó la ficha, no sobre
+    la última que se dijo.
+  - **Con auriculares por Bluetooth o USB** la app no distingue un casco de un altavoz: si es un
+    altavoz, elige la banda.
 
 ### Tu corpus, indexado · desde Sprint 001
 
@@ -694,7 +748,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 - **Cuándo se calla sola, y por qué:**
   - **Si el sonido sale por los altavoces de tu Mac**, no habla y te lo dice en ámbar: «Conecta
     auriculares · el cliente te oiría». Es el candado del modo.
-  - **Mientras alguien esté hablando** en la reunión —el cliente o tú—. Nunca habla encima de nadie.
+  - **Mientras alguien esté hablando** en la reunión —el cliente o tú—. Nunca habla encima de nadie. En
+    *Presencial* no se la salta: espera a que la sala calle, hasta 4 s.
   - **Mientras ya esté diciendo otra ficha.** No encola una detrás de otra.
   - Y `⌥⎋` la calla y apaga el modo, como todo lo demás.
 - **Limitaciones conocidas:**
@@ -843,6 +898,7 @@ abierta.
 | 002 | el disparo por silencio · **tu diccionario técnico** · **el modo solo audio** · **la lectura de pantalla** y `⌃⌥L` · **los porqués** (la pista que no abrió, la salida de audio por su nombre, el motor que falta) · **por qué llegó la ficha y cuánto tardó** · las teclas pasan a `⌃⌥` · **el radar** (ámbar y coral) y `⌃⌥R` · **la sugerencia** y la pantalla **IA** |
 | 003 | **tus notas** (el cuaderno de la reunión, el archivo cifrado por reunión, la retención, exportar y borrar) · `⌃⌥N` y `⌃⌥P` · **el cuaderno protegido** mientras la reunión está abierta · **lo que salió al API**, en *IA* · **las propuestas por reglas y la bandeja** con su cuenta atrás y su borrado con la app cerrada · `⌃⌥↵` · la señal «fijada» · el corte pasa a 11 piezas · las preferencias se recuerdan · tus notas pasan a la **carpeta privada de la app**, con «Mostrar en Finder», y se borran solas al vencer aunque no abras la app · **el marco en la mano**: «Este cliente», su bandera de jurisdicción, el chequeo de NDA, la cláusula de encargo y el **modo solo notas** · **la puerta local para Claude Code** (`ghost`), en *IA* |
 | 004 | **el ensayo** (las preguntas por reglas de tu propuesta, tu ficha y las objeciones típicas; la evaluación sin puntaje: usaste, tenías y no usaste, tiempo, ritmo y muletillas; el informe; guardarlo con la llave y la retención de tus notas; tu progreso por cliente; exportar y borrar) · **«Enriquecer el banco»**, en *IA* · **la banda arriba**, junto a la cámara, con `⌃⌥B` y el aviso de la primera vez · el acople arriba **baja y encoge solo la ventana de la reunión**, al iniciar la sesión · el corte pasa a 12 piezas · tras su auditoría: con una videollamada abierta el ensayo pide auriculares, *Sesión* avisa antes de descartar un ensayo sin guardar, la puerta se cierra también con un ensayo y lo dice, y la protección arriba se declara sin verificar |
+| 005 | **presencial**: la sala por el micrófono del Mac, sin audio del sistema ni pantalla; el idioma de la sala; la ficha al oído de fábrica, con la voz que espera a que la sala calle; las reglas medidas con dos voces sintéticas para no dispararse con tu voz; el PC con Windows al lado; lo que no hace (no separa voces, no guarda tus turnos, no propone) · en inglés, una frase que empieza con «is», «have» o «do» solo cuenta como pregunta si los abre |
 
 > **Corregido tras la auditoría del sprint 001** (2026-09-22): tres frases de este manual habían
 > dejado de ser ciertas y se arreglaron con lo que el código hacía de verdad — el disparo por

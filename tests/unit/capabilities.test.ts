@@ -89,6 +89,8 @@ const SENSIBLES = [
   "empezar_a_escuchar",
   // El modo presencial abre el micrófono en la sala (sprint 005, ADR 020): solo desde Sesión.
   "empezar_presencial",
+  // Cómo ves la ficha en presencial (ADR 020 §7): se elige en Sesión; la banda tiene ⌃⌥V.
+  "fijar_la_voz",
   "abrir_ajustes_de",
   // La banda no se cambia de borde a sí misma: lo eliges tú en Sesión o con ⌃⌥B (sprint 004).
   "fijar_posicion_de_la_banda",

@@ -162,7 +162,7 @@ export const ESTADO_DE_LA_ESCUCHA: EstadoDeEscucha = {
 
 export const ESTADO_DE_LA_ESCUCHA_PRESENCIAL: EstadoDeEscucha = {
     "bytesDelEnsayo": 0,
-    "bytesDelTranscript": 1536,
+    "bytesDelTranscript": 2048,
     "ensayo": false,
     "escuchando": true,
     "microfono": {
@@ -306,19 +306,29 @@ export const INFORME_DEL_CORTE: InformeDelCorte = {
 export const LA_VOZ_APAGADA: LaVoz = {
     "diciendo": false,
     "encendida": false,
+    "esperando": false,
     "puede": false
   };
 
 export const LA_VOZ_DICIENDO: LaVoz = {
     "diciendo": true,
     "encendida": true,
+    "esperando": false,
     "puede": true
   };
 
 export const LA_VOZ_SIN_AURICULARES: LaVoz = {
     "diciendo": false,
     "encendida": true,
+    "esperando": false,
     "puede": false
+  };
+
+export const LA_VOZ_ESPERANDO_A_LA_SALA: LaVoz = {
+    "diciendo": false,
+    "encendida": true,
+    "esperando": true,
+    "puede": true
   };
 
 export const PANTALLA_LEYENDO: EstadoDeLaPantalla = {

@@ -418,7 +418,7 @@ pub fn muestras() -> Vec<Muestra> {
                 microfono: pista_abierta(),
                 sistema: EstadoDePista::cerrada(),
                 turnos_en_memoria: 4,
-                bytes_del_transcript: 1_536,
+                bytes_del_transcript: 2_048,
                 bytes_del_ensayo: 0,
                 ensayo: false,
                 motor: "apple-speechanalyzer",
@@ -495,11 +495,20 @@ pub fn muestras() -> Vec<Muestra> {
             encendida: true,
             puede: true,
             diciendo: true,
+            esperando: false,
         }),
         m("LA_VOZ_SIN_AURICULARES", "LaVoz", "./cuaderno", &crate::habla::LaVoz {
             encendida: true,
             puede: false,
             diciendo: false,
+            esperando: false,
+        }),
+        // Sprint 005 (ADR 020 §7): en la sala, la ficha espera a que la sala calle.
+        m("LA_VOZ_ESPERANDO_A_LA_SALA", "LaVoz", "./cuaderno", &crate::habla::LaVoz {
+            encendida: true,
+            puede: true,
+            diciendo: false,
+            esperando: true,
         }),
         // ---- la lectura de pantalla (C8) del sprint 002 --------------------------------------
         // El evento «pantalla» y el comando `estado_de_la_pantalla`: la vista es la fila de Sesión y

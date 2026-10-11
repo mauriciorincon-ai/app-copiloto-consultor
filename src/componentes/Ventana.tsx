@@ -48,6 +48,7 @@ export function Ventana({
   cerrando = false,
   bandeja = null,
   ensayando = false,
+  presencial = false,
   children,
 }: {
   seccion: Seccion;
@@ -65,6 +66,8 @@ export function Ventana({
   bandeja?: { texto: string; vencida: boolean } | null;
   /** Hay un ensayo con el micrófono abierto (sprint 004): «Ensayando · 0 B». */
   ensayando?: boolean;
+  /** La sesión presencial está en marcha (sprint 005, ADR 020): «Presencial · 0 B». */
+  presencial?: boolean;
   children: ReactNode;
 }) {
   // La cifra es la del contador, no una constante: con el API encendido, el chip decía «0 B»
@@ -121,6 +124,13 @@ export function Ventana({
               <Ic id="i-mic" s />
               <span>
                 {te.ensayando} · {bytes}
+              </span>
+            </span>
+          ) : presencial ? (
+            <span className="estado halo">
+              <Ic id="i-mic" s />
+              <span>
+                {t.presencial.boton} · {bytes}
               </span>
             </span>
           ) : cerrando ? (

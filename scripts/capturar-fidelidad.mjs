@@ -42,7 +42,7 @@ const FIDELIDAD = join(RAIZ, "docs/fidelidad");
  * enseña como contrapeso del gate diferido pasó a enseñar pantallas del sprint 2. Se cambia en el
  * primer commit de cada sprint que capture.
  */
-const SPRINT = "s4";
+const SPRINT = "s5";
 
 const MARCO = 9;
 const PUERTO = 4180;
@@ -97,6 +97,11 @@ const ARTEFACTOS = [
       { id: "fijada", maqueta: "banda.html", estado: "s3-fijada", alto: 88, url: "ventana=banda&estado=ficha-fijada" },
       // Solo notas (sprint 003, fase 3): la cabecera ámbar y la frase de reposo que manda a tu nota.
       { id: "solo-notas", maqueta: "banda.html", estado: "s3-solo-notas", alto: 88, url: "ventana=banda&estado=solo-notas" },
+      // Presencial (sprint 005, ADR 020; maquetados, no vistos): la cabecera de la sala, la voz que espera a que
+      // la sala calle, y el transcript sin dueño.
+      { id: "presencial", maqueta: "banda.html", estado: "s5-presencial", alto: 88, url: "ventana=banda&estado=ficha-presencial" },
+      { id: "presencial-voz", maqueta: "banda.html", estado: "s5-presencial-voz", alto: 44, url: "ventana=banda&estado=voz-sala" },
+      { id: "presencial-transcript", maqueta: "banda.html", estado: "s5-presencial-transcript", alto: 200, url: "ventana=banda&estado=ficha-presencial&transcript=1" },
     ],
   },
   {
@@ -141,6 +146,9 @@ const ARTEFACTOS = [
       // El estado de la Etapa de Diseño «NDA prohíbe transcribir», aprobado en G-Diseño: por fin tiene producto.
       { id: "sesion-nda", maqueta: "sesion.html", estado: "nda", alto: 640, url: "ventana=principal&pantalla=sesion&estado=nda" },
       { id: "sesion-solo-notas", maqueta: "sesion.html", estado: "s3-solo-notas", alto: 640, url: "ventana=principal&pantalla=sesion&estado=solo-notas" },
+      // Presencial (sprint 005, ADR 020): la mirada de DECISIÓN, antes de empezar y en marcha.
+      { id: "sesion-presencial", maqueta: "sesion.html", estado: "s5-presencial", alto: 640, url: "ventana=principal&pantalla=sesion&estado=presencial" },
+      { id: "sesion-presencial-marcha", maqueta: "sesion.html", estado: "s5-presencial-marcha", alto: 640, url: "ventana=principal&pantalla=sesion&estado=presencial-marcha" },
       { id: "permisos", maqueta: "permisos.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=permisos" },
       { id: "corpus", maqueta: "corpus.html", estado: "s2", alto: 640, url: "ventana=principal&pantalla=corpus" },
       // Desde la fase 1 del sprint 003 Honestidad se compara con «así se ve hoy · sprint 3»: la
@@ -148,6 +156,7 @@ const ARTEFACTOS = [
       // «sprint 4 · con tus ensayos»; y mientras ensayas, «sprint 4 · ensayando».
       { id: "honestidad", maqueta: "honestidad.html", estado: "s4", alto: 640, url: "ventana=principal&pantalla=honestidad" },
       { id: "honestidad-ensayando", maqueta: "honestidad.html", estado: "s4-ensayando", alto: 640, url: "ventana=principal&pantalla=honestidad&estado=ensayando" },
+      { id: "honestidad-presencial", maqueta: "honestidad.html", estado: "s5-presencial", alto: 640, url: "ventana=principal&pantalla=honestidad&estado=presencial" },
       // La bandeja en Honestidad (fase 2): su cuenta atrás, y la tarea de borrado que no corrió.
       { id: "honestidad-bandeja", maqueta: "honestidad.html", estado: "s3-bandeja", alto: 640, url: "ventana=principal&pantalla=honestidad&estado=bandeja" },
       { id: "honestidad-no-corrio", maqueta: "honestidad.html", estado: "s3-no-corrio", alto: 640, url: "ventana=principal&pantalla=honestidad&estado=no-corrio" },

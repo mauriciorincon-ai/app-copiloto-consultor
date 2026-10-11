@@ -455,11 +455,13 @@ export const ESCUCHA_DEL_ENSAYO_DE_MUESTRA: EstadoDeEscucha = {
  * | `encendida` | la banda vive a 44 px en vez de 88 |
  * | `puede` | cuál de los dos estados se pinta: «Diciéndote la ficha…» o «Conecta auriculares» |
  * | `diciendo` | si está sonando ahora mismo |
+ * | `esperando` | en presencial, la ficha espera a que la sala calle (ADR 020 §7): «La sala habla · te la digo cuando calle» |
  */
 export type LaVoz = {
   encendida: boolean;
   puede: boolean;
   diciendo: boolean;
+  esperando: boolean;
 };
 
 /** La voz apagada, que es como nace la app — y como la pinta el arnés de capturas. */
@@ -467,6 +469,7 @@ export const VOZ_APAGADA: LaVoz = {
   encendida: false,
   puede: false,
   diciendo: false,
+  esperando: false,
 };
 
 /**
@@ -497,6 +500,14 @@ export function useVoz(): LaVoz {
     };
   }, []);
   return voz;
+}
+
+/**
+ * **Cómo ves la ficha en presencial, con la sesión en marcha** (ADR 020 §7): al oído enciende el modo solo audio
+ * y la banda lo apaga, por el mismo camino que `⌃⌥V`. Pedir lo que ya está no conmuta nada.
+ */
+export function fijarLaVoz(alOido: boolean): Promise<LaVoz | null> {
+  return preguntar<LaVoz>("fijar_la_voz", { alOido });
 }
 
 /**

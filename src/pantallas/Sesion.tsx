@@ -6,6 +6,7 @@ import { hayTauri } from "../puente";
 import type { Bilingue } from "../radar";
 import {
   elegirCliente,
+  empezarPresencial,
   empezarSoloNotas,
   estadoDeSesion,
   muestraDelCliente,
@@ -18,9 +19,13 @@ import {
 import {
   empezarAEscuchar,
   dejarDeEscuchar,
+  fijarIdiomaDePista,
+  fijarLaVoz,
   lecturaAutomatica,
+  useIdiomasDePista,
   usePantalla,
   useBytesALaRed,
+  useVoz,
   type EstadoDeEscucha,
   type EstadoDePista,
   type EstadoDeLaPantalla,
@@ -81,6 +86,13 @@ export function Sesion({
   const [vista, setVista] = useEsteCliente(muestra);
   const [preguntando, setPreguntando] = useState(fuera && pedido === "pregunta");
   const [viendoClausula, setViendoClausula] = useState(fuera && pedido === "clausula");
+  /**
+   * **El modo que eliges antes de empezar** (sprint 005, ADR 020): la reunión en este Mac o presencial. No se
+   * recuerda (ADR 002, enmienda 9): cada sesión empieza en la reunión. Con la sesión en marcha manda Rust.
+   */
+  const [modo, setModo] = useState<"reunion" | "presencial">(
+    fuera && (pedido === "presencial" || pedido === "presencial-marcha") ? "presencial" : "reunion",
+  );
   const hayEco = salida.salida === "altavoces" || salida.salida === "altavoz-externo";
   const caida = (p: EstadoDePista) => escucha.escuchando && !p.abierta;
   /**
@@ -173,6 +185,32 @@ export function Sesion({
       <>
         {titulo}
         <LaNdaLoProhibe iniciar={() => void empezarSoloNotas()} revisar={revisar} />
+      </>
+    );
+  }
+
+  // **Presencial** (ADR 020): elegido antes de empezar, o en marcha. Una reunión en marcha se ve como reunión.
+  if (escucha.presencial || (!escucha.escuchando && modo === "presencial")) {
+    return (
+      <>
+        {titulo}
+        <EnPresencial
+          escucha={escucha}
+          salida={salida}
+          bytes={bytes}
+          volver={() => setModo("reunion")}
+          ensayoSinGuardar={ensayoSinGuardar}
+          accion={preguntando ? <LaPreguntaDeLaNda responder={responder} /> : null}
+          cliente={
+            <EsteCliente
+              vista={vista}
+              elegir={(nombre) => void elegirCliente(nombre).then((v) => v && setVista(v))}
+              revisar={revisar}
+              preguntando={preguntando}
+              verLaClausula={() => setViendoClausula(true)}
+            />
+          }
+        />
       </>
     );
   }
@@ -276,6 +314,11 @@ export function Sesion({
                 <Ic id="i-nota" s />
                 <span>{tc.soloNotas}</span>
               </button>
+              {/* El tercer modo (sprint 005, ADR 020): no empieza nada, enseña cómo será la sesión en la sala. */}
+              <button className="btn" onClick={() => setModo("presencial")}>
+                <Ic id="i-mic" s />
+                <span>{t.presencial.boton}</span>
+              </button>
             </div>
             {/* Un ensayo terminado sin guardar (auditoría del S4, M10): «Iniciar sesión» lo descarta, así que se
                 dice en una línea, en el sitio de la promesa, que vuelve al guardarlo o cerrarlo. En dos líneas,
@@ -359,6 +402,245 @@ export function ElAvisoDeArriba({ entendido }: { entendido: () => void }) {
           {t.entendido}
         </button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * **PRESENCIAL** (C19, sprint 005, ADR 020; `sesion.html` «sprint 5 · presencial» y «… · en marcha», mirada de
+ * DECISIÓN aprobada el 2026-10-05).
+ *
+ * Una pista, la sala, por el micrófono del Mac: el audio del sistema y la pantalla **no se abren**, y se dice.
+ * El idioma es uno para toda la sala; la ficha llega **al oído**, salvo con altavoces que la app reconoce, y la
+ * banda queda a una tecla. «Lo tuyo queda» se apaga porque la app no sabe qué turnos son tuyos (§5).
+ */
+function EnPresencial({
+  escucha,
+  salida,
+  bytes,
+  volver,
+  cliente,
+  accion,
+  ensayoSinGuardar,
+}: {
+  escucha: EstadoDeEscucha;
+  salida: Salida;
+  bytes: string;
+  /** «reunión en este Mac»: vuelve a la sesión de siempre, sin empezar nada. */
+  volver: () => void;
+  /** La tarjeta «Este cliente», la misma de la reunión. */
+  cliente: React.ReactNode;
+  /** Lo que ocupa la fila de la acción mientras se contesta la NDA; `null`, los botones. */
+  accion: React.ReactNode;
+  ensayoSinGuardar: boolean;
+}) {
+  const t = useT().cuaderno;
+  const tc = useT().cliente;
+  const tp = t.presencial;
+  const idiomas = useIdiomasDePista();
+  const voz = useVoz();
+  const enMarcha = escucha.escuchando;
+  const sala = idiomas.sala ?? idiomas.cliente;
+  const codigos = [...new Set(["es-ES", "en-US", sala])];
+  // Con altavoces que la app reconoce, la banda de partida (§7): la voz no hablaría con el cliente oyéndola.
+  const altavoz = salida.salida === "altavoces" || salida.salida === "altavoz-externo";
+  const [elegida, setElegida] = useState<boolean | null>(null);
+  const alOido = enMarcha && hayTauri() ? voz.encendida : (elegida ?? !altavoz);
+  const elegir = (si: boolean) => {
+    if (enMarcha && hayTauri()) void fijarLaVoz(si);
+    else setElegida(si);
+  };
+  const nota = { fontSize: "11.5px", marginTop: "-2px", color: "var(--ink-2)" } as const;
+  // De qué aparato se habla: el que la app nombra, o lo que sabe de él.
+  const aparato =
+    salida.salida === "otra" || salida.salida === "altavoz-externo"
+      ? `${salida.nombre}. `
+      : salida.salida === "no-se-sabe"
+        ? salida.nombre
+          ? `${salida.nombre}. `
+          : ""
+        : salida.salida === "altavoces"
+          ? `${t.altavocesInternos}. `
+          : `${t.pistaAuriculares}. `;
+  // Con USB o Bluetooth la app no distingue un auricular de un altavoz, y lo dice (§7).
+  const duda = salida.salida === "otra" || salida.salida === "no-se-sabe";
+  const opciones: [boolean, string][] = [
+    [true, tp.alOido],
+    [false, tp.laBanda],
+  ];
+
+  return (
+    <div style={PILA}>
+      <div className="tarjeta">
+        <div className="fila">
+          <Ic id="i-mic" color="var(--halo)" />
+          <h3 className="crece">{tp.titulo}</h3>
+          {enMarcha ? (
+            <span className="estado halo">
+              <Ic id="i-dot" s relleno />
+              <span>{tp.enMarcha}</span>
+            </span>
+          ) : (
+            <div className="ventanas" role="radiogroup" aria-label={tp.modo}>
+              <button type="button" role="radio" aria-checked={false} className="op" onClick={volver}>
+                {tp.reunionEnEsteMac}
+              </button>
+              <button type="button" role="radio" aria-checked className="op on">
+                <Ic id="i-check-circle" s relleno />
+                {tp.presencial}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="grid-2">
+        <div className="tarjeta">
+          <h2 className="seccion">{tp.unaPista}</h2>
+          {enMarcha ? (
+            <LaPista pista={escucha.microfono} caida={!escucha.microfono.abierta} icono="i-mic" texto={tp.microfono} />
+          ) : (
+            <>
+              <Fila icono="i-mic" color="var(--ok)" texto={tp.microfono}>
+                <span className="estado ok">
+                  <Ic id="i-check-circle" s relleno />
+                  <span>{tp.listo}</span>
+                </span>
+              </Fila>
+              <p style={nota}>
+                <b>{tp.pcPregunta}</b> {tp.pcQueHacer}
+              </p>
+            </>
+          )}
+          <div className="fila">
+            <Ic id="i-globo" s color="var(--ink-2)" />
+            <span className="crece">{tp.idiomaDeLaSala}</span>
+            {enMarcha ? (
+              // Fijo mientras dura: la sala se transcribe en el que tenía al empezar.
+              <span className="mono" style={{ color: "var(--ink-2)" }}>
+                {sala}
+              </span>
+            ) : (
+              <select
+                className="selector"
+                aria-label={tp.idiomaDeLaSala}
+                value={sala}
+                onChange={(e) => fijarIdiomaDePista("sala", e.target.value)}
+              >
+                {codigos.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+          <p style={nota}>{tp.todaLaSala}</p>
+          <div className="fila">
+            <Ic id="i-sistema-off" s color="var(--mute)" />
+            <span className="crece" style={{ color: "var(--mute)" }}>
+              {tp.audioDelSistema}
+            </span>
+            <span className="estado mute">
+              <Ic id="i-ring" s />
+              <span>{tp.noSeAbre}</span>
+            </span>
+          </div>
+          <div className="fila">
+            <Ic id="i-pantalla-off" s color="var(--mute)" />
+            <span className="crece" style={{ color: "var(--mute)" }}>
+              {tp.pantalla}
+            </span>
+            <span className="estado mute">
+              <Ic id="i-ring" s />
+              <span>{tp.noSeAbre}</span>
+            </span>
+          </div>
+          <div className="fila" style={{ flexWrap: "nowrap" }}>
+            <Ic id="i-auriculares" s color="var(--ink-2)" />
+            <span className="crece">{tp.laFicha}</span>
+            <div className="ventanas" role="radiogroup" aria-label={tp.laFicha} style={{ flexWrap: "nowrap" }}>
+              {opciones.map(([si, nombre]) => {
+                const on = si === alOido;
+                return (
+                  <button
+                    key={nombre}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    className={on ? "op on" : "op"}
+                    onClick={() => {
+                      if (!on) elegir(si);
+                    }}
+                  >
+                    {on && <Ic id="i-check-circle" s relleno />}
+                    {nombre}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <p style={nota}>
+            {`${aparato}${duda ? `${tp.siEsUnAltavoz} ` : ""}`}
+            <kbd>⌃⌥V</kbd>
+            {` ${tp.cambia}`}
+          </p>
+          <div className="fila">
+            <Ic id="i-nota" s color="var(--mute)" />
+            <span className="crece" style={{ fontSize: "var(--t-meta)" }}>
+              {tp.loTuyoQueda}
+            </span>
+            <span className="estado mute">
+              <Ic id="i-ring" s />
+              <span>{tp.apagado}</span>
+            </span>
+          </div>
+          <p style={nota}>{tp.noSabeCuales}</p>
+        </div>
+
+        {cliente}
+      </div>
+
+      {enMarcha ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <div className="fila">
+            <button className="btn primario" onClick={() => dejarDeEscuchar()}>
+              <Ic id="i-x-circle" s />
+              <span>{t.terminarSesion}</span>
+            </button>
+          </div>
+          <div className="fila">
+            <Promesa bytes={bytes} />
+          </div>
+        </div>
+      ) : accion ? (
+        accion
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <div className="fila">
+            <button className="btn primario" onClick={() => void empezarPresencial(alOido)}>
+              <Ic id="i-mic" s />
+              <span>{tp.empezar}</span>
+            </button>
+            <button className="btn" onClick={() => void empezarSoloNotas()}>
+              <Ic id="i-nota" s />
+              <span>{tc.soloNotas}</span>
+            </button>
+          </div>
+          {ensayoSinGuardar ? (
+            <div className="franja warn" role="status">
+              <Ic id="i-ensayo" s />
+              <p>
+                <b>{t.ensayoSinGuardar}.</b> {t.ensayoSinGuardarQue}
+              </p>
+            </div>
+          ) : (
+            <div className="fila">
+              <Promesa bytes={bytes} />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

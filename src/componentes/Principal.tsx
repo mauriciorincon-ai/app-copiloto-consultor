@@ -90,11 +90,19 @@ export function Principal({ busqueda = globalThis.location?.search ?? "" }: { bu
   // Y el ensayo no convive con una reunión (ADR 019 §6.5): fuera de Tauri, sus estados van sin sesión, y
   // también Honestidad «ensayando» (fase 4).
   const ensayandoEnHonestidad = q.get("pantalla") === "honestidad" && q.get("estado") === "ensayando";
+  // Presencial (sprint 005): no hay reunión en este Mac, y no hace falta (`sesion.html` · sprint 5 · presencial).
+  const presencialEnHonestidad = q.get("pantalla") === "honestidad" && q.get("estado") === "presencial";
+  const presencialDeMuestra =
+    !hayTauri() &&
+    (((q.get("pantalla") ?? "sesion") === "sesion" &&
+      (q.get("estado") === "presencial" || q.get("estado") === "presencial-marcha")) ||
+      presencialEnHonestidad);
   const sinReunionDeMuestra =
     !hayTauri() &&
     ((q.get("vista") === "puerta" && q.get("puerta") !== "en-reunion") ||
       q.get("pantalla") === "ensayo" ||
-      ensayandoEnHonestidad);
+      ensayandoEnHonestidad ||
+      presencialDeMuestra);
   const enSesion = reunion.que === "detectada" && !sinReunionDeMuestra;
   // El ensayo (sprint 004): el chip dice «Ensayando» mientras su micrófono está abierto. Fuera de Tauri,
   // en los estados de la maqueta que ensayan.
@@ -112,6 +120,12 @@ export function Principal({ busqueda = globalThis.location?.search ?? "" }: { bu
       cerrando={cerrando}
       bandeja={chipDeLaBandeja}
       ensayando={ensayando}
+      // La sala, en marcha: dentro de Tauri lo dice Rust; fuera, el estado «presencial · en marcha» de la maqueta.
+      presencial={
+        hayTauri()
+          ? escucha.presencial
+          : presencialDeMuestra && (q.get("estado") === "presencial-marcha" || presencialEnHonestidad)
+      }
       cliente={reunion.que === "detectada" ? reunion.cliente : undefined}
     >
       {seccion === "sesion" && (
