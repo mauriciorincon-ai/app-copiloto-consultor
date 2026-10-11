@@ -33,6 +33,7 @@ pub mod habla;
 pub mod hardware;
 pub mod jurisdiccion;
 pub mod llavero;
+pub mod modelo_whisper;
 pub mod modo;
 pub mod notas;
 pub mod pantalla;
@@ -42,6 +43,7 @@ pub mod propuestas;
 pub mod puerta;
 pub mod radar;
 pub mod red;
+pub mod reloj;
 pub mod relleno;
 pub mod reunion;
 pub mod sesion;
@@ -59,11 +61,23 @@ use tauri::{Emitter, Manager};
 /// mal**. En la carpeta de configuración de la app, nunca en el repo ni en un temporal del
 /// sistema: un temporal lo barre macOS, y entonces la ventana de la reunión se queda encogida sin
 /// que nadie sepa quién lo hizo.
+/// **La carpeta privada de la app** (ADR 022 §2). En macOS, `~/Library/Application Support/<id>`: la misma que dan
+/// `app_data_dir` y `app_config_dir`, así que allí nada cambia. En Windows esas dos caen en `%APPDATA%` (Roaming),
+/// que en un equipo de empresa puede sincronizarse con un servidor; tus notas, tu bandeja y tus ensayos no van ahí:
+/// van a la LOCAL, `%LOCALAPPDATA%\<id>`. Todo lo que la app escribe de ti nace aquí.
+pub(crate) fn carpeta_privada<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<PathBuf> {
+    #[cfg(windows)]
+    {
+        app.path().app_local_data_dir()
+    }
+    #[cfg(not(windows))]
+    {
+        app.path().app_data_dir()
+    }
+}
+
 fn huella<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
-    let base = app
-        .path()
-        .app_config_dir()
-        .unwrap_or_else(|_| std::env::temp_dir());
+    let base = carpeta_privada(app).unwrap_or_else(|_| std::env::temp_dir());
     acople::ruta_de_la_huella(&base)
 }
 
@@ -84,10 +98,7 @@ fn huella<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
 const DICCIONARIO: &str = "diccionario.yaml";
 
 fn ruta_del_diccionario<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
-    app.path()
-        .app_config_dir()
-        .unwrap_or_else(|_| std::env::temp_dir())
-        .join(DICCIONARIO)
+    carpeta_privada(app).unwrap_or_else(|_| std::env::temp_dir()).join(DICCIONARIO)
 }
 
 /// Deja el archivo escrito **si no existía**, con la semilla, y cierra sus permisos siempre.
@@ -180,7 +191,8 @@ impl EstadoDelDiccionario {
         let terminos = d.terminos().len();
         let del_corpus = d.cuantos_del_corpus();
         let ruta = ruta.display().to_string();
-        let ruta = match std::env::var("HOME") {
+        // La carpeta del usuario: `HOME` en macOS, `USERPROFILE` en Windows (ADR 022).
+        let ruta = match std::env::var("HOME").or_else(|_| std::env::var("USERPROFILE")) {
             Ok(casa) if !casa.is_empty() && ruta.starts_with(&casa) => format!("~{}", &ruta[casa.len()..]),
             _ => ruta,
         };
@@ -572,9 +584,7 @@ impl escucha::Buscador for ConPantalla {
 /// documentos del usuario**. La pantalla de corpus enseña esta ruta, porque quien confía su
 /// carpeta a una app tiene derecho a saber dónde acabó el derivado.
 fn donde_va_el_indice(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
-    use tauri::Manager;
-    app.path()
-        .app_data_dir()
+    carpeta_privada(app)
         .map(|d| d.join("corpus"))
         .map_err(|e| format!("no se supo dónde poner el índice: {e}"))
 }
@@ -2671,7 +2681,7 @@ struct LasPreferencias {
 }
 
 fn ruta_de_las_preferencias<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
-    app.path().app_config_dir().unwrap_or_else(|_| std::env::temp_dir()).join(prefs::ARCHIVO)
+    carpeta_privada(app).unwrap_or_else(|_| std::env::temp_dir()).join(prefs::ARCHIVO)
 }
 
 /// Pone el estado de la app como lo dejó el usuario. **El API no se enciende solo si su clave ya no
@@ -2835,18 +2845,13 @@ pub struct EstadoDelApi {
 }
 
 fn ruta_del_costo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
-    app.path().app_config_dir().unwrap_or_else(|_| std::env::temp_dir()).join(COSTO_DEL_MES)
+    carpeta_privada(app).unwrap_or_else(|_| std::env::temp_dir()).join(COSTO_DEL_MES)
 }
 
-/// «2026-09», en la hora del Mac. Sin traer una biblioteca de fechas para un año y un mes.
+/// «2026-09», en la hora del equipo (`reloj.rs`, ADR 022).
 fn mes_de_hoy() -> String {
-    // SEGURIDAD: `time` y `localtime_r` escriben en estructuras que viven en esta función.
-    unsafe {
-        let ahora = libc::time(std::ptr::null_mut());
-        let mut tm: libc::tm = std::mem::zeroed();
-        libc::localtime_r(&ahora, &mut tm);
-        format!("{}-{:02}", tm.tm_year + 1900, tm.tm_mon + 1)
-    }
+    let l = reloj::local(reloj::ahora());
+    format!("{}-{:02}", l.anio, l.mes)
 }
 
 /// El gasto del mes guardado; si es de otro mes, empieza en cero.
@@ -3522,15 +3527,10 @@ fn en_reunion<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> bool {
     escuchando || cuaderno || ensayando(app) || !matches!(sesion::ahora(), sesion::Reunion::Ninguna)
 }
 
-/// «11:04», la hora del Mac.
+/// «11:04», la hora del equipo (`reloj.rs`, ADR 022).
 fn hora_de_ahora() -> String {
-    // SEGURIDAD: `time` y `localtime_r` escriben en estructuras que viven en esta función.
-    unsafe {
-        let ahora = libc::time(std::ptr::null_mut());
-        let mut tm: libc::tm = std::mem::zeroed();
-        libc::localtime_r(&ahora, &mut tm);
-        format!("{:02}:{:02}", tm.tm_hour, tm.tm_min)
-    }
+    let l = reloj::local(reloj::ahora());
+    format!("{:02}:{:02}", l.hora, l.minuto)
 }
 
 const SIN_CORPUS: &str = "no hay corpus indexado en esta sesión de la app: señala tu carpeta en Corpus";
@@ -4163,6 +4163,8 @@ mod pruebas_del_gasto_del_mes {
 
     /// **El archivo del gasto no desaparece nunca** (M10): se escribe a un temporal y se renombra
     /// encima. Cada escritura deja el archivo con lo último, cerrado (600) y sin temporal al lado.
+    // Comprueba permisos de Unix (600/700): en Windows la carpeta hereda la ACL del perfil (ADR 022 §2).
+    #[cfg(unix)]
     #[test]
     fn el_gasto_se_reemplaza_sin_desaparecer() {
         use std::os::unix::fs::PermissionsExt;

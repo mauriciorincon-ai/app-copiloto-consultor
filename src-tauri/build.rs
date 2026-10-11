@@ -102,6 +102,9 @@ fn main() {
         tauri_build::Attributes::new().app_manifest(tauri_build::AppManifest::new().commands(COMANDOS)),
     )
     .expect("tauri-build no pudo generar el manifiesto de comandos");
+    // El `cfg` del puente se declara en TODAS las plataformas: si solo lo declarara macOS, compilar en Windows
+    // avisaría `unexpected_cfgs` en cada `cfg(puente_de_swift)` del crate (ADR 022).
+    println!("cargo:rustc-check-cfg=cfg(puente_de_swift)");
     #[cfg(target_os = "macos")]
     compilar_el_puente_de_swift();
 }
@@ -199,5 +202,4 @@ fn compilar_el_puente_de_swift() {
             );
         }
     }
-    println!("cargo:rustc-check-cfg=cfg(puente_de_swift)");
 }

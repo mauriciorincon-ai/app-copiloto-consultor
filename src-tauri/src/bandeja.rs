@@ -282,6 +282,8 @@ mod pruebas {
         let _ = std::fs::remove_dir_all(&raiz);
     }
 
+    // Comprueba permisos de Unix (600/700): en Windows la carpeta hereda la ACL del perfil (ADR 022 §2).
+    #[cfg(unix)]
     #[test]
     fn la_bandeja_nace_cerrada_cifrada_y_con_su_vencimiento() {
         use std::os::unix::fs::PermissionsExt;

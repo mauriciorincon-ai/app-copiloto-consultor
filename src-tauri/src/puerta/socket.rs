@@ -11,7 +11,10 @@
 //! de un `accept` si alguien borró el socket por fuera.
 
 use std::io::{BufRead, BufReader, Read, Write};
+#[cfg(unix)]
 use std::os::unix::net::{UnixListener, UnixStream};
+#[cfg(not(unix))]
+use sin_unix::{UnixListener, UnixStream};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -233,6 +236,72 @@ fn carpeta_en_700(_carpeta: &Path) -> bool {
 fn cerrar_permisos(ruta: &Path) -> std::io::Result<()> {
     use std::os::unix::fs::PermissionsExt;
     std::fs::set_permissions(ruta, std::fs::Permissions::from_mode(0o600)) // verify-ephemeral:allow — ADR 018 §1: el socket, en 600
+}
+
+#[cfg(not(unix))]
+fn cerrar_permisos(_ruta: &Path) -> std::io::Result<()> {
+    Err(sin_unix::no_hay())
+}
+
+/// **En Windows no hay puerta local** (ADR 022: «no en Windows» en el sprint 006). La puerta es un socket Unix en la
+/// carpeta privada de la app, y Windows no lo tiene en `std`. En vez de un `cfg` en cada línea de arriba, esto da la
+/// MISMA forma que los sockets de Unix y contesta siempre que no existe: abrir la puerta devuelve `NoAbre::Socket` (y
+/// antes ya lo para `carpeta_en_700`, que fuera de Unix es `false`), y `ghost` encuentra la puerta cerrada. Nada de
+/// esto toca la red: no hay socket que abrir.
+#[cfg(not(unix))]
+mod sin_unix {
+    use std::io;
+    use std::path::Path;
+    use std::time::Duration;
+
+    pub fn no_hay() -> io::Error {
+        io::Error::new(io::ErrorKind::Unsupported, "la puerta local no existe en Windows (ADR 022)")
+    }
+
+    pub struct UnixListener;
+    pub struct UnixStream;
+
+    impl UnixListener {
+        pub fn bind(_ruta: &Path) -> io::Result<UnixListener> {
+            Err(no_hay())
+        }
+        pub fn set_nonblocking(&self, _no: bool) -> io::Result<()> {
+            Err(no_hay())
+        }
+        pub fn accept(&self) -> io::Result<(UnixStream, ())> {
+            Err(no_hay())
+        }
+    }
+
+    impl UnixStream {
+        pub fn connect(_ruta: &Path) -> io::Result<UnixStream> {
+            Err(io::Error::new(io::ErrorKind::NotFound, "la puerta local no existe en Windows (ADR 022)"))
+        }
+        pub fn set_nonblocking(&self, _no: bool) -> io::Result<()> {
+            Err(no_hay())
+        }
+        pub fn set_read_timeout(&self, _t: Option<Duration>) -> io::Result<()> {
+            Err(no_hay())
+        }
+        pub fn set_write_timeout(&self, _t: Option<Duration>) -> io::Result<()> {
+            Err(no_hay())
+        }
+    }
+
+    impl io::Read for &UnixStream {
+        fn read(&mut self, _buf: &mut [u8]) -> io::Result<usize> {
+            Err(no_hay())
+        }
+    }
+
+    impl io::Write for UnixStream {
+        fn write(&mut self, _buf: &[u8]) -> io::Result<usize> {
+            Err(no_hay())
+        }
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
 }
 
 /// El hilo de una apertura: atiende de una en una y, entre conexiones, vigila la reunión.

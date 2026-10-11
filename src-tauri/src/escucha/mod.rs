@@ -1102,22 +1102,10 @@ pub(crate) fn la_hora() -> String {
     format!("{:02}:{:02}", del_dia / 3600, (del_dia % 3600) / 60)
 }
 
-#[cfg(unix)]
+/// Los segundos que la zona local lleva sobre UTC, ahora. Lo lee `reloj.rs` (ADR 022): `localtime_r` en Unix, el
+/// sistema por `chrono` en Windows — antes, fuera de Unix, era 0 y el transcript habría salido en hora de UTC.
 fn desplazamiento_local() -> i64 {
-    // `localtime_r` rellena `tm_gmtoff` con los segundos que la zona local lleva sobre UTC.
-    unsafe {
-        let ahora: libc::time_t = libc::time(std::ptr::null_mut());
-        let mut tm: libc::tm = std::mem::zeroed();
-        if libc::localtime_r(&ahora, &mut tm).is_null() {
-            return 0;
-        }
-        tm.tm_gmtoff as i64
-    }
-}
-
-#[cfg(not(unix))]
-fn desplazamiento_local() -> i64 {
-    0
+    crate::reloj::local(crate::reloj::ahora()).desplazamiento
 }
 
 /// Traduce el estado del motor a algo que se pueda enseñar. Es la última frontera antes de la

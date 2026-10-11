@@ -138,6 +138,12 @@ fn config_de<'a>(ventanas: &'a [WindowConfig], etiqueta: &str) -> Result<&'a Win
         .ok_or_else(|| format!("«{etiqueta}» no está declarada en tauri.conf.json"))
 }
 
+/// **¿Esta plataforma necesita relleno?** Solo macOS (ADR 022 §3). Allí la ventana protegida deja un hueco en la
+/// captura y el relleno lo tapa con tu fondo de escritorio. En Windows la ventana protegida se EXCLUYE de la captura
+/// (`WDA_EXCLUDEFROMCAPTURE`) y se ve lo que hay detrás: si hubiera un relleno debajo, sería él lo que se capturase,
+/// una franja negra donde estaba la banda. Allí no se crea.
+pub const HAY_RELLENO: bool = cfg!(target_os = "macos");
+
 /// Abre la banda y su relleno, en ese orden inverso: **primero el relleno, después la banda**, para
 /// que la banda quede encima. Las dos ocupan el ancho entero del monitor principal, en el borde que
 /// diga `borde` (sprint 004: arriba de fábrica, bajo la barra de menús; abajo como en el H1).
@@ -158,6 +164,9 @@ pub fn abrir_banda<R: Runtime>(app: &AppHandle<R>, borde: Borde, alto: u32) -> R
     let (ancho, x, y) = (f.ancho, f.x, f.y);
 
     for etiqueta in [RELLENO, BANDA] {
+        if etiqueta == RELLENO && !HAY_RELLENO {
+            continue;
+        }
         // Una por una y no «si falta alguna, las dos»: si alguna vez quedara el relleno sin su
         // banda, lo que hay que reponer es la banda, y abrir un segundo relleno encima del que ya
         // está sería dejar dos rectángulos opacos sobre la reunión.

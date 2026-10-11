@@ -230,33 +230,31 @@ fn launchctl(argumentos: &[&str]) -> bool {
         .is_ok_and(|s| s.success())
 }
 
+#[cfg(unix)]
 fn uid() -> u32 {
     // SEGURIDAD: `getuid` no recibe nada y no puede fallar.
     unsafe { libc::getuid() }
 }
 
+/// En Windows no hay launchd ni dominio `gui/<uid>`: la tarea que borra con la app cerrada llega en el S7 con el
+/// Programador de tareas (ADR 022), y `reunion::la_tarea` no la pide.
+#[cfg(not(unix))]
+fn uid() -> u32 {
+    0
+}
+
 /// El último segundo del día de `instante` en la hora del Mac: «fin del día» de la bandeja (ADR 016
 /// §4), las 23:59 del día en que cierras.
 pub fn fin_del_dia(instante: i64) -> i64 {
-    // SEGURIDAD: `localtime_r` escribe en una estructura que vive en esta función.
-    let pasado = unsafe {
-        let t = instante as libc::time_t;
-        let mut tm: libc::tm = std::mem::zeroed();
-        libc::localtime_r(&t, &mut tm);
-        i64::from(tm.tm_hour) * 3_600 + i64::from(tm.tm_min) * 60 + i64::from(tm.tm_sec)
-    };
+    let l = crate::reloj::local(instante);
+    let pasado = i64::from(l.hora) * 3_600 + i64::from(l.minuto) * 60 + i64::from(l.segundo);
     instante + (86_399 - pasado)
 }
 
-/// La hora del Mac de un instante Unix, con `localtime_r`: sin una biblioteca de fechas.
+/// La hora del equipo de un instante Unix (`reloj.rs`, ADR 022).
 pub fn hora_del_mac(instante: i64) -> Minuto {
-    // SEGURIDAD: `localtime_r` escribe en una estructura que vive en esta función.
-    unsafe {
-        let t = instante as libc::time_t;
-        let mut tm: libc::tm = std::mem::zeroed();
-        libc::localtime_r(&t, &mut tm);
-        Minuto { mes: (tm.tm_mon + 1) as u32, dia: tm.tm_mday as u32, hora: tm.tm_hour as u32, minuto: tm.tm_min as u32 }
-    }
+    let l = crate::reloj::local(instante);
+    Minuto { mes: l.mes, dia: l.dia, hora: l.hora, minuto: l.minuto }
 }
 
 #[cfg(test)]
