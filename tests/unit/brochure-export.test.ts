@@ -32,14 +32,31 @@ const MANUAL = "docs/MANUAL-DE-USO.md";
 const crudo = readFileSync(EXPORT, "utf8");
 const exportado = JSON.parse(crudo) as {
   _schema: Record<string, unknown>;
-  app: { version_repo: string; sprints_cerrados: number };
+  app: {
+    nombre: string;
+    ciclo: string;
+    version_repo: string;
+    sprints_cerrados: number;
+  };
   promesa: { tagline: string; intro: string; para_quien: string };
   funcionalidades: {
     total: number;
     fuente_del_conteo: string;
-    grupos: { features: { id: string; seccion_manual: string }[] }[];
+    grupos: {
+      nombre: string;
+      linea: string;
+      features: { id: string; seccion_manual: string }[];
+    }[];
   };
-  metricas: { clave: string; valor: number; fuente: string; detalle: string }[];
+  metricas: {
+    clave: string;
+    etiqueta: string;
+    unidad: string;
+    valor: number;
+    fuente: string;
+    detalle: string;
+  }[];
+  stack: { nombre: string; papel: string }[];
 };
 
 const features = exportado.funcionalidades.grupos.flatMap((g) => g.features);
@@ -59,24 +76,55 @@ function seccionesDelManual(): string[] {
 }
 
 /**
- * **Lo que la ficha técnica de CV Viva deriva de este export, y sus topes.** CV Viva (hoja-de-vida) arma con este
- * archivo la ficha técnica de la app, y su contrato (`app-hoja-de-vida/docs/contrato-ficha-tecnica/
- * plantilla.ficha-tecnica.json`, v1.3.1; `fichaTecnicaSchema` en el código de la vitrina) recorta lo que toma: el
- * tagline a 80 caracteres, la intro, el «para quién» y el detalle de cada cifra a 400. Con uno más largo la ficha no se
- * arma y el build de CV Viva falla, y CV Viva no edita lo que exporta otra app: el tope se vigila aquí, en origen. El
- * `diferencial` no viaja a la ficha y no tiene tope.
+ * **Lo que la ficha técnica de CV Viva deriva de este export, y sus topes: el contrato entero.** CV Viva (hoja-de-vida)
+ * arma con este archivo la ficha técnica de la app (`src/lib/vitrina/ficha-tecnica/armar.ts`), y su contrato
+ * (`docs/contrato-ficha-tecnica/plantilla.ficha-tecnica.json`, v1.3.1; `fichaTecnicaSchema`) recorta TODO lo que
+ * toma de aquí:
  *
- * ¿Puede fallar? Sí, y nació en rojo dos veces (PR «fix(brochure)…», a pedido de CV Viva): primero nombró los tres
- * detalles que pasaban —`pruebas_automaticas (475)`, `bytes_que_salen_del_equipo (563)`, `costo_operacion_mensual
- * (515)`—, y al cubrir la promesa, `promesa.intro (528 de 400)`.
+ *   - de la app, el nombre (≤ 60), el ciclo (≤ 16) y la versión (≤ 20);
+ *   - de la promesa, el tagline (≤ 80), la intro y el «para quién» (1–400);
+ *   - el stack, de 1 a 8 piezas, cada una con su nombre (≤ 40) y su papel (≤ 160);
+ *   - los grupos de funcionalidades, de 2 a 10, con su nombre (≤ 40) y su línea (≤ 120);
+ *   - y de cada métrica, porque cualquiera puede ser una «cifra destacada», la clave (≤ 60), la etiqueta (≤ 60), la
+ *     unidad (≤ 40) y el detalle (1–400).
+ *
+ * Con uno fuera de su tope la ficha no se arma y el build de CV Viva falla, y CV Viva no edita lo que exporta otra
+ * app: los topes se vigilan aquí, en origen. El `diferencial` no viaja a la ficha y no tiene tope.
+ *
+ * ¿Puede fallar? Sí, y nació en rojo tres veces, a pedido de CV Viva: primero nombró los tres detalles que pasaban
+ * —`pruebas_automaticas (475)`, `bytes_que_salen_del_equipo (563)`, `costo_operacion_mensual (515)`—; al cubrir la
+ * promesa, `promesa.intro (528 de 400)` (PR #17); y al cerrar el contrato entero, `stack (9 de 8)`.
  */
-const TOPES_DE_LA_FICHA: [string, string, number][] = [
-  ["promesa.tagline", exportado.promesa.tagline, 80],
-  ["promesa.intro", exportado.promesa.intro, 400],
-  ["promesa.para_quien", exportado.promesa.para_quien, 400],
-  ...exportado.metricas.map(
-    (m): [string, string, number] => [m.clave, m.detalle, 400],
-  ),
+type Tope = [campo: string, medida: number, minimo: number, maximo: number];
+const largo = (campo: string, texto: string, maximo: number, minimo = 1): Tope => [
+  campo,
+  texto.length,
+  minimo,
+  maximo,
+];
+const TOPES_DE_LA_FICHA: Tope[] = [
+  largo("app.nombre", exportado.app.nombre, 60),
+  largo("app.ciclo", exportado.app.ciclo, 16),
+  largo("app.version_repo", exportado.app.version_repo, 20),
+  largo("promesa.tagline", exportado.promesa.tagline, 80),
+  largo("promesa.intro", exportado.promesa.intro, 400),
+  largo("promesa.para_quien", exportado.promesa.para_quien, 400),
+  ["stack", exportado.stack.length, 1, 8],
+  ...exportado.stack.flatMap((p, i) => [
+    largo(`stack[${i}].nombre`, p.nombre, 40),
+    largo(`stack[${i}].papel`, p.papel, 160),
+  ]),
+  ["funcionalidades.grupos", exportado.funcionalidades.grupos.length, 2, 10],
+  ...exportado.funcionalidades.grupos.flatMap((g, i) => [
+    largo(`funcionalidades.grupos[${i}].nombre`, g.nombre, 40),
+    largo(`funcionalidades.grupos[${i}].linea`, g.linea, 120),
+  ]),
+  ...exportado.metricas.flatMap((m) => [
+    largo(`metricas.${m.clave}.clave`, m.clave, 60),
+    largo(`metricas.${m.clave}.etiqueta`, m.etiqueta, 60),
+    largo(`metricas.${m.clave}.unidad`, m.unidad, 40, 0),
+    largo(`metricas.${m.clave}.detalle`, m.detalle, 400),
+  ]),
 ];
 
 describe("brochure-export.json: el contrato de la vitrina", () => {
@@ -94,8 +142,12 @@ describe("brochure-export.json: el contrato de la vitrina", () => {
       ),
     ).toBe(true);
     const fuera = TOPES_DE_LA_FICHA.filter(
-      ([, texto, tope]) => texto.length < 1 || texto.length > tope,
-    ).map(([campo, texto, tope]) => `${campo} (${texto.length} de ${tope})`);
+      ([, medida, minimo, maximo]) => medida < minimo || medida > maximo,
+    ).map(([campo, medida, minimo, maximo]) =>
+      medida > maximo
+        ? `${campo} (${medida} de ${maximo})`
+        : `${campo} (${medida}, mínimo ${minimo})`,
+    );
     expect(
       fuera,
       `no caben en la ficha técnica de CV Viva: ${fuera.join(", ")}`,
