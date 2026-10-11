@@ -1,0 +1,339 @@
+{
+  "_schema": {
+    "_lee_esto_primero": "Este bloque documenta el formato y no es dato de la app. Se conserva en cada export para que el esquema viaje con el archivo: quien lo consuma no necesita buscar otro documento. Las apps que adopten este formato copian este bloque tal cual y rellenan el resto.",
+    "_origen": "Definido por app-dash-agent-ai en su entrega de brochure (2026-08-19). Es el PRIMER export del portafolio; las demás apps lo adoptan.",
+    "_consumidor": "La vitrina de hoja-de-vida. Renderiza la ficha de cada app sin abrir su repositorio.",
+    "_regla_madre": "Toda cifra de `metricas[]` lleva su etiqueta de `fuente`. Es la regla dura 3 de Dash Agent AI aplicada a su propia ficha: una app que exige procedencia a cada número de su pantalla no puede publicar cifras sueltas sobre sí misma. Se recomienda al resto del portafolio.",
+    "schema_version": "semver del FORMATO, no de la app. Cambio mayor = campo eliminado o con significado distinto; menor = campo nuevo opcional; parche = documentación.",
+    "app.estado": "\"inicial\" mientras el brochure describe la construcción cerrada; \"sellado\" cuando el gate de pruebas del usuario terminó. `sellado_en` es null hasta entonces.",
+    "funcionalidades.total": "El número que el brochure declara en su pie. `fuente_del_conteo` dice contra qué documento se cuadró — sin eso, el total es una afirmación.",
+    "funcionalidades.descartadas": "Las que se construyeron o se planearon y NO existen. Van aquí con su razón y su fecha para que nadie las cuente como pendientes ni como entregadas.",
+    "metricas[].fuente": "Una de cuatro: \"medido\" (salió de un contador o un comando), \"calculada\" (medido operado con una tarifa o una regla, y se dice cuál), \"declarado\" (lo fijó una persona), \"estimacion\" (deducido). Una cifra sin fuente no entra.",
+    "enlaces.produccion": "null cuando la app no tiene URL pública. `razon` explica por qué, y es lo que la vitrina muestra en lugar del enlace. Nunca se rellena con un enlace de repositorio ni con una promesa."
+  },
+  "schema_version": "1.0.0",
+  "actualizado": "2026-10-11",
+  "app": {
+    "slug": "copiloto-consultor",
+    "nombre": "AngelGhost",
+    "ciclo": "H1",
+    "estado": "inicial",
+    "sellado_en": null,
+    "sprints_cerrados": 5,
+    "version_repo": "0.1.0"
+  },
+  "promesa": {
+    "tagline": "Tu propia experiencia, en la reunión, en el momento justo — y solo tú la ves.",
+    "intro": "Una ventana pequeña que vive en tu Mac mientras estás en Zoom, Meet o Teams y que el cliente no ve aunque compartas pantalla. Escucha la conversación y mira lo que hay en pantalla, y cuando el cliente pregunta —«¿eso está en el alcance?», «¿han hecho algo así antes?», «¿por qué este número no cuadra?»— te pone delante la ficha exacta de tu propuesta, tu marco, tu caso o tu trayectoria: un titular, una línea y de dónde sale. Nada se graba, nada sale de tu equipo; al cerrar la reunión solo quedan las notas que tú escribiste.",
+    "para_quien": "Para el consultor de datos, BI e IA que hoy, con la pantalla compartida y una pregunta en el aire, elige entre responder de memoria o decir «déjame revisarlo y te cuento».",
+    "diferencial": "No es «un asistente invisible más». Los que existen son para ventas o entrevistas, en inglés, y viven de ocultarse. Esta responde desde tu propuesta, tu marco, tu caso y tu trayectoria; corre entera en tu Mac; y su promesa no es «nadie lo nota» sino «nada queda», demostrable con un contador y una prueba."
+  },
+  "funcionalidades": {
+    "total": 20,
+    "fuente_del_conteo": "docs/MANUAL-DE-USO.md",
+    "descartadas": [
+      {
+        "id": "X1",
+        "nombre": "Gemini como proveedor de la sugerencia",
+        "fecha": "2026-09-29",
+        "razon": "Salió por decisión del usuario, con la tabla de retención del ADR 011 delante: la Gemini Developer API no ofrece retención cero en ningún nivel. Quedan Claude y Groq, y la app dice lo que publica cada uno."
+      }
+    ],
+    "grupos": [
+      {
+        "orden": 1,
+        "estrella": true,
+        "nombre": "Nada queda, y se comprueba",
+        "linea": "Lo del cliente vive en memoria y muere al cerrar; lo tuyo se guarda cifrado en tu Mac, y la app enseña la cuenta.",
+        "features": [
+          {
+            "id": "N1",
+            "nombre": "Nada se graba, y se puede comprobar",
+            "que_hace": "El audio, lo que se dijo y el último cuadro leído de la pantalla viven solo en memoria y mueren al cerrar. Honestidad enseña cuánto ocupa cada uno ahora mismo y cuántos bytes salieron de tu equipo, y ⌥⎋ corta todo en el acto.",
+            "seccion_manual": "Nada se graba, y se puede comprobar"
+          },
+          {
+            "id": "N2",
+            "nombre": "Tus notas, cifradas",
+            "que_hace": "Tu nota, tus acuerdos y las fichas que fijaste se guardan al terminar en un archivo por reunión, cifrado, en la carpeta privada de la app. Del cliente no se guarda ni su voz, ni sus turnos, ni lo que se leyó de su pantalla.",
+            "seccion_manual": "Tus notas: lo único de la reunión que queda"
+          },
+          {
+            "id": "N3",
+            "nombre": "Te propone qué guardar, y la bandeja",
+            "que_hace": "Propone con reglas publicadas y sin modelo cifras, plazos, tus compromisos y lo que choca con una ficha fijada; nada entra sin tu sí, y del cliente, como mucho, un hecho de una línea. Lo que no decides espera en una bandeja con cuenta atrás (3 h de fábrica, 24 h como mucho) y se borra sola al vencer, aunque no abras la app.",
+            "seccion_manual": "La app te propone qué guardar, y la bandeja"
+          }
+        ]
+      },
+      {
+        "orden": 2,
+        "estrella": false,
+        "nombre": "Tu evidencia, en el momento justo",
+        "linea": "Una pregunta, una cifra, un término tuyo o un silencio, y aparece la ficha de tus propios documentos.",
+        "features": [
+          {
+            "id": "E1",
+            "nombre": "Tu corpus, indexado",
+            "que_hace": "Lee tus PDF, Word y Markdown donde están, sin copiarlos ni subirlos, y los reparte en las cinco unidades del trabajo de consultoría: propuesta, marco, caso, ficha de cliente y tu perfil.",
+            "seccion_manual": "Tu corpus, indexado"
+          },
+          {
+            "id": "E2",
+            "nombre": "La ficha en el momento justo",
+            "que_hace": "Cuando el cliente pregunta, dice una cifra, nombra algo de tus documentos o se queda callado, pone en la banda un titular de ocho palabras, una línea y la fuente exacta: documento y sección. Si tu corpus no tiene la respuesta pero sí algo cercano, te lo nombra. ⌃⌥A la pide a mano.",
+            "seccion_manual": "La ficha en el momento justo"
+          },
+          {
+            "id": "E3",
+            "nombre": "La sugerencia: qué decir, con su fuente",
+            "que_hace": "Debajo de la ficha propone qué decir en una frase, redactada por el modelo de tu Mac o, si lo enciendes con tu clave, por Claude o Groq. Dice dónde se redactó y con qué confianza, y la descarta si afirma algo que su ficha no dice: la ficha sigue a la vista.",
+            "seccion_manual": "La sugerencia: qué decir, con su fuente"
+          },
+          {
+            "id": "E4",
+            "nombre": "El modo solo audio: la ficha, al oído",
+            "que_hace": "Te lee la ficha en voz alta con la voz del sistema mientras la banda se encoge a una línea, para que recuperes la pantalla completa de la reunión. ⌃⌥V lo enciende y lo apaga; si el sonido sale por los altavoces del Mac, se calla.",
+            "seccion_manual": "El modo solo audio: la ficha, al oído"
+          }
+        ]
+      },
+      {
+        "orden": 3,
+        "estrella": false,
+        "nombre": "La ventana que solo tú ves",
+        "linea": "Una banda junto a la cámara que no aparece en lo que compartes.",
+        "features": [
+          {
+            "id": "V1",
+            "nombre": "La banda protegida",
+            "que_hace": "Una franja bajo la barra de menús, o abajo, donde aparece todo lo que la app tiene que decirte. Al compartir pantalla, el cliente ve tu fondo de escritorio en ese trozo. Está verificado en Google Meet sobre macOS 26.6.2 con la banda abajo; donde no se ha comprobado, la app dice «sin verificar».",
+            "seccion_manual": "La banda protegida"
+          },
+          {
+            "id": "V2",
+            "nombre": "El acople: la reunión se hace sitio",
+            "que_hace": "Le hace sitio a la banda en la ventana de la videollamada, como dos aplicaciones pegadas, y al cerrar la devuelve a su sitio y a su tamaño. Necesita el permiso de Accesibilidad; sin él, la banda flota encima y lo dice.",
+            "seccion_manual": "El acople: la reunión se hace sitio"
+          },
+          {
+            "id": "V3",
+            "nombre": "Arriba o abajo: la banda junto a la cámara",
+            "que_hace": "De fábrica la banda va arriba, bajo la barra de menús y junto a la cámara, para que leer la ficha se vea como mirar a quien habla. ⌃⌥B o Sesión la pasan abajo, y la ventana de la reunión se recoloca.",
+            "seccion_manual": "Arriba o abajo: la banda junto a la cámara"
+          }
+        ]
+      },
+      {
+        "orden": 4,
+        "estrella": false,
+        "nombre": "Escucha y lee, sin bot",
+        "linea": "Oye y lee lo que pasa en la reunión dentro de tu Mac, sin entrar en ella.",
+        "features": [
+          {
+            "id": "L1",
+            "nombre": "Escucha las dos pistas",
+            "que_hace": "Oye tu micrófono (tú) y el audio de tu Mac (el cliente) por separado y los convierte a texto dentro de tu equipo: sabe quién habla por la pista, sin identificar la voz de nadie. Ningún audio sale de tu Mac.",
+            "seccion_manual": "Escucha las dos pistas"
+          },
+          {
+            "id": "L2",
+            "nombre": "Presencial: la app escucha la sala",
+            "que_hace": "En la mesa con el cliente, o al lado de un PC con Windows donde corre la videollamada, escucha la sala solo por el micrófono del Mac —sin audio del sistema ni pantalla— y te da la ficha de siempre, de fábrica al oído. La tolerancia a tu propia voz son reglas sobre el texto y el tiempo, medidas con dos voces sintéticas, nunca una huella de voz.",
+            "seccion_manual": "Presencial: la app escucha la sala"
+          },
+          {
+            "id": "L3",
+            "nombre": "Lee la pantalla de la reunión",
+            "que_hace": "Mira la ventana de Zoom, Teams o Meet y solo lee lo nuevo, una vez: si trae una cifra o uno de tus términos te trae la ficha, y si dos fichas responden igual de bien, lo que se ve en pantalla desempata.",
+            "seccion_manual": "Lee la pantalla de la reunión"
+          },
+          {
+            "id": "L4",
+            "nombre": "El modelo de voz de un idioma",
+            "que_hace": "Idioma dice de cada pista si su modelo de voz de macOS está instalado y, si falta, ofrece instalarlo. Es la única vez que la transcripción toca la red, y solo porque tú lo pides.",
+            "seccion_manual": "El modelo de voz de un idioma"
+          },
+          {
+            "id": "L5",
+            "nombre": "Español e inglés, en todo",
+            "que_hace": "La app entera, incluidos los textos que macOS enseña al pedir permisos, está en español y en inglés, y sigue el idioma del sistema.",
+            "seccion_manual": "Español e inglés, en todo"
+          },
+          {
+            "id": "L6",
+            "nombre": "Tu diccionario técnico",
+            "que_hace": "Corrige después de transcribir la jerga que el motor de voz oye mal («power by» → Power BI, «the ax» → DAX), en tu Mac y sin modelo. Viene con la jerga de datos puesta, y los nombres de tus clientes salen solos de tu corpus.",
+            "seccion_manual": "Tu diccionario técnico"
+          }
+        ]
+      },
+      {
+        "orden": 5,
+        "estrella": false,
+        "nombre": "Antes de la reunión",
+        "linea": "Ensaya con las preguntas que ese cliente probablemente hará.",
+        "features": [
+          {
+            "id": "P1",
+            "nombre": "El ensayo: practica antes de la reunión",
+            "que_hace": "Eliges cliente y propuesta y la app te hace las preguntas que ese cliente probablemente hará, sacadas con reglas publicadas de tu propuesta, de su ficha y de un catálogo de objeciones de datos, BI e IA. Te escucha solo por el micrófono y te dice qué evidencia usaste y cuál tenías y no usaste, tu ritmo y tus muletillas; si lo guardas, queda cifrado con tus notas.",
+            "seccion_manual": "El ensayo: practica antes de la reunión"
+          }
+        ]
+      },
+      {
+        "orden": 6,
+        "estrella": false,
+        "nombre": "El marco y tu Mac, protegidos",
+        "linea": "Qué regla aplica a cada cliente, quién graba o te vigila, y un agente que opera la app sin tocar la reunión.",
+        "features": [
+          {
+            "id": "M1",
+            "nombre": "El marco en la mano: tu cliente, su jurisdicción y su NDA",
+            "que_hace": "Antes de empezar, Sesión enseña qué regla aplica a este cliente, con sus normas y su fecha; pregunta si su NDA prohíbe grabar o transcribir y, si lo prohíbe, propone el modo solo notas; y da una cláusula modelo para tu carta de encargo. Nunca te bloquea y dice siempre que no es asesoría legal.",
+            "seccion_manual": "El marco en la mano: tu cliente, su jurisdicción y su NDA"
+          },
+          {
+            "id": "M2",
+            "nombre": "El radar: quién graba y quién te vigila",
+            "que_hace": "Mirando solo tu Mac y tu pantalla, avisa en ámbar si la reunión muestra el aviso de grabación o un bot de notas, y en coral si en tu Mac corre software de monitoreo o proctoring de un catálogo con fuente. Jamás toca la máquina de nadie.",
+            "seccion_manual": "El radar: quién graba y quién te vigila"
+          },
+          {
+            "id": "M3",
+            "nombre": "La puerta local: que Claude Code opere la app",
+            "que_hace": "Claude Code, en tu Mac y en tu sesión, opera la app con el comando ghost: buscar en tu corpus, reindexarlo, correr el kit de evaluación, cambiar algunas preferencias y abrir tus notas guardadas. Nace cerrada, en reunión o durante un ensayo se cierra sola, y no sale a la red.",
+            "seccion_manual": "La puerta local: que Claude Code opere la app"
+          }
+        ]
+      }
+    ]
+  },
+  "metricas": [
+    {
+      "clave": "funcionalidades",
+      "etiqueta": "Funcionalidades construidas",
+      "valor": 20,
+      "unidad": "funcionalidades",
+      "fuente": "medido",
+      "detalle": "Las secciones de «Features» de docs/MANUAL-DE-USO.md, una por funcionalidad. tests/unit/brochure-export.test.ts las recuenta y exige que cada sección tenga su funcionalidad aquí y al revés. La VISION cuenta 30 porque suma las que faltan: Windows, el modo transparente y las del roadmap."
+    },
+    {
+      "clave": "pruebas_automaticas",
+      "etiqueta": "Pruebas automáticas",
+      "valor": 1476,
+      "unidad": "pruebas",
+      "fuente": "medido",
+      "detalle": "Las que corre la CI en cada cambio, contadas en sus corridas: Vitest 499 (la corrida local de este cambio dio 501; 2 de ellas comparan copias del contrato con sus originales y solo corren en local), cargo test 658 (librería 609, contra el Mac de verdad 30, la puerta 14 y ghost 5; las 3 «en_vivo_», que necesitan al usuario delante, se corren a mano) y Playwright 319, con 3 saltadas a propósito. Rust y Playwright, de la CI del cierre del sprint 005 (commit 62faf04, corrida 38115184113)."
+    },
+    {
+      "clave": "bytes_que_salen_del_equipo",
+      "etiqueta": "Bytes que salen del equipo en modo local",
+      "valor": 0,
+      "unidad": "bytes",
+      "fuente": "medido",
+      "detalle": "El contador de red de la app (src-tauri/src/red.rs), el que enseña Honestidad, arranca en 0 B y en modo local no se mueve. tests/unit/contador-de-red.test.ts demuestra que no hay más salidas a la red que las tres declaradas del puente nativo: las dos con que macOS descarga un modelo de voz cuando tú lo pides, y la del API externo de la sugerencia, que nace apagada y necesita tu clave. src-tauri/tests/puerta.rs (el_contador_de_red_no_se_mueve) comprueba que un agente operando la app por la puerta local no suma un byte. Ningún audio ni imagen sale del equipo."
+    },
+    {
+      "clave": "costo_operacion_mensual",
+      "etiqueta": "Costo de operación mensual",
+      "valor": 0,
+      "unidad": "USD",
+      "fuente": "calculada",
+      "detalle": "Suma de lo contratado, según docs/BLUEPRINT.html («Costo real por mes»): no hay hosting, servidor ni base de datos (US$0); la CI corre en GitHub Actions con el repositorio público (US$0); la voz, la lectura de pantalla y el modelo del sistema vienen con macOS (US$0). Solo hay costo variable si enciendes el API de la sugerencia con tu clave: pago por uso directo al proveedor, con un tope fijo de US$10 al mes. La cuenta de Apple Developer (US$99 al año) no se paga hoy: el binario se compila en local, sin firmar."
+    },
+    {
+      "clave": "decisiones_registradas",
+      "etiqueta": "Decisiones de arquitectura registradas",
+      "valor": 21,
+      "unidad": "ADR",
+      "fuente": "medido",
+      "detalle": "Archivos de decisions/ (001–021). Lo recuenta tests/unit/brochure-export.test.ts."
+    },
+    {
+      "clave": "precision_del_disparador",
+      "etiqueta": "Precisión del disparador sobre el kit",
+      "valor": 100,
+      "unidad": "%",
+      "fuente": "medido",
+      "detalle": "El kit del disparador, turno a turno, sobre textos sintéticos: precisión 1,000 y recall 1,000, con un mínimo exigido de 1,00. Lo midió la CI del cierre del sprint 005 (commit 62faf04, corrida 38115184113)."
+    },
+    {
+      "clave": "ndcg_del_buscador",
+      "etiqueta": "Calidad de la búsqueda en tu corpus (nDCG@5)",
+      "valor": 0.823,
+      "unidad": "nDCG@5",
+      "fuente": "medido",
+      "detalle": "Kit de evaluación v0: 30 preguntas sintéticas sobre un corpus de ejemplo, con un mínimo exigido de 0,80; las 4 preguntas sin respuesta se rechazan todas (1,000). Misma corrida de la CI."
+    },
+    {
+      "clave": "latencia_pregunta_a_ficha",
+      "etiqueta": "De la pregunta a la ficha, el peor caso del kit",
+      "valor": 1.3,
+      "unidad": "ms",
+      "fuente": "medido",
+      "detalle": "El tramo determinista del kit v0, de la pregunta transcrita a la ficha: mediana 0,706 ms, p90 0,998 ms, peor 1,3 ms. No incluye la captura ni la transcripción: el presupuesto de la app es de 4 s del fin de turno a la ficha, y ese tramo con voz real la CI no lo mide, porque no tiene modelos de voz. Misma corrida."
+    },
+    {
+      "clave": "fichas_falsas_por_tu_voz_en_la_sala",
+      "etiqueta": "Fichas falsas por tu voz en presencial",
+      "valor": 5,
+      "unidad": "fichas",
+      "fuente": "medido",
+      "detalle": "Kit v4 del modo presencial: dos salas con dos voces sintéticas (32 y 30 turnos). Con la regla elegida salen 5 fichas falsas por tus turnos, frente a 16 sin regla, y 5 pertinentes, tantas como sin regla; se pierden 9 de los 14 turnos del cliente que pedían ficha, igual que sin regla. Sin biometría de voz: son reglas sobre el texto y el tiempo. Misma corrida."
+    }
+  ],
+  "stack": [
+    {
+      "nombre": "Tauri 2 (Rust)",
+      "papel": "el núcleo nativo: captura, fin de turno, disparo, búsqueda, fichas y todo lo que se guarda; sin backend ni nube"
+    },
+    {
+      "nombre": "React + TypeScript",
+      "papel": "la interfaz, que solo pinta y conmuta, en español y en inglés"
+    },
+    {
+      "nombre": "Swift (puente nativo)",
+      "papel": "la voz, la lectura de pantalla, el Llavero y el modelo del sistema, por FFI desde Rust"
+    },
+    {
+      "nombre": "Apple SpeechAnalyzer",
+      "papel": "la transcripción, dentro del Mac"
+    },
+    {
+      "nombre": "Apple Vision",
+      "papel": "la lectura de la pantalla de la reunión, solo cuando cambia"
+    },
+    {
+      "nombre": "tantivy (BM25)",
+      "papel": "el índice local de tu corpus, por sección"
+    },
+    {
+      "nombre": "Apple Foundation Models",
+      "papel": "la sugerencia redactada en tu Mac; Claude o Groq, solo si los enciendes con tu clave"
+    },
+    {
+      "nombre": "XChaCha20-Poly1305 y el Llavero de macOS",
+      "papel": "el cifrado de tus notas y tus ensayos, con la llave solo en el Llavero"
+    },
+    {
+      "nombre": "Vitest, Playwright y cargo test",
+      "papel": "las pruebas, con los kits de evaluación medidos en cada corrida de la CI"
+    }
+  ],
+  "privacidad": {
+    "local_only": true,
+    "red_saliente": false,
+    "usa_ia": true,
+    "detalle": "Todo corre en tu Mac: la transcripción, la lectura de pantalla, la búsqueda y la sugerencia. El audio, el transcript y lo leído de la pantalla viven solo en memoria y mueren al cerrar; ningún audio ni imagen sale del equipo. Por defecto no hay tráfico de salida y el contador de Honestidad marca 0 B. Las dos salidas que existen las abres tú: la descarga de un modelo de voz de macOS, y el API externo de la sugerencia, que nace apagado y, si lo enciendes con tu clave, solo recibe texto minimizado y anonimizado en el Mac. La IA es un acento: la ficha del corpus no usa ningún modelo."
+  },
+  "enlaces": {
+    "produccion": null,
+    "razon": "App de escritorio para macOS: no tiene URL de producción. Se instala en el Mac, y por la regla de cero enlaces del portafolio este export no publica ningún enlace de acceso.",
+    "repositorio": null,
+    "razon_repositorio": "Ningún enlace viaja en este export: es la regla de cero enlaces del portafolio, no una cuestión de visibilidad del repositorio.",
+    "brochure_archivo": "docs/BROCHURE.html",
+    "brochure_ruta_local": "/conoce"
+  }
+}
