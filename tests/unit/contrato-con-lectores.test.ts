@@ -101,6 +101,12 @@ const DEUDA: Record<string, string> = {
   // `bytesPropuestas` salió del contrato —y del cuaderno—: «Se va a guardar» no tiene fila de
   // propuestas en la maqueta (la franja dice «Las 3 que guardaste van en tu archivo»), y un campo que
   // nadie pinta no cruza. `EstadoDeLaBandeja.bandejas` nació y salió en la misma fase, por lo mismo.
+
+  // ── Sprint 005, fase 1: el modo presencial cruzó antes que su pantalla; pagada en la fase 2 ──
+  //
+  // `EstadoDeEscucha.presencial` lo leen Sesión (la vista presencial, sin «A medias»), la banda (la cabecera
+  // de la sala), Honestidad y el rail. `IdiomasDePista.sala`, el selector «Idioma de la sala» de Sesión: la
+  // fila de Idioma no cabe con la franja aprobada y queda maquetada, no vista (bitácora del sprint 005).
 };
 
 /** Cada `export type X = … { … }`, con las variantes de una unión incluidas. */

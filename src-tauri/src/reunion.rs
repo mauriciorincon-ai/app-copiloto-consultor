@@ -434,7 +434,10 @@ pub fn contar_una_lectura<R: Runtime>(app: &AppHandle<R>) {
 
 /// Empieza una sesión. Si la reunión anterior seguía abierta con algo tuyo dentro, **se guarda
 /// primero**: nada tuyo se pierde por empezar otra.
-pub fn al_empezar<R: Runtime>(app: &AppHandle<R>) {
+///
+/// `tus_turnos` es lo que el modo deja (ADR 020 §5): en presencial, `false`, y «Conservar mis turnos» no
+/// guarda nada **sin que se toque tu preferencia**, que vuelve a valer en la siguiente reunión.
+pub fn al_empezar<R: Runtime>(app: &AppHandle<R>, tus_turnos: bool) {
     let Some(el) = app.try_state::<ElCuaderno>() else { return };
     if el.hay_que_guardar_la_anterior() {
         match guardar(app) {
@@ -442,10 +445,15 @@ pub fn al_empezar<R: Runtime>(app: &AppHandle<R>) {
             Err(e) => println!("[notas] la reunión anterior seguía abierta y no se pudo guardar: {}", sin_ruta(&e)),
         }
     }
-    el.abrir(preferencias(app).conservar_mis_turnos, fecha_de_ahora());
+    el.abrir(conservar_en_este_modo(preferencias(app).conservar_mis_turnos, tus_turnos), fecha_de_ahora());
     let fallo = ventana::proteger_el_cuaderno(app, true).is_err();
     el.sin_proteger.store(fallo, Ordering::Relaxed);
     avisar(app);
+}
+
+/// «Conservar mis turnos» en esta sesión: tu preferencia, **si el modo lo deja**. Pura, para probarla.
+pub fn conservar_en_este_modo(preferencia: bool, el_modo_lo_deja: bool) -> bool {
+    preferencia && el_modo_lo_deja
 }
 
 /// Dejaste de escuchar. Con algo tuyo dentro, la reunión sigue abierta —y el cuaderno protegido—
@@ -598,10 +606,15 @@ pub fn ver<R: Runtime>(app: &AppHandle<R>, aparicion: &crate::ficha::Aparicion) 
 }
 
 /// Un turno recién transcrito: el cuaderno decide si es tuyo (`notas::Cuaderno::oir`). Los del
-/// cliente solo se CUENTAN, para «Muere al cerrar».
+/// cliente solo se CUENTAN, para «Muere al cerrar» — **y los de la sala también** (ADR 020): no son
+/// tuyos, así que mueren al cerrar como los del cliente.
 pub fn oir<R: Runtime>(app: &AppHandle<R>, turno: &crate::stt::Turno) {
     let Some(el) = app.try_state::<ElCuaderno>() else { return };
-    if turno.pista == crate::capture::Pista::Sistema && !turno.texto.trim().is_empty() {
+    let muere_al_cerrar = match turno.pista.quien() {
+        crate::capture::Quien::Cliente | crate::capture::Quien::SinAtribuir => true,
+        crate::capture::Quien::Tuyo => false,
+    };
+    if muere_al_cerrar && !turno.texto.trim().is_empty() {
         el.turnos_del_cliente.fetch_add(1, Ordering::Relaxed);
     }
     el.con(|c| c.oir(turno));
@@ -894,9 +907,11 @@ pub fn soltar_fijada<R: Runtime>(app: &AppHandle<R>, indice: usize) -> bool {
     app.try_state::<ElCuaderno>().and_then(|el| el.con(|c| c.soltar_fijada(indice))).unwrap_or(false)
 }
 
-pub fn conservar_mis_turnos<R: Runtime>(app: &AppHandle<R>, si: bool) {
+/// El interruptor: **tu preferencia se recuerda tal cual; la sesión solo la usa si el modo lo deja** (ADR 020
+/// §5). En presencial encenderlo no guarda nada, y en la reunión siguiente vuelve a valer.
+pub fn conservar_mis_turnos<R: Runtime>(app: &AppHandle<R>, si: bool, el_modo_lo_deja: bool) {
     if let Some(el) = app.try_state::<ElCuaderno>() {
-        el.con(|c| c.conservar_mis_turnos(si));
+        el.con(|c| c.conservar_mis_turnos(conservar_en_este_modo(si, el_modo_lo_deja)));
     }
     crate::recordar(app, |p| p.conservar_mis_turnos = si);
 }
@@ -1086,6 +1101,31 @@ mod pruebas {
             seccion: None,
             hora: "14:16".into(),
         }
+    }
+
+    /// **«Conservar mis turnos» solo vale si el modo lo deja** (ADR 020 §5): en presencial, apagado aunque tu
+    /// preferencia diga que sí, y la preferencia no se toca. Y abrir el cuaderno con lo que dice esta función
+    /// deja la casilla apagada: un turno tuyo no entra.
+    ///
+    /// ¿Puede fallar? Sí: con `preferencia || el_modo_lo_deja` presencial conservaría tus turnos (bitácora
+    /// del sprint 005, fase 1).
+    #[test]
+    fn conservar_mis_turnos_solo_si_el_modo_lo_deja() {
+        assert!(conservar_en_este_modo(true, true), "en reunión, tu preferencia manda");
+        assert!(!conservar_en_este_modo(true, false), "en presencial no se conservan tus turnos");
+        assert!(!conservar_en_este_modo(false, true));
+        assert!(!conservar_en_este_modo(false, false));
+        let el = ElCuaderno::default();
+        el.abrir(conservar_en_este_modo(true, false), HOY);
+        let turno = crate::stt::Turno {
+            pista: crate::capture::Pista::Microfono,
+            desde_ms: 0,
+            hasta_ms: 1_000,
+            texto: "Te lo mando el lunes.".into(),
+            hora: "14:02".into(),
+            eco: false,
+        };
+        assert_eq!(el.con(|c| c.oir(&turno)), Some(false), "el cuaderno conservó un turno con la casilla apagada por el modo");
     }
 
     #[test]

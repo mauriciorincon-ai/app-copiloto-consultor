@@ -1,0 +1,13 @@
+{
+  "_leeme": "La tolerancia a tu voz en el modo presencial (ADR 020 §3): la sala no tiene dueño, así que delante del disparador de siempre, y solo para los turnos de la sala, van estas reglas sobre el texto y el tiempo. Cero biometría de voz (regla dura 4). Los valores los eligió la medición del kit v4 (docs/kit-de-prueba/presencial.json, ADR 020 «Medición»): tras una ficha la sala espera 15 s, un término suelto no basta, el silencio no dispara y ningún turno pasa de 15 s.",
+  "version": 1,
+  "fecha": "2026-10-10",
+  "estado": "elegida en el STOP de medición del sprint 005: la primera por el criterio del kit v4 (5 pertinentes, 5 falsas, 9 perdidas de 14; la línea base, 5, 16 y 9) y el tope de 15 s del nivel B",
+  "tolerancia": {
+    "esperaTrasFichaMs": 15000,
+    "ecoDeLaFicha": null,
+    "soloPreguntaOCifra": true,
+    "silencio": false,
+    "topeDeTurnoMs": 15000
+  }
+}

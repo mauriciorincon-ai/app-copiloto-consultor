@@ -18,6 +18,10 @@ en su lugar las del binario, los permisos del sistema y la no-persistencia.
 > mientras la CI daba verde; desde v1.28.0 corre en `build-escritorio`)*.
 
 ### 1. Tests
+- **Regla 25 (kit v1.36.0/v1.40.0; en esta app, dentro de la regla 22):** `cargo test`/`pnpm test` a secas no abren
+  hardware ni permisos (centinela o marca); lo `hardware` lo corrió la CI con `--include-ignored --skip en_vivo_`; lo
+  `en_vivo_*` se corrió a mano con la matriz de la regla 24 (la 22 de esta casa) y su «sí», o se declara aplazado con
+  su fecha.
 - [ ] `pnpm test` verde (con su `--coverage`); cobertura ≥70 % en `src/**` sin errores de glob.
 - [ ] `pnpm test:e2e` verde y con CERO flaky (la UI de la webview vía `pnpm preview`).
 - [ ] `cargo test --locked` verde en `src-tauri/` (lo nativo: captura, ventana, permisos, buffers).
@@ -26,14 +30,18 @@ en su lugar las del binario, los permisos del sistema y la no-persistencia.
       `#[ignore = "hardware: …"]` y lo corre la CI con `-- --include-ignored --skip en_vivo_`; lo que solo
       puede correr en el Mac del usuario se llama `en_vivo_*` y se corre a mano, con su matriz y su «sí».
       En la CI el paso a secas corre con `AG_SIN_HARDWARE=1`, que hace saltar el centinela en cualquier
-      entrada nativa abierta sin la marca. *(El kit no actualizó este checklist para las reglas 24/25:
-      K-S4, bitácora del sprint 004.)*
+      entrada nativa abierta sin la marca. *(El kit lo incorporó en v1.40.0, K-S4-4; esta casilla conserva
+      el detalle propio de esta app: el centinela de `src-tauri/src/hardware.rs`.)*
 
 ### 2. Type safety y lint
 - [ ] `pnpm typecheck` sin errores · `pnpm lint` sin warnings nuevos · `cargo clippy --locked -- -D warnings` limpio (corre en `build-escritorio`, kit v1.28.0).
 - [ ] Tokens de tinta vetados y reduced-motion como en `/deploy-check` §3 (la UI sigue siendo web).
 
 ### 3. Build del binario
+- **Regla 28 (kit v1.40.0; en esta app, regla 27 «parejas entre ecosistemas»):** `pnpm tauri build` se corre TAMBIÉN
+  cuando entró un lote de dependencias en el sprint (Dependabot), no solo al cierre; y
+  `tests/unit/tauri-a-la-par.test.ts` está en verde. *(Este repo, S4: npm en 2.12, crates en 2.11, CI verde, binario
+  imposible.)*
 - [ ] `pnpm build` (frontend) verde · `cargo check --locked` verde en CI (`build-escritorio`).
 - [ ] `pnpm tauri build` corre en local y produce el bundle (`.app`/`.dmg` en macOS); tamaño
       anotado en la bitácora (regresiones de peso se ven aquí, no en Lighthouse). **`manual`:**
@@ -45,6 +53,9 @@ en su lugar las del binario, los permisos del sistema y la no-persistencia.
       `tauri.conf.json`/`Info.plist` declara qué cambió en permisos y entitlements.
 
 ### 4. Permisos del sistema (TCC en macOS)
+- **Regla 24 (kit v1.36.0; en esta app, regla 22):** cada protección del sistema que el sprint tocó (Llavero, TCC,
+  launchd, ítems de inicio, Touch ID, Automatización) tiene su fila de matriz y su «sí» en la bitácora; lo no corrido se
+  declara aplazado.
 - [ ] Cada permiso que la app pide (micrófono · pantalla y audio del sistema · accesibilidad)
       tiene su `NS*UsageDescription` en español e inglés y su estado en la UI con símbolo + texto
       + color (daltonismo).

@@ -237,3 +237,23 @@ no abre la pista del sistema, y con una videollamada abierta no empieza por los 
 1, auditoría del S4—), y un archivo intruso en `ensayos/` lo pone en rojo (fase 4). Las tres
 preferencias no son nuevas para el inventario: son campos de un archivo que ya estaba.
 
+## Enmienda 9 — el idioma de la sala, y lo que el modo presencial NO guarda (sprint 005, fase 0, 2026-10-05)
+
+`preferencias.json` gana **un** campo, dentro de `idiomasDePista`: **`sala`**, el idioma en que la app escucha la sala
+en el modo presencial (ADR 020 §6, enmienda 1 del ADR 009). Es tuyo, como los otros dos idiomas, y vive en 600 como el
+resto del archivo. **De fábrica es el de la pista del cliente**: un archivo de antes de este sprint, sin el campo, se lee
+igual y la sala escucha en el idioma del cliente.
+
+**El modo presencial no guarda nada nuevo de nadie.** La sala no tiene dueño (ADR 020 §2), así que:
+
+- **«Conservar mis turnos» se apaga en presencial** sin tocar tu preferencia: ningún turno de la sala se escribe, ni
+  siquiera uno que dijiste tú, porque la app no sabe cuál fue (ADR 020 §5);
+- **no hay propuestas automáticas**, así que la bandeja no recibe nada de una sesión presencial;
+- tus notas, tus fichas fijadas y tus acuerdos escritos se guardan como siempre, porque los escribes tú.
+
+El modo elegido y cómo ves la ficha («al oído» o la banda) **no se recuerdan**: se eligen en cada sesión, igual que el
+modo solo audio en una reunión (`prefs.rs`, «qué NO entra»).
+
+**Lo que entra en el inventario del efímero:** nada. `Permitido` no cambia: el campo nuevo es parte de un archivo que
+ya estaba, y la sesión completa del gate en marcha gana un paso presencial con un término plantado en un turno de la
+sala, que no puede aparecer en el disco ni en el log.

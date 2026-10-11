@@ -102,9 +102,12 @@ for (const estado of estados) {
 
       // Desborde: contenido que no cabe en su caja (la banda tiene `overflow:hidden` — lo que
       // no cabe DESAPARECE en silencio, que es exactamente el fallo que hay que cazar).
+      // Y el área que desplaza de las ventanas (`.ventana .contenido`), que hasta el sprint 005 no
+      // miraba: dijo «ninguno» con Idioma pasándose 113 px y Sesión 11 px, y los cazó `maqueta-cabe`
+      // (bitácora del sprint 005, fase 0). Misma tolerancia que ese gate: 1 px.
       const fuera = await pag.evaluate(() => {
         const out = [];
-        for (const el of document.querySelectorAll(".banda, .panel, .pildora, .banda .cuerpo-b, .banda .lado-b, .banda .ficha-b")) {
+        for (const el of document.querySelectorAll(".banda, .panel, .pildora, .banda .cuerpo-b, .banda .lado-b, .banda .ficha-b, .ventana .contenido")) {
           if (el.offsetParent === null && el.hidden) continue;
           const dv = el.scrollHeight - el.clientHeight;
           const dh = el.scrollWidth - el.clientWidth;
@@ -134,7 +137,10 @@ for (const estado of estados) {
         window.scrollTo(0, 0);
       }, ".mq-bar, .mq-nota, .mq-choque, .mq-corte, .mq-etiqueta, .mq-tabla-pos, .mq-hero, .mq-grupo");
       let recortado = false;
-      for (const sel of [".banda", ".panel", ".pildora"]) {
+      // `.ventana` desde el sprint 005: sin ella, toda página de ventana (Sesión, Idioma, Honestidad…)
+      // terminaba «sin recorte» y el arnés salía con 2 aunque todo estuviera bien — un rojo
+      // permanente es un gate que nadie puede leer.
+      for (const sel of [".banda", ".panel", ".pildora", ".ventana"]) {
         for (const el of await pag.$$(sel)) {
           if (!(await el.isVisible())) continue;
           await el.screenshot({ path: join(SALIDA, "solo", nombre) });

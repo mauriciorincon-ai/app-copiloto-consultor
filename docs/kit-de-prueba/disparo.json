@@ -117,11 +117,11 @@
       "porque": "pregunta en inglés: las reglas son bilingües"
     },
     {
-      "dice": "We have four data sources, not three.",
+      "dice": "We have 4 data sources, not 3.",
       "pista": "sistema",
       "ms": 84000,
       "dispara": true,
-      "porque": "cifra en inglés"
+      "porque": "cifra en inglés, en dígitos como la escribe el transcriptor. Hasta el sprint 005 decía «four… three» y disparaba por el «have» de la segunda palabra, que contaba como pregunta, no por la cifra: lo destapó el kit v4 al arreglar los auxiliares del inglés (la cifra con letras es la limitación declarada de «catorce», arriba)"
     },
     {
       "dice": "That sounds reasonable to me.",

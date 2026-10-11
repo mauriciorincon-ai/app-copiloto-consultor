@@ -121,12 +121,44 @@ pub enum PorQueNoSeSabe {
 /// Marca de quién habló. **Por PISTA, jamás por biometría** (regla de cero huellas de voz):
 /// el micrófono es el consultor y el audio del sistema es la contraparte, y eso se sabe por
 /// el origen de la muestra, no por analizar la voz.
+///
+/// **Y la sala, que no tiene dueño** (sprint 005, ADR 020). En el modo presencial las dos voces
+/// entran por el mismo micrófono, así que la pista dice de dónde viene el audio —la sala— y no de
+/// quién es. Nadie lo adivina por la voz: lo que no se sabe, se dice.
+///
+/// **De quién es un turno se pregunta con [`Pista::quien`], nunca comparando pistas.** Hasta el
+/// sprint 005 unos veinticinco sitios preguntaban `pista == Pista::Sistema`; con una tercera pista
+/// esa comparación habría dado «no es del cliente, luego es tuyo» y la sala habría acabado en tus
+/// propuestas. Con el `match` de `quien()`, sin comodín, el compilador obliga a decidir en cada sitio.
+/// Lo vigila `tests/unit/pista-por-quien.test.ts`: fuera de `capture/`, nadie compara con
+/// `Pista::Sistema` ni con `Pista::Microfono`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Pista {
-    /// Micrófono: el consultor.
+    /// Micrófono, en una reunión: el consultor.
     Microfono,
     /// Audio del sistema: la contraparte.
+    Sistema,
+    /// **El micrófono en el modo presencial: la sala entera**, tú y el cliente por el mismo canal.
+    Sala,
+}
+
+/// De quién es lo que se oyó por una pista.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Quien {
+    /// El consultor: el micrófono en una reunión.
+    Tuyo,
+    /// La contraparte: el audio del sistema.
+    Cliente,
+    /// **Nadie lo sabe**: la sala, en presencial. Ni se guarda como tuyo ni se propone como del cliente.
+    SinAtribuir,
+}
+
+/// **El dispositivo por el que entra el audio.** No es lo mismo que la pista: la sala entra por el
+/// micrófono y no es tuya. Lo usan solo quienes abren grifos o preguntan por permisos.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Fuente {
+    Microfono,
     Sistema,
 }
 
@@ -136,6 +168,25 @@ impl Pista {
         match self {
             Pista::Microfono => "microfono",
             Pista::Sistema => "sistema",
+            Pista::Sala => "sala",
+        }
+    }
+
+    /// De quién es lo que se oyó por esta pista. **Sin comodín**: una pista nueva no compila hasta
+    /// que alguien decida de quién es.
+    pub fn quien(self) -> Quien {
+        match self {
+            Pista::Microfono => Quien::Tuyo,
+            Pista::Sistema => Quien::Cliente,
+            Pista::Sala => Quien::SinAtribuir,
+        }
+    }
+
+    /// Por qué dispositivo entra.
+    pub fn fuente(self) -> Fuente {
+        match self {
+            Pista::Microfono | Pista::Sala => Fuente::Microfono,
+            Pista::Sistema => Fuente::Sistema,
         }
     }
 }
@@ -150,5 +201,18 @@ mod tests {
         assert_eq!(Pista::Microfono.etiqueta(), "microfono");
         assert_eq!(Pista::Sistema.etiqueta(), "sistema");
         assert_ne!(Pista::Microfono, Pista::Sistema);
+    }
+
+    /// **La sala no es de nadie, y entra por el micrófono.** ¿Puede fallar? Sí: con
+    /// `Pista::Sala => Quien::Tuyo` la sala acabaría guardada como tus turnos, y este test lo dice.
+    #[test]
+    fn la_sala_no_tiene_dueno_y_entra_por_el_microfono() {
+        assert_eq!(Pista::Microfono.quien(), Quien::Tuyo);
+        assert_eq!(Pista::Sistema.quien(), Quien::Cliente);
+        assert_eq!(Pista::Sala.quien(), Quien::SinAtribuir);
+        assert_eq!(Pista::Sala.fuente(), Fuente::Microfono);
+        assert_eq!(Pista::Microfono.fuente(), Fuente::Microfono);
+        assert_eq!(Pista::Sistema.fuente(), Fuente::Sistema);
+        assert_eq!(Pista::Sala.etiqueta(), "sala");
     }
 }

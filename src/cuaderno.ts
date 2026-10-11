@@ -244,6 +244,11 @@ export type EstadoDeEscucha = {
   escuchando: boolean;
   /** La reunión va en modo solo notas (ADR 017 §5): hay reunión y nada se captura. */
   soloNotas: boolean;
+  /**
+   * La sesión es presencial (sprint 005, ADR 020): `microfono` es la pista de la sala, y `sistema` va
+   * cerrada a propósito —sin motivo, porque no es una avería—.
+   */
+  presencial: boolean;
   microfono: EstadoDePista;
   sistema: EstadoDePista;
   // `turnosEnMemoria` salió por la misma decisión: Honestidad cuenta el transcript por sus bytes.
@@ -296,7 +301,8 @@ export type InformeDelCorte = {
   piezas: [PiezaDelCorte, SuerteDelCorte][];
 };
 
-export type Pista = "microfono" | "sistema";
+/** «sala» (sprint 005, ADR 020): el micrófono en presencial, con las dos voces y sin dueño. */
+export type Pista = "microfono" | "sistema" | "sala";
 
 export type Turno = {
   pista: Pista;
@@ -324,6 +330,7 @@ export type QueSabeTranscribir = {
 const ESCUCHA_DE_MUESTRA: EstadoDeEscucha = {
   escuchando: true,
   soloNotas: false,
+  presencial: false,
   microfono: {
     abierta: true,
     motivo: null,
@@ -404,6 +411,7 @@ export function useEscucha(): EstadoDeEscucha {
 const APAGADA: EstadoDeEscucha = {
   escuchando: false,
   soloNotas: false,
+  presencial: false,
   microfono: {
     abierta: false,
     motivo: null,
@@ -426,6 +434,7 @@ const APAGADA: EstadoDeEscucha = {
 export const ESCUCHA_DEL_ENSAYO_DE_MUESTRA: EstadoDeEscucha = {
   escuchando: false,
   soloNotas: false,
+  presencial: false,
   microfono: { abierta: true, motivo: null, bytes: 1_920_000 },
   sistema: { abierta: false, motivo: null, bytes: 0 },
   bytesDelTranscript: 0,
@@ -446,11 +455,13 @@ export const ESCUCHA_DEL_ENSAYO_DE_MUESTRA: EstadoDeEscucha = {
  * | `encendida` | la banda vive a 44 px en vez de 88 |
  * | `puede` | cuál de los dos estados se pinta: «Diciéndote la ficha…» o «Conecta auriculares» |
  * | `diciendo` | si está sonando ahora mismo |
+ * | `esperando` | en presencial, la ficha espera a que la sala calle (ADR 020 §7): «La sala habla · te la digo cuando calle» |
  */
 export type LaVoz = {
   encendida: boolean;
   puede: boolean;
   diciendo: boolean;
+  esperando: boolean;
 };
 
 /** La voz apagada, que es como nace la app — y como la pinta el arnés de capturas. */
@@ -458,6 +469,7 @@ export const VOZ_APAGADA: LaVoz = {
   encendida: false,
   puede: false,
   diciendo: false,
+  esperando: false,
 };
 
 /**
@@ -488,6 +500,14 @@ export function useVoz(): LaVoz {
     };
   }, []);
   return voz;
+}
+
+/**
+ * **Cómo ves la ficha en presencial, con la sesión en marcha** (ADR 020 §7): al oído enciende el modo solo audio
+ * y la banda lo apaga, por el mismo camino que `⌃⌥V`. Pedir lo que ya está no conmuta nada.
+ */
+export function fijarLaVoz(alOido: boolean): Promise<LaVoz | null> {
+  return preguntar<LaVoz>("fijar_la_voz", { alOido });
 }
 
 /**
@@ -620,7 +640,11 @@ export function useQueSabeTranscribir(): QueSabeTranscribir {
  * los clientes del usuario lo son— y **se recuerdan** (sprint 003, ADR 002 enmienda 2): Rust las
  * guarda en `preferencias.json` y el cuaderno las pide al abrirse.
  */
-export type IdiomasDePista = { consultor: string; cliente: string };
+/**
+ * `sala` (sprint 005, ADR 020 §6): el idioma de la sala en presencial. Sin elegir no cruza, y la sala
+ * escucha en el del cliente.
+ */
+export type IdiomasDePista = { consultor: string; cliente: string; sala?: string };
 let idiomasDePista: IdiomasDePista = { consultor: "es-ES", cliente: "es-ES" };
 const oyentesDeIdioma = new Set<() => void>();
 /** Se piden a Rust una vez, al primer lector; si el usuario elige antes de que lleguen, manda él. */

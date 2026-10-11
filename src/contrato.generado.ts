@@ -109,6 +109,15 @@ export const TURNO_DEL_CLIENTE: Turno = {
     "texto": "¿Y la limpieza de datos está dentro del alcance?"
   };
 
+export const TURNO_DE_LA_SALA: Turno = {
+    "desdeMs": 5400,
+    "eco": false,
+    "hastaMs": 8000,
+    "hora": "14:02",
+    "pista": "sala",
+    "texto": "¿Y la limpieza de datos está dentro del alcance?"
+  };
+
 export const REUNION_NINGUNA: Reunion = {
     "que": "ninguna"
   };
@@ -142,10 +151,30 @@ export const ESTADO_DE_LA_ESCUCHA: EstadoDeEscucha = {
       "bytes": 1920000,
       "motivo": null
     },
+    "presencial": false,
     "sistema": {
       "abierta": false,
       "bytes": 0,
       "motivo": "dispositivo-ocupado"
+    },
+    "soloNotas": false
+  };
+
+export const ESTADO_DE_LA_ESCUCHA_PRESENCIAL: EstadoDeEscucha = {
+    "bytesDelEnsayo": 0,
+    "bytesDelTranscript": 2048,
+    "ensayo": false,
+    "escuchando": true,
+    "microfono": {
+      "abierta": true,
+      "bytes": 1920000,
+      "motivo": null
+    },
+    "presencial": true,
+    "sistema": {
+      "abierta": false,
+      "bytes": 0,
+      "motivo": null
     },
     "soloNotas": false
   };
@@ -160,6 +189,7 @@ export const ESTADO_DE_LA_ESCUCHA_EN_UN_ENSAYO: EstadoDeEscucha = {
       "bytes": 1920000,
       "motivo": null
     },
+    "presencial": false,
     "sistema": {
       "abierta": false,
       "bytes": 0,
@@ -276,19 +306,29 @@ export const INFORME_DEL_CORTE: InformeDelCorte = {
 export const LA_VOZ_APAGADA: LaVoz = {
     "diciendo": false,
     "encendida": false,
+    "esperando": false,
     "puede": false
   };
 
 export const LA_VOZ_DICIENDO: LaVoz = {
     "diciendo": true,
     "encendida": true,
+    "esperando": false,
     "puede": true
   };
 
 export const LA_VOZ_SIN_AURICULARES: LaVoz = {
     "diciendo": false,
     "encendida": true,
+    "esperando": false,
     "puede": false
+  };
+
+export const LA_VOZ_ESPERANDO_A_LA_SALA: LaVoz = {
+    "diciendo": false,
+    "encendida": true,
+    "esperando": true,
+    "puede": true
   };
 
 export const PANTALLA_LEYENDO: EstadoDeLaPantalla = {
@@ -988,7 +1028,8 @@ export const LO_QUE_SALIO_DEL_BANCO: LoQueSalio = {
 
 export const IDIOMAS_DE_PISTA: IdiomasDePista = {
     "cliente": "en-US",
-    "consultor": "es-ES"
+    "consultor": "es-ES",
+    "sala": "en-US"
   };
 
 export const VISTA_DEL_CUADERNO: VistaDelCuaderno = {
@@ -1369,6 +1410,7 @@ export const ESCUCHA_SOLO_NOTAS: EstadoDeEscucha = {
       "bytes": 0,
       "motivo": null
     },
+    "presencial": false,
     "sistema": {
       "abierta": false,
       "bytes": 0,

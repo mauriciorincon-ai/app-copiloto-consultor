@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-fijar-la-voz"
+description = "Enables the fijar_la_voz command without any pre-configured scope."
+commands.allow = ["fijar_la_voz"]
+
+[[permission]]
+identifier = "deny-fijar-la-voz"
+description = "Denies the fijar_la_voz command without any pre-configured scope."
+commands.deny = ["fijar_la_voz"]

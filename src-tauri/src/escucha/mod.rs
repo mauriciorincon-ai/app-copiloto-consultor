@@ -30,7 +30,7 @@
 //! quedarse en blanco sin que nadie sepa por qué.
 
 use crate::capture::anillo::{Anillo, HZ};
-use crate::capture::Pista;
+use crate::capture::{Fuente, Pista, Quien};
 use crate::diccionario::Diccionario;
 use crate::disparo::{Contexto, Disparador, Motivo};
 use crate::ficha::{Aparicion, Respuesta};
@@ -163,6 +163,9 @@ pub struct EstadoDeEscucha {
     /// **La reunión va en modo solo notas** (ADR 017 §5): hay reunión y no hay captura. La banda lo
     /// dice —«Solo notas · sin transcripción»— y Sesión ofrece terminarla.
     pub solo_notas: bool,
+    /// **La sesión es presencial** (ADR 020): `microfono` es entonces la pista de la sala, y `sistema` va
+    /// cerrada **a propósito** —sin motivo, porque no es una avería—. Sesión no la pinta «A medias».
+    pub presencial: bool,
     pub microfono: EstadoDePista,
     pub sistema: EstadoDePista,
     /// Fuera del contrato por la misma decisión: Honestidad cuenta el transcript por sus bytes.
@@ -191,6 +194,7 @@ impl EstadoDeEscucha {
         EstadoDeEscucha {
             escuchando: false,
             solo_notas: true,
+            presencial: false,
             microfono: EstadoDePista::cerrada(),
             sistema: EstadoDePista::cerrada(),
             turnos_en_memoria: 0,
@@ -208,6 +212,7 @@ impl EstadoDeEscucha {
         EstadoDeEscucha {
             escuchando: false,
             solo_notas: false,
+            presencial: false,
             microfono: EstadoDePista { abierta: microfono_abierto, bytes: bytes_del_microfono, ..EstadoDePista::cerrada() },
             sistema: EstadoDePista::cerrada(),
             turnos_en_memoria: 0,
@@ -224,6 +229,8 @@ struct PistaViva {
     anillo: Arc<Mutex<Anillo>>,
     /// Se conserva para que el grifo siga abierto: soltarlo lo cierra.
     _grifo: Option<crate::capture::nativo::Grifo>,
+    /// **Un anillo que llenan las pruebas** ([`Escucha::sobre_anillos`]): no hay grifo, y no es una avería.
+    de_prueba: bool,
     no_abrio: Option<crate::capture::NoAbrio>,
     turnos: Turnos,
     /// Índice global de la primera muestra que esta pista vio.
@@ -250,21 +257,43 @@ struct PistaViva {
 impl PistaViva {
     fn abrir(cual: Pista, idioma: &str) -> Self {
         let anillo = Arc::new(Mutex::new(Anillo::de_la_app()));
-        let abierto = match cual {
-            Pista::Microfono => crate::capture::nativo::Grifo::del_microfono(anillo.clone()),
-            Pista::Sistema => crate::capture::nativo::Grifo::del_sistema(anillo.clone()),
+        // El grifo se elige por el DISPOSITIVO: la sala entra por el micrófono, y no por eso es tuya.
+        let abierto = match cual.fuente() {
+            Fuente::Microfono => crate::capture::nativo::Grifo::del_microfono(anillo.clone()),
+            Fuente::Sistema => crate::capture::nativo::Grifo::del_sistema(anillo.clone()),
         };
         let (grifo, no_abrio) = match abierto {
             Ok(g) => (Some(g), None),
             Err(e) => (None, Some(con_su_permiso(cual, e, &crate::permisos::leer()))),
         };
+        Self::con(cual, anillo, grifo, no_abrio, false, idioma)
+    }
+
+    /// La costura de las pruebas: una pista sobre un anillo que alguien ya llena, sin abrir ningún grifo.
+    fn sobre(cual: Pista, anillo: Arc<Mutex<Anillo>>, idioma: &str) -> Self {
+        Self::con(cual, anillo, None, None, true, idioma)
+    }
+
+    fn con(
+        cual: Pista,
+        anillo: Arc<Mutex<Anillo>>,
+        grifo: Option<crate::capture::nativo::Grifo>,
+        no_abrio: Option<crate::capture::NoAbrio>,
+        de_prueba: bool,
+        idioma: &str,
+    ) -> Self {
         let origen = anillo.lock().map(|a| a.totales()).unwrap_or(0);
         Self {
             cual,
             anillo,
             _grifo: grifo,
+            de_prueba,
             no_abrio,
-            turnos: Turnos::default(),
+            // En la sala, con el tope de turno de la regla de la casa (ADR 020 §3); en una reunión, sin tope.
+            turnos: Turnos::default().con_tope(match cual.quien() {
+                Quien::SinAtribuir => crate::disparo::Tolerancia::de_la_casa().tope_de_turno_ms,
+                Quien::Tuyo | Quien::Cliente => None,
+            }),
             origen,
             procesadas: 0,
             sobrante: Vec::with_capacity(MARCO * 4),
@@ -292,7 +321,7 @@ impl PistaViva {
             .map(|a| (a.bytes(), a.segundos()))
             .unwrap_or((0, 0.0));
         EstadoDePista {
-            abierta: self._grifo.is_some(),
+            abierta: self._grifo.is_some() || self.de_prueba,
             motivo: self.no_abrio.as_ref().map(|n| n.porque),
             bytes,
             segundos,
@@ -315,9 +344,9 @@ pub(crate) fn con_su_permiso(
 ) -> crate::capture::NoAbrio {
     use crate::capture::PorQueNoAbrio::{SinPermisoDelAudio, SinPermisoDelMicrofono};
     use crate::permisos::Estado;
-    let (estado, sin) = match cual {
-        Pista::Microfono => (permisos.microfono, SinPermisoDelMicrofono),
-        Pista::Sistema => (permisos.audio, SinPermisoDelAudio),
+    let (estado, sin) = match cual.fuente() {
+        Fuente::Microfono => (permisos.microfono, SinPermisoDelMicrofono),
+        Fuente::Sistema => (permisos.audio, SinPermisoDelAudio),
     };
     if matches!(estado, Estado::SinConceder | Estado::Denegado) {
         e.porque = sin;
@@ -364,6 +393,33 @@ struct Encargo {
     cerro: std::time::Instant,
 }
 
+/// **Qué pistas abre la escucha**, con su idioma (ADR 009 y su enmienda 1).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Pistas {
+    /// Una reunión: el micrófono (tú) y el audio del sistema (el cliente), cada uno en su idioma.
+    Reunion { consultor: String, cliente: String },
+    /// **Presencial** (ADR 020): una pista, la sala, por el micrófono, en un solo idioma.
+    Sala { idioma: String },
+}
+
+impl Pistas {
+    /// **Qué pista abre cada modo, con su idioma.** Pura, para probarla sin abrir un grifo: `arrancar` abre
+    /// exactamente estas.
+    pub fn cuales(&self) -> Vec<(Pista, String)> {
+        match self {
+            Pistas::Reunion { consultor, cliente } => {
+                vec![(Pista::Microfono, consultor.clone()), (Pista::Sistema, cliente.clone())]
+            }
+            Pistas::Sala { idioma } => vec![(Pista::Sala, idioma.clone())],
+        }
+    }
+}
+
+/// Una escucha es presencial si alguna de sus pistas no tiene dueño: la sala.
+fn es_presencial(pistas: &[(Pista, String)]) -> bool {
+    pistas.iter().any(|(p, _)| p.quien() == Quien::SinAtribuir)
+}
+
 /// La escucha en marcha.
 pub struct Escucha {
     /// El disparador vive aquí y no dentro del hilo porque **el kill-switch tiene que poder
@@ -378,30 +434,59 @@ pub struct Escucha {
     /// con el mismo reloj que los turnos.
     nacio: std::time::Instant,
     buscador: Arc<dyn Buscador>,
+    /// La sesión es presencial: una sola pista, la sala.
+    presencial: bool,
 }
 
 impl Escucha {
-    /// Abre las dos pistas y arranca los dos hilos.
+    /// Abre las pistas que pide el modo y arranca los dos hilos.
     ///
     /// `avisar` recibe cada novedad. No se le pasa nada de la reunión que no sea lo que va a
     /// enseñarse: la firma es la frontera.
     pub fn arrancar(
-        idioma_del_consultor: &str,
-        idioma_del_cliente: &str,
+        pistas: Pistas,
         motor: Box<dyn Motor>,
         buscador: Arc<dyn Buscador>,
         diccionario: Arc<Diccionario>,
         avisar: impl Fn(Novedad) + Send + Sync + 'static,
     ) -> Self {
-        // **El reloj de la escucha**: uno solo para las dos pistas, monótono, que no vuelve atrás
+        let que = pistas.cuales();
+        let presencial = es_presencial(&que);
+        let vivas = que.into_iter().map(|(p, idioma)| PistaViva::abrir(p, &idioma)).collect();
+        Self::con_pistas(vivas, presencial, motor, buscador, diccionario, avisar)
+    }
+
+    /// **La costura de las pruebas**: la escucha entera —turnos, transcripción, disparo, ficha— sobre
+    /// anillos que el test llena, **sin abrir ningún grifo**. Es la única forma de probar la sala de punta a
+    /// punta en un `cargo test` que no toca el Mac (regla 22). No la llama la app: un test de la fuente de
+    /// `lib.rs` lo vigila.
+    #[doc(hidden)]
+    pub fn sobre_anillos(
+        anillos: Vec<(Pista, Arc<Mutex<Anillo>>, String)>,
+        motor: Box<dyn Motor>,
+        buscador: Arc<dyn Buscador>,
+        diccionario: Arc<Diccionario>,
+        avisar: impl Fn(Novedad) + Send + Sync + 'static,
+    ) -> Self {
+        let presencial = es_presencial(&anillos.iter().map(|(p, _, i)| (*p, i.clone())).collect::<Vec<_>>());
+        let vivas = anillos.into_iter().map(|(p, a, idioma)| PistaViva::sobre(p, a, &idioma)).collect();
+        Self::con_pistas(vivas, presencial, motor, buscador, diccionario, avisar)
+    }
+
+    fn con_pistas(
+        vivas: Vec<PistaViva>,
+        presencial: bool,
+        motor: Box<dyn Motor>,
+        buscador: Arc<dyn Buscador>,
+        diccionario: Arc<Diccionario>,
+        avisar: impl Fn(Novedad) + Send + Sync + 'static,
+    ) -> Self {
+        // **El reloj de la escucha**: uno solo para las pistas, monótono, que no vuelve atrás
         // ni cuando un anillo da la vuelta. Los relojes de cada pista se cuentan en muestras y
         // valen para pedirle su trozo al anillo; para todo lo demás —el eco, el disparador, la
         // banda— manda este.
         let nacio = std::time::Instant::now();
-        let pistas = Arc::new(Mutex::new(vec![
-            PistaViva::abrir(Pista::Microfono, idioma_del_consultor),
-            PistaViva::abrir(Pista::Sistema, idioma_del_cliente),
-        ]));
+        let pistas = Arc::new(Mutex::new(vivas));
         let ventana = Arc::new(Mutex::new(Ventana::nueva()));
         let viva = Arc::new(AtomicBool::new(true));
         let nombre_del_motor = motor.nombre();
@@ -459,7 +544,13 @@ impl Escucha {
             std::thread::spawn(move || while suyo.latir(&recibe, avisar.as_ref()) {});
         }
 
-        Self { disparador, pistas, ventana, viva, motor: nombre_del_motor, nacio, buscador }
+        Self { disparador, pistas, ventana, viva, motor: nombre_del_motor, nacio, buscador, presencial }
+    }
+
+    /// **¿Habla alguien ahora mismo, por cualquier pista?** La voz al oído no habla encima de nadie, y en la
+    /// sala «alguien» es cualquiera de los dos.
+    pub fn alguien_hablando(&self) -> bool {
+        self.pistas.lock().is_ok_and(|l| l.iter().any(|p| p.turnos.hablando()))
     }
 
     /// **LA PANTALLA PIDE FICHA** (C8). La pantalla que comparte el cliente cambió y trae una cifra o
@@ -476,7 +567,7 @@ impl Escucha {
         let empezo = std::time::Instant::now();
         let ahora_ms = self.nacio.elapsed().as_millis() as usize;
         let motivo = self.disparador.lock().ok()?.por_pantalla(consulta, ahora_ms)?;
-        let a = armar_y_anunciar(self.buscador.as_ref(), consulta, motivo, &la_hora(), empezo);
+        let a = armar_y_anunciar(self.buscador.as_ref(), consulta, motivo, &la_hora(), empezo, None);
         matches!(a.respuesta, Respuesta::Ficha(_)).then_some(a)
     }
 
@@ -486,7 +577,7 @@ impl Escucha {
         let empezo = std::time::Instant::now();
         let ahora_ms = self.nacio.elapsed().as_millis() as usize;
         let motivo = self.disparador.lock().ok()?.a_mano(ahora_ms);
-        Some(armar_y_anunciar(self.buscador.as_ref(), consulta, motivo, &la_hora(), empezo))
+        Some(armar_y_anunciar(self.buscador.as_ref(), consulta, motivo, &la_hora(), empezo, None))
     }
 
     pub fn estado(&self) -> EstadoDeEscucha {
@@ -510,10 +601,17 @@ impl Escucha {
             .lock()
             .map(|v| (v.cuantos(), v.bytes()))
             .unwrap_or((0, 0));
-        let (microfono, sistema) = (de(Pista::Microfono), de(Pista::Sistema));
+        // En presencial la fila del micrófono es la sala, y la del sistema va cerrada sin motivo: no se
+        // pidió, así que no es una avería que contar (ADR 020).
+        let (microfono, sistema) = if self.presencial {
+            (de(Pista::Sala), EstadoDePista::cerrada())
+        } else {
+            (de(Pista::Microfono), de(Pista::Sistema))
+        };
         EstadoDeEscucha {
             escuchando: self.viva.load(Ordering::Relaxed),
             solo_notas: false,
+            presencial: self.presencial,
             microfono,
             sistema,
             turnos_en_memoria: turnos,
@@ -633,10 +731,17 @@ impl ElQueTranscribe {
         }
     }
 
+    /// ¿Habla ahora alguien que pudo ser el cliente? Su pista, o la sala, donde no se sabe.
     fn cliente_hablando(&self) -> bool {
-        self.pistas
-            .lock()
-            .is_ok_and(|l| l.iter().any(|p| p.cual == Pista::Sistema && p.turnos.hablando()))
+        self.pistas.lock().is_ok_and(|l| {
+            l.iter().any(|p| {
+                p.turnos.hablando()
+                    && match p.cual.quien() {
+                        Quien::Cliente | Quien::SinAtribuir => true,
+                        Quien::Tuyo => false,
+                    }
+            })
+        })
     }
 }
 
@@ -734,7 +839,7 @@ fn huele_a_eco(turno: &Turno, ventana: &Ventana) -> bool {
     let del_sistema: Vec<crate::voz::Tramo> = ventana
         .ultimos(crate::stt::ventana::TURNOS)
         .into_iter()
-        .filter(|t| t.pista == Pista::Sistema)
+        .filter(|t| t.pista.quien() == Quien::Cliente)
         .map(|t| crate::voz::Tramo {
             desde_ms: t.desde_ms,
             hasta_ms: t.hasta_ms,
@@ -795,10 +900,15 @@ fn atender(
         // El eco se decide **con la ventana delante**: hace falta saber qué dijo el cliente para
         // saber si el micrófono lo está repitiendo. Por eso vive aquí y no en `transcribir`, que no
         // conoce a nadie más.
-        if t.pista == Pista::Microfono {
-            if let Ok(v) = ventana.lock() {
-                t.eco = huele_a_eco(t, &v);
+        // Solo tu pista puede ser un eco: es la que oye a los altavoces. En la sala no hay eco que
+        // buscar, porque no hay otra pista con la que compararla.
+        match t.pista.quien() {
+            Quien::Tuyo => {
+                if let Ok(v) = ventana.lock() {
+                    t.eco = huele_a_eco(t, &v);
+                }
             }
+            Quien::Cliente | Quien::SinAtribuir => {}
         }
         if let Ok(mut v) = ventana.lock() {
             v.empujar(t.clone());
@@ -821,10 +931,26 @@ fn buscar_si_toca(
     turno: &Turno,
     encargo: &Encargo,
 ) -> Option<Aparicion> {
+    del_turno_a_la_ficha(disparador, buscador, turno, encargo.cerro)
+}
+
+/// **Del turno a la ficha, como lo hace la escucha**: el disparador decide, el buscador busca, y si sale una ficha
+/// con resultado el disparador se entera (la tolerancia de la sala la mira). Pública para el kit v4, que mide la
+/// tolerancia por este mismo camino y no por una copia.
+pub fn del_turno_a_la_ficha(
+    disparador: &mut Disparador,
+    buscador: &dyn Buscador,
+    turno: &Turno,
+    cerro: std::time::Instant,
+) -> Option<Aparicion> {
     let vocabulario = buscador.vocabulario();
     let ctx = Contexto { ahora_ms: turno.hasta_ms, vocabulario: &vocabulario };
     let motivo = disparador.mirar(turno, &ctx)?;
-    Some(armar_y_anunciar(buscador, &turno.texto, motivo, &turno.hora, encargo.cerro))
+    let a = armar_y_anunciar(buscador, &turno.texto, motivo, &turno.hora, cerro, Some(turno.hasta_ms));
+    if let Respuesta::Ficha(f) = &a.respuesta {
+        disparador.vio_ficha(turno.hasta_ms, &f.titular, &f.linea);
+    }
+    Some(a)
 }
 
 /// **EL SILENCIO COMO DISPARO** — el quinto motivo, que existía sin cablear desde el sprint 001.
@@ -857,15 +983,32 @@ fn el_silencio_pide_ficha(
     if cliente_hablando {
         return None;
     }
-    let empezo = std::time::Instant::now();
     // Los dos candados en este orden y en ningún otro: es el único sitio de la app donde se anidan.
     let v = ventana.lock().ok()?;
-    let ultimo = v.ultimo_de(Pista::Sistema)?;
+    let ultimo = v.ultimo_que(crate::stt::Turno::pudo_decirlo_el_cliente)?;
+    del_silencio_a_la_ficha(disparador, buscador, ultimo, ahora_ms)
+}
+
+/// **Del silencio a la ficha, como lo hace la escucha**, una vez elegido el último turno que pudo decir el
+/// cliente: el disparador decide (con la tolerancia, si es la sala), el buscador busca y, si sale una ficha con
+/// resultado, el disparador se entera. Pública para el kit v4, como [`del_turno_a_la_ficha`].
+pub fn del_silencio_a_la_ficha(
+    disparador: &Mutex<Disparador>,
+    buscador: &dyn Buscador,
+    ultimo: &Turno,
+    ahora_ms: usize,
+) -> Option<Aparicion> {
+    let empezo = std::time::Instant::now();
     let vocabulario = buscador.vocabulario();
     let ctx = Contexto { ahora_ms, vocabulario: &vocabulario };
-    let motivo =
-        disparador.lock().ok()?.por_silencio(&ultimo.texto, ultimo.hasta_ms, &ctx)?;
-    Some(armar_y_anunciar(buscador, &ultimo.texto, motivo, &ultimo.hora, empezo))
+    let motivo = disparador.lock().ok()?.por_silencio(ultimo, &ctx)?;
+    let a = armar_y_anunciar(buscador, &ultimo.texto, motivo, &ultimo.hora, empezo, Some(ultimo.hasta_ms));
+    // La tolerancia de la sala tiene que saber qué ficha salió (C1 y C2). El candado se suelta mientras se busca,
+    // para que el corte no espere a la búsqueda, y se vuelve a tomar para apuntarla.
+    if let (Respuesta::Ficha(f), Ok(mut d)) = (&a.respuesta, disparador.lock()) {
+        d.vio_ficha(ahora_ms, &f.titular, &f.linea);
+    }
+    Some(a)
 }
 
 /// De un texto del cliente a la aparición, con su medida y su línea de log.
@@ -884,6 +1027,7 @@ fn armar_y_anunciar(
     motivo: Motivo,
     hora: &str,
     desde: std::time::Instant,
+    de_ms: Option<usize>,
 ) -> Aparicion {
     let hallazgos = buscador.buscar(texto, crate::ficha::TOP);
     let respuesta = crate::ficha::armar(texto, &hallazgos);
@@ -896,7 +1040,7 @@ fn armar_y_anunciar(
     };
     println!("[ficha] {que} por «{}» en {ms} ms · {} candidatas", motivo.etiqueta(), hallazgos.len());
 
-    Aparicion { respuesta, motivo, ms, hora: hora.to_string() }
+    Aparicion { respuesta, motivo, ms, hora: hora.to_string(), de_ms }
 }
 
 /// Pisa el audio de un encargo que no se va a transcribir.
@@ -1031,6 +1175,7 @@ mod tests {
             cual: Pista::Sistema,
             anillo: anillo.clone(),
             _grifo: None,
+            de_prueba: false,
             no_abrio: None,
             turnos: Turnos::default(),
             origen: 0,
@@ -1085,6 +1230,7 @@ mod tests {
             cual: Pista::Sistema,
             anillo: anillo.clone(),
             _grifo: None,
+            de_prueba: false,
             no_abrio: None,
             turnos: Turnos::default(),
             origen: 0,
@@ -1706,6 +1852,184 @@ mod tests {
             dichas.lock().unwrap().is_empty(),
             "la banda estrenó una ficha después del kill-switch"
         );
+    }
+
+    /// Un motor que dice siempre la misma frase y apunta en qué idioma se la pidieron.
+    struct Dice(&'static str, Arc<Mutex<Vec<String>>>);
+
+    impl Motor for Dice {
+        fn nombre(&self) -> &'static str {
+            "dice"
+        }
+        fn disponibilidad(&self, _idioma: &str) -> Disponibilidad {
+            Disponibilidad::Listo
+        }
+        fn instalar(&self, _idioma: &str) -> Disponibilidad {
+            Disponibilidad::Listo
+        }
+        fn transcribir(&self, idioma: &str, _muestras: &[f32], _hz: u32) -> Result<String, Fallo> {
+            self.1.lock().unwrap().push(idioma.to_string());
+            Ok(self.0.into())
+        }
+        fn techo_de_idiomas(&self) -> u32 {
+            1
+        }
+        fn idiomas(&self) -> Vec<String> {
+            vec!["en-US".into()]
+        }
+    }
+
+    /// **LA SALA DE PUNTA A PUNTA, sin grifos** (ADR 020): una sola pista, la sala, sobre un anillo que el
+    /// test llena. El estado lo dice —presencial, la sala abierta, el sistema cerrado sin avería—, y lo que
+    /// se oye sale como un turno de la sala, transcrito en el idioma de la sala, sin marca de eco, y trae
+    /// su ficha.
+    ///
+    /// ¿Puede fallar? Sí: con la sala fuera del disparo (`Quien::SinAtribuir => None` en `disparo::mirar`), es
+    /// rojo (bitácora del sprint 005, fase 1).
+    #[test]
+    fn la_sala_abre_una_pista_y_de_su_turno_sale_la_ficha() {
+        use crate::corpus::seccion::Seccion;
+        let corpus = corpus_de_prueba();
+        corpus
+            .0
+            .indice_para_pruebas()
+            .meter("/c/propuesta.md", "Páramo Azul · Propuesta", Some(crate::corpus::Unidad::Propuesta), false, &[
+                Seccion {
+                    titulo: Some("Plazo de entrega".into()),
+                    texto: "La entrega completa toma cuatro semanas desde la firma del contrato.".into(),
+                },
+            ])
+            .unwrap();
+        let anillo = Arc::new(Mutex::new(crate::capture::Anillo::de_la_app()));
+        let idiomas = Arc::new(Mutex::new(Vec::new()));
+        let oido: Arc<Mutex<Vec<Novedad>>> = Arc::default();
+        let apunta = oido.clone();
+        let e = Escucha::sobre_anillos(
+            vec![(Pista::Sala, anillo.clone(), "en-US".into())],
+            Box::new(Dice("¿En cuántas semanas hacen la entrega completa?", idiomas.clone())),
+            Arc::new(corpus),
+            sin_diccionario(),
+            move |n| apunta.lock().unwrap().push(n),
+        );
+
+        let estado = e.estado();
+        assert!(estado.presencial, "la escucha de la sala no se declara presencial");
+        assert!(estado.microfono.abierta, "la sala no abrió");
+        assert!(!estado.sistema.abierta && estado.sistema.motivo.is_none(), "en la sala el sistema va cerrado sin avería que contar");
+
+        {
+            let mut a = anillo.lock().unwrap();
+            let hz = crate::capture::anillo::HZ as usize;
+            a.escribir(&vec![0.0; hz * 6 / 10]);
+            a.escribir(&voz(hz));
+            a.escribir(&vec![0.0; hz / 2]);
+        }
+        let hasta = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        while std::time::Instant::now() < hasta && !oido.lock().unwrap().iter().any(|n| matches!(n, Novedad::Aparece(_))) {
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        e.cortar();
+
+        let oido = oido.lock().unwrap();
+        let turno = oido
+            .iter()
+            .find_map(|n| match n {
+                Novedad::Turno(t) => Some(t),
+                _ => None,
+            })
+            .expect("la sala no sacó ningún turno: el test no prueba nada");
+        assert_eq!(turno.pista, Pista::Sala, "el turno de la sala salió con otra pista");
+        assert!(!turno.eco, "en la sala no hay eco que marcar");
+        assert_eq!(*idiomas.lock().unwrap(), vec!["en-US".to_string()], "la sala no se transcribió en su idioma");
+        let Some(Novedad::Aparece(a)) = oido.iter().find(|n| matches!(n, Novedad::Aparece(_))) else {
+            panic!("de la pregunta oída en la sala no salió ficha")
+        };
+        let Respuesta::Ficha(f) = &a.respuesta else { panic!("no encontró la sección que responde") };
+        assert_eq!(f.fuente.seccion.as_deref(), Some("Plazo de entrega"));
+    }
+
+    /// **La sala abre UNA pista, la sala, en el idioma de la sala** —ni el micrófono como tuyo ni el audio del
+    /// sistema—, y la reunión, las dos de siempre. Es lo que `arrancar` abre, sin grifos.
+    ///
+    /// ¿Puede fallar? Sí: con `Pistas::Sala` abriendo `Pista::Microfono`, la sala se guardaría como tus turnos
+    /// (bitácora del sprint 005, fase 1).
+    #[test]
+    fn la_sala_abre_solo_la_sala_y_la_reunion_sus_dos_pistas() {
+        let sala = Pistas::Sala { idioma: "en-US".into() }.cuales();
+        assert_eq!(sala, vec![(Pista::Sala, "en-US".to_string())], "presencial abre otra cosa que la sala");
+        assert!(es_presencial(&sala));
+        let reunion = Pistas::Reunion { consultor: "es-ES".into(), cliente: "en-US".into() }.cuales();
+        assert_eq!(reunion, vec![(Pista::Microfono, "es-ES".to_string()), (Pista::Sistema, "en-US".to_string())]);
+        assert!(!es_presencial(&reunion));
+    }
+
+    /// **Y una reunión no es presencial**: con el micrófono y el sistema, las dos filas son las suyas.
+    #[test]
+    fn una_reunion_sobre_anillos_no_es_presencial() {
+        let e = Escucha::sobre_anillos(
+            vec![
+                (Pista::Microfono, Arc::new(Mutex::new(crate::capture::Anillo::de_la_app())), "es-ES".into()),
+                (Pista::Sistema, Arc::new(Mutex::new(crate::capture::Anillo::de_la_app())), "es-ES".into()),
+            ],
+            Box::new(Dice("hola", Arc::default())),
+            Arc::new(SinCorpus),
+            sin_diccionario(),
+            |_| {},
+        );
+        let estado = e.estado();
+        e.cortar();
+        assert!(!estado.presencial, "una reunión se declaró presencial");
+        assert!(estado.microfono.abierta && estado.sistema.abierta);
+    }
+
+    /// **Solo tu pista puede ser un eco**: la sala no, aunque repita palabra por palabra un turno del cliente
+    /// que estuviera en la ventana. ¿Puede fallar? Sí: con `Quien::SinAtribuir` en el brazo de `Quien::Tuyo`
+    /// de `atender`, este turno saldría marcado como eco (bitácora del sprint 005, fase 1).
+    #[test]
+    fn la_sala_no_se_marca_como_eco() {
+        let frase = "Y la limpieza de datos, eso está dentro del alcance?";
+        let ventana = Mutex::new(Ventana::nueva());
+        ventana.lock().unwrap().empujar(Turno { pista: Pista::Sistema, ..turno_del_cliente(frase, 2_000) });
+        let disparador = Mutex::new(Disparador::nuevo());
+        let viva = AtomicBool::new(true);
+        let mut encargo = Encargo { pista: Pista::Sala, desde_ms: 500, hasta_ms: 2_100, muestras: Some(vec![0.3; 16_000]), ..encargo_cerrado_ahora() };
+        let (novedad, _) = atender(&mut encargo, &Dice(frase, Arc::default()), &SinCorpus, &Diccionario::default(), &ventana, &disparador, &viva)
+            .expect("con la escucha viva el turno tiene que llegar");
+        let Novedad::Turno(t) = novedad else { panic!("{novedad:?}") };
+        assert_eq!(t.pista, Pista::Sala);
+        assert!(!t.eco, "un turno de la sala salió marcado como eco");
+    }
+
+    /// **La escucha le dice al disparador qué ficha salió**, y la tolerancia de la sala la usa: tras la ficha del
+    /// plazo, la sala que la lee en voz alta no dispara otra (C2).
+    ///
+    /// ¿Puede fallar? Sí: sin `vio_ficha` en `del_turno_a_la_ficha`, la lectura de la ficha dispara (bitácora del
+    /// sprint 005, fase 1).
+    #[test]
+    fn la_ficha_que_sale_la_ve_la_tolerancia_de_la_sala() {
+        use crate::corpus::seccion::Seccion;
+        let corpus = corpus_de_prueba();
+        corpus
+            .0
+            .indice_para_pruebas()
+            .meter("/c/propuesta.md", "Páramo Azul · Propuesta", Some(crate::corpus::Unidad::Propuesta), false, &[
+                Seccion {
+                    titulo: Some("Plazo de entrega".into()),
+                    texto: "La entrega completa toma cuatro semanas desde la firma del contrato.".into(),
+                },
+            ])
+            .unwrap();
+        let regla = crate::disparo::Tolerancia { eco_de_la_ficha: Some(0.5), ..crate::disparo::Tolerancia::SIN_FILTRO };
+        let mut d = Disparador::con_tolerancia(regla);
+        let ahora = std::time::Instant::now();
+        let pregunta = Turno { pista: Pista::Sala, ..turno_del_cliente("¿En cuántas semanas hacen la entrega completa?", 2_000) };
+        let a = del_turno_a_la_ficha(&mut d, &corpus, &pregunta, ahora).expect("la pregunta no disparó");
+        assert!(matches!(a.respuesta, Respuesta::Ficha(_)), "no salió la ficha del plazo: el test no prueba nada");
+        let lectura = Turno {
+            pista: Pista::Sala,
+            ..turno_del_cliente("La entrega completa toma cuatro semanas desde la firma del contrato, ¿les parece?", 20_000)
+        };
+        assert!(del_turno_a_la_ficha(&mut d, &corpus, &lectura, ahora).is_none(), "la sala que lee la ficha disparó otra");
     }
 
     /// Una reunión que arranca callada no estrena la banda con una ficha de la nada: sin nada dicho

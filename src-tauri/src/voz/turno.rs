@@ -67,6 +67,10 @@ pub struct Turnos<D: Detector = PorEnergia> {
     /// Milisegundos de audio procesados. Es el reloj de la pista, no el del sistema: así los
     /// tests son deterministas y el mismo audio da siempre los mismos turnos.
     reloj_ms: usize,
+    /// **Lo más que dura un turno** (sprint 005, ADR 020 §3): en la sala, dos voces con pausas de menos de
+    /// [`FIN_MS`] se juntan en un turno, y uno que pase de los 30 s del anillo pierde su principio antes de
+    /// transcribirse. `None`, sin tope: el micrófono y el sistema de una reunión.
+    tope_ms: Option<usize>,
 }
 
 impl Default for Turnos<PorEnergia> {
@@ -77,7 +81,13 @@ impl Default for Turnos<PorEnergia> {
 
 impl<D: Detector> Turnos<D> {
     pub fn nuevo(detector: D) -> Self {
-        Self { detector, estado: Estado::Callado, reloj_ms: 0 }
+        Self { detector, estado: Estado::Callado, reloj_ms: 0, tope_ms: None }
+    }
+
+    /// Con un tope de duración: al llegar a él, el turno se cierra y el que sigue empieza en ese mismo marco.
+    pub fn con_tope(mut self, tope_ms: Option<usize>) -> Self {
+        self.tope_ms = tope_ms;
+        self
     }
 
     /// Cuántos milisegundos de audio lleva vistos esta pista.
@@ -111,6 +121,12 @@ impl<D: Detector> Turnos<D> {
             (Estado::Arrancando { desde_ms, seguidos }, true) => {
                 self.estado = Estado::Arrancando { desde_ms, seguidos: seguidos + 1 };
                 self.confirmar_arranque()
+            }
+            // Con tope, un turno que lo alcanza se cierra aquí y el siguiente empieza sin hueco: nadie se calló,
+            // así que no hay arranque que confirmar.
+            (Estado::Hablando { desde_ms, .. }, true) if self.tope_ms.is_some_and(|t| fin_ms - desde_ms >= t) => {
+                self.estado = Estado::Hablando { desde_ms: fin_ms, ultima_voz_ms: fin_ms, silencios: 0 };
+                Some(Suceso::Termina { desde_ms, hasta_ms: fin_ms })
             }
             (Estado::Hablando { desde_ms, .. }, true) => {
                 self.estado = Estado::Hablando { desde_ms, ultima_voz_ms: fin_ms, silencios: 0 };
@@ -208,6 +224,32 @@ mod tests {
     }
     fn s(n: usize) -> String {
         ".".repeat(n)
+    }
+
+    /// **El tope corta un turno que no se calla** (ADR 020 §3), y sin tope sigue entero. ¿Puede fallar? Sí: sin
+    /// la rama del tope en `marco`, los 3 s salen en un turno (bitácora del sprint 005, fase 1).
+    #[test]
+    fn el_tope_corta_un_turno_que_no_se_calla() {
+        let patron = format!("{}{}", v(150), s(50));
+        let (sin_tope, _) = correr(&patron);
+        let terminados = |s: &[(usize, Suceso)]| -> Vec<Suceso> {
+            s.iter().map(|(_, x)| *x).filter(|x| matches!(x, Suceso::Termina { .. })).collect()
+        };
+        assert_eq!(terminados(&sin_tope), vec![Suceso::Termina { desde_ms: 0, hasta_ms: 3_000 }]);
+
+        let marcos: Vec<bool> = patron.chars().map(|c| c == '#').collect();
+        let n = marcos.len();
+        let mut t = Turnos::nuevo(Guion { marcos, i: 0 }).con_tope(Some(1_000));
+        let con_tope: Vec<(usize, Suceso)> = (0..n).filter_map(|k| t.marco(&[0.0; 320]).map(|x| (k * MARCO_MS, x))).collect();
+        assert_eq!(
+            terminados(&con_tope),
+            vec![
+                Suceso::Termina { desde_ms: 0, hasta_ms: 1_000 },
+                Suceso::Termina { desde_ms: 1_000, hasta_ms: 2_000 },
+                Suceso::Termina { desde_ms: 2_000, hasta_ms: 3_000 },
+            ],
+            "el tope no cortó el turno en trozos de 1 s"
+        );
     }
 
     #[test]

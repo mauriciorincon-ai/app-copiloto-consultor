@@ -71,7 +71,13 @@ export type EstadoBanda =
   | "ficha-propuesta"
   | "ficha-fijada"
   /** La reunión en modo solo notas (sprint 003, fase 3, ADR 017 §5): la banda en reposo, sin escucha. */
-  | "solo-notas";
+  | "solo-notas"
+  /**
+   * Presencial (sprint 005, ADR 020): la ficha con la cabecera de la sala, y la voz que espera a que la sala calle.
+   * Dentro de Tauri lo decide la escucha (`presencial`) y la voz (`esperando`); fuera, la URL.
+   */
+  | "ficha-presencial"
+  | "voz-sala";
 
 export type PropsBanda = {
   estado: EstadoBanda;
@@ -170,7 +176,11 @@ export function Banda({
   // La ficha del PDF y la de la pantalla SON fichas: lo que cambia es su línea de «por qué», y eso
   // lo dice la aparición. Se dibujan con la misma rama.
   const estadoReal: EstadoBanda =
-    pedido === "ficha-pdf" || pedido === "ficha-pantalla" || pedido === "ficha-propuesta" || pedido === "ficha-fijada"
+    pedido === "ficha-pdf" ||
+    pedido === "ficha-pantalla" ||
+    pedido === "ficha-propuesta" ||
+    pedido === "ficha-fijada" ||
+    pedido === "ficha-presencial"
       ? "ficha"
       : pedido === "solo-notas"
         ? "esperando"
@@ -178,6 +188,8 @@ export function Banda({
   // **Solo notas** (ADR 017 §5): nada escucha, y la banda lo dice. Dentro de Tauri lo decide Rust;
   // fuera, la URL.
   const soloNotas = deLaMaqueta ? estado === "solo-notas" : escucha.soloNotas;
+  // **Presencial** (ADR 020): una pista, la sala, sin dueño. Dentro de Tauri lo decide Rust; fuera, la URL.
+  const presencial = deLaMaqueta ? estado === "ficha-presencial" || estado === "voz-sala" : escucha.presencial;
   // La propuesta de la maqueta: la tuya, la del plan («Fecha real del tablero…»).
   const propuestaDeMuestra: Propuesta | null =
     deLaMaqueta && estado === "ficha-propuesta"
@@ -188,7 +200,9 @@ export function Banda({
   // Los turnos se piden SIEMPRE, no solo con el transcript abierto: el hueco entre abrirlo y
   // recibir la primera respuesta se vería como un transcript vacío, y un transcript vacío en una
   // reunión con gente hablando parece una avería.
-  const turnos = useTurnos();
+  // Fuera de Tauri, la muestra de la sala son los mismos turnos, todos de la sala: la app no sabe quién habló.
+  const oidos = useTurnos();
+  const turnos = deLaMaqueta && presencial ? oidos.map((x) => ({ ...x, pista: "sala" as const })) : oidos;
   const { borde } = useFranja({ borde: bordeDeMuestra, barra: 0, avisoVisto: true });
   const asa = useAsa(borde);
   const voz = useVoz();
@@ -378,7 +392,7 @@ export function Banda({
    * obedece); fuera manda la URL, que es como el arnés de capturas fotografía los tres encuadres.
    */
   const enVoz = deLaMaqueta
-    ? estado === "voz" || estado === "voz-espera" || estado === "voz-sin"
+    ? estado === "voz" || estado === "voz-espera" || estado === "voz-sin" || estado === "voz-sala"
     : voz.encendida;
   if (enVoz) {
     const comoEsta: LaVoz = deLaMaqueta
@@ -386,6 +400,7 @@ export function Banda({
           encendida: true,
           puede: estado !== "voz-sin",
           diciendo: estado === "voz",
+          esperando: estado === "voz-sala",
         }
       : voz;
     return (
@@ -424,9 +439,11 @@ export function Banda({
         {!soloNotas && (deLaMaqueta || escucha.escuchando) && (
           <span className="marca-min">
             <Ic id="i-check-circle" s relleno />
-            {deLaMaqueta
-              ? t.escuchando
-              : `${t.escuchandoPrefijo} · ${cuenta(pistasAbiertas, t.pista, t.pistas)}`}
+            {presencial
+              ? t.escuchandoLaSala
+              : deLaMaqueta
+                ? t.escuchando
+                : `${t.escuchandoPrefijo} · ${cuenta(pistasAbiertas, t.pista, t.pistas)}`}
           </span>
         )}
 
@@ -437,7 +454,16 @@ export function Banda({
           </span>
         )}
 
-        {chipDelCliente()}
+        {/* En la sala no hay un cliente de videollamada cuya protección afirmar (ADR 020 §9): la banda sigue
+            protegida de la captura, y el chip dice dónde se está. */}
+        {presencial ? (
+          <span className="cliente-b">
+            <Ic id="i-mic" s />
+            {t.presencialLaSala}
+          </span>
+        ) : (
+          chipDelCliente()
+        )}
 
         {/* La propuesta, pasiva y en una línea (mirada 20): no toca la ficha, no suena y no se lee en
             voz alta. Tuya, tu frase entre comillas; del cliente, el hecho que dejó. */}
@@ -482,18 +508,22 @@ export function Banda({
               </span>
             </span>
             <span className="lado-b">
-              <span className="meta-b">
-                <Ic id="i-reloj" s />
-                {/* El nombre de la reunión sale del detector. **Los «12 min» de la maqueta no se
-                    pintan dentro del producto**: nadie mide todavía cuánto lleva la llamada, y
-                    escribir un número que no se mide es lo que esta pantalla existe para no hacer.
-                    Queda declarado en la bitácora para la mirada. */}
-                {deLaMaqueta
-                  ? t.reunion
-                  : reunion.que === "detectada"
-                    ? (reunion.titulo ?? reunion.cliente)
-                    : tc.sinReunion}
-              </span>
+              {/* En presencial no se nombra la reunión de este Mac: la reunión está en la sala, y «Sin reunión
+                  abierta» sería falso (sprint 005, ADR 020). La cabecera ya dice «Presencial · la sala». */}
+              {!presencial && (
+                <span className="meta-b">
+                  <Ic id="i-reloj" s />
+                  {/* El nombre de la reunión sale del detector. **Los «12 min» de la maqueta no se
+                      pintan dentro del producto**: nadie mide todavía cuánto lleva la llamada, y
+                      escribir un número que no se mide es lo que esta pantalla existe para no hacer.
+                      Queda declarado en la bitácora para la mirada. */}
+                  {deLaMaqueta
+                    ? t.reunion
+                    : reunion.que === "detectada"
+                      ? (reunion.titulo ?? reunion.cliente)
+                      : tc.sinReunion}
+                </span>
+              )}
               {atajos}
             </span>
           </>
@@ -914,7 +944,7 @@ function BandaDeVoz({
   borde: Borde;
 }) {
   const t = useT().banda;
-  const estado = !voz.puede ? "voz-sin" : voz.diciendo ? "voz" : "voz-espera";
+  const estado = !voz.puede ? "voz-sin" : voz.diciendo ? "voz" : voz.esperando ? "voz-sala" : "voz-espera";
 
   /** El contador, que a este alto vive en la línea y no en la cabecera. */
   const red = (
@@ -993,6 +1023,13 @@ function BandaDeVoz({
                     averiguarlo, que es justo lo contrario de un modo que existe para no mirar. */}
                 {voz.diciendo ? (
                   <span>{t.diciendoLaFicha}</span>
+                ) : voz.esperando ? (
+                  // En la sala la voz no habla encima de nadie: espera a que calle, con tope (ADR 020 §7).
+                  <>
+                    <span>{t.laSalaHabla}</span>
+                    <span className="sep">·</span>
+                    <span>{t.teLaDigoCuandoCalle}</span>
+                  </>
                 ) : (
                   <>
                     <span>{t.callado}</span>
@@ -1016,7 +1053,7 @@ function BandaDeVoz({
                   </span>
                 )}
                 <span className="tecla">
-                  <kbd>⌃⌥V</kbd> {t.volver}
+                  <kbd>⌃⌥V</kbd> {voz.esperando && !voz.diciendo ? t.verla : t.volver}
                 </span>
               </span>
               {red}
@@ -1054,11 +1091,13 @@ function Transcript({ turnos }: { turnos: Turno[] }) {
         // el cliente, ese turno no es del consultor — pintarlo como «tú» sería ponerle en la boca
         // palabras que no dijo. Se enseña como del cliente, que es de quien son.
         const mio = turno.pista === "microfono" && !turno.eco;
+        // **La sala no tiene dueño** (ADR 020 §2): su turno dice «sala», nunca «cliente» ni «tú».
+        const sala = turno.pista === "sala";
         return (
           <span className={mio ? "turno tu" : "turno"} key={`${turno.desdeMs}-${i}`}>
             <span className="quien">
-              <Ic id={mio ? "i-mic" : "i-sistema"} s />
-              {mio ? t.tu : t.cliente}
+              <Ic id={mio || sala ? "i-mic" : "i-sistema"} s />
+              {sala ? t.sala : mio ? t.tu : t.cliente}
               {/* La hora y **cuánto duró** el turno (mirada 17-bis): con el tramo se ve de un
                   vistazo quién habló mucho y quién poco, sin leer. */}
               {/* Una sola cadena y no cuatro nodos de texto: partida, el avance fraccional de la

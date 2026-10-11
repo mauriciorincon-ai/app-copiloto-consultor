@@ -35,11 +35,22 @@ pub const VERSION: u32 = 1;
 pub struct IdiomasDePista {
     pub consultor: String,
     pub cliente: String,
+    /// **El idioma de la sala, en presencial** (ADR 020 §6; ADR 002, enmienda 9). `None` es «el del
+    /// cliente», que es el de fábrica: un archivo de antes del sprint 005, sin este campo, se lee igual.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sala: Option<String>,
+}
+
+impl IdiomasDePista {
+    /// En qué idioma escucha la sala: el elegido, o el del cliente.
+    pub fn de_la_sala(&self) -> &str {
+        self.sala.as_deref().unwrap_or(&self.cliente)
+    }
 }
 
 impl Default for IdiomasDePista {
     fn default() -> Self {
-        Self { consultor: "es-ES".into(), cliente: "es-ES".into() }
+        Self { consultor: "es-ES".into(), cliente: "es-ES".into(), sala: None }
     }
 }
 
@@ -195,6 +206,10 @@ pub fn de_texto(texto: &str) -> Result<Preferencias, String> {
     if !es_un_idioma(&p.idiomas.cliente) {
         p.idiomas.cliente = fabrica.cliente;
     }
+    // La sala torcida vuelve a «la del cliente», que es su valor de fábrica (ADR 002, enmienda 9).
+    if p.idiomas.sala.as_deref().is_some_and(|s| !es_un_idioma(s)) {
+        p.idiomas.sala = None;
+    }
     Ok(p)
 }
 
@@ -236,7 +251,7 @@ mod tests {
         let d = carpeta("reinicio");
         let ruta = d.join(ARCHIVO);
         let elegidas = Preferencias {
-            idiomas: IdiomasDePista { consultor: "es-ES".into(), cliente: "en-US".into() },
+            idiomas: IdiomasDePista { consultor: "es-ES".into(), cliente: "en-US".into(), sala: Some("es-ES".into()) },
             redactar: true,
             api_encendida: true,
             externo: Externo::Groq,
@@ -335,6 +350,19 @@ mod tests {
         let p = de_texto(r#"{"version":1,"idiomas":{"consultor":"es-ES","cliente":"../../x"},"redactar":true}"#).unwrap();
         assert_eq!(p.idiomas.cliente, "es-ES");
         assert!(p.redactar);
+    }
+
+    /// **La sala** (sprint 005, ADR 020 §6): un archivo de antes, sin el campo, escucha la sala en el
+    /// idioma del cliente; una sala torcida vuelve a eso mismo; y una elegida se respeta.
+    #[test]
+    fn la_sala_vale_la_del_cliente_si_no_se_eligio() {
+        let antes = de_texto(r#"{"version":1,"idiomas":{"consultor":"es-ES","cliente":"en-US"}}"#).unwrap();
+        assert_eq!(antes.idiomas.sala, None);
+        assert_eq!(antes.idiomas.de_la_sala(), "en-US");
+        let torcida = de_texto(r#"{"version":1,"idiomas":{"consultor":"es-ES","cliente":"en-US","sala":"../x"}}"#).unwrap();
+        assert_eq!(torcida.idiomas.de_la_sala(), "en-US");
+        let elegida = de_texto(r#"{"version":1,"idiomas":{"consultor":"es-ES","cliente":"en-US","sala":"es-ES"}}"#).unwrap();
+        assert_eq!(elegida.idiomas.de_la_sala(), "es-ES");
     }
 
     #[test]

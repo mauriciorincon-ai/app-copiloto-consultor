@@ -85,6 +85,7 @@ impl Voz for Muda {
 /// | `encendida` | la banda vive a 44 px en vez de 88 |
 /// | `puede` | cuál de los dos estados se pinta: «Diciéndote la ficha…» o «Conecta auriculares» |
 /// | `diciendo` | si está sonando ahora mismo |
+/// | `esperando` | en presencial, la ficha espera a que la sala calle: «La sala habla · te la digo cuando calle» |
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LaVoz {
@@ -93,11 +94,46 @@ pub struct LaVoz {
     /// oye. Es una capacidad, no un instante — que alguien esté hablando ahora mismo no la cambia.
     pub puede: bool,
     pub diciendo: bool,
+    /// **En la sala, la ficha espera a que la sala calle** (sprint 005, ADR 020 §7): hay una ficha que decir y
+    /// alguien habla. Dura como mucho [`ESPERA_DE_LA_SALA`]; si la sala no calla, la ficha se queda en la banda.
+    pub esperando: bool,
 }
 
 impl LaVoz {
     /// La voz apagada, que es como nace la app.
-    pub const APAGADA: Self = Self { encendida: false, puede: false, diciendo: false };
+    pub const APAGADA: Self = Self { encendida: false, puede: false, diciendo: false, esperando: false };
+}
+
+/// **Cuánto espera la voz a que la sala calle** antes de rendirse (ADR 020 §7). Es el presupuesto de la ficha —de
+/// fin de turno a ficha, ≤ 4 s—: pasado ese rato la conversación ya va por otro sitio, y la ficha se queda en la
+/// banda, donde `⌃⌥V` la enseña. No lo mide el kit v4 (no hay voz en el kit): es una decisión de producto, dicha.
+pub const ESPERA_DE_LA_SALA: std::time::Duration = std::time::Duration::from_secs(4);
+
+/// Cada cuánto se mira si la sala calló mientras se espera.
+pub const PASO_DE_LA_ESPERA: std::time::Duration = std::time::Duration::from_millis(100);
+
+/// **Espera a que nadie hable**, mirando cada `paso` y como mucho `tope`. `true` si la sala calló a tiempo.
+///
+/// Pura: el reloj entra por `dormir`, así que la prueba no espera de verdad. En la reunión no se usa —allí la
+/// ficha que llega con alguien hablando se calla, como desde el sprint 002—; en la sala, lo último que se dijo
+/// suele ser tuyo y la ficha llega mientras sigues hablando, así que se espera un poco antes de rendirse.
+pub fn esperar_al_silencio(
+    mut alguien_hablando: impl FnMut() -> bool,
+    mut dormir: impl FnMut(std::time::Duration),
+    tope: std::time::Duration,
+    paso: std::time::Duration,
+) -> bool {
+    let mut esperado = std::time::Duration::ZERO;
+    loop {
+        if !alguien_hablando() {
+            return true;
+        }
+        if esperado >= tope {
+            return false;
+        }
+        dormir(paso);
+        esperado += paso;
+    }
 }
 
 /// Por qué la voz no dice la ficha. **Cinco, y ninguna se colapsa en «no se puede».**
@@ -373,6 +409,39 @@ mod pruebas {
     fn una_parte_vacia_no_deja_una_pausa_sola() {
         assert_eq!(a_voz("Titular", "", "propuesta"), "Titular. propuesta.");
         assert!(!a_voz("Titular", "", "propuesta").contains(".."));
+    }
+
+    /// **En la sala la voz espera a que calle, y no más que el tope** (ADR 020 §7). Con un reloj de mentira: la
+    /// prueba no duerme. ¿Puede fallar? Sí: sin el tope, una sala que no calla dejaría la voz esperando para
+    /// siempre (bitácora del sprint 005, fase 2).
+    #[test]
+    fn en_la_sala_la_voz_espera_al_silencio_y_no_mas_que_el_tope() {
+        use std::time::Duration;
+        let paso = Duration::from_millis(100);
+        let tope = Duration::from_secs(4);
+        // Calla a la tercera mirada: se dice, tras dormir dos pasos.
+        let mut miradas = 0;
+        let mut dormido = Duration::ZERO;
+        let callo = esperar_al_silencio(
+            || {
+                miradas += 1;
+                miradas < 3
+            },
+            |d| dormido += d,
+            tope,
+            paso,
+        );
+        assert!(callo, "la sala calló y la voz no lo vio");
+        assert_eq!(dormido, paso * 2);
+        // Callada desde el principio: se dice ya, sin dormir.
+        let mut dormido = Duration::ZERO;
+        assert!(esperar_al_silencio(|| false, |d| dormido += d, tope, paso));
+        assert_eq!(dormido, Duration::ZERO);
+        // Una sala que no calla: se rinde justo al tope, ni antes ni después.
+        let mut dormido = Duration::ZERO;
+        assert!(!esperar_al_silencio(|| true, |d| dormido += d, tope, paso), "la voz habló encima de la sala");
+        assert_eq!(dormido, tope, "la voz esperó otra cosa que el tope");
+        assert_eq!(ESPERA_DE_LA_SALA, tope, "el tope de la sala cambió sin pasar por el ADR 020 §7");
     }
 
     /// La voz muda **siempre existe** y siempre dice por qué. Es la que corre en la CI.

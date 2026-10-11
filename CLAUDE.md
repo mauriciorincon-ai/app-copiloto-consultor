@@ -5,6 +5,11 @@
 > 2026-09-18. **Primera app de ESCRITORIO del portafolio** (Tauri) y primera bajo el estándar
 > 4-T «captura de terceros». Nace con el pipeline completo desde el día 0 (Etapa de Diseño ·
 > dos filtros ⭐/⭐⭐ · cierre en dos actos · cero enlaces).
+>
+> **Constitución regenerada con el kit v1.40.0 (modo regenerar, método v1.39.0) el 2026-10-05**, en la
+> fase 0 del sprint 005, desde este mismo archivo y no desde la copia de la planeadora, que se quedó en el
+> estampado v1.27 (K-S5-1). Las reglas propias quedan intactas; entran los deltas del kit v1.37→v1.40, y
+> las reglas 26, 27 y 28 del kit entran como **25, 26 y 27** de esta casa, citadas por nombre.
 
 ## Las dos casas (regla dura)
 
@@ -23,7 +28,8 @@
 **Angel Ghost** — *«Tu propia experiencia, en la reunión, en el momento justo — y solo tú la
 ves.»* Una ventana pequeña en el Mac del consultor que el cliente NO ve aunque comparta pantalla.
 Escucha ambos lados de la videollamada (dos pistas: micrófono = consultor, audio del sistema =
-cliente), lee la pantalla solo cuando cambia, y muestra **fichas de evidencia del propio corpus
+cliente; o, en el **modo presencial** del sprint 005, la sala por el micrófono del Mac, en una sola pista sin dueño
+y sin leer la pantalla), lee la pantalla solo cuando cambia, y muestra **fichas de evidencia del propio corpus
 del consultor** (propuesta · marco · caso · ficha de cliente · perfil del consultor): un titular,
 una línea y la fuente. Si el usuario lo enciende, un modelo local redacta una sugerencia breve.
 **Silenciosa y efímera:** nada de terceros se graba ni persiste; al cerrar queda solo lo tuyo (regla dura 1).
@@ -83,7 +89,12 @@ vende **no persistir, verificable**.
    (`sintesis/sistema.rs`) → API opt-in (`sintesis/api.rs`: Claude, Groq); MLX queda en el
    roadmap del H2 (ADR 011); `mock` de primera clase (`AG_SINTESIS=mock`).
 4. **CERO HUELLAS DE VOZ, CERO EMOCIONES.** La atribución de hablante se resuelve por pista
-   (mic/sistema), nunca por biometría; no se infiere estado emocional de nadie.
+   (mic/sistema), nunca por biometría; no se infiere estado emocional de nadie. **En presencial (sprint 005, ADR
+   020) la pista única es la sala y no tiene dueño** (`Quien::SinAtribuir`): la app no sabe quién habló y lo dice; la
+   tolerancia a tu voz son reglas sobre el texto y el tiempo, medidas por el kit v4, y nunca una huella de la tuya.
+   Lo vigilan `tests/unit/pista-por-quien.test.ts` (de quién es un turno se pregunta con `Pista::quien()`, jamás
+   comparando pistas) y `tests/unit/cero-huellas-de-voz.test.ts` (ninguna API ni librería de hablantes, de rasgos de
+   voz ni de emociones, en el código ni en las dependencias).
 5. **CERO DATOS REALES DE CLIENTES EN EL REPO.** Público por defecto: kits de prueba y maquetas
    con datos 100 % sintéticos; el corpus real del usuario y sus notas viven fuera del repo y
    gitignored. Doble cinturón gitleaks.
@@ -145,6 +156,15 @@ vende **no persistir, verificable**.
   entra por ADR — **ADR 003 «observabilidad sin contenido»**: `println!` con prefijo y solo
   metadatos, sin logger en la UI y sin Sentry; un término plantado lo vigila en el log.
 - Ruleset `main-protegida` con checks requeridos `quality` · `e2e` · `build-escritorio`.
+- **Lo del kit que es del perfil web y aquí no aplica (regeneración v1.40.0, dicho para que no se
+  busque):** Lighthouse y su margen (`lighthouse-margen.mjs`, v1.37.0); la CI que construye como el
+  proveedor (`build-como-proveedor.mjs`, perfil `--estatico`, v1.39.0); el bundle comparado contra
+  `git merge-base` de `/deploy-check` §4 (v1.38.0: aquí el peso que cuenta es el del binario, en
+  `/release-check` §3); la mirada sobre la **página guardada** del preview (v1.39.0: no hay preview, el
+  HTML se lee en el propio archivo de la maqueta); y la pasada de capturas sobre la maqueta **servida**
+  (v1.37.0): aquí el usuario la abre con doble clic, así que `file://` es el modo real y es el que
+  recorre `scripts/capturar-maqueta.mjs`. Las reglas de producto con perfiles del skill `diseno-ui` § 5
+  tampoco: la app no tiene perfiles.
 
 ## Estructura
 
@@ -227,6 +247,10 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    carnada floja pasa en silencio dando falsa tranquilidad (lección 2026-07-15: dos falsos "todo
    bien" seguidos). Si gitleaks sube de versión mayor, re-verificar la carnada en sandbox antes
    de confiar en ella.
+   **El hook PreToolUse FALLA CERRADO (kit v1.37.0):** si faltan gitleaks o jq bloquea la escritura y
+   lo dice (antes dejaba pasar todo en silencio); `KIT_SIN_GITLEAKS=1` lo salta a sabiendas, por
+   invocación. Lo prueba `tests/unit/hook-secretos.test.ts`, que corre el comando REAL del hook con un
+   PATH sin herramientas.
    *En esta app no hay `.env.local` ni Vercel:* los secretos viven **solo en el Llavero de macOS**
    (`src-tauri/src/llavero.rs`: API · notas · puerta), ninguno en archivo.
 8. **Presupuesto de esfuerzo:** ~12 pasos por pantalla; si lo excedes, detente y simplifica o consulta.
@@ -287,7 +311,8 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    mirada real con todos los gates de palabra cumplidos; 3ª ocurrencia de la clase. Es la
    regla 15-hermana del lado humano: una mirada satisfecha sin mirada es un gate que nunca
    ejecutó.)*
-   **Tres clases de mirada (kit v1.36.0, método v1.38.0; antes dos, kit v1.31.0):** abre parada
+   **Tres clases de mirada (kit v1.40.0 la sube a la constitución, K-S4-3; método v1.38.0; antes dos,
+   kit v1.31.0):** abre parada
    **SOLO la de DECISIÓN** — lo que cambia una decisión del usuario, la promesa del producto o su
    máquina: una pantalla o un flujo nuevos fuera de la maqueta aprobada, un cambio de forma que
    altera cómo se usa, cualquier acción sobre las protecciones del sistema. Va **una pregunta de
@@ -301,6 +326,8 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    sueltas. **Las segundas vueltas no abren parada**: copy retocado por su propio veredicto y
    filas sin respuesta se aplican, se registran y se ven al cierre de fase. *(Este repo, S2:
    el usuario cortó las paradas de copy — «así no vamos a avanzar nada».)*
+   *La mirada sobre la página guardada (kit v1.39.0) no aplica aquí:* no hay preview; si una mirada
+   exige leer el HTML, se lee el archivo de la maqueta mismo.
 11. **Guía de prueba viva y ACUMULATIVA (`docs/GUIA-DE-PRUEBA.html`, OBLIGATORIA en todo sprint
    con UI — reglas duras del pipeline, G-Metodo 2026-07-12 ×2).** HTML visual y **AUTOCONTENIDO**
    (cero CDNs; casillas con `localStorage` bajo **prefijo versionado por sprint** — cambia en
@@ -428,11 +455,15 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    mirar en una fase; desde entonces cada push termina leyendo sus checks)*. **Y una métrica
    del kit que la CI NO puede medir se declara `manual` con su corrida local registrada**, o
    no se declara: el WER vivió dos sprints «en CI» sin que el runner tuviera modelos de voz.
-   **Y la demo se corre con `scripts/demo-rojo.sh` (kit v1.35.0):** mutación literal → gate (debe
-   fallar) → restauración desde UNA carpeta de respaldo (`.demo-rojo/`, ignorada por git) verificada
-   con `grep` y `cmp` → gate restaurado (debe pasar). *En esta casa,* su opción `--puerto` mata lo que
-   ocupe el puerto: solo se usa con un puerto propio, jamás con el 3000, que es de otra app del
-   usuario.
+   **Y la demo se corre con `scripts/demo-rojo.sh` (kit v1.35.0; endurecido en v1.38.0 y v1.40.0):**
+   mutación literal → gate (debe fallar) → restauración desde UNA carpeta de respaldo (`.demo-rojo/`,
+   ignorada por git) verificada con Python y `cmp` → gate restaurado (debe pasar). **`--debe-nombrar`**
+   exige que el rojo venga de la aserción (un servidor que no arrancó o una mutación que no compila no
+   son rojos); un exit 126/127 o una señal no cuentan como rojo; **`--minimo-tests N`** rechaza un verde
+   que corrió menos de N pruebas (un filtro que no coincide sale 0); una interrupción restaura antes de
+   salir; y `--buscar` de varias líneas se verifica entero. **`--puerto` mata SOLO procesos de este repo**
+   (su línea de comando contiene el directorio del repo); uno ajeno —el 3000 es de otra app del
+   usuario— se reporta y aborta (kit v1.40.0, K-S4-7). *(ds S6: tres demos que no eran rojos.)*
 16. **El bundle publicable del design system es un ARTEFACTO DEL REPO (kit v1.17.0).** `design-sync/`
    se versiona aquí como **espejo 1:1** de lo publicado en Claude Design, y la jerarquía es fija:
    `design-system.md` (fuente de verdad) → `design-sync/` (bundle, deriva) → el proyecto remoto
@@ -501,6 +532,12 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    **Comprobación MECÁNICA (kit v1.32.0; falla CERRADO desde v1.35.0):**
    `scripts/verificar-dependencias.mjs` corre en el job `quality` en cada PR y falla si algún paquete
    quedó por debajo de `main` (su rojo: un `jsdom` bajado a mano en el lockfile, bitácora del S4).
+   **Degradaciones DECLARADAS (kit v1.37.0):** una bajada a propósito va a
+   `scripts/degradaciones-permitidas.json` (`{nombre, de, a, razon}`, coincidencia exacta); una entrada
+   que ya no aplica FALLA, y se compara cada línea mayor que las dos orillas tienen. **Bajadas FORZADAS
+   (kit v1.39.0):** una bajada que un paquete del PR **fija exacta** según el registro (`npm view`) se
+   acepta y se nombra («bajada forzada aceptada porque X la fija exacta»); un rango que admite la versión
+   de `main`, sin dependiente o sin registro, sigue en rojo. Prueba `tests/unit/verificar-dependencias.test.ts`.
    **Excepciones de auditoría (kit v1.34.0):** `pnpm audit --audit-level high` es gate y su nivel no
    se baja; una advisory SIN parche publicado puede ir a `auditConfig.ignoreGhsas` de
    `pnpm-workspace.yaml` con un ADR que diga id, razón, fecha y condición de retiro. Una advisory CON
@@ -530,7 +567,11 @@ decisions/NNN-titulo.md   (ADRs de implementación)
    y **el usuario los paga todos, hasta los bajos**. Lo vigila
    `tests/unit/auditoria-con-sitio.test.ts`, que exige que cada encabezado de severidad declare
    su cuenta y que la cuenta cuadre con sus filas *(origen: el S1 resumió quince hallazgos en una
-   frase con un puntero roto y desaparecieron)*.
+   frase con un puntero roto y desaparecieron)*. **Y el ESTADO de cada hallazgo (kit v1.40.0, que lo
+   tomó de este repo):** `pagado · <commit o pago>` · `deuda · <sprint o condición>` ·
+   `descartado · <razón>` (o `irrecuperable`, la confesión del S1). El gate exige sitio **y** estado
+   *(el artefacto del S4 tenía el sitio de cada hallazgo y ninguno su estado; se completó en el
+   `/release-check`)*.
 
 21. **IA de construcción por suscripción (estándar 7-S, kit v1.30.0 — en el kit es su regla 21).**
     Si un agente o un lote de esta app usa la **suscripción del usuario** como proveedor de modelo
@@ -557,8 +598,9 @@ decisions/NNN-titulo.md   (ADRs de implementación)
     24 y 25 del kit, «las protecciones del sistema se enseñan antes de tocarlas» y «el comando de
     pruebas por defecto no toca hardware», citadas por nombre): lo que abre micrófono, audio del
     sistema, altavoces, reconocimiento de voz, pantalla, Accessibility, Llavero, desbloqueo o launchd
-    lleva `#[ignore = "hardware: …"]` y lo corre la CI con `--include-ignored`; lo que necesita al
-    usuario delante se llama `en_vivo_*`, la CI lo salta y se corre a mano, con su matriz y su «sí».
+    lleva `#[ignore = "hardware: …"]` y lo corre la CI con `--include-ignored --skip en_vivo_`; lo que
+    necesita al usuario delante se llama `en_vivo_*`, la CI lo salta y se corre a mano, con su matriz y
+    su «sí» (las **dos marcas** de la regla 25 del kit, v1.40.0, que nacieron aquí: K-S4-6).
     Lo garantiza un centinela, no la memoria: con `AG_SIN_HARDWARE=1` cada entrada nativa **aborta antes
     de cruzar a C** (`src-tauri/src/hardware.rs`; gate `tests/unit/cargo-test-sin-hardware.test.ts`).
     Su primera corrida cazó un test de la voz que desde el S2 encolaba una frase en los altavoces. En
@@ -593,6 +635,33 @@ decisions/NNN-titulo.md   (ADRs de implementación)
     después, +100 días y «siempre»— (`ensayos::pruebas::lo_vencido_se_barre_justo_al_vencer_y_siempre_no_vence`). La fecha «consultado» del catálogo de jurisdicciones no cambia el
     estado de nada y queda fuera, dicho aquí.
 
+25. **Worktrees prohibidos (regla 26 del kit, v1.37.0 — citada por nombre; regla del usuario
+    2026-09-27).** Todo el trabajo ocurre en el checkout principal `~/Code/app-copiloto-consultor`: nada
+    de `git worktree` ni de `.claude/worktrees`. Un trabajo en paralelo vive como archivos en este
+    directorio y se comitea a su rama sin cambiar de rama (índice temporal); jamás `git stash` a secas
+    sobre trabajo ajeno. *(planlang: un worktree duplica el `node_modules`, pierde el
+    `settings.local.json` y deja ramas que nadie cierra.)*
+
+26. **La evidencia se escribe DESPUÉS del hecho (regla 27 del kit, v1.38.0 — citada por nombre).** Una
+    frase de evidencia en la bitácora, el summary o el PR —«leído como imagen», «N de N», «% de líneas»,
+    «medido con…», «en verde en la CI»— se escribe después de la corrida que la produce, con su cuenta
+    tomada del resultado, nunca como plan en pasado. La segunda pasada de la casilla 4 de
+    `/audita-sprint` las busca y exige la corrida que las sostiene. **La pasada de capturas cubre los
+    extremos de magnitud** de cada contenido de ejemplo (en esta app: la ficha con el titular más largo,
+    la cifra más grande, el transcript más largo, el idioma con las palabras más largas), no solo el
+    ejemplo principal. Un spike de costos se corre con máquina quieta y carga registrada (molde del kit
+    `docs/SPIKE-DE-COSTOS.plantilla.md`). *(ds S6: «leído como imagen» antes de leer y dos «N de N» que
+    no eran la cuenta.)* Y su pareja de la casa (método v1.42.0): **toda edición programática se relee
+    con `git diff` línea a línea antes del commit** *(K-S4-2: una sustitución del kit se tragó un
+    bloque entero)*.
+
+27. **Parejas de versiones entre dos ecosistemas se vigilan con un test entre lockfiles (regla 28 del
+    kit, v1.40.0 — citada por nombre; nació en este repo).** `@tauri-apps/*` ↔ crates `tauri*` van en la
+    misma versión menor o `pnpm tauri build` se niega; Dependabot solo mueve npm y `cargo check` no lo
+    ve. Lo vigila `tests/unit/tauri-a-la-par.test.ts` (la plantilla del kit, con el origen de esta casa),
+    y `/release-check` §3 construye el binario también cuando entra un lote de dependencias. *(Este repo,
+    S4: npm en 2.12, crates en 2.11, CI verde y binario imposible; lo vio el `/release-check`.)*
+
 ## Estándares (los 6+1, gates en CI)
 
 Testing · CI/CD · Observabilidad · Seguridad · Performance (en esta app, contra el presupuesto de
@@ -613,6 +682,10 @@ Branch `sprint-NNN/<tema>`.
 **Durante** — construye por fases (setup → motor → UI → integración → e2e). Mantén viva la bitácora
 `sprints/SPRINT_NNN-implementation-log.md` (progreso, decisiones, bugs). ADRs en `decisions/` para
 decisiones no anticipadas. `/self-review` tras cada bloque; `/run-tests` frecuente.
+**El PR del sprint nace en borrador (`gh pr create --draft`) desde el primer push, y su cuerpo EMPIEZA
+con la línea del merge (kit v1.38.0, método v1.40.0):** «cuando esté verde: marca el PR listo, mergea con
+**squash** y borra la rama; después corre `/cierre-sprint copiloto-consultor`». El merge lo hace el
+usuario *(ds S6: dos PRs entraron como merge commit con la instrucción escrita solo al final de la orden)*.
 **Gate de FASE (kit v1.8.0): al terminar CADA fase DETENTE** — entrega el resumen completo de
 la fase (qué se construyó, archivos, tests y resultados, criterio de fase completa,
 desviaciones), recuerda al usuario que puede cambiar modelo/esfuerzo con `/model`, y espera su
@@ -640,7 +713,12 @@ es INVISIBLE para la planeadora (el S3 de Innmobiliaria lo estuvo UN MES) — y 
 registrada, el cierre queda condicionado. **Y si el sprint se mergea SIN completar sus fases,
 el CORTE SE DECLARA EN EL MISMO ACTO (método v1.24.0):** en el PR y en el summary — qué fases
 quedaron fuera y qué entregables arrastran; el corte silencioso arrastró 5 consecuencias
-medibles.
+medibles. **Un PR de cierre no se abre sin contenido ni se mergea vacío (kit v1.40.0, método v1.42.0):**
+la fase final, la auditoría, el `/release-check` y el summary viajan en UN solo PR, que nace en borrador
+y se marca listo cuando lo tiene todo *(este repo, S4: tres PRs —uno sin la fase 5, otro vacío—)*.
+**`/audita-sprint` parte la Fase 1 por SUPERFICIES cuando el diff pasa de ~100 archivos (kit v1.38.0)**
+—alcance y textos · motor, contrato, gates y dependencias · UI, i18n, a11y y privacidad del cliente— con
+un consolidado único, y el artefacto lleva el estado de cada hallazgo desde el principio (regla 20).
 
 **Cierre de CICLO — ocurre en DOS ACTOS (método v1.20.0; la orden declara cuando este sprint es
 el ÚLTIMO del ciclo):** **Acto 1, DE CONSTRUCCIÓN** — el último sprint mergea con CI verde
@@ -709,6 +787,7 @@ pr: <link>
 ## Sugerencias de mejora al método  [¿algo de metodo/metodo.md debería cambiar?]
 ## Deuda técnica aceptada  [qué, por qué, sprint de pago]
 ## Archivos clave (máx. 10) · ## Cómo probar
+## Para mergear  [línea FIJA (kit v1.38.0): «marca el PR listo, mergea con SQUASH y borra la rama; después corre /cierre-sprint copiloto-consultor» — la hace el usuario]
 ```
 
 ## Patrones de dominio de esta app
@@ -717,7 +796,9 @@ Llenado en la auditoría del cierre del ciclo H1 (sprint 003); el estampado lo d
 
 - **Dos pistas por dispositivo, jamás por voz** (regla dura 4): micrófono = consultor, audio del
   sistema = cliente (`capture/`); un turno del micrófono que repite al cliente se marca eco
-  (`voz/eco.rs`) y cuenta como del cliente.
+  (`voz/eco.rs`) y cuenta como del cliente. **En presencial, una: la sala** (`Pista::Sala`), sin dueño; su
+  tolerancia vive en `disparo/tolerancia.rs` con la regla de `data/presencial/reglas.json`, y lo que abre cada modo,
+  en `modo::que_abre` (sprint 005, ADR 020).
 - **Turno → disparo → búsqueda → ficha en ≤ 4 s:** `voz/turno.rs` → `stt/` → `disparo/` →
   `corpus/` (BM25 por sección) → `ficha/` (con `maniobra.rs` cuando el corpus no tiene nada). Todo
   determinista; la pantalla aporta al mismo camino (`pantalla/refuerzo.rs`).

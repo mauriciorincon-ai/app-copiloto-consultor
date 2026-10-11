@@ -236,8 +236,7 @@ fn una_frase_por_los_altavoces_acaba_siendo_texto() {
     // Sin corpus: lo que este test comprueba es que una frase por los altavoces acaba siendo
     // texto. La ficha tiene su propio camino y sus propias pruebas.
     let escucha = Escucha::arrancar(
-        "es-ES",
-        "es-ES",
+        app_copiloto_consultor_lib::escucha::Pistas::Reunion { consultor: "es-ES".into(), cliente: "es-ES".into() },
         motor,
         std::sync::Arc::new(SinCorpus),
         // Sin jerga: este test mide el camino del audio, no la corrección del transcript.
@@ -938,6 +937,70 @@ fn una_sesion_completa(casa: &Path, corpus_en: &Path, llave: &dyn Llaves) -> (Ve
         ejercido.push("ensayo");
     }
 
+    // 7-quater · **La sala, en presencial** (sprint 005, ADR 020). La escucha entera sobre un anillo que llena el test
+    //     —el micrófono no se abre— con **una sola pista, la sala**, y el motor de verdad: el audio del kit entra como
+    //     la sala, se corta, se transcribe en el idioma de la sala y pasa por el disparador con la tolerancia de la
+    //     casa. Lo que Apple escriba al transcribir la sala se escribe aquí, dentro del inventario. Y **un turno de la
+    //     sala con la canaria** recorre el camino de la escucha hasta la ficha (`del_turno_a_la_ficha`), el cuaderno
+    //     (que no lo guarda: la sala no es tuya) y las propuestas (que no proponen nada: no se sabe quién lo dijo).
+    {
+        use app_copiloto_consultor_lib::escucha::{del_turno_a_la_ficha, Buscador};
+        struct ElDeLaSesion<'a>(&'a Corpus);
+        impl Buscador for ElDeLaSesion<'_> {
+            fn buscar(&self, texto: &str, cuantos: usize) -> Vec<app_copiloto_consultor_lib::corpus::Hallazgo> {
+                self.0.buscar(texto, cuantos).unwrap_or_default()
+            }
+            fn vocabulario(&self) -> Vec<String> {
+                self.0.vocabulario().to_vec()
+            }
+        }
+        let anillo = Arc::new(Mutex::new(Anillo::de_la_app()));
+        let oido: Arc<Mutex<Vec<Novedad>>> = Arc::default();
+        let apunta = oido.clone();
+        let sala = Escucha::sobre_anillos(
+            vec![(Pista::Sala, anillo.clone(), "es-ES".into())],
+            motor_de_la_casa(),
+            Arc::new(SinCorpus),
+            jerga.clone(),
+            move |n| apunta.lock().unwrap().push(n),
+        );
+        assert!(sala.estado().presencial, "la escucha de la sala no se declaró presencial");
+        {
+            let silencio = vec![0.0f32; 16 * 600];
+            let mut a = anillo.lock().unwrap();
+            a.escribir(&silencio);
+            a.escribir(&muestras);
+            a.escribir(&silencio);
+        }
+        let de_la_sala = |n: &Novedad| match n {
+            Novedad::Turno(t) => t.pista == Pista::Sala,
+            Novedad::SinTexto { pista, .. } => *pista == Pista::Sala,
+            _ => false,
+        };
+        for _ in 0..400 {
+            if oido.lock().unwrap().iter().any(de_la_sala) {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        sala.cortar();
+        let oidos = oido.lock().unwrap().iter().filter(|n| de_la_sala(n)).count();
+        assert!(oidos > 0, "la sala no sacó ni un turno del audio del kit: el paso no midió nada");
+        println!("[sesión] la sala: {oidos} turno(s) cerrados por la escucha (transcritos o sin texto, sin el texto)");
+
+        let canaria_en_la_sala = Turno { pista: Pista::Sala, ..turno.clone() };
+        let mut d = Disparador::nuevo();
+        let a = del_turno_a_la_ficha(&mut d, &ElDeLaSesion(&corpus), &canaria_en_la_sala, Instant::now())
+            .expect("la pregunta de la sala no disparó: el paso no midió el camino de la ficha");
+        println!("[sesión] la sala disparó por «{}»", a.motivo.etiqueta());
+        assert!(!Cuaderno::nuevo(true).oir(&canaria_en_la_sala), "la sala entró al cuaderno como tuya");
+        let nada = |_: &str| false;
+        let ctx = app_copiloto_consultor_lib::propuestas::Contexto { fijadas: &[], conoce: &nada };
+        assert!(app_copiloto_consultor_lib::propuestas::proponer(&canaria_en_la_sala, &ctx).is_empty(), "la sala propuso una nota");
+        d.reiniciar();
+        ejercido.push("sala");
+    }
+
     // 7-bis · **La bandeja** (sprint 003, fase 2, ADR 016). Las reglas miran los turnos de verdad —la
     //     pregunta del cliente con la canaria y un plazo que dijo— y lo que no decidiste se sella en la
     //     bandeja con su vencimiento, junto a la lista que lee la tarea de launchd. **El plist no se
@@ -1032,6 +1095,7 @@ fn una_sesion_completa_no_deja_nada_en_el_disco_salvo_el_indice_del_corpus() {
     assert!(ejercido.contains(&"notas"), "las notas no se guardaron: el inventario no las midió");
     assert!(ejercido.contains(&"bandeja"), "la bandeja no se escribió: el inventario no la midió");
     assert!(ejercido.contains(&"ensayo"), "el ensayo no se guardó: el inventario no lo midió");
+    assert!(ejercido.contains(&"sala"), "la sala no se ejerció: el inventario no la midió");
 
     let despues: BTreeMap<PathBuf, Huella> = sitios.iter().flat_map(|s| inventario(s)).collect();
 
@@ -1197,6 +1261,8 @@ fn la_canaria_del_cliente_no_aparece_en_el_log() {
         "el hijo no llegó a correr la sesión entera: este gate no midió nada.\n{salida}"
     );
 
+    // La sala (paso 7-quater) también: la canaria la recorrió como turno sin dueño.
+    assert!(salida.contains("[sesión] la sala disparó por"), "el hijo no llegó a la sala: su canaria no midió nada.\n{salida}");
     // El ensayo (paso 7-ter) también tuvo que correr en el hijo: si no, su término no mide nada.
     assert!(salida.contains("[sesión] ensayo guardado"), "el hijo no llegó al ensayo: su término plantado no midió nada.\n{salida}");
     let delator: Vec<&str> = salida.lines().filter(|l| l.contains(TERMINO_DEL_ENSAYO)).collect();
@@ -2897,4 +2963,462 @@ fn el_kit_del_ensayo_mide_la_evaluacion() {
         fallos.push(format!("la evaluación más lenta tardó {peor_ms:.1} ms: el presupuesto es {PRESUPUESTO_DE_LA_EVALUACION_MS} ms"));
     }
     assert!(fallos.is_empty(), "la evaluación del ensayo:\n{}", fallos.join("\n"));
+}
+
+// =============================================================================================
+// el KIT v4: la sala del modo presencial (sprint 005, ADR 020 §4)
+// =============================================================================================
+//
+// En la sala tu voz y la del cliente entran por el mismo micrófono, y la app no sabe de quién es cada frase. La
+// tolerancia a tu voz (`disparo::Tolerancia`) son reglas sobre el texto y el tiempo, y **sus valores no se eligen
+// a ojo: se miden aquí**. El guion (`docs/kit-de-prueba/presencial.json`) dice turno a turno quién habla —la
+// verdad, solo para el kit— y si debería traer ficha; las salas (`sala-{es,en}.wav`) son ese guion dicho por dos
+// voces sintéticas en una sola pista (`scripts/kit-v4-sala.sh`), con su línea de tiempo (`*.tiempos.json`).
+//
+//   · **Nivel A** (puro, en la CI): los turnos, con su reloj, por el MISMO camino que la escucha
+//     (`escucha::del_turno_a_la_ficha` y `del_silencio_a_la_ficha`), para cada combinación de candidatas.
+//   · **Nivel B** (puro, en la CI): el VAD y el fin de turno de siempre sobre los wav. ¿Se juntan dos voces en un
+//     turno? ¿Cuánto dura el más largo? ¿Hace falta el tope, y de cuánto?
+//   · **Nivel C** (`hardware`): la transcripción de la sala. La CI no tiene modelos de voz: es `manual`.
+//
+// El criterio se escribió antes de medir (ADR 020 §4): no perder más fichas pertinentes que la línea base; entre
+// esas, la de menos falsas; si empatan, la de menos perillas. **La regla la elige el usuario** al STOP de la fase 1.
+
+use app_copiloto_consultor_lib::disparo::{Motivo, Tolerancia};
+use app_copiloto_consultor_lib::escucha::{del_silencio_a_la_ficha, del_turno_a_la_ficha, Buscador};
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct KitPresencial {
+    candidatas: Candidatas,
+    salas: Vec<SalaDelKit>,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Candidatas {
+    espera_tras_ficha_ms: Vec<usize>,
+    eco_de_la_ficha: Vec<Option<f32>>,
+    solo_pregunta_o_cifra: Vec<bool>,
+    silencio: Vec<bool>,
+    tope_de_turno_ms: Vec<Option<usize>>,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SalaDelKit {
+    id: String,
+    archivo: String,
+    idioma: String,
+    turnos: Vec<TurnoDeLaSala>,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct TurnoDeLaSala {
+    quien: String,
+    dice: String,
+    espera: String,
+    #[serde(default)]
+    motivo: Option<String>,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct TiemposDeLaSala {
+    duracion_ms: usize,
+    turnos: Vec<TiempoDeUnTurno>,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct TiempoDeUnTurno {
+    quien: String,
+    desde_ms: usize,
+    hasta_ms: usize,
+}
+
+const KIT_V4: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/kit-de-prueba");
+
+fn kit_presencial() -> KitPresencial {
+    serde_json::from_str(&std::fs::read_to_string(format!("{KIT_V4}/presencial.json")).expect("falta presencial.json"))
+        .expect("presencial.json no se pudo leer")
+}
+
+fn tiempos_de(sala: &SalaDelKit) -> TiemposDeLaSala {
+    let t: TiemposDeLaSala = serde_json::from_str(
+        &std::fs::read_to_string(format!("{KIT_V4}/audio/{}.tiempos.json", sala.id))
+            .unwrap_or_else(|_| panic!("falta {}.tiempos.json: córrelo con scripts/kit-v4-sala.sh", sala.id)),
+    )
+    .expect("los tiempos de la sala no se pudieron leer");
+    assert_eq!(t.turnos.len(), sala.turnos.len(), "{}: el wav y el guion no cuentan los mismos turnos: regenera la sala", sala.id);
+    for (i, (g, w)) in sala.turnos.iter().zip(&t.turnos).enumerate() {
+        assert_eq!(g.quien, w.quien, "{}: el turno {i} no lo dice quien dice el guion: regenera la sala", sala.id);
+    }
+    t
+}
+
+/// El corpus del kit, visto como lo ve la escucha.
+struct CorpusDelKit(Corpus);
+
+impl Buscador for CorpusDelKit {
+    fn buscar(&self, texto: &str, cuantos: usize) -> Vec<app_copiloto_consultor_lib::corpus::Hallazgo> {
+        self.0.buscar(texto, cuantos).unwrap_or_default()
+    }
+    fn vocabulario(&self) -> Vec<String> {
+        self.0.vocabulario().to_vec()
+    }
+}
+
+fn corpus_del_kit() -> CorpusDelKit {
+    let mut c = Corpus::en_memoria().unwrap();
+    c.indexar(Path::new(&format!("{KIT_V4}/corpus")), &|_| {}).expect("no se indexó el corpus del kit");
+    CorpusDelKit(c)
+}
+
+/// Lo que un turno del guion trajo: el motivo con el que disparó (él o el silencio que lo siguió), o nada.
+#[derive(Default, Clone)]
+struct Cuenta {
+    pertinentes: usize,
+    falsas_tuyas: usize,
+    falsas_del_cliente: usize,
+    perdidas: usize,
+    /// «motivo» → cuántas, para el detalle de la regla recomendada y de la línea base.
+    por_motivo: BTreeMap<String, (usize, usize, usize)>,
+    /// Los turnos que dispararon sin deber, con su texto: para que la tabla se pueda leer.
+    sobran: Vec<String>,
+    faltan: Vec<String>,
+    latencia_max_ms: u64,
+}
+
+impl Cuenta {
+    fn falsas(&self) -> usize {
+        self.falsas_tuyas + self.falsas_del_cliente
+    }
+    fn sumar(&mut self, otra: &Cuenta) {
+        self.pertinentes += otra.pertinentes;
+        self.falsas_tuyas += otra.falsas_tuyas;
+        self.falsas_del_cliente += otra.falsas_del_cliente;
+        self.perdidas += otra.perdidas;
+        for (m, (p, f, d)) in &otra.por_motivo {
+            let e = self.por_motivo.entry(m.clone()).or_default();
+            e.0 += p;
+            e.1 += f;
+            e.2 += d;
+        }
+        self.sobran.extend(otra.sobran.iter().cloned());
+        self.faltan.extend(otra.faltan.iter().cloned());
+        self.latencia_max_ms = self.latencia_max_ms.max(otra.latencia_max_ms);
+    }
+}
+
+fn etiqueta(m: Motivo) -> &'static str {
+    match m {
+        Motivo::Pregunta => "pregunta",
+        Motivo::Cifra => "cifra",
+        Motivo::TerminoDelCorpus => "termino",
+        Motivo::SilencioLargo => "silencio",
+        Motivo::Atajo => "atajo",
+        Motivo::Pantalla => "pantalla",
+    }
+}
+
+/// **Una sala por el camino de la escucha**, con una tolerancia. Cada turno entra como `Pista::Sala` —la app no
+/// sabe de quién es—, con el reloj de su wav; entre un turno y el siguiente, el silencio se mira cada 400 ms, como
+/// el latido de la escucha.
+fn medir_la_sala(sala: &SalaDelKit, tiempos: &TiemposDeLaSala, corpus: &CorpusDelKit, regla: &Tolerancia) -> Cuenta {
+    const LATIDO_DEL_SILENCIO_MS: usize = 400;
+    let disparador = Mutex::new(Disparador::con_tolerancia(regla.clone()));
+    let mut cuenta = Cuenta::default();
+    // La última aparición, para explicar cada perdida: casi siempre la tapa la espera tras una ficha anterior.
+    let mut anterior: Option<(usize, &str, Motivo)> = None;
+    for (i, (g, w)) in sala.turnos.iter().zip(&tiempos.turnos).enumerate() {
+        let turno = Turno {
+            pista: Pista::Sala,
+            desde_ms: w.desde_ms,
+            hasta_ms: w.hasta_ms,
+            texto: g.dice.clone(),
+            hora: "10:00".into(),
+            eco: false,
+        };
+        let mut trajo = del_turno_a_la_ficha(&mut disparador.lock().unwrap(), corpus, &turno, Instant::now());
+        let siguiente = tiempos.turnos.get(i + 1).map_or(tiempos.duracion_ms, |t| t.desde_ms);
+        let mut ahora = w.hasta_ms + LATIDO_DEL_SILENCIO_MS;
+        while trajo.is_none() && ahora < siguiente {
+            trajo = del_silencio_a_la_ficha(&disparador, corpus, &turno, ahora);
+            ahora += LATIDO_DEL_SILENCIO_MS;
+        }
+        let debia = g.quien == "cliente" && g.espera == "ficha";
+        let linea = |m: &str| format!("  {} · {:<7} · {:<8} · «{}»", sala.id, g.quien, m, g.dice);
+        match (&trajo, debia) {
+            (Some(a), true) => {
+                cuenta.pertinentes += 1;
+                cuenta.por_motivo.entry(etiqueta(a.motivo).into()).or_default().0 += 1;
+            }
+            (Some(a), false) => {
+                if g.quien == "tuyo" {
+                    cuenta.falsas_tuyas += 1;
+                } else {
+                    cuenta.falsas_del_cliente += 1;
+                }
+                cuenta.por_motivo.entry(etiqueta(a.motivo).into()).or_default().1 += 1;
+                cuenta.sobran.push(linea(etiqueta(a.motivo)));
+            }
+            (None, true) => {
+                cuenta.perdidas += 1;
+                let m = g.motivo.clone().unwrap_or_else(|| "?".into());
+                cuenta.por_motivo.entry(m.clone()).or_default().2 += 1;
+                let antes = match anterior {
+                    Some((ms, quien, motivo)) => format!(
+                        "la anterior salió {:.1} s antes, de un turno {quien}, por «{}»",
+                        (w.hasta_ms - ms) as f64 / 1000.0,
+                        etiqueta(motivo)
+                    ),
+                    None => "no había salido ninguna antes".into(),
+                };
+                cuenta.faltan.push(format!("{} — {antes}", linea(&m)));
+            }
+            (None, false) => {}
+        }
+        if let Some(a) = &trajo {
+            cuenta.latencia_max_ms = cuenta.latencia_max_ms.max(a.ms);
+            anterior = Some((a.de_ms.unwrap_or(w.hasta_ms), if g.quien == "tuyo" { "tuyo" } else { "del cliente" }, a.motivo));
+        }
+    }
+    cuenta
+}
+
+fn describir(t: &Tolerancia) -> String {
+    let c1 = if t.espera_tras_ficha_ms == 0 { "—".to_string() } else { format!("{} s", t.espera_tras_ficha_ms / 1000) };
+    let c2 = t.eco_de_la_ficha.map_or("—".to_string(), |f| format!("{f:.2}"));
+    let c3 = if t.solo_pregunta_o_cifra { "sí" } else { "—" };
+    let s = if t.silencio { "sí" } else { "no" };
+    format!("{c1:>5} │ {c2:>4} │ {c3:>2} │ {s:>3}")
+}
+
+/// **NIVEL A — la tolerancia, medida turno a turno en las dos salas.**
+#[test]
+fn el_kit_presencial_mide_la_tolerancia() {
+    let _turno = turno();
+    let kit = kit_presencial();
+    let corpus = corpus_del_kit();
+    let salas: Vec<(&SalaDelKit, TiemposDeLaSala)> = kit.salas.iter().map(|s| (s, tiempos_de(s))).collect();
+
+    // Que el kit mida lo que dice medir: en cada sala, turnos del cliente que deben traer ficha y preguntas tuyas,
+    // que son el falso positivo que más se espera.
+    for (s, _) in &salas {
+        let deben = s.turnos.iter().filter(|t| t.quien == "cliente" && t.espera == "ficha").count();
+        let tuyas = s.turnos.iter().filter(|t| t.quien == "tuyo" && t.dice.contains('?')).count();
+        assert!(deben >= 5 && tuyas >= 3, "{}: {deben} fichas debidas y {tuyas} preguntas tuyas: el kit no mide el problema", s.id);
+    }
+
+    let medir = |regla: &Tolerancia| {
+        let mut total = Cuenta::default();
+        for (s, t) in &salas {
+            total.sumar(&medir_la_sala(s, t, &corpus, regla));
+        }
+        total
+    };
+
+    let c = &kit.candidatas;
+    let mut filas: Vec<(Tolerancia, Cuenta)> = Vec::new();
+    for &espera in &c.espera_tras_ficha_ms {
+        for &eco in &c.eco_de_la_ficha {
+            for &solo in &c.solo_pregunta_o_cifra {
+                for &silencio in &c.silencio {
+                    let regla = Tolerancia {
+                        espera_tras_ficha_ms: espera,
+                        eco_de_la_ficha: eco,
+                        solo_pregunta_o_cifra: solo,
+                        silencio,
+                        tope_de_turno_ms: None,
+                    };
+                    let cuenta = medir(&regla);
+                    filas.push((regla, cuenta));
+                }
+            }
+        }
+    }
+    let base = medir(&Tolerancia::SIN_FILTRO);
+    // El criterio, escrito antes de medir: no perder más que la línea base, luego menos falsas, luego menos perillas.
+    filas.sort_by_key(|(r, k)| (k.perdidas > base.perdidas, k.falsas(), r.perillas(), k.perdidas));
+
+    println!("\n╭─ kit v4 · la tolerancia a tu voz en la sala ({} combinaciones, 2 salas) ─────────", filas.len());
+    println!("│   C1   │  C2  │ C3 │ sil │ pertinentes │ falsas (tuyas+cliente) │ perdidas │ perillas");
+    for (r, k) in &filas {
+        let marca = if r.perillas() == 0 { "  ← línea base" } else { "" };
+        println!(
+            "│ {} │ {:>11} │ {:>6} ({:>2}+{:<2})         │ {:>8} │ {:>8}{marca}",
+            describir(r),
+            k.pertinentes,
+            k.falsas(),
+            k.falsas_tuyas,
+            k.falsas_del_cliente,
+            k.perdidas,
+            r.perillas()
+        );
+    }
+    println!("╰──────────────────────────────────────────────────────────────────────────────────");
+    let (recomendada, la_mejor) = &filas[0];
+    for (nombre, k) in [("línea base (sin filtro)", &base), ("primera por el criterio", la_mejor)] {
+        println!("\n{nombre}: pertinentes {} · falsas {} · perdidas {} · latencia máx. {} ms", k.pertinentes, k.falsas(), k.perdidas, k.latencia_max_ms);
+        println!("  por motivo (pertinentes / falsas / perdidas):");
+        for (m, (p, f, d)) in &k.por_motivo {
+            println!("    {m:<9} {p} / {f} / {d}");
+        }
+        if !k.sobran.is_empty() {
+            println!("  disparó y no debía:\n{}", k.sobran.join("\n"));
+        }
+        if !k.faltan.is_empty() {
+            println!("  no disparó y debía:\n{}", k.faltan.join("\n"));
+        }
+    }
+    println!("\nprimera por el criterio: {}", describir(recomendada));
+
+    assert!(base.pertinentes > 0 && base.falsas() > 0, "la línea base no tiene fichas pertinentes o falsas: el kit no mide nada");
+    // El presupuesto del producto: de fin de turno a ficha, ≤ 4 s. Sin audio ni modelo esto son milisegundos; lo que
+    // vigila es que no se cuele una espera en el camino de la sala.
+    let peor = filas.iter().map(|(_, k)| k.latencia_max_ms).max().unwrap_or(0).max(base.latencia_max_ms);
+    assert!(peor < 4_000, "una ficha de la sala tardó {peor} ms: por encima del presupuesto de 4 s");
+    // La regla de la casa (`data/presencial/reglas.json`) no pierde más fichas pertinentes que la línea base: el primer
+    // escalón del criterio.
+    let casa = medir(&Tolerancia::de_la_casa());
+    assert!(
+        casa.perdidas <= base.perdidas,
+        "la regla de la casa pierde {} fichas pertinentes y la línea base {}: la sala se queda callada cuando el cliente pregunta",
+        casa.perdidas,
+        base.perdidas
+    );
+    // Y la regla de la casa hace algo: calla fichas falsas que la línea base deja pasar. Sin esto, devolver
+    // `reglas.json` a la línea base pasaría en verde (sprint 005, fase 2).
+    assert!(
+        casa.falsas() < base.falsas(),
+        "la regla de la casa deja {} fichas falsas y la línea base {}: la sala no tolera tu voz",
+        casa.falsas(),
+        base.falsas()
+    );
+}
+
+/// Los turnos que corta el VAD de siempre sobre una sala, con un tope o sin él.
+fn cortar_la_sala(muestras: &[f32], tope: Option<usize>) -> Vec<(usize, usize)> {
+    let mut t = Turnos::nuevo(PorEnergia::nuevo()).con_tope(tope);
+    let mut cortes = Vec::new();
+    for marco in muestras.as_chunks::<{ app_copiloto_consultor_lib::voz::MARCO }>().0 {
+        if let Some(Suceso::Termina { desde_ms, hasta_ms }) = t.marco(marco) {
+            cortes.push((desde_ms, hasta_ms));
+        }
+    }
+    if let Some(Suceso::Termina { desde_ms, hasta_ms }) = t.cerrar() {
+        cortes.push((desde_ms, hasta_ms));
+    }
+    cortes
+}
+
+/// Quién dijo algo dentro de un turno cortado: los del guion que caen dentro más de 150 ms.
+fn quienes_en(corte: (usize, usize), tiempos: &TiemposDeLaSala) -> Vec<&str> {
+    let mut q: Vec<&str> = tiempos
+        .turnos
+        .iter()
+        .filter(|t| corte.1.min(t.hasta_ms).saturating_sub(corte.0.max(t.desde_ms)) > 150)
+        .map(|t| t.quien.as_str())
+        .collect();
+    q.dedup();
+    q
+}
+
+/// **NIVEL B — los turnos de la sala, cortados por el VAD y el fin de turno de siempre.**
+#[test]
+fn el_kit_presencial_corta_los_turnos_de_la_sala() {
+    let _turno = turno();
+    let kit = kit_presencial();
+    let anillo_ms = (app_copiloto_consultor_lib::capture::anillo::SEGUNDOS * 1000.0) as usize;
+    let topes: Vec<Option<usize>> = kit.candidatas.tope_de_turno_ms.clone();
+    println!("\n╭─ kit v4 · nivel B: los turnos de la sala (VAD por energía, fin de turno a 320 ms) ──");
+    println!("│ sala    │ tope   │ guion │ cortados │ con dos voces │ más largo │ > anillo (30 s) │ cortes a media frase");
+    let mut del_tope_de_la_casa: Vec<usize> = Vec::new();
+    for s in &kit.salas {
+        let tiempos = tiempos_de(s);
+        let (muestras, hz) = leer_wav(&format!("{KIT_V4}/audio/{}", s.archivo));
+        assert_eq!(hz, 16_000, "{}: la sala no está a 16 kHz", s.archivo);
+        let dura_ms = muestras.len() * 1000 / hz as usize;
+        assert!(dura_ms.abs_diff(tiempos.duracion_ms) < 50, "{}: el wav y sus tiempos no son de la misma generación", s.archivo);
+        for tope in &topes {
+            let cortes = cortar_la_sala(&muestras, *tope);
+            let con_dos = cortes.iter().filter(|c| quienes_en(**c, &tiempos).len() > 1).count();
+            let mas_largo = cortes.iter().map(|(a, b)| b - a).max().unwrap_or(0);
+            let pasan = cortes.iter().filter(|(a, b)| b - a > anillo_ms).count();
+            // Un corte del tope a media frase: un turno cortado que termina dentro de un turno del guion (no en su final).
+            let a_media = cortes
+                .windows(2)
+                .filter(|w| w[0].1 == w[1].0)
+                .filter(|w| tiempos.turnos.iter().any(|t| t.desde_ms + 300 < w[0].1 && w[0].1 + 300 < t.hasta_ms))
+                .count();
+            let tope_txt = tope.map_or("ninguno".to_string(), |t| format!("{} s", t / 1000));
+            println!(
+                "│ {:<7} │ {:<7}│ {:>5} │ {:>8} │ {:>13} │ {:>7.1} s │ {:>15} │ {:>4}",
+                s.id,
+                tope_txt,
+                s.turnos.len(),
+                cortes.len(),
+                con_dos,
+                mas_largo as f64 / 1000.0,
+                pasan,
+                a_media
+            );
+            if *tope == Tolerancia::de_la_casa().tope_de_turno_ms {
+                assert!(cortes.len() * 2 >= s.turnos.len(), "{}: el VAD cortó {} turnos de {}: el nivel B no mide nada", s.id, cortes.len(), s.turnos.len());
+                del_tope_de_la_casa.push(mas_largo);
+            }
+        }
+    }
+    println!("╰──────────────────────────────────────────────────────────────────────────────────");
+    // Con la regla de la casa ningún turno de la sala pasa del anillo: el que pasa pierde su principio antes de
+    // transcribirse y sale «pisado».
+    let peor = del_tope_de_la_casa.iter().copied().max().unwrap_or(0);
+    assert!(!del_tope_de_la_casa.is_empty(), "el tope de la casa no está entre las candidatas del kit: no se midió");
+    assert!(peor <= anillo_ms, "con la regla de la casa un turno de la sala dura {peor} ms, más que el anillo de {anillo_ms}: su principio se pisa");
+}
+
+/// **NIVEL C — la sala, transcrita** (`manual`: la CI no tiene modelos de reconocimiento de voz). Corta cada sala con
+/// la regla de la casa y transcribe cada turno en el idioma de la sala; enseña lo que salió y el WER contra lo que
+/// dice el guion en ese tramo. Se corre a mano, con su matriz y su «sí», en la corrida en vivo de la fase 2.
+#[test]
+#[ignore = "hardware: el reconocimiento de voz de Apple; lo corre la CI con --include-ignored"]
+fn el_kit_presencial_transcribe_la_sala() {
+    let _turno = turno();
+    let kit = kit_presencial();
+    let motor = motor_de_la_casa();
+    let tope = Tolerancia::de_la_casa().tope_de_turno_ms;
+    let mut medidas = 0;
+    for s in &kit.salas {
+        if !matches!(motor.disponibilidad(&s.idioma), Disponibilidad::Listo) {
+            println!("{}: sin modelo de {} en esta máquina: no se mide", s.id, s.idioma);
+            continue;
+        }
+        let tiempos = tiempos_de(s);
+        let (muestras, hz) = leer_wav(&format!("{KIT_V4}/audio/{}", s.archivo));
+        let por_ms = hz as usize / 1000;
+        let (mut referencia, mut oido) = (Vec::new(), Vec::new());
+        for (a, b) in cortar_la_sala(&muestras, tope) {
+            let Ok(texto) = motor.transcribir(&s.idioma, &muestras[a * por_ms..(b * por_ms).min(muestras.len())], hz) else {
+                println!("{}: el motor falló en {a}–{b} ms", s.id);
+                continue;
+            };
+            let dicho: Vec<&str> = s
+                .turnos
+                .iter()
+                .zip(&tiempos.turnos)
+                .filter(|(_, t)| b.min(t.hasta_ms).saturating_sub(a.max(t.desde_ms)) > 150)
+                .map(|(g, _)| g.dice.as_str())
+                .collect();
+            println!("{} · {:>6}–{:<6} ms · oído «{texto}»", s.id, a, b);
+            referencia.extend(palabras(&dicho.join(" ")));
+            oido.extend(palabras(&texto));
+        }
+        println!("{}: WER de la sala entera {:.3}", s.id, wer(&referencia, &oido));
+        medidas += 1;
+    }
+    if medidas == 0 {
+        println!("el WER de la sala no se pudo medir en ningún idioma: sin modelos de voz en esta máquina");
+    }
 }

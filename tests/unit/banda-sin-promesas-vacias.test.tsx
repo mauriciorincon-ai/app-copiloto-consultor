@@ -40,6 +40,9 @@ const ESTADOS: EstadoBanda[] = [
   "sugerencia-local",
   "sugerencia-api",
   "voz",
+  // Presencial (sprint 005, ADR 020): la cabecera de la sala y la voz que espera a que la sala calle.
+  "ficha-presencial",
+  "voz-sala",
 ];
 
 /** El manejador que React le puso al botón, si alguno. */

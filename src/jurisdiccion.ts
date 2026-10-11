@@ -5,6 +5,7 @@ import type { EstadoDeEscucha } from "./cuaderno";
 import {
   BANDERA_SIN_INDICAR,
   ESCUCHA_SOLO_NOTAS,
+  ESTADO_DE_LA_ESCUCHA_PRESENCIAL,
   NDA_LO_PROHIBE,
   NDA_NO_LO_PROHIBE,
   VISTA_DEL_CLIENTE,
@@ -67,7 +68,10 @@ export type EstadoDeSesion =
   /** La primera vez con la banda arriba (sprint 004, `sesion.html` · la primera vez). */
   | "aviso"
   /** Un ensayo terminado sin guardar (auditoría del S4, M10; `sesion.html` · ensayo sin guardar). */
-  | "ensayo";
+  | "ensayo"
+  /** Presencial, antes de empezar y en marcha (sprint 005, ADR 020; `sesion.html` · sprint 5 · presencial). */
+  | "presencial"
+  | "presencial-marcha";
 
 const ESTADOS: EstadoDeSesion[] = [
   "normal",
@@ -79,6 +83,8 @@ const ESTADOS: EstadoDeSesion[] = [
   "solo-notas",
   "aviso",
   "ensayo",
+  "presencial",
+  "presencial-marcha",
 ];
 
 export function estadoDeSesion(busqueda: string): EstadoDeSesion {
@@ -96,6 +102,10 @@ export function muestraDelCliente(estado: EstadoDeSesion): VistaDelCliente {
       };
     case "nda":
       return { ...VISTA_DEL_CLIENTE, nda: NDA_LO_PROHIBE };
+    // La maqueta de presencial dibuja la NDA ya revisada, «no lo prohíbe».
+    case "presencial":
+    case "presencial-marcha":
+      return { ...VISTA_DEL_CLIENTE, nda: NDA_NO_LO_PROHIBE };
     default:
       return VISTA_DEL_CLIENTE;
   }
@@ -107,6 +117,8 @@ export function muestraDelCliente(estado: EstadoDeSesion): VistaDelCliente {
  */
 export function escuchaDeMuestra(estado: EstadoDeSesion, base: EstadoDeEscucha): EstadoDeEscucha {
   if (estado === "solo-notas") return ESCUCHA_SOLO_NOTAS;
+  // En presencial, en marcha: la sala abierta y el sistema cerrado a propósito, como lo cuenta Rust.
+  if (estado === "presencial-marcha") return ESTADO_DE_LA_ESCUCHA_PRESENCIAL;
   return { ...base, escuchando: estado === "en-marcha" };
 }
 
@@ -165,4 +177,12 @@ export function revisarNda(): Promise<VistaDelCliente | null> {
 /** «Solo notas» e «Iniciar en modo solo notas»: la reunión se abre y nada se captura. */
 export function empezarSoloNotas(): Promise<boolean> {
   return llamar("empezar_solo_notas");
+}
+
+/**
+ * «Empezar en presencial» (ADR 020): la sala, por el micrófono del Mac; ni sistema, ni pantalla, ni acople. `alOido` es
+ * cómo eliges ver la ficha (§7): pulsar «Empezar» con «al oído» elegido enciende la voz para esta sesión.
+ */
+export function empezarPresencial(alOido: boolean): Promise<boolean> {
+  return llamar("empezar_presencial", { alOido });
 }

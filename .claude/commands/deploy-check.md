@@ -54,7 +54,13 @@ Corre cada verificación en orden y reporta estado:
 
 ### 4. Build
 - [ ] `pnpm build` exitoso.
-- [ ] Bundle size no creció >10% vs main (medir con `next build` output).
+- [ ] Bundle size no creció >10 % **contra la base REAL del PR y con el mismo entorno de build (kit
+      v1.38.0):** `base=$(git merge-base origin/main HEAD)` → `next build` de esa base y de HEAD con el
+      mismo `.env.local` (o ninguno en ambos) y el mismo Node; se comparan los dos outputs. Un `main` local
+      viejo o un entorno distinto dan otra cifra *(ds S6: la primera comparación se descartó por eso)*.
+- [ ] **Perfil estático (kit v1.39.0):** `node scripts/build-como-proveedor.mjs` en verde — cada página de
+      `.vercel/output/static/` idéntica a la de `out/`; si un paso posterior al build modifica `out/`, su demo en rojo
+      (modificar una página de `out/` tras el build → el gate falla) está en la bitácora. En el perfil web: «n/a».
 
 ### 5. Security
 - [ ] `pnpm audit --audit-level high` limpio. **Si sale rojo sin que tú tocaras dependencias, no
