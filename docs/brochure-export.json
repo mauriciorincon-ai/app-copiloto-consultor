@@ -222,10 +222,10 @@
     {
       "clave": "pruebas_automaticas",
       "etiqueta": "Pruebas automáticas",
-      "valor": 1476,
+      "valor": 1475,
       "unidad": "pruebas",
       "fuente": "medido",
-      "detalle": "Las que corre la CI en cada cambio, contadas en sus corridas: Vitest 499 (la corrida local de este cambio dio 501; 2 de ellas comparan copias del contrato con sus originales y solo corren en local), cargo test 658 (librería 609, contra el Mac de verdad 30, la puerta 14 y ghost 5; las 3 «en_vivo_», que necesitan al usuario delante, se corren a mano) y Playwright 319, con 3 saltadas a propósito. Rust y Playwright, de la CI del cierre del sprint 005 (commit 62faf04, corrida 38115184113)."
+      "detalle": "Las que corrió la CI de este export (commit 81a2021, corrida 38117320453): Vitest 498 de 501, porque allí se saltan 3 —las 2 de este export que comparan copias del contrato con sus originales, que solo existen en el Mac, y la mitad del hook de secretos que necesita gitleaks—; cargo test 658 (librería 609, contra el Mac de verdad 30, la puerta 14 y ghost 5; las 3 «en_vivo_», que necesitan al usuario delante, se corren a mano); y Playwright 319, con 3 saltadas a propósito."
     },
     {
       "clave": "bytes_que_salen_del_equipo",
