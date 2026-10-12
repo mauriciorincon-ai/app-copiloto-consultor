@@ -72,15 +72,42 @@ pub fn deja_de_sonar(ahora: Instant) {
     }
 }
 
+/// **Cuánto tardó en sonar la frase encolada en `desde`** (el presupuesto «la voz empieza ≤ 1 s tras la ficha»; auditoría
+/// del S2, B21; en Windows, B1 del S7). En macOS lo mide el puente (`apple::ms_hasta_sonar`); en Windows sale del
+/// registro de lo que sonó: el primer intervalo que empezó después de `desde`. `None` mientras aún no suena.
+pub fn ms_hasta_sonar(desde: Instant) -> Option<u32> {
+    if cfg!(windows) {
+        let hablado: Vec<_> = HABLADO.lock().ok()?.iter().copied().collect();
+        ms_hasta_el_primer_inicio(&hablado, desde)
+    } else {
+        apple::ms_hasta_sonar()
+    }
+}
+
+/// El primer intervalo de `hablado` que empezó a partir de `desde`, en milisegundos desde `desde`. Pura.
+pub fn ms_hasta_el_primer_inicio(hablado: &[(Instant, Option<Instant>)], desde: Instant) -> Option<u32> {
+    hablado
+        .iter()
+        .filter(|(inicio, _)| *inicio >= desde)
+        .map(|(inicio, _)| u32::try_from(inicio.duration_since(desde).as_millis()).unwrap_or(u32::MAX))
+        .min()
+}
+
 /// ¿Sonó la app entre `desde` y `hasta`?
 pub fn la_app_hablo(desde: Instant, hasta: Instant) -> bool {
     HABLADO.lock().is_ok_and(|mut h| solapa(h.make_contiguous(), desde, hasta, MARGEN_DEL_LOOPBACK))
 }
 
-/// **¿Solapa el tramo `[desde, hasta]` con algo que dijo la app?** Un intervalo sin fin es que sigue sonando. Pura.
+/// Lo más que puede durar «sigue sonando» sin que nadie diga que paró (sprint 008, B2 del S7). Una frase de la ficha
+/// dura segundos; si el hilo de la voz muere con el intervalo abierto, sin este tope **todo** turno posterior del cliente
+/// contaría como eco para siempre.
+pub const TOPE_DE_UNA_FRASE: Duration = Duration::from_secs(60);
+
+/// **¿Solapa el tramo `[desde, hasta]` con algo que dijo la app?** Un intervalo sin fin es que sigue sonando, hasta el
+/// [`TOPE_DE_UNA_FRASE`]. Pura.
 pub fn solapa(hablado: &[(Instant, Option<Instant>)], desde: Instant, hasta: Instant, margen: Duration) -> bool {
     hablado.iter().any(|&(inicio, fin)| {
-        let fin = fin.map_or(hasta + margen, |f| f + margen);
+        let fin = fin.unwrap_or(inicio + TOPE_DE_UNA_FRASE) + margen;
         let inicio = inicio.checked_sub(margen).unwrap_or(inicio);
         desde <= fin && inicio <= hasta
     })
@@ -547,8 +574,26 @@ mod pruebas {
         assert!(!solapa(&dijo, t0 + s(16), t0 + s(18), m), "un rato después ya es el cliente");
         assert!(!solapa(&dijo, t0 + s(2), t0 + s(9), m), "antes de que hablara");
         let sigue = [(t0 + s(10), None)];
-        assert!(solapa(&sigue, t0 + s(20), t0 + s(22), m), "si sigue sonando, todo lo de después solapa");
+        assert!(solapa(&sigue, t0 + s(20), t0 + s(22), m), "si sigue sonando, lo que cae dentro del tope solapa");
+        // **B2 del S7:** si el hilo de la voz muere con el intervalo abierto, pasado el tope ya no es eco.
+        assert!(
+            !solapa(&sigue, t0 + TOPE_DE_UNA_FRASE + s(20), t0 + TOPE_DE_UNA_FRASE + s(22), m),
+            "un intervalo abierto no puede volver eco todo lo que venga después"
+        );
         assert!(!solapa(&[], t0, t0 + s(5), m), "en el Mac nadie escribe aquí");
+    }
+
+    /// **El tiempo hasta sonar sale del registro de lo que sonó** (auditoría del S7, B1): en Windows no hay puente que
+    /// lo mida, y sin esto cada ficha imprimía «no empezó a sonar en 2 s» (falso).
+    #[test]
+    fn el_tiempo_hasta_sonar_sale_de_lo_que_sono() {
+        let t0 = Instant::now();
+        let s = |n: u64| Duration::from_millis(n);
+        // Una frase de antes de pedir esta no cuenta; la que empezó 340 ms después, sí.
+        let hablado = [(t0 - s(5_000), Some(t0 - s(3_000))), (t0 + s(340), None)];
+        assert_eq!(ms_hasta_el_primer_inicio(&hablado, t0), Some(340));
+        assert_eq!(ms_hasta_el_primer_inicio(&hablado[..1], t0), None, "aún no suena: no se inventa una cifra");
+        assert_eq!(ms_hasta_el_primer_inicio(&[], t0), None);
     }
 
     /// **Preguntar si hay voz no pasa por el hilo que habla** (auditoría del S7, A3). En Windows ese hilo está

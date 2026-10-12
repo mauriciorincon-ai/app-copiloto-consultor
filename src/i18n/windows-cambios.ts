@@ -33,6 +33,8 @@ const ES: Cambios = {
   },
   cuaderno: {
     sesionSub: "Nada se enciende hasta que tú lo digas. Esto es lo que la app ve de tu propio PC.",
+    // La promesa es graduada por plataforma (regla dura 6): en Windows se dice lo que se pidió, no que esté verificado.
+    panelProtegido: "Panel con la protección pedida a Windows",
     proteccionDetalle:
       "Tu panel le pide a Windows que no salga en las capturas, pero en Teams, Zoom y Meet está sin verificar: se verifica con una videollamada real en tu PC. Mientras tanto, comparte una ventana, no la pantalla.",
     modeloDelSistema: "Modelo del sistema",
@@ -82,6 +84,7 @@ const ES: Cambios = {
     },
   },
   notas: {
+    clienteNoLaVe: "con la protección pedida al compartir",
     // Time Machine es del Mac; en Windows no se promete qué copias de seguridad cubren la carpeta de la app.
     borrarDetalle:
       "Se borra ahora de la app y no vuelve. Si haces copias de seguridad de tu PC, esas copias la conservan hasta que caduquen.",
@@ -99,6 +102,9 @@ const ES: Cambios = {
     vozSinReunion:
       "Sin reunión, la voz sale por donde suene tu PC; con una videollamada abierta, el ensayo no empieza por los altavoces del PC. Mientras habla, el micrófono no escucha.",
   },
+  cliente: {
+    panelProtegido: "El panel sigue con la protección pedida a Windows",
+  },
 };
 
 const EN: Cambios = {
@@ -109,6 +115,7 @@ const EN: Cambios = {
     radarEnTuEquipo: "on your PC, not the client’s",
   },
   cuaderno: {
+    panelProtegido: "Panel with the protection requested from Windows",
     sesionSub: "Nothing turns on until you say so. This is what the app sees of your own PC.",
     proteccionDetalle:
       "Your panel asks Windows to stay out of screen captures, but in Teams, Zoom and Meet it is unverified: you verify it with a real video call on your PC. Until then, share a window, not the screen.",
@@ -154,6 +161,7 @@ const EN: Cambios = {
     },
   },
   notas: {
+    clienteNoLaVe: "with protection requested when sharing",
     borrarDetalle:
       "It is deleted from the app now and does not come back. If you back up your PC, your backups keep it until they expire.",
     lasTresPrimeras: "The first three died on close; the tray, on expiry.",
@@ -169,6 +177,9 @@ const EN: Cambios = {
     sinTranscripcion: "This PC cannot transcribe the rehearsal’s language",
     vozSinReunion:
       "With no meeting, the voice plays wherever your PC plays sound; with a video call open, the rehearsal won’t start on the PC’s speakers. While it speaks, the microphone does not listen.",
+  },
+  cliente: {
+    panelProtegido: "The panel keeps the protection requested from Windows",
   },
 };
 

@@ -37,7 +37,10 @@ pub enum Accion {
 }
 
 /// Todas, en el orden en que se registran y se enseñan.
-pub const TODAS: [Accion; 11] = [
+///
+/// Un trozo (`&[Accion]`) y no un arreglo de largo fijo (sprint 008, B10 del S7): la cuenta sale de la tabla, no de un
+/// número escrito a mano que hay que acordarse de subir con cada tecla nueva.
+pub const TODAS: &[Accion] = &[
     Accion::Corte,
     Accion::Transcript,
     Accion::Ayuda,
@@ -123,22 +126,50 @@ pub fn se_registra_aqui(_a: Accion) -> bool {
     true
 }
 
-/// Las acciones que el sistema no dejó registrar en esta sesión. Solo acciones: ni teclas pulsadas ni nada más.
-static FALLIDAS: Mutex<Vec<Accion>> = Mutex::new(Vec::new());
+/// Cómo quedó el registro de una acción en esta sesión.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Registro {
+    /// Aún no se intentó (o se devolvió al sistema: `Esc` solo es de la app mientras dure el modo de voz).
+    SinIntentar,
+    Registrada,
+    /// El sistema no la dejó registrar: otra app ya tiene esa combinación.
+    Fallida,
+}
 
-/// Apunta si una acción quedó registrada o no.
-pub fn apuntar(a: Accion, registrada: bool) {
-    if let Ok(mut f) = FALLIDAS.lock() {
-        f.retain(|x| *x != a);
-        if !registrada {
-            f.push(a);
-        }
+/// Cómo quedó cada acción. Solo acciones y su estado: ni teclas pulsadas ni nada más.
+static REGISTROS: Mutex<Vec<(Accion, Registro)>> = Mutex::new(Vec::new());
+
+fn poner(a: Accion, r: Registro) {
+    if let Ok(mut v) = REGISTROS.lock() {
+        v.retain(|(x, _)| *x != a);
+        v.push((a, r));
     }
 }
 
-/// ¿Quedó registrada? (Lo que no se intentó aún cuenta como registrado: no hay nada que decir de ello.)
+/// Apunta si una acción quedó registrada o no.
+pub fn apuntar(a: Accion, registrada: bool) {
+    poner(a, if registrada { Registro::Registrada } else { Registro::Fallida });
+}
+
+/// La acción se devolvió al sistema: vuelve a «sin intentar» (lo único que pasa con `Esc` al apagar el modo de voz).
+pub fn soltar(a: Accion) {
+    poner(a, Registro::SinIntentar);
+}
+
+/// Cómo quedó esta acción. **Distingue lo que no se intentó de lo que salió bien** (sprint 008, M10 del S7): antes las
+/// dos eran «registrada» y un atajo que nadie intentó pasaba por bueno.
+pub fn estado(a: Accion) -> Registro {
+    REGISTROS
+        .lock()
+        .ok()
+        .and_then(|v| v.iter().find(|(x, _)| *x == a).map(|(_, r)| *r))
+        .unwrap_or(Registro::SinIntentar)
+}
+
+/// ¿Es un fallo de registro lo que hay que decir? Solo `Fallida`: lo que no se intentó no tiene nada que contar al
+/// usuario, y el test de `lib.rs` exige que `registrar_el_kill_switch` intente todas las demás.
 pub fn registrada(a: Accion) -> bool {
-    FALLIDAS.lock().map_or(true, |f| !f.contains(&a))
+    estado(a) != Registro::Fallida
 }
 
 /// Un atajo tal como lo enseña la webview.
@@ -172,7 +203,7 @@ mod pruebas {
     #[test]
     fn en_windows_ninguno_es_altgr_ni_se_repite() {
         let mut vistas = Vec::new();
-        for a in TODAS {
+        for &a in TODAS {
             let w = en_windows(a);
             let m = w.modificadores.unwrap_or(Modifiers::empty());
             assert!(!(m.contains(Modifiers::CONTROL) && m.contains(Modifiers::ALT)), "{a:?} es AltGr en muchos teclados");
@@ -209,6 +240,21 @@ mod pruebas {
             assert_eq!(en_macos(*a).modificadores, CTRL_OPCION, "{a:?}");
         }
         assert_eq!(en_macos(Accion::Callar), t(None, Code::Escape, "⎋"));
+    }
+
+    /// **Lo que no se intentó no es lo que salió bien** (sprint 008, M10 del S7), y `Esc` se apunta como las demás.
+    #[test]
+    fn sin_intentar_no_es_registrada_y_se_distingue() {
+        soltar(Accion::Callar);
+        assert_eq!(estado(Accion::Callar), Registro::SinIntentar);
+        apuntar(Accion::Callar, true);
+        assert_eq!(estado(Accion::Callar), Registro::Registrada);
+        apuntar(Accion::Callar, false);
+        assert_eq!(estado(Accion::Callar), Registro::Fallida);
+        assert!(!registrada(Accion::Callar), "una tecla que el sistema no dejó registrar se dice");
+        soltar(Accion::Callar);
+        assert_eq!(estado(Accion::Callar), Registro::SinIntentar);
+        assert!(registrada(Accion::Callar), "devuelta al sistema: ya no hay nada que decir");
     }
 
     /// Lo que no se pudo registrar se dice, y deja de decirse al registrarse.

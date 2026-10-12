@@ -6,10 +6,12 @@
 
 ## Contexto
 
-Angel Ghost existe solo en macOS. La VISION promete Windows en el H-2 («la misma app donde la invisibilidad está
-garantizada por el sistema»), y el plan lo parte en dos: el **S6 arranca** (un instalador que sale de la CI, la banda
-protegida, la sala por el micrófono con whisper local y su latencia medida) y el **S7 trae la videollamada** (el audio
-del sistema, la pantalla, la voz al oído y los atajos; el acople, el desbloqueo y el radar pasan al **S8**).
+Angel Ghost existe solo en macOS. La VISION promete Windows en el H-2 («la misma app, con la ventana protegida por un
+flag del sistema», que es lo que se verifica por cliente y por versión: regla dura 6), y el plan lo partió en tres: el
+**S6 arrancó** (un instalador que sale de la CI, la banda protegida, la sala por el micrófono con whisper local y su
+latencia medida), el **S7 trajo la videollamada** (el audio del sistema, la pantalla, la voz al oído y los atajos) y el
+**S8 cierra lo que faltaba** (el acople, el desbloqueo, el radar, el borrado con la app cerrada y la sugerencia con el
+API; véase la Enmienda 2).
 
 Antes de escribir una línea de Windows, la lectura del código encontró algo que los comentarios negaban: **el crate no
 compilaba fuera de macOS**. `relleno.rs` usaba `base64` declarada solo para macOS; la puerta local y `ghost` usaban

@@ -5,6 +5,8 @@ import { useFranja, type Borde } from "../franja";
 import { useTurnos } from "../turnos";
 import { useFicha, type Acumulada, type Aparicion } from "../ficha";
 import { hayTauri } from "../puente";
+import { atajosSinRegistrar, esWindows, usePlataforma, type Plataforma } from "../plataforma";
+import { useTextosDeWindows } from "../i18n/windows";
 import {
   cortarTodo,
   useBytesALaRed,
@@ -97,6 +99,8 @@ export type PropsBanda = {
   acoplada?: boolean;
   /** El cliente detectado tiene la protección verificada por el spike. */
   verificado?: boolean;
+  /** Para las pruebas: la plataforma que se pinta, en vez de preguntarle a Rust. */
+  plataforma?: Plataforma;
   /**
    * En qué borde vive (sprint 004). **Solo manda fuera de Tauri**, para el arnés de capturas: abajo es
    * la banda de `banda.html`, contra la que compara el gate desde el S1; arriba, la variante de
@@ -114,6 +118,7 @@ export function Banda({
   transcript = false,
   acoplada = true,
   verificado = true,
+  plataforma: prestada,
   borde: bordeDeMuestra = "abajo",
 }: PropsBanda) {
   const t = useT().banda;
@@ -207,6 +212,13 @@ export function Banda({
   const { borde } = useFranja({ borde: bordeDeMuestra, barra: 0, avisoVisto: true });
   const asa = useAsa(borde);
   const voz = useVoz();
+  // **Una tecla que el sistema no dejó registrar se dice en la banda, no solo en Honestidad** (sprint 008, M10 del S7):
+  // el usuario pulsaría `Alt+Mayús+Q` en plena reunión creyendo que cortó. Se pregunta de nuevo al encender o apagar
+  // el modo de voz, que es cuando se coge o se suelta `Esc`.
+  const [propia] = usePlataforma(undefined, voz.encendida);
+  const plataforma = prestada ?? propia;
+  const tw = useTextosDeWindows();
+  const teclasMudas = esWindows(plataforma) ? atajosSinRegistrar(plataforma).length : 0;
 
   /** «1 documento» y no «1 documentos»: el contador es visible y la app es bilingüe por regla. */
   const cuenta = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
@@ -452,6 +464,13 @@ export function Banda({
           <span className="cliente-b warn">
             <Ic id="i-alert" s relleno />
             {t.sinAcople}
+          </span>
+        )}
+
+        {teclasMudas > 0 && (
+          <span className="cliente-b warn">
+            <Ic id="i-alert" s relleno />
+            {tw.teclasSinResponder(teclasMudas)}
           </span>
         )}
 

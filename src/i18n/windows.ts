@@ -33,11 +33,13 @@ export type TextosDeWindows = {
     medirOtra: string;
     bajarPequeno: string;
     sinReunion: string;
-    /** Sprint 007: con dos pistas el cliente va primero; lo tuyo que no dio tiempo a transcribir, contado. */
+    /** Sprint 007: con dos pistas el cliente va primero; lo que no dio tiempo a transcribir, contado sin atribuirlo. */
     descartados: (n: number) => string;
   };
   /** Sprint 007: un atajo que Windows no dejó registrar porque otra app ya tiene esa combinación. */
   atajoOcupado: (teclas: string) => string;
+  /** Sprint 008: el aviso corto de la banda cuando alguna tecla no responde (el detalle vive en Honestidad). */
+  teclasSinResponder: (n: number) => string;
   /** Idioma: el motor de voz es de la app, no del sistema (ADR 022). */
   idioma: {
     transcribeTuPc: string;
@@ -136,6 +138,7 @@ const ES: TextosDeWindows = {
   },
   atajoOcupado: (teclas) =>
     `${teclas} no responde: otra app de este PC ya tiene esa combinación. Lo mismo se hace desde la app.`,
+  teclasSinResponder: (n) => (n === 1 ? "1 tecla no responde" : `${n} teclas no responden`),
   whisper: {
     titulo: "La transcripción en este PC",
     bajando: "Bajando el modelo de voz (1,6 GB, con su comprobación)…",
@@ -151,8 +154,8 @@ const ES: TextosDeWindows = {
     sinReunion: "Bajar o medir no se puede con una reunión abierta.",
     descartados: (n) =>
       n === 1
-        ? "En la última reunión, 1 turno tuyo se quedó sin transcribir: este PC no daba abasto y el cliente va primero."
-        : `En la última reunión, ${n} turnos tuyos se quedaron sin transcribir: este PC no daba abasto y el cliente va primero.`,
+        ? "En la última reunión, 1 turno se quedó sin transcribir: este PC no daba abasto, y se atiende primero al cliente."
+        : `En la última reunión, ${n} turnos se quedaron sin transcribir: este PC no daba abasto, y se atiende primero al cliente.`,
   },
   idioma: {
     transcribeTuPc: "Transcribe tu PC, no un servicio",
@@ -255,6 +258,7 @@ const EN: TextosDeWindows = {
   },
   atajoOcupado: (teclas) =>
     `${teclas} doesn't respond: another app on this PC already has that combination. You can do the same from the app.`,
+  teclasSinResponder: (n) => (n === 1 ? "1 shortcut isn't responding" : `${n} shortcuts aren't responding`),
   whisper: {
     titulo: "Transcription on this PC",
     bajando: "Downloading the speech model (1.6 GB, with its checksum)…",
@@ -271,8 +275,8 @@ const EN: TextosDeWindows = {
       "Downloading or measuring isn't possible while a meeting is open.",
     descartados: (n) =>
       n === 1
-        ? "In the last meeting, 1 of your turns wasn't transcribed: this PC couldn't keep up and the client goes first."
-        : `In the last meeting, ${n} of your turns weren't transcribed: this PC couldn't keep up and the client goes first.`,
+        ? "In the last meeting, 1 turn wasn't transcribed: this PC couldn't keep up, and the client is served first."
+        : `In the last meeting, ${n} turns weren't transcribed: this PC couldn't keep up, and the client is served first.`,
   },
   idioma: {
     transcribeTuPc: "Transcribes on your PC, not a service",

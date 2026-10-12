@@ -12,11 +12,11 @@ Ninguno.
 
 | Id | Sitio | Hallazgo | Estado |
 |---|---|---|---|
-| **A1** | `src-tauri/src/lib.rs:3828` | Se registraban atajos globales (y Escape) en Windows, pese a «atajos: todavía no». | pagado · 553b68e · 09ec07b (el gate exige el `return`) |
-| **A2** | `src-tauri/src/stt/whisper.rs:161` | El texto de la última transcripción sobrevivía al corte y a «Terminar». | pagado · 553b68e (`soltar()` en el corte y al terminar; copias del audio a cero; lo verifica la CI de Windows) |
-| **A3** | `src-tauri/src/modelo_whisper.rs:92` | La descarga del modelo no tenía ningún test; la guía y la CI afirmaban lo contrario. | pagado · 553b68e (`descargar_a`, 4 pruebas en el Mac) |
-| **A4** | `src/pantallas/Idioma.tsx:254` | Texto de macOS en Idioma y Honestidad en Windows (motor, descarga, conexión, icono). | pagado · 553b68e (textos de Windows; e2e sin «macOS» ni «Mac», con control en macOS) |
-| **A5** | `src/pantallas/Notas.tsx:573` | «Se borra aunque no abras la app» es falso en Windows. | pagado · 553b68e (variantes de Windows; e2e con control en macOS) |
+| **A1** | `src-tauri/src/lib.rs:3828` | Se registraban atajos globales (y Escape) en Windows, pese a «atajos: todavía no». | pagado · `fd24008` (PR #20; el gate exige el `return`) |
+| **A2** | `src-tauri/src/stt/whisper.rs:161` | El texto de la última transcripción sobrevivía al corte y a «Terminar». | pagado · `fd24008` (PR #20; `soltar()` en el corte y al terminar; copias del audio a cero; lo verifica la CI de Windows) |
+| **A3** | `src-tauri/src/modelo_whisper.rs:92` | La descarga del modelo no tenía ningún test; la guía y la CI afirmaban lo contrario. | pagado · `fd24008` (PR #20; `descargar_a`, 4 pruebas en el Mac) |
+| **A4** | `src/pantallas/Idioma.tsx:254` | Texto de macOS en Idioma y Honestidad en Windows (motor, descarga, conexión, icono). | pagado · `fd24008` (PR #20; textos de Windows; e2e sin «macOS» ni «Mac», con control en macOS) |
+| **A5** | `src/pantallas/Notas.tsx:573` | «Se borra aunque no abras la app» es falso en Windows. | pagado · `fd24008` (PR #20; variantes de Windows; e2e con control en macOS) |
 
 ## MEDIOS (12)
 
@@ -26,7 +26,7 @@ Ninguno.
 | **M2** | `src-tauri/src/lib.rs:1056` | La guarda «nunca en reunión» solo se mira al empezar la descarga. | deuda · lote del hito |
 | **M3** | `src-tauri/src/stt/whisper.rs:38` | La latencia y el escalón al modelo pequeño no sobreviven a reabrir la app. | deuda · lote del hito |
 | **M4** | `src-tauri/src/lib.rs:1073` | `hay_una_reunion` mira solo la escucha; no mira el ensayo ni «solo notas». | deuda · lote del hito |
-| **M5** | `src/pantallas/Sesion.tsx:446` | «Al oído» queda elegido por defecto en Windows, con la voz muda. | deuda · lote del hito |
+| **M5** | `src/pantallas/Sesion.tsx:446` | «Al oído» queda elegido por defecto en Windows, con la voz muda. | pagado · `0d05bf0` (PR #23; `Sesion.tsx:451-453` parte elegido solo si `voz.puede`) |
 | **M6** | `src-tauri/src/ventana/mod.rs:107` | Falta el mínimo de Windows (10 2004) y su comprobación de versión. | deuda · lote del hito |
 | **M7** | `src/pantallas/Permisos.tsx:104` | El título y los «para» de Permisos siguen diciendo macOS en Windows. | deuda · lote del hito |
 | **M8** | `src/i18n/es.ts:331` | Más texto de macOS visible en Windows (Sesión, Notas, IA). | deuda · lote del hito |
@@ -43,7 +43,7 @@ Ninguno.
 | **B2** | `docs/GUIA-DE-PRUEBA.html:21` | El reemplazo global de «nuevo» dañó una instrucción de la guía. | deuda · lote del hito |
 | **B3** | `README.md:5` | Textos que dicen solo macOS; falta cómo compilar en Windows. | deuda · lote del hito |
 | **B4** | `decisions/006-stt-local-y-su-modelo.md:79` | Sigue diciendo que whisper es «el camino escrito». | deuda · lote del hito |
-| **B5** | `src-tauri/src/modelo_whisper.rs:116` | Un corte dejaba un `.parcial` en disco. | pagado · 553b68e (se borra en cada error); deuda: limpieza al arrancar y comprobación de espacio |
+| **B5** | `src-tauri/src/modelo_whisper.rs:116` | Un corte dejaba un `.parcial` en disco. | pagado · `fd24008` (PR #20; se borra en cada error); deuda: limpieza al arrancar y comprobación de espacio |
 | **B6** | `src/componentes/HoyEnWindows.tsx:37` | «Bajando…» no se refresca si la descarga empieza desde Idioma. | deuda · lote del hito |
 | **B7** | `src/componentes/HoyEnWindows.tsx:156` | El botón del modelo pequeño sale aunque ya esté bajado. | deuda · lote del hito |
 | **B8** | `tests/unit/windows-honestidad-y-manual.test.ts:43` | `estadoDelDetalle` devuelve «todavía no» por defecto. | deuda · lote del hito |

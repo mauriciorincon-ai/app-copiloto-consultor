@@ -18,7 +18,8 @@ pantalla para que puedas comprobarlo en vez de creértelo.
 
 **Y en la mesa, también:** en *Presencial* la app escucha la sala por el micrófono de tu Mac —una reunión
 cara a cara, o la videollamada que corre en otro equipo con tu Mac al lado— y te da la ficha al oído
-(*Presencial*, abajo).
+(*Presencial*, abajo). Si esa videollamada corre en un PC con Windows, la app también puede instalarse allí
+(*Angel Ghost en Windows*, abajo).
 
 **Y antes de la reunión, puedes ensayarla:** la app te hace las preguntas que ese cliente probablemente
 hará, sacadas de tu propia propuesta, te escucha por el micrófono y te dice qué evidencia tuya usaste y
@@ -143,7 +144,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 ### Presencial: la app escucha la sala · Nuevo · Sprint 005
 
 - **Qué hace:** para la reunión en la mesa, o para la videollamada que corre en otro equipo —un PC con
-  Windows— con tu Mac al lado. La app escucha **la sala por el micrófono de tu Mac, y nada más**: no abre
+  Windows— con tu Mac al lado (si prefieres no instalar nada en ese PC; desde el sprint 007 la app también
+  corre en él). La app escucha **la sala por el micrófono de tu Mac, y nada más**: no abre
   el audio del sistema ni lee la pantalla. Con lo que oye busca en tus documentos y te da la ficha de
   siempre —titular, línea y de dónde sale—, de fábrica **al oído**.
 - **Cómo se usa:**
@@ -156,7 +158,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   4. **«Empezar en presencial».** Para acabar, «Terminar sesión»: la voz se apaga con la sesión y `⎋`
      vuelve a tus otras apps. `⌥⎋` corta todo, como siempre.
   5. Con la sesión en marcha, `⌃⌥V` cambia entre la voz y la banda; el selector de *Sesión* también.
-- **Con la videollamada en un PC con Windows:** pon el PC **en altavoz** y el Mac al lado. En el PC no se
+- **Con la videollamada en un PC con Windows donde no instalas la app:** pon el PC **en altavoz** y el Mac al lado. En el PC no se
   instala nada y la app no toca esa máquina. **Si llevas auriculares en el PC, la app no oye al
   cliente**: solo te oye a ti.
 - **Cómo decide cuándo darte una ficha.** Tu voz y la del cliente entran por el mismo micrófono, y la app
@@ -869,7 +871,8 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
   Necesita el paquete de idioma de texto (Configuración → Hora e idioma → Idioma y región); sin él lo dice. La imagen
   vive en memoria y se descarta al leerla.
 - **Si tu PC no da abasto.** La transcripción atiende las dos pistas una tras otra y **el cliente va primero**. Si se
-  acumulan más de 4 turnos, se descartan los **tuyos** más viejos —nunca los del cliente— y Honestidad cuenta cuántos.
+  acumulan más de 4 turnos, se descartan primero los **tuyos** más viejos y, si no queda nada tuyo (en la sala la
+  pista no tiene dueño), el turno más viejo; Honestidad cuenta cuántos, sin decir de quién eran.
   Cuánto tarda tu PC en transcribir lo dice Honestidad; la cifra de la integración continua es de otra máquina y no vale.
 - **Los atajos.** En Windows son `Alt+Mayús` y una tecla; ninguno usa `Ctrl+Alt`, que en muchos teclados es AltGr. Si otra
   app ya tiene una de esas combinaciones, Windows no la deja registrar: la app lo dice en Honestidad y la acción se hace
@@ -931,7 +934,9 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
 | `desbloqueo` | sí: Windows Hello, una vez por sesión de la app |
 | `puerta-local` | no en Windows por ahora: la puerta para Claude Code |
 
-## Atajos de teclado
+## Atajos de teclado en el Mac
+
+Son los del Mac. En Windows son otros —`Alt+Mayús` y una letra—, y están en *Angel Ghost en Windows*, arriba.
 
 | Tecla | Qué hace |
 |---|---|

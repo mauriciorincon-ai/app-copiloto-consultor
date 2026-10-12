@@ -132,6 +132,9 @@ porque la ficha sale de tus documentos.
 
 ### 8 · Windows al lado
 
+_(Enmienda 1, sprint 008: desde el sprint 007 la app también corre en el PC con Windows —ADR 022—; este modo sigue
+valiendo para quien prefiere no instalar nada en ese PC, y para la sala sin videollamada.)_
+
 La videollamada corre en tu PC con Windows y el Mac está al lado. El PC suena por su altavoz y el Mac escucha la sala.
 **Si llevas auriculares en el PC, la app no oye al cliente**, y el manual y Sesión lo dicen. En el PC no se instala
 nada y la app no toca esa máquina (regla dura 9). Sigues siendo participante, y lo efímero no cambia. El marco legal es

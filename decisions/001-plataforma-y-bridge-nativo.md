@@ -45,7 +45,8 @@ escaparse.
 - El build exige `swiftc` en el PATH. La CI de `build-escritorio` corre en `macos-latest`, que lo
   trae; el job falla con un mensaje claro si algún día no está.
 - El bridge es **específico de macOS**. Windows (D3) es horizonte H2 y exigirá su propio ADR: la
-  decisión de hoy no lo hipoteca porque la frontera es una interfaz C, no un diseño.
+  decisión de hoy no lo hipoteca porque la frontera es una interfaz C, no un diseño. _(Enmienda, sprint 008: ese ADR
+  es el 022, y desde los sprints 006 a 008 la capa de Windows existe detrás de la misma frontera.)_
 - `capture/` y `stt/` siguen siendo módulos protegidos: el código Swift también obedece la regla
   del efímero, y el barrido de `verify:ephemeral` se extiende a los `.swift` del bridge cuando
   existan.

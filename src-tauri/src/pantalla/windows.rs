@@ -17,15 +17,17 @@
 
 use super::{Cuadro, Lector, LineaLeida, NoSeVe, Objetivo, Ojo};
 use std::sync::Mutex;
-use windows::Graphics::Imaging::{BitmapPixelFormat, SoftwareBitmap};
+use windows::core::Interface;
+use windows::Graphics::Imaging::{BitmapBufferAccessMode, BitmapPixelFormat, SoftwareBitmap};
 use windows::Media::Ocr::OcrEngine;
-use windows::Storage::Streams::DataWriter;
+use windows::Storage::Streams::{DataWriter, IBuffer};
 use windows::Win32::Foundation::{HWND, RECT};
 use windows::Win32::Graphics::Gdi::{
     CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, GetDC, GetDIBits, ReleaseDC, SelectObject,
     BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS, HGDIOBJ,
 };
 use windows::Win32::Storage::Xps::{PrintWindow, PRINT_WINDOW_FLAGS};
+use windows::Win32::System::WinRT::{IBufferByteAccess, IMemoryBufferByteAccess};
 use windows::Win32::UI::WindowsAndMessaging::{GetWindowRect, PW_RENDERFULLCONTENT};
 
 /// Los ojos y el lector de Windows. Los píxeles de la captura viven en un búfer que se reutiliza y se pisa.
@@ -70,11 +72,21 @@ impl Lector for DelSistema {
     }
 }
 
-/// El hilo que lee la pantalla es de la app y no trae COM: se inicia en multihilo, y si ya estaba, no pasa nada.
+/// El hilo que lee la pantalla es de la app y no trae COM: se inicia en multihilo **una vez por hilo** (sprint 008,
+/// B4 del S7: antes cada lectura llamaba a `CoInitializeEx` sin pareja). Nunca se deshace: el hilo dura lo que la app
+/// y soltar COM en un hilo con objetos WinRT vivos tumbó el proceso de pruebas en el S7 (A3).
 fn con_com() {
     use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
-    // SAFETY: iniciar COM en el hilo actual; un segundo inicio en el mismo modo solo devuelve «ya estaba».
-    let _ = unsafe { CoInitializeEx(None, COINIT_MULTITHREADED) };
+    thread_local! {
+        static INICIADO: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+    }
+    INICIADO.with(|iniciado| {
+        if !iniciado.get() {
+            // SAFETY: iniciar COM en el hilo actual; si ya estaba en el mismo modo, solo devuelve «ya estaba».
+            let _ = unsafe { CoInitializeEx(None, COINIT_MULTITHREADED) };
+            iniciado.set(true);
+        }
+    });
 }
 
 /// El motor de lectura: el de los idiomas del perfil del usuario, y si Windows no tiene ninguno, español o inglés.
@@ -99,9 +111,25 @@ fn reconocer(motor: &OcrEngine, bgra: &[u8], ancho: usize, alto: usize) -> Resul
     let escritor = DataWriter::new().map_err(e)?;
     escritor.WriteBytes(bgra).map_err(e)?;
     let buffer = escritor.DetachBuffer().map_err(e)?;
-    let mapa = SoftwareBitmap::CreateCopyFromBuffer(&buffer, BitmapPixelFormat::Bgra8, ancho as i32, alto as i32)
-        .map_err(e)?;
-    let resultado = motor.RecognizeAsync(&mapa).map_err(e)?.join().map_err(e)?;
+    let mapa =
+        SoftwareBitmap::CreateCopyFromBuffer(&buffer, BitmapPixelFormat::Bgra8, ancho as i32, alto as i32).map_err(e);
+    let leidas = mapa.as_ref().map_err(|m| m.clone()).and_then(|m| leer_lineas(motor, m, alto));
+    // **Lo que se le pasó a Windows es la pantalla del cliente** (sprint 008, B3 del S7): se pisa en el búfer y en el
+    // mapa antes de soltarlos, como se pisa el `Vec` de la captura. El texto que devuelve el reconocedor es de Windows
+    // (un `HSTRING` inmutable) y solo lo cierra su dueño.
+    pisar_buffer(&buffer);
+    if let Ok(m) = &mapa {
+        pisar_mapa(m);
+        let _ = m.Close();
+    }
+    let _ = escritor.Close();
+    leidas
+}
+
+/// Las líneas que el reconocedor lee del mapa.
+fn leer_lineas(motor: &OcrEngine, mapa: &SoftwareBitmap, alto: usize) -> Result<Vec<LineaLeida>, String> {
+    let e = |e: windows::core::Error| format!("el lector de Windows no pudo: {e}");
+    let resultado = motor.RecognizeAsync(mapa).map_err(e)?.join().map_err(e)?;
     let lineas = resultado.Lines().map_err(e)?;
     let mut leidas = Vec::new();
     for i in 0..lineas.Size().map_err(e)? {
@@ -117,6 +145,33 @@ fn reconocer(motor: &OcrEngine, bgra: &[u8], ancho: usize, alto: usize) -> Resul
         leidas.push(LineaLeida { texto, confianza: 1.0, alto: alto_px / alto as f32 });
     }
     Ok(leidas)
+}
+
+/// Pisa a ceros los bytes de un búfer de WinRT. Lo que no se puede pisar (otro tipo de búfer) se deja: es lo mejor
+/// que se puede hacer, y el propio búfer se suelta enseguida.
+fn pisar_buffer(buffer: &IBuffer) {
+    let Ok(largo) = buffer.Length() else { return };
+    let Ok(acceso) = buffer.cast::<IBufferByteAccess>() else { return };
+    // SAFETY: `Buffer` da el puntero a los `Length` bytes que el búfer posee mientras viva; se escribe dentro de ese largo.
+    if let Ok(p) = unsafe { acceso.Buffer() } {
+        if !p.is_null() {
+            unsafe { std::ptr::write_bytes(p, 0, largo as usize) };
+        }
+    }
+}
+
+/// Pisa a ceros los píxeles de un `SoftwareBitmap`, bloqueándolo para escribir.
+fn pisar_mapa(mapa: &SoftwareBitmap) {
+    let Ok(bloqueo) = mapa.LockBuffer(BitmapBufferAccessMode::ReadWrite) else { return };
+    let Ok(referencia) = bloqueo.CreateReference() else { return };
+    let Ok(acceso) = referencia.cast::<IMemoryBufferByteAccess>() else { return };
+    let (mut p, mut capacidad) = (std::ptr::null_mut::<u8>(), 0u32);
+    // SAFETY: `GetBuffer` escribe el puntero y la capacidad de la memoria del mapa, que sigue bloqueado y vivo; se
+    // escribe como mucho `capacidad` bytes.
+    if unsafe { acceso.GetBuffer(&mut p, &mut capacidad) }.is_ok() && !p.is_null() {
+        unsafe { std::ptr::write_bytes(p, 0, capacidad as usize) };
+    }
+    let _ = bloqueo.Close();
 }
 
 /// La ventana entera, en BGRA de arriba abajo, en `bgra`. Devuelve su tamaño.

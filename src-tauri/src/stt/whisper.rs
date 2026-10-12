@@ -288,11 +288,16 @@ mod motor {
             let ms_cliente = medir(&cliente);
             let ms_tuyo = medir(&tuyo);
             let modelo = std::path::Path::new(&ruta).file_name().map(|n| n.to_string_lossy().into_owned());
+            // Los segundos de cada audio salen de sus muestras, no de una cifra escrita a mano (B11 del S7): si el kit
+            // o la calibración cambian, el mensaje sigue diciendo la verdad.
+            let segundos = |audio: &[f32]| audio.len() as f32 / crate::capture::anillo::HZ as f32;
             println!(
-                "[medición] whisper {} con dos pistas en serie, el cliente primero: el cliente (5,9 s) {ms_cliente} ms · \
-                 un turno tuyo detrás (10 s) {ms_tuyo} ms · techo del fin de turno a la ficha {} ms · cifra del runner, \
+                "[medición] whisper {} con dos pistas en serie, el cliente primero: el cliente ({:.1} s) {ms_cliente} ms · \
+                 un turno tuyo detrás ({:.1} s) {ms_tuyo} ms · techo del fin de turno a la ficha {} ms · cifra del runner, \
                  manual: la del PC manda",
                 modelo.unwrap_or_default(),
+                segundos(&cliente),
+                segundos(&tuyo),
                 crate::stt::calibracion::TECHO_MS
             );
         }

@@ -194,7 +194,9 @@ jobs:
           $ruta = Join-Path $HOME "ag-modelos\ggml-small.bin"
           if (-not (Test-Path $ruta)) {
             New-Item -ItemType Directory -Force (Split-Path $ruta) | Out-Null
-            Invoke-WebRequest -Uri "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin" -OutFile $ruta
+            # La misma revisión fija que `modelo_whisper.rs::REVISION` (B12 del S7: `main` se mueve), y con reintentos:
+            # una caída pasajera del servidor no tumba el job.
+            Invoke-WebRequest -Uri "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-small.bin" -OutFile $ruta -MaximumRetryCount 4 -RetryIntervalSec 15
           }
           $huella = (Get-FileHash $ruta -Algorithm SHA256).Hash.ToLower()
           if ($huella -ne "1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b") {

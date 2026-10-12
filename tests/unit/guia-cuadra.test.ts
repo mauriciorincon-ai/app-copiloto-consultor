@@ -37,10 +37,11 @@ const FILAS_H2 = [
   ...GUIA.matchAll(/<tr data-texto data-ciclo="h2"><td><input type="checkbox" id="(\w+)"/g),
 ];
 
-/** Las ⭐ del ciclo H2: las que nacen del sprint 4 al 7. */
-const DEL_H2 = PRUEBAS.filter(
-  (p) => /data-nace="s[4-7]"/.test(p[1]) && p[1].includes("data-minimo"),
-);
+/** De qué sprint nace una prueba, de su `data-nace`: «s7» → 7. Los sprints salen de los datos de la guía (auditoría del S7, B10). */
+const NACE = (p: RegExpMatchArray): number => Number(/data-nace="s(\d+)"/.exec(p[1])?.[1]);
+
+/** Las ⭐ del ciclo H2: las que nacen del sprint 4 en adelante. */
+const DEL_H2 = PRUEBAS.filter((p) => NACE(p) >= 4 && p[1].includes("data-minimo"));
 
 /** «Sprint 003» → 3: el sprint de la guía, de su cabecera. */
 const SPRINT = Number(/Sprint 0*(\d+) · /.exec(GUIA)?.[1]);
@@ -129,19 +130,29 @@ describe("la guía de prueba cuadra", () => {
   });
 
   it("el desglose del ⭐ por sprint cuadra con de dónde nace cada prueba", () => {
-    const sinNacer = PRUEBAS.filter((p) => !/data-nace="s\d"/.test(p[1])).map((p) => p[3]);
+    const sinNacer = PRUEBAS.filter((p) => !/data-nace="s\d+"/.test(p[1])).map((p) => p[3]);
     expect(sinNacer, "pruebas sin data-nace").toEqual([]);
-    const m =
-      /Gate mínimo ⭐: (\d+) pruebas · ~\d+ min \(S1 (\d+) · S2 (\d+) · S3 (\d+) · S4 (\d+) · S5 (\d+) · S6 (\d+) · S7 (\d+)\)/.exec(GUIA);
-    expect(m, "la cabecera no trae el desglose S1 · S2 · S3 · S4 · S5 · S6 · S7").not.toBeNull();
-    const minimo = PRUEBAS.filter((p) => p[1].includes("data-minimo"));
-    const de = (s: string) => minimo.filter((p) => p[1].includes(`data-nace="${s}"`)).length;
-    // S5 no tiene bloque de pruebas: el sprint 005 saltó la directiva del 2026-10-06 y la guía lo declara en
-    // su cabecera de versión. Que sea cero aquí es lo que lo hace visible, no un olvido.
-    expect([de("s1"), de("s2"), de("s3"), de("s4"), de("s5"), de("s6"), de("s7")]).toEqual(
-      [m![2], m![3], m![4], m![5], m![6], m![7], m![8]].map(Number),
+    // El desglose se lee de la cabecera y se cruza con los sprints que hay en los datos: ni la lista de sprints ni su
+    // número están escritos aquí (auditoría del S7, B10: `s[4-7]` y «S1 … S7» se rompían con cada sprint nuevo).
+    const m = /Gate mínimo ⭐: (\d+) pruebas · ~\d+ min \(((?:S\d+ \d+(?: · )?)+)\)/.exec(GUIA);
+    expect(m, "la cabecera no trae el desglose «S1 n · S2 n · …»").not.toBeNull();
+    const declaradoPorSprint = new Map(
+      [...m![2].matchAll(/S(\d+) (\d+)/g)].map((x) => [Number(x[1]), Number(x[2])] as const),
     );
-    expect(de("s1") + de("s2") + de("s3") + de("s4") + de("s5") + de("s6") + de("s7")).toBe(Number(m![1]));
+    const minimo = PRUEBAS.filter((p) => p[1].includes("data-minimo"));
+    const delosDatos = new Map<number, number>();
+    for (const p of PRUEBAS) delosDatos.set(NACE(p), delosDatos.get(NACE(p)) ?? 0); // un sprint sin ⭐ queda en 0, visible
+    for (const p of minimo) delosDatos.set(NACE(p), (delosDatos.get(NACE(p)) ?? 0) + 1);
+    // S5 no tiene bloque de pruebas: el sprint 005 saltó la directiva del 2026-10-06 y la guía lo declara en
+    // su cabecera de versión. Que la cabecera lo diga en cero es lo que lo hace visible, no un olvido.
+    const desglose = (mapa: Map<number, number>) => [...mapa].sort((a, b) => a[0] - b[0]);
+    for (const [sprint, cuantas] of delosDatos) {
+      expect(declaradoPorSprint.get(sprint) ?? 0, `S${sprint}`).toBe(cuantas);
+    }
+    for (const [sprint] of declaradoPorSprint) {
+      expect(delosDatos.has(sprint) || declaradoPorSprint.get(sprint) === 0, `S${sprint} figura en la cabecera y no en los datos`).toBe(true);
+    }
+    expect(desglose(delosDatos).reduce((n, [, c]) => n + c, 0)).toBe(Number(m![1]));
   });
 
   it("el bloque de textos diferidos declara sus filas, y ningún id se repite con las pruebas", () => {
@@ -173,19 +184,19 @@ describe("la guía de prueba cuadra", () => {
       (p) => p[1].includes("data-candidata") && !p[1].includes("data-minimo"),
     ).map((p) => p[3]);
     expect(sueltas, "candidata sin ser ⭐").toEqual([]);
-    const m = /Acumulado del ciclo H2: (\d+) ⭐ \(S4 (\d+) · S6 (\d+) · S7 (\d+)\) · candidatas al ⭐⭐ del H2: (\d+) sí · (\d+) no/.exec(
+    const m = /Acumulado del ciclo H2: (\d+) ⭐ \(((?:S\d+ \d+(?: · )?)+)\) · candidatas al ⭐⭐ del H2: (\d+) sí · (\d+) no/.exec(
       GUIA,
     );
     expect(m, "la cabecera no dice el acumulado del H2 y sus candidatas").not.toBeNull();
     const si = DEL_H2.filter((p) => p[1].includes('data-candidata="si"')).length;
-    expect([m![1], m![2], m![3], m![4], m![5], m![6]].map(Number)).toEqual([
-      DEL_H2.length,
-      DEL_H2.filter((p) => p[1].includes('data-nace="s4"')).length,
-      DEL_H2.filter((p) => p[1].includes('data-nace="s6"')).length,
-      DEL_H2.filter((p) => p[1].includes('data-nace="s7"')).length,
-      si,
-      DEL_H2.length - si,
-    ]);
+    // Los sprints del desglose salen de los datos, no de una lista escrita aquí (auditoría del S7, B10).
+    const declarado = new Map(
+      [...m![2].matchAll(/S(\d+) (\d+)/g)].map((x) => [Number(x[1]), Number(x[2])] as const),
+    );
+    const real = new Map<number, number>();
+    for (const p of DEL_H2) real.set(NACE(p), (real.get(NACE(p)) ?? 0) + 1);
+    expect([...declarado].sort((a, b) => a[0] - b[0])).toEqual([...real].sort((a, b) => a[0] - b[0]));
+    expect([m![1], m![3], m![4]].map(Number)).toEqual([DEL_H2.length, si, DEL_H2.length - si]);
   });
 
   it("el chip de cada prueba dice su origen, con el sprint de la guía y su namespace", () => {

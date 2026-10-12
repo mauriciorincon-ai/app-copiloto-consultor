@@ -157,3 +157,20 @@ describe("lo que Windows dice de la red, con la puerta única", () => {
     expect(TEXTOS_DE_WINDOWS.en.honestidad.modoDetalle).toContain("install the speech model");
   });
 });
+
+describe("la cuenta de turnos sin transcribir no atribuye (auditoría del S7, M3)", () => {
+  it("no dice «tuyos» ni «your»: en la sala el turno que se tira puede ser del cliente", () => {
+    for (const n of [1, 3]) {
+      expect(TEXTOS_DE_WINDOWS.es.whisper.descartados(n)).not.toMatch(/tuy/i);
+      expect(TEXTOS_DE_WINDOWS.en.whisper.descartados(n)).not.toMatch(/\byour\b/i);
+    }
+  });
+
+  it("el manual cuenta lo mismo que el código: tuyos primero y, sin tuyos, el más viejo", () => {
+    const manual = MANUAL.slice(MANUAL.indexOf("Si tu PC no da abasto"));
+    const frase = manual.slice(0, manual.indexOf("\n- **"));
+    expect(frase).toMatch(/primero los \*\*tuyos\*\*/);
+    expect(frase).toMatch(/el turno más viejo/);
+    expect(frase).not.toMatch(/nunca los del cliente/);
+  });
+});

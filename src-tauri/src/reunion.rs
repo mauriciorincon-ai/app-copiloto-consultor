@@ -1005,7 +1005,14 @@ pub fn mostrar_en_finder<R: Runtime>(app: &AppHandle<R>, archivo: Option<&str>) 
             notas.raiz().to_path_buf()
         }
     };
-    tauri_plugin_opener::reveal_item_in_dir(&ruta).map_err(|e| format!("Finder no pudo enseñarla: {e}"))
+    tauri_plugin_opener::reveal_item_in_dir(&ruta).map_err(|e| no_pudo_enseñarla(cfg!(windows), &e.to_string()))
+}
+
+/// El motivo cuando el sistema no pudo enseñar la carpeta, **con el nombre de su propio explorador** (sprint 008, el
+/// bajo del S7 sobre `reunion.rs:1010`: en Windows decía «Finder»). Pura, para probarla en los dos runners.
+fn no_pudo_enseñarla(en_windows: bool, motivo: &str) -> String {
+    let explorador = if en_windows { "El Explorador de archivos" } else { "Finder" };
+    format!("{explorador} no pudo enseñarla: {motivo}")
 }
 
 /// Barre lo vencido ahora y luego **al llegar el próximo vencimiento** (como mucho, cada hora),
@@ -1076,6 +1083,14 @@ mod pruebas {
         let d = std::env::temp_dir().join(format!("ag-reunion-{nombre}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&d);
         Carpeta::en(d)
+    }
+
+    /// Cada sistema nombra su propio explorador en el error de «Mostrar en…» (el bajo del S7 sobre `reunion.rs:1010`).
+    #[test]
+    fn el_error_de_mostrar_nombra_el_explorador_de_cada_sistema() {
+        assert!(no_pudo_enseñarla(false, "x").starts_with("Finder "));
+        assert!(no_pudo_enseñarla(true, "x").starts_with("El Explorador de archivos "));
+        assert!(!no_pudo_enseñarla(true, "x").contains("Finder"));
     }
 
     const HOY: notas::Fecha = notas::Fecha { anio: 2026, mes: 9, dia: 27, hora: 14, minuto: 2 };

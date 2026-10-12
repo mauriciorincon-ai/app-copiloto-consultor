@@ -116,7 +116,9 @@ function bandaDesdeLaUrl(busqueda: string, alto: number) {
     // no puede dibujarse ampliada dentro de un marco de 88 px (ni al revés) y el asa funciona
     // sin avisar a nadie: cambia la ventana, y la banda se entera midiendo.
     ampliada: alto >= DESDE_AMPLIADA,
-    verificado: p.get("verificado") !== "0",
+    // En la muestra de Windows ningún cliente está verificado (la promesa es graduada por plataforma y nadie la ha
+    // corrido en un PC): el chip no dice «protegido» (auditoría del S7, el chip de la banda).
+    verificado: p.get("verificado") !== "0" && p.get("plataforma") !== "windows",
   };
 }
 

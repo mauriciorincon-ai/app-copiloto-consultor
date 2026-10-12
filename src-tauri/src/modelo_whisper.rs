@@ -24,13 +24,20 @@ pub struct Modelo {
     pub origen: &'static str,
 }
 
+/// La revisión del repositorio de modelos desde la que se baja (sprint 008, B12 del S7). Antes se bajaba de `main`, una
+/// referencia que se mueve: la huella protegía la integridad, no la disponibilidad —si el repositorio cambiaba el
+/// archivo, la descarga fallaba por una huella que ya no coincidía—. Con la revisión fija la URL dice siempre lo
+/// mismo; verificada el 2026-10-12 contra el árbol de esa revisión: el tamaño y la huella de cada archivo son los de
+/// abajo.
+pub const REVISION: &str = "5359861c739e955e79d9a303bcbc70fb988958b1";
+
 /// El modelo de la app en Windows (ADR 006: large-v3-turbo). 1,6 GB.
 pub const GRANDE: Modelo = Modelo {
     nombre: "large-v3-turbo",
     archivo: "ggml-large-v3-turbo.bin",
     bytes: 1_624_555_275,
     sha256: "1fc70f774d38eb169993ac391eea357ef47c88757ef72ee5943879b7e8e2bc69",
-    origen: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin",
+    origen: "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-large-v3-turbo.bin",
 };
 
 /// El escalón para cuando la calibración pasa de 4 s en tu PC (ADR 022 §5). 0,5 GB.
@@ -39,7 +46,7 @@ pub const PEQUENO: Modelo = Modelo {
     archivo: "ggml-small.bin",
     bytes: 487_601_967,
     sha256: "1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b",
-    origen: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin",
+    origen: "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-small.bin",
 };
 
 /// La carpeta de los modelos, dentro de la carpeta privada de la app.
@@ -173,6 +180,9 @@ mod pruebas {
             assert!(m.sha256.chars().all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase()), "{}", m.nombre);
             assert!(m.origen.ends_with(m.archivo), "{}: el origen no baja el archivo que dice", m.nombre);
             assert!(m.origen.starts_with("https://huggingface.co/ggerganov/whisper.cpp/"), "{}", m.nombre);
+            // B12 del S7: la URL lleva la revisión fija, no `main`, que se mueve.
+            assert!(m.origen.contains(&format!("/resolve/{REVISION}/")), "{}: el origen no usa la revisión fija", m.nombre);
+            assert!(!m.origen.contains("/resolve/main/"), "{}", m.nombre);
         }
         assert_eq!(GRANDE.bytes, 1_624_555_275);
         assert_eq!(PEQUENO.bytes, 487_601_967);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { hayTauri, preguntar } from "./puente";
-import { PLATAFORMA_WINDOWS } from "./contrato.generado";
+import { PLATAFORMA_MACOS, PLATAFORMA_WINDOWS } from "./contrato.generado";
 
 /**
  * QUÉ HACE LA APP EN ESTE EQUIPO (sprint 006, ADR 022). Lo emite `src-tauri/src/plataforma.rs` y la muestra del
@@ -110,21 +110,14 @@ export function plataformaFuera(
  * Las teclas de macOS tal como las escriben los textos de la app y la maqueta, y la acción de cada una. Los textos
  * (`es.ts`, `en.ts`, la banda) están atados a la maqueta y no cambian; en Windows se pintan con las teclas de
  * Windows en su lugar.
+ *
+ * **Salen del contrato** (sprint 008, auditoría del S7, M7): `PLATAFORMA_MACOS.atajos` es lo que `atajos.rs::en_macos`
+ * emite, así que no hay una segunda copia a mano que pueda separarse de Rust. Van de la más larga a la más corta
+ * porque «⎋» sola va dentro de «⌥⎋» y la sustitución tiene que haber pasado ya por la larga.
  */
-const TECLAS_DE_MACOS: [string, AccionDeAtajo][] = [
-  ["⌥⎋", "corte"],
-  ["⌃⌥T", "transcript"],
-  ["⌃⌥A", "ayuda"],
-  ["⌃⌥V", "modo-de-voz"],
-  ["⌃⌥L", "leer-la-pantalla"],
-  ["⌃⌥R", "radar"],
-  ["⌃⌥N", "anotar"],
-  ["⌃⌥P", "fijar"],
-  ["⌃⌥↵", "guardar-la-propuesta"],
-  ["⌃⌥B", "banda"],
-  // La última: «⎋» sola va dentro de «⌥⎋», que ya se sustituyó.
-  ["⎋", "callar"],
-];
+export const TECLAS_DE_MACOS: [string, AccionDeAtajo][] = PLATAFORMA_MACOS.atajos
+  .map((a): [string, AccionDeAtajo] => [a.teclas, a.accion])
+  .sort((a, b) => b[0].length - a[0].length);
 
 /** Las teclas de un atajo de Windows en el idioma de quien lee: «Mayús» en español, «Shift» en inglés. */
 export function teclasEnIdioma(teclas: string, idioma: "es" | "en"): string {
@@ -199,9 +192,31 @@ export function whisperEnEsteEquipo(p: Plataforma): EstadoDeWhisper | null {
   return estadoDeWhisper(p.transcripcion);
 }
 
-/** Pregunta a Rust una vez al montar. */
-export function usePlataforma(
+/**
+ * **Lo que se pinta en el primer cuadro dentro de Tauri**, hasta que Rust contesta (sprint 008, auditoría del S7,
+ * M12). Antes arrancaba siempre con macOS: en Windows el primer cuadro escribía las teclas `⌃⌥` y «Verificada solo en
+ * Meet · macOS 26.6.2» hasta que llegaba la respuesta. El navegador embebido ya dice en qué sistema corre (WebView2
+ * dice «Windows NT»), así que el primer cuadro parte de Windows sin esperar a nadie; las funciones y la transcripción
+ * vacías, para no pintar cifras de muestra. Fuera de Tauri manda `fuera` (la muestra que pida la URL).
+ */
+export function plataformaInicial(
   fuera: Plataforma = plataformaFuera(),
+  agente: string = globalThis.navigator?.userAgent ?? "",
+  dentroDeTauri: boolean = hayTauri(),
+): Plataforma {
+  if (!dentroDeTauri) return fuera;
+  return /Windows/i.test(agente)
+    ? { ...PLATAFORMA_WINDOWS, funciones: [], transcripcion: null }
+    : fuera;
+}
+
+/**
+ * Pregunta a Rust al montar y, si se da, otra vez cuando cambie `refrescarCon` (la banda lo usa para enterarse de
+ * una tecla que no se pudo registrar al encender el modo de voz).
+ */
+export function usePlataforma(
+  fuera: Plataforma = plataformaInicial(),
+  refrescarCon?: unknown,
 ): [Plataforma, (p: Plataforma) => void] {
   const [p, setP] = useState<Plataforma>(fuera);
   useEffect(() => {
@@ -213,7 +228,7 @@ export function usePlataforma(
     return () => {
       vivo = false;
     };
-  }, []);
+  }, [refrescarCon]);
   return [p, setP];
 }
 

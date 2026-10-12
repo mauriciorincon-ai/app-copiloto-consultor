@@ -2228,14 +2228,16 @@ fn decir_la_ficha_si_cabe<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &fich
     }
 
     let dicho = habla::a_voz(&f.titular, &f.linea, &fuente_hablada(&f.fuente));
+    let pedida = std::time::Instant::now();
     match estado.voz.decir(&idioma, &dicho) {
         Ok(()) => {
             println!("[habla] diciendo la ficha · {} letras · {idioma}", dicho.chars().count());
             // **El presupuesto «la voz empieza ≤ 1 s tras la ficha», medido en vivo** (auditoría del
             // S2, B21): lo que tardó el sintetizador en sonar de verdad, al log. Solo el número.
-            std::thread::spawn(|| {
+            // En Windows lo mide el registro de lo que sonó (B1 del S7): antes cada ficha decía «no empezó a sonar».
+            std::thread::spawn(move || {
                 for _ in 0..100 {
-                    if let Some(ms) = habla::apple::ms_hasta_sonar() {
+                    if let Some(ms) = habla::ms_hasta_sonar(pedida) {
                         println!("[habla] empezó a sonar a los {ms} ms (presupuesto 1000)");
                         return;
                     }
@@ -2466,22 +2468,32 @@ fn con_el_callar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, coger: bool) {
             // **Si no puede, lo dice**: el usuario pulsaría la tecla creyendo que calló a la app, y
             // la app seguiría hablándole encima del cliente.
             match g.register(atajo) {
-                Ok(()) => println!(
-                    "[habla] ⎋ registrada MIENTRAS dure el modo · OJO: durante estos segundos la \
-                     tecla no le llega a la reunión"
-                ),
-                Err(e) => println!(
-                    "[habla] NO se pudo registrar {} ({e}): para callar la voz hay que apagar el \
-                     modo con {}",
-                    atajos::de_este_equipo(atajos::Accion::Callar).texto,
-                    atajos::de_este_equipo(atajos::Accion::ModoDeVoz).texto
-                ),
+                Ok(()) => {
+                    atajos::apuntar(atajos::Accion::Callar, true);
+                    println!(
+                        "[habla] ⎋ registrada MIENTRAS dure el modo · OJO: durante estos segundos la \
+                         tecla no le llega a la reunión"
+                    );
+                }
+                Err(e) => {
+                    // Se apunta como las demás (sprint 008, M10 del S7): Honestidad dice que esa tecla no responde.
+                    atajos::apuntar(atajos::Accion::Callar, false);
+                    println!(
+                        "[habla] NO se pudo registrar {} ({e}): para callar la voz hay que apagar el \
+                         modo con {}",
+                        atajos::de_este_equipo(atajos::Accion::Callar).texto,
+                        atajos::de_este_equipo(atajos::Accion::ModoDeVoz).texto
+                    );
+                }
             }
         } else {
             // Que falle no rompe nada —la tecla seguiría cogida— pero se dice, porque a partir de
             // ahí la reunión dejaría de recibir Escapes sin ninguna razón visible.
             match g.unregister(atajo) {
-                Ok(()) => println!("[habla] ⎋ devuelta al sistema"),
+                Ok(()) => {
+                    atajos::soltar(atajos::Accion::Callar);
+                    println!("[habla] ⎋ devuelta al sistema");
+                }
                 Err(e) => {
                     println!("[habla] ⎋ NO se pudo devolver ({e}): la reunión seguirá sin recibirla")
                 }
@@ -3830,7 +3842,7 @@ fn registrar_el_kill_switch<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
     use tauri_plugin_global_shortcut::GlobalShortcutExt;
     // Cada atajo con lo que es y lo que queda si no se registra. Las teclas salen de `atajos.rs`: las de macOS de
     // siempre o, en Windows, `Alt+Mayús` + letra (sprint 007, ADR 022 enmienda 1).
-    let lista: [(Accion, &str, &str); 10] = [
+    let lista: &[(Accion, &str, &str)] = &[
         (Accion::Corte, "[corte] el kill-switch", "el kill-switch sigue en el botón de Honestidad, pero la tecla no va a responder"),
         (Accion::Transcript, "[transcript] el transcript", "el transcript no se va a poder abrir con la tecla"),
         (Accion::Ayuda, "[ficha] «ayúdame con esto»", "la ficha a petición sigue en el botón de la banda ampliada, pero la tecla no va a responder"),
@@ -3842,7 +3854,7 @@ fn registrar_el_kill_switch<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
         (Accion::GuardarLaPropuesta, "[propuestas] «guardar la propuesta»", "las propuestas se siguen guardando en Notas, pero la tecla no va a responder"),
         (Accion::Banda, "[ventanas] «la banda, al otro borde»", "la banda se sigue cambiando de borde en Sesión, pero la tecla no va a responder"),
     ];
-    for (accion, que, si_no) in lista {
+    for &(accion, que, si_no) in lista {
         if !atajos::se_registra_aqui(accion) {
             println!("{que}: su tecla no se registra en este sistema todavía (ADR 022)");
             continue;
@@ -3960,6 +3972,24 @@ mod pruebas_de_los_atajos_en_windows {
         let registro = &registro[..registro.find("\n}\n").unwrap()];
         assert!(registro.contains(".register(atajos::atajo(accion))"), "el registro no lee la tabla");
         assert!(registro.contains("atajos::apuntar(accion, false)"), "un registro fallido no se apunta");
+    }
+
+    /// **Ninguna acción queda sin intentar ni sin apuntar** (auditoría del S7, M10): `registrar_el_kill_switch`
+    /// intenta TODAS las de la tabla menos `Esc` —que solo se coge mientras dura el modo de voz—, y `con_el_callar`
+    /// apunta el resultado de `Esc`, para que un registro fallido de cualquiera llegue a Honestidad.
+    #[test]
+    fn toda_accion_intenta_su_registro_y_lo_apunta() {
+        let fuente = include_str!("lib.rs");
+        let registro = &fuente[fuente.find("fn registrar_el_kill_switch<").unwrap()..];
+        let registro = &registro[..registro.find("\n}\n").unwrap()];
+        for accion in crate::atajos::TODAS.iter().filter(|a| **a != crate::atajos::Accion::Callar) {
+            assert!(registro.contains(&format!("(Accion::{accion:?},")), "{accion:?} no está en la lista de registro");
+        }
+        let callar = &fuente[fuente.find("fn con_el_callar<").unwrap()..];
+        let callar = &callar[..callar.find("\n}\n").unwrap()];
+        assert!(callar.contains("atajos::apuntar(atajos::Accion::Callar, true)"), "Esc registrada no se apunta");
+        assert!(callar.contains("atajos::apuntar(atajos::Accion::Callar, false)"), "Esc fallida no se apunta");
+        assert!(callar.contains("atajos::soltar(atajos::Accion::Callar)"), "Esc devuelta no se suelta");
     }
 }
 
