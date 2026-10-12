@@ -222,10 +222,10 @@
     {
       "clave": "pruebas_automaticas",
       "etiqueta": "Pruebas automáticas",
-      "valor": 1475,
+      "valor": 1806,
       "unidad": "pruebas",
       "fuente": "medido",
-      "detalle": "Las que corrió la CI (commit 81a2021, corrida 38117320453): Vitest 498 de 501 (allí se saltan 3: 2 comparan copias del contrato con originales que solo están en el Mac, 1 necesita gitleaks); cargo test 658 (librería 609, contra el Mac 30, puerta 14, ghost 5; las 3 «en_vivo_» se corren a mano, con el usuario delante); Playwright 319, con 3 saltadas a propósito."
+      "detalle": "Las que corrió la CI (commit ba58ca7, corrida 38285677757): Vitest 629 de 631 (allí se saltan 2: comparan con copias que viven en otros repos de este Mac); cargo test en macOS 748 (librería 699, contra el Mac 30, puerta 14, ghost 5; las 3 «en_vivo_» se corren a mano, con el usuario delante); Playwright 429, con 3 saltadas a propósito. En Windows, la librería pasa 672 y su integración 4."
     },
     {
       "clave": "bytes_que_salen_del_equipo",
