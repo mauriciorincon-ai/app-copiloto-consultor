@@ -56,5 +56,5 @@ Ninguno.
 
 1. **Alcance:** requiere ajustes → corregido en el sprint (A1); el resto, lote.
 2. **Calidad:** la lógica nativa es sólida; los altos de calidad están pagados.
-3. **Seguridad y privacidad:** sin secretos, sin enlaces de producción, sin datos reales. A2 y A6 pagados; M2 y M11 al lote.
+3. **Seguridad y privacidad:** sin secretos, sin enlaces de producción, sin datos reales. A2 y A5 pagados; M2 y M11 al lote.
 4. **Frases caducadas:** A1, A4 y A5 pagados; M6 a M9 y B3 al lote.
