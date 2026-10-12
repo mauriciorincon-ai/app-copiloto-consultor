@@ -17,6 +17,7 @@ import { llamar, preguntar } from "@/puente";
 import {
   ESTADO_DE_LA_ESCUCHA,
   ESTADO_DE_LA_ESCUCHA_PRESENCIAL,
+  LA_VOZ_APAGADA,
   LA_VOZ_ESPERANDO_A_LA_SALA,
   VISTA_DEL_CLIENTE,
 } from "@/contrato.generado";
@@ -57,6 +58,8 @@ const antesDeEmpezar: EstadoDeEscucha = {
   escuchando: false,
 };
 const AIRPODS: Salida = { salida: "otra", nombre: "AirPods Pro" };
+/** Antes de encender nada, con voz para el idioma y una salida que no suena en la sala: la voz PUEDE hablar. */
+const PUEDE_HABLAR = { ...LA_VOZ_APAGADA, puede: true };
 
 async function pintaSesion(
   escucha: EstadoDeEscucha = antesDeEmpezar,
@@ -82,6 +85,7 @@ beforeEach(() => {
   vi.mocked(preguntar).mockClear();
   vi.mocked(llamar).mockClear();
   respuestas.set("este_cliente", VISTA_DEL_CLIENTE);
+  respuestas.set("estado_de_la_voz", PUEDE_HABLAR);
 });
 
 describe("Sesión en presencial", () => {
@@ -106,6 +110,8 @@ describe("Sesión en presencial", () => {
   it("«Empezar en presencial» pide la sala con la ficha al oído, y con la banda si la eliges", async () => {
     await pintaSesion();
     fireEvent.click(screen.getByRole("button", { name: tp.boton }));
+    // La voz se pregunta a Rust al montarse la pantalla del modo: «Al oído» parte elegido cuando contesta que PUEDE.
+    await act(async () => {});
     expect(radio(tp.alOido)).toHaveAttribute("aria-checked", "true");
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: tp.empezar }));
@@ -132,6 +138,15 @@ describe("Sesión en presencial", () => {
     expect(pedidos("empezar_presencial").at(-1)?.[1]).toEqual({
       alOido: false,
     });
+  });
+
+  it("sin voz que pueda hablar, la banda viene marcada aunque la salida sean auriculares (M5 del S6)", async () => {
+    // En Windows, sin voz del sistema para el idioma, «Al oído» partía elegido con la voz muda.
+    respuestas.set("estado_de_la_voz", LA_VOZ_APAGADA);
+    await pintaSesion(antesDeEmpezar, { salida: "auriculares" });
+    fireEvent.click(screen.getByRole("button", { name: tp.boton }));
+    expect(radio(tp.laBanda)).toHaveAttribute("aria-checked", "true");
+    expect(radio(tp.alOido)).toHaveAttribute("aria-checked", "false");
   });
 
   it("el idioma de la sala se elige ahí y Rust lo guarda como el de la pista «sala»", async () => {

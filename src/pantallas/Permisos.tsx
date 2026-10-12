@@ -60,7 +60,7 @@ function Permiso({
   estado: EstadoPermiso;
   cual: "microfono" | "audio" | "pantalla" | "accesibilidad";
   /** En Windows (sprint 006, ADR 022): `null` si el permiso todavía no existe allí; si no, su texto de ajustes. */
-  windows?: { boton: string | null; llegaDespues: string } | null;
+  windows?: { boton: string | null; llegaDespues: string; sinPermiso?: string } | null;
 }) {
   const t = useT().cuaderno;
   const concedido = estado === "concedido";
@@ -70,7 +70,14 @@ function Permiso({
       <span className="nombre">{nombre}</span>
       <span className="para">{para}</span>
       <div className="accion">
-        {windows && windows.boton === null ? (
+        {windows?.sinPermiso ? (
+          // Sprint 007: en Windows el audio del sistema y la pantalla de la reunión no piden permiso; no hay nada
+          // que conceder ni que abrir en Ajustes, y decir «sin conceder» sería mandar a buscar un permiso que no existe.
+          <span className="estado ok">
+            <Ic id="i-check-circle" s relleno />
+            <span>{windows.sinPermiso}</span>
+          </span>
+        ) : windows && windows.boton === null ? (
           <span className="estado mute">
             <Ic id="i-pendiente" s />
             <span>{windows.llegaDespues}</span>
@@ -95,8 +102,12 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
   const [plataforma] = usePlataforma();
   const enWindows = esWindows(plataforma);
   const w = useTextosDeWindows().permisos;
-  // En Windows solo el micrófono existe hoy; los otros tres llegan en una versión próxima (ADR 022).
+  // En Windows el micrófono tiene su permiso en Ajustes; el audio del sistema y la pantalla funcionan sin ninguno
+  // (sprint 007); acoplarse a la ventana de la reunión llega en una versión próxima (ADR 022).
   const despues = enWindows ? { boton: null, llegaDespues: w.llegaDespues } : undefined;
+  const sinPermiso = enWindows
+    ? { boton: null, llegaDespues: w.llegaDespues, sinPermiso: w.sinPermiso }
+    : undefined;
 
   return (
     <>
@@ -121,7 +132,7 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
             para={t.permSistemaPara}
             estado={permisos.audio}
             cual="audio"
-            windows={despues}
+            windows={sinPermiso}
           />
           <Permiso
             icono="i-pantalla"
@@ -129,7 +140,7 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
             para={t.permPantallaPara}
             estado={permisos.pantalla}
             cual="pantalla"
-            windows={despues}
+            windows={sinPermiso}
           />
           <Permiso
             icono="i-flecha"

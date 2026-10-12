@@ -1,4 +1,4 @@
-import { useIdioma, useT } from "../i18n";
+import { useIdioma, useT, useTeclas } from "../i18n";
 import { Ic } from "./Iconos";
 import { useAsa } from "../asa";
 import { useFranja, type Borde } from "../franja";
@@ -117,6 +117,7 @@ export function Banda({
   borde: bordeDeMuestra = "abajo",
 }: PropsBanda) {
   const t = useT().banda;
+  const k = useTeclas();
   const tc = useT().cuaderno;
   const tn = useT().notas;
   const idioma = useIdioma();
@@ -310,10 +311,10 @@ export function Banda({
   const atajos = (
     <span className="atajos-b">
       <span className="tecla">
-        <kbd>⌃⌥A</kbd> {t.ayudame}
+        <kbd>{k("⌃⌥A")}</kbd> {t.ayudame}
       </span>
       <span className="tecla">
-        <kbd>⌥⎋</kbd> {t.corta}
+        <kbd>{k("⌥⎋")}</kbd> {t.corta}
       </span>
     </span>
   );
@@ -328,14 +329,14 @@ export function Banda({
         </span>
       ) : (
         <span className="tecla">
-          <kbd>⌃⌥P</kbd> {t.fijar}
+          <kbd>{k("⌃⌥P")}</kbd> {t.fijar}
         </span>
       )}
       <span className="tecla">
-        <kbd>⌃⌥T</kbd> {t.transcript}
+        <kbd>{k("⌃⌥T")}</kbd> {t.transcript}
       </span>
       <span className="tecla">
-        <kbd>⌥⎋</kbd>
+        <kbd>{k("⌥⎋")}</kbd>
       </span>
     </span>
   );
@@ -476,7 +477,7 @@ export function Banda({
               }`}
             </span>
             <span className="tecla">
-              <kbd>⌃⌥↵</kbd>
+              <kbd>{k("⌃⌥↵")}</kbd>
             </span>
           </span>
         )}
@@ -583,10 +584,10 @@ export function Banda({
                 {fuenteDe(sugerencia.ficha.fuente)}
                 <span className="atajos-b">
                   <span className="tecla">
-                    <kbd>⌃⌥P</kbd> {t.fijar}
+                    <kbd>{k("⌃⌥P")}</kbd> {t.fijar}
                   </span>
                   <span className="tecla">
-                    <kbd>⌥⎋</kbd>
+                    <kbd>{k("⌥⎋")}</kbd>
                   </span>
                 </span>
               </span>
@@ -643,10 +644,10 @@ export function Banda({
               </span>
               <span className="atajos-b">
                 <span className="tecla">
-                  <kbd>⌃⌥R</kbd> {t.radarQueVe}
+                  <kbd>{k("⌃⌥R")}</kbd> {t.radarQueVe}
                 </span>
                 <span className="tecla">
-                  <kbd>⌥⎋</kbd> {t.corta}
+                  <kbd>{k("⌥⎋")}</kbd> {t.corta}
                 </span>
               </span>
             </span>
@@ -683,7 +684,7 @@ export function Banda({
               </span>
               <span className="atajos-b">
                 <span className="tecla">
-                  <kbd>⌥⎋</kbd> {t.corta}
+                  <kbd>{k("⌥⎋")}</kbd> {t.corta}
                 </span>
               </span>
             </span>
@@ -739,10 +740,10 @@ export function Banda({
               {transcript ? (
                 <span className="atajos-b">
                   <span className="tecla">
-                    <kbd>⌃⌥P</kbd> {t.fijar}
+                    <kbd>{k("⌃⌥P")}</kbd> {t.fijar}
                   </span>
                   <span className="tecla">
-                    <kbd>⌥⎋</kbd>
+                    <kbd>{k("⌥⎋")}</kbd>
                   </span>
                 </span>
               ) : (
@@ -798,18 +799,18 @@ export function Banda({
                   <span className="acciones-b">
                     <button className="btn mini" type="button" onClick={pedir}>
                       <Ic id="i-buscar" s />
-                      {t.buscarOtras} <kbd className="tecla">⌃⌥A</kbd>
+                      {t.buscarOtras} <kbd className="tecla">{k("⌃⌥A")}</kbd>
                     </button>
                     {/* Lo mismo que ⌃⌥N: el cuaderno al frente, en tu nota, para escribirlo con tus
                         palabras. La pregunta del cliente NO se copia: es su transcript (regla dura 1). */}
                     <button className="btn mini" type="button" onClick={irANotas}>
                       <Ic id="i-nota" s />
-                      {t.anotarDespues} <kbd className="tecla">⌃⌥N</kbd>
+                      {t.anotarDespues} <kbd className="tecla">{k("⌃⌥N")}</kbd>
                     </button>
                   </span>
                   <span className="atajos-b">
                     <span className="tecla">
-                      <kbd>⌥⎋</kbd> {t.corta}
+                      <kbd>{k("⌥⎋")}</kbd> {t.corta}
                     </span>
                   </span>
                 </>
@@ -827,13 +828,13 @@ export function Banda({
                   )}
                   <span className="atajos-b">
                     <span className="tecla">
-                      <kbd>⌃⌥A</kbd> {t.otrasPalabras}
+                      <kbd>{k("⌃⌥A")}</kbd> {t.otrasPalabras}
                     </span>
                     <span className="tecla">
-                      <kbd>⌃⌥N</kbd> {t.anotar}
+                      <kbd>{k("⌃⌥N")}</kbd> {t.anotar}
                     </span>
                     <span className="tecla">
-                      <kbd>⌥⎋</kbd>
+                      <kbd>{k("⌥⎋")}</kbd>
                     </span>
                   </span>
                 </>
@@ -887,7 +888,7 @@ export function Banda({
                   </span>
                   <span className="atajos-b">
                     <span className="tecla">
-                      <kbd>⌥⎋</kbd> {t.corta}
+                      <kbd>{k("⌥⎋")}</kbd> {t.corta}
                     </span>
                   </span>
                 </>
@@ -944,6 +945,7 @@ function BandaDeVoz({
   borde: Borde;
 }) {
   const t = useT().banda;
+  const k = useTeclas();
   const estado = !voz.puede ? "voz-sin" : voz.diciendo ? "voz" : voz.esperando ? "voz-sala" : "voz-espera";
 
   /** El contador, que a este alto vive en la línea y no en la cabecera. */
@@ -1004,7 +1006,7 @@ function BandaDeVoz({
             <span className="lado-b">
               <span className="atajos-b">
                 <span className="tecla">
-                  <kbd>⌃⌥V</kbd> {t.volver}
+                  <kbd>{k("⌃⌥V")}</kbd> {t.volver}
                 </span>
               </span>
               {red}
@@ -1049,11 +1051,11 @@ function BandaDeVoz({
                     fuera de ese rato la tecla es de la reunión, no nuestra. */}
                 {voz.diciendo && (
                   <span className="tecla">
-                    <kbd>⎋</kbd> {t.callar}
+                    <kbd>{k("⎋")}</kbd> {t.callar}
                   </span>
                 )}
                 <span className="tecla">
-                  <kbd>⌃⌥V</kbd> {voz.esperando && !voz.diciendo ? t.verla : t.volver}
+                  <kbd>{k("⌃⌥V")}</kbd> {voz.esperando && !voz.diciendo ? t.verla : t.volver}
                 </span>
               </span>
               {red}
@@ -1077,13 +1079,14 @@ function segundos(ms: number, idioma: string): string {
  */
 function Transcript({ turnos }: { turnos: Turno[] }) {
   const t = useT().banda;
+  const k = useTeclas();
   return (
     <span className="transcript-b" aria-label="Transcript">
       <span className="cab">
         <Ic id="i-ojo" s />
         {t.transcriptCab}
         <span className="tecla">
-          <kbd>⌃⌥T</kbd> {t.ocultar}
+          <kbd>{k("⌃⌥T")}</kbd> {t.ocultar}
         </span>
       </span>
       {turnos.map((turno, i) => {

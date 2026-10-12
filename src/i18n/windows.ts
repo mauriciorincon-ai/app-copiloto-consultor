@@ -58,6 +58,8 @@ export type TextosDeWindows = {
     microfonoPara: string;
     abrirAjustes: string;
     llegaDespues: string;
+    /** Sprint 007: el audio del sistema y la pantalla no piden ningún permiso en Windows. */
+    sinPermiso: string;
     antesTitulo: string;
     antesTexto: string;
   };
@@ -175,9 +177,10 @@ const ES: TextosDeWindows = {
     microfonoPara: "Escuchar la sala o tu voz, con el micrófono de este PC",
     abrirAjustes: "Abrir Ajustes de Windows",
     llegaDespues: "Llega en una versión próxima",
+    sinPermiso: "No pide permiso en Windows",
     antesTitulo: "El micrófono en Windows",
     antesTexto:
-      "Lo concedes o lo quitas tú en Ajustes → Privacidad y seguridad → Micrófono. La app no pide el permiso por su cuenta.",
+      "El micrófono lo concedes o lo quitas tú en Ajustes → Privacidad y seguridad → Micrófono; la app no pide el permiso por su cuenta. El audio del sistema y la pantalla de la reunión no piden ninguno.",
   },
 };
 
@@ -298,9 +301,10 @@ const EN: TextosDeWindows = {
       "Listening to the room or your voice, with this PC's microphone",
     abrirAjustes: "Open Windows Settings",
     llegaDespues: "Coming in a later version",
+    sinPermiso: "Needs no permission on Windows",
     antesTitulo: "The microphone on Windows",
     antesTexto:
-      "You grant or revoke it yourself in Settings → Privacy & security → Microphone. The app never asks for the permission on its own.",
+      "You grant or revoke the microphone yourself in Settings → Privacy & security → Microphone; the app never asks for the permission on its own. The system audio and the meeting screen need none.",
   },
 };
 

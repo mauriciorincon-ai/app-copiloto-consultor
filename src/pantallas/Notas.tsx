@@ -43,6 +43,7 @@ import {
   type VistaDelCuaderno,
 } from "../notas";
 import { etiquetaDe, iconoDe, origenDe, textoDe } from "../propuesta";
+import { Tecla } from "../componentes/Tecla";
 
 /**
  * NOTAS — «Lo que escribes tú. Es lo único de la reunión que llega al día siguiente.» (C9, ADR 015)
@@ -289,11 +290,7 @@ function Durante({ cuaderno, volver, foco }: { cuaderno: VistaDelCuaderno; volve
               <Ic id="i-ojo-off" s />
               <span>{t.clienteNoLaVe}</span>
             </span>
-            <span className="tecla">
-              <kbd>⌃</kbd>
-              <kbd>⌥</kbd>
-              <kbd>N</kbd>
-            </span>
+            <Tecla combo="⌃⌥N" />
           </div>
           <textarea
             id="tu-nota"
@@ -314,11 +311,7 @@ function Durante({ cuaderno, volver, foco }: { cuaderno: VistaDelCuaderno; volve
               <h2 className="seccion crece" style={{ margin: 0 }}>
                 {t.fichasQueFijaste}
               </h2>
-              <span className="tecla">
-                <kbd>⌃</kbd>
-                <kbd>⌥</kbd>
-                <kbd>P</kbd>
-              </span>
+              <Tecla combo="⌃⌥P" />
             </div>
             {/* Sin ninguna, la tarjeta se queda con su título y su tecla: ⌃⌥P ya dice cómo se llena. */}
             {cuaderno.fijadas.map((f, i) => (
@@ -366,11 +359,7 @@ function Durante({ cuaderno, volver, foco }: { cuaderno: VistaDelCuaderno; volve
                 <span>{`${guardadas} ${guardadas === 1 ? t.guardada : t.guardadas}`}</span>
               </span>
             )}
-            <span className="tecla">
-              <kbd>⌃</kbd>
-              <kbd>⌥</kbd>
-              <kbd>↵</kbd>
-            </span>
+            <Tecla combo="⌃⌥↵" />
           </div>
           {cuaderno.propuestas.map((p) => (
             <FilaDePropuesta

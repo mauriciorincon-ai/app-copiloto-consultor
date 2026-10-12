@@ -1,5 +1,6 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { IdiomaContext, type Idioma } from "./i18n";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { EsteSistemaContext, IdiomaContext, type Idioma } from "./i18n";
+import { conTeclasDeEsteSistema, esWindows, usePlataforma } from "./plataforma";
 import { SpriteIconos } from "./componentes/Iconos";
 import { Banda, type EstadoBanda } from "./componentes/Banda";
 import { Relleno } from "./componentes/Relleno";
@@ -45,10 +46,25 @@ export function Cascara({ children }: { children?: ReactNode }) {
     document.documentElement.lang = idioma;
   }, [idioma]);
 
-  return <IdiomaContext.Provider value={idioma}>{children}</IdiomaContext.Provider>;
+  // Sprint 007: en Windows los textos se escriben con las teclas de Windows y sin el Mac; en macOS, el contexto es
+  // `null` y el diccionario sale tal cual. La función es estable mientras no cambie lo que Rust dijo.
+  const [plataforma] = usePlataforma();
+  const esteSistema = useMemo(
+    () =>
+      esWindows(plataforma)
+        ? (texto: string) => conTeclasDeEsteSistema(texto, plataforma, idioma)
+        : null,
+    [plataforma, idioma],
+  );
+
+  return (
+    <IdiomaContext.Provider value={idioma}>
+      <EsteSistemaContext.Provider value={esteSistema}>{children}</EsteSistemaContext.Provider>
+    </IdiomaContext.Provider>
+  );
 }
 
-const ESTADOS: EstadoBanda[] = [
+export const ESTADOS: EstadoBanda[] = [
   "esperando",
   "buscando",
   "ficha",

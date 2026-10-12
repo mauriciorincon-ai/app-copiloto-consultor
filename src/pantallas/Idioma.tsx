@@ -3,6 +3,7 @@ import { useT } from "../i18n";
 import { useTextosDeWindows } from "../i18n/windows";
 import { esWindows, usePlataforma } from "../plataforma";
 import { Ic } from "../componentes/Iconos";
+import { Tecla } from "../componentes/Tecla";
 import { PILA } from "../componentes/Ventana";
 import {
   fijarIdiomaDePista,
@@ -232,11 +233,7 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
             </div>
             <p style={{ marginTop: "8px" }}>{t.naceOculta}</p>
             <div className="fila" style={{ marginTop: "10px", gap: "10px" }}>
-              <span className="tecla">
-                <kbd>⌃</kbd>
-                <kbd>⌥</kbd>
-                <kbd>T</kbd>
-              </span>
+              <Tecla combo="⌃⌥T" />
               <span style={{ fontSize: "12.5px", color: "var(--ink-2)" }}>{t.laMuestraCuando}</span>
             </div>
           </div>
