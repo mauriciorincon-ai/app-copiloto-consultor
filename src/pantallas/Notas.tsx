@@ -63,6 +63,7 @@ const VISTAS: VistaDeNotas[] = [
   "al-cerrar",
   "al-cerrar-bandeja",
   "al-cerrar-cero",
+  "al-cerrar-presencial",
   "archivo",
   "exportar",
   "bandeja",
@@ -138,7 +139,11 @@ export function Notas({ busqueda = "", alCambiarDeVista }: {
       {(vista === "durante" || vista === "propuestas") && cuaderno && (
         <Durante cuaderno={cuaderno} volver={volver} foco={new URLSearchParams(busqueda).get("foco") === "nota"} />
       )}
-      {(vista === "al-cerrar" || vista === "al-cerrar-bandeja" || vista === "al-cerrar-cero") && cuaderno && (
+      {(vista === "al-cerrar" ||
+        vista === "al-cerrar-bandeja" ||
+        vista === "al-cerrar-cero" ||
+        vista === "al-cerrar-presencial") &&
+        cuaderno && (
         <AlCerrar cuaderno={cuaderno} volver={volver} />
       )}
       {vista === "bandeja" && bandeja && (

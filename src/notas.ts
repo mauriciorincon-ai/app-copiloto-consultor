@@ -167,6 +167,8 @@ export type VistaDeNotas =
   | "al-cerrar"
   | "al-cerrar-bandeja"
   | "al-cerrar-cero"
+  /** Una sesión presencial, ya parada (sprint 008, M3 del S5): la sala no tiene dueño. */
+  | "al-cerrar-presencial"
   | "archivo"
   | "exportar"
   | "bandeja"
@@ -186,7 +188,8 @@ export function useMuestraDelCuaderno(vista: VistaDeNotas): VistaDelCuaderno {
   const m = useT().notas.muestra;
   const conPropuestas = vista === "propuestas";
   const durante = vista === "durante" || conPropuestas;
-  const cerrando = vista === "al-cerrar" || vista === "al-cerrar-bandeja" || vista === "al-cerrar-cero";
+  const cerrando =
+    vista === "al-cerrar" || vista === "al-cerrar-bandeja" || vista === "al-cerrar-cero" || vista === "al-cerrar-presencial";
   const quedan = vista === "al-cerrar-bandeja" || vista === "al-cerrar-cero" ? 4 : 0;
   return {
     nota: conPropuestas ? m.nota1 : `${m.nota1}\n${m.nota2}`,
@@ -219,7 +222,7 @@ export function useMuestraDelCuaderno(vista: VistaDeNotas): VistaDelCuaderno {
     lleno: false,
     ventana: vista === "al-cerrar-cero" ? "0" : "3h",
     sinProteger: false,
-    presencial: false,
+    presencial: vista === "al-cerrar-presencial",
   };
 }
 
