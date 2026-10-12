@@ -28,6 +28,10 @@ para «Enriquecer el banco» del ensayo.
 en curso: el sprint 004 sumó el ensayo y la banda arriba, junto a la cámara. Hoy la app se compila
 desde este repo; la versión firmada para instalar llega en el H2, con la firma de Apple.
 
+Desde el sprint 006 la app también se compila para **Windows** (ADR 022): la banda protegida, el micrófono, la
+transcripción con whisper y tus notas cifradas; Honestidad dice qué hace hoy y qué todavía no. El instalador sale sin
+firmar de la integración continua hasta G-Release.
+
 ## Arrancarla
 
 Necesitas **macOS 26 o posterior**, [pnpm](https://pnpm.io/) y Rust.
@@ -80,6 +84,7 @@ bank".
 
 **Status:** personal MVP (cycle H1) built; it is sealed by the cycle-closing human gate. Cycle H2 is
 under way: sprint 004 added the rehearsal and the band at the top, next to the camera. Today it is
-built from this repo (macOS 26+, `pnpm install && pnpm tauri dev`); a signed build comes in H2. The
+built from this repo (macOS 26+, `pnpm install && pnpm tauri dev`), and since sprint 006 for Windows (ADR 022:
+protected band, microphone, whisper transcription, encrypted notes; the unsigned installer comes from CI); a signed build comes later. The
 app's interface is in Spanish and English; the documents in this repo (manual, test guide, decisions)
 are in Spanish.

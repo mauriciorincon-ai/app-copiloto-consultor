@@ -132,14 +132,16 @@ describe("la guía de prueba cuadra", () => {
     const sinNacer = PRUEBAS.filter((p) => !/data-nace="s\d"/.test(p[1])).map((p) => p[3]);
     expect(sinNacer, "pruebas sin data-nace").toEqual([]);
     const m =
-      /Gate mínimo ⭐: (\d+) pruebas · ~\d+ min \(S1 (\d+) · S2 (\d+) · S3 (\d+) · S4 (\d+)\)/.exec(GUIA);
-    expect(m, "la cabecera no trae el desglose S1 · S2 · S3 · S4").not.toBeNull();
+      /Gate mínimo ⭐: (\d+) pruebas · ~\d+ min \(S1 (\d+) · S2 (\d+) · S3 (\d+) · S4 (\d+) · S5 (\d+) · S6 (\d+)\)/.exec(GUIA);
+    expect(m, "la cabecera no trae el desglose S1 · S2 · S3 · S4 · S5 · S6").not.toBeNull();
     const minimo = PRUEBAS.filter((p) => p[1].includes("data-minimo"));
     const de = (s: string) => minimo.filter((p) => p[1].includes(`data-nace="${s}"`)).length;
-    expect([de("s1"), de("s2"), de("s3"), de("s4")]).toEqual(
-      [m![2], m![3], m![4], m![5]].map(Number),
+    // S5 no tiene bloque de pruebas: el sprint 005 saltó la directiva del 2026-10-06 y la guía lo declara en
+    // su cabecera de versión. Que sea cero aquí es lo que lo hace visible, no un olvido.
+    expect([de("s1"), de("s2"), de("s3"), de("s4"), de("s5"), de("s6")]).toEqual(
+      [m![2], m![3], m![4], m![5], m![6], m![7]].map(Number),
     );
-    expect(de("s1") + de("s2") + de("s3") + de("s4")).toBe(Number(m![1]));
+    expect(de("s1") + de("s2") + de("s3") + de("s4") + de("s5") + de("s6")).toBe(Number(m![1]));
   });
 
   it("el bloque de textos diferidos declara sus filas, y ningún id se repite con las pruebas", () => {
@@ -171,14 +173,15 @@ describe("la guía de prueba cuadra", () => {
       (p) => p[1].includes("data-candidata") && !p[1].includes("data-minimo"),
     ).map((p) => p[3]);
     expect(sueltas, "candidata sin ser ⭐").toEqual([]);
-    const m = /Acumulado del ciclo H2: (\d+) ⭐ \(S4 (\d+)\) · candidatas al ⭐⭐ del H2: (\d+) sí · (\d+) no/.exec(
+    const m = /Acumulado del ciclo H2: (\d+) ⭐ \(S4 (\d+) · S6 (\d+)\) · candidatas al ⭐⭐ del H2: (\d+) sí · (\d+) no/.exec(
       GUIA,
     );
     expect(m, "la cabecera no dice el acumulado del H2 y sus candidatas").not.toBeNull();
     const si = DEL_H2.filter((p) => p[1].includes('data-candidata="si"')).length;
-    expect([m![1], m![2], m![3], m![4]].map(Number)).toEqual([
+    expect([m![1], m![2], m![3], m![4], m![5]].map(Number)).toEqual([
       DEL_H2.length,
       DEL_H2.filter((p) => p[1].includes('data-nace="s4"')).length,
+      DEL_H2.filter((p) => p[1].includes('data-nace="s6"')).length,
       si,
       DEL_H2.length - si,
     ]);
