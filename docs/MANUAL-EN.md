@@ -271,6 +271,9 @@ only macOS 26 ships with; on a Mac with an earlier version it does not start.
   audio-only mode is the first one cut, because it is the only one your client could hear.
 - **Known limitations:** the button cuts what lives in memory **now**; what has already come out of
   the speakers or what you have already seen in the band obviously cannot be undone.
+- **Get to know Angel Ghost:** at the bottom of *Honesty* (only inside the app) there is a button, **“Open the tour”**,
+  that opens in your browser a visual tour of the app, from the general to the particular and in Spanish and English. It
+  is a file that ships inside the app: opening it does not touch the network and the counter stays at 0 B.
 
 ### Your notes: the only thing from the meeting that remains · New · Sprint 003
 

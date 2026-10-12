@@ -271,6 +271,9 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   modo solo audio es la primera que se corta, porque es la única que tu cliente podría oír.
 - **Limitaciones conocidas:** el botón corta lo que vive en memoria **ahora**; lo que ya salió por
   los altavoces o lo que ya viste en la banda, obviamente, no se puede deshacer.
+- **Conoce Angel Ghost:** al pie de *Honestidad* (solo dentro de la app) hay un botón, **«Abrir el recorrido»**, que
+  abre en tu navegador un recorrido visual de la app, de lo general a lo particular y en español y en inglés. Es un
+  archivo que viaja dentro de la app: abrirlo no toca la red y el contador sigue en 0 B.
 
 ### Tus notas: lo único de la reunión que queda · Nuevo · Sprint 003
 
