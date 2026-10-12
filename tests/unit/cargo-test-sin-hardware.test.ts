@@ -68,6 +68,9 @@ const CENTINELAS: [string, number][] = [
   // `llavero.rs`, que ya llevan el suyo; el modelo de whisper, al cargarse y al bajarse.
   // Sprint 007: el micrófono y el audio del sistema (el loopback, la pista del cliente).
   ["src-tauri/src/capture/windows.rs", 2],
+  // La voz al oído (antes de sonar) y la captura de la ventana de la reunión.
+  ["src-tauri/src/habla/windows.rs", 1],
+  ["src-tauri/src/pantalla/windows.rs", 1],
   ["src-tauri/src/stt/whisper.rs", 1],
   ["src-tauri/src/modelo_whisper.rs", 1],
 ];

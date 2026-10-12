@@ -50,12 +50,39 @@ export type Transcripcion = {
   techoMs: number;
   /** Se está bajando un modelo ahora mismo. */
   bajando: boolean;
+  /** Turnos tuyos que se quedaron sin transcribir en la última escucha (sprint 007: el cliente va primero). */
+  descartados: number;
+};
+
+/** Lo que hace cada atajo (sprint 007, `src-tauri/src/atajos.rs`). */
+export type AccionDeAtajo =
+  | "corte"
+  | "transcript"
+  | "ayuda"
+  | "modo-de-voz"
+  | "leer-la-pantalla"
+  | "radar"
+  | "anotar"
+  | "fijar"
+  | "guardar-la-propuesta"
+  | "banda"
+  | "callar";
+
+/** Un atajo de este sistema: sus teclas y si el sistema lo dejó registrar. */
+export type Atajo = {
+  accion: AccionDeAtajo;
+  /** «⌃⌥T» en macOS, «Alt+Shift+C» en Windows. */
+  teclas: string;
+  /** `false`: otra app ya tiene esa combinación y la tecla no responde. */
+  registrado: boolean;
 };
 
 export type Plataforma = {
   sistema: Sistema;
   funciones: FuncionEnWindows[];
   transcripcion: Transcripcion | null;
+  /** Las teclas de este sistema (sprint 007). */
+  atajos: Atajo[];
 };
 
 /** Fuera de Tauri (tests, arnés de capturas) no hay a quién preguntar: se dice macOS, sin lista. */
@@ -63,6 +90,7 @@ export const PLATAFORMA_FUERA: Plataforma = {
   sistema: "macos",
   funciones: [],
   transcripcion: null,
+  atajos: [],
 };
 
 /**
@@ -70,8 +98,61 @@ export const PLATAFORMA_FUERA: Plataforma = {
  * pinta la muestra de Windows (la del contrato); sin el parámetro, macOS. Es el mismo mecanismo que `?estado=` en
  * las demás pantallas: lo usan el e2e y el arnés de capturas, nunca la app instalada.
  */
-export function plataformaFuera(busqueda: string = globalThis.location?.search ?? ""): Plataforma {
-  return new URLSearchParams(busqueda).get("plataforma") === "windows" ? PLATAFORMA_WINDOWS : PLATAFORMA_FUERA;
+export function plataformaFuera(
+  busqueda: string = globalThis.location?.search ?? "",
+): Plataforma {
+  return new URLSearchParams(busqueda).get("plataforma") === "windows"
+    ? PLATAFORMA_WINDOWS
+    : PLATAFORMA_FUERA;
+}
+
+/**
+ * Las teclas de macOS tal como las escriben los textos de la app y la maqueta, y la acción de cada una. Los textos
+ * (`es.ts`, `en.ts`, la banda) están atados a la maqueta y no cambian; en Windows se pintan con las teclas de
+ * Windows en su lugar.
+ */
+const TECLAS_DE_MACOS: [string, AccionDeAtajo][] = [
+  ["⌥⎋", "corte"],
+  ["⌃⌥T", "transcript"],
+  ["⌃⌥A", "ayuda"],
+  ["⌃⌥V", "modo-de-voz"],
+  ["⌃⌥L", "leer-la-pantalla"],
+  ["⌃⌥R", "radar"],
+  ["⌃⌥N", "anotar"],
+  ["⌃⌥P", "fijar"],
+  ["⌃⌥↵", "guardar-la-propuesta"],
+  ["⌃⌥B", "banda"],
+  // La última: «⎋» sola va dentro de «⌥⎋», que ya se sustituyó.
+  ["⎋", "callar"],
+];
+
+/** Las teclas de un atajo de Windows en el idioma de quien lee: «Mayús» en español, «Shift» en inglés. */
+export function teclasEnIdioma(teclas: string, idioma: "es" | "en"): string {
+  return idioma === "es" ? teclas.replace("Shift", "Mayús") : teclas;
+}
+
+/**
+ * **Un texto con las teclas de este sistema** (sprint 007). En macOS, el texto tal cual. En Windows, cada tecla de
+ * macOS cambia por la de Windows de la misma acción; si una acción no tiene tecla en Windows (el radar, hasta el S8),
+ * se queda la de macOS sin cambiar, y su pantalla ya dice «todavía no».
+ */
+export function conTeclasDeEsteSistema(
+  texto: string,
+  p: Plataforma,
+  idioma: "es" | "en",
+): string {
+  if (!esWindows(p)) return texto;
+  let salida = texto;
+  for (const [mac, accion] of TECLAS_DE_MACOS) {
+    const suyo = p.atajos.find((a) => a.accion === accion);
+    if (suyo) salida = salida.split(mac).join(teclasEnIdioma(suyo.teclas, idioma));
+  }
+  return salida;
+}
+
+/** Los atajos que el sistema no dejó registrar: otra app tiene esa combinación. */
+export function atajosSinRegistrar(p: Plataforma): Atajo[] {
+  return p.atajos.filter((a) => !a.registrado);
 }
 
 /** ¿Es Windows? Honestidad enseña su bloque solo entonces. */

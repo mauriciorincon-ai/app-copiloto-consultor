@@ -1,0 +1,62 @@
+{
+  "version": "v1 · 2026-10-11",
+  "nota": "Clientes de videollamada en Windows, por el nombre de su ejecutable (sprint 007, ADR 022). Cada fila trae la página pública que nombra el ejecutable y la fecha en que se leyó. Teams clásico (Teams.exe) dejó de estar disponible el 2025-07-01 (learn.microsoft.com/microsoftteams/teams-classic-client-end-of-availability); se mantiene por los equipos que aún lo tengan. msedgewebview2.exe no es Edge: lo usan Teams y la propia app. Ninguno verificado: la banda en Windows no la ha mirado nadie en Teams, Zoom ni Meet hasta la prueba del usuario en su PC.",
+  "clientes": [
+    {
+      "ejecutable": "ms-teams.exe",
+      "nombre": "Microsoft Teams",
+      "clase": "Aplicacion",
+      "proteccion": "SinVerificar",
+      "fuente": "https://learn.microsoft.com/troubleshoot/microsoftteams/teams-administration/include-exclude-teams-from-antivirus-dlp",
+      "fecha": "2026-10-11"
+    },
+    {
+      "ejecutable": "Teams.exe",
+      "nombre": "Microsoft Teams",
+      "clase": "Aplicacion",
+      "proteccion": "SinVerificar",
+      "fuente": "https://learn.microsoft.com/troubleshoot/microsoftteams/teams-administration/include-exclude-teams-from-antivirus-dlp",
+      "fecha": "2026-10-11"
+    },
+    {
+      "ejecutable": "Zoom.exe",
+      "nombre": "Zoom",
+      "clase": "Aplicacion",
+      "proteccion": "SinVerificar",
+      "fuente": "https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0058758",
+      "fecha": "2026-10-11"
+    },
+    {
+      "ejecutable": "chrome.exe",
+      "nombre": "Google Chrome",
+      "clase": "Navegador",
+      "proteccion": "SinVerificar",
+      "fuente": "https://support.google.com/chrome/answer/142063",
+      "fecha": "2026-10-11"
+    },
+    {
+      "ejecutable": "msedge.exe",
+      "nombre": "Microsoft Edge",
+      "clase": "Navegador",
+      "proteccion": "SinVerificar",
+      "fuente": "https://learn.microsoft.com/troubleshoot/microsoft-edge/performance/edge-crashes-fails-to-launch",
+      "fecha": "2026-10-11"
+    },
+    {
+      "ejecutable": "firefox.exe",
+      "nombre": "Firefox",
+      "clase": "Navegador",
+      "proteccion": "SinVerificar",
+      "fuente": "https://firefox-source-docs.mozilla.org/browser/CommandLineParameters.html",
+      "fecha": "2026-10-11"
+    },
+    {
+      "ejecutable": "brave.exe",
+      "nombre": "Brave",
+      "clase": "Navegador",
+      "proteccion": "SinVerificar",
+      "fuente": "https://support.brave.app/hc/en-us/articles/360044860011-How-Do-I-Use-Command-Line-Flags-in-Brave",
+      "fecha": "2026-10-11"
+    }
+  ]
+}

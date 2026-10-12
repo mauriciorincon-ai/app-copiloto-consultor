@@ -23,10 +23,16 @@
 //!   API y el que pide más tiene que justificarlo: sin el título no hay forma de saber si Chrome
 //!   está en una llamada o en el correo.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use std::sync::OnceLock;
+
+/// En Windows, la reunión se ve con los procesos y las ventanas del propio PC (sprint 007, ADR 022).
+#[cfg(windows)]
+#[path = "windows.rs"]
+pub mod windows;
 
 /// Qué es cada aplicación del catálogo para el detector.
-#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Clase {
     /// Se detecta con que esté corriendo: si Zoom está abierto, hay llamada o la va a haber.
     Aplicacion,
@@ -39,7 +45,7 @@ pub enum Clase {
 /// No es un detalle: la promesa de invisibilidad es **graduada** por cliente y versión de macOS
 /// (regla del vocabulario), y decir «protegido» donde solo hay «sin verificar» sería exactamente
 /// la clase de afirmación que esta app no hace. La maqueta ya dibuja los dos estados.
-#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Proteccion {
     /// Comprobada por el usuario en su Mac, con fecha.
     Verificada,
@@ -72,6 +78,80 @@ pub const CATALOGO: &[Cliente] = &[
 /// La versión del catálogo, que se muestra en pantalla al lado de lo que afirma. Un catálogo sin
 /// versión visible no se puede contrastar con nada.
 pub const VERSION_CATALOGO: &str = "v1 · 2026-09-21";
+
+/// **El catálogo de Windows** (sprint 007, ADR 022): la misma forma, otra clave. En Windows una aplicación se
+/// reconoce por el nombre de su ejecutable, no por un identificador de paquete, y cada fila lleva la página
+/// pública que lo nombra y la fecha en que se leyó (`data/clientes-windows.json`). **Nada verificado**: la banda
+/// en Windows no la ha mirado nadie en Teams, Zoom ni Meet, y la fila lo dice.
+const CLIENTES_WINDOWS: &str = include_str!("../../../data/clientes-windows.json");
+
+/// El catálogo de Windows tal como viaja en el repo.
+#[derive(Deserialize)]
+struct CatalogoDeWindows {
+    version: String,
+    clientes: Vec<FilaDeWindows>,
+}
+
+/// Una fila del catálogo de Windows, con su fuente.
+#[derive(Deserialize)]
+pub struct FilaDeWindows {
+    pub ejecutable: String,
+    pub nombre: String,
+    pub clase: Clase,
+    pub proteccion: Proteccion,
+    pub fuente: String,
+    pub fecha: String,
+}
+
+fn de_windows() -> &'static (String, Vec<FilaDeWindows>, Vec<Cliente>) {
+    static LEIDO: OnceLock<(String, Vec<FilaDeWindows>, Vec<Cliente>)> = OnceLock::new();
+    LEIDO.get_or_init(|| {
+        // El catálogo es del repo y lo comprueba su test: si no se lee, el binario no debería haber salido.
+        let c: CatalogoDeWindows =
+            serde_json::from_str(CLIENTES_WINDOWS).expect("data/clientes-windows.json no se lee");
+        // `Cliente` es de cadenas estáticas (el catálogo del Mac es una constante). Las de Windows se leen una
+        // vez por proceso y viven lo que el proceso: unas decenas de bytes.
+        let clientes = c
+            .clientes
+            .iter()
+            .map(|f| Cliente {
+                bundle: Box::leak(f.ejecutable.clone().into_boxed_str()),
+                nombre: Box::leak(f.nombre.clone().into_boxed_str()),
+                clase: f.clase,
+                proteccion: f.proteccion,
+            })
+            .collect();
+        (c.version, c.clientes, clientes)
+    })
+}
+
+/// El catálogo de Windows, leído del repo. Existe en todas las plataformas para que su test corra en el Mac.
+pub fn catalogo_de_windows() -> &'static [Cliente] {
+    &de_windows().2
+}
+
+/// Las filas del catálogo de Windows con su fuente y su fecha.
+pub fn filas_de_windows() -> &'static [FilaDeWindows] {
+    &de_windows().1
+}
+
+/// **El catálogo de esta plataforma**: el del Mac, igual que siempre, o el de Windows.
+pub fn catalogo() -> &'static [Cliente] {
+    if cfg!(windows) {
+        catalogo_de_windows()
+    } else {
+        CATALOGO
+    }
+}
+
+/// La versión del catálogo de esta plataforma.
+pub fn version_del_catalogo() -> &'static str {
+    if cfg!(windows) {
+        &de_windows().0
+    } else {
+        VERSION_CATALOGO
+    }
+}
 
 /// Lo que delata una pestaña de Meet en el título de una ventana. Se compara **sin distinguir
 /// mayúsculas** y contra el título entero.
@@ -124,7 +204,11 @@ pub enum PorQueNoSeVe {
 }
 
 fn del_catalogo(bundle: &str) -> Option<&'static Cliente> {
-    CATALOGO.iter().find(|c| c.bundle.eq_ignore_ascii_case(bundle))
+    del_catalogo_en(catalogo(), bundle)
+}
+
+fn del_catalogo_en<'a>(catalogo: &'a [Cliente], bundle: &str) -> Option<&'a Cliente> {
+    catalogo.iter().find(|c| c.bundle.eq_ignore_ascii_case(bundle))
 }
 
 /// ¿Este título delata una reunión de Meet?
@@ -138,10 +222,15 @@ pub fn es_meet(titulo: &str) -> bool {
 /// El orden importa y es el del producto, no el del código: una aplicación nativa de videollamada
 /// gana a una pestaña, porque si tienes Zoom abierto **y** Chrome, la reunión es la de Zoom.
 pub fn clasificar(vista: &Vista) -> Reunion {
+    clasificar_en(vista, catalogo())
+}
+
+/// El veredicto contra un catálogo dado: el de macOS o el de Windows. Puro.
+pub fn clasificar_en(vista: &Vista, catalogo: &[Cliente]) -> Reunion {
     let mut navegadores = Vec::new();
 
     for p in &vista.programas {
-        let Some(cliente) = del_catalogo(&p.bundle) else { continue };
+        let Some(cliente) = del_catalogo_en(catalogo, &p.bundle) else { continue };
         match cliente.clase {
             Clase::Aplicacion => {
                 return Reunion::Detectada {
@@ -220,7 +309,14 @@ pub fn mirar() -> Vista {
     Vista { programas, titulos_legibles: legibles }
 }
 
-#[cfg(not(target_os = "macos"))]
+/// En Windows, los procesos del PC y los títulos de las ventanas de los navegadores del catálogo. Windows no pide
+/// permiso para leerlos, así que los títulos siempre se pueden leer.
+#[cfg(windows)]
+pub fn mirar() -> Vista {
+    windows::mirar()
+}
+
+#[cfg(not(any(target_os = "macos", windows)))]
 pub fn mirar() -> Vista {
     Vista { programas: Vec::new(), titulos_legibles: false }
 }
@@ -297,9 +393,101 @@ pub fn ventana_de_la_reunion() -> Option<crate::acople::Destino> {
     None
 }
 
+/// Una ventana de la videollamada, reducida a lo que decide cuál se lee.
+#[derive(Clone, Debug)]
+pub struct Candidata {
+    pub ancho: i32,
+    pub alto: i32,
+    pub titulo: String,
+}
+
+/// **Cuál de las ventanas de la videollamada se lee** (sprint 007): la mayor de al menos 320×200 y, en un
+/// navegador, la que lleva las señales de la reunión en el título. Es el mismo criterio que la captura del Mac
+/// (`Pantalla.swift`), escrito en Rust para Windows. Pura.
+pub fn la_de_la_reunion(candidatas: &[Candidata], senales: &[String]) -> Option<usize> {
+    candidatas
+        .iter()
+        .enumerate()
+        .filter(|(_, c)| c.ancho >= 320 && c.alto >= 200)
+        .filter(|(_, c)| {
+            let t = c.titulo.to_lowercase();
+            senales.is_empty() || senales.iter().any(|s| t.contains(s.as_str()))
+        })
+        .max_by_key(|(_, c)| i64::from(c.ancho) * i64::from(c.alto))
+        .map(|(i, _)| i)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// **El catálogo de Windows dice de dónde sale cada fila** y no afirma nada que nadie haya mirado: cada fila trae
+    /// una página pública con fecha, un ejecutable `.exe` sin repetir, y la banda «sin verificar».
+    #[test]
+    fn el_catalogo_de_windows_trae_su_fuente_y_nada_verificado() {
+        let filas = filas_de_windows();
+        assert!(filas.len() >= 6, "faltan clientes: {}", filas.len());
+        let mut exes: Vec<String> = Vec::new();
+        for f in filas {
+            assert!(f.fuente.starts_with("https://"), "{} sin fuente pública", f.ejecutable);
+            assert!(
+                f.fecha.len() == 10 && f.fecha.starts_with("2026-"),
+                "{}: la fecha de lectura no se puede contrastar",
+                f.ejecutable
+            );
+            assert!(f.ejecutable.to_lowercase().ends_with(".exe"), "{} no es un ejecutable", f.ejecutable);
+            assert_eq!(f.proteccion, Proteccion::SinVerificar, "{}: nadie lo ha mirado en Windows", f.nombre);
+            exes.push(f.ejecutable.to_lowercase());
+        }
+        let antes = exes.len();
+        exes.sort();
+        exes.dedup();
+        assert_eq!(antes, exes.len(), "hay un ejecutable repetido");
+        assert!(version_del_catalogo().starts_with('v'));
+    }
+
+    /// **En Windows, Teams, Zoom y Meet se reconocen igual que en el Mac**, por el nombre del ejecutable y sin
+    /// distinguir mayúsculas, y Meet por el título de la pestaña.
+    #[test]
+    fn en_windows_teams_zoom_y_meet_se_reconocen() {
+        let w = catalogo_de_windows();
+        let teams = clasificar_en(&vista(vec![prog("MS-TEAMS.EXE", &[])], true), w);
+        assert!(matches!(&teams, Reunion::Detectada { cliente, .. } if cliente == "Microsoft Teams"), "{teams:?}");
+        let zoom = clasificar_en(&vista(vec![prog("Zoom.exe", &[])], true), w);
+        assert!(matches!(&zoom, Reunion::Detectada { cliente, .. } if cliente == "Zoom"), "{zoom:?}");
+        let meet = clasificar_en(&vista(vec![prog("msedge.exe", &["Páramo Azul - Google Meet - Edge"])], true), w);
+        let Reunion::Detectada { cliente, proteccion, .. } = meet else { panic!("tenía que detectar Meet") };
+        assert_eq!(cliente, "Google Meet");
+        assert_eq!(proteccion, Proteccion::SinVerificar, "Meet verificado en el Mac no vale para Windows");
+        let correo = clasificar_en(&vista(vec![prog("chrome.exe", &["Correo"])], true), w);
+        assert_eq!(correo, Reunion::Ninguna);
+        // Un identificador de macOS no se reconoce en Windows, ni al revés: cada catálogo es de su plataforma.
+        assert_eq!(clasificar_en(&vista(vec![prog("us.zoom.xos", &[])], true), w), Reunion::Ninguna);
+        assert_eq!(clasificar_en(&vista(vec![prog("Zoom.exe", &[])], true), CATALOGO), Reunion::Ninguna);
+    }
+
+    /// **macOS no cambia**: `clasificar` con el catálogo de la plataforma es el de siempre.
+    #[cfg(not(windows))]
+    #[test]
+    fn en_macos_el_catalogo_es_el_de_siempre() {
+        assert_eq!(catalogo().len(), CATALOGO.len());
+        assert_eq!(version_del_catalogo(), VERSION_CATALOGO);
+        let v = vista(vec![prog("com.google.Chrome", &["Páramo Azul — Google Meet"])], true);
+        assert_eq!(clasificar(&v), clasificar_en(&v, CATALOGO));
+    }
+
+    /// La ventana que se lee: la mayor que cabe, y en un navegador la de la reunión aunque no sea la mayor.
+    #[test]
+    fn se_lee_la_ventana_mayor_de_la_reunion() {
+        let c = |ancho, alto, titulo: &str| Candidata { ancho, alto, titulo: titulo.into() };
+        let zoom = [c(300, 900, "Zoom"), c(1280, 720, "Zoom Meeting"), c(1600, 150, "barra")];
+        assert_eq!(la_de_la_reunion(&zoom, &[]), Some(1), "ni la estrecha ni la barra");
+        let senales: Vec<String> = SENALES_MEET.iter().map(|s| s.to_string()).collect();
+        let chrome = [c(1920, 1080, "Correo - Gmail"), c(1280, 800, "abc-defg-hij - Google Meet")];
+        assert_eq!(la_de_la_reunion(&chrome, &senales), Some(1));
+        assert_eq!(la_de_la_reunion(&chrome[..1], &senales), None, "sin Meet no se lee el correo");
+        assert_eq!(la_de_la_reunion(&[], &[]), None);
+    }
 
     /// El acople arriba se dirige a la reunión por identificador, y en un navegador a la ventana de Meet
     /// **por su posición real en la lista**, aunque haya ventanas sin título o con otro antes.

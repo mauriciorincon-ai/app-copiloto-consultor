@@ -124,17 +124,17 @@ La misma lista vive en `src-tauri/src/plataforma.rs`, en Honestidad y en el manu
 | `banda-protegida`            | sí, sin verificar en Teams, Zoom ni Meet hasta tu prueba en el PC |
 | `presencial`                 | sí: la sala por el micrófono, con whisper                         |
 | `corpus-y-ficha`             | sí                                                                |
-| `notas-cifradas`             | sí, se guardan cifradas con la llave en el Administrador de credenciales; exportarlas y abrir la bandeja esperan al desbloqueo (S7) |
-| `videollamada`               | todavía no (S7): el audio del sistema                             |
-| `pantalla`                   | todavía no (S7)                                                   |
-| `voz-al-oido`                | todavía no (S7)                                                   |
-| `acople`                     | todavía no (S7)                                                   |
-| `ensayo`                     | todavía no (S7): la voz que lee las preguntas                     |
-| `sugerencia`                 | todavía no (S7)                                                   |
-| `radar`                      | todavía no (S7)                                                   |
-| `atajos`                     | todavía no (S7): en muchos teclados Ctrl+Alt es AltGr             |
-| `borrado-con-la-app-cerrada` | todavía no (S7): se borra con la app abierta                      |
-| `desbloqueo`                 | todavía no (S7): Windows Hello                                    |
+| `notas-cifradas` | sí, se guardan cifradas con la llave en el Administrador de credenciales; exportarlas y abrir la bandeja esperan al desbloqueo (S8) |
+| `videollamada` | sí: tu micrófono y el audio del sistema, dos pistas; sin verificar en Teams, Zoom ni Meet hasta tu prueba en el PC |
+| `pantalla` | sí: la ventana de la reunión, leída solo cuando cambia, con el reconocimiento de texto de Windows |
+| `voz-al-oido` | sí, con auriculares: la voz del sistema; por altavoces no habla |
+| `acople` | todavía no (S8) |
+| `ensayo` | sí: la voz del sistema lee las preguntas |
+| `sugerencia` | todavía no (S8) |
+| `radar` | todavía no (S8) |
+| `atajos` | sí: Alt+Mayús y una tecla (tabla de la enmienda 1); ninguno con Ctrl+Alt, que en muchos teclados es AltGr |
+| `borrado-con-la-app-cerrada` | todavía no (S8): se borra con la app abierta |
+| `desbloqueo` | todavía no (S8): Windows Hello |
 | `puerta-local`               | no en Windows por ahora                                           |
 
 ## Consecuencias
@@ -150,7 +150,64 @@ La misma lista vive en `src-tauri/src/plataforma.rs`, en Honestidad y en el manu
 El ADR 006 dejó whisper-rs como «el camino escrito» y sin construir. Desde el S6 es **el motor de Windows**. En macOS
 nada cambia: SpeechAnalyzer, sin respaldo.
 
+## Enmienda 1 · la videollamada (sprint 007, 2026-10-11)
+
+El S7 trae a Windows lo que la videollamada necesita, cada pieza detrás de la frontera del §1. Cinco claves pasan a
+«sí»; lo que queda (acople, sugerencia, radar, borrado con la app cerrada, desbloqueo) es del **S8 «Windows completo»**.
+
+1. **El audio del sistema es el *loopback* de WASAPI** (`capture/windows.rs`, con `cpal`, sin dependencia nueva): la
+   pista del cliente, `Pista::Sistema`. Dos diferencias con el tap del Mac, cada una con su respuesta:
+   - **no entrega nada mientras nada suena**: el reloj de la pista lo rellena con silencio medido con el reloj de pared
+     (`capture/reloj.rs`), para que el eco y el disparo comparen tiempos de un solo reloj;
+   - **oye también la voz de la app** (el tap del Mac excluye su proceso; el loopback por proceso de Windows exige
+     Windows 11 o build 20348+): un turno del cliente que cae mientras la app hablaba se marca como eco y no dispara
+     (`escucha::atender`, `habla::la_app_hablo`). Cuando el mínimo sea Windows 11, el loopback por proceso lo sustituye.
+2. **Por dónde sale el sonido** se lee de la forma que Windows declara del dispositivo de salida
+   (`PKEY_AudioEndpoint_FormFactor`): altavoces y HDMI, la voz no habla; auriculares, sí. Es el mismo freno que en el Mac.
+3. **La reunión** se detecta con los procesos y los títulos de las ventanas del propio PC, contra
+   `data/clientes-windows.json`: ejecutable, fuente pública y fecha por fila. Solo se leen los títulos de los navegadores
+   del catálogo. Windows no pide permiso para esto, así que «no se puede saber» no aplica. Teams arranca con Windows y
+   queda abierto: como en el Mac, una aplicación de videollamada abierta cuenta como reunión.
+4. **La voz** es `Windows.Media.SpeechSynthesis`: la frase en un WAV en memoria (`habla/pcm.rs`) que suena por `cpal`. Con
+   ella, el ensayo con voz.
+5. **La pantalla** es la ventana de la reunión por `PrintWindow` (`PW_RENDERFULLCONTENT`) y su texto por
+   `Windows.Media.Ocr`, detrás de la misma huella por zonas y el mismo `Vigia` que en el Mac. Windows no da confianza por
+   línea (se toma 1,0) y cada motor lee un idioma: el del perfil del usuario, o español o inglés. Sin el reconocimiento
+   de texto de ningún idioma instalado, lo dice.
+6. **La cola de whisper**: con dos pistas, el cliente va primero y, si esperan más de 4 turnos, se descarta lo tuyo más
+   viejo, pisado con ceros y contado en Honestidad. En macOS no cambia nada: orden de llegada, sin tope.
+7. **Los atajos**: misma acción, otra combinación (`atajos.rs`). En Windows `Ctrl+Alt` es AltGr en muchos teclados y
+   `Alt+Esc` es del sistema, así que se usa **`Alt+Mayús` + letra**, la única familia de letras libre en las seis tablas
+   publicadas que se leyeron el 2026-10-11. Un atajo que Windows no deja registrar se dice en Honestidad. El radar no
+   registra su tecla hasta el S8.
+
+| Acción | macOS | Windows | Choques en las tablas publicadas |
+| --- | --- | --- | --- |
+| Cortar (kill-switch) | ⌥⎋ | Alt+Mayús+Q | ninguno; tampoco en Word ni Excel |
+| Transcript | ⌃⌥T | Alt+Mayús+C | ninguno (Word la usa) |
+| Ayúdame con esto | ⌃⌥A | Alt+Mayús+H | ninguno (Excel la usa) |
+| Modo solo audio | ⌃⌥V | Alt+Mayús+W | ninguno; tampoco en Word ni Excel |
+| Léela ahora | ⌃⌥L | Alt+Mayús+D | ninguno (Word la usa) |
+| Qué ve (radar) | ⌃⌥R | Alt+Mayús+U, apartada hasta el S8 | ninguno |
+| Anotar | ⌃⌥N | Alt+Mayús+K | ninguno (Word la usa) |
+| Fijar | ⌃⌥P | Alt+Mayús+F | ninguno (Word la usa) |
+| Guardar la propuesta | ⌃⌥↵ | Alt+Mayús+Z | ninguno; tampoco en Word ni Excel |
+| La banda, al otro borde | ⌃⌥B | Alt+Mayús+X | ninguno (Word la usa) |
+| Callar la voz (solo con el modo encendido) | ⎋ | Esc | Esc no es del sistema; mientras el modo está encendido no le llega a la reunión, como en el Mac |
+
+Las seis tablas, leídas el 2026-10-11: Windows 11
+(support.microsoft.com/windows/keyboard-shortcuts-in-windows-dcc61a57-8ff0-cffe-9796-cb9706c75eec), Microsoft Teams
+(support.microsoft.com/office/keyboard-shortcuts-for-microsoft-teams-2e8e2a70-e8d8-4a19-949b-4c36dd5292d2), Zoom
+Workplace (support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0067050), Chrome
+(support.google.com/chrome/answer/157179), Edge
+(support.microsoft.com/microsoft-edge/keyboard-shortcuts-in-microsoft-edge-50d3edab-30d9-c7e4-21ce-37fe2713cfad) y Google
+Meet (support.google.com/a/users/answer/9896256). La tecla Windows y F12 están reservadas
+(learn.microsoft.com/windows/win32/api/winuser/nf-winuser-registerhotkey); `Ctrl+Alt` como AltGr lo dice
+learn.microsoft.com/windows/win32/uxguide/inter-keyboard. **Sin verificar, para el PC:** que `Alt+Mayús` no cambie la
+distribución del teclado al pulsar la letra en un PC con dos distribuciones, y que ninguna app del usuario fuera de esas
+seis tablas use estas combinaciones; Word y Excel usan algunas, y mientras la app está abierta no les llegan.
+
 ## Lo que este ADR NO decide
 
-La videollamada en Windows (S7), la firma del instalador (G-Release), una DACL propia para la carpeta (todavía no), ni
+La firma del instalador (G-Release), una DACL propia para la carpeta (todavía no), ni
 si la puerta local llega a Windows (otro ADR, si llega).

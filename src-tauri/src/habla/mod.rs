@@ -24,8 +24,67 @@
 //! puede permitir equivocar.
 
 pub mod apple;
+pub mod pcm;
+/// En Windows, la voz del sistema por `Windows.Media.SpeechSynthesis` (sprint 007, ADR 022).
+#[cfg(windows)]
+#[path = "windows.rs"]
+pub mod windows;
 
 use crate::capture::nativo::Salida;
+use std::collections::VecDeque;
+use std::sync::Mutex;
+use std::time::{Duration, Instant};
+
+/// **Cuándo sonó la app** (sprint 007, ADR 022). En Windows el audio del sistema es el *loopback* de la salida, y
+/// la salida también lleva la voz de la propia app: sin esto, la ficha que la app te dice volvería por la pista
+/// del cliente como si la hubiera dicho él, y dispararía otra. El tap del Mac excluye el proceso de la app y no lo
+/// necesita: allí nadie escribe aquí y la respuesta es siempre «no».
+///
+/// Solo instantes de reloj, en memoria, los últimos [`HABLADOS`]: ni texto ni audio.
+static HABLADO: Mutex<VecDeque<(Instant, Option<Instant>)>> = Mutex::new(VecDeque::new());
+
+/// Cuántos intervalos se recuerdan. Un turno del cliente se compara con lo que la app dijo mientras él hablaba;
+/// más atrás no hace falta.
+pub const HABLADOS: usize = 16;
+
+/// Lo que tarda el loopback en devolver lo que sonó, con margen: el turno del cliente y la voz de la app se comparan
+/// con esta holgura a cada lado.
+pub const MARGEN_DEL_LOOPBACK: Duration = Duration::from_millis(500);
+
+/// La voz empieza a sonar.
+pub fn empieza_a_sonar(ahora: Instant) {
+    if let Ok(mut h) = HABLADO.lock() {
+        if h.len() == HABLADOS {
+            h.pop_front();
+        }
+        h.push_back((ahora, None));
+    }
+}
+
+/// La voz deja de sonar.
+pub fn deja_de_sonar(ahora: Instant) {
+    if let Ok(mut h) = HABLADO.lock() {
+        if let Some(ultimo) = h.back_mut() {
+            if ultimo.1.is_none() {
+                ultimo.1 = Some(ahora);
+            }
+        }
+    }
+}
+
+/// ¿Sonó la app entre `desde` y `hasta`?
+pub fn la_app_hablo(desde: Instant, hasta: Instant) -> bool {
+    HABLADO.lock().is_ok_and(|mut h| solapa(h.make_contiguous(), desde, hasta, MARGEN_DEL_LOOPBACK))
+}
+
+/// **¿Solapa el tramo `[desde, hasta]` con algo que dijo la app?** Un intervalo sin fin es que sigue sonando. Pura.
+pub fn solapa(hablado: &[(Instant, Option<Instant>)], desde: Instant, hasta: Instant, margen: Duration) -> bool {
+    hablado.iter().any(|&(inicio, fin)| {
+        let fin = fin.map_or(hasta + margen, |f| f + margen);
+        let inicio = inicio.checked_sub(margen).unwrap_or(inicio);
+        desde <= fin && inicio <= hasta
+    })
+}
 
 /// Lo que cualquier voz tiene que saber hacer. Igual que `stt::Motor`: la app no conoce a
 /// `AVSpeechSynthesizer`, conoce a quien sabe decir una frase.
@@ -267,9 +326,16 @@ pub fn a_voz(titular: &str, linea: &str, fuente: &str) -> String {
         + "."
 }
 
-/// La voz de este Mac, o la muda con su razón.
+/// La voz de este equipo, o la muda con su razón: la del Mac por su puente, la de Windows por WinRT.
 pub fn voz() -> Box<dyn Voz> {
-    apple::voz()
+    #[cfg(windows)]
+    {
+        windows::voz()
+    }
+    #[cfg(not(windows))]
+    {
+        apple::voz()
+    }
 }
 
 #[cfg(test)]
@@ -466,5 +532,22 @@ mod pruebas {
         println!("[habla] ¿hay voz para en-US? {}", v.hay_para("en-US"));
         // Un idioma inventado no puede tener voz, y no puede romper nada.
         assert!(!v.hay_para("xx-ZZ"), "«xx-ZZ» no puede tener voz");
+    }
+
+    /// **La voz de la app que vuelve por el loopback** (sprint 007): un turno del cliente que cae mientras la app
+    /// hablaba —o justo después, lo que tarda en volver— solapa; uno de un rato después, no.
+    #[test]
+    fn lo_que_dijo_la_app_se_reconoce_por_cuando_sono() {
+        let t0 = Instant::now();
+        let s = |n: u64| Duration::from_secs(n);
+        let m = MARGEN_DEL_LOOPBACK;
+        let dijo = [(t0 + s(10), Some(t0 + s(14)))];
+        assert!(solapa(&dijo, t0 + s(11), t0 + s(13), m), "durante");
+        assert!(solapa(&dijo, t0 + s(14) + Duration::from_millis(300), t0 + s(16), m), "lo que tarda en volver");
+        assert!(!solapa(&dijo, t0 + s(16), t0 + s(18), m), "un rato después ya es el cliente");
+        assert!(!solapa(&dijo, t0 + s(2), t0 + s(9), m), "antes de que hablara");
+        let sigue = [(t0 + s(10), None)];
+        assert!(solapa(&sigue, t0 + s(20), t0 + s(22), m), "si sigue sonando, todo lo de después solapa");
+        assert!(!solapa(&[], t0, t0 + s(5), m), "en el Mac nadie escribe aquí");
     }
 }

@@ -844,14 +844,14 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
 | `presencial` | sí, con transcripción local (whisper) |
 | `corpus-y-ficha` | sí |
 | `notas-cifradas` | sí: cifradas con la llave en el Administrador de credenciales; exportar y abrir la bandeja esperan a Windows Hello |
-| `videollamada` | todavía no: el audio del sistema, la pista del cliente |
-| `pantalla` | todavía no: leer la pantalla de la reunión |
-| `voz-al-oido` | todavía no: la ficha al oído |
+| `videollamada` | sí: tu micrófono y el audio del sistema, dos pistas; sin verificar en Teams, Zoom ni Meet hasta que la pruebes en tu PC |
+| `pantalla` | sí: la ventana de la reunión, leída solo cuando cambia |
+| `voz-al-oido` | sí, con auriculares; por altavoces no habla |
 | `acople` | todavía no: acoplarse a la ventana de la reunión |
-| `ensayo` | todavía no: ensayar con la voz que lee las preguntas |
+| `ensayo` | sí: la voz del sistema lee las preguntas |
 | `sugerencia` | todavía no: la sugerencia redactada por IA |
 | `radar` | todavía no: el radar de tu equipo |
-| `atajos` | todavía no: en muchos teclados Ctrl+Alt es AltGr |
+| `atajos` | sí: Alt+Mayús y una tecla; ninguno con Ctrl+Alt, que en muchos teclados es AltGr |
 | `borrado-con-la-app-cerrada` | todavía no: por ahora se borra con la app abierta |
 | `desbloqueo` | todavía no: abrir tus notas guardadas, con Windows Hello |
 | `puerta-local` | no en Windows por ahora: la puerta para Claude Code |

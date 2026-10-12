@@ -23,13 +23,25 @@ describe("lo que la app hace en este equipo", () => {
       ...CLAVES_DE_WINDOWS,
     ]);
     const g = porCuando(PLATAFORMA_WINDOWS);
+    // Sprint 007: la videollamada, la pantalla, la voz al oído, el ensayo con voz y los atajos pasan a «sí».
     expect(g.si).toEqual([
       "banda-protegida",
       "presencial",
       "corpus-y-ficha",
       "notas-cifradas",
+      "videollamada",
+      "pantalla",
+      "voz-al-oido",
+      "ensayo",
+      "atajos",
     ]);
-    expect(g["todavia-no"]).toHaveLength(10);
+    expect(g["todavia-no"]).toEqual([
+      "acople",
+      "sugerencia",
+      "radar",
+      "borrado-con-la-app-cerrada",
+      "desbloqueo",
+    ]);
     expect(g["no-por-ahora"]).toEqual(["puerta-local"]);
   });
 

@@ -24,7 +24,7 @@ pub enum Sistema {
 pub enum Cuando {
     /// Hoy, con lo que diga su frase (p. ej. «sin verificar»).
     Si,
-    /// En el sprint 007.
+    /// En el sprint 008 («Windows completo»).
     TodaviaNo,
     /// No está planeada por ahora.
     NoPorAhora,
@@ -44,14 +44,14 @@ pub const EN_WINDOWS: [Funcion; 15] = [
     Funcion { clave: "presencial", cuando: Cuando::Si },
     Funcion { clave: "corpus-y-ficha", cuando: Cuando::Si },
     Funcion { clave: "notas-cifradas", cuando: Cuando::Si },
-    Funcion { clave: "videollamada", cuando: Cuando::TodaviaNo },
-    Funcion { clave: "pantalla", cuando: Cuando::TodaviaNo },
-    Funcion { clave: "voz-al-oido", cuando: Cuando::TodaviaNo },
+    Funcion { clave: "videollamada", cuando: Cuando::Si },
+    Funcion { clave: "pantalla", cuando: Cuando::Si },
+    Funcion { clave: "voz-al-oido", cuando: Cuando::Si },
     Funcion { clave: "acople", cuando: Cuando::TodaviaNo },
-    Funcion { clave: "ensayo", cuando: Cuando::TodaviaNo },
+    Funcion { clave: "ensayo", cuando: Cuando::Si },
     Funcion { clave: "sugerencia", cuando: Cuando::TodaviaNo },
     Funcion { clave: "radar", cuando: Cuando::TodaviaNo },
-    Funcion { clave: "atajos", cuando: Cuando::TodaviaNo },
+    Funcion { clave: "atajos", cuando: Cuando::Si },
     Funcion { clave: "borrado-con-la-app-cerrada", cuando: Cuando::TodaviaNo },
     Funcion { clave: "desbloqueo", cuando: Cuando::TodaviaNo },
     Funcion { clave: "puerta-local", cuando: Cuando::NoPorAhora },
@@ -69,6 +69,9 @@ pub struct Transcripcion {
     pub techo_ms: u32,
     /// Se está bajando un modelo ahora mismo.
     pub bajando: bool,
+    /// Los turnos tuyos que se quedaron sin transcribir en la última escucha porque el equipo no daba abasto (sprint
+    /// 007: con dos pistas, el cliente va primero). Solo la cuenta.
+    pub descartados: u32,
 }
 
 /// Lo que cruza a Honestidad.
@@ -79,13 +82,17 @@ pub struct Plataforma {
     /// En Windows, la lista del ADR 022; en macOS, vacía: ahí la app hace lo que dicen el manual y Honestidad.
     pub funciones: Vec<Funcion>,
     pub transcripcion: Option<Transcripcion>,
+    /// Las teclas de este sistema y si el sistema las dejó registrar (sprint 007): la banda y los textos enseñan las
+    /// de Windows en Windows, y Honestidad dice cuál tiene otra app.
+    pub atajos: Vec<crate::atajos::Atajo>,
 }
 
 impl Plataforma {
     /// La de un sistema dado, con lo que su transcripción sepa.
     pub fn de(sistema: Sistema, transcripcion: Option<Transcripcion>) -> Self {
         let funciones = if sistema == Sistema::Windows { EN_WINDOWS.to_vec() } else { Vec::new() };
-        Self { sistema, funciones, transcripcion }
+        let atajos = crate::atajos::para_el_contrato(sistema == Sistema::Windows);
+        Self { sistema, funciones, transcripcion, atajos }
     }
 }
 
@@ -108,6 +115,7 @@ fn la_transcripcion() -> Transcripcion {
         latencia_ms: elegido.and_then(|m| crate::stt::whisper::latencia_ms(&m)),
         techo_ms: crate::stt::calibracion::TECHO_MS,
         bajando: crate::modelo_whisper::bajando(),
+        descartados: crate::escucha::descartados(),
     }
 }
 
@@ -133,7 +141,7 @@ mod pruebas {
             let dice = fila.split('|').nth(2).unwrap().trim();
             let esperado = match f.cuando {
                 Cuando::Si => "sí",
-                Cuando::TodaviaNo => "todavía no (S7)",
+                Cuando::TodaviaNo => "todavía no (S8)",
                 Cuando::NoPorAhora => "no en Windows por ahora",
             };
             assert!(dice.starts_with(esperado), "{}: el ADR dice «{dice}» y aquí es {:?}", f.clave, f.cuando);

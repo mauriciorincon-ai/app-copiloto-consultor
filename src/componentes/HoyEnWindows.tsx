@@ -3,11 +3,13 @@ import { Ic } from "./Iconos";
 import { useIdioma } from "../i18n";
 import { cifraEnIdioma, useTextosDeWindows } from "../i18n/windows";
 import {
+  atajosSinRegistrar,
   bajarModeloPequeno,
   calibrarTranscripcion,
   esWindows,
   estadoDeWhisper,
   porCuando,
+  teclasEnIdioma,
   usePlataforma,
   type ClaveDeWindows,
   type Cuando,
@@ -107,6 +109,12 @@ export function HoyEnWindows({
       {bloque(t.ya, si)}
       {bloque(t.todavia, todavia)}
       {bloque(t.noPorAhora, noPorAhora)}
+      {atajosSinRegistrar(p).map((a) => (
+        <p key={a.accion} className="estado warn">
+          <Ic id="i-alert" s />
+          <span>{t.atajoOcupado(teclasEnIdioma(a.teclas, idioma))}</span>
+        </p>
+      ))}
 
       <h3 className="seccion" style={{ margin: "12px 0 4px" }}>
         {t.whisper.titulo}
@@ -139,6 +147,12 @@ export function HoyEnWindows({
         <p className="estado warn">
           <Ic id="i-alert" s />
           <span>{t.whisper.lento(whisper.modelo, cifra(whisper.ms))}</span>
+        </p>
+      )}
+      {(p.transcripcion?.descartados ?? 0) > 0 && (
+        <p className="estado warn">
+          <Ic id="i-alert" s />
+          <span>{t.whisper.descartados(p.transcripcion?.descartados ?? 0)}</span>
         </p>
       )}
       <p className="mono" style={{ color: "var(--ink-2)" }}>

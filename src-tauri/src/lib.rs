@@ -13,6 +13,7 @@
 
 pub mod acople;
 pub mod almacen;
+pub mod atajos;
 pub mod bandeja;
 pub mod capture;
 pub mod carpeta;
@@ -418,8 +419,7 @@ fn entendido_el_aviso_de_arriba(app: tauri::AppHandle) {
 
 /// `⌃⌥B` — la banda, al otro borde (sprint 004). La octava letra con `⌃⌥`.
 fn el_atajo_de_la_banda() -> tauri_plugin_global_shortcut::Shortcut {
-    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
-    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyB)
+    atajos::atajo(atajos::Accion::Banda)
 }
 
 /// Lo que la banda necesita para dibujar «acoplada» o «sin acople» — y lo que hace que esa
@@ -2026,8 +2026,7 @@ fn registrar_lo_que_ve() {
 
 /// `⌥⎋` — la tecla del kill-switch, tal y como la dibuja la maqueta.
 fn el_atajo() -> tauri_plugin_global_shortcut::Shortcut {
-    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
-    Shortcut::new(Some(Modifiers::ALT), Code::Escape)
+    atajos::atajo(atajos::Accion::Corte)
 }
 
 /// `⌃⌥T` — enseñar u ocultar el transcript, tal y como lo dibuja `idioma.html`.
@@ -2038,8 +2037,7 @@ fn el_atajo() -> tauri_plugin_global_shortcut::Shortcut {
 /// Opción), que ni Zoom, ni Meet, ni Teams documentan. La que queda es VoiceOver, cuyas órdenes
 /// empiezan por `⌃⌥`: lo dice el manual.
 fn el_atajo_del_transcript() -> tauri_plugin_global_shortcut::Shortcut {
-    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
-    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyT)
+    atajos::atajo(atajos::Accion::Transcript)
 }
 
 /// `⌃⌥A` — «ayúdame con esto», el atajo que la maqueta dibuja en la banda.
@@ -2049,8 +2047,7 @@ fn el_atajo_del_transcript() -> tauri_plugin_global_shortcut::Shortcut {
 /// seguidas es porque la primera no le sirvió, y contestarle con silencio sería lo peor posible
 /// justo en el momento en que decidió pedir ayuda a mano.
 fn el_atajo_de_ayuda() -> tauri_plugin_global_shortcut::Shortcut {
-    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
-    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyA)
+    atajos::atajo(atajos::Accion::Ayuda)
 }
 
 /// El nombre del evento con el que la banda se entera de que hay que enseñar u ocultar el
@@ -2430,14 +2427,12 @@ fn ficha_de_la_nota(app: &tauri::AppHandle, el_corpus: &tauri::State<'_, ElCorpu
 /// No es `⌃⌥A`, que es lo que pedía la orden del sprint: `⌃⌥A` ya es «ayúdame con esto» desde el
 /// sprint 001 y el panel aprobado en la etapa de diseño ya escribía `⌃⌥V`. Desviación declarada.
 fn el_atajo_del_modo_de_voz() -> tauri_plugin_global_shortcut::Shortcut {
-    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
-    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyV)
+    atajos::atajo(atajos::Accion::ModoDeVoz)
 }
 
 /// `⎋` — **cállate**. Solo está registrada mientras el modo solo audio está encendido.
 fn el_atajo_de_callar() -> tauri_plugin_global_shortcut::Shortcut {
-    use tauri_plugin_global_shortcut::{Code, Shortcut};
-    Shortcut::new(None, Code::Escape)
+    atajos::atajo(atajos::Accion::Callar)
 }
 
 /// **Coger y soltar `⎋`, SIEMPRE EN OTRO HILO. Y esto no es una precaución: es un cuelgue real.**
@@ -2456,10 +2451,8 @@ fn el_atajo_de_callar() -> tauri_plugin_global_shortcut::Shortcut {
 /// registro ocurre unos microsegundos después. Nadie espera a nadie.
 fn con_el_callar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, coger: bool) {
     use tauri_plugin_global_shortcut::GlobalShortcutExt;
-    // Windows (ADR 022): ⎋ global durante el modo de voz robaría Escape al sistema. Llega en el S7.
-    if cfg!(windows) {
-        return;
-    }
+    // En Windows igual que en el Mac (sprint 007, ADR 022 enmienda 1): Esc es de la app SOLO mientras el modo de voz
+    // está encendido, y se devuelve al apagarlo y en el corte.
     let mango = app.clone();
     std::thread::spawn(move || {
         let atajo = el_atajo_de_callar();
@@ -2473,8 +2466,10 @@ fn con_el_callar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, coger: bool) {
                      tecla no le llega a la reunión"
                 ),
                 Err(e) => println!(
-                    "[habla] NO se pudo registrar ⎋ ({e}): para callar la voz hay que apagar el \
-                     modo con ⌃⌥V"
+                    "[habla] NO se pudo registrar {} ({e}): para callar la voz hay que apagar el \
+                     modo con {}",
+                    atajos::de_este_equipo(atajos::Accion::Callar).texto,
+                    atajos::de_este_equipo(atajos::Accion::ModoDeVoz).texto
                 ),
             }
         } else {
@@ -2530,7 +2525,7 @@ fn arrancar_la_pantalla<R: tauri::Runtime>(
 ) -> std::sync::Arc<std::sync::Mutex<pantalla::Refuerzo>> {
     parar_la_pantalla(app);
     let estado = app.state::<LaPantalla>();
-    let (ojo, lector) = pantalla::apple::ojos();
+    let (ojo, lector) = pantalla::ojos();
     println!(
         "[pantalla] ojos «{}» · lectura automática {}",
         ojo.nombre(),
@@ -2699,8 +2694,7 @@ fn lectura_automatica(
 
 /// `⌃⌥L` — leer la pantalla una vez, ahora. La tecla que Sesión dibuja al lado de «Leerla sola».
 fn el_atajo_de_leer_la_pantalla() -> tauri_plugin_global_shortcut::Shortcut {
-    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
-    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyL)
+    atajos::atajo(atajos::Accion::LeerLaPantalla)
 }
 
 /// **La lectura bajo demanda, sin región** (decisión del usuario, 2026-09-26): lee UNA vez la
@@ -3312,8 +3306,7 @@ fn radar_de_tu_mac(estado: tauri::State<'_, ElRadar>) -> radar::EnTuMac {
 /// `⌃⌥R` — «qué ve» (mirada 17). Abre el cuaderno en Sesión, donde está la tabla de lo que
 /// alcanza a ver cada programa, con su catálogo.
 fn el_atajo_del_radar() -> tauri_plugin_global_shortcut::Shortcut {
-    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
-    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyR)
+    atajos::atajo(atajos::Accion::Radar)
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -3742,20 +3735,17 @@ fn cerrar_la_puerta_al_empezar<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
 
 /// `⌃⌥↵` — guardar la última propuesta, la que la banda enseña (ADR 016 §3).
 fn el_atajo_de_guardar_la_propuesta() -> tauri_plugin_global_shortcut::Shortcut {
-    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
-    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::Enter)
+    atajos::atajo(atajos::Accion::GuardarLaPropuesta)
 }
 
 /// `⌃⌥N` — el cuaderno al frente, en tu nota.
 fn el_atajo_de_anotar() -> tauri_plugin_global_shortcut::Shortcut {
-    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
-    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyN)
+    atajos::atajo(atajos::Accion::Anotar)
 }
 
 /// `⌃⌥P` — fijar la ficha que la banda enseña.
 fn el_atajo_de_fijar() -> tauri_plugin_global_shortcut::Shortcut {
-    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
-    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyP)
+    atajos::atajo(atajos::Accion::Fijar)
 }
 
 /// El botón «Ver qué alcanza a ver» de la banda ampliada: lo mismo que `⌃⌥R`.
@@ -3792,18 +3782,18 @@ fn atender_el_atajo<R: tauri::Runtime>(
     if *atajo == el_atajo() {
         ejecutar_el_corte(app);
     } else if *atajo == el_atajo_del_transcript() {
-        println!("[transcript] ⌃⌥T");
+        println!("[transcript] {}", atajos::de_este_equipo(atajos::Accion::Transcript).texto);
         let _ = app.emit_to(ventana::BANDA, EVENTO_TRANSCRIPT, ());
     } else if *atajo == el_atajo_de_ayuda() {
-        println!("[ficha] ⌃⌥A");
+        println!("[ficha] {}", atajos::de_este_equipo(atajos::Accion::Ayuda).texto);
         let _ = app.emit_to(ventana::BANDA, EVENTO_FICHA, ());
     } else if *atajo == el_atajo_del_modo_de_voz() {
         conmutar_el_modo(app);
     } else if *atajo == el_atajo_de_leer_la_pantalla() {
-        println!("[pantalla] ⌃⌥L");
+        println!("[pantalla] {}", atajos::de_este_equipo(atajos::Accion::LeerLaPantalla).texto);
         leer_una_vez(&app.state::<LaPantalla>());
     } else if *atajo == el_atajo_del_radar() {
-        println!("[radar] ⌃⌥R");
+        println!("[radar] {}", atajos::de_este_equipo(atajos::Accion::Radar).texto);
         ir_a_lo_que_ve(app);
     } else if *atajo == el_atajo_de_anotar() {
         reunion::ir_a_notas(app);
@@ -3812,7 +3802,7 @@ fn atender_el_atajo<R: tauri::Runtime>(
     } else if *atajo == el_atajo_de_guardar_la_propuesta() {
         reunion::guardar_la_ultima(app);
     } else if *atajo == el_atajo_de_la_banda() {
-        println!("[ventanas] ⌃⌥B");
+        println!("[ventanas] {}", atajos::de_este_equipo(atajos::Accion::Banda).texto);
         // «El otro borde» se calcula dentro del turno, no aquí: dos ⌃⌥B seguidos irían al mismo (A3).
         let mango = app.clone();
         std::thread::spawn(move || cambiar_de_borde(&mango, ventana::Borde::otro));
@@ -3831,82 +3821,40 @@ fn atender_el_atajo<R: tauri::Runtime>(
 /// honestidad. Lo que no puede pasar es que falle en silencio — el usuario pulsaría la tecla en
 /// mitad de una reunión creyendo que cortó, y no habría cortado nada. (Riesgo nº 7 del plan.)
 fn registrar_el_kill_switch<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    use atajos::Accion;
     use tauri_plugin_global_shortcut::GlobalShortcutExt;
-    // Windows (sprint 006, ADR 022): los atajos globales llegan en el S7. Registrarlos ya robaría AltGr+letra en los
-    // teclados latinos y Alt+Esc al sistema. El corte sigue en el botón de Honestidad.
-    if cfg!(windows) {
-        println!("[atajos] en Windows los atajos globales llegan en el S7 (ADR 022); el corte está en Honestidad");
-        return;
-    }
-    match app.global_shortcut().register(el_atajo()) {
-        Ok(()) => println!("[corte] kill-switch ⌥⎋ registrado"),
-        Err(e) => println!(
-            "[corte] NO se pudo registrar ⌥⎋ ({e}): el kill-switch sigue en el botón de Honestidad, \
-             pero la tecla no va a responder"
-        ),
-    }
-    match app.global_shortcut().register(el_atajo_del_transcript()) {
-        Ok(()) => println!("[transcript] ⌃⌥T registrado"),
-        Err(e) => println!(
-            "[transcript] NO se pudo registrar ⌃⌥T ({e}): el transcript no se va a poder abrir \
-             con la tecla"
-        ),
-    }
-    match app.global_shortcut().register(el_atajo_de_ayuda()) {
-        Ok(()) => println!("[ficha] ⌃⌥A «ayúdame con esto» registrado"),
-        Err(e) => println!(
-            "[ficha] NO se pudo registrar ⌃⌥A ({e}): la ficha a petición sigue en el botón de la \
-             banda ampliada, pero la tecla no va a responder"
-        ),
-    }
-    match app.global_shortcut().register(el_atajo_del_modo_de_voz()) {
-        Ok(()) => println!("[habla] ⌃⌥V «modo solo audio» registrado"),
-        Err(e) => println!(
-            "[habla] NO se pudo registrar ⌃⌥V ({e}): el modo solo audio no se va a poder encender \
-             — y hoy no tiene otra puerta, así que queda apagado"
-        ),
-    }
-    match app.global_shortcut().register(el_atajo_del_radar()) {
-        Ok(()) => println!("[radar] ⌃⌥R «qué ve» registrado"),
-        Err(e) => println!(
-            "[radar] NO se pudo registrar ⌃⌥R ({e}): lo que alcanza a ver cada programa sigue en \
-             Sesión y en el botón de la banda ampliada"
-        ),
-    }
-    match app.global_shortcut().register(el_atajo_de_leer_la_pantalla()) {
-        Ok(()) => println!("[pantalla] ⌃⌥L «léela ahora» registrado"),
-        Err(e) => println!(
-            "[pantalla] NO se pudo registrar ⌃⌥L ({e}): la lectura a petición no va a responder \
-             a la tecla; la automática sigue en el interruptor de Sesión"
-        ),
-    }
-    match app.global_shortcut().register(el_atajo_de_anotar()) {
-        Ok(()) => println!("[notas] ⌃⌥N «anotar» registrado"),
-        Err(e) => println!(
-            "[notas] NO se pudo registrar ⌃⌥N ({e}): tu nota sigue en Notas, en el cuaderno, pero \
-             la tecla no te va a llevar"
-        ),
-    }
-    match app.global_shortcut().register(el_atajo_de_fijar()) {
-        Ok(()) => println!("[notas] ⌃⌥P «fijar» registrado"),
-        Err(e) => println!(
-            "[notas] NO se pudo registrar ⌃⌥P ({e}): la ficha de la banda no se va a poder fijar \
-             con la tecla"
-        ),
-    }
-    match app.global_shortcut().register(el_atajo_de_guardar_la_propuesta()) {
-        Ok(()) => println!("[propuestas] ⌃⌥↵ «guardar la propuesta» registrado"),
-        Err(e) => println!(
-            "[propuestas] NO se pudo registrar ⌃⌥↵ ({e}): las propuestas se siguen guardando en \
-             Notas, pero la tecla no va a responder"
-        ),
-    }
-    match app.global_shortcut().register(el_atajo_de_la_banda()) {
-        Ok(()) => println!("[ventanas] ⌃⌥B «la banda, al otro borde» registrado"),
-        Err(e) => println!(
-            "[ventanas] NO se pudo registrar ⌃⌥B ({e}): la banda se sigue cambiando de borde en \
-             Sesión, pero la tecla no va a responder"
-        ),
+    // Cada atajo con lo que es y lo que queda si no se registra. Las teclas salen de `atajos.rs`: las de macOS de
+    // siempre o, en Windows, `Alt+Mayús` + letra (sprint 007, ADR 022 enmienda 1).
+    let lista: [(Accion, &str, &str); 10] = [
+        (Accion::Corte, "[corte] el kill-switch", "el kill-switch sigue en el botón de Honestidad, pero la tecla no va a responder"),
+        (Accion::Transcript, "[transcript] el transcript", "el transcript no se va a poder abrir con la tecla"),
+        (Accion::Ayuda, "[ficha] «ayúdame con esto»", "la ficha a petición sigue en el botón de la banda ampliada, pero la tecla no va a responder"),
+        (Accion::ModoDeVoz, "[habla] el modo solo audio", "el modo solo audio no se va a poder encender — y hoy no tiene otra puerta, así que queda apagado"),
+        (Accion::Radar, "[radar] «qué ve»", "lo que alcanza a ver cada programa sigue en Sesión y en el botón de la banda ampliada"),
+        (Accion::LeerLaPantalla, "[pantalla] «léela ahora»", "la lectura a petición no va a responder a la tecla; la automática sigue en el interruptor de Sesión"),
+        (Accion::Anotar, "[notas] «anotar»", "tu nota sigue en Notas, en el cuaderno, pero la tecla no te va a llevar"),
+        (Accion::Fijar, "[notas] «fijar»", "la ficha de la banda no se va a poder fijar con la tecla"),
+        (Accion::GuardarLaPropuesta, "[propuestas] «guardar la propuesta»", "las propuestas se siguen guardando en Notas, pero la tecla no va a responder"),
+        (Accion::Banda, "[ventanas] «la banda, al otro borde»", "la banda se sigue cambiando de borde en Sesión, pero la tecla no va a responder"),
+    ];
+    for (accion, que, si_no) in lista {
+        if !atajos::se_registra_aqui(accion) {
+            println!("{que}: su tecla no se registra en este sistema todavía (ADR 022)");
+            continue;
+        }
+        let teclas = atajos::de_este_equipo(accion).texto;
+        // **Si no puede, lo dice**, en el log y en Honestidad: el usuario no puede pulsar una tecla creyendo que
+        // cortó y no haber cortado nada.
+        match app.global_shortcut().register(atajos::atajo(accion)) {
+            Ok(()) => {
+                atajos::apuntar(accion, true);
+                println!("{que} {teclas} registrado");
+            }
+            Err(e) => {
+                atajos::apuntar(accion, false);
+                println!("{que}: NO se pudo registrar {teclas} ({e}): {si_no}");
+            }
+        }
     }
 }
 
@@ -3992,21 +3940,21 @@ mod pruebas_de_los_atajos_en_windows {
         assert!(cuerpo("fn dejar_de_escuchar(").contains("stt::whisper::soltar()"));
     }
 
-    /// **En Windows no se registra ningún atajo global** (ADR 022, hallazgo A1 de la auditoría del S6): la pantalla
-    /// de Honestidad dice «atajos: todavía no», así que la app no puede tenerlos. La guarda va ANTES del primer
-    /// `.register(` de cada función, y con `cfg!(windows)` para que sea una condición de compilación y no un comentario.
+    /// **En Windows los atajos se registran con las teclas de Windows** (sprint 007, ADR 022 enmienda 1; la guarda del
+    /// S6 se fue con la tabla de choques): el registro y el callar leen las teclas de `atajos.rs` y ya no retornan en
+    /// Windows; y ningún `.register(` usa un atajo escrito a mano.
     #[test]
-    fn en_windows_ningun_atajo_se_registra() {
+    fn en_windows_los_atajos_salen_de_la_tabla() {
         let fuente = include_str!("lib.rs");
         for funcion in ["fn registrar_el_kill_switch<", "fn con_el_callar<"] {
             let cuerpo = &fuente[fuente.find(funcion).unwrap_or_else(|| panic!("{funcion}"))..];
             let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
-            // La guarda tiene que RETORNAR: una condición que no sale no protege nada (demo en rojo del sprint 006).
-            let guarda = cuerpo.find("if cfg!(windows) {").unwrap_or_else(|| panic!("{funcion} sin guarda de Windows"));
-            let retorno = cuerpo[guarda..].find("return;").map(|i| i + guarda).unwrap_or(usize::MAX);
-            let primero = cuerpo.find(".register(").unwrap_or_else(|| panic!("{funcion} sin registro"));
-            assert!(retorno < primero, "{funcion}: no retorna en Windows antes del primer .register(");
+            assert!(!cuerpo.contains("if cfg!(windows)"), "{funcion}: la guarda del S6 sigue ahí");
         }
+        let registro = &fuente[fuente.find("fn registrar_el_kill_switch<").unwrap()..];
+        let registro = &registro[..registro.find("\n}\n").unwrap()];
+        assert!(registro.contains(".register(atajos::atajo(accion))"), "el registro no lee la tabla");
+        assert!(registro.contains("atajos::apuntar(accion, false)"), "un registro fallido no se apunta");
     }
 }
 
@@ -4142,6 +4090,7 @@ mod pruebas_de_las_teclas {
     /// Una tecla global se la quita a todos ellos mientras la app esté abierta. El usuario eligió
     /// `⌃⌥` para todas. Se quedan fuera, a propósito, `⌥⎋` (el kill-switch, aprobado en el sprint
     /// 001) y `⎋` (callar la voz, que solo existe mientras suena).
+    #[cfg(not(windows))]
     #[test]
     fn las_teclas_de_la_app_son_control_opcion() {
         let control_opcion = Some(Modifiers::CONTROL | Modifiers::ALT);

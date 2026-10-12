@@ -42,6 +42,63 @@
 pub mod apple;
 pub mod huella;
 pub mod refuerzo;
+/// En Windows, la ventana de la reunión por `PrintWindow` y su texto por `Windows.Media.Ocr` (sprint 007, ADR 022).
+#[cfg(windows)]
+#[path = "windows.rs"]
+pub mod windows;
+
+/// Los ojos y el lector de este equipo: los del Mac por su puente, los de Windows por el sistema, o los ciegos.
+pub fn ojos() -> (Box<dyn Ojo>, Box<dyn Lector>) {
+    #[cfg(windows)]
+    {
+        windows::ojos()
+    }
+    #[cfg(not(windows))]
+    {
+        apple::ojos()
+    }
+}
+
+/// **De la captura de Windows al cuadro de la app** (sprint 007): píxeles BGRA de `ancho × alto` a grises, con el lado
+/// mayor como mucho de [`ANCHO_MAXIMO`]. Reduce por **media de cada bloque**, no saltándose píxeles: una letra de un
+/// píxel de grosor no puede desaparecer al escalar, que es justo lo que el lector necesita. Escribe en el búfer del
+/// cuadro, que ya existe. Pura.
+pub fn a_gris(bgra: &[u8], ancho: usize, alto: usize, cuadro: &mut Cuadro) -> Result<(), String> {
+    if ancho == 0 || alto == 0 || bgra.len() < ancho * alto * 4 {
+        return Err("la captura llegó vacía o corta".into());
+    }
+    let escala = (ancho.max(alto) as f64 / ANCHO_MAXIMO as f64).max(1.0);
+    let (sale_ancho, sale_alto) =
+        (((ancho as f64 / escala).floor() as usize).max(1), ((alto as f64 / escala).floor() as usize).max(1));
+    if cuadro.gris.len() < sale_ancho * sale_alto {
+        cuadro.gris.resize(ANCHO_MAXIMO * ANCHO_MAXIMO, 0);
+    }
+    for oy in 0..sale_alto {
+        let (y0, y1) = (oy * alto / sale_alto, ((oy + 1) * alto / sale_alto).max(oy * alto / sale_alto + 1));
+        for ox in 0..sale_ancho {
+            let (x0, x1) = (ox * ancho / sale_ancho, ((ox + 1) * ancho / sale_ancho).max(ox * ancho / sale_ancho + 1));
+            let (mut suma, mut n) = (0u32, 0u32);
+            for y in y0..y1.min(alto) {
+                for x in x0..x1.min(ancho) {
+                    let i = (y * ancho + x) * 4;
+                    // Luminancia BT.601 en enteros: 0,114 B + 0,587 G + 0,299 R.
+                    suma += (114 * u32::from(bgra[i]) + 587 * u32::from(bgra[i + 1]) + 299 * u32::from(bgra[i + 2])) / 1000;
+                    n += 1;
+                }
+            }
+            cuadro.gris[oy * sale_ancho + ox] = (suma / n.max(1)) as u8;
+        }
+    }
+    cuadro.ajustar(sale_ancho, sale_alto);
+    Ok(())
+}
+
+/// El cuadro en grises como BGRA opaco, el formato que acepta el lector de Windows. **Quien lo recibe lo pisa al
+/// acabar**: es la pantalla del cliente. Pura.
+pub fn gris_a_bgra(cuadro: &Cuadro) -> Vec<u8> {
+    let n = (cuadro.ancho * cuadro.alto).min(cuadro.gris.len());
+    cuadro.gris[..n].iter().flat_map(|&g| [g, g, g, 255]).collect()
+}
 
 pub use refuerzo::{LineaLeida, Refuerzo};
 
@@ -1052,5 +1109,51 @@ mod pruebas {
             true,
         );
         assert_eq!(Vista::de(&r), Some(Vista::NoPudo));
+    }
+
+    /// **De BGRA a grises, por bloques**: un píxel blanco de cada cuatro se queda como un gris medio, no desaparece; y
+    /// el lado mayor nunca pasa de `ANCHO_MAXIMO`.
+    #[test]
+    fn la_captura_de_windows_pasa_a_grises_sin_perder_letras() {
+        let mut cuadro = Cuadro::con_sitio();
+        // 2×1: un píxel blanco y uno negro.
+        let bgra = [255, 255, 255, 255, 0, 0, 0, 255];
+        a_gris(&bgra, 2, 1, &mut cuadro).unwrap();
+        assert_eq!((cuadro.ancho, cuadro.alto), (2, 1));
+        assert_eq!(&cuadro.gris[..2], &[255, 0]);
+        // 3200×2 blancos con una columna negra de un píxel: a 1600 de ancho, la columna sigue ahí.
+        let (ancho, alto) = (3_200, 2);
+        let mut grande = vec![255u8; ancho * alto * 4];
+        for y in 0..alto {
+            let i = (y * ancho + 1_001) * 4;
+            grande[i..i + 3].fill(0);
+        }
+        a_gris(&grande, ancho, alto, &mut cuadro).unwrap();
+        assert_eq!((cuadro.ancho, cuadro.alto), (ANCHO_MAXIMO, 1));
+        assert!(cuadro.gris[..ANCHO_MAXIMO].iter().any(|&g| g < 200), "la línea de un píxel desapareció");
+        assert!(a_gris(&[0; 4], 2, 1, &mut cuadro).is_err(), "una captura corta se dice");
+        let bgra = gris_a_bgra(&cuadro);
+        assert_eq!(bgra.len(), ANCHO_MAXIMO * 4);
+        assert_eq!(&bgra[..4], &[255, 255, 255, 255]);
+    }
+
+    /// **El OCR de Windows no se salta la huella** (sprint 007, gate con su demo en rojo). Cuándo se lee lo decide el
+    /// `Vigia` y la lectura pasa por el `Lector`; así que en `windows.rs` el reconocimiento vive en una sola función,
+    /// la llama solo el lector, y los ojos no leen.
+    #[test]
+    fn el_ocr_de_windows_solo_lo_llama_el_lector() {
+        let fuente = include_str!("windows.rs");
+        assert_eq!(fuente.matches("RecognizeAsync(").count(), 1, "el reconocimiento vive en un solo sitio");
+        let bloque = |inicio: &str| {
+            let desde = fuente.find(inicio).unwrap_or_else(|| panic!("falta «{inicio}»"));
+            let resto = &fuente[desde + inicio.len()..];
+            &resto[..resto.find("\nimpl ").or_else(|| resto.find("\nfn ")).unwrap_or(resto.len())]
+        };
+        let ojos = bloque("impl Ojo for DelSistema");
+        assert!(!ojos.contains("reconocer(") && !ojos.contains(".leer("), "los ojos leen sin pasar por el Vigia");
+        let lector = bloque("impl Lector for DelSistema");
+        assert!(lector.contains("reconocer("), "el lector no lee");
+        let llamadas = fuente.matches("reconocer(").count();
+        assert_eq!(llamadas, 2, "«reconocer» se define una vez y la llama solo el lector: {llamadas}");
     }
 }
