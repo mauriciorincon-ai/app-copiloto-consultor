@@ -162,6 +162,21 @@ impl Anillo {
         self.escritas = 0;
         self.totales = 0;
     }
+
+    /// **`n` muestras de silencio**, sin reservar `n` ceros (sprint 007, ADR 022). Deja el anillo igual que
+    /// `escribir(&vec![0.0; n])`: entran las `n` en el reloj y caben las que caben. Lo usa el audio del sistema en
+    /// Windows, que no entrega nada mientras nada suena: tras dormir el PC una hora, el hueco es de una hora y el
+    /// anillo solo necesita sus treinta segundos de ceros.
+    pub fn silencio(&mut self, n: u64) {
+        let cap = self.muestras.len();
+        let utiles = n.min(cap as u64) as usize;
+        for _ in 0..utiles {
+            self.muestras[self.cursor] = 0.0;
+            self.cursor = (self.cursor + 1) % cap;
+        }
+        self.escritas = (self.escritas + utiles).min(cap);
+        self.totales += n;
+    }
 }
 
 #[cfg(test)]
@@ -295,5 +310,21 @@ mod tests {
         a.escribir(&vec![0.1; 8_000]);
         assert!((a.segundos() - 0.5).abs() < 1e-6);
         assert_eq!(a.ultimos_segundos(0.25).len(), 4_000);
+    }
+
+    /// **El silencio deja el anillo como lo dejarían sus ceros**, en el reloj y en la memoria, quepa o no quepa.
+    #[test]
+    fn el_silencio_es_escribir_ceros_sin_reservarlos() {
+        for n in [0u64, 3, 10, 27] {
+            let mut con_ceros = Anillo::nuevo(10, 1.0);
+            let mut con_silencio = Anillo::nuevo(10, 1.0);
+            con_ceros.escribir(&[1.0, 2.0, 3.0, 4.0]);
+            con_silencio.escribir(&[1.0, 2.0, 3.0, 4.0]);
+            con_ceros.escribir(&vec![0.0; n as usize]);
+            con_silencio.silencio(n);
+            assert_eq!(con_silencio.totales(), con_ceros.totales(), "n = {n}");
+            assert_eq!(con_silencio.ocupadas(), con_ceros.ocupadas(), "n = {n}");
+            assert_eq!(con_silencio.ultimas(10), con_ceros.ultimas(10), "n = {n}");
+        }
     }
 }

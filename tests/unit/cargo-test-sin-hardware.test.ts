@@ -42,7 +42,7 @@ const AGUJAS: string[] = [
   "ax::" + "encoger(",
   "ax::" + "mover(",
   "Lectura::" + "arrancar(",
-  "\"sesion_para_" + "el_log\"",
+  '"sesion_para_' + 'el_log"',
   "donde_se_" + "mira(",
   // Auditoría del S4 (B5): el oído del ensayo, el Llavero de las pruebas, el desbloqueo de los ensayos y la
   // ventana de la reunión (que lee títulos por Accessibility).
@@ -66,7 +66,8 @@ const CENTINELAS: [string, number][] = [
   ["src-tauri/src/vencimiento/mod.rs", 1],
   // Sprint 006 (ADR 022): las entradas de Windows. El Administrador de credenciales cruza desde las cinco de
   // `llavero.rs`, que ya llevan el suyo; el modelo de whisper, al cargarse y al bajarse.
-  ["src-tauri/src/capture/windows.rs", 1],
+  // Sprint 007: el micrófono y el audio del sistema (el loopback, la pista del cliente).
+  ["src-tauri/src/capture/windows.rs", 2],
   ["src-tauri/src/stt/whisper.rs", 1],
   ["src-tauri/src/modelo_whisper.rs", 1],
 ];
@@ -101,7 +102,11 @@ function sinTexto(fuente: string): string {
       const f = fuente.indexOf("*/", i + 2) + 2;
       blanco(i, f);
       i = f;
-    } else if (c === "r" && (d === "#" || d === '"') && !/\w/.test(s[i - 1] ?? "")) {
+    } else if (
+      c === "r" &&
+      (d === "#" || d === '"') &&
+      !/\w/.test(s[i - 1] ?? "")
+    ) {
       const m = /^r(#*)"/.exec(fuente.slice(i));
       if (!m) {
         i++;
@@ -118,7 +123,9 @@ function sinTexto(fuente: string): string {
       i = k + 1;
     } else if (c === "'") {
       // Un carácter ('a', '\n', '{') o una vida ('static): solo lo primero se borra.
-      const m = /^'(\\.|[^\\'])'/.exec(fuente.slice(i)) ?? /^'\\u\{[0-9a-fA-F]+\}'/.exec(fuente.slice(i));
+      const m =
+        /^'(\\.|[^\\'])'/.exec(fuente.slice(i)) ??
+        /^'\\u\{[0-9a-fA-F]+\}'/.exec(fuente.slice(i));
       if (m) {
         blanco(i, i + m[0].length);
         i += m[0].length;
@@ -128,13 +135,19 @@ function sinTexto(fuente: string): string {
   return s.join("");
 }
 
-type Funcion = { nombre: string; atributos: string; cuerpo: string; linea: number };
+type Funcion = {
+  nombre: string;
+  atributos: string;
+  cuerpo: string;
+  linea: number;
+};
 
 /** Cada `fn` del archivo, con los atributos que la preceden y su cuerpo (texto original). */
 function funciones(fuente: string): Funcion[] {
   const limpio = sinTexto(fuente);
   const out: Funcion[] = [];
-  const re = /((?:[ \t]*#\[[^\n]*\][ \t]*\n)*)[ \t]*(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?(?:unsafe\s+)?fn\s+(\w+)/g;
+  const re =
+    /((?:[ \t]*#\[[^\n]*\][ \t]*\n)*)[ \t]*(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?(?:unsafe\s+)?fn\s+(\w+)/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(limpio))) {
     const abre = limpio.indexOf("{", m.index + m[0].length);
@@ -150,7 +163,10 @@ function funciones(fuente: string): Funcion[] {
       nombre: m[2]!,
       atributos: fuente.slice(m.index, m.index + (m[1] ?? "").length),
       cuerpo: fuente.slice(abre, k + 1),
-      linea: fuente.slice(0, m.index).split("\n").length + (m[1] ?? "").split("\n").length - 1,
+      linea:
+        fuente.slice(0, m.index).split("\n").length +
+        (m[1] ?? "").split("\n").length -
+        1,
     });
   }
   return out;
@@ -170,21 +186,30 @@ describe("cargo test a secas no toca el Mac (regla 25 del kit · regla 22 de la 
         const motivo = MOTIVO.exec(f.atributos)?.[1] ?? "";
         if (ignorado) cuantos++;
         if (ignorado && !/^(hardware:|en vivo:|medición)/.test(motivo))
-          malos.push(`${a}:${f.linea} ${f.nombre}: «${motivo || "sin motivo"}»`);
+          malos.push(
+            `${a}:${f.linea} ${f.nombre}: «${motivo || "sin motivo"}»`,
+          );
         if (motivo.startsWith("en vivo:") !== f.nombre.startsWith("en_vivo_"))
-          malos.push(`${a}:${f.linea} ${f.nombre}: «en vivo» y el prefijo en_vivo_ van juntos`);
+          malos.push(
+            `${a}:${f.linea} ${f.nombre}: «en vivo» y el prefijo en_vivo_ van juntos`,
+          );
       }
     }
-    expect(cuantos, "no encontré ningún #[ignore]: el lector de Rust se rompió").toBeGreaterThan(10);
+    expect(
+      cuantos,
+      "no encontré ningún #[ignore]: el lector de Rust se rompió",
+    ).toBeGreaterThan(10);
     expect(malos).toEqual([]);
   });
 
   it("en contra-el-mac-de-verdad, todo test que llega a una entrada nativa lleva su marca", () => {
     const fs = funciones(readFileSync(CONTRA, "utf8"));
-    expect(fs.length, "no encontré funciones en el archivo").toBeGreaterThan(30);
+    expect(fs.length, "no encontré funciones en el archivo").toBeGreaterThan(
+      30,
+    );
     // Los ayudantes que tocan el Mac se vuelven agujas, hasta que no aparezca ninguno nuevo.
     const agujas = [...AGUJAS];
-    for (let cambio = true; cambio; ) {
+    for (let cambio = true; cambio;) {
       cambio = false;
       for (const f of fs) {
         const llamada = `${f.nombre}(`;
@@ -196,9 +221,14 @@ describe("cargo test a secas no toca el Mac (regla 25 del kit · regla 22 de la 
       }
     }
     const sinMarca = fs
-      .filter((f) => /#\[test\]/.test(f.atributos) && !/#\[ignore/.test(f.atributos))
+      .filter(
+        (f) => /#\[test\]/.test(f.atributos) && !/#\[ignore/.test(f.atributos),
+      )
       .filter((f) => agujas.some((a) => f.cuerpo.includes(a)))
-      .map((f) => `${f.nombre} (línea ${f.linea}) llega a ${agujas.find((a) => f.cuerpo.includes(a))}`);
+      .map(
+        (f) =>
+          `${f.nombre} (línea ${f.linea}) llega a ${agujas.find((a) => f.cuerpo.includes(a))}`,
+      );
     expect(sinMarca).toEqual([]);
   });
 
@@ -207,17 +237,28 @@ describe("cargo test a secas no toca el Mac (regla 25 del kit · regla 22 de la 
     expect(hw).toContain("std::process::abort()");
     expect(hw).toContain('pub const VARIABLE: &str = "AG_SIN_HARDWARE"');
     for (const [archivo, n] of CENTINELAS) {
-      const veces = readFileSync(archivo, "utf8").split("crate::hardware::vigilar(").length - 1;
-      expect(veces, `${archivo}: ${veces} centinelas, se esperaban ${n}`).toBe(n);
+      const veces =
+        readFileSync(archivo, "utf8").split("crate::hardware::vigilar(")
+          .length - 1;
+      expect(veces, `${archivo}: ${veces} centinelas, se esperaban ${n}`).toBe(
+        n,
+      );
     }
   });
 
   it("la CI corre a secas con el centinela armado, y lo marcado en otro paso; en_vivo_ se salta", () => {
     const ci = readFileSync(".github/workflows/ci.yml", "utf8");
-    const aSecas = /env: \{ AG_SIN_HARDWARE: "1" \}\n\s+run: cargo test --locked\n/;
+    const aSecas =
+      /env: \{ AG_SIN_HARDWARE: "1" \}\n\s+run: cargo test --locked\n/;
     expect(ci).toMatch(aSecas);
-    expect(ci).toContain("run: cargo test --locked -- --include-ignored --skip en_vivo_");
-    const pkg = JSON.parse(readFileSync("package.json", "utf8")) as { scripts: Record<string, string> };
-    expect(pkg.scripts["verify:ephemeral:runtime"]).toContain("--include-ignored");
+    expect(ci).toContain(
+      "run: cargo test --locked -- --include-ignored --skip en_vivo_",
+    );
+    const pkg = JSON.parse(readFileSync("package.json", "utf8")) as {
+      scripts: Record<string, string>;
+    };
+    expect(pkg.scripts["verify:ephemeral:runtime"]).toContain(
+      "--include-ignored",
+    );
   });
 });
