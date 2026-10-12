@@ -35,6 +35,34 @@ struct Orden {
     generacion: u64,
 }
 
+/// Lo que se le pregunta al hilo de las preguntas: si hay voz para un idioma.
+struct Pregunta {
+    idioma: String,
+    responde: mpsc::Sender<bool>,
+}
+
+/// El hilo de las preguntas (`ag-voz-pregunta`): otro hilo, con su propio COM multihilo, que vive lo que la app como el de
+/// la voz y solo contesta «¿hay voz para este idioma?». Un hilo corto que iniciara y cerrara COM en cada pregunta tumbó
+/// el proceso de pruebas de Windows (acceso a memoria inválido al desmontar COM bajo WinRT): el ciclo de vida de COM es
+/// el mismo que el del hilo de la voz, que ya funcionaba.
+fn preguntador() -> &'static Mutex<mpsc::Sender<Pregunta>> {
+    static UNO: OnceLock<Mutex<mpsc::Sender<Pregunta>>> = OnceLock::new();
+    UNO.get_or_init(|| {
+        let (manda, recibe) = mpsc::channel::<Pregunta>();
+        let _ = std::thread::Builder::new().name("ag-voz-pregunta".into()).spawn(move || contestar(recibe));
+        Mutex::new(manda)
+    })
+}
+
+fn contestar(recibe: mpsc::Receiver<Pregunta>) {
+    use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
+    // SAFETY: COM se inicia una vez en este hilo, que vive lo que la app.
+    let _ = unsafe { CoInitializeEx(None, COINIT_MULTITHREADED) };
+    for Pregunta { idioma, responde } in recibe {
+        let _ = responde.send(voz_para(&idioma).is_some());
+    }
+}
+
 struct Trabajador {
     orden: Mutex<mpsc::Sender<Orden>>,
     estado: Arc<Estado>,
@@ -69,25 +97,13 @@ impl Voz for DelSistema {
         "windows-speechsynthesizer"
     }
 
-    /// Se pregunta a Windows en un hilo propio y corto, con COM multihilo, como `salida_de_audio`: no espera a que
-    /// acabe de hablar el hilo de la voz, ni importa en qué modo de COM está quien pregunta.
+    /// Se pregunta al **hilo de las preguntas**, no al que habla: ese está ocupado mientras suena la frase.
     fn hay_para(&self, idioma: &str) -> bool {
-        use windows::Win32::System::Com::{CoInitializeEx, CoUninitialize, COINIT_MULTITHREADED};
-        let idioma = idioma.to_string();
-        std::thread::Builder::new()
-            .name("ag-voz-pregunta".into())
-            .spawn(move || {
-                // SAFETY: COM se inicia y, si se pudo iniciar, se cierra en este mismo hilo, que vive lo que la pregunta.
-                let iniciado = unsafe { CoInitializeEx(None, COINIT_MULTITHREADED) }.is_ok();
-                let hay = voz_para(&idioma).is_some();
-                if iniciado {
-                    unsafe { CoUninitialize() };
-                }
-                hay
-            })
-            .ok()
-            .and_then(|h| h.join().ok())
-            .unwrap_or(false)
+        let (responde, respuesta) = mpsc::channel();
+        let pedido = preguntador()
+            .lock()
+            .is_ok_and(|p| p.send(Pregunta { idioma: idioma.into(), responde }).is_ok());
+        pedido && respuesta.recv_timeout(Duration::from_secs(3)).unwrap_or(false)
     }
 
     fn decir(&self, idioma: &str, texto: &str) -> Result<(), String> {

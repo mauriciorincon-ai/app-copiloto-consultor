@@ -561,7 +561,7 @@ mod pruebas {
         let resto = &fuente[desde..];
         let cuerpo = &resto[..resto.find("\n    fn decir(").expect("falta decir")];
         assert!(
-            !cuerpo.contains("recv_timeout") && !cuerpo.contains("Orden") && !cuerpo.contains(".orden"),
+            cuerpo.contains("preguntador()") && !cuerpo.contains("trabajador()") && !cuerpo.contains("Orden"),
             "hay_para espera detrás del hilo que habla:\n{cuerpo}"
         );
         assert!(!fuente.contains("HayPara"), "la cola de la voz no lleva preguntas, solo frases");
