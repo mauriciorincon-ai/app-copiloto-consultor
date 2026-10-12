@@ -4001,9 +4001,11 @@ mod pruebas_de_los_atajos_en_windows {
         for funcion in ["fn registrar_el_kill_switch<", "fn con_el_callar<"] {
             let cuerpo = &fuente[fuente.find(funcion).unwrap_or_else(|| panic!("{funcion}"))..];
             let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
-            let guarda = cuerpo.find("if cfg!(windows)").unwrap_or_else(|| panic!("{funcion} sin guarda de Windows"));
+            // La guarda tiene que RETORNAR: una condición que no sale no protege nada (demo en rojo del sprint 006).
+            let guarda = cuerpo.find("if cfg!(windows) {").unwrap_or_else(|| panic!("{funcion} sin guarda de Windows"));
+            let retorno = cuerpo[guarda..].find("return;").map(|i| i + guarda).unwrap_or(usize::MAX);
             let primero = cuerpo.find(".register(").unwrap_or_else(|| panic!("{funcion} sin registro"));
-            assert!(guarda < primero, "{funcion}: registra un atajo antes de mirar si esta plataforma los tiene");
+            assert!(retorno < primero, "{funcion}: no retorna en Windows antes del primer .register(");
         }
     }
 }
