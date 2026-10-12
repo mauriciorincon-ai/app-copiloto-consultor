@@ -169,8 +169,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - el silencio de la sala no pide ficha.
 
   Y ningún turno de la sala dura más de 15 s: dos voces que se pisan no se juntan en un bloque que
-  llegue tarde. En la prueba, de 14 preguntas del cliente salieron 5 fichas —las mismas que sin
-  reglas— y las fichas que sobraban, casi todas por tu voz, bajaron de 16 a 5.
+  llegue tarde. En la prueba, de 14 turnos del cliente que pedían ficha salieron 5 —tantas como sin reglas,
+  aunque no las mismas— y las que sobraban, todas por tu voz, bajaron de 16 a 5.
 - **La voz espera a que la sala calle.** Si llega una ficha mientras alguien habla, la banda dice «La
   sala habla · te la digo cuando calle», y la voz la lee en cuanto haya silencio. Si en 4 s nadie calla,
   la ficha se queda en la banda y `⌃⌥V` te la enseña.
@@ -192,6 +192,10 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     la última que se dijo.
   - **Con auriculares por Bluetooth o USB** la app no distingue un casco de un altavoz: si es un
     altavoz, elige la banda.
+  - **Si tus auriculares tienen micrófono**, macOS puede escuchar por ellos y la app oiría sobre todo tu voz,
+    con el cliente lejos o sin llegar. *Sesión* nombra el micrófono que usará antes de empezar y, si es
+    externo, lo avisa: elige el micrófono del Mac en System Settings → Sound → Input.
+  - **Con la ficha al oído, `⎋` es de la app** mientras dure la sesión: no le llega a ninguna otra.
 
 ### Tu corpus, indexado · desde Sprint 001
 

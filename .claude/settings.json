@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if ! command -v gitleaks >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then if [ \"${KIT_SIN_GITLEAKS:-0}\" = \"1\" ]; then exit 0; fi; echo 'BLOQUEADO: falta gitleaks o jq y el hook no puede buscar secretos en lo que vas a escribir. Instalalos (brew install gitleaks jq), o KIT_SIN_GITLEAKS=1 a sabiendas.'; exit 2; fi; inp=$(cat); c=$(printf '%s' \"$inp\" | jq -r '.tool_input.content // .tool_input.new_string // empty' 2>/dev/null); if [ -n \"$c\" ]; then printf '%s' \"$c\" | gitleaks detect --pipe --no-banner --redact >/dev/null 2>&1; if [ $? -eq 1 ]; then echo 'SECRET DETECTADO en el contenido a escribir. Escritura bloqueada: los secretos van al Llavero de macOS, nunca a un archivo del repo.'; exit 2; fi; fi; gitleaks protect --no-banner --redact --staged 2>/dev/null; if [ $? -eq 1 ]; then echo 'SECRET DETECTADO en lo staged. Escritura bloqueada: los secretos van al Llavero de macOS, nunca a un archivo del repo.'; exit 2; fi; exit 0"
+            "command": "if ! command -v gitleaks >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then if [ \"${KIT_SIN_GITLEAKS:-0}\" = \"1\" ]; then exit 0; fi; echo 'BLOQUEADO: falta gitleaks o jq y el hook no puede buscar secretos en lo que vas a escribir. Instalalos (brew install gitleaks jq), o KIT_SIN_GITLEAKS=1 a sabiendas.' >&2; exit 2; fi; inp=$(cat); c=$(printf '%s' \"$inp\" | jq -r '.tool_input.content // .tool_input.new_string // empty' 2>/dev/null); if [ -n \"$c\" ]; then printf '%s' \"$c\" | gitleaks detect --pipe --no-banner --redact >/dev/null 2>&1; if [ $? -eq 1 ]; then echo 'SECRET DETECTADO en el contenido a escribir. Escritura bloqueada: los secretos van al Llavero de macOS, nunca a un archivo del repo.' >&2; exit 2; fi; fi; gitleaks protect --no-banner --redact --staged 2>/dev/null; if [ $? -eq 1 ]; then echo 'SECRET DETECTADO en lo staged. Escritura bloqueada: los secretos van al Llavero de macOS, nunca a un archivo del repo.' >&2; exit 2; fi; exit 0"
           }
         ]
       },
@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "input=$(cat); if echo \"$input\" | grep -qE 'git push[^|]*( origin)? +(main|master)( |$|\\\")'; then echo 'BLOQUEADO: push directo a main prohibido. Trabaja en branch sprint-NNN/<tema> y abre PR.'; exit 2; fi; exit 0"
+            "command": "input=$(cat); if echo \"$input\" | grep -qE 'git push[^|]*( origin)? +(main|master)( |$|\\\")'; then echo 'BLOQUEADO: push directo a main prohibido. Trabaja en branch sprint-NNN/<tema> y abre PR.' >&2; exit 2; fi; exit 0"
           }
         ]
       }

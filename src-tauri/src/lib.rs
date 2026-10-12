@@ -801,7 +801,12 @@ fn empezar(
     let idiomas = idiomas_guardados(&app.state::<LasPreferencias>());
     let idioma_de_la_sala = idiomas.de_la_sala().to_string();
     let prefs::IdiomasDePista { consultor: idioma_del_consultor, cliente: idioma_del_cliente, .. } = idiomas;
-    let mut guardada = estado.0.lock().map_err(|_| "la escucha quedó en mal estado")?;
+    // Si el candado está envenenado se vuelve con error **sin dejar el modo puesto** (auditoría del S5, B5): un `ElModo`
+    // que se queda en `Presencial` sin sesión haría que el latido y `⌃⌥B` no acoplaran hasta la siguiente.
+    let mut guardada = estado.0.lock().map_err(|_| {
+        marcar_el_modo(&app, None);
+        "la escucha quedó en mal estado"
+    })?;
     if let Some(vieja) = guardada.take() {
         vieja.cortar();
     }
@@ -813,7 +818,7 @@ fn empezar(
     // La reunión se abre aquí: el cuaderno se protege de la captura hasta que la guardes o la
     // descartes, y si la anterior seguía abierta con algo tuyo, se guarda antes (ADR 015 §7 y §10).
     // «Conservar mis turnos» solo vale si el modo lo deja: en presencial no hay turnos tuyos (ADR 020 §5).
-    reunion::al_empezar(&app, tus_turnos);
+    reunion::al_empezar(&app, tus_turnos, modo == modo::Modo::Presencial);
     {
         let s = app.state::<LaSintesis>();
         if let Ok(mut u) = s.reunion_usd.lock() {
@@ -1153,6 +1158,13 @@ fn estado_del_diccionario(
 #[tauri::command]
 fn salida_de_audio() -> capture::nativo::Salida {
     capture::nativo::salida_de_audio()
+}
+
+/// Qué micrófono escucharía la app ahora: el dispositivo de entrada por defecto, con su nombre. En presencial, Sesión lo
+/// nombra para que no empieces con unos auriculares puestos como entrada (sprint 008, M7 del S5).
+#[tauri::command]
+fn entrada_de_audio() -> Option<capture::Entrada> {
+    capture::nativo::entrada_de_audio()
 }
 
 /// El kill-switch. Corta lo que existe y **declara lo que todavía no**, pieza por pieza.
@@ -1790,6 +1802,7 @@ pub fn run() {
             calibrar_transcripcion,
             bajar_modelo_pequeno,
             salida_de_audio,
+            entrada_de_audio,
             elegir_carpeta,
             indexar_corpus,
             estado_del_corpus,
@@ -2347,9 +2360,12 @@ fn fijar_la_voz_en<R: tauri::Runtime>(app: &tauri::AppHandle<R>, al_oido: bool) 
 
 /// El selector «La ficha: al oído · la banda» de Sesión en presencial, con la sesión en marcha. Solo desde la
 /// ventana principal (`SENSIBLES`): la banda no se cambia de modo a sí misma, para eso está `⌃⌥V`.
+///
+/// **No devuelve nada** (auditoría del S5, B14): el estado de la voz le llega a la pantalla por el evento `voz`, y el
+/// retorno no lo leía nadie.
 #[tauri::command]
-fn fijar_la_voz(app: tauri::AppHandle, al_oido: bool) -> habla::LaVoz {
-    fijar_la_voz_en(&app, al_oido)
+fn fijar_la_voz(app: tauri::AppHandle, al_oido: bool) {
+    let _ = fijar_la_voz_en(&app, al_oido);
 }
 
 /// El trabajo de `⌃⌥V`, **hecho en Rust y no pedido a la banda por un evento**.
@@ -2402,7 +2418,15 @@ fn conmutar_el_modo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> habla::LaVo
     println!("[habla] ⌃⌥V: modo solo audio ENCENDIDO · banda a {alto} px");
     // La ficha vigente se rearma igual que en `pedir_ficha`: con el último turno del cliente.
     // Si no se ha oído nada todavía, no hay nada que decir y el modo queda encendido, esperando.
-    match ficha_vigente(&escucha_viva, &el_corpus, &app.state::<LaPantalla>()) {
+    //
+    // **En presencial se dice la que la banda ya enseña** (auditoría del S5, M6): volver a buscar con el último turno de
+    // la sala, que suele ser tu respuesta y sin la tolerancia, decía otra ficha distinta de la de la banda, o ninguna.
+    let la_que_toca = if modo_de_la_sesion(app) == Some(modo::Modo::Presencial) {
+        reunion::la_vigente(app).map(|v| aparicion_de_la_vigente(&v))
+    } else {
+        ficha_vigente(&escucha_viva, &el_corpus, &app.state::<LaPantalla>())
+    };
+    match la_que_toca {
         Some(a) => decir_la_ficha(app, &a),
         None => println!("[habla] todavía no he oído nada del cliente: el modo queda a la espera"),
     }
@@ -2448,6 +2472,30 @@ fn ficha_vigente(
     let ms = empezo.elapsed().as_millis() as u64;
     println!("[ficha] a petición del usuario en {ms} ms · {} candidatas", hallazgos.len());
     Some(ficha::Aparicion { respuesta, motivo: disparo::Motivo::Atajo, ms, hora: ultimo.hora, de_ms: Some(ultimo.hasta_ms) })
+}
+
+/// La ficha que la banda enseña (la del cuaderno), hecha aparición para que la voz la diga. La línea larga y las
+/// acumuladas no se dicen: la voz lee titular, línea y fuente.
+fn aparicion_de_la_vigente(v: &notas::FichaFijada) -> ficha::Aparicion {
+    ficha::Aparicion {
+        respuesta: ficha::Respuesta::Ficha(Box::new(ficha::Ficha {
+            titular: v.titular.clone(),
+            linea: v.linea.clone(),
+            linea_larga: v.linea.clone(),
+            fuente: ficha::Fuente {
+                documento: v.documento.clone(),
+                seccion: v.seccion.clone(),
+                unidad: v.unidad,
+                conjeturada: false,
+            },
+            acumuladas: Vec::new(),
+            respaldo: Vec::new(),
+        })),
+        motivo: disparo::Motivo::Atajo,
+        ms: 0,
+        hora: escucha::la_hora(),
+        de_ms: None,
+    }
 }
 
 /// **`⌃⌥A` en solo notas** (ADR 017 §5): no hay turno del cliente con que buscar, así que busca con la
@@ -2756,12 +2804,12 @@ fn el_atajo_de_leer_la_pantalla() -> tauri_plugin_global_shortcut::Shortcut {
 /// ventana de la reunión, ahora, aunque la automática esté apagada. Es la salida para una NDA
 /// estricta: nada se lee salvo cuando el consultor lo pide.
 #[tauri::command]
-fn leer_la_pantalla_ahora(la_pantalla: tauri::State<'_, LaPantalla>) -> bool {
-    leer_una_vez(&la_pantalla)
+fn leer_la_pantalla_ahora(app: tauri::AppHandle, la_pantalla: tauri::State<'_, LaPantalla>) -> bool {
+    leer_una_vez(&app, &la_pantalla)
 }
 
 /// Lo que hacen el comando y la tecla: los dos caminos, una sola decisión.
-fn leer_una_vez(la_pantalla: &LaPantalla) -> bool {
+fn leer_una_vez<R: tauri::Runtime>(app: &tauri::AppHandle<R>, la_pantalla: &LaPantalla) -> bool {
     let hay = la_pantalla
         .lectura
         .lock()
@@ -2769,9 +2817,19 @@ fn leer_una_vez(la_pantalla: &LaPantalla) -> bool {
         .and_then(|g| g.as_ref().map(|l| l.leer_ahora()))
         .is_some();
     if !hay {
-        println!("[pantalla] lectura pedida sin sesión: no hay reunión que leer");
+        // Hay sesión pero en presencial la lectura no arranca por diseño: decirlo como lo que es y no como «sin
+        // sesión» (auditoría del S5, B4). Solo metadatos.
+        println!("{}", por_que_no_se_leyo(modo_de_la_sesion(app)));
     }
     hay
+}
+
+/// El motivo que va al log cuando `⌃⌥L` no leyó nada, según el modo de la sesión. Pura.
+fn por_que_no_se_leyo(modo: Option<modo::Modo>) -> &'static str {
+    match modo {
+        Some(modo::Modo::Presencial) => "[pantalla] ⌃⌥L en presencial: no se lee la pantalla (ADR 020 §1)",
+        _ => "[pantalla] lectura pedida sin sesión: no hay reunión que leer",
+    }
 }
 
 // ── LAS PREFERENCIAS (ADR 002, enmienda 2) ──────────────────────────────────────────────────────
@@ -2836,7 +2894,7 @@ fn idiomas_de_pista(lp: tauri::State<'_, LasPreferencias>) -> prefs::IdiomasDePi
     idiomas_guardados(&lp)
 }
 
-/// Idioma elige el de una pista. Solo `consultor` o `cliente`, y solo un código de idioma.
+/// Idioma elige el de una pista. Solo `consultor`, `cliente` o `sala` (presencial, ADR 020 §6), y solo un código de idioma.
 #[tauri::command]
 fn fijar_idioma_de_pista(
     app: tauri::AppHandle,
@@ -3846,7 +3904,7 @@ fn atender_el_atajo<R: tauri::Runtime>(
         conmutar_el_modo(app);
     } else if *atajo == el_atajo_de_leer_la_pantalla() {
         println!("[pantalla] {}", atajos::de_este_equipo(atajos::Accion::LeerLaPantalla).texto);
-        leer_una_vez(&app.state::<LaPantalla>());
+        leer_una_vez(app, &app.state::<LaPantalla>());
     } else if *atajo == el_atajo_del_radar() {
         println!("[radar] {}", atajos::de_este_equipo(atajos::Accion::Radar).texto);
         ir_a_lo_que_ve(app);
@@ -4701,6 +4759,62 @@ mod pruebas_del_modo_presencial {
             c.contains(concat!("reunion::conservar_mis_turnos(&app, si, ", "el_modo_lo_deja)")),
             "el interruptor no le pasa al cuaderno lo que dice el modo"
         );
+    }
+
+    /// **En presencial, encender la voz dice la ficha que la banda enseña** (sprint 008, M6 del S5), no una búsqueda
+    /// nueva con el último turno de la sala: esa decía otra ficha, o ninguna. `conmutar_el_modo` mira el modo ANTES de
+    /// llamar a `ficha_vigente`, y la ficha dicha lleva lo que el cuaderno tiene: titular, línea y fuente.
+    #[test]
+    fn en_presencial_la_voz_dice_la_ficha_de_la_banda() {
+        let c = cuerpo_de("\nfn conmutar_el_modo<");
+        let presencial = c.find("modo::Modo::Presencial").expect("conmutar_el_modo no mira si es presencial");
+        let reunion = c.find("reunion::la_vigente(app)").expect("no pide la ficha vigente del cuaderno");
+        let busca = c.find("ficha_vigente(&escucha_viva").expect("la reunión ya no busca");
+        assert!(presencial < reunion && reunion < busca, "la búsqueda nueva va solo en la rama de la reunión");
+        let v = crate::notas::FichaFijada {
+            titular: "Limpieza de datos: hasta tres fuentes".into(),
+            documento: "Propuesta Páramo Azul".into(),
+            seccion: Some("Alcance".into()),
+            unidad: None,
+            linea: "El alcance incluye hasta tres fuentes.".into(),
+        };
+        let a = crate::aparicion_de_la_vigente(&v);
+        let crate::ficha::Respuesta::Ficha(f) = &a.respuesta else { panic!("tiene que ser una ficha") };
+        assert_eq!((f.titular.as_str(), f.linea.as_str()), ("Limpieza de datos: hasta tres fuentes", "El alcance incluye hasta tres fuentes."));
+        assert_eq!((f.fuente.documento.as_str(), f.fuente.seccion.as_deref()), ("Propuesta Páramo Azul", Some("Alcance")));
+    }
+
+    /// **`⌃⌥L` en presencial no miente en el log** (sprint 008, B4 del S5): hay sesión, pero la lectura no arranca por
+    /// diseño, y decir «sin sesión» era falso.
+    #[test]
+    fn el_log_de_leer_la_pantalla_dice_la_verdad_en_presencial() {
+        use crate::modo::Modo;
+        assert!(crate::por_que_no_se_leyo(Some(Modo::Presencial)).contains("en presencial"));
+        assert!(crate::por_que_no_se_leyo(None).contains("sin sesión"));
+        assert!(crate::por_que_no_se_leyo(Some(Modo::Normal)).contains("sin sesión"));
+    }
+
+    /// **Un candado envenenado no deja el modo puesto** (B5 del S5): `empezar` lo suelta antes de volver con el error.
+    #[test]
+    fn empezar_no_deja_el_modo_si_la_escucha_no_se_puede_tomar() {
+        let c = cuerpo_de("\nfn empezar(");
+        let candado = c.find("estado.0.lock().map_err(").expect("empezar toma el candado de la escucha");
+        let suelta = c[candado..].find(concat!("marcar_el_modo(&app, ", "None)")).expect("no suelta el modo si el candado falla");
+        assert!(suelta < 200, "el modo se suelta lejos del error: {suelta}");
+    }
+
+    /// **El cuaderno sabe que la sesión es presencial** (sprint 008, M3 del S5): `empezar` se lo dice a `al_empezar` y
+    /// la vista de Notas lo lee, para no ofrecer «Conservar mis turnos» ni hablar de «la voz del cliente» en la sala.
+    #[test]
+    fn el_cuaderno_sabe_si_la_sesion_es_presencial() {
+        let e = cuerpo_de("\nfn empezar(");
+        assert!(
+            e.contains(concat!("reunion::al_empezar(&app, tus_turnos, ", "modo == modo::Modo::Presencial)")),
+            "empezar no le dice al cuaderno si la sesión es presencial"
+        );
+        let r = include_str!("reunion.rs");
+        assert!(r.contains("el.presencial.store(presencial, Ordering::Relaxed)"), "al_empezar no lo recuerda");
+        assert!(r.contains("let presencial = el.presencial.load(Ordering::Relaxed)"), "la vista no lo lee");
     }
 }
 

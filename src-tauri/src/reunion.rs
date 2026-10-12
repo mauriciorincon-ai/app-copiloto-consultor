@@ -86,6 +86,9 @@ pub struct ElCuaderno {
     cliente: Mutex<Option<String>>,
     /// La reunión va en **modo solo notas** (ADR 017 §5): sin captura. La banda y Sesión lo dicen.
     solo_notas: AtomicBool,
+    /// La sesión es **presencial** (ADR 020): la sala, sin dueño. Notas lo necesita para no hablar de «la voz del
+    /// cliente» ni ofrecer «Conservar mis turnos» donde no se sabe cuáles son tuyos (sprint 008, M3 del S5).
+    presencial: AtomicBool,
 }
 
 /// Lo que la pantalla de Notas enseña del cuaderno de ahora.
@@ -116,6 +119,9 @@ pub struct VistaDelCuaderno {
     /// macOS no dejó proteger el cuaderno al empezar: tu nota se vería al compartir la pantalla entera
     /// (auditoría del S3, B4). Notas lo dice en una franja.
     pub sin_proteger: bool,
+    /// La sesión es presencial: la sala no tiene dueño (ADR 020). Notas desactiva «Conservar mis turnos» y nombra la
+    /// sala donde la reunión nombra al cliente (sprint 008, M3 del S5).
+    pub presencial: bool,
 }
 
 /// La bandeja que Notas enseña: la que vence antes (ADR 016 §4).
@@ -407,6 +413,7 @@ pub fn vista<R: Runtime>(app: &AppHandle<R>) -> Option<VistaDelCuaderno> {
         (el.turnos_del_cliente.load(Ordering::Relaxed), el.lecturas.load(Ordering::Relaxed));
     let ventana = preferencias(app).ventana_de_la_bandeja;
     let sin_proteger = el.sin_proteger.load(Ordering::Relaxed);
+    let presencial = el.presencial.load(Ordering::Relaxed);
     el.con(|c| VistaDelCuaderno {
         nota: c.nota().to_string(),
         acuerdos: c.acuerdos().to_vec(),
@@ -423,6 +430,7 @@ pub fn vista<R: Runtime>(app: &AppHandle<R>) -> Option<VistaDelCuaderno> {
         lleno: c.lleno(),
         ventana,
         sin_proteger,
+        presencial,
     })
 }
 
@@ -438,7 +446,7 @@ pub fn contar_una_lectura<R: Runtime>(app: &AppHandle<R>) {
 ///
 /// `tus_turnos` es lo que el modo deja (ADR 020 §5): en presencial, `false`, y «Conservar mis turnos» no
 /// guarda nada **sin que se toque tu preferencia**, que vuelve a valer en la siguiente reunión.
-pub fn al_empezar<R: Runtime>(app: &AppHandle<R>, tus_turnos: bool) {
+pub fn al_empezar<R: Runtime>(app: &AppHandle<R>, tus_turnos: bool, presencial: bool) {
     let Some(el) = app.try_state::<ElCuaderno>() else { return };
     if el.hay_que_guardar_la_anterior() {
         match guardar(app) {
@@ -447,6 +455,7 @@ pub fn al_empezar<R: Runtime>(app: &AppHandle<R>, tus_turnos: bool) {
         }
     }
     el.abrir(conservar_en_este_modo(preferencias(app).conservar_mis_turnos, tus_turnos), fecha_de_ahora());
+    el.presencial.store(presencial, Ordering::Relaxed);
     let fallo = ventana::proteger_el_cuaderno(app, true).is_err();
     el.sin_proteger.store(fallo, Ordering::Relaxed);
     avisar(app);
@@ -604,6 +613,13 @@ pub fn ver<R: Runtime>(app: &AppHandle<R>, aparicion: &crate::ficha::Aparicion) 
             linea: f.linea.clone(),
         })
     });
+}
+
+/// **La ficha que la banda enseña ahora**, tal como el cuaderno la recuerda (la misma que fijaría `⌃⌥P`); el corte la
+/// vacía. En presencial, encender la voz a mitad de sesión dice esta y no vuelve a buscar con el último turno de la sala
+/// (sprint 008, M6 del S5).
+pub fn la_vigente<R: Runtime>(app: &AppHandle<R>) -> Option<FichaFijada> {
+    app.try_state::<ElCuaderno>()?.con(|c| c.la_vigente().cloned()).flatten()
 }
 
 /// Un turno recién transcrito: el cuaderno decide si es tuyo (`notas::Cuaderno::oir`). Los del

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-entrada-de-audio"
+description = "Enables the entrada_de_audio command without any pre-configured scope."
+commands.allow = ["entrada_de_audio"]
+
+[[permission]]
+identifier = "deny-entrada-de-audio"
+description = "Denies the entrada_de_audio command without any pre-configured scope."
+commands.deny = ["entrada_de_audio"]

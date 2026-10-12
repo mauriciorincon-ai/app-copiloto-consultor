@@ -749,7 +749,9 @@ pub fn muestras() -> Vec<Muestra> {
         m("IDIOMAS_DE_PISTA", "IdiomasDePista", "./cuaderno", &crate::prefs::IdiomasDePista {
             consultor: "es-ES".into(),
             cliente: "en-US".into(),
-            sala: Some("en-US".into()),
+            // Distinta de la del cliente a propósito (auditoría del S5, B9): con las dos iguales, una sala que no llegara
+            // caería al idioma del cliente y ningún test lo distinguiría.
+            sala: Some("es-ES".into()),
         }),
         // ---- tus notas (C9, sprint 003, fase 1, ADR 015) -------------------------------------
         // Tres comandos que la pantalla de Notas lee: el cuaderno de ahora (durante · al cerrar), la
@@ -783,6 +785,7 @@ pub fn muestras() -> Vec<Muestra> {
                 lleno: c.lleno(),
                 ventana: crate::bandeja::Ventana::TresHoras,
                 sin_proteger: false,
+                presencial: false,
             }
         }),
         // ---- las propuestas y la bandeja (sprint 003, fase 2, ADR 016) ---------------------------
@@ -808,6 +811,37 @@ pub fn muestras() -> Vec<Muestra> {
                 lleno: true,
                 ventana: crate::bandeja::Ventana::AlCerrar,
                 sin_proteger: false,
+                presencial: false,
+            }
+        }),
+        // **El micrófono que la app escucharía** (sprint 008, M7 del S5): el del equipo y unos auriculares USB o Bluetooth.
+        m("ENTRADA_DEL_EQUIPO", "Entrada", "./cuaderno", &crate::capture::Entrada {
+            nombre: "Micrófono del MacBook Pro".into(),
+            externa: false,
+        }),
+        m("ENTRADA_EXTERNA", "Entrada", "./cuaderno", &crate::capture::Entrada { nombre: "AirPods Pro".into(), externa: true }),
+        // **Una sesión presencial, ya parada** (sprint 008, M3 del S5): la sala no tiene dueño. «Al cerrar», Notas
+        // desactiva «Conservar mis turnos» y nombra la sala; la única forma con `presencial` en `true`.
+        m("CUADERNO_PRESENCIAL", "VistaDelCuaderno", "./notas", &{
+            let mut c = crate::notas::Cuaderno::nuevo(false);
+            c.escribir("La sala pide la cuarta fuente.");
+            crate::reunion::VistaDelCuaderno {
+                nota: c.nota().to_string(),
+                acuerdos: Vec::new(),
+                fijadas: Vec::new(),
+                resumen: c.resumen(),
+                conservar_mis_turnos: false,
+                abierta: true,
+                escuchando: false,
+                previsto: None,
+                turnos_del_cliente: 12,
+                lecturas: 0,
+                retencion: crate::prefs::Retencion::Dias90,
+                propuestas: Vec::new(),
+                lleno: false,
+                ventana: crate::bandeja::Ventana::TresHoras,
+                sin_proteger: false,
+                presencial: true,
             }
         }),
         // macOS no dejó proteger el cuaderno (auditoría del S3, B4): la única forma con el campo en `true`.
@@ -830,6 +864,7 @@ pub fn muestras() -> Vec<Muestra> {
                 lleno: false,
                 ventana: crate::bandeja::Ventana::TresHoras,
                 sin_proteger: true,
+                presencial: false,
             }
         }),
         // La línea de la banda: la última propuesta, o nada. Y las cinco reglas, cada una con su grafía.

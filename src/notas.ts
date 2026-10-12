@@ -129,6 +129,8 @@ export type VistaDelCuaderno = {
   ventana: Ventana;
   /** macOS no dejó proteger el cuaderno al empezar: Notas lo dice (auditoría del S3, B4). */
   sinProteger: boolean;
+  /** La sesión es presencial: la sala no tiene dueño (ADR 020). Notas no ofrece «Conservar mis turnos» ni habla del cliente. */
+  presencial: boolean;
 };
 
 /** Una reunión guardada, como la lista la enseña: sin abrirla (`reuniones_guardadas`). */
@@ -217,6 +219,7 @@ export function useMuestraDelCuaderno(vista: VistaDeNotas): VistaDelCuaderno {
     lleno: false,
     ventana: vista === "al-cerrar-cero" ? "0" : "3h",
     sinProteger: false,
+    presencial: false,
   };
 }
 

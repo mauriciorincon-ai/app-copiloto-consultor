@@ -90,8 +90,10 @@ const INTERROGATIVOS: &[&str] = &[
 /// inglesa: tres frases dichas sin pregunta disparaban como preguntas, en presencial y en una reunión.
 const AUXILIARES: &[&str] = &["does", "do", "can", "could", "would", "will", "are", "is", "have", "has", "any"];
 
-/// Lo que puede ir delante de un auxiliar sin quitarle la pregunta: «And is that included?».
-const CONJUNCIONES: &[&str] = &["and", "so", "but", "or", "then"];
+/// Lo que puede ir delante de un auxiliar sin quitarle la pregunta: «And is that included?» y, desde el sprint 008
+/// (auditoría del S5, B7), las muletillas de apertura —«Okay, is that included», «Well, do you…»—, que sin esto dejaban
+/// de disparar si el transcriptor no escribía el `?`.
+const CONJUNCIONES: &[&str] = &["and", "so", "but", "or", "then", "okay", "ok", "well", "now", "also", "right"];
 
 /// Estado del disparador entre turnos. Vive en la escucha.
 #[derive(Debug, Default)]
@@ -515,6 +517,9 @@ mod pruebas {
             "We have the same problem with the rural stores.",
             "That is exactly what the margin by channel dashboard measures.",
             "Access is requested in writing, read only, and revoked on closing day.",
+            // Una muletilla delante no vuelve pregunta a una afirmación.
+            "Okay that is exactly what the dashboard measures.",
+            "Well we have the same problem with the rural stores.",
         ] {
             assert_eq!(Disparador::nuevo().mirar(&turno(afirmacion), &ctx(0)), None, "«{afirmacion}» no es una pregunta");
         }
@@ -523,6 +528,13 @@ mod pruebas {
             "And is data cleaning within the scope",
             "Can we start with the scope",
             "So does that include the workshop",
+            // Las muletillas de apertura (B7 del S5): antes dejaban de ser pregunta sin el «?».
+            "Okay is that included",
+            "Ok are we within the scope",
+            "Well do you have ISO certification",
+            "Now can we start with the scope",
+            "Also does that include the workshop",
+            "Right is the data cleaning in the proposal",
         ] {
             assert_eq!(Disparador::nuevo().mirar(&turno(pregunta), &ctx(0)), Some(Motivo::Pregunta), "«{pregunta}» es una pregunta");
         }

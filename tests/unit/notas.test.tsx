@@ -7,6 +7,7 @@ import { llamar, preguntar } from "@/puente";
 import {
   BANDEJA_ABIERTA,
   BANDEJA_CON_LLAVE,
+  CUADERNO_PRESENCIAL,
   CUADERNO_SIN_PROTEGER,
   LISTA_DE_REUNIONES,
   REUNION_GUARDADA,
@@ -111,6 +112,35 @@ describe("Notas dentro de Tauri", () => {
     // La casilla apagada: la fila de tus turnos no está, y la frase lo dice.
     expect(screen.queryByText(t.tusTurnosEnTexto)).toBeNull();
     expect(screen.getByRole("switch", { name: t.conservarMisTurnos })).toHaveAttribute("aria-checked", "false");
+  });
+
+  /**
+   * Auditoría del S5, M3: en una sesión presencial la sala no tiene dueño. «Conservar mis turnos» no hace nada (Rust lo deja
+   * apagado) y «Muere al cerrar» no habla de la voz del cliente ni de sus turnos. Su control: una reunión sí.
+   */
+  it("al cerrar una sesión presencial, el interruptor está desactivado y la sala se nombra como sala", async () => {
+    respuestas.set("cuaderno_de_la_reunion", CUADERNO_PRESENCIAL);
+    await pinta();
+    const interruptor = screen.getByRole("switch", { name: t.conservarMisTurnos });
+    expect(interruptor).toHaveAttribute("aria-disabled", "true");
+    await act(async () => {
+      fireEvent.click(interruptor);
+    });
+    expect(pedidos("conservar_mis_turnos"), "pulsarlo no puede cambiar nada").toHaveLength(0);
+    expect(screen.getByText(es.cuaderno.presencial.noSabeCuales)).toBeInTheDocument();
+    expect(screen.getByText(es.cuaderno.enPresencial.bufSala)).toBeInTheDocument();
+    expect(screen.getByText(es.cuaderno.bufTranscript)).toBeInTheDocument();
+    expect(screen.queryByText(t.vozDelCliente)).toBeNull();
+    expect(screen.queryByText(t.susTurnos)).toBeNull();
+    expect(screen.queryByText(t.conservarApagado)).toBeNull();
+  });
+
+  it("al cerrar una reunión (el control), sigue habiendo voz del cliente e interruptor que se pulsa", async () => {
+    respuestas.set("cuaderno_de_la_reunion", VISTA_DEL_CUADERNO);
+    await pinta();
+    expect(screen.getByText(t.vozDelCliente)).toBeInTheDocument();
+    expect(screen.getByText(t.susTurnos)).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: t.conservarMisTurnos })).not.toHaveAttribute("aria-disabled");
   });
 
   it("si guardar falla, se dice y la nota se queda en pantalla", async () => {

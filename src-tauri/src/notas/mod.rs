@@ -219,6 +219,11 @@ impl Cuaderno {
         self.vigente = Some(ficha);
     }
 
+    /// La ficha que la banda enseña ahora (la que fijaría ⌃⌥P), si hay una. El corte la vacía.
+    pub fn la_vigente(&self) -> Option<&FichaFijada> {
+        self.vigente.as_ref()
+    }
+
     /// ⌃⌥P: fija la ficha que la banda enseña. `None` si no hay ninguna; la misma no se fija dos veces.
     pub fn fijar_la_vigente(&mut self) -> Option<&FichaFijada> {
         let v = self.vigente.clone()?;
@@ -611,6 +616,18 @@ mod pruebas {
         assert_eq!(c.fijadas().len(), 1, "las fijadas son tuyas y sobreviven al corte");
         assert_eq!(c.resumen().turnos, 0, "tus turnos salen de la captura y mueren con el corte");
         assert!(c.fijar_la_vigente().is_none(), "la ficha vigente la eligió el cliente: muere con el corte");
+        assert!(c.la_vigente().is_none(), "y no se puede leer de vuelta después del corte");
+    }
+
+    /// La ficha que la banda enseña se puede leer de vuelta (sprint 008, M6 del S5): es la que la voz dice en presencial.
+    #[test]
+    fn la_ficha_vigente_se_lee_de_vuelta() {
+        let mut c = Cuaderno::nuevo(false);
+        assert!(c.la_vigente().is_none());
+        c.ver(ficha("Limpieza de datos: hasta tres fuentes"));
+        assert_eq!(c.la_vigente().map(|f| f.titular.as_str()), Some("Limpieza de datos: hasta tres fuentes"));
+        c.ver(ficha("Sur del Valle: 11 semanas reales"));
+        assert_eq!(c.la_vigente().map(|f| f.titular.as_str()), Some("Sur del Valle: 11 semanas reales"), "manda la última");
     }
 
     #[test]

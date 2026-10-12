@@ -11,7 +11,7 @@
  *     cd src-tauri && ACTUALIZA_CONTRATO=1 cargo test contrato
  */
 import type { Novedad, Aparicion } from "./ficha";
-import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelDiccionario, EstadoDelCorpus, InformeDelCorte, LaVoz, EstadoDeLaPantalla, IdiomasDePista, QueSabeTranscribir } from "./cuaderno";
+import type { Turno, Reunion, Permisos, EstadoDeEscucha, Disponibilidad, Salida, EstadoDelDiccionario, EstadoDelCorpus, InformeDelCorte, LaVoz, EstadoDeLaPantalla, IdiomasDePista, Entrada, QueSabeTranscribir } from "./cuaderno";
 import type { EnTuMac } from "./radar";
 import type { EstadoDeLaIa, PorQueNoRedacta, LoQueSalio } from "./ia";
 import type { EstadoDelAcople } from "./acople";
@@ -1030,7 +1030,7 @@ export const LO_QUE_SALIO_DEL_BANCO: LoQueSalio = {
 export const IDIOMAS_DE_PISTA: IdiomasDePista = {
     "cliente": "en-US",
     "consultor": "es-ES",
-    "sala": "en-US"
+    "sala": "es-ES"
   };
 
 export const VISTA_DEL_CUADERNO: VistaDelCuaderno = {
@@ -1051,6 +1051,7 @@ export const VISTA_DEL_CUADERNO: VistaDelCuaderno = {
     "lecturas": 9,
     "lleno": false,
     "nota": "Piden la cuarta fuente (Excel de logística).\nFecha real: 12 semanas desde la firma.",
+    "presencial": false,
     "previsto": {
       "archivo": "reunion-2026-09-20-1402.ghost",
       "cliente": null,
@@ -1085,6 +1086,7 @@ export const VISTA_CON_PROPUESTAS: VistaDelCuaderno = {
     "lecturas": 0,
     "lleno": true,
     "nota": "Piden la cuarta fuente.",
+    "presencial": false,
     "previsto": null,
     "propuestas": [
       {
@@ -1124,6 +1126,46 @@ export const VISTA_CON_PROPUESTAS: VistaDelCuaderno = {
     "ventana": "0"
   };
 
+export const ENTRADA_DEL_EQUIPO: Entrada = {
+    "externa": false,
+    "nombre": "Micrófono del MacBook Pro"
+  };
+
+export const ENTRADA_EXTERNA: Entrada = {
+    "externa": true,
+    "nombre": "AirPods Pro"
+  };
+
+export const CUADERNO_PRESENCIAL: VistaDelCuaderno = {
+    "abierta": true,
+    "acuerdos": [],
+    "conservarMisTurnos": false,
+    "escuchando": false,
+    "fijadas": [],
+    "lecturas": 0,
+    "lleno": false,
+    "nota": "La sala pide la cuarta fuente.",
+    "presencial": true,
+    "previsto": null,
+    "propuestas": [],
+    "resumen": {
+      "acuerdos": 0,
+      "bytesAcuerdos": 0,
+      "bytesFijadas": 0,
+      "bytesNota": 30,
+      "bytesTurnos": 0,
+      "fijadas": 0,
+      "parrafos": 1,
+      "propuestas": 0,
+      "sinDecidir": 0,
+      "turnos": 0
+    },
+    "retencion": "90d",
+    "sinProteger": false,
+    "turnosDelCliente": 12,
+    "ventana": "3h"
+  };
+
 export const CUADERNO_SIN_PROTEGER: VistaDelCuaderno = {
     "abierta": true,
     "acuerdos": [],
@@ -1133,6 +1175,7 @@ export const CUADERNO_SIN_PROTEGER: VistaDelCuaderno = {
     "lecturas": 0,
     "lleno": false,
     "nota": "Piden la cuarta fuente.",
+    "presencial": false,
     "previsto": null,
     "propuestas": [],
     "resumen": {

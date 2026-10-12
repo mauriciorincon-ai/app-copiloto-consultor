@@ -29,6 +29,7 @@ const COMANDOS: &[&str] = &[
         "calibrar_transcripcion",
         "bajar_modelo_pequeno",
         "salida_de_audio",
+        "entrada_de_audio",
         "elegir_carpeta",
         "indexar_corpus",
         "estado_del_corpus",

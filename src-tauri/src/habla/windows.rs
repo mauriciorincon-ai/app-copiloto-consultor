@@ -173,15 +173,24 @@ fn voz_para(idioma: &str) -> Option<VoiceInformation> {
         .map(|(v, _)| v.clone())
 }
 
-/// Sintetiza la frase en memoria y la hace sonar. Vuelve al acabar o al callarla.
-fn decir_ahora(
-    sintetizador: Option<&SpeechSynthesizer>,
-    idioma: &str,
-    texto: &str,
-    generacion: u64,
-    estado: &Estado,
-) -> Result<(), String> {
-    let s = sintetizador.ok_or("Windows no dio un sintetizador de voz")?;
+/// **Sintetiza una frase a memoria, sin hacerla sonar** (sprint 008, M6 del S7: la voz de Windows contra un fixture en
+/// `build-windows`). El hilo que llama tiene que tener COM multihilo, como el de la voz y el de las preguntas. Crea su
+/// propio sintetizador: no toca la cola ni el estado del hilo que habla.
+pub fn sintetizar_a_memoria(idioma: &str, texto: &str) -> Result<pcm::Frase, String> {
+    let s = SpeechSynthesizer::new().map_err(|e| format!("Windows no dio un sintetizador de voz: {e}"))?;
+    sintetizar(&s, idioma, texto)
+}
+
+/// Los idiomas de las voces que este PC trae, para decirlos cuando no hay la que se pidió.
+pub fn idiomas_de_las_voces() -> Vec<String> {
+    let Ok(todas) = SpeechSynthesizer::AllVoices() else { return Vec::new() };
+    let n = todas.Size().unwrap_or(0);
+    (0..n).filter_map(|i| todas.GetAt(i).ok()).filter_map(|v| v.Language().ok().map(|l| l.to_string())).collect()
+}
+
+/// La frase como PCM en memoria: `SynthesizeTextToStreamAsync` la entrega como un WAV y `pcm.rs` lo lee. Los bytes
+/// intermedios se pisan.
+fn sintetizar(s: &SpeechSynthesizer, idioma: &str, texto: &str) -> Result<pcm::Frase, String> {
     let voz = voz_para(idioma).ok_or_else(|| format!("este PC no tiene voz para «{idioma}»"))?;
     let e = |e: windows::core::Error| format!("{e}");
     s.SetVoice(&voz).map_err(e)?;
@@ -193,7 +202,19 @@ fn decir_ahora(
     DataReader::FromBuffer(&leido).map_err(e)?.ReadBytes(&mut bytes).map_err(e)?;
     let frase = pcm::leer(&bytes);
     bytes.fill(0);
-    let mut frase = frase?;
+    frase
+}
+
+/// Sintetiza la frase en memoria y la hace sonar. Vuelve al acabar o al callarla.
+fn decir_ahora(
+    sintetizador: Option<&SpeechSynthesizer>,
+    idioma: &str,
+    texto: &str,
+    generacion: u64,
+    estado: &Estado,
+) -> Result<(), String> {
+    let s = sintetizador.ok_or("Windows no dio un sintetizador de voz")?;
+    let mut frase = sintetizar(s, idioma, texto)?;
     super::empieza_a_sonar(Instant::now());
     let sonado = sonar(&frase, generacion, estado);
     super::deja_de_sonar(Instant::now());

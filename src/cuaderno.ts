@@ -210,6 +210,18 @@ export function useBytesALaRed(): string {
 // Fase 3 — las dos pistas, la transcripción y el idioma
 // ---------------------------------------------------------------------------------------------
 
+/**
+ * **El micrófono que la app escucharía** (sprint 008, M7 del S5): el dispositivo de entrada por defecto, con su nombre y si es
+ * externo (USB o Bluetooth). En presencial la sala es lo que ese micrófono oye: unos auriculares como entrada harían que
+ * la app oyera sobre todo tu voz. Sesión lo nombra antes de empezar. Solo el nombre; jamás audio.
+ */
+export type Entrada = { nombre: string; externa: boolean };
+
+/** El micrófono por defecto ahora; se vuelve a preguntar al recuperar el foco (cambiarlo es ir a Ajustes y volver). */
+export function useEntradaDeAudio(): Entrada | null {
+  return usePreguntaAlVolver<Entrada | null>("entrada_de_audio", null, null);
+}
+
 /** Por dónde sale el sonido del Mac, y por tanto si el micrófono va a oír al cliente. */
 export type Salida =
   | { salida: "altavoces" }
@@ -506,8 +518,9 @@ export function useVoz(): LaVoz {
  * **Cómo ves la ficha en presencial, con la sesión en marcha** (ADR 020 §7): al oído enciende el modo solo audio
  * y la banda lo apaga, por el mismo camino que `⌃⌥V`. Pedir lo que ya está no conmuta nada.
  */
-export function fijarLaVoz(alOido: boolean): Promise<LaVoz | null> {
-  return preguntar<LaVoz>("fijar_la_voz", { alOido });
+export function fijarLaVoz(alOido: boolean): Promise<boolean> {
+  // Sin retorno (auditoría del S5, B14): el estado de la voz llega por el evento `voz`.
+  return llamar("fijar_la_voz", { alOido });
 }
 
 /**

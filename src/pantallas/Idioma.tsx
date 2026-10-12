@@ -93,7 +93,7 @@ export function TuDiccionario({ diccionario }: { diccionario: EstadoDelDiccionar
   );
 }
 
-function estadoDelModelo(d: Disponibilidad | undefined, instalado: string): string | null {
+export function estadoDelModelo(d: Disponibilidad | undefined, instalado: string): string | null {
   if (!d) return null;
   return d.estado === "listo" ? instalado : null;
 }
@@ -327,7 +327,7 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
  * una frase del sistema en una pantalla inglesa es el mismo defecto por otra puerta—. Lo que se
  * pierde de detalle se gana en que la app diga la verdad en el idioma del usuario.
  */
-function motivo(
+export function motivo(
   t: ReturnType<typeof useT>["cuaderno"],
   d: Disponibilidad | "instalando" | undefined,
 ): string {

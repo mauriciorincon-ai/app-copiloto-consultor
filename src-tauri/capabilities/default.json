@@ -28,6 +28,7 @@
     "allow-calibrar-transcripcion",
     "allow-bajar-modelo-pequeno",
     "allow-salida-de-audio",
+    "allow-entrada-de-audio",
     "allow-elegir-carpeta",
     "allow-indexar-corpus",
     "allow-estado-del-corpus",

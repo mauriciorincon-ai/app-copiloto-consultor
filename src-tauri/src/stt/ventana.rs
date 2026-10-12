@@ -43,12 +43,6 @@ impl Ventana {
         self.turnos.iter().skip(self.turnos.len().saturating_sub(n)).collect()
     }
 
-    /// El último turno de una pista concreta. Es lo que la fase 4 preguntará: «¿qué acaba de
-    /// decir el cliente?».
-    pub fn ultimo_de(&self, pista: crate::capture::Pista) -> Option<&Turno> {
-        self.turnos.iter().rev().find(|t| t.pista == pista)
-    }
-
     /// El último turno que cumple algo. El silencio pregunta por «lo último que pudo decir el
     /// cliente», que en presencial es la sala (`Turno::pudo_decirlo_el_cliente`).
     pub fn ultimo_que(&self, cumple: impl Fn(&Turno) -> bool) -> Option<&Turno> {
@@ -118,8 +112,10 @@ mod tests {
         v.empujar(turno(Pista::Sistema, 1));
         v.empujar(turno(Pista::Microfono, 2));
         v.empujar(turno(Pista::Sistema, 3));
-        assert_eq!(v.ultimo_de(Pista::Sistema).unwrap().desde_ms, 3_000);
-        assert_eq!(v.ultimo_de(Pista::Microfono).unwrap().desde_ms, 2_000);
+        // Se pregunta por quién (`quien()`), no por una pista concreta (sprint 008, B6 del S5): `ultimo_de(pista)` se retiró.
+        use crate::capture::Quien;
+        assert_eq!(v.ultimo_que(|t| t.pista.quien() == Quien::Cliente).unwrap().desde_ms, 3_000);
+        assert_eq!(v.ultimo_que(|t| t.pista.quien() == Quien::Tuyo).unwrap().desde_ms, 2_000);
     }
 
     #[test]
@@ -127,7 +123,7 @@ mod tests {
         let v = Ventana::nueva();
         assert_eq!(v.cuantos(), 0);
         assert_eq!(v.bytes(), 0);
-        assert!(v.ultimo_de(Pista::Sistema).is_none());
+        assert!(v.ultimo_que(|_| true).is_none());
         assert!(v.ultimos(3).is_empty());
     }
 
