@@ -108,23 +108,36 @@ windows-sys = { version = "0.61", features = [
   "Win32_Security_Credentials",
   "Win32_System_Registry",
 ] }
+# `windows-future` (sprint 008): la que ya trae `windows`, nombrada para pedir Windows Hello con la ventana de la app
+# (`IAsyncOperation` del resultado). No es un crate nuevo en el árbol.
+windows-future = "0.3"
 windows = { version = "0.62", features = [
   "Foundation",
+  "Wdk_System_SystemServices",
   "Globalization",
   "Graphics_Imaging",
   "Media_Core",
   "Media_Ocr",
   "Media_SpeechSynthesis",
+  "Security_Credentials_UI",
   "Storage_Streams",
   "Win32_Devices_FunctionDiscovery",
   "Win32_Foundation",
+  "Win32_Graphics_Dwm",
   "Win32_Graphics_Gdi",
+  "Win32_Management_MobileDeviceManagementRegistration",
   "Win32_Media_Audio",
+  "Win32_Storage_FileSystem",
   "Win32_Storage_Xps",
   "Win32_System_Com",
   "Win32_System_Com_StructuredStorage",
   "Win32_System_Diagnostics_ToolHelp",
+  "Win32_System_Ole",
+  "Win32_System_SystemInformation",
+  "Win32_System_TaskScheduler",
   "Win32_System_Variant",
+  "Win32_System_WinRT",
+  "Win32_UI_HiDpi",
   "Win32_UI_Shell_PropertiesSystem",
   "Win32_UI_WindowsAndMessaging",
 ] }

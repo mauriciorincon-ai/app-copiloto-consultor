@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Ic } from "./Iconos";
 import { useIdioma } from "../i18n";
+import { preguntar } from "../puente";
 import { cifraEnIdioma, useTextosDeWindows } from "../i18n/windows";
 import {
   atajosSinRegistrar,
@@ -10,6 +11,7 @@ import {
   estadoDeWhisper,
   porCuando,
   teclasEnIdioma,
+  useRefrescoMientras,
   usePlataforma,
   type ClaveDeWindows,
   type Cuando,
@@ -29,7 +31,6 @@ import {
 
 const ICONO: Record<Cuando, { id: string; color: string }> = {
   si: { id: "i-check-circle", color: "var(--ok)" },
-  "todavia-no": { id: "i-pendiente", color: "var(--halo)" },
   "no-por-ahora": { id: "i-x-circle", color: "var(--mute)" },
 };
 
@@ -41,13 +42,20 @@ export function HoyEnWindows({
   const t = useTextosDeWindows();
   const idioma = useIdioma();
   const [ocupado, setOcupado] = useState(false);
+  // «Bajando…» se refresca solo mientras dura la descarga, aunque la haya empezado Idioma (B6 del S6).
+  const refrescar = useCallback(() => {
+    void preguntar<Plataforma>("plataforma_de_este_equipo").then((r) => {
+      if (r) setPropia(r);
+    });
+  }, [setPropia]);
+  useRefrescoMientras(!prestada && p.transcripcion?.bajando === true, refrescar);
 
   if (!esWindows(p)) return null;
 
   const grupos = porCuando(p);
   const porClave = new Map(p.funciones.map((f) => [f.clave, f]));
   const whisper = estadoDeWhisper(p.transcripcion);
-  const { si, "todavia-no": todavia, "no-por-ahora": noPorAhora } = grupos;
+  const { si, "no-por-ahora": noPorAhora } = grupos;
 
   const fila = (clave: ClaveDeWindows) => {
     const f = porClave.get(clave);
@@ -107,7 +115,6 @@ export function HoyEnWindows({
       </h2>
       <p>{t.intro}</p>
       {bloque(t.ya, si)}
-      {bloque(t.todavia, todavia)}
       {bloque(t.noPorAhora, noPorAhora)}
       {atajosSinRegistrar(p).map((a) => (
         <p key={a.accion} className="estado warn">
@@ -167,7 +174,8 @@ export function HoyEnWindows({
           >
             {t.whisper.medirOtra}
           </button>
-          {whisper.que === "lento" && (
+          {/* Con el modelo pequeño ya puesto, ofrecer bajarlo no tiene sentido (B7 del S6). */}
+          {whisper.que === "lento" && whisper.modelo !== "small" && (
             <button
               className="btn mini primario"
               disabled={ocupado}

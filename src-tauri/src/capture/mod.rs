@@ -19,6 +19,18 @@ pub mod nativo;
 pub mod reloj;
 pub mod remuestreo;
 
+/// **Por qué micrófono escucha la app**: el dispositivo de entrada por defecto del equipo (sprint 008, M7 del S5). En
+/// presencial la «sala» es lo que ese micrófono oye: con unos auriculares con micrófono puestos como entrada por defecto,
+/// el sistema la pasa a ellos y la app oiría sobre todo tu voz, mientras el cliente llega lejos o no llega. Se nombra en
+/// Sesión para que lo veas antes de empezar. Solo el nombre y si es externo (USB o Bluetooth): ni una muestra de audio.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Entrada {
+    pub nombre: String,
+    /// Conectado por USB o Bluetooth, no el micrófono del equipo: puede ser el de unos auriculares.
+    pub externa: bool,
+}
+
 /// Ni macOS ni Windows: no hay grifos que abrir, y el resto del crate no tiene por qué enterarse.
 ///
 /// El mismo patrón que `acople`: la app se distribuye en macOS y Windows, pero el crate compila en
@@ -47,6 +59,10 @@ pub mod nativo {
 
     pub fn salida_de_audio() -> Salida {
         Salida::NoSeSabe { motivo: super::PorQueNoSeSabe::SinSalida, nombre: None }
+    }
+
+    pub fn entrada_de_audio() -> Option<super::Entrada> {
+        None
     }
 
     pub struct Grifo {

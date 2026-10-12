@@ -188,14 +188,15 @@ export function TodaviaNo() {
   );
 }
 
-/** Lo que no está en el MVP y ya tiene sitio: el H2 (auditoría del S3, B9). «Todavía no» queda para lo
- *  que no tiene horizonte escrito. */
-export function EnElH2() {
+/** Lo que no está construido y ya tiene sitio en el roadmap, sin fecha (auditoría del S3, B9). Antes decía «En el H2»: el
+ *  H2 del ciclo antiguo ya cerró sin MLX, y en la matriz de hitos H-2 es «Uso real» (auditoría del S8, M3). «Todavía no»
+ *  queda para lo que no tiene horizonte escrito. */
+export function EnElRoadmap() {
   const t = useT().cuaderno;
   return (
     <span className="estado pendiente">
       <Ic id="i-pendiente" s />
-      <span>{t.enElH2}</span>
+      <span>{t.enElRoadmap}</span>
     </span>
   );
 }

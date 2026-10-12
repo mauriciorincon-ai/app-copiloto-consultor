@@ -1,14 +1,16 @@
-//! Los dos catálogos del radar, **dentro del binario**.
+//! Los catálogos del radar, **dentro del binario**.
 //!
-//! `data/radar/programas.json` (coral y MDM) y `data/radar/avisos.json` (ámbar) se incluyen al
-//! compilar y se leen una vez. No hay archivo que abrir en tiempo de ejecución ni servidor al que
-//! preguntar: un catálogo nuevo llega con una versión nueva de la app. Cada fila lleva su fuente,
-//! y el test de abajo no deja entrar una que no la tenga.
+//! `data/radar/programas.json` (coral y MDM del Mac), `data/radar/programas-windows.json` (los mismos programas
+//! por su `.exe`, sprint 008) y `data/radar/avisos.json` (ámbar, el mismo en las dos plataformas: es texto de la
+//! ventana de la reunión) se incluyen al compilar y se leen una vez. No hay archivo que abrir en tiempo de
+//! ejecución ni servidor al que preguntar: un catálogo nuevo llega con una versión nueva de la app. Cada fila lleva
+//! su fuente, y el test de abajo no deja entrar una que no la tenga.
 
 use super::{Bilingue, CatalogoDelRadar, Categoria, Programa};
 use std::sync::OnceLock;
 
 const PROGRAMAS: &str = include_str!("../../../data/radar/programas.json");
+const PROGRAMAS_WINDOWS: &str = include_str!("../../../data/radar/programas-windows.json");
 const AVISOS: &str = include_str!("../../../data/radar/avisos.json");
 
 #[derive(serde::Deserialize)]
@@ -35,6 +37,10 @@ pub struct Fila {
     pub ve: Bilingue,
     pub alcance: Bilingue,
     pub fuente: String,
+    /// El día en que se leyó la fuente. Obligatorio en el catálogo de Windows (sprint 008); el del Mac la lleva una
+    /// vez, en su cabecera.
+    #[serde(default)]
+    pub fecha: Option<String>,
 }
 
 impl Fila {
@@ -72,9 +78,26 @@ pub struct FilaDeBot {
     pub fuente: String,
 }
 
-fn de_programas() -> &'static Programas {
+fn del_mac() -> &'static Programas {
     static P: OnceLock<Programas> = OnceLock::new();
     P.get_or_init(|| serde_json::from_str(PROGRAMAS).expect("data/radar/programas.json no es válido"))
+}
+
+fn de_windows() -> &'static Programas {
+    static P: OnceLock<Programas> = OnceLock::new();
+    P.get_or_init(|| {
+        serde_json::from_str(PROGRAMAS_WINDOWS).expect("data/radar/programas-windows.json no es válido")
+    })
+}
+
+/// El catálogo de esta plataforma: el del Mac o el de Windows. Los dos existen en las dos, para que sus pruebas
+/// corran en cualquier CI.
+fn de_programas() -> &'static Programas {
+    if cfg!(windows) {
+        de_windows()
+    } else {
+        del_mac()
+    }
 }
 
 fn de_avisos() -> &'static Avisos {
@@ -86,7 +109,18 @@ pub fn programas() -> &'static [Fila] {
     &de_programas().programas
 }
 
-/// La fila que se enseña cuando `profiles` dice que el Mac está inscrito en un MDM.
+/// Las filas del catálogo del Mac, en cualquier plataforma (para sus pruebas).
+pub fn programas_del_mac() -> &'static [Fila] {
+    &del_mac().programas
+}
+
+/// Las filas del catálogo de Windows, en cualquier plataforma (para sus pruebas).
+pub fn programas_de_windows() -> &'static [Fila] {
+    &de_windows().programas
+}
+
+/// La fila que se enseña cuando el sistema dice que el equipo está inscrito en un MDM: `profiles` en el Mac,
+/// `IsDeviceRegisteredWithManagement` en Windows.
 pub fn inscripcion() -> Option<Programa> {
     programas().iter().find(|f| f.inscripcion).map(Fila::programa)
 }
@@ -112,18 +146,24 @@ mod pruebas {
     /// **Una fila sin fuente no entra.** Es la diferencia entre un catálogo y una lista de
     /// sospechas: si el radar le dice al usuario que un programa ve su cámara, alguien tiene que
     /// poder comprobar de dónde salió.
+    fn los_dos() -> [(&'static str, &'static [Fila]); 2] {
+        [("Mac", programas_del_mac()), ("Windows", programas_de_windows())]
+    }
+
     #[test]
     fn cada_fila_trae_su_fuente_y_sus_dos_idiomas() {
-        for f in programas() {
-            assert!(f.fuente.starts_with("https://"), "«{}» sin fuente comprobable", f.id);
-            for t in [&f.ve, &f.alcance] {
-                assert!(!t.es.trim().is_empty() && !t.en.trim().is_empty(), "«{}» sin sus dos idiomas", f.id);
+        for (de, filas) in los_dos() {
+            for f in filas {
+                assert!(f.fuente.starts_with("https://"), "{de}: «{}» sin fuente comprobable", f.id);
+                for t in [&f.ve, &f.alcance] {
+                    assert!(!t.es.trim().is_empty() && !t.en.trim().is_empty(), "{de}: «{}» sin sus dos idiomas", f.id);
+                }
+                assert!(
+                    f.inscripcion != !f.procesos.is_empty(),
+                    "{de}: «{}» tiene que reconocerse por sus procesos o por la inscripción, una de las dos",
+                    f.id
+                );
             }
-            assert!(
-                f.inscripcion != !f.procesos.is_empty(),
-                "«{}» tiene que reconocerse por sus procesos o por la inscripción, una de las dos",
-                f.id
-            );
         }
         for g in grabacion() {
             assert!(g.fuente.starts_with("https://") && !g.frases.is_empty(), "{} sin fuente o sin frases", g.cliente);
@@ -133,15 +173,40 @@ mod pruebas {
         }
     }
 
+    /// **El catálogo de Windows** (sprint 008): cada proceso es un `.exe`, cada fila dice el día en que se leyó su
+    /// fuente, y ninguna es de un programa que solo existe en el Mac.
+    #[test]
+    fn el_catalogo_de_windows_va_por_exe_y_con_fecha() {
+        for f in programas_de_windows() {
+            for p in &f.procesos {
+                assert!(p.to_lowercase().ends_with(".exe"), "«{}»: «{p}» no es un ejecutable de Windows", f.id);
+            }
+            let fecha = f.fecha.as_deref().unwrap_or_default();
+            assert!(
+                fecha.len() == 10 && fecha[..4].parse::<u32>().is_ok_and(|a| a >= 2026),
+                "«{}»: sin la fecha en que se leyó su fuente",
+                f.id
+            );
+        }
+        for de_mac in ["gestion-remota-macos", "compartir-pantalla-macos", "jamf", "mdm-macos"] {
+            assert!(
+                programas_de_windows().iter().all(|f| f.id != de_mac),
+                "«{de_mac}» es del Mac y está en el catálogo de Windows"
+            );
+        }
+    }
+
     /// Un ejecutable que delatara a dos programas pondría al radar a elegir, y elegiría al azar.
     #[test]
     fn ningun_proceso_delata_a_dos_programas() {
-        let mut vistos = HashSet::new();
-        let mut ids = HashSet::new();
-        for f in programas() {
-            assert!(ids.insert(f.id.clone()), "id repetido: {}", f.id);
-            for p in &f.procesos {
-                assert!(vistos.insert(p.to_lowercase()), "«{p}» está en dos filas");
+        for (de, filas) in los_dos() {
+            let mut vistos = HashSet::new();
+            let mut ids = HashSet::new();
+            for f in filas {
+                assert!(ids.insert(f.id.clone()), "{de}: id repetido: {}", f.id);
+                for p in &f.procesos {
+                    assert!(vistos.insert(p.to_lowercase()), "{de}: «{p}» está en dos filas");
+                }
             }
         }
     }
@@ -150,10 +215,13 @@ mod pruebas {
     fn el_catalogo_se_lee_y_tiene_de_las_cinco_clases() {
         let r = rotulo();
         assert!(r.version >= 1 && r.fecha.len() == 10, "rótulo raro: {r:?}");
-        let clases: HashSet<_> = programas().iter().map(|f| f.categoria).collect();
-        for c in [Categoria::Supervision, Categoria::Monitoreo, Categoria::AccesoRemoto, Categoria::Mdm] {
-            assert!(clases.contains(&c), "el catálogo no trae ninguna fila de {c:?}");
+        for (de, filas) in los_dos() {
+            let clases: HashSet<_> = filas.iter().map(|f| f.categoria).collect();
+            for c in [Categoria::Supervision, Categoria::Monitoreo, Categoria::AccesoRemoto, Categoria::Mdm] {
+                assert!(clases.contains(&c), "{de}: el catálogo no trae ninguna fila de {c:?}");
+            }
+            assert!(filas.iter().any(|f| f.inscripcion), "{de}: falta la fila de la inscripción en un MDM");
         }
-        assert!(inscripcion().is_some(), "falta la fila de la inscripción en un MDM");
+        assert!(inscripcion().is_some());
     }
 }

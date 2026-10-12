@@ -31,11 +31,10 @@ function filasDelAdr(): Map<string, string> {
   return filas;
 }
 
-/** Del texto de la fila del ADR, el estado que dice: sí · todavía no · no en Windows por ahora. */
-function estadoDelTexto(texto: string): "si" | "todavia-no" | "no-por-ahora" {
+/** Del texto de la fila del ADR, el estado que dice: sí · no en Windows por ahora (desde el sprint 008, nada más). */
+function estadoDelTexto(texto: string): "si" | "no-por-ahora" {
   if (texto.startsWith("sí")) return "si";
   if (texto.startsWith("no en Windows")) return "no-por-ahora";
-  if (texto.startsWith("todavía no")) return "todavia-no";
   throw new Error(`no sé qué estado dice «${texto}»`);
 }
 
@@ -43,15 +42,15 @@ function estadoDelTexto(texto: string): "si" | "todavia-no" | "no-por-ahora" {
 function estadoDelDetalle(
   detalle: string,
   idioma: "es" | "en",
-): "si" | "todavia-no" | "no-por-ahora" {
+): "si" | "no-por-ahora" | "otro" {
   if (idioma === "es") {
     if (detalle.startsWith("sí")) return "si";
     if (detalle.startsWith("no en Windows")) return "no-por-ahora";
-    return "todavia-no";
+    return "otro";
   }
   if (detalle.startsWith("yes")) return "si";
   if (detalle.startsWith("not on Windows")) return "no-por-ahora";
-  return "todavia-no";
+  return "otro";
 }
 
 describe("«Hoy en Windows» dice lo mismo en el ADR, la app y el manual", () => {
@@ -64,7 +63,7 @@ describe("«Hoy en Windows» dice lo mismo en el ADR, la app y el manual", () =>
   it("cada clave tiene el MISMO estado en el ADR y en el contrato que emite Rust", () => {
     for (const f of PLATAFORMA_WINDOWS.funciones) {
       const enAdr = estadoDelTexto(filas.get(f.clave) ?? "");
-      const enRust = f.cuando === "si" ? "si" : f.cuando;
+      const enRust = f.cuando;
       expect(
         enAdr,
         `${f.clave}: el ADR dice una cosa y la app emite otra`,
@@ -156,5 +155,22 @@ describe("lo que Windows dice de la red, con la puerta única", () => {
     // Hallazgo A4 de la auditoría del S6: la frase no puede decir «macOS» ni dejar la puerta sin nombrar.
     expect(TEXTOS_DE_WINDOWS.es.honestidad.modoDetalle).toContain("instalar el modelo de voz");
     expect(TEXTOS_DE_WINDOWS.en.honestidad.modoDetalle).toContain("install the speech model");
+  });
+});
+
+describe("la cuenta de turnos sin transcribir no atribuye (auditoría del S7, M3)", () => {
+  it("no dice «tuyos» ni «your»: en la sala el turno que se tira puede ser del cliente", () => {
+    for (const n of [1, 3]) {
+      expect(TEXTOS_DE_WINDOWS.es.whisper.descartados(n)).not.toMatch(/tuy/i);
+      expect(TEXTOS_DE_WINDOWS.en.whisper.descartados(n)).not.toMatch(/\byour\b/i);
+    }
+  });
+
+  it("el manual cuenta lo mismo que el código: tuyos primero y, sin tuyos, el más viejo", () => {
+    const manual = MANUAL.slice(MANUAL.indexOf("Si tu PC no da abasto"));
+    const frase = manual.slice(0, manual.indexOf("\n- **"));
+    expect(frase).toMatch(/primero los \*\*tuyos\*\*/);
+    expect(frase).toMatch(/el turno más viejo/);
+    expect(frase).not.toMatch(/nunca los del cliente/);
   });
 });

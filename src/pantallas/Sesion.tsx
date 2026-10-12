@@ -22,7 +22,9 @@ import {
   fijarIdiomaDePista,
   fijarLaVoz,
   lecturaAutomatica,
+  useEntradaDeAudio,
   useIdiomasDePista,
+  useQueSabeTranscribir,
   usePantalla,
   useBytesALaRed,
   useVoz,
@@ -33,6 +35,9 @@ import {
   type Salida,
 } from "../cuaderno";
 import { invasivos, useRadarDeTuMac, type EnTuMac } from "../radar";
+import { estadoDelModelo, motivo } from "./Idioma";
+import { useTextosDePresencial } from "../i18n/presencial-nuevo";
+import { esWindows, usePlataforma } from "../plataforma";
 import {
   entendidoElAvisoDeArriba,
   fijarPosicionDeLaBanda,
@@ -123,6 +128,15 @@ export function Sesion({
   // Un MDM solo es «sábelo»: no toma la pantalla. Sin esta fila, un Mac inscrito y sin ningún
   // invasivo no lo veía en ningún sitio, y el manual decía que Sesión lo lista (auditoría del S2, B15).
   const mdm = radar.programas.find((p) => p.categoria === "mdm");
+  /** La fila del MDM: la misma en la reunión y en presencial (auditoría del S5, M4). */
+  const filaMdm = mdm ? (
+    <Fila icono="i-radar" color="var(--ink-2)" texto={`${t.radarClases.mdm.titulo} ${t.radarClases.mdm.sufijo}`}>
+      <span className="estado mute">
+        <Ic id="i-ring" s />
+        <span>{t.sabelo}</span>
+      </span>
+    </Fila>
+  ) : null;
 
   const titulo = (
     <div className="titulo">
@@ -151,7 +165,10 @@ export function Sesion({
           radar={radar}
           iniciar={() => {
             setVisto(clave);
-            empezarAEscuchar();
+            // **Con «presencial» elegido, «Iniciar de todos modos» no empieza una reunión** (auditoría del S5, M4):
+            // abriría el audio del sistema y la pantalla que ese modo promete no abrir. Vuelve a la vista de la sala,
+            // donde se pulsa «Empezar en presencial».
+            if (modo !== "presencial") empezarAEscuchar();
           }}
           noIniciar={() => setVisto(clave)}
         />
@@ -200,6 +217,8 @@ export function Sesion({
           bytes={bytes}
           volver={() => setModo("reunion")}
           ensayoSinGuardar={ensayoSinGuardar}
+          vigilancia={vigilado ? <LaVigilancia radar={radar} /> : null}
+          filaMdm={filaMdm}
           accion={preguntando ? <LaPreguntaDeLaNda responder={responder} /> : null}
           cliente={
             <EsteCliente
@@ -281,14 +300,7 @@ export function Sesion({
           />
         </div>
 
-        {mdm && (
-          <Fila icono="i-radar" color="var(--ink-2)" texto={`${t.radarClases.mdm.titulo} ${t.radarClases.mdm.sufijo}`}>
-            <span className="estado mute">
-              <Ic id="i-ring" s />
-              <span>{t.sabelo}</span>
-            </span>
-          </Fila>
-        )}
+        {filaMdm}
 
         {escucha.escuchando ? (
           // El kill-switch va al lado de la promesa que cumple, en la fila de la acción.
@@ -423,10 +435,16 @@ function EnPresencial({
   cliente,
   accion,
   ensayoSinGuardar,
+  vigilancia,
+  filaMdm,
 }: {
   escucha: EstadoDeEscucha;
   salida: Salida;
   bytes: string;
+  /** El aviso coral del radar, arriba, como en la reunión (auditoría del S5, M4). */
+  vigilancia: React.ReactNode;
+  /** La fila del MDM: «sábelo». */
+  filaMdm: React.ReactNode;
   /** «reunión en este Mac»: vuelve a la sesión de siempre, sin empezar nada. */
   volver: () => void;
   /** La tarjeta «Este cliente», la misma de la reunión. */
@@ -443,15 +461,26 @@ function EnPresencial({
   const voz = useVoz();
   const enMarcha = escucha.escuchando;
   const sala = idiomas.sala ?? idiomas.cliente;
-  const codigos = [...new Set(["es-ES", "en-US", sala])];
+  // **El selector ofrece lo que este equipo sabe transcribir** (auditoría del S5, M5): los dos de la casa, los del motor y
+  // el del cliente. Un idioma elegido no desaparece de la lista al elegir otro, y el estado de su modelo se dice al lado.
+  const transcribe = useQueSabeTranscribir();
+  const codigos = [...new Set(["es-ES", "en-US", ...transcribe.idiomas.map((i) => i.codigo), idiomas.cliente, sala])];
+  const modeloDeLaSala = transcribe.idiomas.find((i) => i.codigo === sala)?.disponibilidad;
+  // **El micrófono de la sala, nombrado antes de empezar** (auditoría del S5, M7).
+  const entrada = useEntradaDeAudio();
+  const te = useTextosDePresencial();
+  const [plataforma] = usePlataforma();
   // Con altavoces que la app reconoce, la banda de partida (§7): la voz no hablaría con el cliente oyéndola.
   const altavoz = salida.salida === "altavoces" || salida.salida === "altavoz-externo";
   const [elegida, setElegida] = useState<boolean | null>(null);
+  /** Pediste la ficha al oído al empezar (y no la cambiaste después): para decir si no hay voz (auditoría del S5, B13). */
+  const [pedidaAlOido, setPedidaAlOido] = useState(false);
   // **M5 (auditoría del S6):** «Al oído» parte elegido solo si la voz PUEDE hablar —hay voz para el idioma y la salida no
   // son altavoces que la app reconoce—, que es lo que Rust dice en `voz.puede`. En Windows, sin voz del sistema para el
   // idioma, partía elegido con la voz muda. Fuera de Tauri (la maqueta) no hay a quién preguntar y manda la salida.
   const alOido = enMarcha && hayTauri() ? voz.encendida : (elegida ?? (hayTauri() ? voz.puede : !altavoz));
   const elegir = (si: boolean) => {
+    setPedidaAlOido(si);
     if (enMarcha && hayTauri()) void fijarLaVoz(si);
     else setElegida(si);
   };
@@ -476,6 +505,7 @@ function EnPresencial({
 
   return (
     <div style={PILA}>
+      {vigilancia}
       <div className="tarjeta">
         <div className="fila">
           <Ic id="i-mic" color="var(--halo)" />
@@ -517,6 +547,18 @@ function EnPresencial({
               </p>
             </>
           )}
+          {entrada && !enMarcha && (
+            <p style={nota} role="status">
+              {entrada.externa ? (
+                <>
+                  <Ic id="i-alert" s color="var(--warn)" />{" "}
+                  {te.externa(entrada.nombre, esWindows(plataforma) ? te.enWindows : te.enElMac)}
+                </>
+              ) : (
+                te.microfono(entrada.nombre)
+              )}
+            </p>
+          )}
           <div className="fila">
             <Ic id="i-globo" s color="var(--ink-2)" />
             <span className="crece">{tp.idiomaDeLaSala}</span>
@@ -540,6 +582,17 @@ function EnPresencial({
               </select>
             )}
           </div>
+          {/* Pediste la voz y no hay voz para tu idioma: la sesión sigue con la banda y lo dice (B13 del S5). */}
+          {enMarcha && hayTauri() && pedidaAlOido && !voz.encendida && !voz.puede && (
+            <p style={nota} role="status">
+              <Ic id="i-alert" s color="var(--warn)" /> {te.sinVoz(idiomas.consultor)}
+            </p>
+          )}
+          {modeloDeLaSala && (
+            <p style={nota} role="status">
+              {estadoDelModelo(modeloDeLaSala, t.modeloInstalado) ?? motivo(t, modeloDeLaSala)}
+            </p>
+          )}
           <p style={nota}>{tp.todaLaSala}</p>
           <div className="fila">
             <Ic id="i-sistema-off" s color="var(--mute)" />
@@ -606,6 +659,8 @@ function EnPresencial({
         {cliente}
       </div>
 
+      {filaMdm}
+
       {enMarcha ? (
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <div className="fila">
@@ -623,7 +678,13 @@ function EnPresencial({
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <div className="fila">
-            <button className="btn primario" onClick={() => void empezarPresencial(alOido)}>
+            <button
+              className="btn primario"
+              onClick={() => {
+                setPedidaAlOido(alOido);
+                void empezarPresencial(alOido);
+              }}
+            >
               <Ic id="i-mic" s />
               <span>{tp.empezar}</span>
             </button>

@@ -19,15 +19,22 @@ type Parcial<T> = { [K in keyof T]?: T[K] extends string ? string : Parcial<T[K]
 /** Una parte del diccionario: una clave que no existe en `es.ts` no compila. */
 export type Cambios = Parcial<Diccionario>;
 
+/** En Windows no hay modelo del sistema (ADR 023): la sugerencia, con el API; sin él, la ficha. */
+const SIN_MODELO_ES = "En Windows no hay modelo del sistema: la sugerencia la redacta el API, si lo enciendes con tu clave.";
+const SIN_MODELO_EN = "Windows has no system model: the API writes the suggestion, if you turn it on with your key.";
+
 const ES: Cambios = {
   banda: {
     // La banda no promete invisibilidad donde nadie la verificó (regla dura 6).
     sinVerificarCuando: "Sin verificar en Teams, Zoom ni Meet · se verifica en tu PC",
     sugerenciaEnTuMac: "sugerencia · en tu PC",
     radarTeMira: "Te está mirando un programa de tu PC",
+    radarEnTuEquipo: "en tu PC, no en el del cliente",
   },
   cuaderno: {
     sesionSub: "Nada se enciende hasta que tú lo digas. Esto es lo que la app ve de tu propio PC.",
+    // La promesa es graduada por plataforma (regla dura 6): en Windows se dice lo que se pidió, no que esté verificado.
+    panelProtegido: "Panel con la protección pedida a Windows",
     proteccionDetalle:
       "Tu panel le pide a Windows que no salga en las capturas, pero en Teams, Zoom y Meet está sin verificar: se verifica con una videollamada real en tu PC. Mientras tanto, comparte una ventana, no la pantalla.",
     modeloDelSistema: "Modelo del sistema",
@@ -54,6 +61,21 @@ const ES: Cambios = {
     guardarEnLlavero: "Guardar en el Administrador de credenciales",
     permSistemaPara: "Lo que suena en tu PC: la voz del cliente. Sin bot en la reunión.",
     permAcoplePara: "Para que la banda no tape la llamada: la reunión se encoge y las dos conviven.",
+    // En Windows, Teams y Zoom cuentan cuando están en una llamada, no por estar abiertos (sprint 008, S7 M1).
+    sinReunionVoz: "Entra en tu llamada de Zoom, Teams o Meet y aparecerá aquí. Mientras tanto, prepara la reunión.",
+    // IA en Windows (sprint 008, ADR 023): no hay modelo del sistema; cualquier motivo de macOS dice esa verdad.
+    enTuMac: "en tu PC",
+    porQueNoRedacta: {
+      "apple-intelligence-apagado": SIN_MODELO_ES,
+      "mac-no-compatible": SIN_MODELO_ES,
+      "no-disponible": SIN_MODELO_ES,
+      "modelo-descargandose": SIN_MODELO_ES,
+      "sin-puente": SIN_MODELO_ES,
+    },
+    caracteresTachado: "caracteres. Tachado, lo que se reemplazó en tu PC antes de enviarlo.",
+    // El radar en Sesión (sprint 008): mira este PC.
+    vigilanciaTitulo: "Software invasivo corriendo en tu PC",
+    vigilanciaSoloTuMac: "solo tu PC",
     presencial: {
       reunionEnEsteMac: "reunión en este PC",
       pcPregunta: "¿La videollamada está en este PC?",
@@ -62,6 +84,7 @@ const ES: Cambios = {
     },
   },
   notas: {
+    clienteNoLaVe: "con la protección pedida al compartir",
     // Time Machine es del Mac; en Windows no se promete qué copias de seguridad cubren la carpeta de la app.
     borrarDetalle:
       "Se borra ahora de la app y no vuelve. Si haces copias de seguridad de tu PC, esas copias la conservan hasta que caduquen.",
@@ -79,6 +102,9 @@ const ES: Cambios = {
     vozSinReunion:
       "Sin reunión, la voz sale por donde suene tu PC; con una videollamada abierta, el ensayo no empieza por los altavoces del PC. Mientras habla, el micrófono no escucha.",
   },
+  cliente: {
+    panelProtegido: "El panel sigue con la protección pedida a Windows",
+  },
 };
 
 const EN: Cambios = {
@@ -86,8 +112,10 @@ const EN: Cambios = {
     sinVerificarCuando: "Not verified in Teams, Zoom or Meet · you verify it on your PC",
     sugerenciaEnTuMac: "suggestion · on your PC",
     radarTeMira: "A program on your PC is watching you",
+    radarEnTuEquipo: "on your PC, not the client’s",
   },
   cuaderno: {
+    panelProtegido: "Panel with the protection requested from Windows",
     sesionSub: "Nothing turns on until you say so. This is what the app sees of your own PC.",
     proteccionDetalle:
       "Your panel asks Windows to stay out of screen captures, but in Teams, Zoom and Meet it is unverified: you verify it with a real video call on your PC. Until then, share a window, not the screen.",
@@ -113,6 +141,18 @@ const EN: Cambios = {
     guardarEnLlavero: "Save to Credential Manager",
     permSistemaPara: "What plays on your PC: the client’s voice. No bot in the meeting.",
     permAcoplePara: "So the band does not cover the call: the meeting shrinks and the two live together.",
+    sinReunionVoz: "Join your Zoom, Teams or Meet call and it will show up here. Meanwhile, get ready.",
+    enTuMac: "on your PC",
+    porQueNoRedacta: {
+      "apple-intelligence-apagado": SIN_MODELO_EN,
+      "mac-no-compatible": SIN_MODELO_EN,
+      "no-disponible": SIN_MODELO_EN,
+      "modelo-descargandose": SIN_MODELO_EN,
+      "sin-puente": SIN_MODELO_EN,
+    },
+    caracteresTachado: "characters. Struck through, what was replaced on your PC before sending.",
+    vigilanciaTitulo: "Invasive software running on your PC",
+    vigilanciaSoloTuMac: "only your PC",
     presencial: {
       reunionEnEsteMac: "call on this PC",
       pcPregunta: "Is the call on this PC?",
@@ -121,6 +161,7 @@ const EN: Cambios = {
     },
   },
   notas: {
+    clienteNoLaVe: "with protection requested when sharing",
     borrarDetalle:
       "It is deleted from the app now and does not come back. If you back up your PC, your backups keep it until they expire.",
     lasTresPrimeras: "The first three died on close; the tray, on expiry.",
@@ -136,6 +177,9 @@ const EN: Cambios = {
     sinTranscripcion: "This PC cannot transcribe the rehearsal’s language",
     vozSinReunion:
       "With no meeting, the voice plays wherever your PC plays sound; with a video call open, the rehearsal won’t start on the PC’s speakers. While it speaks, the microphone does not listen.",
+  },
+  cliente: {
+    panelProtegido: "The panel keeps the protection requested from Windows",
   },
 };
 

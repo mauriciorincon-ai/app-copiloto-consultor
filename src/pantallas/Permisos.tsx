@@ -59,8 +59,8 @@ function Permiso({
   para: string;
   estado: EstadoPermiso;
   cual: "microfono" | "audio" | "pantalla" | "accesibilidad";
-  /** En Windows (sprint 006, ADR 022): `null` si el permiso todavía no existe allí; si no, su texto de ajustes. */
-  windows?: { boton: string | null; llegaDespues: string; sinPermiso?: string } | null;
+  /** En Windows (sprint 006, ADR 022): el botón de Ajustes, o «no pide permiso» si allí no hay ninguno que conceder. */
+  windows?: { boton: string; sinPermiso?: string } | null;
 }) {
   const t = useT().cuaderno;
   const concedido = estado === "concedido";
@@ -76,11 +76,6 @@ function Permiso({
           <span className="estado ok">
             <Ic id="i-check-circle" s relleno />
             <span>{windows.sinPermiso}</span>
-          </span>
-        ) : windows && windows.boton === null ? (
-          <span className="estado mute">
-            <Ic id="i-pendiente" s />
-            <span>{windows.llegaDespues}</span>
           </span>
         ) : (
           <>
@@ -102,12 +97,9 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
   const [plataforma] = usePlataforma();
   const enWindows = esWindows(plataforma);
   const w = useTextosDeWindows().permisos;
-  // En Windows el micrófono tiene su permiso en Ajustes; el audio del sistema y la pantalla funcionan sin ninguno
-  // (sprint 007); acoplarse a la ventana de la reunión llega en una versión próxima (ADR 022).
-  const despues = enWindows ? { boton: null, llegaDespues: w.llegaDespues } : undefined;
-  const sinPermiso = enWindows
-    ? { boton: null, llegaDespues: w.llegaDespues, sinPermiso: w.sinPermiso }
-    : undefined;
+  // En Windows el micrófono tiene su permiso en Ajustes; el audio del sistema, la pantalla (sprint 007) y el acople
+  // (sprint 008) funcionan sin ninguno (ADR 022).
+  const sinPermiso = enWindows ? { boton: w.abrirAjustes, sinPermiso: w.sinPermiso } : undefined;
 
   return (
     <>
@@ -124,7 +116,7 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
             para={t.permMicPara}
             estado={permisos.microfono}
             cual="microfono"
-            windows={enWindows ? { boton: w.abrirAjustes, llegaDespues: w.llegaDespues } : undefined}
+            windows={enWindows ? { boton: w.abrirAjustes } : undefined}
           />
           <Permiso
             icono="i-sistema"
@@ -148,7 +140,7 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
             para={t.permAcoplePara}
             estado={permisos.accesibilidad}
             cual="accesibilidad"
-            windows={despues}
+            windows={sinPermiso}
           />
           {!enWindows && (
             <p className="mono" style={{ color: "var(--ink-2)" }}>

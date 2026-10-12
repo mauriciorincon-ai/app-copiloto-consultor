@@ -104,12 +104,14 @@ o suavizar antes de construir esa feature.
 
 El modo presencial (ADR 020) abre **una** pista, la de la sala, por la que entran las dos voces. La regla de este ADR
 no cambia: **un idioma por pista**. Como en presencial la pista es una, **toda la sala escucha en un solo idioma**,
-elegido en Idioma («El idioma de la sala») y guardado en `idiomasDePista.sala` (ADR 002, enmienda 9). De fábrica es el
-de la pista del cliente.
+elegido en Sesión, en la vista presencial («Idioma de la sala»), y guardado en `idiomasDePista.sala` (ADR 002, enmienda 9).
+De fábrica es el de la pista del cliente.
 
 Lo que eso implica, medido en §1 y no supuesto: **si tú hablas en otro idioma que el de la sala, tu parte se
 transcribe mal** (la frase en el otro idioma «no se transcribe: se destroza»). En una mesa es aceptable porque la
-ficha responde al cliente. Pero la app lo dice donde se elige: Sesión, al empezar en presencial, e Idioma.
+ficha responde al cliente. Pero la app lo dice donde se elige: Sesión, al empezar en presencial. _(2026-10-12, sprint 008:
+la fila de Idioma que esta enmienda daba por hecha no se construyó —desviación 1 de la fase 2 del sprint 005—; la sala
+se elige solo en Sesión, y el selector ofrece lo que el equipo sabe transcribir y dice el estado del modelo.)_
 
 No se mide ni se promete el reconocimiento con varios idiomas a la vez (§3 sigue vigente). El kit v4 mide la
 transcripción de las salas sintéticas en local (nivel C, `manual`: la CI no tiene modelos de reconocimiento).

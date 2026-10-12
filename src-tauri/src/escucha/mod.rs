@@ -59,9 +59,31 @@ const LATIDO_DEL_SILENCIO_MS: u64 = 400;
 /// siempre; en Windows, dos cosas que el Mac no necesita:
 /// - la voz de la app vuelve por el loopback del audio del sistema (`atender` la marca como eco);
 /// - whisper tarda más que el transcriptor del sistema del Mac, y con dos pistas la cola puede crecer: el cliente
-///   va primero y, si la cola pasa del tope, se descarta lo tuyo más viejo, contado ([`descartados`]).
+///   va primero y, si la cola pasa del tope, se descarta lo tuyo más viejo y, si no queda nada tuyo (la sala no tiene
+///   dueño), el turno más viejo, contado ([`descartados`]).
 const VOZ_DE_LA_APP_POR_EL_SISTEMA: bool = cfg!(windows);
 const POLITICA: Politica = if cfg!(windows) { Politica::ClientePrimero { tope: TOPE_DE_LA_COLA } } else { Politica::Llegada };
+
+/// **¿Este turno del cliente es la voz de la propia app, vuelta por el loopback?** (sprint 008, auditoría del S7, M2).
+/// Se pregunta **antes** del motor: transcribir con whisper lo que la app misma acaba de decir gasta el tiempo del
+/// transcriptor —que es el cuello de botella en Windows— en un turno que se va a tirar, y retrasa los turnos del
+/// cliente de verdad que esperan detrás. Pura: el reloj de lo que sonó (`sono`) y si la plataforma lo necesita
+/// (`por_el_sistema`) entran como parámetros, para probarla en los dos runners.
+fn es_voz_de_la_app(
+    por_el_sistema: bool,
+    pista: Pista,
+    desde_ms: usize,
+    hasta_ms: usize,
+    cerro: std::time::Instant,
+    sono: impl Fn(std::time::Instant, std::time::Instant) -> bool,
+) -> bool {
+    if !por_el_sistema || pista.quien() != Quien::Cliente {
+        return false;
+    }
+    let dura = std::time::Duration::from_millis((hasta_ms.saturating_sub(desde_ms) + crate::voz::turno::FIN_MS) as u64);
+    let desde = cerro.checked_sub(dura).unwrap_or(cerro);
+    sono(desde, cerro)
+}
 
 /// Cuántos turnos pueden esperar al transcriptor en Windows. Cuatro turnos son de sobra para una conversación
 /// normal con whisper a tiempo; si se pasa, el equipo no da abasto y es mejor decirlo que llegar tarde a todo.
@@ -72,11 +94,13 @@ pub const TOPE_DE_LA_COLA: usize = 4;
 pub enum Politica {
     /// Por orden de llegada y sin tope: el de siempre (macOS).
     Llegada,
-    /// El cliente primero, y con tope: si la cola pasa de `tope`, se descarta lo tuyo más viejo.
+    /// El cliente primero, y con tope: si la cola pasa de `tope`, se descarta lo tuyo más viejo y, si no queda nada tuyo,
+    /// el más viejo.
     ClientePrimero { tope: usize },
 }
 
-/// Los turnos tuyos que se quedaron sin transcribir en esta escucha porque el equipo no daba abasto. Solo una
+/// Los turnos que se quedaron sin transcribir en esta escucha porque el equipo no daba abasto (tuyos primero; en la
+/// sala, los más viejos: sprint 008, M3 del S7). Solo una
 /// cuenta: ni texto ni audio. Honestidad la enseña.
 static DESCARTADOS: AtomicU32 = AtomicU32::new(0);
 
@@ -971,6 +995,25 @@ fn atender(
         olvidar(encargo);
         return None;
     }
+    // **La voz de la app no se transcribe** (M2 del S7): sale como «sin texto», con su motivo en el log, y el audio del
+    // encargo se pisa. Un turno que desaparece sin decir por qué es justo el silencio que esta casa no se permite.
+    if es_voz_de_la_app(
+        VOZ_DE_LA_APP_POR_EL_SISTEMA,
+        encargo.pista,
+        encargo.desde_ms,
+        encargo.hasta_ms,
+        encargo.cerro,
+        crate::habla::la_app_hablo,
+    ) {
+        let novedad = Novedad::SinTexto {
+            pista: encargo.pista,
+            desde_ms: encargo.desde_ms,
+            hasta_ms: encargo.hasta_ms,
+            motivo: "era la voz de la app, vuelta por el audio del sistema: no se transcribe".into(),
+        };
+        olvidar(encargo);
+        return Some((novedad, None));
+    }
     let mut novedad = transcribir(motor, diccionario, encargo);
     if !viva.load(Ordering::Relaxed) {
         olvidar(encargo);
@@ -999,13 +1042,8 @@ fn atender(
             }
             // **Windows (sprint 007, ADR 022): la voz de la app vuelve por el loopback.** El audio del sistema en
             // Windows es todo lo que suena, también la ficha que la app te acaba de decir; el tap del Mac excluye
-            // el proceso de la app y no lo necesita. Un turno del cliente que cae mientras la app hablaba es eco:
-            // se marca y no dispara (`disparo::mirar`).
-            Quien::Cliente if VOZ_DE_LA_APP_POR_EL_SISTEMA => {
-                let dura = std::time::Duration::from_millis((t.duracion_ms() + crate::voz::turno::FIN_MS) as u64);
-                let desde = encargo.cerro.checked_sub(dura).unwrap_or(encargo.cerro);
-                t.eco = crate::habla::la_app_hablo(desde, encargo.cerro);
-            }
+            // el proceso de la app y no lo necesita. Un turno del cliente que cae mientras la app hablaba **ya no llega
+            // aquí**: `es_voz_de_la_app` lo para antes de whisper (sprint 008, M2 del S7).
             Quien::Cliente | Quien::SinAtribuir => {}
         }
         if let Ok(mut v) = ventana.lock() {
@@ -2192,6 +2230,12 @@ mod tests {
         let mut solo_cliente: VecDeque<Encargo> = (0..6).map(|i| encargo(Pista::Sistema, i * 100)).collect();
         let (_, tirados) = siguiente(&mut solo_cliente, 4);
         assert_eq!(tirados.iter().map(|e| e.desde_ms).collect::<Vec<_>>(), vec![0, 100]);
+        // **M3 del S7:** en la sala la pista no tiene dueño (`SinAtribuir`): se tira el más viejo, que puede ser del
+        // cliente, y la cuenta de Honestidad no dice «tuyos» (la copia de `windows.ts` es neutra, y lo prueba su test).
+        let mut sala: VecDeque<Encargo> = (0..5).map(|i| encargo(Pista::Sala, i * 100)).collect();
+        let (toca, tirados) = siguiente(&mut sala, 4);
+        assert_eq!(tirados.iter().map(|e| e.desde_ms).collect::<Vec<_>>(), vec![0], "el más viejo de la sala");
+        assert_eq!(toca.map(|e| e.desde_ms), Some(100));
     }
 
     /// **En el Mac nada cambia**: el transcriptor atiende por orden de llegada, sin tope, y la voz de la app no se
@@ -2201,6 +2245,47 @@ mod tests {
     fn en_el_mac_la_escucha_es_la_de_siempre() {
         assert_eq!(POLITICA, Politica::Llegada);
         const { assert!(!VOZ_DE_LA_APP_POR_EL_SISTEMA) };
+    }
+
+    /// **La voz de la app no pasa por whisper** (sprint 008, M2 del S7). En Windows el loopback también oye la ficha que
+    /// la app dice; transcribirla gasta el tiempo del transcriptor en un turno que se tira. Solo el cliente por el
+    /// sistema, solo con el loopback, y solo si la app sonó en el tramo del turno.
+    ///
+    /// ¿Puede fallar? Sí: sin la condición de la pista, o con `por_el_sistema` ignorado, es rojo.
+    #[test]
+    fn la_voz_de_la_app_se_para_antes_del_motor() {
+        let cerro = std::time::Instant::now();
+        let sonando = |_: std::time::Instant, _: std::time::Instant| true;
+        let callada = |_: std::time::Instant, _: std::time::Instant| false;
+        assert!(es_voz_de_la_app(true, Pista::Sistema, 0, 2_000, cerro, sonando), "el cliente sobre la voz de la app");
+        assert!(!es_voz_de_la_app(true, Pista::Sistema, 0, 2_000, cerro, callada), "la app callaba: va al motor");
+        assert!(!es_voz_de_la_app(true, Pista::Microfono, 0, 2_000, cerro, sonando), "lo tuyo no es la voz de la app");
+        assert!(!es_voz_de_la_app(true, Pista::Sala, 0, 2_000, cerro, sonando), "la sala no tiene loopback");
+        assert!(!es_voz_de_la_app(false, Pista::Sistema, 0, 2_000, cerro, sonando), "el tap del Mac excluye la app");
+    }
+
+    /// El tramo que se pregunta es el del turno **más** el fin de turno: lo que el cliente dijo hasta que cerró.
+    #[test]
+    fn el_tramo_que_se_pregunta_es_el_del_turno_y_su_cierre() {
+        let cerro = std::time::Instant::now();
+        let visto = std::cell::Cell::new(None);
+        es_voz_de_la_app(true, Pista::Sistema, 1_000, 3_000, cerro, |d, h| {
+            visto.set(Some((h.duration_since(d), h == cerro)));
+            false
+        });
+        let (largo, hasta_el_cierre) = visto.get().expect("no preguntó");
+        assert!(hasta_el_cierre, "el tramo termina cuando el turno cerró");
+        assert_eq!(largo.as_millis() as usize, 2_000 + crate::voz::turno::FIN_MS);
+    }
+
+    /// El orden importa y se vigila en el código: la pregunta va ANTES de `transcribir`, o whisper ya trabajó.
+    #[test]
+    fn la_pregunta_de_la_voz_de_la_app_va_antes_del_motor() {
+        let fuente = include_str!("mod.rs");
+        let cuerpo = &fuente[fuente.find("\nfn atender(").expect("no está atender")..];
+        let pregunta = cuerpo.find("es_voz_de_la_app(").expect("atender no pregunta por la voz de la app");
+        let motor = cuerpo.find("let mut novedad = transcribir(motor").expect("atender no transcribe");
+        assert!(pregunta < motor, "atender transcribe antes de preguntar si era la voz de la app");
     }
 
     /// **LA REUNIÓN DEL KIT DE PUNTA A PUNTA, sin grifos** (sprint 007, ADR 022 enmienda 1). La pregunta sintética del

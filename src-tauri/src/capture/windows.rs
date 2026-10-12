@@ -55,6 +55,15 @@ impl Salida {
     }
 }
 
+/// **El micrófono que la app va a escuchar** (sprint 008, M7 del S5): el dispositivo de entrada por defecto, con su nombre
+/// y si es USB o Bluetooth. No lo abre: solo lo describe.
+pub fn entrada_de_audio() -> Option<super::Entrada> {
+    let d = cpal::default_host().default_input_device()?;
+    let descripcion = d.description().ok()?;
+    let externa = matches!(descripcion.interface_type(), cpal::InterfaceType::Usb | cpal::InterfaceType::Bluetooth);
+    Some(super::Entrada { nombre: descripcion.name().to_string(), externa })
+}
+
 /// **Por dónde sale el sonido en este PC** (sprint 007): la forma que Windows declara del dispositivo de salida por
 /// defecto. Se pregunta en un hilo propio con COM multihilo, porque quien pregunta puede ser el hilo principal de
 /// la ventana, que ya tiene COM en otro modo.

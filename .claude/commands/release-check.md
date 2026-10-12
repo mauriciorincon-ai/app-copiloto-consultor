@@ -4,8 +4,8 @@ description: Checklist pre-merge a main del PERFIL ESCRITORIO (Tauri) — ≤ 10
 
 # /release-check
 
-**Todo lo demás lo corre la CI (`quality` · `e2e` · `build-escritorio`); si no está en la CI, no es
-casilla.** Aquí mergear no publica nada: la app se distribuye como binario. Se corre después de
+**Todo lo demás lo corre la CI (`quality` · `e2e` · `build-escritorio` · `build-windows` · `un-pr-vivo`); si no
+está en la CI, no es casilla.** Aquí mergear no publica nada: la app se distribuye como binario. Se corre después de
 `/audita-sprint`, antes de abrir el PR. Las pruebas `hardware` las corrió la CI; las `en_vivo_*` solo con
 la matriz de la regla 24 y su «sí», o se declaran aplazadas con fecha.
 
@@ -24,13 +24,14 @@ la matriz de la regla 24 y su «sí», o se declaran aplazadas con fecha.
 - [ ] 6. **No persistencia 4-T** (solo `captura_terceros: true`): tras una sesión completa, cero archivos
       nuevos fuera de la carpeta de notas; un término plantado en la sesión no aparece en ningún log;
       salidas a red = 0 en modo local (`verify:ephemeral` estático lo corre la CI; esto es la corrida real).
-- [ ] 7. **`cargo audit` limpio** en `src-tauri/` (o ADR con la excepción) — manual porque la CI no lo corre.
+- [ ] 7. **`cargo audit`:** lo corre la CI (`build-escritorio`); aquí solo se confirma que, si hay una advertencia
+      aceptada, tiene su ADR con la excepción.
 - [ ] 8. **`docs/MANUAL-DE-USO.md` actualizado** y **cierre ejecutivo** ≤ 40 líneas con la salida de
       `node scripts/horas-sprint.mjs` y la sección Auditoría (deuda M/B con `archivo:línea`; cero C/A abiertos).
-- [ ] 9. **Checks `quality` · `e2e` · `build-escritorio` con conclusión propia `success`** al final
-      (`gh pr checks <N>`), y **cero enlaces**: `node scripts/cero-enlaces.mjs --homepage "$(gh repo view --json
-      homepageUrl -q .homepageUrl)"` en verde (dominios de `cero-enlaces.json`; en escritorio se suma
-      `releases/download`: ningún enlace de descarga del binario — la app se muestra, no se entrega).
+- [ ] 9. **Los cinco checks (`quality` · `e2e` · `build-escritorio` · `build-windows` · `un-pr-vivo`) con conclusión
+      propia `success`** al final (`gh pr checks <N>`), y **la lista de PR abiertos es ese uno** (`gh pr list
+      --state open`). El barrido de cero enlaces lo corre `quality` (`scripts/cero-enlaces.mjs`); lo manual es que
+      **ningún archivo ni campo de GitHub ofrezca un enlace de descarga del binario** — la app se muestra, no se entrega.
 - [ ] 10. **Protecciones del sistema enseñadas:** toda acción del sprint sobre Llavero, TCC, launchd, ítems
       de inicio, Touch ID o Automatización tiene su matriz y su «sí» en el cierre; el comando de pruebas por
       defecto no abrió ninguna. Si no hubo: «n/a».

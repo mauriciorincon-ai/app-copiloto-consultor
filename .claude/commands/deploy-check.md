@@ -2,6 +2,9 @@
 description: Checklist pre-merge a main. Verifica que todo lo necesario está listo antes de mergear un PR.
 ---
 
+> **No aplica a esta app (perfil escritorio): usa `/release-check`.** Este archivo es la plantilla web del kit y se conserva solo
+> porque el kit la trae (auditoría de la constitución del sprint 008).
+
 # /deploy-check
 
 Checklist exhaustivo antes de mergear a `main` (que dispara deploy a producción en Vercel).

@@ -3,8 +3,6 @@ import { useIdioma, useT, type Idioma } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { hayTauri } from "../puente";
 import { formatearBytes } from "./Honestidad";
-import { useTextosDeWindows } from "../i18n/windows";
-import { useEnWindows } from "../plataforma";
 import {
   nombreDeLaRetencion,
   abrirLaBandeja,
@@ -65,6 +63,7 @@ const VISTAS: VistaDeNotas[] = [
   "al-cerrar",
   "al-cerrar-bandeja",
   "al-cerrar-cero",
+  "al-cerrar-presencial",
   "archivo",
   "exportar",
   "bandeja",
@@ -140,7 +139,11 @@ export function Notas({ busqueda = "", alCambiarDeVista }: {
       {(vista === "durante" || vista === "propuestas") && cuaderno && (
         <Durante cuaderno={cuaderno} volver={volver} foco={new URLSearchParams(busqueda).get("foco") === "nota"} />
       )}
-      {(vista === "al-cerrar" || vista === "al-cerrar-bandeja" || vista === "al-cerrar-cero") && cuaderno && (
+      {(vista === "al-cerrar" ||
+        vista === "al-cerrar-bandeja" ||
+        vista === "al-cerrar-cero" ||
+        vista === "al-cerrar-presencial") &&
+        cuaderno && (
         <AlCerrar cuaderno={cuaderno} volver={volver} />
       )}
       {vista === "bandeja" && bandeja && (
@@ -425,6 +428,11 @@ function DondeViven({ archivo }: { archivo?: string }) {
 
 function AlCerrar({ cuaderno, volver }: { cuaderno: VistaDelCuaderno; volver: () => void }) {
   const t = useT().notas;
+  // En presencial la sala no tiene dueño (S5 M3): no hay «voz del cliente» ni «tus turnos», y el interruptor no hace nada.
+  const sala = useT().cuaderno.enPresencial;
+  const noSabeCuales = useT().cuaderno.presencial.noSabeCuales;
+  const bufTranscript = useT().cuaderno.bufTranscript;
+  const presencial = cuaderno.presencial;
   const idioma = useIdioma();
   const [fallo, setFallo] = useState(false);
   const guardar = () =>
@@ -483,9 +491,18 @@ function AlCerrar({ cuaderno, volver }: { cuaderno: VistaDelCuaderno; volver: ()
             type="button"
             role="switch"
             aria-checked={cuaderno.conservarMisTurnos}
+            aria-disabled={presencial ? true : undefined}
             className={cuaderno.conservarMisTurnos ? "conm on" : "conm off"}
-            style={{ background: "none", border: 0, padding: 0, fontFamily: "inherit", margin: "8px 2px 2px" }}
-            onClick={() => void conservarMisTurnos(!cuaderno.conservarMisTurnos).then(volver)}
+            style={{
+              background: "none",
+              border: 0,
+              padding: 0,
+              fontFamily: "inherit",
+              margin: "8px 2px 2px",
+              opacity: presencial ? 0.55 : undefined,
+              cursor: presencial ? "not-allowed" : undefined,
+            }}
+            onClick={presencial ? undefined : () => void conservarMisTurnos(!cuaderno.conservarMisTurnos).then(volver)}
           >
             <span className="track" />
             <span className="etq">
@@ -494,16 +511,22 @@ function AlCerrar({ cuaderno, volver }: { cuaderno: VistaDelCuaderno; volver: ()
             </span>
           </button>
           <p style={{ ...AYUDA, marginTop: "4px" }}>
-            {cuaderno.conservarMisTurnos ? t.conservarEncendido : t.conservarApagado} <b>{t.audioNunca}</b>
-            {t.audioNuncaCola}
+            {presencial ? (
+              noSabeCuales
+            ) : (
+              <>
+                {cuaderno.conservarMisTurnos ? t.conservarEncendido : t.conservarApagado} <b>{t.audioNunca}</b>
+                {t.audioNuncaCola}
+              </>
+            )}
           </p>
         </div>
         <div className="tarjeta" style={{ paddingBottom: "8px" }}>
           <h2 className="seccion" style={{ margin: "0 0 6px" }}>
             {t.muereAlCerrar}
           </h2>
-          {fila("i-sistema", t.vozDelCliente, t.sinInterruptor, "0 B", true)}
-          {fila("i-ojo", t.susTurnos, `${cuaderno.turnosDelCliente} ${t.turnos}`, "0 B", true)}
+          {fila("i-sistema", presencial ? sala.bufSala : t.vozDelCliente, t.sinInterruptor, "0 B", true)}
+          {fila("i-ojo", presencial ? bufTranscript : t.susTurnos, `${cuaderno.turnosDelCliente} ${t.turnos}`, "0 B", true)}
           {fila("i-pantalla", t.loLeido, `${cuaderno.lecturas} ${t.lecturas}`, "0 B", true)}
           {fila("i-mic", t.tuPropioAudio, t.tambienMuere, "0 B", true)}
           {/* Con la franja de la bandeja debajo, la línea se va: la pantalla no cabría (mirada 20). */}
@@ -552,8 +575,6 @@ function FranjaDeLaBandeja({ quedan, guardadas, ventana, elegir }: {
   ventana: Ventana;
   elegir: (v: Ventana) => void;
 }) {
-  const enWindows = useEnWindows();
-  const tw = useTextosDeWindows();
   const t = useT().notas;
   const cero = ventana === "0";
   const lasTuyas = guardadas > 0 ? `${t.las} ${guardadas} ${t.queGuardasteVan}` : "";
@@ -563,7 +584,7 @@ function FranjaDeLaBandeja({ quedan, guardadas, ventana, elegir }: {
       <div>
         <strong>{`${quedan} ${cero ? t.muerenAlCerrar : t.esperaranEnLaBandeja}`}</strong>
         <Ventanas elegida={ventana} elegir={elegir} estilo={{ margin: "6px 0 4px" }} />
-        <p>{cero ? `${t.ceroDetalle}${lasTuyas && ` ${lasTuyas}`}` : `${lasTuyas && `${lasTuyas} `}${enWindows ? tw.notas.enLaBandejaDetalle : t.enLaBandejaDetalle}`}</p>
+        <p>{cero ? `${t.ceroDetalle}${lasTuyas && ` ${lasTuyas}`}` : `${lasTuyas && `${lasTuyas} `}${t.enLaBandejaDetalle}`}</p>
       </div>
     </div>
   );
@@ -878,8 +899,6 @@ function Archivo({ retencion, preguntaInicial, bandeja, volverALaBandeja }: {
   bandeja: VistaDeLaBandeja | null;
   volverALaBandeja: () => void;
 }) {
-  const enWindows = useEnWindows();
-  const tw = useTextosDeWindows();
   const t = useT().notas;
   const quedanBandeja = useQuedan(bandeja?.vence ?? null);
   const idioma = useIdioma();
@@ -947,7 +966,7 @@ function Archivo({ retencion, preguntaInicial, bandeja, volverALaBandeja }: {
           );
         })}
       </div>
-      <p style={{ ...AYUDA, marginTop: "8px" }}>{enWindows ? tw.notas.cadaReunion : t.cadaReunion}</p>
+      <p style={{ ...AYUDA, marginTop: "8px" }}>{t.cadaReunion}</p>
     </div>
   );
 

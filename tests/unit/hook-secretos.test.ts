@@ -40,15 +40,25 @@ function pathSinHerramientas(): string {
   return dir;
 }
 
+/**
+ * La mitad positiva (la carnada) necesita gitleaks y jq. En local los trae el hook; en la CI, `quality` instala gitleaks
+ * con versión y huella fijas (auditoría del S5, B8), así que allí NO se salta: si falta gitleaks en la CI, es rojo.
+ */
 const hayHerramientas =
   spawnSync("/bin/bash", ["-c", "command -v gitleaks && command -v jq"])
     .status === 0;
 
 describe("hook PreToolUse de secretos (kit v1.37.0; origen planlang AU-S2-B12)", () => {
+  it("en la CI las herramientas están: la mitad positiva no se salta en silencio", () => {
+    if (process.env.CI) expect(hayHerramientas, "gitleaks o jq faltan en la CI: la carnada no se probó").toBe(true);
+  });
+
   it("sin gitleaks ni jq bloquea, y lo dice", () => {
     const r = correr("hola", { PATH: pathSinHerramientas() });
     expect(r.status).toBe(2);
-    expect(r.stdout).toContain("falta gitleaks o jq");
+    // Con exit 2 Claude Code le enseña al agente el stderr (auditoría del S5, B8): el porqué va ahí, no en stdout.
+    expect(r.stderr).toContain("falta gitleaks o jq");
+    expect(r.stdout).toBe("");
   });
 
   it("KIT_SIN_GITLEAKS=1 lo salta a sabiendas", () => {
@@ -68,7 +78,8 @@ describe("hook PreToolUse de secretos (kit v1.37.0; origen planlang AU-S2-B12)",
       );
       const r = correr(carnada, process.env);
       expect(r.status).toBe(2);
-      expect(r.stdout).toContain("SECRET DETECTADO");
+      expect(r.stderr).toContain("SECRET DETECTADO");
+      expect(r.stdout).toBe("");
     },
   );
 });

@@ -76,9 +76,11 @@ un módulo protegido de esta app**. No sale audio ni texto: entra el modelo. Por
 
 ### 5 · El respaldo se declara y NO se implementa en este sprint
 
-macOS < 26 se queda sin transcripción y lo dice con esa frase exacta. `whisper-rs` sigue siendo el
-camino escrito para ese caso; ponerlo hoy sería compilar whisper.cpp en cada build y descargar
-1,5 GB para un caso que este usuario no tiene. **Deuda declarada**, no olvido.
+macOS < 26 se queda sin transcripción y lo dice con esa frase exacta. `whisper-rs` era el camino escrito
+para ese caso; ponerlo en el Mac habría sido compilar whisper.cpp en cada build y descargar 1,5 GB para un caso que
+este usuario no tiene. **Deuda declarada**, no olvido. _(Enmienda, sprint 008: `whisper-rs` ya no es solo un camino
+escrito: es el motor de Windows desde el sprint 006, ADR 022 §5, con su modelo bajado y comprobado por
+`modelo_whisper.rs`. Para macOS < 26 la decisión no cambia.)_
 
 ## Consecuencias
 

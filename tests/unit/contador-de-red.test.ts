@@ -109,13 +109,16 @@ const DECLARADA = /verify-ephemeral:allow\b.*ADR/;
 const PUERTAS_DECLARADAS = 3;
 
 /**
- * **Y una puerta escrita en Rust, desde el sprint 006 (ADR 022 §4): exactamente una.** Windows no tiene puente de Swift,
- * y whisper necesita su modelo. La puerta vive en UN archivo, en UNA línea marcada con su ADR, y su cliente (`ureq`)
- * solo puede declararse para Windows. No se afloja nada: el resto de Rust sigue sin poder abrir un socket, y una
- * segunda línea de red —en ese archivo o en otro— es rojo.
+ * **Y las puertas escritas en Rust: una desde el sprint 006 (ADR 022 §4), dos desde el sprint 008 (ADR 023).** Windows
+ * no tiene puente de Swift: whisper necesita su modelo (`modelo_whisper.rs`) y la sugerencia por API necesita salir
+ * (`sintesis/api.rs`, la misma que en el Mac va por `nativo/Red.swift`). Cada una vive en SU archivo, en UNA línea
+ * marcada con su ADR, y su cliente (`ureq`) solo puede declararse para Windows. No se afloja nada: el resto de Rust
+ * sigue sin poder abrir un socket, y una línea de red más —en esos archivos o en otro— es rojo.
  */
-const PUERTA_RUST = "src-tauri/src/modelo_whisper.rs";
-const PUERTAS_RUST_DECLARADAS = 1;
+const PUERTAS_RUST: [string, number][] = [
+  ["src-tauri/src/modelo_whisper.rs", 1],
+  ["src-tauri/src/sintesis/api.rs", 1],
+];
 /** El único cliente de red que puede declararse, y solo en esta sección de `Cargo.toml`. */
 const CLIENTE_PERMITIDO = { nombre: "ureq", seccion: "[target.'cfg(windows)'.dependencies]" };
 
@@ -168,22 +171,40 @@ describe("contador de red: la única puerta que hay está declarada y contada", 
     ).toEqual([]);
   });
 
-  it("ningún archivo de Rust abre un socket, salvo la única puerta declarada (ADR 022 §4)", () => {
+  /**
+   * **Ni por las features de `windows` o `windows-sys`** (auditoría del S6, B11). El gate de arriba mira los clientes de
+   * red por su nombre de crate, pero las dos crates de Windows traen sockets, WinHTTP y WinINet detrás de features:
+   * `Win32_Networking_*` (WinSock, WinHttp, WinInet), `Networking_*` y `Web_*` (WinRT), `Win32_NetworkManagement_*`. Una
+   * línea en `Cargo.toml` abriría una puerta que ninguna búsqueda de `ureq` ve. Lo leído: cada feature declarada.
+   */
+  it("ninguna feature de windows o windows-sys trae red (B11 del S6)", () => {
+    const manifiesto = readFileSync(CARGO, "utf8");
+    const bloques = [...manifiesto.matchAll(/^(windows(?:-sys)?)\s*=\s*\{[^}]*features\s*=\s*\[([^\]]*)\]/gms)];
+    expect(bloques.map((b) => b[1]).sort(), "no encontré las dos crates de Windows en Cargo.toml").toEqual(["windows", "windows-sys"]);
+    const features = bloques.flatMap((b) => [...b[2].matchAll(/"([^"]+)"/g)].map((m) => `${b[1]}:${m[1]}`));
+    expect(features.length, "no leí ninguna feature: el lector se rompió").toBeGreaterThan(10);
+    const CON_RED = /:(Win32_Networking|Networking|Web(_|$)|Win32_NetworkManagement|Win32_Security_Authentication)/;
+    expect(features.filter((f) => CON_RED.test(f)), "features de Windows con red: necesitan ADR antes de entrar").toEqual([]);
+  });
+
+  it("ningún archivo de Rust abre un socket, salvo las puertas declaradas (ADR 022 §4, ADR 023)", () => {
     const hallazgos = barrer(archivos(RUST, [".rs"]), SOCKETS_RUST);
-    const esLaPuerta = (h: string) => h.startsWith(`${PUERTA_RUST}:`) && DECLARADA.test(h.slice(h.indexOf("  ")));
     // `barrer` corta la línea a 90 caracteres: la marca se busca en la línea entera del archivo.
-    const lineas = readFileSync(PUERTA_RUST, "utf8").split("\n");
-    const declaradasEnLaPuerta = hallazgos.filter((h) => {
-      if (!h.startsWith(`${PUERTA_RUST}:`)) return false;
-      const n = Number(h.slice(PUERTA_RUST.length + 1).split(" ")[0]);
-      return DECLARADA.test(lineas[n - 1] ?? "");
-    });
-    const sinDeclarar = hallazgos.filter((h) => !declaradasEnLaPuerta.includes(h) && !esLaPuerta(h));
+    const declarada = (h: string) => {
+      const puerta = PUERTAS_RUST.find(([f]) => h.startsWith(`${f}:`));
+      if (!puerta) return false;
+      const n = Number(h.slice(puerta[0].length + 1).split(" ")[0]);
+      return DECLARADA.test(readFileSync(puerta[0], "utf8").split("\n")[n - 1] ?? "");
+    };
+    const sinDeclarar = hallazgos.filter((h) => !declarada(h));
     expect(sinDeclarar, `salidas a la red en Rust:\n${sinDeclarar.join("\n")}`).toEqual([]);
-    expect(
-      declaradasEnLaPuerta.length,
-      `cambió el número de puertas Rust a la red (ADR 022 §4):\n${declaradasEnLaPuerta.join("\n")}`,
-    ).toBe(PUERTAS_RUST_DECLARADAS);
+    for (const [f, n] of PUERTAS_RUST) {
+      const suyas = hallazgos.filter((h) => h.startsWith(`${f}:`) && declarada(h));
+      expect(
+        suyas.length,
+        `cambió el número de líneas de red de ${f} (ADR 022 §4, ADR 023):\n${suyas.join("\n")}`,
+      ).toBe(n);
+    }
   });
 
   /**

@@ -78,6 +78,61 @@ pub fn debe_estar_protegida(etiqueta: &str, reunion_abierta: bool) -> bool {
     }
 }
 
+/// **La compilación de Windows más vieja que sabe sacar una ventana de la captura** (`WDA_EXCLUDEFROMCAPTURE`):
+/// Windows 10 versión 2004, la 19041 (sprint 008, M6 del S6). En una anterior, la ventana «protegida» sale negra pero
+/// presente o no se protege: la banda se vería. Es el mínimo que el manual y el ADR 022 declaran.
+pub const COMPILACION_MINIMA_DE_WINDOWS: u32 = 19041;
+
+/// ¿Una Windows de esta compilación puede proteger la banda? Pura.
+pub fn la_proteccion_cabe_en(compilacion: u32) -> bool {
+    compilacion >= COMPILACION_MINIMA_DE_WINDOWS
+}
+
+/// La frase cuando no cabe: qué compilación es, cuál hace falta y qué pasa.
+pub fn por_que_no_cabe(compilacion: u32) -> String {
+    format!(
+        "Esta Windows (compilación {compilacion}) no puede ocultar la banda de la captura de pantalla: hace falta Windows 10 \
+         versión 2004 (compilación {COMPILACION_MINIMA_DE_WINDOWS}) o posterior. Angel Ghost no abre la banda sin su protección."
+    )
+}
+
+/// La compilación de Windows de este equipo, de `RtlGetVersion` (que no miente aunque el programa no declare versión).
+#[cfg(windows)]
+pub fn compilacion_de_windows() -> Option<u32> {
+    use windows::Wdk::System::SystemServices::RtlGetVersion;
+    use windows::Win32::System::SystemInformation::OSVERSIONINFOW;
+    let mut v = OSVERSIONINFOW { dwOSVersionInfoSize: std::mem::size_of::<OSVERSIONINFOW>() as u32, ..Default::default() };
+    // SAFETY: `v` vive durante la llamada y trae su tamaño puesto; `RtlGetVersion` solo escribe dentro de la estructura.
+    unsafe { RtlGetVersion(&mut v) }.is_ok().then_some(v.dwBuildNumber)
+}
+
+/// Antes de abrir la banda: si esta Windows no puede protegerla, no se abre (y se dice por qué). En el Mac y en una
+/// Windows que alcanza, no hace nada. Si no se pudo leer la versión, se deja pasar: la protección la comprueba
+/// después `invariante_de_proteccion` con las ventanas de verdad.
+pub fn exigir_la_version_de_windows() -> Result<(), String> {
+    #[cfg(windows)]
+    if let Some(c) = compilacion_de_windows() {
+        if !la_proteccion_cabe_en(c) {
+            return Err(por_que_no_cabe(c));
+        }
+    }
+    Ok(())
+}
+
+/// Dice por qué la app no arranca, con un cuadro de Windows: una app que se cierra en silencio no le dice nada a
+/// nadie. Solo informa (un botón «Aceptar»); no toca ninguna protección del sistema. Fuera de Windows, no hace nada.
+pub fn avisar_que_no_arranca(motivo: &str) {
+    #[cfg(windows)]
+    {
+        use windows::core::HSTRING;
+        use windows::Win32::UI::WindowsAndMessaging::{MessageBoxW, MB_ICONINFORMATION, MB_OK};
+        // SAFETY: dos cadenas anchas que viven durante la llamada y ningún manejador de ventana (sin dueño).
+        unsafe { MessageBoxW(None, &HSTRING::from(motivo), &HSTRING::from("Angel Ghost"), MB_OK | MB_ICONINFORMATION) };
+    }
+    #[cfg(not(windows))]
+    let _ = motivo;
+}
+
 /// Lo que [`proteger_el_cuaderno`] cambia: una ventana, la principal, y nada más. Separado para que
 /// el test lo aplique sobre el `tauri.conf.json` de verdad y compruebe el invariante en marcha.
 pub fn lo_que_cambia(reunion_abierta: bool) -> [(&'static str, bool); 1] {
@@ -157,6 +212,7 @@ pub const HAY_RELLENO: bool = cfg!(target_os = "macos");
 /// porque `build()` no admite una etiqueta repetida, así que la reposición se mira **ventana por
 /// ventana**: se abre la que falte y se deja en paz la que esté.
 pub fn abrir_banda<R: Runtime>(app: &AppHandle<R>, borde: Borde, alto: u32) -> Result<(), String> {
+    exigir_la_version_de_windows()?;
     let ventanas = app.config().app.windows.clone();
     invariante_de_proteccion(&proteccion_declarada(&ventanas))?;
 
@@ -298,6 +354,29 @@ pub fn cerrar_banda<R: Runtime>(app: &AppHandle<R>) {
 
 #[cfg(test)]
 mod tests {
+    /// **El mínimo de Windows para proteger la banda** (sprint 008, M6 del S6): 19041, Windows 10 versión 2004.
+    #[test]
+    fn la_proteccion_pide_windows_10_2004_o_mas() {
+        assert!(!la_proteccion_cabe_en(18363), "Windows 10 1909 no puede ocultar la banda");
+        assert!(!la_proteccion_cabe_en(19040));
+        assert!(la_proteccion_cabe_en(19041));
+        assert!(la_proteccion_cabe_en(22631), "Windows 11");
+        let frase = por_que_no_cabe(18363);
+        assert!(frase.contains("18363") && frase.contains("19041") && frase.contains("no abre la banda"), "{frase}");
+        assert!(!frase.contains("sprint"), "una frase que llega al usuario no habla de sprints");
+    }
+
+    /// `abrir_banda` pregunta por la versión ANTES de tocar nada (en el Mac, la pregunta no hace nada).
+    #[test]
+    fn abrir_la_banda_pregunta_primero_por_la_version() {
+        let fuente = include_str!("mod.rs");
+        let cuerpo = &fuente[fuente.find("pub fn abrir_banda<").expect("abrir_banda")..];
+        let pregunta = cuerpo.find("exigir_la_version_de_windows()?").expect("no pregunta por la versión");
+        let invariante = cuerpo.find("invariante_de_proteccion(").expect("sin invariante");
+        assert!(pregunta < invariante);
+        assert!(exigir_la_version_de_windows().is_ok() || cfg!(windows));
+    }
+
     use super::*;
 
     #[test]
@@ -387,11 +466,6 @@ mod tests {
         assert!(invariante_en_marcha(&[(BANDA, false)], false).unwrap_err().contains("la vería"));
     }
 
-    /// La banda y su relleno **no tienen bordes**, y eso es lo único que impide cerrarlas por
-    /// separado: macOS no le manda el cierre a una ventana sin bordes. Medido en vivo el
-    /// 2026-09-27 con una sonda en `CloseRequested`: ⌘W y «Close All» sobre la banda no llegan
-    /// (tres ventanas antes y después), y sobre la principal sí. Con bordes, ⌘W cerraría la banda
-    /// sola y dejaría el relleno —un rectángulo opaco— encima de la reunión. Se quitan juntas, con
     /// **En Windows no nace el relleno** (sprint 006, ADR 022 §3): allí la banda se excluye de la captura y un relleno
     /// debajo sería lo capturado, una franja negra. En macOS sí nace: es lo que tapa el hueco. Y `abrir_banda` lo mira
     /// antes de construir nada.
@@ -405,7 +479,11 @@ mod tests {
         assert!(salta < abrir.find(".build()").expect("construye"), "el relleno se construye antes de mirarlo");
     }
 
-    /// ⌥⎋ (`cerrar_banda`).
+    /// La banda y su relleno **no tienen bordes**, y eso es lo único que impide cerrarlas por
+    /// separado: macOS no le manda el cierre a una ventana sin bordes. Medido en vivo el
+    /// 2026-09-27 con una sonda en `CloseRequested`: ⌘W y «Close All» sobre la banda no llegan
+    /// (tres ventanas antes y después), y sobre la principal sí. Con bordes, ⌘W cerraría la banda
+    /// sola y dejaría el relleno —un rectángulo opaco— encima de la reunión. Se quitan juntas, con ⌥⎋ (`cerrar_banda`).
     #[test]
     fn la_banda_y_su_relleno_no_tienen_bordes() {
         let json: serde_json::Value =

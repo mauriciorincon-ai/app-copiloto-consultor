@@ -19,7 +19,6 @@ export type TextosDeWindows = {
   titulo: string;
   intro: string;
   ya: string;
-  todavia: string;
   noPorAhora: string;
   /** Lo que cada clave es, para quien la lee. */
   funciones: Record<ClaveDeWindows, { nombre: string; detalle: string }>;
@@ -34,21 +33,20 @@ export type TextosDeWindows = {
     medirOtra: string;
     bajarPequeno: string;
     sinReunion: string;
-    /** Sprint 007: con dos pistas el cliente va primero; lo tuyo que no dio tiempo a transcribir, contado. */
+    /** Sprint 007: con dos pistas el cliente va primero; lo que no dio tiempo a transcribir, contado sin atribuirlo. */
     descartados: (n: number) => string;
   };
   /** Sprint 007: un atajo que Windows no dejó registrar porque otra app ya tiene esa combinación. */
   atajoOcupado: (teclas: string) => string;
+  /** Sprint 008: el aviso corto de la banda cuando alguna tecla no responde (el detalle vive en Honestidad). */
+  teclasSinResponder: (n: number) => string;
   /** Idioma: el motor de voz es de la app, no del sistema (ADR 022). */
   idioma: {
     transcribeTuPc: string;
     transcribeTuPcDetalle: string;
     idiomasListos: string;
-  };
-  /** Notas y la bandeja: cuándo se borra lo guardado (ADR 022: el borrado con la app cerrada, todavía no). */
-  notas: {
-    cadaReunion: string;
-    enLaBandejaDetalle: string;
+    /** Sprint 008: el «Instalar» acabó y el modelo no está (la descarga falló o se paró). */
+    instalarFallo: string;
   };
   /** Honestidad: qué abre la app y cuándo. */
   honestidad: {
@@ -57,8 +55,7 @@ export type TextosDeWindows = {
   permisos: {
     microfonoPara: string;
     abrirAjustes: string;
-    llegaDespues: string;
-    /** Sprint 007: el audio del sistema y la pantalla no piden ningún permiso en Windows. */
+    /** El audio del sistema, la pantalla (sprint 007) y el acople (sprint 008) no piden ningún permiso en Windows. */
     sinPermiso: string;
     antesTitulo: string;
     antesTexto: string;
@@ -68,9 +65,8 @@ export type TextosDeWindows = {
 const ES: TextosDeWindows = {
   titulo: "Hoy en Windows",
   intro:
-    "Angel Ghost ya se instala en Windows. Esto es lo que hace hoy en este PC y lo que todavía no, dicho tal cual.",
+    "Angel Ghost se instala en Windows. Esto es lo que hace hoy en este PC y lo que no, dicho tal cual.",
   ya: "Ya funciona",
-  todavia: "Todavía no",
   noPorAhora: "No en Windows por ahora",
   funciones: {
     "banda-protegida": {
@@ -86,7 +82,7 @@ const ES: TextosDeWindows = {
     "notas-cifradas": {
       nombre: "Tus notas cifradas",
       detalle:
-        "sí: se guardan cifradas con la llave en el Administrador de credenciales; exportarlas y abrir la bandeja esperan a Windows Hello",
+        "sí: se guardan cifradas con la llave en el Administrador de credenciales; exportarlas y abrir la bandeja piden Windows Hello",
     },
     videollamada: {
       nombre: "Las videollamadas: el audio del cliente",
@@ -105,7 +101,8 @@ const ES: TextosDeWindows = {
     },
     acople: {
       nombre: "Acoplarse a la ventana de la reunión",
-      detalle: "llega en una versión próxima",
+      detalle:
+        "sí: la ventana de la reunión baja y se encoge para que la banda no la tape, y vuelve al cerrar; no pide permiso",
     },
     ensayo: {
       nombre: "Ensayar con la voz que lee las preguntas",
@@ -114,11 +111,13 @@ const ES: TextosDeWindows = {
     },
     sugerencia: {
       nombre: "La sugerencia redactada por IA",
-      detalle: "llega en una versión próxima",
+      detalle:
+        "sí, con el API y tu clave: en Windows no hay modelo del sistema; sin API, la ficha sigue siendo la respuesta",
     },
     radar: {
       nombre: "El radar de tu equipo",
-      detalle: "llega en una versión próxima",
+      detalle:
+        "sí: los programas de este PC que te miran, con su catálogo de Windows, y si el PC está gestionado (MDM)",
     },
     atajos: {
       nombre: "Los atajos de teclado globales",
@@ -127,11 +126,12 @@ const ES: TextosDeWindows = {
     },
     "borrado-con-la-app-cerrada": {
       nombre: "Borrar tus notas con la app cerrada",
-      detalle: "por ahora se borran con la app abierta",
+      detalle:
+        "sí: una tarea del Programador de tareas las borra al vencer, aunque no abras la app",
     },
     desbloqueo: {
       nombre: "Abrir tus notas guardadas",
-      detalle: "llega con Windows Hello, en una versión próxima",
+      detalle: "sí: con Windows Hello (tu PIN, tu huella o tu cara), una vez por sesión de la app",
     },
     "puerta-local": {
       nombre: "La puerta para Claude Code",
@@ -140,6 +140,7 @@ const ES: TextosDeWindows = {
   },
   atajoOcupado: (teclas) =>
     `${teclas} no responde: otra app de este PC ya tiene esa combinación. Lo mismo se hace desde la app.`,
+  teclasSinResponder: (n) => (n === 1 ? "1 tecla no responde" : `${n} teclas no responden`),
   whisper: {
     titulo: "La transcripción en este PC",
     bajando: "Bajando el modelo de voz (1,6 GB, con su comprobación)…",
@@ -152,22 +153,19 @@ const ES: TextosDeWindows = {
       `Modelo ${m}: tardó ${ms} ms, y pasa del techo de 4 s en este PC. El modelo pequeño es menos preciso, pero más rápido aquí.`,
     medirOtra: "Medir otra vez",
     bajarPequeno: "Bajar el modelo pequeño (0,5 GB)",
-    sinReunion: "Bajar o medir no se puede con una reunión abierta.",
+    sinReunion: "Bajar o medir no se puede con una reunión, una sesión o un ensayo abiertos.",
     descartados: (n) =>
       n === 1
-        ? "En la última reunión, 1 turno tuyo se quedó sin transcribir: este PC no daba abasto y el cliente va primero."
-        : `En la última reunión, ${n} turnos tuyos se quedaron sin transcribir: este PC no daba abasto y el cliente va primero.`,
+        ? "En la última reunión, 1 turno se quedó sin transcribir: este PC no daba abasto, y se atiende primero al cliente."
+        : `En la última reunión, ${n} turnos se quedaron sin transcribir: este PC no daba abasto, y se atiende primero al cliente.`,
   },
   idioma: {
     transcribeTuPc: "Transcribe tu PC, no un servicio",
     transcribeTuPcDetalle:
       "El modelo de voz (whisper), dentro de tu equipo. Ningún audio sale para convertirse en texto. La única vez que toca la red es cuando pides instalar el modelo: lo baja Angel Ghost desde su origen y comprueba su huella antes de usarlo.",
     idiomasListos: "idiomas a la vez, como mucho: los que la app ofrece.",
-  },
-  notas: {
-    cadaReunion:
-      "Cada reunión que guardas vive eso, y se borra sola al vencer, en cuanto abras la app. Con la app cerrada, todavía no.",
-    enLaBandejaDetalle: "Estas, cifradas, se borran al llegar a cero, en cuanto abras la app.",
+    instalarFallo:
+      "No se pudo bajar el modelo. Revisa la conexión y vuelve a intentarlo (si empezó una reunión o un ensayo, la descarga se para).",
   },
   honestidad: {
     modoDetalle:
@@ -176,20 +174,18 @@ const ES: TextosDeWindows = {
   permisos: {
     microfonoPara: "Escuchar la sala o tu voz, con el micrófono de este PC",
     abrirAjustes: "Abrir Ajustes de Windows",
-    llegaDespues: "Llega en una versión próxima",
     sinPermiso: "No pide permiso en Windows",
     antesTitulo: "El micrófono en Windows",
     antesTexto:
-      "El micrófono lo concedes o lo quitas tú en Ajustes → Privacidad y seguridad → Micrófono; la app no pide el permiso por su cuenta. El audio del sistema y la pantalla de la reunión no piden ninguno.",
+      "El micrófono lo concedes o lo quitas tú en Ajustes → Privacidad y seguridad → Micrófono; la app no pide el permiso por su cuenta. El audio del sistema, la pantalla de la reunión y el acople no piden ninguno.",
   },
 };
 
 const EN: TextosDeWindows = {
   titulo: "On Windows today",
   intro:
-    "Angel Ghost already installs on Windows. This is what it does today on this PC, and what it doesn't do yet, stated plainly.",
+    "Angel Ghost installs on Windows. This is what it does today on this PC, and what it doesn't, stated plainly.",
   ya: "Works now",
-  todavia: "Not yet",
   noPorAhora: "Not on Windows for now",
   funciones: {
     "banda-protegida": {
@@ -208,7 +204,7 @@ const EN: TextosDeWindows = {
     "notas-cifradas": {
       nombre: "Your encrypted notes",
       detalle:
-        "yes: they're saved encrypted with the key in Credential Manager; exporting them and opening the tray wait for Windows Hello",
+        "yes: they're saved encrypted with the key in Credential Manager; exporting them and opening the tray ask for Windows Hello",
     },
     videollamada: {
       nombre: "Video calls: the client's audio",
@@ -227,7 +223,8 @@ const EN: TextosDeWindows = {
     },
     acople: {
       nombre: "Docking to the meeting window",
-      detalle: "coming in a later version",
+      detalle:
+        "yes: the meeting window moves down and shrinks so the band doesn't cover it, and comes back on close; no permission needed",
     },
     ensayo: {
       nombre: "Rehearsing with a voice that reads the questions",
@@ -236,11 +233,13 @@ const EN: TextosDeWindows = {
     },
     sugerencia: {
       nombre: "The suggestion written by AI",
-      detalle: "coming in a later version",
+      detalle:
+        "yes, with the API and your key: Windows has no system model; without the API, the card is still the answer",
     },
     radar: {
       nombre: "Your machine's radar",
-      detalle: "coming in a later version",
+      detalle:
+        "yes: the programs on this PC that watch you, with its Windows catalog, and whether the PC is managed (MDM)",
     },
     atajos: {
       nombre: "Global keyboard shortcuts",
@@ -249,11 +248,12 @@ const EN: TextosDeWindows = {
     },
     "borrado-con-la-app-cerrada": {
       nombre: "Deleting your notes with the app closed",
-      detalle: "for now they are deleted with the app open",
+      detalle:
+        "yes: a Task Scheduler task deletes them when they expire, even if you never open the app",
     },
     desbloqueo: {
       nombre: "Opening your saved notes",
-      detalle: "comes with Windows Hello, in a later version",
+      detalle: "yes: with Windows Hello (your PIN, fingerprint or face), once per app session",
     },
     "puerta-local": {
       nombre: "The door for Claude Code",
@@ -262,6 +262,7 @@ const EN: TextosDeWindows = {
   },
   atajoOcupado: (teclas) =>
     `${teclas} doesn't respond: another app on this PC already has that combination. You can do the same from the app.`,
+  teclasSinResponder: (n) => (n === 1 ? "1 shortcut isn't responding" : `${n} shortcuts aren't responding`),
   whisper: {
     titulo: "Transcription on this PC",
     bajando: "Downloading the speech model (1.6 GB, with its checksum)…",
@@ -275,22 +276,19 @@ const EN: TextosDeWindows = {
     medirOtra: "Measure again",
     bajarPequeno: "Download the small model (0.5 GB)",
     sinReunion:
-      "Downloading or measuring isn't possible while a meeting is open.",
+      "Downloading or measuring isn't possible while a meeting, a session or a rehearsal is open.",
     descartados: (n) =>
       n === 1
-        ? "In the last meeting, 1 of your turns wasn't transcribed: this PC couldn't keep up and the client goes first."
-        : `In the last meeting, ${n} of your turns weren't transcribed: this PC couldn't keep up and the client goes first.`,
+        ? "In the last meeting, 1 turn wasn't transcribed: this PC couldn't keep up, and the client is served first."
+        : `In the last meeting, ${n} turns weren't transcribed: this PC couldn't keep up, and the client is served first.`,
   },
   idioma: {
     transcribeTuPc: "Transcribes on your PC, not a service",
     transcribeTuPcDetalle:
       "The speech model (whisper) lives inside your machine. No audio leaves to become text. The only time it touches the network is when you ask to install a model: Angel Ghost downloads it from its origin and checks its checksum before using it.",
     idiomasListos: "languages ready at once, at most: the ones the app offers.",
-  },
-  notas: {
-    cadaReunion:
-      "Every meeting you save lives that long, and deletes itself when it expires, once you open the app. With the app closed, not yet.",
-    enLaBandejaDetalle: "These, encrypted, delete at zero, once you open the app.",
+    instalarFallo:
+      "The model couldn't be downloaded. Check the connection and try again (if a meeting or a rehearsal started, the download stops).",
   },
   honestidad: {
     modoDetalle:
@@ -300,11 +298,10 @@ const EN: TextosDeWindows = {
     microfonoPara:
       "Listening to the room or your voice, with this PC's microphone",
     abrirAjustes: "Open Windows Settings",
-    llegaDespues: "Coming in a later version",
     sinPermiso: "Needs no permission on Windows",
     antesTitulo: "The microphone on Windows",
     antesTexto:
-      "You grant or revoke the microphone yourself in Settings → Privacy & security → Microphone; the app never asks for the permission on its own. The system audio and the meeting screen need none.",
+      "You grant or revoke the microphone yourself in Settings → Privacy & security → Microphone; the app never asks for the permission on its own. The system audio, the meeting screen and docking need none.",
   },
 };
 

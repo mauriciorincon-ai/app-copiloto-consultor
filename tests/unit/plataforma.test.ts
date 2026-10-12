@@ -6,6 +6,8 @@ import {
 } from "../../src/contrato.generado";
 import {
   CLAVES_DE_WINDOWS,
+  TECLAS_DE_MACOS,
+  conTeclasDeEsteSistema,
   esWindows,
   estadoDeWhisper,
   porCuando,
@@ -23,26 +25,12 @@ describe("lo que la app hace en este equipo", () => {
       ...CLAVES_DE_WINDOWS,
     ]);
     const g = porCuando(PLATAFORMA_WINDOWS);
-    // Sprint 007: la videollamada, la pantalla, la voz al oído, el ensayo con voz y los atajos pasan a «sí».
-    expect(g.si).toEqual([
-      "banda-protegida",
-      "presencial",
-      "corpus-y-ficha",
-      "notas-cifradas",
-      "videollamada",
-      "pantalla",
-      "voz-al-oido",
-      "ensayo",
-      "atajos",
-    ]);
-    expect(g["todavia-no"]).toEqual([
-      "acople",
-      "sugerencia",
-      "radar",
-      "borrado-con-la-app-cerrada",
-      "desbloqueo",
-    ]);
+    // Sprint 008, «Windows completo»: el acople, la sugerencia, el radar, el borrado con la app cerrada y el desbloqueo
+    // pasan a «sí». Catorce están; la puerta local no está planeada.
+    expect(g.si).toEqual(CLAVES_DE_WINDOWS.filter((c) => c !== "puerta-local"));
+    expect(g.si).toHaveLength(14);
     expect(g["no-por-ahora"]).toEqual(["puerta-local"]);
+    expect(Object.keys(g)).toEqual(["si", "no-por-ahora"]);
   });
 
   it("whisper se dice como está: medido, bajando o sin modelo", () => {
@@ -84,5 +72,29 @@ describe("lo que la app hace en este equipo", () => {
     expect(esWindows(PLATAFORMA_MACOS)).toBe(false);
     expect(PLATAFORMA_MACOS.funciones).toEqual([]);
     expect(whisperEnEsteEquipo(PLATAFORMA_MACOS)).toBeNull();
+  });
+});
+
+describe("las teclas de macOS salen del contrato, no de una copia (auditoría del S7, M7)", () => {
+  it("son las once de Rust, cada acción una vez, y la sustitución va de la más larga a la más corta", () => {
+    expect(TECLAS_DE_MACOS.map(([, accion]) => accion).sort()).toEqual(
+      PLATAFORMA_MACOS.atajos.map((a) => a.accion).sort(),
+    );
+    expect(TECLAS_DE_MACOS).toHaveLength(PLATAFORMA_MACOS.atajos.length);
+    // «⎋» está dentro de «⌥⎋»: si la corta fuera antes, el corte quedaría a medias.
+    TECLAS_DE_MACOS.forEach(([teclas], i) => {
+      for (const [despues] of TECLAS_DE_MACOS.slice(i + 1)) {
+        expect(teclas).not.toBe(despues);
+        expect(despues.includes(teclas)).toBe(false);
+      }
+    });
+  });
+
+  it("un texto con teclas de macOS se escribe con las de Windows, y el corte no se parte", () => {
+    const texto = "Corta con ⌥⎋, calla la voz con ⎋ y oculta la banda con ⌃⌥B.";
+    expect(conTeclasDeEsteSistema(texto, PLATAFORMA_MACOS, "es")).toBe(texto);
+    const enWindows = conTeclasDeEsteSistema(texto, PLATAFORMA_WINDOWS, "es");
+    expect(enWindows).toContain("Alt+Mayús+Q");
+    expect(enWindows).not.toMatch(/[⌃⌥⎋]/);
   });
 });

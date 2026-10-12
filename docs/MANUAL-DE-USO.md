@@ -18,7 +18,8 @@ pantalla para que puedas comprobarlo en vez de creértelo.
 
 **Y en la mesa, también:** en *Presencial* la app escucha la sala por el micrófono de tu Mac —una reunión
 cara a cara, o la videollamada que corre en otro equipo con tu Mac al lado— y te da la ficha al oído
-(*Presencial*, abajo).
+(*Presencial*, abajo). Si esa videollamada corre en un PC con Windows, la app también puede instalarse allí
+(*Angel Ghost en Windows*, abajo).
 
 **Y antes de la reunión, puedes ensayarla:** la app te hace las preguntas que ese cliente probablemente
 hará, sacadas de tu propia propuesta, te escucha por el micrófono y te dice qué evidencia tuya usaste y
@@ -143,7 +144,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 ### Presencial: la app escucha la sala · Nuevo · Sprint 005
 
 - **Qué hace:** para la reunión en la mesa, o para la videollamada que corre en otro equipo —un PC con
-  Windows— con tu Mac al lado. La app escucha **la sala por el micrófono de tu Mac, y nada más**: no abre
+  Windows— con tu Mac al lado (si prefieres no instalar nada en ese PC; desde el sprint 007 la app también
+  corre en él). La app escucha **la sala por el micrófono de tu Mac, y nada más**: no abre
   el audio del sistema ni lee la pantalla. Con lo que oye busca en tus documentos y te da la ficha de
   siempre —titular, línea y de dónde sale—, de fábrica **al oído**.
 - **Cómo se usa:**
@@ -156,7 +158,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   4. **«Empezar en presencial».** Para acabar, «Terminar sesión»: la voz se apaga con la sesión y `⎋`
      vuelve a tus otras apps. `⌥⎋` corta todo, como siempre.
   5. Con la sesión en marcha, `⌃⌥V` cambia entre la voz y la banda; el selector de *Sesión* también.
-- **Con la videollamada en un PC con Windows:** pon el PC **en altavoz** y el Mac al lado. En el PC no se
+- **Con la videollamada en un PC con Windows donde no instalas la app:** pon el PC **en altavoz** y el Mac al lado. En el PC no se
   instala nada y la app no toca esa máquina. **Si llevas auriculares en el PC, la app no oye al
   cliente**: solo te oye a ti.
 - **Cómo decide cuándo darte una ficha.** Tu voz y la del cliente entran por el mismo micrófono, y la app
@@ -167,8 +169,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - el silencio de la sala no pide ficha.
 
   Y ningún turno de la sala dura más de 15 s: dos voces que se pisan no se juntan en un bloque que
-  llegue tarde. En la prueba, de 14 preguntas del cliente salieron 5 fichas —las mismas que sin
-  reglas— y las fichas que sobraban, casi todas por tu voz, bajaron de 16 a 5.
+  llegue tarde. En la prueba, de 14 turnos del cliente que pedían ficha salieron 5 —tantas como sin reglas,
+  aunque no las mismas— y las que sobraban, todas por tu voz, bajaron de 16 a 5.
 - **La voz espera a que la sala calle.** Si llega una ficha mientras alguien habla, la banda dice «La
   sala habla · te la digo cuando calle», y la voz la lee en cuanto haya silencio. Si en 4 s nadie calla,
   la ficha se queda en la banda y `⌃⌥V` te la enseña.
@@ -190,6 +192,10 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     la última que se dijo.
   - **Con auriculares por Bluetooth o USB** la app no distingue un casco de un altavoz: si es un
     altavoz, elige la banda.
+  - **Si tus auriculares tienen micrófono**, macOS puede escuchar por ellos y la app oiría sobre todo tu voz,
+    con el cliente lejos o sin llegar. *Sesión* nombra el micrófono que usará antes de empezar y, si es
+    externo, lo avisa: elige el micrófono del Mac en System Settings → Sound → Input.
+  - **Con la ficha al oído, `⎋` es de la app** mientras dure la sesión: no le llega a ninguna otra.
 
 ### Tu corpus, indexado · desde Sprint 001
 
@@ -265,6 +271,9 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   modo solo audio es la primera que se corta, porque es la única que tu cliente podría oír.
 - **Limitaciones conocidas:** el botón corta lo que vive en memoria **ahora**; lo que ya salió por
   los altavoces o lo que ya viste en la banda, obviamente, no se puede deshacer.
+- **Conoce Angel Ghost:** al pie de *Honestidad* (solo dentro de la app) hay un botón, **«Abrir el recorrido»**, que
+  abre en tu navegador un recorrido visual de la app, de lo general a lo particular y en español y en inglés. Es un
+  archivo que viaja dentro de la app: abrirlo no toca la red y el contador sigue en 0 B.
 
 ### Tus notas: lo único de la reunión que queda · Nuevo · Sprint 003
 
@@ -317,7 +326,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - **Si borras el Llavero, tus reuniones guardadas no se pueden abrir.** La app no tiene recuperación:
     sería una segunda llave. Solo una copia de Time Machine (o el Asistente de migración) devuelve tu
     llavero, y con él tus notas, que se siguen abriendo.
-  - **Que la llave quede solo en este Mac llega con la firma de Apple (H2):** hasta entonces, el
+  - **Que la llave quede solo en este Mac llega con la firma de la app (G-Release, H-4):** hasta entonces, el
     llavero que la app puede usar no sabe atarla a un solo equipo.
   - **Tus notas no aparecen en Documentos:** se llega a ellas desde *Notas*, o con «Mostrar en Finder».
   - **El nombre del archivo va en claro** (`reunion-2026-09-27-1402.ghost`, o
@@ -410,7 +419,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     el catálogo v1») y no adivina.
   - Si la línea nombra varias («Colombia y California»), la bandera es la de **la más estricta**.
   - El catálogo se actualiza con una versión nueva de la app, nunca por la red.
-  - La plantilla del aviso de una línea al cliente y el registro de que le informaste quedan para H2.
+  - La plantilla del aviso de una línea al cliente y el registro de que le informaste quedan para un hito posterior, sin fecha.
 
 ### El ensayo: practica antes de la reunión · Nuevo · Sprint 004
 
@@ -680,8 +689,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - Las fichas que trae **la pantalla sola** no llevan sugerencia: no responden a ninguna pregunta.
   - Un nombre de persona **suelto** («Andrea») que no esté en tu corpus no se reconoce al anonimizar;
     dos palabras con mayúscula seguidas («Andrea Villalba») sí.
-  - El camino **MLX** (un modelo que descargas tú) no está en este MVP: queda en el roadmap del H2, y
-    en IA su fila lo dice con «En el H2». Sin Apple Intelligence, la sugerencia local no está.
+  - El camino **MLX** (un modelo que descargas tú) no está en este MVP: queda en el roadmap, sin fecha, y
+    en IA su fila lo dice con «En el roadmap». Sin Apple Intelligence, la sugerencia local no está.
   - La sugerencia se escribe **en el idioma de la ficha que cita**, no en el de la pregunta: si tu
     cliente pregunta en inglés y tu propuesta está en español, la sugerencia sale en español.
   - A veces la sugerencia es fiel a su ficha pero **no contesta la pregunta** (cita otra de las tres
@@ -816,27 +825,32 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     otro idioma no se transcribe bien** — está medido y está dicho en la pantalla de *Idioma*. Marcar
     varios idiomas por pista no está en la app.
 
-## Angel Ghost en Windows · Sprints 006 y 007
+## Angel Ghost en Windows · Sprints 006, 007 y 008
 
 No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fuera de «Features».
 
 - **Qué hace:** la app se instala en un PC con Windows. Tiene la banda protegida, el micrófono, la transcripción
   local con whisper, tus notas cifradas y tu corpus con sus fichas. **Desde el sprint 007 también la
   videollamada en ese mismo PC** (Teams, Zoom o Meet en el navegador): las dos pistas, la ficha al oído, la lectura
-  de la pantalla de la reunión, el ensayo con voz y los atajos. Honestidad tiene el bloque **«Hoy en Windows»**,
-  que dice qué hace y qué todavía no, cada cosa con su motivo.
+  de la pantalla de la reunión, el ensayo con voz y los atajos. **Desde el sprint 008, todo lo demás:** el acople,
+  la sugerencia con el API, el radar, abrir tus notas con Windows Hello y el borrado con la app cerrada. Honestidad
+  tiene el bloque **«Hoy en Windows»**, que dice qué hace y qué no, cada cosa con su motivo.
 - **Cómo se instala:** llega como archivo (`.msi` o `.exe`) desde la integración continua del repositorio. **El
   instalador no está firmado todavía:** Windows SmartScreen mostrará «Windows protegió tu PC». Pulsa **Más
   información** (en inglés, *More info*) y luego **Ejecutar de todas formas** (en inglés, *Run anyway*). Si tu
   cuenta no es de administrador, pide a quien administre el PC que lo instale.
+- **Qué Windows hace falta:** **Windows 10 versión 2004 (compilación 19041) o posterior**. En una anterior Windows no
+  puede ocultar la banda de la captura de pantalla, y Angel Ghost no la abre sin su protección: lo dice con un cuadro
+  al arrancar y se cierra.
 - **El micrófono:** Windows no pide nada desde la app. Lo concedes o lo quitas tú en **Ajustes → Privacidad y
   seguridad → Micrófono**. En Permisos, el botón **Abrir Ajustes de Windows** te lleva ahí.
 - **El modelo de voz:** en Idioma, **Instalar** baja el modelo grande de whisper (1,6 GB). Antes de usarlo se
-  comprueba su huella SHA-256; si no coincide, se borra. **Nunca se baja con una reunión abierta.**
+  comprueba su huella SHA-256; si no coincide, se borra. **Nunca se baja con una reunión, una sesión (también «solo notas» o presencial) ni un ensayo abiertos, y si empieza uno mientras baja, la descarga se para** y se borra lo que llevaba. Si la conexión se cuelga, a las tres horas se suelta sola. Lo que tardó whisper en tu PC se recuerda al reabrir la app.
 - **La velocidad de tu PC:** Honestidad mide cuánto tarda la transcripción en 10 segundos de audio de muestra. Si
   pasa de 4 s, lo dice y ofrece bajar el modelo pequeño (0,5 GB): es menos preciso, pero más rápido en ese PC.
-- **Tus notas:** se guardan cifradas, con la llave en el Administrador de credenciales de tu usuario. Exportarlas y
-  abrir la bandeja esperan a Windows Hello, que llega en una versión próxima.
+- **Tus notas:** se guardan cifradas, con la llave en el Administrador de credenciales de tu usuario. Exportarlas,
+  abrir tus ensayos y abrir la bandeja de otra sesión piden **Windows Hello** (tu PIN, tu huella o tu cara) una vez
+  por sesión de la app.
 - **Lo que no verificamos:** que la banda no salga en Teams, Zoom ni Meet. Honestidad lo dice como «sin verificar»
   hasta que lo pruebes en tu PC, y la banda y *Sesión* lo repiten con esas palabras: en Windows no dicen «Verificada»
   ni nombran el Mac.
@@ -849,9 +863,13 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
   una notificación o una canción que suene en ese momento. **Si cambias de salida de audio con la sesión en marcha**
   (unos auriculares Bluetooth, por ejemplo), la app vuelve a abrir el audio del sistema sola, en un par de segundos; si
   el transcript del cliente deja de moverse tras el cambio, repórtalo.
-- **Qué reunión reconoce.** Por el programa que corre: Teams, Zoom, o Meet en Chrome, Edge, Firefox o Brave, que lee por
-  el título de la pestaña. De los navegadores lee **solo los títulos de sus ventanas**, nada más del PC. Cada programa
-  del catálogo trae la página oficial de donde sale; ninguno se da por verificado.
+- **Qué reunión reconoce.** Teams o Zoom **cuando estás en una llamada**: tener la app abierta no basta, porque en
+  Windows se quedan abiertas todo el día (sprint 008). La app lo sabe porque Teams o Zoom tienen el micrófono abierto;
+  Windows lo dice por programa y sin pedir permiso, y la app no oye nada por eso. Meet, en Chrome, Edge, Firefox o
+  Brave, por el título de la pestaña. De los navegadores lee **solo los títulos de sus ventanas**, nada más del PC.
+  Cada programa del catálogo trae la página oficial de donde sale; ninguno se da por verificado. **Sin verificar:** si
+  Teams mantiene el micrófono abierto cuando te silencias dentro de la llamada; si no, la reunión puede dejar de verse
+  mientras estás en silencio.
 - **La voz de la propia app no te dispara fichas.** Lo que dice la app por tus altavoces vuelve por el audio del sistema;
   si coincide con un turno del cliente, ese turno se marca como eco y no busca nada.
 - **La ficha al oído** usa la voz de Windows. Necesita una voz del idioma instalada (Configuración → Hora e idioma →
@@ -863,7 +881,8 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
   Necesita el paquete de idioma de texto (Configuración → Hora e idioma → Idioma y región); sin él lo dice. La imagen
   vive en memoria y se descarta al leerla.
 - **Si tu PC no da abasto.** La transcripción atiende las dos pistas una tras otra y **el cliente va primero**. Si se
-  acumulan más de 4 turnos, se descartan los **tuyos** más viejos —nunca los del cliente— y Honestidad cuenta cuántos.
+  acumulan más de 4 turnos, se descartan primero los **tuyos** más viejos y, si no queda nada tuyo (en la sala la
+  pista no tiene dueño), el turno más viejo; Honestidad cuenta cuántos, sin decir de quién eran.
   Cuánto tarda tu PC en transcribir lo dice Honestidad; la cifra de la integración continua es de otra máquina y no vale.
 - **Los atajos.** En Windows son `Alt+Mayús` y una tecla; ninguno usa `Ctrl+Alt`, que en muchos teclados es AltGr. Si otra
   app ya tiene una de esas combinaciones, Windows no la deja registrar: la app lo dice en Honestidad y la acción se hace
@@ -877,34 +896,57 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
 | `Alt+Mayús+C` | muestra u oculta el transcript junto a la ficha |
 | `Alt+Mayús+W` | enciende o apaga el modo solo audio |
 | `Alt+Mayús+D` | lee la pantalla una vez, ahora |
+| `Alt+Mayús+U` | qué ve el radar en tu PC (desde el sprint 008) |
 | `Alt+Mayús+K` | anotar |
 | `Alt+Mayús+F` | fijar la ficha |
 | `Alt+Mayús+Z` | guardar la propuesta |
 | `Alt+Mayús+X` | la banda, arriba o abajo |
 | `Esc` | calla la voz. **Solo existe mientras el modo solo audio está encendido**: con el modo encendido, la app se queda `Esc` y no le llega a Teams, a Zoom ni a tus otras apps hasta que lo apagas (`Alt+Mayús+W`) |
 
-- **Lo que sigue sin llegar:** acoplarse a la ventana de la reunión, la sugerencia redactada por IA y el radar (no tiene
-  tecla en Windows), abrir tus notas guardadas con Windows Hello, y borrar con la app cerrada.
+### Windows completo · Sprint 008
+
+- **El acople.** Con la banda arriba, al **Iniciar sesión** la ventana de la reunión baja hasta la banda y se encoge lo
+  mismo, con sus controles donde estaban; abajo, la ventana que esté delante se encoge hasta la banda. Al cerrar vuelve
+  a su sitio, y si la app se cae, vuelve la próxima vez que la abras. **No pide permiso en Windows**: Permisos lo dice.
+  Si la redimensionas a mano mientras tanto, manda lo tuyo y no se toca. Sin verificar: una ventana maximizada se
+  acopla sin restaurarse; y Teams o Zoom pueden negarse a encogerse: entonces se deshace y la banda flota encima.
+- **Windows Hello.** Abrir tus notas guardadas, tus ensayos o la bandeja de otra sesión te pide tu PIN, tu huella o tu
+  cara, una vez por sesión de la app. Si tu PC no tiene Windows Hello configurado, la app te dice dónde se configura
+  (Configuración → Cuentas → Opciones de inicio de sesión) y tus notas siguen cifradas.
+- **Lo que vence se borra con la app cerrada.** La app deja una tarea en el **Programador de tareas** de Windows
+  (*Task Scheduler*) que corre al minuto de cada vencimiento, aunque no abras la app; si el PC estaba apagado, corre al
+  volver. Lo que corre es PowerShell sobre una lista de la app: solo borra archivos `.ghost` vencidos, no escribe nada
+  y no lanza la app. Cuando ya no vence nada, la tarea se quita sola. Si una directiva de tu empresa bloquea PowerShell,
+  Honestidad dice que no corrió.
+- **El radar.** Mira los programas de **este PC** contra su catálogo de Windows —supervisión de exámenes, monitoreo
+  de empleados, acceso remoto como TeamViewer, AnyDesk o Asistencia rápida— y si el PC está gestionado por tu empresa
+  (MDM). Cada fila trae la página pública de donde sale el nombre del programa y la fecha en que se leyó. No mira nada
+  fuera de tu PC, no bloquea ni cierra nada: avisa. `Alt+Mayús+U` enseña lo que ve.
+- **La sugerencia.** En Windows no hay modelo del sistema: la sugerencia la redacta el **API** que eliges en IA (Groq
+  o Claude), con tu clave guardada en el Administrador de credenciales, y solo sale texto anonimizado en tu PC, igual
+  que en el Mac. Sin API, la ficha sigue siendo la respuesta. Cada envío se cuenta en Honestidad.
 
 | Clave | Hoy en Windows |
 |---|---|
 | `banda-protegida` | sí, sin verificar en Teams, Zoom ni Meet hasta que la pruebes en tu PC |
 | `presencial` | sí, con transcripción local (whisper) |
 | `corpus-y-ficha` | sí |
-| `notas-cifradas` | sí: cifradas con la llave en el Administrador de credenciales; exportar y abrir la bandeja esperan a Windows Hello |
+| `notas-cifradas` | sí: cifradas con la llave en el Administrador de credenciales; exportar y abrir la bandeja piden Windows Hello |
 | `videollamada` | sí: tu micrófono y el audio del sistema, dos pistas; sin verificar en Teams, Zoom ni Meet hasta que la pruebes en tu PC |
 | `pantalla` | sí: la ventana de la reunión, leída solo cuando cambia |
 | `voz-al-oido` | sí, con auriculares; por altavoces no habla |
-| `acople` | todavía no: acoplarse a la ventana de la reunión |
+| `acople` | sí: la ventana de la reunión baja y se encoge, y vuelve al cerrar; sin permiso que conceder |
 | `ensayo` | sí: la voz del sistema lee las preguntas |
-| `sugerencia` | todavía no: la sugerencia redactada por IA |
-| `radar` | todavía no: el radar de tu equipo |
+| `sugerencia` | sí, con el API y tu clave: en Windows no hay modelo del sistema |
+| `radar` | sí: los programas de este PC que te miran, y si está gestionado (MDM) |
 | `atajos` | sí: Alt+Mayús y una tecla; ninguno con Ctrl+Alt, que en muchos teclados es AltGr |
-| `borrado-con-la-app-cerrada` | todavía no: por ahora se borra con la app abierta |
-| `desbloqueo` | todavía no: abrir tus notas guardadas, con Windows Hello |
+| `borrado-con-la-app-cerrada` | sí: el Programador de tareas, al minuto de cada vencimiento |
+| `desbloqueo` | sí: Windows Hello, una vez por sesión de la app |
 | `puerta-local` | no en Windows por ahora: la puerta para Claude Code |
 
-## Atajos de teclado
+## Atajos de teclado en el Mac
+
+Son los del Mac. En Windows son otros —`Alt+Mayús` y una letra—, y están en *Angel Ghost en Windows*, arriba.
 
 | Tecla | Qué hace |
 |---|---|

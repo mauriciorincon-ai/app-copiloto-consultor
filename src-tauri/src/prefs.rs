@@ -132,6 +132,18 @@ pub struct Preferencias {
     /// «Enriquecer el banco» (ADR 019 §3): un modelo propone hasta cinco preguntas de más en el
     /// ensayo. De fábrica, apagado: el ensayo es entero sin él.
     pub enriquecer_el_banco: bool,
+    /// Lo que whisper tardó en este PC con cada modelo (sprint 008, M3 del S6). Metadatos de costo, en claro 600 con
+    /// el resto: ni texto ni audio. Sin esto, al reabrir la app Honestidad decía «sin medir» y el escalón al modelo
+    /// pequeño se olvidaba hasta la siguiente calibración.
+    pub latencias_de_whisper: LatenciasDeWhisper,
+}
+
+/// Cuánto tardó cada modelo de whisper en transcribir el recorte de calibración, en milisegundos (`None`: sin medir).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct LatenciasDeWhisper {
+    pub grande_ms: Option<u32>,
+    pub pequeno_ms: Option<u32>,
 }
 
 impl Default for Preferencias {
@@ -150,6 +162,7 @@ impl Default for Preferencias {
             posicion_de_la_banda: crate::ventana::Borde::Arriba,
             aviso_de_arriba_visto: false,
             enriquecer_el_banco: false,
+            latencias_de_whisper: LatenciasDeWhisper::default(),
         }
     }
 }
@@ -268,6 +281,8 @@ mod tests {
             posicion_de_la_banda: crate::ventana::Borde::Abajo,
             aviso_de_arriba_visto: true,
             enriquecer_el_banco: true,
+            // Lo que whisper tardó en este PC se recuerda (M3 del S6): lo contrario de «sin medir».
+            latencias_de_whisper: LatenciasDeWhisper { grande_ms: Some(5_200), pequeno_ms: Some(1_900) },
         };
         guardar(&ruta, &elegidas).unwrap();
         assert_eq!(leer(&ruta), elegidas);
@@ -319,6 +334,17 @@ mod tests {
         let p = de_texto(r#"{"version":1,"redactar":true}"#).unwrap();
         assert!(p.redactar);
         assert_eq!(p.idiomas, IdiomasDePista::default());
+    }
+
+    /// **Un archivo sin las medidas de whisper las deja sin medir** (M3 del S6), y las medidas se escriben y se leen.
+    #[test]
+    fn las_medidas_de_whisper_son_opcionales_y_viajan() {
+        let p = de_texto(r#"{"version":1,"redactar":true}"#).unwrap();
+        assert_eq!(p.latencias_de_whisper, LatenciasDeWhisper::default());
+        let con = Preferencias { latencias_de_whisper: LatenciasDeWhisper { grande_ms: Some(5_200), pequeno_ms: None }, ..p };
+        let texto = a_texto(&con);
+        assert!(texto.contains(r#""grandeMs": 5200"#), "{texto}");
+        assert_eq!(de_texto(&texto).unwrap().latencias_de_whisper.grande_ms, Some(5_200));
     }
 
     /// **Un archivo del H1 abre la banda arriba y enseña el aviso una vez** (sprint 004): no tiene ni

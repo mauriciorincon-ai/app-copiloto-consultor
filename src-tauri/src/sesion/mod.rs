@@ -157,6 +157,58 @@ pub fn version_del_catalogo() -> &'static str {
 /// mayúsculas** y contra el título entero.
 const SENALES_MEET: &[&str] = &["google meet", "meet.google.com"];
 
+/// Un proceso del PC tal como lo da la foto de procesos de Windows: el suyo, el de su padre y su ejecutable. Vive
+/// aquí, y no en `windows.rs`, para que las pruebas de [`en_llamada`] corran también en el Mac.
+#[derive(Clone, Debug)]
+pub struct Proceso {
+    pub pid: u32,
+    pub padre: u32,
+    pub exe: String,
+}
+
+/// **¿Está este proceso en una llamada?** (sprint 008, auditoría del S7, M1; ADR 005, enmienda de Windows). En
+/// Windows, Teams y Zoom corren residentes todo el día: «abierto» no es «en una reunión». Lo que sí distingue la
+/// llamada es que **él o uno de sus procesos hijos tiene abierta una sesión de captura de audio**, que Windows
+/// cuenta por proceso (`IAudioSessionManager2`) sin pedir permiso y sin leer un título. Los hijos cuentan porque
+/// una videollamada reparte su trabajo en varios procesos, y el que abre el micrófono no siempre es el de la
+/// ventana.
+///
+/// `con_captura` es `None` cuando Windows no dejó leer las sesiones: lo que no se sabe cuenta como llamada, igual
+/// que en la puerta (ADR 018 §5). Una foto de procesos puede traer ciclos (un número que Windows reutilizó), y se
+/// recorren una sola vez. Pura.
+pub fn en_llamada(pid: u32, procesos: &[Proceso], con_captura: Option<&[u32]>) -> bool {
+    let Some(con_captura) = con_captura else { return true };
+    let mut por_ver = vec![pid];
+    let mut vistos = std::collections::HashSet::new();
+    while let Some(p) = por_ver.pop() {
+        if !vistos.insert(p) {
+            continue;
+        }
+        if con_captura.contains(&p) {
+            return true;
+        }
+        por_ver.extend(procesos.iter().filter(|h| h.padre == p && h.pid != p).map(|h| h.pid));
+    }
+    false
+}
+
+/// **Los programas del catálogo que cuentan** (sprint 008): los navegadores, todos (Meet se reconoce después por el
+/// título), y de las aplicaciones de videollamada, solo los procesos que están en una llamada. Pura.
+pub fn solo_en_llamada(
+    apps: Vec<(u32, String)>,
+    procesos: &[Proceso],
+    con_captura: Option<&[u32]>,
+    catalogo: &[Cliente],
+) -> Vec<(u32, String)> {
+    apps.into_iter()
+        .filter(|(pid, exe)| match del_catalogo_en(catalogo, exe) {
+            Some(c) if c.clase == Clase::Aplicacion => en_llamada(*pid, procesos, con_captura),
+            Some(_) => true,
+            None => false,
+        })
+        .collect()
+}
+
 /// Una aplicación en ejecución, reducida a lo que el detector necesita ver.
 #[derive(Clone, Debug)]
 pub struct Programa {
@@ -398,7 +450,15 @@ pub fn ventana_de_la_reunion() -> Option<crate::acople::Destino> {
     Some(crate::acople::Destino { pid, app: ax::nombre_de(pid)?, indice })
 }
 
-#[cfg(not(target_os = "macos"))]
+/// En Windows (sprint 008): la ventana que elige la lectura de pantalla —la mayor de la videollamada y, en un
+/// navegador, la de Meet—, traducida a lo que entiende la maniobra del acople (`acople::windows::destino_de`).
+#[cfg(windows)]
+pub fn ventana_de_la_reunion() -> Option<crate::acople::Destino> {
+    let (ejecutable, senales) = objetivo_de(&mirar())?;
+    crate::acople::windows::destino_de(windows::ventana_del_objetivo(&ejecutable, &senales)?)
+}
+
+#[cfg(not(any(target_os = "macos", windows)))]
 pub fn ventana_de_la_reunion() -> Option<crate::acople::Destino> {
     None
 }
@@ -452,11 +512,9 @@ mod tests {
         let mut exes: Vec<String> = Vec::new();
         for f in filas {
             assert!(f.fuente.starts_with("https://"), "{} sin fuente pública", f.ejecutable);
-            assert!(
-                f.fecha.len() == 10 && f.fecha.starts_with("2026-"),
-                "{}: la fecha de lectura no se puede contrastar",
-                f.ejecutable
-            );
+            // Una fecha AAAA-MM-DD desde que existe el catálogo, sin fijar el año (auditoría del S7, B13): una
+            // actualización en 2027 no es un defecto.
+            assert!(es_fecha(&f.fecha), "{}: la fecha de lectura no se puede contrastar", f.ejecutable);
             assert!(f.ejecutable.to_lowercase().ends_with(".exe"), "{} no es un ejecutable", f.ejecutable);
             assert_eq!(f.proteccion, Proteccion::SinVerificar, "{}: nadie lo ha mirado en Windows", f.nombre);
             exes.push(f.ejecutable.to_lowercase());
@@ -486,6 +544,72 @@ mod tests {
         // Un identificador de macOS no se reconoce en Windows, ni al revés: cada catálogo es de su plataforma.
         assert_eq!(clasificar_en(&vista(vec![prog("us.zoom.xos", &[])], true), w), Reunion::Ninguna);
         assert_eq!(clasificar_en(&vista(vec![prog("Zoom.exe", &[])], true), CATALOGO), Reunion::Ninguna);
+    }
+
+    /// `AAAA-MM-DD`, con un año desde que existe el catálogo.
+    fn es_fecha(f: &str) -> bool {
+        let b = f.as_bytes();
+        f.len() == 10
+            && b[4] == b'-'
+            && b[7] == b'-'
+            && [&f[..4], &f[5..7], &f[8..]].iter().all(|t| t.bytes().all(|c| c.is_ascii_digit()))
+            && f[..4].parse::<u32>().is_ok_and(|a| a >= 2026)
+    }
+
+    #[test]
+    fn la_fecha_del_catalogo_no_caduca_con_el_ano() {
+        assert!(es_fecha("2026-10-11"));
+        assert!(es_fecha("2027-01-03"), "una actualización del año que viene vale");
+        assert!(!es_fecha("2025-12-31"), "antes del catálogo no");
+        assert!(!es_fecha("11-10-2026"));
+        assert!(!es_fecha("2026-1-11"));
+    }
+
+    fn p(pid: u32, padre: u32, exe: &str) -> Proceso {
+        Proceso { pid, padre, exe: exe.into() }
+    }
+
+    /// **M1 del S7: Teams o Zoom abiertos no son una reunión.** Cuentan solo si ellos, o un proceso suyo, tienen
+    /// una sesión de captura abierta. Los navegadores pasan siempre: Meet se reconoce después, por el título.
+    #[test]
+    fn en_windows_teams_y_zoom_cuentan_solo_en_una_llamada() {
+        let w = catalogo_de_windows();
+        let foto = [
+            p(4, 0, "System"),
+            p(100, 4, "ms-teams.exe"),
+            p(101, 100, "msedgewebview2.exe"),
+            p(200, 4, "Zoom.exe"),
+            p(300, 4, "chrome.exe"),
+            p(400, 4, "Spotify.exe"),
+        ];
+        let apps: Vec<(u32, String)> = foto.iter().map(|x| (x.pid, x.exe.clone())).collect();
+        let veredicto = |captura: Option<&[u32]>| {
+            let quedan = solo_en_llamada(apps.clone(), &foto, captura, w);
+            let programas = quedan.into_iter().map(|(_, exe)| prog(&exe, &[])).collect();
+            clasificar_en(&vista(programas, true), w)
+        };
+        // Residentes, sin llamada: no hay reunión (ni Spotify con el micrófono cuenta: no es del catálogo).
+        assert_eq!(veredicto(Some(&[400])), Reunion::Ninguna);
+        // Zoom con el micrófono abierto: reunión de Zoom.
+        assert!(matches!(veredicto(Some(&[200])), Reunion::Detectada { cliente, .. } if cliente == "Zoom"));
+        // Teams abre el micrófono desde un proceso hijo: cuenta igual.
+        assert!(
+            matches!(veredicto(Some(&[101])), Reunion::Detectada { cliente, .. } if cliente == "Microsoft Teams")
+        );
+        // Windows no dejó leer las sesiones: no se sabe, y cuenta como reunión, igual que antes.
+        assert!(matches!(veredicto(None), Reunion::Detectada { .. }));
+        // El navegador sigue entrando siempre, para que Meet se lea por el título.
+        let solo_chrome = solo_en_llamada(apps.clone(), &foto, Some(&[]), w);
+        assert_eq!(solo_chrome, vec![(300, "chrome.exe".to_string())]);
+    }
+
+    /// Una foto de procesos con un número reutilizado puede traer un ciclo: se recorre una vez y termina.
+    #[test]
+    fn un_ciclo_en_la_foto_de_procesos_no_cuelga_nada() {
+        let foto = [p(10, 11, "Zoom.exe"), p(11, 10, "a.exe"), p(12, 12, "b.exe")];
+        assert!(!en_llamada(10, &foto, Some(&[99])));
+        assert!(en_llamada(10, &foto, Some(&[11])));
+        assert!(!en_llamada(12, &foto, Some(&[])));
     }
 
     /// **macOS no cambia**: `clasificar` con el catálogo de la plataforma es el de siempre.

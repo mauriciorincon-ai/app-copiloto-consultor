@@ -5,7 +5,10 @@
 //! Mac con macOS 26. En Windows no: el mismo modelo tarda lo que dé el procesador de cada PC, y por eso se mide en el
 //! PC del usuario, con un audio que no es de nadie.
 
-/// El recorte: los primeros 10 s de `docs/kit-de-prueba/audio/sala-es.wav` (`data/calibracion/LEEME.md`).
+/// El recorte: los primeros 10 s de `docs/kit-de-prueba/audio/sala-es.wav` (`data/calibracion/LEEME.md`). **Solo entra
+/// en el binario de Windows** (y en el de las pruebas): son 320 KB que el Mac no usa, porque su motor se midió una vez
+/// (sprint 008, B9 del S6).
+#[cfg(any(windows, test))]
 const RECORTE: &[u8] = include_bytes!("../../../data/calibracion/sala-es-10s.wav");
 
 /// El idioma del recorte.
@@ -22,12 +25,14 @@ pub fn pasa_del_techo(ms: u32) -> bool {
 
 /// Las muestras del recorte en flotante, mono a 16 kHz. Vacío solo si el recorte dejara de ser un WAV PCM de 16
 /// bits a 16 kHz, y eso lo caza la prueba de abajo antes de que llegue a un PC.
+#[cfg(any(windows, test))]
 pub fn muestras() -> Vec<f32> {
     leer_wav(RECORTE).unwrap_or_default()
 }
 
 /// Un WAV PCM mono de 16 bits a 16 kHz, en flotantes entre -1 y 1. Cualquier otra cosa, `None`: la calibración no
 /// adivina formatos.
+#[cfg(any(windows, test))]
 fn leer_wav(bytes: &[u8]) -> Option<Vec<f32>> {
     if bytes.get(0..4)? != b"RIFF" || bytes.get(8..12)? != b"WAVE" {
         return None;
@@ -60,6 +65,19 @@ fn leer_wav(bytes: &[u8]) -> Option<Vec<f32>> {
 #[cfg(test)]
 mod pruebas {
     use super::*;
+
+    /// **El recorte no entra en el binario del Mac** (sprint 008, B9 del S6): `RECORTE` y quien lo lee llevan
+    /// `cfg(any(windows, test))`, así que fuera de Windows solo existe en las pruebas.
+    #[test]
+    fn el_recorte_no_entra_en_el_binario_del_mac() {
+        let fuente = include_str!("calibracion.rs");
+        for pieza in ["const RECORTE", "pub fn muestras", "fn leer_wav"] {
+            let i = fuente.find(pieza).unwrap_or_else(|| panic!("falta {pieza}"));
+            let antes = &fuente[..i];
+            let atributo = antes.lines().rev().find(|l| l.trim_start().starts_with("#[")).unwrap_or("");
+            assert_eq!(atributo.trim(), "#[cfg(any(windows, test))]", "{pieza} entraría en el binario de macOS");
+        }
+    }
 
     /// El recorte son diez segundos exactos a 16 kHz, y suenan (no es silencio).
     #[test]

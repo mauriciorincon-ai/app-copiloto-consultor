@@ -220,7 +220,9 @@ export function useFicha(
       escuchar<Novedad>("escucha", (n) => {
         // Un turno del cliente puede acabar en ficha o en nada, y hasta saberlo la banda dice
         // que está buscando. El eco no cuenta: es el consultor oyéndose a sí mismo.
-        if (n?.que === "turno" && n.pista === "sistema" && !n.eco) {
+        // Un turno del cliente o de la sala puede acabar en ficha, y hasta saberlo la banda dice que busca; el tuyo, no.
+        // pista-decidida (auditoría del S5, B6): la sala cuenta, a propósito.
+        if (n?.que === "turno" && (n.pista === "sistema" || n.pista === "sala") && !n.eco) {
           setBuscando(true);
           setNada(null);
           setRadar(null);

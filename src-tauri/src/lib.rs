@@ -491,6 +491,32 @@ fn abrir_ajustes_de(permiso: String) -> Result<(), String> {
     tauri_plugin_opener::open_url(url, None::<&str>).map_err(|e| e.to_string())
 }
 
+/// Dónde está el recorrido «Conoce Angel Ghost» dentro de la app: `docs/BROCHURE.html` viaja como recurso
+/// (`tauri.conf.json` → `bundle.resources`). Pura: se prueba sin Tauri.
+fn ruta_del_recorrido(recursos: &std::path::Path) -> std::path::PathBuf {
+    recursos.join("BROCHURE.html")
+}
+
+/// La ruta tal como la entiende el sistema para abrirla: en Windows, Tauri puede devolver la forma «verbatim»
+/// (`\\?\C:\…`) que el shell no abre; se le quita el prefijo. En macOS no cambia nada.
+fn ruta_para_abrir(ruta: &std::path::Path) -> String {
+    let s = ruta.to_string_lossy().into_owned();
+    s.strip_prefix(r"\\?\").map(str::to_owned).unwrap_or(s)
+}
+
+/// **«Conoce Angel Ghost».** Abre el recorrido visual (`docs/BROCHURE.html`, que viaja dentro de la app) en el
+/// navegador del usuario con el plugin `opener`. Es un archivo local: **no toca la red** (ninguna salida pasa por
+/// `red.rs`, y un test lo comprueba) y no lee ni escribe nada tuyo. Si esta compilación no lo trae, lo dice.
+#[tauri::command]
+fn abrir_conoce(app: tauri::AppHandle) -> Result<(), String> {
+    let recursos = app.path().resource_dir().map_err(|e| e.to_string())?;
+    let ruta = ruta_del_recorrido(&recursos);
+    if !ruta.is_file() {
+        return Err("el recorrido no viaja en esta compilación".to_string());
+    }
+    tauri_plugin_opener::open_path(ruta_para_abrir(&ruta), None::<&str>).map_err(|e| e.to_string())
+}
+
 /// Los bytes que han salido del equipo en esta reunión, ya formateados como los escribe la
 /// maqueta. Se devuelve **leído**, no como constante de la interfaz: un contador escrito a mano
 /// en el webview no es un contador.
@@ -801,7 +827,12 @@ fn empezar(
     let idiomas = idiomas_guardados(&app.state::<LasPreferencias>());
     let idioma_de_la_sala = idiomas.de_la_sala().to_string();
     let prefs::IdiomasDePista { consultor: idioma_del_consultor, cliente: idioma_del_cliente, .. } = idiomas;
-    let mut guardada = estado.0.lock().map_err(|_| "la escucha quedó en mal estado")?;
+    // Si el candado está envenenado se vuelve con error **sin dejar el modo puesto** (auditoría del S5, B5): un `ElModo`
+    // que se queda en `Presencial` sin sesión haría que el latido y `⌃⌥B` no acoplaran hasta la siguiente.
+    let mut guardada = estado.0.lock().map_err(|_| {
+        marcar_el_modo(&app, None);
+        "la escucha quedó en mal estado"
+    })?;
     if let Some(vieja) = guardada.take() {
         vieja.cortar();
     }
@@ -813,7 +844,7 @@ fn empezar(
     // La reunión se abre aquí: el cuaderno se protege de la captura hasta que la guardes o la
     // descartes, y si la anterior seguía abierta con algo tuyo, se guarda antes (ADR 015 §7 y §10).
     // «Conservar mis turnos» solo vale si el modo lo deja: en presencial no hay turnos tuyos (ADR 020 §5).
-    reunion::al_empezar(&app, tus_turnos);
+    reunion::al_empezar(&app, tus_turnos, modo == modo::Modo::Presencial);
     {
         let s = app.state::<LaSintesis>();
         if let Ok(mut u) = s.reunion_usd.lock() {
@@ -1060,19 +1091,41 @@ async fn instalar_idioma(app: tauri::AppHandle, codigo: String) -> stt::Disponib
         println!("[idioma] el modelo no se baja con una reunión abierta");
         return stt::motor_de_la_casa().disponibilidad(&codigo);
     }
-    tauri::async_runtime::spawn_blocking(move || {
+    let hecha = tauri::async_runtime::spawn_blocking(move || {
         println!("[idioma] el usuario pidió instalar el modelo de {codigo}");
         let d = stt::motor_de_la_casa().instalar(&codigo);
         println!("[idioma] {codigo}: {d:?}");
         d
     })
     .await
-    .unwrap_or(stt::Disponibilidad::SinMotor { motivo: stt::PorQueNoHayMotor::NoContesta })
+    .unwrap_or(stt::Disponibilidad::SinMotor { motivo: stt::PorQueNoHayMotor::NoContesta });
+    recordar_las_latencias(&app);
+    hecha
 }
 
-/// ¿Hay una reunión escuchando? Si el candado no contesta, se responde que sí: lo prudente es no bajar nada.
+/// ¿Hay algo en marcha con lo que bajar un modelo o medir competiría por la red y el procesador? **Pura**: la escucha
+/// viva, una sesión abierta en cualquier modo —también «solo notas» y presencial, donde la app no escucha pero tú estás
+/// en la llamada— o un ensayo (sprint 008, M4 del S6: antes solo miraba la escucha).
+fn algo_en_marcha(escuchando: bool, modo: Option<modo::Modo>, ensayando: bool) -> bool {
+    escuchando || modo.is_some() || ensayando
+}
+
+/// ¿Hay una reunión, una sesión o un ensayo abiertos? Si un candado no contesta, se responde que sí: lo prudente es no
+/// bajar nada.
 fn hay_una_reunion<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> bool {
-    app.state::<LaEscucha>().0.lock().map(|g| g.is_some()).unwrap_or(true)
+    let escuchando = app.state::<LaEscucha>().0.lock().map(|g| g.is_some()).unwrap_or(true);
+    let ensayando = app.try_state::<ElEnsayo>().is_some_and(|e| e.0.lock().map(|g| g.is_some()).unwrap_or(true));
+    algo_en_marcha(escuchando, modo_de_la_sesion(app), ensayando)
+}
+
+/// Guarda lo que whisper tardó en este PC con cada modelo, para que la próxima vez que se abra la app no diga «sin
+/// medir» (sprint 008, M3 del S6). Dos números, en las preferencias.
+fn recordar_las_latencias<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    let medidas = prefs::LatenciasDeWhisper {
+        grande_ms: stt::whisper::latencia_ms(&modelo_whisper::GRANDE),
+        pequeno_ms: stt::whisper::latencia_ms(&modelo_whisper::PEQUENO),
+    };
+    recordar(app, |p| p.latencias_de_whisper = medidas);
 }
 
 /// **Qué hace la app en este equipo** (ADR 022): en Windows, la lista «Hoy en Windows» y lo que la transcripción
@@ -1091,6 +1144,7 @@ async fn calibrar_transcripcion(app: tauri::AppHandle) -> plataforma::Plataforma
         if let Ok(Err(f)) = medida {
             println!("[stt] la calibración no se pudo medir ({f:?})");
         }
+        recordar_las_latencias(&app);
     }
     plataforma::de_este_equipo()
 }
@@ -1108,6 +1162,7 @@ async fn bajar_modelo_pequeno(app: tauri::AppHandle) -> plataforma::Plataforma {
         if let Ok(Err(e)) = hecho {
             println!("[stt] el modelo pequeño: {e}");
         }
+        recordar_las_latencias(&app);
     }
     plataforma::de_este_equipo()
 }
@@ -1129,6 +1184,13 @@ fn estado_del_diccionario(
 #[tauri::command]
 fn salida_de_audio() -> capture::nativo::Salida {
     capture::nativo::salida_de_audio()
+}
+
+/// Qué micrófono escucharía la app ahora: el dispositivo de entrada por defecto, con su nombre. En presencial, Sesión lo
+/// nombra para que no empieces con unos auriculares puestos como entrada (sprint 008, M7 del S5).
+#[tauri::command]
+fn entrada_de_audio() -> Option<capture::Entrada> {
+    capture::nativo::entrada_de_audio()
 }
 
 /// El kill-switch. Corta lo que existe y **declara lo que todavía no**, pieza por pieza.
@@ -1753,6 +1815,7 @@ pub fn run() {
             reunion_abierta,
             permisos_de_macos,
             abrir_ajustes_de,
+            abrir_conoce,
             bytes_a_la_red,
             cortar_todo,
             empezar_a_escuchar,
@@ -1766,6 +1829,7 @@ pub fn run() {
             calibrar_transcripcion,
             bajar_modelo_pequeno,
             salida_de_audio,
+            entrada_de_audio,
             elegir_carpeta,
             indexar_corpus,
             estado_del_corpus,
@@ -1852,6 +1916,14 @@ pub fn run() {
                 let ruta = ruta_de_las_preferencias(app.handle());
                 let p = prefs::leer(&ruta);
                 aplicar_las_preferencias(app.handle(), &p);
+                // Lo que whisper tardó la vez anterior vuelve (M3 del S6); y la descarga de un modelo se corta si
+                // empieza una reunión, una sesión o un ensayo mientras baja (M2 del S6).
+                stt::whisper::restaurar_latencias(p.latencias_de_whisper.grande_ms, p.latencias_de_whisper.pequeno_ms);
+                modelo_whisper::limpiar_lo_que_quedo();
+                {
+                    let mango = app.handle().clone();
+                    modelo_whisper::poner_la_guarda(move || hay_una_reunion(&mango));
+                }
                 let carpeta_del_corpus = p.carpeta_del_corpus.clone();
                 app.manage(LasPreferencias { ruta, actuales: std::sync::Mutex::new(p) });
                 if let Some(carpeta) = carpeta_del_corpus {
@@ -1888,6 +1960,11 @@ pub fn run() {
 
             registrar_el_kill_switch(app.handle());
             arrancar_el_radar(app.handle());
+            // Windows Hello sale delante de la ventana principal (sprint 008): se deja dicha cuál es.
+            #[cfg(windows)]
+            if let Some(hwnd) = app.get_webview_window(ventana::PRINCIPAL).and_then(|v| v.hwnd().ok()) {
+                desbloqueo::windows::recordar_la_ventana(hwnd.0 as usize);
+            }
 
             // El diccionario del consultor: se deja escrito con la semilla si no existía, para que
             // el usuario pueda ir a editarlo. Que falle no impide arrancar — la app funciona sin
@@ -1896,6 +1973,12 @@ pub fn run() {
                 println!("[diccionario] {e}");
             }
 
+            // Windows 10 2004 o más (M6 del S6): en una anterior la banda no se puede ocultar de la captura y no se abre;
+            // se dice con un cuadro, no en silencio.
+            if let Err(motivo) = ventana::exigir_la_version_de_windows() {
+                ventana::avisar_que_no_arranca(&motivo);
+                return Err(motivo.into());
+            }
             ventana::abrir_banda(app.handle(), borde_de(app.handle()), ventana::ALTO_COMPACTA)?;
 
             let mango = app.handle().clone();
@@ -2223,14 +2306,16 @@ fn decir_la_ficha_si_cabe<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &fich
     }
 
     let dicho = habla::a_voz(&f.titular, &f.linea, &fuente_hablada(&f.fuente));
+    let pedida = std::time::Instant::now();
     match estado.voz.decir(&idioma, &dicho) {
         Ok(()) => {
             println!("[habla] diciendo la ficha · {} letras · {idioma}", dicho.chars().count());
             // **El presupuesto «la voz empieza ≤ 1 s tras la ficha», medido en vivo** (auditoría del
             // S2, B21): lo que tardó el sintetizador en sonar de verdad, al log. Solo el número.
-            std::thread::spawn(|| {
+            // En Windows lo mide el registro de lo que sonó (B1 del S7): antes cada ficha decía «no empezó a sonar».
+            std::thread::spawn(move || {
                 for _ in 0..100 {
-                    if let Some(ms) = habla::apple::ms_hasta_sonar() {
+                    if let Some(ms) = habla::ms_hasta_sonar(pedida) {
                         println!("[habla] empezó a sonar a los {ms} ms (presupuesto 1000)");
                         return;
                     }
@@ -2302,9 +2387,12 @@ fn fijar_la_voz_en<R: tauri::Runtime>(app: &tauri::AppHandle<R>, al_oido: bool) 
 
 /// El selector «La ficha: al oído · la banda» de Sesión en presencial, con la sesión en marcha. Solo desde la
 /// ventana principal (`SENSIBLES`): la banda no se cambia de modo a sí misma, para eso está `⌃⌥V`.
+///
+/// **No devuelve nada** (auditoría del S5, B14): el estado de la voz le llega a la pantalla por el evento `voz`, y el
+/// retorno no lo leía nadie.
 #[tauri::command]
-fn fijar_la_voz(app: tauri::AppHandle, al_oido: bool) -> habla::LaVoz {
-    fijar_la_voz_en(&app, al_oido)
+fn fijar_la_voz(app: tauri::AppHandle, al_oido: bool) {
+    let _ = fijar_la_voz_en(&app, al_oido);
 }
 
 /// El trabajo de `⌃⌥V`, **hecho en Rust y no pedido a la banda por un evento**.
@@ -2357,7 +2445,15 @@ fn conmutar_el_modo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> habla::LaVo
     println!("[habla] ⌃⌥V: modo solo audio ENCENDIDO · banda a {alto} px");
     // La ficha vigente se rearma igual que en `pedir_ficha`: con el último turno del cliente.
     // Si no se ha oído nada todavía, no hay nada que decir y el modo queda encendido, esperando.
-    match ficha_vigente(&escucha_viva, &el_corpus, &app.state::<LaPantalla>()) {
+    //
+    // **En presencial se dice la que la banda ya enseña** (auditoría del S5, M6): volver a buscar con el último turno de
+    // la sala, que suele ser tu respuesta y sin la tolerancia, decía otra ficha distinta de la de la banda, o ninguna.
+    let la_que_toca = if modo_de_la_sesion(app) == Some(modo::Modo::Presencial) {
+        reunion::la_vigente(app).map(|v| aparicion_de_la_vigente(&v))
+    } else {
+        ficha_vigente(&escucha_viva, &el_corpus, &app.state::<LaPantalla>())
+    };
+    match la_que_toca {
         Some(a) => decir_la_ficha(app, &a),
         None => println!("[habla] todavía no he oído nada del cliente: el modo queda a la espera"),
     }
@@ -2403,6 +2499,30 @@ fn ficha_vigente(
     let ms = empezo.elapsed().as_millis() as u64;
     println!("[ficha] a petición del usuario en {ms} ms · {} candidatas", hallazgos.len());
     Some(ficha::Aparicion { respuesta, motivo: disparo::Motivo::Atajo, ms, hora: ultimo.hora, de_ms: Some(ultimo.hasta_ms) })
+}
+
+/// La ficha que la banda enseña (la del cuaderno), hecha aparición para que la voz la diga. La línea larga y las
+/// acumuladas no se dicen: la voz lee titular, línea y fuente.
+fn aparicion_de_la_vigente(v: &notas::FichaFijada) -> ficha::Aparicion {
+    ficha::Aparicion {
+        respuesta: ficha::Respuesta::Ficha(Box::new(ficha::Ficha {
+            titular: v.titular.clone(),
+            linea: v.linea.clone(),
+            linea_larga: v.linea.clone(),
+            fuente: ficha::Fuente {
+                documento: v.documento.clone(),
+                seccion: v.seccion.clone(),
+                unidad: v.unidad,
+                conjeturada: false,
+            },
+            acumuladas: Vec::new(),
+            respaldo: Vec::new(),
+        })),
+        motivo: disparo::Motivo::Atajo,
+        ms: 0,
+        hora: escucha::la_hora(),
+        de_ms: None,
+    }
 }
 
 /// **`⌃⌥A` en solo notas** (ADR 017 §5): no hay turno del cliente con que buscar, así que busca con la
@@ -2461,22 +2581,32 @@ fn con_el_callar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, coger: bool) {
             // **Si no puede, lo dice**: el usuario pulsaría la tecla creyendo que calló a la app, y
             // la app seguiría hablándole encima del cliente.
             match g.register(atajo) {
-                Ok(()) => println!(
-                    "[habla] ⎋ registrada MIENTRAS dure el modo · OJO: durante estos segundos la \
-                     tecla no le llega a la reunión"
-                ),
-                Err(e) => println!(
-                    "[habla] NO se pudo registrar {} ({e}): para callar la voz hay que apagar el \
-                     modo con {}",
-                    atajos::de_este_equipo(atajos::Accion::Callar).texto,
-                    atajos::de_este_equipo(atajos::Accion::ModoDeVoz).texto
-                ),
+                Ok(()) => {
+                    atajos::apuntar(atajos::Accion::Callar, true);
+                    println!(
+                        "[habla] ⎋ registrada MIENTRAS dure el modo · OJO: durante estos segundos la \
+                         tecla no le llega a la reunión"
+                    );
+                }
+                Err(e) => {
+                    // Se apunta como las demás (sprint 008, M10 del S7): Honestidad dice que esa tecla no responde.
+                    atajos::apuntar(atajos::Accion::Callar, false);
+                    println!(
+                        "[habla] NO se pudo registrar {} ({e}): para callar la voz hay que apagar el \
+                         modo con {}",
+                        atajos::de_este_equipo(atajos::Accion::Callar).texto,
+                        atajos::de_este_equipo(atajos::Accion::ModoDeVoz).texto
+                    );
+                }
             }
         } else {
             // Que falle no rompe nada —la tecla seguiría cogida— pero se dice, porque a partir de
             // ahí la reunión dejaría de recibir Escapes sin ninguna razón visible.
             match g.unregister(atajo) {
-                Ok(()) => println!("[habla] ⎋ devuelta al sistema"),
+                Ok(()) => {
+                    atajos::soltar(atajos::Accion::Callar);
+                    println!("[habla] ⎋ devuelta al sistema");
+                }
                 Err(e) => {
                     println!("[habla] ⎋ NO se pudo devolver ({e}): la reunión seguirá sin recibirla")
                 }
@@ -2701,12 +2831,12 @@ fn el_atajo_de_leer_la_pantalla() -> tauri_plugin_global_shortcut::Shortcut {
 /// ventana de la reunión, ahora, aunque la automática esté apagada. Es la salida para una NDA
 /// estricta: nada se lee salvo cuando el consultor lo pide.
 #[tauri::command]
-fn leer_la_pantalla_ahora(la_pantalla: tauri::State<'_, LaPantalla>) -> bool {
-    leer_una_vez(&la_pantalla)
+fn leer_la_pantalla_ahora(app: tauri::AppHandle, la_pantalla: tauri::State<'_, LaPantalla>) -> bool {
+    leer_una_vez(&app, &la_pantalla)
 }
 
 /// Lo que hacen el comando y la tecla: los dos caminos, una sola decisión.
-fn leer_una_vez(la_pantalla: &LaPantalla) -> bool {
+fn leer_una_vez<R: tauri::Runtime>(app: &tauri::AppHandle<R>, la_pantalla: &LaPantalla) -> bool {
     let hay = la_pantalla
         .lectura
         .lock()
@@ -2714,9 +2844,19 @@ fn leer_una_vez(la_pantalla: &LaPantalla) -> bool {
         .and_then(|g| g.as_ref().map(|l| l.leer_ahora()))
         .is_some();
     if !hay {
-        println!("[pantalla] lectura pedida sin sesión: no hay reunión que leer");
+        // Hay sesión pero en presencial la lectura no arranca por diseño: decirlo como lo que es y no como «sin
+        // sesión» (auditoría del S5, B4). Solo metadatos.
+        println!("{}", por_que_no_se_leyo(modo_de_la_sesion(app)));
     }
     hay
+}
+
+/// El motivo que va al log cuando `⌃⌥L` no leyó nada, según el modo de la sesión. Pura.
+fn por_que_no_se_leyo(modo: Option<modo::Modo>) -> &'static str {
+    match modo {
+        Some(modo::Modo::Presencial) => "[pantalla] ⌃⌥L en presencial: no se lee la pantalla (ADR 020 §1)",
+        _ => "[pantalla] lectura pedida sin sesión: no hay reunión que leer",
+    }
 }
 
 // ── LAS PREFERENCIAS (ADR 002, enmienda 2) ──────────────────────────────────────────────────────
@@ -2781,7 +2921,7 @@ fn idiomas_de_pista(lp: tauri::State<'_, LasPreferencias>) -> prefs::IdiomasDePi
     idiomas_guardados(&lp)
 }
 
-/// Idioma elige el de una pista. Solo `consultor` o `cliente`, y solo un código de idioma.
+/// Idioma elige el de una pista. Solo `consultor`, `cliente` o `sala` (presencial, ADR 020 §6), y solo un código de idioma.
 #[tauri::command]
 fn fijar_idioma_de_pista(
     app: tauri::AppHandle,
@@ -3791,7 +3931,7 @@ fn atender_el_atajo<R: tauri::Runtime>(
         conmutar_el_modo(app);
     } else if *atajo == el_atajo_de_leer_la_pantalla() {
         println!("[pantalla] {}", atajos::de_este_equipo(atajos::Accion::LeerLaPantalla).texto);
-        leer_una_vez(&app.state::<LaPantalla>());
+        leer_una_vez(app, &app.state::<LaPantalla>());
     } else if *atajo == el_atajo_del_radar() {
         println!("[radar] {}", atajos::de_este_equipo(atajos::Accion::Radar).texto);
         ir_a_lo_que_ve(app);
@@ -3825,7 +3965,7 @@ fn registrar_el_kill_switch<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
     use tauri_plugin_global_shortcut::GlobalShortcutExt;
     // Cada atajo con lo que es y lo que queda si no se registra. Las teclas salen de `atajos.rs`: las de macOS de
     // siempre o, en Windows, `Alt+Mayús` + letra (sprint 007, ADR 022 enmienda 1).
-    let lista: [(Accion, &str, &str); 10] = [
+    let lista: &[(Accion, &str, &str)] = &[
         (Accion::Corte, "[corte] el kill-switch", "el kill-switch sigue en el botón de Honestidad, pero la tecla no va a responder"),
         (Accion::Transcript, "[transcript] el transcript", "el transcript no se va a poder abrir con la tecla"),
         (Accion::Ayuda, "[ficha] «ayúdame con esto»", "la ficha a petición sigue en el botón de la banda ampliada, pero la tecla no va a responder"),
@@ -3837,11 +3977,7 @@ fn registrar_el_kill_switch<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
         (Accion::GuardarLaPropuesta, "[propuestas] «guardar la propuesta»", "las propuestas se siguen guardando en Notas, pero la tecla no va a responder"),
         (Accion::Banda, "[ventanas] «la banda, al otro borde»", "la banda se sigue cambiando de borde en Sesión, pero la tecla no va a responder"),
     ];
-    for (accion, que, si_no) in lista {
-        if !atajos::se_registra_aqui(accion) {
-            println!("{que}: su tecla no se registra en este sistema todavía (ADR 022)");
-            continue;
-        }
+    for &(accion, que, si_no) in lista {
         let teclas = atajos::de_este_equipo(accion).texto;
         // **Si no puede, lo dice**, en el log y en Honestidad: el usuario no puede pulsar una tecla creyendo que
         // cortó y no haber cortado nada.
@@ -3956,10 +4092,55 @@ mod pruebas_de_los_atajos_en_windows {
         assert!(registro.contains(".register(atajos::atajo(accion))"), "el registro no lee la tabla");
         assert!(registro.contains("atajos::apuntar(accion, false)"), "un registro fallido no se apunta");
     }
+
+    /// **Ninguna acción queda sin intentar ni sin apuntar** (auditoría del S7, M10): `registrar_el_kill_switch`
+    /// intenta TODAS las de la tabla menos `Esc` —que solo se coge mientras dura el modo de voz—, y `con_el_callar`
+    /// apunta el resultado de `Esc`, para que un registro fallido de cualquiera llegue a Honestidad.
+    #[test]
+    fn toda_accion_intenta_su_registro_y_lo_apunta() {
+        let fuente = include_str!("lib.rs");
+        let registro = &fuente[fuente.find("fn registrar_el_kill_switch<").unwrap()..];
+        let registro = &registro[..registro.find("\n}\n").unwrap()];
+        for accion in crate::atajos::TODAS.iter().filter(|a| **a != crate::atajos::Accion::Callar) {
+            assert!(registro.contains(&format!("(Accion::{accion:?},")), "{accion:?} no está en la lista de registro");
+        }
+        let callar = &fuente[fuente.find("fn con_el_callar<").unwrap()..];
+        let callar = &callar[..callar.find("\n}\n").unwrap()];
+        assert!(callar.contains("atajos::apuntar(atajos::Accion::Callar, true)"), "Esc registrada no se apunta");
+        assert!(callar.contains("atajos::apuntar(atajos::Accion::Callar, false)"), "Esc fallida no se apunta");
+        assert!(callar.contains("atajos::soltar(atajos::Accion::Callar)"), "Esc devuelta no se suelta");
+    }
 }
 
 #[cfg(test)]
 mod pruebas_de_whisper_en_windows {
+    /// **Qué cuenta como «hay algo en marcha»** (sprint 008, M4 del S6): la escucha, una sesión en cualquier modo
+    /// —también «solo notas» y presencial— y un ensayo. Solo sin nada de eso se puede bajar o medir.
+    #[test]
+    fn bajar_o_medir_solo_sin_nada_en_marcha() {
+        use crate::modo::Modo;
+        assert!(!crate::algo_en_marcha(false, None, false));
+        assert!(crate::algo_en_marcha(true, None, false), "escuchando");
+        for modo in [Modo::Normal, Modo::SoloNotas, Modo::Presencial] {
+            assert!(crate::algo_en_marcha(false, Some(modo), false), "{modo:?}");
+        }
+        assert!(crate::algo_en_marcha(false, None, true), "un ensayo ocupa el procesador y el micrófono");
+    }
+
+    /// **La medida de whisper se guarda y vuelve, y la descarga tiene su freno** (M2 y M3 del S6): los tres comandos
+    /// que miden o bajan terminan recordando las latencias, y el arranque restaura lo guardado y pone la guarda.
+    #[test]
+    fn las_medidas_se_guardan_y_vuelven_y_la_descarga_tiene_su_freno() {
+        let fuente = include_str!("lib.rs");
+        for comando in ["async fn instalar_idioma(", "async fn calibrar_transcripcion(", "async fn bajar_modelo_pequeno("] {
+            let cuerpo = &fuente[fuente.find(comando).unwrap_or_else(|| panic!("{comando}"))..];
+            let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
+            assert!(cuerpo.contains("recordar_las_latencias(&app)"), "{comando} no recuerda lo que midió");
+        }
+        assert!(fuente.contains("stt::whisper::restaurar_latencias("), "al abrir no vuelve lo guardado");
+        assert!(fuente.contains("modelo_whisper::poner_la_guarda("), "la descarga no tiene su freno");
+    }
+
     /// **Bajar o medir whisper nunca con una reunión abierta** (sprint 006, ADR 022 §4): bajar ocupa la red y medir el
     /// procesador. Los tres comandos preguntan `hay_una_reunion` antes de hacer nada.
     #[test]
@@ -4135,6 +4316,32 @@ mod pruebas_de_las_teclas {
                 assert_ne!(a, b, "dos atajos comparten tecla");
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod pruebas_de_conoce {
+    use super::*;
+    use std::path::Path;
+
+    /// El recorrido es el archivo del repo, dentro de los recursos de la app (`bundle.resources` de `tauri.conf.json`).
+    #[test]
+    fn el_recorrido_vive_en_los_recursos_con_el_nombre_del_archivo_del_repo() {
+        assert_eq!(
+            ruta_del_recorrido(Path::new("/app/Resources")),
+            Path::new("/app/Resources/BROCHURE.html")
+        );
+    }
+
+    /// En Windows el shell no abre la forma «verbatim»: se le quita el prefijo. Lo demás no cambia.
+    #[test]
+    fn para_abrir_le_quita_a_windows_su_prefijo_y_no_toca_la_ruta_del_mac() {
+        assert_eq!(
+            ruta_para_abrir(Path::new(r"\\?\C:\Program Files\Angel Ghost\BROCHURE.html")),
+            r"C:\Program Files\Angel Ghost\BROCHURE.html"
+        );
+        let mac = "/Applications/Angel Ghost.app/Contents/Resources/BROCHURE.html";
+        assert_eq!(ruta_para_abrir(Path::new(mac)), mac);
     }
 }
 
@@ -4601,6 +4808,62 @@ mod pruebas_del_modo_presencial {
             c.contains(concat!("reunion::conservar_mis_turnos(&app, si, ", "el_modo_lo_deja)")),
             "el interruptor no le pasa al cuaderno lo que dice el modo"
         );
+    }
+
+    /// **En presencial, encender la voz dice la ficha que la banda enseña** (sprint 008, M6 del S5), no una búsqueda
+    /// nueva con el último turno de la sala: esa decía otra ficha, o ninguna. `conmutar_el_modo` mira el modo ANTES de
+    /// llamar a `ficha_vigente`, y la ficha dicha lleva lo que el cuaderno tiene: titular, línea y fuente.
+    #[test]
+    fn en_presencial_la_voz_dice_la_ficha_de_la_banda() {
+        let c = cuerpo_de("\nfn conmutar_el_modo<");
+        let presencial = c.find("modo::Modo::Presencial").expect("conmutar_el_modo no mira si es presencial");
+        let reunion = c.find("reunion::la_vigente(app)").expect("no pide la ficha vigente del cuaderno");
+        let busca = c.find("ficha_vigente(&escucha_viva").expect("la reunión ya no busca");
+        assert!(presencial < reunion && reunion < busca, "la búsqueda nueva va solo en la rama de la reunión");
+        let v = crate::notas::FichaFijada {
+            titular: "Limpieza de datos: hasta tres fuentes".into(),
+            documento: "Propuesta Páramo Azul".into(),
+            seccion: Some("Alcance".into()),
+            unidad: None,
+            linea: "El alcance incluye hasta tres fuentes.".into(),
+        };
+        let a = crate::aparicion_de_la_vigente(&v);
+        let crate::ficha::Respuesta::Ficha(f) = &a.respuesta else { panic!("tiene que ser una ficha") };
+        assert_eq!((f.titular.as_str(), f.linea.as_str()), ("Limpieza de datos: hasta tres fuentes", "El alcance incluye hasta tres fuentes."));
+        assert_eq!((f.fuente.documento.as_str(), f.fuente.seccion.as_deref()), ("Propuesta Páramo Azul", Some("Alcance")));
+    }
+
+    /// **`⌃⌥L` en presencial no miente en el log** (sprint 008, B4 del S5): hay sesión, pero la lectura no arranca por
+    /// diseño, y decir «sin sesión» era falso.
+    #[test]
+    fn el_log_de_leer_la_pantalla_dice_la_verdad_en_presencial() {
+        use crate::modo::Modo;
+        assert!(crate::por_que_no_se_leyo(Some(Modo::Presencial)).contains("en presencial"));
+        assert!(crate::por_que_no_se_leyo(None).contains("sin sesión"));
+        assert!(crate::por_que_no_se_leyo(Some(Modo::Normal)).contains("sin sesión"));
+    }
+
+    /// **Un candado envenenado no deja el modo puesto** (B5 del S5): `empezar` lo suelta antes de volver con el error.
+    #[test]
+    fn empezar_no_deja_el_modo_si_la_escucha_no_se_puede_tomar() {
+        let c = cuerpo_de("\nfn empezar(");
+        let candado = c.find("estado.0.lock().map_err(").expect("empezar toma el candado de la escucha");
+        let suelta = c[candado..].find(concat!("marcar_el_modo(&app, ", "None)")).expect("no suelta el modo si el candado falla");
+        assert!(suelta < 200, "el modo se suelta lejos del error: {suelta}");
+    }
+
+    /// **El cuaderno sabe que la sesión es presencial** (sprint 008, M3 del S5): `empezar` se lo dice a `al_empezar` y
+    /// la vista de Notas lo lee, para no ofrecer «Conservar mis turnos» ni hablar de «la voz del cliente» en la sala.
+    #[test]
+    fn el_cuaderno_sabe_si_la_sesion_es_presencial() {
+        let e = cuerpo_de("\nfn empezar(");
+        assert!(
+            e.contains(concat!("reunion::al_empezar(&app, tus_turnos, ", "modo == modo::Modo::Presencial)")),
+            "empezar no le dice al cuaderno si la sesión es presencial"
+        );
+        let r = include_str!("reunion.rs");
+        assert!(r.contains("el.presencial.store(presencial, Ordering::Relaxed)"), "al_empezar no lo recuerda");
+        assert!(r.contains("let presencial = el.presencial.load(Ordering::Relaxed)"), "la vista no lo lee");
     }
 }
 

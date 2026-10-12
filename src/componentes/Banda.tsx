@@ -5,6 +5,8 @@ import { useFranja, type Borde } from "../franja";
 import { useTurnos } from "../turnos";
 import { useFicha, type Acumulada, type Aparicion } from "../ficha";
 import { hayTauri } from "../puente";
+import { atajosSinRegistrar, esWindows, usePlataforma, type Plataforma } from "../plataforma";
+import { useTextosDeWindows } from "../i18n/windows";
 import {
   cortarTodo,
   useBytesALaRed,
@@ -97,6 +99,8 @@ export type PropsBanda = {
   acoplada?: boolean;
   /** El cliente detectado tiene la protección verificada por el spike. */
   verificado?: boolean;
+  /** Para las pruebas: la plataforma que se pinta, en vez de preguntarle a Rust. */
+  plataforma?: Plataforma;
   /**
    * En qué borde vive (sprint 004). **Solo manda fuera de Tauri**, para el arnés de capturas: abajo es
    * la banda de `banda.html`, contra la que compara el gate desde el S1; arriba, la variante de
@@ -114,6 +118,7 @@ export function Banda({
   transcript = false,
   acoplada = true,
   verificado = true,
+  plataforma: prestada,
   borde: bordeDeMuestra = "abajo",
 }: PropsBanda) {
   const t = useT().banda;
@@ -207,6 +212,13 @@ export function Banda({
   const { borde } = useFranja({ borde: bordeDeMuestra, barra: 0, avisoVisto: true });
   const asa = useAsa(borde);
   const voz = useVoz();
+  // **Una tecla que el sistema no dejó registrar se dice en la banda, no solo en Honestidad** (sprint 008, M10 del S7):
+  // el usuario pulsaría `Alt+Mayús+Q` en plena reunión creyendo que cortó. Se pregunta de nuevo al encender o apagar
+  // el modo de voz, que es cuando se coge o se suelta `Esc`.
+  const [propia] = usePlataforma(undefined, voz.encendida);
+  const plataforma = prestada ?? propia;
+  const tw = useTextosDeWindows();
+  const teclasMudas = esWindows(plataforma) ? atajosSinRegistrar(plataforma).length : 0;
 
   /** «1 documento» y no «1 documentos»: el contador es visible y la app es bilingüe por regla. */
   const cuenta = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
@@ -232,12 +244,13 @@ export function Banda({
    * están en la banda —pista del sistema, sin eco— y si no hay ninguno **no se dibuja nada**: la
    * alternativa era la que había, inventar una frase y ponerle una hora.
    */
-  const delCliente = turnos.filter((x) => x.pista === "sistema" && !x.eco);
+  // pista-decidida: la sala cuenta como lo último que se oyó (auditoría del S5, B6) y se nombra «sala», no «cliente».
+  const delCliente = turnos.filter((x) => (x.pista === "sistema" || x.pista === "sala") && !x.eco);
   const ultimoDelCliente = delCliente[delCliente.length - 1];
   const oido = deLaMaqueta
     ? { quien: m.oidoQuien, texto: m.oido }
     : ultimoDelCliente && {
-        quien: `${t.cliente} ${ultimoDelCliente.hora}`,
+        quien: `${ultimoDelCliente.pista === "sala" ? t.sala : t.cliente} ${ultimoDelCliente.hora}`, // pista-decidida
         texto: ultimoDelCliente.texto,
       };
 
@@ -440,18 +453,31 @@ export function Banda({
         {!soloNotas && (deLaMaqueta || escucha.escuchando) && (
           <span className="marca-min">
             <Ic id="i-check-circle" s relleno />
+            {/* En presencial la cabecera solo dice «la sala» si la única pista abrió (S5 M1): con el permiso del
+                micrófono denegado, «Escuchando · la sala» con su check verde era mentira. */}
             {presencial
-              ? t.escuchandoLaSala
+              ? deLaMaqueta || escucha.microfono.abierta
+                ? t.escuchandoLaSala
+                : `${t.escuchandoPrefijo} · ${cuenta(0, t.pista, t.pistas)}`
               : deLaMaqueta
                 ? t.escuchando
                 : `${t.escuchandoPrefijo} · ${cuenta(pistasAbiertas, t.pista, t.pistas)}`}
           </span>
         )}
 
-        {!acoplada && (
+        {/* En presencial no hay ventana de reunión en este equipo: no acoplar es lo que ese modo busca, no una avería
+            (S5 M2; la maqueta de s5-presencial no trae el chip). */}
+        {!acoplada && !presencial && (
           <span className="cliente-b warn">
             <Ic id="i-alert" s relleno />
             {t.sinAcople}
+          </span>
+        )}
+
+        {teclasMudas > 0 && (
+          <span className="cliente-b warn">
+            <Ic id="i-alert" s relleno />
+            {tw.teclasSinResponder(teclasMudas)}
           </span>
         )}
 
@@ -1093,9 +1119,10 @@ function Transcript({ turnos }: { turnos: Turno[] }) {
         // **El eco no se atribuye a nadie.** Si el micrófono captó por los altavoces lo que decía
         // el cliente, ese turno no es del consultor — pintarlo como «tú» sería ponerle en la boca
         // palabras que no dijo. Se enseña como del cliente, que es de quien son.
+        // pista-decidida: el transcript pinta cada pista con su etiqueta (tú · sala · cliente), ADR 020 §2.
         const mio = turno.pista === "microfono" && !turno.eco;
         // **La sala no tiene dueño** (ADR 020 §2): su turno dice «sala», nunca «cliente» ni «tú».
-        const sala = turno.pista === "sala";
+        const sala = turno.pista === "sala"; // pista-decidida
         return (
           <span className={mio ? "turno tu" : "turno"} key={`${turno.desdeMs}-${i}`}>
             <span className="quien">

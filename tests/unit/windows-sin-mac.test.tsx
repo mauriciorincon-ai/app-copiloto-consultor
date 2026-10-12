@@ -65,14 +65,14 @@ afterEach(() => {
 
 
 /**
- * Lo que sigue hablando de Apple y NO es de este sprint, declarado con su motivo (auditoría del S7, A2): nada se calla
- * en silencio. La sugerencia redactada por un modelo del sistema no existe en Windows hasta el S8 (ADR 022), así que
- * la pantalla IA habla del modelo de Apple mientras tanto; se corrige con la sugerencia, no con la videollamada.
+ * Lo que sigue hablando de Apple en Windows, declarado con su motivo (auditoría del S7, A2): nada se calla en silencio.
+ * Desde el sprint 008 (Windows completo) la lista está vacía: la pantalla IA dice lo que es la sugerencia en Windows y
+ * la banda pinta el radar también allí, con sus dos estados.
  */
-const DECLARADO = [{ pantalla: "pantalla=ia", frase: /Apple Intelligence/, hasta: "S8 · la sugerencia (ADR 022)" }];
+const DECLARADO: { pantalla: string; frase: RegExp; hasta: string }[] = [];
 
-/** El radar no existe en Windows hasta el S8 (ADR 022): la banda jamás lo pinta allí. */
-const SIN_RADAR = ESTADOS.filter((e) => e !== "radar" && e !== "radar-invasivo");
+/** Todos los estados de la banda, el radar incluido: desde el sprint 008 mira también en Windows. */
+const SIN_RADAR = ESTADOS;
 
 describe("en Windows ninguna pantalla habla del Mac ni pinta sus teclas", () => {
   for (const idioma of ["es", "en"] as const) {

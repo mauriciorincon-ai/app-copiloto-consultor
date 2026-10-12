@@ -86,6 +86,9 @@ pub struct ElCuaderno {
     cliente: Mutex<Option<String>>,
     /// La reunión va en **modo solo notas** (ADR 017 §5): sin captura. La banda y Sesión lo dicen.
     solo_notas: AtomicBool,
+    /// La sesión es **presencial** (ADR 020): la sala, sin dueño. Notas lo necesita para no hablar de «la voz del
+    /// cliente» ni ofrecer «Conservar mis turnos» donde no se sabe cuáles son tuyos (sprint 008, M3 del S5).
+    presencial: AtomicBool,
 }
 
 /// Lo que la pantalla de Notas enseña del cuaderno de ahora.
@@ -116,6 +119,9 @@ pub struct VistaDelCuaderno {
     /// macOS no dejó proteger el cuaderno al empezar: tu nota se vería al compartir la pantalla entera
     /// (auditoría del S3, B4). Notas lo dice en una franja.
     pub sin_proteger: bool,
+    /// La sesión es presencial: la sala no tiene dueño (ADR 020). Notas desactiva «Conservar mis turnos» y nombra la
+    /// sala donde la reunión nombra al cliente (sprint 008, M3 del S5).
+    pub presencial: bool,
 }
 
 /// La bandeja que Notas enseña: la que vence antes (ADR 016 §4).
@@ -407,6 +413,7 @@ pub fn vista<R: Runtime>(app: &AppHandle<R>) -> Option<VistaDelCuaderno> {
         (el.turnos_del_cliente.load(Ordering::Relaxed), el.lecturas.load(Ordering::Relaxed));
     let ventana = preferencias(app).ventana_de_la_bandeja;
     let sin_proteger = el.sin_proteger.load(Ordering::Relaxed);
+    let presencial = el.presencial.load(Ordering::Relaxed);
     el.con(|c| VistaDelCuaderno {
         nota: c.nota().to_string(),
         acuerdos: c.acuerdos().to_vec(),
@@ -423,6 +430,7 @@ pub fn vista<R: Runtime>(app: &AppHandle<R>) -> Option<VistaDelCuaderno> {
         lleno: c.lleno(),
         ventana,
         sin_proteger,
+        presencial,
     })
 }
 
@@ -438,7 +446,7 @@ pub fn contar_una_lectura<R: Runtime>(app: &AppHandle<R>) {
 ///
 /// `tus_turnos` es lo que el modo deja (ADR 020 §5): en presencial, `false`, y «Conservar mis turnos» no
 /// guarda nada **sin que se toque tu preferencia**, que vuelve a valer en la siguiente reunión.
-pub fn al_empezar<R: Runtime>(app: &AppHandle<R>, tus_turnos: bool) {
+pub fn al_empezar<R: Runtime>(app: &AppHandle<R>, tus_turnos: bool, presencial: bool) {
     let Some(el) = app.try_state::<ElCuaderno>() else { return };
     if el.hay_que_guardar_la_anterior() {
         match guardar(app) {
@@ -447,6 +455,7 @@ pub fn al_empezar<R: Runtime>(app: &AppHandle<R>, tus_turnos: bool) {
         }
     }
     el.abrir(conservar_en_este_modo(preferencias(app).conservar_mis_turnos, tus_turnos), fecha_de_ahora());
+    el.presencial.store(presencial, Ordering::Relaxed);
     let fallo = ventana::proteger_el_cuaderno(app, true).is_err();
     el.sin_proteger.store(fallo, Ordering::Relaxed);
     avisar(app);
@@ -604,6 +613,13 @@ pub fn ver<R: Runtime>(app: &AppHandle<R>, aparicion: &crate::ficha::Aparicion) 
             linea: f.linea.clone(),
         })
     });
+}
+
+/// **La ficha que la banda enseña ahora**, tal como el cuaderno la recuerda (la misma que fijaría `⌃⌥P`); el corte la
+/// vacía. En presencial, encender la voz a mitad de sesión dice esta y no vuelve a buscar con el último turno de la sala
+/// (sprint 008, M6 del S5).
+pub fn la_vigente<R: Runtime>(app: &AppHandle<R>) -> Option<FichaFijada> {
+    app.try_state::<ElCuaderno>()?.con(|c| c.la_vigente().cloned()).flatten()
 }
 
 /// Un turno recién transcrito: el cuaderno decide si es tuyo (`notas::Cuaderno::oir`). Los del
@@ -844,10 +860,9 @@ pub fn estado_de_la_bandeja<R: Runtime>(app: &AppHandle<R>) -> EstadoDeLaBandeja
 // ---- el vencimiento (ADR 016 §5) ---------------------------------------------------------------
 
 fn la_tarea<R: Runtime>(app: &AppHandle<R>) -> Option<vencimiento::Tarea> {
-    // La tarea que borra con la app cerrada es de launchd. En Windows llega en el S7 con el Programador de tareas
-    // (ADR 022); mientras, no se escribe un plist ni se llama a `launchctl`: lo vencido se barre con la app abierta, y
-    // Honestidad lo dice («borrado con la app cerrada: todavía no»).
-    if cfg!(not(target_os = "macos")) {
+    // La tarea que borra con la app cerrada es de launchd en macOS y del Programador de tareas en Windows (sprint 008,
+    // ADR 016 enmienda 4). Fuera de esos dos sistemas la app no se distribuye y no hay tarea.
+    if cfg!(not(any(target_os = "macos", windows))) {
         return None;
     }
     let casa = app.path().home_dir().ok()?;
@@ -1006,7 +1021,14 @@ pub fn mostrar_en_finder<R: Runtime>(app: &AppHandle<R>, archivo: Option<&str>) 
             notas.raiz().to_path_buf()
         }
     };
-    tauri_plugin_opener::reveal_item_in_dir(&ruta).map_err(|e| format!("Finder no pudo enseñarla: {e}"))
+    tauri_plugin_opener::reveal_item_in_dir(&ruta).map_err(|e| no_pudo_enseñarla(cfg!(windows), &e.to_string()))
+}
+
+/// El motivo cuando el sistema no pudo enseñar la carpeta, **con el nombre de su propio explorador** (sprint 008, el
+/// bajo del S7 sobre `reunion.rs:1010`: en Windows decía «Finder»). Pura, para probarla en los dos runners.
+fn no_pudo_enseñarla(en_windows: bool, motivo: &str) -> String {
+    let explorador = if en_windows { "El Explorador de archivos" } else { "Finder" };
+    format!("{explorador} no pudo enseñarla: {motivo}")
 }
 
 /// Barre lo vencido ahora y luego **al llegar el próximo vencimiento** (como mucho, cada hora),
@@ -1077,6 +1099,14 @@ mod pruebas {
         let d = std::env::temp_dir().join(format!("ag-reunion-{nombre}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&d);
         Carpeta::en(d)
+    }
+
+    /// Cada sistema nombra su propio explorador en el error de «Mostrar en…» (el bajo del S7 sobre `reunion.rs:1010`).
+    #[test]
+    fn el_error_de_mostrar_nombra_el_explorador_de_cada_sistema() {
+        assert!(no_pudo_enseñarla(false, "x").starts_with("Finder "));
+        assert!(no_pudo_enseñarla(true, "x").starts_with("El Explorador de archivos "));
+        assert!(!no_pudo_enseñarla(true, "x").contains("Finder"));
     }
 
     const HOY: notas::Fecha = notas::Fecha { anio: 2026, mes: 9, dia: 27, hora: 14, minuto: 2 };

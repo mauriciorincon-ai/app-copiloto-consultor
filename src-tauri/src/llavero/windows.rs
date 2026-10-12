@@ -131,6 +131,9 @@ mod pruebas {
     #[test]
     #[ignore = "hardware: escribe y borra una credencial de prueba en el Administrador de credenciales"]
     fn guarda_lee_reemplaza_y_borra() {
+        // Este test llama a las funciones de Windows de frente y se salta el centinela de `llavero.rs`: sin esta línea,
+        // un `--include-ignored` con `AG_SIN_HARDWARE=1` tocaría el Administrador de credenciales (M12 del S6).
+        crate::hardware::vigilar("el Administrador de credenciales (la prueba de hardware)");
         let cuenta = format!("prueba-ci-{}", std::process::id());
         borrar(Servicio::Puerta, &cuenta).unwrap();
         assert_eq!(leer(Servicio::Puerta, &cuenta).unwrap(), None, "una credencial que no existe se leyó");

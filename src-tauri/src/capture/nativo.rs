@@ -227,6 +227,22 @@ pub fn salida_de_audio() -> Salida {
     clasificar(transporte, fuente, nombre)
 }
 
+/// **El micrófono que la app va a escuchar**: el dispositivo de entrada por defecto, con su nombre y si es externo
+/// (sprint 008, M7 del S5). Solo lee propiedades del dispositivo, como `salida_de_audio`: no abre el micrófono ni pide
+/// ningún permiso.
+pub fn entrada_de_audio() -> Option<super::Entrada> {
+    let dispositivo = leer_objeto(OBJETO_SISTEMA, ENTRADA_POR_DEFECTO, AMBITO_GLOBAL)?;
+    let nombre = leer_cadena(dispositivo, cuatro(b"lnam")).unwrap_or_else(|| "sin nombre".into());
+    let transporte = leer_u32(dispositivo, TIPO_DE_TRANSPORTE, AMBITO_GLOBAL);
+    Some(super::Entrada { nombre, externa: es_externa(transporte) })
+}
+
+/// ¿Un dispositivo con este transporte es externo? Pura, para que cada transporte tenga su test. Lo que no se sabe
+/// (`None`) no se acusa de externo: sería avisar sin motivo.
+fn es_externa(transporte: Option<u32>) -> bool {
+    transporte.is_some_and(|t| t != TRANSPORTE_INTERNO)
+}
+
 /// **Por dónde sale el sonido**, a partir de lo que Core Audio dice del dispositivo. Pura, para que
 /// cada transporte tenga su test sin enchufar nada.
 fn clasificar(transporte: Option<u32>, fuente: Option<u32>, nombre: String) -> Salida {
@@ -248,6 +264,16 @@ fn clasificar(transporte: Option<u32>, fuente: Option<u32>, nombre: String) -> S
 #[cfg(test)]
 mod pruebas_de_la_salida {
     use super::*;
+
+    /// **La entrada externa se distingue de la del Mac** (sprint 008, M7 del S5): USB y Bluetooth son externas; la
+    /// interna y lo que no se sabe, no.
+    #[test]
+    fn la_entrada_externa_se_distingue_de_la_interna() {
+        assert!(es_externa(Some(cuatro(b"usb "))));
+        assert!(es_externa(Some(cuatro(b"blue"))));
+        assert!(!es_externa(Some(TRANSPORTE_INTERNO)));
+        assert!(!es_externa(None), "lo que no se sabe no se acusa");
+    }
 
     /// **Cada transporte, con su salida** (auditoría del S2, M4): HDMI, DisplayPort y AirPlay son
     /// altavoces —el cliente oiría la voz—; USB y Bluetooth no se pueden distinguir y se dicen por su

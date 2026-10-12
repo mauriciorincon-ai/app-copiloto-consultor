@@ -155,7 +155,7 @@ export function Corpus() {
           </div>
 
           <div className="tarjeta pendiente" style={{ margin: 0 }}>
-            {/* «Lo que no hace hoy», sin chip «En el H2»: la ruta del H2 no lo incluye (auditoría del S4, B46). */}
+            {/* «Lo que no hace hoy», sin chip «En el roadmap»: la ruta no lo incluye (auditoría del S4, B46). */}
             <h2 className="seccion">{t.corpusPendiente}</h2>
             {[t.arrastrar, t.releer, t.leerEscaneado].map((que) => (
               <div className="fila" key={que}>

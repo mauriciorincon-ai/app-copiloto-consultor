@@ -241,7 +241,7 @@ export const en: Diccionario = {
     detectado: "detected",
 
     todaviaNo: "Not yet",
-    enElH2: "In H2",
+    enElRoadmap: "On the roadmap",
     soloNotasEnSesion: "It is chosen in Session, before you start",
     funciona: "Works",
 

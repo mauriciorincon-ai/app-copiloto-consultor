@@ -1,4 +1,5 @@
-//! ¿Está este Mac inscrito en un MDM? Lo contesta el propio macOS.
+//! ¿Está este equipo inscrito en un MDM? Lo contesta el propio sistema: macOS con `profiles`, Windows con
+//! `IsDeviceRegisteredWithManagement` (sprint 008).
 //!
 //! Un MDM no siempre deja un proceso a la vista —la inscripción de Apple vive en el sistema—, así
 //! que se le pregunta a `/usr/bin/profiles`, la herramienta de Apple para eso. Es **la única
@@ -19,7 +20,20 @@ pub fn inscrito() -> Option<bool> {
     Some(dice_inscrito(&String::from_utf8_lossy(&salida.stdout)))
 }
 
-#[cfg(not(target_os = "macos"))]
+/// **En Windows** (sprint 008): se le pregunta a `IsDeviceRegisteredWithManagement`, la función que Windows publica
+/// para eso (`mdmregistration.h`). Es local, no lanza ningún programa y no lee la cuenta inscrita: el segundo
+/// argumento, que la devolvería, va vacío. `None` si Windows no contestó.
+#[cfg(windows)]
+pub fn inscrito() -> Option<bool> {
+    use windows::core::BOOL;
+    use windows::Win32::Management::MobileDeviceManagementRegistration::IsDeviceRegisteredWithManagement;
+    let mut si = BOOL(0);
+    // SAFETY: `si` vive durante la llamada y sin búfer para la cuenta Windows solo escribe el booleano.
+    unsafe { IsDeviceRegisteredWithManagement(&mut si, None) }.ok()?;
+    Some(si.as_bool())
+}
+
+#[cfg(not(any(target_os = "macos", windows)))]
 pub fn inscrito() -> Option<bool> {
     None
 }
