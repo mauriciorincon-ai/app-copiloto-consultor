@@ -150,3 +150,11 @@ describe("el lenguaje de Windows cumple la regla 6 del vocabulario", () => {
     expect(seccion).not.toMatch(vetadas);
   });
 });
+
+describe("lo que Windows dice de la red, con la puerta única", () => {
+  it("la frase de Honestidad en Windows nombra la única descarga que la app hace por su cuenta (ADR 022 §4)", () => {
+    // Hallazgo A4 de la auditoría del S6: la frase no puede decir «macOS» ni dejar la puerta sin nombrar.
+    expect(TEXTOS_DE_WINDOWS.es.honestidad.modoDetalle).toContain("instalar el modelo de voz");
+    expect(TEXTOS_DE_WINDOWS.en.honestidad.modoDetalle).toContain("install the speech model");
+  });
+});

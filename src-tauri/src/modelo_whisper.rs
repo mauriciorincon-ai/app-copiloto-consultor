@@ -8,7 +8,7 @@
 //! abre cuando pulsas «Instalar» en Idioma, jamás durante una reunión, y lo bajado se compara con la huella SHA-256
 //! fija en este archivo: si no coincide, se borra y no se usa.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Un modelo de whisper, con lo que hace falta para bajarlo y comprobarlo.
@@ -87,12 +87,9 @@ fn hex(bytes: &[u8]) -> String {
 
 /// **Baja el modelo**, lo comprueba y lo deja listo. Solo en Windows y solo si lo pides (Idioma, «Instalar»).
 ///
-/// Se baja a `<archivo>.parcial`; si el tamaño o la huella no coinciden, se borra y no se usa; si coinciden, se renombra.
+/// Lo que llega de la red lo escribe [`descargar_a`]; esta función solo pone la puerta. Ver ADR 022 §4.
 #[cfg(windows)]
 pub fn bajar(m: &Modelo) -> Result<PathBuf, String> {
-    use sha2::{Digest, Sha256};
-    use std::io::{Read, Write};
-
     crate::hardware::vigilar("la descarga del modelo de whisper");
     if BAJANDO.swap(true, Ordering::SeqCst) {
         return Err("ya se está bajando el modelo".into());
@@ -102,12 +99,25 @@ pub fn bajar(m: &Modelo) -> Result<PathBuf, String> {
         if entero(&destino, m) {
             return Ok(destino);
         }
-        let carpeta = destino.parent().ok_or("ruta del modelo sin carpeta")?;
-        std::fs::create_dir_all(carpeta).map_err(|e| format!("no se pudo crear la carpeta del modelo: {e}"))?;
-        let parcial = destino.with_extension("parcial");
         println!("[modelo] bajando {} ({} bytes)", m.nombre, m.bytes);
         let respuesta = ureq::get(m.origen).call().map_err(|e| format!("la descarga no empezó: {e}"))?; // verify-ephemeral:allow — ADR 022 §4: la única puerta Rust, el modelo de whisper, con su huella
-        let mut lector = respuesta.into_body().into_reader();
+        descargar_a(respuesta.into_body().into_reader(), m, &destino)
+    })();
+    BAJANDO.store(false, Ordering::SeqCst);
+    hecho
+}
+
+/// **Escribe un modelo que llega de un lector y lo comprueba**: tamaño exacto y huella SHA-256 fija. Si algo no
+/// coincide, o la lectura se corta, el `.parcial` se borra y no queda destino: un modelo a medias no se usa nunca
+/// (ADR 022 §4). Vive fuera de Windows a propósito, para que la CI del Mac pruebe lo que escribe la descarga.
+pub fn descargar_a(mut lector: impl std::io::Read, m: &Modelo, destino: &Path) -> Result<PathBuf, String> {
+    use sha2::{Digest, Sha256};
+    use std::io::Write;
+
+    let carpeta = destino.parent().ok_or("ruta del modelo sin carpeta")?;
+    std::fs::create_dir_all(carpeta).map_err(|e| format!("no se pudo crear la carpeta del modelo: {e}"))?;
+    let parcial = destino.with_extension("parcial");
+    let escrito = (|| -> Result<(), String> {
         let mut archivo = std::fs::File::create(&parcial).map_err(|e| format!("no se pudo crear el archivo: {e}"))?;
         let mut huella = Sha256::new();
         let mut total: u64 = 0;
@@ -127,15 +137,22 @@ pub fn bajar(m: &Modelo) -> Result<PathBuf, String> {
         archivo.sync_all().map_err(|e| format!("no se pudo cerrar el modelo: {e}"))?;
         drop(archivo);
         if total != m.bytes || !coincide(&huella.finalize(), m) {
-            let _ = std::fs::remove_file(&parcial);
-            return Err(format!("el modelo bajado no es el esperado ({total} bytes, huella distinta): borrado"));
+            return Err(format!("el modelo bajado no es el esperado ({total} bytes, huella distinta)"));
         }
-        std::fs::rename(&parcial, &destino).map_err(|e| format!("no se pudo dejar el modelo en su sitio: {e}"))?;
-        println!("[modelo] {} listo: tamaño y huella comprobados", m.nombre);
-        Ok(destino)
+        Ok(())
     })();
-    BAJANDO.store(false, Ordering::SeqCst);
-    hecho
+    match escrito {
+        Ok(()) => {
+            std::fs::rename(&parcial, destino).map_err(|e| format!("no se pudo dejar el modelo en su sitio: {e}"))?;
+            println!("[modelo] {} listo: tamaño y huella comprobados", m.nombre);
+            Ok(destino.to_path_buf())
+        }
+        Err(e) => {
+            // B5 de la auditoría: un corte a mitad no deja un parcial de 1,6 GB en disco.
+            let _ = std::fs::remove_file(&parcial);
+            Err(format!("{e}: borrado"))
+        }
+    }
 }
 
 /// Fuera de Windows no se baja nada: macOS transcribe con su propio motor (ADR 006).
@@ -184,6 +201,83 @@ mod pruebas {
         std::fs::create_dir_all(r.parent().unwrap()).unwrap();
         std::fs::write(&r, b"a medias").unwrap();
         assert!(!entero(&r, &PEQUENO), "un modelo a medias contó como listo");
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    /// Una huella de prueba: la de `hola` (4 bytes) y el modelo falso que la lleva.
+    fn modelo_de_prueba(bytes: u64, texto: &[u8]) -> Modelo {
+        use sha2::{Digest, Sha256};
+        let hex: String = Sha256::digest(texto).iter().map(|b| format!("{b:02x}")).collect();
+        let sha = Box::leak(hex.into_boxed_str());
+        Modelo { nombre: "prueba", archivo: "prueba.bin", bytes, sha256: sha, origen: "https://prueba.invalid/prueba.bin" }
+    }
+
+    fn carpeta_de_prueba(nombre: &str) -> PathBuf {
+        let base = std::env::temp_dir().join(format!("ag-descarga-{nombre}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        base
+    }
+
+    /// Un lector que da unos bytes y luego se corta, como una red que se cae a mitad.
+    struct SeCorta(usize);
+    impl std::io::Read for SeCorta {
+        fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+            if self.0 == 0 {
+                return Err(std::io::Error::other("cortado"));
+            }
+            let n = self.0.min(buf.len()).min(2);
+            buf[..n].fill(b'h');
+            self.0 -= n;
+            Ok(n)
+        }
+    }
+
+    /// **Lo bueno pasa**: el tamaño y la huella exactos dejan el modelo en su sitio, sin `.parcial`.
+    #[test]
+    fn una_descarga_exacta_queda_en_su_sitio() {
+        let base = carpeta_de_prueba("exacta");
+        let m = modelo_de_prueba(4, b"hola");
+        let destino = base.join("modelos").join("prueba.bin");
+        let r = descargar_a(&b"hola"[..], &m, &destino).expect("una descarga exacta debe pasar");
+        assert_eq!(r, destino);
+        assert_eq!(std::fs::read(&destino).unwrap(), b"hola");
+        assert!(!destino.with_extension("parcial").exists());
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    /// **Un byte de más aborta**: no queda ni el parcial ni el destino.
+    #[test]
+    fn un_byte_de_mas_aborta_y_no_deja_nada() {
+        let base = carpeta_de_prueba("mas");
+        let m = modelo_de_prueba(4, b"hola");
+        let destino = base.join("modelos").join("prueba.bin");
+        assert!(descargar_a(&b"holaX"[..], &m, &destino).is_err());
+        assert!(!destino.exists(), "un modelo de más se quedó como bueno");
+        assert!(!destino.with_extension("parcial").exists(), "el parcial se quedó en disco");
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    /// **Una huella distinta con el mismo tamaño se borra**: no es el modelo publicado.
+    #[test]
+    fn una_huella_distinta_se_borra() {
+        let base = carpeta_de_prueba("huella");
+        let m = modelo_de_prueba(4, b"hola");
+        let destino = base.join("modelos").join("prueba.bin");
+        assert!(descargar_a(&b"chao"[..], &m, &destino).is_err());
+        assert!(!destino.exists());
+        assert!(!destino.with_extension("parcial").exists());
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    /// **Una descarga que se corta a mitad no deja nada** (B5 de la auditoría del S6).
+    #[test]
+    fn una_descarga_cortada_no_deja_parcial() {
+        let base = carpeta_de_prueba("cortada");
+        let m = modelo_de_prueba(4, b"hola");
+        let destino = base.join("modelos").join("prueba.bin");
+        assert!(descargar_a(SeCorta(3), &m, &destino).is_err());
+        assert!(!destino.exists());
+        assert!(!destino.with_extension("parcial").exists(), "el parcial sobrevivió al corte");
         let _ = std::fs::remove_dir_all(&base);
     }
 }

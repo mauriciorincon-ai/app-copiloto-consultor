@@ -97,3 +97,46 @@ for (const tema of ["dark", "light"] as const) {
     });
   }
 }
+
+/**
+ * Hallazgo A4 de la auditoría del S6: en Windows, Idioma y Honestidad no pueden decir «macOS» ni «Mac»: el motor
+ * de voz y el modelo los baja la app, no el sistema (ADR 022). Este test es el criterio de aceptación de ese ajuste.
+ */
+for (const p of [
+  { que: "idioma", url: "ventana=principal&pantalla=idioma&plataforma=windows" },
+  { que: "honestidad", url: "ventana=principal&pantalla=honestidad&plataforma=windows" },
+]) {
+  test(`en Windows, «${p.que}» no dice «macOS» ni «Mac»`, async ({ page }) => {
+    await page.goto(`/?${p.url}`);
+    await expect(page.locator("h1").first()).toBeVisible();
+    await expect(page.getByText(/macOS|\bMac\b/)).toHaveCount(0);
+  });
+}
+
+/**
+ * Hallazgo A6 de la auditoría del S6: Notas y la bandeja prometían que lo guardado se borra «aunque no abras la app».
+ * En Windows esa tarea no existe (ADR 022: el borrado con la app cerrada, todavía no), así que la frase no puede salir.
+ */
+for (const url of [
+  "ventana=principal&pantalla=notas&estado=archivo&plataforma=windows",
+  "ventana=principal&pantalla=notas&estado=al-cerrar-bandeja&plataforma=windows",
+]) {
+  test(`en Windows, Notas no promete el borrado con la app cerrada (${url.split("estado=")[1].split("&")[0]})`, async ({ page }) => {
+    await page.goto(`/?${url}`);
+    await expect(page.locator("h1").first()).toBeVisible();
+    await expect(page.getByText(/aunque no abras la app/)).toHaveCount(0);
+  });
+}
+
+/** El contrario del test de arriba: en macOS esa frase sí sale en las mismas vistas. Si no saliera, el cero de arriba no
+ * demostraría nada. */
+for (const url of [
+  "ventana=principal&pantalla=notas&estado=archivo",
+  "ventana=principal&pantalla=notas&estado=al-cerrar-bandeja",
+]) {
+  test(`en macOS, la frase del borrado sí sale en ${url.split("estado=")[1]} (control del cero de Windows)`, async ({ page }) => {
+    await page.goto(`/?${url}`);
+    await expect(page.locator("h1").first()).toBeVisible();
+    await expect(page.getByText(/aunque no abras la app/).first()).toBeVisible();
+  });
+}

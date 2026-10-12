@@ -120,6 +120,12 @@ export function whisperEnEsteEquipo(p: Plataforma): EstadoDeWhisper | null {
   return estadoDeWhisper(p.transcripcion);
 }
 
+/** ¿Estamos en Windows? Para las pantallas que cambian una frase por otra (sprint 006, auditoría A4 y A6). */
+export function useEnWindows(): boolean {
+  const [p] = usePlataforma();
+  return esWindows(p);
+}
+
 /** Pregunta a Rust una vez al montar. */
 export function usePlataforma(
   fuera: Plataforma = plataformaFuera(),

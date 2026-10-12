@@ -176,7 +176,8 @@ jobs:
         env: { AG_SIN_HARDWARE: "1" }
         run: cargo test --locked
       # Lo marcado `hardware:` que sí se puede correr aquí: el Administrador de credenciales DEL RUNNER, una máquina
-      # efímera de GitHub (regla 24: jamás el PC del usuario). El micrófono y whisper llevan `en_vivo_` y se saltan.
+      # efímera de GitHub (regla 24: jamás el PC del usuario). El micrófono lleva `en_vivo_` y se salta; la descarga del
+      # modelo se prueba en `cargo test` con un archivo falso (`modelo_whisper::descargar_a`), en el Mac y en Windows.
       - name: el Administrador de credenciales de verdad — en el runner efímero
         working-directory: src-tauri
         run: cargo test --locked --lib llavero -- --include-ignored --skip en_vivo_

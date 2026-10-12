@@ -55,6 +55,9 @@ base64 = "0.22"
 # que este crate las usa de primera mano y que la superficie nativa que tocamos son dos APIs del
 # sistema — Accessibility (mover ventanas ajenas) y NSWorkspace (leer el fondo de escritorio) —
 # y ninguna más.
+# SHA-256 del modelo de whisper: en todas las plataformas, para probar la descarga en el Mac (ADR 022 §4).
+sha2 = "0.10"
+
 [target.'cfg(unix)'.dependencies]
 # Solo para leer el desplazamiento horario del sistema y escribir «14:02» en un turno. Viajaba ya
 # en el árbol (tao la usa); declararla hace explícito que este crate la llama de primera mano.
@@ -95,7 +98,6 @@ objc2-foundation = { version = "0.3", default-features = false, features = [
 cpal = "0.18"
 whisper-rs = "0.16"
 ureq = { version = "3.4", default-features = false, features = ["rustls"] }
-sha2 = "0.10"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 windows-sys = { version = "0.61", features = [
   "Win32_Foundation",

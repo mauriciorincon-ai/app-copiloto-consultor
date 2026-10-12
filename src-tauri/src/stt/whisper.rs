@@ -93,6 +93,21 @@ pub fn completar(muestras: &[f32]) -> std::borrow::Cow<'_, [f32]> {
     std::borrow::Cow::Owned(largo)
 }
 
+/// Pone a cero unas muestras (las copias del turno) antes de soltarlas.
+pub fn borrar(muestras: &mut [f32]) {
+    muestras.fill(0.0);
+}
+
+/// **Suelta el modelo cargado y lo que su estado retiene** (sprint 006, ADR 022, hallazgo A2 de la auditoría). La
+/// última transcripción vive dentro del estado de whisper hasta la siguiente. El corte y «Terminar» la sueltan: el
+/// texto de la sala no sobrevive a la sesión. Fuera de Windows no hay nada que soltar.
+pub fn soltar() {
+    #[cfg(windows)]
+    {
+        *motor::CARGADO.lock().unwrap_or_else(|e| e.into_inner()) = None;
+    }
+}
+
 /// El motor de la casa en Windows.
 #[cfg(windows)]
 pub fn motor() -> Box<dyn Motor> {
@@ -158,7 +173,7 @@ mod motor {
         estado: WhisperState,
     }
 
-    static CARGADO: Mutex<Option<Cargado>> = Mutex::new(None);
+    pub(super) static CARGADO: Mutex<Option<Cargado>> = Mutex::new(None);
 
     fn codigo(e: &WhisperError) -> i32 {
         match e {
@@ -215,13 +230,18 @@ mod motor {
 
     pub fn transcribir(codigo_whisper: &'static str, muestras: &[f32], hz: u32) -> Result<String, Fallo> {
         let hz_app = crate::capture::anillo::HZ;
-        let a_dieciseis: std::borrow::Cow<'_, [f32]> = if hz == hz_app {
-            std::borrow::Cow::Borrowed(muestras)
+        // Las copias del audio del turno se ponen a cero al salir (ADR 022, hallazgo A2 de la auditoría del S6): el
+        // turno es de un tercero y no debe sobrevivir a su uso.
+        let mut a_dieciseis: Vec<f32> = if hz == hz_app {
+            muestras.to_vec()
         } else {
-            std::borrow::Cow::Owned(crate::capture::Remuestreador::nuevo(hz, hz_app).convertir(muestras))
+            crate::capture::Remuestreador::nuevo(hz, hz_app).convertir(muestras)
         };
-        let audio = completar(&a_dieciseis);
-        con_el_modelo(|_, estado| transcribir_en(estado, codigo_whisper, &audio))
+        let mut audio = completar(&a_dieciseis).into_owned();
+        let texto = con_el_modelo(|_, estado| transcribir_en(estado, codigo_whisper, &audio));
+        super::borrar(&mut a_dieciseis);
+        super::borrar(&mut audio);
+        texto
     }
 
     pub fn calibrar() -> Result<u32, Fallo> {

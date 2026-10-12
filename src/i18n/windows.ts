@@ -35,6 +35,21 @@ export type TextosDeWindows = {
     bajarPequeno: string;
     sinReunion: string;
   };
+  /** Idioma: el motor de voz es de la app, no del sistema (ADR 022). */
+  idioma: {
+    transcribeTuPc: string;
+    transcribeTuPcDetalle: string;
+    idiomasListos: string;
+  };
+  /** Notas y la bandeja: cuándo se borra lo guardado (ADR 022: el borrado con la app cerrada, todavía no). */
+  notas: {
+    cadaReunion: string;
+    enLaBandejaDetalle: string;
+  };
+  /** Honestidad: qué abre la app y cuándo. */
+  honestidad: {
+    modoDetalle: string;
+  };
   permisos: {
     microfonoPara: string;
     abrirAjustes: string;
@@ -126,6 +141,21 @@ const ES: TextosDeWindows = {
     medirOtra: "Medir otra vez",
     bajarPequeno: "Bajar el modelo pequeño (0,5 GB)",
     sinReunion: "Bajar o medir no se puede con una reunión abierta.",
+  },
+  idioma: {
+    transcribeTuPc: "Transcribe tu PC, no un servicio",
+    transcribeTuPcDetalle:
+      "El modelo de voz (whisper), dentro de tu equipo. Ningún audio sale para convertirse en texto. La única vez que toca la red es cuando pides instalar el modelo: lo baja Angel Ghost desde su origen y comprueba su huella antes de usarlo.",
+    idiomasListos: "idiomas a la vez, como mucho: los que la app ofrece.",
+  },
+  notas: {
+    cadaReunion:
+      "Cada reunión que guardas vive eso, y se borra sola al vencer, en cuanto abras la app. Con la app cerrada, todavía no.",
+    enLaBandejaDetalle: "Estas, cifradas, se borran al llegar a cero, en cuanto abras la app.",
+  },
+  honestidad: {
+    modoDetalle:
+      "La app abre una conexión solo si enciendes el API en IA, con tu clave, y solo con texto anonimizado. La otra la abre la propia app, una vez, cuando pides instalar el modelo de voz: 1,6 GB, comprobados antes de usarse.",
   },
   permisos: {
     microfonoPara: "Escuchar la sala o tu voz, con el micrófono de este PC",
@@ -223,6 +253,21 @@ const EN: TextosDeWindows = {
     bajarPequeno: "Download the small model (0.5 GB)",
     sinReunion:
       "Downloading or measuring isn't possible while a meeting is open.",
+  },
+  idioma: {
+    transcribeTuPc: "Transcribes on your PC, not a service",
+    transcribeTuPcDetalle:
+      "The speech model (whisper) lives inside your machine. No audio leaves to become text. The only time it touches the network is when you ask to install a model: Angel Ghost downloads it from its origin and checks its checksum before using it.",
+    idiomasListos: "languages ready at once, at most: the ones the app offers.",
+  },
+  notas: {
+    cadaReunion:
+      "Every meeting you save lives that long, and deletes itself when it expires, once you open the app. With the app closed, not yet.",
+    enLaBandejaDetalle: "These, encrypted, delete at zero, once you open the app.",
+  },
+  honestidad: {
+    modoDetalle:
+      "The app opens a connection only if you turn on the API in AI, with your key, and only with anonymized text. The other one the app opens itself, once, when you ask to install the speech model: 1.6 GB, checked before use.",
   },
   permisos: {
     microfonoPara:

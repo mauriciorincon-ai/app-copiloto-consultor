@@ -962,6 +962,7 @@ fn dejar_de_escuchar(app: tauri::AppHandle, estado: tauri::State<'_, LaEscucha>)
     if modo_de_la_sesion(&app) == Some(modo::Modo::Presencial) {
         fijar_la_voz_en(&app, false);
     }
+    stt::whisper::soltar();
     if let Ok(mut g) = estado.0.lock() {
         if let Some(e) = g.take() {
             e.cortar();
@@ -1196,9 +1197,9 @@ fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Inf
                     }
                 }
                 // Ya cortadas arriba, todas a la vez.
-                corte::Pieza::AudioDelMicrofono
-                | corte::Pieza::AudioDelSistema
-                | corte::Pieza::Transcript => {}
+                // El transcript: el modelo suelta lo que retiene de la última transcripción (ADR 022, A2).
+                corte::Pieza::Transcript => stt::whisper::soltar(),
+                corte::Pieza::AudioDelMicrofono | corte::Pieza::AudioDelSistema => {}
                 // El cuadro de la reunión y lo leído de él: se pisan y el vigía se para.
                 corte::Pieza::UltimoFrame => {
                     if parar_la_pantalla(app) {
@@ -2455,6 +2456,10 @@ fn el_atajo_de_callar() -> tauri_plugin_global_shortcut::Shortcut {
 /// registro ocurre unos microsegundos después. Nadie espera a nadie.
 fn con_el_callar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, coger: bool) {
     use tauri_plugin_global_shortcut::GlobalShortcutExt;
+    // Windows (ADR 022): ⎋ global durante el modo de voz robaría Escape al sistema. Llega en el S7.
+    if cfg!(windows) {
+        return;
+    }
     let mango = app.clone();
     std::thread::spawn(move || {
         let atajo = el_atajo_de_callar();
@@ -3827,6 +3832,12 @@ fn atender_el_atajo<R: tauri::Runtime>(
 /// mitad de una reunión creyendo que cortó, y no habría cortado nada. (Riesgo nº 7 del plan.)
 fn registrar_el_kill_switch<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
     use tauri_plugin_global_shortcut::GlobalShortcutExt;
+    // Windows (sprint 006, ADR 022): los atajos globales llegan en el S7. Registrarlos ya robaría AltGr+letra en los
+    // teclados latinos y Alt+Esc al sistema. El corte sigue en el botón de Honestidad.
+    if cfg!(windows) {
+        println!("[atajos] en Windows los atajos globales llegan en el S7 (ADR 022); el corte está en Honestidad");
+        return;
+    }
     match app.global_shortcut().register(el_atajo()) {
         Ok(()) => println!("[corte] kill-switch ⌥⎋ registrado"),
         Err(e) => println!(
@@ -3965,6 +3976,36 @@ fn acoplar_cuando_haya_a_quien<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
             ESPERA * LATIDO.as_secs() as u32 + ESPERA * LATIDO.subsec_millis() / 1000
         );
     });
+}
+
+#[cfg(test)]
+mod pruebas_de_los_atajos_en_windows {
+    /// **El corte y «Terminar» sueltan el modelo** (ADR 022, A2): la última transcripción no sobrevive a la sesión.
+    #[test]
+    fn el_corte_y_terminar_sueltan_el_transcriptor() {
+        let fuente = include_str!("lib.rs");
+        let cuerpo = |f: &str| {
+            let c = &fuente[fuente.find(f).unwrap_or_else(|| panic!("{f}"))..];
+            c[..c.find("\n}\n").expect("su cierre")].to_string()
+        };
+        assert!(cuerpo("fn ejecutar_el_corte<").contains("corte::Pieza::Transcript => stt::whisper::soltar()"));
+        assert!(cuerpo("fn dejar_de_escuchar(").contains("stt::whisper::soltar()"));
+    }
+
+    /// **En Windows no se registra ningún atajo global** (ADR 022, hallazgo A1 de la auditoría del S6): la pantalla
+    /// de Honestidad dice «atajos: todavía no», así que la app no puede tenerlos. La guarda va ANTES del primer
+    /// `.register(` de cada función, y con `cfg!(windows)` para que sea una condición de compilación y no un comentario.
+    #[test]
+    fn en_windows_ningun_atajo_se_registra() {
+        let fuente = include_str!("lib.rs");
+        for funcion in ["fn registrar_el_kill_switch<", "fn con_el_callar<"] {
+            let cuerpo = &fuente[fuente.find(funcion).unwrap_or_else(|| panic!("{funcion}"))..];
+            let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
+            let guarda = cuerpo.find("if cfg!(windows)").unwrap_or_else(|| panic!("{funcion} sin guarda de Windows"));
+            let primero = cuerpo.find(".register(").unwrap_or_else(|| panic!("{funcion} sin registro"));
+            assert!(guarda < primero, "{funcion}: registra un atajo antes de mirar si esta plataforma los tiene");
+        }
+    }
 }
 
 #[cfg(test)]
