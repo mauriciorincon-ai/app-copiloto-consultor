@@ -18,14 +18,13 @@ pub enum Sistema {
     Otro,
 }
 
-/// Cuándo llega una función a Windows.
+/// Si una función está en Windows. Desde el sprint 008 («Windows completo») no queda ninguna «todavía no»: o está,
+/// con lo que diga su frase, o no está planeada.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Cuando {
     /// Hoy, con lo que diga su frase (p. ej. «sin verificar»).
     Si,
-    /// En el sprint 008 («Windows completo»).
-    TodaviaNo,
     /// No está planeada por ahora.
     NoPorAhora,
 }
@@ -47,13 +46,13 @@ pub const EN_WINDOWS: [Funcion; 15] = [
     Funcion { clave: "videollamada", cuando: Cuando::Si },
     Funcion { clave: "pantalla", cuando: Cuando::Si },
     Funcion { clave: "voz-al-oido", cuando: Cuando::Si },
-    Funcion { clave: "acople", cuando: Cuando::TodaviaNo },
+    Funcion { clave: "acople", cuando: Cuando::Si },
     Funcion { clave: "ensayo", cuando: Cuando::Si },
-    Funcion { clave: "sugerencia", cuando: Cuando::TodaviaNo },
-    Funcion { clave: "radar", cuando: Cuando::TodaviaNo },
+    Funcion { clave: "sugerencia", cuando: Cuando::Si },
+    Funcion { clave: "radar", cuando: Cuando::Si },
     Funcion { clave: "atajos", cuando: Cuando::Si },
-    Funcion { clave: "borrado-con-la-app-cerrada", cuando: Cuando::TodaviaNo },
-    Funcion { clave: "desbloqueo", cuando: Cuando::TodaviaNo },
+    Funcion { clave: "borrado-con-la-app-cerrada", cuando: Cuando::Si },
+    Funcion { clave: "desbloqueo", cuando: Cuando::Si },
     Funcion { clave: "puerta-local", cuando: Cuando::NoPorAhora },
 ];
 
@@ -141,20 +140,25 @@ mod pruebas {
             let dice = fila.split('|').nth(2).unwrap().trim();
             let esperado = match f.cuando {
                 Cuando::Si => "sí",
-                Cuando::TodaviaNo => "todavía no (S8)",
                 Cuando::NoPorAhora => "no en Windows por ahora",
             };
             assert!(dice.starts_with(esperado), "{}: el ADR dice «{dice}» y aquí es {:?}", f.clave, f.cuando);
         }
     }
 
-    /// En macOS no cruza ninguna lista de Windows ni nada de whisper; en Windows, las 15 y la transcripción.
+    /// En macOS no cruza ninguna lista de Windows ni nada de whisper; en Windows, las 15 y la transcripción. Desde
+    /// el sprint 008, 14 están y una (la puerta local) no está planeada.
     #[test]
     fn cada_sistema_cruza_lo_suyo() {
         let mac = Plataforma::de(Sistema::Macos, None);
         assert!(mac.funciones.is_empty());
         let win = Plataforma::de(Sistema::Windows, Some(la_transcripcion()));
         assert_eq!(win.funciones.len(), 15);
+        assert_eq!(win.funciones.iter().filter(|f| f.cuando == Cuando::Si).count(), 14);
+        assert_eq!(
+            win.funciones.iter().filter(|f| f.cuando == Cuando::NoPorAhora).map(|f| f.clave).collect::<Vec<_>>(),
+            vec!["puerta-local"]
+        );
         assert_eq!(win.transcripcion.unwrap().techo_ms, 4_000);
         let aqui = de_este_equipo();
         assert_eq!(aqui.sistema == Sistema::Windows, cfg!(windows));

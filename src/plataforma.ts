@@ -6,14 +6,14 @@ import { PLATAFORMA_WINDOWS } from "./contrato.generado";
  * QUÉ HACE LA APP EN ESTE EQUIPO (sprint 006, ADR 022). Lo emite `src-tauri/src/plataforma.rs` y la muestra del
  * contrato (`PLATAFORMA_WINDOWS` en `contrato.generado.ts`) se compila contra estos tipos.
  *
- * En Windows cruza la lista «Hoy en Windows» del ADR 022 —qué hace hoy, qué llega en el sprint 007 y qué no está
- * planeado— y lo que la transcripción sabe de este PC: el modelo de whisper que hay y lo que tardó en la calibración.
- * En macOS la lista viene vacía: ahí la app hace lo que dicen el manual y Honestidad.
+ * En Windows cruza la lista «Hoy en Windows» del ADR 022 —qué hace hoy y qué no está planeado; desde el sprint 008 no
+ * queda nada a medio llegar— y lo que la transcripción sabe de este PC: el modelo de whisper que hay y lo que tardó en
+ * la calibración. En macOS la lista viene vacía: ahí la app hace lo que dicen el manual y Honestidad.
  */
 export type Sistema = "macos" | "windows" | "otro";
 
-/** Cuándo está una función en Windows: hoy, en el sprint 007, o no por ahora. */
-export type Cuando = "si" | "todavia-no" | "no-por-ahora";
+/** Si una función está en Windows: hoy, o no por ahora. */
+export type Cuando = "si" | "no-por-ahora";
 
 /** Las claves del ADR 022, en su orden. */
 export const CLAVES_DE_WINDOWS = [
@@ -133,8 +133,7 @@ export function teclasEnIdioma(teclas: string, idioma: "es" | "en"): string {
 
 /**
  * **Un texto con las teclas de este sistema** (sprint 007). En macOS, el texto tal cual. En Windows, cada tecla de
- * macOS cambia por la de Windows de la misma acción; si una acción no tiene tecla en Windows (el radar, hasta el S8),
- * se queda la de macOS sin cambiar, y su pantalla ya dice «todavía no».
+ * macOS cambia por la de Windows de la misma acción (desde el sprint 008 las tienen todas, el radar incluido).
  */
 export function conTeclasDeEsteSistema(
   texto: string,
@@ -164,7 +163,6 @@ export function esWindows(p: Plataforma): boolean {
 export function porCuando(p: Plataforma): Record<Cuando, ClaveDeWindows[]> {
   const grupos: Record<Cuando, ClaveDeWindows[]> = {
     si: [],
-    "todavia-no": [],
     "no-por-ahora": [],
   };
   for (const f of p.funciones) grupos[f.cuando].push(f.clave);
@@ -199,12 +197,6 @@ export function estadoDeWhisper(
 /** Lo que Honestidad dice de whisper en este equipo; `null` fuera de Windows. */
 export function whisperEnEsteEquipo(p: Plataforma): EstadoDeWhisper | null {
   return estadoDeWhisper(p.transcripcion);
-}
-
-/** ¿Estamos en Windows? Para las pantallas que cambian una frase por otra (sprint 006, auditoría A4 y A6). */
-export function useEnWindows(): boolean {
-  const [p] = usePlataforma();
-  return esWindows(p);
 }
 
 /** Pregunta a Rust una vez al montar. */

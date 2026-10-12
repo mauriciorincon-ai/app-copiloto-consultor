@@ -19,12 +19,17 @@ type Parcial<T> = { [K in keyof T]?: T[K] extends string ? string : Parcial<T[K]
 /** Una parte del diccionario: una clave que no existe en `es.ts` no compila. */
 export type Cambios = Parcial<Diccionario>;
 
+/** En Windows no hay modelo del sistema (ADR 023): la sugerencia, con el API; sin él, la ficha. */
+const SIN_MODELO_ES = "En Windows no hay modelo del sistema: la sugerencia la redacta el API, si lo enciendes con tu clave.";
+const SIN_MODELO_EN = "Windows has no system model: the API writes the suggestion, if you turn it on with your key.";
+
 const ES: Cambios = {
   banda: {
     // La banda no promete invisibilidad donde nadie la verificó (regla dura 6).
     sinVerificarCuando: "Sin verificar en Teams, Zoom ni Meet · se verifica en tu PC",
     sugerenciaEnTuMac: "sugerencia · en tu PC",
     radarTeMira: "Te está mirando un programa de tu PC",
+    radarEnTuEquipo: "en tu PC, no en el del cliente",
   },
   cuaderno: {
     sesionSub: "Nada se enciende hasta que tú lo digas. Esto es lo que la app ve de tu propio PC.",
@@ -56,6 +61,19 @@ const ES: Cambios = {
     permAcoplePara: "Para que la banda no tape la llamada: la reunión se encoge y las dos conviven.",
     // En Windows, Teams y Zoom cuentan cuando están en una llamada, no por estar abiertos (sprint 008, S7 M1).
     sinReunionVoz: "Entra en tu llamada de Zoom, Teams o Meet y aparecerá aquí. Mientras tanto, prepara la reunión.",
+    // IA en Windows (sprint 008, ADR 023): no hay modelo del sistema; cualquier motivo de macOS dice esa verdad.
+    enTuMac: "en tu PC",
+    porQueNoRedacta: {
+      "apple-intelligence-apagado": SIN_MODELO_ES,
+      "mac-no-compatible": SIN_MODELO_ES,
+      "no-disponible": SIN_MODELO_ES,
+      "modelo-descargandose": SIN_MODELO_ES,
+      "sin-puente": SIN_MODELO_ES,
+    },
+    caracteresTachado: "caracteres. Tachado, lo que se reemplazó en tu PC antes de enviarlo.",
+    // El radar en Sesión (sprint 008): mira este PC.
+    vigilanciaTitulo: "Software invasivo corriendo en tu PC",
+    vigilanciaSoloTuMac: "solo tu PC",
     presencial: {
       reunionEnEsteMac: "reunión en este PC",
       pcPregunta: "¿La videollamada está en este PC?",
@@ -88,6 +106,7 @@ const EN: Cambios = {
     sinVerificarCuando: "Not verified in Teams, Zoom or Meet · you verify it on your PC",
     sugerenciaEnTuMac: "suggestion · on your PC",
     radarTeMira: "A program on your PC is watching you",
+    radarEnTuEquipo: "on your PC, not the client’s",
   },
   cuaderno: {
     sesionSub: "Nothing turns on until you say so. This is what the app sees of your own PC.",
@@ -116,6 +135,17 @@ const EN: Cambios = {
     permSistemaPara: "What plays on your PC: the client’s voice. No bot in the meeting.",
     permAcoplePara: "So the band does not cover the call: the meeting shrinks and the two live together.",
     sinReunionVoz: "Join your Zoom, Teams or Meet call and it will show up here. Meanwhile, get ready.",
+    enTuMac: "on your PC",
+    porQueNoRedacta: {
+      "apple-intelligence-apagado": SIN_MODELO_EN,
+      "mac-no-compatible": SIN_MODELO_EN,
+      "no-disponible": SIN_MODELO_EN,
+      "modelo-descargandose": SIN_MODELO_EN,
+      "sin-puente": SIN_MODELO_EN,
+    },
+    caracteresTachado: "characters. Struck through, what was replaced on your PC before sending.",
+    vigilanciaTitulo: "Invasive software running on your PC",
+    vigilanciaSoloTuMac: "only your PC",
     presencial: {
       reunionEnEsteMac: "call on this PC",
       pcPregunta: "Is the call on this PC?",

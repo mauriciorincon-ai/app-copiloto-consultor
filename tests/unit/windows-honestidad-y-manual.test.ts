@@ -31,11 +31,10 @@ function filasDelAdr(): Map<string, string> {
   return filas;
 }
 
-/** Del texto de la fila del ADR, el estado que dice: sí · todavía no · no en Windows por ahora. */
-function estadoDelTexto(texto: string): "si" | "todavia-no" | "no-por-ahora" {
+/** Del texto de la fila del ADR, el estado que dice: sí · no en Windows por ahora (desde el sprint 008, nada más). */
+function estadoDelTexto(texto: string): "si" | "no-por-ahora" {
   if (texto.startsWith("sí")) return "si";
   if (texto.startsWith("no en Windows")) return "no-por-ahora";
-  if (texto.startsWith("todavía no")) return "todavia-no";
   throw new Error(`no sé qué estado dice «${texto}»`);
 }
 
@@ -43,15 +42,15 @@ function estadoDelTexto(texto: string): "si" | "todavia-no" | "no-por-ahora" {
 function estadoDelDetalle(
   detalle: string,
   idioma: "es" | "en",
-): "si" | "todavia-no" | "no-por-ahora" {
+): "si" | "no-por-ahora" | "otro" {
   if (idioma === "es") {
     if (detalle.startsWith("sí")) return "si";
     if (detalle.startsWith("no en Windows")) return "no-por-ahora";
-    return "todavia-no";
+    return "otro";
   }
   if (detalle.startsWith("yes")) return "si";
   if (detalle.startsWith("not on Windows")) return "no-por-ahora";
-  return "todavia-no";
+  return "otro";
 }
 
 describe("«Hoy en Windows» dice lo mismo en el ADR, la app y el manual", () => {
@@ -64,7 +63,7 @@ describe("«Hoy en Windows» dice lo mismo en el ADR, la app y el manual", () =>
   it("cada clave tiene el MISMO estado en el ADR y en el contrato que emite Rust", () => {
     for (const f of PLATAFORMA_WINDOWS.funciones) {
       const enAdr = estadoDelTexto(filas.get(f.clave) ?? "");
-      const enRust = f.cuando === "si" ? "si" : f.cuando;
+      const enRust = f.cuando;
       expect(
         enAdr,
         `${f.clave}: el ADR dice una cosa y la app emite otra`,

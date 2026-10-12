@@ -3,8 +3,6 @@ import { useIdioma, useT, type Idioma } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { hayTauri } from "../puente";
 import { formatearBytes } from "./Honestidad";
-import { useTextosDeWindows } from "../i18n/windows";
-import { useEnWindows } from "../plataforma";
 import {
   nombreDeLaRetencion,
   abrirLaBandeja,
@@ -552,8 +550,6 @@ function FranjaDeLaBandeja({ quedan, guardadas, ventana, elegir }: {
   ventana: Ventana;
   elegir: (v: Ventana) => void;
 }) {
-  const enWindows = useEnWindows();
-  const tw = useTextosDeWindows();
   const t = useT().notas;
   const cero = ventana === "0";
   const lasTuyas = guardadas > 0 ? `${t.las} ${guardadas} ${t.queGuardasteVan}` : "";
@@ -563,7 +559,7 @@ function FranjaDeLaBandeja({ quedan, guardadas, ventana, elegir }: {
       <div>
         <strong>{`${quedan} ${cero ? t.muerenAlCerrar : t.esperaranEnLaBandeja}`}</strong>
         <Ventanas elegida={ventana} elegir={elegir} estilo={{ margin: "6px 0 4px" }} />
-        <p>{cero ? `${t.ceroDetalle}${lasTuyas && ` ${lasTuyas}`}` : `${lasTuyas && `${lasTuyas} `}${enWindows ? tw.notas.enLaBandejaDetalle : t.enLaBandejaDetalle}`}</p>
+        <p>{cero ? `${t.ceroDetalle}${lasTuyas && ` ${lasTuyas}`}` : `${lasTuyas && `${lasTuyas} `}${t.enLaBandejaDetalle}`}</p>
       </div>
     </div>
   );
@@ -878,8 +874,6 @@ function Archivo({ retencion, preguntaInicial, bandeja, volverALaBandeja }: {
   bandeja: VistaDeLaBandeja | null;
   volverALaBandeja: () => void;
 }) {
-  const enWindows = useEnWindows();
-  const tw = useTextosDeWindows();
   const t = useT().notas;
   const quedanBandeja = useQuedan(bandeja?.vence ?? null);
   const idioma = useIdioma();
@@ -947,7 +941,7 @@ function Archivo({ retencion, preguntaInicial, bandeja, volverALaBandeja }: {
           );
         })}
       </div>
-      <p style={{ ...AYUDA, marginTop: "8px" }}>{enWindows ? tw.notas.cadaReunion : t.cadaReunion}</p>
+      <p style={{ ...AYUDA, marginTop: "8px" }}>{t.cadaReunion}</p>
     </div>
   );
 

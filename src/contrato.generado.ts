@@ -1657,7 +1657,7 @@ export const PLATAFORMA_WINDOWS: Plataforma = {
       },
       {
         "clave": "acople",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "ensayo",
@@ -1665,11 +1665,11 @@ export const PLATAFORMA_WINDOWS: Plataforma = {
       },
       {
         "clave": "sugerencia",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "radar",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "atajos",
@@ -1677,11 +1677,11 @@ export const PLATAFORMA_WINDOWS: Plataforma = {
       },
       {
         "clave": "borrado-con-la-app-cerrada",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "desbloqueo",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "puerta-local",
@@ -1787,7 +1787,7 @@ export const PLATAFORMA_WINDOWS_SIN_MODELO: Plataforma = {
       },
       {
         "clave": "acople",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "ensayo",
@@ -1795,11 +1795,11 @@ export const PLATAFORMA_WINDOWS_SIN_MODELO: Plataforma = {
       },
       {
         "clave": "sugerencia",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "radar",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "atajos",
@@ -1807,11 +1807,11 @@ export const PLATAFORMA_WINDOWS_SIN_MODELO: Plataforma = {
       },
       {
         "clave": "borrado-con-la-app-cerrada",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "desbloqueo",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "puerta-local",

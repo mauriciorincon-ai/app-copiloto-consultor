@@ -164,3 +164,18 @@ idempotencia; la huella del H1; la ventana que el usuario movió no se devuelve;
 `AXPosition`. **En vivo, una vez, con la matriz de la regla 22 y el «sí» del usuario** antes de mover
 una ventana real (la página de Meet de prueba del kit): baja 88 px, vuelve al cerrar, ≤ 300 ms. Y
 mirada de DECISIÓN sobre la variante «arriba» de `docs/diseno/posicion.html` antes del código.
+
+## Enmienda 2 — en Windows, `SetWindowPos` y la misma maniobra (sprint 008, 2026-10-12)
+
+En Windows no hay Accessibility API ni permiso que pedir: el mismo usuario puede mover y redimensionar las ventanas
+de sus otros programas con `SetWindowPos`. `acople/windows.rs` da **las mismas funciones** que `ax.rs` (leer las
+ventanas de un proceso, encoger, mover, releer, saber quién está al frente y si el proceso sigue siendo el mismo), y
+la maniobra entera de `acople/mod.rs` corre igual en los dos sistemas: soltar primero, leer lo que de verdad quedó,
+deshacer lo que no salió y anotar la huella para devolverla al cerrar o tras una caída.
+
+Lo que cambia, y por qué: se mide **lo que se ve** de la ventana (`DWMWA_EXTENDED_FRAME_BOUNDS`), no su rectángulo,
+que incluye los bordes invisibles de redimensionar, y se escribe el rectángulo con esos bordes por fuera; las medidas
+pasan a puntos con la escala del monitor de cada ventana, que es como Tauri da la franja; y el índice de una ventana
+es su posición entre las de su proceso ordenadas por identificador, que no cambia con cada clic. La conversión es
+pura y tiene su test. Como aquí, **no se lee ningún título ni contenido**: la ventana de la reunión la elige la
+detección (`sesion::windows`), donde sí se leen, y llega como un número. Detalle en el ADR 022, enmienda 2.

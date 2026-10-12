@@ -29,7 +29,6 @@ import {
 
 const ICONO: Record<Cuando, { id: string; color: string }> = {
   si: { id: "i-check-circle", color: "var(--ok)" },
-  "todavia-no": { id: "i-pendiente", color: "var(--halo)" },
   "no-por-ahora": { id: "i-x-circle", color: "var(--mute)" },
 };
 
@@ -47,7 +46,7 @@ export function HoyEnWindows({
   const grupos = porCuando(p);
   const porClave = new Map(p.funciones.map((f) => [f.clave, f]));
   const whisper = estadoDeWhisper(p.transcripcion);
-  const { si, "todavia-no": todavia, "no-por-ahora": noPorAhora } = grupos;
+  const { si, "no-por-ahora": noPorAhora } = grupos;
 
   const fila = (clave: ClaveDeWindows) => {
     const f = porClave.get(clave);
@@ -107,7 +106,6 @@ export function HoyEnWindows({
       </h2>
       <p>{t.intro}</p>
       {bloque(t.ya, si)}
-      {bloque(t.todavia, todavia)}
       {bloque(t.noPorAhora, noPorAhora)}
       {atajosSinRegistrar(p).map((a) => (
         <p key={a.accion} className="estado warn">

@@ -23,26 +23,12 @@ describe("lo que la app hace en este equipo", () => {
       ...CLAVES_DE_WINDOWS,
     ]);
     const g = porCuando(PLATAFORMA_WINDOWS);
-    // Sprint 007: la videollamada, la pantalla, la voz al oído, el ensayo con voz y los atajos pasan a «sí».
-    expect(g.si).toEqual([
-      "banda-protegida",
-      "presencial",
-      "corpus-y-ficha",
-      "notas-cifradas",
-      "videollamada",
-      "pantalla",
-      "voz-al-oido",
-      "ensayo",
-      "atajos",
-    ]);
-    expect(g["todavia-no"]).toEqual([
-      "acople",
-      "sugerencia",
-      "radar",
-      "borrado-con-la-app-cerrada",
-      "desbloqueo",
-    ]);
+    // Sprint 008, «Windows completo»: el acople, la sugerencia, el radar, el borrado con la app cerrada y el desbloqueo
+    // pasan a «sí». Catorce están; la puerta local no está planeada.
+    expect(g.si).toEqual(CLAVES_DE_WINDOWS.filter((c) => c !== "puerta-local"));
+    expect(g.si).toHaveLength(14);
     expect(g["no-por-ahora"]).toEqual(["puerta-local"]);
+    expect(Object.keys(g)).toEqual(["si", "no-por-ahora"]);
   });
 
   it("whisper se dice como está: medido, bajando o sin modelo", () => {

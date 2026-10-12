@@ -192,3 +192,13 @@ gate del MVP (`data/radar/avisos.json:2`).
 - **Fidelidad:** 100 encuadres sin ninguno sobre el umbral; **axe** sin hallazgos en ámbar, coral y
   «vigilancia», en los dos temas (`bitácora:2094-2096`).
 - Los rojos de cada gate y test nuevo, en `bitácora:2131-2148`.
+
+## Enmienda — el radar en Windows (sprint 008, 2026-10-12)
+
+En Windows el radar hace lo mismo con dos lecturas de ESTE PC, sin lanzar ningún programa: la foto de procesos que ya
+toma la reunión (`sesion::windows::procesos`, `CreateToolhelp32Snapshot`), cotejada contra su propio catálogo
+(`data/radar/programas-windows.json`: el ejecutable `.exe`, la fuente y la fecha por fila), y
+`IsDeviceRegisteredWithManagement` para saber si el PC está gestionado por un MDM, sin leer la cuenta inscrita. El kit
+sintético tiene su PC limpio y su PC vigilado (`docs/kit-de-prueba/radar/pc-*.txt`). `radar-solo-este-mac` deja pasar
+esas dos lecturas de Windows y ninguna otra; se vio en rojo con un `connect` de Winsock plantado. Lo que no hace sigue
+igual: no abre sockets, no resuelve nombres, no bloquea ni cierra nada. Detalle en el ADR 022, enmienda 2.

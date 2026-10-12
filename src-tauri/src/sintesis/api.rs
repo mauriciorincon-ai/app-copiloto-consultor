@@ -5,7 +5,8 @@
 //!    las parejas de nombres propios ([`super::anonimo::Boveda`]).
 //! 2. **Cuenta** los bytes que van a salir, por el único camino de entrada del contador de red, en
 //!    el instante antes de enviarlos.
-//! 3. **Envía** por el puente de Swift —la única puerta de la app a la red, efímera y https—.
+//! 3. **Envía** por la puerta de este sistema: el puente de Swift en el Mac (efímero y https, ADR 011) o, en
+//!    Windows, `ureq` con rustls (sprint 008, ADR 023). Las dos detrás de [`Api::redactar_con`], que hace lo demás.
 //! 4. **Destapa** la respuesta en el Mac y se la da a `fundar`, que la valida como a cualquier otra.
 //!
 //! Dos proveedores intercambiables, cada uno en su formato: el de Anthropic y el compatible con
@@ -36,8 +37,6 @@ impl Externo {
         }
     }
 
-    // La salida al proveedor va por el puente de Swift; en Windows la sugerencia llega en el sprint 007 (ADR 022).
-    #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
     fn modelo(self) -> &'static str {
         match self {
             Externo::Claude => "claude-haiku-4-5",
@@ -45,7 +44,6 @@ impl Externo {
         }
     }
 
-    #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
     fn url(self) -> &'static str {
         match self {
             Externo::Claude => "https://api.anthropic.com/v1/messages",
@@ -75,7 +73,6 @@ impl Externo {
     }
 
     /// Cabeceras y cuerpo de la petición.
-    #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
     fn peticion(self, clave: &str, instrucciones: &str, texto: &str) -> (String, String) {
         let cuerpo = match self {
             Externo::Claude => serde_json::json!({
@@ -105,7 +102,6 @@ impl Externo {
     }
 
     /// El texto y los tokens de la respuesta.
-    #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
     fn leer(self, json: &serde_json::Value) -> Option<(String, u64, u64)> {
         match self {
             Externo::Claude => Some((
@@ -158,7 +154,7 @@ pub fn guardar_clave(externo: Externo, clave: &str) -> Result<(), String> {
 }
 
 /// Lee la clave, si hay. Vive lo que dura una petición.
-#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+#[cfg_attr(not(any(target_os = "macos", windows)), allow(dead_code))]
 fn leer_clave(externo: Externo) -> Option<String> {
     llavero::leer(Servicio::Api, externo.cuenta())
 }
@@ -410,18 +406,44 @@ impl Proveedor for Api {
         if hay_clave(self.externo) { Ok(()) } else { Err(PorQueNoRedacta::SinClave) }
     }
 
-    #[cfg(all(target_os = "macos", puente_de_swift))]
+    #[cfg(any(all(target_os = "macos", puente_de_swift), windows))]
     fn redactar(&self, instrucciones: &str, texto: &str) -> Result<Respuesta, String> {
-        use std::ffi::CString;
         if !self.vigencia.sigue() {
             return Err(CORTADA.into());
         }
-        let mut clave = leer_clave(self.externo).ok_or("sin clave en el Llavero")?;
+        let clave = leer_clave(self.externo).ok_or("sin clave guardada para este proveedor")?;
+        self.redactar_con(clave, instrucciones, texto, por_la_puerta)
+    }
+
+    #[cfg(not(any(all(target_os = "macos", puente_de_swift), windows)))]
+    fn redactar(&self, _i: &str, _t: &str) -> Result<Respuesta, String> {
+        if !self.vigencia.sigue() {
+            return Err(CORTADA.into());
+        }
+        Err("esta compilación no trae el puente de red".into())
+    }
+}
+
+/// Lo que devuelve una puerta a la red: el estado HTTP y el cuerpo de la respuesta.
+pub type Contestacion = Result<(u16, Vec<u8>), String>;
+
+impl Api {
+    /// **El envío, en orden y en un solo sitio** (sprint 008): tapar, armar, contar, anotar, enviar por la puerta de
+    /// este sistema (`enviar`: la URL, las cabeceras «nombre: valor» por línea y el cuerpo), pisar y destapar. Es lo que
+    /// el Mac hacía dentro de `redactar`; ahora el Mac y Windows lo comparten y cambia solo la puerta: el puente de
+    /// Swift (`nativo/Red.swift`, ADR 011) o `ureq` (ADR 023). Con una puerta falsa se prueba sin red.
+    pub(crate) fn redactar_con(
+        &self,
+        mut clave: String,
+        instrucciones: &str,
+        texto: &str,
+        enviar: impl FnOnce(&str, &str, &[u8]) -> Contestacion,
+    ) -> Result<Respuesta, String> {
         let (mut tapado, boveda) = lo_que_sale(&self.conocidos, instrucciones, texto);
         let (mut cabeceras, mut cuerpo) = self.externo.peticion(&clave, instrucciones, &tapado);
         // Lo que IA enseñará, armado ANTES de pisar el texto: el mismo `tapado` que va en el cuerpo.
         let salio = LoQueSalio::de(&tapado, &boveda, self.externo, &self.sobre).para(self.para);
-        // SEGURIDAD (las tres): ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
+        // SEGURIDAD (las dos): ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
         unsafe { clave.as_mut_vec() }.fill(0);
         unsafe { tapado.as_mut_vec() }.fill(0);
         let bytes_fuera = (cuerpo.len() + cabeceras.len()) as u64;
@@ -435,34 +457,14 @@ impl Proveedor for Api {
         // la misma razón: lo que salió se enseña aunque el proveedor no conteste nunca.
         crate::red::registrar_salida(bytes_fuera);
         let id = self.registro.anotar(salio);
-        let url = CString::new(self.externo.url()).map_err(|e| e.to_string())?;
-        let cab = CString::new(cabeceras.clone()).map_err(|e| e.to_string())?;
+        let contestacion = enviar(self.externo.url(), &cabeceras, cuerpo.as_bytes());
+        // SEGURIDAD: lo mismo, con la clave dentro de las cabeceras.
         unsafe { cabeceras.as_mut_vec() }.fill(0);
-        let mut salida = vec![0u8; 64 * 1024];
-        let mut estado: i32 = 0;
-        // SEGURIDAD: textos terminados en cero, un cuerpo de `largo` bytes y una salida de
-        // `capacidad` bytes, todos vivos hasta que la llamada vuelve.
-        let n = unsafe {
-            puente::ag_red_post(
-                url.as_ptr(),
-                cab.as_ptr(),
-                cuerpo.as_ptr(),
-                cuerpo.len() as i32,
-                super::TECHO.as_secs_f64() + 1.0,
-                salida.as_mut_ptr(),
-                salida.len() as i32,
-                &mut estado,
-            )
-        };
-        let mut cab = cab.into_bytes();
-        cab.fill(0);
         unsafe { cuerpo.as_mut_vec() }.fill(0);
-        if n < 0 {
-            return Err(format!("el proveedor no contestó (código {n})"));
-        }
-        let json: serde_json::Value = serde_json::from_slice(&salida[..n as usize])
-            .map_err(|_| format!("respuesta ilegible (HTTP {estado})"))?;
+        let (estado, mut salida) = contestacion?;
+        let json: Result<serde_json::Value, _> = serde_json::from_slice(&salida);
         salida.fill(0);
+        let json = json.map_err(|_| format!("respuesta ilegible (HTTP {estado})"))?;
         if !(200..300).contains(&estado) {
             return Err(format!("HTTP {estado}"));
         }
@@ -476,20 +478,155 @@ impl Proveedor for Api {
             salida: Some(id),
         })
     }
+}
 
-    #[cfg(not(all(target_os = "macos", puente_de_swift)))]
-    fn redactar(&self, _i: &str, _t: &str) -> Result<Respuesta, String> {
-        if !self.vigencia.sigue() {
-            return Err(CORTADA.into());
-        }
-        Err("esta compilación no trae el puente de red".into())
+/// Lo que más se lee de una respuesta: 64 KB, como el búfer del puente de Swift.
+const TOPE_DE_LA_RESPUESTA: usize = 64 * 1024;
+
+/// **La puerta del Mac**: el puente de Swift (`nativo/Red.swift`, ADR 011), efímera y https.
+#[cfg(all(target_os = "macos", puente_de_swift))]
+fn por_la_puerta(url: &str, cabeceras: &str, cuerpo: &[u8]) -> Contestacion {
+    use std::ffi::CString;
+    let url = CString::new(url).map_err(|e| e.to_string())?;
+    let cab = CString::new(cabeceras).map_err(|e| e.to_string())?;
+    let mut salida = vec![0u8; TOPE_DE_LA_RESPUESTA];
+    let mut estado: i32 = 0;
+    // SEGURIDAD: textos terminados en cero, un cuerpo de `largo` bytes y una salida de
+    // `capacidad` bytes, todos vivos hasta que la llamada vuelve.
+    let n = unsafe {
+        puente::ag_red_post(
+            url.as_ptr(),
+            cab.as_ptr(),
+            cuerpo.as_ptr(),
+            cuerpo.len() as i32,
+            super::TECHO.as_secs_f64() + 1.0,
+            salida.as_mut_ptr(),
+            salida.len() as i32,
+            &mut estado,
+        )
+    };
+    let mut cab = cab.into_bytes();
+    cab.fill(0);
+    if n < 0 {
+        salida.fill(0);
+        return Err(format!("el proveedor no contestó (código {n})"));
     }
+    salida.truncate(n as usize);
+    Ok((estado.clamp(0, i32::from(u16::MAX)) as u16, salida))
+}
+
+/// **La puerta de Windows** (sprint 008, ADR 023): `ureq` con rustls, la segunda puerta Rust a la red y la única que
+/// lleva texto. Mismo techo que el puente de Swift; sin caché, sin cookies y sin redirecciones que la lleven a otro
+/// sitio; lee como mucho 64 KB. Los errores HTTP se leen como respuesta, para decir cuál fue.
+#[cfg(windows)]
+fn por_la_puerta(url: &str, cabeceras: &str, cuerpo: &[u8]) -> Contestacion {
+    let techo = super::TECHO + std::time::Duration::from_secs(1);
+    let agente: ureq::Agent = ureq::Agent::config_builder().timeout_global(Some(techo)).http_status_as_error(false).max_redirects(0).build().into(); // verify-ephemeral:allow — ADR 023 «la sugerencia en Windows»: la segunda puerta Rust, opt-in, con texto anonimizado
+    let mut peticion = agente.post(url);
+    for (nombre, valor) in cabeceras_en_pares(cabeceras) {
+        peticion = peticion.header(nombre, valor);
+    }
+    let mut respuesta = peticion.send(cuerpo).map_err(|e| format!("el proveedor no contestó ({e})"))?;
+    let estado = respuesta.status().as_u16();
+    let salida = respuesta
+        .body_mut()
+        .with_config()
+        .limit(TOPE_DE_LA_RESPUESTA as u64)
+        .read_to_vec()
+        .map_err(|_| format!("respuesta ilegible (HTTP {estado})"))?;
+    Ok((estado, salida))
+}
+
+/// Las cabeceras «nombre: valor» por línea, como las arma `Externo::peticion` para el puente de Swift, en parejas.
+/// Una línea sin «:» no es una cabecera y se salta. Pura.
+#[cfg_attr(not(windows), allow(dead_code))]
+pub(crate) fn cabeceras_en_pares(cabeceras: &str) -> Vec<(&str, &str)> {
+    cabeceras.lines().filter_map(|l| l.split_once(':')).map(|(n, v)| (n.trim(), v.trim())).collect()
 }
 
 #[cfg(test)]
 mod pruebas {
     use super::super::{pruebas::respaldo, Peticion};
     use super::*;
+
+    fn api(externo: Externo, conocidos: &[&str]) -> Api {
+        Api {
+            externo,
+            conocidos: conocidos.iter().map(|s| s.to_string()).collect(),
+            registro: Registro::default(),
+            sobre: "Alcance".into(),
+            para: Para::Sugerencia,
+            vigencia: Vigencia::default(),
+        }
+    }
+
+    /// **El envío es el mismo en el Mac y en Windows** (sprint 008, ADR 023): por la puerta solo sale texto tapado,
+    /// la clave va en las cabeceras y no en el cuerpo, los bytes se cuentan antes de salir, lo que salió queda
+    /// anotado aunque el proveedor falle, y la respuesta vuelve destapada. Con una puerta falsa, sin red.
+    #[test]
+    fn el_envio_tapa_cuenta_anota_y_destapa_con_cualquier_puerta() {
+        let a = api(Externo::Groq, &["Páramo Azul"]);
+        let antes = crate::red::bytes();
+        let mut visto = (String::new(), String::new(), String::new());
+        let r = a
+            .redactar_con("gsk_falsa".into(), "instrucciones", "¿Cuánto cuesta para Páramo Azul?", |url, cab, cuerpo| {
+                visto = (url.to_string(), cab.to_string(), String::from_utf8_lossy(cuerpo).into_owned());
+                let respuesta = serde_json::json!({
+                    "choices": [{ "message": { "content": "{\"s\":\"Para [CLIENTE_1], el piloto\"}" } }],
+                    "usage": { "prompt_tokens": 40, "completion_tokens": 12 }
+                });
+                Ok((200, respuesta.to_string().into_bytes()))
+            })
+            .unwrap();
+        assert_eq!(visto.0, "https://api.groq.com/openai/v1/chat/completions");
+        assert!(visto.1.contains("authorization: Bearer gsk_falsa"), "la clave va en las cabeceras");
+        assert!(!visto.2.contains("gsk_falsa"), "la clave no va en el cuerpo");
+        assert!(!visto.2.contains("Páramo Azul") && visto.2.contains("[CLIENTE_1]"), "salió sin tapar: {}", visto.2);
+        assert!(r.json.contains("Páramo Azul"), "la respuesta no se destapó: {}", r.json);
+        assert_eq!((r.tokens_entrada, r.tokens_salida), (40, 12));
+        assert_eq!(r.bytes_fuera, (visto.1.len() + visto.2.len()) as u64);
+        assert!(crate::red::bytes() >= antes + r.bytes_fuera, "los bytes no se contaron");
+        assert_eq!(a.registro.cuantas(), 1);
+
+        // Un error HTTP se dice con su número, y lo que salió sigue anotado.
+        let e = a.redactar_con("k".into(), "i", "t", |_, _, _| Ok((401, b"{\"error\":\"x\"}".to_vec()))).unwrap_err();
+        assert_eq!(e, "HTTP 401");
+        assert_eq!(a.registro.cuantas(), 2, "lo que salió se anota aunque el proveedor falle");
+        // Una puerta que no contesta, también.
+        let e = a.redactar_con("k".into(), "i", "t", |_, _, _| Err("sin red".into())).unwrap_err();
+        assert_eq!(e, "sin red");
+    }
+
+    /// **El corte alcanza a la petición en camino**: con la época cambiada, no se abre la puerta.
+    #[test]
+    fn con_el_corte_la_puerta_no_se_abre() {
+        let epoca = std::sync::Arc::new(std::sync::atomic::AtomicU64::new(0));
+        let mut a = api(Externo::Claude, &[]);
+        a.vigencia = Vigencia::desde_ahora(&epoca);
+        epoca.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        let mut abierta = false;
+        let e = a
+            .redactar_con("k".into(), "i", "t", |_, _, _| {
+                abierta = true;
+                Ok((200, Vec::new()))
+            })
+            .unwrap_err();
+        assert_eq!(e, CORTADA);
+        assert!(!abierta, "la puerta se abrió después del corte");
+        assert_eq!(a.registro.cuantas(), 0);
+    }
+
+    /// Las cabeceras que arma `peticion` (una por línea, para Swift) llegan a `ureq` en parejas, sin espacios de más.
+    #[test]
+    fn las_cabeceras_se_parten_en_parejas() {
+        let (cab, _) = Externo::Claude.peticion("sk-ant-x", "i", "t");
+        let pares = cabeceras_en_pares(&cab);
+        assert_eq!(
+            pares,
+            vec![("content-type", "application/json"), ("x-api-key", "sk-ant-x"), ("anthropic-version", "2023-06-01")]
+        );
+        assert!(cabeceras_en_pares("sin dos puntos\n").is_empty());
+    }
 
     /// **Solo texto anonimizado al API** (acceptance del sprint): lo que se enviaría no lleva los
     /// nombres plantados en el turno ni en las fichas.
