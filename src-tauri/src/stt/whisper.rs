@@ -168,7 +168,7 @@ mod motor {
     use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters, WhisperError, WhisperState};
 
     /// El modelo cargado: el estado de whisper guarda su contexto. Uno a la vez; se carga al primer turno.
-    struct Cargado {
+    pub(super) struct Cargado {
         modelo: Modelo,
         estado: WhisperState,
     }
