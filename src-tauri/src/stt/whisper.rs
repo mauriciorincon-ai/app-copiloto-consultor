@@ -58,6 +58,21 @@ pub fn anotar_latencia(m: &Modelo, ms: u32) {
     latencia_de(m).store(ms.max(1), Ordering::Relaxed);
 }
 
+/// Vuelve a poner las medidas que la app guardó la vez anterior (sprint 008, M3 del S6). Lo que ya se midió en esta
+/// sesión manda sobre lo guardado. Este módulo no escribe nada: quien guarda es `prefs`, que recibe solo dos números.
+pub fn restaurar_latencias(grande_ms: Option<u32>, pequeno_ms: Option<u32>) {
+    restaurar_en((&LATENCIA_GRANDE, grande_ms), (&LATENCIA_PEQUENO, pequeno_ms));
+}
+
+/// La parte pura: cada medida guardada entra solo si ese modelo aún no se midió en esta sesión.
+fn restaurar_en(grande: (&AtomicU32, Option<u32>), pequeno: (&AtomicU32, Option<u32>)) {
+    for (donde, ms) in [grande, pequeno] {
+        if let Some(ms) = ms.filter(|&ms| ms > 0) {
+            let _ = donde.compare_exchange(0, ms, Ordering::Relaxed, Ordering::Relaxed);
+        }
+    }
+}
+
 /// **Con qué modelo se transcribe** (ADR 022 §5): el grande; el pequeño solo si el grande es el único que falta, o si
 /// en este PC el grande se pasó del techo de 4 s y el pequeño ya está bajado.
 pub fn elegir(grande_listo: bool, pequeno_listo: bool, latencia_grande: Option<u32>) -> Option<Modelo> {
@@ -354,6 +369,20 @@ mod pruebas {
         assert_eq!(elegir(true, false, Some(6_000)), Some(GRANDE), "lento, pero el pequeño no está: el grande");
         assert_eq!(elegir(false, true, None), Some(PEQUENO));
         assert_eq!(elegir(false, false, None), None);
+    }
+
+    /// **Lo medido la vez anterior vuelve al abrir la app, y lo medido hoy manda** (sprint 008, M3 del S6).
+    #[test]
+    fn las_medidas_guardadas_vuelven_y_lo_de_hoy_manda() {
+        let (grande, pequeno) = (AtomicU32::new(0), AtomicU32::new(4_200));
+        restaurar_en((&grande, Some(5_200)), (&pequeno, Some(1_900)));
+        assert_eq!(grande.load(Ordering::Relaxed), 5_200, "sin medir hoy: vuelve lo guardado");
+        assert_eq!(pequeno.load(Ordering::Relaxed), 4_200, "ya medido hoy: lo guardado no lo pisa");
+        let vacio = AtomicU32::new(0);
+        restaurar_en((&vacio, None), (&AtomicU32::new(0), Some(0)));
+        assert_eq!(vacio.load(Ordering::Relaxed), 0, "nada guardado: sigue sin medir, no se inventa un cero");
+        // Y con lo que vuelve, el escalón se decide como antes de cerrar la app.
+        assert_eq!(elegir(true, true, Some(grande.load(Ordering::Relaxed))), Some(PEQUENO));
     }
 
     /// Un turno corto se completa con silencio hasta lo que whisper acepta; uno largo pasa tal cual.

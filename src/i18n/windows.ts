@@ -45,6 +45,8 @@ export type TextosDeWindows = {
     transcribeTuPc: string;
     transcribeTuPcDetalle: string;
     idiomasListos: string;
+    /** Sprint 008: el «Instalar» acabó y el modelo no está (la descarga falló o se paró). */
+    instalarFallo: string;
   };
   /** Honestidad: qué abre la app y cuándo. */
   honestidad: {
@@ -151,7 +153,7 @@ const ES: TextosDeWindows = {
       `Modelo ${m}: tardó ${ms} ms, y pasa del techo de 4 s en este PC. El modelo pequeño es menos preciso, pero más rápido aquí.`,
     medirOtra: "Medir otra vez",
     bajarPequeno: "Bajar el modelo pequeño (0,5 GB)",
-    sinReunion: "Bajar o medir no se puede con una reunión abierta.",
+    sinReunion: "Bajar o medir no se puede con una reunión, una sesión o un ensayo abiertos.",
     descartados: (n) =>
       n === 1
         ? "En la última reunión, 1 turno se quedó sin transcribir: este PC no daba abasto, y se atiende primero al cliente."
@@ -162,6 +164,8 @@ const ES: TextosDeWindows = {
     transcribeTuPcDetalle:
       "El modelo de voz (whisper), dentro de tu equipo. Ningún audio sale para convertirse en texto. La única vez que toca la red es cuando pides instalar el modelo: lo baja Angel Ghost desde su origen y comprueba su huella antes de usarlo.",
     idiomasListos: "idiomas a la vez, como mucho: los que la app ofrece.",
+    instalarFallo:
+      "No se pudo bajar el modelo. Revisa la conexión y vuelve a intentarlo (si empezó una reunión o un ensayo, la descarga se para).",
   },
   honestidad: {
     modoDetalle:
@@ -272,7 +276,7 @@ const EN: TextosDeWindows = {
     medirOtra: "Measure again",
     bajarPequeno: "Download the small model (0.5 GB)",
     sinReunion:
-      "Downloading or measuring isn't possible while a meeting is open.",
+      "Downloading or measuring isn't possible while a meeting, a session or a rehearsal is open.",
     descartados: (n) =>
       n === 1
         ? "In the last meeting, 1 turn wasn't transcribed: this PC couldn't keep up, and the client is served first."
@@ -283,6 +287,8 @@ const EN: TextosDeWindows = {
     transcribeTuPcDetalle:
       "The speech model (whisper) lives inside your machine. No audio leaves to become text. The only time it touches the network is when you ask to install a model: Angel Ghost downloads it from its origin and checks its checksum before using it.",
     idiomasListos: "languages ready at once, at most: the ones the app offers.",
+    instalarFallo:
+      "The model couldn't be downloaded. Check the connection and try again (if a meeting or a rehearsal started, the download stops).",
   },
   honestidad: {
     modoDetalle:

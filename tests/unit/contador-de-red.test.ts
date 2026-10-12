@@ -171,6 +171,22 @@ describe("contador de red: la única puerta que hay está declarada y contada", 
     ).toEqual([]);
   });
 
+  /**
+   * **Ni por las features de `windows` o `windows-sys`** (auditoría del S6, B11). El gate de arriba mira los clientes de
+   * red por su nombre de crate, pero las dos crates de Windows traen sockets, WinHTTP y WinINet detrás de features:
+   * `Win32_Networking_*` (WinSock, WinHttp, WinInet), `Networking_*` y `Web_*` (WinRT), `Win32_NetworkManagement_*`. Una
+   * línea en `Cargo.toml` abriría una puerta que ninguna búsqueda de `ureq` ve. Lo leído: cada feature declarada.
+   */
+  it("ninguna feature de windows o windows-sys trae red (B11 del S6)", () => {
+    const manifiesto = readFileSync(CARGO, "utf8");
+    const bloques = [...manifiesto.matchAll(/^(windows(?:-sys)?)\s*=\s*\{[^}]*features\s*=\s*\[([^\]]*)\]/gms)];
+    expect(bloques.map((b) => b[1]).sort(), "no encontré las dos crates de Windows en Cargo.toml").toEqual(["windows", "windows-sys"]);
+    const features = bloques.flatMap((b) => [...b[2].matchAll(/"([^"]+)"/g)].map((m) => `${b[1]}:${m[1]}`));
+    expect(features.length, "no leí ninguna feature: el lector se rompió").toBeGreaterThan(10);
+    const CON_RED = /:(Win32_Networking|Networking|Web(_|$)|Win32_NetworkManagement|Win32_Security_Authentication)/;
+    expect(features.filter((f) => CON_RED.test(f)), "features de Windows con red: necesitan ADR antes de entrar").toEqual([]);
+  });
+
   it("ningún archivo de Rust abre un socket, salvo las puertas declaradas (ADR 022 §4, ADR 023)", () => {
     const hallazgos = barrer(archivos(RUST, [".rs"]), SOCKETS_RUST);
     // `barrer` corta la línea a 90 caracteres: la marca se busca en la línea entera del archivo.

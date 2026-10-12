@@ -1060,19 +1060,41 @@ async fn instalar_idioma(app: tauri::AppHandle, codigo: String) -> stt::Disponib
         println!("[idioma] el modelo no se baja con una reunión abierta");
         return stt::motor_de_la_casa().disponibilidad(&codigo);
     }
-    tauri::async_runtime::spawn_blocking(move || {
+    let hecha = tauri::async_runtime::spawn_blocking(move || {
         println!("[idioma] el usuario pidió instalar el modelo de {codigo}");
         let d = stt::motor_de_la_casa().instalar(&codigo);
         println!("[idioma] {codigo}: {d:?}");
         d
     })
     .await
-    .unwrap_or(stt::Disponibilidad::SinMotor { motivo: stt::PorQueNoHayMotor::NoContesta })
+    .unwrap_or(stt::Disponibilidad::SinMotor { motivo: stt::PorQueNoHayMotor::NoContesta });
+    recordar_las_latencias(&app);
+    hecha
 }
 
-/// ¿Hay una reunión escuchando? Si el candado no contesta, se responde que sí: lo prudente es no bajar nada.
+/// ¿Hay algo en marcha con lo que bajar un modelo o medir competiría por la red y el procesador? **Pura**: la escucha
+/// viva, una sesión abierta en cualquier modo —también «solo notas» y presencial, donde la app no escucha pero tú estás
+/// en la llamada— o un ensayo (sprint 008, M4 del S6: antes solo miraba la escucha).
+fn algo_en_marcha(escuchando: bool, modo: Option<modo::Modo>, ensayando: bool) -> bool {
+    escuchando || modo.is_some() || ensayando
+}
+
+/// ¿Hay una reunión, una sesión o un ensayo abiertos? Si un candado no contesta, se responde que sí: lo prudente es no
+/// bajar nada.
 fn hay_una_reunion<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> bool {
-    app.state::<LaEscucha>().0.lock().map(|g| g.is_some()).unwrap_or(true)
+    let escuchando = app.state::<LaEscucha>().0.lock().map(|g| g.is_some()).unwrap_or(true);
+    let ensayando = app.try_state::<ElEnsayo>().is_some_and(|e| e.0.lock().map(|g| g.is_some()).unwrap_or(true));
+    algo_en_marcha(escuchando, modo_de_la_sesion(app), ensayando)
+}
+
+/// Guarda lo que whisper tardó en este PC con cada modelo, para que la próxima vez que se abra la app no diga «sin
+/// medir» (sprint 008, M3 del S6). Dos números, en las preferencias.
+fn recordar_las_latencias<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    let medidas = prefs::LatenciasDeWhisper {
+        grande_ms: stt::whisper::latencia_ms(&modelo_whisper::GRANDE),
+        pequeno_ms: stt::whisper::latencia_ms(&modelo_whisper::PEQUENO),
+    };
+    recordar(app, |p| p.latencias_de_whisper = medidas);
 }
 
 /// **Qué hace la app en este equipo** (ADR 022): en Windows, la lista «Hoy en Windows» y lo que la transcripción
@@ -1091,6 +1113,7 @@ async fn calibrar_transcripcion(app: tauri::AppHandle) -> plataforma::Plataforma
         if let Ok(Err(f)) = medida {
             println!("[stt] la calibración no se pudo medir ({f:?})");
         }
+        recordar_las_latencias(&app);
     }
     plataforma::de_este_equipo()
 }
@@ -1108,6 +1131,7 @@ async fn bajar_modelo_pequeno(app: tauri::AppHandle) -> plataforma::Plataforma {
         if let Ok(Err(e)) = hecho {
             println!("[stt] el modelo pequeño: {e}");
         }
+        recordar_las_latencias(&app);
     }
     plataforma::de_este_equipo()
 }
@@ -1852,6 +1876,14 @@ pub fn run() {
                 let ruta = ruta_de_las_preferencias(app.handle());
                 let p = prefs::leer(&ruta);
                 aplicar_las_preferencias(app.handle(), &p);
+                // Lo que whisper tardó la vez anterior vuelve (M3 del S6); y la descarga de un modelo se corta si
+                // empieza una reunión, una sesión o un ensayo mientras baja (M2 del S6).
+                stt::whisper::restaurar_latencias(p.latencias_de_whisper.grande_ms, p.latencias_de_whisper.pequeno_ms);
+                modelo_whisper::limpiar_lo_que_quedo();
+                {
+                    let mango = app.handle().clone();
+                    modelo_whisper::poner_la_guarda(move || hay_una_reunion(&mango));
+                }
                 let carpeta_del_corpus = p.carpeta_del_corpus.clone();
                 app.manage(LasPreferencias { ruta, actuales: std::sync::Mutex::new(p) });
                 if let Some(carpeta) = carpeta_del_corpus {
@@ -1901,6 +1933,12 @@ pub fn run() {
                 println!("[diccionario] {e}");
             }
 
+            // Windows 10 2004 o más (M6 del S6): en una anterior la banda no se puede ocultar de la captura y no se abre;
+            // se dice con un cuadro, no en silencio.
+            if let Err(motivo) = ventana::exigir_la_version_de_windows() {
+                ventana::avisar_que_no_arranca(&motivo);
+                return Err(motivo.into());
+            }
             ventana::abrir_banda(app.handle(), borde_de(app.handle()), ventana::ALTO_COMPACTA)?;
 
             let mango = app.handle().clone();
@@ -3995,6 +4033,33 @@ mod pruebas_de_los_atajos_en_windows {
 
 #[cfg(test)]
 mod pruebas_de_whisper_en_windows {
+    /// **Qué cuenta como «hay algo en marcha»** (sprint 008, M4 del S6): la escucha, una sesión en cualquier modo
+    /// —también «solo notas» y presencial— y un ensayo. Solo sin nada de eso se puede bajar o medir.
+    #[test]
+    fn bajar_o_medir_solo_sin_nada_en_marcha() {
+        use crate::modo::Modo;
+        assert!(!crate::algo_en_marcha(false, None, false));
+        assert!(crate::algo_en_marcha(true, None, false), "escuchando");
+        for modo in [Modo::Normal, Modo::SoloNotas, Modo::Presencial] {
+            assert!(crate::algo_en_marcha(false, Some(modo), false), "{modo:?}");
+        }
+        assert!(crate::algo_en_marcha(false, None, true), "un ensayo ocupa el procesador y el micrófono");
+    }
+
+    /// **La medida de whisper se guarda y vuelve, y la descarga tiene su freno** (M2 y M3 del S6): los tres comandos
+    /// que miden o bajan terminan recordando las latencias, y el arranque restaura lo guardado y pone la guarda.
+    #[test]
+    fn las_medidas_se_guardan_y_vuelven_y_la_descarga_tiene_su_freno() {
+        let fuente = include_str!("lib.rs");
+        for comando in ["async fn instalar_idioma(", "async fn calibrar_transcripcion(", "async fn bajar_modelo_pequeno("] {
+            let cuerpo = &fuente[fuente.find(comando).unwrap_or_else(|| panic!("{comando}"))..];
+            let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
+            assert!(cuerpo.contains("recordar_las_latencias(&app)"), "{comando} no recuerda lo que midió");
+        }
+        assert!(fuente.contains("stt::whisper::restaurar_latencias("), "al abrir no vuelve lo guardado");
+        assert!(fuente.contains("modelo_whisper::poner_la_guarda("), "la descarga no tiene su freno");
+    }
+
     /// **Bajar o medir whisper nunca con una reunión abierta** (sprint 006, ADR 022 §4): bajar ocupa la red y medir el
     /// procesador. Los tres comandos preguntan `hay_una_reunion` antes de hacer nada.
     #[test]

@@ -242,6 +242,13 @@ desaparece de `plataforma.rs`: no queda ninguna.
    `radar-solo-este-mac` deja pasar esas dos lecturas y ninguna otra de Windows.
 6. **La sugerencia** sale por la segunda puerta Rust (ADR 023). El modelo del sistema sigue sin existir en Windows: la
    sugerencia es «sí, con el API y tu clave», y sin API la ficha sigue siendo la respuesta.
+7. **El mínimo de Windows es 10 versión 2004** (compilación 19041), la primera que sabe sacar una ventana de la captura
+   (`WDA_EXCLUDEFROMCAPTURE`). `ventana::abrir_banda` lo pregunta antes que nada (`RtlGetVersion`, que no miente aunque
+   el programa no declare versión) y, en una anterior, la app no abre la banda y lo dice con un cuadro: una banda que se
+   abre sin su protección es peor que una banda que no se abre.
+8. **La descarga del modelo tiene techos y freno**: 20 s para conectar, 60 s para la primera respuesta, 3 h para el
+   cuerpo (alcanza para 1,6 GB a 1,5 Mbit/s), y se corta sola, borrando el parcial, si empieza una reunión, una sesión
+   o un ensayo mientras baja. Se baja de una revisión fija del repositorio de modelos, no de `main`.
 
 ## Lo que este ADR NO decide
 

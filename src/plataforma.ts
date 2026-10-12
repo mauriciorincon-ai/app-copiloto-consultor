@@ -232,6 +232,19 @@ export function usePlataforma(
   return [p, setP];
 }
 
+/**
+ * **Vuelve a preguntar cada `cadaMs` mientras `activo`** (sprint 008, B6 del S6): «Bajando el modelo…» se enciende
+ * desde Idioma, y esta pantalla, que preguntó una sola vez al montar, no se enteraba de cuándo acaba. Solo mientras
+ * dura la descarga: sin `activo` no hay temporizador.
+ */
+export function useRefrescoMientras(activo: boolean, refrescar: () => void, cadaMs = 2000): void {
+  useEffect(() => {
+    if (!activo) return;
+    const id = setInterval(refrescar, cadaMs);
+    return () => clearInterval(id);
+  }, [activo, refrescar, cadaMs]);
+}
+
 /** «Medir otra vez»: whisper transcribe los 10 s de calibración y devuelve lo que sabe ahora. */
 export function calibrarTranscripcion(): Promise<Plataforma | null> {
   return preguntar<Plataforma>("calibrar_transcripcion");

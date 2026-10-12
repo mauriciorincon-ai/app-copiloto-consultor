@@ -55,6 +55,28 @@ pub const CARPETA: &str = "modelos";
 /// ¿Se está bajando ahora? Una descarga a la vez.
 static BAJANDO: AtomicBool = AtomicBool::new(false);
 
+/// **Cuánto puede esperar cada fase de la descarga** (sprint 008, M1 del S6). Sin esto una conexión colgada dejaba
+/// `BAJANDO` activo hasta reiniciar la app: ni se podía reintentar ni se podía decir qué pasaba. Conectar y recibir la
+/// primera respuesta son segundos; el cuerpo entero tiene un techo que deja bajar 1,6 GB a una línea mala (ver la
+/// prueba) pero no para siempre.
+pub const TECHO_DE_CONECTAR: std::time::Duration = std::time::Duration::from_secs(20);
+pub const TECHO_DE_LA_RESPUESTA: std::time::Duration = std::time::Duration::from_secs(60);
+pub const TECHO_DE_LA_DESCARGA: std::time::Duration = std::time::Duration::from_secs(3 * 3600);
+
+/// **Quién decide que hay que parar una descarga en curso** (sprint 008, M2 del S6). La guarda «nunca en reunión» se
+/// miraba solo al empezar: si la reunión empezaba a mitad de los 1,6 GB, la descarga seguía ocupando la red y el
+/// procesador. `lib.rs` pone aquí, al arrancar, la pregunta «¿hay algo en marcha?»; cada trozo de la descarga la hace.
+static GUARDA: std::sync::OnceLock<Box<dyn Fn() -> bool + Send + Sync>> = std::sync::OnceLock::new();
+
+/// Pone la pregunta que corta una descarga. Una sola vez, al arrancar.
+pub fn poner_la_guarda(hay_que_parar: impl Fn() -> bool + Send + Sync + 'static) {
+    let _ = GUARDA.set(Box::new(hay_que_parar));
+}
+
+fn hay_que_parar() -> bool {
+    GUARDA.get().is_some_and(|f| f())
+}
+
 /// Dónde vive el modelo. En Windows, `%LOCALAPPDATA%\<id>\modelos\`: la misma carpeta privada que `carpeta_privada`
 /// en `lib.rs` (ADR 022 §2), calculada sin Tauri porque el motor de transcripción no tiene una mano de la app.
 pub fn ruta(m: &Modelo) -> Option<PathBuf> {
@@ -76,6 +98,46 @@ pub fn listo(m: &Modelo) -> Option<PathBuf> {
 
 fn entero(ruta: &std::path::Path, m: &Modelo) -> bool {
     std::fs::metadata(ruta).is_ok_and(|d| d.is_file() && d.len() == m.bytes)
+}
+
+/// **¿Cabe el modelo en el disco?** (sprint 008, B5 del S6): el tamaño del modelo más un 10 % de aire, que el sistema
+/// necesita para no quedarse sin espacio a medias. Pura.
+pub fn cabe(libre: u64, m: &Modelo) -> bool {
+    libre >= m.bytes + m.bytes / 10
+}
+
+/// Cuánto espacio libre tiene el disco de `carpeta` para este usuario. `None` si Windows no contesta (entonces se baja
+/// y, si falta, la escritura falla y el `.parcial` se borra).
+#[cfg(windows)]
+fn espacio_libre(carpeta: &Path) -> Option<u64> {
+    use windows::core::HSTRING;
+    use windows::Win32::Storage::FileSystem::GetDiskFreeSpaceExW;
+    let mut libre = 0u64;
+    // SAFETY: el nombre es una cadena ancha que vive durante la llamada y `libre` es un entero propio.
+    unsafe { GetDiskFreeSpaceExW(&HSTRING::from(carpeta.as_os_str()), Some(&mut libre), None, None) }.ok()?;
+    Some(libre)
+}
+
+/// **Borra los `.parcial` que dejó una caída** (sprint 008, B5 del S6): un corte en plena descarga los borra solo si la
+/// app llega a ver el error; si el proceso muere, queda un parcial de hasta 1,6 GB. Al arrancar se borran. Devuelve
+/// cuántos.
+pub fn limpiar_parciales(carpeta: &Path) -> usize {
+    let Ok(entradas) = std::fs::read_dir(carpeta) else { return 0 };
+    entradas
+        .flatten()
+        .filter(|e| e.path().extension().is_some_and(|x| x == "parcial"))
+        .filter(|e| std::fs::remove_file(e.path()).is_ok())
+        .count()
+}
+
+/// Lo que se hace al arrancar: limpiar los parciales de la carpeta de modelos de este usuario.
+pub fn limpiar_lo_que_quedo() {
+    let Some(ruta) = ruta(&PEQUENO) else { return };
+    let Some(carpeta) = ruta.parent() else { return };
+    let n = limpiar_parciales(carpeta);
+    if n > 0 {
+        println!("[modelo] {n} descarga(s) a medias de una caída anterior, borradas");
+    }
 }
 
 /// ¿Se está bajando?
@@ -106,8 +168,21 @@ pub fn bajar(m: &Modelo) -> Result<PathBuf, String> {
         if entero(&destino, m) {
             return Ok(destino);
         }
+        if let Some(libre) = destino.parent().and_then(|c| {
+            std::fs::create_dir_all(c).ok()?;
+            espacio_libre(c)
+        }) {
+            if !cabe(libre, m) {
+                return Err(format!(
+                    "no hay espacio en el disco: el modelo pide {} MB y quedan {} MB libres",
+                    m.bytes / 1_000_000,
+                    libre / 1_000_000
+                ));
+            }
+        }
         println!("[modelo] bajando {} ({} bytes)", m.nombre, m.bytes);
-        let respuesta = ureq::get(m.origen).call().map_err(|e| format!("la descarga no empezó: {e}"))?; // verify-ephemeral:allow — ADR 022 §4: la única puerta Rust, el modelo de whisper, con su huella
+        let agente: ureq::Agent = ureq::Agent::config_builder().timeout_connect(Some(TECHO_DE_CONECTAR)).timeout_recv_response(Some(TECHO_DE_LA_RESPUESTA)).timeout_global(Some(TECHO_DE_LA_DESCARGA)).build().into(); // verify-ephemeral:allow — ADR 022 §4: la única puerta Rust, el modelo de whisper, con su huella y sus techos de tiempo
+        let respuesta = agente.get(m.origen).call().map_err(|e| format!("la descarga no empezó: {e}"))?;
         descargar_a(respuesta.into_body().into_reader(), m, &destino)
     })();
     BAJANDO.store(false, Ordering::SeqCst);
@@ -117,7 +192,18 @@ pub fn bajar(m: &Modelo) -> Result<PathBuf, String> {
 /// **Escribe un modelo que llega de un lector y lo comprueba**: tamaño exacto y huella SHA-256 fija. Si algo no
 /// coincide, o la lectura se corta, el `.parcial` se borra y no queda destino: un modelo a medias no se usa nunca
 /// (ADR 022 §4). Vive fuera de Windows a propósito, para que la CI del Mac pruebe lo que escribe la descarga.
-pub fn descargar_a(mut lector: impl std::io::Read, m: &Modelo, destino: &Path) -> Result<PathBuf, String> {
+pub fn descargar_a(lector: impl std::io::Read, m: &Modelo, destino: &Path) -> Result<PathBuf, String> {
+    descargar_con_guarda(lector, m, destino, &hay_que_parar)
+}
+
+/// Lo mismo, con la pregunta «¿hay que parar?» como parámetro: se hace antes de cada trozo, y si dice que sí la
+/// descarga se corta, el `.parcial` se borra y el motivo lo dice (M2 del S6).
+pub fn descargar_con_guarda(
+    mut lector: impl std::io::Read,
+    m: &Modelo,
+    destino: &Path,
+    parar: &dyn Fn() -> bool,
+) -> Result<PathBuf, String> {
     use sha2::{Digest, Sha256};
     use std::io::Write;
 
@@ -130,6 +216,9 @@ pub fn descargar_a(mut lector: impl std::io::Read, m: &Modelo, destino: &Path) -
         let mut total: u64 = 0;
         let mut trozo = vec![0u8; 1 << 20];
         loop {
+            if parar() {
+                return Err("la descarga se paró porque empezó una reunión o un ensayo; vuelve a pedirla al terminar".into());
+            }
             let n = lector.read(&mut trozo).map_err(|e| format!("la descarga se cortó: {e}"))?;
             if n == 0 {
                 break;
@@ -186,6 +275,55 @@ mod pruebas {
         }
         assert_eq!(GRANDE.bytes, 1_624_555_275);
         assert_eq!(PEQUENO.bytes, 487_601_967);
+    }
+
+    /// **El espacio en disco y los parciales de una caída** (sprint 008, B5 del S6).
+    #[test]
+    fn el_modelo_pide_espacio_y_los_parciales_de_una_caida_se_borran() {
+        assert!(!cabe(GRANDE.bytes, &GRANDE), "justo el tamaño no alcanza: falta el aire");
+        assert!(cabe(GRANDE.bytes + GRANDE.bytes / 10, &GRANDE));
+        assert!(cabe(u64::MAX, &PEQUENO));
+        let carpeta = std::env::temp_dir().join(format!("ag-parciales-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&carpeta);
+        std::fs::create_dir_all(&carpeta).unwrap();
+        std::fs::write(carpeta.join("ggml-small.parcial"), b"a medias").unwrap();
+        std::fs::write(carpeta.join("ggml-large-v3-turbo.parcial"), b"a medias").unwrap();
+        std::fs::write(carpeta.join("ggml-small.bin"), b"entero").unwrap();
+        assert_eq!(limpiar_parciales(&carpeta), 2);
+        assert!(carpeta.join("ggml-small.bin").exists(), "un modelo entero no se toca");
+        assert!(!carpeta.join("ggml-small.parcial").exists());
+        assert_eq!(limpiar_parciales(&carpeta.join("no-existe")), 0);
+        let _ = std::fs::remove_dir_all(&carpeta);
+    }
+
+    /// **La descarga se corta si empieza una reunión** (sprint 008, M2 del S6): no queda destino ni parcial.
+    #[test]
+    fn una_descarga_se_para_si_empieza_una_reunion() {
+        let carpeta = std::env::temp_dir().join(format!("ag-guarda-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&carpeta);
+        let destino = carpeta.join("m.bin");
+        let m = Modelo { nombre: "t", archivo: "m.bin", bytes: 4, sha256: "x", origen: "https://huggingface.co/ggerganov/whisper.cpp/resolve/x/m.bin" };
+        let llamadas = std::cell::Cell::new(0);
+        // La reunión empieza antes del segundo trozo.
+        let error = descargar_con_guarda(&b"hola"[..], &m, &destino, &|| {
+            llamadas.set(llamadas.get() + 1);
+            llamadas.get() > 1
+        });
+        assert!(llamadas.get() >= 2, "la guarda se pregunta antes de cada trozo, no solo al empezar");
+        assert!(error.is_err());
+        assert!(error.unwrap_err().contains("empezó una reunión"));
+        assert!(!destino.exists() && !destino.with_extension("parcial").exists(), "no queda nada a medias");
+        let _ = std::fs::remove_dir_all(&carpeta);
+    }
+
+    /// **Los techos de tiempo** (M1 del S6): conectar y la primera respuesta son segundos, y el techo del cuerpo deja
+    /// bajar el modelo grande a una línea de 1,5 Mbit/s sin que una conexión colgada ocupe `BAJANDO` para siempre.
+    #[test]
+    fn los_techos_de_la_descarga_dejan_bajar_a_una_linea_mala() {
+        assert!(TECHO_DE_CONECTAR.as_secs() <= 30 && TECHO_DE_LA_RESPUESTA.as_secs() <= 90);
+        let bits = GRANDE.bytes * 8;
+        assert!(bits / TECHO_DE_LA_DESCARGA.as_secs() <= 1_500_000, "el techo no alcanza para una línea de 1,5 Mbit/s");
+        assert!(TECHO_DE_LA_DESCARGA.as_secs() <= 4 * 3600, "un techo de más de cuatro horas es no tener techo");
     }
 
     /// Una huella distinta no coincide: el archivo bajado se tira.

@@ -4,6 +4,7 @@ import { Idioma } from "@/pantallas/Idioma";
 import { SpriteIconos } from "@/componentes/Iconos";
 import { IdiomaContext, es, en, type Idioma as Lengua } from "@/i18n";
 import { preguntar } from "@/puente";
+import { PLATAFORMA_WINDOWS } from "@/contrato.generado";
 import { fijarIdiomaDePista, type QueSabeTranscribir } from "@/cuaderno";
 
 /**
@@ -106,5 +107,22 @@ describe("el idioma sin modelo", () => {
     expect(screen.getByText(es.cuaderno.sinMotorDeVoz)).toBeInTheDocument();
     expect(screen.queryByText("este Mac no trae el transcriptor")).toBeNull();
     expect(screen.queryByRole("button", { name: new RegExp(es.cuaderno.instalarModelo) })).toBeNull();
+  });
+
+  it("en Windows, un «Instalar» que acaba sin el modelo lo dice, y al reintentar con éxito el aviso se va (M10 del S6)", async () => {
+    let instalar: unknown = { estado: "sin-modelo" };
+    vi.mocked(preguntar).mockImplementation((async (comando: string) =>
+      comando === "plataforma_de_este_equipo" ? PLATAFORMA_WINDOWS : comando === "instalar_idioma" ? instalar : null) as never);
+    pinta(transcribeCon({ estado: "sin-modelo" }));
+    const boton = await screen.findByRole("button", { name: new RegExp(es.cuaderno.instalarModelo) });
+    expect(screen.queryByText(/No se pudo bajar el modelo/)).toBeNull();
+
+    await act(async () => boton.click());
+    expect(await screen.findByText(/No se pudo bajar el modelo/)).toBeInTheDocument();
+
+    // Reintenta y esta vez el modelo queda: el aviso desaparece.
+    instalar = { estado: "listo" };
+    await act(async () => screen.getByRole("button", { name: new RegExp(es.cuaderno.instalarModelo) }).click());
+    expect(screen.queryByText(/No se pudo bajar el modelo/)).toBeNull();
   });
 });

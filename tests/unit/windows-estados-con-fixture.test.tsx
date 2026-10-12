@@ -108,3 +108,39 @@ describe("en Windows la protección se dice pedida, no verificada (auditoría de
     }
   });
 });
+
+describe("«Bajando…» se refresca solo, y el modelo pequeño no se ofrece si ya es el que suena (auditoría del S6, B6 y B7)", () => {
+  const con = (t: Partial<NonNullable<Plataforma["transcripcion"]>>): Plataforma => ({
+    ...PLATAFORMA_WINDOWS,
+    transcripcion: { ...PLATAFORMA_WINDOWS.transcripcion!, ...t },
+  });
+
+  it("el refresco corre mientras dura la descarga y se para al acabar", async () => {
+    const { renderHook } = await import("@testing-library/react");
+    const { useRefrescoMientras } = await import("@/plataforma");
+    const { vi } = await import("vitest");
+    vi.useFakeTimers();
+    try {
+      const refrescar = vi.fn();
+      const { rerender, unmount } = renderHook(({ activo }) => useRefrescoMientras(activo, refrescar, 1000), {
+        initialProps: { activo: true },
+      });
+      vi.advanceTimersByTime(3500);
+      expect(refrescar).toHaveBeenCalledTimes(3);
+      rerender({ activo: false });
+      vi.advanceTimersByTime(5000);
+      expect(refrescar, "al acabar la descarga ya no pregunta").toHaveBeenCalledTimes(3);
+      unmount();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("lento con el grande: ofrece el pequeño · lento con el pequeño puesto: no", () => {
+    pinta(<HoyEnWindows plataforma={con({ modelo: "large-v3-turbo", latenciaMs: 6200 })} />, "es");
+    expect(screen.getByText("Bajar el modelo pequeño (0,5 GB)")).toBeTruthy();
+    pinta(<HoyEnWindows plataforma={con({ modelo: "small", latenciaMs: 5100 })} />, "es");
+    expect(screen.getByText(/pasa del techo de 4 s/)).toBeTruthy();
+    expect(screen.queryByText("Bajar el modelo pequeño (0,5 GB)")).toBeNull();
+  });
+});

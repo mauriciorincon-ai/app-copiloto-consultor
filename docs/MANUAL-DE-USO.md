@@ -832,10 +832,13 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
   instalador no está firmado todavía:** Windows SmartScreen mostrará «Windows protegió tu PC». Pulsa **Más
   información** (en inglés, *More info*) y luego **Ejecutar de todas formas** (en inglés, *Run anyway*). Si tu
   cuenta no es de administrador, pide a quien administre el PC que lo instale.
+- **Qué Windows hace falta:** **Windows 10 versión 2004 (compilación 19041) o posterior**. En una anterior Windows no
+  puede ocultar la banda de la captura de pantalla, y Angel Ghost no la abre sin su protección: lo dice con un cuadro
+  al arrancar y se cierra.
 - **El micrófono:** Windows no pide nada desde la app. Lo concedes o lo quitas tú en **Ajustes → Privacidad y
   seguridad → Micrófono**. En Permisos, el botón **Abrir Ajustes de Windows** te lleva ahí.
 - **El modelo de voz:** en Idioma, **Instalar** baja el modelo grande de whisper (1,6 GB). Antes de usarlo se
-  comprueba su huella SHA-256; si no coincide, se borra. **Nunca se baja con una reunión abierta.**
+  comprueba su huella SHA-256; si no coincide, se borra. **Nunca se baja con una reunión, una sesión (también «solo notas» o presencial) ni un ensayo abiertos, y si empieza uno mientras baja, la descarga se para** y se borra lo que llevaba. Si la conexión se cuelga, a las tres horas se suelta sola. Lo que tardó whisper en tu PC se recuerda al reabrir la app.
 - **La velocidad de tu PC:** Honestidad mide cuánto tarda la transcripción en 10 segundos de audio de muestra. Si
   pasa de 4 s, lo dice y ofrece bajar el modelo pequeño (0,5 GB): es menos preciso, pero más rápido en ese PC.
 - **Tus notas:** se guardan cifradas, con la llave en el Administrador de credenciales de tu usuario. Exportarlas,

@@ -114,11 +114,22 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
   const [instalado, setInstalado] = useState<Record<string, Disponibilidad | "instalando">>({});
   const de = (codigo: string): Disponibilidad | "instalando" | undefined =>
     instalado[codigo] ?? transcribe.idiomas.find((i) => i.codigo === codigo)?.disponibilidad;
+  /**
+   * **Los idiomas cuyo «Instalar» acabó y el modelo sigue sin estar** (sprint 008, M10 del S6): antes el botón volvía a
+   * su sitio como si no hubiera pasado nada y nadie sabía que lo intentó. Se apunta el código y se dice debajo.
+   */
+  const [fallidos, setFallidos] = useState<ReadonlySet<string>>(new Set());
 
   /** El botón que faltaba: pide a macOS el modelo de ese idioma. Hallazgo A7 de la auditoría. */
   const instalar = async (codigo: string) => {
     setInstalado((antes) => ({ ...antes, [codigo]: "instalando" }));
     const d = await instalarIdioma(codigo);
+    setFallidos((antes) => {
+      const nuevo = new Set(antes);
+      if (d !== null && d.estado === "sin-modelo") nuevo.add(codigo);
+      else nuevo.delete(codigo);
+      return nuevo;
+    });
     setInstalado((antes) => {
       const nuevo = { ...antes };
       // `null` es «no hay nadie al otro lado» (fuera de Tauri): se deja como estaba en vez de
@@ -141,10 +152,18 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
     }
     if (!d || d.estado !== "sin-modelo") return null;
     return (
-      <button className="btn mini" type="button" onClick={() => void instalar(codigo)} key={codigo}>
-        <Ic id="i-nube" s />
-        {t.instalarModelo}
-      </button>
+      <>
+        <button className="btn mini" type="button" onClick={() => void instalar(codigo)} key={codigo}>
+          <Ic id="i-nube" s />
+          {t.instalarModelo}
+        </button>
+        {enWindows && fallidos.has(codigo) && (
+          <span className="estado warn" role="status">
+            <Ic id="i-alert" s />
+            <span>{tw.idioma.instalarFallo}</span>
+          </span>
+        )}
+      </>
     );
   };
 
@@ -152,7 +171,7 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
   const elegidos = useIdiomasDePista();
   // Los que se pueden elegir: los dos de la casa y los que el motor de este Mac dice conocer.
   const codigos = [...new Set(["es-ES", "en-US", ...transcribe.idiomas.map((i) => i.codigo)])];
-  // La sala (sprint 005) tiene su fila aparte, con su «de fábrica, el del cliente»: aquí, las dos de una reunión.
+  // La sala (sprint 005) se elige en Sesión, no aquí (desviación de la fase 2, bitácora): aquí, las dos de una reunión.
   const pista = (icono: string, quien: string, cual: Exclude<keyof IdiomasDePista, "sala">, etiqueta: string) => {
     const codigo = elegidos[cual];
     const d = de(codigo);

@@ -18,8 +18,8 @@
      comprimida lo despachaba con "todo como antes"). Una prueba solo se elimina cuando la
      feature que probaba dejó de existir, y se declara en el historial del pie.
   3. ORIGEN VISIBLE por prueba, en su propia línea (atributo data-origen + chip):
-       - "Nuevo · SN"       (data-origen="heredada")    — nació en este sprint.
-       - "Mejorado en SN"   (data-origen="heredada") — venía de antes y este sprint la cambió:
+       - "Nuevo · SN"       (data-origen="nuevo")    — nació en este sprint.
+       - "Mejorado en SN"   (data-origen="mejorado") — venía de antes y este sprint la cambió:
                                                        hay que volver a mirarla.
        - "SN" a secas       (data-origen="heredada") — heredada sin cambios ⇒ ES REGRESIÓN.
      Los filtros dejan correr todo o solo lo que cambió, sin perder la cobertura completa.
@@ -876,7 +876,7 @@
         <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. Es la promesa de la pantalla, y solo quien la usa en su PC puede comprobar que la lista dice lo que la app hace.</p>
         <span class="origen origen-heredada">S6</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="heredada" data-nace="s6" data-minimo data-candidata="si"><input type="checkbox" id="w3"><label for="w3">En <strong>Permisos</strong>, si el micrófono no está concedido, pulsa <strong>Abrir Ajustes de Windows</strong> y concédelo en <strong>Privacidad y seguridad → Micrófono</strong>. Abre el modo presencial, habla y mira que Honestidad enseña la transcripción <strong>medida en tu PC</strong>: el tiempo de los 10 s de calibración y, si pasa de 4 s, el botón del modelo pequeño.
+      <li data-origen="heredada" data-nace="s6" data-minimo data-candidata="si"><input type="checkbox" id="w3"><label for="w3">En <strong>Permisos</strong>, el botón <strong>Abrir Ajustes de Windows</strong> solo sale si el micrófono no está concedido (si ya lo está, la fila lo dice y no hay botón): concédelo en <strong>Privacidad y seguridad → Micrófono</strong>. Abre el modo presencial y habla; luego, en <strong>Honestidad</strong>, pulsa <strong>Medir otra vez</strong>: la transcripción enseña lo que tardó <strong>en tu PC</strong> con los 10 s de calibración (hasta entonces dice «sin medir») y, si pasa de 4 s, el botón del modelo pequeño.
         <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. El micrófono real y la latencia de tu equipo: la CI no tiene micrófono ni modelo, y el techo de 4 s solo lo mide tu PC.</p>
         <span class="origen origen-heredada">S6</span>
         <span class="minimo">⭐ mínimo</span></label></li>

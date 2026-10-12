@@ -2,7 +2,7 @@
 
 Auditor independiente, solo lectura (subagente Sonnet 5.5, high), sobre el diff de PR #20. Primer veredicto:
 **requiere ajustes** (0 críticos, 5 altos). El informe del auditor numeró el quinto alto como A6 (no hay A5 en su informe); aquí va como A5. Los altos se pagan en el sprint; los medios y bajos van al lote del hito,
-cada uno con su `archivo:línea`.
+cada uno con su `archivo:línea`. **El lote del hito se pagó en el sprint 008 (PR #24): cada fila lleva su estado.**
 
 ## CRÍTICOS (0)
 
@@ -22,39 +22,39 @@ Ninguno.
 
 | Id | Sitio | Hallazgo | Estado |
 |---|---|---|---|
-| **M1** | `src-tauri/src/modelo_whisper.rs:109` | Sin timeout en la descarga: una conexión colgada deja `BAJANDO` activo hasta reiniciar. | deuda · lote del hito |
-| **M2** | `src-tauri/src/lib.rs:1056` | La guarda «nunca en reunión» solo se mira al empezar la descarga. | deuda · lote del hito |
-| **M3** | `src-tauri/src/stt/whisper.rs:38` | La latencia y el escalón al modelo pequeño no sobreviven a reabrir la app. | deuda · lote del hito |
-| **M4** | `src-tauri/src/lib.rs:1073` | `hay_una_reunion` mira solo la escucha; no mira el ensayo ni «solo notas». | deuda · lote del hito |
+| **M1** | `src-tauri/src/modelo_whisper.rs:109` | Sin timeout en la descarga: una conexión colgada deja `BAJANDO` activo hasta reiniciar. | pagado · PR #24 (S8 F2; `modelo_whisper.rs`: 20 s para conectar, 60 s la respuesta, 3 h el cuerpo, y la prueba de la línea mala) |
+| **M2** | `src-tauri/src/lib.rs:1056` | La guarda «nunca en reunión» solo se mira al empezar la descarga. | pagado · PR #24 (S8 F2; `modelo_whisper::poner_la_guarda` corta la descarga si empieza una reunión) |
+| **M3** | `src-tauri/src/stt/whisper.rs:38` | La latencia y el escalón al modelo pequeño no sobreviven a reabrir la app. | pagado · PR #24 (S8 F2; `prefs::LatenciasDeWhisper` y `stt::whisper::restaurar_latencias`) |
+| **M4** | `src-tauri/src/lib.rs:1073` | `hay_una_reunion` mira solo la escucha; no mira el ensayo ni «solo notas». | pagado · PR #24 (S8 F2; `lib.rs::algo_en_marcha` cuenta la escucha, la sesión en cualquier modo y el ensayo) |
 | **M5** | `src/pantallas/Sesion.tsx:446` | «Al oído» queda elegido por defecto en Windows, con la voz muda. | pagado · `0d05bf0` (PR #23; `Sesion.tsx:451-453` parte elegido solo si `voz.puede`) |
-| **M6** | `src-tauri/src/ventana/mod.rs:107` | Falta el mínimo de Windows (10 2004) y su comprobación de versión. | deuda · lote del hito |
-| **M7** | `src/pantallas/Permisos.tsx:104` | El título y los «para» de Permisos siguen diciendo macOS en Windows. | deuda · lote del hito |
-| **M8** | `src/i18n/es.ts:331` | Más texto de macOS visible en Windows (Sesión, Notas, IA). | deuda · lote del hito |
-| **M9** | `src-tauri/src/desbloqueo.rs:85` | Jerga «sprint 007» en un error que llega a la interfaz. | deuda · lote del hito |
-| **M10** | `src/pantallas/Idioma.tsx:113` | «Instalar» que falla vuelve al botón sin un motivo escrito. | deuda · lote del hito |
-| **M11** | `src-tauri/tests/contra-el-mac-de-verdad.rs:28` | La mitad en marcha de la regla 1 solo corre en macOS. Declarada en el cierre. | deuda · lote del hito |
-| **M12** | `src-tauri/src/llavero/windows.rs:131` | El test «de hardware» salta el centinela `vigilar` de `llavero.rs`. | deuda · lote del hito |
+| **M6** | `src-tauri/src/ventana/mod.rs:107` | Falta el mínimo de Windows (10 2004) y su comprobación de versión. | pagado · PR #24 (S8 F2; `ventana::exigir_la_version_de_windows`: 19041, con cuadro al arrancar) |
+| **M7** | `src/pantallas/Permisos.tsx:104` | El título y los «para» de Permisos siguen diciendo macOS en Windows. | pagado · PR #23 y PR #24 (S7 A1/A2 y S8 F1; `windows-sin-mac.test.tsx` recorre Permisos sin una sola coincidencia) |
+| **M8** | `src/i18n/es.ts:331` | Más texto de macOS visible en Windows (Sesión, Notas, IA). | pagado · PR #23 y PR #24 (S7 A1/A2 y S8 F1; `windows-sin-mac.test.tsx` recorre Sesión, Notas e IA sin coincidencias) |
+| **M9** | `src-tauri/src/desbloqueo.rs:85` | Jerga «sprint 007» en un error que llega a la interfaz. | pagado · PR #24 (S8 F1; `desbloqueo.rs`: el motivo de Windows dice dónde configurar Windows Hello y un test exige que no diga «sprint») |
+| **M10** | `src/pantallas/Idioma.tsx:113` | «Instalar» que falla vuelve al botón sin un motivo escrito. | pagado · PR #24 (S8 F2; `Idioma.tsx` dice «No se pudo bajar el modelo» y `idioma-sin-modelo.test.tsx`) |
+| **M11** | `src-tauri/tests/contra-el-mac-de-verdad.rs:28` | La mitad en marcha de la regla 1 solo corre en macOS. Declarada en el cierre. | pagado · PR #24 (S8 F2; `tests/efimero-en-windows.rs`, en el paso de `build-windows`) |
+| **M12** | `src-tauri/src/llavero/windows.rs:131` | El test «de hardware» salta el centinela `vigilar` de `llavero.rs`. | pagado · PR #24 (S8 F2; el test de hardware llama a `hardware::vigilar`) |
 
 ## BAJOS (12)
 
 | Id | Sitio | Hallazgo | Estado |
 |---|---|---|---|
-| **B1** | `src-tauri/src/ventana/mod.rs:394` | El comentario doc se partió al insertar el test. | deuda · lote del hito |
-| **B2** | `docs/GUIA-DE-PRUEBA.html:21` | El reemplazo global de «nuevo» dañó una instrucción de la guía. | deuda · lote del hito |
-| **B3** | `README.md:5` | Textos que dicen solo macOS; falta cómo compilar en Windows. | deuda · lote del hito |
-| **B4** | `decisions/006-stt-local-y-su-modelo.md:79` | Sigue diciendo que whisper es «el camino escrito». | deuda · lote del hito |
-| **B5** | `src-tauri/src/modelo_whisper.rs:116` | Un corte dejaba un `.parcial` en disco. | pagado · `fd24008` (PR #20; se borra en cada error); deuda: limpieza al arrancar y comprobación de espacio |
-| **B6** | `src/componentes/HoyEnWindows.tsx:37` | «Bajando…» no se refresca si la descarga empieza desde Idioma. | deuda · lote del hito |
-| **B7** | `src/componentes/HoyEnWindows.tsx:156` | El botón del modelo pequeño sale aunque ya esté bajado. | deuda · lote del hito |
-| **B8** | `tests/unit/windows-honestidad-y-manual.test.ts:43` | `estadoDelDetalle` devuelve «todavía no» por defecto. | deuda · lote del hito |
-| **B9** | `src-tauri/src/stt/calibracion.rs:9` | El WAV de 320 KB entra también en el binario de macOS. | deuda · lote del hito (medir el peso en el PR) |
-| **B10** | `decisions/022-windows-detras-de-la-misma-frontera.md:9` | Cita «la invisibilidad está garantizada por el sistema», contra la regla 6. | deuda · lote del hito |
-| **B11** | `src-tauri/Cargo.toml:96` | El gate no mira las features de `windows-sys`. | deuda · lote del hito |
-| **B12** | `docs/GUIA-DE-PRUEBA.html:873` | «Honestidad enseña la medición» solo es cierto tras medir; el botón de ajustes solo sale sin micrófono concedido. | deuda · lote del hito |
+| **B1** | `src-tauri/src/ventana/mod.rs:394` | El comentario doc se partió al insertar el test. | pagado · PR #24 (S8 F2; los dos tests de `ventana/mod.rs` recuperaron cada uno su doc) |
+| **B2** | `docs/GUIA-DE-PRUEBA.html:21` | El reemplazo global de «nuevo» dañó una instrucción de la guía. | pagado · PR #24 (S8 F2; la instrucción de la guía vuelve a decir `nuevo` y `mejorado`) |
+| **B3** | `README.md:5` | Textos que dicen solo macOS; falta cómo compilar en Windows. | pagado · PR #24 (S8 F2; el README nombra Windows y dice cómo compilarlo) |
+| **B4** | `decisions/006-stt-local-y-su-modelo.md:79` | Sigue diciendo que whisper es «el camino escrito». | pagado · PR #24 (S8 F2; enmienda en el ADR 006 §5) |
+| **B5** | `src-tauri/src/modelo_whisper.rs:116` | Un corte dejaba un `.parcial` en disco. | pagado · `fd24008` (PR #20; se borra en cada error); pagado · PR #24 (S8 F2; limpieza al arrancar y comprobación de espacio, además del borrado en cada error de `fd24008`) |
+| **B6** | `src/componentes/HoyEnWindows.tsx:37` | «Bajando…» no se refresca si la descarga empieza desde Idioma. | pagado · PR #24 (S8 F2; `useRefrescoMientras` en `HoyEnWindows`) |
+| **B7** | `src/componentes/HoyEnWindows.tsx:156` | El botón del modelo pequeño sale aunque ya esté bajado. | pagado · PR #24 (S8 F2; el botón no sale con el modelo pequeño puesto) |
+| **B8** | `tests/unit/windows-honestidad-y-manual.test.ts:43` | `estadoDelDetalle` devuelve «todavía no» por defecto. | pagado · PR #24 (S8 F1; `estadoDelTexto` lanza error ante un estado que no conoce) |
+| **B9** | `src-tauri/src/stt/calibracion.rs:9` | El WAV de 320 KB entra también en el binario de macOS. | pagado · PR #24 (S8 F2; el recorte solo entra con `cfg(any(windows, test))`) |
+| **B10** | `decisions/022-windows-detras-de-la-misma-frontera.md:9` | Cita «la invisibilidad está garantizada por el sistema», contra la regla 6. | pagado · PR #24 (S8 F2; `decisions/022` ya no cita la garantía del sistema) |
+| **B11** | `src-tauri/Cargo.toml:96` | El gate no mira las features de `windows-sys`. | pagado · PR #24 (S8 F2; `contador-de-red` lee las features de `windows` y `windows-sys`) |
+| **B12** | `docs/GUIA-DE-PRUEBA.html:873` | «Honestidad enseña la medición» solo es cierto tras medir; el botón de ajustes solo sale sin micrófono concedido. | pagado · PR #24 (S8 F2; la prueba w3 dice cuándo sale el botón y cuándo hay medición) |
 
 ## Casillas
 
 1. **Alcance:** requiere ajustes → corregido en el sprint (A1); el resto, lote.
 2. **Calidad:** la lógica nativa es sólida; los altos de calidad están pagados.
 3. **Seguridad y privacidad:** sin secretos, sin enlaces de producción, sin datos reales. A2 y A5 pagados; M2 y M11 al lote.
-4. **Frases caducadas:** A1, A4 y A5 pagados; M6 a M9 y B3 al lote.
+4. **Frases caducadas:** A1, A4 y A5 pagados en el sprint; M6 a M9 y B3, en el sprint 008 (PR #24).

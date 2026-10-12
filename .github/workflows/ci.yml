@@ -204,6 +204,12 @@ jobs:
             throw "la huella del modelo pequeño no coincide: $huella"
           }
           "AG_MODELO_WHISPER=$ruta" | Out-File -FilePath $env:GITHUB_ENV -Append
+      # M11 del S6: la mitad en marcha de la regla 1, en Windows. Una sesión completa con whisper de verdad (el modelo
+      # pequeño que acaba de bajarse) y el disco inventariado antes y después: ni un archivo nuevo en la carpeta de la
+      # app fuera de `modelos/`, ni la transcripción del cliente en la carpeta temporal.
+      - name: una sesión completa no deja nada en el disco (regla dura 1, en Windows)
+        working-directory: src-tauri
+        run: cargo test --locked --test efimero-en-windows -- --include-ignored --nocapture
       - name: whisper con dos pistas en este runner (medición, manual)
         working-directory: src-tauri
         run: cargo test --locked --lib medicion_whisper_con_dos_pistas -- --ignored --nocapture

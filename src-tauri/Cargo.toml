@@ -113,6 +113,7 @@ windows-sys = { version = "0.61", features = [
 windows-future = "0.3"
 windows = { version = "0.62", features = [
   "Foundation",
+  "Wdk_System_SystemServices",
   "Globalization",
   "Graphics_Imaging",
   "Media_Core",
@@ -126,11 +127,13 @@ windows = { version = "0.62", features = [
   "Win32_Graphics_Gdi",
   "Win32_Management_MobileDeviceManagementRegistration",
   "Win32_Media_Audio",
+  "Win32_Storage_FileSystem",
   "Win32_Storage_Xps",
   "Win32_System_Com",
   "Win32_System_Com_StructuredStorage",
   "Win32_System_Diagnostics_ToolHelp",
   "Win32_System_Ole",
+  "Win32_System_SystemInformation",
   "Win32_System_TaskScheduler",
   "Win32_System_Variant",
   "Win32_System_WinRT",
