@@ -4081,6 +4081,7 @@ mod pruebas_del_diccionario_en_disco {
 #[cfg(test)]
 mod pruebas_de_las_teclas {
     use super::*;
+    #[cfg(not(windows))]
     use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
 
     /// **La decisión 7 de la mirada 17-quater, fijada: ninguna tecla de la app vuelve a `⌘⇧`.**
