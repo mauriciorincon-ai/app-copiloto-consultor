@@ -181,6 +181,30 @@ jobs:
       - name: el Administrador de credenciales de verdad — en el runner efímero
         working-directory: src-tauri
         run: cargo test --locked --lib llavero -- --include-ignored --skip en_vivo_
+      # SPRINT 007 (decisión 3 del plan): whisper con dos pistas, medido en el runner con el modelo pequeño. La cifra es
+      # del runner y se declara `manual`: la del PC del usuario manda, en el gate del hito. El modelo se baja con la
+      # huella SHA-256 de `modelo_whisper.rs` y se guarda en la caché de Actions para no bajarlo en cada corrida.
+      - uses: actions/cache@v4
+        with:
+          path: ~/ag-modelos
+          key: whisper-ggml-small-1be3a9b2
+      - name: el modelo pequeño de whisper, con su huella
+        shell: pwsh
+        run: |
+          $ruta = Join-Path $HOME "ag-modelos\ggml-small.bin"
+          if (-not (Test-Path $ruta)) {
+            New-Item -ItemType Directory -Force (Split-Path $ruta) | Out-Null
+            Invoke-WebRequest -Uri "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin" -OutFile $ruta
+          }
+          $huella = (Get-FileHash $ruta -Algorithm SHA256).Hash.ToLower()
+          if ($huella -ne "1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b") {
+            Remove-Item $ruta
+            throw "la huella del modelo pequeño no coincide: $huella"
+          }
+          "AG_MODELO_WHISPER=$ruta" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: whisper con dos pistas en este runner (medición, manual)
+        working-directory: src-tauri
+        run: cargo test --locked --lib medicion_whisper_con_dos_pistas -- --ignored --nocapture
       - name: el instalador de Windows (.msi y .exe, sin firmar)
         run: pnpm tauri build --bundles msi,nsis
       - uses: actions/upload-artifact@v7

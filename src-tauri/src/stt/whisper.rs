@@ -256,6 +256,47 @@ mod motor {
         println!("[stt] whisper: {} tardó {ms} ms en 10 s de calibración", modelo.nombre);
         Ok(ms)
     }
+
+    /// **Whisper con dos pistas, medido en este equipo** (sprint 007, decisión 3 del plan). Con dos pistas el
+    /// transcriptor atiende en serie, el cliente primero: lo que importa es cuánto tarda el turno del cliente y cuánto
+    /// le añade un turno tuyo detrás. La CI lo corre en `build-windows` con el modelo pequeño; **la cifra es del runner
+    /// y se declara `manual`: la del PC del usuario manda**, en el gate del hito. Imprime solo milisegundos, jamás lo
+    /// transcrito (ADR 003).
+    #[cfg(test)]
+    mod medicion {
+        use super::*;
+
+        #[test]
+        #[ignore = "medición: whisper con dos pistas en este equipo; necesita AG_MODELO_WHISPER con un modelo entero"]
+        fn medicion_whisper_con_dos_pistas() {
+            let ruta = std::env::var("AG_MODELO_WHISPER").expect("falta AG_MODELO_WHISPER: la medición no midió nada");
+            whisper_rs::install_logging_hooks();
+            let contexto =
+                WhisperContext::new_with_params(&ruta, WhisperContextParameters::default()).expect("el modelo no cargó");
+            let mut estado = contexto.create_state().expect("whisper no dio su estado");
+            let cliente = crate::habla::pcm::leer(include_bytes!("../../../docs/kit-de-prueba/audio/pregunta-es.wav"))
+                .expect("el WAV del kit se lee")
+                .muestras;
+            let tuyo = crate::stt::calibracion::muestras();
+            let mut medir = |audio: &[f32]| {
+                let inicio = std::time::Instant::now();
+                transcribir_en(&mut estado, "es", &completar(audio)).expect("whisper no transcribió");
+                inicio.elapsed().as_millis() as u32
+            };
+            // La primera inferencia calienta pesos y cachés; en una reunión el modelo ya está cargado y caliente.
+            medir(&cliente);
+            let ms_cliente = medir(&cliente);
+            let ms_tuyo = medir(&tuyo);
+            let modelo = std::path::Path::new(&ruta).file_name().map(|n| n.to_string_lossy().into_owned());
+            println!(
+                "[medición] whisper {} con dos pistas en serie, el cliente primero: el cliente (5,9 s) {ms_cliente} ms · \
+                 un turno tuyo detrás (10 s) {ms_tuyo} ms · techo del fin de turno a la ficha {} ms · cifra del runner, \
+                 manual: la del PC manda",
+                modelo.unwrap_or_default(),
+                crate::stt::calibracion::TECHO_MS
+            );
+        }
+    }
 }
 
 /// Fuera de Windows no hay whisper: macOS transcribe con su propio motor (ADR 006).

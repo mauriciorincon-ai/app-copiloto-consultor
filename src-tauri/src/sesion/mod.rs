@@ -271,12 +271,17 @@ pub fn clasificar_en(vista: &Vista, catalogo: &[Cliente]) -> Reunion {
 /// Solo entran los **navegadores del catálogo**, y solo si se pueden leer. Zoom y Teams no: se
 /// detectan por su identificador y su título no aporta nada.
 pub fn a_quien_preguntar_titulos(apps: &[(i32, String)], legibles: bool) -> Vec<i32> {
+    a_quien_preguntar_titulos_en(apps, legibles, catalogo())
+}
+
+/// Lo mismo, contra un catálogo dado. Pura.
+pub fn a_quien_preguntar_titulos_en(apps: &[(i32, String)], legibles: bool, catalogo: &[Cliente]) -> Vec<i32> {
     if !legibles {
         return Vec::new();
     }
     apps.iter()
         .filter(|(_, bundle)| {
-            del_catalogo(bundle).is_some_and(|c| c.clase == Clase::Navegador)
+            del_catalogo_en(catalogo, bundle).is_some_and(|c| c.clase == Clase::Navegador)
         })
         .map(|(pid, _)| *pid)
         .collect()
@@ -333,15 +338,20 @@ pub fn ahora() -> Reunion {
 /// navegador— para que la ventana que se lee sea la de la reunión que Sesión enseña, y no otra.
 /// Con dos videollamadas abiertas a la vez, las dos pantallas eligen la misma.
 pub fn objetivo_de(vista: &Vista) -> Option<(String, Vec<String>)> {
+    objetivo_de_en(vista, catalogo())
+}
+
+/// Lo mismo, contra un catálogo dado. Pura.
+pub fn objetivo_de_en(vista: &Vista, catalogo: &[Cliente]) -> Option<(String, Vec<String>)> {
     for p in &vista.programas {
-        if let Some(c) = del_catalogo(&p.bundle) {
+        if let Some(c) = del_catalogo_en(catalogo, &p.bundle) {
             if c.clase == Clase::Aplicacion {
                 return Some((p.bundle.clone(), Vec::new()));
             }
         }
     }
     vista.programas.iter().find_map(|p| {
-        let c = del_catalogo(&p.bundle)?;
+        let c = del_catalogo_en(catalogo, &p.bundle)?;
         (c.clase == Clase::Navegador && p.titulos.iter().any(|t| es_meet(t))).then(|| {
             (
                 p.bundle.clone(),
@@ -421,6 +431,18 @@ pub fn la_de_la_reunion(candidatas: &[Candidata], senales: &[String]) -> Option<
 mod tests {
     use super::*;
 
+    // Las pruebas de siempre son del catálogo del Mac, y lo dicen: en Windows el de la plataforma es otro (sprint 007).
+    // Estas tres tapan a las de la plataforma dentro de este módulo; las de Windows usan `catalogo_de_windows()`.
+    fn clasificar(v: &Vista) -> Reunion {
+        clasificar_en(v, CATALOGO)
+    }
+    fn objetivo_de(v: &Vista) -> Option<(String, Vec<String>)> {
+        objetivo_de_en(v, CATALOGO)
+    }
+    fn a_quien_preguntar_titulos(apps: &[(i32, String)], legibles: bool) -> Vec<i32> {
+        a_quien_preguntar_titulos_en(apps, legibles, CATALOGO)
+    }
+
     /// **El catálogo de Windows dice de dónde sale cada fila** y no afirma nada que nadie haya mirado: cada fila trae
     /// una página pública con fecha, un ejecutable `.exe` sin repetir, y la banda «sin verificar».
     #[test]
@@ -473,7 +495,7 @@ mod tests {
         assert_eq!(catalogo().len(), CATALOGO.len());
         assert_eq!(version_del_catalogo(), VERSION_CATALOGO);
         let v = vista(vec![prog("com.google.Chrome", &["Páramo Azul — Google Meet"])], true);
-        assert_eq!(clasificar(&v), clasificar_en(&v, CATALOGO));
+        assert_eq!(super::clasificar(&v), clasificar_en(&v, CATALOGO));
     }
 
     /// La ventana que se lee: la mayor que cabe, y en un navegador la de la reunión aunque no sea la mayor.

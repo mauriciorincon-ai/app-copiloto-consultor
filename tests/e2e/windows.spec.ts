@@ -25,10 +25,11 @@ test("en Windows, Honestidad enseña «Hoy en Windows» con sus tres grupos y la
   await expect(page.getByText("Ya funciona")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Todavía no" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "No en Windows por ahora" })).toBeVisible();
-  // La banda sin verificar se dice con su frase, no solo con un color.
+  // La banda sin verificar se dice con su frase, no solo con un color. Desde el sprint 007 lo dicen dos filas: la
+  // banda protegida y la videollamada, porque las dos dependen de lo que el usuario compruebe en su PC.
   await expect(
     page.getByText(/sin verificar en Teams, Zoom ni Meet/),
-  ).toBeVisible();
+  ).toHaveCount(2);
   // La transcripción: el modelo medido, con la cifra y el techo de 4 s.
   await expect(
     page.getByText(/large-v3-turbo: 10 s de audio en 2\.?350 ms/),

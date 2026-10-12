@@ -2203,6 +2203,81 @@ mod tests {
         const { assert!(!VOZ_DE_LA_APP_POR_EL_SISTEMA) };
     }
 
+    /// **LA REUNIÓN DEL KIT DE PUNTA A PUNTA, sin grifos** (sprint 007, ADR 022 enmienda 1). La pregunta sintética del
+    /// kit (`docs/kit-de-prueba/audio/pregunta-es.wav`) entra por el anillo del audio del sistema —lo que en Windows
+    /// llena el loopback— con el micrófono callado al lado: sale como un turno **del cliente**, sin eco, y trae su
+    /// ficha. El motor es de prueba (la CI no tiene modelos de voz); lo que se prueba es la cadena: anillo → fin de
+    /// turno → pista → disparo → ficha. Corre en los dos runners, a secas.
+    ///
+    /// ¿Puede fallar? Sí: con la pista del sistema sin dueño (`Pista::Sistema => Quien::SinAtribuir`), es rojo (demo
+    /// en rojo del sprint 007).
+    #[test]
+    fn la_pregunta_del_kit_por_el_sistema_es_del_cliente_y_trae_su_ficha() {
+        use crate::corpus::seccion::Seccion;
+        let corpus = corpus_de_prueba();
+        corpus
+            .0
+            .indice_para_pruebas()
+            .meter("/c/seguridad.md", "Páramo Azul · Seguridad", Some(crate::corpus::Unidad::Propuesta), false, &[
+                Seccion {
+                    titulo: Some("Certificaciones".into()),
+                    texto: "Tenemos la certificación ISO 27001 vigente, auditada cada año.".into(),
+                },
+            ])
+            .unwrap();
+        let pregunta = crate::habla::pcm::leer(include_bytes!("../../../docs/kit-de-prueba/audio/pregunta-es.wav"))
+            .expect("el WAV del kit se lee");
+        assert_eq!(pregunta.hz, HZ, "el kit está a la frecuencia de la app");
+        let microfono = Arc::new(Mutex::new(crate::capture::Anillo::de_la_app()));
+        let sistema = Arc::new(Mutex::new(crate::capture::Anillo::de_la_app()));
+        let idiomas = Arc::new(Mutex::new(Vec::new()));
+        let oido: Arc<Mutex<Vec<Novedad>>> = Arc::default();
+        let apunta = oido.clone();
+        let e = Escucha::sobre_anillos(
+            vec![
+                (Pista::Microfono, microfono.clone(), "es-ES".into()),
+                (Pista::Sistema, sistema.clone(), "es-ES".into()),
+            ],
+            Box::new(Dice("¿Ustedes tienen certificación ISO 27001?", idiomas.clone())),
+            Arc::new(corpus),
+            sin_diccionario(),
+            move |n| apunta.lock().unwrap().push(n),
+        );
+        {
+            let hz = HZ as usize;
+            let total = hz * 6 / 10 + pregunta.muestras.len() + hz;
+            microfono.lock().unwrap().escribir(&vec![0.0; total]);
+            let mut s = sistema.lock().unwrap();
+            s.escribir(&vec![0.0; hz * 6 / 10]);
+            s.escribir(&pregunta.muestras);
+            s.escribir(&vec![0.0; hz]);
+        }
+        let hasta = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        while std::time::Instant::now() < hasta && !oido.lock().unwrap().iter().any(|n| matches!(n, Novedad::Aparece(_))) {
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        e.cortar();
+
+        let oido = oido.lock().unwrap();
+        let turnos: Vec<&Turno> = oido
+            .iter()
+            .filter_map(|n| match n {
+                Novedad::Turno(t) => Some(t),
+                _ => None,
+            })
+            .collect();
+        assert!(!turnos.is_empty(), "la pregunta del kit no sacó ningún turno: el test no prueba nada");
+        for t in &turnos {
+            assert_eq!(t.pista.quien(), Quien::Cliente, "un turno del audio del sistema no salió del cliente");
+            assert!(!t.eco, "la pregunta del cliente salió marcada como eco");
+        }
+        let Some(Novedad::Aparece(a)) = oido.iter().find(|n| matches!(n, Novedad::Aparece(_))) else {
+            panic!("de la pregunta del cliente no salió ficha")
+        };
+        let Respuesta::Ficha(f) = &a.respuesta else { panic!("no encontró la sección que responde") };
+        assert_eq!(f.fuente.seccion.as_deref(), Some("Certificaciones"));
+    }
+
     /// En Windows, el cliente primero y la voz de la app buscada en su pista.
     #[cfg(windows)]
     #[test]
