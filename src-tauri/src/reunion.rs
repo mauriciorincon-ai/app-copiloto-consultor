@@ -844,10 +844,9 @@ pub fn estado_de_la_bandeja<R: Runtime>(app: &AppHandle<R>) -> EstadoDeLaBandeja
 // ---- el vencimiento (ADR 016 §5) ---------------------------------------------------------------
 
 fn la_tarea<R: Runtime>(app: &AppHandle<R>) -> Option<vencimiento::Tarea> {
-    // La tarea que borra con la app cerrada es de launchd. En Windows llega en el S7 con el Programador de tareas
-    // (ADR 022); mientras, no se escribe un plist ni se llama a `launchctl`: lo vencido se barre con la app abierta, y
-    // Honestidad lo dice («borrado con la app cerrada: todavía no»).
-    if cfg!(not(target_os = "macos")) {
+    // La tarea que borra con la app cerrada es de launchd en macOS y del Programador de tareas en Windows (sprint 008,
+    // ADR 016 enmienda 2). Fuera de esos dos sistemas la app no se distribuye y no hay tarea.
+    if cfg!(not(any(target_os = "macos", windows))) {
         return None;
     }
     let casa = app.path().home_dir().ok()?;

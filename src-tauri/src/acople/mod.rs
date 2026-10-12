@@ -35,6 +35,12 @@ use std::path::{Path, PathBuf};
 #[cfg(target_os = "macos")]
 pub mod ax;
 
+/// En Windows, las mismas lecturas y escrituras que `ax` (sprint 008, ADR 004 enmienda 2), con `SetWindowPos` y el
+/// marco visible de DWM. La maniobra de abajo (`nativo`) es la misma en los dos sistemas.
+#[cfg(windows)]
+#[path = "windows.rs"]
+pub mod windows;
+
 /// Un rectángulo en coordenadas globales de pantalla, origen arriba-izquierda y **puntos**
 /// (no píxeles físicos) — que es el sistema que usan tanto la Accessibility API como la geometría
 /// lógica de Tauri. Los dos lados hablan el mismo idioma a propósito: una conversión de más entre
@@ -332,6 +338,65 @@ pub fn devolucion(actual: Marco, huella: &Huella) -> Option<Marco> {
 }
 
 // ---------------------------------------------------------------------------------------------
+// Windows: del marco que se ve al rectángulo que se escribe (sprint 008, ADR 004 enmienda 2)
+// ---------------------------------------------------------------------------------------------
+
+/// Un rectángulo de Windows en **píxeles físicos**: izquierda, arriba, derecha y abajo, como `RECT`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Rect {
+    pub izquierda: i32,
+    pub arriba: i32,
+    pub derecha: i32,
+    pub abajo: i32,
+}
+
+/// Lo que el rectángulo de una ventana de Windows sobresale de lo que se ve de ella: los bordes invisibles por donde
+/// se agarra para redimensionar (unos 7 px a izquierda, derecha y abajo en Windows 10 y 11). `GetWindowRect` los
+/// incluye; `DWMWA_EXTENDED_FRAME_BOUNDS` no. El acople mide y decide sobre **lo que se ve** —es lo que la banda
+/// tapa— y escribe el rectángulo entero, así que los bordes se restan al leer y se suman al escribir.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Bordes {
+    pub izquierda: i32,
+    pub arriba: i32,
+    pub derecha: i32,
+    pub abajo: i32,
+}
+
+/// Los bordes invisibles: lo que va de lo que se ve al rectángulo de la ventana. Nunca negativos (una ventana sin
+/// marco de DWM da el mismo rectángulo por los dos lados). Pura.
+pub fn bordes(ventana: Rect, visible: Rect) -> Bordes {
+    Bordes {
+        izquierda: (visible.izquierda - ventana.izquierda).max(0),
+        arriba: (visible.arriba - ventana.arriba).max(0),
+        derecha: (ventana.derecha - visible.derecha).max(0),
+        abajo: (ventana.abajo - visible.abajo).max(0),
+    }
+}
+
+/// Lo que se ve de una ventana, en **puntos** —el sistema de la franja de la banda, que da Tauri—: los píxeles
+/// físicos divididos por la escala de su monitor (1,5 con el 150 % de Windows). Pura.
+pub fn a_puntos(visible: Rect, escala: f64) -> Marco {
+    let e = if escala > 0.0 { escala } else { 1.0 };
+    Marco {
+        x: f64::from(visible.izquierda) / e,
+        y: f64::from(visible.arriba) / e,
+        ancho: f64::from(visible.derecha - visible.izquierda) / e,
+        alto: f64::from(visible.abajo - visible.arriba) / e,
+    }
+}
+
+/// El rectángulo que hay que escribir con `SetWindowPos` (izquierda, arriba, ancho, alto, en píxeles físicos) para
+/// que **lo que se ve** quede en `marco`: los puntos por la escala, y los bordes invisibles por fuera. Pura.
+pub fn a_escribir(marco: Marco, escala: f64, b: Bordes) -> (i32, i32, i32, i32) {
+    let e = if escala > 0.0 { escala } else { 1.0 };
+    let x = (marco.x * e).round() as i32;
+    let y = (marco.y * e).round() as i32;
+    let ancho = (marco.ancho * e).round() as i32;
+    let alto = (marco.alto * e).round() as i32;
+    (x - b.izquierda, y - b.arriba, ancho + b.izquierda + b.derecha, alto + b.arriba + b.abajo)
+}
+
+// ---------------------------------------------------------------------------------------------
 // La huella en disco
 // ---------------------------------------------------------------------------------------------
 
@@ -389,7 +454,7 @@ pub fn olvidar(ruta: &Path) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// La maniobra completa — solo macOS, porque la Accessibility API lo es
+// La maniobra completa — macOS con la Accessibility API y, desde el sprint 008, Windows con `SetWindowPos`
 // ---------------------------------------------------------------------------------------------
 
 /// Qué pasó, en datos. Viaja al log y a la banda (que dibuja «acoplada» o «sin acople»).
@@ -418,12 +483,15 @@ impl Informe {
     }
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", windows))]
 pub use nativo::*;
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", windows))]
 mod nativo {
     use super::*;
+    // En Windows, `ax` es la capa hermana: las mismas funciones con otra API (ADR 022).
+    #[cfg(windows)]
+    use super::windows as ax;
 
     /// **Una maniobra a la vez** (auditoría del S4, A3): todas leen y escriben la misma huella y las mismas
     /// ventanas, y llegan desde varios hilos —un clic, ⌃⌥B, «Iniciar sesión», el latido—. Sin turno, la
@@ -801,10 +869,9 @@ mod nativo {
     }
 }
 
-/// Fuera de macOS no hay Accessibility API, y esta app es solo de macOS. Los stubs existen para
-/// que la lógica pura —que es donde están los tests que importan— compile y se pruebe en
-/// cualquier sitio, sin `cfg` salpicados por el resto del crate.
-#[cfg(not(target_os = "macos"))]
+/// Ni macOS ni Windows: la app no se distribuye ahí. Los stubs existen para que la lógica pura —que es donde están
+/// los tests que importan— compile y se pruebe en cualquier sitio, sin `cfg` salpicados por el resto del crate.
+#[cfg(not(any(target_os = "macos", windows)))]
 mod nativo_ausente {
     use super::*;
 
@@ -834,12 +901,40 @@ mod nativo_ausente {
     }
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(not(any(target_os = "macos", windows)))]
 pub use nativo_ausente::*;
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn rect(izquierda: i32, arriba: i32, derecha: i32, abajo: i32) -> Rect {
+        Rect { izquierda, arriba, derecha, abajo }
+    }
+
+    /// **Windows: lo que se ve, no el rectángulo** (sprint 008). Una ventana de Windows 11 al 150 % con sus bordes
+    /// invisibles de 7 px a izquierda, derecha y abajo: se mide sin ellos, en puntos; y lo que se escribe los lleva
+    /// por fuera, de modo que lo que se ve queda exactamente donde se pidió.
+    #[test]
+    fn en_windows_se_mide_lo_que_se_ve_y_se_escribe_con_sus_bordes() {
+        let ventana = rect(293, 150, 1807, 1207);
+        let visible = rect(300, 150, 1800, 1200);
+        let b = bordes(ventana, visible);
+        assert_eq!(b, Bordes { izquierda: 7, arriba: 0, derecha: 7, abajo: 7 });
+        let m = a_puntos(visible, 1.5);
+        assert_eq!(m, Marco::nuevo(200.0, 100.0, 1000.0, 700.0));
+        // Bajarla a y=150 puntos con 650 de alto: el borde de abajo no se mueve.
+        let pedido = Marco { y: 150.0, alto: 650.0, ..m };
+        assert_eq!(pedido.fondo(), m.fondo());
+        let (x, y, ancho, alto) = a_escribir(pedido, 1.5, b);
+        assert_eq!((x, y, ancho, alto), (293, 225, 1514, 982));
+        // Lo que se verá al escribir eso: el rectángulo menos sus bordes, de vuelta en puntos, es lo pedido.
+        let se_vera = rect(x + b.izquierda, y + b.arriba, x + ancho - b.derecha, y + alto - b.abajo);
+        assert_eq!(a_puntos(se_vera, 1.5), pedido);
+        // Sin marco de DWM los dos rectángulos son el mismo, y una escala rota no divide por cero.
+        assert_eq!(bordes(visible, visible), Bordes::default());
+        assert_eq!(a_puntos(visible, 0.0), Marco::nuevo(300.0, 150.0, 1500.0, 1050.0));
+    }
 
     /// Una franja de banda como la real: ancho de pantalla, 88 px, pegada abajo en 1440×900.
     fn franja(alto: f64) -> Marco {

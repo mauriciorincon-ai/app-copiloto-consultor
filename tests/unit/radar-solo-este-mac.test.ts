@@ -20,6 +20,9 @@ import { describe, expect, it } from "vitest";
  *
  *  - `proc_listallpids` y `proc_pidpath`: la lista de procesos de ESTE Mac, al núcleo de este Mac.
  *  - `/usr/bin/profiles status`: la inscripción de este Mac en un MDM. Lee la configuración local.
+ *  - **En Windows (sprint 008)**: la foto de procesos de ESTE PC, que el radar no toma por su cuenta sino que pide
+ *    a `sesion::windows::procesos` (`CreateToolhelp32Snapshot`), y `IsDeviceRegisteredWithManagement`, la función
+ *    de Windows que dice si este PC está inscrito en un MDM. Nada más del crate `windows` entra en el radar.
  *
  * ¿Puede fallar? Sí, y por tres lados que el contador de red no ve: se vio en rojo con un
  * `libc::socket` plantado, con un `Command::new("ping")` y con un `extern "C"` propio (bitácora
@@ -36,6 +39,12 @@ const LIBC_PERMITIDO = new Set([
   "c_void",
   "pid_t",
 ]);
+
+/** Lo que el radar puede nombrar del crate `windows` (sprint 008), y nada más. */
+const WINDOWS_PERMITIDO = new Set(["IsDeviceRegisteredWithManagement", "BOOL"]);
+
+/** Lo que el radar puede pedirle a la reunión de Windows: la foto de procesos de este PC. */
+const DE_LA_REUNION_PERMITIDO = new Set(["procesos"]);
 
 /** Los únicos programas que el radar puede lanzar. */
 const PROGRAMAS_PERMITIDOS = new Set(["/usr/bin/profiles"]);
@@ -74,7 +83,26 @@ describe("regla dura 9: el radar mira solo este Mac", () => {
   it("el módulo existe y tiene código que barrer", () => {
     const todo = archivos();
     expect(todo.length, "un gate que no lee nada no es un gate").toBeGreaterThanOrEqual(4);
-    expect(todo.flatMap(([, l]) => l).join("\n")).toMatch(/proc_listallpids/);
+    const junto = todo.flatMap(([, l]) => l).join("\n");
+    expect(junto).toMatch(/proc_listallpids/);
+    expect(junto).toMatch(/IsDeviceRegisteredWithManagement/);
+    expect(junto).toMatch(/sesion::windows::procesos\(\)/);
+  });
+
+  it("de Windows, solo la foto de procesos y la inscripción en un MDM", () => {
+    const fuera: string[] = [];
+    for (const [f, lineas] of archivos()) {
+      const texto = lineas.join("\n");
+      // `use windows::…::{a, b};`, `use windows::…::a;` y `windows::…::a` en el código: lo último de cada ruta.
+      for (const m of texto.matchAll(/(?<!sesion::)\bwindows(?:_sys)?::[\w:]*?(?:\{([^}]*)\}|(\w+))(?!\w|::)/g)) {
+        const nombres = m[1] !== undefined ? m[1].split(",").map((x) => x.trim().split("::").pop()!) : [m[2]!];
+        for (const n of nombres.filter(Boolean))
+          if (!WINDOWS_PERMITIDO.has(n)) fuera.push(`${f}: windows::…::${n}`);
+      }
+      for (const m of texto.matchAll(/\bsesion::windows::(\w+)/g))
+        if (!DE_LA_REUNION_PERMITIDO.has(m[1]!)) fuera.push(`${f}: sesion::windows::${m[1]}`);
+    }
+    expect(fuera, `el radar le pide a Windows algo fuera de su lista:\n${fuera.join("\n")}`).toEqual([]);
   });
 
   it("cada llamada a libc está en la lista", () => {

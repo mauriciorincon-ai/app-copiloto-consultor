@@ -89,3 +89,27 @@ mirado.
   decidir si mostrar un botón, es desproporcionado.
 - **Preguntar al usuario siempre.** Es el fallback y sigue estando: el botón de empezar existe con
   o sin detección. Lo que la detección ahorra es el paso, no la decisión.
+
+## Enmienda 1 — Windows: la aplicación cuenta cuando está en una llamada (2026-10-12, sprint 008)
+
+**Contexto.** En Windows, Teams y Zoom arrancan con el equipo y se quedan residentes. Con el §1 tal cual («basta con
+que estén corriendo»), Sesión decía «Teams detectado» sin llamada, la pantalla leía la ventana mayor de Teams y el
+ensayo con altavoces quedaba bloqueado todo el día (auditoría del S7, M1). Leer el título de Teams o Zoom para
+distinguir la llamada contradiría el §2: sus títulos no son de navegador y no se leen.
+
+**Decisión.** Solo en Windows, una aplicación nativa del catálogo cuenta como reunión **si ella o uno de sus procesos
+hijos tiene una sesión de captura de audio activa** (`IAudioSessionManager2` en cada micrófono activo,
+`IAudioSessionControl2::GetProcessId` y `GetState`). Es una función pura con su test (`sesion::en_llamada`), y los
+navegadores no cambian: Meet sigue reconociéndose por el título de la pestaña, como en el §2. Si Windows no deja
+leer las sesiones, la aplicación cuenta, igual que antes: lo que no se sabe se trata como reunión (ADR 018 §5).
+
+**Por qué la alternativa descartada aquí ya no se descarta.** Las tres razones de «detectar por uso del micrófono»
+no se cumplen en Windows: (1) la sesión se lee **por proceso**, así que dice cuál —la de Teams, no «una llamada»—;
+(2) el proceso es del catálogo, así que una nota de voz en otra app no cuenta; (3) leer las sesiones **no pide
+permiso** y no abre ningún micrófono: se lee el número del proceso y su estado, nada del sonido. En macOS el
+equivalente no da el proceso sin permisos nuevos, y el §1 sigue igual.
+
+**Consecuencias.** Sesión, la lectura de pantalla, el acople y el ensayo ven la misma reunión: la de la llamada. Sin
+verificar: si Teams mantiene la sesión con el micrófono silenciado dentro de la llamada (Windows enseña el
+micrófono en uso; la comprobación va al gate del PC). Un seminario solo de escucha, sin micrófono, no se detecta: el
+botón de empezar sigue estando, con o sin detección.

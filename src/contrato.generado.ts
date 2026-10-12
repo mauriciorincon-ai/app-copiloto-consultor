@@ -1596,6 +1596,11 @@ export const PLATAFORMA_WINDOWS: Plataforma = {
         "teclas": "Alt+Shift+D"
       },
       {
+        "accion": "radar",
+        "registrado": true,
+        "teclas": "Alt+Shift+U"
+      },
+      {
         "accion": "anotar",
         "registrado": true,
         "teclas": "Alt+Shift+K"
@@ -1719,6 +1724,11 @@ export const PLATAFORMA_WINDOWS_SIN_MODELO: Plataforma = {
         "accion": "leer-la-pantalla",
         "registrado": true,
         "teclas": "Alt+Shift+D"
+      },
+      {
+        "accion": "radar",
+        "registrado": true,
+        "teclas": "Alt+Shift+U"
       },
       {
         "accion": "anotar",

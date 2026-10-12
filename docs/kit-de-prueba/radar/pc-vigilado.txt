@@ -1,0 +1,40 @@
+# KIT DEL RADAR — lo que se AÑADE al PC limpio para vigilarlo: un programa de cada fila del catálogo coral de
+# Windows (`data/radar/programas-windows.json`), con una ruta donde suele instalarse (sprint 008).
+#
+# Qué mide: con esto encima de `pc-limpio.txt`, el radar tiene que encontrar TODAS las filas del catálogo de Windows
+# —ni una menos, ni una más— (test `el_kit_de_procesos_sinteticos_de_windows`). Una fila nueva sin su línea aquí
+# pone ese test en rojo, a propósito.
+#
+# Las rutas son ilustrativas: el radar compara solo el último tramo, el nombre del ejecutable.
+
+C:\Program Files\Respondus LockDown Browser\LockDownBrowser.exe
+C:\Program Files\Safe Exam Browser\SafeExamBrowser.exe
+C:\Program Files\Examplify\Examplify.exe
+C:\Program Files\Guardian Browser\Guardian Browser.exe
+C:\Program Files\ActivTrak\SVCTCOM.exe
+C:\Program Files\Teramind\tmagentsvc.exe
+C:\Program Files\Insightful\workpuls.exe
+C:\Program Files\Time Doctor\sfproc.exe
+C:\Program Files\Controlio\wesvc.exe
+C:\Program Files\TeamViewer\TeamViewer.exe
+C:\Program Files\AnyDesk\AnyDesk.exe
+C:\Program Files\Chrome Remote Desktop\remoting_host.exe
+C:\Program Files\Splashtop Streamer\SRManager.exe
+C:\Program Files\ConnectWise ScreenConnect\ScreenConnect.ClientService.exe
+C:\Program Files\RustDesk\rustdesk.exe
+C:\Program Files\LogMeIn\logmein.exe
+C:\Program Files\LogMeIn Rescue\Support-LogMeInRescue.exe
+C:\Program Files\Parsec\parsecd.exe
+C:\Program Files\RemotePC\RemotePCDesktop.exe
+C:\Program Files\DWService\dwagent.exe
+C:\Program Files\ISL Light\isllight.exe
+C:\Program Files\Supremo\supremo.exe
+C:\Program Files\ToDesk\ToDesk.exe
+C:\Program Files\Jump Desktop Connect\JumpConnect.exe
+C:\Program Files\Parallels Access\prl_deskctl_agent.exe
+C:\Program Files\RealVNC Server\vncserver.exe
+C:\Program Files\Microsoft Intune\Microsoft.Management.Services.IntuneWindowsAgent.exe
+C:\Program Files\JumpCloud\jumpcloud-agent.exe
+C:\Program Files\Asistencia rápida de Windows\quickassist.exe
+C:\Program Files\Radmin Server\rserver3.exe
+C:\Program Files\JumpCloud Remote Assist\JumpCloud Remote Assist.exe

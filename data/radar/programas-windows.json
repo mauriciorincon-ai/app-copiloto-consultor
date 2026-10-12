@@ -1,0 +1,645 @@
+{
+  "_leeme": "Catálogo del radar coral en Windows (sprint 008, ADR 013 y 022). Las mismas filas que el del Mac, por el nombre del ejecutable con su .exe (comparado entero y sin mayúsculas) y con la fecha en que se leyó cada fuente. Fuentes: la documentación del fabricante cuando nombra el ejecutable; si no, la lista de procesos prohibidos de Safe Exam Browser para Windows o el catálogo público LOLRMM, las dos fijadas a un commit; `nota` dice lo que es inferido o de una fuente débil. Fuera, sin fuente pública del ejecutable de Windows: Inspera, Hubstaff y DeskTime. Fuera, por ser del Mac: la gestión remota y el compartir pantalla de macOS y Jamf. Fuera, por genéricos o compartidos: dwm.exe (el agente oculto de Teramind toma ese nombre, así que una instalación oculta no se ve por el nombre), svc.exe, clm.exe, mtm.exe, pservice.exe, teams.exe, LMIIgnition.exe (con el que TÚ te conectas a otro), AgentExecutor.exe y msedgewebview2.exe. Añadidos de Windows: Asistencia rápida, Radmin Server y JumpCloud Remote Assist.",
+  "version": 1,
+  "fecha": "2026-10-12",
+  "programas": [
+    {
+      "id": "respondus",
+      "nombre": "Respondus LockDown Browser",
+      "categoria": "supervision",
+      "procesos": [
+        "LockDownBrowser.exe"
+      ],
+      "ve": {
+        "es": "cierra tus otras apps y, con Respondus Monitor, graba tu cámara",
+        "en": "closes your other apps and, with Respondus Monitor, records your camera"
+      },
+      "alcance": {
+        "es": "Apps abiertas, que puede cerrar; con Respondus Monitor, tu cámara y a veces tu pantalla",
+        "en": "Open apps, which it can close; with Respondus Monitor, your camera and sometimes your screen"
+      },
+      "fuente": "https://support.respondus.com/hc/en-us/articles/4409607174043",
+      "fecha": "2026-10-12",
+      "nota": "LockDownBrowser.exe verificado en la ayuda de Respondus (pide añadirlo como aplicación aceptada en el antivirus). La versión OEM no tiene página que nombre su ejecutable: va en sin_fuente."
+    },
+    {
+      "id": "safe-exam-browser",
+      "nombre": "Safe Exam Browser",
+      "categoria": "supervision",
+      "procesos": [
+        "SafeExamBrowser.exe",
+        "SafeExamBrowser.Client.exe"
+      ],
+      "ve": {
+        "es": "bloquea las capturas, la mensajería y el acceso remoto",
+        "en": "blocks screenshots, messaging and remote access"
+      },
+      "alcance": {
+        "es": "Apps abiertas; bloquea capturas, mensajería, pantalla compartida y acceso remoto",
+        "en": "Open apps; blocks screenshots, messaging, screen sharing and remote access"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-win-refactoring/blob/376378ad5e4b9fdda686b88d40ade904d1d9b828/SafeExamBrowser.Monitoring/Applications/ApplicationMonitor.cs#L213-L225",
+      "fecha": "2026-10-12",
+      "nota": "nombres leídos del código de SEB para Windows (commit fijado): su monitor reconoce su propio proceso por «SafeExamBrowser.exe» (arranque) y «SafeExamBrowser.Client.exe» (la sesión)."
+    },
+    {
+      "id": "examplify",
+      "nombre": "Examplify (ExamSoft)",
+      "categoria": "supervision",
+      "procesos": [
+        "Examplify.exe"
+      ],
+      "ve": {
+        "es": "puede usar tu cámara, tu micrófono y tu pantalla",
+        "en": "can use your camera, microphone and screen"
+      },
+      "alcance": {
+        "es": "Cámara, micrófono y grabación de pantalla (ExamID, ExamMonitor)",
+        "en": "Camera, microphone and screen recording (ExamID, ExamMonitor)"
+      },
+      "fuente": "https://services.pacificu.edu/TDClient/2579/Portal/KB/ArticleDet?ID=134149",
+      "fecha": "2026-10-12",
+      "nota": "fuente débil: es un KB de la Pacific University (no del fabricante) y da la ruta completa C:\\Program Files (x86)\\Examsoft\\Examplify\\Examplify.exe. La ayuda pública de ExamSoft solo nombra EsWinsr.exe (restaurador de ajustes tras un fallo), que no es un observador y no se incluye."
+    },
+    {
+      "id": "guardian-browser",
+      "nombre": "Guardian Browser (Meazure / ProctorU)",
+      "categoria": "supervision",
+      "procesos": [
+        "Guardian Browser.exe"
+      ],
+      "ve": {
+        "es": "comparte tu pantalla, tu cámara y tu micrófono con un supervisor",
+        "en": "shares your screen, camera and microphone with a proctor"
+      },
+      "alcance": {
+        "es": "Pantalla, cámara y micrófono; cierra los demás programas",
+        "en": "Screen, camera and microphone; closes other programs"
+      },
+      "fuente": "https://any.run/report/b985c122771006b91125bb4caf90a1b3a648460dd7f5dee8a6a0670ac97eacc0/3b26cf0c-111f-4510-b6f0-d2ef605237f3",
+      "fecha": "2026-10-12",
+      "nota": "FUENTE DÉBIL: «Guardian Browser.exe» (ruta ...\\AppData\\Local\\Programs\\guardian-browser\\) sale de un informe público de sandbox de any.run que ejecutó el instalador oficial, no de documentación de Meazure/ProctorU. ProctorU solo nombra el instalador (guardian-browser-x64.exe) y no publica el nombre del proceso."
+    },
+    {
+      "id": "activtrak",
+      "nombre": "ActivTrak",
+      "categoria": "monitoreo",
+      "procesos": [
+        "SVCTCOM.exe",
+        "SCTHOST.exe",
+        "scthosti.exe"
+      ],
+      "ve": {
+        "es": "registra tus apps, tus ventanas y tus webs, y puede hacer capturas",
+        "en": "logs your apps, windows and websites, and can take screenshots"
+      },
+      "alcance": {
+        "es": "App activa, títulos de ventana y direcciones web; capturas de pantalla (opcional)",
+        "en": "Active app, window titles and web addresses; screenshots (optional)"
+      },
+      "fuente": "https://support.activtrak.com/hc/en-us/articles/360034165131-Agent-Allowlist-Addresses-for-Antivirus-and-Firewall",
+      "fecha": "2026-10-12",
+      "nota": "lista de archivos a permitir en el antivirus, del fabricante (C:\\Windows\\SysWOW64\\; System32 en 32 bits). SVCTCOM es el servicio y SCTHOST el proceso que ve el Administrador de tareas. Otros archivos de esa lista (BGStart.exe, syschk.exe, conmhost.exe...) se omiten por genéricos."
+    },
+    {
+      "id": "teramind",
+      "nombre": "Teramind",
+      "categoria": "monitoreo",
+      "procesos": [
+        "tmagentsvc.exe"
+      ],
+      "ve": {
+        "es": "graba tu pantalla y registra tus teclas",
+        "en": "records your screen and logs your keystrokes"
+      },
+      "alcance": {
+        "es": "Grabación de pantalla, apps, webs, teclas, correo web y archivos",
+        "en": "Screen recording, apps, websites, keystrokes, web email and files"
+      },
+      "fuente": "https://github.com/magicsword-io/LOLRMM/blob/1c5e9dc042a62c7d2e0920b1679a2be407ca6eb0/yaml/teramind.yaml",
+      "fecha": "2026-10-12",
+      "nota": "tmagentsvc.exe es el binario del servicio «tsvchst» según LOLRMM (análisis de terceros; Teramind no lo publica). El agente oculto se renombra por defecto a dwm.exe (el nombre del Administrador de ventanas de Windows) y el nombre se puede cambiar al instalar: ese NO se ve por nombre. Un servicio «tsvchst» en la lista de servicios sí lo delata."
+    },
+    {
+      "id": "insightful",
+      "nombre": "Insightful (Workpuls)",
+      "categoria": "monitoreo",
+      "procesos": [
+        "workpuls.exe"
+      ],
+      "ve": {
+        "es": "registra tu tiempo y tu actividad, y puede ocultar su icono",
+        "en": "tracks your time and activity, and can hide its icon"
+      },
+      "alcance": {
+        "es": "Tiempo y actividad por app; puede ocultar su icono",
+        "en": "Time and activity per app; can hide its icon"
+      },
+      "fuente": "https://help.insightful.io/en/articles/4332404-whitelist-insightful-in-antivirus-software",
+      "fecha": "2026-10-12",
+      "nota": "la ayuda del fabricante pide permitir la carpeta workpuls-agent y «workpuls.exe» en el antivirus (nombre heredado de Workpuls); si las versiones nuevas usan otro nombre, no se ve."
+    },
+    {
+      "id": "time-doctor",
+      "nombre": "Time Doctor",
+      "categoria": "monitoreo",
+      "procesos": [
+        "sfproc.exe"
+      ],
+      "ve": {
+        "es": "graba tu pantalla y el audio de tu PC",
+        "en": "records your screen and your PC’s audio"
+      },
+      "alcance": {
+        "es": "Capturas o vídeo de la pantalla y audio del sistema",
+        "en": "Screenshots or video of the screen, and system audio"
+      },
+      "fuente": "https://support.timedoctor.com/knowledge/how-to-identify-devices-that-may-still-have-the-time-doctor-automatic-app-installed",
+      "fecha": "2026-10-12",
+      "nota": "la ayuda de Time Doctor dice «confirma que el proceso sfproc no está corriendo» (App Automática) sin escribir «.exe»; el «.exe» es la convención de Windows y aparece en los tests de un repo público (github.com/mystaff/bdd-specs, no verificado como del fabricante). Vale para la App Automática; la app interactiva «Time Doctor 2» no tiene nombre de proceso publicado (sin_fuente)."
+    },
+    {
+      "id": "controlio",
+      "nombre": "Controlio",
+      "categoria": "monitoreo",
+      "procesos": [
+        "wesvc.exe",
+        "wemonc.exe",
+        "weprtct.exe",
+        "weClipboardListener.exe"
+      ],
+      "ve": {
+        "es": "pide ver tu pantalla, tus teclas y tu disco",
+        "en": "asks to see your screen, keystrokes and disk"
+      },
+      "alcance": {
+        "es": "Grabación de pantalla, teclado, disco completo y accesibilidad",
+        "en": "Screen recording, keyboard input, full disk and accessibility"
+      },
+      "fuente": "https://github.com/magicsword-io/LOLRMM/blob/1c5e9dc042a62c7d2e0920b1679a2be407ca6eb0/yaml/controlio.yaml",
+      "fecha": "2026-10-12",
+      "nota": "nombres de LOLRMM (análisis de terceros, 2026-03); Controlio no los publica. wemonc.exe coincide con «Wemonc» de la fila de macOS. Se omite bbl.exe por corto y genérico."
+    },
+    {
+      "id": "teamviewer",
+      "nombre": "TeamViewer",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "TeamViewer.exe",
+        "TeamViewer_Desktop.exe",
+        "TeamViewer_Service.exe",
+        "tv_w32.exe",
+        "tv_w64.exe",
+        "tv_x64.exe",
+        "TeamViewerQS.exe"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu PC",
+        "en": "if someone connects, sees your screen and controls your PC"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the PC if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/magicsword-io/LOLRMM/blob/1c5e9dc042a62c7d2e0920b1679a2be407ca6eb0/yaml/teamviewer.yaml",
+      "fecha": "2026-10-12",
+      "nota": "tv_w32/tv_w64/tv_x64 son los procesos de la sesión y TeamViewerQS.exe es QuickSupport (se ejecuta sin instalar). TeamViewer.exe, TeamViewer_Desktop.exe, TeamViewer_Service.exe, tv_w32.exe y tv_x64.exe también figuran en la lista de SEB y en la lista de excepciones de Trend Micro (KA-0008745)."
+    },
+    {
+      "id": "anydesk",
+      "nombre": "AnyDesk",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "AnyDesk.exe"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu PC",
+        "en": "if someone connects, sees your screen and controls your PC"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the PC if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/magicsword-io/LOLRMM/blob/1c5e9dc042a62c7d2e0920b1679a2be407ca6eb0/yaml/anydesk.yaml",
+      "fecha": "2026-10-12",
+      "nota": "también corre como servicio con el mismo ejecutable («AnyDesk.exe --service»); la versión portátil usa «AnyDesk-<id>.exe», que no se cubre por nombre. Figura además en la lista de SEB."
+    },
+    {
+      "id": "chrome-remote-desktop",
+      "nombre": "Chrome Remote Desktop",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "remoting_host.exe",
+        "remote_assistance_host.exe",
+        "chromoting.exe"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu PC",
+        "en": "if someone connects, sees your screen and controls your PC"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the PC if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-win-refactoring/blob/376378ad5e4b9fdda686b88d40ade904d1d9b828/SafeExamBrowser.Configuration/ConfigurationData/DataValues.cs#L116-L158",
+      "fecha": "2026-10-12",
+      "nota": "remoting_host.exe también lo nombra ProctorU/Meazure en su lista de apps no permitidas («Remoting_Host.exe», support.proctoru.com/hc/en-us/articles/46589198199565). remote_assistance_host.exe es la asistencia puntual; chromoting.exe solo figura en la lista de SEB. Se omite remoting_native_messaging_host.exe: es un ayudante del navegador."
+    },
+    {
+      "id": "splashtop",
+      "nombre": "Splashtop Streamer",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "SRManager.exe",
+        "SRFeature.exe",
+        "SRServer.exe"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu PC",
+        "en": "if someone connects, sees your screen and controls your PC"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the PC if someone connects; open does not mean connected"
+      },
+      "fuente": "https://support-splashtopbusiness.splashtop.com/hc/en-us/articles/212724303-How-to-fix-Unable-to-reach-Splashtop-servers-error-on-Splashtop",
+      "fecha": "2026-10-12",
+      "nota": "lista de procesos que Splashtop pide no bloquear (SRServer.exe aparece marcado «old»). El servicio SRService.exe va en con_otra_fuente. Splashtop SOS (soporte puntual) usa otros nombres (SRServerSOS.exe...) y no está en esta fila."
+    },
+    {
+      "id": "screenconnect",
+      "nombre": "ConnectWise ScreenConnect",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "ScreenConnect.ClientService.exe",
+        "ScreenConnect.WindowsClient.exe"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu PC",
+        "en": "if someone connects, sees your screen and controls your PC"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the PC if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/magicsword-io/LOLRMM/blob/1c5e9dc042a62c7d2e0920b1679a2be407ca6eb0/yaml/screenconnect.yaml",
+      "fecha": "2026-10-12",
+      "nota": "el servicio del cliente es ScreenConnect.ClientService.exe (la carpeta lleva un sufijo aleatorio y no se cubre por ruta); ScreenConnect.WindowsClient.exe es el proceso de la sesión. Nombres antiguos o de SEB en con_otra_fuente."
+    },
+    {
+      "id": "rustdesk",
+      "nombre": "RustDesk",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "rustdesk.exe"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu PC",
+        "en": "if someone connects, sees your screen and controls your PC"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the PC if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/magicsword-io/LOLRMM/blob/1c5e9dc042a62c7d2e0920b1679a2be407ca6eb0/yaml/rustdesk.yaml",
+      "fecha": "2026-10-12",
+      "nota": "en Windows su servicio corre con el mismo ejecutable (RustDesk.exe --service), por eso aquí sí se puede reconocer por nombre; en macOS el servicio se llama «service» y no. Figura también en la lista de SEB."
+    },
+    {
+      "id": "logmein",
+      "nombre": "LogMeIn",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "logmein.exe",
+        "LMIGuardianSvc.exe",
+        "LogMeInSystray.exe"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu PC",
+        "en": "if someone connects, sees your screen and controls your PC"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the PC if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/magicsword-io/LOLRMM/blob/1c5e9dc042a62c7d2e0920b1679a2be407ca6eb0/yaml/logmein.yaml",
+      "fecha": "2026-10-12",
+      "nota": "se omite LMIIgnition.exe (LogMeIn Ignition): es el lanzador con el que TÚ te conectas a otro equipo."
+    },
+    {
+      "id": "logmein-rescue",
+      "nombre": "LogMeIn Rescue",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "Support-LogMeInRescue.exe",
+        "lmi_rescue.exe",
+        "lmi_rescue_srv.exe"
+      ],
+      "ve": {
+        "es": "alguien de soporte puede estar viendo tu pantalla ahora",
+        "en": "someone from support may be watching your screen now"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC: solo existe durante una sesión de soporte",
+        "en": "Your screen and control of the PC: it only exists during a support session"
+      },
+      "fuente": "https://github.com/magicsword-io/LOLRMM/blob/1c5e9dc042a62c7d2e0920b1679a2be407ca6eb0/yaml/logmein_rescue.yaml",
+      "fecha": "2026-10-12",
+      "nota": "el applet se descarga a %LOCALAPPDATA%\\LogMeIn Rescue Applet\\ y se borra solo al terminar; ProctorU documenta que lo usa en sesiones en vivo."
+    },
+    {
+      "id": "parsec",
+      "nombre": "Parsec",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "parsecd.exe"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu PC",
+        "en": "if someone connects, sees your screen and controls your PC"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the PC if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/magicsword-io/LOLRMM/blob/1c5e9dc042a62c7d2e0920b1679a2be407ca6eb0/yaml/parsec.yaml",
+      "fecha": "2026-10-12",
+      "nota": "se omite pservice.exe (su servicio) por genérico; parsecd.exe también figura en la lista de SEB."
+    },
+    {
+      "id": "remotepc",
+      "nombre": "RemotePC",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "RemotePCDesktop.exe",
+        "RPCService.exe",
+        "RPCSuite.exe"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu PC",
+        "en": "if someone connects, sees your screen and controls your PC"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the PC if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-win-refactoring/blob/376378ad5e4b9fdda686b88d40ade904d1d9b828/SafeExamBrowser.Configuration/ConfigurationData/DataValues.cs#L157-L160",
+      "fecha": "2026-10-12",
+      "nota": "nombres de la lista de SEB. LOLRMM lista otros (RemotePCService.exe, RemotePCHost.exe, RemotePC.exe) en con_otra_fuente: no se sabe cuáles usa cada versión."
+    },
+    {
+      "id": "dwagent",
+      "nombre": "DWService (DWAgent)",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "dwagent.exe",
+        "dwagsvc.exe",
+        "dwaglnc.exe"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu PC",
+        "en": "if someone connects, sees your screen and controls your PC"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the PC if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/magicsword-io/LOLRMM/blob/1c5e9dc042a62c7d2e0920b1679a2be407ca6eb0/yaml/dw_service.yaml",
+      "fecha": "2026-10-12",
+      "nota": "dwagent.exe también figura en la lista de SEB."
+    },
+    {
+      "id": "isl-light",
+      "nombre": "ISL Light",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "isllight.exe",
+        "isllightservice.exe",
+        "islalwaysonmonitor.exe"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu PC",
+        "en": "if someone connects, sees your screen and controls your PC"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the PC if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/magicsword-io/LOLRMM/blob/1c5e9dc042a62c7d2e0920b1679a2be407ca6eb0/yaml/isl_light.yaml",
+      "fecha": "2026-10-12",
+      "nota": "isllight.exe también figura en la lista de SEB (junto a islalwayson.exe, en con_otra_fuente)."
+    },
+    {
+      "id": "supremo",
+      "nombre": "Supremo",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "supremo.exe",
+        "supremoservice.exe",
+        "supremohelper.exe",
+        "SupremoSystem.exe"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu PC",
+        "en": "if someone connects, sees your screen and controls your PC"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the PC if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/magicsword-io/LOLRMM/blob/1c5e9dc042a62c7d2e0920b1679a2be407ca6eb0/yaml/supremo.yaml",
+      "fecha": "2026-10-12",
+      "nota": "los tres primeros también figuran en la lista de SEB."
+    },
+    {
+      "id": "todesk",
+      "nombre": "ToDesk",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "ToDesk.exe",
+        "ToDesk_Service.exe"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu PC",
+        "en": "if someone connects, sees your screen and controls your PC"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the PC if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/magicsword-io/LOLRMM/blob/1c5e9dc042a62c7d2e0920b1679a2be407ca6eb0/yaml/todesk.yaml",
+      "fecha": "2026-10-12",
+      "nota": "ToDesk.exe también figura en la lista de SEB. Se omite ToDesk_Setup.exe: es el instalador."
+    },
+    {
+      "id": "jump-desktop-connect",
+      "nombre": "Jump Desktop Connect",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "JumpConnect.exe"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu PC",
+        "en": "if someone connects, sees your screen and controls your PC"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the PC if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/magicsword-io/LOLRMM/blob/1c5e9dc042a62c7d2e0920b1679a2be407ca6eb0/yaml/jump_desktop.yaml",
+      "fecha": "2026-10-12",
+      "nota": "fuente débil: la entrada de LOLRMM no tiene descripción, solo la lista de nombres; su referencia es la guía de administradores de Jump Desktop Connect. Solo el anfitrión: jumpclient.exe y jumpdesktop.exe son el visor con el que TÚ te conectas y no cuentan."
+    },
+    {
+      "id": "parallels-access",
+      "nombre": "Parallels Access",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "prl_deskctl_agent.exe"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu PC",
+        "en": "if someone connects, sees your screen and controls your PC"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the PC if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/magicsword-io/LOLRMM/blob/1c5e9dc042a62c7d2e0920b1679a2be407ca6eb0/yaml/parallelsaccess.yaml",
+      "fecha": "2026-10-12",
+      "nota": "fuente débil: la entrada de LOLRMM no tiene descripción; prl_deskctl_agent.exe es el agente de escritorio (mismo nombre que en macOS). Se omiten TSClient.exe (genérico) y prl_pm_service.exe (de Parallels Desktop)."
+    },
+    {
+      "id": "realvnc",
+      "nombre": "RealVNC Server",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "vncserver.exe",
+        "vncserverui.exe"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu PC",
+        "en": "if someone connects, sees your screen and controls your PC"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the PC if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-win-refactoring/blob/376378ad5e4b9fdda686b88d40ade904d1d9b828/SafeExamBrowser.Configuration/ConfigurationData/DataValues.cs#L193-L195",
+      "fecha": "2026-10-12",
+      "nota": "nombres de la lista de SEB; en Windows «vncserver.exe» es el servidor de RealVNC (en macOS es genérico). winvnc.exe, tvnserver.exe y vncviewer.exe (otros VNC y visores) no se incluyen."
+    },
+    {
+      "id": "intune",
+      "nombre": "Microsoft Intune",
+      "categoria": "mdm",
+      "procesos": [
+        "Microsoft.Management.Services.IntuneWindowsAgent.exe"
+      ],
+      "ve": {
+        "es": "puede instalar, borrar y leer la configuración",
+        "en": "can install, wipe and read configuration"
+      },
+      "alcance": {
+        "es": "Puede instalar, borrar y leer configuración. Normal en equipos de empresa",
+        "en": "Can install, wipe and read configuration. Normal on company machines"
+      },
+      "fuente": "https://learn.microsoft.com/en-us/intune/device-management/tools/management-extension-windows",
+      "fecha": "2026-10-12",
+      "nota": "Microsoft Learn nombra el archivo de configuración «...IntuneWindowsAgent.exe.config» en C:\\Program Files (x86)\\Microsoft Intune Management Extension\\ y el servicio «IntuneManagementExtension»; el nombre del .exe se deduce del .config. El agente solo se instala si la empresa asigna scripts o apps Win32. Se omite AgentExecutor.exe por genérico."
+    },
+    {
+      "id": "jumpcloud",
+      "nombre": "JumpCloud",
+      "categoria": "mdm",
+      "procesos": [
+        "jumpcloud-agent.exe"
+      ],
+      "ve": {
+        "es": "puede instalar, borrar y leer la configuración",
+        "en": "can install, wipe and read configuration"
+      },
+      "alcance": {
+        "es": "Puede instalar, borrar y leer configuración. Normal en equipos de empresa",
+        "en": "Can install, wipe and read configuration. Normal on company machines"
+      },
+      "fuente": "https://github.com/TheJumpCloud/support/blob/d498c737b4b12e50945dc56d20075859f7a59a66/scripts/windows/InstallWindowsAgent.ps1#L16",
+      "fecha": "2026-10-12",
+      "nota": "repositorio oficial del fabricante (TheJumpCloud/support): AGENT_BINARY_NAME = jumpcloud-agent.exe, en C:\\Program Files (x86)\\JumpCloud\\."
+    },
+    {
+      "id": "quick-assist",
+      "nombre": "Asistencia rápida de Windows (Quick Assist)",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "quickassist.exe"
+      ],
+      "ve": {
+        "es": "alguien de soporte puede estar viendo tu pantalla ahora",
+        "en": "someone from support may be watching your screen now"
+      },
+      "alcance": {
+        "es": "Tu pantalla y, si lo permites, el control del PC: solo existe mientras la app está abierta",
+        "en": "Your screen and, if you allow it, control of the PC: it only exists while the app is open"
+      },
+      "fuente": "https://github.com/SafeExamBrowser/seb-win-refactoring/blob/376378ad5e4b9fdda686b88d40ade904d1d9b828/SafeExamBrowser.Configuration/ConfigurationData/DataValues.cs#L153",
+      "fecha": "2026-10-12",
+      "nota": "Microsoft Learn describe la app pero no nombra su ejecutable: el nombre sale de la lista de SEB (commit fijado) y de LOLRMM (yaml/microsoft_quick_assist.yaml). Abierta no quiere decir compartida: pide tu permiso antes de mostrar la pantalla. Se omite msedgewebview2.exe, que usa pero es genérico."
+    },
+    {
+      "id": "radmin-server",
+      "nombre": "Radmin Server",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "rserver3.exe"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu PC",
+        "en": "if someone connects, sees your screen and controls your PC"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the PC if someone connects; open does not mean connected"
+      },
+      "fuente": "https://github.com/magicsword-io/LOLRMM/blob/1c5e9dc042a62c7d2e0920b1679a2be407ca6eb0/yaml/radmin.yaml",
+      "fecha": "2026-10-12",
+      "nota": "rserver3.exe es el servidor (C:\\Windows\\SysWOW64\\rserver30\\rserver3.exe) y también figura en la lista de SEB; Radmin.exe es el visor con el que TÚ te conectas y no cuenta."
+    },
+    {
+      "id": "jumpcloud-remote-assist",
+      "nombre": "JumpCloud Remote Assist",
+      "categoria": "acceso-remoto",
+      "procesos": [
+        "JumpCloud Remote Assist.exe"
+      ],
+      "ve": {
+        "es": "si alguien se conecta, ve tu pantalla y maneja tu PC",
+        "en": "if someone connects, sees your screen and controls your PC"
+      },
+      "alcance": {
+        "es": "Tu pantalla y el control del PC si alguien se conecta; abierto no quiere decir conectado",
+        "en": "Your screen and control of the PC if someone connects; open does not mean connected"
+      },
+      "fuente": "https://jumpcloud.com/support/understand-remote-assist-agent",
+      "fecha": "2026-10-12",
+      "nota": "la página del fabricante lo llama «el binario principal que transmite el contenido de la pantalla» (C:\\Program Files\\JumpCloud Remote Assist\\JumpCloud Remote Assist.exe)."
+    },
+    {
+      "id": "mdm-windows",
+      "nombre": "MDM (Windows)",
+      "categoria": "mdm",
+      "inscripcion": true,
+      "ve": {
+        "es": "puede instalar, borrar y leer la configuración",
+        "en": "can install, wipe and read configuration"
+      },
+      "alcance": {
+        "es": "Puede instalar, borrar y leer configuración. Normal en equipos de empresa",
+        "en": "Can install, wipe and read configuration. Normal on company machines"
+      },
+      "fuente": "https://learn.microsoft.com/windows/win32/api/mdmregistration/nf-mdmregistration-isdeviceregisteredwithmanagement",
+      "fecha": "2026-10-12",
+      "nota": "se reconoce por la inscripción, no por un proceso: IsDeviceRegisteredWithManagement, sin leer la cuenta inscrita"
+    }
+  ]
+}

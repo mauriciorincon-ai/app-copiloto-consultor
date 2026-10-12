@@ -84,7 +84,7 @@ pub fn en_macos(a: Accion) -> Teclas {
 }
 
 /// **Windows**: `Alt+Mayús` + una letra libre en las seis tablas publicadas (ADR 022, enmienda 1). El corte, con la
-/// Q, que tampoco usan Word ni Excel. El radar llega a Windows en el S8: su tecla está apartada y no se registra.
+/// Q, que tampoco usan Word ni Excel. El radar, con la U, desde que mira en Windows (sprint 008).
 pub fn en_windows(a: Accion) -> Teclas {
     match a {
         Accion::Corte => t(ALT_MAYUS, Code::KeyQ, "Alt+Shift+Q"),
@@ -116,10 +116,11 @@ pub fn atajo(a: Accion) -> Shortcut {
     Shortcut::new(t.modificadores, t.tecla)
 }
 
-/// ¿Se registra esta acción en este equipo? Todas, salvo el radar en Windows hasta el S8: registrar su tecla le
-/// quitaría una combinación al usuario para abrir una pantalla que todavía dice «todavía no».
-pub fn se_registra_aqui(a: Accion) -> bool {
-    !(cfg!(windows) && a == Accion::Radar)
+/// ¿Se registra esta acción en este equipo? Todas: desde el sprint 008 el radar también mira en Windows, y su tecla,
+/// que estuvo apartada, se registra. Se queda como función para que la próxima que falte en un sistema tenga dónde
+/// decirse.
+pub fn se_registra_aqui(_a: Accion) -> bool {
+    true
 }
 
 /// Las acciones que el sistema no dejó registrar en esta sesión. Solo acciones: ni teclas pulsadas ni nada más.
@@ -151,11 +152,10 @@ pub struct Atajo {
     pub registrado: bool,
 }
 
-/// Los atajos de un sistema, para el contrato. En Windows no cruza el radar, que no se registra hasta el S8.
+/// Los atajos de un sistema, para el contrato: los mismos en los dos.
 pub fn para_el_contrato(en_windows_: bool) -> Vec<Atajo> {
     TODAS
         .iter()
-        .filter(|a| !(en_windows_ && **a == Accion::Radar))
         .map(|&a| Atajo {
             accion: a,
             teclas: if en_windows_ { en_windows(a).texto } else { en_macos(a).texto },
@@ -219,7 +219,10 @@ mod pruebas {
         assert!(para_el_contrato(true).iter().any(|x| x.accion == Accion::Banda && !x.registrado));
         apuntar(Accion::Banda, true);
         assert!(registrada(Accion::Banda));
-        assert!(!para_el_contrato(true).iter().any(|x| x.accion == Accion::Radar), "el radar no cruza en Windows");
+        // Desde el sprint 008 el radar cruza también en Windows, con Alt+Mayús+U.
+        assert!(para_el_contrato(true).iter().any(|x| x.accion == Accion::Radar && x.teclas == "Alt+Shift+U"));
+        assert!(TODAS.iter().all(|a| se_registra_aqui(*a)));
         assert_eq!(para_el_contrato(false).len(), TODAS.len());
+        assert_eq!(para_el_contrato(true).len(), TODAS.len());
     }
 }

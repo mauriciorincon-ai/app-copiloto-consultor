@@ -6,8 +6,15 @@
 //! cerrar una reunión no hay que pararse.
 //!
 //! Qué protege: a alguien frente a tu Mac desbloqueado que abre Angel Ghost para leer tus reuniones.
+//!
+//! **En Windows (sprint 008, ADR 022): Windows Hello**, con tu PIN, tu huella o tu cara (`desbloqueo/windows.rs`).
 
 use std::sync::atomic::{AtomicBool, Ordering};
+
+/// En Windows, el desbloqueo es Windows Hello.
+#[cfg(windows)]
+#[path = "desbloqueo/windows.rs"]
+pub mod windows;
 
 /// Lo que contestó el sistema.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -29,7 +36,7 @@ mod puente {
 
 /// Pide el desbloqueo con el diálogo del sistema. Bloquea hasta que contestas.
 pub fn pedir(razon: &str) -> Respuesta {
-    crate::hardware::vigilar("el desbloqueo (Touch ID o contraseña)");
+    crate::hardware::vigilar("el desbloqueo (Touch ID, contraseña o Windows Hello)");
     #[cfg(all(target_os = "macos", puente_de_swift))]
     {
         let Ok(r) = std::ffi::CString::new(razon) else { return Respuesta::NoSePuede };
@@ -40,10 +47,27 @@ pub fn pedir(razon: &str) -> Respuesta {
             _ => Respuesta::NoSePuede,
         }
     }
-    #[cfg(not(all(target_os = "macos", puente_de_swift)))]
+    #[cfg(windows)]
+    {
+        windows::pedir(razon)
+    }
+    #[cfg(not(any(all(target_os = "macos", puente_de_swift), windows)))]
     {
         let _ = razon;
         Respuesta::NoSePuede
+    }
+}
+
+/// **Lo que contestó Windows Hello, en la respuesta de la app** (`UserConsentVerificationResult`). Pura, para que su
+/// prueba corra también en el Mac: 0 verificado · 6 cancelado · 5 demasiados intentos, que es un «no» tuyo y no un
+/// fallo del PC · lo demás (sin dispositivo, sin configurar, desactivado por directiva, ocupado) es que este PC no
+/// tiene con qué pedirlo.
+#[cfg_attr(not(windows), allow(dead_code))]
+pub(crate) fn de_windows_hello(resultado: i32) -> Respuesta {
+    match resultado {
+        0 => Respuesta::Hecho,
+        5 | 6 => Respuesta::NoQuiso,
+        _ => Respuesta::NoSePuede,
     }
 }
 
@@ -80,10 +104,11 @@ impl Desbloqueo {
             Respuesta::NoSePuede => Err(
                 "este Mac no tiene con qué pedir el desbloqueo: tu cuenta necesita una contraseña para abrir tus notas".into(),
             ),
-            // ADR 022: Windows Hello llega en el sprint 007. Hasta entonces tus notas se guardan cifradas y no se abren.
+            // Sprint 008 (auditoría del S6, M9): sin Windows Hello configurado no hay con qué pedirlo, y se dice dónde
+            // se configura. Sin fecha prometida: el desbloqueo ya está.
             #[cfg(windows)]
             Respuesta::NoSePuede => Err(
-                "en Windows el desbloqueo (Windows Hello) llega en el sprint 007: tus notas se guardan cifradas y abrirlas espera a ese desbloqueo".into(),
+                "este PC no tiene Windows Hello configurado: añade un PIN, tu huella o tu cara en Configuración → Cuentas → Opciones de inicio de sesión para abrir tus notas".into(),
             ),
         }
     }
@@ -126,9 +151,11 @@ mod pruebas {
         let d = Desbloqueo::default();
         assert!(d.asegurar(|| Respuesta::NoQuiso).is_err());
         assert!(!d.desbloqueado());
-        // El «no se puede» dice qué falta: la contraseña de la cuenta en macOS; Windows Hello, que llega en el S7, en Windows.
+        // El «no se puede» dice qué falta: la contraseña de la cuenta en macOS; Windows Hello configurado, en Windows. Y
+        // no promete ningún sprint (auditoría del S6, M9).
         let no = d.asegurar(|| Respuesta::NoSePuede).unwrap_err();
         assert!(no.contains(if cfg!(windows) { "Windows Hello" } else { "contraseña" }), "{no}");
+        assert!(!no.to_lowercase().contains("sprint"), "el usuario no sabe qué es un sprint: {no}");
         assert!(d.asegurar(|| Respuesta::Hecho).is_ok());
     }
 
@@ -154,6 +181,18 @@ mod pruebas {
         puerta.asegurar(pedir).unwrap();
         assert_eq!(veces.get(), 3, "en la apertura siguiente no se volvió a preguntar");
         assert!(pantalla.desbloqueado(), "olvidar el de la puerta tocó el de la pantalla");
+    }
+
+    /// Windows Hello: verificado abre; cancelar o agotar los intentos es tu «no»; sin dispositivo, sin configurar,
+    /// por directiva u ocupado, este PC no tiene con qué pedirlo.
+    #[test]
+    fn lo_que_dice_windows_hello_es_una_de_las_tres_respuestas() {
+        assert_eq!(de_windows_hello(0), Respuesta::Hecho);
+        assert_eq!(de_windows_hello(6), Respuesta::NoQuiso);
+        assert_eq!(de_windows_hello(5), Respuesta::NoQuiso);
+        for r in [1, 2, 3, 4, 99] {
+            assert_eq!(de_windows_hello(r), Respuesta::NoSePuede, "{r}");
+        }
     }
 
     #[test]

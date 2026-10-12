@@ -171,7 +171,8 @@ El S7 trae a Windows lo que la videollamada necesita, cada pieza detrás de la f
 3. **La reunión** se detecta con los procesos y los títulos de las ventanas del propio PC, contra
    `data/clientes-windows.json`: ejecutable, fuente pública y fecha por fila. Solo se leen los títulos de los navegadores
    del catálogo. Windows no pide permiso para esto, así que «no se puede saber» no aplica. Teams arranca con Windows y
-   queda abierto: como en el Mac, una aplicación de videollamada abierta cuenta como reunión.
+   queda abierto, así que **una aplicación de videollamada cuenta solo cuando ella o un proceso suyo tiene una sesión
+   de captura de audio activa** (sprint 008, auditoría del S7, M1; ADR 005, enmienda 1). Meet, por el título.
 4. **La voz** es `Windows.Media.SpeechSynthesis`: la frase en un WAV en memoria (`habla/pcm.rs`) que suena por `cpal`. Con
    ella, el ensayo con voz. Preguntar si hay voz para un idioma (`hay_para`) se hace en un hilo propio y corto: pasar por
    la cola del hilo que habla dejaba al que preguntaba esperando detrás de la frase (auditoría del S7, A3).

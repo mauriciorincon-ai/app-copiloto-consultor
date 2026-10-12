@@ -313,3 +313,31 @@ El §1 decía que lo que enseña la pantalla «sale del catálogo… (test)». N
   `corto`); si una regla se añade, se quita o se renombra sin la frase, es rojo.
 - `catalogo::reglas()` se borró: nadie la llamaba.
 
+
+## Enmienda 4 (2026-10-12, sprint 008) — en Windows, el Programador de tareas
+
+**Contexto.** El §5 pone la tercera capa en launchd: con la app cerrada, una tarea al minuto de cada vencimiento corre
+`/bin/sh` sobre la lista. En Windows no hay launchd, y hasta el sprint 007 lo vencido solo se barría con la app
+abierta (ADR 022, inventario).
+
+**Decisión.** La misma tarea, en el **Programador de tareas** de Windows:
+
+- **Se registra por COM** (`ITaskService::Connect`, `ITaskFolder::RegisterTask` con `TASK_CREATE_OR_UPDATE`), en la
+  carpeta raíz del usuario y con el mismo nombre que en launchd. **La app no lanza ningún programa para esto**: los dos
+  que lanza siguen siendo `/usr/bin/profiles` y `/bin/launchctl`, los dos en macOS (`contador-de-red`).
+- **La definición es XML puro** (`vencimiento::xml_de_windows`): un disparador por cada minuto que vence, sin repetir;
+  `StartWhenAvailable` hace de `RunAtLoad` (un vencimiento con el PC apagado se barre al volver); corre como el
+  usuario, solo con su sesión abierta y sin privilegios (`InteractiveToken`, `LeastPrivilege`), cinco minutos como
+  mucho, sin escribir nada. Una copia queda en la carpeta de la app (`vencimiento-tarea.xml`, 600) para saber si
+  cambió sin preguntarle al Programador.
+- **Lo que corre es `powershell.exe`, no el binario de la app**, con el barrido de `vencimiento::guion_de_windows`:
+  lee la lista y solo borra archivos `.ghost` cuya hora pasó; una línea rota no hace nada; no escribe la lista. Viaja
+  codificado (`-EncodedCommand`) para que ninguna comilla de la ruta toque el XML. Se prueba con PowerShell de verdad
+  en la CI de Windows (`tests/vencimiento-en-windows.rs`), como el de `sh` en el Mac.
+- **«No corrió» se mide igual** (§5): si la copia del XML existe y al abrir hay algo vencido hace más de dos minutos,
+  Honestidad lo dice.
+
+**Consecuencias.** «Borrado con la app cerrada» pasa a «sí» en Windows (`plataforma.rs`). La tarea se ve en el
+Programador de tareas con su descripción, y se quita sola cuando ya no vence nada. **Sin verificar, para el PC:** que
+la ventana de PowerShell no se vea al correr (`-WindowStyle Hidden` la esconde, pero Windows puede enseñarla un
+instante), y que una directiva de la empresa no bloquee PowerShell; si la bloquea, Honestidad dice «no corrió».

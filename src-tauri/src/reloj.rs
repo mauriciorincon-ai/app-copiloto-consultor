@@ -72,7 +72,7 @@ pub fn local(instante: i64) -> Local {
 }
 
 /// UTC, sin zona: el respaldo cuando el sistema no contesta. Algoritmo civil de días a fecha (Howard Hinnant).
-fn en_utc(instante: i64) -> Local {
+pub(crate) fn en_utc(instante: i64) -> Local {
     let dias = instante.div_euclid(86_400);
     let del_dia = instante.rem_euclid(86_400);
     let z = dias + 719_468;

@@ -73,6 +73,11 @@ const CENTINELAS: [string, number][] = [
   ["src-tauri/src/pantalla/windows.rs", 1],
   ["src-tauri/src/stt/whisper.rs", 1],
   ["src-tauri/src/modelo_whisper.rs", 1],
+  // Sprint 008 (auditoría del S7, B5): la reunión en Windows, como en el Mac `Aplicacion::de` — los procesos, las
+  // sesiones de captura y las ventanas (`mirar`) y la ventana de la videollamada (`ventana_del_objetivo`).
+  ["src-tauri/src/sesion/windows.rs", 2],
+  // Sprint 008: el Programador de tareas (la única entrada, `pedir`, que registra y quita la tarea de vencimiento).
+  ["src-tauri/src/vencimiento/windows.rs", 1],
 ];
 
 function rustDe(dir: string): string[] {

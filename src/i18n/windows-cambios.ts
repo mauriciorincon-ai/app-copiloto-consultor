@@ -54,6 +54,8 @@ const ES: Cambios = {
     guardarEnLlavero: "Guardar en el Administrador de credenciales",
     permSistemaPara: "Lo que suena en tu PC: la voz del cliente. Sin bot en la reunión.",
     permAcoplePara: "Para que la banda no tape la llamada: la reunión se encoge y las dos conviven.",
+    // En Windows, Teams y Zoom cuentan cuando están en una llamada, no por estar abiertos (sprint 008, S7 M1).
+    sinReunionVoz: "Entra en tu llamada de Zoom, Teams o Meet y aparecerá aquí. Mientras tanto, prepara la reunión.",
     presencial: {
       reunionEnEsteMac: "reunión en este PC",
       pcPregunta: "¿La videollamada está en este PC?",
@@ -113,6 +115,7 @@ const EN: Cambios = {
     guardarEnLlavero: "Save to Credential Manager",
     permSistemaPara: "What plays on your PC: the client’s voice. No bot in the meeting.",
     permAcoplePara: "So the band does not cover the call: the meeting shrinks and the two live together.",
+    sinReunionVoz: "Join your Zoom, Teams or Meet call and it will show up here. Meanwhile, get ready.",
     presencial: {
       reunionEnEsteMac: "call on this PC",
       pcPregunta: "Is the call on this PC?",

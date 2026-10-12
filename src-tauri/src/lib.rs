@@ -1888,6 +1888,11 @@ pub fn run() {
 
             registrar_el_kill_switch(app.handle());
             arrancar_el_radar(app.handle());
+            // Windows Hello sale delante de la ventana principal (sprint 008): se deja dicha cuál es.
+            #[cfg(windows)]
+            if let Some(hwnd) = app.get_webview_window(ventana::PRINCIPAL).and_then(|v| v.hwnd().ok()) {
+                desbloqueo::windows::recordar_la_ventana(hwnd.0 as usize);
+            }
 
             // El diccionario del consultor: se deja escrito con la semilla si no existía, para que
             // el usuario pueda ir a editarlo. Que falle no impide arrancar — la app funciona sin

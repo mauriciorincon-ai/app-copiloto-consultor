@@ -42,14 +42,22 @@ pub fn listar() -> Vec<String> {
     rutas
 }
 
-#[cfg(not(target_os = "macos"))]
+/// **En Windows** (sprint 008): los ejecutables de la foto de procesos de este PC, la misma que lee la reunión
+/// (`sesion::windows::procesos`, `CreateToolhelp32Snapshot`). No pide permiso ni lee nada de dentro de ellos.
+#[cfg(windows)]
+pub fn listar() -> Vec<String> {
+    crate::sesion::windows::procesos().into_iter().map(|p| p.exe).collect()
+}
+
+#[cfg(not(any(target_os = "macos", windows)))]
 pub fn listar() -> Vec<String> {
     Vec::new()
 }
 
-/// El nombre del ejecutable: el último tramo de la ruta. Es lo que el catálogo compara.
+/// El nombre del ejecutable: el último tramo de la ruta, con la barra de cada sistema (auditoría del S7: en Windows
+/// la ruta va con `\`). Es lo que el catálogo compara.
 fn ejecutable(ruta: &str) -> &str {
-    ruta.rsplit('/').next().unwrap_or(ruta)
+    ruta.rsplit(['/', '\\']).next().unwrap_or(ruta)
 }
 
 /// **El cotejo.** Un programa del catálogo está si alguno de sus ejecutables corre, comparado
@@ -122,20 +130,58 @@ mod pruebas {
     fn el_kit_de_procesos_sinteticos() {
         let limpio = del_kit(include_str!("../../../docs/kit-de-prueba/radar/mac-limpio.txt"));
         assert!(limpio.len() > 60, "el Mac limpio del kit tiene {} procesos", limpio.len());
-        let falsos = cotejar(&limpio, catalogo::programas());
+        let falsos = cotejar(&limpio, catalogo::programas_del_mac());
         assert!(falsos.is_empty(), "falsos positivos en un Mac limpio: {falsos:?}");
 
         let mut vigilado = limpio.clone();
         vigilado.extend(del_kit(include_str!("../../../docs/kit-de-prueba/radar/mac-vigilado.txt")));
         let vistos: Vec<String> =
-            cotejar(&vigilado, catalogo::programas()).into_iter().map(|p| p.nombre).collect();
-        let todos: Vec<String> = catalogo::programas()
+            cotejar(&vigilado, catalogo::programas_del_mac()).into_iter().map(|p| p.nombre).collect();
+        let todos: Vec<String> = catalogo::programas_del_mac()
             .iter()
             .filter(|f| !f.inscripcion)
             .map(|f| f.nombre.clone())
             .collect();
         assert_eq!(vistos, todos, "el kit no encuentra todo el catálogo, o encuentra de más");
         println!("[kit del radar] {} filas del catálogo · 0 falsos positivos en {} procesos", todos.len(), limpio.len());
+    }
+
+    /// **El kit del radar en Windows** (sprint 008, `docs/kit-de-prueba/radar/pc-*.txt`): la misma medida que en el
+    /// Mac, contra el catálogo de Windows. Un PC limpio, con los parecidos a propósito (Teams no es TeamViewer, el
+    /// Escritorio remoto con el que TÚ miras otra pantalla no es el que deja que te miren), da cero; con un programa
+    /// de cada fila, todas. Las rutas van con `\`.
+    #[test]
+    fn el_kit_de_procesos_sinteticos_de_windows() {
+        let w = catalogo::programas_de_windows();
+        let limpio = del_kit(include_str!("../../../docs/kit-de-prueba/radar/pc-limpio.txt"));
+        assert!(limpio.len() > 60, "el PC limpio del kit tiene {} procesos", limpio.len());
+        let falsos = cotejar(&limpio, w);
+        assert!(falsos.is_empty(), "falsos positivos en un PC limpio: {falsos:?}");
+
+        let mut vigilado = limpio.clone();
+        vigilado.extend(del_kit(include_str!("../../../docs/kit-de-prueba/radar/pc-vigilado.txt")));
+        let vistos: Vec<String> = cotejar(&vigilado, w).into_iter().map(|p| p.nombre).collect();
+        let todos: Vec<String> = w.iter().filter(|f| !f.inscripcion).map(|f| f.nombre.clone()).collect();
+        assert_eq!(vistos, todos, "el kit de Windows no encuentra todo el catálogo, o encuentra de más");
+    }
+
+    #[test]
+    fn la_ruta_de_windows_se_corta_por_su_barra() {
+        assert_eq!(ejecutable(r"C:\Program Files\TeamViewer\TeamViewer.exe"), "TeamViewer.exe");
+        assert_eq!(ejecutable("/usr/bin/x"), "x");
+        assert_eq!(ejecutable("AnyDesk.exe"), "AnyDesk.exe");
+    }
+
+    /// La foto de procesos de este PC llega al radar, con el propio test dentro. Corre en la CI de Windows a secas:
+    /// no pide permisos.
+    #[cfg(windows)]
+    #[test]
+    fn la_foto_de_procesos_de_este_pc_llega_al_radar() {
+        let r = listar();
+        assert!(r.len() > 10, "solo {} procesos: la lista no se está leyendo", r.len());
+        let yo = std::env::current_exe().unwrap();
+        let yo = yo.file_name().unwrap().to_string_lossy();
+        assert!(r.iter().any(|x| ejecutable(x).eq_ignore_ascii_case(&yo)), "el propio test («{yo}») no aparece");
     }
 
     /// El núcleo de este Mac contesta y el radar sabe leerlo. En la CI de macOS también corre: la
