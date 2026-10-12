@@ -13,12 +13,16 @@ import AxeBuilder from "@axe-core/playwright";
  *
  * Sprint 007: la videollamada. Las cinco funciones nuevas en «Ya funciona», la banda y Sesión sin el Mac, y las
  * teclas de Windows en vez de `⌃⌥`.
+ *
+ * Sprint 008: Windows completo. «Todavía no» desaparece: el acople, la sugerencia, el radar, el borrado con la app
+ * cerrada y el desbloqueo pasan a «Ya funciona»; la IA dice que en Windows no hay modelo del sistema; el radar pinta su
+ * tecla de Windows.
  */
 
 // La app elige el idioma por el del navegador (src/App.tsx): estos textos se leen en español.
 test.use({ locale: "es-ES", reducedMotion: "reduce" });
 
-test("en Windows, Honestidad enseña «Hoy en Windows» con sus tres grupos y la transcripción medida", async ({
+test("en Windows, Honestidad enseña «Hoy en Windows» con sus dos grupos y la transcripción medida", async ({
   page,
 }) => {
   await page.goto("/?ventana=principal&pantalla=honestidad&plataforma=windows");
@@ -26,7 +30,8 @@ test("en Windows, Honestidad enseña «Hoy en Windows» con sus tres grupos y la
     page.getByRole("heading", { name: "Hoy en Windows" }),
   ).toBeVisible();
   await expect(page.getByText("Ya funciona")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Todavía no" })).toBeVisible();
+  // Sprint 008: ninguna función queda «todavía no».
+  await expect(page.getByRole("heading", { name: "Todavía no" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "No en Windows por ahora" })).toBeVisible();
   // La banda sin verificar se dice con su frase, no solo con un color. Desde el sprint 007 lo dicen dos filas: la
   // banda protegida y la videollamada, porque las dos dependen de lo que el usuario compruebe en su PC.
@@ -46,7 +51,7 @@ test("en Windows, Honestidad enseña «Hoy en Windows» con sus tres grupos y la
   ).toHaveCount(0);
 });
 
-test("en Windows, «Ya funciona» lleva las cinco funciones de la videollamada", async ({ page }) => {
+test("en Windows, «Ya funciona» lleva la videollamada (S7) y las cinco del S8", async ({ page }) => {
   await page.goto("/?ventana=principal&pantalla=honestidad&plataforma=windows");
   const ya = page.locator("section, div").filter({ has: page.getByText("Ya funciona", { exact: true }) }).last();
   for (const nombre of [
@@ -55,11 +60,16 @@ test("en Windows, «Ya funciona» lleva las cinco funciones de la videollamada",
     "La ficha al oído",
     "Ensayar con la voz que lee las preguntas",
     "Los atajos de teclado globales",
+    "Acoplarse a la ventana de la reunión",
+    "La sugerencia redactada por IA",
+    "El radar de tu equipo",
+    "Borrar tus notas con la app cerrada",
+    "Abrir tus notas guardadas",
   ]) {
     await expect(ya.getByText(nombre)).toBeVisible();
   }
-  // Y las que siguen sin llegar no se cuelan en «Ya funciona»: el acople y la sugerencia dicen que llegan después.
-  await expect(page.getByText("llega en una versión próxima").first()).toBeVisible();
+  // Y nada promete una versión próxima.
+  await expect(page.getByText(/versión próxima/i)).toHaveCount(0);
 });
 
 test("en macOS, Honestidad no enseña nada de Windows", async ({ page }) => {
@@ -77,9 +87,10 @@ test("en Windows, Permisos enseña el micrófono de Windows y no inventa los dem
   // La muestra de la maqueta trae el micrófono concedido: sin botón, con su chip. Los otros tres no existen aún.
   await expect(page.getByRole("button", { name: "Abrir Ajustes de Windows" })).toHaveCount(0);
   await expect(page.getByText("Conceder en macOS")).toHaveCount(0);
-  // Sprint 007: el audio del sistema y la pantalla de la reunión funcionan sin ningún permiso; solo acoplarse llega después.
-  await expect(page.getByText("No pide permiso en Windows")).toHaveCount(2);
-  await expect(page.getByText("Llega en una versión próxima")).toHaveCount(1);
+  // Sprint 007: el audio del sistema y la pantalla de la reunión funcionan sin ningún permiso; desde el sprint 008, acoplarse
+  // tampoco pide ninguno.
+  await expect(page.getByText("No pide permiso en Windows")).toHaveCount(3);
+  await expect(page.getByText(/versión próxima/i)).toHaveCount(0);
   await expect(page.getByText("El micrófono en Windows")).toBeVisible();
   await expect(
     page.getByText("Ajustes → Privacidad y seguridad → Micrófono"),
@@ -139,32 +150,37 @@ for (const p of [
 }
 
 /**
- * Hallazgo A6 de la auditoría del S6: Notas y la bandeja prometían que lo guardado se borra «aunque no abras la app».
- * En Windows esa tarea no existe (ADR 022: el borrado con la app cerrada, todavía no), así que la frase no puede salir.
+ * Hallazgo A6 de la auditoría del S6: Notas y la bandeja prometían que lo guardado se borra «aunque no abras la app», y en
+ * Windows esa tarea no existía. **Desde el sprint 008 existe** (el Programador de tareas, ADR 016 enmienda 4): la frase es
+ * verdad en los dos sistemas, y sale en los dos.
  */
-for (const url of [
-  "ventana=principal&pantalla=notas&estado=archivo&plataforma=windows",
-  "ventana=principal&pantalla=notas&estado=al-cerrar-bandeja&plataforma=windows",
-]) {
-  test(`en Windows, Notas no promete el borrado con la app cerrada (${url.split("estado=")[1].split("&")[0]})`, async ({ page }) => {
-    await page.goto(`/?${url}`);
-    await expect(page.locator("h1").first()).toBeVisible();
-    await expect(page.getByText(/aunque no abras la app/)).toHaveCount(0);
-  });
+for (const plataforma of ["", "&plataforma=windows"]) {
+  for (const estado of ["archivo", "al-cerrar-bandeja"]) {
+    test(`Notas promete el borrado con la app cerrada (${estado}${plataforma ? ", Windows" : ", macOS"})`, async ({ page }) => {
+      await page.goto(`/?ventana=principal&pantalla=notas&estado=${estado}${plataforma}`);
+      await expect(page.locator("h1").first()).toBeVisible();
+      await expect(page.getByText(/aunque no abras la app/).first()).toBeVisible();
+    });
+  }
 }
 
-/** El contrario del test de arriba: en macOS esa frase sí sale en las mismas vistas. Si no saliera, el cero de arriba no
- * demostraría nada. */
-for (const url of [
-  "ventana=principal&pantalla=notas&estado=archivo",
-  "ventana=principal&pantalla=notas&estado=al-cerrar-bandeja",
-]) {
-  test(`en macOS, la frase del borrado sí sale en ${url.split("estado=")[1]} (control del cero de Windows)`, async ({ page }) => {
-    await page.goto(`/?${url}`);
-    await expect(page.locator("h1").first()).toBeVisible();
-    await expect(page.getByText(/aunque no abras la app/).first()).toBeVisible();
-  });
-}
+/** La IA en Windows (sprint 008, ADR 023): sin modelo del sistema, lo dice con la verdad de Windows y no nombra a Apple. */
+test("en Windows, IA dice que no hay modelo del sistema y que la sugerencia va con el API", async ({ page }) => {
+  await page.goto("/?ventana=principal&pantalla=ia&plataforma=windows");
+  await expect(page.locator("h1").first()).toBeVisible();
+  await expect(page.getByText(/En Windows no hay modelo del sistema/).first()).toBeVisible();
+  await expect(page.getByText(/Apple|macOS|\bMac\b/)).toHaveCount(0);
+});
+
+/** El radar en la banda de Windows (sprint 008): dice que te mira un programa de tu PC, con las teclas de Windows y sin
+ * nombrar el Mac. (Su tecla, `Alt+Mayús+U`, la comprueban el contrato y `atajos.rs`: la banda compacta no la pinta.) */
+test("en Windows, la banda pinta el radar de tu PC", async ({ page }) => {
+  await page.setViewportSize({ width: 900, height: 220 });
+  await page.goto("/?ventana=banda&estado=radar-invasivo&plataforma=windows");
+  await expect(page.getByText("Te está mirando un programa de tu PC")).toBeVisible();
+  await expect(page.getByText(/Alt\+Mayús\+Q corta/)).toBeVisible();
+  await expect(page.getByText(/⌃|⌥|⎋|macOS|\bMac\b/)).toHaveCount(0);
+});
 
 /**
  * **La banda y Sesión en Windows (sprint 007).** La banda no promete invisibilidad donde nadie la verificó (regla dura 6) ni
