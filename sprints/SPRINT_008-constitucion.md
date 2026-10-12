@@ -52,9 +52,9 @@ y la latencia fin de turno → ficha ≤ 4 s en el PC (el runner da una cifra ma
 | Afirmación | Estado al cerrar el S8 |
 |---|---|
 | manual ES/EN (reglas 7 y 9) | `docs/MANUAL-EN.md` existe y `manual-bilingue` ata su estructura al manual en español |
-| brochure (regla 13) | ver «Brochure» más abajo (se actualiza al terminar la fase) |
-| documentos de arquitectura al día (BLUEPRINT) | ver «BLUEPRINT» más abajo (se actualiza al terminar la fase) |
-| guía con «Gate del H-1» | ver «Guía» más abajo (se actualiza al terminar la fase) |
+| brochure (regla 13) | existe: `docs/BROCHURE.html` (20 funcionalidades, Mac y Windows, es/en) + `docs/brochure-export.json` al día + la entrada «Conoce Angel Ghost» en Honestidad; `brochure.test.ts` (21) y `brochure.spec.ts` (30) lo vigilan, y el guion está «maquetado, no visto» para el gate. Copiar el export a CV Viva y publicar la ficha son del usuario |
+| documentos de arquitectura al día (BLUEPRINT) | `docs/BLUEPRINT.html` as-built al 2026-10-12 (commit `a485a47`, 89 comandos, cinco jobs de CI, «La misma frontera, dos sistemas»), con `design-system.md` 1.18.0 y `design-sync/` regenerado; publicar `design-sync/` con `/design-sync` es del usuario |
+| guía con «Gate del H-1» | existe: Mac 8 paradas ~20 min y PC 9 paradas ~20 min, con su matriz de la regla 24; `guia-cuadra` vigila el techo por máquina; las filas 21 a 26 de la tabla U (textos y el brochure) van aparte, sin techo |
 
 ## Sin deriva
 
