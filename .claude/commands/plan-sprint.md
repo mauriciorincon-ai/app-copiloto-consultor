@@ -23,9 +23,12 @@ con `status: open`.
    fuera de la maqueta, cambio que altera el uso, acción sobre protecciones del sistema). Sin fase 0 de
    método ni fase de cierre: el cierre son los pasos 3–5 del workflow de la constitución.
 4. **Aprobación en plan mode y gate de arranque.** Presenta el plan y espera su aprobación. Aprobar el plan
-   NO arranca nada: emite el bloque de arranque — modelo y esfuerzo de cada fase según la tabla de la
-   constitución (desvío = una línea de por qué) con sus `/model` y `/effort` — y espera la
-   palabra **«construye»**. Si llegan ajustes, incorpóralos y vuelve a esperar. **Prohibido crear o editar
+   NO arranca nada: emite el bloque de arranque — modelo **requerido** de cada fase según la tabla de la
+   constitución (desvío = una línea de por qué; esfuerzo solo sugerido) con su `/model` — y espera la
+   palabra **«construye»**. **Gate de modelo (kit v2.2.0):** antes de la F1 y al abrir cada fase escribes
+   «Fase N · modelo requerido: X · modelo activo: Y»; si no coinciden, NO construyes hasta su «vamos con Y»
+   o su `/model X`. Fable 5.1 solo si el usuario lo declara emergencia. **Relevo (regla 29):** segundo
+   intento fallido o 20 min sin avance verificable ⇒ paras y pides relevo en una línea; jamás un loop. Si llegan ajustes, incorpóralos y vuelve a esperar. **Prohibido crear o editar
    archivos antes del «construye».**
 5. **Construye** en branch `sprint-NNN/<tema>` con commits convencionales etiquetados `[F1]` / `[F2]` /
    `[F3]` en el subject (de ahí salen las horas por fase de `scripts/horas-sprint.mjs`). **Un solo STOP al

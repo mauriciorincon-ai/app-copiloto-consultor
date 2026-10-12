@@ -462,6 +462,17 @@ Estado v2.0.0 (§ 28): [cambio] — solo escritorio con dos ecosistemas; el test
     2.11; `cargo check` verde y `pnpm tauri build` imposible; lo vio el `/release-check`.)*
 
 
+Estado v2.2.0 (§ 29): [siempre] — regla dura del usuario (2026-10-11), nueva; absorbe el «si Haiku falla dos veces, sube a Sonnet» del piloto.
+29. **Relevo, nunca loop (kit v2.2.0).** Un modelo que siente que una tarea le cuesta y no la resuelve en seguida **para y pide
+    relevo** de un modelo más capaz; por nada se queda en un loop intentando resolverla de forma permanente. Umbral: el **segundo
+    intento fallido** sobre el mismo problema, o **20 min de reloj sin avance verificable** (un test que pasa, un error distinto, un
+    dato nuevo). Al parar: (a) escribe en la bitácora o el cierre qué intentó, qué falló y qué sabe; (b) una línea «Relevo: modelo
+    actual X · recomiendo Y · por qué · `/model Y`»; (c) espera. Escalón: Haiku → Sonnet → Opus; si Opus pide relevo, decide el
+    usuario y Fable entra solo si él lo declara emergencia. Un relevo no es fracaso: se cuenta en la fila «relevos» del cierre
+    ejecutivo (cuántos, de qué a qué, por qué) y alimenta la tabla de modelos en el checkpoint del hito. Compañera de esta regla:
+    el **gate de modelo** del núcleo (cada fase abre con «requerido X · activo Y»; si no coinciden, nada arranca hasta el «vamos
+    con Y» del usuario) y el esfuerzo **sugerido** (no se verifica).
+
 Estado v2.0.0 (§ Workflow): sustituido por el workflow de 5 pasos del núcleo. Dejan de aplicar: el gate de FASE en cada fase (un STOP al final de la construcción + máximo 1 mirada de DECISIÓN), la auditoría de dos fases (una pasada, un auditor), el summary con secciones fijas (cierre ejecutivo ≤ 40 líneas con las horas de `scripts/horas-sprint.mjs`), el PR en borrador con línea de merge (PR normal; el merge squash sigue siendo del usuario), el cierre de ciclo en dos actos y el mínimo de 3 sprints (modelo de hitos), el gate ⭐ por bloques (gate humano por hito) y `/design-sync` + BLUEPRINT por ciclo (al cierre del hito).
 ## Workflow de un sprint
 
