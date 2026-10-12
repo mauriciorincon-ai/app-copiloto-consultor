@@ -20,6 +20,7 @@ import {
 } from "../notas";
 import { escuchar, hayTauri } from "../puente";
 import { ESTADO_DE_LA_ESCUCHA_PRESENCIAL } from "../contrato.generado";
+import { HoyEnWindows } from "../componentes/HoyEnWindows";
 
 /**
  * HONESTIDAD — «Qué vive en la memoria ahora mismo y qué salió de tu equipo».
@@ -282,6 +283,8 @@ export function Honestidad({ bytes, escucha: laEscucha, busqueda = "" }: { bytes
             )}
           </div>
         </div>
+        {/* Solo en Windows (sprint 006, ADR 022): en macOS no pinta nada y la maqueta aprobada no cambia. */}
+        <HoyEnWindows />
       </div>
     </>
   );

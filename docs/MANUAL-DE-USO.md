@@ -816,6 +816,46 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     otro idioma no se transcribe bien** — está medido y está dicho en la pantalla de *Idioma*. Marcar
     varios idiomas por pista no está en la app.
 
+## Angel Ghost en Windows · Sprint 006
+
+No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fuera de «Features».
+
+- **Qué hace:** la app se instala en un PC con Windows. Tiene la banda protegida, el micrófono, la transcripción
+  local con whisper (en el modo presencial), tus notas cifradas y tu corpus con sus fichas. Honestidad tiene el
+  bloque **«Hoy en Windows»**, que dice qué hace y qué todavía no, cada cosa con su motivo.
+- **Cómo se instala:** llega como archivo (`.msi` o `.exe`) desde la integración continua del repositorio. **El
+  instalador no está firmado todavía:** Windows SmartScreen mostrará «Windows protegió tu PC». Pulsa **Más
+  información** (en inglés, *More info*) y luego **Ejecutar de todas formas** (en inglés, *Run anyway*). Si tu
+  cuenta no es de administrador, pide a quien administre el PC que lo instale.
+- **El micrófono:** Windows no pide nada desde la app. Lo concedes o lo quitas tú en **Ajustes → Privacidad y
+  seguridad → Micrófono**. En Permisos, el botón **Abrir Ajustes de Windows** te lleva ahí.
+- **El modelo de voz:** en Idioma, **Instalar** baja el modelo grande de whisper (1,6 GB). Antes de usarlo se
+  comprueba su huella SHA-256; si no coincide, se borra. **Nunca se baja con una reunión abierta.**
+- **La velocidad de tu PC:** Honestidad mide cuánto tarda la transcripción en 10 segundos de audio de muestra. Si
+  pasa de 4 s, lo dice y ofrece bajar el modelo pequeño (0,5 GB): es menos preciso, pero más rápido en ese PC.
+- **Tus notas:** se guardan cifradas, con la llave en el Administrador de credenciales de tu usuario. Exportarlas y
+  abrir la bandeja esperan a Windows Hello, que llega en una versión próxima.
+- **Lo que no verificamos:** que la banda no salga en Teams, Zoom ni Meet. Honestidad lo dice como «sin verificar»
+  hasta que lo pruebes en tu PC.
+
+| Clave | Hoy en Windows |
+|---|---|
+| `banda-protegida` | sí, sin verificar en Teams, Zoom ni Meet hasta que la pruebes en tu PC |
+| `presencial` | sí, con transcripción local (whisper) |
+| `corpus-y-ficha` | sí |
+| `notas-cifradas` | sí: cifradas con la llave en el Administrador de credenciales; exportar y abrir la bandeja esperan a Windows Hello |
+| `videollamada` | todavía no: el audio del sistema, la pista del cliente |
+| `pantalla` | todavía no: leer la pantalla de la reunión |
+| `voz-al-oido` | todavía no: la ficha al oído |
+| `acople` | todavía no: acoplarse a la ventana de la reunión |
+| `ensayo` | todavía no: ensayar con la voz que lee las preguntas |
+| `sugerencia` | todavía no: la sugerencia redactada por IA |
+| `radar` | todavía no: el radar de tu equipo |
+| `atajos` | todavía no: en muchos teclados Ctrl+Alt es AltGr |
+| `borrado-con-la-app-cerrada` | todavía no: por ahora se borra con la app abierta |
+| `desbloqueo` | todavía no: abrir tus notas guardadas, con Windows Hello |
+| `puerta-local` | no en Windows por ahora: la puerta para Claude Code |
+
 ## Atajos de teclado
 
 | Tecla | Qué hace |
@@ -900,6 +940,7 @@ abierta.
 | 003 | **tus notas** (el cuaderno de la reunión, el archivo cifrado por reunión, la retención, exportar y borrar) · `⌃⌥N` y `⌃⌥P` · **el cuaderno protegido** mientras la reunión está abierta · **lo que salió al API**, en *IA* · **las propuestas por reglas y la bandeja** con su cuenta atrás y su borrado con la app cerrada · `⌃⌥↵` · la señal «fijada» · el corte pasa a 11 piezas · las preferencias se recuerdan · tus notas pasan a la **carpeta privada de la app**, con «Mostrar en Finder», y se borran solas al vencer aunque no abras la app · **el marco en la mano**: «Este cliente», su bandera de jurisdicción, el chequeo de NDA, la cláusula de encargo y el **modo solo notas** · **la puerta local para Claude Code** (`ghost`), en *IA* |
 | 004 | **el ensayo** (las preguntas por reglas de tu propuesta, tu ficha y las objeciones típicas; la evaluación sin puntaje: usaste, tenías y no usaste, tiempo, ritmo y muletillas; el informe; guardarlo con la llave y la retención de tus notas; tu progreso por cliente; exportar y borrar) · **«Enriquecer el banco»**, en *IA* · **la banda arriba**, junto a la cámara, con `⌃⌥B` y el aviso de la primera vez · el acople arriba **baja y encoge solo la ventana de la reunión**, al iniciar la sesión · el corte pasa a 12 piezas · tras su auditoría: con una videollamada abierta el ensayo pide auriculares, *Sesión* avisa antes de descartar un ensayo sin guardar, la puerta se cierra también con un ensayo y lo dice, y la protección arriba se declara sin verificar |
 | 005 | **presencial**: la sala por el micrófono del Mac, sin audio del sistema ni pantalla; el idioma de la sala; la ficha al oído de fábrica, con la voz que espera a que la sala calle; las reglas medidas con dos voces sintéticas para no dispararse con tu voz; el PC con Windows al lado; lo que no hace (no separa voces, no guarda tus turnos, no propone) · en inglés, una frase que empieza con «is», «have» o «do» solo cuenta como pregunta si los abre |
+| 006 | **Angel Ghost en Windows**: la banda protegida, el micrófono, la transcripción con whisper (con su calibración en tu PC y el modelo pequeño como escalón), tus notas cifradas en el Administrador de credenciales, la privacidad del micrófono de Windows y **«Hoy en Windows»** en Honestidad · el instalador sin firmar sale de la integración continua |
 
 > **Corregido tras la auditoría del sprint 001** (2026-09-22): tres frases de este manual habían
 > dejado de ser ciertas y se arreglaron con lo que el código hacía de verdad — el disparo por

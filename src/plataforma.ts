@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { hayTauri, preguntar } from "./puente";
+import { PLATAFORMA_WINDOWS } from "./contrato.generado";
 
 /**
  * QUÉ HACE LA APP EN ESTE EQUIPO (sprint 006, ADR 022). Lo emite `src-tauri/src/plataforma.rs` y la muestra del
@@ -64,6 +65,15 @@ export const PLATAFORMA_FUERA: Plataforma = {
   transcripcion: null,
 };
 
+/**
+ * Lo que enseña una pantalla fuera de Tauri, donde no hay parte nativa a la que preguntar. `?plataforma=windows`
+ * pinta la muestra de Windows (la del contrato); sin el parámetro, macOS. Es el mismo mecanismo que `?estado=` en
+ * las demás pantallas: lo usan el e2e y el arnés de capturas, nunca la app instalada.
+ */
+export function plataformaFuera(busqueda: string = globalThis.location?.search ?? ""): Plataforma {
+  return new URLSearchParams(busqueda).get("plataforma") === "windows" ? PLATAFORMA_WINDOWS : PLATAFORMA_FUERA;
+}
+
 /** ¿Es Windows? Honestidad enseña su bloque solo entonces. */
 export function esWindows(p: Plataforma): boolean {
   return p.sistema === "windows";
@@ -112,7 +122,7 @@ export function whisperEnEsteEquipo(p: Plataforma): EstadoDeWhisper | null {
 
 /** Pregunta a Rust una vez al montar. */
 export function usePlataforma(
-  fuera: Plataforma = PLATAFORMA_FUERA,
+  fuera: Plataforma = plataformaFuera(),
 ): [Plataforma, (p: Plataforma) => void] {
   const [p, setP] = useState<Plataforma>(fuera);
   useEffect(() => {
