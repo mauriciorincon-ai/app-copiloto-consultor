@@ -78,6 +78,9 @@ const CENTINELAS: [string, number][] = [
   ["src-tauri/src/sesion/windows.rs", 2],
   // Sprint 008: el Programador de tareas (la única entrada, `pedir`, que registra y quita la tarea de vencimiento).
   ["src-tauri/src/vencimiento/windows.rs", 1],
+  // Sprint 008: el acople en Windows, como `acople/ax.rs` — leer las ventanas de otro programa (`ventanas_de`) y la
+  // única escritura sobre ellas (`poner`).
+  ["src-tauri/src/acople/windows.rs", 2],
 ];
 
 function rustDe(dir: string): string[] {
