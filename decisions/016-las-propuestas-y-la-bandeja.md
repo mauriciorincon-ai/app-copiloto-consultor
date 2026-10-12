@@ -336,6 +336,13 @@ abierta (ADR 022, inventario).
   en la CI de Windows (`tests/vencimiento-en-windows.rs`), como el de `sh` en el Mac.
 - **«No corrió» se mide igual** (§5): si la copia del XML existe y al abrir hay algo vencido hace más de dos minutos,
   Honestidad lo dice.
+- **Hasta 48 disparadores** (auditoría del S8, A1): el Programador de tareas admite como máximo 48 por tarea y rechaza la
+  tarea entera con uno más. `vencimiento::xml_de_windows` deja los **48 minutos más próximos** (`MAX_DISPARADORES_DE_WINDOWS`);
+  la tarea se vuelve a registrar en cada guardado, borrado o apertura, y lo que quedó fuera entra cuando se liberan. Lo
+  que venza después del 48.º disparo y antes de que la app se abra de nuevo espera a esa apertura, que barre lo vencido
+  (§5, primera capa).
+- **Su nombre es el del launchd:** `com.aiapps.copiloto-consultor.vencimiento` (el autor del XML dice «Angel Ghost»).
+  Es lo que se busca en la biblioteca raíz del Programador de tareas, y lo que la guía de prueba cita.
 
 **Consecuencias.** «Borrado con la app cerrada» pasa a «sí» en Windows (`plataforma.rs`). La tarea se ve en el
 Programador de tareas con su descripción, y se quita sola cuando ya no vence nada. **Sin verificar, para el PC:** que

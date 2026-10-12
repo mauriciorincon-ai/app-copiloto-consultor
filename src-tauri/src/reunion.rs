@@ -861,7 +861,7 @@ pub fn estado_de_la_bandeja<R: Runtime>(app: &AppHandle<R>) -> EstadoDeLaBandeja
 
 fn la_tarea<R: Runtime>(app: &AppHandle<R>) -> Option<vencimiento::Tarea> {
     // La tarea que borra con la app cerrada es de launchd en macOS y del Programador de tareas en Windows (sprint 008,
-    // ADR 016 enmienda 2). Fuera de esos dos sistemas la app no se distribuye y no hay tarea.
+    // ADR 016 enmienda 4). Fuera de esos dos sistemas la app no se distribuye y no hay tarea.
     if cfg!(not(any(target_os = "macos", windows))) {
         return None;
     }

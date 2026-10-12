@@ -322,7 +322,7 @@ export const es = {
 
     // ---- vocabulario de «todavía no» (§9-sexies) ----
     todaviaNo: "Todavía no",
-    enElH2: "En el H2",
+    enElRoadmap: "En el roadmap",
     soloNotasEnSesion: "Se elige en Sesión, antes de empezar",
     funciona: "Funciona",
 

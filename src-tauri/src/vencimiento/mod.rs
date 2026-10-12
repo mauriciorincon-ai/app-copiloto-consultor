@@ -13,7 +13,7 @@
 //! - y el registro con `/bin/launchctl`: el **segundo programa** que lanza la app, solo desde aquí
 //!   (lo cuenta `contador-de-red`).
 //!
-//! **En Windows (sprint 008, ADR 016 enmienda 2): el Programador de tareas.** La misma tarea con otra forma: un
+//! **En Windows (sprint 008, ADR 016 enmienda 4): el Programador de tareas.** La misma tarea con otra forma: un
 //! disparador por cada minuto que vence y «ejecutar lo antes posible si se perdió» en vez de `RunAtLoad`; lo que corre
 //! es `powershell.exe` sobre la misma lista ([`guion_de_windows`]), **no el binario de la app**. La definición es el
 //! XML del Programador ([`xml_de_windows`]), puro y probado aquí; se registra por COM (`ITaskService`), sin lanzar
@@ -203,6 +203,9 @@ pub fn argumentos_de_windows(lista: &str) -> String {
     )
 }
 
+/// Los disparadores que el Programador de tareas de Windows admite por tarea (límite documentado por Microsoft).
+pub const MAX_DISPARADORES_DE_WINDOWS: usize = 48;
+
 /// **La tarea de Windows en el XML del Programador de tareas** (esquema 1.2). Un disparador por cada minuto que vence,
 /// sin repetir; «ejecutar lo antes posible si se perdió» (`StartWhenAvailable`) hace de `RunAtLoad`: un vencimiento
 /// con el PC apagado se barre al volver. Corre como el usuario, solo con su sesión abierta y sin privilegios
@@ -211,6 +214,11 @@ pub fn xml_de_windows(tarea: &Tarea, pendientes: &[Pendiente], local: &dyn Fn(i6
     let mut minutos: Vec<Minuto> = en_la_lista(pendientes).iter().map(|p| local(minuto_de(p.vence))).collect();
     minutos.sort();
     minutos.dedup();
+    // El Programador de tareas admite 48 disparadores como máximo por tarea (Microsoft Learn, «Task Triggers»): con uno
+    // más, `RegisterTask` rechaza la tarea entera y no se borraría nada con la app cerrada. Entran los 48 más próximos; la
+    // tarea se registra de nuevo en cada guardado, borrado o apertura, así que los siguientes entran cuando se liberan
+    // (auditoría del S8, A1).
+    minutos.truncate(MAX_DISPARADORES_DE_WINDOWS);
     let disparadores: String = minutos
         .iter()
         .map(|m| {
@@ -225,7 +233,7 @@ pub fn xml_de_windows(tarea: &Tarea, pendientes: &[Pendiente], local: &dyn Fn(i6
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
     <Author>Angel Ghost</Author>
-    <Description>Angel Ghost: borra tus notas, tu bandeja y tus ensayos cuando vencen, aunque la app esté cerrada. Solo lee la lista de la app y solo borra archivos .ghost vencidos.</Description>
+    <Description>Angel Ghost: borra tus notas, tu bandeja y tus ensayos cuando vencen, aunque la app esté cerrada. Solo lee la lista de la app y solo borra archivos .ghost vencidos. · Angel Ghost: deletes your notes, tray and rehearsals when they expire, even with the app closed. It only reads the app's list and only deletes expired .ghost files.</Description>
   </RegistrationInfo>
   <Triggers>
 {disparadores}  </Triggers>
@@ -511,6 +519,22 @@ mod pruebas {
         assert!(!x.contains("angel-ghost.exe") && !x.contains("copiloto-consultor.exe"));
         assert!(x.contains("-EncodedCommand "), "la ruta no viaja en claro por la línea de órdenes");
         assert!(!x.contains("O'Neil"), "la ruta va dentro del guion codificado");
+    }
+
+    /// **El Programador de tareas rechaza una tarea con más de 48 disparadores** (auditoría del S8, A1): con 60 vencimientos en
+    /// 60 minutos distintos entran los 48 más próximos, en orden, y la descripción que ve el usuario está en los dos idiomas
+    /// (B5). Demostrado en rojo quitando el `truncate`.
+    #[test]
+    fn el_xml_de_windows_no_pasa_de_48_disparadores_y_deja_los_mas_proximos() {
+        let t = Tarea { etiqueta: ETIQUETA.into(), plist: "C:/a/x.xml".into(), lista: r"C:\l\vencimientos".into() };
+        let pendientes: Vec<Pendiente> = (0..60).map(|i| p(HOY + 3_600 + i * 60, "/b/a.ghost")).collect();
+        let x = xml_de_windows(&t, &pendientes, &utc);
+        assert_eq!(x.matches("<TimeTrigger>").count(), MAX_DISPARADORES_DE_WINDOWS, "{x}");
+        assert_eq!(MAX_DISPARADORES_DE_WINDOWS, 48);
+        assert!(x.contains("<StartBoundary>2026-09-27T15:00:00</StartBoundary>"), "el más próximo entra: {x}");
+        assert!(x.contains("<StartBoundary>2026-09-27T15:47:00</StartBoundary>"), "el 48.º entra: {x}");
+        assert!(!x.contains("<StartBoundary>2026-09-27T15:48:00</StartBoundary>"), "el 49.º se queda fuera: {x}");
+        assert!(x.contains("Solo lee la lista de la app") && x.contains("It only reads the app's list"), "la descripción va en los dos idiomas");
     }
 
     /// El guion de Windows hace lo mismo que el de `sh`: solo `.ghost`, solo vencido, y no escribe la lista. Una comilla

@@ -77,7 +77,7 @@ describe("el manual en inglés sigue la estructura del manual en español", () =
     expect(EN.texto, "queda una tecla de Windows en español").not.toMatch(/Alt\+Mayús/);
   });
 
-  it("las veinte funciones de «Features» están en las dos lenguas (el N = 20 del brochure)", () => {
+  it("las funciones de «Features» son las mismas en las dos lenguas (su cuenta es el N del brochure)", () => {
     const funciones = (m: typeof ES) => {
       const desde = m.secciones.findIndex((s) => s.nivel === 2 && /^(Features)$/.test(s.titulo));
       expect(desde, "no encontré «Features»").toBeGreaterThan(-1);
@@ -85,8 +85,8 @@ describe("el manual en inglés sigue la estructura del manual en español", () =
       const hasta = resto.findIndex((s) => s.nivel === 2);
       return resto.slice(0, hasta === -1 ? undefined : hasta).filter((s) => s.nivel === 3);
     };
-    expect(funciones(ES)).toHaveLength(20);
-    expect(funciones(EN)).toHaveLength(20);
+    expect(funciones(ES).length, "el manual no tiene funciones").toBeGreaterThan(0);
+    expect(funciones(EN)).toHaveLength(funciones(ES).length);
   });
 
   it("«Hoy en Windows» lleva las quince claves del ADR 022 en las dos lenguas, en su orden", () => {

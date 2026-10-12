@@ -35,7 +35,7 @@ La CI de `0cc590f` dio `quality`, `e2e` y `build-escritorio` en `success`. El da
   - Nada crudo sale del equipo.
   - No hay biometría de voz.
   - Nada toca otra máquina.
-- **Medios y bajos:** van al summary con su sitio, como manda el cierre mínimo.
+- **Medios y bajos:** van al summary con su sitio, como manda el cierre mínimo (pagados en el sprint 008, PR #24).
 
 | Severidad | Cuenta |
 |---|---|
@@ -55,11 +55,11 @@ A1 y M7 son justo la clase de defecto que esa corrida en vivo habría enseñado.
 **Lo que hizo el constructor con este informe (2026-10-11), según el cierre mínimo de la directiva del 2026-10-06:**
 
 - **A1, pagado en el sprint**, con su test y su rojo (abajo, en su sección).
-- **Los 8 medios y los 14 bajos van al summary como deuda, con su sitio, y no se pagan ahora**: la directiva lo manda
+- **Los 8 medios y los 14 bajos van al summary como deuda, con su sitio, y no se pagaron entonces** (pagados en el sprint 008, PR #24): la directiva lo mandaba
   así, aunque la regla de la casa es pagarlos todos. Su sprint de pago era el 006 y no llegó; **se pagaron todos en el
   sprint 008 (PR #24), y cada fila de abajo lleva su estado**. M7 se confirma además en la corrida en vivo del modo
   presencial, que viaja al gate humano del hito con los auriculares puestos.
-- **Los sitios de la deuda en `src-tauri/src/lib.rs` posteriores a la línea 946** (M6, B1, B4 y B14) están al día
+- **Los sitios de la deuda (pagada después, en el sprint 008) en `src-tauri/src/lib.rs` posteriores a la línea 946** (M6, B1, B4 y B14) están al día
   tras el pago de A1, que añadió 7 líneas ahí, y los del manual posteriores a su línea 156 (que ganó una); los demás
   sitios de este informe son los de `0cc590f`.
 

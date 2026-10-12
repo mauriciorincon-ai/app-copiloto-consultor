@@ -12,7 +12,7 @@
 //!
 //! Regla dura 9: todo es del propio equipo; no se toca ninguna otra máquina.
 
-use super::{a_quien_preguntar_titulos, del_catalogo, solo_en_llamada, Candidata, Proceso, Programa, Vista};
+use super::{a_quien_preguntar_titulos, del_catalogo, solo_en_llamada, Candidata, Clase, Proceso, Programa, Vista};
 use std::sync::{mpsc, Mutex, OnceLock};
 use std::time::Duration;
 use windows::core::BOOL;
@@ -31,7 +31,10 @@ pub fn mirar() -> Vista {
     let foto = procesos();
     let apps: Vec<(u32, String)> =
         foto.iter().filter(|p| del_catalogo(&p.exe).is_some()).map(|p| (p.pid, p.exe.clone())).collect();
-    let captura = if apps.is_empty() { Some(Vec::new()) } else { con_captura() };
+    // Enumerar los micrófonos y sus sesiones cuesta (hasta 2 s de espera): solo hace falta si corre Teams o Zoom, que son los
+    // que cuentan «en una llamada». Los navegadores pasan siempre y su reunión sale del título (auditoría del S8, B3).
+    let hay_aplicaciones = apps.iter().any(|(_, exe)| del_catalogo(exe).is_some_and(|c| c.clase == Clase::Aplicacion));
+    let captura = if hay_aplicaciones { con_captura() } else { Some(Vec::new()) };
     let apps: Vec<(i32, String)> = solo_en_llamada(apps, &foto, captura.as_deref(), super::catalogo())
         .into_iter()
         .map(|(pid, exe)| (pid as i32, exe))

@@ -326,7 +326,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - **Si borras el Llavero, tus reuniones guardadas no se pueden abrir.** La app no tiene recuperación:
     sería una segunda llave. Solo una copia de Time Machine (o el Asistente de migración) devuelve tu
     llavero, y con él tus notas, que se siguen abriendo.
-  - **Que la llave quede solo en este Mac llega con la firma de Apple (H2):** hasta entonces, el
+  - **Que la llave quede solo en este Mac llega con la firma de la app (G-Release, H-4):** hasta entonces, el
     llavero que la app puede usar no sabe atarla a un solo equipo.
   - **Tus notas no aparecen en Documentos:** se llega a ellas desde *Notas*, o con «Mostrar en Finder».
   - **El nombre del archivo va en claro** (`reunion-2026-09-27-1402.ghost`, o
@@ -419,7 +419,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     el catálogo v1») y no adivina.
   - Si la línea nombra varias («Colombia y California»), la bandera es la de **la más estricta**.
   - El catálogo se actualiza con una versión nueva de la app, nunca por la red.
-  - La plantilla del aviso de una línea al cliente y el registro de que le informaste quedan para H2.
+  - La plantilla del aviso de una línea al cliente y el registro de que le informaste quedan para un hito posterior, sin fecha.
 
 ### El ensayo: practica antes de la reunión · Nuevo · Sprint 004
 
@@ -689,8 +689,8 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - Las fichas que trae **la pantalla sola** no llevan sugerencia: no responden a ninguna pregunta.
   - Un nombre de persona **suelto** («Andrea») que no esté en tu corpus no se reconoce al anonimizar;
     dos palabras con mayúscula seguidas («Andrea Villalba») sí.
-  - El camino **MLX** (un modelo que descargas tú) no está en este MVP: queda en el roadmap del H2, y
-    en IA su fila lo dice con «En el H2». Sin Apple Intelligence, la sugerencia local no está.
+  - El camino **MLX** (un modelo que descargas tú) no está en este MVP: queda en el roadmap, sin fecha, y
+    en IA su fila lo dice con «En el roadmap». Sin Apple Intelligence, la sugerencia local no está.
   - La sugerencia se escribe **en el idioma de la ficha que cita**, no en el de la pregunta: si tu
     cliente pregunta en inglés y tu propuesta está en español, la sugerencia sale en español.
   - A veces la sugerencia es fiel a su ficha pero **no contesta la pregunta** (cita otra de las tres

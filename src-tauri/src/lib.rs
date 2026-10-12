@@ -3978,10 +3978,6 @@ fn registrar_el_kill_switch<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
         (Accion::Banda, "[ventanas] «la banda, al otro borde»", "la banda se sigue cambiando de borde en Sesión, pero la tecla no va a responder"),
     ];
     for &(accion, que, si_no) in lista {
-        if !atajos::se_registra_aqui(accion) {
-            println!("{que}: su tecla no se registra en este sistema todavía (ADR 022)");
-            continue;
-        }
         let teclas = atajos::de_este_equipo(accion).texto;
         // **Si no puede, lo dice**, en el log y en Honestidad: el usuario no puede pulsar una tecla creyendo que
         // cortó y no haber cortado nada.

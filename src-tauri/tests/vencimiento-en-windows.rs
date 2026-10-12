@@ -1,4 +1,4 @@
-//! **El barrido de Windows, con PowerShell de verdad** (sprint 008, ADR 016 enmienda 2): la misma prueba que el
+//! **El barrido de Windows, con PowerShell de verdad** (sprint 008, ADR 016 enmienda 4): la misma prueba que el
 //! barrido de `/bin/sh` en el Mac (`contra-el-mac-de-verdad.rs`), con el guion que la tarea del Programador corre.
 //! No registra ninguna tarea ni toca el Programador: lanza `powershell.exe` con los mismos argumentos de la tarea
 //! sobre una carpeta temporal con archivos inventados, y mira qué quedó. Corre en la CI de Windows a secas.

@@ -326,7 +326,7 @@ only macOS 26 ships with; on a Mac with an earlier version it does not start.
   - **If you delete the Keychain, your saved meetings cannot be opened.** The app has no recovery:
     it would be a second key. Only a Time Machine backup (or Migration Assistant) brings back your
     keychain, and with it your notes, which keep opening.
-  - **Having the key stay only on this Mac arrives with Apple signing (H2):** until then, the
+  - **Having the key stay only on this Mac arrives with the app’s signing (G-Release, H-4):** until then, the
     keychain that the app can use does not know how to tie it to a single machine.
   - **Your notes do not appear in Documents:** you reach them from *Notes*, or with “Show in Finder”.
   - **The file name is in the clear** (`reunion-2026-09-27-1402.ghost`, or
@@ -419,7 +419,7 @@ only macOS 26 ships with; on a Mac with an earlier version it does not start.
     catalog v1”) and does not guess.
   - If the line names several (“Colombia and California”), the flag is that of **the strictest one**.
   - The catalog is updated with a new version of the app, never over the network.
-  - The template for the one-line notice to the client and the record that you informed them are left for H2.
+  - The template for the one-line notice to the client and the record that you informed them are left for a later milestone, with no date.
 
 ### The rehearsal: practice before the meeting · New · Sprint 004
 
@@ -685,8 +685,8 @@ only macOS 26 ships with; on a Mac with an earlier version it does not start.
   - The cards that **the screen alone** brings carry no suggestion: they answer no question.
   - A **loose** person’s name (“Andrea”) that is not in your corpus is not recognized when anonymizing;
     two capitalized words in a row (“Andrea Villalba”) are.
-  - The **MLX** path (a model you download yourself) is not in this MVP: it stays on the H2 roadmap, and
-    in AI its row says so with “In H2”. Without Apple Intelligence, the local suggestion is not available.
+  - The **MLX** path (a model you download yourself) is not in this MVP: it stays on the roadmap, with no date, and
+    in AI its row says so with “On the roadmap”. Without Apple Intelligence, the local suggestion is not available.
   - The suggestion is written **in the language of the card it cites**, not of the question: if your
     client asks in English and your proposal is in Spanish, the suggestion comes out in Spanish.
   - Sometimes the suggestion is faithful to its card but **does not answer the question** (it cites another of the three

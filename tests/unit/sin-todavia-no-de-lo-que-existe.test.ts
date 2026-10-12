@@ -6,8 +6,8 @@ import { describe, expect, it } from "vitest";
  *
  * Una pantalla que dice «Todavía no» de algo que existe miente igual que una que promete lo que falta.
  * El S3 construyó «Conservar mis turnos» y «Solo notas», y tres pantallas seguían diciendo «Todavía no».
- * Y lo que ya tiene sitio en el H2 (MLX, arrastrar documentos, releer lo que cambió, leer lo escaneado)
- * dice «En el H2», no «Todavía no». Este gate lee las fuentes de las pantallas.
+ * Y lo que ya tiene sitio en el roadmap (MLX, arrastrar documentos, releer lo que cambió, leer lo escaneado)
+ * dice «En el roadmap», no «Todavía no». Este gate lee las fuentes de las pantallas.
  *
  * ¿Puede fallar? Sí: nació en rojo con las pantallas de antes (bitácora).
  */

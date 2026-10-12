@@ -1,4 +1,4 @@
-//! **La tarea de vencimiento en el Programador de tareas de Windows** (sprint 008, ADR 016 enmienda 2). La app no
+//! **La tarea de vencimiento en el Programador de tareas de Windows** (sprint 008, ADR 016 enmienda 4). La app no
 //! lanza ningún programa para esto: habla con el Programador por COM (`ITaskService`), registra el XML que generó
 //! `super::xml_de_windows` en la carpeta raíz con el nombre de la tarea y, cuando ya no vence nada, la borra. Lo que
 //! corre después, al minuto de cada vencimiento, es `powershell.exe` lanzado por Windows, no por la app.

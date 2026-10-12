@@ -301,7 +301,7 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
               existe en Notas. Una pantalla que dice «todavía no» de algo que existe miente igual que
               una que promete lo que falta. */}
           <div className="tarjeta pendiente">
-            {/* «Lo que no hace hoy», sin chip «En el H2»: la ruta del H2 no lo incluye (auditoría del S4, B46). */}
+            {/* «Lo que no hace hoy», sin chip «En el roadmap»: la ruta no lo incluye (auditoría del S4, B46). */}
             <h2 className="seccion">{t.loQueTodaviaNo}</h2>
             <div className="fila">
               <span className="crece">{t.variosIdiomasPorPista}</span>

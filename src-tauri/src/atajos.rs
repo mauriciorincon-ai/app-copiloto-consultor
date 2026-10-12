@@ -119,57 +119,42 @@ pub fn atajo(a: Accion) -> Shortcut {
     Shortcut::new(t.modificadores, t.tecla)
 }
 
-/// ¿Se registra esta acción en este equipo? Todas: desde el sprint 008 el radar también mira en Windows, y su tecla,
-/// que estuvo apartada, se registra. Se queda como función para que la próxima que falte en un sistema tenga dónde
-/// decirse.
-pub fn se_registra_aqui(_a: Accion) -> bool {
-    true
-}
-
-/// Cómo quedó el registro de una acción en esta sesión.
+/// Cómo quedó el registro de una acción que se intentó en esta sesión. Lo que no se intentó (o se devolvió al sistema: `Esc` solo es
+/// de la app mientras dure el modo de voz) no tiene entrada, y no se dice (auditoría del S8, B1: antes había una tercera variante
+/// que nadie leía fuera de este archivo).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Registro {
-    /// Aún no se intentó (o se devolvió al sistema: `Esc` solo es de la app mientras dure el modo de voz).
-    SinIntentar,
+enum Registro {
     Registrada,
     /// El sistema no la dejó registrar: otra app ya tiene esa combinación.
     Fallida,
 }
 
-/// Cómo quedó cada acción. Solo acciones y su estado: ni teclas pulsadas ni nada más.
+/// Cómo quedó cada acción intentada. Solo acciones y su estado: ni teclas pulsadas ni nada más.
 static REGISTROS: Mutex<Vec<(Accion, Registro)>> = Mutex::new(Vec::new());
-
-fn poner(a: Accion, r: Registro) {
-    if let Ok(mut v) = REGISTROS.lock() {
-        v.retain(|(x, _)| *x != a);
-        v.push((a, r));
-    }
-}
 
 /// Apunta si una acción quedó registrada o no.
 pub fn apuntar(a: Accion, registrada: bool) {
-    poner(a, if registrada { Registro::Registrada } else { Registro::Fallida });
+    if let Ok(mut v) = REGISTROS.lock() {
+        v.retain(|(x, _)| *x != a);
+        v.push((a, if registrada { Registro::Registrada } else { Registro::Fallida }));
+    }
 }
 
-/// La acción se devolvió al sistema: vuelve a «sin intentar» (lo único que pasa con `Esc` al apagar el modo de voz).
+/// La acción se devolvió al sistema: vuelve a no tener entrada (lo único que pasa con `Esc` al apagar el modo de voz).
 pub fn soltar(a: Accion) {
-    poner(a, Registro::SinIntentar);
+    if let Ok(mut v) = REGISTROS.lock() {
+        v.retain(|(x, _)| *x != a);
+    }
 }
 
-/// Cómo quedó esta acción. **Distingue lo que no se intentó de lo que salió bien** (sprint 008, M10 del S7): antes las
-/// dos eran «registrada» y un atajo que nadie intentó pasaba por bueno.
-pub fn estado(a: Accion) -> Registro {
-    REGISTROS
-        .lock()
-        .ok()
-        .and_then(|v| v.iter().find(|(x, _)| *x == a).map(|(_, r)| *r))
-        .unwrap_or(Registro::SinIntentar)
+fn estado(a: Accion) -> Option<Registro> {
+    REGISTROS.lock().ok().and_then(|v| v.iter().find(|(x, _)| *x == a).map(|(_, r)| *r))
 }
 
-/// ¿Es un fallo de registro lo que hay que decir? Solo `Fallida`: lo que no se intentó no tiene nada que contar al
-/// usuario, y el test de `lib.rs` exige que `registrar_el_kill_switch` intente todas las demás.
+/// ¿Es un fallo de registro lo que hay que decir? Solo si el sistema la rechazó: lo que no se intentó no tiene nada que
+/// contar al usuario, y el test de `lib.rs` exige que `registrar_el_kill_switch` intente todas las demás.
 pub fn registrada(a: Accion) -> bool {
-    estado(a) != Registro::Fallida
+    estado(a) != Some(Registro::Fallida)
 }
 
 /// Un atajo tal como lo enseña la webview.
@@ -242,18 +227,19 @@ mod pruebas {
         assert_eq!(en_macos(Accion::Callar), t(None, Code::Escape, "⎋"));
     }
 
-    /// **Lo que no se intentó no es lo que salió bien** (sprint 008, M10 del S7), y `Esc` se apunta como las demás.
+    /// **Lo que no se intentó no es lo que salió bien** (sprint 008, M10 del S7), y `Esc` se apunta como las demás: solo lo
+    /// que el sistema rechazó se dice, y devolverla al sistema borra la entrada.
     #[test]
     fn sin_intentar_no_es_registrada_y_se_distingue() {
         soltar(Accion::Callar);
-        assert_eq!(estado(Accion::Callar), Registro::SinIntentar);
+        assert_eq!(estado(Accion::Callar), None);
         apuntar(Accion::Callar, true);
-        assert_eq!(estado(Accion::Callar), Registro::Registrada);
+        assert_eq!(estado(Accion::Callar), Some(Registro::Registrada));
         apuntar(Accion::Callar, false);
-        assert_eq!(estado(Accion::Callar), Registro::Fallida);
+        assert_eq!(estado(Accion::Callar), Some(Registro::Fallida));
         assert!(!registrada(Accion::Callar), "una tecla que el sistema no dejó registrar se dice");
         soltar(Accion::Callar);
-        assert_eq!(estado(Accion::Callar), Registro::SinIntentar);
+        assert_eq!(estado(Accion::Callar), None);
         assert!(registrada(Accion::Callar), "devuelta al sistema: ya no hay nada que decir");
     }
 
@@ -267,7 +253,6 @@ mod pruebas {
         assert!(registrada(Accion::Banda));
         // Desde el sprint 008 el radar cruza también en Windows, con Alt+Mayús+U.
         assert!(para_el_contrato(true).iter().any(|x| x.accion == Accion::Radar && x.teclas == "Alt+Shift+U"));
-        assert!(TODAS.iter().all(|a| se_registra_aqui(*a)));
         assert_eq!(para_el_contrato(false).len(), TODAS.len());
         assert_eq!(para_el_contrato(true).len(), TODAS.len());
     }

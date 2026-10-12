@@ -44,8 +44,8 @@ const texto = (el: Element, idioma: "es" | "en") =>
     .join(" ");
 
 describe("el brochure cubre las funcionalidades del manual, todas y en los dos idiomas", () => {
-  it("hay una .feature por sección «###» de Features del manual: N = 20, agrupar sí, omitir jamás", () => {
-    expect(MANUAL_ES.length).toBe(20);
+  it("hay una .feature por sección «###» de Features del manual (su cuenta es el N): agrupar sí, omitir jamás", () => {
+    expect(MANUAL_ES.length, "el manual no tiene funcionalidades").toBeGreaterThan(0);
     expect(features.length).toBe(MANUAL_ES.length);
     const es = features.map((f) => texto(f.querySelector("h4")!, "es"));
     const en = features.map((f) => texto(f.querySelector("h4")!, "en"));
@@ -72,15 +72,18 @@ describe("el brochure cubre las funcionalidades del manual, todas y en los dos i
     );
   });
 
-  it("seis tarjetas, y las .feature de cada una suman las 20", () => {
+  it("una tarjeta por grupo del export, con las .feature de cada grupo, y entre todas suman las del manual", () => {
+    const exportado = JSON.parse(readFileSync("docs/brochure-export.json", "utf8")) as {
+      funcionalidades: { grupos: { features: unknown[] }[] };
+    };
     const tarjetas = [...doc.querySelectorAll(".tarjeta")];
-    expect(tarjetas.length).toBe(6);
-    expect(tarjetas.map((t) => t.querySelectorAll(".feature").length)).toEqual([
-      3, 4, 3, 6, 1, 3,
-    ]);
+    expect(tarjetas.length).toBe(exportado.funcionalidades.grupos.length);
+    expect(tarjetas.map((t) => t.querySelectorAll(".feature").length)).toEqual(
+      exportado.funcionalidades.grupos.map((g) => g.features.length),
+    );
     expect(
-      tarjetas.reduce((s, t) => s + t.querySelectorAll(".feature").length, 0),
-    ).toBe(features.length);
+      tarjetas.reduce((n, t) => n + t.querySelectorAll(".feature").length, 0),
+    ).toBe(MANUAL_ES.length);
   });
 
   it("todo texto tiene su par: cada elemento con lang=es tiene su lang=en en el mismo sitio", () => {
@@ -154,15 +157,14 @@ describe("el brochure es autocontenido y no ofrece nada que no sea suyo", () => 
     const pedidas = [...doc.querySelectorAll("[data-muestra]")].map((e) =>
       e.getAttribute("data-muestra")!,
     );
-    expect(pedidas.length).toBe(12);
-    expect(new Set(pedidas).size).toBe(12);
-    const estados = new Set(pedidas.map((p) => p.split("--")[0]));
-    expect([...estados].sort()).toEqual([
-      "banda-ficha",
-      "notas-al-cerrar",
-      "sesion-windows",
-    ]);
+    // Los estados que el script sabe capturar, por sus llaves; cada uno se pide en dos temas y dos idiomas, sin repetirse.
     const guion = readFileSync("scripts/capturar-brochure.mjs", "utf8");
+    const delGuion = [...guion.matchAll(/^\s*"([a-z-]+)": \{ url:/gm)].map((m) => m[1]);
+    expect(delGuion.length, "el script no declara estados").toBeGreaterThan(0);
+    expect(new Set(pedidas).size, "una muestra repetida").toBe(pedidas.length);
+    expect(pedidas.length).toBe(delGuion.length * 2 * 2);
+    const estados = new Set(pedidas.map((p) => p.split("--")[0]));
+    expect([...estados].sort()).toEqual([...delGuion].sort());
     for (const e of estados)
       expect(guion, `el script no sabe capturar «${e}»`).toContain(`"${e}"`);
     for (const el of doc.querySelectorAll("[data-muestra]")) {
@@ -263,7 +265,7 @@ describe("el brochure solo dice lo real, con el vocabulario del producto", () =>
 
   it("incluye Windows y no promete lo que nadie ha verificado", () => {
     expect(visible).toMatch(/Windows/);
-    expect(texto(doc.querySelector(".e5")!, "es")).toMatch(/va al gate del hito/);
+    expect(texto(doc.querySelector(".e5")!, "es")).toMatch(/en el gate del hito/);
     // La protección de la captura, graduada por plataforma (regla dura 6): verificada solo donde la corrida en vivo lo comprobó.
     expect(visible).toMatch(/verificado en Google Meet sobre macOS 26\.6\.2/);
     expect(visible).toMatch(/verified in Google Meet on macOS 26\.6\.2/);

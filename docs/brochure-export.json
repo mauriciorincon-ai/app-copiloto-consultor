@@ -197,7 +197,7 @@
           {
             "id": "M2",
             "nombre": "El radar: quién graba y quién te vigila",
-            "que_hace": "Mirando solo tu equipo y tu pantalla, avisa en ámbar si la reunión muestra el aviso de grabación o un bot de notas, y en coral si en tu equipo corre software de monitoreo o de supervisión de exámenes de un catálogo con fuente y fecha por fila. Jamás toca la máquina de nadie.",
+            "que_hace": "Mirando solo tu equipo y tu pantalla, avisa en ámbar si la reunión muestra el aviso de grabación o un bot de notas, y en coral si en tu equipo corre software de monitoreo o de supervisión de exámenes de un catálogo con fuente por fila y fecha de lectura. Jamás toca la máquina de nadie.",
             "seccion_manual": "El radar: quién graba y quién te vigila"
           },
           {

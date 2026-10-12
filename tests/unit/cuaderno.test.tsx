@@ -407,7 +407,7 @@ describe("el cuaderno: lo que no existe se dice", () => {
     // idiomas por pista **no está en la app**, y la ruta del H2 no lo incluye: «Lo que no hace hoy», sin
     // chip que prometa un horizonte (auditoría del S4, B46).
     expect(screen.getByText(t.loQueTodaviaNo)).toBeInTheDocument();
-    expect(screen.queryByText(t.enElH2)).toBeNull();
+    expect(screen.queryByText(t.enElRoadmap)).toBeNull();
     expect(screen.queryByText(t.todaviaNo)).toBeNull();
     expect(
       screen.getByText(`SpeechAnalyzer · macOS 26 · 5 ${t.idiomasListos}`),
@@ -478,7 +478,7 @@ describe("el cuaderno: lo que no existe se dice", () => {
     );
     // Lo que falta no está en la ruta del H2: «Lo que no hace hoy», sin chip (auditoría del S4, B46).
     expect(screen.getByText(t.corpusPendiente)).toBeInTheDocument();
-    expect(screen.queryByText(t.enElH2)).toBeNull();
+    expect(screen.queryByText(t.enElRoadmap)).toBeNull();
     // Las cinco unidades más la sexta respuesta: lo que no encaja en ninguna.
     expect(container.querySelectorAll(".unidad-chip")).toHaveLength(6);
     expect(screen.getByText(t.sinUnidad)).toBeInTheDocument();

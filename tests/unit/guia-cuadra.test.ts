@@ -275,5 +275,24 @@ describe("la guía de prueba cuadra", () => {
       expect(new Set(filas.map((f) => f[2]))).toEqual(new Set(["Mac", "PC"]));
       expect(filas.map((f) => Number(f[1]))).toEqual(filas.map((_, i) => i + 1));
     });
+
+    /**
+     * **Lo que la matriz dice que se toca se llama como el código lo llama** (auditoría del S8, A2): la fila 9 mandaba a borrar
+     * una tarea «Angel Ghost …» que no existe —se registra con la etiqueta de launchd— y la parada 8 mandaba a buscarla. Los
+     * nombres salen del código, no de la memoria de quien escribió la guía. ¿Puede fallar? Sí: con otro nombre en la guía (o en
+     * el código) es rojo, con el nombre que no coincide.
+     */
+    it("la tarea del Programador de tareas y la credencial de las notas se llaman en la guía como en el código", () => {
+      const venc = readFileSync("src-tauri/src/vencimiento/mod.rs", "utf8");
+      const etiqueta = /pub const ETIQUETA: &str = "([^"]+)";/.exec(venc)?.[1];
+      expect(etiqueta, "vencimiento/mod.rs ya no declara ETIQUETA").toBeTruthy();
+      const filaDeLaTarea = GUIA.match(/<tr><td>\d+<\/td><td>PC<\/td><td>Una tarea del Programador de tareas<\/td>.*?<\/tr>/)?.[0] ?? "";
+      expect(filaDeLaTarea, `la fila de la tarea no cita ${etiqueta}`).toContain(etiqueta!);
+      expect(GUIA.match(/id="w15"[\s\S]*?<\/li>/)?.[0] ?? "", `la parada del borrado no cita ${etiqueta}`).toContain(etiqueta!);
+      expect(GUIA, "la guía manda buscar una tarea que no existe").not.toMatch(/tarea\s*(<strong>)?«Angel Ghost …»/);
+      const llave = /"(Angel Ghost · notas \/ llave)"/.exec(readFileSync("src-tauri/src/llavero/windows.rs", "utf8"))?.[1];
+      expect(llave, "llavero/windows.rs ya no prueba el nombre de la credencial").toBeTruthy();
+      expect(GUIA, `la matriz no cita la credencial «${llave}»`).toContain(`«${llave}»`);
+    });
   });
 });

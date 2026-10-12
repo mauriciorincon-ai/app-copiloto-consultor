@@ -80,7 +80,7 @@ describe("las teclas de macOS salen del contrato, no de una copia (auditoría de
     expect(TECLAS_DE_MACOS.map(([, accion]) => accion).sort()).toEqual(
       PLATAFORMA_MACOS.atajos.map((a) => a.accion).sort(),
     );
-    expect(TECLAS_DE_MACOS).toHaveLength(11);
+    expect(TECLAS_DE_MACOS).toHaveLength(PLATAFORMA_MACOS.atajos.length);
     // «⎋» está dentro de «⌥⎋»: si la corta fuera antes, el corte quedaría a medias.
     TECLAS_DE_MACOS.forEach(([teclas], i) => {
       for (const [despues] of TECLAS_DE_MACOS.slice(i + 1)) {
