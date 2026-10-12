@@ -20,6 +20,7 @@ import {
 } from "../notas";
 import { escuchar, hayTauri } from "../puente";
 import { ESTADO_DE_LA_ESCUCHA_PRESENCIAL } from "../contrato.generado";
+import { Conoce } from "../componentes/Conoce";
 import { HoyEnWindows } from "../componentes/HoyEnWindows";
 import { useTextosDeWindows } from "../i18n/windows";
 import { esWindows, usePlataforma } from "../plataforma";
@@ -292,6 +293,8 @@ export function Honestidad({ bytes, escucha: laEscucha, busqueda = "" }: { bytes
         </div>
         {/* Solo en Windows (sprint 006, ADR 022): en macOS no pinta nada y la maqueta aprobada no cambia. */}
         <HoyEnWindows />
+        {/* Solo dentro de la app (sprint 008): abre el recorrido visual que viaja con ella. */}
+        <Conoce />
       </div>
     </>
   );

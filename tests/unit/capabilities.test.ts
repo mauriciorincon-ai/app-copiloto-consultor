@@ -96,6 +96,8 @@ const SENSIBLES = [
   // Cómo ves la ficha en presencial (ADR 020 §7): se elige en Sesión; la banda tiene ⌃⌥V.
   "fijar_la_voz",
   "abrir_ajustes_de",
+  // «Conoce Angel Ghost» abre un archivo local en el navegador del usuario (opener): solo desde Honestidad.
+  "abrir_conoce",
   // La banda no se cambia de borde a sí misma: lo eliges tú en Sesión o con ⌃⌥B (sprint 004).
   "fijar_posicion_de_la_banda",
   "entendido_el_aviso_de_arriba",

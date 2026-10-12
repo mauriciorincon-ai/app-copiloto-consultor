@@ -192,11 +192,14 @@ describe("brochure-export.json: el contrato de la vitrina", () => {
       version: string;
     };
     expect(exportado.app.version_repo).toBe(pkg.version);
+    // Hasta el sprint 5 el cierre era un `summary` con `status: closed`; desde el 6 es el cierre ejecutivo, con `closed: <fecha>`
+    // en su frontmatter (`/cierre-sprint`: «un solo archivo»).
     const cerrados = readdirSync("sprints")
-      .filter((n) => /^SPRINT_\d{3}-summary\.md$/.test(n))
-      .filter((n) =>
-        /^status: closed$/m.test(readFileSync(join("sprints", n), "utf8")),
-      );
+      .filter((n) => /^SPRINT_\d{3}-(summary|cierre)\.md$/.test(n))
+      .filter((n) => {
+        const texto = readFileSync(join("sprints", n), "utf8");
+        return /^status: closed$/m.test(texto) || /\bclosed: \d{4}-\d{2}-\d{2}\b/.test(texto.slice(0, 600));
+      });
     expect(exportado.app.sprints_cerrados).toBe(cerrados.length);
     const adrs = readdirSync("decisions").filter((n) =>
       /^\d{3}-.+\.md$/.test(n),

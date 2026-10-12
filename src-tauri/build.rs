@@ -16,6 +16,7 @@ const COMANDOS: &[&str] = &[
         "reunion_abierta",
         "permisos_de_macos",
         "abrir_ajustes_de",
+        "abrir_conoce",
         "bytes_a_la_red",
         "cortar_todo",
         "empezar_a_escuchar",

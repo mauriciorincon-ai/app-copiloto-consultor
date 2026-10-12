@@ -491,6 +491,32 @@ fn abrir_ajustes_de(permiso: String) -> Result<(), String> {
     tauri_plugin_opener::open_url(url, None::<&str>).map_err(|e| e.to_string())
 }
 
+/// Dónde está el recorrido «Conoce Angel Ghost» dentro de la app: `docs/BROCHURE.html` viaja como recurso
+/// (`tauri.conf.json` → `bundle.resources`). Pura: se prueba sin Tauri.
+fn ruta_del_recorrido(recursos: &std::path::Path) -> std::path::PathBuf {
+    recursos.join("BROCHURE.html")
+}
+
+/// La ruta tal como la entiende el sistema para abrirla: en Windows, Tauri puede devolver la forma «verbatim»
+/// (`\\?\C:\…`) que el shell no abre; se le quita el prefijo. En macOS no cambia nada.
+fn ruta_para_abrir(ruta: &std::path::Path) -> String {
+    let s = ruta.to_string_lossy().into_owned();
+    s.strip_prefix(r"\\?\").map(str::to_owned).unwrap_or(s)
+}
+
+/// **«Conoce Angel Ghost».** Abre el recorrido visual (`docs/BROCHURE.html`, que viaja dentro de la app) en el
+/// navegador del usuario con el plugin `opener`. Es un archivo local: **no toca la red** (ninguna salida pasa por
+/// `red.rs`, y un test lo comprueba) y no lee ni escribe nada tuyo. Si esta compilación no lo trae, lo dice.
+#[tauri::command]
+fn abrir_conoce(app: tauri::AppHandle) -> Result<(), String> {
+    let recursos = app.path().resource_dir().map_err(|e| e.to_string())?;
+    let ruta = ruta_del_recorrido(&recursos);
+    if !ruta.is_file() {
+        return Err("el recorrido no viaja en esta compilación".to_string());
+    }
+    tauri_plugin_opener::open_path(ruta_para_abrir(&ruta), None::<&str>).map_err(|e| e.to_string())
+}
+
 /// Los bytes que han salido del equipo en esta reunión, ya formateados como los escribe la
 /// maqueta. Se devuelve **leído**, no como constante de la interfaz: un contador escrito a mano
 /// en el webview no es un contador.
@@ -1789,6 +1815,7 @@ pub fn run() {
             reunion_abierta,
             permisos_de_macos,
             abrir_ajustes_de,
+            abrir_conoce,
             bytes_a_la_red,
             cortar_todo,
             empezar_a_escuchar,
@@ -4293,6 +4320,32 @@ mod pruebas_de_las_teclas {
                 assert_ne!(a, b, "dos atajos comparten tecla");
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod pruebas_de_conoce {
+    use super::*;
+    use std::path::Path;
+
+    /// El recorrido es el archivo del repo, dentro de los recursos de la app (`bundle.resources` de `tauri.conf.json`).
+    #[test]
+    fn el_recorrido_vive_en_los_recursos_con_el_nombre_del_archivo_del_repo() {
+        assert_eq!(
+            ruta_del_recorrido(Path::new("/app/Resources")),
+            Path::new("/app/Resources/BROCHURE.html")
+        );
+    }
+
+    /// En Windows el shell no abre la forma «verbatim»: se le quita el prefijo. Lo demás no cambia.
+    #[test]
+    fn para_abrir_le_quita_a_windows_su_prefijo_y_no_toca_la_ruta_del_mac() {
+        assert_eq!(
+            ruta_para_abrir(Path::new(r"\\?\C:\Program Files\Angel Ghost\BROCHURE.html")),
+            r"C:\Program Files\Angel Ghost\BROCHURE.html"
+        );
+        let mac = "/Applications/Angel Ghost.app/Contents/Resources/BROCHURE.html";
+        assert_eq!(ruta_para_abrir(Path::new(mac)), mac);
     }
 }
 

@@ -33,7 +33,7 @@ export default defineConfig({
       // La ventana principal: 960 × 640 (--principal-w / --principal-h).
       name: "ventana-principal",
       use: { ...devices["Desktop Chrome"], viewport: { width: 960, height: 640 } },
-      testIgnore: /en-us\.spec\.ts/,
+      testIgnore: /(en-us|brochure)\.spec\.ts/,
     },
     {
       // La banda acoplada a lo ancho de la pantalla, 88 px de alto (§3.6).
@@ -41,7 +41,7 @@ export default defineConfig({
       // `docs/diseno/posicion.html`.
       name: "banda",
       use: { ...devices["Desktop Chrome"], viewport: { width: 1180, height: 200 } },
-      testIgnore: /en-us\.spec\.ts/,
+      testIgnore: /(en-us|brochure)\.spec\.ts/,
     },
     {
       // El inglés, de punta a punta (sprint 008, regla 20): el navegador en `en-US` y las aserciones salen del diccionario
@@ -49,6 +49,13 @@ export default defineConfig({
       name: "en-US",
       use: { ...devices["Desktop Chrome"], locale: "en-US", viewport: { width: 960, height: 640 } },
       testMatch: /en-us\.spec\.ts/,
+    },
+    {
+      // El brochure (sprint 008): se abre como archivo (`file://`), sin servidor, como lo abre quien da doble clic. Corre solo
+      // `brochure.spec.ts` y trae sus propios tamaños de ventana (de 360 a 1280).
+      name: "brochure",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1100, height: 900 } },
+      testMatch: /brochure\.spec\.ts/,
     },
   ],
   webServer: {

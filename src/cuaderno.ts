@@ -806,6 +806,15 @@ export function abrirAjustesDe(
   void llamar("abrir_ajustes_de", { permiso });
 }
 
+/** «Conoce Angel Ghost»: abre el recorrido que viaja con la app en el navegador. `false` si no se pudo (o fuera de Tauri). */
+export async function abrirConoce(): Promise<boolean> {
+  try {
+    return await llamar("abrir_conoce");
+  } catch {
+    return false;
+  }
+}
+
 export function cortarTodo() {
   void llamar("cortar_todo");
 }

@@ -65,6 +65,7 @@
       "minimumSystemVersion": "26.0"
     },
     "resources": {
+      "../docs/BROCHURE.html": "BROCHURE.html",
       "lproj/es.lproj/InfoPlist.strings": "es.lproj/InfoPlist.strings",
       "lproj/en.lproj/InfoPlist.strings": "en.lproj/InfoPlist.strings"
     },
