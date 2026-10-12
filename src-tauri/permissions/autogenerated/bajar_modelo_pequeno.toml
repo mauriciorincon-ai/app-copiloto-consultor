@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-bajar-modelo-pequeno"
+description = "Enables the bajar_modelo_pequeno command without any pre-configured scope."
+commands.allow = ["bajar_modelo_pequeno"]
+
+[[permission]]
+identifier = "deny-bajar-modelo-pequeno"
+description = "Denies the bajar_modelo_pequeno command without any pre-configured scope."
+commands.deny = ["bajar_modelo_pequeno"]

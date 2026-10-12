@@ -20,6 +20,9 @@ import {
 } from "../notas";
 import { escuchar, hayTauri } from "../puente";
 import { ESTADO_DE_LA_ESCUCHA_PRESENCIAL } from "../contrato.generado";
+import { HoyEnWindows } from "../componentes/HoyEnWindows";
+import { useTextosDeWindows } from "../i18n/windows";
+import { esWindows, usePlataforma } from "../plataforma";
 
 /**
  * HONESTIDAD — «Qué vive en la memoria ahora mismo y qué salió de tu equipo».
@@ -53,6 +56,10 @@ import { ESTADO_DE_LA_ESCUCHA_PRESENCIAL } from "../contrato.generado";
 
 export function Honestidad({ bytes, escucha: laEscucha, busqueda = "" }: { bytes: string; escucha: EstadoDeEscucha; busqueda?: string }) {
   const t = useT().cuaderno;
+  // En Windows el modelo de voz lo baja la app, no macOS (ADR 022): el párrafo y el icono lo dicen (sprint 006).
+  const [plataforma] = usePlataforma();
+  const enWindows = esWindows(plataforma);
+  const tw = useTextosDeWindows();
   // La bandeja (ADR 016 §6), sin abrirla: cuándo vence la próxima y si la tarea de borrado corrió.
   // Fuera de Tauri, lo que pide la URL: «sprint 3 · con bandeja» o «la tarea no corrió».
   const pedido = new URLSearchParams(busqueda).get("estado");
@@ -223,11 +230,11 @@ export function Honestidad({ bytes, escucha: laEscucha, busqueda = "" }: { bytes
                 </span>
               ) : (
                 <span className="estado ok">
-                  <Ic id="i-mac" s relleno />
+                  <Ic id={enWindows ? "i-candado" : "i-mac"} s relleno />
                   <span>{t.modoLocal}</span>
                 </span>
               )}
-              <p>{t.modoDetalle}</p>
+              <p>{enWindows ? tw.honestidad.modoDetalle : t.modoDetalle}</p>
             </div>
             <button className="kill" style={{ justifyContent: "center" }} onClick={cortarTodo}>
               <Ic id="i-rayo" s relleno />
@@ -282,6 +289,8 @@ export function Honestidad({ bytes, escucha: laEscucha, busqueda = "" }: { bytes
             )}
           </div>
         </div>
+        {/* Solo en Windows (sprint 006, ADR 022): en macOS no pinta nada y la maqueta aprobada no cambia. */}
+        <HoyEnWindows />
       </div>
     </>
   );

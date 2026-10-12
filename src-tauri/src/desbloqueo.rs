@@ -76,8 +76,14 @@ impl Desbloqueo {
                 Ok(())
             }
             Respuesta::NoQuiso => Err("no se desbloqueó: tus notas siguen cerradas".into()),
+            #[cfg(not(windows))]
             Respuesta::NoSePuede => Err(
                 "este Mac no tiene con qué pedir el desbloqueo: tu cuenta necesita una contraseña para abrir tus notas".into(),
+            ),
+            // ADR 022: Windows Hello llega en el sprint 007. Hasta entonces tus notas se guardan cifradas y no se abren.
+            #[cfg(windows)]
+            Respuesta::NoSePuede => Err(
+                "en Windows el desbloqueo (Windows Hello) llega en el sprint 007: tus notas se guardan cifradas y abrirlas espera a ese desbloqueo".into(),
             ),
         }
     }
@@ -120,7 +126,9 @@ mod pruebas {
         let d = Desbloqueo::default();
         assert!(d.asegurar(|| Respuesta::NoQuiso).is_err());
         assert!(!d.desbloqueado());
-        assert!(d.asegurar(|| Respuesta::NoSePuede).unwrap_err().contains("contraseña"));
+        // El «no se puede» dice qué falta: la contraseña de la cuenta en macOS; Windows Hello, que llega en el S7, en Windows.
+        let no = d.asegurar(|| Respuesta::NoSePuede).unwrap_err();
+        assert!(no.contains(if cfg!(windows) { "Windows Hello" } else { "contraseña" }), "{no}");
         assert!(d.asegurar(|| Respuesta::Hecho).is_ok());
     }
 

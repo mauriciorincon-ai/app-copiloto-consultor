@@ -86,6 +86,10 @@ const SENSIBLES = [
   "indexar_corpus",
   "elegir_carpeta",
   "instalar_idioma",
+  // Whisper en Windows (sprint 006, ADR 022): medir ocupa el procesador y bajar el pequeño usa la red; solo desde la
+  // ventana principal.
+  "calibrar_transcripcion",
+  "bajar_modelo_pequeno",
   "empezar_a_escuchar",
   // El modo presencial abre el micrófono en la sala (sprint 005, ADR 020): solo desde Sesión.
   "empezar_presencial",
@@ -136,6 +140,8 @@ describe("cada ventana puede solo lo suyo", () => {
       "puerta",
       "franja",
       "ensayo",
+      // Sprint 006 (ADR 022): lo que la app hace en este equipo, y medir y bajar whisper en Windows.
+      "plataforma",
       "componentes/Relleno",
     ]
       .map((m) =>

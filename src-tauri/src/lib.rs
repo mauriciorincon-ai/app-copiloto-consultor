@@ -33,15 +33,18 @@ pub mod habla;
 pub mod hardware;
 pub mod jurisdiccion;
 pub mod llavero;
+pub mod modelo_whisper;
 pub mod modo;
 pub mod notas;
 pub mod pantalla;
 pub mod permisos;
+pub mod plataforma;
 pub mod prefs;
 pub mod propuestas;
 pub mod puerta;
 pub mod radar;
 pub mod red;
+pub mod reloj;
 pub mod relleno;
 pub mod reunion;
 pub mod sesion;
@@ -59,11 +62,23 @@ use tauri::{Emitter, Manager};
 /// mal**. En la carpeta de configuración de la app, nunca en el repo ni en un temporal del
 /// sistema: un temporal lo barre macOS, y entonces la ventana de la reunión se queda encogida sin
 /// que nadie sepa quién lo hizo.
+/// **La carpeta privada de la app** (ADR 022 §2). En macOS, `~/Library/Application Support/<id>`: la misma que dan
+/// `app_data_dir` y `app_config_dir`, así que allí nada cambia. En Windows esas dos caen en `%APPDATA%` (Roaming),
+/// que en un equipo de empresa puede sincronizarse con un servidor; tus notas, tu bandeja y tus ensayos no van ahí:
+/// van a la LOCAL, `%LOCALAPPDATA%\<id>`. Todo lo que la app escribe de ti nace aquí.
+pub(crate) fn carpeta_privada<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<PathBuf> {
+    #[cfg(windows)]
+    {
+        app.path().app_local_data_dir()
+    }
+    #[cfg(not(windows))]
+    {
+        app.path().app_data_dir()
+    }
+}
+
 fn huella<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
-    let base = app
-        .path()
-        .app_config_dir()
-        .unwrap_or_else(|_| std::env::temp_dir());
+    let base = carpeta_privada(app).unwrap_or_else(|_| std::env::temp_dir());
     acople::ruta_de_la_huella(&base)
 }
 
@@ -84,10 +99,7 @@ fn huella<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
 const DICCIONARIO: &str = "diccionario.yaml";
 
 fn ruta_del_diccionario<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
-    app.path()
-        .app_config_dir()
-        .unwrap_or_else(|_| std::env::temp_dir())
-        .join(DICCIONARIO)
+    carpeta_privada(app).unwrap_or_else(|_| std::env::temp_dir()).join(DICCIONARIO)
 }
 
 /// Deja el archivo escrito **si no existía**, con la semilla, y cierra sus permisos siempre.
@@ -180,7 +192,8 @@ impl EstadoDelDiccionario {
         let terminos = d.terminos().len();
         let del_corpus = d.cuantos_del_corpus();
         let ruta = ruta.display().to_string();
-        let ruta = match std::env::var("HOME") {
+        // La carpeta del usuario: `HOME` en macOS, `USERPROFILE` en Windows (ADR 022).
+        let ruta = match std::env::var("HOME").or_else(|_| std::env::var("USERPROFILE")) {
             Ok(casa) if !casa.is_empty() && ruta.starts_with(&casa) => format!("~{}", &ruta[casa.len()..]),
             _ => ruta,
         };
@@ -572,9 +585,7 @@ impl escucha::Buscador for ConPantalla {
 /// documentos del usuario**. La pantalla de corpus enseña esta ruta, porque quien confía su
 /// carpeta a una app tiene derecho a saber dónde acabó el derivado.
 fn donde_va_el_indice(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
-    use tauri::Manager;
-    app.path()
-        .app_data_dir()
+    carpeta_privada(app)
         .map(|d| d.join("corpus"))
         .map_err(|e| format!("no se supo dónde poner el índice: {e}"))
 }
@@ -951,6 +962,7 @@ fn dejar_de_escuchar(app: tauri::AppHandle, estado: tauri::State<'_, LaEscucha>)
     if modo_de_la_sesion(&app) == Some(modo::Modo::Presencial) {
         fijar_la_voz_en(&app, false);
     }
+    stt::whisper::soltar();
     if let Ok(mut g) = estado.0.lock() {
         if let Some(e) = g.take() {
             e.cortar();
@@ -1042,7 +1054,12 @@ fn que_sabe_transcribir() -> QueSabeTranscribir {
 /// reconocimiento. Solo se llama desde el botón de la pantalla de Idioma; la app jamás descarga
 /// nada por su cuenta.
 #[tauri::command]
-async fn instalar_idioma(codigo: String) -> stt::Disponibilidad {
+async fn instalar_idioma(app: tauri::AppHandle, codigo: String) -> stt::Disponibilidad {
+    // En Windows «Instalar» baja 1,6 GB por la única puerta Rust (ADR 022 §4): jamás con una reunión abierta.
+    if cfg!(windows) && hay_una_reunion(&app) {
+        println!("[idioma] el modelo no se baja con una reunión abierta");
+        return stt::motor_de_la_casa().disponibilidad(&codigo);
+    }
     tauri::async_runtime::spawn_blocking(move || {
         println!("[idioma] el usuario pidió instalar el modelo de {codigo}");
         let d = stt::motor_de_la_casa().instalar(&codigo);
@@ -1051,6 +1068,48 @@ async fn instalar_idioma(codigo: String) -> stt::Disponibilidad {
     })
     .await
     .unwrap_or(stt::Disponibilidad::SinMotor { motivo: stt::PorQueNoHayMotor::NoContesta })
+}
+
+/// ¿Hay una reunión escuchando? Si el candado no contesta, se responde que sí: lo prudente es no bajar nada.
+fn hay_una_reunion<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> bool {
+    app.state::<LaEscucha>().0.lock().map(|g| g.is_some()).unwrap_or(true)
+}
+
+/// **Qué hace la app en este equipo** (ADR 022): en Windows, la lista «Hoy en Windows» y lo que la transcripción
+/// sabe de este PC. Lo pinta Honestidad.
+#[tauri::command]
+fn plataforma_de_este_equipo() -> plataforma::Plataforma {
+    plataforma::de_este_equipo()
+}
+
+/// **Vuelve a medir** lo que tarda whisper en este PC con los 10 s de calibración (ADR 022 §5). Ocupa el procesador
+/// unos segundos: solo desde Honestidad y nunca con una reunión abierta.
+#[tauri::command]
+async fn calibrar_transcripcion(app: tauri::AppHandle) -> plataforma::Plataforma {
+    if !hay_una_reunion(&app) {
+        let medida = tauri::async_runtime::spawn_blocking(stt::whisper::calibrar).await;
+        if let Ok(Err(f)) = medida {
+            println!("[stt] la calibración no se pudo medir ({f:?})");
+        }
+    }
+    plataforma::de_este_equipo()
+}
+
+/// **El escalón** (ADR 022 §5): baja el modelo pequeño (0,5 GB, con su huella) cuando el grande pasó de 4 s en este
+/// PC, y lo mide. Solo si lo pides en Honestidad, y nunca con una reunión abierta.
+#[tauri::command]
+async fn bajar_modelo_pequeno(app: tauri::AppHandle) -> plataforma::Plataforma {
+    if !hay_una_reunion(&app) {
+        let hecho = tauri::async_runtime::spawn_blocking(|| {
+            modelo_whisper::bajar(&modelo_whisper::PEQUENO)?;
+            stt::whisper::calibrar().map_err(|f| format!("la calibración no se pudo medir ({f:?})"))
+        })
+        .await;
+        if let Ok(Err(e)) = hecho {
+            println!("[stt] el modelo pequeño: {e}");
+        }
+    }
+    plataforma::de_este_equipo()
 }
 
 /// El diccionario tal y como lo usaría una sesión que empezara ahora: el archivo del usuario más los
@@ -1138,9 +1197,9 @@ fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Inf
                     }
                 }
                 // Ya cortadas arriba, todas a la vez.
-                corte::Pieza::AudioDelMicrofono
-                | corte::Pieza::AudioDelSistema
-                | corte::Pieza::Transcript => {}
+                // El transcript: el modelo suelta lo que retiene de la última transcripción (ADR 022, A2).
+                corte::Pieza::Transcript => stt::whisper::soltar(),
+                corte::Pieza::AudioDelMicrofono | corte::Pieza::AudioDelSistema => {}
                 // El cuadro de la reunión y lo leído de él: se pisan y el vigía se para.
                 corte::Pieza::UltimoFrame => {
                     if parar_la_pantalla(app) {
@@ -1703,6 +1762,9 @@ pub fn run() {
             que_sabe_transcribir,
             estado_del_diccionario,
             instalar_idioma,
+            plataforma_de_este_equipo,
+            calibrar_transcripcion,
+            bajar_modelo_pequeno,
             salida_de_audio,
             elegir_carpeta,
             indexar_corpus,
@@ -2394,6 +2456,10 @@ fn el_atajo_de_callar() -> tauri_plugin_global_shortcut::Shortcut {
 /// registro ocurre unos microsegundos después. Nadie espera a nadie.
 fn con_el_callar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, coger: bool) {
     use tauri_plugin_global_shortcut::GlobalShortcutExt;
+    // Windows (ADR 022): ⎋ global durante el modo de voz robaría Escape al sistema. Llega en el S7.
+    if cfg!(windows) {
+        return;
+    }
     let mango = app.clone();
     std::thread::spawn(move || {
         let atajo = el_atajo_de_callar();
@@ -2671,7 +2737,7 @@ struct LasPreferencias {
 }
 
 fn ruta_de_las_preferencias<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
-    app.path().app_config_dir().unwrap_or_else(|_| std::env::temp_dir()).join(prefs::ARCHIVO)
+    carpeta_privada(app).unwrap_or_else(|_| std::env::temp_dir()).join(prefs::ARCHIVO)
 }
 
 /// Pone el estado de la app como lo dejó el usuario. **El API no se enciende solo si su clave ya no
@@ -2835,18 +2901,13 @@ pub struct EstadoDelApi {
 }
 
 fn ruta_del_costo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
-    app.path().app_config_dir().unwrap_or_else(|_| std::env::temp_dir()).join(COSTO_DEL_MES)
+    carpeta_privada(app).unwrap_or_else(|_| std::env::temp_dir()).join(COSTO_DEL_MES)
 }
 
-/// «2026-09», en la hora del Mac. Sin traer una biblioteca de fechas para un año y un mes.
+/// «2026-09», en la hora del equipo (`reloj.rs`, ADR 022).
 fn mes_de_hoy() -> String {
-    // SEGURIDAD: `time` y `localtime_r` escriben en estructuras que viven en esta función.
-    unsafe {
-        let ahora = libc::time(std::ptr::null_mut());
-        let mut tm: libc::tm = std::mem::zeroed();
-        libc::localtime_r(&ahora, &mut tm);
-        format!("{}-{:02}", tm.tm_year + 1900, tm.tm_mon + 1)
-    }
+    let l = reloj::local(reloj::ahora());
+    format!("{}-{:02}", l.anio, l.mes)
 }
 
 /// El gasto del mes guardado; si es de otro mes, empieza en cero.
@@ -3522,15 +3583,10 @@ fn en_reunion<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> bool {
     escuchando || cuaderno || ensayando(app) || !matches!(sesion::ahora(), sesion::Reunion::Ninguna)
 }
 
-/// «11:04», la hora del Mac.
+/// «11:04», la hora del equipo (`reloj.rs`, ADR 022).
 fn hora_de_ahora() -> String {
-    // SEGURIDAD: `time` y `localtime_r` escriben en estructuras que viven en esta función.
-    unsafe {
-        let ahora = libc::time(std::ptr::null_mut());
-        let mut tm: libc::tm = std::mem::zeroed();
-        libc::localtime_r(&ahora, &mut tm);
-        format!("{:02}:{:02}", tm.tm_hour, tm.tm_min)
-    }
+    let l = reloj::local(reloj::ahora());
+    format!("{:02}:{:02}", l.hora, l.minuto)
 }
 
 const SIN_CORPUS: &str = "no hay corpus indexado en esta sesión de la app: señala tu carpeta en Corpus";
@@ -3776,6 +3832,12 @@ fn atender_el_atajo<R: tauri::Runtime>(
 /// mitad de una reunión creyendo que cortó, y no habría cortado nada. (Riesgo nº 7 del plan.)
 fn registrar_el_kill_switch<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
     use tauri_plugin_global_shortcut::GlobalShortcutExt;
+    // Windows (sprint 006, ADR 022): los atajos globales llegan en el S7. Registrarlos ya robaría AltGr+letra en los
+    // teclados latinos y Alt+Esc al sistema. El corte sigue en el botón de Honestidad.
+    if cfg!(windows) {
+        println!("[atajos] en Windows los atajos globales llegan en el S7 (ADR 022); el corte está en Honestidad");
+        return;
+    }
     match app.global_shortcut().register(el_atajo()) {
         Ok(()) => println!("[corte] kill-switch ⌥⎋ registrado"),
         Err(e) => println!(
@@ -3914,6 +3976,58 @@ fn acoplar_cuando_haya_a_quien<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
             ESPERA * LATIDO.as_secs() as u32 + ESPERA * LATIDO.subsec_millis() / 1000
         );
     });
+}
+
+#[cfg(test)]
+mod pruebas_de_los_atajos_en_windows {
+    /// **El corte y «Terminar» sueltan el modelo** (ADR 022, A2): la última transcripción no sobrevive a la sesión.
+    #[test]
+    fn el_corte_y_terminar_sueltan_el_transcriptor() {
+        let fuente = include_str!("lib.rs");
+        let cuerpo = |f: &str| {
+            let c = &fuente[fuente.find(f).unwrap_or_else(|| panic!("{f}"))..];
+            c[..c.find("\n}\n").expect("su cierre")].to_string()
+        };
+        assert!(cuerpo("fn ejecutar_el_corte<").contains("corte::Pieza::Transcript => stt::whisper::soltar()"));
+        assert!(cuerpo("fn dejar_de_escuchar(").contains("stt::whisper::soltar()"));
+    }
+
+    /// **En Windows no se registra ningún atajo global** (ADR 022, hallazgo A1 de la auditoría del S6): la pantalla
+    /// de Honestidad dice «atajos: todavía no», así que la app no puede tenerlos. La guarda va ANTES del primer
+    /// `.register(` de cada función, y con `cfg!(windows)` para que sea una condición de compilación y no un comentario.
+    #[test]
+    fn en_windows_ningun_atajo_se_registra() {
+        let fuente = include_str!("lib.rs");
+        for funcion in ["fn registrar_el_kill_switch<", "fn con_el_callar<"] {
+            let cuerpo = &fuente[fuente.find(funcion).unwrap_or_else(|| panic!("{funcion}"))..];
+            let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
+            // La guarda tiene que RETORNAR: una condición que no sale no protege nada (demo en rojo del sprint 006).
+            let guarda = cuerpo.find("if cfg!(windows) {").unwrap_or_else(|| panic!("{funcion} sin guarda de Windows"));
+            let retorno = cuerpo[guarda..].find("return;").map(|i| i + guarda).unwrap_or(usize::MAX);
+            let primero = cuerpo.find(".register(").unwrap_or_else(|| panic!("{funcion} sin registro"));
+            assert!(retorno < primero, "{funcion}: no retorna en Windows antes del primer .register(");
+        }
+    }
+}
+
+#[cfg(test)]
+mod pruebas_de_whisper_en_windows {
+    /// **Bajar o medir whisper nunca con una reunión abierta** (sprint 006, ADR 022 §4): bajar ocupa la red y medir el
+    /// procesador. Los tres comandos preguntan `hay_una_reunion` antes de hacer nada.
+    #[test]
+    fn bajar_o_medir_whisper_nunca_en_reunion() {
+        let fuente = include_str!("lib.rs");
+        for comando in ["async fn instalar_idioma(", "async fn calibrar_transcripcion(", "async fn bajar_modelo_pequeno("] {
+            let cuerpo = &fuente[fuente.find(comando).unwrap_or_else(|| panic!("{comando}"))..];
+            let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
+            let candado = cuerpo.find("hay_una_reunion(&app)").unwrap_or_else(|| panic!("{comando} sin candado de reunión"));
+            for trabajo in ["spawn_blocking", ".instalar(", "modelo_whisper::bajar", "stt::whisper::calibrar"] {
+                if let Some(i) = cuerpo.find(trabajo) {
+                    assert!(candado < i, "{comando}: «{trabajo}» antes de mirar si hay reunión");
+                }
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -4163,6 +4277,8 @@ mod pruebas_del_gasto_del_mes {
 
     /// **El archivo del gasto no desaparece nunca** (M10): se escribe a un temporal y se renombra
     /// encima. Cada escritura deja el archivo con lo último, cerrado (600) y sin temporal al lado.
+    // Comprueba permisos de Unix (600/700): en Windows la carpeta hereda la ACL del perfil (ADR 022 §2).
+    #[cfg(unix)]
     #[test]
     fn el_gasto_se_reemplaza_sin_desaparecer() {
         use std::os::unix::fs::PermissionsExt;

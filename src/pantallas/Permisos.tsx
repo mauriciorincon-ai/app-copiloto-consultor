@@ -2,6 +2,8 @@ import { useT } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { Fila, Funciona, PILA } from "../componentes/Ventana";
 import { abrirAjustesDe, type EstadoPermiso, type Permisos as EstadoDeLosPermisos } from "../cuaderno";
+import { esWindows, usePlataforma } from "../plataforma";
+import { useTextosDeWindows } from "../i18n/windows";
 
 /**
  * PERMISOS — «Permisos de macOS».
@@ -50,12 +52,15 @@ function Permiso({
   para,
   estado,
   cual,
+  windows,
 }: {
   icono: string;
   nombre: string;
   para: string;
   estado: EstadoPermiso;
   cual: "microfono" | "audio" | "pantalla" | "accesibilidad";
+  /** En Windows (sprint 006, ADR 022): `null` si el permiso todavía no existe allí; si no, su texto de ajustes. */
+  windows?: { boton: string | null; llegaDespues: string } | null;
 }) {
   const t = useT().cuaderno;
   const concedido = estado === "concedido";
@@ -65,11 +70,20 @@ function Permiso({
       <span className="nombre">{nombre}</span>
       <span className="para">{para}</span>
       <div className="accion">
-        <Chip estado={estado} />
-        {!concedido && (
-          <button className="btn mini primario" onClick={() => abrirAjustesDe(cual)}>
-            {t.concederEnMacos}
-          </button>
+        {windows && windows.boton === null ? (
+          <span className="estado mute">
+            <Ic id="i-pendiente" s />
+            <span>{windows.llegaDespues}</span>
+          </span>
+        ) : (
+          <>
+            <Chip estado={estado} />
+            {!concedido && (
+              <button className="btn mini primario" onClick={() => abrirAjustesDe(cual)}>
+                {windows?.boton ?? t.concederEnMacos}
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -78,6 +92,11 @@ function Permiso({
 
 export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
   const t = useT().cuaderno;
+  const [plataforma] = usePlataforma();
+  const enWindows = esWindows(plataforma);
+  const w = useTextosDeWindows().permisos;
+  // En Windows solo el micrófono existe hoy; los otros tres llegan en una versión próxima (ADR 022).
+  const despues = enWindows ? { boton: null, llegaDespues: w.llegaDespues } : undefined;
 
   return (
     <>
@@ -94,6 +113,7 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
             para={t.permMicPara}
             estado={permisos.microfono}
             cual="microfono"
+            windows={enWindows ? { boton: w.abrirAjustes, llegaDespues: w.llegaDespues } : undefined}
           />
           <Permiso
             icono="i-sistema"
@@ -101,6 +121,7 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
             para={t.permSistemaPara}
             estado={permisos.audio}
             cual="audio"
+            windows={despues}
           />
           <Permiso
             icono="i-pantalla"
@@ -108,6 +129,7 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
             para={t.permPantallaPara}
             estado={permisos.pantalla}
             cual="pantalla"
+            windows={despues}
           />
           <Permiso
             icono="i-flecha"
@@ -115,10 +137,13 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
             para={t.permAcoplePara}
             estado={permisos.accesibilidad}
             cual="accesibilidad"
+            windows={despues}
           />
-          <p className="mono" style={{ color: "var(--ink-2)" }}>
-            {t.dosPermisos}
-          </p>
+          {!enWindows && (
+            <p className="mono" style={{ color: "var(--ink-2)" }}>
+              {t.dosPermisos}
+            </p>
+          )}
         </div>
 
         <div className="grid-2">
@@ -140,11 +165,20 @@ export function Permisos({ permisos }: { permisos: EstadoDeLosPermisos }) {
             </Fila>
           </div>
           <div className="tarjeta">
-            <h2 className="seccion">{t.antesDeQueMacos}</h2>
-            <p style={{ fontFamily: "var(--font-evidencia)", fontSize: "14px", color: "var(--ink)" }}>
-              {t.textoPantalla}
-            </p>
-            <p style={{ fontSize: "11.5px", color: "var(--ink-2)" }}>{t.fraseDeMacos}</p>
+            {enWindows ? (
+              <>
+                <h2 className="seccion">{w.antesTitulo}</h2>
+                <p style={{ fontFamily: "var(--font-evidencia)", fontSize: "14px", color: "var(--ink)" }}>{w.antesTexto}</p>
+              </>
+            ) : (
+              <>
+                <h2 className="seccion">{t.antesDeQueMacos}</h2>
+                <p style={{ fontFamily: "var(--font-evidencia)", fontSize: "14px", color: "var(--ink)" }}>
+                  {t.textoPantalla}
+                </p>
+                <p style={{ fontSize: "11.5px", color: "var(--ink-2)" }}>{t.fraseDeMacos}</p>
+              </>
+            )}
           </div>
         </div>
       </div>

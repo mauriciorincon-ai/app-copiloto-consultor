@@ -53,6 +53,14 @@ fn correr(args: &[String], idioma: &str) -> i32 {
         }
     };
 
+    // La puerta local es un socket Unix: en Windows no existe (ADR 022), y `ghost` lo dice en vez de buscar un HOME.
+    if cfg!(not(unix)) {
+        eprintln!(
+            "{}",
+            if en { "The local door does not exist on Windows yet (ADR 022)." } else { "La puerta local no existe en Windows todavía (ADR 022)." }
+        );
+        return salida::FALLO;
+    }
     let Some(casa) = std::env::var_os("HOME") else {
         eprintln!("{}", if en { "HOME is not set" } else { "falta HOME" });
         return salida::FALLO;

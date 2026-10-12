@@ -20,6 +20,7 @@ import type { Preparacion, VistaDelEnsayo, Progreso, NoEmpezo } from "./ensayo";
 import type { VistaDelCuaderno, LineaDePropuesta, Propuesta, Regla, Ventana, VistaDeLaBandeja, EstadoDeLaBandeja, ReunionGuardada, ListaDeReuniones } from "./notas";
 import type { VistaDelCliente, LaBandera, Nda } from "./jurisdiccion";
 import type { VistaDeLaPuerta, Cierre, NoAbre, Motivo } from "./puerta";
+import type { Plataforma } from "./plataforma";
 
 export const NOVEDAD_EMPIEZA: Novedad = {
     "que": "empieza"
@@ -1565,4 +1566,154 @@ export const QUE_SABE_TRANSCRIBIR_NO_CONTESTA: QueSabeTranscribir = {
     "motivo": "no-contesta",
     "motor": "ninguno",
     "techo": 0
+  };
+
+export const PLATAFORMA_WINDOWS: Plataforma = {
+    "funciones": [
+      {
+        "clave": "banda-protegida",
+        "cuando": "si"
+      },
+      {
+        "clave": "presencial",
+        "cuando": "si"
+      },
+      {
+        "clave": "corpus-y-ficha",
+        "cuando": "si"
+      },
+      {
+        "clave": "notas-cifradas",
+        "cuando": "si"
+      },
+      {
+        "clave": "videollamada",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "pantalla",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "voz-al-oido",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "acople",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "ensayo",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "sugerencia",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "radar",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "atajos",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "borrado-con-la-app-cerrada",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "desbloqueo",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "puerta-local",
+        "cuando": "no-por-ahora"
+      }
+    ],
+    "sistema": "windows",
+    "transcripcion": {
+      "bajando": false,
+      "latenciaMs": 2350,
+      "modelo": "large-v3-turbo",
+      "techoMs": 4000
+    }
+  };
+
+export const PLATAFORMA_WINDOWS_SIN_MODELO: Plataforma = {
+    "funciones": [
+      {
+        "clave": "banda-protegida",
+        "cuando": "si"
+      },
+      {
+        "clave": "presencial",
+        "cuando": "si"
+      },
+      {
+        "clave": "corpus-y-ficha",
+        "cuando": "si"
+      },
+      {
+        "clave": "notas-cifradas",
+        "cuando": "si"
+      },
+      {
+        "clave": "videollamada",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "pantalla",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "voz-al-oido",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "acople",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "ensayo",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "sugerencia",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "radar",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "atajos",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "borrado-con-la-app-cerrada",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "desbloqueo",
+        "cuando": "todavia-no"
+      },
+      {
+        "clave": "puerta-local",
+        "cuando": "no-por-ahora"
+      }
+    ],
+    "sistema": "windows",
+    "transcripcion": {
+      "bajando": true,
+      "latenciaMs": null,
+      "modelo": null,
+      "techoMs": 4000
+    }
+  };
+
+export const PLATAFORMA_MACOS: Plataforma = {
+    "funciones": [],
+    "sistema": "macos",
+    "transcripcion": null
   };

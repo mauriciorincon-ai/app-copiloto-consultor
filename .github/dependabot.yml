@@ -1,6 +1,8 @@
-# kit-app (se estampa en cada app) — kit v1.26.0
-# REGLA DEL USUARIO (2026-08-22, fijada en Innmobiliaria): máximo DOS PRs de dependencias
-# abiertos a la vez — jamás una lista de merges pendientes. Un PR agrupado por ecosistema.
+# kit-app (se estampa en cada app) — kit v2.1.0 (regla fijada en v1.23.1 y v1.26.0; cabecera al día desde v2.1.0)
+# REGLA DURA DEL USUARIO (2026-10-11): UN SOLO PR VIVO POR APP — dependabot cuenta. Un PR agrupado por
+# ecosistema, limit 1, y `github-actions` MENSUAL para que casi nunca coincidan dos; el builder los procesa
+# al arrancar el sprint y antes de abrir el PR del sprint (regla 18 del núcleo; job `un-pr-vivo` en la CI).
+# (Antes, 2026-08-22: máximo DOS de dependencias — jamás una lista de merges pendientes.)
 # (La v1.23.0 traía limit 5 POR ecosistema = hasta 10 abiertos, y la primera activación
 # vuelca el atraso entero de golpe: produjo una cola de 6 en Innmobiliaria.)
 # Y EL LOTE SEMANAL JAMÁS ARRASTRA UN MAYOR (kit v1.26.0, hoja-de-vida PRs #10/#14): un major
@@ -19,10 +21,15 @@ updates:
       todo-npm:
         patterns: ["*"]
         update-types: ["minor", "patch"]
+    # kit v1.32.1 (planlang S1, PR #6): @types/node sigue al Node de la CI (22 LTS); un mayor suelto
+    # lo desalinea del runtime sin que nada lo vigile. Sube por decisión, con la CI, no por bump.
+    ignore:
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"   # kit v2.1.0: un PR vivo por app — las acciones no compiten cada semana con el lote npm
     open-pull-requests-limit: 1
     groups:
       todo-actions:

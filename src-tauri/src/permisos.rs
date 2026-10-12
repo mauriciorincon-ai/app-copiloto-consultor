@@ -117,10 +117,26 @@ pub fn puede_acoplar(p: &Permisos) -> bool {
     p.accesibilidad == Estado::Concedido
 }
 
+/// **El micrófono en Windows** (sprint 006, ADR 022), leído de los interruptores de Settings → Privacy & security →
+/// Microphone: el del equipo («Microphone access»), el de tu usuario («Let apps access your microphone»), el de las
+/// apps de escritorio («Let desktop apps access your microphone») y, si ya lo usó, el de esta app. Cualquier «Deny»
+/// es denegado; tu usuario y las apps de escritorio en «Allow» sin un «Deny», concedido; lo que falte, no se sabe —
+/// la misma regla 2 de arriba: el silencio no es un «no».
+pub fn microfono_en_windows(equipo: Option<&str>, usuario: Option<&str>, escritorio: Option<&str>, esta_app: Option<&str>) -> Estado {
+    if [equipo, usuario, escritorio, esta_app].contains(&Some("Deny")) {
+        return Estado::Denegado;
+    }
+    if usuario == Some("Allow") && escritorio == Some("Allow") {
+        return Estado::Concedido;
+    }
+    Estado::NoSeSabe
+}
+
 /// El panel de Ajustes del Sistema donde se concede cada permiso.
 ///
 /// Se abre el panel, **no se pide el permiso**: es la decisión de la maqueta y además es lo único
 /// que funciona para la Accesibilidad, que no tiene diálogo propio que se pueda invocar dos veces.
+#[cfg(not(windows))]
 pub fn ajustes_de(cual: &str) -> Option<&'static str> {
     match cual {
         "microfono" => Some("x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"),
@@ -128,6 +144,16 @@ pub fn ajustes_de(cual: &str) -> Option<&'static str> {
         // El mismo panel que la pantalla: Ajustes los enseña juntos aunque sean dos permisos.
         "audio" => Some("x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"),
         "accesibilidad" => Some("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"),
+        _ => None,
+    }
+}
+
+/// En Windows solo el micrófono tiene panel que abrir: Settings → Privacy & security → Microphone. El audio del
+/// sistema y la pantalla no piden permiso en Windows y llegan con el sprint 007; el acople, también (ADR 022).
+#[cfg(windows)]
+pub fn ajustes_de(cual: &str) -> Option<&'static str> {
+    match cual {
+        "microfono" => Some("ms-settings:privacy-microphone"),
         _ => None,
     }
 }
@@ -232,7 +258,50 @@ mod nativo {
     }
 }
 
-#[cfg(not(target_os = "macos"))]
+/// En Windows se lee el micrófono del registro, sin pedir nada (ADR 022). Lo demás no se sabe todavía: el audio del
+/// sistema, la pantalla y el acople llegan con el sprint 007, y Honestidad lo dice.
+#[cfg(windows)]
+mod nativo {
+    use super::*;
+    use windows_sys::Win32::System::Registry::{RegGetValueW, HKEY, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, RRF_RT_REG_SZ};
+
+    const CONSENTIMIENTO: &str = r"Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone";
+
+    /// El texto de `Value` bajo una clave, si existe.
+    fn valor(raiz: HKEY, clave: &str) -> Option<String> {
+        let clave: Vec<u16> = clave.encode_utf16().chain(std::iter::once(0)).collect();
+        let nombre: Vec<u16> = "Value".encode_utf16().chain(std::iter::once(0)).collect();
+        let mut texto = [0u16; 64];
+        let mut bytes = std::mem::size_of_val(&texto) as u32;
+        // SEGURIDAD: dos nombres terminados en cero y un búfer de `bytes` bytes; el registro escribe menos o falla.
+        let r = unsafe {
+            RegGetValueW(raiz, clave.as_ptr(), nombre.as_ptr(), RRF_RT_REG_SZ, std::ptr::null_mut(), texto.as_mut_ptr().cast(), &mut bytes)
+        };
+        if r != 0 {
+            return None;
+        }
+        let n = (bytes as usize / 2).min(texto.len());
+        Some(String::from_utf16_lossy(&texto[..n]).trim_end_matches('\0').to_string())
+    }
+
+    /// La clave de esta app entre las de escritorio: su ruta con `#` en lugar de `\`, como la escribe Windows.
+    fn la_de_esta_app() -> Option<String> {
+        let exe = std::env::current_exe().ok()?;
+        Some(format!(r"{CONSENTIMIENTO}\NonPackaged\{}", exe.to_string_lossy().replace('\\', "#")))
+    }
+
+    pub fn leer() -> Permisos {
+        let microfono = microfono_en_windows(
+            valor(HKEY_LOCAL_MACHINE, CONSENTIMIENTO).as_deref(),
+            valor(HKEY_CURRENT_USER, CONSENTIMIENTO).as_deref(),
+            valor(HKEY_CURRENT_USER, &format!(r"{CONSENTIMIENTO}\NonPackaged")).as_deref(),
+            la_de_esta_app().and_then(|c| valor(HKEY_CURRENT_USER, &c)).as_deref(),
+        );
+        Permisos { microfono, audio: Estado::NoSeSabe, pantalla: Estado::NoSeSabe, accesibilidad: Estado::NoSeSabe }
+    }
+}
+
+#[cfg(not(any(target_os = "macos", windows)))]
 mod nativo {
     use super::*;
     pub fn leer() -> Permisos {
@@ -332,6 +401,30 @@ mod tests {
         assert!(!puede_escuchar(&p(Estado::Concedido, Estado::SinConceder, Estado::Concedido)));
     }
 
+    /// **El micrófono de Windows** (ADR 022): un «Deny» en cualquier interruptor gana; concedido solo con tu usuario y
+    /// las apps de escritorio en «Allow»; sin claves, no se sabe — nunca «denegado» por silencio.
+    #[test]
+    fn el_microfono_de_windows_sale_de_sus_cuatro_interruptores() {
+        let a = Some("Allow");
+        let d = Some("Deny");
+        assert_eq!(microfono_en_windows(None, a, a, None), Estado::Concedido);
+        assert_eq!(microfono_en_windows(a, a, a, a), Estado::Concedido);
+        assert_eq!(microfono_en_windows(d, a, a, None), Estado::Denegado, "el del equipo apagado");
+        assert_eq!(microfono_en_windows(a, d, a, None), Estado::Denegado, "el de tu usuario apagado");
+        assert_eq!(microfono_en_windows(a, a, d, None), Estado::Denegado, "el de las apps de escritorio apagado");
+        assert_eq!(microfono_en_windows(a, a, a, d), Estado::Denegado, "el de esta app apagado");
+        assert_eq!(microfono_en_windows(None, None, None, None), Estado::NoSeSabe);
+        assert_eq!(microfono_en_windows(None, a, None, None), Estado::NoSeSabe);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn en_windows_solo_el_microfono_tiene_panel() {
+        assert_eq!(ajustes_de("microfono"), Some("ms-settings:privacy-microphone"));
+        assert_eq!(ajustes_de("pantalla"), None);
+    }
+
+    #[cfg(not(windows))]
     #[test]
     fn cada_permiso_sabe_a_que_panel_de_ajustes_lleva() {
         for cual in ["microfono", "audio", "pantalla", "accesibilidad"] {

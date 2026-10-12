@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useT } from "../i18n";
+import { useTextosDeWindows } from "../i18n/windows";
+import { esWindows, usePlataforma } from "../plataforma";
 import { Ic } from "../componentes/Iconos";
 import { PILA } from "../componentes/Ventana";
 import {
@@ -96,6 +98,9 @@ function estadoDelModelo(d: Disponibilidad | undefined, instalado: string): stri
 }
 
 export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
+  const [plataforma] = usePlataforma();
+  const enWindows = esWindows(plataforma);
+  const tw = useTextosDeWindows();
   const t = useT().cuaderno;
   const diccionario = useDiccionario();
   /**
@@ -251,14 +256,14 @@ export function Idioma({ transcribe }: { transcribe: QueSabeTranscribir }) {
             (17-quater): la frase sale del diccionario, en los dos idiomas. */}
         {transcribe.motivo === null ? (
           <div className="franja ok" role="status">
-            <Ic id="i-mac" relleno />
+            <Ic id={enWindows ? "i-voz" : "i-mac"} relleno />
             <div>
-              <strong>{t.transcribeTuMac}</strong>
+              <strong>{enWindows ? tw.idioma.transcribeTuPc : t.transcribeTuMac}</strong>
               <p className="mono" style={{ fontSize: "11px", color: "var(--ink-2)", margin: "2px 0 4px" }}>
-                {NOMBRE_DEL_MOTOR[transcribe.motor] ?? transcribe.motor} · {transcribe.techo}{" "}
-                {t.idiomasListos}
+                {enWindows ? "whisper" : (NOMBRE_DEL_MOTOR[transcribe.motor] ?? transcribe.motor)} · {transcribe.techo}{" "}
+                {enWindows ? tw.idioma.idiomasListos : t.idiomasListos}
               </p>
-              <p>{t.transcribeTuMacDetalle}</p>
+              <p>{enWindows ? tw.idioma.transcribeTuPcDetalle : t.transcribeTuMacDetalle}</p>
             </div>
           </div>
         ) : (

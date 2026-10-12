@@ -8,10 +8,13 @@
 //! librería de Swift no se compiló (`swiftc` ausente), este archivo no declara nada y
 //! [`motor`] devuelve el mudo con su motivo.
 
-use super::{Disponibilidad, Fallo, Motor, Mudo, PorQueNoHayMotor};
+use super::{Motor, Mudo, PorQueNoHayMotor};
+#[cfg(all(target_os = "macos", puente_de_swift))]
+use super::{Disponibilidad, Fallo};
 
 /// Cuánto texto cabe en una transcripción de un turno. Treinta segundos de habla rápida rondan las
 /// 900 letras; ocho kilobytes son holgura de sobra sin ser una reserva absurda por turno.
+#[cfg(all(target_os = "macos", puente_de_swift))]
 const CABIDA: usize = 8 * 1024;
 
 #[cfg(all(target_os = "macos", puente_de_swift))]
@@ -155,6 +158,7 @@ pub fn motor() -> Box<dyn Motor> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::stt::Disponibilidad;
 
     /// El motor de la casa **siempre existe**, tenga o no transcriptor debajo. Lo que cambia es lo
     /// que contesta, y en el peor caso contesta un motivo legible — nunca un `panic` ni un

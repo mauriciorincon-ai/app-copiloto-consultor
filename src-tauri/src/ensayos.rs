@@ -200,6 +200,8 @@ mod pruebas {
 
     /// **Un ensayo nace cerrado**: 700 la carpeta, 600 el archivo, cifrado (ni tu respuesta ni el cliente en
     /// claro dentro) y con su vencimiento en la cabecera. Y se vuelve a abrir con la misma llave.
+    // Comprueba permisos de Unix (600/700): en Windows la carpeta hereda la ACL del perfil (ADR 022 §2).
+    #[cfg(unix)]
     #[test]
     fn un_ensayo_nace_cifrado_cerrado_y_con_su_vencimiento() {
         use std::os::unix::fs::PermissionsExt;
@@ -275,6 +277,8 @@ mod pruebas {
     }
 
     /// **Lo exportado nace 600, en Markdown y con tus respuestas**; la carpeta que elegiste no se toca.
+    // Comprueba permisos de Unix (600/700): en Windows la carpeta hereda la ACL del perfil (ADR 022 §2).
+    #[cfg(unix)]
     #[test]
     fn exportar_escribe_el_texto_donde_elegiste() {
         use std::os::unix::fs::PermissionsExt;

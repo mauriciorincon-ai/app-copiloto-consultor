@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-calibrar-transcripcion"
+description = "Enables the calibrar_transcripcion command without any pre-configured scope."
+commands.allow = ["calibrar_transcripcion"]
+
+[[permission]]
+identifier = "deny-calibrar-transcripcion"
+description = "Denies the calibrar_transcripcion command without any pre-configured scope."
+commands.deny = ["calibrar_transcripcion"]

@@ -5,6 +5,9 @@
 //! **Ninguna prueba toca el Llavero de verdad** (regla 22): la llave es un doble. Ni la app: las
 //! operaciones son otro doble, con la reunión a voluntad.
 
+// La puerta local es un socket Unix: en Windows no existe (ADR 022), y estas pruebas tampoco.
+#![cfg(unix)]
+
 use std::io::Write;
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::{Path, PathBuf};

@@ -46,19 +46,24 @@ quick-xml = "0.42"
 # usuario a teclear rutas en una app de escritorio.
 tauri-plugin-dialog = "2"
 chacha20poly1305 = { version = "0.11.0", features = ["zeroize"] }
+# El fondo de escritorio del relleno viaja a la webview como imagen en base64. Antes estaba solo en macOS y
+# `relleno.rs` la usaba sin `cfg`: el crate no compilaba en ningún otro sistema (ADR 022). Ya viajaba en el árbol.
+base64 = "0.22"
 
 # Solo macOS, y solo para el ACOPLE y el RELLENO. Las cuatro ya viajaban en el árbol de Tauri
 # (`cargo tree` las lista bajo tao/wry): declararlas aquí no añade una descarga, hace explícito
 # que este crate las usa de primera mano y que la superficie nativa que tocamos son dos APIs del
 # sistema — Accessibility (mover ventanas ajenas) y NSWorkspace (leer el fondo de escritorio) —
 # y ninguna más.
+# SHA-256 del modelo de whisper: en todas las plataformas, para probar la descarga en el Mac (ADR 022 §4).
+sha2 = "0.10"
+
 [target.'cfg(unix)'.dependencies]
 # Solo para leer el desplazamiento horario del sistema y escribir «14:02» en un turno. Viajaba ya
 # en el árbol (tao la usa); declararla hace explícito que este crate la llama de primera mano.
 libc = "0.2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-base64 = "0.22"
 core-foundation = "0.10"
 core-foundation-sys = "0.8"
 objc2 = "0.6"
@@ -81,6 +86,24 @@ objc2-foundation = { version = "0.3", default-features = false, features = [
   "NSUUID",
 ] }
 
+# **Windows, desde el sprint 006 (ADR 022): una capa hermana detrás de la misma frontera.** Cada una, para una cosa:
+# - `cpal`: el micrófono por WASAPI, para la sala (`capture/windows.rs`).
+# - `whisper-rs`: la transcripción local (`stt/whisper.rs`), el respaldo que el ADR 006 dejó escrito. Sin GPU.
+# - `ureq` + `sha2`: la ÚNICA puerta a la red en Rust, para bajar el modelo de whisper cuando lo pides, con su huella
+#   SHA-256 fija en el repo (`modelo_whisper.rs`); `contador-de-red` la cuenta y no deja que aparezca otra.
+# - `chrono`: la hora local, que en macOS da `libc::localtime_r` (ya viajaba en el árbol).
+# - `windows-sys`: el Credential Manager para tus notas, ensayos y bandeja (`llavero/windows.rs`) y la privacidad del
+#   micrófono (`permisos.rs`), con las features mínimas.
+[target.'cfg(windows)'.dependencies]
+cpal = "0.18"
+whisper-rs = "0.16"
+ureq = { version = "3.4", default-features = false, features = ["rustls"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+windows-sys = { version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_Security_Credentials",
+  "Win32_System_Registry",
+] }
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]

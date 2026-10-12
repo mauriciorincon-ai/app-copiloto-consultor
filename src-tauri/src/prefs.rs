@@ -371,6 +371,8 @@ mod tests {
         assert!(de_texto("no es json").is_err());
     }
 
+    // Comprueba permisos de Unix (600/700): en Windows la carpeta hereda la ACL del perfil (ADR 022 §2).
+    #[cfg(unix)]
     #[test]
     fn nace_en_600() {
         use std::os::unix::fs::PermissionsExt;

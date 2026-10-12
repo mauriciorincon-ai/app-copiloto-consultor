@@ -37,6 +37,16 @@ jobs:
       - run: pnpm test            # vitest run --coverage (umbral en vitest.config)
       - run: pnpm build           # build del frontend (Vite) — el binario va en build-escritorio
       - run: pnpm audit --audit-level high
+      # kit v2.0.0 — regla 17 (cero enlaces) pasa de casilla manual a gate de CI (adoptado en el sprint 006; el
+      # perfil escritorio del kit no lo traía, K-S6). La produccion se MUESTRA, jamas se ENTREGA. Dos superficies:
+      # los archivos versionados (git grep) y el campo `homepage` del repo en GitHub. Los dominios salen de
+      # cero-enlaces.json. Demo en rojo: tests/unit/cero-enlaces.test.ts.
+      - name: Cero enlaces — árbol y homepage del repo (regla 17, kit v2.0.0)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          HOMEPAGE="$(gh api "repos/${GITHUB_REPOSITORY}" --jq '.homepage // ""')"
+          node scripts/cero-enlaces.mjs --homepage "$HOMEPAGE"
 
   e2e:
     runs-on: ubuntu-latest
@@ -138,3 +148,46 @@ jobs:
           if jq -e '.scripts["verify:ephemeral"]' package.json >/dev/null; then pnpm verify:ephemeral; \
           elif grep -q 'captura_terceros: true' CLAUDE.md 2>/dev/null; then echo "::error::CLAUDE.md declara captura_terceros pero no existe el script verify:ephemeral"; exit 1; \
           else echo "app sin captura de terceros: gate no aplica"; fi
+
+  # ADR 022 (sprint 006): **Windows detrás de la misma frontera.** El mismo crate, compilado y probado en Windows, y el
+  # instalador como artifact del PR (sin firmar hasta G-Release: SmartScreen avisará, el manual dice cómo pasar). Lo que
+  # es de macOS no corre aquí: ni clippy con el puente de Swift, ni el kit de voz, ni las maquetas, ni `cargo audit`
+  # (lee el mismo Cargo.lock: una vez basta, en `build-escritorio`). Whisper (whisper.cpp con MSVC y cmake) SOLO se
+  # compila aquí; la inferencia real y su latencia se leen en el PC del usuario (no hay modelo en el runner).
+  # Techo: el plan declaró 25 min; la primera corrida mide el real, y el cierre del sprint lo dice.
+  build-windows:
+    runs-on: windows-latest
+    needs: quality
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: src-tauri }
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      # REGLA 25 en Windows: `cargo test` a secas no abre el micrófono ni el Administrador de credenciales; con
+      # AG_SIN_HARDWARE=1 cada entrada nativa nueva (cpal, whisper, Credential Manager) aborta antes de cruzar.
+      - name: cargo test a secas — sin hardware (regla 25, en Windows)
+        working-directory: src-tauri
+        env: { AG_SIN_HARDWARE: "1" }
+        run: cargo test --locked
+      # Lo marcado `hardware:` que sí se puede correr aquí: el Administrador de credenciales DEL RUNNER, una máquina
+      # efímera de GitHub (regla 24: jamás el PC del usuario). El micrófono lleva `en_vivo_` y se salta; la descarga del
+      # modelo se prueba en `cargo test` con un archivo falso (`modelo_whisper::descargar_a`), en el Mac y en Windows.
+      - name: el Administrador de credenciales de verdad — en el runner efímero
+        working-directory: src-tauri
+        run: cargo test --locked --lib llavero -- --include-ignored --skip en_vivo_
+      - name: el instalador de Windows (.msi y .exe, sin firmar)
+        run: pnpm tauri build --bundles msi,nsis
+      - uses: actions/upload-artifact@v7
+        with:
+          name: angel-ghost-windows
+          path: |
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: error
+          retention-days: 14

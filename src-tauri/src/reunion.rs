@@ -382,9 +382,10 @@ pub fn los_ensayos_de<R: Runtime>(app: &AppHandle<R>) -> crate::ensayos::Ensayos
     crate::ensayos::Ensayos::en(carpeta_de_la_app(app).join(crate::ensayos::CARPETA))
 }
 
-/// `~/Library/Application Support/<app>/`, en 700: la de las notas, la bandeja, los ensayos y la puerta local.
+/// `~/Library/Application Support/<app>/` en macOS, en 700; `%LOCALAPPDATA%\<app>` en Windows (ADR 022 §2): la de las
+/// notas, la bandeja, los ensayos y la puerta local.
 pub fn carpeta_de_la_app<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
-    app.path().app_data_dir().unwrap_or_else(|_| std::env::temp_dir().join(vencimiento::APP))
+    crate::carpeta_privada(app).unwrap_or_else(|_| std::env::temp_dir().join(vencimiento::APP))
 }
 
 fn avisar<R: Runtime>(app: &AppHandle<R>) {
@@ -843,6 +844,12 @@ pub fn estado_de_la_bandeja<R: Runtime>(app: &AppHandle<R>) -> EstadoDeLaBandeja
 // ---- el vencimiento (ADR 016 §5) ---------------------------------------------------------------
 
 fn la_tarea<R: Runtime>(app: &AppHandle<R>) -> Option<vencimiento::Tarea> {
+    // La tarea que borra con la app cerrada es de launchd. En Windows llega en el S7 con el Programador de tareas
+    // (ADR 022); mientras, no se escribe un plist ni se llama a `launchctl`: lo vencido se barre con la app abierta, y
+    // Honestidad lo dice («borrado con la app cerrada: todavía no»).
+    if cfg!(not(target_os = "macos")) {
+        return None;
+    }
     let casa = app.path().home_dir().ok()?;
     Some(vencimiento::Tarea::de_la_app(&casa, &carpeta_de_la_app(app)))
 }
@@ -1055,21 +1062,10 @@ fn hasta_el_proximo<R: Runtime>(app: &AppHandle<R>, ahora: i64) -> std::time::Du
     }
 }
 
-/// La fecha y la hora del reloj del Mac, como `mes_de_hoy` en `lib.rs`: sin una biblioteca de fechas.
+/// La fecha y la hora del reloj del equipo, como `mes_de_hoy` en `lib.rs` (`reloj.rs`, ADR 022).
 pub(crate) fn fecha_de_ahora() -> notas::Fecha {
-    // SEGURIDAD: `time` y `localtime_r` escriben en estructuras que viven en esta función.
-    unsafe {
-        let ahora = libc::time(std::ptr::null_mut());
-        let mut tm: libc::tm = std::mem::zeroed();
-        libc::localtime_r(&ahora, &mut tm);
-        notas::Fecha {
-            anio: tm.tm_year + 1900,
-            mes: (tm.tm_mon + 1) as u32,
-            dia: tm.tm_mday as u32,
-            hora: tm.tm_hour as u32,
-            minuto: tm.tm_min as u32,
-        }
-    }
+    let l = crate::reloj::local(crate::reloj::ahora());
+    notas::Fecha { anio: l.anio, mes: l.mes, dia: l.dia, hora: l.hora, minuto: l.minuto }
 }
 
 #[cfg(test)]

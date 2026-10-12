@@ -5,6 +5,9 @@
 //! preguntarle nada a macOS. Si alguna vez leyera el Llavero primero, aquí no se vería un diálogo —no
 //! hay token que leer—, así que eso lo vigila la última prueba, sobre el código.
 
+// La puerta local es un socket Unix: en Windows no existe (ADR 022), y estas pruebas tampoco.
+#![cfg(unix)]
+
 use std::process::{Command, Output};
 
 fn ghost(args: &[&str], casa: &std::path::Path, lang: &str) -> Output {

@@ -345,9 +345,8 @@ pub fn ruta_de_la_huella(soporte: &Path) -> PathBuf {
 
 /// Permisos con los que nacen la carpeta y el archivo. No es ceremonia: el nombre de la
 /// aplicación acoplada y la geometría de sus ventanas dicen con qué trabajó el usuario y cuándo.
-#[cfg(unix)]
+/// En Windows no hay modos de Unix: `restringir` no hace nada y la carpeta hereda la ACL del perfil (ADR 022 §2).
 pub const MODO_ARCHIVO: u32 = 0o600;
-#[cfg(unix)]
 pub const MODO_CARPETA: u32 = 0o700;
 
 /// Guarda la huella con **el escritor único** (`almacen::escribir`, auditoría del S3, B1): carpeta 700,

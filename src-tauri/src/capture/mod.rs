@@ -11,14 +11,18 @@
 pub mod anillo;
 #[cfg(target_os = "macos")]
 pub mod nativo;
+/// En Windows, el grifo hermano detrás de la misma frontera (ADR 022): el micrófono por WASAPI.
+#[cfg(windows)]
+#[path = "windows.rs"]
+pub mod nativo;
 pub mod remuestreo;
 
-/// Fuera de macOS no hay grifos que abrir, y el resto del crate no tiene por qué enterarse.
+/// Ni macOS ni Windows: no hay grifos que abrir, y el resto del crate no tiene por qué enterarse.
 ///
-/// El mismo patrón que `acople`: la app es de macOS, pero el crate compila en cualquier sitio para
-/// que `cargo check` sirva de algo en una máquina prestada. Lo que no hace es fingir: cada
-/// apertura devuelve el motivo escrito.
-#[cfg(not(target_os = "macos"))]
+/// El mismo patrón que `acople`: la app se distribuye en macOS y Windows, pero el crate compila en
+/// cualquier sitio para que `cargo check` sirva de algo en una máquina prestada. Lo que no hace es
+/// fingir: cada apertura devuelve el motivo escrito.
+#[cfg(not(any(target_os = "macos", windows)))]
 pub mod nativo {
     use super::anillo::Anillo;
     use std::sync::{Arc, Mutex};
@@ -52,7 +56,7 @@ pub mod nativo {
             0
         }
         pub fn del_microfono(_anillo: Arc<Mutex<Anillo>>) -> Result<Self, super::NoAbrio> {
-            Err(super::NoAbrio::por(super::PorQueNoAbrio::NoDejo, "la captura de audio solo existe en macOS"))
+            Err(super::NoAbrio::por(super::PorQueNoAbrio::NoDejo, "la captura de audio solo existe en macOS y Windows"))
         }
         pub fn del_sistema(_anillo: Arc<Mutex<Anillo>>) -> Result<Self, super::NoAbrio> {
             Err(super::NoAbrio::por(super::PorQueNoAbrio::NoDejo, "el audio del sistema solo se captura en macOS"))
