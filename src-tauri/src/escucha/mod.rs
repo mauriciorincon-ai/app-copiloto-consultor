@@ -36,8 +36,9 @@ use crate::disparo::{Contexto, Disparador, Motivo};
 use crate::ficha::{Aparicion, Respuesta};
 use crate::stt::{Disponibilidad, Fallo, Motor, Turno, Ventana};
 use crate::voz::{Suceso, Turnos, MARCO};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender};
+use std::collections::VecDeque;
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender, TryRecvError};
 use std::sync::{Arc, Mutex};
 
 /// Cada cuánto mira el hilo de escucha si hay marcos nuevos. Cuarenta milisegundos son dos marcos:
@@ -53,6 +54,51 @@ const LATIDO_MS: u64 = 40;
 /// cuesta decidir un fin de turno. Y el hilo sigue pasando el resto del tiempo **dormido en el
 /// canal**, igual que antes: esto no es un bucle nuevo, es el mismo con un despertador.
 const LATIDO_DEL_SILENCIO_MS: u64 = 400;
+
+/// **Lo que cambia por plataforma en la escucha, en un solo sitio** (sprint 007, ADR 022). En macOS, lo de
+/// siempre; en Windows, dos cosas que el Mac no necesita:
+/// - la voz de la app vuelve por el loopback del audio del sistema (`atender` la marca como eco);
+/// - whisper tarda más que el transcriptor del sistema del Mac, y con dos pistas la cola puede crecer: el cliente
+///   va primero y, si la cola pasa del tope, se descarta lo tuyo más viejo, contado ([`descartados`]).
+const VOZ_DE_LA_APP_POR_EL_SISTEMA: bool = cfg!(windows);
+const POLITICA: Politica = if cfg!(windows) { Politica::ClientePrimero { tope: TOPE_DE_LA_COLA } } else { Politica::Llegada };
+
+/// Cuántos turnos pueden esperar al transcriptor en Windows. Cuatro turnos son de sobra para una conversación
+/// normal con whisper a tiempo; si se pasa, el equipo no da abasto y es mejor decirlo que llegar tarde a todo.
+pub const TOPE_DE_LA_COLA: usize = 4;
+
+/// En qué orden atiende el transcriptor lo que espera.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Politica {
+    /// Por orden de llegada y sin tope: el de siempre (macOS).
+    Llegada,
+    /// El cliente primero, y con tope: si la cola pasa de `tope`, se descarta lo tuyo más viejo.
+    ClientePrimero { tope: usize },
+}
+
+/// Los turnos tuyos que se quedaron sin transcribir en esta escucha porque el equipo no daba abasto. Solo una
+/// cuenta: ni texto ni audio. Honestidad la enseña.
+static DESCARTADOS: AtomicU32 = AtomicU32::new(0);
+
+/// Cuántos turnos se quedaron sin transcribir en la escucha en curso (o en la última).
+pub fn descartados() -> u32 {
+    DESCARTADOS.load(Ordering::Relaxed)
+}
+
+/// **El siguiente encargo, con el cliente primero y la cola con tope** (sprint 007). Devuelve el que toca y los que
+/// se tiran: primero lo tuyo más viejo y, si no queda nada tuyo, lo más viejo. Pura: la atribución sale de la pista
+/// (`quien()`), nunca de la voz.
+fn siguiente(cola: &mut VecDeque<Encargo>, tope: usize) -> (Option<Encargo>, Vec<Encargo>) {
+    let mut tirados = Vec::new();
+    while cola.len() > tope.max(1) {
+        let i = cola.iter().position(|e| e.pista.quien() == Quien::Tuyo).unwrap_or(0);
+        if let Some(e) = cola.remove(i) {
+            tirados.push(e);
+        }
+    }
+    let i = cola.iter().position(|e| e.pista.quien() != Quien::Tuyo).unwrap_or(0);
+    (cola.remove(i), tirados)
+}
 
 /// Lo que el evento de un turno le cuenta al webview: quién habló y si era eco. Nada más.
 fn solo_quien_y_eco<S: serde::Serializer>(t: &Turno, s: S) -> Result<S::Ok, S::Error> {
@@ -450,6 +496,8 @@ impl Escucha {
         diccionario: Arc<Diccionario>,
         avisar: impl Fn(Novedad) + Send + Sync + 'static,
     ) -> Self {
+        // Cada escucha empieza con la cuenta de lo descartado a cero: Honestidad habla de esta reunión.
+        DESCARTADOS.store(0, Ordering::Relaxed);
         let que = pistas.cuales();
         let presencial = es_presencial(&que);
         let vivas = que.into_iter().map(|(p, idioma)| PistaViva::abrir(p, &idioma)).collect();
@@ -531,6 +579,7 @@ impl Escucha {
         {
             let avisar = avisar.clone();
             let suyo = ElQueTranscribe {
+                cola: Default::default(),
                 motor,
                 buscador: buscador.clone(),
                 diccionario,
@@ -682,13 +731,15 @@ struct ElQueTranscribe {
     /// El reloj de la escucha, el único que las dos pistas comparten.
     nacio: std::time::Instant,
     espera: std::time::Duration,
+    /// Lo que espera al transcriptor, solo con [`Politica::ClientePrimero`]. Con `Llegada` la cola es el canal.
+    cola: Mutex<VecDeque<Encargo>>,
 }
 
 impl ElQueTranscribe {
     /// **Un latido**: atiende el encargo que haya llegado y, si no llegó ninguno, mira el silencio.
     /// Devuelve `false` cuando el canal se cerró y el hilo debe acabarse.
     fn latir(&self, recibe: &Receiver<Encargo>, avisar: &dyn Fn(Novedad)) -> bool {
-        match recibe.recv_timeout(self.espera) {
+        match self.recoger(recibe) {
             Ok(mut encargo) => {
                 if let Some((novedad, aparicion)) = atender(
                     &mut encargo,
@@ -729,6 +780,44 @@ impl ElQueTranscribe {
             }
             Err(RecvTimeoutError::Disconnected) => false,
         }
+    }
+
+    /// **El siguiente encargo según la política de esta plataforma.** Con `Llegada`, el canal tal cual —el
+    /// comportamiento de siempre—. Con `ClientePrimero`, se recoge lo que haya llegado, se elige y, si la cola pasó
+    /// del tope, lo descartado se pisa con ceros y se cuenta.
+    fn recoger(&self, recibe: &Receiver<Encargo>) -> Result<Encargo, RecvTimeoutError> {
+        let Politica::ClientePrimero { tope } = POLITICA else {
+            return recibe.recv_timeout(self.espera);
+        };
+        let Ok(mut cola) = self.cola.lock() else { return recibe.recv_timeout(self.espera) };
+        let mut cerrado = false;
+        loop {
+            match recibe.try_recv() {
+                Ok(e) => cola.push_back(e),
+                Err(TryRecvError::Empty) => break,
+                Err(TryRecvError::Disconnected) => {
+                    cerrado = true;
+                    break;
+                }
+            }
+        }
+        if cola.is_empty() {
+            if cerrado {
+                return Err(RecvTimeoutError::Disconnected);
+            }
+            drop(cola);
+            let e = recibe.recv_timeout(self.espera)?;
+            let Ok(mut c) = self.cola.lock() else { return Ok(e) };
+            c.push_back(e);
+            cola = c;
+        }
+        let (toca, tirados) = siguiente(&mut cola, tope);
+        for mut e in tirados {
+            olvidar(&mut e);
+            DESCARTADOS.fetch_add(1, Ordering::Relaxed);
+            println!("[escucha] un turno de la pista «{}» se quedó sin transcribir: el equipo no daba abasto", e.pista.etiqueta());
+        }
+        toca.ok_or(RecvTimeoutError::Timeout)
     }
 
     /// ¿Habla ahora alguien que pudo ser el cliente? Su pista, o la sala, donde no se sabe.
@@ -907,6 +996,15 @@ fn atender(
                 if let Ok(v) = ventana.lock() {
                     t.eco = huele_a_eco(t, &v);
                 }
+            }
+            // **Windows (sprint 007, ADR 022): la voz de la app vuelve por el loopback.** El audio del sistema en
+            // Windows es todo lo que suena, también la ficha que la app te acaba de decir; el tap del Mac excluye
+            // el proceso de la app y no lo necesita. Un turno del cliente que cae mientras la app hablaba es eco:
+            // se marca y no dispara (`disparo::mirar`).
+            Quien::Cliente if VOZ_DE_LA_APP_POR_EL_SISTEMA => {
+                let dura = std::time::Duration::from_millis((t.duracion_ms() + crate::voz::turno::FIN_MS) as u64);
+                let desde = encargo.cerro.checked_sub(dura).unwrap_or(encargo.cerro);
+                t.eco = crate::habla::la_app_hablo(desde, encargo.cerro);
             }
             Quien::Cliente | Quien::SinAtribuir => {}
         }
@@ -1772,6 +1870,7 @@ mod tests {
             .empujar(turno_del_cliente("Nosotros veníamos trabajando con el proveedor anterior", 3_000));
 
         let suyo = ElQueTranscribe {
+            cola: Default::default(),
             motor: Box::new(crate::stt::Mudo::por(crate::stt::PorQueNoHayMotor::SinPuente)),
             buscador: corpus,
             diccionario: sin_diccionario(),
@@ -1818,6 +1917,7 @@ mod tests {
             .empujar(turno_del_cliente("Nosotros veníamos trabajando con el proveedor anterior", 3_000));
 
         let suyo = ElQueTranscribe {
+            cola: Default::default(),
             motor: Box::new(crate::stt::Mudo::por(crate::stt::PorQueNoHayMotor::SinPuente)),
             buscador: Arc::new(corpus_de_prueba()),
             diccionario: sin_diccionario(),
@@ -2044,5 +2144,145 @@ mod tests {
             ..turno_del_cliente("Déjame mirar la propuesta que les mandamos", 3_000)
         });
         assert!(el_silencio_pide_ficha(&ventana, &disparador, &corpus, 3_000 + 9_000, false).is_none());
+    }
+
+    fn encargo(pista: Pista, desde_ms: usize) -> Encargo {
+        Encargo {
+            pista,
+            idioma: "es-ES".into(),
+            desde_ms,
+            hasta_ms: desde_ms + 1_000,
+            muestras: Some(vec![0.3; 16]),
+            cerro: std::time::Instant::now(),
+        }
+    }
+
+    /// **En Windows el cliente va primero** (sprint 007): con un turno tuyo esperando desde antes, el del cliente
+    /// se transcribe antes, y luego el tuyo. Sin tope pasado, nada se tira.
+    #[test]
+    fn con_el_cliente_primero_el_cliente_adelanta() {
+        let mut cola: VecDeque<Encargo> =
+            [encargo(Pista::Microfono, 0), encargo(Pista::Sistema, 500)].into_iter().collect();
+        let (toca, tirados) = siguiente(&mut cola, TOPE_DE_LA_COLA);
+        assert_eq!(toca.map(|e| e.desde_ms), Some(500), "el del cliente");
+        assert!(tirados.is_empty());
+        let (toca, _) = siguiente(&mut cola, TOPE_DE_LA_COLA);
+        assert_eq!(toca.map(|e| e.desde_ms), Some(0), "y después el tuyo");
+        assert!(siguiente(&mut cola, TOPE_DE_LA_COLA).0.is_none());
+    }
+
+    /// **Pasado el tope se tira lo tuyo más viejo**, nunca el cliente mientras quede algo tuyo, y lo tirado se
+    /// devuelve para pisarlo y contarlo.
+    #[test]
+    fn pasado_el_tope_se_tira_lo_tuyo_mas_viejo() {
+        let mut cola: VecDeque<Encargo> = [
+            encargo(Pista::Microfono, 0),
+            encargo(Pista::Sistema, 100),
+            encargo(Pista::Microfono, 200),
+            encargo(Pista::Sistema, 300),
+            encargo(Pista::Microfono, 400),
+            encargo(Pista::Sistema, 500),
+        ]
+        .into_iter()
+        .collect();
+        let (toca, tirados) = siguiente(&mut cola, 4);
+        assert_eq!(tirados.iter().map(|e| e.desde_ms).collect::<Vec<_>>(), vec![0, 200], "lo tuyo más viejo");
+        assert_eq!(toca.map(|e| e.desde_ms), Some(100), "el cliente más viejo de los que quedan");
+        // Si ya no queda nada tuyo, el tope tira lo más viejo: la cola no crece sin límite.
+        let mut solo_cliente: VecDeque<Encargo> = (0..6).map(|i| encargo(Pista::Sistema, i * 100)).collect();
+        let (_, tirados) = siguiente(&mut solo_cliente, 4);
+        assert_eq!(tirados.iter().map(|e| e.desde_ms).collect::<Vec<_>>(), vec![0, 100]);
+    }
+
+    /// **En el Mac nada cambia**: el transcriptor atiende por orden de llegada, sin tope, y la voz de la app no se
+    /// busca en la pista del sistema (el tap excluye el proceso de la app).
+    #[cfg(not(windows))]
+    #[test]
+    fn en_el_mac_la_escucha_es_la_de_siempre() {
+        assert_eq!(POLITICA, Politica::Llegada);
+        const { assert!(!VOZ_DE_LA_APP_POR_EL_SISTEMA) };
+    }
+
+    /// **LA REUNIÓN DEL KIT DE PUNTA A PUNTA, sin grifos** (sprint 007, ADR 022 enmienda 1). La pregunta sintética del
+    /// kit (`docs/kit-de-prueba/audio/pregunta-es.wav`) entra por el anillo del audio del sistema —lo que en Windows
+    /// llena el loopback— con el micrófono callado al lado: sale como un turno **del cliente**, sin eco, y trae su
+    /// ficha. El motor es de prueba (la CI no tiene modelos de voz); lo que se prueba es la cadena: anillo → fin de
+    /// turno → pista → disparo → ficha. Corre en los dos runners, a secas.
+    ///
+    /// ¿Puede fallar? Sí: con la pista del sistema sin dueño (`Pista::Sistema => Quien::SinAtribuir`), es rojo (demo
+    /// en rojo del sprint 007).
+    #[test]
+    fn la_pregunta_del_kit_por_el_sistema_es_del_cliente_y_trae_su_ficha() {
+        use crate::corpus::seccion::Seccion;
+        let corpus = corpus_de_prueba();
+        corpus
+            .0
+            .indice_para_pruebas()
+            .meter("/c/seguridad.md", "Páramo Azul · Seguridad", Some(crate::corpus::Unidad::Propuesta), false, &[
+                Seccion {
+                    titulo: Some("Certificaciones".into()),
+                    texto: "Tenemos la certificación ISO 27001 vigente, auditada cada año.".into(),
+                },
+            ])
+            .unwrap();
+        let pregunta = crate::habla::pcm::leer(include_bytes!("../../../docs/kit-de-prueba/audio/pregunta-es.wav"))
+            .expect("el WAV del kit se lee");
+        assert_eq!(pregunta.hz, HZ, "el kit está a la frecuencia de la app");
+        let microfono = Arc::new(Mutex::new(crate::capture::Anillo::de_la_app()));
+        let sistema = Arc::new(Mutex::new(crate::capture::Anillo::de_la_app()));
+        let idiomas = Arc::new(Mutex::new(Vec::new()));
+        let oido: Arc<Mutex<Vec<Novedad>>> = Arc::default();
+        let apunta = oido.clone();
+        let e = Escucha::sobre_anillos(
+            vec![
+                (Pista::Microfono, microfono.clone(), "es-ES".into()),
+                (Pista::Sistema, sistema.clone(), "es-ES".into()),
+            ],
+            Box::new(Dice("¿Ustedes tienen certificación ISO 27001?", idiomas.clone())),
+            Arc::new(corpus),
+            sin_diccionario(),
+            move |n| apunta.lock().unwrap().push(n),
+        );
+        {
+            let hz = HZ as usize;
+            let total = hz * 6 / 10 + pregunta.muestras.len() + hz;
+            microfono.lock().unwrap().escribir(&vec![0.0; total]);
+            let mut s = sistema.lock().unwrap();
+            s.escribir(&vec![0.0; hz * 6 / 10]);
+            s.escribir(&pregunta.muestras);
+            s.escribir(&vec![0.0; hz]);
+        }
+        let hasta = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        while std::time::Instant::now() < hasta && !oido.lock().unwrap().iter().any(|n| matches!(n, Novedad::Aparece(_))) {
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        e.cortar();
+
+        let oido = oido.lock().unwrap();
+        let turnos: Vec<&Turno> = oido
+            .iter()
+            .filter_map(|n| match n {
+                Novedad::Turno(t) => Some(t),
+                _ => None,
+            })
+            .collect();
+        assert!(!turnos.is_empty(), "la pregunta del kit no sacó ningún turno: el test no prueba nada");
+        for t in &turnos {
+            assert_eq!(t.pista.quien(), Quien::Cliente, "un turno del audio del sistema no salió del cliente");
+            assert!(!t.eco, "la pregunta del cliente salió marcada como eco");
+        }
+        let Some(Novedad::Aparece(a)) = oido.iter().find(|n| matches!(n, Novedad::Aparece(_))) else {
+            panic!("de la pregunta del cliente no salió ficha")
+        };
+        let Respuesta::Ficha(f) = &a.respuesta else { panic!("no encontró la sección que responde") };
+        assert_eq!(f.fuente.seccion.as_deref(), Some("Certificaciones"));
+    }
+
+    /// En Windows, el cliente primero y la voz de la app buscada en su pista.
+    #[cfg(windows)]
+    #[test]
+    fn en_windows_el_cliente_va_primero() {
+        assert_eq!(POLITICA, Politica::ClientePrimero { tope: TOPE_DE_LA_COLA });
+        const { assert!(VOZ_DE_LA_APP_POR_EL_SISTEMA) };
     }
 }

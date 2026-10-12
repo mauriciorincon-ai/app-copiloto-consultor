@@ -978,11 +978,11 @@ pub fn muestras() -> Vec<Muestra> {
         // Sprint 006 (ADR 022): lo que la app hace en este equipo. En Windows, las 15 funciones y whisper medido.
         m("PLATAFORMA_WINDOWS", "Plataforma", "./plataforma", &Plataforma::de(
             Sistema::Windows,
-            Some(Transcripcion { modelo: Some("large-v3-turbo"), latencia_ms: Some(2_350), techo_ms: 4_000, bajando: false }),
+            Some(Transcripcion { modelo: Some("large-v3-turbo"), latencia_ms: Some(2_350), techo_ms: 4_000, bajando: false, descartados: 0 }),
         )),
         m("PLATAFORMA_WINDOWS_SIN_MODELO", "Plataforma", "./plataforma", &Plataforma::de(
             Sistema::Windows,
-            Some(Transcripcion { modelo: None, latencia_ms: None, techo_ms: 4_000, bajando: true }),
+            Some(Transcripcion { modelo: None, latencia_ms: None, techo_ms: 4_000, bajando: true, descartados: 0 }),
         )),
         m("PLATAFORMA_MACOS", "Plataforma", "./plataforma", &Plataforma::de(Sistema::Macos, None)),
     ]

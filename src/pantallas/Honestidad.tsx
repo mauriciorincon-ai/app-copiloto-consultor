@@ -1,4 +1,4 @@
-import { useIdioma, useT, type Idioma } from "../i18n";
+import { useIdioma, useT, useTeclas, type Idioma } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { useEffect, useState } from "react";
 import { PILA } from "../componentes/Ventana";
@@ -56,6 +56,7 @@ import { esWindows, usePlataforma } from "../plataforma";
 
 export function Honestidad({ bytes, escucha: laEscucha, busqueda = "" }: { bytes: string; escucha: EstadoDeEscucha; busqueda?: string }) {
   const t = useT().cuaderno;
+  const k = useTeclas();
   // En Windows el modelo de voz lo baja la app, no macOS (ADR 022): el párrafo y el icono lo dicen (sprint 006).
   const [plataforma] = usePlataforma();
   const enWindows = esWindows(plataforma);
@@ -238,7 +239,7 @@ export function Honestidad({ bytes, escucha: laEscucha, busqueda = "" }: { bytes
             </div>
             <button className="kill" style={{ justifyContent: "center" }} onClick={cortarTodo}>
               <Ic id="i-rayo" s relleno />
-              <span>{t.funcionaCorte}</span> <kbd>⌥⎋</kbd>
+              <span>{t.funcionaCorte}</span> <kbd>{k("⌥⎋")}</kbd>
             </button>
             <p className="mono" style={{ color: "var(--ink-2)" }}>
               {/* «El botón corta»: sin sujeto, «8 de 8 piezas» se leyó como «leyó todo bien»

@@ -816,13 +816,15 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     otro idioma no se transcribe bien** — está medido y está dicho en la pantalla de *Idioma*. Marcar
     varios idiomas por pista no está en la app.
 
-## Angel Ghost en Windows · Sprint 006
+## Angel Ghost en Windows · Sprints 006 y 007
 
 No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fuera de «Features».
 
 - **Qué hace:** la app se instala en un PC con Windows. Tiene la banda protegida, el micrófono, la transcripción
-  local con whisper (en el modo presencial), tus notas cifradas y tu corpus con sus fichas. Honestidad tiene el
-  bloque **«Hoy en Windows»**, que dice qué hace y qué todavía no, cada cosa con su motivo.
+  local con whisper, tus notas cifradas y tu corpus con sus fichas. **Desde el sprint 007 también la
+  videollamada en ese mismo PC** (Teams, Zoom o Meet en el navegador): las dos pistas, la ficha al oído, la lectura
+  de la pantalla de la reunión, el ensayo con voz y los atajos. Honestidad tiene el bloque **«Hoy en Windows»**,
+  que dice qué hace y qué todavía no, cada cosa con su motivo.
 - **Cómo se instala:** llega como archivo (`.msi` o `.exe`) desde la integración continua del repositorio. **El
   instalador no está firmado todavía:** Windows SmartScreen mostrará «Windows protegió tu PC». Pulsa **Más
   información** (en inglés, *More info*) y luego **Ejecutar de todas formas** (en inglés, *Run anyway*). Si tu
@@ -836,7 +838,53 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
 - **Tus notas:** se guardan cifradas, con la llave en el Administrador de credenciales de tu usuario. Exportarlas y
   abrir la bandeja esperan a Windows Hello, que llega en una versión próxima.
 - **Lo que no verificamos:** que la banda no salga en Teams, Zoom ni Meet. Honestidad lo dice como «sin verificar»
-  hasta que lo pruebes en tu PC.
+  hasta que lo pruebes en tu PC, y la banda y *Sesión* lo repiten con esas palabras: en Windows no dicen «Verificada»
+  ni nombran el Mac.
+
+### La videollamada en Windows · Sprint 007
+
+- **Las dos pistas.** Con la reunión abierta, **Iniciar sesión** abre tu micrófono (eres tú) y el **audio del
+  sistema** (el cliente): lo que suena en tu PC. Windows no pide ningún permiso para esto, así que Permisos lo dice:
+  *No pide permiso en Windows*. La app **no separa voces**: toda la pista del sistema cuenta como del cliente, también
+  una notificación o una canción que suene en ese momento. **Si cambias de salida de audio con la sesión en marcha**
+  (unos auriculares Bluetooth, por ejemplo), la app vuelve a abrir el audio del sistema sola, en un par de segundos; si
+  el transcript del cliente deja de moverse tras el cambio, repórtalo.
+- **Qué reunión reconoce.** Por el programa que corre: Teams, Zoom, o Meet en Chrome, Edge, Firefox o Brave, que lee por
+  el título de la pestaña. De los navegadores lee **solo los títulos de sus ventanas**, nada más del PC. Cada programa
+  del catálogo trae la página oficial de donde sale; ninguno se da por verificado.
+- **La voz de la propia app no te dispara fichas.** Lo que dice la app por tus altavoces vuelve por el audio del sistema;
+  si coincide con un turno del cliente, ese turno se marca como eco y no busca nada.
+- **La ficha al oído** usa la voz de Windows. Necesita una voz del idioma instalada (Configuración → Hora e idioma →
+  Voz). **Con altavoces, o con una salida por HDMI o S/PDIF, no habla**: el cliente la oiría. Con auriculares, sí.
+  La app se fía de lo que Windows declara de la salida (altavoces, auriculares, HDMI); si una salida no la clasifica,
+  lo dice en vez de suponerlo. «Al oído» solo viene marcado cuando la voz puede hablar; si no, viene la banda. El
+  **ensayo** usa la misma voz.
+- **La pantalla.** Lee la ventana de la reunión, **solo cuando cambia**, con el reconocimiento de texto de Windows.
+  Necesita el paquete de idioma de texto (Configuración → Hora e idioma → Idioma y región); sin él lo dice. La imagen
+  vive en memoria y se descarta al leerla.
+- **Si tu PC no da abasto.** La transcripción atiende las dos pistas una tras otra y **el cliente va primero**. Si se
+  acumulan más de 4 turnos, se descartan los **tuyos** más viejos —nunca los del cliente— y Honestidad cuenta cuántos.
+  Cuánto tarda tu PC en transcribir lo dice Honestidad; la cifra de la integración continua es de otra máquina y no vale.
+- **Los atajos.** En Windows son `Alt+Mayús` y una tecla; ninguno usa `Ctrl+Alt`, que en muchos teclados es AltGr. Si otra
+  app ya tiene una de esas combinaciones, Windows no la deja registrar: la app lo dice en Honestidad y la acción se hace
+  igual desde la app. Word y Excel usan algunas combinaciones `Alt+Mayús`, y mientras uno de ellos esté en primer plano
+  puede quedársela; lo que ocurra en tu PC se ajusta en la prueba.
+
+| Tecla | Qué hace |
+|---|---|
+| `Alt+Mayús+Q` | corta todo: audio, transcript, banda y relleno |
+| `Alt+Mayús+H` | «ayúdame con esto» |
+| `Alt+Mayús+C` | muestra u oculta el transcript junto a la ficha |
+| `Alt+Mayús+W` | enciende o apaga el modo solo audio |
+| `Alt+Mayús+D` | lee la pantalla una vez, ahora |
+| `Alt+Mayús+K` | anotar |
+| `Alt+Mayús+F` | fijar la ficha |
+| `Alt+Mayús+Z` | guardar la propuesta |
+| `Alt+Mayús+X` | la banda, arriba o abajo |
+| `Esc` | calla la voz. **Solo existe mientras el modo solo audio está encendido**: con el modo encendido, la app se queda `Esc` y no le llega a Teams, a Zoom ni a tus otras apps hasta que lo apagas (`Alt+Mayús+W`) |
+
+- **Lo que sigue sin llegar:** acoplarse a la ventana de la reunión, la sugerencia redactada por IA y el radar (no tiene
+  tecla en Windows), abrir tus notas guardadas con Windows Hello, y borrar con la app cerrada.
 
 | Clave | Hoy en Windows |
 |---|---|
@@ -844,14 +892,14 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
 | `presencial` | sí, con transcripción local (whisper) |
 | `corpus-y-ficha` | sí |
 | `notas-cifradas` | sí: cifradas con la llave en el Administrador de credenciales; exportar y abrir la bandeja esperan a Windows Hello |
-| `videollamada` | todavía no: el audio del sistema, la pista del cliente |
-| `pantalla` | todavía no: leer la pantalla de la reunión |
-| `voz-al-oido` | todavía no: la ficha al oído |
+| `videollamada` | sí: tu micrófono y el audio del sistema, dos pistas; sin verificar en Teams, Zoom ni Meet hasta que la pruebes en tu PC |
+| `pantalla` | sí: la ventana de la reunión, leída solo cuando cambia |
+| `voz-al-oido` | sí, con auriculares; por altavoces no habla |
 | `acople` | todavía no: acoplarse a la ventana de la reunión |
-| `ensayo` | todavía no: ensayar con la voz que lee las preguntas |
+| `ensayo` | sí: la voz del sistema lee las preguntas |
 | `sugerencia` | todavía no: la sugerencia redactada por IA |
 | `radar` | todavía no: el radar de tu equipo |
-| `atajos` | todavía no: en muchos teclados Ctrl+Alt es AltGr |
+| `atajos` | sí: Alt+Mayús y una tecla; ninguno con Ctrl+Alt, que en muchos teclados es AltGr |
 | `borrado-con-la-app-cerrada` | todavía no: por ahora se borra con la app abierta |
 | `desbloqueo` | todavía no: abrir tus notas guardadas, con Windows Hello |
 | `puerta-local` | no en Windows por ahora: la puerta para Claude Code |
@@ -941,6 +989,7 @@ abierta.
 | 004 | **el ensayo** (las preguntas por reglas de tu propuesta, tu ficha y las objeciones típicas; la evaluación sin puntaje: usaste, tenías y no usaste, tiempo, ritmo y muletillas; el informe; guardarlo con la llave y la retención de tus notas; tu progreso por cliente; exportar y borrar) · **«Enriquecer el banco»**, en *IA* · **la banda arriba**, junto a la cámara, con `⌃⌥B` y el aviso de la primera vez · el acople arriba **baja y encoge solo la ventana de la reunión**, al iniciar la sesión · el corte pasa a 12 piezas · tras su auditoría: con una videollamada abierta el ensayo pide auriculares, *Sesión* avisa antes de descartar un ensayo sin guardar, la puerta se cierra también con un ensayo y lo dice, y la protección arriba se declara sin verificar |
 | 005 | **presencial**: la sala por el micrófono del Mac, sin audio del sistema ni pantalla; el idioma de la sala; la ficha al oído de fábrica, con la voz que espera a que la sala calle; las reglas medidas con dos voces sintéticas para no dispararse con tu voz; el PC con Windows al lado; lo que no hace (no separa voces, no guarda tus turnos, no propone) · en inglés, una frase que empieza con «is», «have» o «do» solo cuenta como pregunta si los abre |
 | 006 | **Angel Ghost en Windows**: la banda protegida, el micrófono, la transcripción con whisper (con su calibración en tu PC y el modelo pequeño como escalón), tus notas cifradas en el Administrador de credenciales, la privacidad del micrófono de Windows y **«Hoy en Windows»** en Honestidad · el instalador sin firmar sale de la integración continua |
+| 007 | **la videollamada en Windows**: el audio del sistema como pista del cliente, la reunión reconocida por el programa, la ficha al oído con la voz de Windows (y el ensayo con voz), la lectura de la pantalla de la reunión, los atajos `Alt+Mayús`, el cliente primero en la transcripción · la banda y *Sesión* dicen «sin verificar» y no nombran el Mac |
 
 > **Corregido tras la auditoría del sprint 001** (2026-09-22): tres frases de este manual habían
 > dejado de ser ciertas y se arreglaron con lo que el código hacía de verdad — el disparo por

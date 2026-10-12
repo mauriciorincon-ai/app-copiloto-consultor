@@ -20,12 +20,29 @@ import { Banda, type EstadoBanda } from "@/componentes/Banda";
  * ¿Puede fallar? Sí: con la banda de antes de la auditoría, las dos reglas eran rojas (bitácora).
  */
 const LIB = readFileSync("src-tauri/src/lib.rs", "utf8");
+// Desde el sprint 007 las teclas viven en una tabla por plataforma (`atajos.rs`) y el registro es una lista de
+// acciones en `registrar_el_kill_switch`. Registrada = la acción está en esa lista y su tecla de macOS es `⌃⌥` + letra.
+const ATAJOS = readFileSync("src-tauri/src/atajos.rs", "utf8");
+const EN_MACOS = ATAJOS.slice(
+  ATAJOS.indexOf("pub fn en_macos("),
+  ATAJOS.indexOf("pub fn en_windows("),
+);
+const TECLA_DE_MACOS = new Map(
+  [
+    ...EN_MACOS.matchAll(
+      /Accion::(\w+) => t\(CTRL_OPCION, Code::Key([A-Z]), "⌃⌥[A-Z]"\)/g,
+    ),
+  ].map((m) => [m[1], `⌃⌥${m[2]}`]),
+);
+const REGISTRO = LIB.slice(LIB.indexOf("fn registrar_el_kill_switch<"));
 const REGISTRADAS = new Set(
   [
-    ...LIB.matchAll(
-      /Shortcut::new\(Some\(Modifiers::CONTROL \| Modifiers::ALT\), Code::Key([A-Z])\)/g,
+    ...REGISTRO.slice(0, REGISTRO.indexOf("\n}\n")).matchAll(
+      /\(Accion::(\w+), "/g,
     ),
-  ].map((m) => `⌃⌥${m[1]}`),
+  ]
+    .map((m) => TECLA_DE_MACOS.get(m[1]))
+    .filter((t): t is string => t !== undefined),
 );
 
 const ESTADOS: EstadoBanda[] = [
@@ -84,7 +101,8 @@ describe("la banda no promete lo que no hace", () => {
           .filter(({ texto }) => /^⌃⌥[A-Z]$/.test(texto))
           .filter(
             ({ k, texto }) =>
-              !REGISTRADAS.has(texto) && !k.closest(".pendiente, button:disabled"),
+              !REGISTRADAS.has(texto) &&
+              !k.closest(".pendiente, button:disabled"),
           )
           .map(({ texto }) => texto);
         expect(teclasFalsas, "teclas pintadas que no hacen nada").toEqual([]);

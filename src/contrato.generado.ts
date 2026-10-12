@@ -1569,6 +1569,58 @@ export const QUE_SABE_TRANSCRIBIR_NO_CONTESTA: QueSabeTranscribir = {
   };
 
 export const PLATAFORMA_WINDOWS: Plataforma = {
+    "atajos": [
+      {
+        "accion": "corte",
+        "registrado": true,
+        "teclas": "Alt+Shift+Q"
+      },
+      {
+        "accion": "transcript",
+        "registrado": true,
+        "teclas": "Alt+Shift+C"
+      },
+      {
+        "accion": "ayuda",
+        "registrado": true,
+        "teclas": "Alt+Shift+H"
+      },
+      {
+        "accion": "modo-de-voz",
+        "registrado": true,
+        "teclas": "Alt+Shift+W"
+      },
+      {
+        "accion": "leer-la-pantalla",
+        "registrado": true,
+        "teclas": "Alt+Shift+D"
+      },
+      {
+        "accion": "anotar",
+        "registrado": true,
+        "teclas": "Alt+Shift+K"
+      },
+      {
+        "accion": "fijar",
+        "registrado": true,
+        "teclas": "Alt+Shift+F"
+      },
+      {
+        "accion": "guardar-la-propuesta",
+        "registrado": true,
+        "teclas": "Alt+Shift+Z"
+      },
+      {
+        "accion": "banda",
+        "registrado": true,
+        "teclas": "Alt+Shift+X"
+      },
+      {
+        "accion": "callar",
+        "registrado": true,
+        "teclas": "Esc"
+      }
+    ],
     "funciones": [
       {
         "clave": "banda-protegida",
@@ -1588,15 +1640,15 @@ export const PLATAFORMA_WINDOWS: Plataforma = {
       },
       {
         "clave": "videollamada",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "pantalla",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "voz-al-oido",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "acople",
@@ -1604,7 +1656,7 @@ export const PLATAFORMA_WINDOWS: Plataforma = {
       },
       {
         "clave": "ensayo",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "sugerencia",
@@ -1616,7 +1668,7 @@ export const PLATAFORMA_WINDOWS: Plataforma = {
       },
       {
         "clave": "atajos",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "borrado-con-la-app-cerrada",
@@ -1634,6 +1686,7 @@ export const PLATAFORMA_WINDOWS: Plataforma = {
     "sistema": "windows",
     "transcripcion": {
       "bajando": false,
+      "descartados": 0,
       "latenciaMs": 2350,
       "modelo": "large-v3-turbo",
       "techoMs": 4000
@@ -1641,6 +1694,58 @@ export const PLATAFORMA_WINDOWS: Plataforma = {
   };
 
 export const PLATAFORMA_WINDOWS_SIN_MODELO: Plataforma = {
+    "atajos": [
+      {
+        "accion": "corte",
+        "registrado": true,
+        "teclas": "Alt+Shift+Q"
+      },
+      {
+        "accion": "transcript",
+        "registrado": true,
+        "teclas": "Alt+Shift+C"
+      },
+      {
+        "accion": "ayuda",
+        "registrado": true,
+        "teclas": "Alt+Shift+H"
+      },
+      {
+        "accion": "modo-de-voz",
+        "registrado": true,
+        "teclas": "Alt+Shift+W"
+      },
+      {
+        "accion": "leer-la-pantalla",
+        "registrado": true,
+        "teclas": "Alt+Shift+D"
+      },
+      {
+        "accion": "anotar",
+        "registrado": true,
+        "teclas": "Alt+Shift+K"
+      },
+      {
+        "accion": "fijar",
+        "registrado": true,
+        "teclas": "Alt+Shift+F"
+      },
+      {
+        "accion": "guardar-la-propuesta",
+        "registrado": true,
+        "teclas": "Alt+Shift+Z"
+      },
+      {
+        "accion": "banda",
+        "registrado": true,
+        "teclas": "Alt+Shift+X"
+      },
+      {
+        "accion": "callar",
+        "registrado": true,
+        "teclas": "Esc"
+      }
+    ],
     "funciones": [
       {
         "clave": "banda-protegida",
@@ -1660,15 +1765,15 @@ export const PLATAFORMA_WINDOWS_SIN_MODELO: Plataforma = {
       },
       {
         "clave": "videollamada",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "pantalla",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "voz-al-oido",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "acople",
@@ -1676,7 +1781,7 @@ export const PLATAFORMA_WINDOWS_SIN_MODELO: Plataforma = {
       },
       {
         "clave": "ensayo",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "sugerencia",
@@ -1688,7 +1793,7 @@ export const PLATAFORMA_WINDOWS_SIN_MODELO: Plataforma = {
       },
       {
         "clave": "atajos",
-        "cuando": "todavia-no"
+        "cuando": "si"
       },
       {
         "clave": "borrado-con-la-app-cerrada",
@@ -1706,6 +1811,7 @@ export const PLATAFORMA_WINDOWS_SIN_MODELO: Plataforma = {
     "sistema": "windows",
     "transcripcion": {
       "bajando": true,
+      "descartados": 0,
       "latenciaMs": null,
       "modelo": null,
       "techoMs": 4000
@@ -1713,6 +1819,63 @@ export const PLATAFORMA_WINDOWS_SIN_MODELO: Plataforma = {
   };
 
 export const PLATAFORMA_MACOS: Plataforma = {
+    "atajos": [
+      {
+        "accion": "corte",
+        "registrado": true,
+        "teclas": "⌥⎋"
+      },
+      {
+        "accion": "transcript",
+        "registrado": true,
+        "teclas": "⌃⌥T"
+      },
+      {
+        "accion": "ayuda",
+        "registrado": true,
+        "teclas": "⌃⌥A"
+      },
+      {
+        "accion": "modo-de-voz",
+        "registrado": true,
+        "teclas": "⌃⌥V"
+      },
+      {
+        "accion": "leer-la-pantalla",
+        "registrado": true,
+        "teclas": "⌃⌥L"
+      },
+      {
+        "accion": "radar",
+        "registrado": true,
+        "teclas": "⌃⌥R"
+      },
+      {
+        "accion": "anotar",
+        "registrado": true,
+        "teclas": "⌃⌥N"
+      },
+      {
+        "accion": "fijar",
+        "registrado": true,
+        "teclas": "⌃⌥P"
+      },
+      {
+        "accion": "guardar-la-propuesta",
+        "registrado": true,
+        "teclas": "⌃⌥↵"
+      },
+      {
+        "accion": "banda",
+        "registrado": true,
+        "teclas": "⌃⌥B"
+      },
+      {
+        "accion": "callar",
+        "registrado": true,
+        "teclas": "⎋"
+      }
+    ],
     "funciones": [],
     "sistema": "macos",
     "transcripcion": null

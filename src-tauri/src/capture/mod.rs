@@ -11,10 +11,12 @@
 pub mod anillo;
 #[cfg(target_os = "macos")]
 pub mod nativo;
-/// En Windows, el grifo hermano detrás de la misma frontera (ADR 022): el micrófono por WASAPI.
+/// En Windows, el grifo hermano detrás de la misma frontera (ADR 022): el micrófono y el audio del sistema por
+/// WASAPI.
 #[cfg(windows)]
 #[path = "windows.rs"]
 pub mod nativo;
+pub mod reloj;
 pub mod remuestreo;
 
 /// Ni macOS ni Windows: no hay grifos que abrir, y el resto del crate no tiene por qué enterarse.

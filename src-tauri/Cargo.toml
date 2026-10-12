@@ -94,6 +94,10 @@ objc2-foundation = { version = "0.3", default-features = false, features = [
 # - `chrono`: la hora local, que en macOS da `libc::localtime_r` (ya viajaba en el árbol).
 # - `windows-sys`: el Credential Manager para tus notas, ensayos y bandeja (`llavero/windows.rs`) y la privacidad del
 #   micrófono (`permisos.rs`), con las features mínimas.
+# - `windows` (sprint 007, la videollamada): la misma 0.62 que ya trae `cpal`, así que no se compila dos veces. Para
+#   la forma del dispositivo de salida (COM y sus propiedades), la reunión (procesos y ventanas), la voz al oído
+#   (`Windows.Media.SpeechSynthesis`), la pantalla (`PrintWindow`, GDI) y su lectura (`Windows.Media.Ocr`). Ninguna
+#   feature de red: la única puerta sigue siendo `ureq` en `modelo_whisper.rs`.
 [target.'cfg(windows)'.dependencies]
 cpal = "0.18"
 whisper-rs = "0.16"
@@ -103,6 +107,26 @@ windows-sys = { version = "0.61", features = [
   "Win32_Foundation",
   "Win32_Security_Credentials",
   "Win32_System_Registry",
+] }
+windows = { version = "0.62", features = [
+  "Foundation",
+  "Globalization",
+  "Graphics_Imaging",
+  "Media_Core",
+  "Media_Ocr",
+  "Media_SpeechSynthesis",
+  "Storage_Streams",
+  "Win32_Devices_FunctionDiscovery",
+  "Win32_Foundation",
+  "Win32_Graphics_Gdi",
+  "Win32_Media_Audio",
+  "Win32_Storage_Xps",
+  "Win32_System_Com",
+  "Win32_System_Com_StructuredStorage",
+  "Win32_System_Diagnostics_ToolHelp",
+  "Win32_System_Variant",
+  "Win32_UI_Shell_PropertiesSystem",
+  "Win32_UI_WindowsAndMessaging",
 ] }
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

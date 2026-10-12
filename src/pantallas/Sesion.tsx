@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useIdioma, useT } from "../i18n";
+import { useIdioma, useT, useTeclas } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { Fila, Funciona, PILA } from "../componentes/Ventana";
 import { hayTauri } from "../puente";
@@ -349,6 +349,7 @@ export function Sesion({
  */
 export function LaBanda({ borde }: { borde: Borde }) {
   const t = useT().cuaderno;
+  const k = useTeclas();
   const opciones: [Borde, string][] = [
     ["arriba", t.bandaArriba],
     ["abajo", t.bandaAbajo],
@@ -378,7 +379,7 @@ export function LaBanda({ borde }: { borde: Borde }) {
         })}
       </div>
       <span className="tecla chica">
-        <kbd>⌃⌥B</kbd>
+        <kbd>{k("⌃⌥B")}</kbd>
       </span>
     </Fila>
   );
@@ -435,6 +436,7 @@ function EnPresencial({
   ensayoSinGuardar: boolean;
 }) {
   const t = useT().cuaderno;
+  const k = useTeclas();
   const tc = useT().cliente;
   const tp = t.presencial;
   const idiomas = useIdiomasDePista();
@@ -445,7 +447,10 @@ function EnPresencial({
   // Con altavoces que la app reconoce, la banda de partida (§7): la voz no hablaría con el cliente oyéndola.
   const altavoz = salida.salida === "altavoces" || salida.salida === "altavoz-externo";
   const [elegida, setElegida] = useState<boolean | null>(null);
-  const alOido = enMarcha && hayTauri() ? voz.encendida : (elegida ?? !altavoz);
+  // **M5 (auditoría del S6):** «Al oído» parte elegido solo si la voz PUEDE hablar —hay voz para el idioma y la salida no
+  // son altavoces que la app reconoce—, que es lo que Rust dice en `voz.puede`. En Windows, sin voz del sistema para el
+  // idioma, partía elegido con la voz muda. Fuera de Tauri (la maqueta) no hay a quién preguntar y manda la salida.
+  const alOido = enMarcha && hayTauri() ? voz.encendida : (elegida ?? (hayTauri() ? voz.puede : !altavoz));
   const elegir = (si: boolean) => {
     if (enMarcha && hayTauri()) void fijarLaVoz(si);
     else setElegida(si);
@@ -582,7 +587,7 @@ function EnPresencial({
           </div>
           <p style={nota}>
             {`${aparato}${duda ? `${tp.siEsUnAltavoz} ` : ""}`}
-            <kbd>⌃⌥V</kbd>
+            <kbd>{k("⌃⌥V")}</kbd>
             {` ${tp.cambia}`}
           </p>
           <div className="fila">
@@ -648,10 +653,11 @@ function EnPresencial({
 /** `⌥⎋` y la promesa que cumple: «corta todo · el sonido nunca se guarda · …». */
 function Promesa({ bytes }: { bytes: string }) {
   const t = useT().cuaderno;
+  const k = useTeclas();
   return (
     <>
       <span className="tecla">
-        <kbd>⌥⎋</kbd>
+        <kbd>{k("⌥⎋")}</kbd>
       </span>
       <span className="mono" style={{ color: "var(--ink-2)" }}>
         {bytes === "0 B" ? t.nadaSale : t.nadaSaleConApi}
@@ -843,6 +849,7 @@ function LaClausula({ clausula, volver }: { clausula: Bilingue; volver: () => vo
 /** «Qué queda apagado» y «Qué sigue funcionando»: lo mismo antes de empezar en solo notas y durante. */
 function LoQueQuedaYLoQueSigue() {
   const tc = useT().cliente;
+  const k = useTeclas();
   const apagada = (icono: string, texto: string) => (
     <div className="fila" key={icono}>
       <Ic id={icono} s color="var(--mute)" />
@@ -867,12 +874,12 @@ function LoQueQuedaYLoQueSigue() {
         <h2 className="seccion">{tc.queSigue}</h2>
         <Fila icono="i-nota" color="var(--ok)" texto={tc.notasYAcuerdos}>
           <span className="tecla">
-            <kbd>⌃⌥N</kbd>
+            <kbd>{k("⌃⌥N")}</kbd>
           </span>
         </Fila>
         <Fila icono="i-buscar" color="var(--ok)" texto={tc.buscarAMano}>
           <span className="tecla">
-            <kbd>⌃⌥A</kbd>
+            <kbd>{k("⌃⌥A")}</kbd>
           </span>
         </Fila>
         <Fila icono="i-candado" color="var(--ok)" texto={tc.panelProtegido} />
@@ -913,6 +920,7 @@ function LaNdaLoProhibe({ iniciar, revisar }: { iniciar: () => void; revisar: ()
 /** La reunión en solo notas, en marcha (`sesion.html` «sprint 3 · en solo notas»). */
 function EnSoloNotas({ terminar, bytes }: { terminar: () => void; bytes: string }) {
   const t = useT().cuaderno;
+  const k = useTeclas();
   const tc = useT().cliente;
   return (
     <div style={PILA}>
@@ -921,7 +929,7 @@ function EnSoloNotas({ terminar, bytes }: { terminar: () => void; bytes: string 
         <div>
           <strong>{tc.modoSoloNotas}</strong>
           <p style={{ marginTop: "4px" }}>
-            {tc.enMarchaAntes} <b>⌃⌥A</b> {tc.enMarchaDespues}
+            {tc.enMarchaAntes} <b>{k("⌃⌥A")}</b> {tc.enMarchaDespues}
           </p>
         </div>
       </div>
@@ -1061,6 +1069,7 @@ export function LaPista({
  */
 export function LaPantalla({ pantalla }: { pantalla: EstadoDeLaPantalla }) {
   const t = useT().cuaderno;
+  const k = useTeclas();
   const encendida = pantalla.vista !== "apagada";
   let chip;
   let porque: { texto: string; color?: string } | null = null;
@@ -1140,7 +1149,7 @@ export function LaPantalla({ pantalla }: { pantalla: EstadoDeLaPantalla }) {
           <span className="etq">{t.leerlaSola}</span>
         </button>
         <span className="tecla chica">
-          <kbd>⌃⌥L</kbd> {t.leelaAhora}
+          <kbd>{k("⌃⌥L")}</kbd> {t.leelaAhora}
         </span>
       </div>
     </>

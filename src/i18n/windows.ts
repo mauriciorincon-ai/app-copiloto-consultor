@@ -34,7 +34,11 @@ export type TextosDeWindows = {
     medirOtra: string;
     bajarPequeno: string;
     sinReunion: string;
+    /** Sprint 007: con dos pistas el cliente va primero; lo tuyo que no dio tiempo a transcribir, contado. */
+    descartados: (n: number) => string;
   };
+  /** Sprint 007: un atajo que Windows no dejó registrar porque otra app ya tiene esa combinación. */
+  atajoOcupado: (teclas: string) => string;
   /** Idioma: el motor de voz es de la app, no del sistema (ADR 022). */
   idioma: {
     transcribeTuPc: string;
@@ -54,6 +58,8 @@ export type TextosDeWindows = {
     microfonoPara: string;
     abrirAjustes: string;
     llegaDespues: string;
+    /** Sprint 007: el audio del sistema y la pantalla no piden ningún permiso en Windows. */
+    sinPermiso: string;
     antesTitulo: string;
     antesTexto: string;
   };
@@ -84,15 +90,18 @@ const ES: TextosDeWindows = {
     },
     videollamada: {
       nombre: "Las videollamadas: el audio del cliente",
-      detalle: "llega en una versión próxima",
+      detalle:
+        "sí: tu micrófono y el audio del sistema, dos pistas; sin verificar en Teams, Zoom ni Meet hasta que la pruebes en tu PC",
     },
     pantalla: {
       nombre: "Leer la pantalla de la reunión",
-      detalle: "llega en una versión próxima",
+      detalle:
+        "sí: la ventana de la reunión, leída solo cuando cambia; necesita el reconocimiento de texto de tu idioma en Windows",
     },
     "voz-al-oido": {
       nombre: "La ficha al oído",
-      detalle: "llega en una versión próxima",
+      detalle:
+        "sí, con auriculares; por altavoces no habla",
     },
     acople: {
       nombre: "Acoplarse a la ventana de la reunión",
@@ -100,7 +109,8 @@ const ES: TextosDeWindows = {
     },
     ensayo: {
       nombre: "Ensayar con la voz que lee las preguntas",
-      detalle: "llega en una versión próxima",
+      detalle:
+        "sí: la voz del sistema lee las preguntas",
     },
     sugerencia: {
       nombre: "La sugerencia redactada por IA",
@@ -113,7 +123,7 @@ const ES: TextosDeWindows = {
     atajos: {
       nombre: "Los atajos de teclado globales",
       detalle:
-        "llega en una versión próxima; en muchos teclados Ctrl+Alt es AltGr",
+        "sí: Alt+Mayús y una tecla; ninguno con Ctrl+Alt, que en muchos teclados es AltGr",
     },
     "borrado-con-la-app-cerrada": {
       nombre: "Borrar tus notas con la app cerrada",
@@ -128,6 +138,8 @@ const ES: TextosDeWindows = {
       detalle: "no en Windows por ahora",
     },
   },
+  atajoOcupado: (teclas) =>
+    `${teclas} no responde: otra app de este PC ya tiene esa combinación. Lo mismo se hace desde la app.`,
   whisper: {
     titulo: "La transcripción en este PC",
     bajando: "Bajando el modelo de voz (1,6 GB, con su comprobación)…",
@@ -141,6 +153,10 @@ const ES: TextosDeWindows = {
     medirOtra: "Medir otra vez",
     bajarPequeno: "Bajar el modelo pequeño (0,5 GB)",
     sinReunion: "Bajar o medir no se puede con una reunión abierta.",
+    descartados: (n) =>
+      n === 1
+        ? "En la última reunión, 1 turno tuyo se quedó sin transcribir: este PC no daba abasto y el cliente va primero."
+        : `En la última reunión, ${n} turnos tuyos se quedaron sin transcribir: este PC no daba abasto y el cliente va primero.`,
   },
   idioma: {
     transcribeTuPc: "Transcribe tu PC, no un servicio",
@@ -161,9 +177,10 @@ const ES: TextosDeWindows = {
     microfonoPara: "Escuchar la sala o tu voz, con el micrófono de este PC",
     abrirAjustes: "Abrir Ajustes de Windows",
     llegaDespues: "Llega en una versión próxima",
+    sinPermiso: "No pide permiso en Windows",
     antesTitulo: "El micrófono en Windows",
     antesTexto:
-      "Lo concedes o lo quitas tú en Ajustes → Privacidad y seguridad → Micrófono. La app no pide el permiso por su cuenta.",
+      "El micrófono lo concedes o lo quitas tú en Ajustes → Privacidad y seguridad → Micrófono; la app no pide el permiso por su cuenta. El audio del sistema y la pantalla de la reunión no piden ninguno.",
   },
 };
 
@@ -195,15 +212,18 @@ const EN: TextosDeWindows = {
     },
     videollamada: {
       nombre: "Video calls: the client's audio",
-      detalle: "coming in a later version",
+      detalle:
+        "yes: your microphone and the system audio, two tracks; unverified on Teams, Zoom or Meet until you test it on your PC",
     },
     pantalla: {
       nombre: "Reading the meeting's screen",
-      detalle: "coming in a later version",
+      detalle:
+        "yes: the meeting window, read only when it changes; needs Windows text recognition for your language",
     },
     "voz-al-oido": {
       nombre: "The card read to your ear",
-      detalle: "coming in a later version",
+      detalle:
+        "yes, with headphones; it doesn't speak through speakers",
     },
     acople: {
       nombre: "Docking to the meeting window",
@@ -211,7 +231,8 @@ const EN: TextosDeWindows = {
     },
     ensayo: {
       nombre: "Rehearsing with a voice that reads the questions",
-      detalle: "coming in a later version",
+      detalle:
+        "yes: the system voice reads the questions",
     },
     sugerencia: {
       nombre: "The suggestion written by AI",
@@ -224,7 +245,7 @@ const EN: TextosDeWindows = {
     atajos: {
       nombre: "Global keyboard shortcuts",
       detalle:
-        "coming in a later version; on many keyboard layouts Ctrl+Alt is AltGr",
+        "yes: Alt+Shift and a key; none with Ctrl+Alt, which is AltGr on many keyboards",
     },
     "borrado-con-la-app-cerrada": {
       nombre: "Deleting your notes with the app closed",
@@ -239,6 +260,8 @@ const EN: TextosDeWindows = {
       detalle: "not on Windows for now",
     },
   },
+  atajoOcupado: (teclas) =>
+    `${teclas} doesn't respond: another app on this PC already has that combination. You can do the same from the app.`,
   whisper: {
     titulo: "Transcription on this PC",
     bajando: "Downloading the speech model (1.6 GB, with its checksum)…",
@@ -253,6 +276,10 @@ const EN: TextosDeWindows = {
     bajarPequeno: "Download the small model (0.5 GB)",
     sinReunion:
       "Downloading or measuring isn't possible while a meeting is open.",
+    descartados: (n) =>
+      n === 1
+        ? "In the last meeting, 1 of your turns wasn't transcribed: this PC couldn't keep up and the client goes first."
+        : `In the last meeting, ${n} of your turns weren't transcribed: this PC couldn't keep up and the client goes first.`,
   },
   idioma: {
     transcribeTuPc: "Transcribes on your PC, not a service",
@@ -274,9 +301,10 @@ const EN: TextosDeWindows = {
       "Listening to the room or your voice, with this PC's microphone",
     abrirAjustes: "Open Windows Settings",
     llegaDespues: "Coming in a later version",
+    sinPermiso: "Needs no permission on Windows",
     antesTitulo: "The microphone on Windows",
     antesTexto:
-      "You grant or revoke it yourself in Settings → Privacy & security → Microphone. The app never asks for the permission on its own.",
+      "You grant or revoke the microphone yourself in Settings → Privacy & security → Microphone; the app never asks for the permission on its own. The system audio and the meeting screen need none.",
   },
 };
 
