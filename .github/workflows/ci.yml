@@ -161,7 +161,9 @@ jobs:
   # instalador como artifact del PR (sin firmar hasta G-Release: SmartScreen avisará, el manual dice cómo pasar). Lo que
   # es de macOS no corre aquí: ni clippy con el puente de Swift, ni el kit de voz, ni las maquetas, ni `cargo audit`
   # (lee el mismo Cargo.lock: una vez basta, en `build-escritorio`). Whisper (whisper.cpp con MSVC y cmake) SOLO se
-  # compila aquí; la inferencia real y su latencia se leen en el PC del usuario (no hay modelo en el runner).
+  # compila aquí. Desde el sprint 007 el job baja el modelo pequeño (con su huella) para medir la transcripción, y desde
+  # el 008 lo usa en una sesión completa (regla 1) y trae el OCR y la voz del sistema contra fixtures; la latencia que
+  # vale es la del PC del usuario, no la del runner.
   # Techo: el plan declaró 25 min; la primera corrida mide el real, y el cierre del sprint lo dice.
   build-windows:
     runs-on: windows-latest

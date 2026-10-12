@@ -1,4 +1,4 @@
-# Reglas — ANEXO de consulta (kit v2.0.0)
+# Reglas — ANEXO de consulta (kit v2.2.0)
 
 > **Anexo, no carga automática.** Este archivo NO se lee al abrir una sesión: se consulta solo cuando una regla del núcleo
 > (`CLAUDE.md`) se cita y hace falta su detalle, su origen o su precedente. El texto de cada regla es el de la constitución
@@ -614,7 +614,7 @@ conmutador visible desde la maqueta de la Etapa de Diseño.
 > **Adoptado en el sprint 006 (2026-10-11), kit v2.1.0.** Todo lo que sigue es el `CLAUDE.md` de 840 líneas que esta app tuvo hasta el sprint 005
 > (`git show 2ca36bd:CLAUDE.md`), **copiado tal cual, sin una palabra tocada**: las 9 reglas duras de producto con sus precedentes, las
 > adaptaciones del perfil escritorio, las reglas de desarrollo propias 20 y 22, la estructura, los patrones de dominio y el idioma. El núcleo
-> (`CLAUDE.md`, 116 líneas) manda; este texto explica. Donde difiera de él en el flujo de trabajo (summary, bitácora y auditoría como archivos
+> (`CLAUDE.md`, 135 líneas) manda; este texto explica. Donde difiera de él en el flujo de trabajo (summary, bitácora y auditoría como archivos
 > aparte, dos pasadas de auditoría, tres clases de PR), **manda el núcleo**: ese flujo lo sustituyó el kit v2.0.0 y v2.1.0.
 >
 > **Numeración.** El texto de abajo usa la numeración de reglas de esta casa; el núcleo usa la del kit. Equivalencias:
@@ -633,6 +633,24 @@ conmutador visible desde la maqueta de la Etapa de Diseño.
 > | «Idioma» (bilingüe en todo) | 20 |
 >
 > Los comentarios de código, tests y ADR que citan «regla N de CLAUDE.md» con la numeración de esta casa siguen siendo ciertos leídos con esta tabla.
+>
+> ### Estado a 2026-10-12 (cierre del H-1, sprint 008): lo que el código ya no dice como el texto de abajo
+>
+> Este texto es la v1.40.0 de antes de Windows y del cierre del hito, y se conserva sin tocar. La auditoría de la constitución
+> del sprint 008 (`sprints/SPRINT_008-constitucion.md`) lo contrastó con el código, la CI y la configuración; **donde esto
+> difiera, mandan el núcleo y esta lista**:
+>
+> | El texto de abajo dice… | Hoy |
+> |---|---|
+> | checks requeridos «quality · e2e · build-escritorio» (y «lighthouse») | `quality` · `e2e` · `build-escritorio` · `build-windows` · `un-pr-vivo`, todos en la ruleset `main-protegida`; sin Lighthouse (perfil escritorio) |
+> | «La app exige macOS 26»; Apple SpeechAnalyzer sin respaldo; Core Audio y ScreenCaptureKit | **en macOS**. En Windows, la misma frontera con otra pieza detrás: loopback WASAPI por `cpal`, `whisper-rs` con el modelo bajado y comprobado por huella, `PrintWindow` y `Windows.Media.Ocr`, el Administrador de credenciales (ADR 022). El respaldo de whisper dejó de ser «deuda»: es el motor de Windows (ADR 006, enmienda del sprint 008) |
+> | puertas de red: el adapter LLM y las descargas de modelos de macOS | tres puertas de Swift (`contador-de-red`) y, **solo en Windows**, dos de Rust: `modelo_whisper.rs` (el modelo) y `sintesis/api.rs` (la sugerencia con tu clave, ADR 023); cada una en una línea marcada con su ADR y contada |
+> | tarea de launchd · Llavero · Touch ID · versión de macOS · `NS*UsageDescription` | launchd **y** el Programador de tareas (ADR 016, enmienda 4) · el Llavero **y** el Administrador de credenciales · Touch ID **y** Windows Hello · la versión del sistema (Windows 10 2004 o más) · los textos de permisos de cada sistema |
+> | la puerta local: un socket Unix | solo macOS; en Windows «no por ahora», dicho en Honestidad |
+> | el árbol de «Estructura» y `SPRINT_NNN-implementation-log.md` · `SPRINT_NNN-summary.md` | la fuente es el núcleo (§ «Estructura real»); hoy se usan `SPRINT_NNN-cierre.md` y `SPRINT_NNN-auditoria.md` |
+> | regla 18: «máximo DOS PR abiertos» | **sustituida** por «UN SOLO PR VIVO POR APP» (núcleo, regla 18; job `un-pr-vivo`) |
+> | «H1», «H2», «G-Release (H2)», «20 keep H1 · 4 keep H2 · 6 defer» | los ciclos antiguos; el hito vigente es **H-1 → H-4** del núcleo, y G-Release es el H-4 |
+> | el cierre «reemplaza al summary, la bitácora y la auditoría» | reemplaza al summary y a la bitácora; la auditoría sigue en su archivo y el cierre la resume |
 
 ---
 

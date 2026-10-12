@@ -151,6 +151,13 @@
   .origen-mejorado { color: var(--pendiente); border-color: var(--pendiente); background: var(--pendiente-suave); }
   .origen-heredada { color: var(--tinta-suave); border-color: var(--borde); }
   .minimo { font-size: 0.75rem; white-space: nowrap; margin-left: 4px; }
+  .gate-etq { display: inline-block; font-family: ui-monospace, Menlo, monospace; font-size: 0.7rem;
+    letter-spacing: 0.03em; padding: 1px 8px; border-radius: 99px; border: 1px solid var(--acento);
+    color: var(--acento); background: var(--acento-suave); margin-left: 6px; max-width: 100%; }
+  .gate-etq::before { content: "◆ "; }
+  #matriz-gate { font-size: 0.78rem; }
+  #matriz-gate th, #matriz-gate td { padding: 5px 7px; }
+  #matriz-gate th:nth-child(-n+2), #matriz-gate td:nth-child(-n+2) { white-space: nowrap; }
   .candidata { font-size: 0.82rem; margin: 6px 0 0; padding: 4px 8px; border-left: 2px solid var(--acento);
     background: var(--acento-suave); border-radius: 0 6px 6px 0; }
 
@@ -180,24 +187,27 @@
 <body>
 <div class="pagina">
   <header>
-    <p class="eyebrow">Angel Ghost · Guía de prueba viva y acumulativa · Sprint 007 · 2026-10-12 · <strong>v8</strong></p>
+    <p class="eyebrow">Angel Ghost · Guía de prueba viva y acumulativa · Sprint 008 · 2026-10-12 · <strong>v9</strong></p>
     <h1>Guía de prueba</h1>
     <p class="suave">Todas las pruebas vigentes de la app — las nuevas de este sprint, las que
       cambiaron y las heredadas (regresión). Filtra por origen para correr todo o solo lo que
       cambió. Las casillas se guardan solas en este navegador.</p>
     <div class="url-caja" style="border-color:var(--pendiente)">
       <p class="eyebrow" style="margin:0 0 6px">Qué cambió en esta versión</p>
-      <p class="chica" style="margin:0"><strong>v8 — el sprint 007 lleva la videollamada a Windows: el audio del cliente por el
+      <p class="chica" style="margin:0"><strong>v9 — el sprint 008 cierra el hito H-1: Windows completo (Windows Hello, la tarea de borrado, el acople, el radar y la sugerencia con tu clave) y la sala del modo presencial, que nunca se había probado, más el gate del H-1: una sentada de ~20 min en el Mac y otra de ~20 min en el PC.</strong>
+        <strong>10 pruebas nuevas</strong> —cinco en el bloque S, todas en tu PC, y cinco en el bloque nuevo V (presencial), en tu Mac—. <strong>5 de las 131 heredadas reescritas</strong> («Mejorado en S8»): «Hoy en Windows» ya no tiene tres grupos ni «todavía no» (w2), el botón de ajustes solo sale sin micrófono concedido (w3), la descarga se para si empieza una reunión (w4), la reunión solo cuenta con una llamada (w6) y el radar suma su tecla (w10). Lo que era «Nuevo · S7» pasa a «S7» a secas. Namespace nuevo (<code>ag-s8-</code>).</p>
+      <p class="chica" style="margin:8px 0 0"><strong>El gate del H-1 no borra nada:</strong> es una lente sobre las ⭐ que ya existen —los botones «Gate del H-1 · Mac» y «Gate del H-1 · PC»—, con las paradas numeradas en el orden del documento y sus minutos. Lo que se queda fuera del gate sigue entero en el filtro ⭐, y la caja de abajo dice qué riesgo corre cada cosa que no se mira.</p>
+      <p class="chica" style="margin:8px 0 0"><strong>v8 — el sprint 007 lleva la videollamada a Windows: el audio del cliente por el
         audio del sistema, la reunión reconocida, la ficha al oído y el ensayo con voz, la pantalla de la reunión y los
         atajos <code>Alt+Mayús</code>.</strong>
-        <strong>8 pruebas nuevas</strong> en el bloque S, todas en tu PC con Windows. <strong>0 de las 123 heredadas reescritas</strong>: las cinco del S6 pasan a «S6» a secas, porque ninguna cambió.</p>
+        8 pruebas nuevas en el bloque S, todas en tu PC con Windows; 0 de las 123 heredadas reescritas: las cinco del S6 pasan a «S6» a secas, porque ninguna cambió.</p>
       <p class="chica" style="margin:8px 0 0"><strong>v7 — el sprint 006 lleva la app a Windows: la banda protegida, el micrófono,
         la transcripción local con whisper y tus notas cifradas, con la lista «Hoy en Windows» en Honestidad.</strong>
-        <strong>5 pruebas nuevas</strong> en el bloque S, todas en tu PC con Windows. <strong>0 de las 118 heredadas reescritas</strong>: las pruebas del S4 pasan a «S4» a secas, porque ninguna cambió en macOS.</p>
+        5 pruebas nuevas en el bloque S, todas en tu PC con Windows; 0 de las 118 heredadas reescritas: las pruebas del S4 pasan a «S4» a secas, porque ninguna cambió en macOS.</p>
       <p class="chica" style="margin:8px 0 0"><strong>v6 — el sprint 004 abre el ciclo H2: el ensayo (la app te hace las
         preguntas que el cliente probablemente hará, te escucha y te dice qué evidencia usaste) y la banda arriba,
-        junto a la cámara.</strong> <strong>17 pruebas nuevas</strong> en dos bloques (Q y R) y
-        <strong>11 de las 101 heredadas reescritas</strong> («Mejorado en S4»).</p>
+        junto a la cámara.</strong> 17 pruebas nuevas en dos bloques (Q y R) y
+        11 de las 101 heredadas reescritas («Mejorado en S4»).</p>
       <p class="chica" style="margin:8px 0 0"><strong>Las 101 se releyeron contra la app de hoy.</strong> La banda nace
         arriba desde el S4: los bloques A a P —y el recorrido ⭐⭐ del H1— se corren con la banda <strong>abajo</strong>,
         como eran, y la preparación lo dice; la de arriba tiene su bloque (Q). Cuatro cambiaron al construir: el primer
@@ -217,6 +227,52 @@
         fuera de una reunión, el Llavero, la tarea de borrado y Touch ID— van en el bloque R y en la caja de avisos. Las
         casillas de la v5 <strong>no se conservan a propósito</strong> (namespace nuevo, <code>ag-s4-</code>).</p>
     </div>
+    <div class="url-caja" id="gate-h1" style="border-color:var(--acento)">
+      <p class="eyebrow" style="margin:0 0 6px">El gate del H-1 · una sentada por máquina</p>
+      <p class="chica" style="margin:0"><strong>Gate del H-1: Mac 8 paradas · ~20 min · PC 9 paradas · ~20 min.</strong> Es lo único que le queda al hito. Cada mitad se corre con la
+        página abierta, de arriba abajo, en su máquina y con el filtro de su nombre; cada parada dice sus minutos. <strong>Regla de selección:
+        si la CI lo verifica, no entra.</strong> Entra lo que solo una persona puede ver, oír o juzgar, y lo que toca una protección de tu sistema.</p>
+      <p class="chica" id="preparacion-mac" data-min-gate="2" style="margin:8px 0 0"><strong>Preparación del Mac (~2 min):</strong> arranca con <code>pnpm ghost</code> y
+        <code>AG_BANDEJA_DE_PRUEBA=1 pnpm tauri dev</code>; en <em>Corpus</em>, señala <code>docs/kit-de-prueba/corpus/</code>; en <em>Idioma</em>, las dos pistas en <code>es-ES</code>; en <em>Sesión</em>,
+        «Este cliente» → <strong>Páramo Azul</strong> y «La banda» → <strong>abajo</strong>; en <em>IA</em>, «Redactar sugerencias» encendido y el proveedor externo apagado. Ponte los auriculares y deja Meet
+        cerrado hasta la parada 1.</p>
+      <p class="chica" id="preparacion-pc" data-min-gate="2" style="margin:8px 0 0"><strong>Preparación del PC (~2 min):</strong> <strong>antes de sentarte</strong>, baja el modelo de voz
+        (<em>Idioma</em> → Instalar, 1,6 GB) y deja Windows Hello configurado; ten Teams, Zoom o Meet con alguien al otro lado y los auriculares puestos. Arranca la app con
+        <code>$env:AG_BANDEJA_DE_PRUEBA='1'</code> puesto en PowerShell (para la tarea de borrado, parada 8). El instalador es la parada 1.</p>
+      <p class="chica" style="margin:8px 0 0"><strong>La matriz de la regla 24.</strong> La app toca protecciones de tu sistema, y cada una se anuncia antes. <strong>Antes de correr una fila, tu «sí» por
+        acción</strong> (puede ser «sí a las del Mac» o «sí a las del PC»); si aparece un aviso que no está en esta tabla, deniégalo y repórtalo.</p>
+      <div class="tabla-scroll">
+        <table id="matriz-gate">
+          <thead><tr><th scope="col">#</th><th scope="col">Máquina</th><th scope="col">Qué se toca</th><th scope="col">Para qué</th><th scope="col">Aviso que vas a ver</th><th scope="col">Cómo se deshace</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Mac</td><td>Micrófono, Grabación de pantalla y audio del sistema, Accesibilidad (TCC)</td><td>La banda, las dos pistas y el acople</td><td>Los tres avisos de macOS, la primera vez (paradas 1, 5 y 6)</td><td>System Settings → Privacy &amp; Security → apagar el interruptor</td></tr>
+            <tr><td>2</td><td>Mac</td><td>El Llavero: la llave «Angel Ghost · notas»</td><td>Cifrar tus notas y tus ensayos</td><td>Quizá «Permitir» (Allow), si la llave la creó otra compilación</td><td>Keychain Access → borrar «Angel Ghost · notas» (se pierden las reuniones guardadas)</td></tr>
+            <tr><td>3</td><td>Mac</td><td>Touch ID o tu contraseña, con el motivo «abrir tus notas guardadas»</td><td>Desbloquear lo cifrado (parada 3)</td><td>El cuadro del sistema</td><td>Cancelar: no se abre y nada queda</td></tr>
+            <tr><td>4</td><td>Mac</td><td>launchd y los Ítems de inicio: una tarea «sh · desarrollador no identificado»</td><td>Borrar lo vencido con la app cerrada (parada 4)</td><td>«Ítem en segundo plano añadido» (Background Items Added)</td><td>System Settings → General → Login Items &amp; Extensions → apagarla</td></tr>
+            <tr><td>5</td><td>PC</td><td>Instalar el <code>.msi</code> o <code>.exe</code> sin firmar</td><td>Probar el binario (parada 1)</td><td>SmartScreen → More info → Run anyway</td><td>Settings → Apps → Uninstall</td></tr>
+            <tr><td>6</td><td>PC</td><td>El micrófono</td><td>Tu pista</td><td>Ninguno desde la app: se concede en Privacy &amp; security → Microphone</td><td>Apagar el interruptor</td></tr>
+            <tr><td>7</td><td>PC</td><td>El modelo de voz (1,6 GB), bajado por la única puerta Rust de descarga</td><td>Transcribir en tu PC</td><td>Ninguno; se comprueba su huella SHA-256</td><td>Borrar <code>%LOCALAPPDATA%\com.aiapps.copiloto-consultor\modelos</code></td></tr>
+            <tr><td>8</td><td>PC</td><td>Windows Hello al exportar o abrir lo cifrado</td><td>Desbloquear lo cifrado (parada 7)</td><td>El cuadro de Windows Security</td><td>Cancelar: no se abre y nada queda</td></tr>
+            <tr><td>9</td><td>PC</td><td>Una tarea del Programador de tareas</td><td>Borrar lo vencido con la app cerrada (parada 8)</td><td>Ninguno; aparece en Task Scheduler</td><td>Task Scheduler → borrar la tarea «Angel Ghost …»</td></tr>
+            <tr><td>10</td><td>PC</td><td>Mover y encoger la ventana de la reunión</td><td>Que la banda no la tape (parada 9)</td><td>Ninguno</td><td>Se devuelve sola al terminar; o muévela a mano</td></tr>
+            <tr><td>11</td><td>PC</td><td>La salida al API de Groq o de Claude, con tu clave en el Administrador de credenciales (opcional, fuera del gate)</td><td>La sugerencia (w18)</td><td>Ninguno; el contador de Honestidad cuenta lo que sale</td><td>IA → borrar la clave; Credential Manager</td></tr>
+            <tr><td>12</td><td>PC</td><td>Una videollamada real con auriculares</td><td>El audio del sistema, la voz al oído, los atajos (paradas 3 a 6)</td><td>Ninguno</td><td>Nada</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <details class="chica">
+        <summary>Lo que el gate no mira, y el riesgo de no mirarlo</summary>
+        <ul>
+          <li><strong>Mac · la ficha en menos de 4 s con el audio del cliente por los altavoces (e3):</strong> la CI mide la latencia con el kit; el riesgo es un audio real más sucio.</li>
+          <li><strong>Mac · la sugerencia con Apple Intelligence (h2):</strong> la CI comprueba que no diga nada que su ficha no diga; el riesgo es una frase torpe.</li>
+          <li><strong>Mac · fijar, propuestas y la puerta local (k1, n7):</strong> los prueba la CI; el riesgo es el copy.</li>
+          <li><strong>Mac · el ensayo guardado, el progreso con Touch ID y «Enriquecer el banco» (r6, r7, r10, r12):</strong> el riesgo es el desbloqueo de los ensayos, que se prueba entero en el filtro ⭐.</li>
+          <li><strong>PC · el micrófono, la descarga del modelo y la pantalla de una diapositiva real (w3, w4, w9):</strong> la CI prueba la descarga con un archivo falso y el OCR con el kit; el riesgo es la red de tu PC y el paquete de idioma de texto.</li>
+          <li><strong>PC · los altavoces, el ensayo con voz y el cambio de salida (w8, w11, w12, w13):</strong> la CI no oye ni cambia de dispositivo; el riesgo es la voz saliendo por donde el cliente la oiría.</li>
+          <li><strong>PC · el radar y la sugerencia con tu clave (w17, w18):</strong> opcionales; el riesgo es qué programas vigilantes tienes instalados y un proxy de empresa.</li>
+        </ul>
+      </details>
+    </div>
     <p class="chica"><strong>Gate corto ⭐⭐: 9 paradas · ~20 min — es el del cierre del ciclo H1 (su Acto 2), y
       esta versión no lo mueve.</strong> Es un recorrido: se camina de arriba abajo, en el orden del documento, y cada
       parada deja la app lista para la siguiente. Solo entra lo que únicamente una persona puede juzgar:
@@ -232,7 +288,7 @@
       «Redactar sugerencias» encendido y el proveedor externo apagado; <strong>y en <em>Sesión</em>, «La banda» →
       abajo</strong> (si sale el aviso de la primera vez, «Entendido»): el recorrido del H1 se camina con la banda donde
       estaba en el H1. Ponte los auriculares y deja Meet cerrado hasta la parada 1.</p>
-    <p class="chica"><strong>Deja fuera 99 pruebas ⭐</strong> —las 24 del H2, que esperan el ⭐⭐ de su propio ciclo, y
+    <p class="chica"><strong>Deja fuera 108 pruebas ⭐</strong> —las 33 del H2, que esperan el ⭐⭐ de su propio ciclo, y
       la jurisdicción y la NDA, el modo solo notas,
       exportar, la bandeja con llave, instalar un modelo de idioma, el comportamiento sin permisos, el eco, el
       proveedor externo con tu clave, el diccionario, entre otras—: <strong>ninguna se borra</strong>, siguen
@@ -242,18 +298,18 @@
       que no mide, la captura de una ventana viva, se vio en vivo en el S2 y sigue en el ⭐); <strong>el ámbar
       del radar</strong>, porque la CI lo saca de la reunión grabada del kit; y <strong>el corte a mitad de
       frase</strong>, porque lo prueba la CI con el turno que ya iba en camino.</p>
-    <p class="chica"><strong>Gate mínimo ⭐: 108 pruebas · ~231 min (S1 33 · S2 28 · S3 23 · S4 11 · S5 0 · S6 5 · S7 8).</strong>
+    <p class="chica"><strong>Gate mínimo ⭐: 117 pruebas · ~248 min (S1 33 · S2 28 · S3 23 · S4 11 · S5 0 · S6 5 · S7 8 · S8 9).</strong>
       Es lo que ninguna automatización puede verificar: hardware de verdad, voz de verdad, una videollamada
       de verdad, los avisos de macOS y el juicio humano sobre lo que se ve y se oye. Lo que la CI ya respalda
       queda fuera del mínimo y se corre en los pases completos. Se ofrece, sin fecha, y se puede correr por
       bloques.</p>
-    <p class="chica"><strong>Acumulado del ciclo H2: 24 ⭐ (S4 11 · S6 5 · S7 8) · candidatas al ⭐⭐ del H2: 16 sí · 8 no.</strong>
+    <p class="chica"><strong>Acumulado del ciclo H2: 33 ⭐ (S4 11 · S6 5 · S7 8 · S8 9) · candidatas al ⭐⭐ del H2: 22 sí · 11 no.</strong>
       El ⭐⭐ del H2 se arma al cierre del ciclo, en el S6, con las candidatas. Cada ⭐ nueva dice si lo es y por qué:
       entra lo que solo una persona puede juzgar; si la CI lo verifica por otro camino, no.</p>
     <p class="chica"><strong>Textos diferidos: 20 filas · ~10 min.</strong> Un bloque aparte (T, al
       final) para decidir si cada texto se entiende, pendiente del Acto 2 del H1. Separable: no hace falta la app,
       solo los comparativos.</p>
-    <p class="chica"><strong>Formas y textos del H2: 20 filas · ~13 min.</strong> Su propia tabla (U), para el gate del
+    <p class="chica"><strong>Formas y textos del H2: 24 filas · ~16 min.</strong> Su propia tabla (U), para el gate del
       MVP del H2: lo que el S4 maquetó y nadie ha mirado.</p>
     <div class="url-caja">
       <p class="eyebrow" style="margin:0 0 6px">Cómo se arranca</p>
@@ -300,7 +356,9 @@
     </div>
     <div class="filtros" role="group" aria-label="Filtrar pruebas por origen">
       <button type="button" data-filtro="todo" class="activo">Todo</button>
-      <button type="button" data-filtro="cambios">Lo que cambió en S4</button>
+      <button type="button" data-filtro="gate-mac">Gate del H-1 · Mac</button>
+      <button type="button" data-filtro="gate-pc">Gate del H-1 · PC</button>
+      <button type="button" data-filtro="cambios">Lo que cambió en S8</button>
       <button type="button" data-filtro="minimo">Gate mínimo ⭐</button>
       <button type="button" data-filtro="h2">⭐ del ciclo H2</button>
       <button type="button" data-filtro="corto">Gate corto ⭐⭐ del H1</button>
@@ -318,10 +376,11 @@
         <p class="chica suave" style="margin:6px 0 0">Decía «una banda apaisada pegada al borde inferior de la pantalla»: desde el S4 la banda nace arriba, y abajo es una elección que se recuerda.</p>
         <span class="origen origen-heredada">S4</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="heredada" data-nace="s1" data-minimo data-corto data-min="2"><input type="checkbox" id="a2"><label for="a2">Con la app arrancada, abre Google Meet en Chrome, entra a una sala y deja la ventana de Chrome <strong>maximizada (no a pantalla completa) y delante</strong>. <strong>Pulsa ⌃⌥B dos veces</strong>: la banda sube y vuelve abajo, y al volver acopla la ventana que tienes delante —Chrome se recorta por abajo—. Ahora <strong>comparte la pantalla completa</strong>. Mírate en la miniatura de tu propia compartición, o pide a alguien que mire. <strong>La franja de abajo NO muestra la banda: muestra tu fondo de escritorio.</strong> Ésta es la promesa entera de la app. <strong>Deja la pantalla compartida</strong>: la parada 5 vuelve a mirar esta miniatura, con tu cuaderno.
+      <li data-origen="heredada" data-nace="s1" data-minimo data-corto data-min="2" data-gate="mac" data-min-gate="2"><input type="checkbox" id="a2"><label for="a2">Con la app arrancada, abre Google Meet en Chrome, entra a una sala y deja la ventana de Chrome <strong>maximizada (no a pantalla completa) y delante</strong>. <strong>Pulsa ⌃⌥B dos veces</strong>: la banda sube y vuelve abajo, y al volver acopla la ventana que tienes delante —Chrome se recorta por abajo—. Ahora <strong>comparte la pantalla completa</strong>. Mírate en la miniatura de tu propia compartición, o pide a alguien que mire. <strong>La franja de abajo NO muestra la banda: muestra tu fondo de escritorio.</strong> Ésta es la promesa entera de la app. <strong>Deja la pantalla compartida</strong>: la parada 5 vuelve a mirar esta miniatura, con tu cuaderno.
         <p class="chica suave" style="margin:6px 0 0">Desde el S3 el cuaderno también se protege, pero solo mientras hay sesión: se mira en el bloque K, con la sesión en marcha. Sin sesión, el cuaderno sí se ve al compartir, y es lo esperado.</p>
         <p class="chica suave" style="margin:6px 0 0">Decía solo «abre Google Meet»: abajo la app acopla sola únicamente en los 30 s que siguen al arranque, y la preparación dura más.</p>
         <span class="origen origen-heredada">S4</span>
+        <span class="gate-etq">Gate H-1 · Mac · parada 1 de 8 · ~2 min</span>
         <span class="minimo">⭐ mínimo</span>
         <span class="minimo">⭐⭐ Parada 1 de 9 · ~2 min</span></label></li>
       <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="a3"><label for="a3">Con la pantalla todavía compartida, mira la franja con atención: <strong>no se ve el escritorio de verdad</strong> (ni iconos, ni ventanas por detrás), sino un trozo de tu fondo de pantalla. Si se vieran ventanas ajenas asomando, el relleno no está haciendo su trabajo.
@@ -649,9 +708,10 @@
       <li data-origen="heredada" data-nace="s1"><input type="checkbox" id="l1"><label for="l1">Con la sesión corriendo, mira Honestidad: <strong>los búferes con sus cifras, incluido el último cuadro leído de la pantalla</strong>, y <strong>«Lo que quedará cuando cierres»</strong>: tu nota, tus acuerdos y tus fichas fijadas, en la carpeta privada de la app. El contador de red dice <strong>0 B</strong> (con el proveedor externo de IA apagado).
         <p class="chica suave" style="margin:6px 0 0">Nuevo en el S3: lo que quedará. En el S2 esa parte decía «todavía no».</p>
         <span class="origen origen-heredada">S3</span></label></li>
-      <li data-origen="heredada" data-nace="s1" data-minimo data-corto data-min="1"><input type="checkbox" id="l2"><label for="l2">Pulsa <strong>⌥⎋</strong>. En el acto: la banda y su relleno desaparecen, la voz del modo solo audio se calla, Chrome recupera su tamaño, y en Honestidad <strong>los búferes vuelven a 0 B</strong>. Debajo del botón rojo: <strong>«El botón corta 12 de 12 piezas: ninguna queda fuera.»</strong> Y arriba, en verde, <strong>«Tus notas siguen ahí»</strong>: tu nota, tus acuerdos y tus fijadas se quedan; tus turnos en texto y las propuestas sin decidir, no.
+      <li data-origen="heredada" data-nace="s1" data-minimo data-corto data-min="1" data-gate="mac" data-min-gate="1"><input type="checkbox" id="l2"><label for="l2">Pulsa <strong>⌥⎋</strong>. En el acto: la banda y su relleno desaparecen, la voz del modo solo audio se calla, Chrome recupera su tamaño, y en Honestidad <strong>los búferes vuelven a 0 B</strong>. Debajo del botón rojo: <strong>«El botón corta 12 de 12 piezas: ninguna queda fuera.»</strong> Y arriba, en verde, <strong>«Tus notas siguen ahí»</strong>: tu nota, tus acuerdos y tus fijadas se quedan; tus turnos en texto y las propuestas sin decidir, no.
         <p class="chica suave" style="margin:6px 0 0">Decía «11 de 11»: el S4 sumó una pieza, el ensayo, que el corte también se lleva (el S3 había sumado tus turnos en texto y las propuestas sin decidir). Es la misma parada 6, en su sitio y con su número. Tus notas no se cortan: son lo único tuyo.</p>
         <span class="origen origen-heredada">S4</span>
+        <span class="gate-etq">Gate H-1 · Mac · parada 2 de 8 · ~1 min</span>
         <span class="minimo">⭐ mínimo</span>
         <span class="minimo">⭐⭐ Parada 6 de 9 · ~1 min</span></label></li>
       <li data-origen="heredada" data-nace="s1" data-minimo><input type="checkbox" id="l2b"><label for="l2b"><strong>Y ahora el caso de verdad:</strong> con la sesión iniciada otra vez, haz que el cliente empiece una frase larga —<code>say -v Paulina "Nos gustaría revisar el alcance completo de la propuesta, las tres fuentes, el cronograma de cuatro semanas y el taller de cierre, antes de firmar"</code>— y pulsa <strong>⌥⎋ sin que haya terminado</strong>. Espera cinco segundos mirando la banda y Honestidad. <strong>No aparece nada</strong>: ni un turno nuevo en el transcript, ni una ficha, ni bytes que vuelvan a subir.
@@ -687,9 +747,10 @@
     <div class="bloque-cabeza"><span class="letra">M</span><h2>Al cerrar: tu archivo cifrado</h2></div>
     <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>Notas, tras el corte (⌥⎋) o al terminar la sesión</code> · ~7 min · lo tuyo se guarda cifrado; del cliente, solo lo que aceptaste</p>
     <ul class="pasos">
-      <li data-origen="heredada" data-nace="s3" data-minimo data-corto data-min="2"><input type="checkbox" id="m1"><label for="m1">Tras el corte, <em>Notas</em> enseña <strong>qué se va a guardar y qué muere</strong>, contado, y el nombre del archivo: <code>paramo-azul-&lt;fecha&gt;.ghost</code>, porque elegiste Páramo Azul en «Este cliente». Pulsa <strong>«Guardar cifrado y cerrar»</strong>. <strong>Si es la primera vez que guardas notas con fecha (en el Acto 2 ya lo viste en la prueba en vivo), macOS avisa de un ítem en segundo plano añadido (Background Items Added)</strong> —la tarea que borra lo vencido, de Angel Ghost—. Luego <strong>«Mostrar en Finder»</strong>: el archivo aparece seleccionado. En Terminal, <code>strings ~/Library/Application\ Support/com.aiapps.copiloto-consultor/notas/*.ghost | head</code>: <strong>no sale ni una palabra de tu nota</strong>. Vuelve a <em>Notas</em> → el archivo → la reunión → <strong>«Exportar a texto»</strong> → «Exportar sin cifrado» → macOS pide <strong>Touch ID o tu contraseña</strong> con el motivo «abrir tus notas guardadas» → guárdalo en una carpeta de prueba. Abre el <code>.md</code>: <strong>tu nota, tu acuerdo, la ficha fijada y la propuesta que guardaste; del cliente, solo las propuestas suyas que guardaste (un hecho de una línea)</strong>: ni su voz, ni sus turnos, ni su pantalla. Bórralo al terminar.
+      <li data-origen="heredada" data-nace="s3" data-minimo data-corto data-min="2" data-gate="mac" data-min-gate="2"><input type="checkbox" id="m1"><label for="m1">Tras el corte, <em>Notas</em> enseña <strong>qué se va a guardar y qué muere</strong>, contado, y el nombre del archivo: <code>paramo-azul-&lt;fecha&gt;.ghost</code>, porque elegiste Páramo Azul en «Este cliente». Pulsa <strong>«Guardar cifrado y cerrar»</strong>. <strong>Si es la primera vez que guardas notas con fecha (en el Acto 2 ya lo viste en la prueba en vivo), macOS avisa de un ítem en segundo plano añadido (Background Items Added)</strong> —la tarea que borra lo vencido, de Angel Ghost—. Luego <strong>«Mostrar en Finder»</strong>: el archivo aparece seleccionado. En Terminal, <code>strings ~/Library/Application\ Support/com.aiapps.copiloto-consultor/notas/*.ghost | head</code>: <strong>no sale ni una palabra de tu nota</strong>. Vuelve a <em>Notas</em> → el archivo → la reunión → <strong>«Exportar a texto»</strong> → «Exportar sin cifrado» → macOS pide <strong>Touch ID o tu contraseña</strong> con el motivo «abrir tus notas guardadas» → guárdalo en una carpeta de prueba. Abre el <code>.md</code>: <strong>tu nota, tu acuerdo, la ficha fijada y la propuesta que guardaste; del cliente, solo las propuestas suyas que guardaste (un hecho de una línea)</strong>: ni su voz, ni sus turnos, ni su pantalla. Bórralo al terminar.
         <p class="chica suave" style="margin:6px 0 0">Si la reunión ya se guardó sola (empezaste otra sesión antes de guardarla), búscala en el archivo: se guarda igual, cifrada.</p>
         <span class="origen origen-heredada">S3</span>
+        <span class="gate-etq">Gate H-1 · Mac · parada 3 de 8 · ~2 min</span>
         <span class="minimo">⭐ mínimo</span>
         <span class="minimo">⭐⭐ Parada 7 de 9 · ~2 min</span></label></li>
       <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="m2"><label for="m2"><strong>«Exportar a texto»</strong>: la app pregunta antes, <strong>«¿Exportar sin cifrado?»</strong>. «Exportar sin cifrado» → Touch ID (si no exportaste ya en esta sesión de la app) → elige el Escritorio. El <code>.md</code> se lee con cualquier editor: tu nota, tus acuerdos, las propuestas que guardaste y tus fijadas. <strong>Bórralo al terminar</strong>: ese archivo ya no lo protege nadie.
@@ -739,9 +800,10 @@
     <div class="bloque-cabeza"><span class="letra">O</span><h2>La bandeja que vence sola</h2></div>
     <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>la sesión en marcha, con la app arrancada con AG_BANDEJA_DE_PRUEBA=1</code> · ~10 min (hay esperas) · lo que no decides muere a su hora, aunque no abras la app</p>
     <ul class="pasos">
-      <li data-origen="heredada" data-nace="s3" data-minimo data-corto data-min="4"><input type="checkbox" id="o1"><label for="o1">Con la sesión en marcha, di tú por el micrófono <strong>«Te lo mando en doce semanas»</strong> y no la decidas. «Terminar sesión»: <em>Notas</em> dice cuántas propuestas quedan sin decidir y te deja elegir cuánto esperan; elige <strong>1 h</strong> (con la bandeja de prueba dura <strong>2 minutos</strong>). «Guardar cifrado y cerrar». Si no lo viste en la parada 7, macOS avisa ahora de un <strong>ítem en segundo plano añadido</strong> (Background Items Added). Notas y Honestidad enseñan la bandeja con su cuenta atrás. <strong>Sal de la app con ⌘Q</strong> y espera <strong>tres minutos</strong> sin abrirla. En Terminal, <code>ls ~/Library/Application\ Support/com.aiapps.copiloto-consultor/bandeja/</code>: <strong>vacía</strong>. Abre la app: la bandeja no está, y Honestidad no dice nada en rojo.
+      <li data-origen="heredada" data-nace="s3" data-minimo data-corto data-min="4" data-gate="mac" data-min-gate="4"><input type="checkbox" id="o1"><label for="o1">Con la sesión en marcha, di tú por el micrófono <strong>«Te lo mando en doce semanas»</strong> y no la decidas. «Terminar sesión»: <em>Notas</em> dice cuántas propuestas quedan sin decidir y te deja elegir cuánto esperan; elige <strong>1 h</strong> (con la bandeja de prueba dura <strong>2 minutos</strong>). «Guardar cifrado y cerrar». Si no lo viste en la parada 7, macOS avisa ahora de un <strong>ítem en segundo plano añadido</strong> (Background Items Added). Notas y Honestidad enseñan la bandeja con su cuenta atrás. <strong>Sal de la app con ⌘Q</strong> y espera <strong>tres minutos</strong> sin abrirla. En Terminal, <code>ls ~/Library/Application\ Support/com.aiapps.copiloto-consultor/bandeja/</code>: <strong>vacía</strong>. Abre la app: la bandeja no está, y Honestidad no dice nada en rojo.
         <p class="chica suave" style="margin:6px 0 0">Lo borra una tarea de macOS programada al minuto de cada vencimiento; entre vencimientos no corre nada. Sin <code>AG_BANDEJA_DE_PRUEBA=1</code>, la ventana de 1 h dura una hora.</p>
         <span class="origen origen-heredada">S3</span>
+        <span class="gate-etq">Gate H-1 · Mac · parada 4 de 8 · ~4 min</span>
         <span class="minimo">⭐ mínimo</span>
         <span class="minimo">⭐⭐ Parada 9 de 9 · ~4 min</span></label></li>
       <li data-origen="heredada" data-nace="s3" data-minimo><input type="checkbox" id="o2"><label for="o2">Guarda otra bandeja (1 h de prueba), sal de la app y vuelve a abrirla antes de que venza: Notas enseña la cuenta atrás, pero <strong>lo que dice está cerrado con llave</strong> («Cerrada con llave: es de una sesión anterior de la app»): «Abrir con Touch ID».
@@ -823,9 +885,10 @@
     <ul class="pasos">
       <li data-origen="heredada" data-nace="s4"><input type="checkbox" id="r1"><label for="r1">En «Con quién ensayas», Cliente <strong>Páramo Azul</strong>; la propuesta es la del kit (rentabilidad por canal); Preguntas <strong>5</strong>. La pantalla dice «Idioma del ensayo: español.» y, en «De dónde salen las preguntas», tu propuesta, su ficha de cliente y las objeciones típicas, con «Enriquecer el banco: apagado». «Leer la pregunta en voz alta» está encendido.
         <span class="origen origen-heredada">S4</span></label></li>
-      <li data-origen="heredada" data-nace="s4" data-minimo data-candidata="si"><input type="checkbox" id="r2"><label for="r2">Pulsa <strong>«Empezar el ensayo»</strong>. Si la app desde la que arrancaste nunca tuvo el micrófono, macOS pregunta: permítelo. En la barra de menús aparece <strong>el punto naranja del micrófono, y no el morado</strong> de la grabación de pantalla: el ensayo no abre ni el audio del sistema ni la pantalla. La voz te lee la primera pregunta mientras la pantalla dice «Te la está leyendo · El micrófono espera a que termine», y <strong>nada de lo que dice la voz entra en tu respuesta</strong>. Respóndela en voz alta, como ante el cliente, y cállate: <strong>a los 2,5 s</strong> se cierra sola y llega la evaluación, con «Usaste», «Tenías y no usaste» y sus fichas, y tiempo, ritmo y muletillas. La segunda, termínala con <strong>Enter</strong>. <strong>¿Lo que dice que usaste y que tenías es justo con lo que dijiste?</strong> Si citaste algo con otras palabras y no lo vio, pulsa «Sí lo dije».
+      <li data-origen="heredada" data-nace="s4" data-minimo data-candidata="si" data-gate="mac" data-min-gate="3"><input type="checkbox" id="r2"><label for="r2">Pulsa <strong>«Empezar el ensayo»</strong>. Si la app desde la que arrancaste nunca tuvo el micrófono, macOS pregunta: permítelo. En la barra de menús aparece <strong>el punto naranja del micrófono, y no el morado</strong> de la grabación de pantalla: el ensayo no abre ni el audio del sistema ni la pantalla. La voz te lee la primera pregunta mientras la pantalla dice «Te la está leyendo · El micrófono espera a que termine», y <strong>nada de lo que dice la voz entra en tu respuesta</strong>. Respóndela en voz alta, como ante el cliente, y cállate: <strong>a los 2,5 s</strong> se cierra sola y llega la evaluación, con «Usaste», «Tenías y no usaste» y sus fichas, y tiempo, ritmo y muletillas. La segunda, termínala con <strong>Enter</strong>. <strong>¿Lo que dice que usaste y que tenías es justo con lo que dijiste?</strong> Si citaste algo con otras palabras y no lo vio, pulsa «Sí lo dije».
         <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. Es el ensayo entero con una voz de verdad: la CI no tiene modelos para reconocer voz, y solo tú puedes decir si la evaluación es justa con lo que dijiste.</p>
         <span class="origen origen-heredada">S4</span>
+        <span class="gate-etq">Gate H-1 · Mac · parada 5 de 8 · ~3 min</span>
         <span class="minimo">⭐ mínimo</span></label></li>
       <li data-origen="heredada" data-nace="s4" data-minimo data-candidata="si"><input type="checkbox" id="r3"><label for="r3">En la tercera, responde con calma y mete a propósito un <strong>«o sea»</strong> y dos <strong>«básicamente»</strong>. En «Muletillas» salen las que la transcripción conservó, con sus veces; <strong>«eh» y «um» no salen</strong>, y la pantalla lo dice. «Ritmo», en palabras por minuto: ¿se parece a cómo hablaste? (Una respuesta de menos de cinco palabras o de menos de dos segundos dice «—».)
         <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. Que la transcripción de macOS conserve tus muletillas con tu voz es justo lo que la CI no puede oír; las cuentas sí las prueba, con el texto del kit.</p>
@@ -866,62 +929,120 @@
   </section>
   <section class="bloque">
     <div class="bloque-cabeza"><span class="letra">S</span><h2>Angel Ghost en Windows: lo que solo tú puedes ver en tu PC</h2></div>
-    <p class="chica" style="margin:0 0 10px">Desde el S6 la app se instala en Windows, y desde el S7 sirve en una videollamada. Estas pruebas corren en <strong>tu PC con Windows</strong>, no en el Mac: la CI prueba el código, la cadena con el audio del kit, la descarga con un archivo falso y el Administrador de credenciales en su máquina temporal. Lo que sigue solo lo ve y lo oye una persona. <strong>Las ocho últimas (w6 a w13) piden una videollamada real y auriculares.</strong></p>
+    <p class="chica" style="margin:0 0 10px">Desde el S6 la app se instala en Windows, desde el S7 sirve en una videollamada y desde el S8 está completa: «Hoy en Windows» dice catorce «sí» y un solo «no por ahora». Estas pruebas corren en <strong>tu PC con Windows</strong>, no en el Mac: la CI prueba el código, la cadena con el audio del kit, la descarga con un archivo falso y el Administrador de credenciales en su máquina temporal. Lo que sigue solo lo ve y lo oye una persona. <strong>De la w6 a la w13 piden una videollamada real y auriculares; desde el S8, la w14 a la w18 son Windows Hello, la tarea de borrado, el acople, el radar y la sugerencia con tu clave.</strong></p>
     <ul class="pasos">
-      <li data-origen="heredada" data-nace="s6" data-minimo data-candidata="no"><input type="checkbox" id="w1"><label for="w1"><strong>Instala la app desde el archivo de la integración continua</strong> (<code>.msi</code> o <code>.exe</code>). Windows dirá «Windows protegió tu PC»: pulsa <strong>Más información</strong> y <strong>Ejecutar de todas formas</strong>. La app abre y muestra Sesión.
+      <li data-origen="heredada" data-nace="s6" data-minimo data-candidata="no" data-gate="pc" data-min-gate="2"><input type="checkbox" id="w1"><label for="w1"><strong>Instala la app desde el archivo de la integración continua</strong> (<code>.msi</code> o <code>.exe</code>). Windows dirá «Windows protegió tu PC»: pulsa <strong>Más información</strong> y <strong>Ejecutar de todas formas</strong>. La app abre y muestra Sesión.
         <p class="candidata">Candidata al ⭐⭐ del H2: <strong>no</strong>. Es un paso mecánico: la CI construye el instalador y lo prueba en su máquina temporal.</p>
         <span class="origen origen-heredada">S6</span>
+        <span class="gate-etq">Gate H-1 · PC · parada 1 de 9 · ~2 min</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="heredada" data-nace="s6" data-minimo data-candidata="si"><input type="checkbox" id="w2"><label for="w2">Abre <strong>Honestidad</strong>: el bloque <strong>«Hoy en Windows»</strong> enseña tres grupos. Compara cada línea con lo que de verdad hace la app en tu PC. Si una dice «sí» y no funciona, o dice «todavía no» y sí funciona, <strong>repórtalo</strong>.
+      <li data-origen="mejorado" data-nace="s6" data-minimo data-candidata="si" data-gate="pc" data-min-gate="2"><input type="checkbox" id="w2"><label for="w2">Abre <strong>Honestidad</strong>: el bloque <strong>«Hoy en Windows»</strong> enseña <strong>dos grupos</strong>, «Ya funciona» (catorce funciones) y «No por ahora» (solo la puerta local). Compara cada línea con lo que de verdad hace la app en tu PC. Si una dice «sí» y no funciona, <strong>repórtalo</strong>; y no debe quedar ninguna que diga «todavía no» ni «llega después».
         <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. Es la promesa de la pantalla, y solo quien la usa en su PC puede comprobar que la lista dice lo que la app hace.</p>
-        <span class="origen origen-heredada">S6</span>
+        <span class="origen origen-mejorado">Mejorado en S8</span>
+        <span class="gate-etq">Gate H-1 · PC · parada 2 de 9 · ~2 min</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="heredada" data-nace="s6" data-minimo data-candidata="si"><input type="checkbox" id="w3"><label for="w3">En <strong>Permisos</strong>, el botón <strong>Abrir Ajustes de Windows</strong> solo sale si el micrófono no está concedido (si ya lo está, la fila lo dice y no hay botón): concédelo en <strong>Privacidad y seguridad → Micrófono</strong>. Abre el modo presencial y habla; luego, en <strong>Honestidad</strong>, pulsa <strong>Medir otra vez</strong>: la transcripción enseña lo que tardó <strong>en tu PC</strong> con los 10 s de calibración (hasta entonces dice «sin medir») y, si pasa de 4 s, el botón del modelo pequeño.
+      <li data-origen="mejorado" data-nace="s6" data-minimo data-candidata="si"><input type="checkbox" id="w3"><label for="w3">En <strong>Permisos</strong>, el botón <strong>Abrir Ajustes de Windows</strong> solo sale si el micrófono no está concedido (si ya lo está, la fila lo dice y no hay botón): concédelo en <strong>Privacidad y seguridad → Micrófono</strong>. Abre el modo presencial y habla; luego, en <strong>Honestidad</strong>, pulsa <strong>Medir otra vez</strong>: la transcripción enseña lo que tardó <strong>en tu PC</strong> con los 10 s de calibración (hasta entonces dice «sin medir») y, si pasa de 4 s, el botón del modelo pequeño.
         <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. El micrófono real y la latencia de tu equipo: la CI no tiene micrófono ni modelo, y el techo de 4 s solo lo mide tu PC.</p>
-        <span class="origen origen-heredada">S6</span>
+        <span class="origen origen-mejorado">Mejorado en S8</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="heredada" data-nace="s6" data-minimo data-candidata="si"><input type="checkbox" id="w4"><label for="w4">En <strong>Idioma</strong>, pulsa <strong>Instalar</strong> en español. La descarga pesa 1,6 GB: mira que avanza, que la app no se congela y que al final el modelo queda listo. Con una reunión abierta, <strong>no debe bajar nada</strong>: la pantalla seguirá diciendo que falta el modelo.
+      <li data-origen="mejorado" data-nace="s6" data-minimo data-candidata="si"><input type="checkbox" id="w4"><label for="w4">En <strong>Idioma</strong>, pulsa <strong>Instalar</strong> en español. La descarga pesa 1,6 GB: mira que avanza, que la app no se congela y que al final el modelo queda listo. Con una reunión, una sesión (también «solo notas» o presencial) o un ensayo abiertos, <strong>no debe bajar nada</strong>; y si uno empieza mientras baja, <strong>la descarga se para</strong> y borra lo que llevaba. Si falla, la pantalla dice «No se pudo bajar el modelo».
         <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. La descarga real, cuánto se espera y si el mensaje se entiende: la CI la prueba con un archivo falso y una huella de prueba.</p>
-        <span class="origen origen-heredada">S6</span>
+        <span class="origen origen-mejorado">Mejorado en S8</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="heredada" data-nace="s6" data-minimo data-candidata="si"><input type="checkbox" id="w5"><label for="w5">Con <strong>Teams, Zoom o Meet</strong> abiertos y la banda protegida en pantalla, comparte la <strong>pantalla completa</strong> y mírate en la miniatura. <strong>La banda no debe salir</strong>. Si sale, Honestidad sigue diciendo «sin verificar» y tú lo sabes: repórtalo.
+      <li data-origen="heredada" data-nace="s6" data-minimo data-candidata="si" data-gate="pc" data-min-gate="2"><input type="checkbox" id="w5"><label for="w5">Con <strong>Teams, Zoom o Meet</strong> abiertos y la banda protegida en pantalla, comparte la <strong>pantalla completa</strong> y mírate en la miniatura. <strong>La banda no debe salir</strong>. Si sale, Honestidad sigue diciendo «sin verificar» y tú lo sabes: repórtalo.
         <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. Es la promesa más fuerte y la menos verificada: ninguna videollamada de Windows la ha probado todavía, y solo la ve quien comparte la pantalla.</p>
         <span class="origen origen-heredada">S6</span>
+        <span class="gate-etq">Gate H-1 · PC · parada 3 de 9 · ~2 min</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-          <li data-origen="nuevo" data-nace="s7" data-minimo data-candidata="si"><input type="checkbox" id="w6"><label for="w6">Con una videollamada real en <strong>Teams</strong> (o Zoom, o Meet en el navegador) y <strong>auriculares</strong> puestos, pulsa <strong>Iniciar sesión</strong>. Pide a quien está al otro lado —o a un teléfono— que pregunte: «¿Ustedes tienen certificación ISO 27001?». En el transcript la pregunta sale <strong>del cliente</strong> y la banda trae su ficha en menos de 4 s. Después abre <strong>Honestidad</strong>: dice cuánto tarda tu PC en transcribir y, si descartó turnos tuyos, cuántos.
+          <li data-origen="mejorado" data-nace="s7" data-minimo data-candidata="si" data-gate="pc" data-min-gate="3"><input type="checkbox" id="w6"><label for="w6">Con una videollamada real en <strong>Teams</strong> (o Zoom, o Meet en el navegador) y <strong>auriculares</strong> puestos, <strong>antes de entrar en la llamada</strong> mira Sesión: no dice «Teams detectado» (la reunión cuenta cuando hay una llamada, no cuando la app está abierta). Entra y pulsa <strong>Iniciar sesión</strong>. Pide a quien está al otro lado —o a un teléfono— que pregunte: «¿Ustedes tienen certificación ISO 27001?». En el transcript la pregunta sale <strong>del cliente</strong> y la banda trae su ficha en menos de 4 s. Después abre <strong>Honestidad</strong>: dice cuánto tarda tu PC en transcribir y, si descartó turnos, cuántos.
         <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. Es la promesa del sprint: el audio del cliente por el audio del sistema de tu PC, con tu micrófono, tu whisper y una reunión real. La CI solo prueba la cadena con un audio del kit y mide whisper en otra máquina.</p>
-        <span class="origen origen-nuevo">Nuevo · S7</span>
+        <span class="origen origen-mejorado">Mejorado en S8</span>
+        <span class="gate-etq">Gate H-1 · PC · parada 4 de 9 · ~3 min</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s7" data-minimo data-candidata="si"><input type="checkbox" id="w7"><label for="w7">Con auriculares, enciende <strong>«Al oído»</strong> (<code>Alt+Mayús+W</code>) y pide la ficha de una pregunta. La voz te la lee <strong>en tus auriculares</strong>. Mira el transcript: lo que dijo la voz de la app <strong>no sale como un turno del cliente con su propia ficha</strong> (a lo sumo, marcado como eco).
+      <li data-origen="heredada" data-nace="s7" data-minimo data-candidata="si" data-gate="pc" data-min-gate="1.5"><input type="checkbox" id="w7"><label for="w7">Con auriculares, enciende <strong>«Al oído»</strong> (<code>Alt+Mayús+W</code>) y pide la ficha de una pregunta. La voz te la lee <strong>en tus auriculares</strong>. Mira el transcript: lo que dijo la voz de la app <strong>no sale como un turno del cliente con su propia ficha</strong> (a lo sumo, marcado como eco).
         <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. El audio del sistema de Windows oye también la voz de la propia app; solo tus auriculares y tu oído dicen si la marca de eco la deja fuera de las fichas.</p>
-        <span class="origen origen-nuevo">Nuevo · S7</span>
+        <span class="origen origen-heredada">S7</span>
+        <span class="gate-etq">Gate H-1 · PC · parada 5 de 9 · ~1,5 min</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s7" data-minimo data-candidata="no"><input type="checkbox" id="w8"><label for="w8">Pasa la salida a los <strong>altavoces del PC</strong> (o a un monitor por HDMI) y abre <strong>Sesión → Presencial</strong>: viene marcada <strong>la banda</strong>, no «Al oído». Con la sesión en marcha, <code>Alt+Mayús+W</code> no te lee nada por esos altavoces.
+      <li data-origen="heredada" data-nace="s7" data-minimo data-candidata="no"><input type="checkbox" id="w8"><label for="w8">Pasa la salida a los <strong>altavoces del PC</strong> (o a un monitor por HDMI) y abre <strong>Sesión → Presencial</strong>: viene marcada <strong>la banda</strong>, no «Al oído». Con la sesión en marcha, <code>Alt+Mayús+W</code> no te lee nada por esos altavoces.
         <p class="candidata">Candidata al ⭐⭐ del H2: <strong>no</strong>. La CI prueba cómo se clasifica cada tipo de salida y que el freno de la voz rechaza los altavoces; aquí solo se confirma con tu dispositivo.</p>
-        <span class="origen origen-nuevo">Nuevo · S7</span>
+        <span class="origen origen-heredada">S7</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s7" data-minimo data-candidata="si"><input type="checkbox" id="w9"><label for="w9">Muestra una presentación en la reunión y cambia de diapositiva. La banda trae una ficha <strong>«en pantalla»</strong> con lo que leyó; <code>Alt+Mayús+D</code> la lee una vez, ahora. Si falta el paquete de idioma de texto de Windows, la app lo dice (<strong>Configuración → Hora e idioma → Idioma y región</strong>) y no lee nada.
+      <li data-origen="heredada" data-nace="s7" data-minimo data-candidata="si"><input type="checkbox" id="w9"><label for="w9">Muestra una presentación en la reunión y cambia de diapositiva. La banda trae una ficha <strong>«en pantalla»</strong> con lo que leyó; <code>Alt+Mayús+D</code> la lee una vez, ahora. Si falta el paquete de idioma de texto de Windows, la app lo dice (<strong>Configuración → Hora e idioma → Idioma y región</strong>) y no lee nada.
         <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. Es la captura de la ventana real y el reconocimiento de texto de tu Windows; la CI no tiene ni una reunión ni ese paquete de idioma.</p>
-        <span class="origen origen-nuevo">Nuevo · S7</span>
+        <span class="origen origen-heredada">S7</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s7" data-minimo data-candidata="si"><input type="checkbox" id="w10"><label for="w10">Pulsa los diez atajos de la tabla del manual (<code>Alt+Mayús+Q</code> corta todo; <code>Alt+Mayús+H</code> pide la ficha; …): cada uno hace lo que dice. Si alguno no responde, <strong>Honestidad</strong> lo nombra («otra app de este PC ya tiene esa combinación»). Con dos idiomas de teclado, comprueba que <code>Alt+Mayús</code> no te cambia la distribución; con Word o Excel en primer plano, que no se queda ninguna.
+      <li data-origen="mejorado" data-nace="s7" data-minimo data-candidata="si" data-gate="pc" data-min-gate="2"><input type="checkbox" id="w10"><label for="w10">Pulsa todos los atajos de la tabla del manual (<code>Alt+Mayús+Q</code> corta todo; <code>Alt+Mayús+H</code> pide la ficha; <code>Alt+Mayús+U</code> abre el radar; …): cada uno hace lo que dice. Si alguno no responde, <strong>Honestidad</strong> lo nombra («otra app de este PC ya tiene esa combinación») y <strong>la banda dice «N teclas no responden»</strong>. Con dos idiomas de teclado, comprueba que <code>Alt+Mayús</code> no te cambia la distribución; con Word o Excel en primer plano, que no se queda ninguna.
         <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. Qué combinaciones pisa tu PC no lo dice ninguna tabla publicada: solo se sabe pulsándolas.</p>
-        <span class="origen origen-nuevo">Nuevo · S7</span>
+        <span class="origen origen-mejorado">Mejorado en S8</span>
+        <span class="gate-etq">Gate H-1 · PC · parada 6 de 9 · ~2 min</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s7" data-minimo data-candidata="no"><input type="checkbox" id="w11"><label for="w11">En <strong>Ensayo</strong>, con auriculares, empieza un ensayo: la voz de Windows <strong>lee las preguntas</strong> y, mientras habla, tu micrófono no escucha. Contesta una; el informe del final sale como en el Mac.
+      <li data-origen="heredada" data-nace="s7" data-minimo data-candidata="no"><input type="checkbox" id="w11"><label for="w11">En <strong>Ensayo</strong>, con auriculares, empieza un ensayo: la voz de Windows <strong>lee las preguntas</strong> y, mientras habla, tu micrófono no escucha. Contesta una; el informe del final sale como en el Mac.
         <p class="candidata">Candidata al ⭐⭐ del H2: <strong>no</strong>. El ensayo es la misma cadena que en el Mac y la CI la prueba con las voces del sistema; aquí solo se oye la voz de Windows.</p>
-        <span class="origen origen-nuevo">Nuevo · S7</span>
+        <span class="origen origen-heredada">S7</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-          <li data-origen="nuevo" data-nace="s7" data-minimo data-candidata="si"><input type="checkbox" id="w12"><label for="w12">Con la sesión en marcha y auriculares, pide la ficha de una pregunta y, <strong>mientras la voz la lee</strong>, pulsa <code>Alt+Mayús+W</code> y mira la banda: responden al instante y <strong>no pasan a «Conecta auriculares»</strong> a media lectura. En el log no hay un hueco de unos 3 s entre «diciendo la ficha» y la línea siguiente de la escucha.
+          <li data-origen="heredada" data-nace="s7" data-minimo data-candidata="si"><input type="checkbox" id="w12"><label for="w12">Con la sesión en marcha y auriculares, pide la ficha de una pregunta y, <strong>mientras la voz la lee</strong>, pulsa <code>Alt+Mayús+W</code> y mira la banda: responden al instante y <strong>no pasan a «Conecta auriculares»</strong> a media lectura. En el log no hay un hueco de unos 3 s entre «diciendo la ficha» y la línea siguiente de la escucha.
         <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. El hilo que habla estaba ocupado y la pregunta «¿hay voz?» esperaba detrás de la frase: solo se ve con una voz sonando de verdad, y la CI no puede oírla.</p>
-        <span class="origen origen-nuevo">Nuevo · S7</span>
+        <span class="origen origen-heredada">S7</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="nuevo" data-nace="s7" data-minimo data-candidata="si"><input type="checkbox" id="w13"><label for="w13">Con la sesión en marcha y la reunión abierta, <strong>cambia la salida de audio de Windows</strong> (de los altavoces a unos auriculares, o conecta unos por Bluetooth) y haz que el cliente pregunte algo. La pregunta sale en el transcript <strong>como del cliente</strong>, en un par de segundos, sin volver a «Iniciar sesión».
+      <li data-origen="heredada" data-nace="s7" data-minimo data-candidata="si"><input type="checkbox" id="w13"><label for="w13">Con la sesión en marcha y la reunión abierta, <strong>cambia la salida de audio de Windows</strong> (de los altavoces a unos auriculares, o conecta unos por Bluetooth) y haz que el cliente pregunte algo. La pregunta sale en el transcript <strong>como del cliente</strong>, en un par de segundos, sin volver a «Iniciar sesión».
         <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. El audio del sistema nace atado a la salida de ese momento y se vuelve a abrir solo al cambiarla; con qué dispositivos lo hace de verdad solo lo dice tu PC, y la CI no cambia de salida.</p>
-        <span class="origen origen-nuevo">Nuevo · S7</span>
+        <span class="origen origen-heredada">S7</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-nace="s8" data-minimo data-candidata="si" data-gate="pc" data-min-gate="1.5"><input type="checkbox" id="w14"><label for="w14">Con unas notas guardadas, cierra la app y vuelve a arrancarla. En <strong>Notas</strong>, pulsa <strong>Exportar</strong> en una reunión guardada (o en <strong>Ensayo</strong>, «Ver tu progreso»): Windows pide <strong>Windows Hello</strong> —tu PIN, tu huella o tu cara— con la ventana de la app como dueña del cuadro. Verifícate: abre. Repite y <strong>cancela</strong>: «No se abrieron…» y nada cambia. Si el PC no tiene Windows Hello configurado, la app dice dónde configurarlo (Configuración → Cuentas → Opciones de inicio de sesión), sin hablar de sprints.
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. El cuadro de Windows Hello, con tu huella o tu cara, solo existe en tu PC: la CI prueba cómo se traduce cada respuesta, no el cuadro.</p>
+        <span class="origen origen-nuevo">Nuevo · S8</span>
+        <span class="gate-etq">Gate H-1 · PC · parada 7 de 9 · ~1,5 min</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-nace="s8" data-minimo data-candidata="si" data-gate="pc" data-min-gate="2"><input type="checkbox" id="w15"><label for="w15">Arranca la app con <code>AG_BANDEJA_DE_PRUEBA=1</code> puesto (la bandeja vence en 2 minutos). Inicia una sesión corta, di algo que genere una propuesta sin decidirla, termina la sesión y <strong>cierra la app del todo</strong>. Abre el <strong>Programador de tareas</strong> de Windows (Task Scheduler): hay una tarea <strong>«Angel Ghost …»</strong> que corre al minuto del vencimiento. Pasados los 2 minutos, <strong>sin abrir la app</strong>, el archivo vencido ya no está en la carpeta de la app (<code>%LOCALAPPDATA%\com.aiapps.copiloto-consultor\</code>). Al abrir la app otra vez, ningún aviso dice que la tarea no corrió.
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. La tarea se registra por COM y su guion de PowerShell se prueba en la CI; que Windows la dispare con la app cerrada solo lo dice tu PC.</p>
+        <span class="origen origen-nuevo">Nuevo · S8</span>
+        <span class="gate-etq">Gate H-1 · PC · parada 8 de 9 · ~2 min</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-nace="s8" data-minimo data-candidata="si" data-gate="pc" data-min-gate="2"><input type="checkbox" id="w16"><label for="w16">Con <strong>Teams</strong> (o Zoom) en una videollamada, <strong>maximizada o no</strong>, pulsa <strong>Iniciar sesión</strong>: la ventana de la reunión <strong>baja y se encoge</strong> lo justo para que la banda no la tape (con la banda abajo; arriba, solo con la sesión iniciada) y <strong>vuelve</strong> a su sitio al terminar. Si la mueves tú a mano mientras tanto, la app no la toca al devolverla. Con la ventana en otro monitor, o con la escala a 125 % o 150 %, la banda sigue sin taparla. Windows no pide ningún permiso para esto.
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. Si Teams o Zoom pelean por su tamaño, y cómo se miden los bordes con la escala de cada monitor, solo se ve con ventanas reales: la CI prueba la geometría pura.</p>
+        <span class="origen origen-nuevo">Nuevo · S8</span>
+        <span class="gate-etq">Gate H-1 · PC · parada 9 de 9 · ~2 min</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-nace="s8" data-minimo data-candidata="no"><input type="checkbox" id="w17"><label for="w17">Abre un programa del catálogo del radar si lo tienes (<strong>AnyDesk</strong> o <strong>TeamViewer</strong>, por ejemplo): <strong>Sesión</strong> pinta el aviso coral «Software invasivo corriendo en tu PC». <code>Alt+Mayús+U</code> abre Sesión con la tabla. Cierra el programa y el aviso se va. Si tu PC está gestionado por una empresa, aparece la fila «sábelo»; si no, no.
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>no</strong>. Es opcional: la CI lee la foto de procesos de su máquina y el catálogo trae su fuente y su fecha por fila; con qué programas vigilantes tienes instalados solo lo dice tu PC.</p>
+        <span class="origen origen-nuevo">Nuevo · S8</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-nace="s8" data-minimo data-candidata="no"><input type="checkbox" id="w18"><label for="w18">En <strong>IA</strong>, enciende el proveedor externo con tu clave de Groq o de Claude (se guarda en el Administrador de credenciales, nunca en un archivo). Con «Redactar sugerencias» encendido, pide una ficha: aparece la sugerencia, con su fuente, y el contador de red de Honestidad cuenta los bytes que salieron. Apágalo: vuelve a 0 B y la ficha sigue siendo la respuesta.
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>no</strong>. Es opcional y usa tu clave: la CI prueba el envío con una puerta falsa, y la salida real a un proveedor, con un proxy de empresa de por medio, solo la ve tu PC.</p>
+        <span class="origen origen-nuevo">Nuevo · S8</span>
         <span class="minimo">⭐ mínimo</span></label></li>
     </ul>
     <div class="reportame"><p><strong>Repórtame sí o sí:</strong> la banda visible al compartir pantalla, una descarga que se congela, una línea de «Hoy en Windows» que no coincide con lo que hace la app, la voz de la app saliendo por los altavoces o apareciendo en el transcript como del cliente, un atajo que no responde o que te cambia la distribución del teclado, o una lectura de pantalla que dice un idioma que no tienes.</p></div>
+  </section>
+  <section class="bloque">
+    <div class="bloque-cabeza"><span class="letra">V</span><h2>Presencial: la app escucha la sala</h2></div>
+    <p class="meta-bloque chica suave"><strong>Empieza en:</strong> <code>Sesión → Presencial</code>, con los auriculares puestos · ~13 min · <strong>solo en el Mac</strong>: la sala se escucha por el micrófono del Mac, sin audio del sistema ni pantalla</p>
+    <p class="chica" style="margin:0 0 10px">El modo presencial nació en el S5, que saltó la directiva de la guía: ninguna de estas pruebas se había corrido. La CI prueba las reglas de la sala con el kit y la interfaz con el contrato de Rust; lo que sigue solo lo ve y lo oye una persona.</p>
+    <ul class="pasos">
+      <li data-origen="nuevo" data-nace="s8" data-minimo data-candidata="si" data-gate="mac" data-min-gate="3"><input type="checkbox" id="v1"><label for="v1">En <strong>Sesión</strong> pulsa <strong>Presencial</strong>, elige el idioma de la sala y <strong>«Empezar en presencial»</strong> con la ficha <strong>al oído</strong> (auriculares puestos). Con otra persona en la sala, o con una pregunta del kit dicha por un teléfono, pregunta: «¿Ustedes tienen certificación ISO 27001?». La ficha llega al oído y a la banda; el transcript dice <strong>«sala»</strong> en cada turno, nunca «cliente» ni «tú»; y <strong>no aparece el punto morado de la grabación de pantalla</strong>: presencial no abre el audio del sistema.
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. Es la promesa de la sala: el micrófono del Mac, sin separar voces, con una conversación de verdad. La CI mide las reglas con el kit y no tiene micrófono.</p>
+        <span class="origen origen-nuevo">Nuevo · S8</span>
+        <span class="gate-etq">Gate H-1 · Mac · parada 6 de 8 · ~3 min</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-nace="s8" data-minimo data-candidata="si" data-gate="mac" data-min-gate="1.5"><input type="checkbox" id="v2"><label for="v2">Con unos <strong>AirPods</strong> (o cualquier auricular con micrófono) puestos como entrada del Mac, abre <strong>Presencial</strong>: Sesión dice «<em>AirPods…</em> es un dispositivo externo» y avisa de que la app oiría sobre todo tu voz, con dónde cambiarlo (<strong>System Settings → Sound → Input</strong>). Elige allí el micrófono del Mac y vuelve a la app: el aviso se va y dice «Micrófono de la sala: …».
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. El sistema suele pasar la entrada por defecto a los auriculares Bluetooth, y eso solo se ve con unos puestos: la auditoría del S5 lo dejó sin confirmar en hardware.</p>
+        <span class="origen origen-nuevo">Nuevo · S8</span>
+        <span class="gate-etq">Gate H-1 · Mac · parada 7 de 8 · ~1,5 min</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-nace="s8"><input type="checkbox" id="v3"><label for="v3">Termina la sesión presencial y mira <strong>Notas</strong>: «Conservar mis turnos» está <strong>desactivado</strong> (no se puede pulsar) con «En la sala la app no sabe cuáles son tuyos…», y «Muere al cerrar» dice <strong>«Audio · la sala»</strong> y «Transcript» donde una reunión diría «Voz del cliente» y «Sus turnos».
+        <span class="origen origen-nuevo">Nuevo · S8</span></label></li>
+      <li data-origen="nuevo" data-nace="s8" data-minimo data-candidata="no"><input type="checkbox" id="v4"><label for="v4">Con la sesión presencial y la ficha al oído, pide una ficha mientras alguien sigue hablando: la banda dice <strong>«La sala habla · te la digo cuando calle»</strong> y la voz la lee en cuanto hay silencio; si en 4 s nadie calla, la ficha se queda en la banda y <code>⌃⌥V</code> te la enseña. Y si enciendes la voz a mitad de sesión con <code>⌃⌥V</code>, <strong>dice la ficha que la banda ya enseña</strong>, no otra.
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>no</strong>. La espera de la sala y lo que dice la voz se prueban con relojes y voces de mentira; que se sienta natural, con una sala de verdad, no.</p>
+        <span class="origen origen-nuevo">Nuevo · S8</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-nace="s8" data-minimo data-candidata="si" data-gate="mac" data-min-gate="1.5"><input type="checkbox" id="v5"><label for="v5">Mira las filas <strong>21 a 23</strong> de la tabla U (Formas y textos del H2) con la app abierta en Sesión: los textos nuevos de la sala —el micrófono nombrado, «No hay voz para leer en …», lo que Notas dice al cerrar una sesión presencial—. Contesta en la misma fila: ¿se entiende cada uno?
+        <p class="candidata">Candidata al ⭐⭐ del H2: <strong>sí</strong>. Son textos maquetados, no vistos: viven en `presencial-nuevo.ts`, fuera de la maqueta, y solo una persona dice si se entienden.</p>
+        <span class="origen origen-nuevo">Nuevo · S8</span>
+        <span class="gate-etq">Gate H-1 · Mac · parada 8 de 8 · ~1,5 min</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+    </ul>
+    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> la sala escribiendo «cliente» o «tú» en el transcript, el punto morado de la grabación de pantalla encendido en presencial, una ficha que la voz lee y la banda no enseña, o unos auriculares puestos como entrada sin que Sesión lo diga.</p></div>
   </section>
   <section class="bloque textos" data-textos>
     <div class="bloque-cabeza"><span class="letra">T</span><h2>Textos diferidos: si cada frase se entiende</h2></div>
@@ -984,6 +1105,10 @@
           <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u18" aria-label="Fila 18 vista"> <span class="mono-chica">18</span></td><td><code>diseno/corpus.html</code> · <code>diseno/idioma.html</code><br><span class="mono-chica">así se ve hoy · sprint 2 · sprint 2 · sin motor de voz</span></td><td>El título de la tarjeta de lo que falta: «Lo que no hace hoy» (decía «Lo que llega en el H2», y la ruta del H2 no trae nada de esa lista).<br><span class="suave chica">S4 · auditoría B46 · tu decisión del 2026-10-04</span></td><td>¿Se entiende que es lo que la app no hace, sin prometer cuándo? Sí. Si no, la frase que tú dirías.</td></tr>
           <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u19" aria-label="Fila 19 vista"> <span class="mono-chica">19</span></td><td>La app en tu PC con Windows<br><span class="mono-chica">Sesión</span></td><td>«Esto es lo que la app ve de tu propio PC.» y, en la tarjeta de la reunión: «Tu panel le pide a Windows que no salga en las capturas, pero en Teams, Zoom y Meet está sin verificar: se verifica con una videollamada real en tu PC. Mientras tanto, comparte una ventana, no la pantalla.»<br><span class="suave chica">S7 · textos de Windows · maquetados, no vistos</span></td><td>¿Se entiende que la protección no está verificada y qué hacer mientras tanto? Sí. Si no, la frase que tú dirías.</td></tr>
           <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u20" aria-label="Fila 20 vista"> <span class="mono-chica">20</span></td><td>La app en tu PC con Windows<br><span class="mono-chica">la banda · sin verificar</span></td><td>La línea «Sin verificar en Teams, Zoom ni Meet · se verifica en tu PC», «O corta la banda con Alt+Mayús+Q mientras compartes» y las teclas de la derecha, todas con <code>Alt+Mayús</code>.<br><span class="suave chica">S7 · textos y teclas de Windows · maquetados, no vistos</span></td><td>¿Reconoces las teclas y no chocan con tu videollamada? Sí, o cuál choca.</td></tr>
+          <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u21" aria-label="Fila 21 vista"> <span class="mono-chica">21</span></td><td>La app en tu Mac · Sesión<br><span class="mono-chica">Presencial</span></td><td>El micrófono de la sala, nombrado: «Micrófono de la sala: …»; y, si es externo, «… es un dispositivo externo. Si son tus auriculares con micrófono, el sistema escucha por ellos y la app oirá sobre todo tu voz: elige el micrófono del equipo en System Settings → Sound → Input.»<br><span class="suave chica">S8 · auditoría del S5 (M7) · maquetado, no visto</span></td><td>¿Entiendes qué pasa con unos auriculares puestos y dónde se cambia? Sí. Si no, la frase que tú dirías.</td></tr>
+          <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u22" aria-label="Fila 22 vista"> <span class="mono-chica">22</span></td><td>La app en tu Mac · Sesión<br><span class="mono-chica">Presencial en marcha</span></td><td>«No hay voz para leer en es-ES: la ficha va a la banda.», cuando pediste la ficha al oído y no hay voz.<br><span class="suave chica">S8 · auditoría del S5 (B13) · maquetado, no visto</span></td><td>¿Se entiende por qué la ficha va a la banda? Sí. Si no, la frase que tú dirías.</td></tr>
+          <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u23" aria-label="Fila 23 vista"> <span class="mono-chica">23</span></td><td>La app en tu Mac · Notas<br><span class="mono-chica">Al cerrar una sesión presencial</span></td><td>«En la sala la app no sabe cuáles son tuyos. Tus notas y tus fichas fijadas sí quedan.» bajo «Conservar mis turnos» desactivado, y «Audio · la sala» y «Transcript» en «Muere al cerrar».<br><span class="suave chica">S8 · auditoría del S5 (M3) · reutiliza el copy de la maqueta del S5</span></td><td>¿Entiendes por qué no puedes guardar tus turnos y qué muere? Sí. Si no, la frase que tú dirías.</td></tr>
+          <tr data-texto data-ciclo="h2"><td><input type="checkbox" id="u24" aria-label="Fila 24 vista"> <span class="mono-chica">24</span></td><td>La app en tu PC con Windows<br><span class="mono-chica">Honestidad · Permisos · la banda</span></td><td>«Hoy en Windows» con dos grupos, «Ya funciona» y «No por ahora»; «No pide permiso en Windows»; y el chip «N teclas no responden» en la banda, en ámbar.<br><span class="suave chica">S8 · Windows completo · maquetado, no visto</span></td><td>¿Se entiende qué hace la app en tu PC y qué no, sin hablar del Mac? Sí. Si no, la frase que tú dirías.</td></tr>
         </tbody>
       </table>
     </div>
@@ -997,6 +1122,12 @@
     <details class="chica">
       <summary>Historial de la guía</summary>
       <ul>
+        <li><strong>S8 · v9 · 2026-10-12 (cierra el H-1):</strong> 141 pruebas. <strong>10 nuevas</strong>: cinco en el bloque S —Windows Hello, la tarea de borrado con la app
+          cerrada, el acople, el radar y la sugerencia con tu clave—, todas en tu PC, y cinco en el bloque nuevo V —el modo presencial, que el S5 no llegó a probar: la sala en vivo, el
+          micrófono nombrado, Notas al cerrar, la voz que espera a la sala y los textos de la sala—, en tu Mac. <strong>5 heredadas reescritas</strong> (w2, w3, w4, w6 y w10).
+          <strong>Nace el gate del H-1</strong>: una lente con dos mitades, Mac (8 paradas, ~20 min) y PC (9 paradas, ~20 min), con la matriz de la regla 24 y lo que se queda
+          fuera con su riesgo. Gate mínimo ⭐ de 117 (S1 33 · S2 28 · S3 23 · S4 11 · S5 0 · S6 5 · S7 8 · S8 9); <strong>acumulado del H2: 33</strong> (22 candidatas sí · 11 no); el ⭐⭐ del H1 no se mueve. La tabla U
+          suma cuatro filas (21 a 24). <strong>Ninguna eliminada.</strong> Namespace nuevo (<code>ag-s8-</code>). La v8 fue la del S7.</li>
         <li><strong>S7 · v8 · 2026-10-12:</strong> 131 pruebas. <strong>8 nuevas</strong> en el bloque S —la videollamada
           real, el eco de la voz de la app, los altavoces, la pantalla, los atajos, el ensayo con voz, la voz que
           responde mientras suena y el cambio de salida de audio—, todas en tu PC
@@ -1066,11 +1197,11 @@
 <script>
   (function () {
     // NS VERSIONADO POR SPRINT (regla dura): al publicar la guía de un sprint nuevo se cambia
-    // `ag-s7-` — así una regresión sin correr no aparece marcada por el sprint anterior.
-    // Cambia con CADA versión de la guía, no solo con cada sprint: esta es la v8 del S7. Con el
+    // `ag-s8-` — así una regresión sin correr no aparece marcada por el sprint anterior.
+    // Cambia con CADA versión de la guía, no solo con cada sprint: esta es la v9 del S8. Con el
     // namespace viejo, las casillas marcadas en la v5 seguirían marcadas sobre pruebas que ahora
     // dicen otra cosa — una regresión sin correr apareciendo como aprobada.
-    var NS = "ag-s7-";
+    var NS = "ag-s8-";
     var casillas = Array.prototype.slice.call(document.querySelectorAll('input[type="checkbox"]'));
     var barra = document.getElementById("barra-avance");
     var contador = document.getElementById("contador");
@@ -1082,10 +1213,12 @@
       var delH2 = li.getAttribute("data-ciclo") === "h2";
       if (filtro === "textos") return li.hasAttribute("data-texto") && !delH2;
       if (filtro === "textos-h2") return li.hasAttribute("data-texto") && delH2;
+      if (filtro === "gate-mac") return li.getAttribute("data-gate") === "mac";
+      if (filtro === "gate-pc") return li.getAttribute("data-gate") === "pc";
       if (li.hasAttribute("data-texto")) return false;
       if (filtro === "minimo") return li.hasAttribute("data-minimo");
       // El acumulado del ciclo H2: las ⭐ que nacen del S4 al S6.
-      if (filtro === "h2") return li.hasAttribute("data-minimo") && /^s[4-6]$/.test(li.getAttribute("data-nace") || "");
+      if (filtro === "h2") return li.hasAttribute("data-minimo") && /^s([4-9]|\d\d)$/.test(li.getAttribute("data-nace") || "");
       if (filtro === "corto") return li.hasAttribute("data-corto");
       var o = li.getAttribute("data-origen");
       return o === "nuevo" || o === "mejorado"; // filtro "cambios"
@@ -1111,7 +1244,7 @@
       barra.style.width = (vis.length ? (hechas / vis.length) * 100 : 0) + "%";
       contador.textContent = hechas + "/" + vis.length;
     }
-    // Conteos en los botones (una vez): Todo (N) · Lo que cambió (N) · Gate mínimo (N) · Gate corto (K)
+    // Conteos en los botones (una vez): Todo (N) · Gate del H-1 Mac y PC · Lo que cambió (N) · Gate mínimo (N) · Gate corto (K)
     botones.forEach(function (b) {
       var f = b.getAttribute("data-filtro"), n = 0;
       document.querySelectorAll("ul.pasos li, tr[data-texto]").forEach(function (li) { if (visible(li, f)) n++; });

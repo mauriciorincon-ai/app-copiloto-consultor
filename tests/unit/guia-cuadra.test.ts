@@ -215,4 +215,65 @@ describe("la guía de prueba cuadra", () => {
     }).map((p) => p[3]);
     expect(mal, "chips que no dicen su origen").toEqual([]);
   });
+
+  /**
+   * **El gate del H-1: dos sentadas, una por máquina, cada una dentro de su techo** (sprint 008). Es una lente sobre las ⭐
+   * que ya existen (`data-gate="mac|pc"` y `data-min-gate`), no una lista aparte: las paradas se caminan de arriba abajo, en el
+   * orden del documento, y cada una dice «parada N de M · ~X min» con los minutos de su atributo. La preparación de cada
+   * máquina cuenta. La cabecera declara las dos cuentas, y la matriz de la regla 24 está en la guía.
+   *
+   * ¿Puede fallar? Sí: pasar una parada de 4 min a 6 sube el Mac por encima de 20; repetir un número de parada, o cambiar
+   * los minutos del atributo sin cambiar la etiqueta, también es rojo (demo en rojo del sprint 008).
+   */
+  describe("el gate del H-1 cuadra por máquina", () => {
+    const TECHO_POR_MAQUINA = 20;
+    const delGate = (maq: string) => PRUEBAS.filter((p) => p[1].includes(`data-gate="${maq}"`));
+    const minutosDe = (p: RegExpMatchArray) => Number(/data-min-gate="([\d.]+)"/.exec(p[1])?.[1]);
+    const preparacion = (maq: string) => Number(new RegExp(`id="preparacion-${maq}" data-min-gate="([\\d.]+)"`).exec(GUIA)?.[1]);
+    const declarado = /Gate del H-1: Mac (\d+) paradas · ~([\d,]+) min · PC (\d+) paradas · ~([\d,]+) min/.exec(GUIA);
+
+    it("la cabecera declara las dos mitades", () => {
+      expect(declarado, "la cabecera no trae «Gate del H-1: Mac N paradas · ~X min · PC M paradas · ~Y min»").not.toBeNull();
+    });
+
+    it.each([["mac", 1, 2], ["pc", 3, 4]] as const)("%s: sus paradas suman lo que dice la cabecera y no pasan de 20 min", (maq, iN, iMin) => {
+      const paradas = delGate(maq);
+      expect(paradas.length, `sin paradas de ${maq}`).toBeGreaterThan(0);
+      const sinMinutos = paradas.filter((p) => !Number.isFinite(minutosDe(p))).map((p) => p[3]);
+      expect(sinMinutos, "paradas sin data-min-gate").toEqual([]);
+      const prep = preparacion(maq);
+      expect(Number.isFinite(prep), `la preparación de ${maq} no dice sus minutos`).toBe(true);
+      const suma = paradas.reduce((n, p) => n + minutosDe(p), 0) + prep;
+      expect(Number(declarado![iN]), "el número de paradas de la cabecera").toBe(paradas.length);
+      expect(suma, "la suma de las paradas más la preparación").toBe(minutos(declarado![iMin]));
+      expect(suma, `el gate de ${maq} pasa de ${TECHO_POR_MAQUINA} min`).toBeLessThanOrEqual(TECHO_POR_MAQUINA);
+    });
+
+    it.each(["mac", "pc"])("%s: las paradas son un recorrido 1..M, cada una dice sus minutos, y son ⭐ que ya existían", (maq) => {
+      const paradas = delGate(maq);
+      const etiquetas = [...GUIA.matchAll(new RegExp(`Gate H-1 · ${maq === "mac" ? "Mac" : "PC"} · parada (\\d+) de (\\d+) · ~([\\d,]+) min`, "g"))];
+      expect(etiquetas.map((e) => Number(e[1]))).toEqual(paradas.map((_, i) => i + 1));
+      expect(new Set(etiquetas.map((e) => e[2]))).toEqual(new Set([String(paradas.length)]));
+      // El orden de las etiquetas es el de las paradas del documento, y cada una lleva los minutos de su atributo.
+      etiquetas.forEach((e, i) => expect(minutos(e[3]), `parada ${i + 1}`).toBe(minutosDe(paradas[i])));
+      // Una lente sobre las ⭐: toda parada del gate es ⭐.
+      expect(paradas.filter((p) => !p[1].includes("data-minimo")).map((p) => p[3])).toEqual([]);
+    });
+
+    it("las dos mitades no comparten una prueba, y cada parada es de una sola máquina", () => {
+      const comunes = delGate("mac").filter((p) => delGate("pc").some((q) => q[3] === p[3]));
+      expect(comunes.map((p) => p[3])).toEqual([]);
+    });
+
+    it("la matriz de la regla 24 está en la guía, con sus seis columnas y cubre las dos máquinas", () => {
+      const m = /<table id="matriz-gate">([\s\S]*?)<\/table>/.exec(GUIA);
+      expect(m, "la guía no trae la matriz de la regla 24 (id=\"matriz-gate\")").not.toBeNull();
+      const encabezados = [...m![1].matchAll(/<th scope="col">([^<]*)<\/th>/g)].map((x) => x[1]);
+      expect(encabezados).toEqual(["#", "Máquina", "Qué se toca", "Para qué", "Aviso que vas a ver", "Cómo se deshace"]);
+      const filas = [...m![1].matchAll(/<tr><td>(\d+)<\/td><td>(Mac|PC)<\/td>/g)];
+      expect(filas.length, "la matriz tiene pocas filas").toBeGreaterThanOrEqual(8);
+      expect(new Set(filas.map((f) => f[2]))).toEqual(new Set(["Mac", "PC"]));
+      expect(filas.map((f) => Number(f[1]))).toEqual(filas.map((_, i) => i + 1));
+    });
+  });
 });

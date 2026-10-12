@@ -1,8 +1,8 @@
 ---
 app: copiloto-consultor
 nombre: Angel Ghost
-version: 1.16.1  # 1.16.1: segunda pasada de la casilla 4 del S4 (arriba, los chips de la protección dicen «sin verificar» también en Meet; el aviso del ensayo sin guardar, bajo «Iniciar sesión»; el idioma que no se transcribe avisa y deja ensayar; «con la sesión iniciada»). 1.16.0: 1.16.0: auditoría del S4 (la banda ya no es «inferior» de fábrica; la puerta se cierra también en un ensayo; §9-bis completo; el acople arriba solo con la sesión iniciada; la protección arriba, sin verificar; `.ayuda-e` y `.evidencia-e .conjetura`). 1.15.0: la banda ARRIBA y EL ENSAYO (sprint 004, abre el ciclo H2; las dos pantallas, aprobadas en sus miradas de DECISIÓN; sus estados y textos nuevos, maquetados, no vistos). 1.14.1: el barrido de tokens vetados de §7.2 por fin existe (cierre del ciclo H1). 1.14.0: la puerta local CONSTRUIDA (sprint 003, fase 4 — maquetado, no visto). 1.13.0: «Este cliente», la NDA y solo notas CONSTRUIDOS (sprint 003, fase 3 — maquetado, no visto). 1.12.0: las propuestas y la bandeja CONSTRUIDAS (sprint 003, fase 2 — maquetado, no visto; se valida en el gate del MVP). 1.11.0: cómo ENVEJECE «todavía no» — el estado del sprint se pone al día, y lo que se libera se agrupa (sprint 001, fase 3). 1.10.0: «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2). 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
-fecha: 2026-10-04
+version: 1.17.0  # 1.17.0: sprint 008, cierre del H-1 — §9-duodecies (Windows y presencial, construidos; maquetado, no visto) y la maniobra son siete (el registro 1.9.0 decía seis). 1.16.1: segunda pasada de la casilla 4 del S4 (arriba, los chips de la protección dicen «sin verificar» también en Meet; el aviso del ensayo sin guardar, bajo «Iniciar sesión»; el idioma que no se transcribe avisa y deja ensayar; «con la sesión iniciada»). 1.16.0: 1.16.0: auditoría del S4 (la banda ya no es «inferior» de fábrica; la puerta se cierra también en un ensayo; §9-bis completo; el acople arriba solo con la sesión iniciada; la protección arriba, sin verificar; `.ayuda-e` y `.evidencia-e .conjetura`). 1.15.0: la banda ARRIBA y EL ENSAYO (sprint 004, abre el ciclo H2; las dos pantallas, aprobadas en sus miradas de DECISIÓN; sus estados y textos nuevos, maquetados, no vistos). 1.14.1: el barrido de tokens vetados de §7.2 por fin existe (cierre del ciclo H1). 1.14.0: la puerta local CONSTRUIDA (sprint 003, fase 4 — maquetado, no visto). 1.13.0: «Este cliente», la NDA y solo notas CONSTRUIDOS (sprint 003, fase 3 — maquetado, no visto). 1.12.0: las propuestas y la bandeja CONSTRUIDAS (sprint 003, fase 2 — maquetado, no visto; se valida en el gate del MVP). 1.11.0: cómo ENVEJECE «todavía no» — el estado del sprint se pone al día, y lo que se libera se agrupa (sprint 001, fase 3). 1.10.0: «TODAVÍA NO» — el estado de lo que aún no está construido (sprint 001, fase 2). 1.9.0: la MANIOBRA cuando el corpus no tiene nada (determinista, sin LLM). 1.8.0 los seis estados de CONTENIDO de la banda (sprint 001). 1.7.0 bandeja con cuenta atrás. 1.6.0 propuesta, idiomas, puerta local. 1.5.0 pantallas del cuaderno. 1.4.0 relleno de captura. 1.3.0 banda ACOPLADA. 1.2.0 radar 2 niveles. 1.1.0 voz. 1.0.0 completo.
+fecha: 2026-10-12
 estado: aprobado   # G-Diseño aprobado el 2026-09-20 («sí apruebo la pantalla completa»)
 fuente_en_codigo: docs/diseno/assets/ghost.css   # el sistema en CSS; el kit en docs/diseno/kit.html
 ---
@@ -652,6 +652,38 @@ tardaste, a qué ritmo, qué muletillas— y **jamás pone un puntaje**. Lo que 
 **Las teclas son de la ventana** (Enter · R · S · Esc), no globales, y no se disparan con el foco en un
 selector; ⌥⎋ lo corta todo, el ensayo incluido.
 
+## 9-duodecies · Windows y presencial, construidos (sprints 005 a 008, 2026-10-12)
+
+> **Estado: maquetado, no visto.** Nada de esto tiene una maqueta que el usuario haya aprobado en una mirada: los textos
+> nuevos viven en `src/i18n/windows.ts`, `windows-cambios.ts` y `presencial-nuevo.ts` —el diccionario de la maqueta
+> (`es.ts`, `en.ts`) no puede inventar copy: `i18n-fiel-a-la-maqueta`— y todo va al gate humano del H-1, en el Mac y en
+> el PC. ADR 022 y ADR 020.
+
+**Windows es el mismo sistema, no otro.** Los tokens, los componentes y los estados de arriba valen tal cual; lo que cambia
+es lo que el sistema operativo cambia, y se cambia en un solo sitio:
+
+| Qué | Cómo se dice en Windows | Regla |
+|---|---|---|
+| **La tipografía** | la cadena de respaldo de §3.3 cae sola en Segoe UI (interfaz), Georgia (evidencia) y Consolas (lo medible) | no se añadió ninguna fuente: lo que no está en el kit no existe |
+| **Las teclas** | `Alt+Mayús` y una letra (`Alt+Shift` en inglés); el diccionario escribe las del Mac y el contexto de teclas las cambia (`conTeclasDeEsteSistema`) | en Windows ninguna pantalla pinta `⌃⌥`, `⎋` ni «tu Mac» (`windows-sin-mac`) |
+| **La protección** | «con la protección pedida a Windows», y el chip de la banda «sin verificar», en ámbar | la promesa es graduada por plataforma (regla dura 6): nadie la ha corrido en un PC, y la muestra de la banda de Windows no trae ningún cliente verificado |
+| **Permisos** | «No pide permiso en Windows» (símbolo + texto, `ok`), y un solo botón, «Abrir Ajustes de Windows», solo con el micrófono sin conceder | Windows no pide permiso para el audio del sistema, la pantalla ni el acople |
+| **Honestidad** | el bloque «Hoy en Windows»: dos grupos —«Ya funciona» y «No por ahora»— con símbolo + texto + color por fila | las quince funciones, cada una con su motivo; lo que no está lo dice |
+| **Una tecla que no responde** | el chip ámbar «N teclas no responden» en la banda (`.cliente-b.warn`, `i-alert`) y la frase con su combinación en Honestidad | un atajo sin registrar no puede pasar en silencio en plena reunión |
+| **El relleno** | no existe: la banda se excluye de la captura y no hay hueco que tapar | ADR 022 §3 |
+| **El mínimo** | Windows 10 versión 2004; en una anterior, un cuadro del sistema al arrancar y la banda no se abre | una banda sin su protección es peor que una banda que no se abre |
+
+**Presencial dice distinto en tres sitios**, porque la sala no tiene dueño (ADR 020):
+
+| Pantalla | Lo que cambia |
+|---|---|
+| **La banda** | la cabecera dice «Escuchando · la sala» solo si la única pista abrió; no pinta «sin acople» (no hay ventana que acoplar); lo último que se oyó lleva «Sala», no «Cliente», y un turno de la sala abre el «Buscando…» |
+| **Sesión** | el aviso coral del radar y la fila del MDM salen arriba, y «Iniciar de todos modos» no empieza una reunión; nombra el micrófono de la sala y, si es externo, avisa en ámbar con dónde cambiarlo; el selector de idioma ofrece lo que el equipo sabe transcribir y dice el estado del modelo; «No hay voz para leer en {idioma}» cuando se pidió la ficha al oído y no la hay |
+| **Notas, al cerrar** | «Conservar mis turnos» se desactiva (`aria-disabled`) con la frase «En la sala la app no sabe cuáles son tuyos…»; «Muere al cerrar» dice «Audio · la sala» y «Transcript» donde la reunión dice «Voz del cliente» y «Sus turnos» |
+
+**La maniobra son siete,** no seis: cinco con marcas léxicas (credencial, cifra, plazo, referencia, contrato), el puente
+y la genérica. El registro de 1.9.0 decía «seis maneras» porque el puente nació en el sprint 2.
+
 ## 10 · Deuda de diseño declarada
 
 | Qué | Por qué | Cuándo se paga |
@@ -683,5 +715,6 @@ selector; ⌥⎋ lo corta todo, el ensayo incluido.
 | 1.15.0 | 2026-10-04 | sprint 004, abre el ciclo H2: **§9-decies — la banda arriba, junto a la cámara** (`.banda[data-borde="arriba"]`, el asa abajo, el relleno bajo la barra, la fila «La banda» y el aviso de la primera vez) y **§9-undecies — el ensayo** (`.pregunta-e`, `.reloj-e`, `.respuesta-e`, `.evidencia-e`, `.cifras-e`, el progreso sin puntajes). Las dos pantallas, aprobadas en sus miradas de DECISIÓN; lo que se les sumó al construir, maquetado, no visto |
 | 1.16.0 | 2026-10-04 | auditoría del S4: §3.6, la banda ya no es «inferior» de fábrica (arriba, o abajo si la eliges) y el relleno va a su borde · la puerta se cierra también durante un ensayo (§9-ter, §9-nonies) · §9-bis cuenta las propuestas que aceptas, la bandeja y tus ensayos, y los turnos se encienden en Notas · §9-decies: el acople arriba solo con la sesión iniciada, y la protección arriba, sin verificar · §9-undecies: `.ayuda-e`, `.evidencia-e .conjetura`, la franja de «no empezó» y el aviso de un ensayo sin guardar · §5: `.tecla.chica` (los estilos sueltos de Sesión y del ensayo pasan a clases, con el mismo tamaño) |
 | 1.16.1 | 2026-10-04 | segunda pasada de la casilla 4 del S4: §9-decies, los chips de la protección —«{cliente} · protegido» en la banda y «Protección verificada» en Sesión— solo salen con la banda abajo; arriba, «sin verificar» en ámbar también en Meet (A5), con `.solo-abajo` y `.solo-arriba` en la maqueta · el acople arriba, «con la sesión iniciada» · §9-undecies: el aviso del ensayo sin guardar, en una línea bajo «Iniciar sesión», y el idioma que no se transcribe como fila propia (avisa y deja ensayar) |
+| 1.17.0 | 2026-10-12 | sprint 008, cierre del H-1: **§9-duodecies — Windows y presencial, construidos** (la tipografía de respaldo, las teclas `Alt+Mayús`, «protección pedida», «No pide permiso», «Hoy en Windows» en dos grupos, la tecla que no responde, el mínimo de Windows; y lo que presencial dice distinto en la banda, Sesión y Notas) — maquetado, no visto · la maniobra son siete (el 1.9.0 decía seis: el puente nació en el sprint 2) · §10 declara los pasos que quedan de la maniobra con su porqué |
 | 1.14.1 | 2026-09-27 | cierre del ciclo H1 (sprint 003, fase 5): **§7.2 — el barrido de tokens vetados existe** (`tests/unit/tokens-vetados.test.ts`, que lee la lista de aquí); el frontmatter, que se había quedado en 1.13.0, se pone al día |
 | 1.9.0 | 2026-09-20 | mirada 11: **la maniobra** — catálogo versionado de seis maneras de responder + «lo más cercano que sí tienes», los dos deterministas; `maniobra-b` y `cercano-b`; estado «sin resultado · ampliada» |

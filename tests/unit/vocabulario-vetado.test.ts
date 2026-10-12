@@ -17,6 +17,7 @@ const RAICES = [
   "design-system.md",
   "README.md",
   "docs/MANUAL-DE-USO.md",
+  "docs/MANUAL-EN.md",
   // Sprint 001: ya existe código de producto. El copy que ve el usuario final vive ahora en
   // `src/` (diccionario i18n incluido) y en los comentarios de `src-tauri/src/`, que es donde
   // la regla dura del vocabulario importa más que en ningún documento.
