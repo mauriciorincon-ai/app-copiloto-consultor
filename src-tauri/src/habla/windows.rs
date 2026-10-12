@@ -26,10 +26,13 @@ use windows::Storage::Streams::{Buffer, DataReader, InputStreamOptions};
 /// La voz del sistema, compartida: hay un solo hilo que habla, igual que en el Mac hay un solo sintetizador.
 pub struct DelSistema;
 
-/// Lo que se le pide al hilo de la voz.
-enum Orden {
-    Decir { idioma: String, texto: String, generacion: u64 },
-    HayPara { idioma: String, responde: mpsc::Sender<bool> },
+/// Lo que se le pide al hilo de la voz: decir una frase. **«¿Hay voz para este idioma?» no pasa por aquí** (auditoría
+/// del S7, A3): ese hilo está ocupado mientras suena la frase, y quien preguntaba —el hilo que transcribe, o la
+/// ventana— se quedaba esperando detrás de ella hasta 3 s y recibía un «no» falso.
+struct Orden {
+    idioma: String,
+    texto: String,
+    generacion: u64,
 }
 
 struct Trabajador {
@@ -66,11 +69,25 @@ impl Voz for DelSistema {
         "windows-speechsynthesizer"
     }
 
+    /// Se pregunta a Windows en un hilo propio y corto, con COM multihilo, como `salida_de_audio`: no espera a que
+    /// acabe de hablar el hilo de la voz, ni importa en qué modo de COM está quien pregunta.
     fn hay_para(&self, idioma: &str) -> bool {
-        let (responde, respuesta) = mpsc::channel();
-        let t = trabajador();
-        let pedido = t.orden.lock().is_ok_and(|o| o.send(Orden::HayPara { idioma: idioma.into(), responde }).is_ok());
-        pedido && respuesta.recv_timeout(Duration::from_secs(3)).unwrap_or(false)
+        use windows::Win32::System::Com::{CoInitializeEx, CoUninitialize, COINIT_MULTITHREADED};
+        let idioma = idioma.to_string();
+        std::thread::Builder::new()
+            .name("ag-voz-pregunta".into())
+            .spawn(move || {
+                // SAFETY: COM se inicia y, si se pudo iniciar, se cierra en este mismo hilo, que vive lo que la pregunta.
+                let iniciado = unsafe { CoInitializeEx(None, COINIT_MULTITHREADED) }.is_ok();
+                let hay = voz_para(&idioma).is_some();
+                if iniciado {
+                    unsafe { CoUninitialize() };
+                }
+                hay
+            })
+            .ok()
+            .and_then(|h| h.join().ok())
+            .unwrap_or(false)
     }
 
     fn decir(&self, idioma: &str, texto: &str) -> Result<(), String> {
@@ -87,7 +104,7 @@ impl Voz for DelSistema {
         let mandada = t
             .orden
             .lock()
-            .is_ok_and(|o| o.send(Orden::Decir { idioma: idioma.into(), texto: texto.into(), generacion }).is_ok());
+            .is_ok_and(|o| o.send(Orden { idioma: idioma.into(), texto: texto.into(), generacion }).is_ok());
         if !mandada {
             t.estado.pendientes.fetch_sub(1, Ordering::SeqCst);
             return Err("el hilo de la voz no está".into());
@@ -110,24 +127,17 @@ fn trabajar(recibe: mpsc::Receiver<Orden>, estado: Arc<Estado>) {
     // SAFETY: COM se inicia una vez en este hilo, que vive lo que la app.
     let _ = unsafe { CoInitializeEx(None, COINIT_MULTITHREADED) };
     let sintetizador = SpeechSynthesizer::new().ok();
-    for orden in recibe {
-        match orden {
-            Orden::HayPara { idioma, responde } => {
-                let _ = responde.send(voz_para(&idioma).is_some());
-            }
-            Orden::Decir { idioma, mut texto, generacion } => {
-                if estado.generacion.load(Ordering::SeqCst) == generacion {
-                    if let Err(e) = decir_ahora(sintetizador.as_ref(), &idioma, &texto, generacion, &estado) {
-                        // El motivo es nuestro o de Windows, jamás la frase (ADR 003).
-                        println!("[habla] la voz de Windows no sonó: {e}");
-                    }
-                }
-                // La frase es evidencia del consultor: se pisa antes de soltarse.
-                // SEGURIDAD: ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
-                unsafe { texto.as_mut_vec() }.fill(0);
-                estado.pendientes.fetch_sub(1, Ordering::SeqCst);
+    for Orden { idioma, mut texto, generacion } in recibe {
+        if estado.generacion.load(Ordering::SeqCst) == generacion {
+            if let Err(e) = decir_ahora(sintetizador.as_ref(), &idioma, &texto, generacion, &estado) {
+                // El motivo es nuestro o de Windows, jamás la frase (ADR 003).
+                println!("[habla] la voz de Windows no sonó: {e}");
             }
         }
+        // La frase es evidencia del consultor: se pisa antes de soltarse.
+        // SEGURIDAD: ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
+        unsafe { texto.as_mut_vec() }.fill(0);
+        estado.pendientes.fetch_sub(1, Ordering::SeqCst);
     }
 }
 
@@ -247,4 +257,30 @@ where
         |e: cpal::Error| println!("[habla] la salida avisó: {}", e.kind()),
         None,
     )
+}
+
+#[cfg(test)]
+mod pruebas {
+    use super::*;
+
+    /// **Preguntar si hay voz no espera a que acabe de hablar** (auditoría del S7, A3). Con una frase larga sonando,
+    /// `hay_para` contesta al momento y con la verdad. Solo con alguien delante del PC: hace sonar la voz.
+    #[test]
+    #[ignore = "en vivo: hace sonar la voz del PC por su salida, con alguien delante"]
+    fn en_vivo_hay_para_no_espera_a_que_acabe_de_hablar() {
+        let voz = DelSistema;
+        voz.decir(
+            "es-ES",
+            "Esta es una frase larga para que la voz tarde varios segundos en decirla, y la pregunta de si hay voz \
+             no tenga que esperar detrás de ella.",
+        )
+        .expect("este PC no tiene voz para es-ES");
+        std::thread::sleep(Duration::from_millis(500));
+        let antes = Instant::now();
+        let hay = voz.hay_para("es-ES");
+        let tarda = antes.elapsed();
+        voz.callar();
+        assert!(hay, "con la voz hablando, hay_para dijo que no hay voz");
+        assert!(tarda < Duration::from_millis(500), "hay_para esperó {tarda:?} detrás de la frase");
+    }
 }

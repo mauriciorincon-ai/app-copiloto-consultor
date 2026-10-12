@@ -550,4 +550,20 @@ mod pruebas {
         assert!(solapa(&sigue, t0 + s(20), t0 + s(22), m), "si sigue sonando, todo lo de después solapa");
         assert!(!solapa(&[], t0, t0 + s(5), m), "en el Mac nadie escribe aquí");
     }
+
+    /// **Preguntar si hay voz no pasa por el hilo que habla** (auditoría del S7, A3). En Windows ese hilo está
+    /// ocupado mientras suena la frase; si `hay_para` le mandaba la pregunta por su cola, quien preguntaba —el hilo
+    /// que transcribe, o la ventana— esperaba detrás de la frase hasta 3 s y recibía un «no» falso.
+    #[test]
+    fn la_pregunta_de_si_hay_voz_no_espera_detras_de_la_frase() {
+        let fuente = include_str!("windows.rs");
+        let desde = fuente.find("fn hay_para(").expect("falta hay_para");
+        let resto = &fuente[desde..];
+        let cuerpo = &resto[..resto.find("\n    fn decir(").expect("falta decir")];
+        assert!(
+            !cuerpo.contains("recv_timeout") && !cuerpo.contains("Orden") && !cuerpo.contains(".orden"),
+            "hay_para espera detrás del hilo que habla:\n{cuerpo}"
+        );
+        assert!(!fuente.contains("HayPara"), "la cola de la voz no lleva preguntas, solo frases");
+    }
 }

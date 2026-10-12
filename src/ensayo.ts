@@ -163,7 +163,7 @@ export type EstadoDeMuestra =
   | "progreso-borrar"
   | "sin-corpus";
 
-const ESTADOS: EstadoDeMuestra[] = [
+export const ESTADOS: EstadoDeMuestra[] = [
   "preparar",
   "no-empezo",
   "guardado",

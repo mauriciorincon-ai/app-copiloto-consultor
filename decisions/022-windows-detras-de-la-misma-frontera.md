@@ -9,7 +9,7 @@
 Angel Ghost existe solo en macOS. La VISION promete Windows en el H-2 («la misma app donde la invisibilidad está
 garantizada por el sistema»), y el plan lo parte en dos: el **S6 arranca** (un instalador que sale de la CI, la banda
 protegida, la sala por el micrófono con whisper local y su latencia medida) y el **S7 trae la videollamada** (el audio
-del sistema, la pantalla, la voz al oído, el acople).
+del sistema, la pantalla, la voz al oído y los atajos; el acople, el desbloqueo y el radar pasan al **S8**).
 
 Antes de escribir una línea de Windows, la lectura del código encontró algo que los comentarios negaban: **el crate no
 compilaba fuera de macOS**. `relleno.rs` usaba `base64` declarada solo para macOS; la puerta local y `ghost` usaban
@@ -87,32 +87,32 @@ dice. El escalón al modelo `small` (huella `1be3a9b2063867b937e64e2ec7483364a79
 | `almacen.rs`                | excluir la bandeja de Time Machine                   | **no en Windows**: no hay Time Machine; la carpeta es local (§2)                                        |
 | `permisos.rs`               | leer TCC (micrófono, audio, pantalla, Accessibility) | **S6**: el micrófono, de la privacidad de Windows; lo demás no aplica                                   |
 | `bandeja.rs`                | la bandeja fuera de las copias                       | **no en Windows** (como `almacen.rs`)                                                                   |
-| `desbloqueo.rs`             | Touch ID o contraseña para abrir notas               | **S7**: Windows Hello                                                                                   |
+| `desbloqueo.rs`             | Touch ID o contraseña para abrir notas               | **S8**: Windows Hello                                                                                   |
 | `llavero.rs`                | el Llavero                                           | **S6**: Administrador de credenciales (§6)                                                              |
-| `sintesis/api.rs`           | el POST al proveedor externo por `Red.swift`         | **S7**: necesita su propia puerta Rust y su ADR                                                         |
+| `sintesis/api.rs`           | el POST al proveedor externo por `Red.swift`         | **S8**: necesita su propia puerta Rust y su ADR                                                         |
 | `sintesis/sistema.rs`       | Apple Foundation Models                              | **no en Windows** por ahora: sin modelo del sistema; la ficha sigue siendo la respuesta                 |
-| `capture/mod.rs`            | micrófono y audio del sistema (CoreAudio)            | **S6** el micrófono (`capture/windows.rs`, cpal/WASAPI) · **S7** el audio del sistema (WASAPI loopback) |
-| `sesion/mod.rs`             | qué reunión hay y su ventana                         | **S7**                                                                                                  |
-| `acople/mod.rs`             | hacerle sitio a la banda en la reunión               | **S7**                                                                                                  |
-| `pantalla/apple.rs`         | leer la pantalla (ScreenCaptureKit + Vision)         | **S7** (Windows.Media.Ocr)                                                                              |
-| `habla/apple.rs`            | la voz al oído (AVSpeechSynthesizer)                 | **S7**                                                                                                  |
-| `radar/procesos.rs`         | los programas que vigilan tu Mac                     | **S7**                                                                                                  |
-| `radar/mdm.rs`              | el perfil de gestión del Mac                         | **S7**                                                                                                  |
+| `capture/mod.rs`            | micrófono y audio del sistema (CoreAudio)            | **S6** el micrófono (`capture/windows.rs`, cpal/WASAPI) · **S7 (hecho)** el audio del sistema (loopback) |
+| `sesion/mod.rs`             | qué reunión hay y su ventana                         | **S7 (hecho)**: `sesion/windows.rs` y `data/clientes-windows.json`                                      |
+| `acople/mod.rs`             | hacerle sitio a la banda en la reunión               | **S8**                                                                                                  |
+| `pantalla/apple.rs`         | leer la pantalla (ScreenCaptureKit + Vision)         | **S7 (hecho)**: `pantalla/windows.rs` (PrintWindow + Windows.Media.Ocr)                                 |
+| `habla/apple.rs`            | la voz al oído (AVSpeechSynthesizer)                 | **S7 (hecho)**: `habla/windows.rs` (SpeechSynthesizer)                                                  |
+| `radar/procesos.rs`         | los programas que vigilan tu Mac                     | **S8**                                                                                                  |
+| `radar/mdm.rs`              | el perfil de gestión del Mac                         | **S8**                                                                                                  |
 | `stt/apple.rs`              | SpeechAnalyzer                                       | **S6**: whisper (`stt/whisper.rs`, §5)                                                                  |
 | `nativo/Transcriptor.swift` | SpeechAnalyzer                                       | sustituido por whisper (S6)                                                                             |
-| `nativo/Habla.swift`        | la voz                                               | S7                                                                                                      |
-| `nativo/Pantalla.swift`     | la pantalla                                          | S7                                                                                                      |
+| `nativo/Habla.swift`        | la voz                                               | sustituido por `habla/windows.rs` (S7)                                                                  |
+| `nativo/Pantalla.swift`     | la pantalla                                          | sustituido por `pantalla/windows.rs` (S7)                                                               |
 | `nativo/Sintesis.swift`     | el modelo del sistema                                | no en Windows                                                                                           |
 | `nativo/Llavero.swift`      | el Llavero                                           | sustituido por el Administrador de credenciales (S6)                                                    |
-| `nativo/Red.swift`          | la puerta del API externo                            | S7                                                                                                      |
-| `nativo/Desbloqueo.swift`   | Touch ID                                             | S7 (Windows Hello)                                                                                      |
+| `nativo/Red.swift`          | la puerta del API externo                            | S8                                                                                                      |
+| `nativo/Desbloqueo.swift`   | Touch ID                                             | S8 (Windows Hello)                                                                                      |
 | `nativo/Copias.swift`       | Time Machine                                         | no en Windows                                                                                           |
 
 **Y lo que impedía compilar** (no estaba en el inventario porque no llevaba `cfg`): `relleno.rs` (`base64` pasa a todas
 las plataformas) · `puerta/socket.rs` y `bin/ghost.rs` (la puerta local es un socket Unix: **no en Windows** en el S6,
 dicho por la propia puerta) · la hora local en `lib.rs`, `reunion.rs`, `escucha/mod.rs` y `vencimiento/` (un solo
 `reloj.rs`, `libc` en Unix y `chrono` en Windows) · `vencimiento/` (la tarea que borra con la app cerrada es de launchd:
-**S7**, con el Programador de tareas; mientras, se barre con la app abierta) · ocho tests con permisos Unix (llevan
+**S8**, con el Programador de tareas; mientras, se barre con la app abierta) · ocho tests con permisos Unix (llevan
 `cfg(unix)`) · `tests/puerta.rs` y `tests/ghost.rs` (Unix) · `build.rs` (el `check-cfg` del puente, para todas).
 
 ## Hoy en Windows (lo que enseñan Honestidad y el manual)
@@ -161,7 +161,11 @@ El S7 trae a Windows lo que la videollamada necesita, cada pieza detrás de la f
      (`capture/reloj.rs`), para que el eco y el disparo comparen tiempos de un solo reloj;
    - **oye también la voz de la app** (el tap del Mac excluye su proceso; el loopback por proceso de Windows exige
      Windows 11 o build 20348+): un turno del cliente que cae mientras la app hablaba se marca como eco y no dispara
-     (`escucha::atender`, `habla::la_app_hablo`). Cuando el mínimo sea Windows 11, el loopback por proceso lo sustituye.
+     (`escucha::atender`, `habla::la_app_hablo`). Cuando el mínimo sea Windows 11, el loopback por proceso lo sustituye;
+   - **sigue a la salida** (auditoría del S7, A4): el flujo nace atado al dispositivo por defecto de ese momento. Si el
+     usuario cambia de salida, `cpal` avisa (`StreamInvalidated` o `DeviceNotAvailable`) y el hilo del sistema lo vuelve a
+     abrir sobre la nueva, sin parar el reloj; si no puede, reintenta cada segundo. Sin esto el flujo viejo callaba y el
+     reloj lo rellenaba con silencio: la pista parecía sana mientras la app no oía al cliente.
 2. **Por dónde sale el sonido** se lee de la forma que Windows declara del dispositivo de salida
    (`PKEY_AudioEndpoint_FormFactor`): altavoces y HDMI, la voz no habla; auriculares, sí. Es el mismo freno que en el Mac.
 3. **La reunión** se detecta con los procesos y los títulos de las ventanas del propio PC, contra
@@ -169,7 +173,8 @@ El S7 trae a Windows lo que la videollamada necesita, cada pieza detrás de la f
    del catálogo. Windows no pide permiso para esto, así que «no se puede saber» no aplica. Teams arranca con Windows y
    queda abierto: como en el Mac, una aplicación de videollamada abierta cuenta como reunión.
 4. **La voz** es `Windows.Media.SpeechSynthesis`: la frase en un WAV en memoria (`habla/pcm.rs`) que suena por `cpal`. Con
-   ella, el ensayo con voz.
+   ella, el ensayo con voz. Preguntar si hay voz para un idioma (`hay_para`) se hace en un hilo propio y corto: pasar por
+   la cola del hilo que habla dejaba al que preguntaba esperando detrás de la frase (auditoría del S7, A3).
 5. **La pantalla** es la ventana de la reunión por `PrintWindow` (`PW_RENDERFULLCONTENT`) y su texto por
    `Windows.Media.Ocr`, detrás de la misma huella por zonas y el mismo `Vigia` que en el Mac. Windows no da confianza por
    línea (se toma 1,0) y cada motor lee un idioma: el del perfil del usuario, o español o inglés. Sin el reconocimiento

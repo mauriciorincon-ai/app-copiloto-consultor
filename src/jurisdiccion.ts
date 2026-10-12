@@ -73,7 +73,7 @@ export type EstadoDeSesion =
   | "presencial"
   | "presencial-marcha";
 
-const ESTADOS: EstadoDeSesion[] = [
+export const ESTADOS: EstadoDeSesion[] = [
   "normal",
   "en-marcha",
   "pregunta",

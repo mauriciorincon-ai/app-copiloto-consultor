@@ -17,7 +17,10 @@
 //! **Cada flujo vive en su propio hilo.** Ese hilo abre el dispositivo, arranca el flujo y espera la orden de
 //! parar; el grifo solo guarda el canal para darla y el hilo para esperarlo. Así el grifo se mueve entre hilos sin
 //! pedirle nada a `cpal`, y el flujo muere en el mismo hilo que lo creó. El hilo del sistema, mientras espera, es
-//! también el latido del reloj.
+//! también el latido del reloj **y quien vuelve a abrir el loopback si Windows cambia de salida** (auditoría del S7,
+//! A4): el flujo nace atado al dispositivo que era el de por defecto; si el usuario pasa a unos auriculares, `cpal`
+//! avisa con `StreamInvalidated` o `DeviceNotAvailable`, el flujo viejo ya no entrega nada y, sin reabrirlo, el reloj
+//! lo rellenaría con silencio y la pista parecería sana mientras la app no oye al cliente.
 
 use super::anillo::Anillo;
 use super::reloj::{Reloj, LATIDO};
@@ -25,9 +28,9 @@ use super::remuestreo::Remuestreador;
 use super::{NoAbrio, PorQueNoAbrio, PorQueNoSeSabe};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{FromSample, SampleFormat};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{mpsc, Arc, Mutex};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 /// Por dónde sale el sonido. La misma forma que en macOS: cruza al contrato tal cual.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
@@ -158,7 +161,9 @@ impl Grifo {
                     Some(r) => Escritor::ConReloj(r.clone()),
                     None => Escritor::Directo(anillo),
                 };
-                let flujo = match abrir(cual, escritor, cuenta) {
+                // El callback de error lo levanta cuando `cpal` dice que el flujo ya no sirve.
+                let roto = Arc::new(AtomicBool::new(false));
+                let flujo = match abrir(cual, escritor, cuenta.clone(), roto.clone()) {
                     Ok((flujo, hz)) => {
                         let _ = listo.send(Ok(hz));
                         flujo
@@ -168,18 +173,44 @@ impl Grifo {
                         return;
                     }
                 };
+                let mut flujo = Some(flujo);
                 // Espera la orden de parar; si el grifo se suelta sin darla, el canal se cierra y también vuelve.
-                // Con reloj, la espera late: cada `LATIDO` sin orden se pone el reloj al día.
+                // Con reloj, la espera late: cada `LATIDO` sin orden se pone el reloj al día y, si el flujo se
+                // rompió, se vuelve a abrir sobre la salida de ahora.
                 match reloj {
                     None => {
                         let _ = orden.recv();
                     }
-                    Some(r) => loop {
-                        match orden.recv_timeout(LATIDO) {
-                            Err(mpsc::RecvTimeoutError::Timeout) => r.al_dia(Instant::now()),
-                            _ => break,
+                    Some(r) => {
+                        let mut ultimo_intento: Option<Instant> = None;
+                        loop {
+                            match orden.recv_timeout(LATIDO) {
+                                Err(mpsc::RecvTimeoutError::Timeout) => {
+                                    let ahora = Instant::now();
+                                    r.al_dia(ahora);
+                                    let desde = ultimo_intento.map(|u| ahora.duration_since(u));
+                                    if toca_reabrir(roto.load(Ordering::Relaxed), desde) {
+                                        ultimo_intento = Some(ahora);
+                                        // El flujo roto se suelta antes de abrir el nuevo: dos sobre la misma salida no caben.
+                                        drop(flujo.take());
+                                        roto.store(false, Ordering::Relaxed);
+                                        match abrir(cual, Escritor::ConReloj(r.clone()), cuenta.clone(), roto.clone()) {
+                                            Ok((nuevo, _)) => {
+                                                flujo = Some(nuevo);
+                                                println!("[captura] {} volvió a abrirse: Windows cambió de salida", cual.que());
+                                            }
+                                            Err(no) => {
+                                                roto.store(true, Ordering::Relaxed);
+                                                // Solo el porqué: es un metadato, jamás audio (ADR 003).
+                                                println!("[captura] {} no pudo volver a abrirse: {:?}", cual.que(), no.porque);
+                                            }
+                                        }
+                                    }
+                                }
+                                _ => break,
+                            }
                         }
-                    },
+                    }
                 }
                 drop(flujo);
             })
@@ -291,7 +322,14 @@ where
 ///
 /// El audio del sistema es un flujo **de entrada sobre el dispositivo de salida**: así lo pide `cpal` para el
 /// *loopback* de WASAPI, con el formato del propio dispositivo de salida (el que mezcla Windows).
-fn abrir(cual: Cual, escritor: Escritor, entradas: Arc<AtomicU64>) -> Result<(cpal::Stream, u32), NoAbrio> {
+///
+/// `roto` lo levanta el callback de error cuando `cpal` dice que el flujo ya no sirve (`pide_reabrir`).
+fn abrir(
+    cual: Cual,
+    escritor: Escritor,
+    entradas: Arc<AtomicU64>,
+    roto: Arc<AtomicBool>,
+) -> Result<(cpal::Stream, u32), NoAbrio> {
     let host = cpal::default_host();
     let no = |e: cpal::Error| no_abrio(e, cual);
     let (dispositivo, formato) = match cual {
@@ -319,13 +357,13 @@ fn abrir(cual: Cual, escritor: Escritor, entradas: Arc<AtomicU64>) -> Result<(cp
     };
     let config = formato.config();
     let flujo = match formato.sample_format() {
-        SampleFormat::F32 => construir::<f32>(cual, &dispositivo, config, destino),
-        SampleFormat::F64 => construir::<f64>(cual, &dispositivo, config, destino),
-        SampleFormat::I16 => construir::<i16>(cual, &dispositivo, config, destino),
-        SampleFormat::I32 => construir::<i32>(cual, &dispositivo, config, destino),
-        SampleFormat::I8 => construir::<i8>(cual, &dispositivo, config, destino),
-        SampleFormat::U16 => construir::<u16>(cual, &dispositivo, config, destino),
-        SampleFormat::U8 => construir::<u8>(cual, &dispositivo, config, destino),
+        SampleFormat::F32 => construir::<f32>(cual, &dispositivo, config, destino, roto),
+        SampleFormat::F64 => construir::<f64>(cual, &dispositivo, config, destino, roto),
+        SampleFormat::I16 => construir::<i16>(cual, &dispositivo, config, destino, roto),
+        SampleFormat::I32 => construir::<i32>(cual, &dispositivo, config, destino, roto),
+        SampleFormat::I8 => construir::<i8>(cual, &dispositivo, config, destino, roto),
+        SampleFormat::U16 => construir::<u16>(cual, &dispositivo, config, destino, roto),
+        SampleFormat::U8 => construir::<u8>(cual, &dispositivo, config, destino, roto),
         otro => {
             return Err(NoAbrio::por(
                 PorQueNoAbrio::FormatoIlegible,
@@ -343,6 +381,7 @@ fn construir<T>(
     dispositivo: &cpal::Device,
     config: cpal::StreamConfig,
     mut destino: Destino,
+    roto: Arc<AtomicBool>,
 ) -> Result<cpal::Stream, cpal::Error>
 where
     T: cpal::SizedSample,
@@ -352,9 +391,30 @@ where
         config,
         move |datos: &[T], _: &cpal::InputCallbackInfo| destino.recibir(datos),
         // Solo el tipo del aviso: es un metadato, jamás audio (ADR 003).
-        move |e: cpal::Error| println!("[captura] {} avisó: {}", cual.que(), e.kind()),
+        move |e: cpal::Error| {
+            println!("[captura] {} avisó: {}", cual.que(), e.kind());
+            if pide_reabrir(e.kind()) {
+                roto.store(true, Ordering::Relaxed);
+            }
+        },
         None,
     )
+}
+
+/// Cada cuánto se reintenta abrir el loopback si falló al volver a abrirse.
+const REINTENTO: Duration = Duration::from_secs(1);
+
+/// ¿Este aviso de `cpal` dice que el flujo ya no sirve y hay que abrirlo otra vez? Cuando el dispositivo por defecto
+/// cambia, el backend de WASAPI no reata el flujo (lo dice su código) y avisa con `StreamInvalidated` si hay otra
+/// salida por defecto, o con `DeviceNotAvailable` si la salida se fue. Lo demás —un `Xrun`, un dispositivo ocupado, un
+/// `DeviceChanged`, que `cpal` documenta como «el flujo sigue activo»— no rompe el flujo y no se reabre.
+fn pide_reabrir(tipo: cpal::ErrorKind) -> bool {
+    matches!(tipo, cpal::ErrorKind::StreamInvalidated | cpal::ErrorKind::DeviceNotAvailable)
+}
+
+/// ¿Toca volver a abrir? Con el flujo roto, ya la primera vez; si ese intento falló, una vez por `REINTENTO`.
+fn toca_reabrir(roto: bool, desde_el_ultimo_intento: Option<Duration>) -> bool {
+    roto && desde_el_ultimo_intento.is_none_or(|d| d >= REINTENTO)
 }
 
 /// El «no» de WASAPI, en el conjunto cerrado que enseña la pantalla. El detalle va al log. El permiso que falta
@@ -429,6 +489,23 @@ mod pruebas {
         assert_eq!(clasificar_forma(Some(3), None).puede_haber_eco(), Some(false));
     }
 
+    /// **El loopback se vuelve a abrir cuando Windows cambia de salida** (auditoría del S7, A4): solo los avisos que
+    /// invalidan el flujo lo piden, y un intento que falló no se repite en cada latido.
+    #[test]
+    fn el_flujo_roto_se_vuelve_a_abrir_sin_prisa_de_mas() {
+        use cpal::ErrorKind::*;
+        for k in [StreamInvalidated, DeviceNotAvailable] {
+            assert!(pide_reabrir(k), "{k:?} invalida el flujo");
+        }
+        for k in [Xrun, DeviceBusy, DeviceChanged, PermissionDenied, BackendError] {
+            assert!(!pide_reabrir(k), "{k:?} no rompe el flujo");
+        }
+        assert!(!toca_reabrir(false, None), "sin avisos no se toca nada");
+        assert!(toca_reabrir(true, None), "roto y sin intento previo: ya");
+        assert!(!toca_reabrir(true, Some(Duration::from_millis(400))), "no más de un intento por segundo");
+        assert!(toca_reabrir(true, Some(REINTENTO)), "pasado el segundo, otra vez");
+    }
+
     /// Los dos grifos tienen su hilo con nombre y su texto: lo que sale en el log dice qué se abría.
     #[test]
     fn cada_grifo_se_llama_por_lo_que_abre() {
@@ -459,5 +536,22 @@ mod pruebas {
         let totales = anillo.lock().unwrap().totales();
         assert!(totales >= 12_000, "un segundo de pista, haya sonido o no: {totales}");
         println!("[captura] {} muestras recibidas, {totales} en el reloj", grifo.muestras_recibidas());
+    }
+
+    /// **El audio del sistema sigue a la salida** (auditoría del S7, A4): con la sesión abierta, el usuario pasa la
+    /// salida de los altavoces a unos auriculares y el loopback vuelve a entregar audio real. Solo con alguien delante
+    /// del PC.
+    #[test]
+    #[ignore = "en vivo: pide cambiar la salida de audio del PC y hacer sonar algo, con alguien delante"]
+    fn en_vivo_el_audio_del_sistema_sigue_al_cambiar_de_salida() {
+        let anillo = Arc::new(Mutex::new(Anillo::de_la_app()));
+        let grifo = Grifo::del_sistema(anillo).expect("el audio del sistema no abrió");
+        println!("[captura] AHORA: pasa la salida de audio del PC a otro dispositivo (unos auriculares) en 15 s");
+        std::thread::sleep(Duration::from_secs(15));
+        let tras_el_cambio = grifo.muestras_recibidas();
+        println!("[captura] AHORA: haz sonar algo en la nueva salida durante 8 s");
+        std::thread::sleep(Duration::from_secs(8));
+        let despues = grifo.muestras_recibidas();
+        assert!(despues > tras_el_cambio, "el audio del sistema calló tras el cambio de salida: {tras_el_cambio} → {despues}");
     }
 }

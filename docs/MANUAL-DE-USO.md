@@ -846,7 +846,9 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
 - **Las dos pistas.** Con la reunión abierta, **Iniciar sesión** abre tu micrófono (eres tú) y el **audio del
   sistema** (el cliente): lo que suena en tu PC. Windows no pide ningún permiso para esto, así que Permisos lo dice:
   *No pide permiso en Windows*. La app **no separa voces**: toda la pista del sistema cuenta como del cliente, también
-  una notificación o una canción que suene en ese momento.
+  una notificación o una canción que suene en ese momento. **Si cambias de salida de audio con la sesión en marcha**
+  (unos auriculares Bluetooth, por ejemplo), la app vuelve a abrir el audio del sistema sola, en un par de segundos; si
+  el transcript del cliente deja de moverse tras el cambio, repórtalo.
 - **Qué reunión reconoce.** Por el programa que corre: Teams, Zoom, o Meet en Chrome, Edge, Firefox o Brave, que lee por
   el título de la pestaña. De los navegadores lee **solo los títulos de sus ventanas**, nada más del PC. Cada programa
   del catálogo trae la página oficial de donde sale; ninguno se da por verificado.
@@ -854,8 +856,9 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
   si coincide con un turno del cliente, ese turno se marca como eco y no busca nada.
 - **La ficha al oído** usa la voz de Windows. Necesita una voz del idioma instalada (Configuración → Hora e idioma →
   Voz). **Con altavoces, o con una salida por HDMI o S/PDIF, no habla**: el cliente la oiría. Con auriculares, sí.
-  Con USB o Bluetooth la app no distingue un casco de un altavoz, y lo dice. «Al oído» solo viene marcado cuando la voz
-  puede hablar; si no, viene la banda. El **ensayo** usa la misma voz.
+  La app se fía de lo que Windows declara de la salida (altavoces, auriculares, HDMI); si una salida no la clasifica,
+  lo dice en vez de suponerlo. «Al oído» solo viene marcado cuando la voz puede hablar; si no, viene la banda. El
+  **ensayo** usa la misma voz.
 - **La pantalla.** Lee la ventana de la reunión, **solo cuando cambia**, con el reconocimiento de texto de Windows.
   Necesita el paquete de idioma de texto (Configuración → Hora e idioma → Idioma y región); sin él lo dice. La imagen
   vive en memoria y se descarta al leerla.
@@ -878,7 +881,7 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
 | `Alt+Mayús+F` | fijar la ficha |
 | `Alt+Mayús+Z` | guardar la propuesta |
 | `Alt+Mayús+X` | la banda, arriba o abajo |
-| `Esc` | calla la voz, solo mientras habla |
+| `Esc` | calla la voz. **Solo existe mientras el modo solo audio está encendido**: con el modo encendido, la app se queda `Esc` y no le llega a Teams, a Zoom ni a tus otras apps hasta que lo apagas (`Alt+Mayús+W`) |
 
 - **Lo que sigue sin llegar:** acoplarse a la ventana de la reunión, la sugerencia redactada por IA y el radar (no tiene
   tecla en Windows), abrir tus notas guardadas con Windows Hello, y borrar con la app cerrada.

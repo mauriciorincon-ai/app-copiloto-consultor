@@ -127,11 +127,14 @@ for (const tema of ["dark", "light"] as const) {
 for (const p of [
   { que: "idioma", url: "ventana=principal&pantalla=idioma&plataforma=windows" },
   { que: "honestidad", url: "ventana=principal&pantalla=honestidad&plataforma=windows" },
+  // Sprint 007: el título «Permisos de macOS» y «Mostrar en Finder» los cazó la lectura de las capturas.
+  { que: "permisos", url: "ventana=principal&pantalla=permisos&plataforma=windows" },
+  { que: "notas", url: "ventana=principal&pantalla=notas&plataforma=windows" },
 ]) {
   test(`en Windows, «${p.que}» no dice «macOS» ni «Mac»`, async ({ page }) => {
     await page.goto(`/?${p.url}`);
     await expect(page.locator("h1").first()).toBeVisible();
-    await expect(page.getByText(/macOS|\bMac\b/)).toHaveCount(0);
+    await expect(page.getByText(/macOS|\bMac\b|Finder/)).toHaveCount(0);
   });
 }
 
