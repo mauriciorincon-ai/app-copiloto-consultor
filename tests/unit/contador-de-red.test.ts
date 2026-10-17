@@ -1,6 +1,10 @@
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
-import { join, relative } from "node:path";
+import { posix } from "node:path";
 import { describe, expect, it } from "vitest";
+
+// Las rutas del barrido van con `/` en cualquier sistema (sprint 009): se comparan con las de abajo, escritas con
+// `/`, y en Windows `join` y `relative` de `node:path` devolvían barras invertidas.
+const { join } = posix;
 
 /**
  * GATE DEL CONTADOR DE RED (B2) — el cero tiene que ser estructural, no una coincidencia.
@@ -137,7 +141,7 @@ function barrer(rutas: string[], patrones: [RegExp, string][]): string[] {
         if (linea.includes(CITA)) return;
         for (const [re, nombre] of patrones) {
           if (re.test(linea)) {
-            hallazgos.push(`${relative(".", f)}:${i + 1}  ${nombre}  ${linea.trim().slice(0, 90)}`);
+            hallazgos.push(`${f}:${i + 1}  ${nombre}  ${linea.trim().slice(0, 90)}`);
           }
         }
       });
@@ -260,7 +264,7 @@ describe("contador de red: la única puerta que hay está declarada y contada", 
             return;
           }
           sinDeclarar.push(
-            `${relative(".", f)}:${i + 1}  ${toca.map(([, n]) => n).join(", ")}  ${linea.trim().slice(0, 90)}`,
+            `${f}:${i + 1}  ${toca.map(([, n]) => n).join(", ")}  ${linea.trim().slice(0, 90)}`,
           );
         });
     }

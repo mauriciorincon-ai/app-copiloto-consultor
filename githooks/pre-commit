@@ -3,6 +3,13 @@
 # Cubre los commits MANUALES del usuario; las escrituras de Claude Code las cubre el hook
 # PreToolUse de .claude/settings.json. Se activa con: git config core.hooksPath githooks
 # (lo hace estampar-app.ps1). Requiere gitleaks: winget install Gitleaks.Gitleaks
+#
+# Sprint 009: el aviso nombra el instalador y el almacén de secretos de ESTE sistema. `$OSTYPE` lo pone el propio
+# shell (msys o cygwin con Git for Windows; darwin en macOS), sin depender del PATH.
+case "${OSTYPE:-}" in
+  msys*|cygwin*) instalar="winget install --id Gitleaks.Gitleaks"; almacen="al Administrador de credenciales de Windows" ;;
+  *) instalar="brew install gitleaks"; almacen="al Llavero de macOS" ;;
+esac
 
 if command -v gitleaks >/dev/null 2>&1; then
   gitleaks protect --staged --no-banner --redact
@@ -10,14 +17,14 @@ if command -v gitleaks >/dev/null 2>&1; then
   if [ $status -eq 1 ]; then
     echo ""
     echo "SECRET DETECTADO: commit bloqueado."
-    echo "Los secretos van al Llavero de macOS (regla 7), nunca a un archivo del repo."
+    echo "Los secretos van $almacen (regla 7), nunca a un archivo del repo."
     exit 1
   fi
 elif [ "${KIT_SIN_GITLEAKS:-0}" = "1" ]; then
   echo "aviso: gitleaks no esta instalado — commit SIN scan de secretos (KIT_SIN_GITLEAKS=1, a sabiendas)."
 else
   # Falla CERRADO (kit v1.32.1): un hook que avisa y deja pasar no es un gate.
-  echo "gitleaks no esta instalado: commit BLOQUEADO. Instalalo (brew install gitleaks)"
+  echo "gitleaks no esta instalado: commit BLOQUEADO. Instalalo ($instalar)"
   echo "o, a sabiendas y por esta vez: KIT_SIN_GITLEAKS=1 git commit ..."
   exit 1
 fi

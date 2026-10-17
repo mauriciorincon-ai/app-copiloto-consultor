@@ -1737,6 +1737,22 @@ export const PLATAFORMA_WINDOWS: Plataforma = {
       "descartados": 0,
       "latenciaMs": 2350,
       "modelo": "large-v3-turbo",
+      "modelos": [
+        {
+          "bajado": true,
+          "enUso": true,
+          "latenciaMs": 2350,
+          "nombre": "large-v3-turbo",
+          "porDefecto": true
+        },
+        {
+          "bajado": false,
+          "enUso": false,
+          "latenciaMs": null,
+          "nombre": "small",
+          "porDefecto": false
+        }
+      ],
       "techoMs": 4000
     }
   };
@@ -1867,6 +1883,22 @@ export const PLATAFORMA_WINDOWS_SIN_MODELO: Plataforma = {
       "descartados": 0,
       "latenciaMs": null,
       "modelo": null,
+      "modelos": [
+        {
+          "bajado": false,
+          "enUso": false,
+          "latenciaMs": null,
+          "nombre": "large-v3-turbo",
+          "porDefecto": true
+        },
+        {
+          "bajado": false,
+          "enUso": false,
+          "latenciaMs": null,
+          "nombre": "small",
+          "porDefecto": false
+        }
+      ],
       "techoMs": 4000
     }
   };

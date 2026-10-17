@@ -174,3 +174,25 @@ describe("la cuenta de turnos sin transcribir no atribuye (auditoría del S7, M3
     expect(frase).not.toMatch(/nunca los del cliente/);
   });
 });
+
+/**
+ * **NINGÚN TEXTO PROMETE «1,6 GB» SIN DECIR LO DE ARM64** (sprint 009, auditoría A3): en un Windows ARM64 «Instalar» baja
+ * el modelo pequeño (0,5 GB), no el grande. Una frase de la app sobre sí misma que dijera «1,6 GB» a secas mentiría
+ * justo en el equipo al que apunta el sprint. ¿Puede fallar? Sí: quitar «0,5 GB» de cualquiera de las cadenas es rojo.
+ */
+describe("los textos de Windows no prometen un tamaño que ARM64 no baja", () => {
+  const cadenas = (valor: unknown, ruta: string): [string, string][] =>
+    typeof valor === "string"
+      ? [[ruta, valor]]
+      : valor && typeof valor === "object"
+        ? Object.entries(valor).flatMap(([k, v]) => cadenas(v, `${ruta}.${k}`))
+        : [];
+
+  it.each(["es", "en"] as const)("%s: toda cadena con «1,6 GB» dice también los 0,5 GB de ARM64", (idioma) => {
+    const todas = cadenas(TEXTOS_DE_WINDOWS[idioma], idioma);
+    const con16 = todas.filter(([, t]) => /1[,.]6 GB/.test(t));
+    expect(con16.length, "ya no hay ninguna cadena con el tamaño del modelo grande: ¿se perdió la advertencia?").toBeGreaterThan(0);
+    const sinArm = con16.filter(([, t]) => !/0[,.]5 GB/.test(t) || !/ARM64/.test(t)).map(([ruta]) => ruta);
+    expect(sinArm, "cadenas que dicen 1,6 GB sin el caso de ARM64").toEqual([]);
+  });
+});

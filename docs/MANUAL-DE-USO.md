@@ -844,7 +844,8 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
   al arrancar y se cierra.
 - **El micrófono:** Windows no pide nada desde la app. Lo concedes o lo quitas tú en **Ajustes → Privacidad y
   seguridad → Micrófono**. En Permisos, el botón **Abrir Ajustes de Windows** te lleva ahí.
-- **El modelo de voz:** en Idioma, **Instalar** baja el modelo grande de whisper (1,6 GB). Antes de usarlo se
+- **El modelo de voz:** en Idioma, **Instalar** baja el modelo grande de whisper (1,6 GB; en un Windows ARM64, el pequeño: ver *Instalar en una Surface o un equipo ARM*,
+  más abajo). Antes de usarlo se
   comprueba su huella SHA-256; si no coincide, se borra. **Nunca se baja con una reunión, una sesión (también «solo notas» o presencial) ni un ensayo abiertos, y si empieza uno mientras baja, la descarga se para** y se borra lo que llevaba. Si la conexión se cuelga, a las tres horas se suelta sola. Lo que tardó whisper en tu PC se recuerda al reabrir la app.
 - **La velocidad de tu PC:** Honestidad mide cuánto tarda la transcripción en 10 segundos de audio de muestra. Si
   pasa de 4 s, lo dice y ofrece bajar el modelo pequeño (0,5 GB): es menos preciso, pero más rápido en ese PC.
@@ -943,6 +944,24 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
 | `borrado-con-la-app-cerrada` | sí: el Programador de tareas, al minuto de cada vencimiento |
 | `desbloqueo` | sí: Windows Hello, una vez por sesión de la app |
 | `puerta-local` | no en Windows por ahora: la puerta para Claude Code |
+
+### Instalar en una Surface o un equipo ARM · Sprint 009
+
+- **Qué instalador.** La integración continua sube `angel-ghost-windows-arm64`, con un `.exe` (para tu usuario, sin
+  administrador) y un `.msi` (por equipo, pide administrador). Los dos son ARM64 nativos: en una Surface o en cualquier
+  Windows ARM usa ese artefacto, no `angel-ghost-windows`, que es x64 y correría emulado. Instala uno solo de los dos:
+  comparten identificador. Como no está firmado, SmartScreen avisa: en un Windows en inglés, pulsa *More info* y luego
+  *Run anyway*.
+- **Qué modelo de voz.** En Idioma, **Instalar** baja en un Windows ARM64 el modelo **pequeño** (0,5 GB) y no el grande.
+  En la Surface de referencia (Snapdragon X Plus) el pequeño transcribe los 10 s de la calibración en unos 1,6 s y el
+  grande en 8,5 a 18 s, y el techo son 4 s. Honestidad enseña una línea por modelo con su cifra **en tu PC**, cuál
+  transcribe ahora y cuál baja *Instalar*; al medir manda tu cifra, pero solo entre los modelos que tengas bajados.
+- **Construirla tú.** El README tiene «Desarrollar en Windows ARM»: un script, `scripts/entorno-windows.ps1`, dice qué
+  falta sin instalar nada, y cada instalación se hace por separado. El instalador sale de
+  `pnpm tauri build --bundles nsis`.
+- **Lo que no cambia.** En macOS y en Windows x64 no cambia nada. La protección de la banda sigue «sin verificar» en
+  Teams, Zoom y Meet hasta que la pruebes en tu PC, y el `.msi` ARM64 está construido pero su instalación todavía no se
+  ha probado en vivo.
 
 ## Atajos de teclado en el Mac
 

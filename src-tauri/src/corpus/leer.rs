@@ -365,6 +365,60 @@ mod pruebas {
         assert!(!se_lee(Path::new("a.xlsx")));
     }
 
+    /// **Un .docx de verdad, comprimido con deflate** (sprint 009, auditoría M1). Hasta ahora nada abría un `.docx` en las
+    /// pruebas, y `zip` pasó de la 2 a la 9 (por tres avisos de RustSec) con una feature distinta: si el lector deflate
+    /// se perdiera, la app dejaría de leer los .docx de los consultores y ningún test lo diría. El documento se arma en
+    /// memoria con `word/document.xml` mínimo: un título por estilo (`Heading1`), un título por forma (negrita y letra
+    /// mayor que la del texto, que es lo que escriben los conversores) y dos de cuerpo. Se ve en rojo quitando la feature
+    /// `deflate-flate2-zlib-rs` de `zip` en `Cargo.toml`.
+    #[test]
+    fn un_docx_comprimido_con_deflate_se_lee_con_sus_titulos() {
+        use std::io::Write;
+        const XML: &str = concat!(
+            r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"#,
+            r#"<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>"#,
+            r#"<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>Alcance</w:t></w:r></w:p>"#,
+            r#"<w:p><w:r><w:rPr><w:sz w:val="22"/></w:rPr><w:t>Tres canales y una línea base.</w:t></w:r></w:p>"#,
+            r#"<w:p><w:r><w:rPr><w:b/><w:sz w:val="32"/></w:rPr><w:t>Precio</w:t></w:r></w:p>"#,
+            r#"<w:p><w:r><w:rPr><w:sz w:val="22"/></w:rPr><w:t>Cerrado en marzo.</w:t></w:r></w:p>"#,
+            r#"</w:body></w:document>"#,
+        );
+        let ruta = std::env::temp_dir().join(format!("ag-corpus-docx-{}.docx", std::process::id()));
+        {
+            let mut zip = zip::ZipWriter::new(std::fs::File::create(&ruta).unwrap());
+            let opciones = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+            zip.start_file("word/document.xml", opciones).unwrap();
+            zip.write_all(XML.as_bytes()).unwrap();
+            zip.finish().unwrap();
+        }
+        // El archivo de prueba SÍ va comprimido: si no, esta prueba no ejercitaría el lector deflate.
+        let mut abierto = zip::ZipArchive::new(std::fs::File::open(&ruta).unwrap()).unwrap();
+        assert_eq!(abierto.by_name("word/document.xml").unwrap().compression(), zip::CompressionMethod::Deflated);
+
+        let l = leer(&ruta).expect("un .docx válido se lee");
+        let _ = std::fs::remove_file(&ruta);
+        assert_eq!(
+            l.lineas,
+            vec![
+                Linea::titulo("Alcance"),
+                Linea::cuerpo("Tres canales y una línea base."),
+                Linea::titulo("Precio"),
+                Linea::cuerpo("Cerrado en marzo."),
+            ]
+        );
+        assert!(!l.conjeturado, "en un .docx el título lo marca el formato, no se conjetura");
+    }
+
+    /// Y un `.docx` que no es un zip se declara dañado, sin tumbar la app ni leerse a medias.
+    #[test]
+    fn un_docx_que_no_es_un_zip_se_declara_danado() {
+        let ruta = std::env::temp_dir().join(format!("ag-corpus-roto-{}.docx", std::process::id()));
+        std::fs::write(&ruta, b"esto no es un zip").unwrap();
+        let r = leer(&ruta);
+        let _ = std::fs::remove_file(&ruta);
+        assert!(matches!(r, Err(Fallo::Roto(_))), "{r:?}");
+    }
+
     #[test]
     fn un_archivo_sin_texto_se_declara_ilegible_en_vez_de_indexarse_vacio() {
         let d = std::env::temp_dir().join("ag-corpus-vacio.md");

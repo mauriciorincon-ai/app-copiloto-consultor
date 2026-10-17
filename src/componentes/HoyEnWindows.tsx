@@ -8,6 +8,7 @@ import {
   bajarModeloPequeno,
   calibrarTranscripcion,
   esWindows,
+  estadoDeUnModelo,
   estadoDeWhisper,
   porCuando,
   teclasEnIdioma,
@@ -48,13 +49,17 @@ export function HoyEnWindows({
       if (r) setPropia(r);
     });
   }, [setPropia]);
-  useRefrescoMientras(!prestada && p.transcripcion?.bajando === true, refrescar);
+  useRefrescoMientras(
+    !prestada && p.transcripcion?.bajando === true,
+    refrescar,
+  );
 
   if (!esWindows(p)) return null;
 
   const grupos = porCuando(p);
   const porClave = new Map(p.funciones.map((f) => [f.clave, f]));
   const whisper = estadoDeWhisper(p.transcripcion);
+  const hayModelos = (p.transcripcion?.modelos.length ?? 0) > 0;
   const { si, "no-por-ahora": noPorAhora } = grupos;
 
   const fila = (clave: ClaveDeWindows) => {
@@ -138,13 +143,15 @@ export function HoyEnWindows({
           <span>{t.whisper.sinModelo}</span>
         </p>
       )}
-      {whisper?.que === "sin-medir" && (
+      {/* «Sin medir» y «a tiempo» las dicen las líneas por modelo de abajo (sprint 009, auditoría: A1/B5); este resumen
+          solo se pinta si no hay esas líneas. «Lento» sí se queda: trae el consejo y el botón del modelo pequeño. */}
+      {whisper?.que === "sin-medir" && !hayModelos && (
         <p className="estado mute">
           <Ic id="i-ring" s />
           <span>{t.whisper.sinMedir(whisper.modelo)}</span>
         </p>
       )}
-      {whisper?.que === "a-tiempo" && (
+      {whisper?.que === "a-tiempo" && !hayModelos && (
         <p className="estado ok">
           <Ic id="i-check-circle" s relleno />
           <span>{t.whisper.aTiempo(whisper.modelo, cifra(whisper.ms))}</span>
@@ -159,8 +166,56 @@ export function HoyEnWindows({
       {(p.transcripcion?.descartados ?? 0) > 0 && (
         <p className="estado warn">
           <Ic id="i-alert" s />
-          <span>{t.whisper.descartados(p.transcripcion?.descartados ?? 0)}</span>
+          <span>
+            {t.whisper.descartados(p.transcripcion?.descartados ?? 0)}
+          </span>
         </p>
+      )}
+      {hayModelos && (
+        <>
+          <h3 className="seccion" style={{ margin: "12px 0 4px" }}>
+            {t.whisper.modelos.titulo}
+          </h3>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "6px" }}
+            data-testid="modelos-de-voz"
+          >
+            {p.transcripcion?.modelos.map((m) => {
+              const e = estadoDeUnModelo(m, p.transcripcion?.techoMs ?? 4000);
+              const frase =
+                e.que === "sin-bajar"
+                  ? t.whisper.modelos.sinBajar(m.nombre)
+                  : e.que === "sin-medir"
+                    ? t.whisper.modelos.sinMedir(m.nombre)
+                    : e.que === "a-tiempo"
+                      ? t.whisper.modelos.aTiempo(m.nombre, cifra(e.ms))
+                      : t.whisper.modelos.lento(m.nombre, cifra(e.ms));
+              const etiquetas = [
+                m.enUso ? t.whisper.modelos.enUso : null,
+                m.porDefecto ? t.whisper.modelos.porDefecto : null,
+              ].filter((x): x is string => x !== null);
+              // Símbolo, texto y color (regla dura 8): cabe, pasa del techo, o todavía no hay cifra.
+              const [clase, icono, relleno] =
+                e.que === "a-tiempo"
+                  ? (["ok", "i-check-circle", true] as const)
+                  : e.que === "lento"
+                    ? (["warn", "i-alert", false] as const)
+                    : (["mute", "i-ring", false] as const);
+              return (
+                <p key={m.nombre} className={`estado ${clase}`}>
+                  <Ic id={icono} s relleno={relleno} />
+                  <span>
+                    {frase}
+                    {etiquetas.length > 0 && ` (${etiquetas.join(" · ")})`}
+                  </span>
+                </p>
+              );
+            })}
+          </div>
+          <p className="mono" style={{ color: "var(--ink-2)" }}>
+            {t.whisper.modelos.regla}
+          </p>
+        </>
       )}
       <p className="mono" style={{ color: "var(--ink-2)" }}>
         {t.whisper.sinReunion}
