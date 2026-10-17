@@ -106,6 +106,15 @@ if ($esArm) {
   # `ring` (el HTTPS de la descarga del modelo) compila su C con `clang` en Windows ARM64 (su build.rs).
   $clang = Get-Command clang -ErrorAction SilentlyContinue
   Fila 'clang en el PATH' $(if ($clang) { $clang.Source } else { 'no esta' }) 'clang.exe (lo pide ring en ARM64)' $(if ($clang) { 'ok' } else { 'falta' })
+  # whisper.cpp se compila con clang-cl y Ninja (src-tauri/cmake/windows-arm64-clang-cl.cmake): el toolchain los busca en
+  # estos mismos sitios y falla con REQUIRED si no están. Sin estas dos filas el script salía verde y el build, no.
+  $llvm = @($env:AG_LLVM_BIN, (Join-Path $env:ProgramFiles 'LLVM\bin'), $(if ($vs) { Join-Path $vs 'VC\Tools\Llvm\ARM64\bin' })) | Where-Object { $_ }
+  $clangCl = (Get-Command clang-cl -ErrorAction SilentlyContinue).Source
+  if (-not $clangCl) { $clangCl = $llvm | ForEach-Object { Join-Path $_ 'clang-cl.exe' } | Where-Object { Test-Path $_ } | Select-Object -First 1 }
+  Fila 'clang-cl (whisper.cpp)' $(if ($clangCl) { $clangCl } else { 'no esta' }) 'clang-cl.exe de LLVM (ggml no compila con MSVC en ARM)' $(if ($clangCl) { 'ok' } else { 'falta' })
+  $ninja = (Get-Command ninja -ErrorAction SilentlyContinue).Source
+  if (-not $ninja -and $vs) { $ninja = Join-Path $vs 'Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\ninja.exe'; if (-not (Test-Path $ninja)) { $ninja = $null } }
+  Fila 'ninja (whisper.cpp)' $(if ($ninja) { $ninja } else { 'no esta' }) 'ninja.exe (el de las Build Tools sirve)' $(if ($ninja) { 'ok' } else { 'falta' })
 }
 $libclang = if ($env:LIBCLANG_PATH) { Join-Path $env:LIBCLANG_PATH 'libclang.dll' } else { $null }
 $arqLibclang = Arquitectura-PE $libclang

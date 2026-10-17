@@ -172,8 +172,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
+      # La `key` es nueva a propósito (sprint 009, auditoría A2): las cachés anteriores guardaban whisper.cpp compilado
+      # para la CPU del runner que las creó (AVX-512 incluido) y en otro runner morían con STATUS_ILLEGAL_INSTRUCTION.
+      # Desde `GGML_NATIVE=OFF` (src-tauri/.cargo/config.toml) el binario es portable; la clave nueva las deja atrás.
       - uses: Swatinem/rust-cache@v2
-        with: { workspaces: src-tauri }
+        with: { workspaces: src-tauri, key: ggml-portable }
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }

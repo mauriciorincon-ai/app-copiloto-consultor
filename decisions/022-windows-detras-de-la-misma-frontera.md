@@ -54,7 +54,8 @@ Zoom o Meet **no se afirma**: queda «sin verificar» hasta tu corrida en el PC 
 ### 4. La primera puerta a la red escrita en Rust: el modelo de whisper
 
 `contador-de-red` contaba tres puertas, las tres en el puente Swift. Whisper necesita su modelo
-(`ggml-large-v3-turbo.bin`, 1 624 555 275 bytes) y en Windows no hay puente. Se declara **una** puerta Rust, y solo una:
+(`ggml-large-v3-turbo.bin`, 1 624 555 275 bytes; en un PC ARM64, desde el sprint 009, el pequeño: ver la enmienda 3) y en
+Windows no hay puente. Se declara **una** puerta Rust, y solo una:
 
 - crate `ureq` (con rustls), **solo** bajo `cfg(windows)` y **solo** en `src-tauri/src/modelo_whisper.rs`;
 - se abre **solo cuando lo pides**, desde Idioma («Instalar», el mismo botón que en macOS baja el modelo de voz del
@@ -75,7 +76,8 @@ sigue protegido (`verify-ephemeral`): no abre archivos ni red; recibe la ruta de
 **Calibración:** al quedar el modelo listo, transcribe 10 s del audio sintético del kit v4 (`data/calibracion/`) y mide
 cuánto tarda; Honestidad enseña esa cifra. Si pasa de 4 s (el presupuesto de la app, del fin de turno a la ficha), lo
 dice. El escalón al modelo `small` (huella `1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b`,
-487 601 967 bytes) queda escrito para cuando la cifra lo pida.
+487 601 967 bytes) queda escrito para cuando la cifra lo pida. *(Superado en un PC ARM64 por la enmienda 3: allí el
+pequeño ya no es un escalón sino el defecto, porque el grande no cabe en 4 s.)*
 
 ### 6. Secretos en el Administrador de credenciales
 
@@ -271,6 +273,12 @@ supported for ARM, use clang`, en `ggml/src/ggml-cpu/CMakeLists.txt` del whisper
    en la Surface. Se fija `GGML_NATIVE=OFF` y la base `armv8.2-a+dotprod+fp16` (producto escalar y media precisión, lo que
    usan los modelos de whisper, que van en f16; `i8mm` y SVE solo ayudan a modelos cuantizados, que la app no usa).
    whisper.cpp sale optimizado (`RelWithDebInfo`, `/O2`) aun en el perfil de desarrollo: se leyó del `CMakeCache.txt`.
+   **Lo mismo vale para x64, y lo descubrió la CI**: `build-windows` murió con `STATUS_ILLEGAL_INSTRUCTION` (0xc000001d)
+   al restaurar de la caché un binario que otro runner había compilado para su CPU (`FindSIMD.cmake` prueba AVX-512 en la
+   máquina que compila), y el instalador x64 que sube la CI habría heredado las instrucciones del runner. Por eso
+   `GGML_NATIVE=OFF` está en el `[env]` de `src-tauri/.cargo/config.toml`, para todos los targets: ggml activa entonces SSE4.2,
+   AVX, AVX2, BMI2, FMA y F16C (la base de Haswell, 2013) y deja AVX-512 apagado. La caché de `build-windows` cambió de clave
+   para no reutilizar binarios de antes.
 3. **Los instaladores.** `.exe` de NSIS (5,6 MiB) y `.msi` (8,3 MiB; WiX 3.14, plataforma `Arm64`; no pidió .NET 3.5). Los
    binarios de la app (`app-copiloto-consultor.exe`, `ghost.exe`) son `AA64`; el stub de NSIS es x86 y corre emulado, a
    propósito. `scripts/arquitectura-pe.mjs` lee la cabecera PE y lo exige en el job `build-windows-arm` antes de subir el
