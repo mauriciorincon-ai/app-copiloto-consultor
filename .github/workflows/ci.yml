@@ -288,7 +288,7 @@ jobs:
           "Visual Studio: $vs"
           $componente = 'Microsoft.VisualStudio.Component.VC.Tools.ARM64'
           if (-not (& $vswhere -latest -products * -requires $componente -property installationPath)) {
-            "Falta $componente: se instala con el Visual Studio Installer."
+            "Falta ${componente}: se instala con el Visual Studio Installer."
             $p = Start-Process (Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\setup.exe') -Wait -PassThru -ArgumentList @(
               'modify', '--installPath', "`"$vs`"", '--add', $componente, '--quiet', '--norestart', '--noUpdateInstaller')
             "setup.exe salió con $($p.ExitCode)"

@@ -143,6 +143,27 @@ describe("arquitectura-pe: el job de ARM de la CI lo ejecuta sobre lo que constr
     expect(job).toContain("angel-ghost-windows-arm64");
   });
 
+  // La primera corrida del job murió por `"Falta $componente: …"`: en PowerShell `$componente:` se lee como una variable con
+  // ámbito y el script entero no se parsea. En Ubuntu no hay quien lo ejecute, así que se vigila la forma.
+  it("ningún bloque de PowerShell del workflow escribe `$variable:` sin llaves dentro de una cadena", () => {
+    const bloques = [
+      ...ci.matchAll(/shell: pwsh\n\s+run: \|\n((?: {10,}.*\n|\n)+)/g),
+    ].map((m) => m[1]);
+    expect(
+      bloques.length,
+      "no encontré ningún bloque de PowerShell: el lector se rompió",
+    ).toBeGreaterThanOrEqual(3);
+    const ambitos =
+      /\$(?!env:|global:|script:|local:|private:|using:|true\b|false\b|null\b)[A-Za-z_]\w*:(?!:)/;
+    const mal = bloques.flatMap((b) =>
+      b
+        .split("\n")
+        .filter((l) => ambitos.test(l))
+        .map((l) => l.trim()),
+    );
+    expect(mal, "usa ${variable}: dentro de las cadenas").toEqual([]);
+  });
+
   it("corre los tests sin hardware, con el centinela armado (regla 25)", () => {
     expect(job).toMatch(/AG_SIN_HARDWARE:\s*"1"/);
     expect(job).toMatch(/cargo test --locked/);
