@@ -642,7 +642,7 @@ conmutador visible desde la maqueta de la Etapa de Diseño.
 >
 > | El texto de abajo dice… | Hoy |
 > |---|---|
-> | checks requeridos «quality · e2e · build-escritorio» (y «lighthouse») | `quality` · `e2e` · `build-escritorio` · `build-windows` · `un-pr-vivo`, todos en la ruleset `main-protegida`; sin Lighthouse (perfil escritorio) |
+> | checks requeridos «quality · e2e · build-escritorio» (y «lighthouse») | `quality` · `e2e` · `build-escritorio` · `build-windows` · `build-windows-arm` · `un-pr-vivo`, todos en la ruleset `main-protegida`; sin Lighthouse (perfil escritorio) |
 > | «La app exige macOS 26»; Apple SpeechAnalyzer sin respaldo; Core Audio y ScreenCaptureKit | **en macOS**. En Windows, la misma frontera con otra pieza detrás: loopback WASAPI por `cpal`, `whisper-rs` con el modelo bajado y comprobado por huella, `PrintWindow` y `Windows.Media.Ocr`, el Administrador de credenciales (ADR 022). El respaldo de whisper dejó de ser «deuda»: es el motor de Windows (ADR 006, enmienda del sprint 008) |
 > | puertas de red: el adapter LLM y las descargas de modelos de macOS | tres puertas de Swift (`contador-de-red`) y, **solo en Windows**, dos de Rust: `modelo_whisper.rs` (el modelo) y `sintesis/api.rs` (la sugerencia con tu clave, ADR 023); cada una en una línea marcada con su ADR y contada |
 > | tarea de launchd · Llavero · Touch ID · versión de macOS · `NS*UsageDescription` | launchd **y** el Programador de tareas (ADR 016, enmienda 4) · el Llavero **y** el Administrador de credenciales · Touch ID **y** Windows Hello · la versión del sistema (Windows 10 2004 o más) · los textos de permisos de cada sistema |
