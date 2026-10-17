@@ -1,0 +1,9 @@
+# Windows ARM64 (sprint 009, ADR 022 enmienda 3): whisper.cpp con clang-cl y Ninja, porque ggml no compila con MSVC
+# en ARM (ver `cmake/windows-arm64-clang-cl.cmake`). Cada variable lleva el target en el nombre: el crate `cmake` y el
+# crate `cc` solo las leen al compilar para `aarch64-pc-windows-msvc`. En x64 y en macOS no cambia nada (el único crate
+# del árbol que usa `cmake` es `whisper-rs-sys`, que solo existe en Windows).
+[env]
+CMAKE_GENERATOR_aarch64_pc_windows_msvc = "Ninja"
+CMAKE_TOOLCHAIN_FILE_aarch64_pc_windows_msvc = { value = "cmake/windows-arm64-clang-cl.cmake", relative = true }
+# Con Ninja no llega el /EHsc que MSBuild pone por defecto, y ggml usa excepciones de C++ (gguf.cpp).
+CXXFLAGS_aarch64_pc_windows_msvc = "-EHsc"
