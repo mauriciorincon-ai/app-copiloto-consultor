@@ -4099,7 +4099,10 @@ mod pruebas_del_cierre_de_la_ventana {
     /// El gancho existe: la regla no sirve de nada si el bucle no la consulta (como el `corte`: una pieza sin cablear).
     #[test]
     fn el_bucle_de_eventos_consulta_la_regla() {
-        let fuente = include_str!("lib.rs");
+        // Solo el código de producción: esta misma prueba trae los dos textos que busca, y sin acotar pasaría aunque se
+        // borrara el gancho del bucle (auditoría del sprint 010, M1).
+        let todo = include_str!("lib.rs");
+        let fuente = &todo[..todo.find("mod pruebas_del_cierre_de_la_ventana").expect("falta el módulo de pruebas")];
         let gancho = fuente.find("cerrar_esta_ventana_sale_de_la_app(label, cfg!(windows))").expect("el bucle ya no consulta la regla");
         let salida = fuente[gancho..].find("mango.exit(0)").expect("la regla no lleva a salir");
         assert!(salida < 400, "la salida quedó lejos de la regla");

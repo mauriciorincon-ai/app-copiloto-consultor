@@ -128,18 +128,18 @@ describe("Honestidad enseña una línea por modelo de voz, medida en este PC", (
     expect(lineas()).toHaveLength(2);
     expect(
       screen.getByText(
-        /large-v3-turbo: tu pista, 10 s en 5.?100 ms\. Pasa del techo de 4 s\./,
+        /large-v3-turbo: tu pista, 10 s en 5.?100 ms; la del cliente, sin medir\. Pasa del techo de 4 s\./,
       ),
     ).toBeTruthy();
     expect(
       screen.getByText(
-        /small: tu pista, 10 s en 1.?800 ms\. Cabe en el techo de 4 s\. \(el que transcribe ahora · el que baja «Instalar»\)/,
+        /small: tu pista, 10 s en 1.?800 ms; la del cliente, sin medir\. Cabe en el techo de 4 s\. \(el que transcribe ahora · el que baja «Instalar»\)/,
       ),
     ).toBeTruthy();
     pinta(<HoyEnWindows plataforma={p} />, "en");
     expect(
       screen.getByText(
-        /large-v3-turbo: your track, 10 s in 5,100 ms\. Over the 4 s ceiling\./,
+        /large-v3-turbo: your track, 10 s in 5,100 ms; the client's, not measured\. Over the 4 s ceiling\./,
       ),
     ).toBeTruthy();
     expect(
@@ -242,7 +242,9 @@ describe("Honestidad enseña una línea por modelo de voz, medida en este PC", (
       screen.getByText("large-v3-turbo: bajado, sin medir en esta sesión."),
     ).toBeTruthy();
     expect(
-      screen.getByText(/small: tu pista, 10 s en 4.?000 ms\. Cabe en el techo/),
+      screen.getByText(
+        /small: tu pista, 10 s en 4.?000 ms; la del cliente, sin medir\. Cabe en el techo/,
+      ),
     ).toBeTruthy();
   });
 

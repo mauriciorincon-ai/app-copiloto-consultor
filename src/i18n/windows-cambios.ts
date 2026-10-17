@@ -45,6 +45,9 @@ const ES: Cambios = {
       "Tu panel le pide a Windows que no salga en las capturas, pero en Teams, Zoom y Meet está sin verificar: se verifica con una videollamada real en tu PC. Mientras tanto, comparte una ventana, no la pantalla.",
     modeloDelSistema: "Modelo del sistema",
     permisosTitulo: "Permisos de Windows",
+    // La tarea de borrado es del Programador de tareas, no de «Ítems de inicio» de macOS (auditoría del S10, A1).
+    noCorrio:
+      "La tarea de borrado no corrió con la app cerrada: revisa el Programador de tareas (Task Scheduler)",
     // Las rutas de error: con el audio del sistema y la pantalla en Windows (S7), estos porqués SÍ se alcanzan allí
     // (auditoría del S7, A1). Ninguno manda a Permisos por algo que Windows no pide.
     funcionaEscucha: "Escucha las dos pistas y las transcribe en tu PC",
@@ -176,6 +179,8 @@ const EN: Cambios = {
       "Your panel asks Windows to stay out of screen captures, but in Teams, Zoom and Meet it is unverified: you verify it with a real video call on your PC. Until then, share a window, not the screen.",
     modeloDelSistema: "System model",
     permisosTitulo: "Windows permissions",
+    noCorrio:
+      "The deletion task did not run while the app was closed: check Task Scheduler",
     funcionaEscucha:
       "It listens to both tracks and transcribes them on your PC",
     escuchaAMedias: "Listens and transcribes on your PC —",

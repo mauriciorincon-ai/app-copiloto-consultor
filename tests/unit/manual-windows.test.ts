@@ -230,7 +230,7 @@ describe("las 30 funcionalidades de la visión, en Windows", () => {
     `${process.env.HOME ?? ""}/Code/hr01-develop-ai-apps/portafolio/copiloto-consultor/VISION.md`,
   ].find(existsSync);
   it.skipIf(!VISION)(
-    "la visión de la planeadora (solo lectura) tiene esas mismas 30 funcionalidades",
+    "la visión de la planeadora (solo lectura; solo corre donde está la planeadora, la CI no la tiene) tiene esas mismas 30 funcionalidades",
     () => {
       const texto = readFileSync(VISION as string, "utf8");
       const desde = texto.indexOf("## Lo que podrás hacer");

@@ -362,7 +362,7 @@ test("en Windows, cada línea de modelo cabe en su bloque y Honestidad no se des
  * demás en los de la ventana principal. ¿Puede fallar? Sí: un «Touch ID» en Notas «bandeja-llave» es rojo, con la URL.
  */
 const DEL_MAC =
-  /macOS|\bMac\b|Llavero|Keychain|Touch ID|Finder|launchd|Time Machine|AirPlay|System Settings|Ajustes del Sistema|⌥|⌃/;
+  /macOS|\bMac\b|Llavero|Keychain|Touch ID|Finder|launchd|Time Machine|AirPlay|System Settings|Ajustes del Sistema|Ítems de inicio|Items de inicio|Login Items|Background Items|⌥|⌃/;
 const URLS_DEL_ARNES = [
   ...new Set(
     [

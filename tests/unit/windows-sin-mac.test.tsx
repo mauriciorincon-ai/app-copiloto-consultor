@@ -45,7 +45,7 @@ function alto(px: number) {
 function delMac(texto: string): string[] {
   return [
     ...texto.matchAll(
-      /.{0,40}(⌃|⌥|⎋|\bmacOS\b|\bMac\b|Llavero|Keychain|keychain|llavero|Finder|Touch ID|Time Machine|Spotlight|Accesibilidad|Accessibility|\btap\b|\bApple\b|launchd|AirPlay|Ajustes del Sistema|System Settings|Automatización|Automation).{0,40}/g,
+      /.{0,40}(⌃|⌥|⎋|\bmacOS\b|\bMac\b|Llavero|Keychain|keychain|llavero|Finder|Touch ID|Time Machine|Spotlight|Accesibilidad|Accessibility|\btap\b|\bApple\b|launchd|AirPlay|Ajustes del Sistema|System Settings|Automatización|Automation|Ítems de inicio|Items de inicio|Login Items|Background Items).{0,40}/g,
     ),
   ].map((m) => m[0].trim());
 }

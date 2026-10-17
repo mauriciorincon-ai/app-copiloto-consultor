@@ -8,7 +8,7 @@
 
 Una ventana pequeña en tu PC que el cliente no ve aunque compartas la pantalla. Escucha las dos partes de la videollamada (tu micrófono y lo que suena en el PC), lee la pantalla de la reunión solo cuando cambia, y te pone delante **fichas de evidencia de tu propio corpus**: un titular, una línea y la fuente exacta. Si lo enciendes, un modelo redacta una sugerencia breve. Antes de la reunión puedes ensayar con las preguntas que ese cliente probablemente hará.
 
-Lo que la distingue: **no persiste lo que no debe, y se puede comprobar.** El audio, el transcript del cliente y lo leído de la pantalla viven solo en memoria y mueren al cerrar. Lo que queda es lo tuyo, cifrado. La app no oculta nada ni evade nada: le pide a Windows que su banda no salga en las capturas, y dice con todas sus letras dónde eso no está verificado.
+Lo que la distingue: **no persiste lo que no debe, y se puede comprobar.** El audio, el transcript del cliente y lo leído de la pantalla viven solo en memoria y mueren al cerrar. Lo que queda es lo tuyo, cifrado. La app no esconde nada de ti ni evade nada: le pide a Windows que su banda no salga en las capturas, y dice con todas sus letras dónde eso no está verificado.
 
 ## Lo que necesitas
 
@@ -34,7 +34,7 @@ La app transcribe con **whisper**, dentro de tu PC; ningún audio sale. El model
 - **No baja nada con una reunión, una sesión (tampoco «solo notas» o presencial) ni un ensayo abiertos**, y si uno empieza mientras baja, la descarga se para. Si la conexión se cuelga, a las tres horas se suelta sola.
 - Al terminar, la app mide lo que tarda tu PC. En **Honestidad (Honesty)**, el bloque de la transcripción enseña **una línea por modelo, pista por pista**: tu turno de 10 s (la cifra que decide el modelo) y el turno del cliente, de 6 s. Cada línea dice si cabe en el techo de 4 s (✓), si pasa (⚠) o si falta medirla o bajarla (○).
 - **Medir otra vez (Measure again)** repite la medida: con el modelo grande tarda cerca de medio minuto, y mientras tanto la pantalla lo dice («Midiendo…»).
-- La regla: se transcribe con **el mayor modelo cuya pista tuya cabe en 4 s en tu PC**; uno que no se ha medido cuenta como que cabe. En la Surface de referencia: `small`, 2,0 s tu pista y 1,6 s la del cliente; `large-v3-turbo`, 9,8 s y 9,7 s.
+- La regla: se transcribe con **el mayor modelo cuya pista tuya cabe en 4 s en tu PC**; uno que no se ha medido cuenta como que cabe. En la Surface de referencia: `small`, 2,0 s tu pista y 1,6 s la del cliente; `large-v3-turbo`, 9,8 s y 9,7 s. Son las de la corrida en vivo de esa Surface; las cifras cambian de una medición a otra, y el manual de uso general cita el intervalo de varias (el pequeño, cerca de 1,6 s; el grande, de 8,5 a 18 s).
 
 ## Una reunión, de punta a punta
 
@@ -131,7 +131,7 @@ Cada fila dice qué estado tiene en Windows y qué clave de «Hoy en Windows» l
 | 6   | Dos pistas de audio, sin bot                                   | `videollamada`                                                 | hecho sin verificar | Tu micrófono y el audio del sistema; falta una videollamada real                                                   |
 | 7   | Transcripción local con fin de turno                           | `videollamada`                                                 | hecho sin verificar | whisper en tu PC, medido con el audio del kit; falta la voz real                                                   |
 | 8   | Lectura de pantalla solo cuando cambia                         | `pantalla`                                                     | hecho sin verificar | Reconocimiento de texto de Windows; falta una presentación real                                                    |
-| 9   | Español e inglés, con vocabulario técnico                      | sin clave                                                      | hecho               | Interfaz, transcripción y diccionario propio, en los dos idiomas                                                   |
+| 9   | Español e inglés, con vocabulario técnico                      | sin clave                                                      | hecho sin verificar | Interfaz y diccionario, comprobados en los dos idiomas; la transcripción en inglés falta con voz real              |
 | 10  | Varias voces en el mismo canal                                 | sin clave                                                      | fuera               | Pendiente de la visión; además, la app no separa voces por diseño                                                  |
 | 11  | Sin auriculares (cancelación de eco)                           | sin clave                                                      | fuera               | Pendiente de la visión; con altavoces la voz al oído no habla                                                      |
 | 12  | Transcripción en streaming nativo                              | sin clave                                                      | fuera               | Pendiente de la visión; el motor de Windows transcribe por turnos                                                  |

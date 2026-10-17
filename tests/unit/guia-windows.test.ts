@@ -184,6 +184,34 @@ describe("cada mirada de texto va en una matriz de una fila", () => {
   });
 });
 
+describe("lo que la guía manda correr se puede correr (auditoría del sprint 010, A2)", () => {
+  // `AG_BANDEJA_DE_PRUEBA` solo la lee la compilación de desarrollo (`reunion.rs`, `#[cfg(debug_assertions)]`): contra el
+  // instalador no hace nada y la bandeja dura 3 h. La guía lo mandaba sobre el instalador.
+  it.each([
+    ["docs/GUIA-DE-PRUEBA-WINDOWS.html", WIN],
+    ["docs/GUIA-DE-PRUEBA.html", GENERAL],
+  ])(
+    "%s: cada AG_BANDEJA_DE_PRUEBA en Windows va con `pnpm tauri dev`",
+    (_f, html) => {
+      const t = texto(html);
+      const sitios = [...t.matchAll(/\$env:AG_BANDEJA_DE_PRUEBA='1'/g)];
+      expect(
+        sitios.length,
+        "no hay ninguna mención de PowerShell",
+      ).toBeGreaterThan(0);
+      for (const s of sitios)
+        expect(
+          t.slice(s.index!, s.index! + 60),
+          "la variable de PowerShell va seguida de `pnpm tauri dev`",
+        ).toContain("pnpm tauri dev");
+    },
+  );
+
+  it("la guía de Windows ya no la manda sin el código (forma sin `$env:`)", () => {
+    expect(texto(WIN)).not.toMatch(/AG_BANDEJA_DE_PRUEBA=1/);
+  });
+});
+
 describe("la guía general y la de Windows se enlazan", () => {
   it("la guía general apunta a la de Windows", () => {
     expect(GENERAL).toContain('href="GUIA-DE-PRUEBA-WINDOWS.html"');

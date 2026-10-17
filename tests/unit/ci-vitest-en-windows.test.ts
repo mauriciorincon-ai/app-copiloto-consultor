@@ -29,7 +29,8 @@ describe("vitest corre en Windows, x64 y ARM64", () => {
     (nombre) => {
       const texto = job(nombre);
       const instalar = texto.indexOf("pnpm install --frozen-lockfile");
-      const probar = texto.search(/run: pnpm test\s*$/m);
+      // Anclada al inicio de la línea: un `# run: pnpm test` comentado no cuenta como el paso (auditoría del S10, B10).
+      const probar = texto.search(/^\s+run: pnpm test\s*$/m);
       const construir = texto.indexOf("run: pnpm build");
       expect(instalar, `${nombre}: falta pnpm install`).toBeGreaterThan(-1);
       expect(

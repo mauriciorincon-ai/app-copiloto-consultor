@@ -84,14 +84,14 @@ export type TextosDeWindows = {
   };
 };
 
-/** Lo que tardó cada pista de la calibración (sprint 010): la tuya siempre; la del cliente, si ya se midió. */
+/** Lo que tardó cada pista de la calibración (sprint 010): la tuya siempre; la del cliente, si ya se midió, y si no, lo dice. */
 const pistasEs = (ms: string, cliente: string | null) =>
   cliente === null
-    ? `tu pista, 10 s en ${ms} ms`
+    ? `tu pista, 10 s en ${ms} ms; la del cliente, sin medir`
     : `tu pista, 10 s en ${ms} ms; la del cliente, 6 s en ${cliente} ms`;
 const pistasEn = (ms: string, cliente: string | null) =>
   cliente === null
-    ? `your track, 10 s in ${ms} ms`
+    ? `your track, 10 s in ${ms} ms; the client's, not measured`
     : `your track, 10 s in ${ms} ms; the client's, 6 s in ${cliente} ms`;
 
 const ES: TextosDeWindows = {

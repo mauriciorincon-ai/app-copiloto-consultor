@@ -35,7 +35,7 @@ Cada PR: install (pnpm, lockfile congelado) → typecheck → lint → test (uni
 build → `pnpm audit --audit-level high` → e2e (Playwright) → Lighthouse CI contra
 `perf-budget.json`. `main` con branch protection: no push directo, PR con CI verde requerido.
 **Regla 2026-07-10 (no negociable):** repo **público** (GitHub Free solo aplica rulesets en
-públicos) + la ruleset `main-protegida` exige los checks `quality`/`e2e`/`lighthouse` desde el
+públicos) + la ruleset `main-protegida` exige los seis checks (`quality` · `e2e` · `build-escritorio` · `build-windows` · `build-windows-arm` · `un-pr-vivo`; sin `lighthouse`: perfil escritorio) desde el
 estampado; si un sprint añade un job de CI, se añade a la ruleset en el mismo sprint.
 
 ```powershell

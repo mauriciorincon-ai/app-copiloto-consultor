@@ -8,7 +8,7 @@
 
 A small window on your PC that the client cannot see even if you share your screen. It listens to both sides of the video call (your microphone and what plays on the PC), reads the meeting screen only when it changes, and puts **evidence cards from your own corpus** in front of you: a headline, a line and the exact source. If you turn it on, a model drafts a short suggestion. Before the meeting you can rehearse with the questions that client will probably ask.
 
-What sets it apart: **it does not persist what it should not, and you can check that.** Audio, the client’s transcript and what is read from the screen live in memory only and die on close. What stays is yours, encrypted. The app hides nothing and evades nothing: it asks Windows to keep its band out of screen captures, and says in plain words where that is not verified.
+What sets it apart: **it does not persist what it should not, and you can check that.** Audio, the client’s transcript and what is read from the screen live in memory only and die on close. What stays is yours, encrypted. The app hides nothing from you and evades nothing: it asks Windows to keep its band out of screen captures, and says in plain words where that is not verified.
 
 ## What you need
 
@@ -34,7 +34,7 @@ The app transcribes with **whisper**, inside your PC; no audio leaves. The model
 - **Nothing downloads with a meeting, a session (including “notes only” or in-person) or a rehearsal open**, and if one starts while it downloads, the download stops. If the connection hangs, it lets go by itself after three hours.
 - When it finishes, the app measures your PC. In **Honesty**, the transcription block shows **one line per model, track by track**: your 10 s turn (the figure that decides the model) and the client’s 6 s turn. Each line says whether it fits the 4 s ceiling (✓), goes over (⚠), or still needs measuring or downloading (○).
 - **Measure again** repeats the measurement: with the large model it takes about half a minute, and meanwhile the screen says so (“Measuring…”).
-- The rule: transcription uses **the largest model whose track of yours fits in 4 s on your PC**; a model that has not been measured counts as fitting. On the reference Surface: `small`, 2.0 s your track and 1.6 s the client’s; `large-v3-turbo`, 9.8 s and 9.7 s.
+- The rule: transcription uses **the largest model whose track of yours fits in 4 s on your PC**; a model that has not been measured counts as fitting. On the reference Surface: `small`, 2.0 s your track and 1.6 s the client’s; `large-v3-turbo`, 9.8 s and 9.7 s. Those are the figures from the live run on that Surface; figures change from one measurement to the next, and the general user manual quotes the range of several (the small one, about 1.6 s; the large one, 8.5 to 18 s).
 
 ## A meeting, end to end
 
@@ -131,7 +131,7 @@ Each row says what state it has on Windows and which “On Windows today” key 
 | 6   | Two audio tracks, no bot                                                 | `videollamada`                                                 | done, unverified | Your microphone and the system audio; a real video call is missing                                             |
 | 7   | Local transcription with end of turn                                     | `videollamada`                                                 | done, unverified | whisper on your PC, measured with the kit’s audio; real voice is missing                                       |
 | 8   | Screen reading only when it changes                                      | `pantalla`                                                     | done, unverified | Windows text recognition; a real presentation is missing                                                       |
-| 9   | Spanish and English, with technical vocabulary                           | no key                                                         | done             | Interface, transcription and your own dictionary, in both languages                                            |
+| 9   | Spanish and English, with technical vocabulary                           | no key                                                         | done, unverified | Interface and dictionary, checked in both languages; English transcription is missing with a real voice        |
 | 10  | Several voices on the same channel                                       | no key                                                         | out              | Pending in the vision; also, the app does not separate voices by design                                        |
 | 11  | No headphones (echo cancellation)                                        | no key                                                         | out              | Pending in the vision; with speakers the spoken card does not speak                                            |
 | 12  | Native streaming transcription                                           | no key                                                         | out              | Pending in the vision; Windows’ engine transcribes by turns                                                    |
