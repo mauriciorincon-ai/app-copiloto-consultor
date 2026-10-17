@@ -73,8 +73,11 @@ const hayHerramientas =
   spawnSync(BASH, ["-c", "command -v gitleaks && command -v jq"]).status === 0;
 
 describe("hook PreToolUse de secretos (kit v1.37.0; origen planlang AU-S2-B12)", () => {
-  it("en la CI las herramientas están: la mitad positiva no se salta en silencio", () => {
-    if (process.env.CI)
+  // Sprint 010: vitest corre también en los jobs de Windows de la CI, y allí NO se instalan gitleaks ni jq (el paso con versión y
+  // huella fijas es de `quality`, en Linux). La carnada se prueba en Linux y en la Surface; en los runners de Windows corren
+  // las otras tres mitades del hook (el bash de Git, el aviso de winget, el camino que falla cerrado).
+  it("en la CI de Linux las herramientas están: la mitad positiva no se salta en silencio", () => {
+    if (process.env.CI && !EN_WINDOWS)
       expect(
         hayHerramientas,
         "gitleaks o jq faltan en la CI: la carnada no se probó",
