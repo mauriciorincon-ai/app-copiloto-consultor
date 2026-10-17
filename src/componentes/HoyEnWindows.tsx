@@ -8,6 +8,7 @@ import {
   bajarModeloPequeno,
   calibrarTranscripcion,
   esWindows,
+  estadoDeUnModelo,
   estadoDeWhisper,
   porCuando,
   teclasEnIdioma,
@@ -48,7 +49,10 @@ export function HoyEnWindows({
       if (r) setPropia(r);
     });
   }, [setPropia]);
-  useRefrescoMientras(!prestada && p.transcripcion?.bajando === true, refrescar);
+  useRefrescoMientras(
+    !prestada && p.transcripcion?.bajando === true,
+    refrescar,
+  );
 
   if (!esWindows(p)) return null;
 
@@ -159,8 +163,56 @@ export function HoyEnWindows({
       {(p.transcripcion?.descartados ?? 0) > 0 && (
         <p className="estado warn">
           <Ic id="i-alert" s />
-          <span>{t.whisper.descartados(p.transcripcion?.descartados ?? 0)}</span>
+          <span>
+            {t.whisper.descartados(p.transcripcion?.descartados ?? 0)}
+          </span>
         </p>
+      )}
+      {(p.transcripcion?.modelos.length ?? 0) > 0 && (
+        <>
+          <h3 className="seccion" style={{ margin: "12px 0 4px" }}>
+            {t.whisper.modelos.titulo}
+          </h3>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "6px" }}
+            data-testid="modelos-de-voz"
+          >
+            {p.transcripcion?.modelos.map((m) => {
+              const e = estadoDeUnModelo(m, p.transcripcion?.techoMs ?? 4000);
+              const frase =
+                e.que === "sin-bajar"
+                  ? t.whisper.modelos.sinBajar(m.nombre)
+                  : e.que === "sin-medir"
+                    ? t.whisper.modelos.sinMedir(m.nombre)
+                    : e.que === "a-tiempo"
+                      ? t.whisper.modelos.aTiempo(m.nombre, cifra(e.ms))
+                      : t.whisper.modelos.lento(m.nombre, cifra(e.ms));
+              const etiquetas = [
+                m.enUso ? t.whisper.modelos.enUso : null,
+                m.porDefecto ? t.whisper.modelos.porDefecto : null,
+              ].filter((x): x is string => x !== null);
+              // Símbolo, texto y color (regla dura 8): cabe, pasa del techo, o todavía no hay cifra.
+              const [clase, icono, relleno] =
+                e.que === "a-tiempo"
+                  ? (["ok", "i-check-circle", true] as const)
+                  : e.que === "lento"
+                    ? (["warn", "i-alert", false] as const)
+                    : (["mute", "i-ring", false] as const);
+              return (
+                <p key={m.nombre} className={`estado ${clase}`}>
+                  <Ic id={icono} s relleno={relleno} />
+                  <span>
+                    {frase}
+                    {etiquetas.length > 0 && ` (${etiquetas.join(" · ")})`}
+                  </span>
+                </p>
+              );
+            })}
+          </div>
+          <p className="mono" style={{ color: "var(--ink-2)" }}>
+            {t.whisper.modelos.regla}
+          </p>
+        </>
       )}
       <p className="mono" style={{ color: "var(--ink-2)" }}>
         {t.whisper.sinReunion}

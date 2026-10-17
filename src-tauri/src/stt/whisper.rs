@@ -73,23 +73,65 @@ fn restaurar_en(grande: (&AtomicU32, Option<u32>), pequeno: (&AtomicU32, Option<
     }
 }
 
-/// **Con qué modelo se transcribe** (ADR 022 §5): el grande; el pequeño solo si el grande es el único que falta, o si
-/// en este PC el grande se pasó del techo de 4 s y el pequeño ya está bajado.
-pub fn elegir(grande_listo: bool, pequeno_listo: bool, latencia_grande: Option<u32>) -> Option<Modelo> {
-    let grande_lento = latencia_grande.is_some_and(super::calibracion::pasa_del_techo);
-    match (grande_listo, pequeno_listo) {
-        (true, true) if grande_lento => Some(PEQUENO),
-        (true, _) => Some(GRANDE),
-        (false, true) => Some(PEQUENO),
-        (false, false) => None,
+/// **La regla** (ADR 022 §5, enmienda 3): de los modelos que hay, el MAYOR cuya calibración cabe en el techo de 4 s.
+/// Uno que aún no se midió cuenta como que cabe (se mide al instalarlo y entonces manda su cifra). Si ninguno cabe,
+/// el más rápido: la app transcribe con lo que haya y Honestidad dice que el equipo es lento, no se queda muda.
+/// `candidatos` va de mayor a menor. Pura.
+pub fn el_mayor_que_cabe(candidatos: &[(Modelo, Option<u32>)]) -> Option<Modelo> {
+    candidatos
+        .iter()
+        .find(|(_, ms)| ms.is_none_or(|ms| !super::calibracion::pasa_del_techo(ms)))
+        .or_else(|| candidatos.iter().min_by_key(|(_, ms)| ms.unwrap_or(u32::MAX)))
+        .map(|(m, _)| *m)
+}
+
+/// **Con qué modelo se transcribe** (ADR 022 §5): la regla de arriba sobre los modelos ENTEROS en este PC, con lo que
+/// cada uno tardó en la calibración. Con solo uno bajado, ese; con el grande y el pequeño, el grande mientras quepa.
+pub fn elegir(
+    grande_listo: bool,
+    pequeno_listo: bool,
+    latencia_grande: Option<u32>,
+    latencia_pequeno: Option<u32>,
+) -> Option<Modelo> {
+    let mut candidatos = Vec::with_capacity(2);
+    if grande_listo {
+        candidatos.push((GRANDE, latencia_grande));
     }
+    if pequeno_listo {
+        candidatos.push((PEQUENO, latencia_pequeno));
+    }
+    el_mayor_que_cabe(&candidatos)
+}
+
+/// **Lo que tardó cada modelo en la calibración de 10 s en el equipo ARM64 de referencia** (la Surface con Snapdragon X
+/// Plus; ADR 022, enmienda 3), en ms; `None`: sin medir allí. De ahí sale [`por_defecto`] en un PC ARM64: no se baja
+/// 1,6 GB de un modelo que ya se sabe que no cabe. La cifra de cada PC, medida al instalar, sigue mandando en [`elegir`].
+///
+/// Medido el 2026-10-17 en la Surface del usuario (Snapdragon X Plus X1P64100, plan Balanced, con corriente), mediana
+/// de tres corridas con whisper.cpp optimizado: `large-v3-turbo` 9144 ms (de 8523 a 18428) y `small` 1632 ms (de 1590 a
+/// 1641). Las cifras por pista y el porqué están en el ADR 022, enmienda 3; `el_adr_dice_lo_mismo_que_la_constante` las ata.
+pub const MEDIDO_EN_ARM: [(&str, Option<u32>); 2] = [("ggml-large-v3-turbo.bin", Some(9_144)), ("ggml-small.bin", Some(1_632))];
+
+/// El modelo que «Instalar» baja. En un PC ARM64 de Windows, el mayor que cupo en el equipo de referencia; en cualquier
+/// otro, el grande (ADR 006), como hasta ahora. En macOS no se usa: el motor es el del sistema.
+pub fn por_defecto() -> Modelo {
+    por_defecto_con(cfg!(all(windows, target_arch = "aarch64")), &MEDIDO_EN_ARM)
+}
+
+/// La parte pura de [`por_defecto`]: sin ARM, el grande; con ARM, la regla sobre lo medido en la referencia.
+pub fn por_defecto_con(es_arm64: bool, medido: &[(&str, Option<u32>)]) -> Modelo {
+    if !es_arm64 {
+        return GRANDE;
+    }
+    let latencia = |m: &Modelo| medido.iter().find(|(archivo, _)| *archivo == m.archivo).and_then(|(_, ms)| *ms);
+    el_mayor_que_cabe(&[(GRANDE, latencia(&GRANDE)), (PEQUENO, latencia(&PEQUENO))]).unwrap_or(GRANDE)
 }
 
 /// El modelo con el que se transcribiría ahora mismo, y su ruta. `None`: no hay ninguno entero.
 pub fn el_modelo() -> Option<(Modelo, PathBuf)> {
     let grande = modelo_whisper::listo(&GRANDE);
     let pequeno = modelo_whisper::listo(&PEQUENO);
-    match elegir(grande.is_some(), pequeno.is_some(), latencia_ms(&GRANDE))? {
+    match elegir(grande.is_some(), pequeno.is_some(), latencia_ms(&GRANDE), latencia_ms(&PEQUENO))? {
         m if m == GRANDE => grande.map(|r| (m, r)),
         m => pequeno.map(|r| (m, r)),
     }
@@ -139,13 +181,14 @@ impl Motor for Whisper {
     fn disponibilidad(&self, idioma: &str) -> Disponibilidad {
         disponibilidad_con(idioma, el_modelo().is_some())
     }
-    /// **Baja el modelo grande** (1,6 GB, con su huella) y mide lo que tarda en este PC. Solo desde «Instalar» en
-    /// Idioma, y jamás en reunión (lo impide `lib.rs::instalar_idioma`).
+    /// **Baja el modelo por defecto de este equipo** ([`por_defecto`]: el grande, 1,6 GB, salvo en un PC ARM64 donde ya
+    /// se sabe que no cabe), con su huella, y mide lo que tarda en este PC. Solo desde «Instalar» en Idioma, y jamás en
+    /// reunión (lo impide `lib.rs::instalar_idioma`).
     fn instalar(&self, idioma: &str) -> Disponibilidad {
         if idioma_de_whisper(idioma).is_none() {
             return Disponibilidad::IdiomaDesconocido;
         }
-        match modelo_whisper::bajar(&GRANDE) {
+        match modelo_whisper::bajar(&por_defecto()) {
             Ok(_) => {
                 if let Err(f) = calibrar() {
                     println!("[stt] whisper: la calibración no se pudo medir ({f:?})");
@@ -200,6 +243,15 @@ mod motor {
     /// Corre `f` con el modelo elegido, cargándolo si hace falta (y soltando el anterior si era otro).
     fn con_el_modelo<T>(f: impl FnOnce(Modelo, &mut WhisperState) -> Result<T, Fallo>) -> Result<T, Fallo> {
         let (modelo, ruta) = el_modelo().ok_or(Fallo::NoDisponible(Disponibilidad::SinModelo))?;
+        con_este_modelo(modelo, ruta, f)
+    }
+
+    /// Lo mismo con un modelo dado: la calibración mide cada uno que esté entero, no solo el que se usaría.
+    fn con_este_modelo<T>(
+        modelo: Modelo,
+        ruta: PathBuf,
+        f: impl FnOnce(Modelo, &mut WhisperState) -> Result<T, Fallo>,
+    ) -> Result<T, Fallo> {
         let mut cargado = CARGADO.lock().unwrap_or_else(|e| e.into_inner());
         if cargado.as_ref().map(|c| c.modelo) != Some(modelo) {
             *cargado = None;
@@ -259,17 +311,28 @@ mod motor {
         texto
     }
 
+    /// **Mide CADA modelo que esté entero** (sprint 009): Honestidad enseña una línea por modelo, y la regla
+    /// ([`elegir`]) compara lo que tardó cada uno. Se mide uno tras otro —el modelo cargado se suelta antes de cargar el
+    /// siguiente— y, al terminar, devuelve lo que tardó el que se usaría ahora.
     pub fn calibrar() -> Result<u32, Fallo> {
         let audio = crate::stt::calibracion::muestras();
         let codigo_whisper = idioma_de_whisper(crate::stt::calibracion::IDIOMA).unwrap_or("es");
-        let (modelo, ms) = con_el_modelo(|modelo, estado| {
-            let inicio = std::time::Instant::now();
-            transcribir_en(estado, codigo_whisper, &audio)?;
-            Ok((modelo, inicio.elapsed().as_millis().min(u128::from(u32::MAX)) as u32))
-        })?;
-        anotar_latencia(&modelo, ms);
-        println!("[stt] whisper: {} tardó {ms} ms en 10 s de calibración", modelo.nombre);
-        Ok(ms)
+        let mut midio = false;
+        for m in [GRANDE, PEQUENO] {
+            let Some(ruta) = modelo_whisper::listo(&m) else { continue };
+            let ms = con_este_modelo(m, ruta, |_, estado| {
+                let inicio = std::time::Instant::now();
+                transcribir_en(estado, codigo_whisper, &audio)?;
+                Ok(inicio.elapsed().as_millis().min(u128::from(u32::MAX)) as u32)
+            })?;
+            anotar_latencia(&m, ms);
+            println!("[stt] whisper: {} tardó {ms} ms en 10 s de calibración", m.nombre);
+            midio = true;
+        }
+        if !midio {
+            return Err(Fallo::NoDisponible(Disponibilidad::SinModelo));
+        }
+        el_modelo().and_then(|(m, _)| latencia_ms(&m)).ok_or(Fallo::Motor(-1))
     }
 
     /// **Whisper con dos pistas, medido en este equipo** (sprint 007, decisión 3 del plan). Con dos pistas el
@@ -315,6 +378,29 @@ mod motor {
                 segundos(&tuyo),
                 crate::stt::calibracion::TECHO_MS
             );
+        }
+
+        /// **El camino real de «Medir otra vez»** (sprint 009): `calibrar()` sobre los modelos que haya ENTEROS en la
+        /// carpeta de la app de este PC —los mismos que usa la app instalada— y lo que Honestidad recibiría después
+        /// (`plataforma::de_este_equipo`). Comprueba que se midió CADA modelo bajado, no solo el elegido, y que la
+        /// regla eligió con esas cifras. Imprime solo nombres y milisegundos (ADR 003). No abre hardware: solo CPU.
+        #[test]
+        #[ignore = "medición: carga whisper (nativo: se corre a mano, SIN AG_SIN_HARDWARE) y calibra los modelos enteros de la carpeta de la app de este PC; sin ellos no mide nada"]
+        fn la_calibracion_mide_cada_modelo_entero_y_honestidad_lo_recibe() {
+            let enteros: Vec<Modelo> = [GRANDE, PEQUENO].into_iter().filter(|m| modelo_whisper::listo(m).is_some()).collect();
+            assert!(!enteros.is_empty(), "ningún modelo entero en la carpeta de la app: la medición no midió nada");
+            calibrar().expect("la calibración no pudo medir");
+            for m in &enteros {
+                assert!(latencia_ms(m).is_some(), "{} está entero y no se midió", m.nombre);
+            }
+            let t = crate::plataforma::de_este_equipo().transcripcion.expect("en Windows Honestidad recibe la transcripción");
+            assert_eq!(t.modelos.len(), 2, "una línea por modelo, estén bajados o no");
+            for l in &t.modelos {
+                assert_eq!(l.bajado, enteros.iter().any(|m| m.nombre == l.nombre), "{}", l.nombre);
+                assert_eq!(l.latencia_ms.is_some(), l.bajado, "{}: la cifra va con el modelo bajado", l.nombre);
+            }
+            assert_eq!(t.modelos.iter().filter(|l| l.en_uso).count(), 1, "exactamente uno transcribe");
+            println!("[medición] Honestidad recibiría: {:?}", t.modelos);
         }
     }
 }
@@ -363,12 +449,73 @@ mod pruebas {
     /// en este PC y el pequeño ya está, o cuando es el único que hay.
     #[test]
     fn el_pequeno_solo_si_el_grande_es_lento_o_no_esta() {
-        assert_eq!(elegir(true, true, None), Some(GRANDE), "sin medir, el grande");
-        assert_eq!(elegir(true, true, Some(3_000)), Some(GRANDE));
-        assert_eq!(elegir(true, true, Some(6_000)), Some(PEQUENO));
-        assert_eq!(elegir(true, false, Some(6_000)), Some(GRANDE), "lento, pero el pequeño no está: el grande");
-        assert_eq!(elegir(false, true, None), Some(PEQUENO));
-        assert_eq!(elegir(false, false, None), None);
+        assert_eq!(elegir(true, true, None, None), Some(GRANDE), "sin medir, el grande");
+        assert_eq!(elegir(true, true, Some(3_000), None), Some(GRANDE));
+        assert_eq!(elegir(true, true, Some(4_000), Some(900)), Some(GRANDE), "justo en el techo todavía cabe");
+        assert_eq!(elegir(true, true, Some(6_000), None), Some(PEQUENO));
+        assert_eq!(elegir(true, false, Some(6_000), None), Some(GRANDE), "lento, pero el pequeño no está: el grande");
+        assert_eq!(elegir(false, true, None, None), Some(PEQUENO));
+        assert_eq!(elegir(false, false, None, None), None);
+    }
+
+    /// **La regla de la enmienda 3**: el mayor que cabe en 4 s; sin medir cuenta como que cabe; si ninguno cabe, el más
+    /// rápido —la app no se queda muda en un equipo lento—.
+    #[test]
+    fn la_regla_es_el_mayor_que_cabe_y_si_ninguno_cabe_el_mas_rapido() {
+        let c = |g, p| [(GRANDE, g), (PEQUENO, p)];
+        assert_eq!(el_mayor_que_cabe(&c(Some(3_900), Some(800))), Some(GRANDE));
+        assert_eq!(el_mayor_que_cabe(&c(Some(4_001), Some(800))), Some(PEQUENO));
+        assert_eq!(el_mayor_que_cabe(&c(Some(9_000), None)), Some(PEQUENO), "el pequeño sin medir cabe hasta que se mida");
+        assert_eq!(el_mayor_que_cabe(&c(None, None)), Some(GRANDE), "nada medido: el mayor");
+        assert_eq!(el_mayor_que_cabe(&c(Some(9_000), Some(5_000))), Some(PEQUENO), "ninguno cabe: el más rápido");
+        assert_eq!(el_mayor_que_cabe(&c(Some(5_000), Some(9_000))), Some(GRANDE), "ninguno cabe: el más rápido, aunque sea el grande");
+        assert_eq!(el_mayor_que_cabe(&[]), None);
+        // Y `elegir` es esa misma regla sobre los modelos que están enteros.
+        assert_eq!(elegir(true, true, Some(9_000), Some(5_000)), Some(PEQUENO));
+        assert_eq!(elegir(true, false, Some(9_000), None), Some(GRANDE));
+    }
+
+    /// **El defecto de «Instalar»** (enmienda 3): fuera de un PC ARM64 de Windows, el grande, como siempre; en uno, el
+    /// mayor que cupo en el equipo de referencia. Sin cifra de referencia no se inventa ninguna: el grande.
+    #[test]
+    fn el_defecto_solo_cambia_en_un_pc_arm64_y_solo_con_una_medida() {
+        let rapido = [(GRANDE.archivo, Some(2_100)), (PEQUENO.archivo, Some(700))];
+        let lento = [(GRANDE.archivo, Some(6_300)), (PEQUENO.archivo, Some(1_900))];
+        let sin_medir = [(GRANDE.archivo, None), (PEQUENO.archivo, None)];
+        assert_eq!(por_defecto_con(false, &lento), GRANDE, "x64 y macOS no cambian aunque haya cifras de ARM");
+        assert_eq!(por_defecto_con(true, &rapido), GRANDE);
+        assert_eq!(por_defecto_con(true, &lento), PEQUENO);
+        assert_eq!(por_defecto_con(true, &sin_medir), GRANDE);
+        assert_eq!(por_defecto_con(true, &[]), GRANDE);
+        // Lo que se distribuye: las constantes que salen del ADR llevan los dos archivos, en el orden de la regla.
+        assert_eq!(MEDIDO_EN_ARM.map(|(a, _)| a), [GRANDE.archivo, PEQUENO.archivo]);
+        // Y lo que dicen: en la Surface el grande pasó del techo y el pequeño cupo, así que en ARM64 se baja el pequeño.
+        assert_eq!(por_defecto_con(true, &MEDIDO_EN_ARM), PEQUENO, "la cifra medida en la Surface elige el pequeño");
+        assert_eq!(por_defecto_con(false, &MEDIDO_EN_ARM), GRANDE, "fuera de ARM64 de Windows sigue el grande");
+    }
+
+    /// **La constante y el ADR dicen lo mismo** (como `plataforma::la_lista_es_la_del_adr`): la tabla de la enmienda 3 es
+    /// la fuente que se lee, y `MEDIDO_EN_ARM` no puede cambiar sin que cambie ella, ni al revés.
+    #[test]
+    fn el_adr_dice_lo_mismo_que_la_constante() {
+        let adr = include_str!("../../../decisions/022-windows-detras-de-la-misma-frontera.md");
+        let tabla: Vec<(&str, u32)> = adr
+            .lines()
+            .skip_while(|l| !l.starts_with("## Enmienda 3"))
+            .skip(1)
+            .take_while(|l| !l.starts_with("## "))
+            // La tabla va dentro de un punto de la lista numerada, así que sus filas llegan sangradas.
+            .filter(|l| l.trim_start().starts_with("| `ggml-"))
+            .map(|l| {
+                let celdas: Vec<&str> = l.split('|').map(str::trim).collect();
+                let archivo = celdas[1].trim_matches('`');
+                let ms = celdas[2].parse::<u32>().unwrap_or_else(|_| panic!("el ADR no trae una cifra entera en «{l}»"));
+                (archivo, ms)
+            })
+            .collect();
+        let constante: Vec<(&str, u32)> = MEDIDO_EN_ARM.iter().filter_map(|(a, ms)| Some((*a, (*ms)?))).collect();
+        assert!(!tabla.is_empty(), "la enmienda 3 del ADR 022 no trae la tabla de lo medido");
+        assert_eq!(tabla, constante);
     }
 
     /// **Lo medido la vez anterior vuelve al abrir la app, y lo medido hoy manda** (sprint 008, M3 del S6).
@@ -382,7 +529,10 @@ mod pruebas {
         restaurar_en((&vacio, None), (&AtomicU32::new(0), Some(0)));
         assert_eq!(vacio.load(Ordering::Relaxed), 0, "nada guardado: sigue sin medir, no se inventa un cero");
         // Y con lo que vuelve, el escalón se decide como antes de cerrar la app.
-        assert_eq!(elegir(true, true, Some(grande.load(Ordering::Relaxed))), Some(PEQUENO));
+        assert_eq!(
+            elegir(true, true, Some(grande.load(Ordering::Relaxed)), Some(pequeno.load(Ordering::Relaxed))),
+            Some(PEQUENO)
+        );
     }
 
     /// Un turno corto se completa con silencio hasta lo que whisper acepta; uno largo pasa tal cual.

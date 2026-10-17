@@ -250,6 +250,55 @@ desaparece de `plataforma.rs`: no queda ninguna.
    cuerpo (alcanza para 1,6 GB a 1,5 Mbit/s), y se corta sola, borrando el parcial, si empieza una reunión, una sesión
    o un ensayo mientras baja. Se baja de una revisión fija del repositorio de modelos, no de `main`.
 
+## Enmienda 3 · Windows ARM64 nativo (sprint 009, 2026-10-17)
+
+La app deja de correr emulada en un PC con Windows ARM64: se compila, se prueba y se instala nativa
+(`aarch64-pc-windows-msvc`), y el modelo que baja «Instalar» en ese equipo sale de una cifra medida en él. Equipo de
+referencia: una Surface con Snapdragon X Plus X1P64100 (10 núcleos a 3,4 GHz), 15,6 GB, Windows 11 26200, plan de energía
+Balanced y con corriente.
+
+1. **whisper.cpp se compila con clang-cl, no con MSVC.** ggml se niega a compilar para ARM con MSVC (`MSVC is not
+supported for ARM, use clang`, en `ggml/src/ggml-cpu/CMakeLists.txt` del whisper.cpp que trae `whisper-rs-sys` 0.15.0):
+   ese fue el primer intento, con MSVC tal cual. Para `aarch64-pc-windows-msvc` —solo ese target— `src-tauri/.cargo/config.toml`
+   pone variables que llevan el target en su nombre (`CMAKE_GENERATOR_…`, `CMAKE_TOOLCHAIN_FILE_…`, `CXXFLAGS_…`) y
+   `src-tauri/cmake/windows-arm64-clang-cl.cmake` fija clang-cl y el Ninja de las Build Tools. x64 y macOS no las leen.
+   Con Ninja no llega el `/EHsc` que MSBuild pone solo, y ggml usa excepciones: se pide en `CXXFLAGS`. Hizo falta, además,
+   una `libclang.dll` ARM64 (`bindgen` la carga dentro del proceso de cargo, `LIBCLANG_PATH`) y `clang.exe` en el PATH
+   (`ring`, el HTTPS de la descarga del modelo, compila su C con él en Windows ARM64). No hicieron falta el parche de
+   `whisper-rs-sys` ni el respaldo en x64 emulado.
+2. **El binario es portable.** Con el valor por defecto ggml compila con `-mcpu=native` y PRUEBA las instrucciones en la
+   máquina que compila: el instalador que sube la CI saldría afinado para la CPU del runner y no tendría por qué arrancar
+   en la Surface. Se fija `GGML_NATIVE=OFF` y la base `armv8.2-a+dotprod+fp16` (producto escalar y media precisión, lo que
+   usan los modelos de whisper, que van en f16; `i8mm` y SVE solo ayudan a modelos cuantizados, que la app no usa).
+   whisper.cpp sale optimizado (`RelWithDebInfo`, `/O2`) aun en el perfil de desarrollo: se leyó del `CMakeCache.txt`.
+3. **Los instaladores.** `.exe` de NSIS (5,6 MiB) y `.msi` (8,3 MiB; WiX 3.14, plataforma `Arm64`; no pidió .NET 3.5). Los
+   binarios de la app (`app-copiloto-consultor.exe`, `ghost.exe`) son `AA64`; el stub de NSIS es x86 y corre emulado, a
+   propósito. `scripts/arquitectura-pe.mjs` lee la cabecera PE y lo exige en el job `build-windows-arm` antes de subir el
+   artefacto (rojo demostrado con el `bash.exe` x64 de Git y con el stub x86).
+4. **Lo medido.** Tres corridas por modelo con `medicion_whisper_con_dos_pistas`: dos pistas en serie, el cliente primero
+   (5,9 s de audio) y un turno tuyo detrás (los 10 s de la calibración). Mediana y rango, en ms:
+
+   | Archivo                   | Calibración 10 s (mediana) | Rango        | Turno del cliente 5,9 s (mediana) | Rango         |
+   | ------------------------- | -------------------------- | ------------ | --------------------------------- | ------------- |
+   | `ggml-large-v3-turbo.bin` | 9144                       | 8523 a 18428 | 16858                             | 13786 a 19019 |
+   | `ggml-small.bin`          | 1632                       | 1590 a 1641  | 1552                              | 1550 a 1567   |
+
+   El grande no cabe en el techo de 4 s ni en su mejor corrida (8,5 s); el pequeño cabe con holgura y casi sin variación.
+
+5. **La regla** (`stt/whisper.rs`): de los modelos que hay, el MAYOR cuya calibración cabe en 4 s; uno sin medir cuenta como
+   que cabe; si ninguno cabe, el más rápido (la app transcribe con lo que haya y Honestidad dice que el equipo es lento).
+   `calibrar` mide cada modelo entero, no solo el elegido, y Honestidad enseña una línea por modelo con su cifra. El defecto de
+   «Instalar» (`por_defecto`) sigue la misma regla sobre la tabla de arriba, **solo en Windows ARM64**: con estas cifras es el
+   modelo pequeño. En x64 y en macOS no cambia nada (el grande, ADR 006). La cifra de cada PC, medida al instalar, sigue
+   mandando para elegir cuál transcribe.
+6. **Límites declarados.** a) La referencia es una sola Surface: un ARM64 más rápido no puede bajar el grande desde la app (no
+   hay botón, y no es una función de este sprint). b) El techo compara la calibración de 10 s: es conservadora, pero whisper
+   procesa ventanas de 30 s, así que un turno corto no cuesta proporcionalmente menos. c) La variación del modelo grande
+   (8,5 a 18,4 s) no se investigó; no cambia la decisión. d) La base portable no usa `i8mm`: no se midió contra
+   `-mcpu=native`. e) En este equipo, enlazar con todos los núcleos se queda sin memoria (`LNK1102`): `cargo … -j 4`. f) La calibración de la app mide la primera inferencia tras cargar el modelo, sin calentamiento: en
+   una corrida real de `calibrar()` salieron 8334 ms (grande) y 1928 ms (pequeño), algo más que las medianas de arriba; la
+   decisión no cambia.
+
 ## Lo que este ADR NO decide
 
 La firma del instalador (G-Release), una DACL propia para la carpeta (todavía no), ni

@@ -71,6 +71,25 @@ pub struct Transcripcion {
     /// Los turnos tuyos que se quedaron sin transcribir en la última escucha porque el equipo no daba abasto (sprint
     /// 007: con dos pistas, el cliente va primero). Solo la cuenta.
     pub descartados: u32,
+    /// Una línea por modelo, del mayor al menor (sprint 009): qué tardó cada uno EN ESTE PC, cuál se usa y cuál baja
+    /// «Instalar». Honestidad las enseña todas, no solo la del modelo en uso.
+    pub modelos: Vec<ModeloEnEsteEquipo>,
+}
+
+/// Un modelo de whisper tal como está en este PC.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ModeloEnEsteEquipo {
+    /// Cómo lo enseña la app («large-v3-turbo», «small»).
+    pub nombre: &'static str,
+    /// ¿Está entero en este PC?
+    pub bajado: bool,
+    /// Lo que tardó en los 10 s de calibración, en ms; `None`: sin medir en esta sesión (o sin bajar).
+    pub latencia_ms: Option<u32>,
+    /// ¿Es con el que se transcribe ahora?
+    pub en_uso: bool,
+    /// ¿Es el que baja «Instalar» en este equipo? En un PC ARM64 sale de la regla (ADR 022, enmienda 3).
+    pub por_defecto: bool,
 }
 
 /// Lo que cruza a Honestidad.
@@ -109,12 +128,27 @@ pub fn de_este_equipo() -> Plataforma {
 /// Lo que la transcripción de whisper sabe ahora.
 fn la_transcripcion() -> Transcripcion {
     let elegido = crate::stt::whisper::el_modelo().map(|(m, _)| m);
+    let por_defecto = crate::stt::whisper::por_defecto();
+    let modelos = [crate::modelo_whisper::GRANDE, crate::modelo_whisper::PEQUENO]
+        .iter()
+        .map(|m| {
+            let bajado = crate::modelo_whisper::listo(m).is_some();
+            ModeloEnEsteEquipo {
+                nombre: m.nombre,
+                bajado,
+                latencia_ms: bajado.then(|| crate::stt::whisper::latencia_ms(m)).flatten(),
+                en_uso: elegido == Some(*m),
+                por_defecto: *m == por_defecto,
+            }
+        })
+        .collect();
     Transcripcion {
         modelo: elegido.map(|m| m.nombre),
         latencia_ms: elegido.and_then(|m| crate::stt::whisper::latencia_ms(&m)),
         techo_ms: crate::stt::calibracion::TECHO_MS,
         bajando: crate::modelo_whisper::bajando(),
         descartados: crate::escucha::descartados(),
+        modelos,
     }
 }
 

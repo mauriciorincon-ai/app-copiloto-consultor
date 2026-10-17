@@ -52,7 +52,41 @@ export type Transcripcion = {
   bajando: boolean;
   /** Turnos tuyos que se quedaron sin transcribir en la última escucha (sprint 007: el cliente va primero). */
   descartados: number;
+  /** Una línea por modelo, del mayor al menor (sprint 009): lo que tardó cada uno EN ESTE PC. */
+  modelos: ModeloEnEsteEquipo[];
 };
+
+/** Un modelo de whisper tal como está en este PC (sprint 009). */
+export type ModeloEnEsteEquipo = {
+  /** «large-v3-turbo» o «small». */
+  nombre: string;
+  /** ¿Está entero en este PC? */
+  bajado: boolean;
+  /** Lo que tardó en los 10 s de calibración; `null`: sin medir en esta sesión (o sin bajar). */
+  latenciaMs: number | null;
+  /** ¿Es con el que se transcribe ahora? */
+  enUso: boolean;
+  /** ¿Es el que baja «Instalar» en este equipo? En un PC ARM64 sale de la regla (ADR 022, enmienda 3). */
+  porDefecto: boolean;
+};
+
+/** Lo que Honestidad dice de un modelo: lo que hay, sin adornarlo. */
+export type EstadoDeUnModelo =
+  | { que: "sin-bajar" }
+  | { que: "sin-medir" }
+  | { que: "a-tiempo"; ms: number }
+  | { que: "lento"; ms: number };
+
+export function estadoDeUnModelo(
+  m: ModeloEnEsteEquipo,
+  techoMs: number,
+): EstadoDeUnModelo {
+  if (!m.bajado) return { que: "sin-bajar" };
+  if (m.latenciaMs === null) return { que: "sin-medir" };
+  return m.latenciaMs > techoMs
+    ? { que: "lento", ms: m.latenciaMs }
+    : { que: "a-tiempo", ms: m.latenciaMs };
+}
 
 /** Lo que hace cada atajo (sprint 007, `src-tauri/src/atajos.rs`). */
 export type AccionDeAtajo =
@@ -115,9 +149,10 @@ export function plataformaFuera(
  * emite, así que no hay una segunda copia a mano que pueda separarse de Rust. Van de la más larga a la más corta
  * porque «⎋» sola va dentro de «⌥⎋» y la sustitución tiene que haber pasado ya por la larga.
  */
-export const TECLAS_DE_MACOS: [string, AccionDeAtajo][] = PLATAFORMA_MACOS.atajos
-  .map((a): [string, AccionDeAtajo] => [a.teclas, a.accion])
-  .sort((a, b) => b[0].length - a[0].length);
+export const TECLAS_DE_MACOS: [string, AccionDeAtajo][] =
+  PLATAFORMA_MACOS.atajos
+    .map((a): [string, AccionDeAtajo] => [a.teclas, a.accion])
+    .sort((a, b) => b[0].length - a[0].length);
 
 /** Las teclas de un atajo de Windows en el idioma de quien lee: «Mayús» en español, «Shift» en inglés. */
 export function teclasEnIdioma(teclas: string, idioma: "es" | "en"): string {
@@ -137,7 +172,8 @@ export function conTeclasDeEsteSistema(
   let salida = texto;
   for (const [mac, accion] of TECLAS_DE_MACOS) {
     const suyo = p.atajos.find((a) => a.accion === accion);
-    if (suyo) salida = salida.split(mac).join(teclasEnIdioma(suyo.teclas, idioma));
+    if (suyo)
+      salida = salida.split(mac).join(teclasEnIdioma(suyo.teclas, idioma));
   }
   return salida;
 }
@@ -237,7 +273,11 @@ export function usePlataforma(
  * desde Idioma, y esta pantalla, que preguntó una sola vez al montar, no se enteraba de cuándo acaba. Solo mientras
  * dura la descarga: sin `activo` no hay temporizador.
  */
-export function useRefrescoMientras(activo: boolean, refrescar: () => void, cadaMs = 2000): void {
+export function useRefrescoMientras(
+  activo: boolean,
+  refrescar: () => void,
+  cadaMs = 2000,
+): void {
   useEffect(() => {
     if (!activo) return;
     const id = setInterval(refrescar, cadaMs);
