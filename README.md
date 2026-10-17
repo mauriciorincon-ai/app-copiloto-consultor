@@ -50,7 +50,7 @@ pnpm tauri dev
 
 **En Windows** necesitas **Windows 10 versión 2004 o posterior** (la primera que oculta una ventana de la captura),
 pnpm, Rust con la cadena MSVC (las «Build Tools» de Visual Studio con C++) y CMake, que whisper.cpp usa al
-compilarse. Los mismos dos comandos arrancan la app; el modelo de voz (1,6 GB) se baja desde Idioma, cuando lo pidas.
+compilarse. Los mismos dos comandos arrancan la app; el modelo de voz (1,6 GB; 0,5 GB en un PC ARM64) se baja desde Idioma, cuando lo pidas.
 Para el instalador sin firmar: `pnpm tauri build --bundles msi,nsis`.
 
 `pnpm ghost` compila además la puerta local, para que Claude Code opere la app desde el mismo Mac.
@@ -80,7 +80,8 @@ Se probó en una Surface con Snapdragon X Plus y Windows 11 en inglés. Cada ins
 ```
 pnpm install
 cd src-tauri
-AG_SIN_HARDWARE=1 cargo test --locked -j 4
+$env:AG_SIN_HARDWARE = "1"   # en Git Bash: export AG_SIN_HARDWARE=1
+cargo test --locked -j 4
 cd ..
 pnpm tauri build --bundles nsis
 ```
@@ -141,6 +142,6 @@ documents in this repo (manual, test guide, decisions) are in Spanish, and the m
 for example), with no emulation (ADR 022, amendment 3). `powershell -NoProfile -File scripts/entorno-windows.ps1` only
 reads: it lists what is missing, and each installation —`jq`, the Visual Studio 2022 Build Tools with C++ ARM64, Rustup,
 CMake and LLVM, all through `winget`— is done one at a time, after seeing what it does. Then set `LIBCLANG_PATH` to the
-LLVM `bin` folder, add that folder to your `PATH`, and run `AG_SIN_HARDWARE=1 cargo test --locked -j 4` in `src-tauri`
+LLVM `bin` folder, add that folder to your `PATH`, and run `cargo test --locked -j 4` in `src-tauri` with `AG_SIN_HARDWARE=1` set (PowerShell: `$env:AG_SIN_HARDWARE = "1"`)
 and `pnpm tauri build --bundles nsis`. On an ARM64 PC, the model that Install downloads is the largest one that fits in
 4 s: the small one, on the reference Surface.
