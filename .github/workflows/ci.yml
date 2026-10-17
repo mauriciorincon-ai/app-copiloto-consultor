@@ -244,3 +244,96 @@ jobs:
             src-tauri/target/release/bundle/nsis/*.exe
           if-no-files-found: error
           retention-days: 14
+
+  # SPRINT 009 (La Surface): **Windows ARM64 nativo.** El mismo crate, compilado y probado en un runner ARM de verdad, y el
+  # instalador ARM64 como artifact del PR (sin firmar hasta G-Release). Es la mitad de ARM de `build-windows`: lo que allí
+  # necesita un modelo de voz, el OCR o una sesión completa no se repite aquí (la latencia que vale es la de la Surface,
+  # medida en ella; ADR 022, enmienda 3). Lo que SÍ es de ARM y solo se ve aquí:
+  #   - ggml no compila con MSVC en ARM («use clang»): `src-tauri/.cargo/config.toml` y `cmake/windows-arm64-clang-cl.cmake`
+  #     compilan whisper.cpp con clang-cl y Ninja, y `bindgen` necesita una `libclang.dll` ARM64 (se carga DENTRO de cargo).
+  #   - el binario es portable (`GGML_NATIVE=OFF`): lo que sube este job corre en la Surface, no solo en el runner.
+  #   - `scripts/arquitectura-pe.mjs`: el artefacto que se llama ARM64 tiene que SER ARM64.
+  # El runner `windows-11-arm` es gratis para repos públicos. Si GitHub no lo diera, este job se retira y el cierre lo dice.
+  build-windows-arm:
+    runs-on: windows-11-arm
+    needs: quality
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: src-tauri }
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      # La cadena nativa de ARM64, VERIFICADA (no se da por buena por el nombre del runner): el compilador de C++ ARM64 de
+      # Visual Studio y una `libclang.dll` ARM64. Lo que falte se pone: el componente con el instalador de Visual Studio, y
+      # LLVM ARM64 de su release oficial, con la huella SHA-256 fija (leída de la propia release el 2026-10-17) y extraído
+      # sin instalar (`msiexec /a`), para no pisar el LLVM del runner. Cada paso dice qué encontró.
+      - name: La cadena nativa de ARM64 (se verifica; lo que falte se instala, con huella)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          function Arquitectura([string]$ruta) {
+            $b = New-Object byte[] 4096
+            $fs = [System.IO.File]::OpenRead($ruta); try { [void]$fs.Read($b, 0, $b.Length) } finally { $fs.Close() }
+            $pe = [BitConverter]::ToInt32($b, 0x3C)
+            switch ([BitConverter]::ToUInt16($b, $pe + 4)) { 0xAA64 { 'arm64' } 0x8664 { 'x64' } default { 'otra' } }
+          }
+          "Runner: $env:PROCESSOR_ARCHITECTURE · $((Get-CimInstance Win32_OperatingSystem).Caption)"
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $vs = & $vswhere -latest -products * -property installationPath
+          "Visual Studio: $vs"
+          $componente = 'Microsoft.VisualStudio.Component.VC.Tools.ARM64'
+          if (-not (& $vswhere -latest -products * -requires $componente -property installationPath)) {
+            "Falta $componente: se instala con el Visual Studio Installer."
+            $p = Start-Process (Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\setup.exe') -Wait -PassThru -ArgumentList @(
+              'modify', '--installPath', "`"$vs`"", '--add', $componente, '--quiet', '--norestart', '--noUpdateInstaller')
+            "setup.exe salió con $($p.ExitCode)"
+            if (-not (& $vswhere -latest -products * -requires $componente -property installationPath)) { throw "$componente sigue sin estar" }
+          }
+          "OK $componente"
+          $bin = $null
+          $propio = Join-Path $env:ProgramFiles 'LLVM\bin'
+          if (Test-Path (Join-Path $propio 'libclang.dll')) {
+            $a = Arquitectura (Join-Path $propio 'libclang.dll')
+            "LLVM del runner: $propio · libclang $a"
+            if ($a -eq 'arm64') { $bin = $propio }
+          } else { "El runner no trae LLVM en $propio" }
+          if (-not $bin) {
+            $msi = Join-Path $env:RUNNER_TEMP 'LLVM-23.1.3-woa64.msi'
+            Invoke-WebRequest -Uri 'https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.3/LLVM-23.1.3-woa64.msi' -OutFile $msi -MaximumRetryCount 4 -RetryIntervalSec 15
+            $huella = (Get-FileHash $msi -Algorithm SHA256).Hash.ToLower()
+            if ($huella -ne '19750061816ff721966dff175288e940889aae2dd6e8643eaf9a14a03ee728ed') { throw "la huella de LLVM no coincide: $huella" }
+            $destino = Join-Path $env:RUNNER_TEMP 'llvm-arm64'
+            $p = Start-Process msiexec.exe -Wait -PassThru -ArgumentList @('/a', "`"$msi`"", '/qn', "TARGETDIR=`"$destino`"")
+            "msiexec /a salió con $($p.ExitCode)"
+            $dll = Get-ChildItem $destino -Recurse -Filter libclang.dll | Select-Object -First 1
+            if (-not $dll) { throw "el MSI de LLVM no dejó libclang.dll en $destino" }
+            $bin = $dll.DirectoryName
+          }
+          if ((Arquitectura (Join-Path $bin 'libclang.dll')) -ne 'arm64') { throw "libclang de $bin no es ARM64" }
+          "libclang ARM64 en $bin"
+          "LIBCLANG_PATH=$bin" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "AG_LLVM_BIN=$bin" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $bin | Out-File -FilePath $env:GITHUB_PATH -Append   # `ring` compila su C con `clang` en Windows ARM64
+      - name: cargo test a secas — sin hardware (regla 25, en Windows ARM64)
+        working-directory: src-tauri
+        env: { AG_SIN_HARDWARE: "1" }
+        run: cargo test --locked
+      - name: los instaladores de Windows ARM64 (.msi y .exe, sin firmar)
+        run: pnpm tauri build --bundles msi,nsis
+      # Antes de subir nada: lo que se construyó ES ARM64. El stub del instalador NSIS es x86 a propósito (corre emulado y
+      # solo descomprime), así que se miran los binarios de la app, que son los que importan.
+      - name: la arquitectura de lo construido (sprint 009)
+        run: node scripts/arquitectura-pe.mjs --espera arm64 src-tauri/target/release/app-copiloto-consultor.exe src-tauri/target/release/ghost.exe
+      - uses: actions/upload-artifact@v7
+        with:
+          name: angel-ghost-windows-arm64
+          path: |
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: error
+          retention-days: 14
