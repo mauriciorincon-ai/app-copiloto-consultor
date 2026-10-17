@@ -272,6 +272,9 @@ jobs:
       # Visual Studio y una `libclang.dll` ARM64. Lo que falte se pone: el componente con el instalador de Visual Studio, y
       # LLVM ARM64 de su release oficial, con la huella SHA-256 fija (leída de la propia release el 2026-10-17) y extraído
       # sin instalar (`msiexec /a`), para no pisar el LLVM del runner. Cada paso dice qué encontró.
+      # OJO, declarado en el sprint 009: en la primera corrida verde el runner YA traía las dos cosas (Visual Studio con
+      # `VC.Tools.ARM64` y un LLVM con `libclang` ARM64), así que las dos ramas de respaldo NO se han ejecutado nunca. La
+      # verificación sí corre cada vez; los respaldos se estrenarán el día que la imagen del runner cambie.
       - name: La cadena nativa de ARM64 (se verifica; lo que falte se instala, con huella)
         shell: pwsh
         run: |
