@@ -1,6 +1,10 @@
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
-import { join, relative } from "node:path";
+import { posix } from "node:path";
 import { describe, expect, it } from "vitest";
+
+// Las rutas del barrido van con `/` en cualquier sistema (sprint 009): se comparan con las de abajo, escritas con
+// `/`, y en Windows `join` y `relative` de `node:path` devolvían barras invertidas.
+const { join } = posix;
 
 /**
  * GATE `puerta-solo-local` (sprint 003, fase 4, ADR 018 §8) — **la puerta de tu agente no sale de
@@ -110,7 +114,7 @@ describe("puerta-solo-local: la puerta de tu agente no sale de este Mac", () => 
         codigo(f)
           .filter(([, l]) => UNIX.some((re) => re.test(l)))
           .map(
-            ([n, l]) => `${relative(".", f)}:${n}  ${l.trim().slice(0, 90)}`,
+            ([n, l]) => `${f}:${n}  ${l.trim().slice(0, 90)}`,
           ),
       );
     expect(
@@ -124,7 +128,7 @@ describe("puerta-solo-local: la puerta de tu agente no sale de este Mac", () => 
       codigo(f).flatMap(([n, l]) =>
         FUERA_DEL_MAC.filter(([re]) => re.test(l)).map(
           ([, que]) =>
-            `${relative(".", f)}:${n}  ${que}  ${l.trim().slice(0, 90)}`,
+            `${f}:${n}  ${que}  ${l.trim().slice(0, 90)}`,
         ),
       ),
     );

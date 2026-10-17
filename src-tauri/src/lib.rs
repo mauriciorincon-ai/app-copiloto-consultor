@@ -4353,15 +4353,18 @@ mod pruebas_del_estado_del_diccionario {
     /// la carpeta del usuario escrita entera (es un dato personal que no hace falta enseñar).
     #[test]
     fn las_dos_filas_suman_el_total_y_la_ruta_empieza_por_la_casa() {
-        let casa = std::env::var("HOME").unwrap_or_default();
-        let ruta = PathBuf::from(&casa).join("Library/Application Support/x/diccionario.yaml");
+        // La misma casa que busca `de` (sprint 009): en Windows hay `HOME` si la prueba se lanza desde Git Bash y
+        // `USERPROFILE` siempre; antes solo miraba `HOME` y esperaba la barra de macOS.
+        let casa = std::env::var("HOME").or_else(|_| std::env::var("USERPROFILE")).unwrap_or_default();
+        let ruta = PathBuf::from(&casa).join("Library").join("Application Support").join("x").join("diccionario.yaml");
         let mut d = diccionario::Diccionario::semilla();
         d.con_nombres_del_corpus(&["Páramo Azul".into(), "Sur del Valle".into()]);
         let e = EstadoDelDiccionario::de(&d, &ruta);
         assert_eq!(e.terminos, e.del_corpus + e.en_tu_archivo);
         assert!(e.del_corpus >= 1, "los nombres del corpus no entraron: {e:?}");
         if !casa.is_empty() {
-            assert!(e.ruta.starts_with("~/Library/"), "{}", e.ruta);
+            let sep = std::path::MAIN_SEPARATOR;
+            assert!(e.ruta.starts_with(&format!("~{sep}Library{sep}")), "{}", e.ruta);
         }
     }
 }
