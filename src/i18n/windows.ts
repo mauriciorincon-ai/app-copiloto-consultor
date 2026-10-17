@@ -31,6 +31,11 @@ export type TextosDeWindows = {
     aTiempo: (modelo: string, ms: string) => string;
     lento: (modelo: string, ms: string) => string;
     medirOtra: string;
+    /** Sprint 010: lo que dice la pantalla y el botón mientras mide (con el modelo grande, cerca de medio minuto). */
+    midiendo: string;
+    midiendoBoton: string;
+    /** Sprint 010: mientras baja el modelo pequeño desde Honestidad y lo mide después. */
+    bajandoYMidiendo: string;
     bajarPequeno: string;
     sinReunion: string;
     /** Sprint 007: con dos pistas el cliente va primero; lo que no dio tiempo a transcribir, contado sin atribuirlo. */
@@ -179,6 +184,11 @@ const ES: TextosDeWindows = {
     lento: (m, ms) =>
       `Modelo ${m}: tardó ${ms} ms, y pasa del techo de 4 s en este PC. El modelo pequeño es menos preciso, pero más rápido aquí.`,
     medirOtra: "Medir otra vez",
+    midiendo:
+      "Midiendo en este PC, modelo por modelo y pista por pista: unos segundos con el pequeño y cerca de medio minuto con el grande. Las cifras cambian al terminar.",
+    midiendoBoton: "Midiendo…",
+    bajandoYMidiendo:
+      "Bajando el modelo pequeño (0,5 GB) y midiéndolo después en este PC. Las cifras cambian al terminar.",
     bajarPequeno: "Bajar el modelo pequeño (0,5 GB)",
     sinReunion:
       "Bajar o medir no se puede con una reunión, una sesión o un ensayo abiertos.",
@@ -319,6 +329,11 @@ const EN: TextosDeWindows = {
     lento: (m, ms) =>
       `Model ${m}: took ${ms} ms, over the 4 s ceiling on this PC. The small model is less accurate, but faster here.`,
     medirOtra: "Measure again",
+    midiendo:
+      "Measuring on this PC, model by model and track by track: a few seconds with the small one and about half a minute with the large one. The figures change when it finishes.",
+    midiendoBoton: "Measuring…",
+    bajandoYMidiendo:
+      "Downloading the small model (0.5 GB) and then measuring it on this PC. The figures change when it finishes.",
     bajarPequeno: "Download the small model (0.5 GB)",
     sinReunion:
       "Downloading or measuring isn't possible while a meeting, a session or a rehearsal is open.",

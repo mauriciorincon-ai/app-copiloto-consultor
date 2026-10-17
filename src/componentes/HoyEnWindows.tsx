@@ -35,6 +35,13 @@ const ICONO: Record<Cuando, { id: string; color: string }> = {
   "no-por-ahora": { id: "i-x-circle", color: "var(--mute)" },
 };
 
+/**
+ * Las líneas de estado de este bloque se parten (sprint 010, visto en vivo en la Surface): `.estado` es un chip de una
+ * línea en `ghost.css` (`white-space: nowrap`), y aquí las frases son largas —con las dos pistas, una línea de modelo
+ * pasa de 140 caracteres— y sacaban una barra de desplazamiento horizontal. Solo aquí: el chip de la maqueta no cambia.
+ */
+const PARTIR = { whiteSpace: "normal" } as const;
+
 export function HoyEnWindows({
   plataforma: prestada,
 }: { plataforma?: Plataforma } = {}) {
@@ -42,7 +49,9 @@ export function HoyEnWindows({
   const p = prestada ?? propia;
   const t = useTextosDeWindows();
   const idioma = useIdioma();
-  const [ocupado, setOcupado] = useState(false);
+  // Qué está haciendo ahora el procesador por orden tuya (sprint 010, visto en vivo: «Medir otra vez» solo se apagaba y
+  // parecía que no hacía nada durante el medio minuto del modelo grande). `null`: nada.
+  const [ocupado, setOcupado] = useState<"midiendo" | "bajando" | null>(null);
   // «Bajando…» se refresca solo mientras dura la descarga, aunque la haya empezado Idioma (B6 del S6).
   const refrescar = useCallback(() => {
     void preguntar<Plataforma>("plataforma_de_este_equipo").then((r) => {
@@ -103,13 +112,16 @@ export function HoyEnWindows({
 
   const cifra = (ms: number) => cifraEnIdioma(ms, idioma);
 
-  const repetir = async (orden: () => Promise<Plataforma | null>) => {
-    setOcupado(true);
+  const repetir = async (
+    que: "midiendo" | "bajando",
+    orden: () => Promise<Plataforma | null>,
+  ) => {
+    setOcupado(que);
     try {
       const nueva = await orden();
       if (nueva) setPropia(nueva);
     } finally {
-      setOcupado(false);
+      setOcupado(null);
     }
   };
 
@@ -122,7 +134,7 @@ export function HoyEnWindows({
       {bloque(t.ya, si)}
       {bloque(t.noPorAhora, noPorAhora)}
       {atajosSinRegistrar(p).map((a) => (
-        <p key={a.accion} className="estado warn">
+        <p key={a.accion} style={PARTIR} className="estado warn">
           <Ic id="i-alert" s />
           <span>{t.atajoOcupado(teclasEnIdioma(a.teclas, idioma))}</span>
         </p>
@@ -132,13 +144,13 @@ export function HoyEnWindows({
         {t.whisper.titulo}
       </h3>
       {whisper?.que === "bajando" && (
-        <p className="estado halo">
+        <p style={PARTIR} className="estado halo">
           <Ic id="i-subir" s />
           <span>{t.whisper.bajando}</span>
         </p>
       )}
       {whisper?.que === "sin-modelo" && (
-        <p className="estado warn">
+        <p style={PARTIR} className="estado warn">
           <Ic id="i-alert" s />
           <span>{t.whisper.sinModelo}</span>
         </p>
@@ -146,25 +158,25 @@ export function HoyEnWindows({
       {/* «Sin medir» y «a tiempo» las dicen las líneas por modelo de abajo (sprint 009, auditoría: A1/B5); este resumen
           solo se pinta si no hay esas líneas. «Lento» sí se queda: trae el consejo y el botón del modelo pequeño. */}
       {whisper?.que === "sin-medir" && !hayModelos && (
-        <p className="estado mute">
+        <p style={PARTIR} className="estado mute">
           <Ic id="i-ring" s />
           <span>{t.whisper.sinMedir(whisper.modelo)}</span>
         </p>
       )}
       {whisper?.que === "a-tiempo" && !hayModelos && (
-        <p className="estado ok">
+        <p style={PARTIR} className="estado ok">
           <Ic id="i-check-circle" s relleno />
           <span>{t.whisper.aTiempo(whisper.modelo, cifra(whisper.ms))}</span>
         </p>
       )}
       {whisper?.que === "lento" && (
-        <p className="estado warn">
+        <p style={PARTIR} className="estado warn">
           <Ic id="i-alert" s />
           <span>{t.whisper.lento(whisper.modelo, cifra(whisper.ms))}</span>
         </p>
       )}
       {(p.transcripcion?.descartados ?? 0) > 0 && (
-        <p className="estado warn">
+        <p style={PARTIR} className="estado warn">
           <Ic id="i-alert" s />
           <span>
             {t.whisper.descartados(p.transcripcion?.descartados ?? 0)}
@@ -219,7 +231,7 @@ export function HoyEnWindows({
                     ? (["warn", "i-alert", false] as const)
                     : (["mute", "i-ring", false] as const);
               return (
-                <p key={m.nombre} className={`estado ${clase}`}>
+                <p key={m.nombre} style={PARTIR} className={`estado ${clase}`}>
                   <Ic id={icono} s relleno={relleno} />
                   <span>
                     {frase}
@@ -237,21 +249,41 @@ export function HoyEnWindows({
       <p className="mono" style={{ color: "var(--ink-2)" }}>
         {t.whisper.sinReunion}
       </p>
+      {/* Lo que el procesador está haciendo por tu orden, dicho con símbolo, texto y color (regla dura 8) y anunciado
+          a los lectores de pantalla: un botón apagado no basta para saber que algo está en marcha. */}
+      <div role="status" aria-live="polite">
+        {ocupado === "midiendo" && (
+          <p style={PARTIR} className="estado halo">
+            <Ic id="i-ring" s />
+            <span>{t.whisper.midiendo}</span>
+          </p>
+        )}
+        {ocupado === "bajando" && whisper?.que !== "bajando" && (
+          <p style={PARTIR} className="estado halo">
+            <Ic id="i-subir" s />
+            <span>{t.whisper.bajandoYMidiendo}</span>
+          </p>
+        )}
+      </div>
       {whisper && whisper.que !== "bajando" && whisper.que !== "sin-modelo" && (
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
           <button
             className="btn mini"
-            disabled={ocupado}
-            onClick={() => repetir(calibrarTranscripcion)}
+            disabled={ocupado !== null}
+            aria-busy={ocupado === "midiendo"}
+            onClick={() => repetir("midiendo", calibrarTranscripcion)}
           >
-            {t.whisper.medirOtra}
+            {ocupado === "midiendo"
+              ? t.whisper.midiendoBoton
+              : t.whisper.medirOtra}
           </button>
           {/* Con el modelo pequeño ya puesto, ofrecer bajarlo no tiene sentido (B7 del S6). */}
           {whisper.que === "lento" && whisper.modelo !== "small" && (
             <button
               className="btn mini primario"
-              disabled={ocupado}
-              onClick={() => repetir(bajarModeloPequeno)}
+              disabled={ocupado !== null}
+              aria-busy={ocupado === "bajando"}
+              onClick={() => repetir("bajando", bajarModeloPequeno)}
             >
               {t.whisper.bajarPequeno}
             </button>

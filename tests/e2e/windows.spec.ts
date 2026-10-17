@@ -317,3 +317,39 @@ for (const tema of ["dark", "light"] as const) {
     });
   }
 }
+
+/**
+ * **LAS LÍNEAS DE CADA MODELO SE PARTEN, NO DESBORDAN** (sprint 010, visto en vivo en la Surface): con las dos pistas,
+ * la línea de un modelo pasa de 140 caracteres y `.estado` es un chip de una línea (`white-space: nowrap` en
+ * `ghost.css`). Honestidad sacaba una barra de desplazamiento horizontal y cortaba el final de la frase. ¿Puede fallar?
+ * Sí: quitar el `whiteSpace: "normal"` de las líneas de `modelos-de-voz` lo pone rojo, con el ancho que se sale.
+ */
+test("en Windows, cada línea de modelo cabe en su bloque y Honestidad no se desborda a lo ancho", async ({
+  page,
+}) => {
+  await page.goto("/?ventana=principal&pantalla=honestidad&plataforma=windows");
+  const modelos = page.getByTestId("modelos-de-voz");
+  await expect(modelos.locator("p.estado")).toHaveCount(2);
+  const caja = await modelos.boundingBox();
+  for (const linea of await modelos.locator("p.estado").all()) {
+    const b = await linea.boundingBox();
+    expect(
+      b && caja && b.x + b.width <= caja.x + caja.width + 1,
+      `una línea de modelo se sale de su bloque`,
+    ).toBe(true);
+  }
+  const desbordados = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>("body *")]
+      .filter((e) => {
+        const x = getComputedStyle(e).overflowX;
+        return (
+          (x === "auto" || x === "scroll") && e.scrollWidth > e.clientWidth + 1
+        );
+      })
+      .map(
+        (e) =>
+          `${e.tagName.toLowerCase()}.${e.className}: ${e.scrollWidth} > ${e.clientWidth}`,
+      ),
+  );
+  expect(desbordados, "Honestidad tiene desplazamiento horizontal").toEqual([]);
+});
