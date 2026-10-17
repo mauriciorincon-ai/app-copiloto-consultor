@@ -181,6 +181,11 @@ jobs:
       - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
+      # vitest TAMBIÉN en Windows (sprint 010): los tests que miran rutas, el hook de secretos con Git Bash, el diccionario por
+      # USERPROFILE y los gates de «sin Mac» corren aquí, no solo en Linux. Un `path.sep` que vuelva a colarse deja de ser
+      # algo que solo una Surface ve (el test `ci-vitest-en-windows` exige este paso en los dos jobs).
+      - name: vitest en Windows (con su cobertura)
+        run: pnpm test
       - run: pnpm build
       # REGLA 25 en Windows: `cargo test` a secas no abre el micrófono ni el Administrador de credenciales; con
       # AG_SIN_HARDWARE=1 cada entrada nativa nueva (cpal, whisper, Credential Manager) aborta antes de cruzar.
@@ -270,6 +275,11 @@ jobs:
       - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
+      # vitest TAMBIÉN en Windows (sprint 010): los tests que miran rutas, el hook de secretos con Git Bash, el diccionario por
+      # USERPROFILE y los gates de «sin Mac» corren aquí, no solo en Linux. Un `path.sep` que vuelva a colarse deja de ser
+      # algo que solo una Surface ve (el test `ci-vitest-en-windows` exige este paso en los dos jobs).
+      - name: vitest en Windows (con su cobertura)
+        run: pnpm test
       - run: pnpm build
       # La cadena nativa de ARM64, VERIFICADA (no se da por buena por el nombre del runner): el compilador de C++ ARM64 de
       # Visual Studio y una `libclang.dll` ARM64. Lo que falte se pone: el componente con el instalador de Visual Studio, y
