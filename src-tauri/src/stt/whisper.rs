@@ -103,13 +103,17 @@ pub fn elegir(
     el_mayor_que_cabe(&candidatos)
 }
 
-/// **Lo que tardó cada modelo en la calibración de 10 s en el equipo ARM64 de referencia** (la Surface con Snapdragon X
-/// Plus; ADR 022, enmienda 3), en ms; `None`: sin medir allí. De ahí sale [`por_defecto`] en un PC ARM64: no se baja
-/// 1,6 GB de un modelo que ya se sabe que no cabe. La cifra de cada PC, medida al instalar, sigue mandando en [`elegir`].
+/// **Lo que tardó cada modelo con el turno de 10 s de la calibración en el equipo ARM64 de referencia** (la Surface con
+/// Snapdragon X Plus; ADR 022, enmienda 3), en ms; `None`: sin medir allí. De ahí sale [`por_defecto`] en un PC ARM64: no
+/// se baja 1,6 GB de un modelo que ya se sabe que no cabe. La cifra de cada PC, medida al instalar, sigue mandando en
+/// [`elegir`].
 ///
-/// Medido el 2026-10-17 en la Surface del usuario (Snapdragon X Plus X1P64100, plan Balanced, con corriente), mediana
-/// de tres corridas con whisper.cpp optimizado: `large-v3-turbo` 9144 ms (de 8523 a 18428) y `small` 1632 ms (de 1590 a
-/// 1641). Las cifras por pista y el porqué están en el ADR 022, enmienda 3; `el_adr_dice_lo_mismo_que_la_constante` las ata.
+/// Medido el 2026-10-17 en la Surface del usuario (Snapdragon X Plus X1P64100, plan Balanced, con corriente) con
+/// `medicion_whisper_con_dos_pistas`, mediana de tres corridas con whisper.cpp optimizado: es el turno de 10 s que va
+/// DETRÁS del turno del cliente, con el modelo ya caliente. `large-v3-turbo` 9144 ms (de 8523 a 18428) y `small` 1632 ms
+/// (de 1590 a 1641). La calibración de la propia app mide la primera inferencia tras cargar el modelo, sin calentar, y
+/// da algo más (8334 y 1928 ms en una corrida real; ADR, límite f): la decisión no cambia. Las cifras por pista y el
+/// porqué están en el ADR 022, enmienda 3; `el_adr_dice_lo_mismo_que_la_constante` las ata.
 pub const MEDIDO_EN_ARM: [(&str, Option<u32>); 2] = [("ggml-large-v3-turbo.bin", Some(9_144)), ("ggml-small.bin", Some(1_632))];
 
 /// El modelo que «Instalar» baja. En un PC ARM64 de Windows, el mayor que cupo en el equipo de referencia; en cualquier
@@ -318,19 +322,28 @@ mod motor {
         let audio = crate::stt::calibracion::muestras();
         let codigo_whisper = idioma_de_whisper(crate::stt::calibracion::IDIOMA).unwrap_or("es");
         let mut midio = false;
+        let mut ultimo_fallo = None;
         for m in [GRANDE, PEQUENO] {
             let Some(ruta) = modelo_whisper::listo(&m) else { continue };
-            let ms = con_este_modelo(m, ruta, |_, estado| {
+            // Un modelo que no se deja medir (poca memoria, un archivo dañado) no impide medir el otro (auditoría B3).
+            match con_este_modelo(m, ruta, |_, estado| {
                 let inicio = std::time::Instant::now();
                 transcribir_en(estado, codigo_whisper, &audio)?;
                 Ok(inicio.elapsed().as_millis().min(u128::from(u32::MAX)) as u32)
-            })?;
-            anotar_latencia(&m, ms);
-            println!("[stt] whisper: {} tardó {ms} ms en 10 s de calibración", m.nombre);
-            midio = true;
+            }) {
+                Ok(ms) => {
+                    anotar_latencia(&m, ms);
+                    println!("[stt] whisper: {} tardó {ms} ms en 10 s de calibración", m.nombre);
+                    midio = true;
+                }
+                Err(f) => {
+                    println!("[stt] whisper: {} no se pudo medir ({f:?})", m.nombre);
+                    ultimo_fallo = Some(f);
+                }
+            }
         }
         if !midio {
-            return Err(Fallo::NoDisponible(Disponibilidad::SinModelo));
+            return Err(ultimo_fallo.unwrap_or(Fallo::NoDisponible(Disponibilidad::SinModelo)));
         }
         el_modelo().and_then(|(m, _)| latencia_ms(&m)).ok_or(Fallo::Motor(-1))
     }

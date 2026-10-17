@@ -31,7 +31,8 @@ pub struct Modelo {
 /// abajo.
 pub const REVISION: &str = "5359861c739e955e79d9a303bcbc70fb988958b1";
 
-/// El modelo de la app en Windows (ADR 006: large-v3-turbo). 1,6 GB.
+/// El modelo de la app en Windows x64 (ADR 006: large-v3-turbo). 1,6 GB. En un PC ARM64 «Instalar» baja el pequeño,
+/// porque este no cabe en 4 s (ADR 022, enmienda 3; `stt::whisper::por_defecto`).
 pub const GRANDE: Modelo = Modelo {
     nombre: "large-v3-turbo",
     archivo: "ggml-large-v3-turbo.bin",
@@ -40,7 +41,8 @@ pub const GRANDE: Modelo = Modelo {
     origen: "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-large-v3-turbo.bin",
 };
 
-/// El escalón para cuando la calibración pasa de 4 s en tu PC (ADR 022 §5). 0,5 GB.
+/// El pequeño, 0,5 GB: el escalón para cuando la calibración pasa de 4 s en tu PC (ADR 022 §5) y, desde el sprint 009,
+/// el que «Instalar» baja en un PC ARM64 de Windows (ADR 022, enmienda 3).
 pub const PEQUENO: Modelo = Modelo {
     nombre: "small",
     archivo: "ggml-small.bin",
