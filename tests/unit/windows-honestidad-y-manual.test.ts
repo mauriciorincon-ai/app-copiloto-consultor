@@ -153,8 +153,12 @@ describe("el lenguaje de Windows cumple la regla 6 del vocabulario", () => {
 describe("lo que Windows dice de la red, con la puerta única", () => {
   it("la frase de Honestidad en Windows nombra la única descarga que la app hace por su cuenta (ADR 022 §4)", () => {
     // Hallazgo A4 de la auditoría del S6: la frase no puede decir «macOS» ni dejar la puerta sin nombrar.
-    expect(TEXTOS_DE_WINDOWS.es.honestidad.modoDetalle).toContain("instalar el modelo de voz");
-    expect(TEXTOS_DE_WINDOWS.en.honestidad.modoDetalle).toContain("install the speech model");
+    expect(TEXTOS_DE_WINDOWS.es.honestidad.modoDetalle).toContain(
+      "instalar el modelo de voz",
+    );
+    expect(TEXTOS_DE_WINDOWS.en.honestidad.modoDetalle).toContain(
+      "install the speech model",
+    );
   });
 });
 
@@ -162,7 +166,9 @@ describe("la cuenta de turnos sin transcribir no atribuye (auditoría del S7, M3
   it("no dice «tuyos» ni «your»: en la sala el turno que se tira puede ser del cliente", () => {
     for (const n of [1, 3]) {
       expect(TEXTOS_DE_WINDOWS.es.whisper.descartados(n)).not.toMatch(/tuy/i);
-      expect(TEXTOS_DE_WINDOWS.en.whisper.descartados(n)).not.toMatch(/\byour\b/i);
+      expect(TEXTOS_DE_WINDOWS.en.whisper.descartados(n)).not.toMatch(
+        /\byour\b/i,
+      );
     }
   });
 
@@ -188,11 +194,68 @@ describe("los textos de Windows no prometen un tamaño que ARM64 no baja", () =>
         ? Object.entries(valor).flatMap(([k, v]) => cadenas(v, `${ruta}.${k}`))
         : [];
 
-  it.each(["es", "en"] as const)("%s: toda cadena con «1,6 GB» dice también los 0,5 GB de ARM64", (idioma) => {
-    const todas = cadenas(TEXTOS_DE_WINDOWS[idioma], idioma);
-    const con16 = todas.filter(([, t]) => /1[,.]6 GB/.test(t));
-    expect(con16.length, "ya no hay ninguna cadena con el tamaño del modelo grande: ¿se perdió la advertencia?").toBeGreaterThan(0);
-    const sinArm = con16.filter(([, t]) => !/0[,.]5 GB/.test(t) || !/ARM64/.test(t)).map(([ruta]) => ruta);
-    expect(sinArm, "cadenas que dicen 1,6 GB sin el caso de ARM64").toEqual([]);
+  it.each(["es", "en"] as const)(
+    "%s: toda cadena con «1,6 GB» dice también los 0,5 GB de ARM64",
+    (idioma) => {
+      const todas = cadenas(TEXTOS_DE_WINDOWS[idioma], idioma);
+      const con16 = todas.filter(([, t]) => /1[,.]6 GB/.test(t));
+      expect(
+        con16.length,
+        "ya no hay ninguna cadena con el tamaño del modelo grande: ¿se perdió la advertencia?",
+      ).toBeGreaterThan(0);
+      const sinArm = con16
+        .filter(([, t]) => !/0[,.]5 GB/.test(t) || !/ARM64/.test(t))
+        .map(([ruta]) => ruta);
+      expect(sinArm, "cadenas que dicen 1,6 GB sin el caso de ARM64").toEqual(
+        [],
+      );
+    },
+  );
+});
+
+/**
+ * **LOS SEGUNDOS DE CADA PISTA SALEN DE SU AUDIO** (sprint 010): Honestidad dice «tu pista, 10 s» y «la del cliente,
+ * 6 s». Las dos cifras son de dos archivos que entran en el binario de Windows (`stt/calibracion.rs`); si uno cambia,
+ * el texto dejaría de decir la verdad sin que nadie lo viera. ¿Puede fallar? Sí: cambiar «6 s» por «5 s» en una
+ * cadena, o el audio del cliente por uno de otra duración, es rojo.
+ */
+describe("los segundos de cada pista de la calibración son los de su audio", () => {
+  /** Los segundos de un WAV PCM: el tamaño del bloque «data» entre los bytes por segundo de su «fmt ». */
+  function segundos(ruta: string): number {
+    const b = readFileSync(ruta);
+    let i = 12;
+    let porSegundo = 0;
+    while (i + 8 <= b.length) {
+      const id = b.toString("latin1", i, i + 4);
+      const largo = b.readUInt32LE(i + 4);
+      if (id === "fmt ") porSegundo = b.readUInt32LE(i + 16);
+      if (id === "data") return largo / porSegundo;
+      i += 8 + largo + (largo & 1);
+    }
+    throw new Error(`${ruta}: sin bloque data`);
+  }
+  const tuya = Math.round(segundos("data/calibracion/sala-es-10s.wav"));
+  const delCliente = Math.round(
+    segundos("docs/kit-de-prueba/audio/pregunta-es.wav"),
+  );
+
+  it.each(["es", "en"] as const)(
+    "%s: la línea de un modelo dice los segundos de las dos pistas",
+    (idioma) => {
+      const linea = TEXTOS_DE_WINDOWS[idioma].whisper.modelos.aTiempo(
+        "small",
+        "1",
+        "2",
+      );
+      expect(linea).toContain(`, ${tuya} s `);
+      expect(linea).toContain(`, ${delCliente} s `);
+    },
+  );
+
+  it("la fuente de Rust lee la pista del cliente de ese mismo archivo", () => {
+    const fuente = readFileSync("src-tauri/src/stt/calibracion.rs", "utf8");
+    expect(fuente).toContain(
+      'include_bytes!("../../../docs/kit-de-prueba/audio/pregunta-es.wav")',
+    );
   });
 });

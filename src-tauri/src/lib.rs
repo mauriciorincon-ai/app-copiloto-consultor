@@ -1119,11 +1119,14 @@ fn hay_una_reunion<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> bool {
 }
 
 /// Guarda lo que whisper tardó en este PC con cada modelo, para que la próxima vez que se abra la app no diga «sin
-/// medir» (sprint 008, M3 del S6). Dos números, en las preferencias.
+/// medir» (sprint 008, M3 del S6). Dos números por modelo desde el sprint 010 (tu pista y la del cliente), en las
+/// preferencias.
 fn recordar_las_latencias<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
     let medidas = prefs::LatenciasDeWhisper {
         grande_ms: stt::whisper::latencia_ms(&modelo_whisper::GRANDE),
         pequeno_ms: stt::whisper::latencia_ms(&modelo_whisper::PEQUENO),
+        grande_cliente_ms: stt::whisper::latencia_del_cliente_ms(&modelo_whisper::GRANDE),
+        pequeno_cliente_ms: stt::whisper::latencia_del_cliente_ms(&modelo_whisper::PEQUENO),
     };
     recordar(app, |p| p.latencias_de_whisper = medidas);
 }
@@ -1918,7 +1921,9 @@ pub fn run() {
                 aplicar_las_preferencias(app.handle(), &p);
                 // Lo que whisper tardó la vez anterior vuelve (M3 del S6); y la descarga de un modelo se corta si
                 // empieza una reunión, una sesión o un ensayo mientras baja (M2 del S6).
-                stt::whisper::restaurar_latencias(p.latencias_de_whisper.grande_ms, p.latencias_de_whisper.pequeno_ms);
+                let l = p.latencias_de_whisper;
+                stt::whisper::restaurar_latencias(l.grande_ms, l.pequeno_ms);
+                stt::whisper::restaurar_latencias_del_cliente(l.grande_cliente_ms, l.pequeno_cliente_ms);
                 modelo_whisper::limpiar_lo_que_quedo();
                 {
                     let mango = app.handle().clone();

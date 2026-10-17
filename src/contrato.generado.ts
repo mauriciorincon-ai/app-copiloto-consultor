@@ -1741,6 +1741,7 @@ export const PLATAFORMA_WINDOWS: Plataforma = {
         {
           "bajado": true,
           "enUso": true,
+          "latenciaClienteMs": 2900,
           "latenciaMs": 2350,
           "nombre": "large-v3-turbo",
           "porDefecto": true
@@ -1748,6 +1749,7 @@ export const PLATAFORMA_WINDOWS: Plataforma = {
         {
           "bajado": false,
           "enUso": false,
+          "latenciaClienteMs": null,
           "latenciaMs": null,
           "nombre": "small",
           "porDefecto": false
@@ -1887,6 +1889,7 @@ export const PLATAFORMA_WINDOWS_SIN_MODELO: Plataforma = {
         {
           "bajado": false,
           "enUso": false,
+          "latenciaClienteMs": null,
           "latenciaMs": null,
           "nombre": "large-v3-turbo",
           "porDefecto": true
@@ -1894,6 +1897,7 @@ export const PLATAFORMA_WINDOWS_SIN_MODELO: Plataforma = {
         {
           "bajado": false,
           "enUso": false,
+          "latenciaClienteMs": null,
           "latenciaMs": null,
           "nombre": "small",
           "porDefecto": false

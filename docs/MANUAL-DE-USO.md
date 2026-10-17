@@ -954,7 +954,8 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
   *Run anyway*.
 - **Qué modelo de voz.** En Idioma, **Instalar** baja en un Windows ARM64 el modelo **pequeño** (0,5 GB) y no el grande.
   En la Surface de referencia (Snapdragon X Plus) el pequeño transcribe los 10 s de la calibración en unos 1,6 s y el
-  grande en 8,5 a 18 s, y el techo son 4 s. Honestidad enseña una línea por modelo con su cifra **en tu PC**, cuál
+  grande en 8,5 a 18 s, y el techo son 4 s. Honestidad enseña una línea por modelo con sus cifras **en tu PC**, pista por pista
+  (tu turno de 10 s, que es el que decide, y el del cliente, de 6 s), cuál
   transcribe ahora y cuál baja *Instalar*; al medir manda tu cifra, pero solo entre los modelos que tengas bajados.
 - **Construirla tú.** El README tiene «Desarrollar en Windows ARM»: un script, `scripts/entorno-windows.ps1`, dice qué
   falta sin instalar nada, y cada instalación se hace por separado. El instalador sale de

@@ -950,8 +950,8 @@ It is not a new feature but the same app on another system, which is why it sits
   *More info* and then *Run anyway*.
 - **Which speech model.** In Language, **Install** downloads the **small** model (0.5 GB), not the large one, on a
   Windows ARM64 PC. On the reference Surface (Snapdragon X Plus) the small one transcribes the 10 s of calibration in
-  about 1.6 s and the large one in 8.5 to 18 s, against a 4 s ceiling. Honesty shows one line per model with its figure
-  **on your PC**, which one is transcribing now and which one *Install* downloads; when it measures, your figure
+  about 1.6 s and the large one in 8.5 to 18 s, against a 4 s ceiling. Honesty shows one line per model with its figures
+  **on your PC**, track by track (your 10 s turn, which decides, and the client's 6 s one), which one is transcribing now and which one *Install* downloads; when it measures, your figure
   decides, but only among the models you have downloaded.
 - **Building it yourself.** The README has “Developing on Windows ARM”: a script, `scripts/entorno-windows.ps1`, says
   what is missing without installing anything, and each installation is done separately. The installer comes from

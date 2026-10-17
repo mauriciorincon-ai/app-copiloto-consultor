@@ -118,9 +118,11 @@ pub(crate) fn procesos() -> Vec<Proceso> {
 /// ser el hilo de la ventana, con COM en otro modo, y un hilo de vida corta que abre y cierra COM tumbó el proceso
 /// de pruebas en el S7 (auditoría, A3).
 fn con_captura() -> Option<Vec<u32>> {
-    static HILO: OnceLock<Mutex<mpsc::Sender<mpsc::Sender<Option<Vec<u32>>>>>> = OnceLock::new();
+    /// Por dónde contesta el hilo cada pregunta: los procesos con captura, o `None` si Windows no contestó.
+    type Respuesta = mpsc::Sender<Option<Vec<u32>>>;
+    static HILO: OnceLock<Mutex<mpsc::Sender<Respuesta>>> = OnceLock::new();
     let hilo = HILO.get_or_init(|| {
-        let (manda, recibe) = mpsc::channel::<mpsc::Sender<Option<Vec<u32>>>>();
+        let (manda, recibe) = mpsc::channel::<Respuesta>();
         let _ = std::thread::Builder::new().name("ag-sesiones".into()).spawn(move || {
             use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
             // SAFETY: COM se inicia una vez en este hilo, que vive lo que la app.

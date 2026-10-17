@@ -7,5 +7,10 @@ Para qué: al instalar el modelo de whisper (Idioma, «Instalar»), la app trans
 en tu PC** (ADR 022 §5). Honestidad enseña esa latencia; si pasa de 4 s, el modelo grande es lento para ese equipo y se
 ofrece el pequeño. Entra en el binario con `include_bytes!`: no se lee de disco ni se baja.
 
+**La pista del cliente** (sprint 010) no está aquí: es `docs/kit-de-prueba/audio/pregunta-es.wav` tal cual (la pregunta
+del kit, unos 6 s, la misma voz sintética), que `stt/calibracion.rs` incluye desde el kit para no tener dos copias. La
+calibración mide tu recorte primero —su cifra decide el modelo— y la pregunta después, con el modelo ya caliente;
+Honestidad enseña las dos. `windows-honestidad-y-manual` ata los «10 s» y «6 s» de la pantalla a estos dos archivos.
+
 Cómo se hizo (y cómo se comprueba: `stt::calibracion`, prueba `el_recorte_es_el_principio_del_kit`): las primeras
 160 000 muestras del `data` de `sala-es.wav`, con la misma cabecera PCM.

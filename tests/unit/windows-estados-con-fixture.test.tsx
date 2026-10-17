@@ -102,6 +102,7 @@ describe("Honestidad enseña una línea por modelo de voz, medida en este PC", (
     nombre: "large-v3-turbo",
     bajado: true,
     latenciaMs: null as number | null,
+    latenciaClienteMs: null as number | null,
     enUso: false,
     porDefecto: false,
     ...m,
@@ -127,18 +128,18 @@ describe("Honestidad enseña una línea por modelo de voz, medida en este PC", (
     expect(lineas()).toHaveLength(2);
     expect(
       screen.getByText(
-        /large-v3-turbo: 10 s de audio en 5.?100 ms. Pasa del techo de 4 s\./,
+        /large-v3-turbo: tu pista, 10 s en 5.?100 ms\. Pasa del techo de 4 s\./,
       ),
     ).toBeTruthy();
     expect(
       screen.getByText(
-        /small: 10 s de audio en 1.?800 ms. Cabe en el techo de 4 s\. \(el que transcribe ahora · el que baja «Instalar»\)/,
+        /small: tu pista, 10 s en 1.?800 ms\. Cabe en el techo de 4 s\. \(el que transcribe ahora · el que baja «Instalar»\)/,
       ),
     ).toBeTruthy();
     pinta(<HoyEnWindows plataforma={p} />, "en");
     expect(
       screen.getByText(
-        /large-v3-turbo: 10 s of audio in 5,100 ms\. Over the 4 s ceiling\./,
+        /large-v3-turbo: your track, 10 s in 5,100 ms\. Over the 4 s ceiling\./,
       ),
     ).toBeTruthy();
     expect(
@@ -167,6 +168,66 @@ describe("Honestidad enseña una línea por modelo de voz, medida en este PC", (
     expect(screen.getByText("small: sin bajar.")).toBeTruthy();
   });
 
+  // Sprint 010: Honestidad, pista por pista. La tuya decide «cabe» o «pasa», como la regla; la del cliente se enseña
+  // al lado y, si pasa del techo aunque la tuya quepa, se dice aparte y en ámbar. ¿Puede fallar? Sí: callar la pista del
+  // cliente, o pintar «cabe» en verde cuando la del cliente pasa de 4 s, es rojo.
+  it("enseña las dos pistas de cada modelo medido, en los dos idiomas", () => {
+    const p = con([
+      modelo({
+        nombre: "large-v3-turbo",
+        latenciaMs: 9144,
+        latenciaClienteMs: 16858,
+      }),
+      modelo({
+        nombre: "small",
+        latenciaMs: 1632,
+        latenciaClienteMs: 1552,
+        enUso: true,
+      }),
+    ]);
+    pinta(<HoyEnWindows plataforma={p} />, "es");
+    expect(
+      screen.getByText(
+        /large-v3-turbo: tu pista, 10 s en 9.?144 ms; la del cliente, 6 s en 16.?858 ms\. Pasa del techo de 4 s\./,
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        /small: tu pista, 10 s en 1.?632 ms; la del cliente, 6 s en 1.?552 ms\. Cabe en el techo de 4 s\. \(el que transcribe ahora\)/,
+      ),
+    ).toBeTruthy();
+    pinta(<HoyEnWindows plataforma={p} />, "en");
+    expect(
+      screen.getByText(
+        /small: your track, 10 s in 1,632 ms; the client's, 6 s in 1,552 ms\. Fits the 4 s ceiling\./,
+      ),
+    ).toBeTruthy();
+  });
+
+  it("si tu pista cabe y la del cliente no, lo dice aparte y en ámbar", () => {
+    pinta(
+      <HoyEnWindows
+        plataforma={con([
+          modelo({
+            nombre: "large-v3-turbo",
+            latenciaMs: 3900,
+            latenciaClienteMs: 4200,
+          }),
+          modelo({ nombre: "small", bajado: false }),
+        ])}
+      />,
+      "es",
+    );
+    const [linea] = Array.from(lineas());
+    expect(linea.className).toContain("warn");
+    expect(linea.querySelector("svg")).not.toBeNull();
+    expect(
+      screen.getByText(
+        /large-v3-turbo: tu pista, 10 s en 3.?900 ms; la del cliente, 6 s en 4.?200 ms\. Tu pista cabe en el techo de 4 s; la del cliente, no\./,
+      ),
+    ).toBeTruthy();
+  });
+
   it("bajado y sin cifra dice «sin medir»; una cifra justo en el techo cabe", () => {
     pinta(
       <HoyEnWindows
@@ -181,7 +242,7 @@ describe("Honestidad enseña una línea por modelo de voz, medida en este PC", (
       screen.getByText("large-v3-turbo: bajado, sin medir en esta sesión."),
     ).toBeTruthy();
     expect(
-      screen.getByText(/small: 10 s de audio en 4.?000 ms. Cabe en el techo/),
+      screen.getByText(/small: tu pista, 10 s en 4.?000 ms\. Cabe en el techo/),
     ).toBeTruthy();
   });
 
@@ -191,7 +252,7 @@ describe("Honestidad enseña una línea por modelo de voz, medida en este PC", (
   it("la cifra del modelo en uso sale UNA vez, no en el resumen y otra vez en su línea", () => {
     pinta(<HoyEnWindows plataforma={PLATAFORMA_WINDOWS} />, "es");
     expect(
-      screen.getAllByText(/large-v3-turbo: 10 s de audio en 2\.?350 ms/),
+      screen.getAllByText(/large-v3-turbo: tu pista, 10 s en 2\.?350 ms/),
     ).toHaveLength(1);
     expect(screen.queryByText(/El techo son 4 s/)).toBeNull();
     pinta(<HoyEnWindows plataforma={con([])} />, "es");

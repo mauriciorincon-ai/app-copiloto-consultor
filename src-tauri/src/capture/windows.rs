@@ -192,31 +192,26 @@ impl Grifo {
                     }
                     Some(r) => {
                         let mut ultimo_intento: Option<Instant> = None;
-                        loop {
-                            match orden.recv_timeout(LATIDO) {
-                                Err(mpsc::RecvTimeoutError::Timeout) => {
-                                    let ahora = Instant::now();
-                                    r.al_dia(ahora);
-                                    let desde = ultimo_intento.map(|u| ahora.duration_since(u));
-                                    if toca_reabrir(roto.load(Ordering::Relaxed), desde) {
-                                        ultimo_intento = Some(ahora);
-                                        // El flujo roto se suelta antes de abrir el nuevo: dos sobre la misma salida no caben.
-                                        drop(flujo.take());
-                                        roto.store(false, Ordering::Relaxed);
-                                        match abrir(cual, Escritor::ConReloj(r.clone()), cuenta.clone(), roto.clone()) {
-                                            Ok((nuevo, _)) => {
-                                                flujo = Some(nuevo);
-                                                println!("[captura] {} volvió a abrirse: Windows cambió de salida", cual.que());
-                                            }
-                                            Err(no) => {
-                                                roto.store(true, Ordering::Relaxed);
-                                                // Solo el porqué: es un metadato, jamás audio (ADR 003).
-                                                println!("[captura] {} no pudo volver a abrirse: {:?}", cual.que(), no.porque);
-                                            }
-                                        }
+                        while let Err(mpsc::RecvTimeoutError::Timeout) = orden.recv_timeout(LATIDO) {
+                            let ahora = Instant::now();
+                            r.al_dia(ahora);
+                            let desde = ultimo_intento.map(|u| ahora.duration_since(u));
+                            if toca_reabrir(roto.load(Ordering::Relaxed), desde) {
+                                ultimo_intento = Some(ahora);
+                                // El flujo roto se suelta antes de abrir el nuevo: dos sobre la misma salida no caben.
+                                drop(flujo.take());
+                                roto.store(false, Ordering::Relaxed);
+                                match abrir(cual, Escritor::ConReloj(r.clone()), cuenta.clone(), roto.clone()) {
+                                    Ok((nuevo, _)) => {
+                                        flujo = Some(nuevo);
+                                        println!("[captura] {} volvió a abrirse: Windows cambió de salida", cual.que());
+                                    }
+                                    Err(no) => {
+                                        roto.store(true, Ordering::Relaxed);
+                                        // Solo el porqué: es un metadato, jamás audio (ADR 003).
+                                        println!("[captura] {} no pudo volver a abrirse: {:?}", cual.que(), no.porque);
                                     }
                                 }
-                                _ => break,
                             }
                         }
                     }

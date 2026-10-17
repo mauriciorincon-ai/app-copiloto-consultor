@@ -49,7 +49,7 @@ test("en Windows, Honestidad enseña «Hoy en Windows» con sus dos grupos y la 
   await expect(modelos.locator("p.estado")).toHaveCount(2);
   await expect(
     modelos.getByText(
-      /large-v3-turbo: 10 s de audio en 2\.?350 ms\. Cabe en el techo de 4 s/,
+      /large-v3-turbo: tu pista, 10 s en 2\.?350 ms; la del cliente, 6 s en 2\.?900 ms\. Cabe en el techo de 4 s/,
     ),
   ).toBeVisible();
   await expect(modelos.getByText(/el que transcribe ahora/)).toHaveCount(1);

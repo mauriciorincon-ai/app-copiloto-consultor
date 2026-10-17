@@ -182,23 +182,40 @@ export function HoyEnWindows({
           >
             {p.transcripcion?.modelos.map((m) => {
               const e = estadoDeUnModelo(m, p.transcripcion?.techoMs ?? 4000);
+              const delCliente = (ms: number | null) =>
+                ms === null ? null : cifra(ms);
               const frase =
                 e.que === "sin-bajar"
                   ? t.whisper.modelos.sinBajar(m.nombre)
                   : e.que === "sin-medir"
                     ? t.whisper.modelos.sinMedir(m.nombre)
                     : e.que === "a-tiempo"
-                      ? t.whisper.modelos.aTiempo(m.nombre, cifra(e.ms))
-                      : t.whisper.modelos.lento(m.nombre, cifra(e.ms));
+                      ? t.whisper.modelos.aTiempo(
+                          m.nombre,
+                          cifra(e.ms),
+                          delCliente(e.clienteMs),
+                        )
+                      : e.que === "cliente-lento"
+                        ? t.whisper.modelos.clienteLento(
+                            m.nombre,
+                            cifra(e.ms),
+                            cifra(e.clienteMs),
+                          )
+                        : t.whisper.modelos.lento(
+                            m.nombre,
+                            cifra(e.ms),
+                            delCliente(e.clienteMs),
+                          );
               const etiquetas = [
                 m.enUso ? t.whisper.modelos.enUso : null,
                 m.porDefecto ? t.whisper.modelos.porDefecto : null,
               ].filter((x): x is string => x !== null);
-              // Símbolo, texto y color (regla dura 8): cabe, pasa del techo, o todavía no hay cifra.
+              // Símbolo, texto y color (regla dura 8): cabe, pasa del techo (tu pista o la del cliente), o todavía no
+              // hay cifra.
               const [clase, icono, relleno] =
                 e.que === "a-tiempo"
                   ? (["ok", "i-check-circle", true] as const)
-                  : e.que === "lento"
+                  : e.que === "lento" || e.que === "cliente-lento"
                     ? (["warn", "i-alert", false] as const)
                     : (["mute", "i-ring", false] as const);
               return (

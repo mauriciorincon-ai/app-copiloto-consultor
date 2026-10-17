@@ -84,8 +84,12 @@ pub struct ModeloEnEsteEquipo {
     pub nombre: &'static str,
     /// ¿Está entero en este PC?
     pub bajado: bool,
-    /// Lo que tardó en los 10 s de calibración, en ms; `None`: sin medir en esta sesión (o sin bajar).
+    /// Lo que tardó tu pista, el turno de 10 s de calibración, en ms; `None`: sin medir (o sin bajar). Es la cifra que
+    /// decide el modelo (ADR 022, enmienda 3).
     pub latencia_ms: Option<u32>,
+    /// Lo que tardó la pista del cliente (la pregunta del kit, unos 6 s), medida detrás de la tuya (sprint 010); `None`:
+    /// sin medir (o sin bajar). Honestidad la enseña; la regla no la usa.
+    pub latencia_cliente_ms: Option<u32>,
     /// ¿Es con el que se transcribe ahora?
     pub en_uso: bool,
     /// ¿Es el que baja «Instalar» en este equipo? En un PC ARM64 sale de la regla (ADR 022, enmienda 3).
@@ -137,6 +141,7 @@ fn la_transcripcion() -> Transcripcion {
                 nombre: m.nombre,
                 bajado,
                 latencia_ms: bajado.then(|| crate::stt::whisper::latencia_ms(m)).flatten(),
+                latencia_cliente_ms: bajado.then(|| crate::stt::whisper::latencia_del_cliente_ms(m)).flatten(),
                 en_uso: elegido == Some(*m),
                 por_defecto: *m == por_defecto,
             }
