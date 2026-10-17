@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { PLATAFORMA_WINDOWS } from "../../src/contrato.generado";
 import { CLAVES_DE_WINDOWS } from "../../src/plataforma";
 import { TEXTOS_DE_WINDOWS } from "../../src/i18n/windows";
+import { diccionarioDeWindows } from "../../src/i18n";
 
 /**
  * «HOY EN WINDOWS» dice lo mismo en TRES sitios: el ADR 022 (la fuente), el diccionario de la app
@@ -257,5 +258,58 @@ describe("los segundos de cada pista de la calibración son los de su audio", ()
     expect(fuente).toContain(
       'include_bytes!("../../../docs/kit-de-prueba/audio/pregunta-es.wav")',
     );
+  });
+});
+
+/**
+ * **LAS COPIAS DEL DICCIONARIO DE WINDOWS DICEN LO MISMO QUE SU FUENTE** (sprint 010). Cinco textos de Windows viven en dos
+ * sitios: en `windows.ts`, que los pinta el componente, y en `windows-cambios.ts`, para que el diccionario de Windows no
+ * conserve el del Mac bajo la misma clave. Si uno cambia y el otro no, el diccionario deja de decir lo que la pantalla
+ * dice. ¿Puede fallar? Sí: cambiar una palabra en una sola de las dos copias es rojo, con la clave.
+ */
+describe("las copias de texto de Windows no se separan de su fuente", () => {
+  const igual = (t: string) => t;
+  const PARES: [
+    string,
+    (d: ReturnType<typeof diccionarioDeWindows>) => string,
+    (w: (typeof TEXTOS_DE_WINDOWS)["es"]) => string,
+  ][] = [
+    [
+      "cuaderno.modoDetalle",
+      (d) => d.cuaderno.modoDetalle,
+      (w) => w.honestidad.modoDetalle,
+    ],
+    [
+      "cuaderno.transcribeTuMac",
+      (d) => d.cuaderno.transcribeTuMac,
+      (w) => w.idioma.transcribeTuPc,
+    ],
+    [
+      "cuaderno.transcribeTuMacDetalle",
+      (d) => d.cuaderno.transcribeTuMacDetalle,
+      (w) => w.idioma.transcribeTuPcDetalle,
+    ],
+    [
+      "cuaderno.idiomasListos",
+      (d) => d.cuaderno.idiomasListos,
+      (w) => w.idioma.idiomasListos,
+    ],
+    [
+      "cuaderno.antesDeQueMacos",
+      (d) => d.cuaderno.antesDeQueMacos,
+      (w) => w.permisos.antesTitulo,
+    ],
+  ];
+
+  it.each(["es", "en"] as const)("%s: cada copia es su fuente", (idioma) => {
+    const d = diccionarioDeWindows(idioma, igual);
+    const w = TEXTOS_DE_WINDOWS[idioma];
+    for (const [clave, copia, fuente] of PARES) {
+      // `idiomasListos` de la fuente es el sufijo de una cuenta («idiomas a la vez…») y el del diccionario dice «listos»:
+      // se comparan sin esa palabra. El resto, a la letra.
+      const norm = (t: string) =>
+        t.replace(" listos", "").replace(" ready", "");
+      expect(norm(copia(d)), `${idioma}.${clave}`).toBe(norm(fuente(w)));
+    }
   });
 });

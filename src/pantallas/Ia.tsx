@@ -4,6 +4,7 @@ import { Ic } from "../componentes/Iconos";
 import { PILA, EnElRoadmap } from "../componentes/Ventana";
 import { useBytesALaRed } from "../cuaderno";
 import { hayTauri } from "../puente";
+import { esWindows, usePlataforma } from "../plataforma";
 import {
   EXTERNOS,
   apiExterna,
@@ -59,13 +60,21 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
   const [ia, setIa] = useIa();
   const salio = useLoQueSalio();
   const tp = useT().puerta;
+  // La puerta local no existe en Windows (ADR 022: «no en Windows por ahora», y Honestidad lo dice): ni el botón que la
+  // abre ni la vista por URL —sprint 010: desde Windows no se ve nada del Mac—.
+  const [plataforma] = usePlataforma();
+  const sinPuerta = esWindows(plataforma);
   // «Lo que salió» y la puerta se abren desde su botón; fuera de Tauri, desde la URL (el arnés de
   // fidelidad).
   const [viendo, setViendo] = useState<"quien" | "salio" | "puerta">(() => {
     const pedida = new URLSearchParams(busqueda).get("vista");
-    return pedida === "salio" || pedida === "puerta" ? pedida : "quien";
+    return pedida === "salio" || (pedida === "puerta" && !sinPuerta)
+      ? pedida
+      : "quien";
   });
-  const [puerta, setPuerta] = usePuerta(useMemo(() => muestraDeLaPuerta(busqueda), [busqueda]));
+  const [puerta, setPuerta] = usePuerta(
+    useMemo(() => muestraDeLaPuerta(busqueda), [busqueda]),
+  );
   const bytes = useBytesALaRed();
   const [cifra, unidad = "B"] = bytes.split(" ");
   const [clave, setClave] = useState("");
@@ -95,7 +104,8 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
   // estado que Rust devolvía al guardar la clave seguía diciendo «claude», la pantalla volvía sola
   // a Claude y encender pedía la clave equivocada (auditoría del S2, M3). `api_externa` con el API
   // apagado guarda la elección sin exigir clave.
-  const elegir = (externo: Externo) => aplicar(apiExterna(ia.api.encendida, externo));
+  const elegir = (externo: Externo) =>
+    aplicar(apiExterna(ia.api.encendida, externo));
 
   if (viendo === "puerta") {
     return (
@@ -106,7 +116,11 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
             {tp.subUn} <b>{tp.subComando}</b> {tp.subResto}
           </p>
         </div>
-        <LaPuerta vista={puerta} alCambiar={setPuerta} volver={() => setViendo("quien")} />
+        <LaPuerta
+          vista={puerta}
+          alCambiar={setPuerta}
+          volver={() => setViendo("quien")}
+        />
       </>
     );
   }
@@ -119,7 +133,11 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
           <p className="sub">{t.iaSub}</p>
         </div>
         {/* Fuera de Tauri, la cifra de la maqueta: la de las tres peticiones de muestra. */}
-        <LoQueSalioAlApi salio={salio} bytes={hayTauri() ? bytes : "12,4 KB"} volver={() => setViendo("quien")} />
+        <LoQueSalioAlApi
+          salio={salio}
+          bytes={hayTauri() ? bytes : "12,4 KB"}
+          volver={() => setViendo("quien")}
+        />
       </>
     );
   }
@@ -132,7 +150,14 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
       </div>
 
       <div style={{ ...PILA, gap: "12px" }}>
-        <div className="grid-2" style={{ gridTemplateColumns: "1.25fr 1fr", gap: "12px", alignItems: "start" }}>
+        <div
+          className="grid-2"
+          style={{
+            gridTemplateColumns: "1.25fr 1fr",
+            gap: "12px",
+            alignItems: "start",
+          }}
+        >
           <div className="tarjeta" style={{ paddingBottom: "8px" }}>
             <div className="fila">
               <h2 className="seccion crece" style={{ margin: 0 }}>
@@ -167,7 +192,9 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
                     )}
                   </td>
                   <td className="num">
-                    {ia.quien === "sistema" && ia.latenciaMs !== null ? segundos(ia.latenciaMs) : "—"}
+                    {ia.quien === "sistema" && ia.latenciaMs !== null
+                      ? segundos(ia.latenciaMs)
+                      : "—"}
                   </td>
                 </tr>
                 <tr className="apagada">
@@ -195,18 +222,28 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
                     )}
                   </td>
                   <td className="num">
-                    {ia.quien === "api" && ia.latenciaMs !== null ? segundos(ia.latenciaMs) : "—"}
+                    {ia.quien === "api" && ia.latenciaMs !== null
+                      ? segundos(ia.latenciaMs)
+                      : "—"}
                   </td>
                 </tr>
               </tbody>
             </table>
             {porQue && (
-              <p style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "6px" }}>
+              <p
+                style={{
+                  fontSize: "11.5px",
+                  color: "var(--ink-2)",
+                  marginTop: "6px",
+                }}
+              >
                 {t.porQueNoRedacta[porQue]}
               </p>
             )}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+          >
             <div className={bytes === "0 B" ? "contador cero" : "contador api"}>
               <span className="cifra">
                 {cifra} <small>{unidad}</small>
@@ -238,15 +275,28 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
             relleno="2px"
           />
           <span className="crece" />
-          <button type="button" className="btn mini" onClick={() => setViendo("puerta")}>
-            <Ic id="i-llave" s />
-            <span>
-              {tp.puertaLocal} · {puerta.abierta ? tp.abierta : tp.cerrada}
-            </span>
-          </button>
+          {!sinPuerta && (
+            <button
+              type="button"
+              className="btn mini"
+              onClick={() => setViendo("puerta")}
+            >
+              <Ic id="i-llave" s />
+              <span>
+                {tp.puertaLocal} · {puerta.abierta ? tp.abierta : tp.cerrada}
+              </span>
+            </button>
+          )}
         </div>
 
-        <div className="grid-2" style={{ gridTemplateColumns: "1.25fr 1fr", gap: "12px", alignItems: "start" }}>
+        <div
+          className="grid-2"
+          style={{
+            gridTemplateColumns: "1.25fr 1fr",
+            gap: "12px",
+            alignItems: "start",
+          }}
+        >
           <div className="tarjeta">
             <div className="fila">
               <h2 className="seccion crece" style={{ margin: 0 }}>
@@ -255,7 +305,9 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
               <Interruptor
                 encendido={ia.api.encendida}
                 etiqueta={ia.api.encendida ? t.encendido : t.apagado}
-                alCambiar={() => aplicar(apiExterna(!ia.api.encendida, ia.api.externo))}
+                alCambiar={() =>
+                  aplicar(apiExterna(!ia.api.encendida, ia.api.externo))
+                }
               />
             </div>
             <div className="fila" style={{ gap: "6px", marginTop: "8px" }}>
@@ -267,12 +319,21 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
                   aria-pressed={ia.api.externo === e.id}
                   onClick={() => elegir(e.id)}
                 >
-                  {ia.api.externo === e.id && <Ic id="i-check-circle" s relleno color="var(--halo)" />}
+                  {ia.api.externo === e.id && (
+                    <Ic id="i-check-circle" s relleno color="var(--halo)" />
+                  )}
                   {e.nombre}
                 </button>
               ))}
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+                marginTop: "8px",
+              }}
+            >
               <label className="campo">
                 <span>{t.tuClave}</span>
                 <input
@@ -300,14 +361,22 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
                   <Ic id="i-candado" s />
                   <span>{t.guardarEnLlavero}</span>
                 </button>
-                <button type="button" className="btn mini" onClick={() => aplicar(borrarClave(ia.api.externo))}>
+                <button
+                  type="button"
+                  className="btn mini"
+                  onClick={() => aplicar(borrarClave(ia.api.externo))}
+                >
                   <span>{t.borrarLaClave}</span>
                 </button>
                 {/* Solo cuando algo salió en esta reunión (B37, mirada 19). */}
                 {salio.length > 0 && (
                   <>
                     <span className="crece" />
-                    <button type="button" className="btn mini" onClick={() => setViendo("salio")}>
+                    <button
+                      type="button"
+                      className="btn mini"
+                      onClick={() => setViendo("salio")}
+                    >
                       <Ic id="i-nube" s />
                       <span>
                         {t.verLoQueSalio} · {salio.length}
@@ -341,9 +410,24 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
                   </tr>
                 </tbody>
               </table>
-              <p style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "6px" }}>{t.alLlegarAlTope}</p>
+              <p
+                style={{
+                  fontSize: "11.5px",
+                  color: "var(--ink-2)",
+                  marginTop: "6px",
+                }}
+              >
+                {t.alLlegarAlTope}
+              </p>
             </div>
-            <p className="retencion" style={{ fontSize: "11.5px", color: "var(--ink-2)", margin: "0 4px" }}>
+            <p
+              className="retencion"
+              style={{
+                fontSize: "11.5px",
+                color: "var(--ink-2)",
+                margin: "0 4px",
+              }}
+            >
               {RETENCION[ia.api.externo](t)}
             </p>
           </div>
@@ -367,7 +451,9 @@ function QuienRedacta({ ia }: { ia: EstadoDeLaIa }) {
     return (
       <span className="estado halo">
         <Ic id="i-nube" s />
-        <span>{EXTERNOS.find((e) => e.id === ia.api.externo)?.nombre} · API</span>
+        <span>
+          {EXTERNOS.find((e) => e.id === ia.api.externo)?.nombre} · API
+        </span>
       </span>
     );
   if (ia.quien === "mock")
@@ -410,7 +496,13 @@ function Interruptor({
       aria-checked={encendido}
       aria-label={nombre}
       className={encendido ? "conm on" : "conm off"}
-      style={{ background: "none", border: 0, padding: relleno, fontFamily: "inherit", alignSelf: "flex-start" }}
+      style={{
+        background: "none",
+        border: 0,
+        padding: relleno,
+        fontFamily: "inherit",
+        alignSelf: "flex-start",
+      }}
       onClick={alCambiar}
     >
       <span className="track"></span>
@@ -428,14 +520,27 @@ function Interruptor({
  * esta reunión. Todo sale del registro en memoria de Rust (`sintesis::api::Registro`): muere con ⌥⎋ y
  * al cerrar la reunión, y aquí solo se enseña.
  */
-function LoQueSalioAlApi({ salio, bytes, volver }: { salio: LoQueSalio[]; bytes: string; volver: () => void }) {
+function LoQueSalioAlApi({
+  salio,
+  bytes,
+  volver,
+}: {
+  salio: LoQueSalio[];
+  bytes: string;
+  volver: () => void;
+}) {
   const t = useT().cuaderno;
   const idioma = useIdioma();
   const ultima = salio[0];
   const [cifra, unidad = "B"] = bytes.split(" ");
   const nombre = EXTERNOS.find((e) => e.id === ultima.externo)?.nombre ?? "";
   const usd = (v: number | null) =>
-    v === null ? "—" : new Intl.NumberFormat(idioma, { minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(v);
+    v === null
+      ? "—"
+      : new Intl.NumberFormat(idioma, {
+          minimumFractionDigits: 3,
+          maximumFractionDigits: 3,
+        }).format(v);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -451,7 +556,14 @@ function LoQueSalioAlApi({ salio, bytes, volver }: { salio: LoQueSalio[]; bytes:
           {t.seBorraAlCerrar}
         </span>
       </div>
-      <div className="grid-2" style={{ gridTemplateColumns: "1.2fr 1fr", gap: "12px", alignItems: "start" }}>
+      <div
+        className="grid-2"
+        style={{
+          gridTemplateColumns: "1.2fr 1fr",
+          gap: "12px",
+          alignItems: "start",
+        }}
+      >
         <div className="tarjeta">
           <div className="fila">
             <h2 className="seccion crece" style={{ margin: 0 }}>
@@ -463,7 +575,12 @@ function LoQueSalioAlApi({ salio, bytes, volver }: { salio: LoQueSalio[]; bytes:
           </div>
           <div
             className="diccionario"
-            style={{ marginTop: "8px", fontFamily: "var(--font-evidencia)", fontSize: "13.5px", lineHeight: 1.6 }}
+            style={{
+              marginTop: "8px",
+              fontFamily: "var(--font-evidencia)",
+              fontSize: "13.5px",
+              lineHeight: 1.6,
+            }}
           >
             <p>
               {ultima.trozos.map((tr, i) =>
@@ -478,8 +595,15 @@ function LoQueSalioAlApi({ salio, bytes, volver }: { salio: LoQueSalio[]; bytes:
               )}
             </p>
           </div>
-          <p style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "10px" }}>
-            {t.estoEs} <b>{t.todoLoQueSalio}</b> {t.loQueSalioN} {ultima.caracteres} {t.caracteresTachado}
+          <p
+            style={{
+              fontSize: "11.5px",
+              color: "var(--ink-2)",
+              marginTop: "10px",
+            }}
+          >
+            {t.estoEs} <b>{t.todoLoQueSalio}</b> {t.loQueSalioN}{" "}
+            {ultima.caracteres} {t.caracteresTachado}
           </p>
         </div>
         <div className="contador api">
@@ -511,7 +635,8 @@ function LoQueSalioAlApi({ salio, bytes, volver }: { salio: LoQueSalio[]; bytes:
                 <td className="mono">{p.hora}</td>
                 <td>
                   {/* Lo del ensayo, rotulado como lo que es (auditoría del S4, M21). */}
-                  {p.para === "banco" ? t.paraElBanco : t.redactarSugerencia} · {p.sobre}
+                  {p.para === "banco" ? t.paraElBanco : t.redactarSugerencia} ·{" "}
+                  {p.sobre}
                 </td>
                 <td className="num">{p.caracteres}</td>
                 <td className="num">{p.tapadas}</td>
@@ -520,7 +645,15 @@ function LoQueSalioAlApi({ salio, bytes, volver }: { salio: LoQueSalio[]; bytes:
             ))}
           </tbody>
         </table>
-        <p style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "6px" }}>{t.registroEnMemoria}</p>
+        <p
+          style={{
+            fontSize: "11.5px",
+            color: "var(--ink-2)",
+            marginTop: "6px",
+          }}
+        >
+          {t.registroEnMemoria}
+        </p>
       </div>
     </div>
   );
@@ -546,7 +679,8 @@ function LaPuerta({
     void (vista.abierta ? cerrarLaPuerta() : abrirLaPuerta()).then((v) => {
       if (v) alCambiar(v);
     });
-  const copiar = (texto: string) => void navigator.clipboard?.writeText(texto).catch(() => {});
+  const copiar = (texto: string) =>
+    void navigator.clipboard?.writeText(texto).catch(() => {});
   const puede: [string, string][] = [
     [t.buscarQue, t.buscarPor],
     [t.reindexarQue, t.reindexarPor],
@@ -573,7 +707,9 @@ function LaPuerta({
       <div className="tarjeta" style={{ padding: "10px 14px" }}>
         <div className="fila" style={{ gap: "10px" }}>
           <button type="button" className="btn mini" onClick={volver}>
-            <span style={{ display: "inline-flex", transform: "rotate(180deg)" }}>
+            <span
+              style={{ display: "inline-flex", transform: "rotate(180deg)" }}
+            >
               <Ic id="i-flecha" s />
             </span>
             <span>{tc.volverQuienRedacta}</span>
@@ -595,18 +731,37 @@ function LaPuerta({
               <div className="fila" style={{ gap: "8px", marginTop: "6px" }}>
                 <span
                   className="mono crece"
-                  style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                  style={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
                 >
                   {comandoDeGhost(vista.ghost)}
                 </span>
-                <button type="button" className="btn mini" onClick={() => copiar(comandoDeGhost(vista.ghost ?? ""))}>
+                <button
+                  type="button"
+                  className="btn mini"
+                  onClick={() => copiar(comandoDeGhost(vista.ghost ?? ""))}
+                >
                   {t.copiar}
                 </button>
               </div>
-              <p style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "4px" }}>{t.daselo}</p>
+              <p
+                style={{
+                  fontSize: "11.5px",
+                  color: "var(--ink-2)",
+                  marginTop: "4px",
+                }}
+              >
+                {t.daselo}
+              </p>
             </>
           ) : (
-            <p className="mono" style={{ marginTop: "6px", color: "var(--ink-2)" }}>
+            <p
+              className="mono"
+              style={{ marginTop: "6px", color: "var(--ink-2)" }}
+            >
               {t.faltaGhost}
             </p>
           ))}
@@ -638,7 +793,9 @@ function LaPuerta({
                 <Ic id={icono} s relleno />
                 <span className="qué">{que}</span>
                 {/* La primera de «nunca» es la regla que lo sostiene todo: en negrita, como la maqueta. */}
-                <span className="por">{clase === "no" && i === 0 ? <b>{por}</b> : por}</span>
+                <span className="por">
+                  {clase === "no" && i === 0 ? <b>{por}</b> : por}
+                </span>
               </div>
             ))}
           </div>
@@ -650,12 +807,19 @@ function LaPuerta({
           <h2 className="seccion crece" style={{ margin: 0 }}>
             {t.registro}
           </h2>
-          <span className="mono" style={{ color: "var(--ink-2)", fontSize: "11px" }}>
+          <span
+            className="mono"
+            style={{ color: "var(--ink-2)", fontSize: "11px" }}
+          >
             {t.loDenegado}
           </span>
         </div>
         {vista.registro.length === 0 ? (
-          <p style={{ fontSize: "12px", color: "var(--ink-2)", padding: "4px" }}>{t.vacio}</p>
+          <p
+            style={{ fontSize: "12px", color: "var(--ink-2)", padding: "4px" }}
+          >
+            {t.vacio}
+          </p>
         ) : (
           // Se ven tres; el resto de las últimas 50 se desplaza (ADR 018 §6).
           <div style={{ maxHeight: "74px", overflowY: "auto" }}>
@@ -676,10 +840,15 @@ function LineaDelRegistro({ entrada }: { entrada: Entrada }) {
   return (
     <div className="mas">
       <span className="n">{entrada.hora}</span>
-      <span className="titulos crece" style={{ fontFamily: "var(--font-mono)", fontSize: "var(--t-mono)" }}>
+      <span
+        className="titulos crece"
+        style={{ fontFamily: "var(--font-mono)", fontSize: "var(--t-mono)" }}
+      >
         {entrada.orden}
       </span>
-      {r.que === "denegado" && <span style={{ fontSize: "11px" }}>{t.motivo[r.motivo]}</span>}
+      {r.que === "denegado" && (
+        <span style={{ fontSize: "11px" }}>{t.motivo[r.motivo]}</span>
+      )}
       {r.que === "hecho" ? (
         <span className="estado ok">
           <Ic id="i-check-circle" s relleno />

@@ -1103,6 +1103,14 @@ async fn instalar_idioma(app: tauri::AppHandle, codigo: String) -> stt::Disponib
     hecha
 }
 
+/// **¿Cerrar esta ventana cierra la app?** (sprint 010). En Windows, sí, si es la principal: es lo que hace cualquier
+/// programa de Windows, y sin esto la banda y el proceso se quedaban vivos sin otra manera de salir que el Administrador
+/// de tareas (visto en vivo en la Surface). La banda y el relleno no: se cierran solas al terminar la sesión y la app
+/// sigue. En macOS no cambia nada: ahí cerrar la ventana deja la app viva (⌘Q sale). **Pura.**
+fn cerrar_esta_ventana_sale_de_la_app(etiqueta: &str, es_windows: bool) -> bool {
+    es_windows && etiqueta == "principal"
+}
+
 /// ¿Hay algo en marcha con lo que bajar un modelo o medir competiría por la red y el procesador? **Pura**: la escucha
 /// viva, una sesión abierta en cualquier modo —también «solo notas» y presencial, donde la app no escucha pero tú estás
 /// en la llamada— o un ensayo (sprint 008, M4 del S6: antes solo miraba la escucha).
@@ -2005,6 +2013,14 @@ pub fn run() {
         .expect("error al arrancar Angel Ghost");
 
     app.run(|mango, evento| {
+        // Cerrar la ventana principal en Windows cierra la app entera (sprint 010). `exit` lleva a `RunEvent::Exit`, que
+        // corta la escucha y el ensayo, devuelve la ventana acoplada y guarda lo tuyo sin guardar: nada se pierde.
+        if let tauri::RunEvent::WindowEvent { label, event: tauri::WindowEvent::CloseRequested { .. }, .. } = &evento {
+            if cerrar_esta_ventana_sale_de_la_app(label, cfg!(windows)) {
+                println!("[app] se cerró la ventana principal: la app sale entera");
+                mango.exit(0);
+            }
+        }
         // La red de seguridad del cierre normal. Cerrar la banda ya suelta, pero salir de la app
         // por el menú, por ⌘Q o cerrando la última ventana NO pasa por ahí — y dejar la ventana
         // de una reunión encogida al salir es exactamente el fallo que este módulo existe para
@@ -4065,6 +4081,29 @@ fn acoplar_cuando_haya_a_quien<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
             ESPERA * LATIDO.as_secs() as u32 + ESPERA * LATIDO.subsec_millis() / 1000
         );
     });
+}
+
+#[cfg(test)]
+mod pruebas_del_cierre_de_la_ventana {
+    /// **Cerrar la ventana principal sale de la app en Windows, y solo ella** (sprint 010): la banda y el relleno se
+    /// cierran solas al terminar una sesión y la app sigue; en macOS no cambia nada.
+    #[test]
+    fn solo_la_principal_y_solo_en_windows() {
+        assert!(crate::cerrar_esta_ventana_sale_de_la_app("principal", true));
+        for otra in ["banda", "relleno", "", "Principal"] {
+            assert!(!crate::cerrar_esta_ventana_sale_de_la_app(otra, true), "{otra:?} no cierra la app");
+        }
+        assert!(!crate::cerrar_esta_ventana_sale_de_la_app("principal", false), "en macOS la app sigue viva");
+    }
+
+    /// El gancho existe: la regla no sirve de nada si el bucle no la consulta (como el `corte`: una pieza sin cablear).
+    #[test]
+    fn el_bucle_de_eventos_consulta_la_regla() {
+        let fuente = include_str!("lib.rs");
+        let gancho = fuente.find("cerrar_esta_ventana_sale_de_la_app(label, cfg!(windows))").expect("el bucle ya no consulta la regla");
+        let salida = fuente[gancho..].find("mango.exit(0)").expect("la regla no lleva a salir");
+        assert!(salida < 400, "la salida quedó lejos de la regla");
+    }
 }
 
 #[cfg(test)]
