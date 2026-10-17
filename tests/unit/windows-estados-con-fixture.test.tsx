@@ -185,6 +185,23 @@ describe("Honestidad enseña una línea por modelo de voz, medida en este PC", (
     ).toBeTruthy();
   });
 
+  // Auditoría del S9 (A1/B5): el resumen de arriba y la línea del modelo decían lo mismo con las mismas palabras, y un
+  // e2e que buscaba esa frase encontró dos elementos. Con las líneas por modelo, el resumen de «a tiempo» y «sin medir»
+  // no se repite; sin ellas (muestra vacía) sí se pinta, para que el estado no se pierda.
+  it("la cifra del modelo en uso sale UNA vez, no en el resumen y otra vez en su línea", () => {
+    pinta(<HoyEnWindows plataforma={PLATAFORMA_WINDOWS} />, "es");
+    expect(
+      screen.getAllByText(/large-v3-turbo: 10 s de audio en 2\.?350 ms/),
+    ).toHaveLength(1);
+    expect(screen.queryByText(/El techo son 4 s/)).toBeNull();
+    pinta(<HoyEnWindows plataforma={con([])} />, "es");
+    expect(
+      screen.getByText(
+        /Modelo large-v3-turbo: 10 s de audio en 2\.?350 ms\. El techo son 4 s/,
+      ),
+    ).toBeTruthy();
+  });
+
   it("sin modelos en la muestra no pinta el bloque (macOS y el primer cuadro no cambian)", () => {
     pinta(<HoyEnWindows plataforma={con([])} />, "es");
     expect(screen.queryByTestId("modelos-de-voz")).toBeNull();

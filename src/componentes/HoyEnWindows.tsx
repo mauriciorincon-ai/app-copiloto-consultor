@@ -59,6 +59,7 @@ export function HoyEnWindows({
   const grupos = porCuando(p);
   const porClave = new Map(p.funciones.map((f) => [f.clave, f]));
   const whisper = estadoDeWhisper(p.transcripcion);
+  const hayModelos = (p.transcripcion?.modelos.length ?? 0) > 0;
   const { si, "no-por-ahora": noPorAhora } = grupos;
 
   const fila = (clave: ClaveDeWindows) => {
@@ -142,13 +143,15 @@ export function HoyEnWindows({
           <span>{t.whisper.sinModelo}</span>
         </p>
       )}
-      {whisper?.que === "sin-medir" && (
+      {/* «Sin medir» y «a tiempo» las dicen las líneas por modelo de abajo (sprint 009, auditoría: A1/B5); este resumen
+          solo se pinta si no hay esas líneas. «Lento» sí se queda: trae el consejo y el botón del modelo pequeño. */}
+      {whisper?.que === "sin-medir" && !hayModelos && (
         <p className="estado mute">
           <Ic id="i-ring" s />
           <span>{t.whisper.sinMedir(whisper.modelo)}</span>
         </p>
       )}
-      {whisper?.que === "a-tiempo" && (
+      {whisper?.que === "a-tiempo" && !hayModelos && (
         <p className="estado ok">
           <Ic id="i-check-circle" s relleno />
           <span>{t.whisper.aTiempo(whisper.modelo, cifra(whisper.ms))}</span>
@@ -168,7 +171,7 @@ export function HoyEnWindows({
           </span>
         </p>
       )}
-      {(p.transcripcion?.modelos.length ?? 0) > 0 && (
+      {hayModelos && (
         <>
           <h3 className="seccion" style={{ margin: "12px 0 4px" }}>
             {t.whisper.modelos.titulo}

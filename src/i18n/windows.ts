@@ -154,9 +154,9 @@ const ES: TextosDeWindows = {
     n === 1 ? "1 tecla no responde" : `${n} teclas no responden`,
   whisper: {
     titulo: "La transcripción en este PC",
-    bajando: "Bajando el modelo de voz (1,6 GB, con su comprobación)…",
+    bajando: "Bajando el modelo de voz, con su comprobación…",
     sinModelo:
-      "No hay modelo de voz. «Instalar» en Idioma lo baja: 1,6 GB, y se comprueba su huella antes de usarlo.",
+      "No hay modelo de voz. «Instalar» en Idioma lo baja (1,6 GB; 0,5 GB en un PC ARM64) y se comprueba su huella antes de usarlo.",
     sinMedir: (m) => `Modelo ${m}: sin medir en esta sesión.`,
     aTiempo: (m, ms) =>
       `Modelo ${m}: 10 s de audio en ${ms} ms. El techo son 4 s.`,
@@ -194,7 +194,7 @@ const ES: TextosDeWindows = {
   },
   honestidad: {
     modoDetalle:
-      "La app abre una conexión solo si enciendes el API en IA, con tu clave, y solo con texto anonimizado. La otra la abre la propia app, una vez, cuando pides instalar el modelo de voz: 1,6 GB, comprobados antes de usarse.",
+      "La app abre una conexión solo si enciendes el API en IA, con tu clave, y solo con texto anonimizado. La otra la abre la propia app, una vez, cuando pides instalar el modelo de voz: 1,6 GB (0,5 GB en un PC ARM64), comprobados antes de usarse.",
   },
   permisos: {
     microfonoPara: "Escuchar la sala o tu voz, con el micrófono de este PC",
@@ -292,9 +292,9 @@ const EN: TextosDeWindows = {
       : `${n} shortcuts aren't responding`,
   whisper: {
     titulo: "Transcription on this PC",
-    bajando: "Downloading the speech model (1.6 GB, with its checksum)…",
+    bajando: "Downloading the speech model, with its checksum…",
     sinModelo:
-      "There is no speech model. «Install» in Language downloads it: 1.6 GB, and its checksum is verified before use.",
+      "There is no speech model. «Install» in Language downloads it (1.6 GB; 0.5 GB on an ARM64 PC) and its checksum is verified before use.",
     sinMedir: (m) => `Model ${m}: not measured this session.`,
     aTiempo: (m, ms) =>
       `Model ${m}: 10 s of audio in ${ms} ms. The ceiling is 4 s.`,
@@ -332,7 +332,7 @@ const EN: TextosDeWindows = {
   },
   honestidad: {
     modoDetalle:
-      "The app opens a connection only if you turn on the API in AI, with your key, and only with anonymized text. The other one the app opens itself, once, when you ask to install the speech model: 1.6 GB, checked before use.",
+      "The app opens a connection only if you turn on the API in AI, with your key, and only with anonymized text. The other one the app opens itself, once, when you ask to install the speech model: 1.6 GB (0.5 GB on an ARM64 PC), checked before use.",
   },
   permisos: {
     microfonoPara:
