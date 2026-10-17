@@ -38,8 +38,13 @@ tantivy = "0.26"
 # Los dos lectores que no son texto plano. El .docx es un zip con XML dentro, así que se abre
 # con las piezas y no con una librería de Word: menos superficie y ningún escritor de .docx
 # enlazado en una app que jamás escribe .docx.
+#
+# `zip` 9 (sprint 009): la 2.4.2 tenía tres avisos de RustSec (0367, 0368 y 0369, este crítico: `extract` y los permisos
+# por enlaces simbólicos) y `build-escritorio` los paró. La app solo LEE (`ZipArchive::new` + `by_name`, en
+# `corpus/leer.rs`) y no llama a `extract`, pero la subida quita el aviso de raíz. En la 9, `deflate` trae además
+# `zopfli`, que solo comprime: se pide solo el lector (`deflate-flate2-zlib-rs`), en Rust puro.
 pdf-extract = "0.12"
-zip = { version = "2", default-features = false, features = ["deflate"] }
+zip = { version = "9", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 quick-xml = "0.42"
 # Para UNA cosa: el diálogo con el que el usuario señala su carpeta de documentos. La app no
 # puede abrir un selector de carpetas sin él, y pedir la ruta escrita a mano sería empujar al
