@@ -1,6 +1,10 @@
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
-import { join, relative } from "node:path";
+import { posix } from "node:path";
 import { describe, expect, it } from "vitest";
+
+// Las rutas del barrido van con `/` en cualquier sistema (sprint 009): se comparan con las de abajo, escritas con
+// `/`, y en Windows `join` y `relative` de `node:path` devolvían barras invertidas.
+const { join } = posix;
 
 /**
  * Gate de la PROTECCIÓN DE CAPTURA — el riesgo nº 1 del sprint 001.
@@ -83,13 +87,13 @@ describe("protección de captura: la banda en la configuración, el cuaderno en 
     for (const f of rust(FUENTES_RUST)) {
       const lineas = readFileSync(f, "utf8").split("\n");
       // El cuerpo de la única función que puede encenderlo: de su firma a la llave que la cierra.
-      const desde = relative(".", f) === CUADERNO.archivo ? lineas.findIndex((l) => l.startsWith(CUADERNO.firma)) : -1;
+      const desde = f === CUADERNO.archivo ? lineas.findIndex((l) => l.startsWith(CUADERNO.firma)) : -1;
       const hasta = desde < 0 ? -1 : lineas.findIndex((l, i) => i > desde && l === "}");
       lineas.forEach((linea, i) => {
         if (linea.includes("proteccion:cita")) return; // línea que CITA el nombre sin encenderlo
         if (!ENCENDIDO.test(linea)) return;
         if (i > desde && i < hasta) permitidas++;
-        else hallazgos.push(`${relative(".", f)}:${i + 1}  ${linea.trim().slice(0, 100)}`);
+        else hallazgos.push(`${f}:${i + 1}  ${linea.trim().slice(0, 100)}`);
       });
     }
     expect(

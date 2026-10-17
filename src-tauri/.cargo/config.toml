@@ -1,0 +1,19 @@
+# Windows ARM64 (sprint 009, ADR 022 enmienda 3): whisper.cpp con clang-cl y Ninja, porque ggml no compila con MSVC
+# en ARM (ver `cmake/windows-arm64-clang-cl.cmake`). Cada variable lleva el target en el nombre: el crate `cmake` y el
+# crate `cc` solo las leen al compilar para `aarch64-pc-windows-msvc`. En x64 y en macOS no cambia nada (el único crate
+# del árbol que usa `cmake` es `whisper-rs-sys`, que solo existe en Windows).
+[env]
+CMAKE_GENERATOR_aarch64_pc_windows_msvc = "Ninja"
+CMAKE_TOOLCHAIN_FILE_aarch64_pc_windows_msvc = { value = "cmake/windows-arm64-clang-cl.cmake", relative = true }
+# Con Ninja no llega el /EHsc que MSBuild pone por defecto, y ggml usa excepciones de C++ (gguf.cpp).
+CXXFLAGS_aarch64_pc_windows_msvc = "-EHsc"
+
+# **Un binario que corre en cualquier PC, no solo en el que lo compiló** (sprint 009, auditoría A2). Con el valor por
+# defecto ggml PRUEBA las instrucciones en la máquina que compila (`FindSIMD.cmake`: AVX-512, AVX2…) y compila para
+# ellas. En la CI eso dio `STATUS_ILLEGAL_INSTRUCTION` (0xc000001d) en `build-windows`: la caché de `target/` se restauró
+# en un runner con otra CPU. Y el instalador x64 que sube la CI se instala en el PC del usuario, que no es el runner.
+# Con `GGML_NATIVE=OFF` ggml activa SSE4.2, AVX, AVX2, BMI2, FMA y F16C (la base de Haswell, 2013, en adelante) y deja
+# AVX-512 apagado (`ggml/CMakeLists.txt`, `INS_ENB`). Esta variable no lleva el target en el nombre porque `whisper-rs-sys`
+# solo reenvía las `GGML_*` tal cual; macOS no compila whisper (la dependencia es de Windows) y ARM64 ya la fija igual en
+# `cmake/windows-arm64-clang-cl.cmake`, junto con su base `armv8.2-a+dotprod+fp16`.
+GGML_NATIVE = "OFF"

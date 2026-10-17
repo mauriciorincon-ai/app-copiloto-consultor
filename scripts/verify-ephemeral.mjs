@@ -16,7 +16,11 @@
 // fuera de la carpeta de notas). Sin este script, la CI falla: un gate saltado se ve igual
 // que uno verde.
 import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
-import { join, relative } from "node:path";
+import { posix } from "node:path";
+
+// Las rutas van con `/` en cualquier sistema (sprint 009): se comparan con las de `PROTEGIDOS`, escritas con `/`, y en
+// Windows `join` y `relative` de `node:path` devolvían barras invertidas (los tres módulos de Swift salían «mentirosos»).
+const { join } = posix;
 
 // Módulos protegidos: TODO lo que vive aquí es efímero (RAM) por definición.
 //
@@ -160,7 +164,7 @@ for (const dir of PROTEGIDOS) {
   for (const f of lista) {
     readFileSync(f, "utf8").split("\n").forEach((linea, i) => {
       if (ALLOW.test(linea)) return;
-      for (const re of PROHIBIDO) if (re.test(linea)) { hallazgos++; console.error(`✕ ${relative(".", f)}:${i + 1}  ${re}  →  ${linea.trim()}`); }
+      for (const re of PROHIBIDO) if (re.test(linea)) { hallazgos++; console.error(`✕ ${f}:${i + 1}  ${re}  →  ${linea.trim()}`); }
     });
   }
 }
@@ -178,7 +182,7 @@ let mentirosos = 0;
 for (const raiz of CANDIDATOS) {
   for (const f of archivos(raiz)) {
     if (!MARCA.test(readFileSync(f, "utf8"))) continue;
-    const ruta = relative(".", f);
+    const ruta = f;
     if (PROTEGIDOS.some((d) => ruta.startsWith(d + "/") || ruta === d)) continue;
     mentirosos++;
     console.error(

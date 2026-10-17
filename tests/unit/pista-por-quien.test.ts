@@ -1,7 +1,11 @@
 // @vitest-environment node
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { posix } from "node:path";
 import { describe, expect, it } from "vitest";
+
+// Las rutas del barrido van con `/` en cualquier sistema (sprint 009): se comparan con las de abajo, escritas con
+// `/`, y en Windows `join` y `relative` de `node:path` devolvían barras invertidas.
+const { join } = posix;
 
 /**
  * **De quién es un turno se pregunta con `Pista::quien()`, nunca comparando pistas** (sprint 005, ADR 020).
@@ -50,7 +54,7 @@ const PROHIBIDAS: [string, RegExp][] = [
 ];
 
 describe("de quién es un turno se pregunta con quien(), no comparando pistas", () => {
-  const archivos = rust(RAIZ).filter((f) => relative(".", f) !== DONDE_VIVE);
+  const archivos = rust(RAIZ).filter((f) => f !== DONDE_VIVE);
 
   it("hay Rust que mirar (un gate sobre una carpeta vacía no es un gate)", () => {
     expect(archivos.length).toBeGreaterThan(50);
@@ -66,7 +70,7 @@ describe("de quién es un turno se pregunta con quien(), no comparando pistas", 
           for (const [que, re] of PROHIBIDAS) {
             if (re.test(linea))
               fallos.push(
-                `${relative(".", archivo)}:${i + 1} · ${que} · ${linea.trim()}`,
+                `${archivo}:${i + 1} · ${que} · ${linea.trim()}`,
               );
           }
         });
@@ -106,7 +110,7 @@ describe("en la webview, comparar con una pista concreta se decide a propósito 
         if (linea.trim().startsWith("//") || linea.trim().startsWith("*")) return;
         if (!COMPARA_PISTA.test(linea)) return;
         const decidida = linea.includes(DECIDIDA) || (lineas[i - 1] ?? "").includes(DECIDIDA);
-        if (!decidida) fallos.push(`${relative(".", archivo)}:${i + 1} · ${linea.trim()}`);
+        if (!decidida) fallos.push(`${archivo}:${i + 1} · ${linea.trim()}`);
       });
     }
     expect(

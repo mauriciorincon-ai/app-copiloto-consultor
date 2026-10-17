@@ -247,7 +247,7 @@ pub fn muestras() -> Vec<Muestra> {
     use crate::escucha::{EstadoDeEscucha, EstadoDePista, Novedad};
     use crate::ficha::{Acumulada, Aparicion, Cercana, Ficha, Fuente, Respuesta};
     use crate::permisos::{Estado, Permisos};
-    use crate::plataforma::{Plataforma, Sistema, Transcripcion};
+    use crate::plataforma::{ModeloEnEsteEquipo, Plataforma, Sistema, Transcripcion};
     use crate::sesion::{Proteccion, Reunion};
     use crate::stt::{Disponibilidad, Turno};
 
@@ -1013,11 +1013,32 @@ pub fn muestras() -> Vec<Muestra> {
         // Sprint 006 (ADR 022): lo que la app hace en este equipo. En Windows, las 15 funciones y whisper medido.
         m("PLATAFORMA_WINDOWS", "Plataforma", "./plataforma", &Plataforma::de(
             Sistema::Windows,
-            Some(Transcripcion { modelo: Some("large-v3-turbo"), latencia_ms: Some(2_350), techo_ms: 4_000, bajando: false, descartados: 0 }),
+            Some(Transcripcion {
+                modelo: Some("large-v3-turbo"),
+                latencia_ms: Some(2_350),
+                techo_ms: 4_000,
+                bajando: false,
+                descartados: 0,
+                // Sprint 009: una línea por modelo. El pequeño sin bajar, el grande en uso y medido.
+                modelos: vec![
+                    ModeloEnEsteEquipo { nombre: "large-v3-turbo", bajado: true, latencia_ms: Some(2_350), en_uso: true, por_defecto: true },
+                    ModeloEnEsteEquipo { nombre: "small", bajado: false, latencia_ms: None, en_uso: false, por_defecto: false },
+                ],
+            }),
         )),
         m("PLATAFORMA_WINDOWS_SIN_MODELO", "Plataforma", "./plataforma", &Plataforma::de(
             Sistema::Windows,
-            Some(Transcripcion { modelo: None, latencia_ms: None, techo_ms: 4_000, bajando: true, descartados: 0 }),
+            Some(Transcripcion {
+                modelo: None,
+                latencia_ms: None,
+                techo_ms: 4_000,
+                bajando: true,
+                descartados: 0,
+                modelos: vec![
+                    ModeloEnEsteEquipo { nombre: "large-v3-turbo", bajado: false, latencia_ms: None, en_uso: false, por_defecto: true },
+                    ModeloEnEsteEquipo { nombre: "small", bajado: false, latencia_ms: None, en_uso: false, por_defecto: false },
+                ],
+            }),
         )),
         m("PLATAFORMA_MACOS", "Plataforma", "./plataforma", &Plataforma::de(Sistema::Macos, None)),
     ]

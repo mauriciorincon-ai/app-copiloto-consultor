@@ -31,17 +31,29 @@ test("en Windows, Honestidad enseña «Hoy en Windows» con sus dos grupos y la 
   ).toBeVisible();
   await expect(page.getByText("Ya funciona")).toBeVisible();
   // Sprint 008: ninguna función queda «todavía no».
-  await expect(page.getByRole("heading", { name: "Todavía no" })).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "No en Windows por ahora" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Todavía no" })).toHaveCount(
+    0,
+  );
+  await expect(
+    page.getByRole("heading", { name: "No en Windows por ahora" }),
+  ).toBeVisible();
   // La banda sin verificar se dice con su frase, no solo con un color. Desde el sprint 007 lo dicen dos filas: la
   // banda protegida y la videollamada, porque las dos dependen de lo que el usuario compruebe en su PC.
   await expect(
     page.getByText(/sin verificar en Teams, Zoom ni Meet/),
   ).toHaveCount(2);
-  // La transcripción: el modelo medido, con la cifra y el techo de 4 s.
+  // La transcripción: una línea por modelo (sprint 009), cada una con su cifra en este PC y el techo de 4 s. El grande
+  // está bajado, medido y en uso; el pequeño, sin bajar. Dentro de su bloque, para que un texto repetido en otra parte
+  // de la pantalla no la confunda (la auditoría del S9 cazó ese choque: A1).
+  const modelos = page.getByTestId("modelos-de-voz");
+  await expect(modelos.locator("p.estado")).toHaveCount(2);
   await expect(
-    page.getByText(/large-v3-turbo: 10 s de audio en 2\.?350 ms/),
+    modelos.getByText(
+      /large-v3-turbo: 10 s de audio en 2\.?350 ms\. Cabe en el techo de 4 s/,
+    ),
   ).toBeVisible();
+  await expect(modelos.getByText(/el que transcribe ahora/)).toHaveCount(1);
+  await expect(modelos.getByText("small: sin bajar.")).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Medir otra vez" }),
   ).toBeVisible();
@@ -51,9 +63,14 @@ test("en Windows, Honestidad enseña «Hoy en Windows» con sus dos grupos y la 
   ).toHaveCount(0);
 });
 
-test("en Windows, «Ya funciona» lleva la videollamada (S7) y las cinco del S8", async ({ page }) => {
+test("en Windows, «Ya funciona» lleva la videollamada (S7) y las cinco del S8", async ({
+  page,
+}) => {
   await page.goto("/?ventana=principal&pantalla=honestidad&plataforma=windows");
-  const ya = page.locator("section, div").filter({ has: page.getByText("Ya funciona", { exact: true }) }).last();
+  const ya = page
+    .locator("section, div")
+    .filter({ has: page.getByText("Ya funciona", { exact: true }) })
+    .last();
   for (const nombre of [
     "Las videollamadas: el audio del cliente",
     "Leer la pantalla de la reunión",
@@ -85,7 +102,9 @@ test("en Windows, Permisos enseña el micrófono de Windows y no inventa los dem
 }) => {
   await page.goto("/?ventana=principal&pantalla=permisos&plataforma=windows");
   // La muestra de la maqueta trae el micrófono concedido: sin botón, con su chip. Los otros tres no existen aún.
-  await expect(page.getByRole("button", { name: "Abrir Ajustes de Windows" })).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Abrir Ajustes de Windows" }),
+  ).toHaveCount(0);
   await expect(page.getByText("Conceder en macOS")).toHaveCount(0);
   // Sprint 007: el audio del sistema y la pantalla de la reunión funcionan sin ningún permiso; desde el sprint 008, acoplarse
   // tampoco pide ninguno.
@@ -136,10 +155,19 @@ for (const tema of ["dark", "light"] as const) {
  * de voz y el modelo los baja la app, no el sistema (ADR 022). Este test es el criterio de aceptación de ese ajuste.
  */
 for (const p of [
-  { que: "idioma", url: "ventana=principal&pantalla=idioma&plataforma=windows" },
-  { que: "honestidad", url: "ventana=principal&pantalla=honestidad&plataforma=windows" },
+  {
+    que: "idioma",
+    url: "ventana=principal&pantalla=idioma&plataforma=windows",
+  },
+  {
+    que: "honestidad",
+    url: "ventana=principal&pantalla=honestidad&plataforma=windows",
+  },
   // Sprint 007: el título «Permisos de macOS» y «Mostrar en Finder» los cazó la lectura de las capturas.
-  { que: "permisos", url: "ventana=principal&pantalla=permisos&plataforma=windows" },
+  {
+    que: "permisos",
+    url: "ventana=principal&pantalla=permisos&plataforma=windows",
+  },
   { que: "notas", url: "ventana=principal&pantalla=notas&plataforma=windows" },
 ]) {
   test(`en Windows, «${p.que}» no dice «macOS» ni «Mac»`, async ({ page }) => {
@@ -156,19 +184,29 @@ for (const p of [
  */
 for (const plataforma of ["", "&plataforma=windows"]) {
   for (const estado of ["archivo", "al-cerrar-bandeja"]) {
-    test(`Notas promete el borrado con la app cerrada (${estado}${plataforma ? ", Windows" : ", macOS"})`, async ({ page }) => {
-      await page.goto(`/?ventana=principal&pantalla=notas&estado=${estado}${plataforma}`);
+    test(`Notas promete el borrado con la app cerrada (${estado}${plataforma ? ", Windows" : ", macOS"})`, async ({
+      page,
+    }) => {
+      await page.goto(
+        `/?ventana=principal&pantalla=notas&estado=${estado}${plataforma}`,
+      );
       await expect(page.locator("h1").first()).toBeVisible();
-      await expect(page.getByText(/aunque no abras la app/).first()).toBeVisible();
+      await expect(
+        page.getByText(/aunque no abras la app/).first(),
+      ).toBeVisible();
     });
   }
 }
 
 /** La IA en Windows (sprint 008, ADR 023): sin modelo del sistema, lo dice con la verdad de Windows y no nombra a Apple. */
-test("en Windows, IA dice que no hay modelo del sistema y que la sugerencia va con el API", async ({ page }) => {
+test("en Windows, IA dice que no hay modelo del sistema y que la sugerencia va con el API", async ({
+  page,
+}) => {
   await page.goto("/?ventana=principal&pantalla=ia&plataforma=windows");
   await expect(page.locator("h1").first()).toBeVisible();
-  await expect(page.getByText(/En Windows no hay modelo del sistema/).first()).toBeVisible();
+  await expect(
+    page.getByText(/En Windows no hay modelo del sistema/).first(),
+  ).toBeVisible();
   await expect(page.getByText(/Apple|macOS|\bMac\b/)).toHaveCount(0);
 });
 
@@ -177,7 +215,9 @@ test("en Windows, IA dice que no hay modelo del sistema y que la sugerencia va c
 test("en Windows, la banda pinta el radar de tu PC", async ({ page }) => {
   await page.setViewportSize({ width: 900, height: 220 });
   await page.goto("/?ventana=banda&estado=radar-invasivo&plataforma=windows");
-  await expect(page.getByText("Te está mirando un programa de tu PC")).toBeVisible();
+  await expect(
+    page.getByText("Te está mirando un programa de tu PC"),
+  ).toBeVisible();
   await expect(page.getByText(/Alt\+Mayús\+Q corta/)).toBeVisible();
   await expect(page.getByText(/⌃|⌥|⎋|macOS|\bMac\b/)).toHaveCount(0);
 });
@@ -188,16 +228,28 @@ test("en Windows, la banda pinta el radar de tu PC", async ({ page }) => {
  */
 const BANDA_SIN_VERIFICAR = "ventana=banda&estado=sin-verificar";
 
-test("en Windows, la banda sin verificar lo dice sin nombrar el Mac y con la tecla de Windows", async ({ page }) => {
+test("en Windows, la banda sin verificar lo dice sin nombrar el Mac y con la tecla de Windows", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 900, height: 220 });
   await page.goto(`/?${BANDA_SIN_VERIFICAR}&plataforma=windows`);
-  await expect(page.getByText("Sin verificar en Teams, Zoom ni Meet · se verifica en tu PC")).toBeVisible();
-  await expect(page.getByText(/Verificada solo en Meet|macOS|\bMac\b/)).toHaveCount(0);
-  await expect(page.getByText(/O corta la banda con Alt\+Mayús\+Q mientras compartes/)).toBeVisible();
+  await expect(
+    page.getByText(
+      "Sin verificar en Teams, Zoom ni Meet · se verifica en tu PC",
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/Verificada solo en Meet|macOS|\bMac\b/),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText(/O corta la banda con Alt\+Mayús\+Q mientras compartes/),
+  ).toBeVisible();
   await expect(page.getByText(/⌃|⌥|⎋/)).toHaveCount(0);
 });
 
-test("en Windows, la banda con una ficha pinta las teclas de Windows", async ({ page }) => {
+test("en Windows, la banda con una ficha pinta las teclas de Windows", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 900, height: 220 });
   await page.goto("/?ventana=banda&estado=ficha&plataforma=windows");
   await expect(page.locator("kbd", { hasText: "Alt+Mayús+F" })).toBeVisible();
@@ -205,28 +257,48 @@ test("en Windows, la banda con una ficha pinta las teclas de Windows", async ({ 
   await expect(page.getByText(/⌃|⌥|⎋/)).toHaveCount(0);
 });
 
-test("en macOS, la banda sigue con sus teclas y su verificación (control de los dos de arriba)", async ({ page }) => {
+test("en macOS, la banda sigue con sus teclas y su verificación (control de los dos de arriba)", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 900, height: 220 });
   await page.goto(`/?${BANDA_SIN_VERIFICAR}`);
-  await expect(page.getByText(/Verificada solo en Meet · macOS 26\.6\.2/)).toBeVisible();
-  await expect(page.getByText(/O corta la banda con ⌥⎋ mientras compartes/)).toBeVisible();
+  await expect(
+    page.getByText(/Verificada solo en Meet · macOS 26\.6\.2/),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/O corta la banda con ⌥⎋ mientras compartes/),
+  ).toBeVisible();
   await expect(page.getByText(/Alt\+Mayús/)).toHaveCount(0);
 });
 
-test("en Windows, Sesión no habla del Mac y dice que la protección está sin verificar", async ({ page }) => {
+test("en Windows, Sesión no habla del Mac y dice que la protección está sin verificar", async ({
+  page,
+}) => {
   await page.goto("/?ventana=principal&pantalla=sesion&plataforma=windows");
   await expect(page.locator("h1").first()).toBeVisible();
   await expect(page.getByText(/tu propio PC/)).toBeVisible();
-  await expect(page.getByText(/sin verificar: se verifica con una videollamada real en tu PC/)).toBeVisible();
+  await expect(
+    page.getByText(
+      /sin verificar: se verifica con una videollamada real en tu PC/,
+    ),
+  ).toBeVisible();
   await expect(page.getByText(/macOS|\bMac\b/)).toHaveCount(0);
 });
 
 for (const tema of ["dark", "light"] as const) {
   for (const p of [
-    { que: "banda sin verificar en Windows", url: `${BANDA_SIN_VERIFICAR}&plataforma=windows` },
-    { que: "sesión en Windows", url: "ventana=principal&pantalla=sesion&plataforma=windows" },
+    {
+      que: "banda sin verificar en Windows",
+      url: `${BANDA_SIN_VERIFICAR}&plataforma=windows`,
+    },
+    {
+      que: "sesión en Windows",
+      url: "ventana=principal&pantalla=sesion&plataforma=windows",
+    },
   ]) {
-    test(`«${p.que}» · tema ${tema} · sin hallazgos de axe`, async ({ page }) => {
+    test(`«${p.que}» · tema ${tema} · sin hallazgos de axe`, async ({
+      page,
+    }) => {
       await page.setViewportSize({ width: 900, height: 700 });
       await page.goto(`/?${p.url}`);
       await page.evaluate((t) => {

@@ -35,6 +35,17 @@ export type TextosDeWindows = {
     sinReunion: string;
     /** Sprint 007: con dos pistas el cliente va primero; lo que no dio tiempo a transcribir, contado sin atribuirlo. */
     descartados: (n: number) => string;
+    /** Sprint 009: una línea por modelo, con lo que tardó en ESTE PC. */
+    modelos: {
+      titulo: string;
+      sinBajar: (m: string) => string;
+      sinMedir: (m: string) => string;
+      aTiempo: (m: string, ms: string) => string;
+      lento: (m: string, ms: string) => string;
+      enUso: string;
+      porDefecto: string;
+      regla: string;
+    };
   };
   /** Sprint 007: un atajo que Windows no dejó registrar porque otra app ya tiene esa combinación. */
   atajoOcupado: (teclas: string) => string;
@@ -96,8 +107,7 @@ const ES: TextosDeWindows = {
     },
     "voz-al-oido": {
       nombre: "La ficha al oído",
-      detalle:
-        "sí, con auriculares; por altavoces no habla",
+      detalle: "sí, con auriculares; por altavoces no habla",
     },
     acople: {
       nombre: "Acoplarse a la ventana de la reunión",
@@ -106,8 +116,7 @@ const ES: TextosDeWindows = {
     },
     ensayo: {
       nombre: "Ensayar con la voz que lee las preguntas",
-      detalle:
-        "sí: la voz del sistema lee las preguntas",
+      detalle: "sí: la voz del sistema lee las preguntas",
     },
     sugerencia: {
       nombre: "La sugerencia redactada por IA",
@@ -131,7 +140,8 @@ const ES: TextosDeWindows = {
     },
     desbloqueo: {
       nombre: "Abrir tus notas guardadas",
-      detalle: "sí: con Windows Hello (tu PIN, tu huella o tu cara), una vez por sesión de la app",
+      detalle:
+        "sí: con Windows Hello (tu PIN, tu huella o tu cara), una vez por sesión de la app",
     },
     "puerta-local": {
       nombre: "La puerta para Claude Code",
@@ -140,12 +150,13 @@ const ES: TextosDeWindows = {
   },
   atajoOcupado: (teclas) =>
     `${teclas} no responde: otra app de este PC ya tiene esa combinación. Lo mismo se hace desde la app.`,
-  teclasSinResponder: (n) => (n === 1 ? "1 tecla no responde" : `${n} teclas no responden`),
+  teclasSinResponder: (n) =>
+    n === 1 ? "1 tecla no responde" : `${n} teclas no responden`,
   whisper: {
     titulo: "La transcripción en este PC",
-    bajando: "Bajando el modelo de voz (1,6 GB, con su comprobación)…",
+    bajando: "Bajando el modelo de voz, con su comprobación…",
     sinModelo:
-      "No hay modelo de voz. «Instalar» en Idioma lo baja: 1,6 GB, y se comprueba su huella antes de usarlo.",
+      "No hay modelo de voz. «Instalar» en Idioma lo baja (1,6 GB; 0,5 GB en un PC ARM64) y se comprueba su huella antes de usarlo.",
     sinMedir: (m) => `Modelo ${m}: sin medir en esta sesión.`,
     aTiempo: (m, ms) =>
       `Modelo ${m}: 10 s de audio en ${ms} ms. El techo son 4 s.`,
@@ -153,11 +164,25 @@ const ES: TextosDeWindows = {
       `Modelo ${m}: tardó ${ms} ms, y pasa del techo de 4 s en este PC. El modelo pequeño es menos preciso, pero más rápido aquí.`,
     medirOtra: "Medir otra vez",
     bajarPequeno: "Bajar el modelo pequeño (0,5 GB)",
-    sinReunion: "Bajar o medir no se puede con una reunión, una sesión o un ensayo abiertos.",
+    sinReunion:
+      "Bajar o medir no se puede con una reunión, una sesión o un ensayo abiertos.",
     descartados: (n) =>
       n === 1
         ? "En la última reunión, 1 turno se quedó sin transcribir: este PC no daba abasto, y se atiende primero al cliente."
         : `En la última reunión, ${n} turnos se quedaron sin transcribir: este PC no daba abasto, y se atiende primero al cliente.`,
+    modelos: {
+      titulo: "Cada modelo de voz, medido en este PC",
+      sinBajar: (m) => `${m}: sin bajar.`,
+      sinMedir: (m) => `${m}: bajado, sin medir en esta sesión.`,
+      aTiempo: (m, ms) =>
+        `${m}: 10 s de audio en ${ms} ms. Cabe en el techo de 4 s.`,
+      lento: (m, ms) =>
+        `${m}: 10 s de audio en ${ms} ms. Pasa del techo de 4 s.`,
+      enUso: "el que transcribe ahora",
+      porDefecto: "el que baja «Instalar»",
+      regla:
+        "Se transcribe con el modelo mayor que cabe en 4 s en este PC; mientras uno no se haya medido, se da por bueno.",
+    },
   },
   idioma: {
     transcribeTuPc: "Transcribe tu PC, no un servicio",
@@ -169,7 +194,7 @@ const ES: TextosDeWindows = {
   },
   honestidad: {
     modoDetalle:
-      "La app abre una conexión solo si enciendes el API en IA, con tu clave, y solo con texto anonimizado. La otra la abre la propia app, una vez, cuando pides instalar el modelo de voz: 1,6 GB, comprobados antes de usarse.",
+      "La app abre una conexión solo si enciendes el API en IA, con tu clave, y solo con texto anonimizado. La otra la abre la propia app, una vez, cuando pides instalar el modelo de voz: 1,6 GB (0,5 GB en un PC ARM64), comprobados antes de usarse.",
   },
   permisos: {
     microfonoPara: "Escuchar la sala o tu voz, con el micrófono de este PC",
@@ -218,8 +243,7 @@ const EN: TextosDeWindows = {
     },
     "voz-al-oido": {
       nombre: "The card read to your ear",
-      detalle:
-        "yes, with headphones; it doesn't speak through speakers",
+      detalle: "yes, with headphones; it doesn't speak through speakers",
     },
     acople: {
       nombre: "Docking to the meeting window",
@@ -228,8 +252,7 @@ const EN: TextosDeWindows = {
     },
     ensayo: {
       nombre: "Rehearsing with a voice that reads the questions",
-      detalle:
-        "yes: the system voice reads the questions",
+      detalle: "yes: the system voice reads the questions",
     },
     sugerencia: {
       nombre: "The suggestion written by AI",
@@ -253,7 +276,8 @@ const EN: TextosDeWindows = {
     },
     desbloqueo: {
       nombre: "Opening your saved notes",
-      detalle: "yes: with Windows Hello (your PIN, fingerprint or face), once per app session",
+      detalle:
+        "yes: with Windows Hello (your PIN, fingerprint or face), once per app session",
     },
     "puerta-local": {
       nombre: "The door for Claude Code",
@@ -262,12 +286,15 @@ const EN: TextosDeWindows = {
   },
   atajoOcupado: (teclas) =>
     `${teclas} doesn't respond: another app on this PC already has that combination. You can do the same from the app.`,
-  teclasSinResponder: (n) => (n === 1 ? "1 shortcut isn't responding" : `${n} shortcuts aren't responding`),
+  teclasSinResponder: (n) =>
+    n === 1
+      ? "1 shortcut isn't responding"
+      : `${n} shortcuts aren't responding`,
   whisper: {
     titulo: "Transcription on this PC",
-    bajando: "Downloading the speech model (1.6 GB, with its checksum)…",
+    bajando: "Downloading the speech model, with its checksum…",
     sinModelo:
-      "There is no speech model. «Install» in Language downloads it: 1.6 GB, and its checksum is verified before use.",
+      "There is no speech model. «Install» in Language downloads it (1.6 GB; 0.5 GB on an ARM64 PC) and its checksum is verified before use.",
     sinMedir: (m) => `Model ${m}: not measured this session.`,
     aTiempo: (m, ms) =>
       `Model ${m}: 10 s of audio in ${ms} ms. The ceiling is 4 s.`,
@@ -281,6 +308,19 @@ const EN: TextosDeWindows = {
       n === 1
         ? "In the last meeting, 1 turn wasn't transcribed: this PC couldn't keep up, and the client is served first."
         : `In the last meeting, ${n} turns weren't transcribed: this PC couldn't keep up, and the client is served first.`,
+    modelos: {
+      titulo: "Each speech model, measured on this PC",
+      sinBajar: (m) => `${m}: not downloaded.`,
+      sinMedir: (m) => `${m}: downloaded, not measured this session.`,
+      aTiempo: (m, ms) =>
+        `${m}: 10 s of audio in ${ms} ms. Fits the 4 s ceiling.`,
+      lento: (m, ms) =>
+        `${m}: 10 s of audio in ${ms} ms. Over the 4 s ceiling.`,
+      enUso: "the one transcribing now",
+      porDefecto: "the one «Install» downloads",
+      regla:
+        "Transcription uses the largest model that fits in 4 s on this PC; until one has been measured, it is taken as fitting.",
+    },
   },
   idioma: {
     transcribeTuPc: "Transcribes on your PC, not a service",
@@ -292,7 +332,7 @@ const EN: TextosDeWindows = {
   },
   honestidad: {
     modoDetalle:
-      "The app opens a connection only if you turn on the API in AI, with your key, and only with anonymized text. The other one the app opens itself, once, when you ask to install the speech model: 1.6 GB, checked before use.",
+      "The app opens a connection only if you turn on the API in AI, with your key, and only with anonymized text. The other one the app opens itself, once, when you ask to install the speech model: 1.6 GB (0.5 GB on an ARM64 PC), checked before use.",
   },
   permisos: {
     microfonoPara:

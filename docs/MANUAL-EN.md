@@ -840,7 +840,8 @@ It is not a new feature but the same app on another system, which is why it sits
   at startup and closes.
 - **The microphone:** Windows asks for nothing from the app. You grant or revoke it yourself in **Settings → Privacy &
   security → Microphone**. In Permissions, the **Open Windows Settings** button takes you there.
-- **The speech model:** in Language, **Install** downloads the large whisper model (1.6 GB). Before it is used, its
+- **The speech model:** in Language, **Install** downloads the large whisper model (1.6 GB; on a Windows ARM64 PC, the small one: see *Installing on a Surface or an ARM
+  PC*, below). Before it is used, its
   SHA-256 checksum is verified; if it does not match, it is deleted. **It is never downloaded with a meeting, a session (also “notes-only” or in person) or a rehearsal open, and if one starts while it downloads, the download stops** and what it had is deleted. If the connection hangs, it lets go by itself after three hours. How long whisper took on your PC is remembered when you reopen the app.
 - **Your PC's speed:** Honesty measures how long transcription takes on 10 seconds of sample audio. If it
   goes over 4 s, it says so and offers to download the small model (0.5 GB): it is less accurate, but faster on that PC.
@@ -939,6 +940,25 @@ It is not a new feature but the same app on another system, which is why it sits
 | `borrado-con-la-app-cerrada` | yes: the Task Scheduler, at the minute of each expiry                                                                   |
 | `desbloqueo`                 | yes: Windows Hello, once per app session                                                                                |
 | `puerta-local`               | not on Windows for now: the door for Claude Code                                                                        |
+
+### Installing on a Surface or an ARM PC · Sprint 009
+
+- **Which installer.** Continuous integration uploads `angel-ghost-windows-arm64`, with an `.exe` (for your user, no
+  administrator) and an `.msi` (per machine, asks for an administrator). Both are native ARM64: on a Surface or any
+  Windows on ARM use that artifact, not `angel-ghost-windows`, which is x64 and would run emulated. Install only one of
+  the two: they share an identifier. Because it is not signed, SmartScreen warns you: on an English Windows, click
+  *More info* and then *Run anyway*.
+- **Which speech model.** In Language, **Install** downloads the **small** model (0.5 GB), not the large one, on a
+  Windows ARM64 PC. On the reference Surface (Snapdragon X Plus) the small one transcribes the 10 s of calibration in
+  about 1.6 s and the large one in 8.5 to 18 s, against a 4 s ceiling. Honesty shows one line per model with its figure
+  **on your PC**, which one is transcribing now and which one *Install* downloads; when it measures, your figure
+  decides, but only among the models you have downloaded.
+- **Building it yourself.** The README has “Developing on Windows ARM”: a script, `scripts/entorno-windows.ps1`, says
+  what is missing without installing anything, and each installation is done separately. The installer comes from
+  `pnpm tauri build --bundles nsis`.
+- **What does not change.** Nothing changes on macOS or on x64 Windows. The band's protection stays “unverified” in
+  Teams, Zoom and Meet until you test it on your PC, and the ARM64 `.msi` is built but its installation has not been
+  tested live yet.
 
 ## Keyboard shortcuts on the Mac
 
