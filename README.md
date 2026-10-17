@@ -35,7 +35,9 @@ por el audio del sistema, la ficha al oído, la pantalla de la reunión y los at
 el acople, la sugerencia con el API, el radar, Windows Hello y el borrado con la app cerrada. Honestidad dice qué hace
 hoy y qué no (de las quince funciones, solo la puerta local queda fuera), y la protección sigue «sin verificar» en
 Teams, Zoom y Meet hasta que la pruebes en tu PC. El instalador sale sin firmar de la integración continua hasta
-G-Release.
+G-Release. Desde el sprint 009 la app es además **nativa en ARM64** (una Surface con Snapdragon, por ejemplo): se
+compila y se instala sin emulación, y «Instalar» baja el modelo de voz que cupo en 4 s en un equipo así (ver
+«Desarrollar en Windows ARM»).
 
 ## Arrancarla
 
@@ -52,6 +54,40 @@ compilarse. Los mismos dos comandos arrancan la app; el modelo de voz (1,6 GB) s
 Para el instalador sin firmar: `pnpm tauri build --bundles msi,nsis`.
 
 `pnpm ghost` compila además la puerta local, para que Claude Code opere la app desde el mismo Mac.
+
+## Desarrollar en Windows ARM
+
+Desde el sprint 009 la app se compila, se prueba y se instala **nativa en ARM64**, sin emulación (ADR 022, enmienda 3).
+Se probó en una Surface con Snapdragon X Plus y Windows 11 en inglés. Cada instalación toca tu equipo, así que se hace
+**una por una**, viendo antes qué hace (regla 24).
+
+1. **Mira qué falta**, sin instalar nada: `powershell -NoProfile -File scripts/entorno-windows.ps1`. Imprime «tengo ·
+   necesito» por pieza y sale con 1 si falta alguna. Git Bash sale como «aviso»: es x64 emulado, y es lo normal.
+2. **Instala lo que falte**, una pieza por vez, con `winget`:
+
+| Pieza | Para qué | Comando |
+|---|---|---|
+| jq | el hook de secretos de Claude Code; sin él no puede escribir | `winget install --id jqlang.jq --exact` |
+| Build Tools 2022 con C++ ARM64 | el compilador y el enlazador nativos | `winget install --id Microsoft.VisualStudio.2022.BuildTools --exact --override "--passive --wait --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Windows11SDK.26100"` |
+| Rustup (host `aarch64-pc-windows-msvc`) | Rust | `winget install --id Rustlang.Rustup --exact` |
+| CMake | whisper.cpp | `winget install --id Kitware.CMake --exact` |
+| LLVM (ARM64) | `libclang` para `bindgen` y `clang` para `ring` | `winget install --id LLVM.LLVM --exact` |
+
+   Después, para tu usuario: la variable `LIBCLANG_PATH` con el valor `C:\Program Files\LLVM\bin`, y esa misma carpeta
+   al final del `PATH`. Abre una terminal nueva y repite el paso 1: tiene que salir todo en `[ok]`.
+3. **Compila y prueba**:
+
+```
+pnpm install
+cd src-tauri
+AG_SIN_HARDWARE=1 cargo test --locked -j 4
+cd ..
+pnpm tauri build --bundles nsis
+```
+
+El `-j 4` no es manía: enlazar con todos los núcleos se queda sin memoria en un equipo de 16 GB. `AG_SIN_HARDWARE=1`
+impide que `cargo test` abra el micrófono o las credenciales (regla 25). `--bundles msi` saca el `.msi`. whisper.cpp se
+compila con clang-cl, porque ggml no admite MSVC en ARM (ADR 022, enmienda 3).
 
 ## Dónde está cada cosa
 
@@ -100,3 +136,11 @@ the video call on that same PC, docking, the suggestion through the API, the rad
 app closed; the unsigned installer comes from CI). Today it is built from this repo (macOS 26+ or Windows 10 2004+,
 `pnpm install && pnpm tauri dev`); a signed build comes later. The app's interface is in Spanish and English; the
 documents in this repo (manual, test guide, decisions) are in Spanish, and the manual also has an English edition.
+
+**Windows on ARM (sprint 009).** The app also builds, tests and installs natively on ARM64 (a Surface with a Snapdragon,
+for example), with no emulation (ADR 022, amendment 3). `powershell -NoProfile -File scripts/entorno-windows.ps1` only
+reads: it lists what is missing, and each installation —`jq`, the Visual Studio 2022 Build Tools with C++ ARM64, Rustup,
+CMake and LLVM, all through `winget`— is done one at a time, after seeing what it does. Then set `LIBCLANG_PATH` to the
+LLVM `bin` folder, add that folder to your `PATH`, and run `AG_SIN_HARDWARE=1 cargo test --locked -j 4` in `src-tauri`
+and `pnpm tauri build --bundles nsis`. On an ARM64 PC, the model that Install downloads is the largest one that fits in
+4 s: the small one, on the reference Surface.
