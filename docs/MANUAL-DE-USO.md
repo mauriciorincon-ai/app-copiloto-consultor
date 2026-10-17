@@ -827,7 +827,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 
 ## Angel Ghost en Windows · Sprints 006, 007 y 008
 
-No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fuera de «Features».
+No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fuera de «Features». **Si usas la app solo en Windows, el manual entero y sin remitir a otro sistema es `docs/MANUAL-WINDOWS.md`** (en inglés, `docs/MANUAL-WINDOWS-EN.md`), con su guía de prueba en `docs/GUIA-DE-PRUEBA-WINDOWS.html`.
 
 - **Qué hace:** la app se instala en un PC con Windows. Tiene la banda protegida, el micrófono, la transcripción
   local con whisper, tus notas cifradas y tu corpus con sus fichas. **Desde el sprint 007 también la
@@ -961,8 +961,8 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
   falta sin instalar nada, y cada instalación se hace por separado. El instalador sale de
   `pnpm tauri build --bundles nsis`.
 - **Lo que no cambia.** En macOS y en Windows x64 no cambia nada. La protección de la banda sigue «sin verificar» en
-  Teams, Zoom y Meet hasta que la pruebes en tu PC, y el `.msi` ARM64 está construido pero su instalación todavía no se
-  ha probado en vivo.
+  Teams, Zoom y Meet hasta que la pruebes en tu PC, y el `.msi` ARM64 se instaló y abrió en vivo en una Surface en el sprint 010 (reutilizó la carpeta de la instalación
+  anterior con el `.exe`).
 
 ## Atajos de teclado en el Mac
 

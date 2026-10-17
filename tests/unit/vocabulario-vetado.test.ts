@@ -18,6 +18,10 @@ const RAICES = [
   "README.md",
   "docs/MANUAL-DE-USO.md",
   "docs/MANUAL-EN.md",
+  // Sprint 010: el manual y la guía de prueba de Windows, que se leen solos.
+  "docs/MANUAL-WINDOWS.md",
+  "docs/MANUAL-WINDOWS-EN.md",
+  "docs/GUIA-DE-PRUEBA-WINDOWS.html",
   // Sprint 008: el recorrido público de la app, su export para CV Viva y su guion.
   "docs/BROCHURE.html",
   "docs/brochure-export.json",

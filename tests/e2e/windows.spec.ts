@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
@@ -352,4 +353,44 @@ test("en Windows, cada línea de modelo cabe en su bloque y Honestidad no se des
       ),
   );
   expect(desbordados, "Honestidad tiene desplazamiento horizontal").toEqual([]);
+});
+
+/**
+ * **EL ARNÉS ENTERO, SOBRE EL BUILD REAL, EN WINDOWS, NO HABLA DEL MAC** (sprint 010). El gate de vitest recorre las mismas
+ * URLs sobre el código; este las recorre sobre lo que se distribuye: el build servido, con el navegador de verdad. La lista
+ * se lee de `scripts/capturar-fidelidad.mjs` (una sola fuente), los encuadres de la banda en el proyecto de la banda y los
+ * demás en los de la ventana principal. ¿Puede fallar? Sí: un «Touch ID» en Notas «bandeja-llave» es rojo, con la URL.
+ */
+const DEL_MAC =
+  /macOS|\bMac\b|Llavero|Keychain|Touch ID|Finder|launchd|Time Machine|AirPlay|System Settings|Ajustes del Sistema|⌥|⌃/;
+const URLS_DEL_ARNES = [
+  ...new Set(
+    [
+      ...readFileSync("scripts/capturar-fidelidad.mjs", "utf8").matchAll(
+        /url: "([^"]+)"/g,
+      ),
+    ].map((m) => m[1]),
+  ),
+];
+
+test("en Windows, las URLs del arnés de fidelidad no dicen nada del Mac", async ({
+  page,
+}, info) => {
+  const deLaBanda = info.project.name === "banda";
+  const mias = URLS_DEL_ARNES.filter(
+    (u) => u.includes("ventana=banda") === deLaBanda,
+  );
+  expect(
+    mias.length,
+    "el arnés no tiene encuadres para este proyecto",
+  ).toBeGreaterThan(5);
+  const culpables: string[] = [];
+  for (const url of mias) {
+    await page.goto(`/?${url}&plataforma=windows`);
+    await page.evaluate(() => document.fonts.ready);
+    const texto = await page.evaluate(() => document.body.innerText);
+    const frase = DEL_MAC.exec(texto);
+    if (frase) culpables.push(`${url}: «${frase[0]}»`);
+  }
+  expect(culpables, "en Windows el build dice del Mac").toEqual([]);
 });

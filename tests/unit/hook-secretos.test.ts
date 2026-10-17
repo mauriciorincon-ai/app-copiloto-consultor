@@ -132,5 +132,8 @@ describe("hook PreToolUse de secretos (kit v1.37.0; origen planlang AU-S2-B12)",
       expect(r.stderr).toContain("SECRET DETECTADO");
       expect(r.stdout).toBe("");
     },
+    // Lanza dos veces Git Bash con gitleaks y jq, de forma síncrona: con la suite entera en paralelo en una Surface pasa
+    // de los 5 s por defecto de vitest (sprint 010: tardó 11 s y falló solo; suelto, pasa). Es margen, no un hook lento.
+    30_000,
   );
 });

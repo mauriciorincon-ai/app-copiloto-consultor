@@ -96,6 +96,7 @@ compila con clang-cl, porque ggml no admite MSVC en ARM (ADR 022, enmienda 3).
 |---|---|
 | Cómo se usa, función por función | `docs/MANUAL-DE-USO.md` |
 | Qué probar y qué esperar | `docs/GUIA-DE-PRUEBA.html` (doble clic) |
+| Solo en Windows: el manual (ES · EN) y su guía de prueba | `docs/MANUAL-WINDOWS.md` · `docs/MANUAL-WINDOWS-EN.md` · `docs/GUIA-DE-PRUEBA-WINDOWS.html` (doble clic) |
 | Toda la infraestructura, tal como está construida | `docs/BLUEPRINT.html` |
 | El diseño aprobado y el design system | `docs/diseno/` · `design-system.md` |
 | Las decisiones de arquitectura | `decisions/` |
