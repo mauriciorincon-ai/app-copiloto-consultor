@@ -296,6 +296,22 @@ for (const tema of ["dark", "light"] as const) {
       que: "sesión en Windows",
       url: "ventana=principal&pantalla=sesion&plataforma=windows",
     },
+    {
+      que: "banda arriba en Windows",
+      url: "ventana=banda&estado=ficha&borde=arriba&plataforma=windows",
+    },
+    {
+      que: "banda arriba en Windows · solo audio",
+      url: "ventana=banda&estado=voz&borde=arriba&plataforma=windows",
+    },
+    {
+      que: "sesión en Windows · banda bajada",
+      url: "ventana=principal&pantalla=sesion&plataforma=windows&desplazamiento=132",
+    },
+    {
+      que: "sesión en Windows · banda cerrada",
+      url: "ventana=principal&pantalla=sesion&plataforma=windows&banda=cerrada",
+    },
   ]) {
     test(`«${p.que}» · tema ${tema} · sin hallazgos de axe`, async ({
       page,
@@ -393,4 +409,148 @@ test("en Windows, las URLs del arnés de fidelidad no dicen nada del Mac", async
     if (frase) culpables.push(`${url}: «${frase[0]}»`);
   }
   expect(culpables, "en Windows el build dice del Mac").toEqual([]);
+});
+
+/**
+ * **LA BANDA A TU ALTURA (sprint 011).** Con la banda arriba, en Windows, trae el asa de altura y el «×»; Sesión dice a qué
+ * altura está, cómo volverla arriba y, cerrada, cómo traerla. Todo es de Windows: en macOS no hay ni asa, ni «×», ni filas, y
+ * con la banda abajo no hay asa ni fila de altura. Los textos se leen en español; los de inglés los ata `windows-sin-mac`.
+ * ¿Puede fallar? Sí: pintar el asa o el «×» sin mirar la plataforma, o dejar de ofrecer «Mostrar la banda», es rojo.
+ */
+const sinDesbordeAncho = async (page: import("@playwright/test").Page) => {
+  const { ancho, visible } = await page.evaluate(() => ({
+    ancho: document.documentElement.scrollWidth,
+    visible: document.documentElement.clientWidth,
+  }));
+  expect(ancho, "la banda se sale a lo ancho").toBeLessThanOrEqual(visible);
+};
+
+for (const alto of [
+  { que: "88 px", estado: "ficha", cerrar: "Cerrar la banda" },
+  {
+    que: "44 px, solo audio",
+    estado: "voz",
+    cerrar: "Cerrar la banda y terminar la sesión",
+  },
+]) {
+  test(`en Windows, la banda de arriba (${alto.que}) trae el asa de altura y el «×», y no se desborda`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 900, height: 220 });
+    await page.goto(
+      `/?ventana=banda&estado=${alto.estado}&borde=arriba&plataforma=windows`,
+    );
+    const asa = page.locator(".asa-altura");
+    await expect(asa).toHaveCount(1);
+    await expect(asa).toHaveAttribute(
+      "title",
+      "Arrastra para elegir a qué altura queda la banda",
+    );
+    await expect(page.getByRole("button", { name: alto.cerrar })).toBeVisible();
+    await sinDesbordeAncho(page);
+  });
+}
+
+test("en Windows, con la banda abajo no hay asa de altura, y el «×» sigue", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 900, height: 220 });
+  await page.goto(
+    "/?ventana=banda&estado=ficha&borde=abajo&plataforma=windows",
+  );
+  await expect(page.locator(".asa-altura")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Cerrar la banda" }),
+  ).toBeVisible();
+});
+
+test("en macOS, la banda de arriba no trae ni asa de altura ni «×» (control de los de arriba)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 900, height: 220 });
+  await page.goto("/?ventana=banda&estado=ficha&borde=arriba");
+  await expect(page.locator(".asa-altura")).toHaveCount(0);
+  await expect(page.locator(".cerrar-b")).toHaveCount(0);
+  await expect(page.locator("[data-con-cerrar]")).toHaveCount(0);
+});
+
+test("en Windows, Sesión dice a qué altura está la banda y cómo volverla arriba", async ({
+  page,
+}) => {
+  await page.goto("/?ventana=principal&pantalla=sesion&plataforma=windows");
+  await expect(page.getByText("Altura de la banda")).toBeVisible();
+  await expect(page.getByText("Pegada al borde de arriba")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Volver arriba" })).toHaveCount(
+    0,
+  );
+
+  await page.goto(
+    "/?ventana=principal&pantalla=sesion&plataforma=windows&desplazamiento=132",
+  );
+  await expect(page.getByText("132 px bajo el borde de arriba")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Volver arriba" }),
+  ).toBeVisible();
+});
+
+test("en Windows, con la banda cerrada Sesión lo dice y ofrece «Mostrar la banda»", async ({
+  page,
+}) => {
+  await page.goto(
+    "/?ventana=principal&pantalla=sesion&plataforma=windows&banda=cerrada",
+  );
+  await expect(page.getByText("La banda está cerrada")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Mostrar la banda" }),
+  ).toBeVisible();
+
+  await page.goto("/?ventana=principal&pantalla=sesion&plataforma=windows");
+  await expect(page.getByText("La banda está cerrada")).toHaveCount(0);
+});
+
+test("en macOS, Sesión no habla de la altura ni del cierre de la banda", async ({
+  page,
+}) => {
+  await page.goto(
+    "/?ventana=principal&pantalla=sesion&desplazamiento=132&banda=cerrada",
+  );
+  await expect(page.locator("h1").first()).toBeVisible();
+  await expect(page.getByText("Altura de la banda")).toHaveCount(0);
+  await expect(page.getByText("La banda está cerrada")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Mostrar la banda" }),
+  ).toHaveCount(0);
+});
+
+test("en Windows, Sesión ofrece «Bajar» y, con la banda bajada, «Subir»: la altura sin arrastrar", async ({
+  page,
+}) => {
+  await page.goto("/?ventana=principal&pantalla=sesion&plataforma=windows");
+  await expect(
+    page.getByRole("button", { name: "Bajar la banda" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Subir la banda" }),
+  ).toHaveCount(0);
+  await page.goto(
+    "/?ventana=principal&pantalla=sesion&plataforma=windows&desplazamiento=132",
+  );
+  await expect(
+    page.getByRole("button", { name: "Subir la banda" }),
+  ).toBeVisible();
+});
+
+test("en Windows, el «×» de la banda mide al menos 24 × 24 px (WCAG 2.5.8)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 900, height: 220 });
+  await page.goto(
+    "/?ventana=banda&estado=ficha&borde=arriba&plataforma=windows",
+  );
+  const caja = await page
+    .getByRole("button", { name: "Cerrar la banda" })
+    .boundingBox();
+  expect(caja, "el «×» no tiene caja").not.toBeNull();
+  expect(caja!.width).toBeGreaterThanOrEqual(24);
+  expect(caja!.height).toBeGreaterThanOrEqual(24);
 });

@@ -47,9 +47,11 @@ The app transcribes with **whisper**, inside your PC; no audio leaves. The model
 
 It is the window only you see. It asks Windows to keep out of captures, and **in Teams, Zoom and Meet that is unverified**: Honesty and Session say so in those words until you test it on your PC with a real video call. Meanwhile, **share a window, not the whole screen**.
 
-- **Docking.** The meeting window moves down and shrinks to the band when the session starts, and goes back when it ends (and, if the app crashes, the next time you open it). Windows asks for no permission for this. If you move it by hand meanwhile, the app does not touch it. Unverified: a maximized window, another monitor, scaling at 125 % or 150 %, and Teams or Zoom refusing to shrink (then it is undone and the band floats on top).
+- **Docking.** The meeting window moves down and shrinks to just below the band, at the height you gave it, when the session starts. It goes back when you close the band with its ×, cut everything with `Alt+Shift+Q` or quit the app (and, if the app crashes, the next time you open it); **End session does not send it back**. Windows asks for no permission for this. If you move it by hand meanwhile, the app does not touch it. Unverified: a maximized window, another monitor, scaling at 125 % or 150 %, and Teams or Zoom refusing to shrink (then it is undone and the band floats on top).
 - **Sizes.** 88 px; it grows to 200 with the handle; 44 px in audio-only mode.
-- **Quitting.** **Closing the main window closes the whole app**, band included. If a session was open, it is cut, and what you wrote and had not saved is saved encrypted. The band alone closes with the session.
+- **Height.** With the band at the top, the small bar on its top edge drags down to uncover what the band hid —your browser tabs and address bar, for example—. The height is saved and the band opens there when you start the app; the app limits it to your screen so the band does not leave it; if there is no room left below for a usable meeting, the meeting is not touched and the band floats without docking. In **Session**, the **Band height** row says how far down you put it and changes it without dragging: **Lower** and **Raise**, 40 points at a time, and **Back to the top**, which sticks it to the edge. With the band at the bottom there is no height to choose.
+- **Closing.** The **×** in the top right corner closes the band **without closing the app**. With a session running it ends it (like **End session**) and, besides, gives the docked meeting back and closes the band (its name says so: “Close the band and end the session”). `Alt+Shift+Q`, which cuts everything, closes the band too. With the band closed, **Session** says “The band is closed” and **Show the band** opens it on its edge and at its height; **Start session** brings it back too.
+- **Quitting.** **Closing the main window closes the whole app**, band included. If a session was open, it is cut, and what you wrote and had not saved is saved encrypted. The band alone closes with its ×.
 
 ## The two tracks and the card
 
@@ -123,7 +125,7 @@ Each row says what state it has on Windows and which “On Windows today” key 
 
 | N   | Feature                                                                  | Key                                                            | State            | What is missing or why                                                                                         |
 | --- | ------------------------------------------------------------------------ | -------------------------------------------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------- |
-| 1   | Private band protected from capture                                      | `banda-protegida` · `acople`                                   | done, unverified | The protection is requested from Windows; that it does not show in Teams, Zoom or Meet is verified at the gate |
+| 1   | Private band protected from capture                                      | `banda-protegida` · `acople`                                   | done, unverified | Protection is requested from Windows; Teams, Zoom and Meet at the gate; band height and × at stops w20 and w21 |
 | 2   | Permissions, detected meeting, status and panic button                   | `videollamada` · `atajos`                                      | done, unverified | The microphone is granted in Settings; `Alt+Shift+Q` cuts everything                                           |
 | 3   | Network-egress counter and honesty panel                                 | no key                                                         | done             | Honesty counts the bytes (0 B in local mode) and says what lives in memory                                     |
 | 4   | The app on the phone, in in-person mode                                  | no key                                                         | out              | It belongs to another platform: it is not a Windows feature                                                    |
@@ -156,7 +158,8 @@ Each row says what state it has on Windows and which “On Windows today” key 
 
 ## Frequently asked questions
 
-- **The band stayed on screen and I do not know how to close it.** Close the main window: the app quits entirely. If you cannot see it, open it from the taskbar, or end **Angel Ghost** in Task Manager (**Task Manager → Processes → End task**).
+- **The band stayed on screen and I do not know how to close it.** Press its **×**: it closes and the app keeps running; **Show the band**, in Session, brings it back. To quit altogether, close the main window: the app quits entirely. If you cannot see it, open it from the taskbar, or end **Angel Ghost** in Task Manager (**Task Manager → Processes → End task**).
+- **The band covers my browser tabs.** Drag the small bar on its top edge down until you can see them; it stays saved. In Session, **Lower** does the same without dragging and **Back to the top** sticks it to the edge again.
 - **“Install” downloads nothing.** A meeting, a session or a rehearsal is open, or the connection fails: the screen says so (“The model couldn't be downloaded”).
 - **Honesty says “not measured”.** The model is downloaded but has not been measured this session: click **Measure again**.
 - **A shortcut does not respond.** Another app on your PC already has that combination; Honesty names it. The action works anyway from the app.

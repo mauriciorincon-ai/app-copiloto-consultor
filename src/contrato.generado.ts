@@ -507,14 +507,34 @@ export const ESTADO_DEL_ACOPLE: EstadoDelAcople = {
 
 export const LA_FRANJA_ARRIBA: LaFranja = {
     "avisoVisto": false,
+    "bandaAbierta": true,
     "barra": 38.0,
-    "borde": "arriba"
+    "borde": "arriba",
+    "desplazamiento": 0
   };
 
 export const LA_FRANJA_ABAJO: LaFranja = {
     "avisoVisto": true,
+    "bandaAbierta": true,
     "barra": 25.0,
-    "borde": "abajo"
+    "borde": "abajo",
+    "desplazamiento": 0
+  };
+
+export const LA_FRANJA_BAJADA: LaFranja = {
+    "avisoVisto": true,
+    "bandaAbierta": true,
+    "barra": 0.0,
+    "borde": "arriba",
+    "desplazamiento": 132
+  };
+
+export const LA_FRANJA_CERRADA: LaFranja = {
+    "avisoVisto": true,
+    "bandaAbierta": false,
+    "barra": 0.0,
+    "borde": "arriba",
+    "desplazamiento": 132
   };
 
 export const PREPARACION_DEL_ENSAYO: Preparacion = {

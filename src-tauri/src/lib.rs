@@ -220,7 +220,7 @@ fn ajustar_banda(app: tauri::AppHandle, alto: u32) -> Result<(), String> {
         apagar_el_modo(&app);
         println!("[habla] el asa apagó el modo solo audio");
     }
-    ventana::ajustar_banda(&app, borde_de(&app), alto)
+    ventana::ajustar_banda(&app, borde_de(&app), alto, desplazamiento_de(&app))
 }
 
 /// El modo solo audio solo se enciende si hay voz para el idioma en que se lee.
@@ -257,25 +257,162 @@ fn apagar_el_modo<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> habla::LaVoz 
 #[tauri::command]
 fn asentar_banda<R: tauri::Runtime>(app: tauri::AppHandle<R>, alto: u32) -> Result<(), String> {
     let borde = borde_de(&app);
-    ventana::ajustar_banda(&app, borde, alto)?;
-    // En presencial la banda cambia de alto y nada más: no hay ventana que reacoplar (ADR 020 §1).
-    if !se_puede_acoplar(&app) {
-        return Ok(());
+    let mut desplazamiento = desplazamiento_de(&app);
+    // A otro alto cabe otra altura (sprint 011, auditoría B1): la banda de 200 px baja menos que la de 88. La geometría ya
+    // la acota; aquí se **guarda lo acotado**, para que las preferencias, Sesión y el siguiente arrastre partan de donde
+    // la banda está de verdad y no de un valor que ya no cabe.
+    if borde == ventana::Borde::Arriba {
+        let cabe = ventana::desplazamiento_acotado(&app, alto, desplazamiento)?;
+        if cabe != desplazamiento {
+            recordar(&app, |p| p.desplazamiento_de_la_banda = cabe);
+            desplazamiento = cabe;
+            let _ = app.emit(EVENTO_FRANJA, la_franja_de(&app));
+        }
     }
-    let franja = ventana::franja(&app, borde, alto)?;
+    ventana::ajustar_banda(&app, borde, alto, desplazamiento)?;
+    let franja = ventana::franja(&app, borde, alto, desplazamiento)?;
+    reacoplar_bajo(&app, borde, franja, "reacople");
+    Ok(())
+}
+
+/// Lo que viene después de que la banda cambie de alto o de altura: **la reunión se vuelve a hacer sitio** bajo la
+/// franja nueva. Lo comparten el asa de alto y, desde el sprint 011, la de posición.
+fn reacoplar_bajo<R: tauri::Runtime>(app: &tauri::AppHandle<R>, borde: ventana::Borde, franja: acople::Marco, que: &str) {
+    // En presencial la banda cambia de alto y nada más: no hay ventana que reacoplar (ADR 020 §1).
+    if !se_puede_acoplar(app) {
+        return;
+    }
     let informe = match borde {
-        ventana::Borde::Abajo => acople::reacoplar(franja, &huella(&app)),
+        ventana::Borde::Abajo => acople::reacoplar(franja, &huella(app)),
         // Arriba se reacopla **la ventana de la reunión**, y solo si había algo acoplado: soltar el asa
         // no es el momento de empezar a mover ventanas que no se habían tocado.
-        ventana::Borde::Arriba if acople::leer(&huella(&app)).huellas.is_empty() => acople::Informe {
+        ventana::Borde::Arriba if acople::leer(&huella(app)).huellas.is_empty() => acople::Informe {
             permiso: true,
             motivos: vec!["no había nada acoplado que reajustar".into()],
             ..Default::default()
         },
-        ventana::Borde::Arriba => acoplar_arriba(&app, franja),
+        ventana::Borde::Arriba => acoplar_arriba(app, franja),
     };
-    registrar_acople(&app, "reacople", &informe);
+    registrar_acople(app, que, &informe);
+}
+
+/// **El asa de posición mientras se arrastra** (sprint 011, ADR 004 enmienda 3): sube o baja la banda —y su relleno, en
+/// el Mac— **sin guardar nada**. Solo arriba: abajo la banda vive pegada al borde y esto no hace nada. Es la gemela de
+/// [`ajustar_banda`]: mientras arrastras se mueve lo nuestro; al soltar, lo ajeno ([`asentar_desplazamiento`]).
+#[tauri::command]
+fn desplazar_banda(app: tauri::AppHandle, desplazamiento: u32) -> Result<(), String> {
+    if borde_de(&app) != ventana::Borde::Arriba {
+        return Ok(());
+    }
+    let alto = ventana::alto_actual(&app).unwrap_or(ventana::ALTO_COMPACTA);
+    ventana::ajustar_banda(&app, ventana::Borde::Arriba, alto, desplazamiento)
+}
+
+/// **El asa de posición al soltarla** (sprint 011): la altura se guarda en tus preferencias —acotada a lo que cabe en
+/// esta pantalla, para que el archivo diga dónde está de verdad— y la reunión, si estaba acoplada, se vuelve a acoplar
+/// bajo la banda. «Volver arriba», en Sesión, es esto mismo con 0. Las tres ventanas se enteran por el evento `franja`.
+///
+/// **Con el turno de los cambios de borde y en otro hilo** (auditoría B2): un `Alt+Mayús+X` a la vez no debe dejar la banda
+/// arriba con las preferencias diciendo «abajo», y soltar son idas y vueltas a otro proceso que no van en el hilo principal.
+#[tauri::command]
+fn asentar_desplazamiento(app: tauri::AppHandle, desplazamiento: u32) {
+    std::thread::spawn(move || {
+        let _turno = CAMBIO_DE_BORDE.lock().unwrap_or_else(|e| e.into_inner());
+        if let Err(e) = asentar_la_altura(app, desplazamiento) {
+            println!("[ventanas] la altura de la banda no se pudo asentar: {e}");
+        }
+    });
+}
+
+/// Lo que hace [`asentar_desplazamiento`] con el turno ya tomado: relee el borde, guarda lo acotado y reacopla.
+fn asentar_la_altura<R: tauri::Runtime>(app: tauri::AppHandle<R>, desplazamiento: u32) -> Result<(), String> {
+    if borde_de(&app) != ventana::Borde::Arriba {
+        return Ok(());
+    }
+    let alto = ventana::alto_actual(&app).unwrap_or(ventana::ALTO_COMPACTA);
+    let desplazamiento = ventana::desplazamiento_acotado(&app, alto, desplazamiento)?;
+    recordar(&app, |p| p.desplazamiento_de_la_banda = desplazamiento);
+    println!("[ventanas] la banda queda {desplazamiento} pt bajo el borde de arriba");
+    ventana::ajustar_banda(&app, ventana::Borde::Arriba, alto, desplazamiento)?;
+    let _ = app.emit(EVENTO_FRANJA, la_franja_de(&app));
+    // Sin banda en pantalla («Volver arriba» con la banda cerrada) no hay nada que reacoplar: se guarda y basta.
+    if app.get_webview_window(ventana::BANDA).is_some() {
+        let franja = ventana::franja(&app, ventana::Borde::Arriba, alto, desplazamiento)?;
+        reacoplar_bajo(&app, ventana::Borde::Arriba, franja, "reacople bajo la banda a su altura");
+    }
     Ok(())
+}
+
+/// ¿Hay una sesión en marcha, de las que «Terminar sesión» termina? Escuchando —reunión o presencial— o en solo notas.
+fn hay_una_sesion_en_marcha<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> bool {
+    let escuchando = app
+        .try_state::<LaEscucha>()
+        .is_some_and(|e| e.0.lock().map(|g| g.is_some()).unwrap_or(false));
+    escuchando || reunion::solo_notas(app)
+}
+
+/// **El «×» de la banda** (sprint 011, decisión 1a del G-Plan, 2026-10-18). Con una sesión en marcha la termina como
+/// «Terminar sesión»; después devuelve la ventana de la reunión a su sitio y cierra la banda (y su relleno, en el Mac).
+/// **La app sigue viva**: la ventana principal, la bandeja y lo tuyo sin guardar; Sesión ofrece «Mostrar la banda» e
+/// «Iniciar sesión» también la vuelve a abrir.
+///
+/// El orden es el contrato: **terminar → soltar → cerrar → avisar**. Terminar primero, para que nada siga escuchando
+/// con la reunión ya devuelta; soltar antes de cerrar, porque sin banda el acople ya no se calcula
+/// (`acoplar_segun_el_borde`) y la ventana de la reunión se quedaría encogida hasta salir de la app. Va en otro hilo,
+/// con el turno de los cambios de borde: soltar son idas y vueltas a otro proceso, y un `Alt+Mayús+X` a la vez no
+/// debe mover la banda que se está cerrando.
+#[tauri::command]
+fn cerrar_la_banda(app: tauri::AppHandle) {
+    std::thread::spawn(move || {
+        let _turno = CAMBIO_DE_BORDE.lock().unwrap_or_else(|e| e.into_inner());
+        if hay_una_sesion_en_marcha(&app) {
+            dejar_de_escuchar(app.clone(), app.state::<LaEscucha>());
+            println!("[ventanas] el «×» de la banda terminó la sesión");
+        }
+        registrar_acople(&app, "cerrar la banda", &acople::soltar(&huella(&app)));
+        ventana::cerrar_banda(&app);
+        println!("[ventanas] la banda se cerró con su «×»: la app sigue");
+        avisar_que_la_banda_se_cerro(&app);
+    });
+}
+
+/// La banda ya no está (el «×» o el corte): Sesión tiene que poder ofrecer «Mostrar la banda». Se dice explícitamente
+/// `banda_abierta: false` porque cerrar una ventana es asíncrono y, justo después, puede seguir existiendo.
+fn avisar_que_la_banda_se_cerro<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    let _ = app.emit(EVENTO_FRANJA, LaFranja { banda_abierta: false, ..la_franja_de(app) });
+}
+
+/// **«Mostrar la banda»**, en Sesión (sprint 011): la vuelve a abrir tras el «×» o tras el corte, en su borde y a su
+/// altura. `abrir_banda` es idempotente: con la banda en pantalla no hace nada. **No acopla nada**: tras el «×» o el
+/// corte no queda ninguna sesión en marcha, y «Iniciar sesión» acopla la reunión como siempre.
+///
+/// `async` a propósito: en Windows, crear una ventana desde un comando síncrono se bloquea (lo documenta Tauri, por
+/// WebView2), y este es el único comando que abre la banda sin otra cosa que hacer.
+#[tauri::command]
+async fn mostrar_la_banda(app: tauri::AppHandle) -> Result<(), String> {
+    ventana::abrir_banda(&app, borde_de(&app), ventana::ALTO_COMPACTA, desplazamiento_de(&app))?;
+    println!("[ventanas] la banda vuelve desde Sesión");
+    let _ = app.emit(EVENTO_FRANJA, LaFranja { banda_abierta: true, ..la_franja_de(&app) });
+    Ok(())
+}
+
+/// **Repone la banda si falta** (el «×» o el corte la cerraron) y se lo dice a Sesión cuando de verdad volvió: sin el aviso,
+/// su fila «La banda está cerrada» se quedaría mintiendo con la banda en pantalla (sprint 011). Con la banda a la vista no
+/// hace nada. Lo llama `empezar`, en su hilo o —en Windows, sin banda— en otro: ver allí.
+fn devolver_la_banda<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    let la_habian_cortado = app.get_webview_window(ventana::BANDA).is_none();
+    match ventana::abrir_banda(app, borde_de(app), ventana::ALTO_COMPACTA, desplazamiento_de(app)) {
+        // Que la banda no vuelva no impide escuchar, y callarlo sí sería un problema: el usuario
+        // vería el transcript sin banda y no sabría por qué.
+        Err(e) => println!("[ventanas] la banda no pudo volver: {e}"),
+        // Se dice solo cuando de verdad volvió. Es la única traza de que M4 está cableado, y es
+        // por donde se verificó en vivo: sin ella, «vuelve» sería una afirmación sin testigo.
+        Ok(()) if la_habian_cortado => {
+            println!("[ventanas] la banda estaba cortada: vuelve");
+            let _ = app.emit(EVENTO_FRANJA, la_franja_de(app));
+        }
+        Ok(()) => {}
+    }
 }
 
 /// Acopla arriba **la ventana de la reunión que nombra la detección** (ADR 004, enmienda 1). Sin
@@ -320,7 +457,7 @@ fn acoplar_segun_el_borde<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Resul
     }
     let borde = borde_de(app);
     let alto = ventana::alto_actual(app).unwrap_or(ventana::ALTO_COMPACTA);
-    let franja = ventana::franja(app, borde, alto)?;
+    let franja = ventana::franja(app, borde, alto, desplazamiento_de(app))?;
     Ok(match borde {
         ventana::Borde::Abajo => acople::acoplar(franja, &huella(app)),
         ventana::Borde::Arriba => acoplar_arriba(app, franja),
@@ -338,18 +475,30 @@ fn borde_de<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> ventana::Borde {
         .unwrap_or_default()
 }
 
+/// A qué altura vive la banda arriba (sprint 011): lo que dicen las preferencias. 0 —pegada arriba— si todavía no se
+/// han leído. Abajo no se mira: la geometría lo ignora (`geometria::franja_desplazada`).
+fn desplazamiento_de<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> u32 {
+    app.try_state::<LasPreferencias>()
+        .and_then(|lp| lp.actuales.lock().ok().map(|p| p.desplazamiento_de_la_banda))
+        .unwrap_or(0)
+}
+
 /// Lo que las tres ventanas necesitan saber de la franja: en qué borde está (la banda dibuja su asa y su
 /// sombra con eso; Sesión, el interruptor), cuánto mide la barra de menús (el relleno sube su fondo eso
-/// con la banda arriba) y si ya viste el aviso de la primera vez (Sesión).
+/// con la banda arriba) y si ya viste el aviso de la primera vez (Sesión). Desde el sprint 011, también a qué
+/// altura la bajaste y si está en pantalla (Sesión enseña la altura y, con la banda cerrada, «Mostrar la banda»).
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LaFranja {
     pub borde: ventana::Borde,
     pub barra: f64,
     pub aviso_visto: bool,
+    pub desplazamiento: u32,
+    pub banda_abierta: bool,
 }
 
-/// El nombre del evento con el que las tres ventanas se enteran de que la banda cambió de borde.
+/// El nombre del evento con el que las tres ventanas se enteran de que la banda cambió de borde, de altura o
+/// se cerró.
 const EVENTO_FRANJA: &str = "franja";
 
 fn la_franja_de<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> LaFranja {
@@ -357,7 +506,13 @@ fn la_franja_de<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> LaFranja {
         .try_state::<LasPreferencias>()
         .and_then(|lp| lp.actuales.lock().ok().map(|p| p.aviso_de_arriba_visto))
         .unwrap_or(false);
-    LaFranja { borde: borde_de(app), barra: ventana::barra(app), aviso_visto }
+    LaFranja {
+        borde: borde_de(app),
+        barra: ventana::barra(app),
+        aviso_visto,
+        desplazamiento: desplazamiento_de(app),
+        banda_abierta: app.get_webview_window(ventana::BANDA).is_some(),
+    }
 }
 
 #[tauri::command]
@@ -390,7 +545,7 @@ fn poner_la_banda<R: tauri::Runtime>(app: &tauri::AppHandle<R>, borde: ventana::
     recordar(app, |p| p.posicion_de_la_banda = borde);
     registrar_acople(app, "soltar para cambiar de borde", &acople::soltar(&huella(app)));
     let alto = ventana::alto_actual(app).unwrap_or(ventana::ALTO_COMPACTA);
-    if let Err(e) = ventana::ajustar_banda(app, borde, alto) {
+    if let Err(e) = ventana::ajustar_banda(app, borde, alto, desplazamiento_de(app)) {
         println!("[ventanas] la banda no pudo cambiar de borde: {e}");
     }
     println!("[ventanas] la banda va {}", if borde == ventana::Borde::Arriba { "arriba" } else { "abajo" });
@@ -855,25 +1010,30 @@ fn empezar(
         };
         s.registro.vaciar();
     }
-    // Si la banda sigue en pantalla, esto no hace nada: `abrir_banda` es idempotente.
-    let la_habian_cortado = app.get_webview_window(ventana::BANDA).is_none();
-    match ventana::abrir_banda(&app, borde_de(&app), ventana::ALTO_COMPACTA) {
-        // Que la banda no vuelva no impide escuchar, y callarlo sí sería un problema: el usuario
-        // vería el transcript sin banda y no sabría por qué.
-        Err(e) => println!("[ventanas] la banda no pudo volver: {e}"),
-        // Se dice solo cuando de verdad volvió. Es la única traza de que M4 está cableado, y es
-        // por donde se verificó en vivo: sin ella, «vuelve» sería una afirmación sin testigo.
-        Ok(()) if la_habian_cortado => println!("[ventanas] la banda estaba cortada: vuelve"),
-        Ok(()) => {}
+    // Si la banda sigue en pantalla, esto no hace nada: `abrir_banda` es idempotente. **En Windows, si falta, se repone en
+    // otro hilo** (sprint 011, auditoría A1): crear una ventana desde un comando síncrono se bloquea (lo documenta Tauri,
+    // por WebView2), y tras el «×» o el corte este es el camino de siempre. El acople de abajo espera a que esté, en el
+    // mismo hilo. En el Mac sigue como estaba, síncrono: ahí no cambia nada.
+    let repone_en_otro_hilo = cfg!(windows) && app.get_webview_window(ventana::BANDA).is_none();
+    if !repone_en_otro_hilo {
+        devolver_la_banda(&app);
     }
     // **Arriba, el disparador del acople es la reunión** (ADR 004, enmienda 1): al empezar, la reunión
     // ya está abierta, así que se acopla su ventana si no lo estaba. Abajo no hace falta: al pulsar
     // «Iniciar sesión» la aplicación de delante somos nosotros, y el H1 acopla con su latido.
-    if acopla && borde_de(&app) == ventana::Borde::Arriba && acople::leer(&huella(&app)).huellas.is_empty() {
+    let acoplar_la_reunion = acopla && borde_de(&app) == ventana::Borde::Arriba && acople::leer(&huella(&app)).huellas.is_empty();
+    if acoplar_la_reunion || repone_en_otro_hilo {
         let mango = app.clone();
-        std::thread::spawn(move || match acoplar_segun_el_borde(&mango) {
-            Ok(informe) => registrar_acople(&mango, "al empezar la reunión", &informe),
-            Err(e) => println!("[acople] no se pudo calcular la franja: {e}"),
+        std::thread::spawn(move || {
+            if repone_en_otro_hilo {
+                devolver_la_banda(&mango);
+            }
+            if acoplar_la_reunion {
+                match acoplar_segun_el_borde(&mango) {
+                    Ok(informe) => registrar_acople(&mango, "al empezar la reunión", &informe),
+                    Err(e) => println!("[acople] no se pudo calcular la franja: {e}"),
+                }
+            }
         });
     }
     // **LA PUERTA DE LA CAPTURA** (ADR 017 §5). Todo lo que oye o mira la reunión —la pantalla, las
@@ -1254,7 +1414,11 @@ fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Inf
                 // reunión, además, deja de sumar costo.
                 corte::Pieza::Sugerencia => cortar_la_sugerencia(&app.state::<LaSintesis>()),
                 corte::Pieza::ContadorDeRed => red::reiniciar(),
-                corte::Pieza::Banda => ventana::cerrar_banda(app),
+                // Y Sesión se entera de que ya no está, para ofrecer «Mostrar la banda» (sprint 011).
+                corte::Pieza::Banda => {
+                    ventana::cerrar_banda(app);
+                    avisar_que_la_banda_se_cerro(app);
+                }
                 corte::Pieza::Acople => {
                     registrar_acople(app, "kill-switch", &acople::soltar(&huella(app)))
                 }
@@ -1817,6 +1981,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             ajustar_banda,
             asentar_banda,
+            desplazar_banda,
+            asentar_desplazamiento,
+            cerrar_la_banda,
+            mostrar_la_banda,
             estado_del_acople,
             la_franja,
             fijar_posicion_de_la_banda,
@@ -1992,7 +2160,12 @@ pub fn run() {
                 ventana::avisar_que_no_arranca(&motivo);
                 return Err(motivo.into());
             }
-            ventana::abrir_banda(app.handle(), borde_de(app.handle()), ventana::ALTO_COMPACTA)?;
+            ventana::abrir_banda(
+                app.handle(),
+                borde_de(app.handle()),
+                ventana::ALTO_COMPACTA,
+                desplazamiento_de(app.handle()),
+            )?;
 
             let mango = app.handle().clone();
             std::thread::spawn(move || {
@@ -4110,6 +4283,164 @@ mod pruebas_del_cierre_de_la_ventana {
 }
 
 #[cfg(test)]
+mod pruebas_de_la_banda_a_tu_altura {
+    /// El código de producción de este archivo, sin los módulos de pruebas: lo que se busca aquí también aparece en las
+    /// propias pruebas, y sin acotar pasarían aunque el código lo perdiera (la lección del M1 del sprint 010).
+    fn produccion() -> &'static str {
+        let todo = include_str!("lib.rs");
+        &todo[..todo.find("mod pruebas_del_cierre_de_la_ventana").expect("falta el módulo de pruebas")]
+    }
+
+    /// El cuerpo de una función de producción, hasta la siguiente función de primer nivel.
+    fn cuerpo(firma: &str) -> &'static str {
+        let fuente = produccion();
+        let desde = fuente.find(firma).unwrap_or_else(|| panic!("no está {firma}"));
+        let resto = &fuente[desde + firma.len()..];
+        let hasta = resto.find("\nfn ").into_iter().chain(resto.find("\n#[tauri::command]")).min().unwrap_or(resto.len());
+        &resto[..hasta]
+    }
+
+    fn en(texto: &str, que: &str) -> usize {
+        texto.find(que).unwrap_or_else(|| panic!("falta «{que}»"))
+    }
+
+    /// **El «×» termina, suelta, cierra y avisa, en ese orden** (sprint 011, decisión 1a). ¿Puede fallar? Sí: cerrar la
+    /// banda antes de soltar dejaba la ventana de la reunión encogida hasta salir de la app, porque sin banda el acople ya
+    /// no se calcula; y soltar antes de terminar devolvía la reunión con la escucha todavía abierta.
+    #[test]
+    fn el_x_termina_suelta_cierra_y_avisa_en_ese_orden() {
+        let c = cuerpo("fn cerrar_la_banda(");
+        let terminar = en(c, "dejar_de_escuchar(app.clone(), app.state::<LaEscucha>())");
+        let soltar = en(c, "acople::soltar(&huella(&app))");
+        let cerrar = en(c, "ventana::cerrar_banda(&app)");
+        let avisar = en(c, "avisar_que_la_banda_se_cerro(&app)");
+        assert!(terminar < soltar && soltar < cerrar && cerrar < avisar, "el orden del «×» se rompió");
+        assert!(c[..terminar].contains("if hay_una_sesion_en_marcha(&app)"), "el «×» termina aunque no haya sesión");
+        assert!(c.contains("CAMBIO_DE_BORDE.lock()"), "el «×» no toma el turno de los cambios de borde");
+    }
+
+    /// El corte también cierra la banda, y Sesión se entera: si no, «Mostrar la banda» no saldría tras `Alt+Mayús+Q`.
+    #[test]
+    fn el_corte_avisa_que_la_banda_se_cerro() {
+        let fuente = produccion();
+        let brazo = &fuente[en(fuente, "corte::Pieza::Banda => {")..];
+        let cerrar = en(brazo, "ventana::cerrar_banda(app);");
+        let avisar = en(brazo, "avisar_que_la_banda_se_cerro(app);");
+        assert!(cerrar < avisar && avisar < 200, "el corte cierra la banda y no lo dice");
+    }
+
+    /// **Todo lo que abre, mueve o mide la banda lleva su altura.** La firma ya obliga a pasar un desplazamiento; esto
+    /// obliga a que sea el tuyo y no un `0` escrito a mano, que haría volver la banda pegada arriba tras el «×» o el corte.
+    #[test]
+    fn todo_lo_que_abre_o_mueve_la_banda_lleva_su_altura() {
+        let fuente = produccion();
+        let mut vistas = 0;
+        for llamada in ["ventana::abrir_banda(", "ventana::ajustar_banda(", "ventana::franja("] {
+            for (i, _) in fuente.match_indices(llamada) {
+                let args = &fuente[i + llamada.len()..];
+                let args = &args[..args.find(")?").into_iter().chain(args.find(") {")).chain(args.find(")\n")).chain(args.find(");")).min().unwrap()];
+                assert!(args.contains("desplazamiento"), "«{llamada}{args})» no lleva la altura de la banda");
+                vistas += 1;
+            }
+        }
+        assert!(vistas >= 10, "el barrido casi no vio llamadas: {vistas}");
+    }
+
+    /// **Quien repone la banda se lo dice a Sesión.** Tras el «×» o el corte, Sesión dice «La banda está cerrada» con su
+    /// «Mostrar la banda»; si «Iniciar sesión» la repone sin avisar, esa fila se queda mintiendo con la banda en pantalla.
+    /// ¿Puede fallar? Sí: sin el `emit` del brazo `la_habian_cortado` la fila se queda hasta el siguiente evento de la franja.
+    #[test]
+    fn empezar_avisa_a_sesion_cuando_repone_la_banda() {
+        let c = cuerpo("fn devolver_la_banda<");
+        let brazo = &c[en(c, "Ok(()) if la_habian_cortado => {")..];
+        let aviso = en(brazo, "app.emit(EVENTO_FRANJA, la_franja_de(app))");
+        assert!(aviso < 300, "el aviso quedó lejos del brazo que repone la banda");
+    }
+
+    /// **En Windows, `empezar` no crea la banda en el hilo del comando** (auditoría A1 del S11): el «×» y luego «Iniciar sesión»
+    /// es ahora el camino de siempre, y crear una ventana desde un comando síncrono se bloquea. La reposición va en otro hilo
+    /// y **antes** del acople, que sin banda no se calcula. ¿Puede fallar? Sí: llamar a `abrir_banda` directo en `empezar`, o
+    /// acoplar antes de reponer, lo pone rojo.
+    #[test]
+    fn empezar_repone_la_banda_fuera_del_hilo_del_comando_en_windows() {
+        let c = cuerpo("fn empezar(");
+        assert!(!c.contains("ventana::abrir_banda("), "empezar crea la ventana sin pasar por devolver_la_banda");
+        assert!(
+            c.contains("cfg!(windows) && app.get_webview_window(ventana::BANDA).is_none()"),
+            "en Windows la reposición no se aparta del hilo del comando"
+        );
+        let hilo = &c[en(c, "std::thread::spawn(move || {")..];
+        assert!(
+            en(hilo, "devolver_la_banda(&mango)") < en(hilo, "acoplar_segun_el_borde(&mango)"),
+            "el acople corre antes de que la banda esté"
+        );
+    }
+
+    /// **Ningún comando síncrono construye la banda** (auditoría A1): en Windows se bloquea. Los que la abren son `async`
+    /// (`mostrar_la_banda`) o lo hacen en otro hilo. ¿Puede fallar? Sí: un `ventana::abrir_banda(` dentro de un
+    /// `#[tauri::command] fn` sin `async` es rojo.
+    #[test]
+    fn ningun_comando_sincrono_crea_la_banda() {
+        let fuente = produccion();
+        let etiqueta = "#[tauri::command]\n";
+        let mut vistos = 0;
+        for (i, _) in fuente.match_indices(etiqueta) {
+            let resto = &fuente[i + etiqueta.len()..];
+            let comando = &resto[..resto.find("\n}\n").unwrap_or(resto.len())];
+            vistos += 1;
+            if !comando.starts_with("async fn") {
+                assert!(
+                    !comando.contains("ventana::abrir_banda("),
+                    "un comando síncrono crea la banda: {}",
+                    comando.lines().next().unwrap_or("")
+                );
+            }
+        }
+        assert!(vistos > 40, "el barrido casi no vio comandos: {vistos}");
+    }
+
+    /// **La altura guardada es la que cabe** (auditoría B1): al soltar el asa de alto, `asentar_banda` guarda lo acotado al alto
+    /// nuevo. ¿Puede fallar? Sí: sin ese `recordar` Sesión diría 780 px con la banda de 200 px parada en 668.
+    #[test]
+    fn asentar_banda_guarda_la_altura_que_cabe_al_nuevo_alto() {
+        let c = cuerpo("fn asentar_banda<");
+        assert!(
+            en(c, "ventana::desplazamiento_acotado(&app, alto, desplazamiento)")
+                < en(c, "recordar(&app, |p| p.desplazamiento_de_la_banda = cabe)"),
+            "se guarda sin acotar al alto nuevo"
+        );
+        assert!(en(c, "recordar(") < en(c, "ventana::ajustar_banda("), "se mueve la banda antes de guardar lo acotado");
+    }
+
+    /// **La altura se asienta con el turno de los cambios de borde, en otro hilo** (auditoría B2). ¿Puede fallar? Sí: sin
+    /// el turno, `Alt+Mayús+X` a la vez devolvía la banda arriba con las preferencias diciendo «abajo».
+    #[test]
+    fn asentar_la_altura_toma_el_turno_en_otro_hilo() {
+        let c = cuerpo("fn asentar_desplazamiento(");
+        assert!(c.contains("std::thread::spawn(move || {"), "asentar la altura corre en el hilo del comando");
+        assert!(en(c, "CAMBIO_DE_BORDE.lock()") < en(c, "asentar_la_altura(app, desplazamiento)"), "se asienta sin el turno");
+    }
+
+    /// El asa de posición no hace nada abajo, y «Mostrar la banda» es asíncrono: en Windows, crear una ventana desde un
+    /// comando síncrono se bloquea.
+    #[test]
+    fn la_altura_es_solo_de_arriba_y_mostrar_la_banda_no_se_bloquea() {
+        for comando in ["fn desplazar_banda(", "fn asentar_la_altura<"] {
+            assert!(
+                cuerpo(comando).contains("if borde_de(&app) != ventana::Borde::Arriba {\n        return Ok(());"),
+                "{comando} mueve la banda abajo"
+            );
+        }
+        assert!(produccion().contains("async fn mostrar_la_banda("), "mostrar_la_banda dejó de ser async");
+        let asentar = cuerpo("fn asentar_la_altura<");
+        assert!(
+            en(asentar, "ventana::desplazamiento_acotado(") < en(asentar, "recordar(&app, |p| p.desplazamiento_de_la_banda"),
+            "se guarda la altura pedida y no la que cabe"
+        );
+    }
+}
+
+#[cfg(test)]
 mod pruebas_de_los_atajos_en_windows {
     /// **El corte y «Terminar» sueltan el modelo** (ADR 022, A2): la última transcripción no sobrevive a la sesión.
     #[test]
@@ -4754,7 +5085,7 @@ mod pruebas_del_modo_presencial {
         let nda = en(c, concat!("modo::puede_", "empezar(modo, "));
         let marca = en(c, concat!("marcar_el_", "modo(&app, Some(modo))"));
         let soltar = en(c, concat!("acople::", "soltar(&huella(&app))"));
-        let hilo = en(c, concat!("std::thread::spawn(move || match acoplar_segun_el_", "borde("));
+        let hilo = en(c, concat!("match acoplar_segun_el_", "borde(&mango)"));
         let cuaderno = en(c, concat!("reunion::al_", "empezar(&app, "));
         let puerta = en(c, concat!("let Some(que_pistas) = ", "pistas else {"));
         assert!(nda < marca, "el modo se marca antes de mirar la NDA");
@@ -4762,21 +5093,25 @@ mod pruebas_del_modo_presencial {
         assert!(marca < soltar && soltar < hilo, "en presencial se acopla o se suelta antes de marcar el modo");
         assert!(marca < cuaderno && marca < puerta, "el modo se marca después de abrir el cuaderno o la captura");
         assert!(c[soltar - 120..soltar].contains(concat!("if !", "acopla {")), "se suelta lo acoplado también en reunión");
-        assert!(c[..hilo].rfind(concat!("if acopla ", "&& ")).is_some_and(|g| hilo - g < 200), "el hilo del acople corre sin mirar el modo");
+        assert!(
+            c[..hilo].contains(concat!("let acoplar_la_reunion = ", "acopla && ")) && c[..hilo].contains("if acoplar_la_reunion {"),
+            "el hilo del acople corre sin mirar el modo"
+        );
     }
 
     /// **Se acopla por dos puertas y las dos preguntan**: `acoplar_segun_el_borde` (el latido, `⌃⌥B`, el hilo
-    /// de `empezar`) y `asentar_banda` (el asa). Cada llamada a `acople::acoplar`, `acople::reacoplar` y
+    /// de `empezar`) y `reacoplar_bajo` (las dos asas al soltarlas: la de alto, `asentar_banda`, y desde el sprint 011
+    /// la de posición, `asentar_desplazamiento`). Cada llamada a `acople::acoplar`, `acople::reacoplar` y
     /// `acople::acoplar_arriba` vive dentro de ellas —o de `acoplar_arriba`, a la que solo llaman ellas—, y
     /// en las dos la pregunta va antes.
     ///
-    /// ¿Puede fallar? Sí: sin `se_puede_acoplar` en `asentar_banda`, soltar el asa en presencial reacoplaría
+    /// ¿Puede fallar? Sí: sin `se_puede_acoplar` en la puerta de las asas, soltar el asa en presencial reacoplaría
     /// (bitácora del sprint 005, fase 1).
     #[test]
     fn las_dos_puertas_del_acople_preguntan_por_el_modo() {
         let fuente = include_str!("lib.rs");
         let segun = rango_de(concat!("\nfn acoplar_segun_el_", "borde<"));
-        let asentar = rango_de(concat!("\nfn asentar_", "banda<"));
+        let asentar = rango_de(concat!("\nfn reacoplar_", "bajo<"));
         let arriba = rango_de(concat!("\nfn acoplar_", "arriba<"));
         let dentro = |pos: usize, r: &[(usize, usize)]| r.iter().any(|(a, b)| (*a..*b).contains(&pos));
         for aguja in [concat!("acople::", "acoplar("), concat!("acople::", "reacoplar("), concat!("acople::acoplar_", "arriba(")] {
@@ -4793,7 +5128,7 @@ mod pruebas_del_modo_presencial {
         }
         for (puerta, firma, despues) in [
             (segun, "se_puede_acoplar(app)", concat!("acople::", "acoplar(")),
-            (asentar, "se_puede_acoplar(&app)", concat!("acople::", "reacoplar(")),
+            (asentar, "se_puede_acoplar(app)", concat!("acople::", "reacoplar(")),
         ] {
             let c = &fuente[puerta.0..puerta.1];
             assert!(en(c, firma) < en(c, despues), "una puerta del acople no pregunta por el modo antes de acoplar");

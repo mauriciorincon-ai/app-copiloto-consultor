@@ -203,6 +203,63 @@ html[data-ventana="banda"] .banda[data-borde="arriba"] {
   border-bottom: var(--borde) solid var(--line);
 }
 
+/* Sprint 011 — lo que solo Windows pinta en la banda (ADR 004 enmienda 3): el asa de altura y el «×».
+   Sin maqueta —diccionario aparte, ADR 022— y por eso aquí y no en `ghost.css`. El «×» es una esquina absoluta, así que
+   vale en las tres alturas (44, 88 y 200 px) sin tocar la disposición; la cabecera y la línea de voz le dejan su sitio. */
+.banda .asa-altura {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ns-resize;
+}
+.banda .asa-altura i {
+  display: block;
+  width: 46px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line-2);
+}
+.banda .asa-altura:hover i {
+  background: var(--halo);
+}
+.banda .cerrar-b {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+.banda .cerrar-b:hover {
+  background: var(--line);
+  color: var(--ink);
+}
+.banda .cerrar-b:focus-visible {
+  outline: 2px solid var(--halo);
+  outline-offset: 1px;
+}
+.banda[data-con-cerrar] .cab-b {
+  padding-right: 38px;
+}
+.banda.voz[data-con-cerrar] .cuerpo-b {
+  padding-right: 40px;
+}
+
 /* -----------------------------------------------------------------------------
    EL RELLENO — lo único que la captura encuentra donde está la banda.
 

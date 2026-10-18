@@ -109,6 +109,9 @@ const DEUDA: Record<string, string> = {
   // `EstadoDeEscucha.presencial` lo leen Sesión (la vista presencial, sin «A medias»), la banda (la cabecera
   // de la sala), Honestidad y el rail. `IdiomasDePista.sala`, el selector «Idioma de la sala» de Sesión: la
   // fila de Idioma no cabe con la franja aprobada y queda maquetada, no vista (bitácora del sprint 005).
+  //
+  // Sprint 011, fase 1: `LaFranja.desplazamiento` y `LaFranja.bandaAbierta` cruzaron antes que su pantalla; pagados en la
+  // fase 2 (`LaAlturaDeLaBanda` en Sesión, y el asa de altura de la banda parte de `desplazamiento`): ya no hay DEUDA.
 };
 
 /** Cada `export type X = … { … }`, con las variantes de una unión incluidas. */

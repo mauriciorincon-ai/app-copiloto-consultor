@@ -136,6 +136,16 @@ pub struct Preferencias {
     /// el resto: ni texto ni audio. Sin esto, al reabrir la app Honestidad decía «sin medir» y el escalón al modelo
     /// pequeño se olvidaba hasta la siguiente calibración.
     pub latencias_de_whisper: LatenciasDeWhisper,
+    /// **A qué altura vive la banda arriba** (sprint 011, ADR 004 enmienda 3, ADR 002 enmienda 10): cuántos puntos la
+    /// bajaste con el asa de posición desde el borde superior del área útil. De fábrica 0, pegada arriba como siempre; abajo
+    /// no se mira. **Con 0 no se escribe**: el archivo de quien nunca la baja —el del Mac, entero— no cambia ni un byte.
+    #[serde(skip_serializing_if = "es_cero")]
+    pub desplazamiento_de_la_banda: u32,
+}
+
+/// Lo que no se escribe en el archivo si es el valor de fábrica (el desplazamiento de la banda, sprint 011).
+fn es_cero(n: &u32) -> bool {
+    *n == 0
 }
 
 /// Cuánto tardó cada modelo de whisper en transcribir el recorte de calibración, en milisegundos (`None`: sin medir).
@@ -167,6 +177,7 @@ impl Default for Preferencias {
             aviso_de_arriba_visto: false,
             enriquecer_el_banco: false,
             latencias_de_whisper: LatenciasDeWhisper::default(),
+            desplazamiento_de_la_banda: 0,
         }
     }
 }
@@ -287,6 +298,8 @@ mod tests {
             enriquecer_el_banco: true,
             // Lo que whisper tardó en este PC se recuerda (M3 del S6): lo contrario de «sin medir».
             latencias_de_whisper: LatenciasDeWhisper { grande_ms: Some(5_200), pequeno_ms: Some(1_900), ..Default::default() },
+            // La altura de la banda se recuerda (sprint 011): lo contrario de fábrica.
+            desplazamiento_de_la_banda: 132,
         };
         guardar(&ruta, &elegidas).unwrap();
         assert_eq!(leer(&ruta), elegidas);
@@ -427,5 +440,19 @@ mod tests {
         guardar(&ruta, &Preferencias::default()).unwrap();
         assert_eq!(std::fs::metadata(&ruta).unwrap().permissions().mode() & 0o777, 0o600);
         let _ = std::fs::remove_dir_all(&d);
+    }
+
+    /// **La altura de la banda (sprint 011): un archivo de antes la lee en 0, y el 0 no se escribe.** Así el archivo
+    /// de quien nunca baja la banda —en el Mac, todos— sale idéntico al de antes del sprint. ¿Puede fallar? Sí: sin el
+    /// `skip_serializing_if`, el siguiente guardado añadiría `"desplazamientoDeLaBanda": 0` a todos los archivos.
+    #[test]
+    fn la_altura_de_la_banda_nace_en_0_y_el_0_no_se_escribe() {
+        let p = de_texto(r#"{"version":1,"posicionDeLaBanda":"arriba"}"#).unwrap();
+        assert_eq!(p.desplazamiento_de_la_banda, 0);
+        let texto = a_texto(&p);
+        assert!(!texto.contains("desplazamientoDeLaBanda"), "el 0 se escribió: {texto}");
+        let bajada = a_texto(&Preferencias { desplazamiento_de_la_banda: 132, ..p });
+        assert!(bajada.contains(r#""desplazamientoDeLaBanda": 132"#), "{bajada}");
+        assert_eq!(de_texto(&bajada).unwrap().desplazamiento_de_la_banda, 132);
     }
 }

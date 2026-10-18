@@ -336,7 +336,9 @@ describe("el arnés de fidelidad entero, en Windows, no habla del Mac", () => {
         culpables,
         `en Windows el arnés dice del Mac en ${culpables.length} sitios`,
       ).toEqual([]);
-    });
+      // Setenta y siete pantallas en una sola prueba: en la Surface, con todo el vitest en paralelo, tarda más de los 5 s de
+      // fábrica (7,1 s medidos en el S11) y caía por tiempo, no por lo que dice. El techo se sube; el contenido no se toca.
+    }, 60_000);
   }
 
   /** Todas las cadenas de un diccionario, con su ruta. */

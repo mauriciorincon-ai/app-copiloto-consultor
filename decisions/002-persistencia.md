@@ -257,3 +257,16 @@ modo solo audio en una reunión (`prefs.rs`, «qué NO entra»).
 **Lo que entra en el inventario del efímero:** nada. `Permitido` no cambia: el campo nuevo es parte de un archivo que
 ya estaba, y la sesión completa del gate en marcha gana un paso presencial con un término plantado en un turno de la
 sala, que no puede aparecer en el disco ni en el log.
+## Enmienda 10 — la altura de la banda (sprint 011, 2026-10-18)
+
+`preferencias.json` gana un campo, tuyo y en 600 como el resto:
+
+| Campo                     | Qué guarda                                                                                                                                | De fábrica       |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| `desplazamientoDeLaBanda` | cuántos puntos bajaste la banda arriba desde el borde superior del área útil, ya acotado a la pantalla al guardarlo (ADR 004, enmienda 3) | 0, pegada arriba |
+
+**Con 0 no se escribe** (`skip_serializing_if`): el archivo de quien nunca baja la banda —en el Mac, todos— sale idéntico
+al de antes del sprint, y un archivo de antes se lee en 0 (test `la_altura_de_la_banda_nace_en_0_y_el_0_no_se_escribe`).
+Es un número de interfaz, ni texto ni audio.
+
+**Lo que entra en el inventario del efímero:** nada. `Permitido` no cambia: es un campo de un archivo que ya estaba.

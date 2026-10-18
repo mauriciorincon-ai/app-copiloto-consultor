@@ -62,6 +62,30 @@ export type TextosDeWindows = {
   atajoOcupado: (teclas: string) => string;
   /** Sprint 008: el aviso corto de la banda cuando alguna tecla no responde (el detalle vive en Honestidad). */
   teclasSinResponder: (n: number) => string;
+  /**
+   * Sprint 011: la banda a tu altura y su «×». Solo Windows, y sin maqueta (diccionario aparte, ADR 022): el asa de altura y
+   * el «×» de la banda, y la fila de Sesión con la altura y «Mostrar la banda». Maquetados, no vistos: van al gate del hito.
+   */
+  banda: {
+    /** El título del asa de arriba de la banda: la que elige a qué altura queda. */
+    asaDeAltura: string;
+    /** El nombre del «×» sin sesión, y el que dice lo que de verdad hace con la sesión en marcha. */
+    cerrar: string;
+    cerrarYTerminar: string;
+    /** La fila de Sesión: la altura, y el botón que la devuelve al borde de arriba. */
+    alturaTitulo: string;
+    pegadaArriba: string;
+    alturaValor: (px: number) => string;
+    volverArriba: string;
+    /** «Bajar» y «Subir»: la altura por pasos, sin arrastrar. El nombre accesible dice qué se baja. */
+    bajar: string;
+    subir: string;
+    bajarNombre: string;
+    subirNombre: string;
+    /** La fila de Sesión con la banda cerrada, y el botón que la vuelve a abrir. */
+    cerradaTitulo: string;
+    mostrar: string;
+  };
   /** Idioma: el motor de voz es de la app, no del sistema (ADR 022). */
   idioma: {
     transcribeTuPc: string;
@@ -133,7 +157,7 @@ const ES: TextosDeWindows = {
     acople: {
       nombre: "Acoplarse a la ventana de la reunión",
       detalle:
-        "sí: la ventana de la reunión baja y se encoge para que la banda no la tape, y vuelve al cerrar; no pide permiso",
+        "sí: la ventana de la reunión baja y se encoge para que la banda no la tape, y vuelve al cerrar la banda con su ×, con el corte o al salir de la app; no pide permiso",
     },
     ensayo: {
       nombre: "Ensayar con la voz que lee las preguntas",
@@ -173,6 +197,21 @@ const ES: TextosDeWindows = {
     `${teclas} no responde: otra app de este PC ya tiene esa combinación. Lo mismo se hace desde la app.`,
   teclasSinResponder: (n) =>
     n === 1 ? "1 tecla no responde" : `${n} teclas no responden`,
+  banda: {
+    asaDeAltura: "Arrastra para elegir a qué altura queda la banda",
+    cerrar: "Cerrar la banda",
+    cerrarYTerminar: "Cerrar la banda y terminar la sesión",
+    alturaTitulo: "Altura de la banda",
+    pegadaArriba: "Pegada al borde de arriba",
+    alturaValor: (px) => `${px} px bajo el borde de arriba`,
+    volverArriba: "Volver arriba",
+    bajar: "Bajar",
+    subir: "Subir",
+    bajarNombre: "Bajar la banda",
+    subirNombre: "Subir la banda",
+    cerradaTitulo: "La banda está cerrada",
+    mostrar: "Mostrar la banda",
+  },
   whisper: {
     titulo: "La transcripción en este PC",
     bajando: "Bajando el modelo de voz, con su comprobación…",
@@ -276,7 +315,7 @@ const EN: TextosDeWindows = {
     acople: {
       nombre: "Docking to the meeting window",
       detalle:
-        "yes: the meeting window moves down and shrinks so the band doesn't cover it, and comes back on close; no permission needed",
+        "yes: the meeting window moves down and shrinks so the band doesn't cover it, and comes back when you close the band with its ×, cut everything or quit the app; no permission needed",
     },
     ensayo: {
       nombre: "Rehearsing with a voice that reads the questions",
@@ -318,6 +357,21 @@ const EN: TextosDeWindows = {
     n === 1
       ? "1 shortcut isn't responding"
       : `${n} shortcuts aren't responding`,
+  banda: {
+    asaDeAltura: "Drag to choose how low the band sits",
+    cerrar: "Close the band",
+    cerrarYTerminar: "Close the band and end the session",
+    alturaTitulo: "Band height",
+    pegadaArriba: "At the top edge",
+    alturaValor: (px) => `${px} px below the top edge`,
+    volverArriba: "Back to the top",
+    bajar: "Lower",
+    subir: "Raise",
+    bajarNombre: "Lower the band",
+    subirNombre: "Raise the band",
+    cerradaTitulo: "The band is closed",
+    mostrar: "Show the band",
+  },
   whisper: {
     titulo: "Transcription on this PC",
     bajando: "Downloading the speech model, with its checksum…",

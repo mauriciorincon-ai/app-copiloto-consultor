@@ -179,3 +179,49 @@ pasan a puntos con la escala del monitor de cada ventana, que es como Tauri da l
 es su posición entre las de su proceso ordenadas por identificador, que no cambia con cada clic. La conversión es
 pura y tiene su test. Como aquí, **no se lee ningún título ni contenido**: la ventana de la reunión la elige la
 detección (`sesion::windows`), donde sí se leen, y llega como un número. Detalle en el ADR 022, enmienda 2.
+## Enmienda 3 — la banda a tu altura, y su «×» (sprint 011, 2026-10-18)
+
+**El problema, medido en la Surface del usuario.** Arriba la banda ocupa el ancho entero bajo el borde superior del área
+útil, y el acople solo mueve **la ventana de la reunión detectada, con la sesión iniciada** (enmienda 1). Antes de la
+llamada —al entrar a Chrome para iniciar sesión en la videollamada— no hay reunión que mover y la banda flota encima de
+las pestañas y los controles del navegador. Y sin reunión no había forma de quitarla sin cortarlo todo (`Alt+Mayús+Q`)
+o cerrar la app.
+
+**La altura (decisión 2a del G-Plan, 2026-10-18).** La banda sigue arriba y de ancho completo, pero se desplaza **solo en
+vertical** con un asa de posición, y la altura se guarda (`desplazamientoDeLaBanda`, ADR 002 enmienda 10):
+
+- **Una sola geometría.** `geometria::franja_desplazada` baja la franja ese desplazamiento desde el borde superior del área
+  útil, **acotado** a que la banda quede entera dentro y con `HUECO_BAJO_LA_BANDA` (44 pt) libres debajo. Se acota al
+  calcular, no solo al guardar: agrandar con el asa de alto una banda bajada no la saca de la pantalla.
+- **Con 0 es la de siempre** (test `con_desplazamiento_0_es_la_franja_de_hoy`): quien no la baja, en el Mac y en Windows,
+  no ve nada distinto. **Abajo el desplazamiento no se mira.**
+- **El acople no cambia de regla.** `decidir_arriba` ya bajaba la reunión hasta `franja.fondo()`; con la franja
+  desplazada, la reunión queda bajo la banda esté donde esté. Si debajo no cabe una reunión usable (`ALTO_MINIMO_UTIL`),
+  no se mutila: la banda flota y el informe lo dice.
+- **La pareja de siempre.** Mientras arrastras se mueve lo nuestro (`desplazar_banda`); al soltar se guarda acotado y la
+  reunión, si estaba acoplada, se reacopla (`asentar_desplazamiento`), por la misma puerta que el asa de alto
+  (`reacoplar_bajo`, que pregunta por el modo presencial antes de tocar nada).
+
+**El «×» (decisión 1a).** `cerrar_la_banda`, en este orden y con el turno de los cambios de borde: con una sesión en
+marcha la **termina** como «Terminar sesión»; **suelta** la ventana de la reunión (vuelve a su sitio); **cierra** la
+banda (y su relleno, en el Mac); **avisa** a Sesión. La app sigue viva —la ventana principal y la bandeja—, y «Mostrar
+la banda» (Sesión, `mostrar_la_banda`, asíncrono porque en Windows crear una ventana desde un comando síncrono se
+bloquea) o «Iniciar sesión» la vuelven a abrir a su altura. El corte también avisa de que la banda se cerró.
+
+**Un hecho que esta enmienda deja escrito, porque los manuales lo decían distinto:** «Terminar sesión» **no** suelta la
+ventana de la reunión —la reunión sigue abierta hasta que la guardes o la descartes—. La sueltan cambiar de borde, el
+modo presencial, el corte, el «×», salir de la app y la recuperación tras una caída.
+
+**Plataformas.** El desplazamiento nace en 0 y no cambia nada en macOS; el asa de posición, el «×» y la fila de Sesión se
+enseñan solo en Windows (sprint 011), donde se pidieron.
+
+**Lo que pagó la auditoría del sprint** (cada una con su prueba en `lib.rs` o en `la-banda-a-tu-altura.test.tsx`):
+
+- **«Iniciar sesión» tras el «×» no crea la banda en el hilo del comando.** En Windows crear una ventana desde un comando
+  síncrono se bloquea (WebView2), y tras el «×» o el corte ese es el camino de siempre. `empezar` repone la banda en otro
+  hilo y el acople, que sin banda no se calcula, corre después en el mismo. En el Mac sigue síncrono, como estaba.
+- **La altura guardada es la que cabe.** Agrandar la banda con el asa de alto la deja más arriba de lo guardado; al soltar,
+  `asentar_banda` guarda lo acotado al alto nuevo, y Sesión y el siguiente arrastre parten de donde la banda está.
+- **Asentar la altura toma el turno de los cambios de borde, en otro hilo**, como el «×».
+- **Sin arrastrar** (WCAG 2.5.7): «Bajar» y «Subir» en Sesión mueven la altura de 40 en 40 puntos; el «×» mide 24 px
+  (WCAG 2.5.8); un `pointercancel` suelta el asa como un `pointerup`.

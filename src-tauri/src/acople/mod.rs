@@ -1210,6 +1210,25 @@ mod tests {
         );
     }
 
+    /// **La reunión sigue a la banda bajada** (sprint 011, ADR 004 enmienda 3): con la banda 132 pt más abajo, la ventana
+    /// de la reunión baja hasta el borde inferior de la banda, esté donde esté, y su borde inferior no se mueve. Y si
+    /// debajo de la banda ya no cabe una reunión usable, no se mutila: la banda flota y el informe lo dice.
+    #[test]
+    fn arriba_la_reunion_baja_hasta_la_banda_bajada() {
+        let bajada = Marco::nuevo(0.0, 38.0 + 132.0, 1512.0, 88.0);
+        let reunion = Marco::nuevo(100.0, 38.0, 1200.0, 800.0);
+        assert_eq!(decidir_arriba(reunion, bajada), Decision::BajarYEncoger { y: 258.0, alto: 580.0 });
+        // Pegada arriba, la misma ventana bajaba menos: la decisión es la de antes del sprint con la franja de antes.
+        assert_eq!(decidir_arriba(reunion, franja_arriba(88.0)), Decision::BajarYEncoger { y: 126.0, alto: 712.0 });
+        // Una reunión que acaba poco debajo de la banda bajada: bajarla la dejaría en 142 pt.
+        assert_eq!(
+            decidir_arriba(Marco::nuevo(100.0, 38.0, 1200.0, 362.0), bajada),
+            Decision::QuedariaInservible { alto_resultante: 142.0 }
+        );
+        // Lo que ya empieza debajo de la banda bajada no se toca.
+        assert_eq!(decidir_arriba(Marco::nuevo(100.0, 260.0, 1200.0, 500.0), bajada), Decision::YaCabe);
+    }
+
     /// **De una lista de ventanas sale UNA sola decisión, la del destino.** Las tres invaden la franja
     /// —el editor que estaba delante también—, y solo se decide sobre la que nombró la detección.
     #[test]
