@@ -214,3 +214,14 @@ modo presencial, el corte, el «×», salir de la app y la recuperación tras un
 
 **Plataformas.** El desplazamiento nace en 0 y no cambia nada en macOS; el asa de posición, el «×» y la fila de Sesión se
 enseñan solo en Windows (sprint 011), donde se pidieron.
+
+**Lo que pagó la auditoría del sprint** (cada una con su prueba en `lib.rs` o en `la-banda-a-tu-altura.test.tsx`):
+
+- **«Iniciar sesión» tras el «×» no crea la banda en el hilo del comando.** En Windows crear una ventana desde un comando
+  síncrono se bloquea (WebView2), y tras el «×» o el corte ese es el camino de siempre. `empezar` repone la banda en otro
+  hilo y el acople, que sin banda no se calcula, corre después en el mismo. En el Mac sigue síncrono, como estaba.
+- **La altura guardada es la que cabe.** Agrandar la banda con el asa de alto la deja más arriba de lo guardado; al soltar,
+  `asentar_banda` guarda lo acotado al alto nuevo, y Sesión y el siguiente arrastre parten de donde la banda está.
+- **Asentar la altura toma el turno de los cambios de borde, en otro hilo**, como el «×».
+- **Sin arrastrar** (WCAG 2.5.7): «Bajar» y «Subir» en Sesión mueven la altura de 40 en 40 puntos; el «×» mide 24 px
+  (WCAG 2.5.8); un `pointercancel` suelta el asa como un `pointerup`.

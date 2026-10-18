@@ -240,6 +240,8 @@ describe("la banda a tu altura (sprint 011): sus paradas dicen los rótulos que 
     ["alturaTitulo", en.alturaTitulo],
     ["pegadaArriba", en.pegadaArriba],
     ["volverArriba", en.volverArriba],
+    ["bajar", en.bajar],
+    ["subir", en.subir],
     ["cerradaTitulo", en.cerradaTitulo],
     ["mostrar", en.mostrar],
     ["alturaValor", en.alturaValor(123).replace("123", "N")],

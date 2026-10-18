@@ -11,6 +11,7 @@ import { SpriteIconos } from "@/componentes/Iconos";
 import { Banda } from "@/componentes/Banda";
 import { Sesion } from "@/pantallas/Sesion";
 import { desplazamientoAlArrastrar } from "@/asa";
+import { PASO_DE_LA_ALTURA } from "@/franja";
 import { TEXTOS_DE_WINDOWS } from "@/i18n/windows";
 import { llamar, preguntar } from "@/puente";
 import {
@@ -221,6 +222,24 @@ describe("el asa de altura: mientras arrastras se mueve lo nuestro; al soltar, s
     ]);
   });
 
+  it("si el sistema cancela el puntero, el asa se suelta como con pointerup y deja de seguir al ratón (B3)", async () => {
+    conRust(LA_FRANJA_ARRIBA, PLATAFORMA_WINDOWS);
+    const { container } = await pinta(<Banda estado="esperando" />);
+    const asa = container.querySelector(".asa-altura") as HTMLElement;
+    fireEvent.pointerDown(asa, { screenY: 40 });
+    fireEvent.pointerMove(ventana, { screenY: 100 });
+    fireEvent.pointerCancel(ventana, { screenY: 100 });
+    expect(pedidos("asentar_desplazamiento")).toEqual([
+      ["asentar_desplazamiento", { desplazamiento: 60 }],
+    ]);
+    vi.mocked(llamar).mockClear();
+    fireEvent.pointerMove(ventana, { screenY: 300 });
+    expect(
+      pedidos("desplazar_banda"),
+      "la banda sigue al ratón después de cancelar",
+    ).toEqual([]);
+  });
+
   it("un clic sin mover no guarda nada ni reacopla", async () => {
     conRust(LA_FRANJA_ARRIBA, PLATAFORMA_WINDOWS);
     const { container } = await pinta(<Banda estado="esperando" />);
@@ -309,6 +328,36 @@ describe("Sesión: la altura de la banda y «Mostrar la banda»", () => {
     await pinta(sesion);
     expect(screen.getByText(t.alturaValor(132))).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: t.volverArriba }));
+    expect(pedidos("asentar_desplazamiento")).toEqual([
+      ["asentar_desplazamiento", { desplazamiento: 0 }],
+    ]);
+  });
+
+  it("«Bajar» y «Subir» mueven la altura por pasos, sin arrastrar (B4)", async () => {
+    conRust(LA_FRANJA_BAJADA, PLATAFORMA_WINDOWS);
+    await pinta(sesion);
+    fireEvent.click(screen.getByRole("button", { name: t.bajarNombre }));
+    fireEvent.click(screen.getByRole("button", { name: t.subirNombre }));
+    expect(pedidos("asentar_desplazamiento")).toEqual([
+      ["asentar_desplazamiento", { desplazamiento: 132 + PASO_DE_LA_ALTURA }],
+      ["asentar_desplazamiento", { desplazamiento: 132 - PASO_DE_LA_ALTURA }],
+    ]);
+  });
+
+  it("pegada arriba solo ofrece «Bajar»: no hay altura que quitar (B4)", async () => {
+    conRust({ ...LA_FRANJA_ARRIBA, avisoVisto: true }, PLATAFORMA_WINDOWS);
+    await pinta(sesion);
+    fireEvent.click(screen.getByRole("button", { name: t.bajarNombre }));
+    expect(screen.queryByRole("button", { name: t.subirNombre })).toBeNull();
+    expect(pedidos("asentar_desplazamiento")).toEqual([
+      ["asentar_desplazamiento", { desplazamiento: PASO_DE_LA_ALTURA }],
+    ]);
+  });
+
+  it("«Subir» desde menos de un paso se queda en 0, nunca en negativo (B4)", async () => {
+    conRust({ ...LA_FRANJA_BAJADA, desplazamiento: 10 }, PLATAFORMA_WINDOWS);
+    await pinta(sesion);
+    fireEvent.click(screen.getByRole("button", { name: t.subirNombre }));
     expect(pedidos("asentar_desplazamiento")).toEqual([
       ["asentar_desplazamiento", { desplazamiento: 0 }],
     ]);

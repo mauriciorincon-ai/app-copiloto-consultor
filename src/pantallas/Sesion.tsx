@@ -45,6 +45,7 @@ import {
   entendidoElAvisoDeArriba,
   fijarPosicionDeLaBanda,
   mostrarLaBanda,
+  PASO_DE_LA_ALTURA,
   useFranja,
   type Borde,
   type LaFranja,
@@ -385,10 +386,29 @@ export function LaAlturaDeLaBanda({ franja }: { franja: LaFranja }) {
           <span className="estado mute">
             {franja.desplazamiento === 0 ? tw.pegadaArriba : tw.alturaValor(franja.desplazamiento)}
           </span>
+          {/* Sin arrastrar (WCAG 2.5.7): la altura también se elige por pasos, con un clic o con el teclado. */}
+          <button
+            type="button"
+            className="btn mini"
+            aria-label={tw.bajarNombre}
+            onClick={() => void asentarDesplazamiento(franja.desplazamiento + PASO_DE_LA_ALTURA)}
+          >
+            {tw.bajar}
+          </button>
           {franja.desplazamiento > 0 && (
-            <button type="button" className="btn mini" onClick={() => void asentarDesplazamiento(0)}>
-              {tw.volverArriba}
-            </button>
+            <>
+              <button
+                type="button"
+                className="btn mini"
+                aria-label={tw.subirNombre}
+                onClick={() => void asentarDesplazamiento(Math.max(0, franja.desplazamiento - PASO_DE_LA_ALTURA))}
+              >
+                {tw.subir}
+              </button>
+              <button type="button" className="btn mini" onClick={() => void asentarDesplazamiento(0)}>
+                {tw.volverArriba}
+              </button>
+            </>
           )}
         </Fila>
       )}

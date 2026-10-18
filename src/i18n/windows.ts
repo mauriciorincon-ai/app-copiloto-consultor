@@ -77,6 +77,11 @@ export type TextosDeWindows = {
     pegadaArriba: string;
     alturaValor: (px: number) => string;
     volverArriba: string;
+    /** «Bajar» y «Subir»: la altura por pasos, sin arrastrar. El nombre accesible dice qué se baja. */
+    bajar: string;
+    subir: string;
+    bajarNombre: string;
+    subirNombre: string;
     /** La fila de Sesión con la banda cerrada, y el botón que la vuelve a abrir. */
     cerradaTitulo: string;
     mostrar: string;
@@ -152,7 +157,7 @@ const ES: TextosDeWindows = {
     acople: {
       nombre: "Acoplarse a la ventana de la reunión",
       detalle:
-        "sí: la ventana de la reunión baja y se encoge para que la banda no la tape, y vuelve al cerrar; no pide permiso",
+        "sí: la ventana de la reunión baja y se encoge para que la banda no la tape, y vuelve al cerrar la banda con su ×, con el corte o al salir de la app; no pide permiso",
     },
     ensayo: {
       nombre: "Ensayar con la voz que lee las preguntas",
@@ -200,6 +205,10 @@ const ES: TextosDeWindows = {
     pegadaArriba: "Pegada al borde de arriba",
     alturaValor: (px) => `${px} px bajo el borde de arriba`,
     volverArriba: "Volver arriba",
+    bajar: "Bajar",
+    subir: "Subir",
+    bajarNombre: "Bajar la banda",
+    subirNombre: "Subir la banda",
     cerradaTitulo: "La banda está cerrada",
     mostrar: "Mostrar la banda",
   },
@@ -306,7 +315,7 @@ const EN: TextosDeWindows = {
     acople: {
       nombre: "Docking to the meeting window",
       detalle:
-        "yes: the meeting window moves down and shrinks so the band doesn't cover it, and comes back on close; no permission needed",
+        "yes: the meeting window moves down and shrinks so the band doesn't cover it, and comes back when you close the band with its ×, cut everything or quit the app; no permission needed",
     },
     ensayo: {
       nombre: "Rehearsing with a voice that reads the questions",
@@ -356,6 +365,10 @@ const EN: TextosDeWindows = {
     pegadaArriba: "At the top edge",
     alturaValor: (px) => `${px} px below the top edge`,
     volverArriba: "Back to the top",
+    bajar: "Lower",
+    subir: "Raise",
+    bajarNombre: "Lower the band",
+    subirNombre: "Raise the band",
     cerradaTitulo: "The band is closed",
     mostrar: "Show the band",
   },

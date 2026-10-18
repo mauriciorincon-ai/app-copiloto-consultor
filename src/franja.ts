@@ -107,6 +107,12 @@ export function desplazarBanda(desplazamiento: number): Promise<boolean> {
   return llamar("desplazar_banda", { desplazamiento });
 }
 
+/**
+ * Cuánto baja o sube la banda cada paso de «Bajar» y «Subir» en Sesión: la altura también se elige sin arrastrar
+ * (WCAG 2.5.7, auditoría del S11, B4). Lo que sobra o falta lo acota Rust.
+ */
+export const PASO_DE_LA_ALTURA = 40;
+
 export function asentarDesplazamiento(
   desplazamiento: number,
 ): Promise<boolean> {

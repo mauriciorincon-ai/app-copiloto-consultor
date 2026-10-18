@@ -174,6 +174,7 @@ export function useAsaDeAltura(activa: boolean, desplazamiento: number): void {
       asa = null;
       globalThis.removeEventListener("pointermove", mover);
       globalThis.removeEventListener("pointerup", soltar);
+      globalThis.removeEventListener("pointercancel", soltar);
       // Como el asa de alto: el acople se rehace AL SOLTAR, no en cada cuadro, y solo si la altura cambió (un clic en el
       // asa no mueve la reunión).
       if (pedido !== inicial)
@@ -191,6 +192,9 @@ export function useAsaDeAltura(activa: boolean, desplazamiento: number): void {
       el.setPointerCapture?.(e.pointerId);
       globalThis.addEventListener("pointermove", mover);
       globalThis.addEventListener("pointerup", soltar);
+      // Si el sistema cancela el puntero (táctil, lápiz, captura perdida) no llega `pointerup`: cancelar suelta igual, y el
+      // asa no se queda siguiendo al ratón sin botón (auditoría del S11, B3).
+      globalThis.addEventListener("pointercancel", soltar);
       e.preventDefault();
     };
 
@@ -199,6 +203,7 @@ export function useAsaDeAltura(activa: boolean, desplazamiento: number): void {
       globalThis.removeEventListener("pointerdown", agarrar);
       globalThis.removeEventListener("pointermove", mover);
       globalThis.removeEventListener("pointerup", soltar);
+      globalThis.removeEventListener("pointercancel", soltar);
     };
   }, [activa]);
 }

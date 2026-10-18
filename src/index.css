@@ -232,8 +232,8 @@ html[data-ventana="banda"] .banda[data-borde="arriba"] {
   top: 4px;
   right: 6px;
   z-index: 1;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   display: grid;
   place-items: center;
   padding: 0;

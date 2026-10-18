@@ -521,3 +521,36 @@ test("en macOS, Sesión no habla de la altura ni del cierre de la banda", async 
     page.getByRole("button", { name: "Mostrar la banda" }),
   ).toHaveCount(0);
 });
+
+test("en Windows, Sesión ofrece «Bajar» y, con la banda bajada, «Subir»: la altura sin arrastrar", async ({
+  page,
+}) => {
+  await page.goto("/?ventana=principal&pantalla=sesion&plataforma=windows");
+  await expect(
+    page.getByRole("button", { name: "Bajar la banda" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Subir la banda" }),
+  ).toHaveCount(0);
+  await page.goto(
+    "/?ventana=principal&pantalla=sesion&plataforma=windows&desplazamiento=132",
+  );
+  await expect(
+    page.getByRole("button", { name: "Subir la banda" }),
+  ).toBeVisible();
+});
+
+test("en Windows, el «×» de la banda mide al menos 24 × 24 px (WCAG 2.5.8)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 900, height: 220 });
+  await page.goto(
+    "/?ventana=banda&estado=ficha&borde=arriba&plataforma=windows",
+  );
+  const caja = await page
+    .getByRole("button", { name: "Cerrar la banda" })
+    .boundingBox();
+  expect(caja, "el «×» no tiene caja").not.toBeNull();
+  expect(caja!.width).toBeGreaterThanOrEqual(24);
+  expect(caja!.height).toBeGreaterThanOrEqual(24);
+});
