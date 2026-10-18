@@ -1019,10 +1019,11 @@ pub fn muestras() -> Vec<Muestra> {
                 techo_ms: 4_000,
                 bajando: false,
                 descartados: 0,
-                // Sprint 009: una línea por modelo. El pequeño sin bajar, el grande en uso y medido.
+                // Sprint 009: una línea por modelo. El pequeño sin bajar, el grande en uso y medido; desde el sprint 010, pista por
+                // pista (tu turno y el del cliente).
                 modelos: vec![
-                    ModeloEnEsteEquipo { nombre: "large-v3-turbo", bajado: true, latencia_ms: Some(2_350), en_uso: true, por_defecto: true },
-                    ModeloEnEsteEquipo { nombre: "small", bajado: false, latencia_ms: None, en_uso: false, por_defecto: false },
+                    ModeloEnEsteEquipo { nombre: "large-v3-turbo", bajado: true, latencia_ms: Some(2_350), latencia_cliente_ms: Some(2_900), en_uso: true, por_defecto: true },
+                    ModeloEnEsteEquipo { nombre: "small", bajado: false, latencia_ms: None, latencia_cliente_ms: None, en_uso: false, por_defecto: false },
                 ],
             }),
         )),
@@ -1035,8 +1036,8 @@ pub fn muestras() -> Vec<Muestra> {
                 bajando: true,
                 descartados: 0,
                 modelos: vec![
-                    ModeloEnEsteEquipo { nombre: "large-v3-turbo", bajado: false, latencia_ms: None, en_uso: false, por_defecto: true },
-                    ModeloEnEsteEquipo { nombre: "small", bajado: false, latencia_ms: None, en_uso: false, por_defecto: false },
+                    ModeloEnEsteEquipo { nombre: "large-v3-turbo", bajado: false, latencia_ms: None, latencia_cliente_ms: None, en_uso: false, por_defecto: true },
+                    ModeloEnEsteEquipo { nombre: "small", bajado: false, latencia_ms: None, latencia_cliente_ms: None, en_uso: false, por_defecto: false },
                 ],
             }),
         )),

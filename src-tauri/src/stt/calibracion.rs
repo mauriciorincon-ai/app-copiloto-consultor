@@ -11,7 +11,13 @@
 #[cfg(any(windows, test))]
 const RECORTE: &[u8] = include_bytes!("../../../data/calibracion/sala-es-10s.wav");
 
-/// El idioma del recorte.
+/// **La pista del cliente** (sprint 010): la pregunta del kit, `docs/kit-de-prueba/audio/pregunta-es.wav` (unos 6 s, voz
+/// sintética, cero datos reales). Con ella la calibración mide también lo que tarda el turno del cliente, la otra pista
+/// de una videollamada, y Honestidad enseña las dos. Como el recorte, solo entra en el binario de Windows.
+#[cfg(any(windows, test))]
+const CLIENTE: &[u8] = include_bytes!("../../../docs/kit-de-prueba/audio/pregunta-es.wav");
+
+/// El idioma del recorte (y de la pista del cliente).
 pub const IDIOMA: &str = "es-ES";
 
 /// **El techo**: del fin de turno a la ficha en ≤ 4 s (estándar de performance de escritorio). Si la transcripción sola
@@ -28,6 +34,12 @@ pub fn pasa_del_techo(ms: u32) -> bool {
 #[cfg(any(windows, test))]
 pub fn muestras() -> Vec<f32> {
     leer_wav(RECORTE).unwrap_or_default()
+}
+
+/// Las muestras de la pista del cliente, con el mismo formato y la misma regla que [`muestras`].
+#[cfg(any(windows, test))]
+pub fn muestras_del_cliente() -> Vec<f32> {
+    leer_wav(CLIENTE).unwrap_or_default()
 }
 
 /// Un WAV PCM mono de 16 bits a 16 kHz, en flotantes entre -1 y 1. Cualquier otra cosa, `None`: la calibración no
@@ -71,7 +83,7 @@ mod pruebas {
     #[test]
     fn el_recorte_no_entra_en_el_binario_del_mac() {
         let fuente = include_str!("calibracion.rs");
-        for pieza in ["const RECORTE", "pub fn muestras", "fn leer_wav"] {
+        for pieza in ["const RECORTE", "const CLIENTE", "pub fn muestras()", "pub fn muestras_del_cliente", "fn leer_wav"] {
             let i = fuente.find(pieza).unwrap_or_else(|| panic!("falta {pieza}"));
             let antes = &fuente[..i];
             let atributo = antes.lines().rev().find(|l| l.trim_start().starts_with("#[")).unwrap_or("");
@@ -86,6 +98,17 @@ mod pruebas {
         assert_eq!(m.len(), 160_000, "el recorte no mide 10 s a 16 kHz");
         let pico = m.iter().fold(0.0f32, |a, x| a.max(x.abs()));
         assert!(pico > 0.1, "el recorte es casi silencio (pico {pico})");
+    }
+
+    /// La pista del cliente se lee (la cabecera del kit trae un bloque de relleno antes de los datos) y son unos 6 s
+    /// que suenan: Honestidad dice «6 s» y `windows-honestidad-y-manual` ata esa cifra a este archivo.
+    #[test]
+    fn la_pista_del_cliente_son_unos_seis_segundos_que_suenan() {
+        let m = muestras_del_cliente();
+        let segundos = m.len() as f32 / crate::capture::anillo::HZ as f32;
+        assert!((5.5..6.5).contains(&segundos), "la pista del cliente mide {segundos:.2} s, no unos 6");
+        let pico = m.iter().fold(0.0f32, |a, x| a.max(x.abs()));
+        assert!(pico > 0.1, "la pista del cliente es casi silencio (pico {pico})");
     }
 
     /// **El recorte es el principio del kit**, muestra a muestra: nada de audio que no venga del kit sintético.

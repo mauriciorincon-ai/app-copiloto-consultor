@@ -827,7 +827,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
 
 ## Angel Ghost en Windows · Sprints 006, 007 y 008
 
-No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fuera de «Features».
+No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fuera de «Features». **Si usas la app solo en Windows, el manual entero y sin remitir a otro sistema es `docs/MANUAL-WINDOWS.md`** (en inglés, `docs/MANUAL-WINDOWS-EN.md`), con su guía de prueba en `docs/GUIA-DE-PRUEBA-WINDOWS.html`.
 
 - **Qué hace:** la app se instala en un PC con Windows. Tiene la banda protegida, el micrófono, la transcripción
   local con whisper, tus notas cifradas y tu corpus con sus fichas. **Desde el sprint 007 también la
@@ -954,14 +954,15 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
   *Run anyway*.
 - **Qué modelo de voz.** En Idioma, **Instalar** baja en un Windows ARM64 el modelo **pequeño** (0,5 GB) y no el grande.
   En la Surface de referencia (Snapdragon X Plus) el pequeño transcribe los 10 s de la calibración en unos 1,6 s y el
-  grande en 8,5 a 18 s, y el techo son 4 s. Honestidad enseña una línea por modelo con su cifra **en tu PC**, cuál
+  grande en 8,5 a 18 s, y el techo son 4 s. Honestidad enseña una línea por modelo con sus cifras **en tu PC**, pista por pista
+  (tu turno de 10 s, que es el que decide, y el del cliente, de 6 s), cuál
   transcribe ahora y cuál baja *Instalar*; al medir manda tu cifra, pero solo entre los modelos que tengas bajados.
 - **Construirla tú.** El README tiene «Desarrollar en Windows ARM»: un script, `scripts/entorno-windows.ps1`, dice qué
   falta sin instalar nada, y cada instalación se hace por separado. El instalador sale de
   `pnpm tauri build --bundles nsis`.
 - **Lo que no cambia.** En macOS y en Windows x64 no cambia nada. La protección de la banda sigue «sin verificar» en
-  Teams, Zoom y Meet hasta que la pruebes en tu PC, y el `.msi` ARM64 está construido pero su instalación todavía no se
-  ha probado en vivo.
+  Teams, Zoom y Meet hasta que la pruebes en tu PC, y el `.msi` ARM64 se instaló y abrió en vivo en una Surface en el sprint 010 (reutilizó la carpeta de la instalación
+  anterior con el `.exe`).
 
 ## Atajos de teclado en el Mac
 

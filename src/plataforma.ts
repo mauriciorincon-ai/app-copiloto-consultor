@@ -62,20 +62,26 @@ export type ModeloEnEsteEquipo = {
   nombre: string;
   /** ¿Está entero en este PC? */
   bajado: boolean;
-  /** Lo que tardó en los 10 s de calibración; `null`: sin medir en esta sesión (o sin bajar). */
+  /** Lo que tardó tu pista, el turno de 10 s de calibración; `null`: sin medir (o sin bajar). Decide el modelo. */
   latenciaMs: number | null;
+  /** Lo que tardó la pista del cliente, medida detrás de la tuya (sprint 010); `null`: sin medir. La regla no la usa. */
+  latenciaClienteMs: number | null;
   /** ¿Es con el que se transcribe ahora? */
   enUso: boolean;
   /** ¿Es el que baja «Instalar» en este equipo? En un PC ARM64 sale de la regla (ADR 022, enmienda 3). */
   porDefecto: boolean;
 };
 
-/** Lo que Honestidad dice de un modelo: lo que hay, sin adornarlo. */
+/**
+ * Lo que Honestidad dice de un modelo: lo que hay, sin adornarlo. Desde el sprint 010, pista por pista: «cabe» o
+ * «pasa» lo decide tu pista, como la regla; si la del cliente pasa del techo aunque la tuya quepa, se dice aparte.
+ */
 export type EstadoDeUnModelo =
   | { que: "sin-bajar" }
   | { que: "sin-medir" }
-  | { que: "a-tiempo"; ms: number }
-  | { que: "lento"; ms: number };
+  | { que: "a-tiempo"; ms: number; clienteMs: number | null }
+  | { que: "cliente-lento"; ms: number; clienteMs: number }
+  | { que: "lento"; ms: number; clienteMs: number | null };
 
 export function estadoDeUnModelo(
   m: ModeloEnEsteEquipo,
@@ -83,9 +89,12 @@ export function estadoDeUnModelo(
 ): EstadoDeUnModelo {
   if (!m.bajado) return { que: "sin-bajar" };
   if (m.latenciaMs === null) return { que: "sin-medir" };
-  return m.latenciaMs > techoMs
-    ? { que: "lento", ms: m.latenciaMs }
-    : { que: "a-tiempo", ms: m.latenciaMs };
+  const clienteMs = m.latenciaClienteMs;
+  if (m.latenciaMs > techoMs)
+    return { que: "lento", ms: m.latenciaMs, clienteMs };
+  if (clienteMs !== null && clienteMs > techoMs)
+    return { que: "cliente-lento", ms: m.latenciaMs, clienteMs };
+  return { que: "a-tiempo", ms: m.latenciaMs, clienteMs };
 }
 
 /** Lo que hace cada atajo (sprint 007, `src-tauri/src/atajos.rs`). */

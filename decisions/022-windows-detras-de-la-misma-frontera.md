@@ -295,7 +295,11 @@ supported for ARM, use clang`, en `ggml/src/ggml-cpu/CMakeLists.txt` del whisper
 
 5. **La regla** (`stt/whisper.rs`): de los modelos que hay, el MAYOR cuya calibración cabe en 4 s; uno sin medir cuenta como
    que cabe; si ninguno cabe, el más rápido (la app transcribe con lo que haya y Honestidad dice que el equipo es lento).
-   `calibrar` mide cada modelo entero, no solo el elegido, y Honestidad enseña una línea por modelo con su cifra. El defecto de
+   `calibrar` mide cada modelo entero, no solo el elegido, y Honestidad enseña una línea por modelo con su cifra. **Desde el
+   sprint 010, pista por pista:** `calibrar` mide primero tu turno de 10 s —la cifra que decide, como hasta ahora— y
+   después, con el modelo ya caliente, la pista del cliente (la pregunta del kit, `pregunta-es.wav`, 6 s); Honestidad
+   enseña las dos y, si la del cliente pasa del techo aunque la tuya quepa, lo dice aparte y en ámbar. La regla no
+   cambia. El defecto de
    «Instalar» (`por_defecto`) sigue la misma regla sobre la tabla de arriba, **solo en Windows ARM64**: con estas cifras es el
    modelo pequeño. En x64 y en macOS no cambia nada (el grande, ADR 006). La cifra de cada PC, medida al instalar, sigue
    mandando para elegir cuál transcribe.
@@ -305,7 +309,7 @@ supported for ARM, use clang`, en `ggml/src/ggml-cpu/CMakeLists.txt` del whisper
    (8,5 a 18,4 s) no se investigó; no cambia la decisión. d) La base portable no usa `i8mm`: no se midió contra
    `-mcpu=native`. e) En este equipo, enlazar con todos los núcleos se queda sin memoria (`LNK1102`): `cargo … -j 4`. f) La calibración de la app mide la primera inferencia tras cargar el modelo, sin calentamiento: en
    una corrida real de `calibrar()` salieron 8334 ms (grande) y 1928 ms (pequeño), algo más que las medianas de arriba; la
-   decisión no cambia.
+   decisión no cambia. La pista del cliente (sprint 010) sí se mide en caliente, detrás de la tuya, como en una reunión.
 
 ## Lo que este ADR NO decide
 

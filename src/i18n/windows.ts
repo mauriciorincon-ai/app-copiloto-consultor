@@ -31,17 +31,28 @@ export type TextosDeWindows = {
     aTiempo: (modelo: string, ms: string) => string;
     lento: (modelo: string, ms: string) => string;
     medirOtra: string;
+    /** Sprint 010: lo que dice la pantalla y el botón mientras mide (con el modelo grande, cerca de medio minuto). */
+    midiendo: string;
+    midiendoBoton: string;
+    /** Sprint 010: mientras baja el modelo pequeño desde Honestidad y lo mide después. */
+    bajandoYMidiendo: string;
     bajarPequeno: string;
     sinReunion: string;
     /** Sprint 007: con dos pistas el cliente va primero; lo que no dio tiempo a transcribir, contado sin atribuirlo. */
     descartados: (n: number) => string;
-    /** Sprint 009: una línea por modelo, con lo que tardó en ESTE PC. */
+    /**
+     * Sprint 009: una línea por modelo, con lo que tardó en ESTE PC. Sprint 010: pista por pista; `cliente` es lo que
+     * tardó la pista del cliente, ya formateado, o `null` si todavía no se midió. Los segundos de cada pista los ata
+     * `windows-honestidad-y-manual` a sus archivos de audio.
+     */
     modelos: {
       titulo: string;
       sinBajar: (m: string) => string;
       sinMedir: (m: string) => string;
-      aTiempo: (m: string, ms: string) => string;
-      lento: (m: string, ms: string) => string;
+      aTiempo: (m: string, ms: string, cliente: string | null) => string;
+      lento: (m: string, ms: string, cliente: string | null) => string;
+      /** Tu pista cabe en el techo y la del cliente no. */
+      clienteLento: (m: string, ms: string, cliente: string) => string;
       enUso: string;
       porDefecto: string;
       regla: string;
@@ -72,6 +83,16 @@ export type TextosDeWindows = {
     antesTexto: string;
   };
 };
+
+/** Lo que tardó cada pista de la calibración (sprint 010): la tuya siempre; la del cliente, si ya se midió, y si no, lo dice. */
+const pistasEs = (ms: string, cliente: string | null) =>
+  cliente === null
+    ? `tu pista, 10 s en ${ms} ms; la del cliente, sin medir`
+    : `tu pista, 10 s en ${ms} ms; la del cliente, 6 s en ${cliente} ms`;
+const pistasEn = (ms: string, cliente: string | null) =>
+  cliente === null
+    ? `your track, 10 s in ${ms} ms; the client's, not measured`
+    : `your track, 10 s in ${ms} ms; the client's, 6 s in ${cliente} ms`;
 
 const ES: TextosDeWindows = {
   titulo: "Hoy en Windows",
@@ -163,6 +184,11 @@ const ES: TextosDeWindows = {
     lento: (m, ms) =>
       `Modelo ${m}: tardó ${ms} ms, y pasa del techo de 4 s en este PC. El modelo pequeño es menos preciso, pero más rápido aquí.`,
     medirOtra: "Medir otra vez",
+    midiendo:
+      "Midiendo en este PC, modelo por modelo y pista por pista: unos segundos con el pequeño y cerca de medio minuto con el grande. Las cifras cambian al terminar.",
+    midiendoBoton: "Midiendo…",
+    bajandoYMidiendo:
+      "Bajando el modelo pequeño (0,5 GB) y midiéndolo después en este PC. Las cifras cambian al terminar.",
     bajarPequeno: "Bajar el modelo pequeño (0,5 GB)",
     sinReunion:
       "Bajar o medir no se puede con una reunión, una sesión o un ensayo abiertos.",
@@ -171,17 +197,19 @@ const ES: TextosDeWindows = {
         ? "En la última reunión, 1 turno se quedó sin transcribir: este PC no daba abasto, y se atiende primero al cliente."
         : `En la última reunión, ${n} turnos se quedaron sin transcribir: este PC no daba abasto, y se atiende primero al cliente.`,
     modelos: {
-      titulo: "Cada modelo de voz, medido en este PC",
+      titulo: "Cada modelo de voz, medido en este PC, pista por pista",
       sinBajar: (m) => `${m}: sin bajar.`,
       sinMedir: (m) => `${m}: bajado, sin medir en esta sesión.`,
-      aTiempo: (m, ms) =>
-        `${m}: 10 s de audio en ${ms} ms. Cabe en el techo de 4 s.`,
-      lento: (m, ms) =>
-        `${m}: 10 s de audio en ${ms} ms. Pasa del techo de 4 s.`,
+      aTiempo: (m, ms, cliente) =>
+        `${m}: ${pistasEs(ms, cliente)}. Cabe en el techo de 4 s.`,
+      lento: (m, ms, cliente) =>
+        `${m}: ${pistasEs(ms, cliente)}. Pasa del techo de 4 s.`,
+      clienteLento: (m, ms, cliente) =>
+        `${m}: ${pistasEs(ms, cliente)}. Tu pista cabe en el techo de 4 s; la del cliente, no.`,
       enUso: "el que transcribe ahora",
       porDefecto: "el que baja «Instalar»",
       regla:
-        "Se transcribe con el modelo mayor que cabe en 4 s en este PC; mientras uno no se haya medido, se da por bueno.",
+        "Se transcribe con el modelo mayor cuya pista tuya (10 s) cabe en 4 s en este PC; mientras uno no se haya medido, se da por bueno. La del cliente se mide detrás, con el modelo ya en marcha, como en una reunión.",
     },
   },
   idioma: {
@@ -301,6 +329,11 @@ const EN: TextosDeWindows = {
     lento: (m, ms) =>
       `Model ${m}: took ${ms} ms, over the 4 s ceiling on this PC. The small model is less accurate, but faster here.`,
     medirOtra: "Measure again",
+    midiendo:
+      "Measuring on this PC, model by model and track by track: a few seconds with the small one and about half a minute with the large one. The figures change when it finishes.",
+    midiendoBoton: "Measuring…",
+    bajandoYMidiendo:
+      "Downloading the small model (0.5 GB) and then measuring it on this PC. The figures change when it finishes.",
     bajarPequeno: "Download the small model (0.5 GB)",
     sinReunion:
       "Downloading or measuring isn't possible while a meeting, a session or a rehearsal is open.",
@@ -309,17 +342,19 @@ const EN: TextosDeWindows = {
         ? "In the last meeting, 1 turn wasn't transcribed: this PC couldn't keep up, and the client is served first."
         : `In the last meeting, ${n} turns weren't transcribed: this PC couldn't keep up, and the client is served first.`,
     modelos: {
-      titulo: "Each speech model, measured on this PC",
+      titulo: "Each speech model, measured on this PC, track by track",
       sinBajar: (m) => `${m}: not downloaded.`,
       sinMedir: (m) => `${m}: downloaded, not measured this session.`,
-      aTiempo: (m, ms) =>
-        `${m}: 10 s of audio in ${ms} ms. Fits the 4 s ceiling.`,
-      lento: (m, ms) =>
-        `${m}: 10 s of audio in ${ms} ms. Over the 4 s ceiling.`,
+      aTiempo: (m, ms, cliente) =>
+        `${m}: ${pistasEn(ms, cliente)}. Fits the 4 s ceiling.`,
+      lento: (m, ms, cliente) =>
+        `${m}: ${pistasEn(ms, cliente)}. Over the 4 s ceiling.`,
+      clienteLento: (m, ms, cliente) =>
+        `${m}: ${pistasEn(ms, cliente)}. Your track fits the 4 s ceiling; the client's does not.`,
       enUso: "the one transcribing now",
       porDefecto: "the one «Install» downloads",
       regla:
-        "Transcription uses the largest model that fits in 4 s on this PC; until one has been measured, it is taken as fitting.",
+        "Transcription uses the largest model whose track of yours (10 s) fits in 4 s on this PC; until one has been measured, it is taken as fitting. The client's track is measured after yours, with the model already running, as in a meeting.",
     },
   },
   idioma: {

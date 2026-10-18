@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
@@ -49,7 +50,7 @@ test("en Windows, Honestidad enseña «Hoy en Windows» con sus dos grupos y la 
   await expect(modelos.locator("p.estado")).toHaveCount(2);
   await expect(
     modelos.getByText(
-      /large-v3-turbo: 10 s de audio en 2\.?350 ms\. Cabe en el techo de 4 s/,
+      /large-v3-turbo: tu pista, 10 s en 2\.?350 ms; la del cliente, 6 s en 2\.?900 ms\. Cabe en el techo de 4 s/,
     ),
   ).toBeVisible();
   await expect(modelos.getByText(/el que transcribe ahora/)).toHaveCount(1);
@@ -317,3 +318,79 @@ for (const tema of ["dark", "light"] as const) {
     });
   }
 }
+
+/**
+ * **LAS LÍNEAS DE CADA MODELO SE PARTEN, NO DESBORDAN** (sprint 010, visto en vivo en la Surface): con las dos pistas,
+ * la línea de un modelo pasa de 140 caracteres y `.estado` es un chip de una línea (`white-space: nowrap` en
+ * `ghost.css`). Honestidad sacaba una barra de desplazamiento horizontal y cortaba el final de la frase. ¿Puede fallar?
+ * Sí: quitar el `whiteSpace: "normal"` de las líneas de `modelos-de-voz` lo pone rojo, con el ancho que se sale.
+ */
+test("en Windows, cada línea de modelo cabe en su bloque y Honestidad no se desborda a lo ancho", async ({
+  page,
+}) => {
+  await page.goto("/?ventana=principal&pantalla=honestidad&plataforma=windows");
+  const modelos = page.getByTestId("modelos-de-voz");
+  await expect(modelos.locator("p.estado")).toHaveCount(2);
+  const caja = await modelos.boundingBox();
+  for (const linea of await modelos.locator("p.estado").all()) {
+    const b = await linea.boundingBox();
+    expect(
+      b && caja && b.x + b.width <= caja.x + caja.width + 1,
+      `una línea de modelo se sale de su bloque`,
+    ).toBe(true);
+  }
+  const desbordados = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>("body *")]
+      .filter((e) => {
+        const x = getComputedStyle(e).overflowX;
+        return (
+          (x === "auto" || x === "scroll") && e.scrollWidth > e.clientWidth + 1
+        );
+      })
+      .map(
+        (e) =>
+          `${e.tagName.toLowerCase()}.${e.className}: ${e.scrollWidth} > ${e.clientWidth}`,
+      ),
+  );
+  expect(desbordados, "Honestidad tiene desplazamiento horizontal").toEqual([]);
+});
+
+/**
+ * **EL ARNÉS ENTERO, SOBRE EL BUILD REAL, EN WINDOWS, NO HABLA DEL MAC** (sprint 010). El gate de vitest recorre las mismas
+ * URLs sobre el código; este las recorre sobre lo que se distribuye: el build servido, con el navegador de verdad. La lista
+ * se lee de `scripts/capturar-fidelidad.mjs` (una sola fuente), los encuadres de la banda en el proyecto de la banda y los
+ * demás en los de la ventana principal. ¿Puede fallar? Sí: un «Touch ID» en Notas «bandeja-llave» es rojo, con la URL.
+ */
+const DEL_MAC =
+  /macOS|\bMac\b|Llavero|Keychain|Touch ID|Finder|launchd|Time Machine|AirPlay|System Settings|Ajustes del Sistema|Ítems de inicio|Items de inicio|Login Items|Background Items|⌥|⌃/;
+const URLS_DEL_ARNES = [
+  ...new Set(
+    [
+      ...readFileSync("scripts/capturar-fidelidad.mjs", "utf8").matchAll(
+        /url: "([^"]+)"/g,
+      ),
+    ].map((m) => m[1]),
+  ),
+];
+
+test("en Windows, las URLs del arnés de fidelidad no dicen nada del Mac", async ({
+  page,
+}, info) => {
+  const deLaBanda = info.project.name === "banda";
+  const mias = URLS_DEL_ARNES.filter(
+    (u) => u.includes("ventana=banda") === deLaBanda,
+  );
+  expect(
+    mias.length,
+    "el arnés no tiene encuadres para este proyecto",
+  ).toBeGreaterThan(5);
+  const culpables: string[] = [];
+  for (const url of mias) {
+    await page.goto(`/?${url}&plataforma=windows`);
+    await page.evaluate(() => document.fonts.ready);
+    const texto = await page.evaluate(() => document.body.innerText);
+    const frase = DEL_MAC.exec(texto);
+    if (frase) culpables.push(`${url}: «${frase[0]}»`);
+  }
+  expect(culpables, "en Windows el build dice del Mac").toEqual([]);
+});

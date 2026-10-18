@@ -4,7 +4,7 @@ description: Checklist pre-merge a main del PERFIL ESCRITORIO (Tauri) — ≤ 10
 
 # /release-check
 
-**Todo lo demás lo corre la CI (`quality` · `e2e` · `build-escritorio` · `build-windows` · `un-pr-vivo`); si no
+**Todo lo demás lo corre la CI (`quality` · `e2e` · `build-escritorio` · `build-windows` · `build-windows-arm` · `un-pr-vivo`); si no
 está en la CI, no es casilla.** Aquí mergear no publica nada: la app se distribuye como binario. Se corre después de
 `/audita-sprint`, antes de abrir el PR. Las pruebas `hardware` las corrió la CI; las `en_vivo_*` solo con
 la matriz de la regla 24 y su «sí», o se declaran aplazadas con fecha.
@@ -28,7 +28,7 @@ la matriz de la regla 24 y su «sí», o se declaran aplazadas con fecha.
       aceptada, tiene su ADR con la excepción.
 - [ ] 8. **`docs/MANUAL-DE-USO.md` actualizado** y **cierre ejecutivo** ≤ 40 líneas con la salida de
       `node scripts/horas-sprint.mjs` y la sección Auditoría (deuda M/B con `archivo:línea`; cero C/A abiertos).
-- [ ] 9. **Los cinco checks (`quality` · `e2e` · `build-escritorio` · `build-windows` · `un-pr-vivo`) con conclusión
+- [ ] 9. **Los seis checks (`quality` · `e2e` · `build-escritorio` · `build-windows` · `build-windows-arm` · `un-pr-vivo`) con conclusión
       propia `success`** al final (`gh pr checks <N>`), y **la lista de PR abiertos es ese uno** (`gh pr list
       --state open`). El barrido de cero enlaces lo corre `quality` (`scripts/cero-enlaces.mjs`); lo manual es que
       **ningún archivo ni campo de GitHub ofrezca un enlace de descarga del binario** — la app se muestra, no se entrega.

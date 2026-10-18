@@ -4,6 +4,7 @@ import { Ic } from "../componentes/Iconos";
 import { PILA, EnElRoadmap } from "../componentes/Ventana";
 import { useBytesALaRed } from "../cuaderno";
 import { hayTauri } from "../puente";
+import { esWindows, usePlataforma } from "../plataforma";
 import {
   EXTERNOS,
   apiExterna,
@@ -59,11 +60,15 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
   const [ia, setIa] = useIa();
   const salio = useLoQueSalio();
   const tp = useT().puerta;
+  // La puerta local no existe en Windows (ADR 022: «no en Windows por ahora», y Honestidad lo dice): ni el botón que la
+  // abre ni la vista por URL —sprint 010: desde Windows no se ve nada del Mac—.
+  const [plataforma] = usePlataforma();
+  const sinPuerta = esWindows(plataforma);
   // «Lo que salió» y la puerta se abren desde su botón; fuera de Tauri, desde la URL (el arnés de
   // fidelidad).
   const [viendo, setViendo] = useState<"quien" | "salio" | "puerta">(() => {
     const pedida = new URLSearchParams(busqueda).get("vista");
-    return pedida === "salio" || pedida === "puerta" ? pedida : "quien";
+    return pedida === "salio" || (pedida === "puerta" && !sinPuerta) ? pedida : "quien";
   });
   const [puerta, setPuerta] = usePuerta(useMemo(() => muestraDeLaPuerta(busqueda), [busqueda]));
   const bytes = useBytesALaRed();
@@ -238,12 +243,14 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
             relleno="2px"
           />
           <span className="crece" />
-          <button type="button" className="btn mini" onClick={() => setViendo("puerta")}>
-            <Ic id="i-llave" s />
-            <span>
-              {tp.puertaLocal} · {puerta.abierta ? tp.abierta : tp.cerrada}
-            </span>
-          </button>
+          {!sinPuerta && (
+            <button type="button" className="btn mini" onClick={() => setViendo("puerta")}>
+              <Ic id="i-llave" s />
+              <span>
+                {tp.puertaLocal} · {puerta.abierta ? tp.abierta : tp.cerrada}
+              </span>
+            </button>
+          )}
         </div>
 
         <div className="grid-2" style={{ gridTemplateColumns: "1.25fr 1fr", gap: "12px", alignItems: "start" }}>

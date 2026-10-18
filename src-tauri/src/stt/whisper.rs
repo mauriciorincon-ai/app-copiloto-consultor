@@ -58,10 +58,39 @@ pub fn anotar_latencia(m: &Modelo, ms: u32) {
     latencia_de(m).store(ms.max(1), Ordering::Relaxed);
 }
 
+/// **Lo que tardó cada modelo con la pista del cliente** (sprint 010), en ms (0: sin medir). Se mide DESPUÉS de tu
+/// turno de 10 s, con el modelo ya caliente, como lo atiende el transcriptor en una reunión. Honestidad la enseña junto a
+/// la tuya; la regla ([`elegir`]) no la usa: decide con tu turno, como desde el sprint 009 (ADR 022, enmienda 3).
+static LATENCIA_CLIENTE_GRANDE: AtomicU32 = AtomicU32::new(0);
+static LATENCIA_CLIENTE_PEQUENO: AtomicU32 = AtomicU32::new(0);
+
+fn latencia_del_cliente_de(m: &Modelo) -> &'static AtomicU32 {
+    if m.archivo == PEQUENO.archivo {
+        &LATENCIA_CLIENTE_PEQUENO
+    } else {
+        &LATENCIA_CLIENTE_GRANDE
+    }
+}
+
+/// Lo que tardó `m` con la pista del cliente, si ya se midió.
+pub fn latencia_del_cliente_ms(m: &Modelo) -> Option<u32> {
+    Some(latencia_del_cliente_de(m).load(Ordering::Relaxed)).filter(|&ms| ms > 0)
+}
+
+/// Anota lo que tardó `m` con la pista del cliente.
+pub fn anotar_latencia_del_cliente(m: &Modelo, ms: u32) {
+    latencia_del_cliente_de(m).store(ms.max(1), Ordering::Relaxed);
+}
+
 /// Vuelve a poner las medidas que la app guardó la vez anterior (sprint 008, M3 del S6). Lo que ya se midió en esta
-/// sesión manda sobre lo guardado. Este módulo no escribe nada: quien guarda es `prefs`, que recibe solo dos números.
+/// sesión manda sobre lo guardado. Este módulo no escribe nada: quien guarda es `prefs`, que recibe solo números.
 pub fn restaurar_latencias(grande_ms: Option<u32>, pequeno_ms: Option<u32>) {
     restaurar_en((&LATENCIA_GRANDE, grande_ms), (&LATENCIA_PEQUENO, pequeno_ms));
+}
+
+/// Lo mismo con la pista del cliente (sprint 010). Unas preferencias de antes del sprint no la traen: `None`, sin medir.
+pub fn restaurar_latencias_del_cliente(grande_ms: Option<u32>, pequeno_ms: Option<u32>) {
+    restaurar_en((&LATENCIA_CLIENTE_GRANDE, grande_ms), (&LATENCIA_CLIENTE_PEQUENO, pequeno_ms));
 }
 
 /// La parte pura: cada medida guardada entra solo si ese modelo aún no se midió en esta sesión.
@@ -315,11 +344,13 @@ mod motor {
         texto
     }
 
-    /// **Mide CADA modelo que esté entero** (sprint 009): Honestidad enseña una línea por modelo, y la regla
-    /// ([`elegir`]) compara lo que tardó cada uno. Se mide uno tras otro —el modelo cargado se suelta antes de cargar el
-    /// siguiente— y, al terminar, devuelve lo que tardó el que se usaría ahora.
+    /// **Mide CADA modelo que esté entero** (sprint 009), **pista por pista** (sprint 010): Honestidad enseña una línea
+    /// por modelo con lo que tardó tu turno de 10 s y el del cliente, y la regla ([`elegir`]) compara lo que tardó tu
+    /// turno en cada uno. Se mide uno tras otro —el modelo cargado se suelta antes de cargar el siguiente— y, al
+    /// terminar, devuelve lo que tardó el que se usaría ahora.
     pub fn calibrar() -> Result<u32, Fallo> {
         let audio = crate::stt::calibracion::muestras();
+        let cliente = crate::stt::calibracion::muestras_del_cliente();
         let codigo_whisper = idioma_de_whisper(crate::stt::calibracion::IDIOMA).unwrap_or("es");
         let mut midio = false;
         let mut ultimo_fallo = None;
@@ -327,13 +358,31 @@ mod motor {
             let Some(ruta) = modelo_whisper::listo(&m) else { continue };
             // Un modelo que no se deja medir (poca memoria, un archivo dañado) no impide medir el otro (auditoría B3).
             match con_este_modelo(m, ruta, |_, estado| {
-                let inicio = std::time::Instant::now();
-                transcribir_en(estado, codigo_whisper, &audio)?;
-                Ok(inicio.elapsed().as_millis().min(u128::from(u32::MAX)) as u32)
+                let mut medir = |audio: &[f32]| -> Result<u32, Fallo> {
+                    let inicio = std::time::Instant::now();
+                    transcribir_en(estado, codigo_whisper, audio)?;
+                    Ok(inicio.elapsed().as_millis().min(u128::from(u32::MAX)) as u32)
+                };
+                // Tu turno primero, como hasta el sprint 009: es la cifra que decide el modelo. El del cliente, detrás,
+                // con el modelo ya caliente; si ese falla, tu cifra vale igual y la del cliente queda sin medir.
+                let tuyo = medir(&audio)?;
+                Ok((tuyo, medir(&completar(&cliente))))
             }) {
-                Ok(ms) => {
+                Ok((ms, del_cliente)) => {
                     anotar_latencia(&m, ms);
-                    println!("[stt] whisper: {} tardó {ms} ms en 10 s de calibración", m.nombre);
+                    match del_cliente {
+                        Ok(ms_cliente) => {
+                            anotar_latencia_del_cliente(&m, ms_cliente);
+                            println!(
+                                "[stt] whisper: {} tardó {ms} ms en tu pista (10 s) y {ms_cliente} ms en la del cliente",
+                                m.nombre
+                            );
+                        }
+                        Err(f) => println!(
+                            "[stt] whisper: {} tardó {ms} ms en tu pista (10 s); la del cliente no se pudo medir ({f:?})",
+                            m.nombre
+                        ),
+                    }
                     midio = true;
                 }
                 Err(f) => {
@@ -405,12 +454,14 @@ mod motor {
             calibrar().expect("la calibración no pudo medir");
             for m in &enteros {
                 assert!(latencia_ms(m).is_some(), "{} está entero y no se midió", m.nombre);
+                assert!(latencia_del_cliente_ms(m).is_some(), "{}: la pista del cliente no se midió", m.nombre);
             }
             let t = crate::plataforma::de_este_equipo().transcripcion.expect("en Windows Honestidad recibe la transcripción");
             assert_eq!(t.modelos.len(), 2, "una línea por modelo, estén bajados o no");
             for l in &t.modelos {
                 assert_eq!(l.bajado, enteros.iter().any(|m| m.nombre == l.nombre), "{}", l.nombre);
                 assert_eq!(l.latencia_ms.is_some(), l.bajado, "{}: la cifra va con el modelo bajado", l.nombre);
+                assert_eq!(l.latencia_cliente_ms.is_some(), l.bajado, "{}: la del cliente, también", l.nombre);
             }
             assert_eq!(t.modelos.iter().filter(|l| l.en_uso).count(), 1, "exactamente uno transcribe");
             println!("[medición] Honestidad recibiría: {:?}", t.modelos);
@@ -566,6 +617,18 @@ mod pruebas {
         assert_eq!(latencia_ms(&PEQUENO), Some(1), "una medida de 0 ms se guarda como 1: medida, no vacía");
         anotar_latencia(&PEQUENO, 2_500);
         assert_eq!(latencia_ms(&PEQUENO), Some(2_500));
+    }
+
+    /// **La pista del cliente se anota aparte** (sprint 010): su cifra no pisa la de tu turno, que es la que decide.
+    #[test]
+    fn la_pista_del_cliente_se_anota_aparte() {
+        anotar_latencia_del_cliente(&GRANDE, 0);
+        assert_eq!(latencia_del_cliente_ms(&GRANDE), Some(1), "medida, no vacía");
+        anotar_latencia_del_cliente(&GRANDE, 3_100);
+        assert_eq!(latencia_del_cliente_ms(&GRANDE), Some(3_100));
+        assert!(!std::ptr::eq(latencia_del_cliente_de(&GRANDE), latencia_de(&GRANDE)), "dos cifras, dos sitios");
+        assert!(!std::ptr::eq(latencia_del_cliente_de(&PEQUENO), latencia_de(&PEQUENO)));
+        assert!(!std::ptr::eq(latencia_del_cliente_de(&PEQUENO), latencia_del_cliente_de(&GRANDE)));
     }
 
     /// Sin modelo bajado, whisper dice «falta el modelo» y no transcribe nada inventado.

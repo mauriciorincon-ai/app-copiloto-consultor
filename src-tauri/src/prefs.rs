@@ -139,11 +139,15 @@ pub struct Preferencias {
 }
 
 /// Cuánto tardó cada modelo de whisper en transcribir el recorte de calibración, en milisegundos (`None`: sin medir).
+/// Desde el sprint 010, pista por pista: tu turno de 10 s (el que decide el modelo) y el del cliente; un archivo de
+/// antes no trae las del cliente y quedan sin medir.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct LatenciasDeWhisper {
     pub grande_ms: Option<u32>,
     pub pequeno_ms: Option<u32>,
+    pub grande_cliente_ms: Option<u32>,
+    pub pequeno_cliente_ms: Option<u32>,
 }
 
 impl Default for Preferencias {
@@ -282,7 +286,7 @@ mod tests {
             aviso_de_arriba_visto: true,
             enriquecer_el_banco: true,
             // Lo que whisper tardó en este PC se recuerda (M3 del S6): lo contrario de «sin medir».
-            latencias_de_whisper: LatenciasDeWhisper { grande_ms: Some(5_200), pequeno_ms: Some(1_900) },
+            latencias_de_whisper: LatenciasDeWhisper { grande_ms: Some(5_200), pequeno_ms: Some(1_900), ..Default::default() },
         };
         guardar(&ruta, &elegidas).unwrap();
         assert_eq!(leer(&ruta), elegidas);
@@ -341,10 +345,26 @@ mod tests {
     fn las_medidas_de_whisper_son_opcionales_y_viajan() {
         let p = de_texto(r#"{"version":1,"redactar":true}"#).unwrap();
         assert_eq!(p.latencias_de_whisper, LatenciasDeWhisper::default());
-        let con = Preferencias { latencias_de_whisper: LatenciasDeWhisper { grande_ms: Some(5_200), pequeno_ms: None }, ..p };
+        let con = Preferencias {
+            latencias_de_whisper: LatenciasDeWhisper { grande_ms: Some(5_200), grande_cliente_ms: Some(7_400), ..Default::default() },
+            ..p
+        };
         let texto = a_texto(&con);
         assert!(texto.contains(r#""grandeMs": 5200"#), "{texto}");
-        assert_eq!(de_texto(&texto).unwrap().latencias_de_whisper.grande_ms, Some(5_200));
+        assert!(texto.contains(r#""grandeClienteMs": 7400"#), "{texto}");
+        let leidas = de_texto(&texto).unwrap().latencias_de_whisper;
+        assert_eq!((leidas.grande_ms, leidas.grande_cliente_ms, leidas.pequeno_cliente_ms), (Some(5_200), Some(7_400), None));
+    }
+
+    /// **Unas preferencias del sprint 009 se siguen leyendo** (sprint 010): traen tu turno y no la pista del cliente;
+    /// lo que traen vale y lo que no, queda sin medir.
+    #[test]
+    fn las_medidas_de_antes_de_la_pista_del_cliente_se_leen() {
+        let p = de_texto(r#"{"version":1,"latenciasDeWhisper":{"grandeMs":9144,"pequenoMs":1632}}"#).unwrap();
+        assert_eq!(
+            p.latencias_de_whisper,
+            LatenciasDeWhisper { grande_ms: Some(9_144), pequeno_ms: Some(1_632), grande_cliente_ms: None, pequeno_cliente_ms: None }
+        );
     }
 
     /// **Un archivo del H1 abre la banda arriba y enseña el aviso una vez** (sprint 004): no tiene ni
