@@ -39,11 +39,17 @@ import { estadoDelModelo, motivo } from "./Idioma";
 import { useTextosDePresencial } from "../i18n/presencial-nuevo";
 import { esWindows, usePlataforma } from "../plataforma";
 import {
+  asentarDesplazamiento,
+  bandaCerradaDesdeLaUrl,
+  desplazamientoDesdeLaUrl,
   entendidoElAvisoDeArriba,
   fijarPosicionDeLaBanda,
+  mostrarLaBanda,
   useFranja,
   type Borde,
+  type LaFranja,
 } from "../franja";
+import { useTextosDeWindows } from "../i18n/windows";
 
 /**
  * SESIÓN — «Antes de empezar».
@@ -104,7 +110,13 @@ export function Sesion({
    * **La banda, arriba o abajo** (sprint 004). Fuera de Tauri, la de `sesion.html` · sprint 4: arriba,
    * y el aviso de la primera vez solo en «la primera vez» (`?estado=aviso`).
    */
-  const franja = useFranja({ borde: "arriba", barra: 0, avisoVisto: pedido !== "aviso", desplazamiento: 0, bandaAbierta: true });
+  const franja = useFranja({
+    borde: "arriba",
+    barra: 0,
+    avisoVisto: pedido !== "aviso",
+    desplazamiento: desplazamientoDesdeLaUrl(busqueda),
+    bandaAbierta: !bandaCerradaDesdeLaUrl(busqueda),
+  });
   const [avisoCerrado, setAvisoCerrado] = useState(false);
   const verAviso = franja.borde === "arriba" && !franja.avisoVisto && !avisoCerrado;
 
@@ -283,6 +295,7 @@ export function Sesion({
               </p>
             )}
             <LaBanda borde={franja.borde} />
+            <LaAlturaDeLaBanda franja={franja} />
             {/* «Escucha las dos pistas» solo aparece cuando NO es verdad (mirada 17): con una pista
                 caída, dice cuál queda. Vivía en «Qué funciona hoy», que el sprint 3 retiró al volver
                 al diseño aprobado de la Etapa de Diseño. */}
@@ -350,6 +363,42 @@ export function Sesion({
           </div>
         )}
       </div>
+    </>
+  );
+}
+
+/**
+ * **La altura de la banda y su «×»**, en Sesión (sprint 011, ADR 004 enmienda 3) — solo Windows, y sin maqueta: sus textos
+ * viven en `windows.ts` (diccionario aparte, ADR 022). Maquetada, no vista: va al gate del hito.
+ *
+ * - Con la banda arriba, dice a qué altura quedó y «Volver arriba» la devuelve al borde (es el asa soltada en 0).
+ * - Con la banda cerrada —por su «×» o por el corte—, lo dice y «Mostrar la banda» la abre en su borde y a su altura.
+ */
+export function LaAlturaDeLaBanda({ franja }: { franja: LaFranja }) {
+  const [plataforma] = usePlataforma();
+  const tw = useTextosDeWindows().banda;
+  if (!esWindows(plataforma)) return null;
+  return (
+    <>
+      {franja.borde === "arriba" && (
+        <Fila icono="i-flecha" color="var(--ink-2)" texto={tw.alturaTitulo}>
+          <span className="estado mute">
+            {franja.desplazamiento === 0 ? tw.pegadaArriba : tw.alturaValor(franja.desplazamiento)}
+          </span>
+          {franja.desplazamiento > 0 && (
+            <button type="button" className="btn mini" onClick={() => void asentarDesplazamiento(0)}>
+              {tw.volverArriba}
+            </button>
+          )}
+        </Fila>
+      )}
+      {!franja.bandaAbierta && (
+        <Fila icono="i-ring" color="var(--mute)" texto={tw.cerradaTitulo}>
+          <button type="button" className="btn mini" onClick={() => void mostrarLaBanda()}>
+            {tw.mostrar}
+          </button>
+        </Fila>
+      )}
     </>
   );
 }

@@ -44,6 +44,19 @@ export function bordeDesdeLaUrl(busqueda: string): Borde | null {
 }
 
 /**
+ * `?desplazamiento=132` y `?banda=cerrada` en la URL, para el arnés y el e2e de Windows (sprint 011): fuera de Tauri no hay
+ * parte nativa que diga a qué altura está la banda ni si sigue abierta.
+ */
+export function desplazamientoDesdeLaUrl(busqueda: string): number {
+  const px = Number(new URLSearchParams(busqueda).get("desplazamiento"));
+  return Number.isFinite(px) && px > 0 ? Math.round(px) : 0;
+}
+
+export function bandaCerradaDesdeLaUrl(busqueda: string): boolean {
+  return new URLSearchParams(busqueda).get("banda") === "cerrada";
+}
+
+/**
  * @param fuera lo que se enseña fuera de Tauri —los tests, el arnés de fidelidad—, donde no hay parte
  * nativa a la que preguntar. Cada ventana pasa el de su maqueta.
  */

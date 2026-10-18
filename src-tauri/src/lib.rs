@@ -975,7 +975,11 @@ fn empezar(
         Err(e) => println!("[ventanas] la banda no pudo volver: {e}"),
         // Se dice solo cuando de verdad volvió. Es la única traza de que M4 está cableado, y es
         // por donde se verificó en vivo: sin ella, «vuelve» sería una afirmación sin testigo.
-        Ok(()) if la_habian_cortado => println!("[ventanas] la banda estaba cortada: vuelve"),
+        // Y Sesión se entera (sprint 011): tras el «×» o el corte decía «La banda está cerrada», y ya no lo está.
+        Ok(()) if la_habian_cortado => {
+            println!("[ventanas] la banda estaba cortada: vuelve");
+            let _ = app.emit(EVENTO_FRANJA, la_franja_de(&app));
+        }
         Ok(()) => {}
     }
     // **Arriba, el disparador del acople es la reunión** (ADR 004, enmienda 1): al empezar, la reunión
@@ -4296,6 +4300,17 @@ mod pruebas_de_la_banda_a_tu_altura {
             }
         }
         assert!(vistas >= 10, "el barrido casi no vio llamadas: {vistas}");
+    }
+
+    /// **Quien repone la banda se lo dice a Sesión.** Tras el «×» o el corte, Sesión dice «La banda está cerrada» con su
+    /// «Mostrar la banda»; si «Iniciar sesión» la repone sin avisar, esa fila se queda mintiendo con la banda en pantalla.
+    /// ¿Puede fallar? Sí: sin el `emit` del brazo `la_habian_cortado` la fila se queda hasta el siguiente evento de la franja.
+    #[test]
+    fn empezar_avisa_a_sesion_cuando_repone_la_banda() {
+        let c = cuerpo("fn empezar(");
+        let brazo = &c[en(c, "Ok(()) if la_habian_cortado => {")..];
+        let aviso = en(brazo, "app.emit(EVENTO_FRANJA, la_franja_de(&app))");
+        assert!(aviso < 300, "el aviso quedó lejos del brazo que repone la banda");
     }
 
     /// El asa de posición no hace nada abajo, y «Mostrar la banda» es asíncrono: en Windows, crear una ventana desde un

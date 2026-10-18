@@ -1,7 +1,7 @@
 import { useIdioma, useT, useTeclas } from "../i18n";
 import { Ic } from "./Iconos";
-import { useAsa } from "../asa";
-import { useFranja, type Borde } from "../franja";
+import { useAsa, useAsaDeAltura } from "../asa";
+import { cerrarLaBanda, useFranja, type Borde } from "../franja";
 import { useTurnos } from "../turnos";
 import { useFicha, type Acumulada, type Aparicion } from "../ficha";
 import { hayTauri } from "../puente";
@@ -209,7 +209,13 @@ export function Banda({
   // Fuera de Tauri, la muestra de la sala son los mismos turnos, todos de la sala: la app no sabe quién habló.
   const oidos = useTurnos();
   const turnos = deLaMaqueta && presencial ? oidos.map((x) => ({ ...x, pista: "sala" as const })) : oidos;
-  const { borde } = useFranja({ borde: bordeDeMuestra, barra: 0, avisoVisto: true, desplazamiento: 0, bandaAbierta: true });
+  const { borde, desplazamiento } = useFranja({
+    borde: bordeDeMuestra,
+    barra: 0,
+    avisoVisto: true,
+    desplazamiento: 0,
+    bandaAbierta: true,
+  });
   const asa = useAsa(borde);
   const voz = useVoz();
   // **Una tecla que el sistema no dejó registrar se dice en la banda, no solo en Honestidad** (sprint 008, M10 del S7):
@@ -219,6 +225,9 @@ export function Banda({
   const plataforma = prestada ?? propia;
   const tw = useTextosDeWindows();
   const teclasMudas = esWindows(plataforma) ? atajosSinRegistrar(plataforma).length : 0;
+  /** El asa de altura y el «×» de la banda (sprint 011): solo Windows; en el Mac la banda no cambia ni un píxel. */
+  const enWindows = esWindows(plataforma);
+  useAsaDeAltura(enWindows && borde === "arriba", desplazamiento);
 
   /** «1 documento» y no «1 documentos»: el contador es visible y la app es bilingüe por regla. */
   const cuenta = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
@@ -424,6 +433,7 @@ export function Banda({
         aparicion={aparicion?.clase === "ficha" ? aparicion : null}
         asa={asa}
         borde={borde}
+        enWindows={enWindows}
       />
     );
   }
@@ -431,6 +441,7 @@ export function Banda({
   return (
     <section
       className={grande ? "banda ampliada" : "banda"}
+      data-con-cerrar={enWindows ? "" : undefined}
       aria-label="Angel Ghost"
       data-estado={estadoReal}
       data-borde={borde}
@@ -439,6 +450,7 @@ export function Banda({
       <span className="asa" ref={asa} title={t.asaAjustar}>
         <i />
       </span>
+      {enWindows && <ControlesDeWindows borde={borde} sesion={deLaMaqueta ? false : escucha.escuchando || soloNotas} />}
 
       <div className="cab-b">
         {/* «Escuchando» solo cuando se está escuchando de verdad, y con las pistas que de verdad
@@ -957,18 +969,45 @@ export function Banda({
  * con él se habría ido el «0 B». Es una promesa dura de la app (regla 2), no un adorno, así que
  * baja a la línea. Es una de las tres decisiones que el usuario aprobó en la mirada 16.
  */
+/**
+ * **Lo que solo Windows pinta en la banda** (sprint 011, ADR 004 enmienda 3): el asa de altura —arriba, pegada al borde de
+ * la pantalla, para bajar la banda y dejarla donde estorbe menos— y el «×», que la cierra sin matar la app.
+ *
+ * El «×» dice lo que hace: con la sesión en marcha, además de cerrar la banda la termina (decisión 1a del G-Plan), y el
+ * nombre del botón lo avisa. Va en una esquina, absoluto, para valer en las tres alturas de la banda sin tocar su
+ * disposición. Sin maqueta —diccionario aparte, ADR 022—: maquetado, no visto, al gate del hito.
+ */
+function ControlesDeWindows({ borde, sesion }: { borde: Borde; sesion: boolean }) {
+  const tw = useTextosDeWindows().banda;
+  const nombre = sesion ? tw.cerrarYTerminar : tw.cerrar;
+  return (
+    <>
+      {borde === "arriba" && (
+        <span className="asa-altura" title={tw.asaDeAltura}>
+          <i />
+        </span>
+      )}
+      <button type="button" className="cerrar-b" aria-label={nombre} title={nombre} onClick={() => void cerrarLaBanda()}>
+        <span aria-hidden="true">×</span>
+      </button>
+    </>
+  );
+}
+
 function BandaDeVoz({
   bytes,
   voz,
   aparicion,
   asa,
   borde,
+  enWindows,
 }: {
   bytes: string;
   voz: LaVoz;
   aparicion: (Aparicion & { clase: "ficha" }) | null;
   asa: React.RefObject<HTMLSpanElement | null>;
   borde: Borde;
+  enWindows: boolean;
 }) {
   const t = useT().banda;
   const k = useTeclas();
@@ -1008,13 +1047,20 @@ function BandaDeVoz({
     // sprint 001, que fue exactamente eso. Quien use un lector de pantalla se entera del modo por
     // la línea, que sí es bilingüe; y el estado, para los tests y el gate de fidelidad, viaja en
     // `data-estado` como en la banda de 88 px.
-    <section className="banda voz" aria-label="Angel Ghost" data-estado={estado} data-borde={borde}>
+    <section
+      className="banda voz"
+      data-con-cerrar={enWindows ? "" : undefined}
+      aria-label="Angel Ghost"
+      data-estado={estado}
+      data-borde={borde}
+    >
       {/* El asa sigue siendo la misma y sigue haciendo lo mismo: arrastrarla saca del modo,
           porque el alto ES el modo. No hace falta una tecla distinta para lo que ya se hace
           tirando de la banda. */}
       <span className="asa" ref={asa} title={t.asaVolver}>
         <i />
       </span>
+      {enWindows && <ControlesDeWindows borde={borde} sesion />}
 
       <div className="cuerpo-b">
         {estado === "voz-sin" ? (

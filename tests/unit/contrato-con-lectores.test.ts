@@ -84,12 +84,10 @@ const DEUDA: Record<string, string> = {
   // cruzan por `QueSabeTranscribir`). Esos dos los cazó una lectura a mano, no este gate: los daba
   // por leídos porque compara por NOMBRE y otro tipo tenía un campo que se llamaba igual. Es la
   // limitación que su propia bitácora declara, vista en acción.
-
   // ── Y el último, pagado en la auditoría del S2 (B9) ──
   //
   // `InformeDelCorte.bytesEnRed` se declaraba aquí como «lo lee Rust, no se paga»: un tercer estado
   // que la regla 20 no tiene. Lo que lee solo Rust no cruza: `#[serde(skip)]`, y la lista queda vacía.
-
   // ── Sprint 003, fase 0: B37 cruzó antes que su vista; pagada en la fase 1 ──
   //
   // Siete campos esperaron aquí a la mirada 19 y los pagó la vista «Lo que salió» de IA. Los
@@ -97,25 +95,21 @@ const DEUDA: Record<string, string> = {
   // Notas en la misma fase; y los de `ContenidoDeReunion` salieron del contrato: el contenido
   // descifrado de una reunión no cruza al webview (la maqueta no tiene «abrir»). `hora`, `externo` y
   // `Trozo.texto` los lee la misma vista, aunque el gate no pueda distinguirlos por su nombre.
-
   // ── Sprint 003, fase 2: las propuestas cruzaron antes que su pantalla; pagada en la misma fase ──
   //
   // `propuestas` y `sinDecidir` los leen «durante» y la franja de «al cerrar» de Notas.
   // `bytesPropuestas` salió del contrato —y del cuaderno—: «Se va a guardar» no tiene fila de
   // propuestas en la maqueta (la franja dice «Las 3 que guardaste van en tu archivo»), y un campo que
   // nadie pinta no cruza. `EstadoDeLaBandeja.bandejas` nació y salió en la misma fase, por lo mismo.
-
   // ── Sprint 005, fase 1: el modo presencial cruzó antes que su pantalla; pagada en la fase 2 ──
   //
   // `EstadoDeEscucha.presencial` lo leen Sesión (la vista presencial, sin «A medias»), la banda (la cabecera
   // de la sala), Honestidad y el rail. `IdiomasDePista.sala`, el selector «Idioma de la sala» de Sesión: la
   // fila de Idioma no cabe con la franja aprobada y queda maquetada, no vista (bitácora del sprint 005).
-
-  // ── Sprint 011, fase 1: la altura de la banda y su «×» cruzan antes que su pantalla; se pagan en la fase 2 ──
-  "LaFranja.desplazamiento":
-    "sprint 011, fase 2: Sesión enseña la altura en pt y «Volver arriba» (src/pantallas/Sesion.tsx)",
-  "LaFranja.bandaAbierta":
-    "sprint 011, fase 2: Sesión ofrece «Mostrar la banda» con la banda cerrada (src/pantallas/Sesion.tsx)",
+  // ── Sprint 011, fase 1: la altura de la banda y su «×» cruzaron antes que su pantalla; pagados en la fase 2 ──
+  //
+  // `LaFranja.desplazamiento` y `LaFranja.bandaAbierta` los lee Sesión (`LaAlturaDeLaBanda`: la altura con «Volver
+  // arriba» y, con la banda cerrada, «Mostrar la banda») y el asa de altura de la banda parte de `desplazamiento`.
 };
 
 /** Cada `export type X = … { … }`, con las variantes de una unión incluidas. */
