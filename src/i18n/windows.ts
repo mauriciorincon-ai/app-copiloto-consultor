@@ -86,6 +86,34 @@ export type TextosDeWindows = {
     cerradaTitulo: string;
     mostrar: string;
   };
+  /**
+   * Sprint 012 (ADR 024): el modo transparente por cliente. Solo Windows y sin maqueta (diccionario aparte, ADR 022): el
+   * interruptor y el aviso en «Este cliente», «El cliente consintió», la marca de la banda y las constancias en «Se va a
+   * guardar» y en Honestidad. Maquetados, no vistos: van al gate del hito.
+   */
+  transparente: {
+    titulo: string;
+    ayuda: string;
+    encendido: string;
+    apagado: string;
+    /** El aviso fijo en los dos idiomas: el título del recuadro que lo enseña. */
+    loQueLeDices: string;
+    consintio: string;
+    consintioAyuda: string;
+    sinReunion: string;
+    anotada: string;
+    noAnotada: string;
+    decirlo: string;
+    dicho: string;
+    noCabe: string;
+    /** La marca corta de la banda: solo dice que el modo está encendido. */
+    marcaDeLaBanda: string;
+    /** «Se va a guardar»: la fila de la constancia, con cuántas hay. */
+    constancia: string;
+    constanciaDonde: (n: number) => string;
+    /** Honestidad, en «Tuyo»: lo que el modo añade a lo que se guarda. */
+    tuyoMas: string;
+  };
   /** Idioma: el motor de voz es de la app, no del sistema (ADR 022). */
   idioma: {
     transcribeTuPc: string;
@@ -212,6 +240,30 @@ const ES: TextosDeWindows = {
     subirNombre: "Subir la banda",
     cerradaTitulo: "La banda está cerrada",
     mostrar: "Mostrar la banda",
+  },
+  transparente: {
+    titulo: "Modo transparente",
+    ayuda:
+      "Le cuentas al cliente, antes de empezar, que usas esta herramienta en tu equipo. Se recuerda por cliente. Nada sale de la app.",
+    encendido: "Encendido",
+    apagado: "Apagado",
+    loQueLeDices: "Lo que le dices",
+    consintio: "El cliente consintió",
+    consintioAyuda:
+      "Deja constancia en tus notas cifradas: cliente, jurisdicción, hora, idioma y este texto.",
+    sinReunion: "Se anota con la reunión abierta: inicia la sesión primero.",
+    anotada: "Anotado en tus notas cifradas.",
+    noAnotada: "No se pudo anotar. Revisa que la reunión siga abierta.",
+    decirlo: "Decírselo en voz alta",
+    dicho: "Se lo estoy diciendo con la voz.",
+    noCabe:
+      "No cabe decirlo ahora (altavoces, alguien hablando o sin voz): léeselo tú.",
+    marcaDeLaBanda: "Modo transparente",
+    constancia: "Constancia del cliente",
+    constanciaDonde: (n) =>
+      n === 1 ? "1 · consintió el aviso" : `${n} · consintieron el aviso`,
+    tuyoMas:
+      "Y, si usas el modo transparente, la constancia de que el cliente consintió: cliente, jurisdicción, hora, idioma y el aviso que dijiste.",
   },
   whisper: {
     titulo: "La transcripción en este PC",
@@ -373,6 +425,33 @@ const EN: TextosDeWindows = {
     subirNombre: "Raise the band",
     cerradaTitulo: "The band is closed",
     mostrar: "Show the band",
+  },
+  transparente: {
+    titulo: "Transparent mode",
+    ayuda:
+      "Before you start, you tell the client you use this tool on your own computer. It is remembered per client. Nothing leaves the app.",
+    encendido: "On",
+    apagado: "Off",
+    loQueLeDices: "What you tell them",
+    consintio: "The client consented",
+    consintioAyuda:
+      "Records it in your encrypted notes: client, jurisdiction, time, language and this text.",
+    sinReunion:
+      "It is recorded while the meeting is open: start the session first.",
+    anotada: "Recorded in your encrypted notes.",
+    noAnotada: "It couldn't be recorded. Check that the meeting is still open.",
+    decirlo: "Say it out loud",
+    dicho: "Saying it now with the voice.",
+    noCabe:
+      "It can't be said now (speakers, someone talking or no voice): read it to them yourself.",
+    marcaDeLaBanda: "Transparent mode",
+    constancia: "Client's consent record",
+    constanciaDonde: (n) =>
+      n === 1
+        ? "1 · consented to the notice"
+        : `${n} · consented to the notice`,
+    tuyoMas:
+      "And, if you use the transparent mode, the record that the client consented: client, jurisdiction, time, language and the notice you gave.",
   },
   whisper: {
     titulo: "Transcription on this PC",

@@ -313,6 +313,10 @@ for (const tema of ["dark", "light"] as const) {
       que: "sesión en Windows · banda cerrada",
       url: "ventana=principal&pantalla=sesion&plataforma=windows&banda=cerrada",
     },
+    {
+      que: "sesión en Windows · modo transparente",
+      url: "ventana=principal&pantalla=sesion&estado=transparente&plataforma=windows",
+    },
   ]) {
     test(`«${p.que}» · tema ${tema} · sin hallazgos de axe`, async ({
       page,
@@ -554,4 +558,41 @@ test("en Windows, el «×» de la banda mide al menos 24 × 24 px (WCAG 2.5.8)",
   expect(caja, "el «×» no tiene caja").not.toBeNull();
   expect(caja!.width).toBeGreaterThanOrEqual(24);
   expect(caja!.height).toBeGreaterThanOrEqual(24);
+});
+
+test("en Windows, el modo transparente enseña el aviso en los dos idiomas; en macOS no hay nada", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 900, height: 900 });
+  await page.goto(
+    "/?ventana=principal&pantalla=sesion&estado=transparente&plataforma=windows",
+  );
+  const interruptor = page.getByRole("switch", { name: /Modo transparente/ });
+  await expect(interruptor).toHaveAttribute("aria-checked", "true");
+  // Símbolo + texto, no solo color (regla 8): el estado se lee.
+  await expect(interruptor).toContainText("Encendido");
+  await expect(page.getByText("Lo que le dices")).toBeVisible();
+  await expect(page.locator(".transparente p[lang=es]")).toContainText(
+    "Antes de empezar, te cuento",
+  );
+  await expect(page.locator(".transparente p[lang=en]")).toContainText(
+    "Before we start, a quick note",
+  );
+  // Sin reunión abierta, anotar el consentimiento se ve apagado y dice por qué.
+  await expect(
+    page.getByRole("button", { name: /El cliente consintió/ }),
+  ).toHaveAttribute("aria-disabled", "true");
+  await expect(
+    page.getByText("Se anota con la reunión abierta: inicia la sesión primero."),
+  ).toBeVisible();
+
+  // CONTROL: en macOS, el mismo estado no pinta ni una línea del modo transparente.
+  await page.goto(
+    "/?ventana=principal&pantalla=sesion&estado=transparente",
+  );
+  await expect(page.getByText("Este cliente").first()).toBeVisible();
+  await expect(page.getByRole("switch", { name: /Modo transparente/ })).toHaveCount(
+    0,
+  );
+  await expect(page.getByText("Lo que le dices")).toHaveCount(0);
 });

@@ -3,6 +3,8 @@ import { useIdioma, useT, type Idioma } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { hayTauri } from "../puente";
 import { formatearBytes } from "./Honestidad";
+import { esWindows, usePlataforma } from "../plataforma";
+import { useTextosDeWindows } from "../i18n/windows";
 import {
   nombreDeLaRetencion,
   abrirLaBandeja,
@@ -434,6 +436,9 @@ function AlCerrar({ cuaderno, volver }: { cuaderno: VistaDelCuaderno; volver: ()
   const bufTranscript = useT().cuaderno.bufTranscript;
   const presencial = cuaderno.presencial;
   const idioma = useIdioma();
+  // La constancia del modo transparente (sprint 012, ADR 024): solo Windows, y solo si hay alguna en esta reunión.
+  const [plataforma] = usePlataforma();
+  const tt = useTextosDeWindows().transparente;
   const [fallo, setFallo] = useState(false);
   const guardar = () =>
     guardarLaReunion().then(
@@ -484,6 +489,9 @@ function AlCerrar({ cuaderno, volver }: { cuaderno: VistaDelCuaderno; volver: ()
           {fila("i-nota", t.tusNotas, `${r.parrafos} ${t.parrafos}`, kb(r.bytesNota))}
           {fila("i-pin-lleno", t.fichasFijadas, `${r.fijadas} · ${t.tituloYFuente}`, kb(r.bytesFijadas))}
           {fila("i-check-circle", t.acuerdos, `${r.acuerdos} · ${t.marcadosPorTi}`, kb(r.bytesAcuerdos))}
+          {esWindows(plataforma) &&
+            r.consentimientos > 0 &&
+            fila("i-ojo", tt.constancia, tt.constanciaDonde(r.consentimientos), "")}
           {cuaderno.conservarMisTurnos &&
             fila("i-mic", t.tusTurnosEnTexto, `${r.turnos} · ${t.loQueDijisteTu}`, kb(r.bytesTurnos))}
           {/* Un interruptor de verdad (`role="switch"`), como los de Sesión e IA. */}

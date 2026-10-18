@@ -5,6 +5,7 @@ import { cerrarLaBanda, useFranja, type Borde } from "../franja";
 import { useTurnos } from "../turnos";
 import { useFicha, type Acumulada, type Aparicion } from "../ficha";
 import { hayTauri } from "../puente";
+import { useModoTransparente } from "../jurisdiccion";
 import { atajosSinRegistrar, esWindows, usePlataforma, type Plataforma } from "../plataforma";
 import { useTextosDeWindows } from "../i18n/windows";
 import {
@@ -227,6 +228,8 @@ export function Banda({
   const teclasMudas = esWindows(plataforma) ? atajosSinRegistrar(plataforma).length : 0;
   /** El asa de altura y el «×» de la banda (sprint 011): solo Windows; en el Mac la banda no cambia ni un píxel. */
   const enWindows = esWindows(plataforma);
+  /** La marca del modo transparente (sprint 012, ADR 024): solo Windows, y la banda solo sabe si está encendido. */
+  const transparente = useModoTransparente(enWindows);
   useAsaDeAltura(enWindows && borde === "arriba", desplazamiento);
 
   /** «1 documento» y no «1 documentos»: el contador es visible y la app es bilingüe por regla. */
@@ -434,6 +437,7 @@ export function Banda({
         asa={asa}
         borde={borde}
         enWindows={enWindows}
+        transparente={transparente}
       />
     );
   }
@@ -442,6 +446,7 @@ export function Banda({
     <section
       className={grande ? "banda ampliada" : "banda"}
       data-con-cerrar={enWindows ? "" : undefined}
+      data-transparente={transparente ? "" : undefined}
       aria-label="Angel Ghost"
       data-estado={estadoReal}
       data-borde={borde}
@@ -492,6 +497,9 @@ export function Banda({
             {tw.teclasSinResponder(teclasMudas)}
           </span>
         )}
+
+        {/* Le dijiste al cliente que usas esta herramienta (ADR 024): la banda solo lo recuerda, con símbolo y texto. */}
+        {transparente && <MarcaTransparente />}
 
         {/* En la sala no hay un cliente de videollamada cuya protección afirmar (ADR 020 §9): la banda sigue
             protegida de la captura, y el chip dice dónde se está. */}
@@ -994,6 +1002,17 @@ function ControlesDeWindows({ borde, sesion }: { borde: Borde; sesion: boolean }
   );
 }
 
+/** «Modo transparente», en la banda (sprint 012, ADR 024): un símbolo y dos palabras. Solo Windows y solo si está encendido. */
+function MarcaTransparente() {
+  const tt = useTextosDeWindows().transparente;
+  return (
+    <span className="cliente-b">
+      <Ic id="i-ojo" s />
+      {tt.marcaDeLaBanda}
+    </span>
+  );
+}
+
 function BandaDeVoz({
   bytes,
   voz,
@@ -1001,6 +1020,7 @@ function BandaDeVoz({
   asa,
   borde,
   enWindows,
+  transparente,
 }: {
   bytes: string;
   voz: LaVoz;
@@ -1008,6 +1028,7 @@ function BandaDeVoz({
   asa: React.RefObject<HTMLSpanElement | null>;
   borde: Borde;
   enWindows: boolean;
+  transparente: boolean;
 }) {
   const t = useT().banda;
   const k = useTeclas();
@@ -1015,10 +1036,13 @@ function BandaDeVoz({
 
   /** El contador, que a este alto vive en la línea y no en la cabecera. */
   const red = (
-    <span className={bytes === RED ? "red cero mono" : "red api mono"}>
-      <Ic id="i-subir" s />
-      {bytes}
-    </span>
+    <>
+      {transparente && <MarcaTransparente />}
+      <span className={bytes === RED ? "red cero mono" : "red api mono"}>
+        <Ic id="i-subir" s />
+        {bytes}
+      </span>
+    </>
   );
 
   /**
@@ -1050,6 +1074,7 @@ function BandaDeVoz({
     <section
       className="banda voz"
       data-con-cerrar={enWindows ? "" : undefined}
+      data-transparente={transparente ? "" : undefined}
       aria-label="Angel Ghost"
       data-estado={estado}
       data-borde={borde}

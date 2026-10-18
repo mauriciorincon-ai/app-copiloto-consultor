@@ -9,6 +9,7 @@ import {
   NDA_LO_PROHIBE,
   NDA_NO_LO_PROHIBE,
   VISTA_DEL_CLIENTE,
+  VISTA_DEL_CLIENTE_TRANSPARENTE,
 } from "./contrato.generado";
 
 /**
@@ -75,7 +76,9 @@ export type EstadoDeSesion =
   | "ensayo"
   /** Presencial, antes de empezar y en marcha (sprint 005, ADR 020; `sesion.html` · sprint 5 · presencial). */
   | "presencial"
-  | "presencial-marcha";
+  | "presencial-marcha"
+  /** El modo transparente encendido para el cliente elegido (sprint 012, ADR 024; solo Windows, sin maqueta). */
+  | "transparente";
 
 export const ESTADOS: EstadoDeSesion[] = [
   "normal",
@@ -89,6 +92,7 @@ export const ESTADOS: EstadoDeSesion[] = [
   "ensayo",
   "presencial",
   "presencial-marcha",
+  "transparente",
 ];
 
 export function estadoDeSesion(busqueda: string): EstadoDeSesion {
@@ -106,6 +110,8 @@ export function muestraDelCliente(estado: EstadoDeSesion): VistaDelCliente {
       };
     case "nda":
       return { ...VISTA_DEL_CLIENTE, nda: NDA_LO_PROHIBE };
+    case "transparente":
+      return VISTA_DEL_CLIENTE_TRANSPARENTE;
     // La maqueta de presencial dibuja la NDA ya revisada, «no lo prohíbe».
     case "presencial":
     case "presencial-marcha":
@@ -216,3 +222,31 @@ export function modoTransparente(): Promise<boolean | null> {
 
 /** El evento con el que Rust avisa a la banda de que el modo transparente cambió (una señal sin dato). */
 export const EVENTO_TRANSPARENTE = "transparente";
+
+/**
+ * La marca de la banda: **solo sabe si el modo transparente está encendido** (sprint 012, ADR 024), no el cliente ni el
+ * aviso. Pregunta al montar y cada vez que Rust avisa de un cambio. `activo` es false fuera de Windows: en el Mac la banda
+ * no pregunta nada.
+ */
+export function useModoTransparente(activo: boolean): boolean {
+  const [encendido, setEncendido] = useState(false);
+  useEffect(() => {
+    if (!activo || !hayTauri()) {
+      setEncendido(false);
+      return;
+    }
+    let vivo = true;
+    const leer = () => {
+      void modoTransparente().then((r) => {
+        if (vivo) setEncendido(r === true);
+      });
+    };
+    leer();
+    const baja = escuchar(EVENTO_TRANSPARENTE, leer);
+    return () => {
+      vivo = false;
+      baja();
+    };
+  }, [activo]);
+  return encendido;
+}

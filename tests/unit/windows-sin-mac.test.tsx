@@ -3,6 +3,7 @@ import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { Cascara, Enrutador, ESTADOS } from "@/App";
 import { diccionarioDeWindows } from "@/i18n";
+import { TEXTOS_DE_WINDOWS } from "@/i18n/windows";
 import { CAMBIOS_DE_WINDOWS } from "@/i18n/windows-cambios";
 import { ESTADOS as ESTADOS_DE_SESION } from "@/jurisdiccion";
 import { ESTADOS as ESTADOS_DEL_ENSAYO } from "@/ensayo";
@@ -399,6 +400,22 @@ describe("el arnés de fidelidad entero, en Windows, no habla del Mac", () => {
         loQueSeLee(mac.container),
         `CONTROL: en macOS el botón sí está · ${idioma}`,
       ).toMatch(boton);
+    }
+  });
+
+  it("Honestidad, en Windows, cuenta la constancia del modo transparente en «Tuyo»; en macOS no cambia", () => {
+    for (const idioma of ["es", "en"] as const) {
+      const frase = TEXTOS_DE_WINDOWS[idioma].transparente.tuyoMas;
+      const w = pinta("?pantalla=honestidad&plataforma=windows", true, idioma);
+      expect(
+        loQueSeLee(w.container),
+        `Honestidad en Windows no dice que se guarda la constancia · ${idioma}`,
+      ).toContain(frase);
+      const mac = pinta("?pantalla=honestidad", false, idioma);
+      expect(
+        loQueSeLee(mac.container),
+        `Honestidad en macOS habla de la constancia del modo transparente · ${idioma}`,
+      ).not.toContain(frase);
     }
   });
 
