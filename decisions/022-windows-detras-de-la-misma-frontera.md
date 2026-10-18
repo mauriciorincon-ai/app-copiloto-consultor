@@ -336,5 +336,5 @@ nuevas (solo features de `windows-sys`).
 
 ## Lo que este ADR NO decide
 
-La firma del instalador (G-Release), una DACL propia para la carpeta (todavía no), ni
-si la puerta local llega a Windows (otro ADR, si llega).
+La firma del instalador (G-Release) ni una DACL propia, más estricta, para la carpeta de la app (todavía no). La
+puerta local ya no es una pregunta abierta: llegó a Windows en el sprint 012 (enmienda 4).

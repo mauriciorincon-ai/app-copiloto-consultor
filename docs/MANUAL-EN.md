@@ -939,7 +939,7 @@ It is not a new feature but the same app on another system, which is why it sits
 | `atajos`                     | yes: Alt+Shift and a key; none with Ctrl+Alt, which on many keyboards is AltGr                                          |
 | `borrado-con-la-app-cerrada` | yes: the Task Scheduler, at the minute of each expiry                                                                   |
 | `desbloqueo`                 | yes: Windows Hello, once per app session                                                                                |
-| `puerta-local`               | not on Windows for now: the door for Claude Code                                                                        |
+| `puerta-local`               | yes: the door for Claude Code, a named pipe for your user only, key in the Credential Manager (sprint 012)              |
 
 ### Installing on a Surface or an ARM PC · Sprint 009
 
@@ -959,6 +959,12 @@ It is not a new feature but the same app on another system, which is why it sits
 - **What does not change.** Nothing changes on macOS or on x64 Windows. The band's protection stays “unverified” in
   Teams, Zoom and Meet until you test it on your PC, and the ARM64 `.msi` was installed and opened live on a Surface in
   sprint 010 (it reused the folder of the earlier `.exe` installation).
+
+### The local door and the transparent mode, on Windows · New · Sprint 012
+
+- **The local door is on Windows now.** *AI* → **Local door** opens it: a *named pipe* that only your user can open, with the key in the Credential Manager (“Angel Ghost · puerta / token”). The same policy as on the Mac: it starts closed, closes itself in a meeting or a rehearsal, a closed list of orders and a log without content. `ghost.exe` does not ship in the installer: `cargo build --bin ghost`.
+- **The transparent mode is Windows-only.** In *Session*, “This client” has a per-client switch: it turns on the fixed notice in Spanish and English (which the voice reads to you in audio-only mode), **“The client consented”** leaves a record in your encrypted notes (client, jurisdiction, time, language and text) and the band carries a mark while it is on. Nothing leaves the app and, without the mode, your files do not change. The Windows manual tells it all.
+- **“End session” gives the meeting back.** On Windows, ending the session releases the docked window, like the band’s ×. On the Mac nothing changes.
 
 ## Keyboard shortcuts on the Mac
 

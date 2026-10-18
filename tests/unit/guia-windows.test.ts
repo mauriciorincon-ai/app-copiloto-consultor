@@ -13,7 +13,7 @@ import { TEXTOS_DE_WINDOWS } from "../../src/i18n/windows";
  * Lo que exige:
  *  1. **Cero menciones a otro sistema**, en ninguna prueba, matriz ni nota.
  *  2. **Autocontenida**: ni una URL, ni un `<link>`, ni un `<script src>`, ni `fetch`.
- *  3. **Prefijo propio de `localStorage`** (`ag-w11-`), distinto del de la guía general.
+ *  3. **Prefijo propio de `localStorage`** (`ag-w12-`), distinto del de la guía general.
  *  4. **9 paradas del gate, ~20 min**, numeradas «parada N de 9» en el orden del documento.
  *  5. **Cada mirada de texto en matriz**: abre · qué mirar · qué respuesta espero.
  *  6. **La guía general la enlaza**, y las dos se encuentran.
@@ -72,7 +72,7 @@ describe("la guía de Windows es autocontenida", () => {
 
   it("su prefijo de localStorage es propio y no el de la guía general", () => {
     const ns = (html: string) => /var NS = "([^"]+)"/.exec(html)?.[1];
-    expect(ns(WIN)).toBe("ag-w11-");
+    expect(ns(WIN)).toBe("ag-w12-");
     expect(ns(GENERAL)).not.toBe(ns(WIN));
   });
 
@@ -262,16 +262,84 @@ describe("la banda a tu altura (sprint 011): sus paradas dicen los rótulos que 
     }
   });
 
-  it("w16 es «Mejorado en S11» y dice la verdad: End session no devuelve la reunión acoplada", () => {
+  it("w16 sigue en el gate y dice la verdad desde el S12: End session SÍ devuelve la reunión acoplada", () => {
     expect(WIN).toMatch(
-      /<li data-origen="mejorado" data-nace="s11"[^>]*data-gate="pc"[^>]*><input type="checkbox" id="w16">/,
+      /<li data-origen="mejorado" data-nace="s12"[^>]*data-gate="pc"[^>]*><input type="checkbox" id="w16">/,
     );
-    expect(t).toMatch(/End session no la devuelve/);
+    expect(t).not.toMatch(/End session no la devuelve/);
+    expect(t).toMatch(/terminas la sesión con End session/);
     expect(t).not.toMatch(/vuelve a su sitio al terminar/);
   });
 
-  it("el filtro «Lo que cambió» cuenta desde el S10 y llega al S11", () => {
+  it("el filtro «Lo que cambió» cuenta desde el S10 y llega al S12", () => {
     expect(WIN).toContain("Lo que cambió desde el S10");
-    expect(WIN).toMatch(/n === "s10" \|\| n === "s11"/);
+    expect(WIN).toMatch(/n === "s10" \|\| n === "s11" \|\| n === "s12"/);
+  });
+});
+
+describe("la puerta local y el modo transparente (sprint 012): sus paradas dicen los rótulos que la app pinta", () => {
+  const tx = TEXTOS_DE_WINDOWS.en.transparente;
+  const tp = TEXTOS_DE_WINDOWS.en.funciones["puerta-local"];
+  const texto12 = texto(WIN);
+
+  it.each([
+    ["interruptor apagado", `${tx.titulo} · ${tx.apagado}`],
+    ["interruptor encendido", `${tx.titulo} · ${tx.encendido}`],
+    ["loQueLeDices", tx.loQueLeDices],
+    ["consintio", tx.consintio],
+    ["sinReunion", tx.sinReunion],
+    ["anotada", tx.anotada],
+    ["decirlo", tx.decirlo],
+    ["marcaDeLaBanda", tx.marcaDeLaBanda],
+    ["constancia", tx.constancia],
+    ["constanciaDonde(1)", tx.constanciaDonde(1)],
+    ["la puerta en Honesty", tp.nombre],
+  ])("la guía nombra «%s» tal cual: «%s»", (_clave, rotulo) => {
+    expect(texto12, `la guía no nombra «${rotulo}»`).toContain(rotulo);
+  });
+
+  it("la guía nombra los rótulos de la puerta que la app pinta en inglés (AI)", () => {
+    for (const r of ["Local door · closed", "Local door · open", "It closed itself: there is a meeting or a rehearsal", "What your agent did"])
+      expect(texto12, `la guía no nombra «${r}»`).toContain(r);
+  });
+
+  it("w22 y w23 existen, son ⭐ nuevas del S12 y NO entran al gate (el único gate llega con todo el producto)", () => {
+    for (const id of ["w22", "w23"]) {
+      const li = new RegExp(`<li data-origen="nuevo" data-nace="s12" data-minimo><input type="checkbox" id="${id}">`);
+      expect(WIN, `${id} no es una parada ⭐ nueva del S12`).toMatch(li);
+      expect(paradasDelGate(WIN).map((p) => p.id), `${id} entró al gate`).not.toContain(id);
+    }
+  });
+
+  it("el gate sigue siendo de 9 paradas con los ids de siempre (el S12 no toca la guía general)", () => {
+    expect(paradasDelGate(WIN).map((p) => p.id)).toEqual(paradasDelGate(GENERAL).map((p) => p.id));
+    expect(paradasDelGate(WIN)).toHaveLength(9);
+  });
+
+  it("la llave de la puerta tiene su fila de matriz (regla 24), en su tabla, con qué · para qué · aviso · cómo se deshace", () => {
+    const tabla = WIN.slice(WIN.indexOf('id="matriz-s12"'));
+    const cuerpo = tabla.slice(tabla.indexOf("<tbody>"), tabla.indexOf("</tbody>"));
+    const filas = [...cuerpo.matchAll(/<tr>([\s\S]*?)<\/tr>/g)].map((m) =>
+      [...m[1].matchAll(/<td>([\s\S]*?)<\/td>/g)].map((c) => texto(c[1])),
+    );
+    expect(filas, "una sola fila: la llave de la puerta").toHaveLength(1);
+    const [n, que, paraQue, aviso, deshacer] = filas[0];
+    expect(n).toBe("10");
+    expect(que).toContain("Angel Ghost · puerta / token");
+    expect(paraQue).toContain("w22");
+    expect(aviso).toMatch(/Ninguno/);
+    expect(deshacer).toMatch(/Cerrar la puerta/);
+    expect(deshacer).toMatch(/Administrador de credenciales/);
+    // Y la parada pide el «sí» de esa fila antes de abrir la puerta.
+    expect(texto12).toMatch(/fila 10 de la matriz de arriba y da tu «sí»/);
+  });
+
+  it("t11 y t12 existen en la matriz de textos, y t1 y t8 ya no esperan el grupo «Not on Windows for now»", () => {
+    for (const id of ["t11", "t12"]) expect(WIN).toContain(`id="${id}" aria-label=`);
+    const t1 = WIN.slice(WIN.indexOf('id="t1"'), WIN.indexOf('id="t2"'));
+    const t8 = WIN.slice(WIN.indexOf('id="t8"'), WIN.indexOf('id="t9"'));
+    expect(texto(t1)).not.toMatch(/Los dos grupos/);
+    expect(texto(t8)).not.toMatch(/no está en Windows por ahora|no hay botón de puerta local/);
+    expect(texto12).not.toMatch(/catorce funciones/);
   });
 });

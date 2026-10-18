@@ -225,3 +225,21 @@ enseñan solo en Windows (sprint 011), donde se pidieron.
 - **Asentar la altura toma el turno de los cambios de borde, en otro hilo**, como el «×».
 - **Sin arrastrar** (WCAG 2.5.7): «Bajar» y «Subir» en Sesión mueven la altura de 40 en 40 puntos; el «×» mide 24 px
   (WCAG 2.5.8); un `pointercancel` suelta el asa como un `pointerup`.
+
+## Enmienda 4 — en Windows, «Terminar sesión» devuelve la reunión (sprint 012, 2026-10-18)
+
+La enmienda 3 dejó escrito un hecho incómodo: «Terminar sesión» **no** soltaba la ventana de la reunión, que seguía
+encogida hasta cortar, cerrar la banda o salir de la app. El G-Plan del sprint 012 (decisión 1a del usuario) lo cambia
+**en Windows**: terminar la sesión es el final natural de la reunión, y dejarla encogida debajo de una banda que sigue
+ahí era lo primero que se veía al terminar.
+
+- **Qué hace.** Después de cortar la escucha y guardar el estado, `dejar_de_escuchar` suelta la ventana de la reunión con
+  la misma `acople::soltar` que usa el «×», en otro hilo y tomando el turno de los cambios de borde (`CAMBIO_DE_BORDE`):
+  así no se pisa con un «×» o un cambio de borde que corran a la vez, y el comando no bloquea la interfaz. Lo registra
+  como `terminar sesión` en el informe del acople. **La banda no se cierra**: eso lo hace el «×».
+- **En macOS no cambia nada.** Allí «Terminar sesión» sigue como lo dejó la enmienda 3 (la reunión sigue acoplada hasta
+  que la sueltan cambiar de borde, el modo presencial, el corte, el «×», salir o una caída). La guarda es
+  `cfg!(windows)` y una prueba la exige (`terminar_sesion_devuelve_la_reunion_en_windows`, demostrada en rojo con la
+  guarda cambiada).
+- **Los manuales ya lo dicen:** `docs/MANUAL-WINDOWS.md` y `-EN` (la viñeta del acople y la del «×»), la parada w16 de
+  `docs/GUIA-DE-PRUEBA-WINDOWS.html` y el BLUEPRINT. Verificado con ventanas reales: no (va al gate humano del hito con w16).

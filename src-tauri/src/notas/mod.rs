@@ -206,12 +206,12 @@ impl Cuaderno {
     }
 
     /// **«El cliente consintió»** (sprint 012, ADR 024): la constancia entra al archivo de esta reunión. La misma dos veces
-    /// seguidas no se repite.
+    /// seguidas no se repite, pero tampoco es un fallo: la constancia ya está dentro, y decir «no se pudo» de una segunda
+    /// pulsación en el mismo minuto sería falso (auditoría del S12).
     pub fn consentir(&mut self, c: Consentimiento) -> bool {
-        if self.consentimientos.last() == Some(&c) {
-            return false;
+        if self.consentimientos.last() != Some(&c) {
+            self.consentimientos.push(c);
         }
-        self.consentimientos.push(c);
         true
     }
 
@@ -855,8 +855,8 @@ mod pruebas {
             texto: "Antes de empezar, te cuento…".into(),
         };
         assert!(c.consentir(constancia.clone()));
-        assert!(!c.consentir(constancia.clone()), "la misma constancia se repitió");
-        assert_eq!(c.resumen().consentimientos, 1);
+        assert!(c.consentir(constancia.clone()), "la segunda pulsación se contó como un fallo: la constancia ya estaba");
+        assert_eq!(c.resumen().consentimientos, 1, "la misma constancia se repitió");
         let dentro = c.contenido(encabezado());
         let vuelta = Contenido::de_bytes(&dentro.a_bytes()).unwrap();
         assert_eq!(vuelta.consentimientos, vec![constancia]);

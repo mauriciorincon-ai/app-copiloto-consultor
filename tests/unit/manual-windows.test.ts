@@ -13,13 +13,17 @@ import { PLATAFORMA_WINDOWS } from "../../src/contrato.generado";
  *  3. **Los atajos son los del contrato** que genera Rust: la tabla del manual no puede decir una tecla que la app no
  *     registra, ni callar una que sí.
  *  4. **La tabla de las 30 funcionalidades de la visión** tiene sus 30 filas, cada una con la clave de «Hoy en Windows» que
- *     la cubre (o «sin clave») y un estado en tres palabras —hecho · hecho sin verificar · fuera—, **atada a
+ *     la cubre (o «sin clave») y un estado —hecho · hecho sin verificar · descartada para Windows—, **atada a
  *     `EN_WINDOWS`** (las 15 claves de `plataforma.rs`): una clave que no existe, una clave sin fila o una función «no por
  *     ahora» que se declara hecha, es rojo. Si la planeadora (solo lectura) está en este equipo, también se comprueba que la
  *     visión tiene esas mismas 30.
  *
- * ¿Puede fallar? Sí: nombrar el Mac en una sola línea, quitar la fila 17, declarar «hecho» la puerta local o inventar una
- * clave son rojo (demos del sprint 010).
+ * **Desde el sprint 012 el inventario está completo** (H-2 «Producto completo»): ninguna fila queda «fuera». Lo que no se
+ * construye está «descartada para Windows», con su nombre, la fecha de la decisión del usuario y su motivo; y una clave de
+ * «Hoy en Windows» jamás cubre una fila descartada.
+ *
+ * ¿Puede fallar? Sí: nombrar el Mac en una sola línea, quitar la fila 17, declarar «hecho» la puerta local, inventar una
+ * clave, dejar una fila «fuera» o descartar sin fecha son rojo (demos de los sprints 010 y 012).
  */
 const ES = readFileSync("docs/MANUAL-WINDOWS.md", "utf8");
 const EN = readFileSync("docs/MANUAL-WINDOWS-EN.md", "utf8");
@@ -28,11 +32,15 @@ const EN = readFileSync("docs/MANUAL-WINDOWS-EN.md", "utf8");
 const OTRO_SISTEMA =
   /macOS|\bMac\b|\bMacs\b|Llavero|Keychain|Touch ID|Finder|launchd|Time Machine|Spotlight|AirPlay|iCloud|\bApple\b|iPhone|⌃|⌥|⎋|⌘/;
 
-const ESTADOS: Record<string, "hecho" | "sin-verificar" | "fuera"> = {
+type Estado = "hecho" | "sin-verificar" | "descartada" | "fuera";
+const ESTADOS: Record<string, Estado> = {
   hecho: "hecho",
   done: "hecho",
   "hecho sin verificar": "sin-verificar",
   "done, unverified": "sin-verificar",
+  "descartada para Windows": "descartada",
+  "discarded for Windows": "descartada",
+  // «fuera» ya no se escribe (sprint 012), pero se reconoce: si alguien lo vuelve a poner, el test dice cuál fila.
   fuera: "fuera",
   out: "fuera",
 };
@@ -41,7 +49,7 @@ type Fila = {
   n: number;
   funcionalidad: string;
   claves: string[];
-  estado: "hecho" | "sin-verificar" | "fuera";
+  estado: Estado;
 };
 
 /** Las filas de la tabla de las 30: `| N | Funcionalidad | Clave | Estado | Qué falta |`. */
@@ -204,14 +212,45 @@ describe("las 30 funcionalidades de la visión, en Windows", () => {
         f.claves.length > 0 && f.claves.every((c) => NO_POR_AHORA.includes(c));
       if (f.claves.length > 0) {
         expect(
-          f.estado === "fuera",
-          `fila ${f.n} («${f.funcionalidad}»): una clave «sí» no puede estar «fuera», y una «no por ahora» no puede estar hecha`,
+          f.estado === "descartada",
+          `fila ${f.n} («${f.funcionalidad}»): una clave «sí» no puede estar descartada, y una «no por ahora» no puede estar hecha`,
         ).toBe(sonNoPorAhora);
       }
     }
   });
 
-  it("lo «fuera» sin clave dice su motivo y lo «hecho sin verificar» dice qué falta", () => {
+  it("el inventario está completo: ninguna fila queda «fuera»; lo que no se construye está descartado con nombre, fecha y motivo", () => {
+    for (const filas of [es, en]) {
+      const fuera = filas.filter((f) => f.estado === "fuera").map((f) => `${f.n} ${f.funcionalidad}`);
+      expect(fuera, "filas «fuera»: o se construyen o se descartan con nombre").toEqual([]);
+      // Lo descartado no tiene clave: una función que existe en «Hoy en Windows» no se descarta.
+      for (const f of filas.filter((x) => x.estado === "descartada"))
+        expect(f.claves, `fila ${f.n}: una descartada no puede tener clave`).toEqual([]);
+    }
+    // Las cinco descartadas son las del G-Plan del sprint 012 (decisión 3a), y cada una dice su fecha en las dos lenguas.
+    expect(es.filter((f) => f.estado === "descartada").map((f) => f.n)).toEqual([4, 10, 11, 12, 13]);
+    const motivoDe = (texto: string, n: number) =>
+      texto.split("\n").find((l) => new RegExp(`^\\| ${n} +\\|`).test(l))?.split("|")[5] ?? "";
+    for (const n of [4, 10, 11, 12, 13]) {
+      expect(motivoDe(ES, n), `fila ${n} (ES): la decisión no dice su fecha`).toContain("2026-10-18");
+      expect(motivoDe(EN, n), `fila ${n} (EN): la decisión no dice su fecha`).toContain("2026-10-18");
+    }
+  });
+
+  it("las cinco descartadas están nombradas también en «Lo que Windows no hace por ahora», en los dos idiomas", () => {
+    const seccion = (texto: string, desde: string) => {
+      const i = texto.indexOf(desde);
+      return texto.slice(i, texto.indexOf("\n## ", i + 1));
+    };
+    const es = seccion(ES, "## Lo que Windows no hace por ahora");
+    const en = seccion(EN, "## What Windows does not do for now");
+    for (const [nombre, aqui] of [["ES", es], ["EN", en]] as const) {
+      expect(aqui, `${nombre}: la sección no nombra las descartadas`).toContain("2026-10-18");
+      for (const n of ["(4)", "(10)", "(11)", "(12)", "(13)"]) expect(aqui, `${nombre}: falta ${n}`).toContain(n);
+    }
+  });
+
+  it("lo «hecho sin verificar» y lo descartado dicen qué falta o por qué", () => {
     const motivo = (texto: string) =>
       texto
         .split("\n")
