@@ -47,9 +47,11 @@ La app transcribe con **whisper**, dentro de tu PC; ningún audio sale. El model
 
 Es la ventana que solo tú ves. Le pide a Windows que no salga en las capturas, y **en Teams, Zoom y Meet eso está sin verificar**: Honestidad y Sesión lo dicen con esas palabras hasta que lo pruebes en tu PC con una videollamada real. Mientras tanto, **comparte una ventana, no la pantalla completa**.
 
-- **Acople.** La ventana de la reunión baja y se encoge hasta la banda al iniciar la sesión, y vuelve a su sitio al terminar (y, si la app se cae, la próxima vez que la abras). Windows no pide ningún permiso para esto. Si la mueves a mano mientras tanto, la app no la toca. Sin verificar: una ventana maximizada, otro monitor, la escala al 125 % o 150 %, y que Teams o Zoom se nieguen a encogerse (entonces se deshace y la banda flota encima).
+- **Acople.** La ventana de la reunión baja y se encoge hasta debajo de la banda, a la altura que le hayas dado, al iniciar la sesión. Vuelve a su sitio cuando cierras la banda con su ×, cortas con `Alt+Mayús+Q` o sales de la app (y, si la app se cae, la próxima vez que la abras); **Terminar sesión (End session) no la devuelve**. Windows no pide ningún permiso para esto. Si la mueves a mano mientras tanto, la app no la toca. Sin verificar: una ventana maximizada, otro monitor, la escala al 125 % o 150 %, y que Teams o Zoom se nieguen a encogerse (entonces se deshace y la banda flota encima).
 - **Tamaños.** 88 px; se amplía a 200 con el asa; 44 px en modo solo audio.
-- **Salir.** **Cerrar la ventana principal cierra la app entera**, la banda incluida. Si había una sesión abierta, se corta, y lo que escribiste sin guardar se guarda cifrado. La banda sola se cierra con la sesión.
+- **Altura.** Con la banda arriba, la rayita de su borde de arriba se arrastra hacia abajo para dejar a la vista lo que la banda tapaba —las pestañas y la barra de direcciones de tu navegador, por ejemplo—. La altura se guarda y la banda sale ahí al abrir la app; la app la acota a tu pantalla, de modo que nunca sale de ella ni deja la reunión sin sitio. En **Sesión (Session)**, la fila **Altura de la banda (Band height)** dice cuánto la bajaste y **Volver arriba (Back to the top)** la pega al borde. Con la banda abajo no hay altura que elegir.
+- **Cerrar.** El **×** de la esquina de arriba a la derecha cierra la banda **sin cerrar la app**. Con una sesión en marcha hace lo mismo que **Terminar sesión**: la termina, devuelve la reunión acoplada y cierra la banda (su nombre lo dice: «Cerrar la banda y terminar la sesión»). `Alt+Mayús+Q`, que corta todo, también cierra la banda. Con la banda cerrada, **Sesión (Session)** dice «La banda está cerrada» y **Mostrar la banda (Show the band)** la abre en su borde y a su altura; **Iniciar sesión (Start session)** también la trae de vuelta.
+- **Salir.** **Cerrar la ventana principal cierra la app entera**, la banda incluida. Si había una sesión abierta, se corta, y lo que escribiste sin guardar se guarda cifrado. La banda sola se cierra con su ×.
 
 ## Las dos pistas y la ficha
 
@@ -123,7 +125,7 @@ Cada fila dice qué estado tiene en Windows y qué clave de «Hoy en Windows» l
 
 | N   | Funcionalidad                                                  | Clave                                                          | Estado              | Qué falta o por qué                                                                                                |
 | --- | -------------------------------------------------------------- | -------------------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| 1   | Banda privada protegida de la captura                          | `banda-protegida` · `acople`                                   | hecho sin verificar | La protección se pide a Windows; que no salga en Teams, Zoom ni Meet lo verificas en el gate                       |
+| 1   | Banda privada protegida de la captura                          | `banda-protegida` · `acople`                                   | hecho sin verificar | La protección se pide a Windows; que no salga en Teams, Zoom ni Meet, la altura y el × los verificas en el gate    |
 | 2   | Permisos, reunión detectada, estado y botón de pánico          | `videollamada` · `atajos`                                      | hecho sin verificar | El micrófono se concede en Ajustes; `Alt+Mayús+Q` corta todo                                                       |
 | 3   | Contador de salida a red y panel de honestidad                 | sin clave                                                      | hecho               | Honestidad cuenta los bytes (0 B en modo local) y dice qué vive en memoria                                         |
 | 4   | La app en el celular, en modo presencial                       | sin clave                                                      | fuera               | Es de otra plataforma: no es una funcionalidad de Windows                                                          |
@@ -156,7 +158,8 @@ Cada fila dice qué estado tiene en Windows y qué clave de «Hoy en Windows» l
 
 ## Preguntas frecuentes
 
-- **La banda se quedó en pantalla y no sé cómo cerrarla.** Cierra la ventana principal: la app sale entera. Si no la ves, ábrela desde la barra de tareas, o termina **Angel Ghost** en el Administrador de tareas (**Task Manager → Processes → End task**).
+- **La banda se quedó en pantalla y no sé cómo cerrarla.** Pulsa su **×**: se cierra y la app sigue; **Mostrar la banda (Show the band)**, en Sesión, la devuelve. Para salir del todo, cierra la ventana principal: la app sale entera. Si no la ves, ábrela desde la barra de tareas, o termina **Angel Ghost** en el Administrador de tareas (**Task Manager → Processes → End task**).
+- **La banda me tapa las pestañas de mi navegador.** Arrastra hacia abajo la rayita de su borde de arriba hasta que se vean; queda guardada. **Volver arriba (Back to the top)**, en Sesión, la pega al borde otra vez.
 - **«Instalar» no baja nada.** Hay una reunión, una sesión o un ensayo abiertos, o falla la conexión: la pantalla lo dice («No se pudo bajar el modelo»).
 - **Honestidad dice «sin medir».** El modelo está bajado pero no se ha medido en esta sesión: pulsa **Medir otra vez**.
 - **Un atajo no responde.** Otra app de tu PC ya tiene esa combinación; Honestidad la nombra. La acción se hace igual desde la app.

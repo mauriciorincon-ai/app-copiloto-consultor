@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { TEXTOS_DE_WINDOWS } from "../../src/i18n/windows";
 
 /**
  * **LA GUÍA DE PRUEBA DE WINDOWS ES AUTOCONTENIDA, HABLA SOLO DE WINDOWS Y SUS 9 PARADAS SON LAS DEL GATE** (sprint 010).
@@ -12,7 +13,7 @@ import { describe, expect, it } from "vitest";
  * Lo que exige:
  *  1. **Cero menciones a otro sistema**, en ninguna prueba, matriz ni nota.
  *  2. **Autocontenida**: ni una URL, ni un `<link>`, ni un `<script src>`, ni `fetch`.
- *  3. **Prefijo propio de `localStorage`** (`ag-w10-`), distinto del de la guía general.
+ *  3. **Prefijo propio de `localStorage`** (`ag-w11-`), distinto del de la guía general.
  *  4. **9 paradas del gate, ~20 min**, numeradas «parada N de 9» en el orden del documento.
  *  5. **Cada mirada de texto en matriz**: abre · qué mirar · qué respuesta espero.
  *  6. **La guía general la enlaza**, y las dos se encuentran.
@@ -71,7 +72,7 @@ describe("la guía de Windows es autocontenida", () => {
 
   it("su prefijo de localStorage es propio y no el de la guía general", () => {
     const ns = (html: string) => /var NS = "([^"]+)"/.exec(html)?.[1];
-    expect(ns(WIN)).toBe("ag-w10-");
+    expect(ns(WIN)).toBe("ag-w11-");
     expect(ns(GENERAL)).not.toBe(ns(WIN));
   });
 
@@ -223,5 +224,52 @@ describe("la guía general y la de Windows se enlazan", () => {
         "docs/GUIA-DE-PRUEBA-WINDOWS.html",
       );
     }
+  });
+});
+
+describe("la banda a tu altura (sprint 011): sus paradas dicen los rótulos que la app pinta", () => {
+  // La Surface está en inglés: la guía manda buscar rótulos exactos. Si `windows.ts` cambia uno y la guía no, quien
+  // prueba busca un botón que no existe. Los rótulos se leen del diccionario, no se copian aquí.
+  const en = TEXTOS_DE_WINDOWS.en.banda;
+  const t = texto(WIN);
+
+  it.each([
+    ["asaDeAltura", en.asaDeAltura],
+    ["cerrar", en.cerrar],
+    ["cerrarYTerminar", en.cerrarYTerminar],
+    ["alturaTitulo", en.alturaTitulo],
+    ["pegadaArriba", en.pegadaArriba],
+    ["volverArriba", en.volverArriba],
+    ["cerradaTitulo", en.cerradaTitulo],
+    ["mostrar", en.mostrar],
+    ["alturaValor", en.alturaValor(123).replace("123", "N")],
+  ])("la guía nombra «%s» tal cual: «%s»", (_clave, rotulo) => {
+    expect(t, `la guía no nombra «${rotulo}»`).toContain(rotulo);
+  });
+
+  it("w20 y w21 existen, son ⭐ nuevas del S11 y NO están entre las 9 del gate (la guía general no se toca)", () => {
+    for (const id of ["w20", "w21"]) {
+      const li = new RegExp(
+        `<li data-origen="nuevo" data-nace="s11" data-minimo><input type="checkbox" id="${id}">`,
+      );
+      expect(WIN, `${id} no es una parada ⭐ nueva del S11`).toMatch(li);
+      expect(
+        paradasDelGate(WIN).map((p) => p.id),
+        `${id} entró al gate`,
+      ).not.toContain(id);
+    }
+  });
+
+  it("w16 es «Mejorado en S11» y dice la verdad: End session no devuelve la reunión acoplada", () => {
+    expect(WIN).toMatch(
+      /<li data-origen="mejorado" data-nace="s11"[^>]*data-gate="pc"[^>]*><input type="checkbox" id="w16">/,
+    );
+    expect(t).toMatch(/End session no la devuelve/);
+    expect(t).not.toMatch(/vuelve a su sitio al terminar/);
+  });
+
+  it("el filtro «Lo que cambió» cuenta desde el S10 y llega al S11", () => {
+    expect(WIN).toContain("Lo que cambió desde el S10");
+    expect(WIN).toMatch(/n === "s10" \|\| n === "s11"/);
   });
 });

@@ -16,7 +16,7 @@
      La matriz de la regla 24 también: sus 9 filas son las del PC de la guía general, palabra por palabra.
   4. EL GATE DEL H-1 en Windows son 9 paradas y ~20 min (2 de preparación + 18 de paradas). El ⭐ mínimo es lo que ninguna
      automatización puede verificar; las paradas del gate son su subconjunto caminable, en el orden del documento.
-  5. EL PREFIJO DE localStorage CAMBIA con cada versión de la guía (`ag-w10-`): una prueba sin correr jamás aparece marcada.
+  5. EL PREFIJO DE localStorage CAMBIA con cada versión de la guía (`ag-w11-`): una prueba sin correr jamás aparece marcada.
   6. TODA MIRADA VA EN UNA MATRIZ (bloque T): abre · qué mirar · qué respuesta espero, en la misma fila. Sus filas no son pruebas
      y no cuentan en el gate.
   7. TU WINDOWS ESTÁ EN INGLÉS: cada botón y cada pantalla va con su rótulo exacto en inglés.
@@ -94,10 +94,10 @@
 <body>
 <div class="pagina">
   <header>
-    <span class="eyebrow">Angel Ghost · guía de prueba de Windows · sprint 010</span>
+    <span class="eyebrow">Angel Ghost · guía de prueba de Windows · sprint 011</span>
     <h1>Pruébala en tu PC con Windows</h1>
     <p class="suave">Esta guía es solo de Windows: no hace falta nada más que tu PC, tus auriculares y una videollamada. La app y tu Windows están en inglés, así que cada botón va con su rótulo exacto en inglés. Lo que pone «sin verificar» lo construyó y lo probó la integración continua, pero nadie lo ha corrido en tu PC con una reunión real: eso es lo que haces aquí. Cada parada dice qué hacer, qué mirar y qué respuesta esperar; si algo no coincide, <strong>repórtalo</strong>.</p>
-    <p class="chica"><strong>Gate del H-1 en Windows: 9 paradas · ~20 min.</strong> Es un recorrido: se camina de arriba abajo, en el orden del documento, y cada parada deja la app lista para la siguiente. Filtra por «Gate del H-1» para ver solo esas 9. Las demás pruebas (⭐ mínimo y el resto) se corren cuando quieras, y ninguna se borra.</p>
+    <p class="chica"><strong>Gate del H-1 en Windows: 9 paradas · ~20 min.</strong> Es un recorrido: se camina de arriba abajo, en el orden del documento, y cada parada deja la app lista para la siguiente. Filtra por «Gate del H-1» para ver solo esas 9. Las demás pruebas (⭐ mínimo y el resto) se corren cuando quieras, y ninguna se borra. Las dos paradas ⭐ nuevas de la banda (w20 y w21) no son de las 9: salen con «⭐ Mínimo» y con «Lo que cambió desde el S10».</p>
   </header>
 
   <div class="progreso" role="group" aria-label="Progreso de la guía">
@@ -109,14 +109,14 @@
       <button type="button" class="activo" data-filtro="todo">Todo</button>
       <button type="button" data-filtro="gate">Gate del H-1 · 9 paradas</button>
       <button type="button" data-filtro="minimo">⭐ Mínimo</button>
-      <button type="button" data-filtro="cambios">Lo que cambió en el S10</button>
+      <button type="button" data-filtro="cambios">Lo que cambió desde el S10</button>
       <button type="button" data-filtro="textos">Textos</button>
     </div>
   </div>
 
   <section class="bloque" id="antes">
     <div class="bloque-cabeza"><span class="letra">0</span><h2>Antes de sentarte</h2></div>
-    <p class="chica" id="preparacion" data-min-gate="2"><strong>Preparación (~2 min):</strong> <strong>antes de sentarte</strong>, baja el modelo de voz (<em>Language</em> → <strong>Install</strong>: 1,6 GB, o 0,5 GB en un PC ARM64) y deja <strong>Windows Hello</strong> configurado; ten Teams, Zoom o Meet con alguien al otro lado y los auriculares puestos. Para la tarea de borrado (parada 8), arranca la app desde el código, en la carpeta del repo: <code>$env:AG_BANDEJA_DE_PRUEBA='1'; pnpm tauri dev</code> (la variable solo existe en la compilación de desarrollo: el instalador de la parada 1 no la lee y su bandeja vence a las 3 h).</p>
+    <p class="chica" id="preparacion" data-min-gate="2"><strong>Preparación (~2 min):</strong> <strong>antes de sentarte</strong>, baja el modelo de voz (<em>Language</em> → <strong>Install</strong>: 1,6 GB, o 0,5 GB en un PC ARM64) y deja <strong>Windows Hello</strong> configurado; ten Teams, Zoom o Meet con alguien al otro lado y los auriculares puestos. Para la tarea de borrado (parada 8), arranca la app desde el código, en la carpeta del repo: <code>$env:AG_BANDEJA_DE_PRUEBA='1'; pnpm tauri dev</code> (la variable solo existe en la compilación de desarrollo: el instalador de la parada 1 no la lee y su bandeja vence a las 3 h). Para la banda a tu altura (S11) usa el artefacto de la integración continua de este sprint o arranca desde el código: un instalador anterior no la trae. En la Surface, arranca con <code>$env:CARGO_BUILD_JOBS='4'; pnpm tauri dev</code> para que el enlace no se quede sin memoria.</p>
     <p class="chica"><strong>La matriz de la regla 24.</strong> La app toca protecciones de tu sistema, y cada una se anuncia antes. <strong>Antes de correr una fila, tu «sí» por acción</strong>; si aparece un aviso que no está en esta tabla, deniégalo y repórtalo.</p>
     <div class="tabla-scroll">
       <table id="matriz-gate">
@@ -208,10 +208,18 @@
         <span class="origen origen-heredada">S8</span>
         <span class="gate-etq">Gate H-1 · PC · parada 8 de 9 · ~2 min</span>
         <span class="minimo">⭐ mínimo</span></label></li>
-      <li data-origen="heredada" data-nace="s8" data-minimo data-gate="pc" data-min-gate="2"><input type="checkbox" id="w16"><label for="w16">Con <strong>Teams</strong> (o Zoom) en una videollamada, <strong>maximizada o no</strong>, pulsa <strong>Start session</strong>: la ventana de la reunión <strong>baja y se encoge</strong> lo justo para que la banda no la tape (con la banda abajo; arriba, solo con la sesión iniciada) y <strong>vuelve</strong> a su sitio al terminar. Si la mueves tú a mano mientras tanto, la app no la toca al devolverla. Con la ventana en otro monitor, o con la escala a 125 % o 150 %, la banda sigue sin taparla. Windows no pide ningún permiso para esto.
-        <p class="candidata">Si Teams o Zoom pelean por su tamaño, y cómo se miden los bordes con la escala de cada monitor, solo se ve con ventanas reales: la CI prueba la geometría pura.</p>
-        <span class="origen origen-heredada">S8</span>
+      <li data-origen="nuevo" data-nace="s11" data-minimo><input type="checkbox" id="w20"><label for="w20"><strong>La banda a tu altura.</strong> Abre Chrome (o tu navegador) con varias pestañas: con la banda pegada arriba, <strong>le tapa las pestañas y la barra de direcciones</strong>. En la banda, arrastra <strong>hacia abajo la rayita del borde de arriba</strong> (el puntero pasa a flechas arriba y abajo y su título dice «Drag to choose how low the band sits») hasta que se vean las pestañas, y suelta: la banda se queda ahí. En <strong>Session</strong>, la fila <strong>«Band height»</strong> dice «N px below the top edge» y trae el botón <strong>Back to the top</strong>. <strong>Sal de la app</strong> (cierra la ventana principal) y ábrela otra vez: <strong>la banda sale a la misma altura</strong>. Pulsa <strong>Back to the top</strong>: la banda vuelve pegada arriba y la fila dice «At the top edge». La rayita está en las tres alturas de la banda (88, 200 y 44 px en modo solo audio); con la banda <strong>abajo</strong> (<strong>Session → The band → bottom</strong>) no hay rayita ni fila. Windows no pide ningún permiso para esto: no hay fila nueva en la matriz.
+        <p class="candidata">La geometría —la altura acotada a cada pantalla y el 0 que es el de siempre— la prueba la CI; los píxeles del arrastre a tu escala (125 % o 150 %) y qué pestañas deja ver tu navegador solo los ve tu PC.</p>
+        <span class="origen origen-nuevo">Nuevo · S11</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="mejorado" data-nace="s11" data-minimo data-gate="pc" data-min-gate="2"><input type="checkbox" id="w16"><label for="w16">Con <strong>Teams</strong> (o Zoom) en una videollamada, <strong>maximizada o no</strong>, y con la banda arriba <strong>bajada a tu altura</strong> (arrastra hacia abajo la rayita del borde de arriba de la banda, como en w20), pulsa <strong>Start session</strong>: la ventana de la reunión <strong>baja y se encoge</strong> lo justo para que la banda no la tape y <strong>queda justo debajo de la banda</strong>, no debajo del borde de arriba (con la banda abajo; arriba, solo con la sesión iniciada). <strong>Vuelve</strong> a su sitio cuando cierras la banda con su <strong>×</strong>, cortas con <code>Alt+Shift+Q</code> o sales de la app; <strong>End session no la devuelve</strong>. Si la mueves tú a mano mientras tanto, la app no la toca al devolverla. Con la ventana en otro monitor, o con la escala a 125 % o 150 %, la banda sigue sin taparla. Windows no pide ningún permiso para esto.
+        <p class="candidata">Si Teams o Zoom pelean por su tamaño, y cómo se miden los bordes con la escala de cada monitor, solo se ve con ventanas reales: la CI prueba la geometría pura, ahora también con la banda bajada en tres monitores.</p>
+        <span class="origen origen-mejorado">Mejorado en S11</span>
         <span class="gate-etq">Gate H-1 · PC · parada 9 de 9 · ~2 min</span>
+        <span class="minimo">⭐ mínimo</span></label></li>
+      <li data-origen="nuevo" data-nace="s11" data-minimo><input type="checkbox" id="w21"><label for="w21"><strong>El × de la banda.</strong> Con la banda en pantalla y <strong>sin sesión</strong>, pulsa el <strong>×</strong> de su esquina de arriba a la derecha (su título dice «Close the band»): la banda se cierra y <strong>la app sigue viva</strong> (en <strong>Task Manager → Processes</strong>, «Angel Ghost» sigue). En <strong>Session</strong> aparece la fila <strong>«The band is closed»</strong> con el botón <strong>Show the band</strong>: púlsalo y la banda vuelve a su borde y a su altura. Ahora pulsa <strong>Start session</strong> y, con la banda a la vista, el × otra vez (su título dice ahora «Close the band and end the session»): la sesión termina, la reunión acoplada vuelve a su sitio y la banda se cierra. Prueba también el corte, <code>Alt+Shift+Q</code>: la banda se cierra igual y Session ofrece <strong>Show the band</strong>. Y con la banda cerrada, <strong>Start session</strong> la trae de vuelta sola. Windows no pide ningún permiso para esto.
+        <p class="candidata">Que la app siga viva tras el × y que la reunión acoplada vuelva a su sitio con ventanas reales solo lo ve tu PC; el orden (terminar la sesión, devolver la reunión, cerrar la banda) lo prueba la CI.</p>
+        <span class="origen origen-nuevo">Nuevo · S11</span>
         <span class="minimo">⭐ mínimo</span></label></li>
       <li data-origen="heredada" data-nace="s8"><input type="checkbox" id="w17"><label for="w17">Abre un programa del catálogo del radar si lo tienes (<strong>AnyDesk</strong> o <strong>TeamViewer</strong>, por ejemplo): <strong>Session</strong> pinta el aviso coral «Invasive software running on your PC». <code>Alt+Shift+U</code> abre Session con la tabla. Cierra el programa y el aviso se va. Si tu PC está gestionado por una empresa, aparece la fila «Be aware»; si no, no.
         <span class="origen origen-heredada">S8</span></label></li>
@@ -222,7 +230,7 @@
         <span class="origen origen-nuevo">Nuevo · S10</span>
         <span class="minimo">⭐ mínimo</span></label></li>
     </ul>
-    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> la banda visible al compartir pantalla, una descarga que se congela, una línea de «On Windows today» que no coincide con lo que hace la app, la voz de la app saliendo por los altavoces o apareciendo en el transcript como del cliente, un atajo que no responde o que te cambia la distribución del teclado, una app que sigue viva al cerrar su ventana, o una lectura de pantalla que dice un idioma que no tienes.</p></div>
+    <div class="reportame"><p><strong>Repórtame sí o sí:</strong> la banda visible al compartir pantalla, una descarga que se congela, una línea de «On Windows today» que no coincide con lo que hace la app, la voz de la app saliendo por los altavoces o apareciendo en el transcript como del cliente, un atajo que no responde o que te cambia la distribución del teclado, una app que sigue viva al cerrar su ventana, una banda que no se queda a la altura que le diste, un × que cierra la app o que deja la reunión encogida, o una lectura de pantalla que dice un idioma que no tienes.</p></div>
   </section>
 
   <section class="bloque">
@@ -262,6 +270,8 @@
           <tr data-texto><td><input type="checkbox" id="t6" aria-label="Texto 6"></td><td><strong>Session</strong> con una sesión en marcha, la banda</td><td>«Not verified in Teams, Zoom or Meet · you verify it on your PC»</td><td>Entiendes que la protección de la banda aún no está probada en tu PC y qué hacer mientras tanto</td></tr>
           <tr data-texto><td><input type="checkbox" id="t7" aria-label="Texto 7"></td><td><strong>Notes</strong>, tras cerrar y reabrir la app con una bandeja guardada</td><td>«Open with Windows Hello» y su frase «To read it, Windows Hello (your PIN, fingerprint or face)…»</td><td>Entiendes qué te va a pedir Windows y cuándo (una vez por sesión de la app)</td></tr>
           <tr data-texto><td><input type="checkbox" id="t8" aria-label="Texto 8"></td><td><strong>AI</strong> y <strong>Honesty</strong></td><td>En AI no hay botón de puerta local; en Honesty, «The door for Claude Code» con «Not on Windows for now»</td><td>Las dos pantallas dicen lo mismo: la puerta no está en Windows por ahora</td></tr>
+          <tr data-texto><td><input type="checkbox" id="t9" aria-label="Texto 9"></td><td><strong>Session</strong>, filas «Band height» y «The band is closed»</td><td>«At the top edge» o «N px below the top edge» con <strong>Back to the top</strong>; tras el × o el corte, «The band is closed» con <strong>Show the band</strong></td><td>Entiendes a qué altura está la banda, cómo volverla arriba y cómo traerla de vuelta cuando la cerraste</td></tr>
+          <tr data-texto><td><input type="checkbox" id="t10" aria-label="Texto 10"></td><td>La banda, al pasar el puntero por el × y por la rayita de arriba</td><td>Los títulos «Close the band», «Close the band and end the session» (con una sesión en marcha) y «Drag to choose how low the band sits»</td><td>Entiendes qué hace cada uno antes de pulsarlo; en particular, que con una sesión en marcha el × también la termina</td></tr>
         </tbody>
       </table>
     </div>
@@ -281,15 +291,16 @@
       <summary class="chica">Historial de esta guía</summary>
       <ul class="chica">
         <li><strong>Sprint 010 (2026-10-17).</strong> Nace esta guía, separada de la general: solo Windows, con las 9 paradas del gate del H-1 (mismos ids y minutos que en la guía general, atados por test), la matriz de la regla 24 con las 9 filas del PC, el modo presencial en el PC, y los textos en matriz. Cambia respecto a la general: el <code>.msi</code> ARM64 ya se instaló y abrió en vivo, «Install» ya se corrió por el botón, Honesty enseña las dos pistas por modelo, «Measure again» dice que está midiendo, cerrar la ventana principal cierra la app (w19) y la pantalla IA no ofrece la puerta local.</li>
+        <li><strong>Sprint 011 (2026-10-18).</strong> «La banda a tu altura»: nacen w20 (arrastrar la banda hasta que se vean las pestañas de tu navegador, y que se quede) y w21 (el × de la banda y «Show the band»), las dos ⭐ y fuera de las 9 del gate para no tocar la guía general; w16 ahora se hace con la banda bajada y corrige lo que decía: <strong>End session no devuelve la reunión acoplada</strong>, la devuelven el ×, el corte y salir de la app. El filtro «Lo que cambió» cuenta desde el S10, que tampoco se ha corrido en vivo. Se añaden dos textos a la matriz (t9, t10).</li>
       </ul>
     </details>
   </footer>
 </div>
 <script>
   (function () {
-    // NS VERSIONADO POR VERSIÓN DE LA GUÍA (regla dura): al publicar una guía nueva se cambia `ag-w10-`, así una prueba sin
+    // NS VERSIONADO POR VERSIÓN DE LA GUÍA (regla dura): al publicar una guía nueva se cambia `ag-w11-`, así una prueba sin
     // correr jamás aparece marcada por la versión anterior.
-    var NS = "ag-w10-";
+    var NS = "ag-w11-";
     var casillas = Array.prototype.slice.call(document.querySelectorAll('input[type="checkbox"]'));
     var barra = document.getElementById("barra-avance");
     var contador = document.getElementById("contador");
@@ -302,8 +313,8 @@
       if (li.hasAttribute("data-texto")) return false;
       if (filtro === "gate") return li.getAttribute("data-gate") === "pc";
       if (filtro === "minimo") return li.hasAttribute("data-minimo");
-      var o = li.getAttribute("data-origen"); // filtro "cambios": lo que cambió en el S10
-      return li.getAttribute("data-nace") === "s10" && (o === "nuevo" || o === "mejorado");
+      var o = li.getAttribute("data-origen"), n = li.getAttribute("data-nace"); // filtro "cambios": lo que cambió desde el S10 (el gate espera a la versión final)
+      return (n === "s10" || n === "s11") && (o === "nuevo" || o === "mejorado");
     }
     function aplicarFiltro(filtro) {
       secciones.forEach(function (sec) {
