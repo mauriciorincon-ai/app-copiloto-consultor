@@ -149,7 +149,7 @@ const pistasEn = (ms: string, cliente: string | null) =>
 const ES: TextosDeWindows = {
   titulo: "Hoy en Windows",
   intro:
-    "Angel Ghost se instala en Windows. Esto es lo que hace hoy en este PC y lo que no, dicho tal cual.",
+    "Angel Ghost se instala en Windows. Esto es lo que hace hoy en este PC, dicho tal cual; lo que no hiciera, aparecería aparte con su motivo.",
   ya: "Ya funciona",
   noPorAhora: "No en Windows por ahora",
   funciones: {
@@ -185,7 +185,7 @@ const ES: TextosDeWindows = {
     acople: {
       nombre: "Acoplarse a la ventana de la reunión",
       detalle:
-        "sí: la ventana de la reunión baja y se encoge para que la banda no la tape, y vuelve al cerrar la banda con su ×, con el corte o al salir de la app; no pide permiso",
+        "sí: la ventana de la reunión baja y se encoge para que la banda no la tape, y vuelve al terminar la sesión, al cerrar la banda con su ×, con el corte o al salir de la app; no pide permiso",
     },
     ensayo: {
       nombre: "Ensayar con la voz que lee las preguntas",
@@ -329,7 +329,7 @@ const ES: TextosDeWindows = {
 const EN: TextosDeWindows = {
   titulo: "On Windows today",
   intro:
-    "Angel Ghost installs on Windows. This is what it does today on this PC, and what it doesn't, stated plainly.",
+    "Angel Ghost installs on Windows. This is what it does today on this PC, stated plainly; anything it didn't do would appear apart, with its reason.",
   ya: "Works now",
   noPorAhora: "Not on Windows for now",
   funciones: {
@@ -368,7 +368,7 @@ const EN: TextosDeWindows = {
     acople: {
       nombre: "Docking to the meeting window",
       detalle:
-        "yes: the meeting window moves down and shrinks so the band doesn't cover it, and comes back when you close the band with its ×, cut everything or quit the app; no permission needed",
+        "yes: the meeting window moves down and shrinks so the band doesn't cover it, and comes back when you end the session, close the band with its ×, cut everything or quit the app; no permission needed",
     },
     ensayo: {
       nombre: "Rehearsing with a voice that reads the questions",

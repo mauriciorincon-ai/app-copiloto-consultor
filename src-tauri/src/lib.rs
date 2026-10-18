@@ -3813,14 +3813,16 @@ fn fijar_modo_transparente(
     Ok(vista_del_cliente(&app, &el_corpus))
 }
 
-/// El aviso en el idioma de la pista del cliente: «es» o «en», y su texto.
-fn aviso_en_el_idioma_del_cliente<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> (&'static str, String) {
-    let del_cliente = idiomas_guardados(&app.state::<LasPreferencias>()).cliente;
+/// El aviso en el idioma de la pista que se oye del otro lado —la del cliente, o la sala en presencial, donde nadie
+/// tiene dueño (ADR 020 §6)—: su código de idioma (con el que se busca la voz), «es» o «en», y el texto.
+fn aviso_en_el_idioma_del_cliente<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> (String, &'static str, String) {
+    let idiomas = idiomas_guardados(&app.state::<LasPreferencias>());
+    let oido = if reunion::es_presencial(app) { idiomas.de_la_sala().to_string() } else { idiomas.cliente };
     let aviso = jurisdiccion::aviso_transparente();
-    if del_cliente.starts_with("en") {
-        ("en", aviso.en)
+    if oido.starts_with("en") {
+        (oido, "en", aviso.en)
     } else {
-        ("es", aviso.es)
+        (oido, "es", aviso.es)
     }
 }
 
@@ -3839,7 +3841,7 @@ fn el_cliente_consintio(app: tauri::AppHandle, el_corpus: tauri::State<'_, ElCor
         .ok()
         .and_then(|g| g.as_ref().and_then(|c| c.jurisdiccion_de(&cliente).map(str::to_string)))
         .unwrap_or_default();
-    let (idioma, texto) = aviso_en_el_idioma_del_cliente(&app);
+    let (_, idioma, texto) = aviso_en_el_idioma_del_cliente(&app);
     let l = reloj::local(reloj::ahora());
     let anotada = reunion::consentir(
         &app,
@@ -3863,9 +3865,9 @@ fn el_cliente_consintio(app: tauri::AppHandle, el_corpus: tauri::State<'_, ElCor
 /// hablando—, se calla y lo dice el log.
 #[tauri::command]
 fn decir_el_aviso(app: tauri::AppHandle) -> bool {
-    let (idioma, texto) = aviso_en_el_idioma_del_cliente(&app);
+    // La voz es la del idioma del aviso, no la del consultor: un aviso en inglés con voz española sería ininteligible.
+    let (voz, idioma, texto) = aviso_en_el_idioma_del_cliente(&app);
     let estado = app.state::<LaVozQueSale>();
-    let voz = estado.idioma();
     let salida = capture::nativo::salida_de_audio();
     let momento = habla::Momento {
         modo_encendido: estado.encendida.load(Ordering::Relaxed),
@@ -5527,6 +5529,18 @@ mod pruebas_del_producto_completo {
         assert!(en(c, "if !es_transparente(&app, &cliente)") < en(c, "reunion::consentir("), "se anota sin mirar el modo");
         assert!(c.contains("aviso_en_el_idioma_del_cliente(&app)"), "la constancia no lleva el aviso que se dijo");
         assert!(c.contains("if !anotada"), "sin reunión abierta la orden dice que se anotó");
+    }
+
+    /// **El aviso se oye con la voz de SU idioma, y en presencial es el de la sala** (auditoría del S12, M1 y B12).
+    /// ¿Puede fallar? Sí: volver a `estado.idioma()` (la voz del consultor) o a `.cliente` a secas es rojo.
+    #[test]
+    fn el_aviso_se_oye_con_la_voz_de_su_idioma_y_en_presencial_con_la_de_la_sala() {
+        let d = cuerpo("fn decir_el_aviso(");
+        assert!(d.contains("let (voz, idioma, texto) = aviso_en_el_idioma_del_cliente(&app)"), "la voz no sale del aviso");
+        assert!(!d.contains("estado.idioma()"), "el aviso se lee con la voz del idioma del consultor");
+        assert!(d.contains("hay_para(&voz)") && d.contains("decir(&voz, &texto)"));
+        let a = cuerpo("fn aviso_en_el_idioma_del_cliente");
+        assert!(a.contains("reunion::es_presencial(app)") && a.contains("de_la_sala()"), "en presencial no usa el idioma de la sala");
     }
 
     /// **La banda solo sabe si el modo está encendido**: ni el nombre del cliente, ni el aviso, ni puede encenderlo o anotar.

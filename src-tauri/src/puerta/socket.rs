@@ -10,7 +10,7 @@
 //! su siguiente vuelta y se va: no hay que despertarlo con una conexión falsa, ni queda un hilo colgado
 //! de un `accept` si alguien borró el socket por fuera.
 //!
-//! **En Windows (sprint 012, ADR 022 enmienda 2) la puerta es un named pipe** con la misma forma (`puerta/windows.rs`):
+//! **En Windows (sprint 012, ADR 022 enmienda 4) la puerta es un named pipe** con la misma forma (`puerta/windows.rs`):
 //! DACL solo de tu usuario, sin clientes de otra máquina y una sola instancia que nadie puede ocupar antes. Todo lo de
 //! abajo —la política, el hilo que atiende y vigila, la respuesta— es el mismo código en los dos sistemas.
 
@@ -51,7 +51,7 @@ pub fn ruta_en(carpeta_de_la_app: &Path) -> PathBuf {
     carpeta_de_la_app.join(SOCKET)
 }
 
-/// **El pipe, en Windows**: `\\.\pipe\com.aiapps.copiloto-consultor.puerta` para la carpeta de la app. El pipe no vive en
+/// **El pipe, en Windows**: `\\.\pipe\com.aiapps.copiloto-consultor.puerta.<tu SID>` para la carpeta de la app. El pipe no vive en
 /// el disco; la carpeta solo le da el nombre, y una carpeta de prueba le da uno propio (dos pruebas a la vez no chocan,
 /// ni chocan con la app abierta).
 #[cfg(windows)]
@@ -59,7 +59,16 @@ pub fn ruta_en(carpeta_de_la_app: &Path) -> PathBuf {
     let nombre = carpeta_de_la_app.file_name().and_then(|n| n.to_str()).unwrap_or(IDENTIFICADOR);
     // El mismo nombre que el socket del Mac, sin la extensión: «puerta».
     let base = SOCKET.trim_end_matches(".sock");
-    let tubo = if nombre == IDENTIFICADOR { format!("{IDENTIFICADOR}.{base}") } else { format!("{IDENTIFICADOR}.{base}.{nombre}") };
+    let tubo = if nombre == IDENTIFICADOR {
+        // El nombre de un pipe es de todo el equipo, no de tu usuario: con la app abierta en otra sesión de Windows, la
+        // tuya no podría abrir su puerta («otro programa ya usa ese nombre»). El SID lo hace tuyo (auditoría del S12, B11).
+        match tubo::sid_del_usuario() {
+            Ok(sid) => format!("{IDENTIFICADOR}.{base}.{sid}"),
+            Err(_) => format!("{IDENTIFICADOR}.{base}"),
+        }
+    } else {
+        format!("{IDENTIFICADOR}.{base}.{nombre}")
+    };
     PathBuf::from(format!(r"\\.\pipe\{tubo}"))
 }
 
@@ -187,7 +196,7 @@ impl Puerta {
             return Err(NoAbre::Socket);
         }
         quitar(&ruta);
-        let escucha = UnixListener::bind(&ruta).map_err(|e| {
+        let escucha = enlazar(&ruta).map_err(|e| {
             println!("[puerta] no se pudo crear el socket: {e}");
             NoAbre::Socket
         })?;
@@ -271,12 +280,41 @@ pub fn limpiar_lo_que_quedo(carpeta_de_la_app: &Path, llave: &dyn Llave) -> bool
 }
 
 /// **En Windows, lo que queda de una caída es solo la llave**: el pipe muere con el proceso y no deja nada en el disco.
-/// No hay socket que delate la caída, así que el arranque borra la llave siempre: borrarla si no está no es un error, y
-/// Windows no pregunta nada al hacerlo. Devuelve `false`: no se sabe si quedaba algo.
+/// No hay socket que delate la caída, así que el arranque borra la llave: borrarla si no está no es un error, y Windows
+/// no pregunta nada al hacerlo. **Salvo si el pipe existe**: no hay instancia única de la app, y un pipe vivo es otra app
+/// con su puerta abierta cuya llave NO es una sobra (auditoría del S12, M4). Devuelve `false`: no se sabe si quedaba algo.
 #[cfg(windows)]
-pub fn limpiar_lo_que_quedo(_carpeta_de_la_app: &Path, llave: &dyn Llave) -> bool {
+pub fn limpiar_lo_que_quedo(carpeta_de_la_app: &Path, llave: &dyn Llave) -> bool {
+    if tubo::existe(&ruta_en(carpeta_de_la_app)) {
+        return false;
+    }
     llave.borrar();
     false
+}
+
+/// Crea el socket de la puerta.
+#[cfg(unix)]
+fn enlazar(ruta: &Path) -> std::io::Result<UnixListener> {
+    UnixListener::bind(ruta)
+}
+
+/// Crea el pipe de la puerta. El de la puerta que acabas de cerrar tarda un instante en soltar su nombre (el hilo que lo
+/// atiende lo suelta al volver a su bucle, hasta `PASO`, o al acabar la orden en curso): sin reintentar, cerrar y abrir de
+/// seguido decía «otro programa ya usa ese nombre» con la verdad al revés (auditoría del S12, B2). Un nombre que de verdad
+/// tiene otro programa sigue fallando, tras unos segundos.
+#[cfg(windows)]
+fn enlazar(ruta: &Path) -> std::io::Result<UnixListener> {
+    let mut ultimo = None;
+    for _ in 0..30 {
+        match UnixListener::bind(ruta) {
+            Ok(l) => return Ok(l),
+            Err(e) => {
+                ultimo = Some(e);
+                std::thread::sleep(PASO);
+            }
+        }
+    }
+    Err(ultimo.unwrap_or_else(|| std::io::Error::other("el pipe no se creó")))
 }
 
 #[cfg(unix)]

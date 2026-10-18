@@ -419,7 +419,7 @@ only macOS 26 ships with; on a Mac with an earlier version it does not start.
     catalog v1”) and does not guess.
   - If the line names several (“Colombia and California”), the flag is that of **the strictest one**.
   - The catalog is updated with a new version of the app, never over the network.
-  - The template for the one-line notice to the client and the record that you informed them are left for a later milestone, with no date.
+  - The notice to the client and the record that you informed them exist on Windows since sprint 012 (the transparent mode); on the Mac they are left for a later milestone, with no date.
 
 ### The rehearsal: practice before the meeting · New · Sprint 004
 

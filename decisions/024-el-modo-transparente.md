@@ -24,7 +24,9 @@ texto no lo redacta un modelo (regla 3) y el Mac no cambia.
    (`skip_serializing_if`): un archivo sin el modo es byte a byte el de antes.
 2. **El aviso es fijo y bilingüe, y no lo redacta nadie.** `jurisdiccion::aviso_transparente()` devuelve `{ es, en }`:
    una herramienta en tu propio equipo escucha la reunión para traerte tu propia documentación, no graba el audio ni
-   guarda lo que dices, vive en memoria y se borra al terminar. Un test impide que prometa de más. Es texto, no
+   guarda la transcripción, todo vive en memoria y se borra al terminar, y lo único que podría guardar, si el consultor lo
+   decide, es una frase corta de un acuerdo (la regla dura 1 permite eso, y decir «nada de lo que dices se guarda» era
+   más de lo que la app cumple: auditoría del S12, M3). Un test impide que prometa de más. Es texto, no
    «sugerencia»: no pasa por ningún modelo ni por el API.
 3. **«El cliente consintió» deja una constancia, y solo eso.** `notas::Consentimiento { cliente, jurisdiccion, hora,
 idioma, texto }` entra en `Contenido.consentimientos`, **dentro del archivo cifrado que la reunión ya tiene** (sin
@@ -34,13 +36,16 @@ idioma, texto }` entra en `Contenido.consentimientos`, **dentro del archivo cifr
    (`#[serde(default)]`). La misma constancia dos veces seguidas no se repite, pero la segunda pulsación **no es un
    fallo**: la constancia ya está dentro.
 4. **La orden se niega en lugar de fingir.** `el_cliente_consintio` falla si no hay un cliente elegido, si el modo está
-   apagado para él o si no hay una reunión abierta donde dejarla; la pantalla lo dice. «Se va a guardar» cuenta las
-   constancias (sin descifrar nada) y Honestidad las nombra en «Tuyo».
+   apagado para él o si no hay una reunión abierta donde dejarla (el cuaderno cerrado no recibe constancias: auditoría
+   del S12, M2); la pantalla lo dice. «Se va a guardar» cuenta las
+   constancias (sin descifrar nada) y Honestidad las nombra en «Tuyo». **Una reunión con solo la constancia no se descarta
+   al parar** (cuenta como algo tuyo: auditoría del S12, A1).
 5. **La banda solo sabe si el modo está encendido.** Su capability tiene `modo_transparente` (un booleano) y nada más
    de esto: no puede pedir el cliente, ni el aviso, ni encender el modo, ni anotar. Un test lee las dos capabilities.
 6. **Al oído, con el freno de siempre.** Con el modo solo audio encendido, `decir_el_aviso` pasa por `habla::cabe_decirla`,
    la misma regla que las fichas: por altavoces, sin voz del idioma o con alguien hablando, se calla y la pantalla lo
-   dice. La voz lo lee en el idioma del cliente para que se lo digas tú.
+   dice. La voz lo lee con la voz del idioma del aviso —el del cliente, o el de la sala en presencial— y no con la del consultor
+   (auditoría del S12, M1 y B12), para que se lo digas tú.
 7. **Solo Windows en la interfaz, por ahora.** Las cuatro órdenes y los campos viven en Rust para los dos sistemas, pero
    Sesión y la banda solo pintan el modo en Windows (`esWindows`), y los campos vacíos no se escriben: en macOS no
    cambia ni un byte. Llevarlo al Mac sería otra decisión del usuario, con su maqueta.

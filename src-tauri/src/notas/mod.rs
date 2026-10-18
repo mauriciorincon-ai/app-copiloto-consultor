@@ -338,6 +338,9 @@ impl Cuaderno {
             && self.fijadas.is_empty()
             && self.mis_turnos.is_empty()
             && self.guardadas.is_empty()
+            // La constancia de que el cliente consintió es tuya (sprint 012, ADR 024): sin esto, una reunión con solo
+            // ella se descartaba en silencio al parar y la evidencia desaparecía (auditoría del S12, A1).
+            && self.consentimientos.is_empty()
     }
 
     /// ¿Queda algo que decidir al cerrar? Lo tuyo, o propuestas esperando (ADR 016 §4): una reunión
@@ -700,6 +703,18 @@ mod pruebas {
         assert!(c.vacio());
         c.escribir("algo");
         assert!(!c.vacio());
+        c.olvidar();
+        assert!(c.vacio());
+        // La constancia del consentimiento es tuya: una reunión con solo ella no se descarta al parar (A1 del S12).
+        c.consentir(Consentimiento {
+            cliente: "Páramo Azul".into(),
+            jurisdiccion: "Colombia".into(),
+            hora: "14:02".into(),
+            idioma: "es".into(),
+            texto: "Antes de empezar…".into(),
+        });
+        assert!(!c.vacio(), "una reunión con solo la constancia se habría descartado al parar");
+        assert!(c.hay_que_decidir(), "con solo la constancia, parar tiene que dejar «al cerrar»");
         c.olvidar();
         assert!(c.vacio());
     }

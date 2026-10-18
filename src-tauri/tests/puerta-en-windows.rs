@@ -1,4 +1,4 @@
-//! LA PUERTA LOCAL EN WINDOWS, con un named pipe de verdad (sprint 012, ADR 018 y ADR 022 enmienda 2). La hermana de
+//! LA PUERTA LOCAL EN WINDOWS, con un named pipe de verdad (sprint 012, ADR 018 y ADR 022 enmienda 4). La hermana de
 //! `puerta.rs`, que corre solo en Unix: la misma política, el mismo hilo que atiende y vigila, y lo propio de Windows
 //! —la DACL leída del pipe, que nadie se le adelante con el mismo nombre, y la instancia que se reutiliza—.
 //!
@@ -13,7 +13,9 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use app_copiloto_consultor_lib::puerta::socket::{dacl_de, hay_puerta, pedir, ruta_en, sid_del_usuario, NoLlega, Puerta};
+use app_copiloto_consultor_lib::puerta::socket::{
+    dacl_de, hay_puerta, limpiar_lo_que_quedo, pedir, ruta_de_la_puerta, ruta_en, sid_del_usuario, NoLlega, Puerta,
+};
 use app_copiloto_consultor_lib::puerta::{Cierre, Hecho, Llave, Motivo, NoAbre, Operaciones, Orden, Respuesta, Resultado};
 
 /// La app, de mentira: reunión a voluntad y órdenes que se cuentan.
@@ -101,13 +103,67 @@ fn esperar(que: impl Fn() -> bool) -> bool {
     false
 }
 
-/// El pipe tiene el nombre de la app y una carpeta de prueba le da uno propio.
+/// El pipe tiene el nombre de la app **y el SID de tu usuario** (otra sesión de Windows con la app abierta no le quita el
+/// nombre: auditoría del S12, B11), y una carpeta de prueba le da uno propio.
 #[test]
 fn el_pipe_de_la_app_se_llama_como_la_app() {
     let app = ruta_en(&std::env::temp_dir().join("com.aiapps.copiloto-consultor"));
-    assert_eq!(app.to_string_lossy(), r"\\.\pipe\com.aiapps.copiloto-consultor.puerta");
+    let sid = sid_del_usuario().expect("el SID del usuario");
+    assert_eq!(app.to_string_lossy(), format!(r"\\.\pipe\com.aiapps.copiloto-consultor.puerta.{sid}"));
     let prueba = ruta_en(&carpeta("nombre"));
     assert!(prueba.to_string_lossy().starts_with(r"\\.\pipe\com.aiapps.copiloto-consultor.puerta.ag-puerta-nombre-"));
+}
+
+/// **Cerrar y abrir de seguido funciona** (auditoría del S12, B2): el pipe cerrado tarda un instante en soltar su nombre
+/// y abrir otra vez no dice «otro programa ya usa ese nombre» con la verdad al revés. ¿Puede fallar? Sí: sin los
+/// reintentos de `enlazar`, alguna de las vueltas falla.
+#[test]
+fn cerrar_y_abrir_de_seguido_no_dice_que_el_nombre_esta_ocupado() {
+    let d = carpeta("de-seguido");
+    let (puerta, llave, doble) = (Arc::new(Puerta::default()), Arc::new(LlaveDePrueba::default()), Arc::new(Doble::default()));
+    for vuelta in 0..6 {
+        puerta.abrir(&d, llave.clone(), doble.clone()).unwrap_or_else(|e| panic!("la vuelta {vuelta} no abrió: {e:?}"));
+        assert!(puerta.cerrar(Cierre::ATuMano));
+    }
+}
+
+/// **El arranque no borra la llave de otra app viva** (auditoría del S12, M4): con un pipe vivo la llave no es una sobra;
+/// sin pipe sí lo es, y se borra. ¿Puede fallar? Sí: sin el `existe` de `limpiar_lo_que_quedo`, la primera mitad es roja.
+#[test]
+fn el_arranque_no_borra_la_llave_de_otra_app_viva_y_si_la_que_quedo() {
+    let (puerta, _llave, _doble, _ruta) = abrir("limpia");
+    let ajena = LlaveDePrueba::default();
+    ajena.guardar("la-de-la-otra-app").unwrap();
+    assert!(!limpiar_lo_que_quedo(&carpeta("limpia"), &ajena));
+    assert!(ajena.token.lock().unwrap().is_some(), "el arranque borró la llave de una app que tiene la puerta abierta");
+    puerta.cerrar(Cierre::ATuMano);
+    assert!(esperar(|| !hay_puerta(&ruta_en(&carpeta("limpia")))), "el pipe sobrevivió al cierre");
+    assert!(!limpiar_lo_que_quedo(&carpeta("limpia"), &ajena));
+    assert!(ajena.token.lock().unwrap().is_none(), "una llave que quedó de una caída no se borró");
+}
+
+/// **`ghost.exe` de verdad, con la puerta cerrada** (auditoría del S12, B8): sale con 3 sin conectarse a nada y **sin
+/// tocar el Administrador de credenciales** (mira el pipe antes que la llave), y su ayuda habla de Windows. Si la app
+/// tiene la puerta abierta en este equipo, no la usa: la prueba se salta.
+#[test]
+fn ghost_con_la_puerta_cerrada_sale_con_3_sin_tocar_la_llave_y_habla_de_windows() {
+    let Some(ruta) = ruta_de_la_puerta() else { return };
+    if hay_puerta(&ruta) {
+        eprintln!("la app tiene la puerta abierta en este equipo: esta prueba no la toca");
+        return;
+    }
+    let ghost = env!("CARGO_BIN_EXE_ghost");
+    let salida = std::process::Command::new(ghost).args(["prefs", "leer"]).output().expect("ghost no arrancó");
+    assert_eq!(salida.status.code(), Some(3), "con la puerta cerrada ghost sale con 3: {salida:?}");
+    for idioma in ["en_US.UTF-8", "es_CO.UTF-8"] {
+        let ayuda = std::process::Command::new(ghost).arg("--help").env("LANG", idioma).output().expect("ghost --help");
+        let texto = String::from_utf8_lossy(&ayuda.stdout);
+        assert!(
+            !["Touch ID", "macOS", "Llavero", "Keychain"].iter().any(|m| texto.contains(m)),
+            "ghost --help en Windows habla del Mac ({idioma}):\n{texto}"
+        );
+        assert!(texto.contains("Windows Hello"), "la ayuda no dice cuál es la identidad en Windows ({idioma})");
+    }
 }
 
 /// **Nace cerrada**: sin pipe, y `ghost` lo sabe sin tocar la llave.

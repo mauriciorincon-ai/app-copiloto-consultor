@@ -213,12 +213,14 @@ pub struct VistaDelCliente {
 }
 
 /// **El aviso del modo transparente** (sprint 012, ADR 024): lo que el consultor le dice al cliente antes de empezar.
-/// Texto fijo y en los dos idiomas (reglas duras 3 y 7). Dice lo que la regla dura 1 garantiza —el audio no se graba y
-/// lo que dice el cliente no se guarda— y nada más: ni «invisible» ni promesas que la app no cumple (regla dura 6).
+/// Texto fijo y en los dos idiomas (reglas duras 3 y 7). Dice lo que la regla dura 1 garantiza —el audio no se graba, la
+/// transcripción no se guarda— y lo único que sí puede quedar, si el consultor lo acepta: una frase corta de un acuerdo
+/// (auditoría del S12, M3: decir que «nada de lo que dices se guarda» era más de lo que la app cumple). Ni «invisible» ni
+/// promesas que la app no cumple (regla dura 6).
 pub fn aviso_transparente() -> Bilingue {
     Bilingue {
-        es: "Antes de empezar, te cuento: uso una herramienta en mi propio equipo que escucha esta reunión para traerme mi propia documentación. No graba el audio ni guarda lo que dices: vive en memoria y se borra al terminar. ¿Te parece bien?".into(),
-        en: "Before we start, a quick note: I use a tool on my own computer that listens to this meeting to bring up my own documents. It does not record the audio or keep what you say: it lives in memory and is deleted when we finish. Is that all right with you?".into(),
+        es: "Antes de empezar, te cuento: uso una herramienta en mi propio equipo que escucha esta reunión para traerme mi propia documentación. No graba el audio ni guarda la transcripción: todo vive en memoria y se borra al terminar; lo único que podría guardar, si yo lo decido, es una frase corta de un acuerdo. ¿Te parece bien?".into(),
+        en: "Before we start, a quick note: I use a tool on my own computer that listens to this meeting to bring up my own documents. It does not record the audio or keep a transcript: everything lives in memory and is deleted when we finish; the only thing I might keep, if I decide to, is a short line about an agreement. Is that all right with you?".into(),
     }
 }
 
@@ -238,6 +240,9 @@ mod pruebas {
         }
         assert!(a.es.contains("memoria") && a.es.contains("se borra"), "el aviso no dice que nada se guarda");
         assert!(a.en.contains("memory") && a.en.contains("deleted"), "the notice does not say nothing is kept");
+        // Y no promete más de lo que se cumple: una frase aceptada de un acuerdo SÍ puede quedar (regla dura 1).
+        assert!(a.es.contains("acuerdo") && a.en.contains("agreement"), "el aviso no dice lo único que puede quedar");
+        assert!(!a.es.contains("ni guarda lo que dices") && !a.en.contains("keep what you say"), "el aviso promete que nada se guarda");
         assert!(a.es.ends_with('?') && a.en.ends_with('?'), "el aviso no le pregunta al cliente");
     }
 

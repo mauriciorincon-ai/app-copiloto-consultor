@@ -63,7 +63,7 @@ function loQueLlamaLaBanda(): string[] {
   const salida = new Set<string>();
   const imports = [
     ...(banda + app).matchAll(
-      /import\s*\{([^}]*)\}\s*from\s*"\.\.?\/(cuaderno|ficha|turnos|asa|radar|acople|ia|notas|franja)"/g,
+      /import\s*\{([^}]*)\}\s*from\s*"\.\.?\/(cuaderno|ficha|turnos|asa|radar|acople|ia|notas|franja|jurisdiccion)"/g,
     ),
   ];
   for (const [, nombres, modulo] of imports) {
@@ -120,6 +120,12 @@ const SENSIBLES = [
   "exportar_el_ensayo",
   "progreso_del_ensayo",
   "borrar_los_ensayos",
+  // El modo transparente (sprint 012, ADR 024): encenderlo por cliente, dejar la constancia de que consintió y decir el
+  // aviso en voz alta son de la ventana principal; la banda solo pregunta si está encendido (`modo_transparente`).
+  "fijar_modo_transparente",
+  "el_cliente_consintio",
+  "decir_el_aviso",
+  "este_cliente",
 ];
 
 describe("cada ventana puede solo lo suyo", () => {
@@ -178,6 +184,8 @@ describe("cada ventana puede solo lo suyo", () => {
   it("la banda puede todo lo que de verdad llama", () => {
     const llama = loQueLlamaLaBanda();
     expect(llama).toContain("pedir_ficha");
+    // La marca del modo transparente: lo único que la banda sabe de él (ADR 024), y el gate lo ve llamar.
+    expect(llama).toContain("modo_transparente");
     expect(
       llama.filter((c) => !permite("banda").includes(c)),
       "la banda llama y no tiene permiso",

@@ -24,7 +24,7 @@ const ESPERA: Duration = Duration::from_secs(300);
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    let idioma = cli::idioma(std::env::var("LANG").ok().as_deref());
+    let idioma = cli::idioma_del_entorno();
     ExitCode::from(correr(&args, idioma) as u8)
 }
 
@@ -53,7 +53,7 @@ fn correr(args: &[String], idioma: &str) -> i32 {
         }
     };
 
-    // En el Mac, el socket en la carpeta de la app; en Windows, el named pipe (sprint 012, ADR 022 enmienda 2).
+    // En el Mac, el socket en la carpeta de la app; en Windows, el named pipe (sprint 012, ADR 022 enmienda 4).
     let Some(ruta) = socket::ruta_de_la_puerta() else {
         eprintln!("{}", if en { "HOME is not set" } else { "falta HOME" });
         return salida::FALLO;

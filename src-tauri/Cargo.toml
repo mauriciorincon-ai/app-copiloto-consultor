@@ -110,9 +110,11 @@ ureq = { version = "3.4", default-features = false, features = ["rustls"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 # Sprint 012: la puerta local en Windows es un named pipe (`puerta/windows.rs`): crearlo con la DACL del usuario
 # (Security, Authorization), esperarlo y leerlo sin bloquear (Pipes, IO, Threading) y abrirlo desde `ghost`
-# (Storage_FileSystem). Son features del mismo crate: ninguno nuevo en el árbol.
+# (Storage_FileSystem) y, para `ghost --help`, el idioma del usuario (Globalization). Son features del mismo crate: ninguno nuevo
+# en el árbol.
 windows-sys = { version = "0.61", features = [
   "Win32_Foundation",
+  "Win32_Globalization",
   "Win32_Security",
   "Win32_Security_Authorization",
   "Win32_Security_Credentials",

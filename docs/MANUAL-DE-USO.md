@@ -419,7 +419,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     el catálogo v1») y no adivina.
   - Si la línea nombra varias («Colombia y California»), la bandera es la de **la más estricta**.
   - El catálogo se actualiza con una versión nueva de la app, nunca por la red.
-  - La plantilla del aviso de una línea al cliente y el registro de que le informaste quedan para un hito posterior, sin fecha.
+  - El aviso al cliente y el registro de que le informaste existen en Windows desde el sprint 012 (el modo transparente); en el Mac quedan para un hito posterior, sin fecha.
 
 ### El ensayo: practica antes de la reunión · Nuevo · Sprint 004
 

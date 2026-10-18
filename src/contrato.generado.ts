@@ -1318,8 +1318,8 @@ export const SIN_BANDEJA_Y_LA_TAREA_NO_CORRIO: EstadoDeLaBandeja = {
 
 export const VISTA_DEL_CLIENTE: VistaDelCliente = {
     "aviso": {
-      "en": "Before we start, a quick note: I use a tool on my own computer that listens to this meeting to bring up my own documents. It does not record the audio or keep what you say: it lives in memory and is deleted when we finish. Is that all right with you?",
-      "es": "Antes de empezar, te cuento: uso una herramienta en mi propio equipo que escucha esta reunión para traerme mi propia documentación. No graba el audio ni guarda lo que dices: vive en memoria y se borra al terminar. ¿Te parece bien?"
+      "en": "Before we start, a quick note: I use a tool on my own computer that listens to this meeting to bring up my own documents. It does not record the audio or keep a transcript: everything lives in memory and is deleted when we finish; the only thing I might keep, if I decide to, is a short line about an agreement. Is that all right with you?",
+      "es": "Antes de empezar, te cuento: uso una herramienta en mi propio equipo que escucha esta reunión para traerme mi propia documentación. No graba el audio ni guarda la transcripción: todo vive en memoria y se borra al terminar; lo único que podría guardar, si yo lo decido, es una frase corta de un acuerdo. ¿Te parece bien?"
     },
     "bandera": {
       "bandera": {
@@ -1363,8 +1363,8 @@ export const VISTA_DEL_CLIENTE: VistaDelCliente = {
 
 export const VISTA_DEL_CLIENTE_TRANSPARENTE: VistaDelCliente = {
     "aviso": {
-      "en": "Before we start, a quick note: I use a tool on my own computer that listens to this meeting to bring up my own documents. It does not record the audio or keep what you say: it lives in memory and is deleted when we finish. Is that all right with you?",
-      "es": "Antes de empezar, te cuento: uso una herramienta en mi propio equipo que escucha esta reunión para traerme mi propia documentación. No graba el audio ni guarda lo que dices: vive en memoria y se borra al terminar. ¿Te parece bien?"
+      "en": "Before we start, a quick note: I use a tool on my own computer that listens to this meeting to bring up my own documents. It does not record the audio or keep a transcript: everything lives in memory and is deleted when we finish; the only thing I might keep, if I decide to, is a short line about an agreement. Is that all right with you?",
+      "es": "Antes de empezar, te cuento: uso una herramienta en mi propio equipo que escucha esta reunión para traerme mi propia documentación. No graba el audio ni guarda la transcripción: todo vive en memoria y se borra al terminar; lo único que podría guardar, si yo lo decido, es una frase corta de un acuerdo. ¿Te parece bien?"
     },
     "bandera": {
       "bandera": {
@@ -1408,8 +1408,8 @@ export const VISTA_DEL_CLIENTE_TRANSPARENTE: VistaDelCliente = {
 
 export const VISTA_DEL_CLIENTE_SIN_ELEGIR: VistaDelCliente = {
     "aviso": {
-      "en": "Before we start, a quick note: I use a tool on my own computer that listens to this meeting to bring up my own documents. It does not record the audio or keep what you say: it lives in memory and is deleted when we finish. Is that all right with you?",
-      "es": "Antes de empezar, te cuento: uso una herramienta en mi propio equipo que escucha esta reunión para traerme mi propia documentación. No graba el audio ni guarda lo que dices: vive en memoria y se borra al terminar. ¿Te parece bien?"
+      "en": "Before we start, a quick note: I use a tool on my own computer that listens to this meeting to bring up my own documents. It does not record the audio or keep a transcript: everything lives in memory and is deleted when we finish; the only thing I might keep, if I decide to, is a short line about an agreement. Is that all right with you?",
+      "es": "Antes de empezar, te cuento: uso una herramienta en mi propio equipo que escucha esta reunión para traerme mi propia documentación. No graba el audio ni guarda la transcripción: todo vive en memoria y se borra al terminar; lo único que podría guardar, si yo lo decido, es una frase corta de un acuerdo. ¿Te parece bien?"
     },
     "bandera": null,
     "clausula": {

@@ -216,10 +216,6 @@ export function decirElAviso(): Promise<boolean | null> {
   return preguntar<boolean>("decir_el_aviso");
 }
 
-export function modoTransparente(): Promise<boolean | null> {
-  return preguntar<boolean>("modo_transparente");
-}
-
 /** El evento con el que Rust avisa a la banda de que el modo transparente cambió (una señal sin dato). */
 export const EVENTO_TRANSPARENTE = "transparente";
 
@@ -237,7 +233,8 @@ export function useModoTransparente(activo: boolean): boolean {
     }
     let vivo = true;
     const leer = () => {
-      void modoTransparente().then((r) => {
+      // La cadena va aquí, no en un envoltorio: así el gate de capabilities ve lo que la banda llama (auditoría del S12, B7).
+      void preguntar<boolean>("modo_transparente").then((r) => {
         if (vivo) setEncendido(r === true);
       });
     };

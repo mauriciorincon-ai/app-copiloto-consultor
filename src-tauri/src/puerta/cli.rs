@@ -61,6 +61,50 @@ pub fn idioma(lang: Option<&str>) -> &'static str {
     }
 }
 
+/// El idioma de la ayuda según el entorno: `LANG` (el del Mac) y, si no dice nada —en Windows casi nunca lo dice—, el
+/// idioma del usuario del sistema (auditoría del S12, M5). En el Mac, `LANG` y nada más, como siempre.
+pub fn idioma_del_entorno() -> &'static str {
+    let lang = std::env::var("LANG").ok().filter(|v| !v.is_empty());
+    idioma(lang.or_else(idioma_del_sistema).as_deref())
+}
+
+#[cfg(windows)]
+fn idioma_del_sistema() -> Option<String> {
+    use windows_sys::Win32::Globalization::GetUserDefaultLocaleName;
+    let mut nombre = [0u16; 85]; // LOCALE_NAME_MAX_LENGTH
+    // SEGURIDAD: un búfer propio con su largo; Windows escribe el nombre terminado en cero y devuelve cuántos caracteres.
+    let n = unsafe { GetUserDefaultLocaleName(nombre.as_mut_ptr(), nombre.len() as i32) };
+    (n > 1).then(|| String::from_utf16_lossy(&nombre[..n as usize - 1]))
+}
+
+#[cfg(not(windows))]
+fn idioma_del_sistema() -> Option<String> {
+    None
+}
+
+/// Las dos frases de la ayuda que hablan del sistema: quién pide la identidad al abrir una nota y quién guarda la llave.
+/// En el Mac, Touch ID y el Llavero; en Windows, Windows Hello y el Administrador de credenciales (ADR 022 enmienda 4).
+fn del_sistema(en: bool) -> (&'static str, &'static str) {
+    match (cfg!(windows), en) {
+        (false, true) => (
+            "asks for Touch ID on the Mac, once per door opening",
+            "Each time you open the door, macOS asks you whether ghost may use the key in your Keychain.",
+        ),
+        (false, false) => (
+            "pide Touch ID en el Mac, una vez por apertura",
+            "Cada vez que abres la puerta, macOS te pregunta si ghost puede usar la llave de tu Llavero.",
+        ),
+        (true, true) => (
+            "asks for Windows Hello, once per door opening",
+            "Each time you open the door, the app leaves a new key in Credential Manager and ghost reads it from there.",
+        ),
+        (true, false) => (
+            "pide Windows Hello, una vez por apertura",
+            "Cada vez que abres la puerta, la app deja una llave nueva en el Administrador de credenciales y ghost la lee de ahí.",
+        ),
+    }
+}
+
 /// Las claves que `ghost prefs cambiar` acepta.
 fn delegables() -> String {
     Clave::TODAS.into_iter().filter(|c| c.delegable()).map(Clave::nombre).collect::<Vec<_>>().join(" · ")
@@ -68,6 +112,7 @@ fn delegables() -> String {
 
 pub fn ayuda(idioma: &str) -> String {
     let claves = delegables();
+    let (abre_nota, la_llave) = del_sistema(idioma == "en");
     if idioma == "en" {
         format!(
             "ghost {VERSION} — Angel Ghost's local door (ADR 018)
@@ -79,11 +124,11 @@ Usage:
   ghost prefs get
   ghost prefs set <key> <value>       {claves}
   ghost notes list
-  ghost notes open <file>             asks for Touch ID on the Mac, once per door opening
+  ghost notes open <file>             {abre_nota}
   ghost --version · ghost --help
 
 You open the door by hand, in Angel Ghost → AI. In a meeting or during a rehearsal it closes itself and denies everything.
-Each time you open the door, macOS asks you whether ghost may use the key in your Keychain.
+{la_llave}
 Output: JSON. Exit code: 0 done · 2 denied · 3 door closed · 1 failed · 64 usage.
 "
         )
@@ -98,11 +143,11 @@ Uso:
   ghost prefs leer
   ghost prefs cambiar <clave> <valor> {claves}
   ghost notas listar
-  ghost notas abrir <archivo>         pide Touch ID en el Mac, una vez por apertura
+  ghost notas abrir <archivo>         {abre_nota}
   ghost --version · ghost --help
 
 La puerta se abre a mano, en Angel Ghost → IA. En reunión o durante un ensayo se cierra sola y lo deniega todo.
-Cada vez que abres la puerta, macOS te pregunta si ghost puede usar la llave de tu Llavero.
+{la_llave}
 Salida: JSON. Código: 0 hecho · 2 denegado · 3 puerta cerrada · 1 fallo · 64 uso.
 "
         )
@@ -128,6 +173,27 @@ mod pruebas {
             assert!(!a.contains("La primera vez") && !a.contains("The first time"), "{idioma}: la ayuda dice «la primera vez»");
             assert!(a.contains(cada) && a.contains(una_vez), "{idioma}: la ayuda no dice cuándo pregunta:\n{a}");
         }
+    }
+
+    /// **En Windows la ayuda no habla del Mac** (auditoría del S12, M5): Windows Hello y el Administrador de credenciales
+    /// en lugar de Touch ID y el Llavero, y el idioma del usuario cuando `LANG` no dice nada. En el Mac, el texto de
+    /// siempre. ¿Puede fallar? Sí: quitar el `cfg!(windows)` de `del_sistema` es rojo en un sistema o en el otro.
+    #[test]
+    fn la_ayuda_habla_del_sistema_en_el_que_corre() {
+        for idioma in ["es", "en"] {
+            let a = ayuda(idioma);
+            let del_mac = ["Touch ID", "macOS", "Llavero", "Keychain"].iter().any(|m| a.contains(m));
+            if cfg!(windows) {
+                assert!(!del_mac, "{idioma}: la ayuda de Windows nombra el Mac:\n{a}");
+                assert!(a.contains("Windows Hello") && (a.contains("Credential Manager") || a.contains("Administrador de credenciales")));
+            } else {
+                assert!(del_mac && !a.contains("Windows Hello"), "{idioma}: la ayuda del Mac cambió");
+            }
+        }
+        #[cfg(windows)]
+        assert!(idioma_del_sistema().is_some_and(|i| i.len() >= 2), "Windows no dijo el idioma del usuario");
+        #[cfg(not(windows))]
+        assert!(idioma_del_sistema().is_none(), "en el Mac el idioma sale solo de LANG");
     }
 
     #[test]

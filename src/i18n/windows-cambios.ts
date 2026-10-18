@@ -34,7 +34,7 @@ const ES: Cambios = {
     subResto:
       "para que Claude Code opere la app desde este mismo PC, con una llave en el Administrador de credenciales.",
     daselo:
-      "Dáselo a Claude Code. Cada vez que abres la puerta, la app deja una llave nueva en el Administrador de credenciales y ghost la lee de ahí; al cerrarla, la borra.",
+      "Dáselo a Claude Code. Cada vez que abres la puerta, la app deja una llave nueva en el Administrador de credenciales y ghost la lee de ahí; al cerrarla, la borra. Mientras está abierta, cualquier programa de tu usuario podría leerla.",
     noAbre: {
       llavero: "El Administrador de credenciales no guardó la llave.",
       socket: "Windows no dejó crear la puerta: otro programa ya usa ese nombre.",
@@ -180,7 +180,7 @@ const EN: Cambios = {
   puerta: {
     subResto: "so Claude Code can operate the app from this same PC, with a key in Credential Manager.",
     daselo:
-      "Give it to Claude Code. Each time you open the door, the app leaves a new key in Credential Manager and ghost reads it from there; closing the door deletes it.",
+      "Give it to Claude Code. Each time you open the door, the app leaves a new key in Credential Manager and ghost reads it from there; closing the door deletes it. While it is open, any program of your user could read it.",
     noAbre: {
       llavero: "Credential Manager did not store the key.",
       socket: "Windows did not let the door be created: another program already uses that name.",

@@ -24,8 +24,8 @@ para «Enriquecer el banco» del ensayo.
 
 ## Estado
 
-**Hito H-1 «Vitrina funcional» construido.** Lo sella el gate humano del hito (≈ 20 min en el Mac y ≈ 20 min en
-el PC con Windows). En el camino: el sprint 004 sumó el ensayo y la banda arriba, junto a la cámara; el 005, el modo
+**Hito H-2 «Producto completo» abierto (sprint 012, 2026-10-18).** El gate del H-1 se funde con el ensayo general del
+H-2: un solo gate humano (≈ 20 min en el Mac y ≈ 20 min en el PC con Windows). En el camino: el sprint 004 sumó el ensayo y la banda arriba, junto a la cámara; el 005, el modo
 presencial (la sala por el micrófono del Mac, sin audio del sistema ni pantalla); y los sprints 006, 007 y 008, la app
 en Windows. Hoy se compila desde este repo; la versión firmada para instalar llega más adelante.
 
@@ -33,7 +33,7 @@ La app también se compila para **Windows** (ADR 022): desde el sprint 006 la ba
 transcripción con whisper y tus notas cifradas; desde el 007, la **videollamada** en ese mismo PC (el audio del cliente
 por el audio del sistema, la ficha al oído, la pantalla de la reunión y los atajos `Alt+Mayús`); y desde el 008,
 el acople, la sugerencia con el API, el radar, Windows Hello y el borrado con la app cerrada. Honestidad dice qué hace
-hoy y qué no (de las quince funciones, solo la puerta local queda fuera), y la protección sigue «sin verificar» en
+hoy y qué no (las quince funciones están en «sí», la puerta local y el modo transparente incluidos desde el sprint 012), y la protección sigue «sin verificar» en
 Teams, Zoom y Meet hasta que la pruebes en tu PC. El instalador sale sin firmar de la integración continua hasta
 G-Release. Desde el sprint 009 la app es además **nativa en ARM64** (una Surface con Snapdragon, por ejemplo): se
 compila y se instala sin emulación, y «Instalar» baja el modelo de voz que cupo en 4 s en un equipo así (ver
@@ -130,12 +130,13 @@ not even that). By default everything runs on your Mac: the network counter read
 turn on, with your own key, an external provider for suggestions or for the rehearsal's "Enrich the
 bank".
 
-**Status:** milestone H-1 "Functional showcase" built; it is sealed by the milestone's human gate (about 20 min on
-the Mac and 20 min on the Windows PC). Along the way: sprint 004 added the rehearsal and the band at the top, next to
+**Status:** milestone H-2 "Complete product" opened (sprint 012, 2026-10-18). The H-1 gate is merged with the H-2
+dress rehearsal: a single human gate (about 20 min on the Mac and 20 min on the Windows PC). Along the way: sprint 004 added the rehearsal and the band at the top, next to
 the camera; sprint 005, the in-person mode (the room through the Mac's microphone, with no system audio and no screen);
 and sprints 006 to 008, the app on Windows (ADR 022: protected band, microphone, whisper transcription, encrypted notes,
 the video call on that same PC, docking, the suggestion through the API, the radar, Windows Hello and deletion with the
-app closed; the unsigned installer comes from CI). Today it is built from this repo (macOS 26+ or Windows 10 2004+,
+app closed, and from sprint 012 the local door for Claude Code and the transparent mode; the unsigned installer comes
+from CI). Today it is built from this repo (macOS 26+ or Windows 10 2004+,
 `pnpm install && pnpm tauri dev`); a signed build comes later. The app's interface is in Spanish and English; the
 documents in this repo (manual, test guide, decisions) are in Spanish, and the manual also has an English edition.
 

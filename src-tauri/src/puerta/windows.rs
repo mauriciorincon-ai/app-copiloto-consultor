@@ -1,4 +1,4 @@
-//! LA PUERTA EN WINDOWS (sprint 012, ADR 018 y ADR 022 enmienda 2). Parte del módulo protegido: las únicas líneas que
+//! LA PUERTA EN WINDOWS (sprint 012, ADR 018 y ADR 022 enmienda 4). Parte del módulo protegido: las únicas líneas que
 //! crean, abren, leen o escriben el pipe llevan su marca y el ADR en la misma línea.
 //!
 //! **Un named pipe con la MISMA forma que el socket Unix** (`UnixListener`, `UnixStream`): `socket.rs` no cambia en el
@@ -378,6 +378,8 @@ impl UnixStream {
                     // SEGURIDAD: nombre terminado en cero; espera a que la instancia quede libre.
                     unsafe { tubos::WaitNamedPipeW(nombre.as_ptr(), 2000) };
                 }
+                // Segundo intento y sigue ocupada: se dice abajo, con palabras, y no con «os error 231».
+                ERROR_PIPE_BUSY => break,
                 e => return Err(de(e)),
             }
         }
@@ -495,6 +497,18 @@ mod pruebas {
         assert_ne!(MODO & tubos::PIPE_REJECT_REMOTE_CLIENTS, 0, "el pipe acepta clientes de otra máquina");
         assert_ne!(APERTURA & fs::FILE_FLAG_FIRST_PIPE_INSTANCE, 0, "otro proceso podría crear el pipe antes");
         assert_eq!(MODO & tubos::PIPE_TYPE_MESSAGE, 0, "la puerta habla en bytes, como el socket");
+    }
+
+    /// **Con la instancia ocupada, `ghost` lo dice con palabras** (auditoría del S12, B1): antes salía «All pipe instances
+    /// are busy (os error 231)». ¿Puede fallar? Sí: sin el `break` del segundo intento, el error es el crudo del sistema.
+    #[test]
+    fn con_la_instancia_ocupada_ghost_dice_que_vuelva_a_intentarlo() {
+        let ruta = std::path::PathBuf::from(format!(r"\\.\pipe\ag-ocupado-{}", std::process::id()));
+        let _escucha = UnixListener::bind(&ruta).expect("el pipe de prueba no nació");
+        let primero = UnixStream::connect(&ruta).expect("la primera conexión debe entrar");
+        let e = UnixStream::connect(&ruta).err().expect("la segunda conexión se coló con la única instancia tomada");
+        assert!(e.to_string().contains("vuelve a intentarlo"), "el error es el crudo del sistema: {e}");
+        drop(primero);
     }
 
     /// La DACL de la puerta: solo tu SID, todos los permisos, sin herencia. ¿Puede fallar? Sí: un `WD` (Everyone) o un
