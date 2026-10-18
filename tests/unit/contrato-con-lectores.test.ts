@@ -54,7 +54,8 @@ const FIXTURE = "src/contrato.generado.ts";
  * con su razón; la lista es corta a propósito.
  */
 const LEIDOS_POR_CLAVE: Record<string, string> = {
-  "Bilingue.es": "`p.ve[idioma]` y `p.alcance[idioma]` en la banda y Sesión: el idioma de la interfaz elige el campo",
+  "Bilingue.es":
+    "`p.ve[idioma]` y `p.alcance[idioma]` en la banda y Sesión: el idioma de la interfaz elige el campo",
   "Bilingue.en": "ídem",
   "IdiomasDePista.consultor":
     "`elegidos[cual]` en Idioma: la pista elige el campo. Desde el S3 «Iniciar sesión» no los manda (los lee Rust)",
@@ -109,6 +110,12 @@ const DEUDA: Record<string, string> = {
   // `EstadoDeEscucha.presencial` lo leen Sesión (la vista presencial, sin «A medias»), la banda (la cabecera
   // de la sala), Honestidad y el rail. `IdiomasDePista.sala`, el selector «Idioma de la sala» de Sesión: la
   // fila de Idioma no cabe con la franja aprobada y queda maquetada, no vista (bitácora del sprint 005).
+
+  // ── Sprint 011, fase 1: la altura de la banda y su «×» cruzan antes que su pantalla; se pagan en la fase 2 ──
+  "LaFranja.desplazamiento":
+    "sprint 011, fase 2: Sesión enseña la altura en pt y «Volver arriba» (src/pantallas/Sesion.tsx)",
+  "LaFranja.bandaAbierta":
+    "sprint 011, fase 2: Sesión ofrece «Mostrar la banda» con la banda cerrada (src/pantallas/Sesion.tsx)",
 };
 
 /** Cada `export type X = … { … }`, con las variantes de una unión incluidas. */
@@ -138,7 +145,12 @@ function tipos(
       // y la barra puede haber una intersección cerrada —`({ que: "turno" } & Turno)`— y comentarios:
       // la primera versión se cortaba ahí y no veía las variantes de `Novedad` que seguían (M6).
       const resto = texto.slice(j + 1);
-      if (!/^\s*\)?\s*(?:&\s*\w+\s*\)?)?\s*(?:(?:\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)\s*)*\|/.test(resto)) break;
+      if (
+        !/^\s*\)?\s*(?:&\s*\w+\s*\)?)?\s*(?:(?:\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)\s*)*\|/.test(
+          resto,
+        )
+      )
+        break;
       i = j + 1 + resto.indexOf("|");
     }
   }

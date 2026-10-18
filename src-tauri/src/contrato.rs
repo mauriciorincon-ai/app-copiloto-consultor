@@ -639,11 +639,30 @@ pub fn muestras() -> Vec<Muestra> {
             borde: crate::ventana::Borde::Arriba,
             barra: 38.0,
             aviso_visto: false,
+            desplazamiento: 0,
+            banda_abierta: true,
         }),
         m("LA_FRANJA_ABAJO", "LaFranja", "./franja", &crate::LaFranja {
             borde: crate::ventana::Borde::Abajo,
             barra: 25.0,
             aviso_visto: true,
+            desplazamiento: 0,
+            banda_abierta: true,
+        }),
+        // ---- la banda a tu altura y su «×» (sprint 011, ADR 004 enmienda 3) ---------------------
+        m("LA_FRANJA_BAJADA", "LaFranja", "./franja", &crate::LaFranja {
+            borde: crate::ventana::Borde::Arriba,
+            barra: 0.0,
+            aviso_visto: true,
+            desplazamiento: 132,
+            banda_abierta: true,
+        }),
+        m("LA_FRANJA_CERRADA", "LaFranja", "./franja", &crate::LaFranja {
+            borde: crate::ventana::Borde::Arriba,
+            barra: 0.0,
+            aviso_visto: true,
+            desplazamiento: 132,
+            banda_abierta: false,
         }),
         // ---- el ensayo (sprint 004, ADR 019) — los estados de `ensayo.html` ---------------------
         m("PREPARACION_DEL_ENSAYO", "Preparacion", "./ensayo", &ensayo_preparado()),

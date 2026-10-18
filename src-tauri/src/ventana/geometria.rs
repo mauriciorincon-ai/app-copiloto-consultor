@@ -60,6 +60,39 @@ pub fn franja(borde: Borde, monitor: &Monitor, alto: u32) -> Marco {
     }
 }
 
+/// Lo que la banda deja libre debajo de sí, como poco, cuando la bajas (sprint 011): el alto de la banda de voz.
+/// Una banda pegada al borde inferior del área útil taparía la barra de tareas y la mitad de abajo de cualquier ventana.
+pub const HUECO_BAJO_LA_BANDA: f64 = 44.0;
+
+/// **Cuánto se puede bajar la banda arriba** en este monitor y con este alto (sprint 011, ADR 004 enmienda 3): que
+/// quede entera dentro del área útil y con [`HUECO_BAJO_LA_BANDA`] libre debajo. Nunca negativo: en una pantalla donde
+/// ni eso cabe, cero, la banda pegada arriba como siempre.
+pub fn desplazamiento_maximo(monitor: &Monitor, alto: u32) -> u32 {
+    let libre = monitor.util.alto - f64::from(alto) - HUECO_BAJO_LA_BANDA;
+    libre.max(0.0).floor() as u32
+}
+
+/// El desplazamiento que de verdad se aplica: el pedido, acotado a lo que cabe con ese alto. Se acota **al calcular**,
+/// no solo al guardar: agrandar con el asa una banda que bajaste la sacaría del área útil, y así no sale.
+pub fn desplazamiento_acotado(monitor: &Monitor, alto: u32, desplazamiento: u32) -> u32 {
+    desplazamiento.min(desplazamiento_maximo(monitor, alto))
+}
+
+/// **La franja a la altura que elegiste** (sprint 011): la de [`franja`], bajada `desplazamiento` puntos desde el borde
+/// superior del área útil. **Solo arriba**: abajo la banda vive pegada al borde inferior y el desplazamiento no se mira.
+/// Con 0 es exactamente la de [`franja`] —los tests del sprint 004 la siguen llamando a ella, sin tocarlos—, así que
+/// para quien no baja la banda, en el Mac y en Windows, no cambia nada.
+pub fn franja_desplazada(borde: Borde, monitor: &Monitor, alto: u32, desplazamiento: u32) -> Marco {
+    let f = franja(borde, monitor, alto);
+    match borde {
+        Borde::Arriba => {
+            let d = f64::from(desplazamiento_acotado(monitor, alto, desplazamiento));
+            Marco::nuevo(f.x, f.y + d, f.ancho, f.alto)
+        }
+        Borde::Abajo => f,
+    }
+}
+
 /// Cuánto mide la barra de menús (con el notch, si lo hay): la distancia del borde superior del
 /// monitor al del área útil. Es lo que el relleno sube el fondo de escritorio cuando la banda va arriba,
 /// para que por la franja asome justo el trozo que habría debajo.
@@ -153,5 +186,78 @@ mod tests {
         assert_eq!(Borde::Abajo.otro().otro(), Borde::Abajo);
         assert_eq!(serde_json::to_string(&Borde::Arriba).unwrap(), r#""arriba""#);
         assert_eq!(serde_json::from_str::<Borde>(r#""abajo""#).unwrap(), Borde::Abajo);
+    }
+
+    /// Una Surface con Windows a escala 200 %: sin barra de menús (el área útil empieza en 0) y la barra de tareas abajo,
+    /// 48 pt. Es la pantalla donde la banda tapaba las pestañas de Chrome (sprint 011).
+    fn surface() -> Monitor {
+        Monitor {
+            marco: Marco::nuevo(0.0, 0.0, 1440.0, 960.0),
+            util: Marco::nuevo(0.0, 0.0, 1440.0, 912.0),
+        }
+    }
+
+    /// **Con desplazamiento 0, la franja de hoy, byte a byte** (sprint 011): en los dos bordes, las cuatro pantallas y
+    /// los tres altos. ¿Puede fallar? Sí: sumar el desplazamiento antes de acotarlo, o acotarlo con un mínimo distinto
+    /// de 0, movería la banda de quien nunca la tocó.
+    #[test]
+    fn con_desplazamiento_0_es_la_franja_de_hoy() {
+        for monitor in [air(), con_notch(), externa(), surface()] {
+            for borde in [Borde::Arriba, Borde::Abajo] {
+                for alto in [44, 88, 200] {
+                    assert_eq!(franja_desplazada(borde, &monitor, alto, 0), franja(borde, &monitor, alto), "{borde:?} {alto}");
+                }
+            }
+        }
+    }
+
+    /// Arriba, la banda baja lo pedido desde el borde superior del área útil, y nada más cambia: ni el ancho, ni la x,
+    /// ni el alto.
+    #[test]
+    fn arriba_desplazada_baja_lo_pedido_en_las_cuatro_pantallas() {
+        for (monitor, util_y) in [(air(), 25.0), (con_notch(), 38.0), (externa(), -175.0), (surface(), 0.0)] {
+            let f = franja_desplazada(Borde::Arriba, &monitor, 88, 120);
+            assert_eq!(f.y, util_y + 120.0, "no bajó lo pedido en {monitor:?}");
+            assert_eq!((f.x, f.ancho, f.alto), (monitor.marco.x, monitor.marco.ancho, 88.0));
+        }
+    }
+
+    /// **Abajo no se desplaza**: la franja es la del H1 aunque las preferencias traigan un desplazamiento.
+    #[test]
+    fn abajo_el_desplazamiento_no_se_mira() {
+        for monitor in [air(), con_notch(), externa(), surface()] {
+            for d in [1, 120, 10_000] {
+                assert_eq!(franja_desplazada(Borde::Abajo, &monitor, 88, d), franja(Borde::Abajo, &monitor, 88));
+            }
+        }
+    }
+
+    /// **Acotada:** por mucho que se pida, la banda queda entera en el área útil y deja libres 44 pt debajo; y en una
+    /// pantalla donde ni eso cabe, se queda pegada arriba. ¿Puede fallar? Sí: sin la cota, un arrastre largo dejaba la
+    /// banda bajo la barra de tareas.
+    #[test]
+    fn el_desplazamiento_se_acota_y_deja_hueco_debajo() {
+        for monitor in [air(), con_notch(), externa(), surface()] {
+            for alto in [44, 88, 200] {
+                let f = franja_desplazada(Borde::Arriba, &monitor, alto, 10_000);
+                let fondo_util = monitor.util.y + monitor.util.alto;
+                assert!(f.fondo() <= fondo_util - HUECO_BAJO_LA_BANDA, "{monitor:?} {alto}: se salió del área útil");
+                assert!(fondo_util - HUECO_BAJO_LA_BANDA - f.fondo() < 1.0, "{monitor:?} {alto}: se quedó corta");
+            }
+        }
+        assert_eq!(desplazamiento_maximo(&surface(), 88), 912 - 88 - 44);
+        let diminuta = Monitor { marco: Marco::nuevo(0.0, 0.0, 800.0, 120.0), util: Marco::nuevo(0.0, 0.0, 800.0, 120.0) };
+        assert_eq!(desplazamiento_maximo(&diminuta, 88), 0);
+        assert_eq!(franja_desplazada(Borde::Arriba, &diminuta, 88, 50), franja(Borde::Arriba, &diminuta, 88));
+    }
+
+    /// Agrandar con el asa una banda bajada no la saca del área útil: el mismo desplazamiento se acota con el alto nuevo.
+    #[test]
+    fn agrandar_una_banda_bajada_la_vuelve_a_acotar() {
+        let m = surface();
+        let pegada_abajo = desplazamiento_maximo(&m, 88);
+        let ampliada = franja_desplazada(Borde::Arriba, &m, 200, pegada_abajo);
+        assert!(ampliada.fondo() <= m.util.alto - HUECO_BAJO_LA_BANDA, "la ampliada se salió: {ampliada:?}");
+        assert_eq!(desplazamiento_acotado(&m, 200, pegada_abajo), desplazamiento_maximo(&m, 200));
     }
 }

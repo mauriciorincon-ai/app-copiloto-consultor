@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-desplazar-banda"
+description = "Enables the desplazar_banda command without any pre-configured scope."
+commands.allow = ["desplazar_banda"]
+
+[[permission]]
+identifier = "deny-desplazar-banda"
+description = "Denies the desplazar_banda command without any pre-configured scope."
+commands.deny = ["desplazar_banda"]

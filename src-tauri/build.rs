@@ -7,6 +7,10 @@
 const COMANDOS: &[&str] = &[
         "ajustar_banda",
         "asentar_banda",
+        "desplazar_banda",
+        "asentar_desplazamiento",
+        "cerrar_la_banda",
+        "mostrar_la_banda",
         "estado_del_acople",
         "fondo_del_relleno",
         "la_franja",

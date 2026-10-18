@@ -25,9 +25,16 @@ export type LaFranja = {
   barra: number;
   /** Que ya viste el aviso de la primera vez con la banda arriba. */
   avisoVisto: boolean;
+  /**
+   * A qué altura vive la banda arriba (sprint 011): los puntos que la bajaste desde el borde superior del área útil,
+   * ya acotados a la pantalla. 0, pegada arriba; abajo no se mira.
+   */
+  desplazamiento: number;
+  /** Que la banda está en pantalla. Tras su «×» o el corte, no: Sesión ofrece «Mostrar la banda». */
+  bandaAbierta: boolean;
 };
 
-/** El evento con el que Rust avisa de que la banda cambió de borde. */
+/** El evento con el que Rust avisa de que la banda cambió de borde, de altura o se cerró. */
 export const EVENTO_FRANJA = "franja";
 
 /** `?borde=arriba|abajo` en la URL, para el arnés de capturas. */
@@ -70,4 +77,33 @@ export function fijarPosicionDeLaBanda(borde: Borde): Promise<boolean> {
 /** «Entendido» en el aviso de la primera vez: no vuelve a salir. */
 export function entendidoElAvisoDeArriba(): Promise<boolean> {
   return llamar("entendido_el_aviso_de_arriba");
+}
+
+/**
+ * **La banda a tu altura** (sprint 011, ADR 004 enmienda 3). Las cuatro puertas de Rust, una por gesto:
+ *
+ * - `desplazarBanda`: el asa de posición **mientras arrastras** —mueve la banda, no guarda nada—;
+ * - `asentarDesplazamiento`: **al soltarla** —guarda la altura acotada a la pantalla y reacopla la reunión—, y
+ *   «Volver arriba» en Sesión, con 0;
+ * - `cerrarLaBanda`: el «×» —con una sesión en marcha la termina, devuelve la reunión y cierra la banda; la app sigue—;
+ * - `mostrarLaBanda`: «Mostrar la banda» en Sesión, tras el «×» o el corte.
+ *
+ * Ninguna devuelve nada que haga falta leer: la altura y si la banda está en pantalla llegan por el evento `franja`.
+ */
+export function desplazarBanda(desplazamiento: number): Promise<boolean> {
+  return llamar("desplazar_banda", { desplazamiento });
+}
+
+export function asentarDesplazamiento(
+  desplazamiento: number,
+): Promise<boolean> {
+  return llamar("asentar_desplazamiento", { desplazamiento });
+}
+
+export function cerrarLaBanda(): Promise<boolean> {
+  return llamar("cerrar_la_banda");
+}
+
+export function mostrarLaBanda(): Promise<boolean> {
+  return llamar("mostrar_la_banda");
 }

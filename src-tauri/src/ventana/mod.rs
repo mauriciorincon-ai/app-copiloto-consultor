@@ -3,7 +3,7 @@
 //! | Ventana | Qué es | Protegida de la captura |
 //! |---|---|---|
 //! | `principal` | 960 × 640, las pantallas del cuaderno | **con la reunión abierta** (desde el S3) |
-//! | `banda` | ancho de pantalla × 88 (asa → 200), bajo la barra de menús o pegada abajo (sprint 004) | **sí, siempre** |
+//! | `banda` | ancho de pantalla × 88 (asa → 200), bajo la barra de menús o pegada abajo (sprint 004); arriba, a la altura que elijas (sprint 011) | **sí, siempre** |
 //! | `relleno` | la misma geometría, SIN contenido, justo debajo de la banda | no, **jamás, a propósito** |
 //!
 //! **La regla que gobierna este módulo: la protección FIJA vive SOLO en `tauri.conf.json`** (la
@@ -211,12 +211,15 @@ pub const HAY_RELLENO: bool = cfg!(target_os = "macos");
 /// solo llamador (hallazgo M4). Volver a llamarla con la banda en pantalla habría sido un error,
 /// porque `build()` no admite una etiqueta repetida, así que la reposición se mira **ventana por
 /// ventana**: se abre la que falte y se deja en paz la que esté.
-pub fn abrir_banda<R: Runtime>(app: &AppHandle<R>, borde: Borde, alto: u32) -> Result<(), String> {
+///
+/// Desde el sprint 011 abre **a la altura que elegiste** (`desplazamiento`, solo arriba): una banda que vuelve tras el
+/// «×» o tras el corte vuelve donde la dejaste, no pegada arriba.
+pub fn abrir_banda<R: Runtime>(app: &AppHandle<R>, borde: Borde, alto: u32, desplazamiento: u32) -> Result<(), String> {
     exigir_la_version_de_windows()?;
     let ventanas = app.config().app.windows.clone();
     invariante_de_proteccion(&proteccion_declarada(&ventanas))?;
 
-    let f = franja(app, borde, alto)?;
+    let f = franja(app, borde, alto, desplazamiento)?;
     let (ancho, x, y) = (f.ancho, f.x, f.y);
 
     for etiqueta in [RELLENO, BANDA] {
@@ -260,9 +263,12 @@ pub fn abrir_banda<R: Runtime>(app: &AppHandle<R>, borde: Borde, alto: u32) -> R
 /// Los dos se mueven en la misma llamada a propósito: si el relleno pudiera quedarse en 88 px
 /// mientras la banda crece a 200, la franja de arriba dejaría de estar cubierta y la captura vería
 /// lo que hay detrás — el mismo fallo que el relleno existe para evitar, por la puerta de al lado.
-pub fn ajustar_banda<R: Runtime>(app: &AppHandle<R>, borde: Borde, alto: u32) -> Result<(), String> {
+///
+/// Y desde el sprint 011, **a la altura que elegiste**: es también lo que hace el asa de posición mientras arrastras
+/// (`desplazamiento`, solo arriba; acotado con el alto nuevo, así que agrandar una banda bajada no la saca de la pantalla).
+pub fn ajustar_banda<R: Runtime>(app: &AppHandle<R>, borde: Borde, alto: u32, desplazamiento: u32) -> Result<(), String> {
     let alto = alto.clamp(ALTO_VOZ, ALTO_AMPLIADA);
-    let f = franja(app, borde, alto)?;
+    let f = franja(app, borde, alto, desplazamiento)?;
     let (ancho, x, y) = (f.ancho, f.x, f.y);
     for etiqueta in [RELLENO, BANDA] {
         let Some(v) = app.get_webview_window(etiqueta) else { continue };
@@ -280,8 +286,22 @@ pub fn ajustar_banda<R: Runtime>(app: &AppHandle<R>, borde: Borde, alto: u32) ->
 /// la Accessibility API: los dos lados usan el mismo sin conversión de por medio. Una conversión
 /// de más entre estos dos puntos valdría 2× en una pantalla Retina, y 2× de 88 px es media banda
 /// — el tipo de error que se ve como «el acople recorta de más» y se busca en el sitio equivocado.
-pub fn franja<R: Runtime>(app: &AppHandle<R>, borde: Borde, alto: u32) -> Result<crate::acople::Marco, String> {
-    Ok(geometria::franja(borde, &monitor_principal(app)?, alto))
+///
+/// **Con el desplazamiento** (sprint 011): la franja que el acople mira es la de la banda donde está, así que la reunión
+/// baja hasta el borde inferior de la banda esté a la altura que esté (`acople::decidir_arriba` usa `franja.fondo()`).
+pub fn franja<R: Runtime>(
+    app: &AppHandle<R>,
+    borde: Borde,
+    alto: u32,
+    desplazamiento: u32,
+) -> Result<crate::acople::Marco, String> {
+    Ok(geometria::franja_desplazada(borde, &monitor_principal(app)?, alto, desplazamiento))
+}
+
+/// El desplazamiento que cabe en el monitor principal con este alto: lo que se guarda al soltar el asa de posición, para
+/// que las preferencias digan la altura de verdad y no la que pidió un arrastre que se pasó.
+pub fn desplazamiento_acotado<R: Runtime>(app: &AppHandle<R>, alto: u32, desplazamiento: u32) -> Result<u32, String> {
+    Ok(geometria::desplazamiento_acotado(&monitor_principal(app)?, alto, desplazamiento))
 }
 
 /// Cuánto mide la barra de menús del monitor principal: lo que el relleno sube el fondo con la banda

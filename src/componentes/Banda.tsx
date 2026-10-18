@@ -209,7 +209,7 @@ export function Banda({
   // Fuera de Tauri, la muestra de la sala son los mismos turnos, todos de la sala: la app no sabe quién habló.
   const oidos = useTurnos();
   const turnos = deLaMaqueta && presencial ? oidos.map((x) => ({ ...x, pista: "sala" as const })) : oidos;
-  const { borde } = useFranja({ borde: bordeDeMuestra, barra: 0, avisoVisto: true });
+  const { borde } = useFranja({ borde: bordeDeMuestra, barra: 0, avisoVisto: true, desplazamiento: 0, bandaAbierta: true });
   const asa = useAsa(borde);
   const voz = useVoz();
   // **Una tecla que el sistema no dejó registrar se dice en la banda, no solo en Honestidad** (sprint 008, M10 del S7):

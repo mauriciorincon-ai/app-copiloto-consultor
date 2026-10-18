@@ -104,7 +104,7 @@ export function Sesion({
    * **La banda, arriba o abajo** (sprint 004). Fuera de Tauri, la de `sesion.html` · sprint 4: arriba,
    * y el aviso de la primera vez solo en «la primera vez» (`?estado=aviso`).
    */
-  const franja = useFranja({ borde: "arriba", barra: 0, avisoVisto: pedido !== "aviso" });
+  const franja = useFranja({ borde: "arriba", barra: 0, avisoVisto: pedido !== "aviso", desplazamiento: 0, bandaAbierta: true });
   const [avisoCerrado, setAvisoCerrado] = useState(false);
   const verAviso = franja.borde === "arriba" && !franja.avisoVisto && !avisoCerrado;
 

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-cerrar-la-banda"
+description = "Enables the cerrar_la_banda command without any pre-configured scope."
+commands.allow = ["cerrar_la_banda"]
+
+[[permission]]
+identifier = "deny-cerrar-la-banda"
+description = "Denies the cerrar_la_banda command without any pre-configured scope."
+commands.deny = ["cerrar_la_banda"]

@@ -49,7 +49,7 @@ export function desplazamientoDelFondo(borde: Borde, barra: number, alto: number
 }
 
 /** Fuera de Tauri, la franja de abajo: la del arnés de capturas desde el S1. */
-const FUERA: LaFranja = { borde: "abajo", barra: 0, avisoVisto: true };
+const FUERA: LaFranja = { borde: "abajo", barra: 0, avisoVisto: true, desplazamiento: 0, bandaAbierta: true };
 
 export function Relleno() {
   const fondo = useFondoDeEscritorio();
