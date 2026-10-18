@@ -115,7 +115,7 @@ Mira los programas de **este PC** contra un catálogo con fuente y fecha por fil
 
 ## Lo que Windows no hace por ahora
 
-- **La puerta para Claude Code** (operar la app desde un comando local) **no está en Windows por ahora**; Honestidad lo dice. La pantalla IA no la ofrece.
+- **`ghost.exe` no viaja en el instalador.** La puerta para Claude Code ya está en Windows (IA → Puerta local), pero el comando `ghost` se construye desde el código: `cargo build --bin ghost`.
 - **La invisibilidad en Teams, Zoom y Meet está sin verificar**: la promesa es graduada por plataforma, y solo vale lo que tu corrida en vivo verificó.
 - **Windows anterior a la 2004** no puede ocultar la banda: la app no abre.
 
@@ -152,7 +152,7 @@ Cada fila dice qué estado tiene en Windows y qué clave de «Hoy en Windows» l
 | 25  | Efímero verificable                                            | sin clave                                                      | hecho sin verificar | El barrido y las pruebas corren en la integración continua; la corrida de una sesión completa en tu PC es del gate |
 | 26  | Bandera de jurisdicción, cláusula del encargo y chequeo de NDA | sin clave                                                      | hecho sin verificar | Pantalla Sesión; la recorre un test, falta tu uso real                                                             |
 | 27  | Medida desde el primer día                                     | sin clave                                                      | hecho sin verificar | Kit sintético en la integración continua; la cifra de tu PC la mide Honestidad                                     |
-| 28  | Puerta local para Claude Code                                  | `puerta-local`                                                 | fuera               | No está en Windows por ahora (ADR 022)                                                                             |
+| 28  | Puerta local para Claude Code                                  | `puerta-local`                                                 | hecho sin verificar | Named pipe solo de tu usuario y llave en el Administrador de credenciales; falta usarla con tu agente              |
 | 29  | Modo transparente                                              | sin clave                                                      | fuera               | No existe todavía en ninguna plataforma                                                                            |
 | 30  | Radar de captura                                               | `radar`                                                        | hecho sin verificar | Catálogo de Windows con fuente por fila; falta qué tiene instalado tu PC                                           |
 

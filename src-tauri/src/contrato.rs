@@ -935,6 +935,18 @@ pub fn muestras() -> Vec<Muestra> {
             bandera: Some(crate::jurisdiccion::bandera(Some("Colombia"))),
             nda: crate::jurisdiccion::Nda::SinRevisar,
             clausula: crate::jurisdiccion::clausula().clone(),
+            transparente: false,
+            aviso: crate::jurisdiccion::aviso_transparente(),
+        }),
+        // El modo transparente encendido para el cliente elegido (sprint 012, ADR 024): Sesión enseña el aviso y el botón.
+        m("VISTA_DEL_CLIENTE_TRANSPARENTE", "VistaDelCliente", "./jurisdiccion", &crate::jurisdiccion::VistaDelCliente {
+            clientes: vec!["Páramo Azul".into(), "Sur del Valle".into()],
+            elegido: Some("Páramo Azul".into()),
+            bandera: Some(crate::jurisdiccion::bandera(Some("Colombia"))),
+            nda: crate::jurisdiccion::Nda::NoLoProhibe,
+            clausula: crate::jurisdiccion::clausula().clone(),
+            transparente: true,
+            aviso: crate::jurisdiccion::aviso_transparente(),
         }),
         m("VISTA_DEL_CLIENTE_SIN_ELEGIR", "VistaDelCliente", "./jurisdiccion", &crate::jurisdiccion::VistaDelCliente {
             clientes: vec!["Páramo Azul".into(), "Sur del Valle".into()],
@@ -942,6 +954,8 @@ pub fn muestras() -> Vec<Muestra> {
             bandera: None,
             nda: crate::jurisdiccion::Nda::SinRevisar,
             clausula: crate::jurisdiccion::clausula().clone(),
+            transparente: false,
+            aviso: crate::jurisdiccion::aviso_transparente(),
         }),
         m("BANDERA_CONOCIDA", "LaBandera", "./jurisdiccion", &crate::jurisdiccion::bandera(Some("Colombia"))),
         m("BANDERA_CON_PENDIENTE", "LaBandera", "./jurisdiccion", &crate::jurisdiccion::bandera(Some("California"))),

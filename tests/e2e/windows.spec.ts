@@ -35,9 +35,10 @@ test("en Windows, Honestidad enseña «Hoy en Windows» con sus dos grupos y la 
   await expect(page.getByRole("heading", { name: "Todavía no" })).toHaveCount(
     0,
   );
+  // Sprint 012: la puerta local también está; ya no queda el grupo «No en Windows por ahora».
   await expect(
     page.getByRole("heading", { name: "No en Windows por ahora" }),
-  ).toBeVisible();
+  ).toHaveCount(0);
   // La banda sin verificar se dice con su frase, no solo con un color. Desde el sprint 007 lo dicen dos filas: la
   // banda protegida y la videollamada, porque las dos dependen de lo que el usuario compruebe en su PC.
   await expect(

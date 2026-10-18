@@ -350,18 +350,11 @@ describe("el arnés de fidelidad entero, en Windows, no habla del Mac", () => {
         : [];
 
   /**
-   * Lo que el Mac dice y Windows de verdad no pinta nunca, con su motivo: **solo la puerta local** (ADR 018 y ADR 022: «no
-   * en Windows por ahora»). Todo lo demás que nombraba el Mac se reescribió en `windows-cambios.ts`; declarar una cadena
-   * «muerta» sin motivo es lo que este gate persigue. La puerta no se pinta porque la pantalla IA no la ofrece en Windows,
-   * y eso lo prueba el test de abajo, no la fe.
+   * Lo que el Mac dice y Windows de verdad no pinta nunca, con su motivo. Hasta el sprint 011 era la puerta local; desde
+   * el S12 Windows la ofrece, y sus frases del Llavero y del socket tienen su versión de Windows en `windows-cambios.ts`.
+   * Hoy no queda nada declarado: declarar una cadena «muerta» sin motivo es lo que este gate persigue.
    */
-  const SOLO_DEL_MAC: { ruta: RegExp; motivo: string }[] = [
-    {
-      ruta: /^(es|en)\.puerta\./,
-      motivo:
-        "La puerta local para Claude Code no existe en Windows (ADR 022): la pantalla IA no la ofrece allí.",
-    },
-  ];
+  const SOLO_DEL_MAC: { ruta: RegExp; motivo: string }[] = [];
 
   for (const idioma of ["es", "en"] as const) {
     it(`el diccionario de Windows entero, sin una cadena del Mac · ${idioma}`, () => {
@@ -379,23 +372,28 @@ describe("el arnés de fidelidad entero, en Windows, no habla del Mac", () => {
     });
   }
 
-  it("la puerta local no se ofrece en Windows —ni el botón ni la vista por URL— y en macOS sí", () => {
+  it("la puerta local se ofrece en Windows —el botón y la vista— sin nombrar el Mac, y en macOS sigue", () => {
     for (const idioma of ["es", "en"] as const) {
       const boton = idioma === "es" ? /Puerta local/ : /Local door/;
       const w = pinta("?pantalla=ia&plataforma=windows", true, idioma);
       expect(
         loQueSeLee(w.container),
         `el botón de la puerta en Windows · ${idioma}`,
-      ).not.toMatch(boton);
+      ).toMatch(boton);
       const url = pinta(
         "?pantalla=ia&vista=puerta&plataforma=windows",
         true,
         idioma,
       );
+      const vista = loQueSeLee(url.container);
       expect(
-        loQueSeLee(url.container),
-        `la vista de la puerta por URL en Windows · ${idioma}`,
-      ).not.toMatch(/Llavero|Keychain|\bMac\b/);
+        vista,
+        `la vista de la puerta en Windows nombra el Mac · ${idioma}`,
+      ).not.toMatch(/Llavero|Keychain|\bMac\b|macOS/);
+      expect(
+        vista,
+        `la vista de la puerta en Windows no dice dónde vive la llave · ${idioma}`,
+      ).toMatch(idioma === "es" ? /Administrador de credenciales/ : /Credential Manager/);
       const mac = pinta("?pantalla=ia", false, idioma);
       expect(
         loQueSeLee(mac.container),

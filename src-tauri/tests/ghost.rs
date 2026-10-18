@@ -75,7 +75,7 @@ fn un_kit_que_no_existe_falla_sin_llegar_a_la_puerta() {
 #[test]
 fn puerta_antes_que_el_llavero() {
     let codigo = include_str!("../src/bin/ghost.rs");
-    let puerta = codigo.find("if !ruta.exists()").expect("ghost ya no mira el socket");
+    let puerta = codigo.find("if !socket::hay_puerta(&ruta)").expect("ghost ya no mira la puerta");
     let llavero = codigo.find("llavero::leer(").expect("ghost ya no lee el Llavero");
     assert!(puerta < llavero, "ghost lee el Llavero antes de mirar si la puerta está abierta");
 }

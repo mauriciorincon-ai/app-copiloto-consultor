@@ -19,7 +19,8 @@ pub enum Sistema {
 }
 
 /// Si una función está en Windows. Desde el sprint 008 («Windows completo») no queda ninguna «todavía no»: o está,
-/// con lo que diga su frase, o no está planeada.
+/// con lo que diga su frase, o no está planeada. Desde el sprint 012 están las 15; `NoPorAhora` queda para la que un
+/// día no esté, y Honestidad sigue sabiendo pintarla.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Cuando {
@@ -53,7 +54,8 @@ pub const EN_WINDOWS: [Funcion; 15] = [
     Funcion { clave: "atajos", cuando: Cuando::Si },
     Funcion { clave: "borrado-con-la-app-cerrada", cuando: Cuando::Si },
     Funcion { clave: "desbloqueo", cuando: Cuando::Si },
-    Funcion { clave: "puerta-local", cuando: Cuando::NoPorAhora },
+    // Sprint 012 (ADR 022 enmienda 4): un named pipe solo del usuario, con la llave en el Administrador de credenciales.
+    Funcion { clave: "puerta-local", cuando: Cuando::Si },
 ];
 
 /// Lo que la transcripción sabe de este PC (solo Windows).
@@ -186,17 +188,17 @@ mod pruebas {
     }
 
     /// En macOS no cruza ninguna lista de Windows ni nada de whisper; en Windows, las 15 y la transcripción. Desde
-    /// el sprint 008, 14 están y una (la puerta local) no está planeada.
+    /// el sprint 012 están las 15: la puerta local era la única «no por ahora».
     #[test]
     fn cada_sistema_cruza_lo_suyo() {
         let mac = Plataforma::de(Sistema::Macos, None);
         assert!(mac.funciones.is_empty());
         let win = Plataforma::de(Sistema::Windows, Some(la_transcripcion()));
         assert_eq!(win.funciones.len(), 15);
-        assert_eq!(win.funciones.iter().filter(|f| f.cuando == Cuando::Si).count(), 14);
-        assert_eq!(
-            win.funciones.iter().filter(|f| f.cuando == Cuando::NoPorAhora).map(|f| f.clave).collect::<Vec<_>>(),
-            vec!["puerta-local"]
+        assert_eq!(win.funciones.iter().filter(|f| f.cuando == Cuando::Si).count(), 15);
+        assert!(
+            win.funciones.iter().all(|f| f.cuando != Cuando::NoPorAhora),
+            "queda una función «no en Windows por ahora»"
         );
         assert_eq!(win.transcripcion.unwrap().techo_ms, 4_000);
         let aqui = de_este_equipo();

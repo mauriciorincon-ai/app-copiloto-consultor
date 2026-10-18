@@ -190,7 +190,8 @@ const ES: TextosDeWindows = {
     },
     "puerta-local": {
       nombre: "La puerta para Claude Code",
-      detalle: "no en Windows por ahora",
+      detalle:
+        "sí: un named pipe solo de tu usuario, con la llave en el Administrador de credenciales; se cierra sola en reunión o ensayo",
     },
   },
   atajoOcupado: (teclas) =>
@@ -348,7 +349,8 @@ const EN: TextosDeWindows = {
     },
     "puerta-local": {
       nombre: "The door for Claude Code",
-      detalle: "not on Windows for now",
+      detalle:
+        "yes: a named pipe only your user can open, with the key in Credential Manager; it closes itself in a meeting or rehearsal",
     },
   },
   atajoOcupado: (teclas) =>

@@ -1085,6 +1085,7 @@ export const VISTA_DEL_CUADERNO: VistaDelCuaderno = {
       "bytesFijadas": 64,
       "bytesNota": 84,
       "bytesTurnos": 0,
+      "consentimientos": 0,
       "fijadas": 1,
       "parrafos": 2,
       "propuestas": 0,
@@ -1134,6 +1135,7 @@ export const VISTA_CON_PROPUESTAS: VistaDelCuaderno = {
       "bytesFijadas": 0,
       "bytesNota": 23,
       "bytesTurnos": 0,
+      "consentimientos": 0,
       "fijadas": 0,
       "parrafos": 1,
       "propuestas": 0,
@@ -1174,6 +1176,7 @@ export const CUADERNO_PRESENCIAL: VistaDelCuaderno = {
       "bytesFijadas": 0,
       "bytesNota": 30,
       "bytesTurnos": 0,
+      "consentimientos": 0,
       "fijadas": 0,
       "parrafos": 1,
       "propuestas": 0,
@@ -1204,6 +1207,7 @@ export const CUADERNO_SIN_PROTEGER: VistaDelCuaderno = {
       "bytesFijadas": 0,
       "bytesNota": 23,
       "bytesTurnos": 0,
+      "consentimientos": 0,
       "fijadas": 0,
       "parrafos": 1,
       "propuestas": 0,
@@ -1313,6 +1317,10 @@ export const SIN_BANDEJA_Y_LA_TAREA_NO_CORRIO: EstadoDeLaBandeja = {
   };
 
 export const VISTA_DEL_CLIENTE: VistaDelCliente = {
+    "aviso": {
+      "en": "Before we start, a quick note: I use a tool on my own computer that listens to this meeting to bring up my own documents. It does not record the audio or keep what you say: it lives in memory and is deleted when we finish. Is that all right with you?",
+      "es": "Antes de empezar, te cuento: uso una herramienta en mi propio equipo que escucha esta reunión para traerme mi propia documentación. No graba el audio ni guarda lo que dices: vive en memoria y se borra al terminar. ¿Te parece bien?"
+    },
     "bandera": {
       "bandera": {
         "consultado": "2026-09-17",
@@ -1349,10 +1357,60 @@ export const VISTA_DEL_CLIENTE: VistaDelCliente = {
       "Sur del Valle"
     ],
     "elegido": "Páramo Azul",
-    "nda": "sin-revisar"
+    "nda": "sin-revisar",
+    "transparente": false
+  };
+
+export const VISTA_DEL_CLIENTE_TRANSPARENTE: VistaDelCliente = {
+    "aviso": {
+      "en": "Before we start, a quick note: I use a tool on my own computer that listens to this meeting to bring up my own documents. It does not record the audio or keep what you say: it lives in memory and is deleted when we finish. Is that all right with you?",
+      "es": "Antes de empezar, te cuento: uso una herramienta en mi propio equipo que escucha esta reunión para traerme mi propia documentación. No graba el audio ni guarda lo que dices: vive en memoria y se borra al terminar. ¿Te parece bien?"
+    },
+    "bandera": {
+      "bandera": {
+        "consultado": "2026-09-17",
+        "implica": {
+          "en": "Handle it at the engagement level: contract clause + NDA check.",
+          "es": "Resuélvelo en el encargo: cláusula del contrato + chequeo de NDA."
+        },
+        "nombre": {
+          "en": "Colombia",
+          "es": "Colombia"
+        },
+        "normas": [
+          "CSJ AP1465-2018",
+          "Ley 1581 art. 3"
+        ],
+        "pendiente": {
+          "en": "CSJ AP1465-2018 was read in a secondary source (G-1)",
+          "es": "la CSJ AP1465-2018 se leyó en una fuente secundaria (G-1)"
+        },
+        "regla": {
+          "en": "Listening as a participant is lawful; ephemeral transcription is probably “processing”.",
+          "es": "Escuchar como participante es lícito; la transcripción efímera probablemente es «tratamiento»."
+        },
+        "riesgo": "bajo-medio"
+      },
+      "que": "conocida"
+    },
+    "clausula": {
+      "en": "Local AI assistance. During meetings under this engagement, the Consultant may use, on their own computer, an artificial intelligence assistant that listens to and transcribes the conversation only in that computer’s memory, to search the Consultant’s own documents. The assistant does not record audio or keep transcripts or screenshots, does not identify anyone by their voice and does not infer emotions. By default nothing leaves the computer; if the Consultant turns on an external provider, only text fragments are sent to it, in which the assistant replaces the names, emails, phone numbers and numbers it recognises; the provider does not train on them and may keep them for up to 30 days. Kept, encrypted and under the Consultant’s responsibility, are the Consultant’s notes, what the Consultant said if the Consultant so chooses, and the one-line suggestions about the meeting that the Consultant accepts; those not decided on delete themselves within 24 hours at most. If the Client prefers it not be used in a meeting, saying so is enough.",
+      "es": "Asistencia de IA local. Durante las reuniones de este encargo, el Consultor puede usar en su propio equipo un asistente de inteligencia artificial que escucha y transcribe la conversación solo en la memoria del equipo, para buscar en sus propios documentos. El asistente no graba audio ni guarda transcripciones o capturas de pantalla, no identifica a nadie por su voz y no infiere emociones. Por defecto nada sale del equipo; si el Consultor activa un proveedor externo, solo le envía fragmentos de texto en los que el asistente reemplaza los nombres, correos, teléfonos y números que reconoce; el proveedor no entrena con ellos y puede conservarlos hasta 30 días. Se conservan, cifradas y bajo responsabilidad del Consultor, sus notas, lo que él mismo dijo si así lo elige y las propuestas de una línea sobre la reunión que él acepte; las que no decide se borran solas en 24 horas como mucho. Si el Cliente prefiere que no se use en una reunión, basta con decirlo."
+    },
+    "clientes": [
+      "Páramo Azul",
+      "Sur del Valle"
+    ],
+    "elegido": "Páramo Azul",
+    "nda": "no-lo-prohibe",
+    "transparente": true
   };
 
 export const VISTA_DEL_CLIENTE_SIN_ELEGIR: VistaDelCliente = {
+    "aviso": {
+      "en": "Before we start, a quick note: I use a tool on my own computer that listens to this meeting to bring up my own documents. It does not record the audio or keep what you say: it lives in memory and is deleted when we finish. Is that all right with you?",
+      "es": "Antes de empezar, te cuento: uso una herramienta en mi propio equipo que escucha esta reunión para traerme mi propia documentación. No graba el audio ni guarda lo que dices: vive en memoria y se borra al terminar. ¿Te parece bien?"
+    },
     "bandera": null,
     "clausula": {
       "en": "Local AI assistance. During meetings under this engagement, the Consultant may use, on their own computer, an artificial intelligence assistant that listens to and transcribes the conversation only in that computer’s memory, to search the Consultant’s own documents. The assistant does not record audio or keep transcripts or screenshots, does not identify anyone by their voice and does not infer emotions. By default nothing leaves the computer; if the Consultant turns on an external provider, only text fragments are sent to it, in which the assistant replaces the names, emails, phone numbers and numbers it recognises; the provider does not train on them and may keep them for up to 30 days. Kept, encrypted and under the Consultant’s responsibility, are the Consultant’s notes, what the Consultant said if the Consultant so chooses, and the one-line suggestions about the meeting that the Consultant accepts; those not decided on delete themselves within 24 hours at most. If the Client prefers it not be used in a meeting, saying so is enough.",
@@ -1363,7 +1421,8 @@ export const VISTA_DEL_CLIENTE_SIN_ELEGIR: VistaDelCliente = {
       "Sur del Valle"
     ],
     "elegido": null,
-    "nda": "sin-revisar"
+    "nda": "sin-revisar",
+    "transparente": false
   };
 
 export const BANDERA_CONOCIDA: LaBandera = {
@@ -1748,7 +1807,7 @@ export const PLATAFORMA_WINDOWS: Plataforma = {
       },
       {
         "clave": "puerta-local",
-        "cuando": "no-por-ahora"
+        "cuando": "si"
       }
     ],
     "sistema": "windows",
@@ -1896,7 +1955,7 @@ export const PLATAFORMA_WINDOWS_SIN_MODELO: Plataforma = {
       },
       {
         "clave": "puerta-local",
-        "cuando": "no-por-ahora"
+        "cuando": "si"
       }
     ],
     "sistema": "windows",

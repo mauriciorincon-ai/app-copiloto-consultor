@@ -943,7 +943,7 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
 | `atajos` | sí: Alt+Mayús y una tecla; ninguno con Ctrl+Alt, que en muchos teclados es AltGr |
 | `borrado-con-la-app-cerrada` | sí: el Programador de tareas, al minuto de cada vencimiento |
 | `desbloqueo` | sí: Windows Hello, una vez por sesión de la app |
-| `puerta-local` | no en Windows por ahora: la puerta para Claude Code |
+| `puerta-local` | sí: la puerta para Claude Code, un named pipe solo de tu usuario, con la llave en el Administrador de credenciales (sprint 012) |
 
 ### Instalar en una Surface o un equipo ARM · Sprint 009
 

@@ -238,6 +238,7 @@ impl Carpeta {
                 fijadas: Vec::new(),
                 mis_turnos: Vec::new(),
                 propuestas: Vec::new(),
+                consentimientos: Vec::new(),
             };
             (c, vence_si_nace)
         };

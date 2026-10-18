@@ -115,7 +115,7 @@ It looks at the programs on **this PC** against a catalogue with a source and a 
 
 ## What Windows does not do for now
 
-- **The door for Claude Code** (operating the app from a local command) **is not on Windows for now**; Honesty says so. The AI screen does not offer it.
+- **`ghost.exe` does not ship in the installer.** The door for Claude Code is on Windows now (AI → Local door), but the `ghost` command is built from the code: `cargo build --bin ghost`.
 - **Invisibility in Teams, Zoom and Meet is unverified**: the promise is graded by platform, and only what your live run verified counts.
 - **Windows older than 2004** cannot hide the band: the app does not open.
 
@@ -152,7 +152,7 @@ Each row says what state it has on Windows and which “On Windows today” key 
 | 25  | Verifiable ephemerality                                                  | no key                                                         | done, unverified | The sweep and the tests run in the continuous integration; a full session on your PC belongs to the gate       |
 | 26  | Jurisdiction flag, engagement clause and NDA check                       | no key                                                         | done, unverified | Session screen; a test walks it, your real use is missing                                                      |
 | 27  | Measured from day one                                                    | no key                                                         | done, unverified | Synthetic kit in the continuous integration; Honesty measures your PC’s figure                                 |
-| 28  | Local door for Claude Code                                               | `puerta-local`                                                 | out              | Not on Windows for now (ADR 022)                                                                               |
+| 28  | Local door for Claude Code                                               | `puerta-local`                                                 | done, unverified | Named pipe only your user opens, key in Credential Manager; using it with your agent is pending                |
 | 29  | Transparent mode                                                         | no key                                                         | out              | It does not exist yet on any platform                                                                          |
 | 30  | Capture radar                                                            | `radar`                                                        | done, unverified | Windows catalogue with a source per row; what your PC has installed is missing                                 |
 

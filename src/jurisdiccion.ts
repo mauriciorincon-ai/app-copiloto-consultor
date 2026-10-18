@@ -50,6 +50,10 @@ export type VistaDelCliente = {
   bandera: LaBandera | null;
   nda: Nda;
   clausula: Bilingue;
+  /** El modo transparente de este cliente (sprint 012, ADR 024): se guarda por cliente, como la NDA. */
+  transparente: boolean;
+  /** El aviso que le dices al cliente, en los dos idiomas. Fijo, sin modelo. */
+  aviso: Bilingue;
 };
 
 /**
@@ -186,3 +190,29 @@ export function empezarSoloNotas(): Promise<boolean> {
 export function empezarPresencial(alOido: boolean): Promise<boolean> {
   return llamar("empezar_presencial", { alOido });
 }
+
+/**
+ * **EL MODO TRANSPARENTE** (sprint 012, ADR 024). Las cuatro puertas de Rust: el interruptor del cliente elegido, la
+ * constancia de que consintió (va a las notas cifradas de la reunión), el aviso al oído con el modo solo audio, y la
+ * marca de la banda, que solo sabe si está encendido.
+ */
+export function fijarModoTransparente(
+  encendido: boolean,
+): Promise<VistaDelCliente | null> {
+  return preguntar<VistaDelCliente>("fijar_modo_transparente", { encendido });
+}
+
+export function elClienteConsintio(): Promise<boolean | null> {
+  return preguntar<boolean>("el_cliente_consintio");
+}
+
+export function decirElAviso(): Promise<boolean | null> {
+  return preguntar<boolean>("decir_el_aviso");
+}
+
+export function modoTransparente(): Promise<boolean | null> {
+  return preguntar<boolean>("modo_transparente");
+}
+
+/** El evento con el que Rust avisa a la banda de que el modo transparente cambió (una señal sin dato). */
+export const EVENTO_TRANSPARENTE = "transparente";

@@ -26,10 +26,10 @@ describe("lo que la app hace en este equipo", () => {
     ]);
     const g = porCuando(PLATAFORMA_WINDOWS);
     // Sprint 008, «Windows completo»: el acople, la sugerencia, el radar, el borrado con la app cerrada y el desbloqueo
-    // pasan a «sí». Catorce están; la puerta local no está planeada.
-    expect(g.si).toEqual(CLAVES_DE_WINDOWS.filter((c) => c !== "puerta-local"));
-    expect(g.si).toHaveLength(14);
-    expect(g["no-por-ahora"]).toEqual(["puerta-local"]);
+    // pasan a «sí». Sprint 012: también la puerta local; están las 15.
+    expect(g.si).toEqual([...CLAVES_DE_WINDOWS]);
+    expect(g.si).toHaveLength(15);
+    expect(g["no-por-ahora"]).toEqual([]);
     expect(Object.keys(g)).toEqual(["si", "no-por-ahora"]);
   });
 

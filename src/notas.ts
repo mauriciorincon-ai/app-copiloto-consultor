@@ -95,6 +95,8 @@ export type ResumenDelCuaderno = {
   bytesAcuerdos: number;
   bytesFijadas: number;
   bytesTurnos: number;
+  /** Las constancias del modo transparente de esta reunión (sprint 012, ADR 024). */
+  consentimientos: number;
 };
 
 /** La línea de «al cerrar»: «2026-09-20 · 47 min → reunion-2026-09-20-1402.ghost». */
@@ -210,6 +212,7 @@ export function useMuestraDelCuaderno(vista: VistaDeNotas): VistaDelCuaderno {
       bytesAcuerdos: 1_024,
       bytesFijadas: 1_024,
       bytesTurnos: 0,
+      consentimientos: 0,
     },
     conservarMisTurnos: false,
     abierta: durante || cerrando,

@@ -28,6 +28,19 @@ const SIN_MODELO_EN =
   "Windows has no system model: the API writes the suggestion, if you turn it on with your key.";
 
 const ES: Cambios = {
+  // La puerta local en Windows (sprint 012, ADR 022 enmienda 4): un named pipe y la llave en el Administrador de
+  // credenciales, no un socket y el Llavero.
+  puerta: {
+    subResto:
+      "para que Claude Code opere la app desde este mismo PC, con una llave en el Administrador de credenciales.",
+    daselo:
+      "Dáselo a Claude Code. Cada vez que abres la puerta, la app deja una llave nueva en el Administrador de credenciales y ghost la lee de ahí; al cerrarla, la borra.",
+    noAbre: {
+      llavero: "El Administrador de credenciales no guardó la llave.",
+      socket: "Windows no dejó crear la puerta: otro programa ya usa ese nombre.",
+    },
+    redPor: "solo escucha a este PC; el contador sigue igual",
+  },
   banda: {
     // La banda no promete invisibilidad donde nadie la verificó (regla dura 6).
     sinVerificarCuando:
@@ -164,6 +177,16 @@ const ES: Cambios = {
 };
 
 const EN: Cambios = {
+  puerta: {
+    subResto: "so Claude Code can operate the app from this same PC, with a key in Credential Manager.",
+    daselo:
+      "Give it to Claude Code. Each time you open the door, the app leaves a new key in Credential Manager and ghost reads it from there; closing the door deletes it.",
+    noAbre: {
+      llavero: "Credential Manager did not store the key.",
+      socket: "Windows did not let the door be created: another program already uses that name.",
+    },
+    redPor: "it listens only to this PC; the counter stays",
+  },
   banda: {
     sinVerificarCuando:
       "Not verified in Teams, Zoom or Meet · you verify it on your PC",

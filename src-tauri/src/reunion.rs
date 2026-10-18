@@ -662,6 +662,12 @@ pub fn guardar_propuesta<R: Runtime>(app: &AppHandle<R>, id: u32) -> bool {
     decidir_una(app, |c| c.guardar_propuesta(id))
 }
 
+/// **«El cliente consintió»** (sprint 012, ADR 024): la constancia entra en las notas cifradas de esta reunión. Sin
+/// reunión abierta, no: no hay notas donde dejarla.
+pub fn consentir<R: Runtime>(app: &AppHandle<R>, c: notas::Consentimiento) -> bool {
+    decidir_una(app, |cuaderno| cuaderno.consentir(c))
+}
+
 /// «No» en Notas: muere en ese momento.
 pub fn descartar_propuesta<R: Runtime>(app: &AppHandle<R>, id: u32) -> bool {
     decidir_una(app, |c| c.descartar_propuesta(id))

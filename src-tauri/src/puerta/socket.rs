@@ -9,12 +9,16 @@
 //! otra, mira cada [`VIGIA`](super::VIGIA) si empezó una reunión. Al cerrar la puerta el hilo lo ve en
 //! su siguiente vuelta y se va: no hay que despertarlo con una conexión falsa, ni queda un hilo colgado
 //! de un `accept` si alguien borró el socket por fuera.
+//!
+//! **En Windows (sprint 012, ADR 022 enmienda 2) la puerta es un named pipe** con la misma forma (`puerta/windows.rs`):
+//! DACL solo de tu usuario, sin clientes de otra máquina y una sola instancia que nadie puede ocupar antes. Todo lo de
+//! abajo —la política, el hilo que atiende y vigila, la respuesta— es el mismo código en los dos sistemas.
 
 use std::io::{BufRead, BufReader, Read, Write};
 #[cfg(unix)]
 use std::os::unix::net::{UnixListener, UnixStream};
-#[cfg(not(unix))]
-use sin_unix::{UnixListener, UnixStream};
+#[cfg(windows)]
+use tubo::{UnixListener, UnixStream};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -23,6 +27,14 @@ use super::{
     resolver, Cierre, Entrada, Llave, Motivo, NoAbre, Operaciones, Orden, Registro, Respuesta, Resultado, Token,
     VistaDeLaPuerta, ESPERA, IDENTIFICADOR, SOCKET, TOPE_DE_LINEA, VIGIA,
 };
+
+/// En Windows, el named pipe de la puerta, con la forma de los sockets de Unix (sprint 012).
+#[cfg(windows)]
+#[path = "windows.rs"]
+mod tubo;
+/// Para las pruebas de Windows: la DACL que tiene de verdad el pipe, y el SID que debe traer.
+#[cfg(windows)]
+pub use tubo::{dacl_de, sid_del_usuario};
 
 /// Lo más larga que macOS admite la ruta de un socket: `sun_path` mide 104 bytes, con el cero final.
 pub const RUTA_MAXIMA: usize = 103;
@@ -34,14 +46,54 @@ const PASO: Duration = Duration::from_millis(100);
 const TOPE_DE_RESPUESTA: u64 = 16 << 20;
 
 /// El socket, dentro de la carpeta de la app.
+#[cfg(unix)]
 pub fn ruta_en(carpeta_de_la_app: &Path) -> PathBuf {
     carpeta_de_la_app.join(SOCKET)
+}
+
+/// **El pipe, en Windows**: `\\.\pipe\com.aiapps.copiloto-consultor.puerta` para la carpeta de la app. El pipe no vive en
+/// el disco; la carpeta solo le da el nombre, y una carpeta de prueba le da uno propio (dos pruebas a la vez no chocan,
+/// ni chocan con la app abierta).
+#[cfg(windows)]
+pub fn ruta_en(carpeta_de_la_app: &Path) -> PathBuf {
+    let nombre = carpeta_de_la_app.file_name().and_then(|n| n.to_str()).unwrap_or(IDENTIFICADOR);
+    // El mismo nombre que el socket del Mac, sin la extensión: «puerta».
+    let base = SOCKET.trim_end_matches(".sock");
+    let tubo = if nombre == IDENTIFICADOR { format!("{IDENTIFICADOR}.{base}") } else { format!("{IDENTIFICADOR}.{base}.{nombre}") };
+    PathBuf::from(format!(r"\\.\pipe\{tubo}"))
 }
 
 /// La carpeta de la app a partir de la carpeta del usuario, como la calcula Tauri en macOS. Es la que
 /// usa `ghost`, que no tiene Tauri.
 pub fn carpeta_de_la_app(casa: &Path) -> PathBuf {
     casa.join("Library").join("Application Support").join(IDENTIFICADOR)
+}
+
+/// **Dónde busca `ghost` la puerta.** En el Mac, el socket en la carpeta de la app de `HOME`; en Windows, el pipe, que no
+/// depende de ninguna carpeta. `None` si en el Mac falta `HOME`.
+pub fn ruta_de_la_puerta() -> Option<PathBuf> {
+    #[cfg(unix)]
+    {
+        let casa = std::env::var_os("HOME")?;
+        Some(ruta_en(&carpeta_de_la_app(Path::new(&casa))))
+    }
+    #[cfg(windows)]
+    {
+        Some(ruta_en(Path::new(IDENTIFICADOR)))
+    }
+}
+
+/// **¿Está abierta la puerta?** Sin conectarse ni preguntarle nada al Llavero: en el Mac, si está el socket; en Windows,
+/// si existe el pipe (conectarse gastaría su única instancia).
+pub fn hay_puerta(ruta: &Path) -> bool {
+    #[cfg(unix)]
+    {
+        ruta.exists()
+    }
+    #[cfg(windows)]
+    {
+        tubo::existe(ruta)
+    }
 }
 
 /// **La puerta**, con su estado: cerrada o abierta (con su token y su época), por qué se cerró, por
@@ -206,6 +258,7 @@ impl Puerta {
 
 /// Lo que queda de una caída con la puerta abierta: el socket, y con él el token del Llavero. Se
 /// mira el socket primero, para no preguntarle nada al Llavero en el arranque normal.
+#[cfg(unix)]
 pub fn limpiar_lo_que_quedo(carpeta_de_la_app: &Path, llave: &dyn Llave) -> bool {
     let ruta = ruta_en(carpeta_de_la_app);
     if !ruta.exists() {
@@ -217,9 +270,23 @@ pub fn limpiar_lo_que_quedo(carpeta_de_la_app: &Path, llave: &dyn Llave) -> bool
     true
 }
 
+/// **En Windows, lo que queda de una caída es solo la llave**: el pipe muere con el proceso y no deja nada en el disco.
+/// No hay socket que delate la caída, así que el arranque borra la llave siempre: borrarla si no está no es un error, y
+/// Windows no pregunta nada al hacerlo. Devuelve `false`: no se sabe si quedaba algo.
+#[cfg(windows)]
+pub fn limpiar_lo_que_quedo(_carpeta_de_la_app: &Path, llave: &dyn Llave) -> bool {
+    llave.borrar();
+    false
+}
+
+#[cfg(unix)]
 fn quitar(ruta: &Path) {
     let _ = std::fs::remove_file(ruta); // verify-ephemeral:allow — ADR 018 §1: el socket se borra al cerrar la puerta
 }
+
+/// En Windows no hay nada que quitar: el pipe desaparece cuando el hilo de la puerta suelta su instancia.
+#[cfg(windows)]
+fn quitar(_ruta: &Path) {}
 
 #[cfg(unix)]
 fn carpeta_en_700(carpeta: &Path) -> bool {
@@ -227,9 +294,11 @@ fn carpeta_en_700(carpeta: &Path) -> bool {
     std::fs::metadata(carpeta).is_ok_and(|m| m.is_dir() && m.permissions().mode() & 0o777 == 0o700) // verify-ephemeral:allow — ADR 018 §1: la carpeta del socket, en 700, antes de crearlo
 }
 
-#[cfg(not(unix))]
+/// En Windows el pipe no vive en la carpeta: lo que en el Mac hace la carpeta en 700, aquí lo hace la DACL del pipe al
+/// nacer (`tubo::UnixListener::bind`).
+#[cfg(windows)]
 fn carpeta_en_700(_carpeta: &Path) -> bool {
-    false
+    true
 }
 
 #[cfg(unix)]
@@ -238,70 +307,10 @@ fn cerrar_permisos(ruta: &Path) -> std::io::Result<()> {
     std::fs::set_permissions(ruta, std::fs::Permissions::from_mode(0o600)) // verify-ephemeral:allow — ADR 018 §1: el socket, en 600
 }
 
-#[cfg(not(unix))]
+/// En Windows los permisos del pipe nacen con él: su DACL es solo la de tu usuario.
+#[cfg(windows)]
 fn cerrar_permisos(_ruta: &Path) -> std::io::Result<()> {
-    Err(sin_unix::no_hay())
-}
-
-/// **En Windows no hay puerta local** (ADR 022: «no en Windows» en el sprint 006). La puerta es un socket Unix en la
-/// carpeta privada de la app, y Windows no lo tiene en `std`. En vez de un `cfg` en cada línea de arriba, esto da la
-/// MISMA forma que los sockets de Unix y contesta siempre que no existe: abrir la puerta devuelve `NoAbre::Socket` (y
-/// antes ya lo para `carpeta_en_700`, que fuera de Unix es `false`), y `ghost` encuentra la puerta cerrada. Nada de
-/// esto toca la red: no hay socket que abrir.
-#[cfg(not(unix))]
-mod sin_unix {
-    use std::io;
-    use std::path::Path;
-    use std::time::Duration;
-
-    pub fn no_hay() -> io::Error {
-        io::Error::new(io::ErrorKind::Unsupported, "la puerta local no existe en Windows (ADR 022)")
-    }
-
-    pub struct UnixListener;
-    pub struct UnixStream;
-
-    impl UnixListener {
-        pub fn bind(_ruta: &Path) -> io::Result<UnixListener> {
-            Err(no_hay())
-        }
-        pub fn set_nonblocking(&self, _no: bool) -> io::Result<()> {
-            Err(no_hay())
-        }
-        pub fn accept(&self) -> io::Result<(UnixStream, ())> {
-            Err(no_hay())
-        }
-    }
-
-    impl UnixStream {
-        pub fn connect(_ruta: &Path) -> io::Result<UnixStream> {
-            Err(io::Error::new(io::ErrorKind::NotFound, "la puerta local no existe en Windows (ADR 022)"))
-        }
-        pub fn set_nonblocking(&self, _no: bool) -> io::Result<()> {
-            Err(no_hay())
-        }
-        pub fn set_read_timeout(&self, _t: Option<Duration>) -> io::Result<()> {
-            Err(no_hay())
-        }
-        pub fn set_write_timeout(&self, _t: Option<Duration>) -> io::Result<()> {
-            Err(no_hay())
-        }
-    }
-
-    impl io::Read for &UnixStream {
-        fn read(&mut self, _buf: &mut [u8]) -> io::Result<usize> {
-            Err(no_hay())
-        }
-    }
-
-    impl io::Write for UnixStream {
-        fn write(&mut self, _buf: &[u8]) -> io::Result<usize> {
-            Err(no_hay())
-        }
-        fn flush(&mut self) -> io::Result<()> {
-            Ok(())
-        }
-    }
+    Ok(())
 }
 
 /// El hilo de una apertura: atiende de una en una y, entre conexiones, vigila la reunión.

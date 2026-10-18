@@ -112,6 +112,14 @@ const DEUDA: Record<string, string> = {
   //
   // Sprint 011, fase 1: `LaFranja.desplazamiento` y `LaFranja.bandaAbierta` cruzaron antes que su pantalla; pagados en la
   // fase 2 (`LaAlturaDeLaBanda` en Sesión, y el asa de altura de la banda parte de `desplazamiento`): ya no hay DEUDA.
+
+  // ── Sprint 012, fase 1: el modo transparente cruzó antes que su pantalla; se paga en la fase 2 ──
+  "VistaDelCliente.transparente":
+    "el interruptor del modo transparente en Sesión (Este cliente) lo lee en la fase 2 del sprint 012",
+  "VistaDelCliente.aviso":
+    "el aviso que Sesión enseña con el modo encendido lo lee en la fase 2 del sprint 012",
+  "ResumenDelCuaderno.consentimientos":
+    "«Se va a guardar» y Honestidad cuentan las constancias en la fase 2 del sprint 012",
 };
 
 /** Cada `export type X = … { … }`, con las variantes de una unión incluidas. */
