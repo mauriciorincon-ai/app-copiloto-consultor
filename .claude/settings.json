@@ -4,12 +4,12 @@
   "hooks": {
     "PreToolUse": [
       {
-        "_comment": "Bloquear secrets ANTES de escribir: escanea el CONTENIDO que la herramienta va a escribir (tool_input.content / new_string, vía jq + gitleaks --pipe) y además lo staged. FALLA CERRADO si faltan gitleaks o jq (kit v1.37.0, planlang AU-S2-B12); KIT_SIN_GITLEAKS=1 lo salta a sabiendas. Prueba: tests/unit/hook-secretos.test.ts. Mensaje de esta app: los secretos van al Llavero en macOS y al Administrador de credenciales en Windows (regla 7); el instalador que nombra es brew o winget según $OSTYPE (sprint 009: es de bash, no depende del PATH)",
+        "_comment": "Bloquear secrets ANTES de escribir: escanea el CONTENIDO que la herramienta va a escribir (tool_input.content / new_string, vía jq + gitleaks --pipe) y además lo staged. FALLA CERRADO si faltan gitleaks o jq (kit v1.37.0, planlang AU-S2-B12); KIT_SIN_GITLEAKS=1 lo salta a sabiendas. Prueba: tests/unit/hook-secretos.test.ts. Mensaje de esta app: los secretos van al Llavero en macOS y al Administrador de credenciales en Windows (regla 7); el instalador que nombra es brew o winget según $OSTYPE (sprint 009: es de bash, no depende del PATH). Sprint 014: lee lo que se va a escribir con el read de bash y no con cat (cat viene del usr/bin de Git y falta si el PATH llega de PowerShell: el contenido no se escaneaba y la carnada pasaba sin aviso); si no le llega nada, falla cerrado",
         "matcher": "Write|Edit",
         "hooks": [
           {
             "type": "command",
-            "command": "case \"$OSTYPE\" in msys*|cygwin*) i='winget install --id Gitleaks.Gitleaks y winget install --id jqlang.jq'; s='al Administrador de credenciales de Windows';; *) i='brew install gitleaks jq'; s='al Llavero de macOS';; esac; if ! command -v gitleaks >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then if [ \"${KIT_SIN_GITLEAKS:-0}\" = \"1\" ]; then exit 0; fi; echo \"BLOQUEADO: falta gitleaks o jq y el hook no puede buscar secretos en lo que vas a escribir. Instalalos ($i), o KIT_SIN_GITLEAKS=1 a sabiendas.\" >&2; exit 2; fi; inp=$(cat); c=$(printf '%s' \"$inp\" | jq -r '.tool_input.content // .tool_input.new_string // empty' 2>/dev/null); if [ -n \"$c\" ]; then printf '%s' \"$c\" | gitleaks detect --pipe --no-banner --redact >/dev/null 2>&1; if [ $? -eq 1 ]; then echo \"SECRET DETECTADO en el contenido a escribir. Escritura bloqueada: los secretos van $s, nunca a un archivo del repo.\" >&2; exit 2; fi; fi; gitleaks protect --no-banner --redact --staged 2>/dev/null; if [ $? -eq 1 ]; then echo \"SECRET DETECTADO en lo staged. Escritura bloqueada: los secretos van $s, nunca a un archivo del repo.\" >&2; exit 2; fi; exit 0"
+            "command": "case \"$OSTYPE\" in msys*|cygwin*) i='winget install --id Gitleaks.Gitleaks y winget install --id jqlang.jq'; s='al Administrador de credenciales de Windows';; *) i='brew install gitleaks jq'; s='al Llavero de macOS';; esac; if ! command -v gitleaks >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then if [ \"${KIT_SIN_GITLEAKS:-0}\" = \"1\" ]; then exit 0; fi; echo \"BLOQUEADO: falta gitleaks o jq y el hook no puede buscar secretos en lo que vas a escribir. Instalalos ($i), o KIT_SIN_GITLEAKS=1 a sabiendas.\" >&2; exit 2; fi; IFS= read -r -d '' inp; if [ -z \"$inp\" ]; then echo \"BLOQUEADO: el hook no recibio lo que se va a escribir y no puede buscar secretos en el.\" >&2; exit 2; fi; c=$(printf '%s' \"$inp\" | jq -r '.tool_input.content // .tool_input.new_string // empty' 2>/dev/null); if [ -n \"$c\" ]; then printf '%s' \"$c\" | gitleaks detect --pipe --no-banner --redact >/dev/null 2>&1; if [ $? -eq 1 ]; then echo \"SECRET DETECTADO en el contenido a escribir. Escritura bloqueada: los secretos van $s, nunca a un archivo del repo.\" >&2; exit 2; fi; fi; gitleaks protect --no-banner --redact --staged 2>/dev/null; if [ $? -eq 1 ]; then echo \"SECRET DETECTADO en lo staged. Escritura bloqueada: los secretos van $s, nunca a un archivo del repo.\" >&2; exit 2; fi; exit 0"
           }
         ]
       },
@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "input=$(cat); if echo \"$input\" | grep -qE 'git push[^|]*( origin)? +(main|master)( |$|\\\")'; then echo 'BLOQUEADO: push directo a main prohibido. Trabaja en branch sprint-NNN/<tema> y abre PR.' >&2; exit 2; fi; exit 0"
+            "command": "IFS= read -r -d '' input; if echo \"$input\" | grep -qE 'git push[^|]*( origin)? +(main|master)( |$|\\\")'; then echo 'BLOQUEADO: push directo a main prohibido. Trabaja en branch sprint-NNN/<tema> y abre PR.' >&2; exit 2; fi; exit 0"
           }
         ]
       }

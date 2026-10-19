@@ -7,9 +7,9 @@
  * partida para que este archivo no la contenga).
  */
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, symlinkSync } from "node:fs";
+import { mkdtempSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { delimiter, dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const ajustes = JSON.parse(readFileSync(".claude/settings.json", "utf8")) as {
@@ -137,6 +137,61 @@ describe("hook PreToolUse de secretos (kit v1.37.0; origen planlang AU-S2-B12)",
     },
     // Lanza dos veces Git Bash con gitleaks y jq, de forma síncrona: con la suite entera en paralelo en una Surface pasa
     // de los 5 s por defecto de vitest (sprint 010: tardó 11 s y falló solo; suelto, pasa). Es margen, no un hook lento.
+    30_000,
+  );
+
+  /**
+   * Sprint 014 (hallazgo del cierre del S14): el hook leía lo que iba a escribir con `cat`, y `cat` no es de bash: viene del
+   * `usr/bin` de Git. Lanzado desde PowerShell, el PATH trae gitleaks y jq (los enlaces de winget) pero no `cat`; `inp=$(cat)`
+   * salía vacío, el contenido no se escaneaba y la carnada pasaba **sin avisar** (falla abierto). Ahora lee con el `read` de
+   * bash y, si no le llega nada, falla cerrado. El PATH de esta prueba trae gitleaks, jq y git (que `gitleaks protect --staged` necesita) —envueltos
+   * en un guion, para que `cat` no venga en su carpeta— y nada más.
+   */
+  it.runIf(hayHerramientas)(
+    "sin `cat` en el PATH (con gitleaks y jq) sigue bloqueando la carnada, y sin nada en stdin falla cerrado",
+    () => {
+      const dir = mkdtempSync(join(tmpdir(), "hook-sin-cat-"));
+      // En Windows, gitleaks (un ejecutable nativo) busca `git.exe` en el PATH de Windows y no ve un guion: se le da la carpeta
+      // `cmd` de Git, que trae `git.exe` y no `cat`. Fuera de Windows, `git` se envuelve como los otros dos.
+      for (const b of EN_WINDOWS
+        ? ["gitleaks", "jq"]
+        : ["gitleaks", "jq", "git"]) {
+        const ruta = spawnSync(BASH, ["-c", `command -v ${b}`], {
+          encoding: "utf8",
+        }).stdout.trim();
+        writeFileSync(join(dir, b), `#!/bin/bash\nexec "${ruta}" "$@"\n`, {
+          mode: 0o755,
+        });
+      }
+      const env = {
+        PATH: [
+          dir,
+          ...(EN_WINDOWS ? [join(dirname(dirname(dirname(BASH))), "cmd")] : []),
+        ].join(delimiter),
+      };
+      // El control: de verdad no hay `cat` (si lo hubiera, la prueba no probaría nada).
+      expect(
+        spawnSync(BASH, ["-c", "command -v cat"], {
+          env: env as NodeJS.ProcessEnv,
+        }).status,
+        "el PATH de la prueba trae cat",
+      ).not.toBe(0);
+      expect(correr("const x = 1;", env).status).toBe(0);
+      const carnada = ["AWS_ACCESS_KEY_ID=", "AKIAQ7RTZ4PX", "KM2WNB3S"].join(
+        "",
+      );
+      const r = correr(carnada, env);
+      expect(r.status, "la carnada pasó sin cat").toBe(2);
+      expect(r.stderr).toContain("SECRET DETECTADO");
+      // Sin nada en stdin el hook no puede buscar nada: bloquea y lo dice, no deja pasar.
+      const vacio = spawnSync(BASH, ["-c", comando], {
+        input: "",
+        encoding: "utf8",
+        env: env as NodeJS.ProcessEnv,
+      });
+      expect(vacio.status).toBe(2);
+      expect(vacio.stderr).toContain("no recibio");
+    },
     30_000,
   );
 });
