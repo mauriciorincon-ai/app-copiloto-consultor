@@ -103,9 +103,16 @@ objc2-foundation = { version = "0.3", default-features = false, features = [
 #   la forma del dispositivo de salida (COM y sus propiedades), la reunión (procesos y ventanas), la voz al oído
 #   (`Windows.Media.SpeechSynthesis`), la pantalla (`PrintWindow`, GDI) y su lectura (`Windows.Media.Ocr`). Ninguna
 #   feature de red: la única puerta sigue siendo `ureq` en `modelo_whisper.rs`.
+# - `llama-cpp-2` (sprint 014, ADR 023 enmienda 2): la sugerencia redactada DENTRO del proceso, sin red. Fijada con
+#   `=` en la 0.1.136 junto a su `-sys`: es la última cuyo ggml vendorizado (0.9.5) es el mismo de `whisper-rs-sys`
+#   0.15 —las cabeceras públicas idénticas, 85 de 86 fuentes de CPU iguales; difiere solo el escritor de GGUF—, porque
+#   los dos crates enlazan estáticas `ggml`, `ggml-base` y `ggml-cpu` con el mismo nombre y el binario se queda con
+#   una sola copia. Subirla exige subir whisper a la par. Sin features: ni OpenMP, ni GPU, ni red (`LLAMA_CURL=OFF`).
 [target.'cfg(windows)'.dependencies]
 cpal = "0.18"
 whisper-rs = "0.16"
+llama-cpp-2 = { version = "=0.1.136", default-features = false }
+llama-cpp-sys-2 = { version = "=0.1.136", default-features = false }
 ureq = { version = "3.4", default-features = false, features = ["rustls"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 # Sprint 012: la puerta local en Windows es un named pipe (`puerta/windows.rs`): crearlo con la DACL del usuario
@@ -177,6 +184,15 @@ opt-level = 3
 # una carpeta con un PDF malformado, que es el caso normal de una carpeta de verdad. Se paga y se
 # declara. Lo vigila `el_perfil_de_release_desenreda` en `corpus/leer.rs`.
 strip = true
+
+# **Sin esto, `cargo test` se cuelga antes de `main` en Windows** (sprint 014, medido en la Surface). El `build.rs` de
+# `llama-cpp-sys-2` 0.1.136 añade `msvcrtd` (la CRT de depuración) cuando su propio build script se compiló con
+# `debug_assertions`, que es lo normal en el perfil `dev`; llama.cpp, ggml y todo Rust van con la CRT de release
+# (`/MD`). Dos CRT en el mismo proceso: el binario importa `ucrtbased.dll`, el enlazador avisa con LNK4098, y el
+# arranque se queda esperando para siempre (hasta `--list`). Apagadas para ese paquete —su build script incluido—, la
+# línea no se escribe. En `--release` ya están apagadas.
+[profile.dev.package.llama-cpp-sys-2]
+debug-assertions = false
 
 [dev-dependencies]
 serde_json = "1"
