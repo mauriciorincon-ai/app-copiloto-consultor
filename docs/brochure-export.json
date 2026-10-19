@@ -12,14 +12,14 @@
     "enlaces.produccion": "null cuando la app no tiene URL pública. `razon` explica por qué, y es lo que la vitrina muestra en lugar del enlace. Nunca se rellena con un enlace de repositorio ni con una promesa."
   },
   "schema_version": "1.0.0",
-  "actualizado": "2026-10-12",
+  "actualizado": "2026-10-18",
   "app": {
     "slug": "copiloto-consultor",
     "nombre": "AngelGhost",
     "ciclo": "H-1",
     "estado": "inicial",
     "sellado_en": null,
-    "sprints_cerrados": 11,
+    "sprints_cerrados": 12,
     "version_repo": "0.1.0"
   },
   "promesa": {
