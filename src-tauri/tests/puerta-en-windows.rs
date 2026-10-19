@@ -278,7 +278,10 @@ fn la_dacl_del_pipe_es_solo_del_usuario() {
     let sid = sid_del_usuario().unwrap();
     assert!(sddl.starts_with("D:P"), "la DACL hereda permisos: {sddl}");
     assert_eq!(sddl.matches('(').count(), 1, "la DACL trae más de una entrada: {sddl}");
-    assert!(sddl.starts_with("D:P(A;;") && sddl.ends_with(&format!(";;;{sid})")), "la entrada no es la de tu SID: {sddl}");
+    // Windows escribe la cuenta de administrador integrada (RID 500) con su alias `LA`, no con el SID: así la ve la CI, que
+    // corre con esa cuenta. Es el mismo SID; cualquier otra cuenta se compara con su SID completo.
+    let trustee = if sid.ends_with("-500") { "LA".to_string() } else { sid.clone() };
+    assert!(sddl.starts_with("D:P(A;;") && sddl.ends_with(&format!(";;;{trustee})")), "la entrada no es la de tu SID: {sddl}");
     for ajeno in [";;;WD)", ";;;AU)", ";;;BU)", ";;;BA)", ";;;AN)", ";;;SY)"] {
         assert!(!sddl.contains(ajeno), "la DACL deja pasar a {ajeno}: {sddl}");
     }
