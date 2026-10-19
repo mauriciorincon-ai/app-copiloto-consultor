@@ -114,6 +114,11 @@ describe("en Windows ninguna pantalla habla del Mac ni pinta sus teclas", () => 
               `${estado}${ampliada ? " (ampliada)" : ""}: ${frase}`,
             );
           }
+          // Sprint 014 (release-check): el icono tampoco —la sugerencia de ejemplo es del modelo del sistema, y pintaba la manzana.
+          if (container.querySelector('use[href="#i-mac"]'))
+            culpables.push(
+              `${estado}${ampliada ? " (ampliada)" : ""}: pinta el logotipo de Apple`,
+            );
         }
       }
       expect(culpables, "la banda dice del Mac en Windows").toEqual([]);
