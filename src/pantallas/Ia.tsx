@@ -170,7 +170,7 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
                   <td>
                     {ia.quien === "sistema" || ia.quien === "local" ? (
                       <span className="estado ok">
-                        <Ic id="i-mac" s relleno />
+                        <Ic id={ia.quien === "local" ? "i-candado" : "i-mac"} s relleno />
                         <span>{t.enUso}</span>
                       </span>
                     ) : windows ? (
@@ -395,7 +395,7 @@ function QuienRedacta({ ia }: { ia: EstadoDeLaIa }) {
   if (ia.quien === "sistema" || ia.quien === "local")
     return (
       <span className="estado ok">
-        <Ic id="i-mac" s relleno />
+        <Ic id={ia.quien === "local" ? "i-candado" : "i-mac"} s relleno />
         <span>{t.enTuMac}</span>
       </span>
     );

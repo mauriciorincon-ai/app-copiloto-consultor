@@ -250,6 +250,14 @@ describe("IA en Windows: sin API; la sugerencia la redacta el modelo local, si e
     expect(banco).toHaveAttribute("aria-disabled", "true");
     expect(banco).toHaveTextContent("no por ahora");
     expect(container.textContent).not.toMatch(/Apple|macOS|\bMac\b/);
+    // La corrida en vivo del S14 lo vio: con el modelo local la fila y el chip pintaban el logotipo de Apple en Windows.
+    expect(
+      container.querySelector('use[href="#i-mac"]'),
+      "IA pinta el logotipo de Apple en Windows",
+    ).toBeNull();
+    expect(
+      container.querySelectorAll('use[href="#i-candado"]').length,
+    ).toBeGreaterThanOrEqual(2);
   });
 
   it("«Instalar el modelo» se lo pide a Rust, y mientras baja lo dice sin ofrecer el botón otra vez", async () => {

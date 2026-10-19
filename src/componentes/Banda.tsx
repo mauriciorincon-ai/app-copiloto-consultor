@@ -593,7 +593,7 @@ export function Banda({
               <span className="lado-b">
                 {fuenteDe(sugerencia.ficha.fuente)}
                 <span className="meta-b sugerida">
-                  <Ic id={sugerencia.quien === "api" ? "i-nube" : "i-mac"} s />
+                  <Ic id={sugerencia.quien === "api" ? "i-nube" : sugerencia.quien === "local" ? "i-candado" : "i-mac"} s />
                   {dondeYConfianza(sugerencia)}
                 </span>
                 {atajosDeFicha}
@@ -616,7 +616,7 @@ export function Banda({
               <span className="lado-b">
                 <span className="sugerencia">
                   <span className="cab">
-                    <Ic id={sugerencia.quien === "api" ? "i-nube" : "i-mac"} s />{" "}
+                    <Ic id={sugerencia.quien === "api" ? "i-nube" : sugerencia.quien === "local" ? "i-candado" : "i-mac"} s />{" "}
                     {sugerencia.quien === "api" ? `${sugerencia.nombre} · ${t.api}` : t.sugerenciaEnTuMac}
                     <span className="conf">
                       <Ic id={icConfianza(sugerencia.confianza)} s />
