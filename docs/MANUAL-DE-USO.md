@@ -690,7 +690,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
   - Un nombre de persona **suelto** («Andrea») que no esté en tu corpus no se reconoce al anonimizar;
     dos palabras con mayúscula seguidas («Andrea Villalba») sí.
   - El camino **MLX** (un modelo que descargas tú) no está en este MVP: queda en el roadmap, sin fecha, y
-    en IA su fila lo dice con «En el roadmap». Sin Apple Intelligence, la sugerencia local no está.
+    en IA su fila lo dice con «En el roadmap». Sin Apple Intelligence, la sugerencia local no está. (En Windows el modelo local es otro, y lo instalas tú: ver «Windows completo».)
   - La sugerencia se escribe **en el idioma de la ficha que cita**, no en el de la pregunta: si tu
     cliente pregunta en inglés y tu propuesta está en español, la sugerencia sale en español.
   - A veces la sugerencia es fiel a su ficha pero **no contesta la pregunta** (cita otra de las tres
@@ -833,8 +833,9 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
   local con whisper, tus notas cifradas y tu corpus con sus fichas. **Desde el sprint 007 también la
   videollamada en ese mismo PC** (Teams, Zoom o Meet en el navegador): las dos pistas, la ficha al oído, la lectura
   de la pantalla de la reunión, el ensayo con voz y los atajos. **Desde el sprint 008, todo lo demás:** el acople,
-  el radar, abrir tus notas con Windows Hello y el borrado con la app cerrada. **Desde el sprint 013, sin API:** la sugerencia
-  redactada queda «no por ahora» y, antes de empezar otra sesión con la anterior abierta, la app pregunta. Honestidad
+  el radar, abrir tus notas con Windows Hello y el borrado con la app cerrada. **Desde el sprint 013, sin API:** antes de empezar otra sesión
+  con la anterior abierta, la app pregunta. **Desde el sprint 014, la sugerencia redactada** con un modelo local que
+  instalas en IA (1,1 GB, una vez) y que corre dentro de tu PC, sin ninguna conexión. Honestidad
   tiene el bloque **«Hoy en Windows»**, que dice qué hace y qué no, cada cosa con su motivo.
 - **Cómo se instala:** llega como archivo (`.msi` o `.exe`) desde la integración continua del repositorio. **El
   instalador no está firmado todavía:** Windows SmartScreen mostrará «Windows protegió tu PC». Pulsa **Más
@@ -924,11 +925,14 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
   de empleados, acceso remoto como TeamViewer, AnyDesk o Asistencia rápida— y si el PC está gestionado por tu empresa
   (MDM). Cada fila trae la página pública de donde sale el nombre del programa y la fecha en que se leyó. No mira nada
   fuera de tu PC, no bloquea ni cierra nada: avisa. `Alt+Mayús+U` enseña lo que ve.
-- **La sugerencia.** **No está en Windows por ahora.** No hay modelo del sistema, el API de pago salió de Windows en el
-  sprint 013 y el modelo local que se midió (Foundry Local, en la CPU de una Surface ARM64) cabe en el tiempo —mediana
-  2,1 s, p95 2,3 s, techo 6 s— pero abre una conexión de telemetría con Microsoft aunque se apague, y eso rompería el
-  «0 B» de Honestidad. La ficha sigue siendo la respuesta. IA no ofrece proveedor, clave ni costo en Windows; una clave
-  guardada antes sigue en el Administrador de credenciales sin que la app la lea (bórrala tú).
+- **La sugerencia.** **Sí, con el modelo local que instalas tú** (sprint 014). No viene en el instalador: en **IA**, fila
+  «Modelo local», pulsa **«Instalar el modelo (1,1 GB)»** (una vez; baja por la misma puerta que el modelo de voz, con su
+  tamaño y su huella comprobados, retoma si se corta y no se instala con una reunión, una sesión o un ensayo abiertos).
+  Con el modelo, **«Redactar sugerencias»** se puede encender: el modelo se carga al empezar la sesión (≈ 1,1 GB) y se
+  suelta al terminarla, al apagar el interruptor o con `Alt+Mayús+Q`. Redacta **dentro de tu PC, sin abrir ninguna
+  conexión** (Honestidad sigue en 0 B): en una Surface ARM64, mediana 2,1 s y 12 de 17 sugerencias del kit fundadas. La
+  ficha sale primero; si la sugerencia tarda más de 6 s o no cita bien su ficha, no se enseña. Sin el modelo no hay
+  sugerencia, dicho, y la ficha es la respuesta. Windows no ofrece el API externo ni «Enriquecer el banco». Si guardaste una clave de Groq o de Claude antes, sigue en el Administrador de credenciales sin que la app la lea: bórrala tú en **Panel de control → Administrador de credenciales → Credenciales de Windows → «Angel Ghost · API / claude» o «Angel Ghost · API / groq»**.
 - **Empezar otra sesión.** Si la reunión anterior sigue abierta con algo tuyo, Windows pregunta antes —Guardar,
   Descartar o Cancelar— porque guardar por primera vez crea la llave de tus notas y la tarea de borrado. Cerrar la
   ventana principal con una reunión abierta la guarda sola, como siempre.

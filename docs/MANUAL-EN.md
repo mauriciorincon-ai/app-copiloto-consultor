@@ -829,8 +829,9 @@ It is not a new feature but the same app on another system, which is why it sits
   transcription with whisper, your encrypted notes and your corpus with its cards. **Since sprint 007 it also
   handles the video call on that same PC** (Teams, Zoom or Meet in the browser): both tracks, the card in your ear, reading
   the meeting screen, rehearsal with voice and the shortcuts. **Since sprint 008, everything else:** docking,
-  the radar, opening your notes with Windows Hello and deletion with the app closed. **Since sprint 013, no API:** the drafted
-  suggestion is “not for now” and, before starting another session with the previous one open, the app asks. Honesty
+  the radar, opening your notes with Windows Hello and deletion with the app closed. **Since sprint 013, no API:** before starting another
+  session with the previous one open, the app asks. **Since sprint 014, the drafted suggestion** with a local model you
+  install in AI (1.1 GB, once) that runs inside your PC, with no connection at all. Honesty
   has the block **“On Windows today”**, which says what it does and what it does not, each thing with its reason.
 - **How it installs:** it arrives as a file (`.msi` or `.exe`) from the repository's continuous integration. **The
   installer is not signed yet:** Windows SmartScreen will show “Windows protected your PC”. Click **More
@@ -920,11 +921,15 @@ It is not a new feature but the same app on another system, which is why it sits
   monitoring, remote access such as TeamViewer, AnyDesk or Quick Assist— and whether the PC is managed by your company
   (MDM). Each row carries the public page the program's name comes from and the date it was read. It looks at nothing
   outside your PC, blocks nothing and closes nothing: it warns. `Alt+Shift+U` shows what it sees.
-- **The suggestion.** **It is not on Windows for now.** There is no system model, the paid API left Windows in sprint 013,
-  and the local model that was measured (Foundry Local, on the CPU of an ARM64 Surface) fits the time —median 2.1 s,
-  p95 2.3 s, ceiling 6 s— but opens a telemetry connection to Microsoft even when switched off, and that would break
-  Honesty’s “0 B”. The card is still the answer. AI offers no provider, key or cost on Windows; a key stored earlier is still
-  in Credential Manager and the app does not read it (delete it yourself).
+- **The suggestion.** **Yes, with the local model you install yourself** (sprint 014). It does not ship in the installer:
+  in **AI**, “Local model” row, press **“Install the model (1.1 GB)”** (once; it downloads through the same door as the
+  speech model, with its size and hash checked, resumes if cut, and will not install with a meeting, a session or a
+  rehearsal open). With the model, **“Draft suggestions”** can be switched on: the model is loaded when the session starts
+  (≈ 1.1 GB) and released when it ends, when you switch it off or with `Alt+Shift+Q`. It drafts **inside your PC,
+  opening no connection** (Honesty stays at 0 B): on an ARM64 Surface, median 2.1 s and 12 of 17 kit suggestions grounded.
+  The card comes first; if the suggestion takes more than 6 s or does not cite its card properly, it is not shown.
+  Without the model there is no suggestion, said, and the card is the answer. Windows offers neither the external API nor
+  “Enrich the bank”. If you stored a Groq or Claude key before, it is still in Credential Manager and the app does not read it: delete it yourself in **Control Panel → Credential Manager → Windows Credentials → “Angel Ghost · API / claude” or “Angel Ghost · API / groq”**.
 - **Starting another session.** If the previous meeting is still open with something of yours, Windows asks first —Save,
   Discard or Cancel— because saving for the first time creates your notes key and the deletion task. Closing the main
   window with a meeting open saves it on its own, as always.

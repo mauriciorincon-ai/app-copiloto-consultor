@@ -13,7 +13,7 @@ import { TEXTOS_DE_WINDOWS } from "../../src/i18n/windows";
  * Lo que exige:
  *  1. **Cero menciones a otro sistema**, en ninguna prueba, matriz ni nota.
  *  2. **Autocontenida**: ni una URL, ni un `<link>`, ni un `<script src>`, ni `fetch`.
- *  3. **Prefijo propio de `localStorage`** (`ag-w13-`), distinto del de la guía general.
+ *  3. **Prefijo propio de `localStorage`** (`ag-w14-`), distinto del de la guía general.
  *  4. **9 paradas del gate, ~20 min**, numeradas «parada N de 9» en el orden del documento.
  *  5. **Cada mirada de texto en matriz**: abre · qué mirar · qué respuesta espero.
  *  6. **La guía general la enlaza**, y las dos se encuentran.
@@ -72,7 +72,7 @@ describe("la guía de Windows es autocontenida", () => {
 
   it("su prefijo de localStorage es propio y no el de la guía general", () => {
     const ns = (html: string) => /var NS = "([^"]+)"/.exec(html)?.[1];
-    expect(ns(WIN)).toBe("ag-w13-");
+    expect(ns(WIN)).toBe("ag-w14-");
     expect(ns(GENERAL)).not.toBe(ns(WIN));
   });
 
@@ -271,9 +271,11 @@ describe("la banda a tu altura (sprint 011): sus paradas dicen los rótulos que 
     expect(t).not.toMatch(/vuelve a su sitio al terminar/);
   });
 
-  it("el filtro «Lo que cambió» cuenta desde el S10 y llega al S12", () => {
+  it("el filtro «Lo que cambió» cuenta desde el S10 y llega al S14", () => {
     expect(WIN).toContain("Lo que cambió desde el S10");
-    expect(WIN).toMatch(/n === "s10" \|\| n === "s11" \|\| n === "s12"/);
+    expect(WIN).toMatch(
+      /n === "s10" \|\| n === "s11" \|\| n === "s12" \|\| n === "s13" \|\| n === "s14"/,
+    );
   });
 });
 
@@ -349,22 +351,24 @@ describe("la puerta local y el modo transparente (sprint 012): sus paradas dicen
     expect(texto12).toMatch(/fila 10 de la matriz de arriba y da tu «sí»/);
   });
 
-  it("t11 y t12 existen en la matriz de textos, y t1 espera el grupo «Not on Windows for now» con una sola fila (S13); t8 sigue sin él", () => {
+  it("t11 y t12 existen en la matriz de textos, y t1 espera quince filas y ya no el grupo «Not on Windows for now» (S14); t8 sigue sin él", () => {
     for (const id of ["t11", "t12"])
       expect(WIN).toContain(`id="${id}" aria-label=`);
     const t1 = WIN.slice(WIN.indexOf('id="t1"'), WIN.indexOf('id="t2"'));
-    expect(texto(t1)).toMatch(/catorce filas/);
-    expect(texto(t1)).toMatch(/«Not on Windows for now» con una sola fila/);
+    expect(texto(t1)).toMatch(/quince filas/);
+    expect(texto(t1)).toMatch(/«Not on Windows for now» ya no está/);
+    expect(texto(t1)).not.toMatch(/con una sola fila/);
     const t8 = WIN.slice(WIN.indexOf('id="t8"'), WIN.indexOf('id="t9"'));
     expect(texto(t1)).not.toMatch(/Los dos grupos/);
     expect(texto(t8)).not.toMatch(
       /no está en Windows por ahora|no hay botón de puerta local/,
     );
-    // Sprint 013: son catorce «sí» y una «no por ahora»; las «quince en Works now» del sprint 012 ya no son ciertas.
+    // Sprint 014: la sugerencia volvió con el modelo local, así que son quince «sí» y ninguna «no por ahora»: las
+    // «catorce y una» del sprint 013 ya no son ciertas.
     expect(texto12).not.toMatch(
-      /quince funciones|quince filas|ninguna en «Not on Windows for now»/,
+      /catorce funciones|catorce filas|una en «Not on Windows for now»|con una sola fila/,
     );
-    expect(texto12).toMatch(/catorce funciones/);
+    expect(texto12).toMatch(/quince funciones/);
   });
 });
 
@@ -385,7 +389,10 @@ describe("el API salió de Windows (sprint 013): ninguna guía manda a encenderl
       );
     }
     expect(item(GENERAL, "w2")).not.toMatch(/solo la puerta local/);
-    expect(item(GENERAL, "w2")).toMatch(/una sola: la sugerencia redactada/);
+    expect(item(GENERAL, "w2")).not.toMatch(
+      /una sola: la sugerencia redactada/,
+    );
+    expect(item(GENERAL, "w2")).toMatch(/quince funciones/);
   });
 
   it("ni los resúmenes de la general ni los de Windows prometen «la sugerencia con tu clave» en el PC", () => {
@@ -393,5 +400,86 @@ describe("el API salió de Windows (sprint 013): ninguna guía manda a encenderl
       /PC · el radar y la sugerencia con tu clave|w14 a la w18 son [^.]*sugerencia con tu clave/,
     );
     expect(texto(WIN)).not.toMatch(/El radar y la sugerencia con tu clave/);
+  });
+});
+
+describe("el modelo local (sprint 014): sus paradas dicen los rótulos que la app pinta", () => {
+  // La Surface está en inglés: la guía manda buscar rótulos exactos. Los lee del diccionario, no los copia.
+  const w = TEXTOS_DE_WINDOWS.en;
+  const cambios = readFileSync("src/i18n/windows-cambios.ts", "utf8");
+  const texto14 = texto(WIN);
+  const item = (id: string) => {
+    const i = WIN.indexOf(`id="${id}"`);
+    return texto(WIN.slice(i, WIN.indexOf("</li>", i)));
+  };
+
+  it.each([
+    ["sinInstalar", w.ia.sinInstalar],
+    ["bajando", w.ia.bajando],
+    ["fallo", w.ia.fallo],
+    ["instalar", w.ia.instalar("1.1")],
+    ["instalaPrimero", w.ia.instalaPrimero],
+    ["sinModelo", w.ia.sinModelo.split(":")[0]],
+    ["instalado", w.ia.instalado.slice(0, 60)],
+  ])("la guía nombra «%s» tal cual: «%s»", (_clave, rotulo) => {
+    expect(texto14, `la guía no nombra «${rotulo}»`).toContain(rotulo);
+  });
+
+  it("la guía nombra la fila «Local model», «in use» y la etiqueta de la banda que la app pinta", () => {
+    expect(cambios).toContain('modeloDelSistema: "Local model"');
+    expect(cambios).toContain('sugerenciaEnTuMac: "suggestion · on your PC"');
+    for (const r of [
+      "Local model",
+      "in use",
+      "suggestion · on your PC",
+      "Draft suggestions",
+      "Enrich the bank",
+    ])
+      expect(texto14, `la guía no nombra «${r}»`).toContain(r);
+  });
+
+  it("w25 y w26 existen, son ⭐ nuevas del S14 y NO entran al gate (el único gate llega con todo el producto)", () => {
+    for (const id of ["w25", "w26"]) {
+      const li = new RegExp(
+        `<li data-origen="nuevo" data-nace="s14" data-minimo><input type="checkbox" id="${id}">`,
+      );
+      expect(WIN, `${id} no es una parada ⭐ nueva del S14`).toMatch(li);
+      expect(
+        paradasDelGate(WIN).map((p) => p.id),
+        `${id} entró al gate`,
+      ).not.toContain(id);
+    }
+  });
+
+  it("la descarga y la memoria tienen sus filas de matriz (regla 24), y la parada pide el «sí» de las dos antes de bajar nada", () => {
+    const tabla = WIN.slice(WIN.indexOf('id="matriz-s14"'));
+    const cuerpo = tabla.slice(
+      tabla.indexOf("<tbody>"),
+      tabla.indexOf("</tbody>"),
+    );
+    const filas = [...cuerpo.matchAll(/<tr>([\s\S]*?)<\/tr>/g)].map((m) =>
+      [...m[1].matchAll(/<td>([\s\S]*?)<\/td>/g)].map((c) => texto(c[1])),
+    );
+    expect(
+      filas.map((f) => f[0]),
+      "las filas 11 y 12",
+    ).toEqual(["11", "12"]);
+    expect(filas[0][1]).toContain("1 117 320 736 bytes");
+    expect(filas[0][1]).toContain("única puerta Rust de descarga");
+    expect(filas[0][4]).toMatch(/Borrar/);
+    expect(filas[1][1]).toMatch(/lo suelta/);
+    expect(item("w25")).toMatch(
+      /filas 11 y 12 de la matriz de arriba y da tu «sí»/,
+    );
+    expect(item("w25")).toContain("el botón no baja nada");
+    expect(item("w26")).toMatch(/Si la sugerencia no sale, no es un fallo/);
+  });
+
+  it("w18 describe la fila «Local model» y ya no dice «not for now»; t13 existe en la matriz de textos", () => {
+    expect(item("w18")).toMatch(/ya no hay API/);
+    expect(item("w18")).toContain("Local model");
+    expect(item("w18")).not.toMatch(/not for now/);
+    expect(WIN).toContain('id="t13" aria-label=');
+    expect(WIN).not.toMatch(/«not for now»/);
   });
 });
