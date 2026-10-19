@@ -184,11 +184,52 @@ pub fn bajar(m: &Modelo) -> Result<PathBuf, String> {
         }
         println!("[modelo] bajando {} ({} bytes)", m.nombre, m.bytes);
         let agente: ureq::Agent = ureq::Agent::config_builder().timeout_connect(Some(TECHO_DE_CONECTAR)).timeout_recv_response(Some(TECHO_DE_LA_RESPUESTA)).timeout_global(Some(TECHO_DE_LA_DESCARGA)).build().into(); // verify-ephemeral:allow — ADR 022 §4: la única puerta Rust, el modelo de whisper, con su huella y sus techos de tiempo
-        let respuesta = agente.get(m.origen).call().map_err(|e| format!("la descarga no empezó: {e}"))?;
-        descargar_a(respuesta.into_body().into_reader(), m, &destino)
+        // Cada tramo es una petición del mismo agente; desde el segundo, con su rango y tras una pausa corta.
+        let mut veces = 0u64;
+        let mut abrir = |desde: u64| -> Result<Tramo<'static>, String> {
+            if veces > 0 {
+                std::thread::sleep(std::time::Duration::from_secs(3 * veces));
+            }
+            veces += 1;
+            let pedido = agente.get(m.origen);
+            let pedido = if desde > 0 { pedido.header("Range", format!("bytes={desde}-")) } else { pedido };
+            let respuesta = pedido.call().map_err(|e| format!("la descarga no empezó: {e}"))?;
+            let desde = if respuesta.status().as_u16() == 206 {
+                respuesta
+                    .headers()
+                    .get("content-range")
+                    .and_then(|v| v.to_str().ok())
+                    .and_then(inicio_del_rango)
+                    .ok_or_else(|| "el servidor mandó un tramo sin decir cuál".to_string())?
+            } else {
+                0
+            };
+            Ok(Tramo { lector: Box::new(respuesta.into_body().into_reader()), desde })
+        };
+        descargar_reanudando(&mut abrir, m, &destino, &hay_que_parar, INTENTOS)
     })();
     BAJANDO.store(false, Ordering::SeqCst);
     hecho
+}
+
+/// **Cuántas veces se retoma una descarga que se corta** dentro de una misma petición de «Instalar» (sprint 014). El
+/// modelo de la sugerencia mide 1,1 GB, y en la Surface de pruebas el servidor cortó la conexión dos veces de dos
+/// («Peer disconnected», a los 15 y a los 19 minutos): sin retomar, cada corte borraba lo bajado y se volvía a empezar.
+/// Con un rango (`Range`) se sigue desde el último byte escrito, y la huella se calcula igual, sobre el archivo entero.
+/// Cinco cortes seguidos ya no son un corte: se para y se dice. Un `.parcial` nunca sobrevive a la petición: si no se
+/// termina, se borra, y el que deja una caída lo borra el arranque ([`limpiar_parciales`]).
+pub const INTENTOS: usize = 5;
+
+/// Un tramo de la descarga: lo que llega y desde qué byte del archivo empieza. Un servidor que no acepta el rango manda
+/// el archivo entero (`desde: 0`), y entonces se empieza de cero.
+pub struct Tramo<'a> {
+    pub lector: Box<dyn std::io::Read + 'a>,
+    pub desde: u64,
+}
+
+/// Desde qué byte empieza un tramo, leído de su `Content-Range` («bytes 1000-1999/2000» → 1000). Pura.
+pub fn inicio_del_rango(cabecera: &str) -> Option<u64> {
+    cabecera.trim().strip_prefix("bytes")?.trim_start().split('-').next()?.trim().parse().ok()
 }
 
 /// **Escribe un modelo que llega de un lector y lo comprueba**: tamaño exacto y huella SHA-256 fija. Si algo no
@@ -199,16 +240,36 @@ pub fn descargar_a(lector: impl std::io::Read, m: &Modelo, destino: &Path) -> Re
 }
 
 /// Lo mismo, con la pregunta «¿hay que parar?» como parámetro: se hace antes de cada trozo, y si dice que sí la
-/// descarga se corta, el `.parcial` se borra y el motivo lo dice (M2 del S6).
+/// descarga se corta, el `.parcial` se borra y el motivo lo dice (M2 del S6). Un lector solo no se retoma.
 pub fn descargar_con_guarda(
-    mut lector: impl std::io::Read,
+    lector: impl std::io::Read,
     m: &Modelo,
     destino: &Path,
     parar: &dyn Fn() -> bool,
 ) -> Result<PathBuf, String> {
-    use sha2::{Digest, Sha256};
-    use std::io::Write;
+    let mut uno = Some(lector);
+    let mut abrir = |_desde: u64| {
+        uno.take()
+            .map(|l| Tramo { lector: Box::new(l), desde: 0 })
+            .ok_or_else(|| "esta fuente no se retoma".to_string())
+    };
+    descargar_reanudando(&mut abrir, m, destino, parar, 1)
+}
 
+/// **La descarga por tramos** (sprint 014): `abrir(desde)` da el tramo que empieza en el byte `desde`; si se corta, se
+/// pide el siguiente desde el último byte escrito, hasta `intentos` tramos. Lo escrito y lo huellado son siempre los
+/// mismos bytes, en el mismo orden: la comprobación del final es la de siempre, sobre el archivo entero.
+pub fn descargar_reanudando<'a>(
+    abrir: &mut dyn FnMut(u64) -> Result<Tramo<'a>, String>,
+    m: &Modelo,
+    destino: &Path,
+    parar: &dyn Fn() -> bool,
+    intentos: usize,
+) -> Result<PathBuf, String> {
+    use sha2::{Digest, Sha256};
+    use std::io::{Seek, Write};
+
+    const PARADA: &str = "la descarga se paró porque empezó una reunión o un ensayo; vuelve a pedirla al terminar";
     let carpeta = destino.parent().ok_or("ruta del modelo sin carpeta")?;
     std::fs::create_dir_all(carpeta).map_err(|e| format!("no se pudo crear la carpeta del modelo: {e}"))?;
     let parcial = destino.with_extension("parcial");
@@ -216,21 +277,57 @@ pub fn descargar_con_guarda(
         let mut archivo = std::fs::File::create(&parcial).map_err(|e| format!("no se pudo crear el archivo: {e}"))?;
         let mut huella = Sha256::new();
         let mut total: u64 = 0;
+        let mut cortes = 0usize;
         let mut trozo = vec![0u8; 1 << 20];
-        loop {
+        'tramos: loop {
             if parar() {
-                return Err("la descarga se paró porque empezó una reunión o un ensayo; vuelve a pedirla al terminar".into());
+                return Err(PARADA.into());
             }
-            let n = lector.read(&mut trozo).map_err(|e| format!("la descarga se cortó: {e}"))?;
-            if n == 0 {
-                break;
+            let corte = match abrir(total) {
+                Err(e) => e,
+                Ok(Tramo { mut lector, desde }) => {
+                    if desde != total {
+                        if desde != 0 {
+                            return Err(format!("el servidor mandó el modelo desde el byte {desde}, y faltaba desde el {total}"));
+                        }
+                        // No aceptó el rango y manda el archivo entero: se empieza de cero.
+                        archivo.set_len(0).and_then(|_| archivo.rewind()).map_err(|e| format!("no se pudo reiniciar el modelo: {e}"))?;
+                        huella = Sha256::new();
+                        total = 0;
+                    }
+                    loop {
+                        if parar() {
+                            return Err(PARADA.into());
+                        }
+                        let n = match lector.read(&mut trozo) {
+                            Ok(n) => n,
+                            Err(e) => break format!("la descarga se cortó: {e}"),
+                        };
+                        if n == 0 {
+                            if total == m.bytes {
+                                break 'tramos;
+                            }
+                            break "la descarga se cortó: el servidor cerró antes del final".to_string();
+                        }
+                        total += n as u64;
+                        if total > m.bytes {
+                            return Err(format!("el modelo bajado no es el esperado ({total} bytes, más de los {})", m.bytes));
+                        }
+                        huella.update(&trozo[..n]);
+                        archivo.write_all(&trozo[..n]).map_err(|e| format!("no se pudo escribir el modelo: {e}"))?;
+                    }
+                }
+            };
+            cortes += 1;
+            if cortes >= intentos {
+                return Err(if cortes > 1 { format!("{corte} (tras {cortes} intentos)") } else { corte });
             }
-            total += n as u64;
-            if total > m.bytes {
-                break;
-            }
-            huella.update(&trozo[..n]);
-            archivo.write_all(&trozo[..n]).map_err(|e| format!("no se pudo escribir el modelo: {e}"))?;
+            println!(
+                "[modelo] la descarga se cortó en {} de {} MB; se retoma ({cortes} de {})",
+                total / 1_000_000,
+                m.bytes / 1_000_000,
+                intentos - 1
+            );
         }
         archivo.sync_all().map_err(|e| format!("no se pudo cerrar el modelo: {e}"))?;
         drop(archivo);
@@ -429,5 +526,129 @@ mod pruebas {
         assert!(!destino.exists());
         assert!(!destino.with_extension("parcial").exists(), "el parcial sobrevivió al corte");
         let _ = std::fs::remove_dir_all(&base);
+    }
+
+    /// Un tramo falso: da sus bytes y después se corta («Peer disconnected») o termina.
+    fn tramo(bytes: &'static [u8], desde: u64, corta: bool) -> Tramo<'static> {
+        struct Falso(&'static [u8], bool);
+        impl std::io::Read for Falso {
+            fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+                if self.0.is_empty() {
+                    return if self.1 { Err(std::io::Error::other("Peer disconnected")) } else { Ok(0) };
+                }
+                let n = self.0.len().min(buf.len());
+                buf[..n].copy_from_slice(&self.0[..n]);
+                self.0 = &self.0[n..];
+                Ok(n)
+            }
+        }
+        Tramo { lector: Box::new(Falso(bytes, corta)), desde }
+    }
+
+    /// **Una descarga que se corta se retoma desde el último byte escrito** (sprint 014): «ho», corte, y el segundo
+    /// tramo se pide desde el byte 2 y trae «la». Queda «hola» con su huella, sin `.parcial`.
+    #[test]
+    fn una_descarga_cortada_se_retoma_desde_el_ultimo_byte() {
+        let base = carpeta_de_prueba("retoma");
+        let m = modelo_de_prueba(4, b"hola");
+        let destino = base.join("modelos").join("prueba.bin");
+        let mut pedidos = Vec::new();
+        let mut abrir = |desde: u64| {
+            pedidos.push(desde);
+            Ok(if desde == 0 { tramo(b"ho", 0, true) } else { tramo(&b"hola"[desde as usize..], desde, false) })
+        };
+        let r = descargar_reanudando(&mut abrir, &m, &destino, &|| false, INTENTOS).expect("debía retomarse");
+        assert_eq!(pedidos, vec![0, 2], "el segundo tramo se pide desde el último byte escrito");
+        assert_eq!(std::fs::read(&r).unwrap(), b"hola");
+        assert!(!destino.with_extension("parcial").exists());
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    /// **Un servidor que no acepta el rango manda el archivo entero**: se empieza de cero y la huella sale la misma.
+    #[test]
+    fn sin_rango_se_empieza_de_cero() {
+        let base = carpeta_de_prueba("sin-rango");
+        let m = modelo_de_prueba(4, b"hola");
+        let destino = base.join("modelos").join("prueba.bin");
+        let mut veces = 0;
+        let mut abrir = |_desde: u64| {
+            veces += 1;
+            Ok(if veces == 1 { tramo(b"ho", 0, true) } else { tramo(b"hola", 0, false) })
+        };
+        let r = descargar_reanudando(&mut abrir, &m, &destino, &|| false, INTENTOS).expect("debía bajarse entero");
+        assert_eq!(std::fs::read(&r).unwrap(), b"hola", "lo de antes del corte no se duplica");
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    /// **Cinco cortes paran**, lo dicen y no dejan nada: ni destino ni `.parcial`.
+    #[test]
+    fn cinco_cortes_paran_y_no_dejan_nada() {
+        let base = carpeta_de_prueba("cinco");
+        let m = modelo_de_prueba(4, b"hola");
+        let destino = base.join("modelos").join("prueba.bin");
+        let mut veces = 0;
+        let mut abrir = |desde: u64| {
+            veces += 1;
+            Ok(tramo(if desde == 0 { &b"h"[..] } else { &b""[..] }, desde, true))
+        };
+        let e = descargar_reanudando(&mut abrir, &m, &destino, &|| false, INTENTOS).unwrap_err();
+        assert_eq!(veces, INTENTOS);
+        assert!(e.contains("se cortó") && e.contains(&format!("tras {INTENTOS} intentos")), "{e}");
+        assert!(!destino.exists() && !destino.with_extension("parcial").exists(), "no queda nada a medias");
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    /// **Un tramo que no es el pedido aborta**: si el servidor dice que empieza en otro byte, lo escrito no casaría.
+    #[test]
+    fn un_tramo_que_no_es_el_pedido_aborta() {
+        let base = carpeta_de_prueba("otro-tramo");
+        let m = modelo_de_prueba(4, b"hola");
+        let destino = base.join("modelos").join("prueba.bin");
+        let mut abrir = |desde: u64| Ok(if desde == 0 { tramo(b"ho", 0, true) } else { tramo(b"a", 3, false) });
+        let e = descargar_reanudando(&mut abrir, &m, &destino, &|| false, INTENTOS).unwrap_err();
+        assert!(e.contains("desde el byte 3"), "{e}");
+        assert!(!destino.exists() && !destino.with_extension("parcial").exists());
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    /// **Una reunión que empieza entre dos tramos para la descarga** (M2 del S6): no se pide el siguiente.
+    #[test]
+    fn una_reunion_entre_dos_tramos_para_la_descarga() {
+        struct CortaYEmpieza<'c>(&'c std::cell::Cell<bool>, bool);
+        impl std::io::Read for CortaYEmpieza<'_> {
+            fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+                if !self.1 {
+                    self.1 = true;
+                    buf[..2].copy_from_slice(b"ho");
+                    return Ok(2);
+                }
+                // La reunión empieza justo cuando la red se corta.
+                self.0.set(true);
+                Err(std::io::Error::other("Peer disconnected"))
+            }
+        }
+        let base = carpeta_de_prueba("reunion");
+        let m = modelo_de_prueba(4, b"hola");
+        let destino = base.join("modelos").join("prueba.bin");
+        let reunion = std::cell::Cell::new(false);
+        let mut pedidos = 0;
+        let mut abrir = |_desde: u64| {
+            pedidos += 1;
+            Ok(Tramo { lector: Box::new(CortaYEmpieza(&reunion, false)), desde: 0 })
+        };
+        let e = descargar_reanudando(&mut abrir, &m, &destino, &|| reunion.get(), INTENTOS).unwrap_err();
+        assert!(e.contains("empezó una reunión"), "{e}");
+        assert_eq!(pedidos, 1, "con la reunión en marcha no se pide otro tramo");
+        assert!(!destino.exists() && !destino.with_extension("parcial").exists());
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    /// El byte de partida de un tramo sale de su `Content-Range`; lo que no se entiende no es un tramo.
+    #[test]
+    fn el_rango_se_lee_de_su_cabecera() {
+        assert_eq!(inicio_del_rango("bytes 1000-1999/2000"), Some(1000));
+        assert_eq!(inicio_del_rango("bytes 0-3/4"), Some(0));
+        assert_eq!(inicio_del_rango("bytes */2000"), None);
+        assert_eq!(inicio_del_rango(""), None);
     }
 }
