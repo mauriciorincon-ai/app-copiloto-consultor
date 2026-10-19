@@ -95,8 +95,7 @@ el merge con squash borra, y una medida que nadie puede repetir no es una medida
 
 **Restos en la Surface de pruebas** (el runtime escribe fuera de la carpeta de la app, y eso se dice): (a) las colas de
 telemetría de Microsoft, `%LOCALAPPDATA%\Microsoft\DeveloperTools\.onnxruntime\`, **se borraron** al cerrar la medida, con el «sí»
-del usuario; (b) el modelo bajado, ≈ 1,8 GB, en `%LOCALAPPDATA%\com.aiapps.copiloto-consultor\modelos\foundry\`, **se queda a
-propósito** para medir en el S14 (decisión del usuario); borrar esa carpeta lo quita y no deja nada más.
+del usuario; (b) el modelo bajado, ≈ 1,8 GB, en `%LOCALAPPDATA%\com.aiapps.copiloto-consultor\modelos\foundry\`, **se quedó a propósito** para medir en el S14 (decisión del usuario) y **se retiró al cierre del S14**, con su «sí» (enmienda 2).
 
 **Lo que queda por medir:** ONNX Runtime GenAI directo, sin Foundry Local Core —el mismo motor y el mismo formato de
 modelo—, con su telemetría apagada por API (`OgaSetTelemetryEnabled`), el modelo bajado por una puerta Rust como la de
@@ -119,6 +118,7 @@ porque nada sale.
 | `fundar` | **12 de 17** (Foundry Local, mismo modelo en ONNX: 6 de 17) | ≥ 9 ✅ |
 | Conexiones del proceso (arrancar · cargar · redactar · reposar 60 s · soltar) | **TCP 0 · UDP 0 en las cinco** | 0 ✅ |
 | Canaria del turno | **0 archivos** de los escritos durante la prueba | 0 ✅ |
+| **En vivo, en la app real** (3 corridas, con la pregunta del kit por los altavoces; anexo) | **1 de 3** dentro del techo (2,3 s, en la banda); **2 de 3 pasaron de 6 s con el PC muy cargado** y se descartaron (la ficha ya estaba); causa **sin atribuir**. Con la corrida buena: TCP 0 · UDP 0 en las cinco fases, 0 B | — (viaja a w26, con auriculares, y al gate del hito) |
 
 La tabla completa, el arnés y cómo repetirla: [anexo](anexos/023-medida-llama-cpp.md). El arnés vive en el repo esta vez
 (`src-tauri/tests/modelo-local-en-windows.rs`) y desde la fase 2 mide **el camino de la app**, no una copia.
@@ -143,10 +143,10 @@ La tabla completa, el arnés y cómo repetirla: [anexo](anexos/023-medida-llama-
    a la plantilla del GGUF, comprobado en vivo), temperatura 0, como mucho 160 piezas, con la mitad de los núcleos (la
    otra mitad le queda a whisper). Un contexto por sugerencia, con su caché vaciada antes de soltarlo; el prompt, las
    piezas y la salida se pisan con ceros; los registros de llama.cpp, apagados. `verify-ephemeral` prohíbe en los
-   protegidos las funciones de llama.cpp que guardan su estado en un archivo. `fundar` y el techo de 6 s, como siempre.
+   protegidos las funciones de llama.cpp que guardan su estado en un archivo. `fundar` y el techo de 6 s, como siempre: pasado el techo la generación **se para** en vez de seguir quitándole CPU a whisper, y lo escrito se pisa también si sale con un error.
 5. **El modelo vive lo que la sesión**: se carga al empezar con «Redactar sugerencias» encendido (o la primera vez que
    hace falta) y se suelta al terminar, al apagar «Redactar» y con el corte —dentro de la pieza `Sugerencia`, que el
-   `match` sin comodín obliga a resolver; desviación del plan, que pedía una pieza nueva—.
+   `match` sin comodín obliga a resolver; desviación del plan, que pedía una pieza nueva—. Un corte que llega durante la carga **no espera a la carga** y el modelo no queda residente; y un hilo de sugerencia lanzado antes del corte no lo vuelve a cargar.
 6. **Lo que se promete en Windows**: «Redactar sugerencias», solo con el modelo instalado; **«Enriquecer el banco» sigue
    «no por ahora»** (no se midió para el banco); el API, jamás (`quien_redacta` no lo elige en Windows, con prueba).
    «Hoy en Windows» vuelve a las 15 en «sí».
@@ -159,4 +159,4 @@ descarga.
 
 **Descartados.** Foundry Local (enmienda 1: telemetría a Microsoft con sus interruptores apagados). Qwen2.5-3B (su
 licencia, `qwen-research`, no es comercial). ONNX Runtime GenAI directo y Phi-3-mini (MIT) eran los planes B: no
-hicieron falta. La NPU no se probó: la CPU cabe en el techo.
+hicieron falta. La NPU no se probó: la CPU cabe en el techo. **Retirado de la Surface al cierre del S14**, con el «sí» del usuario, ruta por ruta: el modelo de Foundry Local de la enmienda 1 (≈ 1,8 GB), las compilaciones de su crate y su entrada del registro de cargo, las compilaciones viejas de `llama-cpp-sys-2` hechas antes de la corrección del CRT, el `ggml-large-v3-turbo.bin` (que en esta Surface no cabe en el techo de 4 s) y mis copias de trabajo; la búsqueda de rastros termina en 0 (`*.gguf`/`*.onnx` solo el modelo en uso; ninguna carpeta `foundry` ni `.onnxruntime`; `Cargo.toml` y `Cargo.lock` sin foundry ni ort).

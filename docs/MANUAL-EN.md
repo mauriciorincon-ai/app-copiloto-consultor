@@ -927,8 +927,8 @@ It is not a new feature but the same app on another system, which is why it sits
   rehearsal open). With the model, **“Draft suggestions”** can be switched on: the model is loaded when the session starts
   (≈ 1.1 GB) and released when it ends, when you switch it off or with `Alt+Shift+Q`. It drafts **inside your PC,
   opening no connection** (Honesty stays at 0 B): on an ARM64 Surface, median 2.1 s and 12 of 17 kit suggestions grounded.
-  The card comes first; if the suggestion takes more than 6 s or does not cite its card properly, it is not shown. With the PC heavily loaded (for example, during a build or with two tracks being transcribed at once) it can go past 6 s: then it is dropped and the card is the answer.
-  Without the model there is no suggestion, said, and the card is the answer. Windows offers neither the external API nor
+  The card comes first; if the suggestion takes more than 6 s or does not cite its card properly, it is not shown. With the PC heavily loaded (for example, with two tracks being transcribed at once) it can go past 6 s: then it is dropped and the card is the answer.
+  Without the model there is no suggestion, said, and the card is the answer. To remove it (1.1 GB), delete `%LOCALAPPDATA%\com.aiapps.copiloto-consultor\modelos\qwen2.5-1.5b-instruct-q4_k_m.gguf`. Windows offers neither the external API nor
   “Enrich the bank”. If you stored a Groq or Claude key before, it is still in Credential Manager and the app does not read it: delete it yourself in **Control Panel → Credential Manager → Windows Credentials → “Angel Ghost · API / claude” or “Angel Ghost · API / groq”**.
 - **Starting another session.** If the previous meeting is still open with something of yours, Windows asks first —Save,
   Discard or Cancel— because saving for the first time creates your notes key and the deletion task. Closing the main

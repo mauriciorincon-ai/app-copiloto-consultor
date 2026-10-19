@@ -95,7 +95,8 @@ el sprint 013, ADR 023 enmienda 1) en el **Administrador de credenciales** de Wi
 | `desbloqueo.rs`             | Touch ID o contraseña para abrir notas               | **S8 (hecho)**: Windows Hello (`desbloqueo/windows.rs`)                                                  |
 | `llavero.rs`                | el Llavero                                           | **S6**: Administrador de credenciales (§6)                                                              |
 | `sintesis/api.rs`           | el POST al proveedor externo por `Red.swift`         | **S8 (hecho)**, **retirada en el S13**: la segunda puerta Rust, `ureq` (ADR 023, enmienda 1); en Windows ya no hay API                                                 |
-| `sintesis/sistema.rs`       | Apple Foundation Models                              | **no en Windows** por ahora: sin modelo del sistema; la ficha sigue siendo la respuesta                 |
+| `sintesis/sistema.rs`       | Apple Foundation Models                              | **no en Windows**: no hay modelo del sistema                                                            |
+| `sintesis/local.rs`         | (no existe en el Mac)                                | **S14 (hecho)**: el modelo local con llama.cpp dentro del proceso, sin red (ADR 023, enmienda 2); la ficha sigue siendo el respaldo |
 | `capture/mod.rs`            | micrófono y audio del sistema (CoreAudio)            | **S6** el micrófono (`capture/windows.rs`, cpal/WASAPI) · **S7 (hecho)** el audio del sistema (loopback) |
 | `sesion/mod.rs`             | qué reunión hay y su ventana                         | **S7 (hecho)**: `sesion/windows.rs` y `data/clientes-windows.json`                                      |
 | `acople/mod.rs`             | hacerle sitio a la banda en la reunión               | **S8 (hecho)**: `acople/windows.rs` (`SetWindowPos`, el marco de DWM), la misma maniobra                 |
@@ -246,13 +247,13 @@ desaparece de `plataforma.rs`: no queda ninguna.
 6. **La sugerencia** salió por la segunda puerta Rust del sprint 8 al 12 (ADR 023). El modelo del sistema no existe en Windows:
    la sugerencia era «sí, con el API y tu clave», y sin API la ficha seguía siendo la respuesta. **Desde el sprint 013 es «no en
    Windows por ahora»** (ADR 023, enmienda 1): el API salió de Windows y el modelo local que se midió abre una conexión de
-   telemetría a Microsoft.
+   telemetría a Microsoft. **Desde el sprint 014 vuelve a ser «sí»** con un modelo local propio —Qwen2.5-1.5B con llama.cpp, dentro del proceso, que instalas tú—, sin API y sin ninguna conexión (ADR 023, enmienda 2).
 7. **El mínimo de Windows es 10 versión 2004** (compilación 19041), la primera que sabe sacar una ventana de la captura
    (`WDA_EXCLUDEFROMCAPTURE`). `ventana::abrir_banda` lo pregunta antes que nada (`RtlGetVersion`, que no miente aunque
    el programa no declare versión) y, en una anterior, la app no abre la banda y lo dice con un cuadro: una banda que se
    abre sin su protección es peor que una banda que no se abre.
 8. **La descarga del modelo tiene techos y freno**: 20 s para conectar, 60 s para la primera respuesta, 3 h para el
-   cuerpo (alcanza para 1,6 GB a 1,5 Mbit/s), y se corta sola, borrando el parcial, si empieza una reunión, una sesión
+   cuerpo de cada tramo (alcanza para 1,6 GB a 1,5 Mbit/s; desde el sprint 014 una descarga cortada retoma desde el último byte, hasta 5 tramos), y se corta sola, borrando el parcial, si empieza una reunión, una sesión
    o un ensayo mientras baja. Se baja de una revisión fija del repositorio de modelos, no de `main`.
 
 ## Enmienda 3 · Windows ARM64 nativo (sprint 009, 2026-10-17)

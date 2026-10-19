@@ -108,9 +108,15 @@ Lo que enseñó, y lo que se pagó:
 - **IA y la banda pintaban el logotipo de Apple en Windows** junto a «en tu PC» y «en uso» (el icono `i-mac`, que el Mac
   usa para el modelo del sistema): ningún test miraba iconos. Con el modelo local pintan un candado; un test del IA de
   Windows exige que no salga `#i-mac` (rojo antes, verde después).
-- **Una versión anterior del guion** (con Playwright, que se rompe con los *shared workers* de la sesión) contó 2 a 5
-  conexiones del árbol de WebView2 fuera del bucle local ya con la app recién abierta y el modelo sin cargar; no son del
-  proceso de Rust ni del modelo, y no se pudo atribuir porque el guion cambió. El definitivo (CDP directo) midió **0** en el
-  árbol entero, en las cinco fases.
+- **El árbol de WebView2 sí tiene conexiones, y no son del modelo** (auditoría M-5). Medido en dos arranques en frío
+  (sin sesión ni modelo, 60 s en reposo, 18 muestras cada uno): el proceso de Rust (`app-copiloto-consultor.exe`) tiene
+  **0** sockets; los procesos `msedgewebview2.exe` que cuelgan de la app (`--webview-exe-name=app-copiloto-consultor.exe`,
+  su carpeta `EBWebView`) mantienen **3** conexiones TCP establecidas a Microsoft (puerto 443; 150.171.x.x y 52.96.x.x), las
+  mismas en los dos arranques: el proceso del navegador y su servicio de red, el motor de Microsoft Edge que Tauri usa para
+  pintar la ventana. Es anterior al S14 y el modelo no lo cambia (está igual con el modelo sin cargar). La corrida de la
+  sesión había dicho 0 porque miró cinco instantes y esas conexiones son intermitentes: queda corregida. Una prueba con
+  flags de WebView2 (`--disable-background-networking --disable-component-update --disable-sync …`) bajó de 2 a 1; no se
+  aplicó, porque cambiar el motor de la ventana es una decisión del usuario sobre el producto. Honestidad cuenta lo que
+  sale por la app (0 B), no lo que hace Edge, y hoy ningún documento lo dice; qué llevan esas conexiones no se ha mirado.
 
 No cubre: una videollamada real con auriculares (w26 de la guía) ni la voz de una persona; viaja al gate del hito.
