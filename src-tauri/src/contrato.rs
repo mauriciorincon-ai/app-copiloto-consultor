@@ -1060,7 +1060,7 @@ pub fn muestras() -> Vec<Muestra> {
             idiomas: vec![],
             motivo: Some(crate::stt::PorQueNoHayMotor::NoContesta),
         }),
-        // Sprint 006 (ADR 022): lo que la app hace en este equipo. En Windows, las 15 funciones y whisper medido.
+        // Sprint 006 (ADR 022): lo que la app hace en este equipo. En Windows, las 15 funciones (14 «sí» y la sugerencia redactada en «no por ahora») y whisper medido.
         m("PLATAFORMA_WINDOWS", "Plataforma", "./plataforma", &Plataforma::de(
             Sistema::Windows,
             Some(Transcripcion {

@@ -189,7 +189,7 @@ mod pruebas {
         }
     }
 
-    /// En macOS no cruza ninguna lista de Windows ni nada de whisper; en Windows, las 15 y la transcripción. Desde
+    /// En macOS no cruza ninguna lista de Windows ni nada de whisper; en Windows, las 15 (14 «sí» y 1 «no por ahora») y la transcripción. Desde
     /// el sprint 013 la única «no por ahora» es la sugerencia redactada: las otras 14 están.
     #[test]
     fn cada_sistema_cruza_lo_suyo() {

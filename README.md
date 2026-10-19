@@ -135,8 +135,8 @@ bank".
 dress rehearsal: a single human gate (about 20 min on the Mac and 20 min on the Windows PC). Along the way: sprint 004 added the rehearsal and the band at the top, next to
 the camera; sprint 005, the in-person mode (the room through the Mac's microphone, with no system audio and no screen);
 and sprints 006 to 008, the app on Windows (ADR 022: protected band, microphone, whisper transcription, encrypted notes,
-the video call on that same PC, docking, the suggestion through the API, the radar, Windows Hello and deletion with the
-app closed, and from sprint 012 the local door for Claude Code and the transparent mode; the unsigned installer comes
+the video call on that same PC, docking, the radar, Windows Hello and deletion with the
+app closed, and from sprint 012 the local door for Claude Code and the transparent mode, while the drafted suggestion is “not for now” since sprint 013 (the API left Windows); the unsigned installer comes
 from CI). Today it is built from this repo (macOS 26+ or Windows 10 2004+,
 `pnpm install && pnpm tauri dev`); a signed build comes later. The app's interface is in Spanish and English; the
 documents in this repo (manual, test guide, decisions) are in Spanish, and the manual also has an English edition.

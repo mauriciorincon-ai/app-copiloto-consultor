@@ -16,8 +16,8 @@ import AxeBuilder from "@axe-core/playwright";
  * teclas de Windows en vez de `⌃⌥`.
  *
  * Sprint 008: Windows completo. «Todavía no» desaparece: el acople, la sugerencia, el radar, el borrado con la app
- * cerrada y el desbloqueo pasan a «Ya funciona»; la IA dice que en Windows no hay modelo del sistema; el radar pinta su
- * tecla de Windows.
+ * cerrada y el desbloqueo pasan a «Ya funciona» (la sugerencia, hasta el sprint 013, que la dejó en «no por ahora»); la IA dice, desde el 013, «Modelo local:
+ * no por ahora» y no ofrece API; el radar pinta su tecla de Windows.
  */
 
 // La app elige el idioma por el del navegador (src/App.tsx): estos textos se leen en español.

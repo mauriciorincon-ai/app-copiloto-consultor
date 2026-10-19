@@ -87,7 +87,7 @@
           {
             "id": "E3",
             "nombre": "La sugerencia: qué decir, con su fuente",
-            "que_hace": "Debajo de la ficha propone qué decir en una frase: la redacta el modelo de tu Mac o, si lo enciendes con tu clave, Claude o Groq; en Windows, siempre el API que elijas. Dice dónde se redactó y con qué confianza, y se descarta sola si afirma algo que su ficha no dice.",
+            "que_hace": "Debajo de la ficha propone qué decir en una frase: la redacta el modelo de tu Mac o, si lo enciendes con tu clave, Claude o Groq; en Windows queda «no por ahora» y la ficha es la respuesta. Dice dónde se redactó y con qué confianza, y se descarta sola si afirma algo que su ficha no dice.",
             "seccion_manual": "La sugerencia: qué decir, con su fuente"
           },
           {

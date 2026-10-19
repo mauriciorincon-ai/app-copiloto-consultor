@@ -102,7 +102,7 @@ Before the meeting, the app asks you the questions that client will probably ask
 
 ## The drafted suggestion: not for now
 
-The drafted suggestion is **not on Windows for now**. There is no system model, the paid API is gone from this version, and the local model measured on an ARM64 Surface (Foundry Local, on the CPU) fits the time —median 2.1 s, p95 2.3 s, ceiling 6 s— but opens a telemetry connection to Microsoft even when switched off, and that would break Honesty’s “0 B”. **The card is still the answer**, with its exact source. In **AI** the “Local model” row says “not for now”, there is no provider, key or cost, and “Draft suggestions” stays off. If you stored a Groq or Claude key before, it is still in Credential Manager and the app does not read it: delete it yourself in **Control Panel → Credential Manager → Windows Credentials → “Angel Ghost · API”**.
+The drafted suggestion is **not on Windows for now**. There is no system model, the paid API is gone from this version, and the local model measured on an ARM64 Surface (Foundry Local, on the CPU) fits the time —median 2.1 s, p95 2.3 s, ceiling 6 s— but opens a telemetry connection to Microsoft even when switched off, and that would break Honesty’s “0 B”. **The card is still the answer**, with its exact source. In **AI** the “Local model” row says “not for now”, there is no provider, key or cost, and “Draft suggestions” stays off. If you stored a Groq or Claude key before, it is still in Credential Manager and the app does not read it: delete it yourself in **Control Panel → Credential Manager → Windows Credentials → “Angel Ghost · API / claude” or “Angel Ghost · API / groq”**.
 
 ## The radar
 
@@ -148,7 +148,7 @@ Some clients and jurisdictions ask to know that you use a tool that listens to t
 
 ## The 30 features of the vision, on Windows
 
-Each row says what state it has on Windows and which “On Windows today” key covers it. **done** = built and checked end to end on a Windows PC; **done, unverified** = built and tested in the continuous integration, but what needs a real video call, your microphone or your Windows user in front has not been run by anyone on your PC yet; **discarded for Windows** = it was decided on 2026-10-18 not to build it for the complete Windows product, with its name and its reason.
+Each row says what state it has on Windows and which “On Windows today” key covers it. **done** = built and checked end to end on a Windows PC; **done, unverified** = built and tested in the continuous integration, but what needs a real video call, your microphone or your Windows user in front has not been run by anyone on your PC yet; **discarded for Windows** = it was decided on 2026-10-18 not to build it for the complete Windows product, with its name and its reason; **not for now** = measured and postponed (sprint 013): it does not ship in this version, with its figure and its reason, and it comes back when there is a way.
 
 | N   | Feature                                                                  | Key                                                            | State                 | What is missing or why                                                                                                |
 | --- | ------------------------------------------------------------------------ | -------------------------------------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------- |
