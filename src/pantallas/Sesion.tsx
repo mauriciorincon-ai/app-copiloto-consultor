@@ -38,6 +38,7 @@ import { invasivos, useRadarDeTuMac, type EnTuMac } from "../radar";
 import { estadoDelModelo, motivo } from "./Idioma";
 import { useTextosDePresencial } from "../i18n/presencial-nuevo";
 import { esWindows, usePlataforma } from "../plataforma";
+import { useAntesDeEmpezar } from "../reunionAnterior";
 import {
   asentarDesplazamiento,
   bandaCerradaDesdeLaUrl,
@@ -97,6 +98,10 @@ export function Sesion({
   const pedido = estadoDeSesion(busqueda);
   const muestra = useMemo(() => muestraDelCliente(pedido), [pedido]);
   const [vista, setVista] = useEsteCliente(muestra);
+  // **Antes de empezar otra sesión** (sprint 013, decisión 2a): en Windows, si la reunión anterior sigue abierta con algo
+  // tuyo, se pregunta «Guardar · Descartar · Cancelar» antes de tocar la llave de notas ni la tarea de borrado. En el Mac
+  // y fuera de Tauri `antes` empieza directo y el cuadro no existe.
+  const { antes, cuadro } = useAntesDeEmpezar();
   // El modo transparente (sprint 012, ADR 024): solo Windows, y solo con un cliente elegido. En el Mac, ni una fila.
   const [plataforma] = usePlataforma();
   const transparente =
@@ -163,10 +168,13 @@ export function Sesion({
   ) : null;
 
   const titulo = (
-    <div className="titulo">
-      <h1>{t.sesionTitulo}</h1>
-      <p className="sub">{t.sesionSub}</p>
-    </div>
+    <>
+      <div className="titulo">
+        <h1>{t.sesionTitulo}</h1>
+        <p className="sub">{t.sesionSub}</p>
+      </div>
+      {cuadro}
+    </>
   );
 
   // «Revisar» abre la pregunta; si ya había respuesta, se borra primero (ADR 017 §4).
@@ -192,7 +200,7 @@ export function Sesion({
             // **Con «presencial» elegido, «Iniciar de todos modos» no empieza una reunión** (auditoría del S5, M4):
             // abriría el audio del sistema y la pantalla que ese modo promete no abrir. Vuelve a la vista de la sala,
             // donde se pulsa «Empezar en presencial».
-            if (modo !== "presencial") empezarAEscuchar();
+            if (modo !== "presencial") antes(empezarAEscuchar);
           }}
           noIniciar={() => setVisto(clave)}
         />
@@ -225,7 +233,7 @@ export function Sesion({
     return (
       <>
         {titulo}
-        <LaNdaLoProhibe iniciar={() => void empezarSoloNotas()} revisar={revisar} />
+        <LaNdaLoProhibe iniciar={() => antes(empezarSoloNotas)} revisar={revisar} />
       </>
     );
   }
@@ -240,6 +248,7 @@ export function Sesion({
           salida={salida}
           bytes={bytes}
           volver={() => setModo("reunion")}
+          antes={antes}
           ensayoSinGuardar={ensayoSinGuardar}
           vigilancia={vigilado ? <LaVigilancia radar={radar} /> : null}
           filaMdm={filaMdm}
@@ -345,11 +354,11 @@ export function Sesion({
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             <div className="fila">
-              <button className="btn primario" onClick={() => empezarAEscuchar()}>
+              <button className="btn primario" onClick={() => antes(empezarAEscuchar)}>
                 <Ic id="i-voz" s />
                 <span>{t.iniciarSesion}</span>
               </button>
-              <button className="btn" onClick={() => void empezarSoloNotas()}>
+              <button className="btn" onClick={() => antes(empezarSoloNotas)}>
                 <Ic id="i-nota" s />
                 <span>{tc.soloNotas}</span>
               </button>
@@ -516,6 +525,7 @@ function EnPresencial({
   volver,
   cliente,
   accion,
+  antes,
   ensayoSinGuardar,
   vigilancia,
   filaMdm,
@@ -533,6 +543,8 @@ function EnPresencial({
   cliente: React.ReactNode;
   /** Lo que ocupa la fila de la acción mientras se contesta la NDA; `null`, los botones. */
   accion: React.ReactNode;
+  /** Empieza lo que pidas, o en Windows pregunta primero por la reunión anterior (sprint 013, decisión 2a). */
+  antes: (accion: () => unknown) => void;
   ensayoSinGuardar: boolean;
 }) {
   const t = useT().cuaderno;
@@ -764,13 +776,13 @@ function EnPresencial({
               className="btn primario"
               onClick={() => {
                 setPedidaAlOido(alOido);
-                void empezarPresencial(alOido);
+                antes(() => empezarPresencial(alOido));
               }}
             >
               <Ic id="i-mic" s />
               <span>{tp.empezar}</span>
             </button>
-            <button className="btn" onClick={() => void empezarSoloNotas()}>
+            <button className="btn" onClick={() => antes(empezarSoloNotas)}>
               <Ic id="i-nota" s />
               <span>{tc.soloNotas}</span>
             </button>

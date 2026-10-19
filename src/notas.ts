@@ -345,6 +345,14 @@ export function conservarMisTurnos(si: boolean): Promise<boolean> {
   return llamar("conservar_mis_turnos", { si });
 }
 
+/**
+ * **¿La reunión anterior pide que decidas?** (sprint 013, decisión 2a). Solo pregunta: no guarda, no descarta, no toca
+ * ninguna protección. Windows lo pregunta antes de empezar otra sesión (`reunionAnterior.tsx`); fuera de Tauri, `null`.
+ */
+export function reunionPorDecidir(): Promise<boolean | null> {
+  return preguntar<boolean>("reunion_por_decidir");
+}
+
 /** «Guardar cifrado y cerrar». Rechaza con el motivo si no se pudo: la nota se queda. No devuelve lo
  *  guardado: nadie lo leía (auditoría del S3, B13). */
 export function guardarLaReunion(): Promise<null> {

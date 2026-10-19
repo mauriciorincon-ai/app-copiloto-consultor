@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-reunion-por-decidir"
+description = "Enables the reunion_por_decidir command without any pre-configured scope."
+commands.allow = ["reunion_por_decidir"]
+
+[[permission]]
+identifier = "deny-reunion-por-decidir"
+description = "Denies the reunion_por_decidir command without any pre-configured scope."
+commands.deny = ["reunion_por_decidir"]

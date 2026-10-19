@@ -19,8 +19,8 @@ pub enum Sistema {
 }
 
 /// Si una función está en Windows. Desde el sprint 008 («Windows completo») no queda ninguna «todavía no»: o está,
-/// con lo que diga su frase, o no está planeada. Desde el sprint 012 están las 15; `NoPorAhora` queda para la que un
-/// día no esté, y Honestidad sigue sabiendo pintarla.
+/// con lo que diga su frase, o no está planeada. Desde el sprint 012 estaban las 15; en el sprint 013 la sugerencia
+/// redactada pasó a `NoPorAhora` (ADR 023, enmienda 1) y Honestidad la pinta con su motivo.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Cuando {
@@ -49,7 +49,9 @@ pub const EN_WINDOWS: [Funcion; 15] = [
     Funcion { clave: "voz-al-oido", cuando: Cuando::Si },
     Funcion { clave: "acople", cuando: Cuando::Si },
     Funcion { clave: "ensayo", cuando: Cuando::Si },
-    Funcion { clave: "sugerencia", cuando: Cuando::Si },
+    // Sprint 013 (ADR 023, enmienda 1): el API salió de Windows y el modelo local que se midió abre una conexión de
+    // telemetría a Microsoft. Sin modelo que no salga a la red, la sugerencia redactada queda «no por ahora».
+    Funcion { clave: "sugerencia", cuando: Cuando::NoPorAhora },
     Funcion { clave: "radar", cuando: Cuando::Si },
     Funcion { clave: "atajos", cuando: Cuando::Si },
     Funcion { clave: "borrado-con-la-app-cerrada", cuando: Cuando::Si },
@@ -188,18 +190,16 @@ mod pruebas {
     }
 
     /// En macOS no cruza ninguna lista de Windows ni nada de whisper; en Windows, las 15 y la transcripción. Desde
-    /// el sprint 012 están las 15: la puerta local era la única «no por ahora».
+    /// el sprint 013 la única «no por ahora» es la sugerencia redactada: las otras 14 están.
     #[test]
     fn cada_sistema_cruza_lo_suyo() {
         let mac = Plataforma::de(Sistema::Macos, None);
         assert!(mac.funciones.is_empty());
         let win = Plataforma::de(Sistema::Windows, Some(la_transcripcion()));
         assert_eq!(win.funciones.len(), 15);
-        assert_eq!(win.funciones.iter().filter(|f| f.cuando == Cuando::Si).count(), 15);
-        assert!(
-            win.funciones.iter().all(|f| f.cuando != Cuando::NoPorAhora),
-            "queda una función «no en Windows por ahora»"
-        );
+        assert_eq!(win.funciones.iter().filter(|f| f.cuando == Cuando::Si).count(), 14);
+        let no_por_ahora: Vec<&str> = win.funciones.iter().filter(|f| f.cuando == Cuando::NoPorAhora).map(|f| f.clave).collect();
+        assert_eq!(no_por_ahora, ["sugerencia"], "la única «no en Windows por ahora» es la sugerencia redactada");
         assert_eq!(win.transcripcion.unwrap().techo_ms, 4_000);
         let aqui = de_este_equipo();
         assert_eq!(aqui.sistema == Sistema::Windows, cfg!(windows));

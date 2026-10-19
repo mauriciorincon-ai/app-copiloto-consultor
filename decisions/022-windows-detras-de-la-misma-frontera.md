@@ -134,7 +134,7 @@ La misma lista vive en `src-tauri/src/plataforma.rs`, en Honestidad y en el manu
 | `voz-al-oido` | sí, con auriculares: la voz del sistema; por altavoces no habla |
 | `acople` | sí: la ventana de la reunión baja y se encoge, y vuelve al cerrar; sin permiso que conceder |
 | `ensayo` | sí: la voz del sistema lee las preguntas |
-| `sugerencia` | sí, con el API y tu clave: en Windows no hay modelo del sistema |
+| `sugerencia` | no en Windows por ahora: el modelo local que se midió abre una conexión de telemetría a Microsoft y el API de pago salió de Windows; la ficha sigue siendo la respuesta |
 | `radar` | sí: los programas de este PC que te miran, con su catálogo de Windows, y si está gestionado (MDM) |
 | `atajos` | sí: Alt+Mayús y una tecla (tabla de la enmienda 1); ninguno con Ctrl+Alt, que en muchos teclados es AltGr |
 | `borrado-con-la-app-cerrada` | sí: el Programador de tareas, al minuto de cada vencimiento |
@@ -243,7 +243,9 @@ desaparece de `plataforma.rs`: no queda ninguna.
    fijadas a un commit, con su nota cuando la fuente es débil. Fuera, sin fuente pública: Inspera, Hubstaff y DeskTime.
    `radar-solo-este-mac` deja pasar esas dos lecturas y ninguna otra de Windows.
 6. **La sugerencia** sale por la segunda puerta Rust (ADR 023). El modelo del sistema sigue sin existir en Windows: la
-   sugerencia es «sí, con el API y tu clave», y sin API la ficha sigue siendo la respuesta.
+   sugerencia era «sí, con el API y tu clave», y sin API la ficha seguía siendo la respuesta. **Desde el sprint 013 es «no en
+   Windows por ahora»** (ADR 023, enmienda 1): el API salió de Windows y el modelo local que se midió abre una conexión de
+   telemetría a Microsoft.
 7. **El mínimo de Windows es 10 versión 2004** (compilación 19041), la primera que sabe sacar una ventana de la captura
    (`WDA_EXCLUDEFROMCAPTURE`). `ventana::abrir_banda` lo pregunta antes que nada (`RtlGetVersion`, que no miente aunque
    el programa no declare versión) y, en una anterior, la app no abre la banda y lo dice con un cuadro: una banda que se

@@ -938,7 +938,7 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
 | `voz-al-oido` | sí, con auriculares; por altavoces no habla |
 | `acople` | sí: la ventana de la reunión baja y se encoge, y vuelve al cerrar; sin permiso que conceder |
 | `ensayo` | sí: la voz del sistema lee las preguntas |
-| `sugerencia` | sí, con el API y tu clave: en Windows no hay modelo del sistema |
+| `sugerencia` | no en Windows por ahora: el modelo local que se midió abre una conexión de telemetría a Microsoft y el API de pago salió de Windows; la ficha sigue siendo la respuesta |
 | `radar` | sí: los programas de este PC que te miran, y si está gestionado (MDM) |
 | `atajos` | sí: Alt+Mayús y una tecla; ninguno con Ctrl+Alt, que en muchos teclados es AltGr |
 | `borrado-con-la-app-cerrada` | sí: el Programador de tareas, al minuto de cada vencimiento |

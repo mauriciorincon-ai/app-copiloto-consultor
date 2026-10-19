@@ -2039,6 +2039,7 @@ pub fn run() {
             fijar_idioma_de_pista,
             lo_que_salio_al_api,
             cuaderno_de_la_reunion,
+            reunion_por_decidir,
             escribir_nota,
             anotar_acuerdo,
             conservar_mis_turnos,
@@ -3709,6 +3710,13 @@ fn anotar_acuerdo(app: tauri::AppHandle, texto: String) -> bool {
 fn conservar_mis_turnos(app: tauri::AppHandle, si: bool) {
     let el_modo_lo_deja = modo_de_la_sesion(&app).is_none_or(|m| modo::que_abre(m).tus_turnos);
     reunion::conservar_mis_turnos(&app, si, el_modo_lo_deja);
+}
+
+/// **¿La reunión anterior pide que decidas?** Solo pregunta, sin efectos (sprint 013, decisión 2a): Windows enseña
+/// «Guardar · Descartar · Cancelar» antes de empezar otra sesión; el Mac sigue guardando solo, como siempre.
+#[tauri::command]
+fn reunion_por_decidir(app: tauri::AppHandle) -> bool {
+    reunion::pide_decidir(&app)
 }
 
 /// «Guardar cifrado y cerrar». No devuelve lo guardado: la pantalla no lo leía (auditoría del S3, B13;

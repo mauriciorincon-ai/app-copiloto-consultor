@@ -934,7 +934,7 @@ It is not a new feature but the same app on another system, which is why it sits
 | `voz-al-oido`                | yes, with headphones; it does not speak through speakers                                                                |
 | `acople`                     | yes: the meeting window moves down and shrinks, and returns on close; no permission to grant                            |
 | `ensayo`                     | yes: the system voice reads the questions                                                                               |
-| `sugerencia`                 | yes, with the API and your key: Windows has no system model                                                             |
+| `sugerencia`                 | not on Windows for now: the local model we measured opens a telemetry connection to Microsoft and the paid API is gone from Windows; the card is still the answer |
 | `radar`                      | yes: the programs on this PC that watch you, and whether it is managed (MDM)                                            |
 | `atajos`                     | yes: Alt+Shift and a key; none with Ctrl+Alt, which on many keyboards is AltGr                                          |
 | `borrado-con-la-app-cerrada` | yes: the Task Scheduler, at the minute of each expiry                                                                   |

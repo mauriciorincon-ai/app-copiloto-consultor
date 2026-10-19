@@ -487,6 +487,22 @@ export const ESTADO_DE_LA_IA_CON_API: EstadoDeLaIa = {
     "topeUsd": 10.0
   };
 
+export const ESTADO_DE_LA_IA_EN_WINDOWS: EstadoDeLaIa = {
+    "api": {
+      "encendida": false,
+      "externo": "groq",
+      "hayClave": false
+    },
+    "enriquecer": true,
+    "latenciaMs": null,
+    "mesUsd": 0.0,
+    "quien": null,
+    "redactar": true,
+    "reunionUsd": 0.0,
+    "sistema": "sin-puente",
+    "topeUsd": 10.0
+  };
+
 export const POR_QUE_NO_REDACTA_APAGADO: PorQueNoRedacta = "apple-intelligence-apagado";
 
 export const POR_QUE_NO_REDACTA_NO_COMPATIBLE: PorQueNoRedacta = "mac-no-compatible";
@@ -1787,7 +1803,7 @@ export const PLATAFORMA_WINDOWS: Plataforma = {
       },
       {
         "clave": "sugerencia",
-        "cuando": "si"
+        "cuando": "no-por-ahora"
       },
       {
         "clave": "radar",
@@ -1935,7 +1951,7 @@ export const PLATAFORMA_WINDOWS_SIN_MODELO: Plataforma = {
       },
       {
         "clave": "sugerencia",
-        "cuando": "si"
+        "cuando": "no-por-ahora"
       },
       {
         "clave": "radar",
