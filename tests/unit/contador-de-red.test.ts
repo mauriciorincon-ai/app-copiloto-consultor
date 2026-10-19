@@ -66,23 +66,11 @@ const SOCKETS_RUST: [RegExp, string][] = [
   // Por `libc`, que el crate ya usa para hablar con el núcleo. Faltaba y se vio en la fase 4 del
   // sprint 002: con un `libc::socket` plantado en el radar este gate seguía en verde. Es la puerta
   // de más abajo de todas, y la que no necesita ninguna dependencia nueva para abrirse.
-  [
-    /\blibc::(socket|connect|sendto|sendmsg|getaddrinfo|gethostbyname)\b/,
-    "libc (socket, connect, DNS)",
-  ],
+  [/\blibc::(socket|connect|sendto|sendmsg|getaddrinfo|gethostbyname)\b/, "libc (socket, connect, DNS)"],
 ];
 
 /** Clientes HTTP y de red que no pueden aparecer como dependencia directa. */
-const CLIENTES = [
-  "reqwest",
-  "ureq",
-  "hyper",
-  "isahc",
-  "surf",
-  "curl",
-  "socket2",
-  "tungstenite",
-];
+const CLIENTES = ["reqwest", "ureq", "hyper", "isahc", "surf", "curl", "socket2", "tungstenite"];
 
 /** Formas de salir a la red desde el webview. */
 const SALIDAS_WEB: [RegExp, string][] = [
@@ -132,19 +120,13 @@ const PUERTAS_DECLARADAS = 3;
  * Windows. No se afloja nada: el resto de Rust sigue sin poder abrir un socket, y una línea de red más —en ese
  * archivo o en otro, `sintesis/api.rs` incluido— es rojo.
  */
-const PUERTAS_RUST: [string, number][] = [
-  ["src-tauri/src/modelo_whisper.rs", 1],
-];
+const PUERTAS_RUST: [string, number][] = [["src-tauri/src/modelo_whisper.rs", 1]];
 /** El único cliente de red que puede declararse, y solo en esta sección de `Cargo.toml`. */
-const CLIENTE_PERMITIDO = {
-  nombre: "ureq",
-  seccion: "[target.'cfg(windows)'.dependencies]",
-};
+const CLIENTE_PERMITIDO = { nombre: "ureq", seccion: "[target.'cfg(windows)'.dependencies]" };
 
 function archivos(ruta: string, ext: string[]): string[] {
   if (!existsSync(ruta)) return [];
-  if (statSync(ruta).isFile())
-    return ext.some((e) => ruta.endsWith(e)) ? [ruta] : [];
+  if (statSync(ruta).isFile()) return ext.some((e) => ruta.endsWith(e)) ? [ruta] : [];
   return readdirSync(ruta).flatMap((n) => archivos(join(ruta, n), ext));
 }
 
@@ -157,9 +139,7 @@ function barrer(rutas: string[], patrones: [RegExp, string][]): string[] {
         if (linea.includes(CITA)) return;
         for (const [re, nombre] of patrones) {
           if (re.test(linea)) {
-            hallazgos.push(
-              `${f}:${i + 1}  ${nombre}  ${linea.trim().slice(0, 90)}`,
-            );
+            hallazgos.push(`${f}:${i + 1}  ${nombre}  ${linea.trim().slice(0, 90)}`);
           }
         }
       });
@@ -185,13 +165,7 @@ describe("contador de red: la única puerta que hay está declarada y contada", 
     }
     const culpables = declaradas
       .filter((d) => CLIENTES.includes(d.nombre))
-      .filter(
-        (d) =>
-          !(
-            d.nombre === CLIENTE_PERMITIDO.nombre &&
-            d.seccion === CLIENTE_PERMITIDO.seccion
-          ),
-      )
+      .filter((d) => !(d.nombre === CLIENTE_PERMITIDO.nombre && d.seccion === CLIENTE_PERMITIDO.seccion))
       .map((d) => `${d.nombre} en ${d.seccion || "(sin sección)"}`);
     expect(
       culpables,
@@ -207,28 +181,12 @@ describe("contador de red: la única puerta que hay está declarada y contada", 
    */
   it("ninguna feature de windows o windows-sys trae red (B11 del S6)", () => {
     const manifiesto = readFileSync(CARGO, "utf8");
-    const bloques = [
-      ...manifiesto.matchAll(
-        /^(windows(?:-sys)?)\s*=\s*\{[^}]*features\s*=\s*\[([^\]]*)\]/gms,
-      ),
-    ];
-    expect(
-      bloques.map((b) => b[1]).sort(),
-      "no encontré las dos crates de Windows en Cargo.toml",
-    ).toEqual(["windows", "windows-sys"]);
-    const features = bloques.flatMap((b) =>
-      [...b[2].matchAll(/"([^"]+)"/g)].map((m) => `${b[1]}:${m[1]}`),
-    );
-    expect(
-      features.length,
-      "no leí ninguna feature: el lector se rompió",
-    ).toBeGreaterThan(10);
-    const CON_RED =
-      /:(Win32_Networking|Networking|Web(_|$)|Win32_NetworkManagement|Win32_Security_Authentication)/;
-    expect(
-      features.filter((f) => CON_RED.test(f)),
-      "features de Windows con red: necesitan ADR antes de entrar",
-    ).toEqual([]);
+    const bloques = [...manifiesto.matchAll(/^(windows(?:-sys)?)\s*=\s*\{[^}]*features\s*=\s*\[([^\]]*)\]/gms)];
+    expect(bloques.map((b) => b[1]).sort(), "no encontré las dos crates de Windows en Cargo.toml").toEqual(["windows", "windows-sys"]);
+    const features = bloques.flatMap((b) => [...b[2].matchAll(/"([^"]+)"/g)].map((m) => `${b[1]}:${m[1]}`));
+    expect(features.length, "no leí ninguna feature: el lector se rompió").toBeGreaterThan(10);
+    const CON_RED = /:(Win32_Networking|Networking|Web(_|$)|Win32_NetworkManagement|Win32_Security_Authentication)/;
+    expect(features.filter((f) => CON_RED.test(f)), "features de Windows con red: necesitan ADR antes de entrar").toEqual([]);
   });
 
   it("ningún archivo de Rust abre un socket, salvo las puertas declaradas (ADR 022 §4, ADR 023)", () => {
@@ -238,19 +196,12 @@ describe("contador de red: la única puerta que hay está declarada y contada", 
       const puerta = PUERTAS_RUST.find(([f]) => h.startsWith(`${f}:`));
       if (!puerta) return false;
       const n = Number(h.slice(puerta[0].length + 1).split(" ")[0]);
-      return DECLARADA.test(
-        readFileSync(puerta[0], "utf8").split("\n")[n - 1] ?? "",
-      );
+      return DECLARADA.test(readFileSync(puerta[0], "utf8").split("\n")[n - 1] ?? "");
     };
     const sinDeclarar = hallazgos.filter((h) => !declarada(h));
-    expect(
-      sinDeclarar,
-      `salidas a la red en Rust:\n${sinDeclarar.join("\n")}`,
-    ).toEqual([]);
+    expect(sinDeclarar, `salidas a la red en Rust:\n${sinDeclarar.join("\n")}`).toEqual([]);
     for (const [f, n] of PUERTAS_RUST) {
-      const suyas = hallazgos.filter(
-        (h) => h.startsWith(`${f}:`) && declarada(h),
-      );
+      const suyas = hallazgos.filter((h) => h.startsWith(`${f}:`) && declarada(h));
       expect(
         suyas.length,
         `cambió el número de líneas de red de ${f} (ADR 022 §4, ADR 023):\n${suyas.join("\n")}`,
@@ -277,35 +228,25 @@ describe("contador de red: la única puerta que hay está declarada y contada", 
         .forEach((linea, i) => {
           const t = linea.trim();
           if (t.startsWith("//")) return;
-          for (const m of linea.matchAll(
-            /Command::new\(\s*("[^"]*"|[^)]*)\)/g,
-          )) {
+          for (const m of linea.matchAll(/Command::new\(\s*("[^"]*"|[^)]*)\)/g)) {
             const programa = m[1].replace(/"/g, "");
-            if (PERMITIDOS[f] !== programa)
-              lanzados.push(`${f}:${i + 1} lanza «${programa}»`);
+            if (PERMITIDOS[f] !== programa) lanzados.push(`${f}:${i + 1} lanza «${programa}»`);
           }
         });
     }
-    expect(
-      lanzados,
-      `programas lanzados fuera de la lista:\n${lanzados.join("\n")}`,
-    ).toEqual([]);
+    expect(lanzados, `programas lanzados fuera de la lista:\n${lanzados.join("\n")}`).toEqual([]);
   });
 
   it("ningún archivo del webview sale a la red", () => {
     const hallazgos = barrer(archivos(WEBVIEW, [".ts", ".tsx"]), SALIDAS_WEB);
-    expect(
-      hallazgos,
-      `salidas a la red en el webview:\n${hallazgos.join("\n")}`,
-    ).toEqual([]);
+    expect(hallazgos, `salidas a la red en el webview:\n${hallazgos.join("\n")}`).toEqual([]);
   });
 
   it("el puente nativo tiene EXACTAMENTE las puertas a la red que la app declara", () => {
     const swift = archivos(NATIVO, [".swift", ".m", ".mm"]);
-    expect(
-      swift.length,
-      `no se leyó nada de ${NATIVO}: este barrido no mide nada`,
-    ).toBeGreaterThan(0);
+    expect(swift.length, `no se leyó nada de ${NATIVO}: este barrido no mide nada`).toBeGreaterThan(
+      0,
+    );
 
     const sinDeclarar: string[] = [];
     let declaradas = 0;
@@ -345,10 +286,7 @@ describe("contador de red: la única puerta que hay está declarada y contada", 
   it("la puerta de la síntesis no deja caché en el disco", () => {
     const red = readFileSync(join(NATIVO, "Red.swift"), "utf8");
     const sesiones = red.split("\n").filter((l) => /\bURLSession\s*\(/.test(l));
-    expect(
-      sesiones.length,
-      "no se encontró la sesión: este test no mide nada",
-    ).toBe(1);
+    expect(sesiones.length, "no se encontró la sesión: este test no mide nada").toBe(1);
     expect(sesiones[0]).toMatch(/configuration:\s*\.ephemeral\b/);
   });
 
