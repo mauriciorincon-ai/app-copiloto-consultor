@@ -623,24 +623,23 @@ pub fn muestras() -> Vec<Muestra> {
             mes_usd: 0.84,
             tope_usd: 10.0,
         }),
-        // Sprint 013 (ADR 023, enmienda 1): IA en Windows. Sin API (`encendida` y `hay_clave` siempre falsos, aunque haya una
-        // clave vieja en el Administrador de credenciales) y sin modelo local: nadie redacta, con el motivo de siempre. La
-        // preferencia «redactar» puede venir recordada de antes; la pantalla la pinta apagada y bloqueada.
-        m("ESTADO_DE_LA_IA_EN_WINDOWS", "EstadoDeLaIa", "./ia", &crate::EstadoDeLaIa {
-            redactar: true,
-            enriquecer: true,
-            quien: None,
-            sistema: Some(crate::sintesis::PorQueNoRedacta::SinPuente),
-            api: crate::EstadoDelApi {
-                encendida: false,
-                externo: crate::sintesis::api::Externo::Groq,
-                hay_clave: false,
+        // Sprint 013 (ADR 023, enmienda 1): IA en Windows, **por la función de la app** (`estado_de`, auditoría M-2) y no escrita a
+        // mano: con todo recordado encendido de antes —el API, «redactar», «enriquecer»— el estado sale sin API (`encendida` y
+        // `hay_clave` falsos; la clave ni se pregunta) y sin nadie que redacte, con el motivo de siempre.
+        m("ESTADO_DE_LA_IA_EN_WINDOWS", "EstadoDeLaIa", "./ia", &crate::estado_de(
+            crate::sintesis::Plataforma::Windows,
+            false,
+            crate::Leido {
+                redactar: true,
+                enriquecer: true,
+                api: crate::ConfigDelApi { encendida: true, externo: crate::sintesis::api::Externo::Groq },
+                sistema: Some(crate::sintesis::PorQueNoRedacta::SinPuente),
+                mes_usd: 0.0,
+                reunion_usd: 0.0,
+                latencia_ms: None,
             },
-            latencia_ms: None,
-            reunion_usd: 0.0,
-            mes_usd: 0.0,
-            tope_usd: 10.0,
-        }),
+            |_| unreachable!("Windows no pregunta por la clave del API"),
+        )),
         // ---- el acople, que la banda dibuja en su cabecera --------------------------------
         // Cada motivo de «nadie redacta», uno por uno: son grafías kebab de varias palabras, y un
         // cambio de `rename_all` solo lo vería una muestra de CADA variante (auditoría del S2, B2).

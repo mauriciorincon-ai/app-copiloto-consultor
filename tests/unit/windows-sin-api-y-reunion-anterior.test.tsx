@@ -8,16 +8,20 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Cascara } from "@/App";
 import { SpriteIconos } from "@/componentes/Iconos";
+import { Ensayo } from "@/pantallas/Ensayo";
 import { Ia } from "@/pantallas/Ia";
 import { Sesion } from "@/pantallas/Sesion";
+import { CAMBIOS_DE_WINDOWS } from "@/i18n/windows-cambios";
 import { TEXTOS_DE_WINDOWS } from "@/i18n/windows";
 import { llamar, preguntar } from "@/puente";
 import {
+  EN_TU_MAC_VIGILADO,
   ESTADO_DE_LA_ESCUCHA,
   ESTADO_DE_LA_IA_CON_API,
   ESTADO_DE_LA_IA_EN_WINDOWS,
   LA_FRANJA_ARRIBA,
   PLATAFORMA_MACOS,
+  PREPARACION_DEL_ENSAYO,
   PLATAFORMA_WINDOWS,
   VISTA_DEL_CLIENTE,
 } from "@/contrato.generado";
@@ -49,10 +53,12 @@ vi.mock("@/puente", () => ({
   escuchar: vi.fn(() => () => {}),
   preguntar: vi.fn((comando: string) => {
     const r = respuestas.get(comando);
+    if (typeof r === "function") return (r as () => Promise<unknown>)();
     return r instanceof Error ? Promise.reject(r) : Promise.resolve(r ?? null);
   }),
   llamar: vi.fn((comando: string) => {
     const r = respuestas.get(comando);
+    if (typeof r === "function") return (r as () => Promise<unknown>)();
     return r instanceof Error ? Promise.reject(r) : Promise.resolve(true);
   }),
 }));
@@ -107,6 +113,15 @@ function conRust(plataforma: unknown, porDecidir: boolean | Error) {
   respuestas.set("plataforma_de_este_equipo", plataforma);
   respuestas.set("este_cliente", VISTA_DEL_CLIENTE);
   respuestas.set("reunion_por_decidir", porDecidir);
+}
+
+/** Una contestación de Rust que tarda: se resuelve cuando el test lo dice. */
+function diferida() {
+  let resolver!: (v: unknown) => void;
+  const promesa = new Promise<unknown>((r) => {
+    resolver = r;
+  });
+  return { promesa, resolver };
 }
 
 const clic = async (nombre: RegExp | string) => {
@@ -170,16 +185,26 @@ describe("IA en Windows: sin API, la sugerencia redactada es «no por ahora»", 
 
   it("«Redactar sugerencias» y «Enriquecer el banco» se ven apagados y bloqueados aunque Rust los recuerde encendidos", async () => {
     respuestas.set("plataforma_de_este_equipo", PLATAFORMA_WINDOWS);
-    respuestas.set("estado_de_la_ia", ESTADO_DE_LA_IA_EN_WINDOWS);
+    // Rust ya no lo manda encendido en Windows (`estado_de`); la pantalla se defiende aun así de un estado viejo.
     expect(
-      ESTADO_DE_LA_IA_EN_WINDOWS.redactar &&
+      ESTADO_DE_LA_IA_EN_WINDOWS.redactar ||
         ESTADO_DE_LA_IA_EN_WINDOWS.enriquecer,
-    ).toBe(true);
+    ).toBe(false);
+    respuestas.set("estado_de_la_ia", {
+      ...ESTADO_DE_LA_IA_EN_WINDOWS,
+      redactar: true,
+      enriquecer: true,
+    });
     await pinta(<Ia />);
     for (const nombre of [/Redactar sugerencias/, /Enriquecer el banco/]) {
       const interruptor = screen.getByRole("switch", { name: nombre });
       expect(interruptor).toHaveAttribute("aria-checked", "false");
       expect(interruptor).toHaveAttribute("aria-disabled", "true");
+      // Bloqueado se dice con texto y con motivo, no solo con menos color (regla 8; auditoría del S13, B-2).
+      expect(interruptor).toHaveTextContent("no por ahora");
+      expect(interruptor).toHaveAccessibleDescription(
+        /La sugerencia redactada no está en Windows por ahora|no hay modelo|conexión|Microsoft/i,
+      );
       await act(async () => {
         fireEvent.click(interruptor);
       });
@@ -225,6 +250,8 @@ describe("Sesión en Windows: antes de empezar otra, la reunión anterior decide
   /** Los cuatro caminos que empiezan una sesión, cada uno con su comando de Rust. */
   const CAMINOS: {
     nombre: string;
+    /** Lo que Rust diría para que este camino exista (el radar vio algo, la NDA lo prohíbe). */
+    preparar?: () => void;
     abrir: () => Promise<void>;
     comando: string;
   }[] = [
@@ -254,12 +281,29 @@ describe("Sesión en Windows: antes de empezar otra, la reunión anterior decide
       },
       comando: "empezar_solo_notas",
     },
+    {
+      nombre: "Iniciar de todos modos (el radar vio algo)",
+      preparar: () => respuestas.set("radar_de_tu_mac", EN_TU_MAC_VIGILADO),
+      abrir: () => clic(/Iniciar de todos modos/),
+      comando: "empezar_a_escuchar",
+    },
+    {
+      nombre: "Iniciar en modo solo notas (la NDA lo prohíbe)",
+      preparar: () =>
+        respuestas.set("este_cliente", {
+          ...VISTA_DEL_CLIENTE,
+          nda: "lo-prohibe",
+        }),
+      abrir: () => clic(/Iniciar en modo solo notas/),
+      comando: "empezar_solo_notas",
+    },
   ];
 
   it.each(CAMINOS)(
     "«$nombre» con la reunión anterior abierta: pregunta primero y no empieza nada",
-    async ({ abrir, comando }) => {
+    async ({ abrir, comando, preparar }) => {
       conRust(PLATAFORMA_WINDOWS, true);
+      preparar?.();
       await pinta(sesion());
       await abrir();
       const cuadro = screen.getByRole("alertdialog", { name: tw.titulo });
@@ -378,6 +422,13 @@ describe("Sesión en Windows: antes de empezar otra, la reunión anterior decide
     expect(pedidos("empezar_a_escuchar")).toHaveLength(1);
   });
 
+  it("el cuadro nombra las dos protecciones que Guardar toca, en los dos idiomas (regla 24)", () => {
+    expect(tw.detalle).toMatch(/Administrador de credenciales/);
+    expect(tw.detalle).toMatch(/Programador de tareas/);
+    expect(twEn.detalle).toMatch(/Credential Manager/);
+    expect(twEn.detalle).toMatch(/Task Scheduler/);
+  });
+
   it("los dos idiomas tienen el mismo cuadro, completo", () => {
     expect(Object.keys(tw).sort()).toEqual(Object.keys(twEn).sort());
     for (const idioma of ["es", "en"] as const) {
@@ -386,6 +437,154 @@ describe("Sesión en Windows: antes de empezar otra, la reunión anterior decide
       )) {
         expect(texto.trim(), `${idioma}.reunionAnterior.${clave}`).not.toBe("");
       }
+    }
+  });
+});
+
+describe("El cuadro, al detalle (auditoría del S13)", () => {
+  it("cambiar de modo con el cuadro abierto lo cierra y «Guardar» ya no arranca la sesión del primer clic (M-3)", async () => {
+    conRust(PLATAFORMA_WINDOWS, true);
+    await pinta(sesion());
+    await clic(/Iniciar sesión/);
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+    await clic(/Presencial/);
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    for (const comando of [
+      "empezar_a_escuchar",
+      "empezar_presencial",
+      "guardar_la_reunion",
+      "cerrar_sin_guardar",
+    ]) {
+      expect(pedidos(comando), comando).toEqual([]);
+    }
+  });
+
+  it("si cambias de modo mientras Rust contesta la pregunta, no aparece un cuadro de lo que ya no ves (M-3)", async () => {
+    conRust(PLATAFORMA_WINDOWS, true);
+    const d = diferida();
+    respuestas.set("reunion_por_decidir", () => d.promesa);
+    await pinta(sesion());
+    await clic(/Iniciar sesión/);
+    await clic(/Presencial/);
+    await act(async () => {
+      d.resolver(true);
+    });
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(pedidos("empezar_a_escuchar")).toEqual([]);
+  });
+
+  it("doble clic en Guardar: guarda una vez, empieza una vez, y los tres botones esperan (M-4)", async () => {
+    conRust(PLATAFORMA_WINDOWS, true);
+    const d = diferida();
+    respuestas.set("guardar_la_reunion", () => d.promesa);
+    await pinta(sesion());
+    await clic(/Iniciar sesión/);
+    const guardar = screen.getByRole("button", { name: tw.guardar });
+    await act(async () => {
+      fireEvent.click(guardar);
+      fireEvent.click(guardar);
+    });
+    expect(pedidos("guardar_la_reunion")).toHaveLength(1);
+    for (const boton of [tw.guardar, tw.descartar, tw.cancelar]) {
+      expect(screen.getByRole("button", { name: boton })).toHaveAttribute(
+        "aria-disabled",
+        "true",
+      );
+    }
+    // Mientras vuela, ni Descartar ni Cancelar hacen nada.
+    await clic(tw.descartar);
+    await clic(tw.cancelar);
+    expect(pedidos("cerrar_sin_guardar")).toEqual([]);
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+    await act(async () => {
+      d.resolver(null);
+    });
+    expect(pedidos("empezar_a_escuchar")).toHaveLength(1);
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+
+  it("si Descartar es rechazado, se dice, el cuadro sigue y no se empezó nada; y se puede reintentar (M-4)", async () => {
+    conRust(PLATAFORMA_WINDOWS, true);
+    respuestas.set("cerrar_sin_guardar", new Error("el almacén no dejó"));
+    await pinta(sesion());
+    await clic(/Solo notas/);
+    await clic(tw.descartar);
+    expect(screen.getByRole("alert")).toHaveTextContent(tw.noDescarto);
+    expect(
+      screen.getByRole("alertdialog", { name: tw.titulo }),
+    ).toBeInTheDocument();
+    expect(pedidos("empezar_solo_notas")).toEqual([]);
+    expect(
+      screen.getByRole("button", { name: tw.descartar }),
+    ).not.toHaveAttribute("aria-disabled");
+    respuestas.delete("cerrar_sin_guardar");
+    await clic(tw.descartar);
+    expect(pedidos("empezar_solo_notas")).toHaveLength(1);
+  });
+
+  it("Esc cancela, Tab da la vuelta dentro del cuadro y el foco vuelve al botón que lo abrió (B-1)", async () => {
+    conRust(PLATAFORMA_WINDOWS, true);
+    await pinta(sesion());
+    const abre = screen.getByRole("button", { name: /Iniciar sesión/ });
+    abre.focus();
+    await clic(/Iniciar sesión/);
+    const cuadro = screen.getByRole("alertdialog", { name: tw.titulo });
+    expect(cuadro).toHaveAttribute("aria-modal", "true");
+    expect(cuadro).toHaveAccessibleDescription(tw.detalle);
+    const guardar = screen.getByRole("button", { name: tw.guardar });
+    const cancelar = screen.getByRole("button", { name: tw.cancelar });
+    expect(cancelar).toHaveFocus();
+    // Tab desde el último vuelve al primero; Mayús+Tab desde el primero va al último.
+    fireEvent.keyDown(cancelar, { key: "Tab" });
+    expect(guardar).toHaveFocus();
+    fireEvent.keyDown(guardar, { key: "Tab", shiftKey: true });
+    expect(cancelar).toHaveFocus();
+    // Esc: el cuadro se va, no se empieza nada y el foco vuelve al botón de Start.
+    fireEvent.keyDown(cancelar, { key: "Escape" });
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(pedidos("empezar_a_escuchar")).toEqual([]);
+    expect(abre).toHaveFocus();
+  });
+});
+
+describe("Ensayo en Windows: no manda a «encenderlo en IA» (auditoría del S13, A-2)", () => {
+  it("el banco enriquecido dice que está «no por ahora» y no manda a IA, en español", async () => {
+    respuestas.set("plataforma_de_este_equipo", PLATAFORMA_WINDOWS);
+    respuestas.set("preparar_el_ensayo", PREPARACION_DEL_ENSAYO);
+    document.documentElement.lang = "es";
+    const { container } = render(
+      <Cascara>
+        <SpriteIconos />
+        <Ensayo ir={vi.fn()} />
+      </Cascara>,
+    );
+    await act(async () => {});
+    expect(container.textContent).toContain("no por ahora");
+    expect(container.textContent).not.toContain("Se enciende en IA");
+    expect(container.textContent).not.toMatch(/Enriquecer el banco: encendido/);
+  });
+
+  it("y en inglés", async () => {
+    respuestas.set("plataforma_de_este_equipo", PLATAFORMA_WINDOWS);
+    respuestas.set("preparar_el_ensayo", PREPARACION_DEL_ENSAYO);
+    document.documentElement.lang = "en";
+    const { container } = render(
+      <Cascara>
+        <SpriteIconos />
+        <Ensayo ir={vi.fn()} />
+      </Cascara>,
+    );
+    await act(async () => {});
+    expect(container.textContent).toContain("not for now");
+    expect(container.textContent).not.toContain("Turn it on in AI");
+  });
+
+  it("el motivo «nadie puede redactar» tampoco manda a IA en Windows, y el Mac conserva el suyo", () => {
+    for (const idioma of ["es", "en"] as const) {
+      const motivo =
+        CAMBIOS_DE_WINDOWS[idioma].ensayo?.porQueNoSumo?.["sin-proveedor"];
+      expect(motivo, idioma).toBeTruthy();
+      expect(motivo, idioma).not.toMatch(/\bIA\b|\bAI\b/);
     }
   });
 });

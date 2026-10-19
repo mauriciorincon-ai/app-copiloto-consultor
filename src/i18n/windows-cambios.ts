@@ -40,7 +40,8 @@ const ES: Cambios = {
       "Dáselo a Claude Code. Cada vez que abres la puerta, la app deja una llave nueva en el Administrador de credenciales y ghost la lee de ahí; al cerrarla, la borra. Mientras está abierta, cualquier programa de tu usuario podría leerla.",
     noAbre: {
       llavero: "El Administrador de credenciales no guardó la llave.",
-      socket: "Windows no dejó crear la puerta: otro programa ya usa ese nombre.",
+      socket:
+        "Windows no dejó crear la puerta: otro programa ya usa ese nombre.",
     },
     redPor: "solo escucha a este PC; el contador sigue igual",
   },
@@ -178,6 +179,12 @@ const ES: Cambios = {
       "La app no pudo ver si tu navegador está en una llamada. Ponte auriculares o cierra la llamada para ensayar.",
     vozSinReunion:
       "Sin reunión, la voz sale por donde suene tu PC; con una videollamada abierta, el ensayo no empieza por los altavoces del PC. Mientras habla, el micrófono no escucha.",
+    // Sprint 013 (auditoría, A-2): en Windows nadie redacta, así que el ensayo no manda a encenderlo en IA.
+    enriquecerApagadoQue:
+      "En Windows el banco de preguntas es el de las reglas; el acento de un modelo está «no por ahora».",
+    porQueNoSumo: {
+      "sin-proveedor": "en Windows nadie redacta por ahora.",
+    },
   },
   cliente: {
     panelProtegido: "El panel sigue con la protección pedida a Windows",
@@ -186,12 +193,14 @@ const ES: Cambios = {
 
 const EN: Cambios = {
   puerta: {
-    subResto: "so Claude Code can operate the app from this same PC, with a key in Credential Manager.",
+    subResto:
+      "so Claude Code can operate the app from this same PC, with a key in Credential Manager.",
     daselo:
       "Give it to Claude Code. Each time you open the door, the app leaves a new key in Credential Manager and ghost reads it from there; closing the door deletes it. While it is open, any program of your user could read it.",
     noAbre: {
       llavero: "Credential Manager did not store the key.",
-      socket: "Windows did not let the door be created: another program already uses that name.",
+      socket:
+        "Windows did not let the door be created: another program already uses that name.",
     },
     redPor: "it listens only to this PC; the counter stays",
   },
@@ -210,7 +219,8 @@ const EN: Cambios = {
       "Your panel asks Windows to stay out of screen captures, but in Teams, Zoom and Meet it is unverified: you verify it with a real video call on your PC. Until then, share a window, not the screen.",
     modeloDelSistema: "Local model",
     noDisponible: "not for now",
-    iaSub: "On Windows everything runs on your PC and the card is the answer. The written suggestion is “not for now”.",
+    iaSub:
+      "On Windows everything runs on your PC and the card is the answer. The written suggestion is “not for now”.",
     siFallaQuedan: "The card is the answer",
     permisosTitulo: "Windows permissions",
     noCorrio:
@@ -313,6 +323,12 @@ const EN: Cambios = {
       "The app could not see whether your browser is in a call. Put on headphones or close the call to rehearse.",
     vozSinReunion:
       "With no meeting, the voice plays wherever your PC plays sound; with a video call open, the rehearsal won’t start on the PC’s speakers. While it speaks, the microphone does not listen.",
+    // Sprint 013 (audit, A-2): on Windows nobody drafts, so the rehearsal does not send you to turn it on in AI.
+    enriquecerApagadoQue:
+      "On Windows the question bank is the rules-based one; a model’s extra touch is “not for now”.",
+    porQueNoSumo: {
+      "sin-proveedor": "on Windows nobody drafts for now.",
+    },
   },
   cliente: {
     panelProtegido: "The panel keeps the protection requested from Windows",

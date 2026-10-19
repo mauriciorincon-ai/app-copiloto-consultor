@@ -1637,7 +1637,7 @@ fn preparar_el_ensayo(
 ) -> ensayo::Preparacion {
     let el_corpus = app.state::<ElCorpus>();
     let tope = ensayo::banco::catalogo().tope_valido(tope);
-    let enriquecer = app.state::<LaSintesis>().enriquecer.load(Ordering::Relaxed);
+    let enriquecer = enriquecer_ahora(&app.state::<LaSintesis>());
     let el_tuyo = el_tuyo(&app);
     let topes = ensayo::banco::catalogo().topes.clone();
     let vacia = |clientes: Vec<String>, cliente: Option<String>| ensayo::Preparacion {
@@ -1765,7 +1765,7 @@ fn empezar_el_ensayo(
         let e = escucha::con_su_permiso(capture::Pista::Microfono, e, &permisos::leer());
         ensayo::NoEmpezo::Microfono { porque: e.porque }
     })?;
-    let enriquecer = app.state::<LaSintesis>().enriquecer.load(Ordering::Relaxed);
+    let enriquecer = enriquecer_ahora(&app.state::<LaSintesis>());
     let banco = if enriquecer { ensayo::EstadoDelBanco::EnCamino } else { ensayo::EstadoDelBanco::Apagado };
     let n = preguntas.len();
     let id = ENSAYOS.fetch_add(1, Ordering::SeqCst) + 1;
@@ -2108,7 +2108,15 @@ pub fn run() {
             // pantalla pregunte, para que ninguna enseñe los valores de fábrica un instante.
             {
                 let ruta = ruta_de_las_preferencias(app.handle());
-                let p = prefs::leer(&ruta);
+                let mut p = prefs::leer(&ruta);
+                // Sprint 013 (auditoría, B-4): lo que Windows ya no tiene (el API, la sugerencia redactada) no se recuerda
+                // encendido. Solo en Windows, solo si el archivo lo traía de antes, y solo apaga.
+                if prefs::para_esta_plataforma(&mut p, sintesis::Plataforma::ESTA, sintesis_mock()) {
+                    println!("[prefs] lo que esta plataforma ya no tiene (API, sugerencia redactada) se apaga y se recuerda apagado");
+                    if let Err(e) = prefs::guardar(&ruta, &p) {
+                        println!("[prefs] no se pudieron guardar: {e}");
+                    }
+                }
                 aplicar_las_preferencias(app.handle(), &p);
                 // Lo que whisper tardó la vez anterior vuelve (M3 del S6); y la descarga de un modelo se corta si
                 // empieza una reunión, una sesión o un ensayo mientras baja (M2 del S6).
@@ -3300,6 +3308,17 @@ fn clientes_del_corpus(el_corpus: &ElCorpus) -> Vec<String> {
         .unwrap_or_default()
 }
 
+/// `AG_SINTESIS=mock`: el adapter `mock` de la CI y del kit (ADR 011).
+fn sintesis_mock() -> bool {
+    std::env::var("AG_SINTESIS").as_deref() == Ok("mock")
+}
+
+/// «Enriquecer el banco» **tal como se promete ahora**: lo recordado, y solo donde alguien puede redactar (en Windows,
+/// nadie desde el sprint 013). Así el ensayo no promete un acento que luego falla en silencio.
+fn enriquecer_ahora(s: &LaSintesis) -> bool {
+    s.enriquecer.load(Ordering::Relaxed) && sintesis::Plataforma::ESTA.promete_redactar(sintesis_mock())
+}
+
 /// **Quién redacta ahora**, por [`sintesis::quien_redacta`]: el API si lo encendiste, tiene clave y
 /// no llegó al tope —**solo en el Mac**: en Windows se retiró en el sprint 013 y ni se pregunta por su
 /// clave (ADR 023, enmienda 1)—; si no, el modelo del sistema si está. `AG_SINTESIS=mock` fuerza el
@@ -3312,7 +3331,7 @@ fn proveedor_de_ahora(
 ) -> Option<std::sync::Arc<dyn sintesis::Proveedor>> {
     use sintesis::Proveedor;
     let plataforma = sintesis::Plataforma::ESTA;
-    let mock = std::env::var("AG_SINTESIS").as_deref() == Ok("mock");
+    let mock = sintesis_mock();
     let api = *s.api.lock().ok()?;
     let api_lista = !mock
         && plataforma.admite_api()
@@ -3341,13 +3360,52 @@ fn proveedor_de_ahora(
     })
 }
 
+/// **Lo que Ia pinta, leído del sistema y sin pintarlo todavía.** Aparte de [`estado_de`] para que el contrato (regla 19)
+/// y las pruebas la pasen por la misma función que la app, en las dos plataformas.
+struct Leido {
+    redactar: bool,
+    enriquecer: bool,
+    api: ConfigDelApi,
+    sistema: Option<sintesis::PorQueNoRedacta>,
+    mes_usd: f64,
+    reunion_usd: f64,
+    latencia_ms: Option<u64>,
+}
+
+/// **El estado de IA para esta plataforma**, sin efectos. En Windows (sprint 013, ADR 023 enmienda 1) no hay API ni se
+/// pregunta por su clave —`hay_clave` ni se llama—, y ni «redactar» ni «enriquecer» se prometen aunque vengan recordados
+/// de antes: nadie redacta, salvo el `mock`.
+fn estado_de(
+    plataforma: sintesis::Plataforma,
+    mock: bool,
+    leido: Leido,
+    hay_clave: impl FnOnce(sintesis::api::Externo) -> bool,
+) -> EstadoDeLaIa {
+    let Leido { redactar, enriquecer, api, sistema, mes_usd, reunion_usd, latencia_ms } = leido;
+    let hay_clave = plataforma.admite_api() && hay_clave(api.externo);
+    let quien = sintesis::quien_redacta(
+        plataforma,
+        mock,
+        api.encendida && hay_clave && mes_usd < TOPE_DEL_MES_USD,
+        sistema.is_none(),
+    );
+    EstadoDeLaIa {
+        redactar: redactar && plataforma.promete_redactar(mock),
+        enriquecer: enriquecer && plataforma.promete_redactar(mock),
+        quien,
+        sistema,
+        api: EstadoDelApi { encendida: api.encendida && plataforma.admite_api(), externo: api.externo, hay_clave },
+        latencia_ms,
+        reunion_usd,
+        mes_usd,
+        tope_usd: TOPE_DEL_MES_USD,
+    }
+}
+
 fn estado_de_la_ia_de<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> EstadoDeLaIa {
     use sintesis::Proveedor;
     let s = app.state::<LaSintesis>();
-    let plataforma = sintesis::Plataforma::ESTA;
     let api = s.api.lock().map(|a| *a).unwrap_or_default();
-    // En Windows no hay API (ADR 023, enmienda 1): ni se pregunta al Administrador de credenciales.
-    let hay_clave = plataforma.admite_api() && sintesis::api::hay_clave(api.externo);
     let sistema = sintesis::sistema::DelSistema.disponible().err();
     let mes_usd = s
         .mes
@@ -3357,28 +3415,25 @@ fn estado_de_la_ia_de<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> EstadoDeL
             g.usd
         })
         .unwrap_or(0.0);
-    let quien = sintesis::quien_redacta(
-        plataforma,
-        std::env::var("AG_SINTESIS").as_deref() == Ok("mock"),
-        api.encendida && hay_clave && mes_usd < TOPE_DEL_MES_USD,
-        sistema.is_none(),
-    );
     let latencia_ms = s.latencias.lock().ok().and_then(|l| {
         let mut l = l.clone();
         l.sort_unstable();
         l.get(l.len() / 2).copied()
     });
-    EstadoDeLaIa {
-        redactar: s.redactar.load(Ordering::Relaxed),
-        enriquecer: s.enriquecer.load(Ordering::Relaxed),
-        quien,
-        sistema,
-        api: EstadoDelApi { encendida: api.encendida && plataforma.admite_api(), externo: api.externo, hay_clave },
-        latencia_ms,
-        reunion_usd: s.reunion_usd.lock().map(|u| *u).unwrap_or(0.0),
-        mes_usd,
-        tope_usd: TOPE_DEL_MES_USD,
-    }
+    estado_de(
+        sintesis::Plataforma::ESTA,
+        sintesis_mock(),
+        Leido {
+            redactar: s.redactar.load(Ordering::Relaxed),
+            enriquecer: s.enriquecer.load(Ordering::Relaxed),
+            api,
+            sistema,
+            mes_usd,
+            reunion_usd: s.reunion_usd.lock().map(|u| *u).unwrap_or(0.0),
+            latencia_ms,
+        },
+        sintesis::api::hay_clave,
+    )
 }
 
 fn avisar_a_la_ia<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> EstadoDeLaIa {
@@ -3413,6 +3468,13 @@ fn sintetizar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Aparicion
     let mango = app.clone();
     std::thread::spawn(move || {
         let s = mango.state::<LaSintesis>();
+        // Primero quién redacta: sin proveedor (en Windows, siempre) el turno de un tercero ni se copia (auditoría del S13, M-7).
+        let conocidos = clientes_del_corpus(&mango.state::<ElCorpus>());
+        let sobre = respaldo.first().map(|r| r.titular.clone()).unwrap_or_default();
+        let Some(proveedor) = proveedor_de_ahora(&s, conocidos, sobre, sintesis::api::Para::Sugerencia) else {
+            s.en_marcha.store(false, Ordering::Relaxed);
+            return;
+        };
         let turno = mango
             .state::<LaEscucha>()
             .0
@@ -3421,9 +3483,7 @@ fn sintetizar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Aparicion
             .and_then(|g| g.as_ref().map(|e| e.ultimos_turnos(12)))
             .and_then(|ts| stt::el_turno_de_la_ficha(ts, de_ms))
             .map(|t| t.texto);
-        let conocidos = clientes_del_corpus(&mango.state::<ElCorpus>());
-        let sobre = respaldo.first().map(|r| r.titular.clone()).unwrap_or_default();
-        let (Some(mut turno), Some(proveedor)) = (turno, proveedor_de_ahora(&s, conocidos, sobre, sintesis::api::Para::Sugerencia)) else {
+        let Some(mut turno) = turno else {
             s.en_marcha.store(false, Ordering::Relaxed);
             return;
         };
@@ -3514,6 +3574,8 @@ fn lo_que_salio_al_api(app: tauri::AppHandle) -> Vec<sintesis::api::LoQueSalio> 
 /// «Redactar sugerencias (además de mostrar la ficha)».
 #[tauri::command]
 fn redactar_sugerencias(app: tauri::AppHandle, si: bool) -> EstadoDeLaIa {
+    // En Windows nadie redacta (sprint 013): el interruptor se ve apagado y, si alguien lo pide por otra vía, se queda así.
+    let si = si && sintesis::Plataforma::ESTA.promete_redactar(sintesis_mock());
     app.state::<LaSintesis>().redactar.store(si, Ordering::Relaxed);
     println!("[sintesis] redactar sugerencias: {}", if si { "encendido" } else { "apagado" });
     recordar(&app, |p| p.redactar = si);
@@ -3523,14 +3585,12 @@ fn redactar_sugerencias(app: tauri::AppHandle, si: bool) -> EstadoDeLaIa {
 /// «Enriquecer el banco» (ADR 019 §3): el segundo interruptor de IA, junto a «Redactar sugerencias».
 #[tauri::command]
 fn enriquecer_el_banco(app: tauri::AppHandle, si: bool) -> EstadoDeLaIa {
+    let si = si && sintesis::Plataforma::ESTA.promete_redactar(sintesis_mock());
     app.state::<LaSintesis>().enriquecer.store(si, Ordering::Relaxed);
     println!("[ensayo] enriquecer el banco: {}", if si { "encendido" } else { "apagado" });
     recordar(&app, |p| p.enriquecer_el_banco = si);
     avisar_a_la_ia(&app)
 }
-
-/// Lo que contestan los comandos del API en Windows, donde el API ya no está (sprint 013, ADR 023 enmienda 1).
-const SIN_API_EN_WINDOWS: &str = "sin-api-en-windows";
 
 /// El proveedor externo: encenderlo exige su clave en el Llavero. **En Windows no se enciende**: apagarlo sí,
 /// que no cambia nada.
@@ -3540,9 +3600,7 @@ fn api_externa(
     encendida: bool,
     externo: sintesis::api::Externo,
 ) -> Result<EstadoDeLaIa, String> {
-    if encendida && !sintesis::Plataforma::ESTA.admite_api() {
-        return Err(SIN_API_EN_WINDOWS.into());
-    }
+    sintesis::pedir_el_api(sintesis::Plataforma::ESTA, encendida)?;
     if encendida && !sintesis::api::hay_clave(externo) {
         return Err("sin-clave".into());
     }
@@ -3566,10 +3624,10 @@ fn guardar_clave_del_api(
     let mut clave = clave;
     // En Windows no hay API: la clave no se escribe en el Administrador de credenciales (ADR 023, enmienda 1).
     // Borrar la que hubiera sigue funcionando: es tuya.
-    if !sintesis::Plataforma::ESTA.admite_api() {
+    if let Err(e) = sintesis::pedir_el_api(sintesis::Plataforma::ESTA, true) {
         // SEGURIDAD: ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
         unsafe { clave.as_mut_vec() }.fill(0);
-        return Err(SIN_API_EN_WINDOWS.into());
+        return Err(e.into());
     }
     let r = sintesis::api::guardar_clave(externo, &clave);
     // SEGURIDAD: ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
@@ -5039,6 +5097,106 @@ mod pruebas_de_la_clave_borrada {
         assert!(apagar_si_usaba(&mut api, sintesis::api::Externo::Groq));
         assert!(!api.encendida);
         assert!(!apagar_si_usaba(&mut api, sintesis::api::Externo::Groq), "ya estaba apagado: nada que recordar");
+    }
+}
+
+/// **La IA en Windows, por las mismas funciones que la app** (sprint 013; auditoría, M-1 y M-2): el estado que Ia pinta
+/// no pregunta por la clave, no promete lo que nadie cumple, y los comandos se niegan antes de tocar el Administrador de
+/// credenciales. Lo que necesita la app entera se vigila en la fuente; las agujas van con `concat!`.
+#[cfg(test)]
+mod pruebas_de_la_ia_en_windows {
+    use super::*;
+    use sintesis::Plataforma::{Mac, Windows};
+
+    fn cuerpo_de(firma: &str) -> &'static str {
+        let fuente = include_str!("lib.rs");
+        let desde = fuente.find(firma).unwrap_or_else(|| panic!("falta {firma}"));
+        let cuerpo = &fuente[desde..];
+        &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")]
+    }
+
+    fn antes(cuerpo: &str, primero: &str, despues: &str) -> bool {
+        match (cuerpo.find(primero), cuerpo.find(despues)) {
+            (Some(a), Some(b)) => a < b,
+            _ => false,
+        }
+    }
+
+    fn recordado() -> Leido {
+        Leido {
+            redactar: true,
+            enriquecer: true,
+            api: ConfigDelApi { encendida: true, externo: sintesis::api::Externo::Groq },
+            sistema: Some(sintesis::PorQueNoRedacta::SinPuente),
+            mes_usd: 0.0,
+            reunion_usd: 0.0,
+            latencia_ms: None,
+        }
+    }
+
+    /// En Windows, con todo recordado encendido de antes: nadie redacta, no hay API ni clave, y la clave **ni se pregunta**.
+    #[test]
+    fn en_windows_el_estado_no_pregunta_por_la_clave_ni_promete() {
+        let e = estado_de(Windows, false, recordado(), |_| panic!("Windows preguntó por la clave del API"));
+        assert!(!e.api.encendida && !e.api.hay_clave, "el API se ve encendido en Windows");
+        assert!(!e.redactar && !e.enriquecer, "Windows promete una sugerencia o un banco enriquecido");
+        assert_eq!(e.quien, None);
+    }
+
+    /// El Mac sigue como estaba (el API listo manda) y el `mock` redacta en las dos plataformas.
+    #[test]
+    fn el_mac_sigue_igual_y_el_mock_redacta_en_las_dos() {
+        let e = estado_de(Mac, false, recordado(), |_| true);
+        assert!(e.api.encendida && e.api.hay_clave && e.redactar && e.enriquecer);
+        assert_eq!(e.quien, Some(sintesis::Quien::Api));
+        for p in [Mac, Windows] {
+            let e = estado_de(p, true, recordado(), |_| false);
+            assert_eq!(e.quien, Some(sintesis::Quien::Mock));
+            assert!(e.redactar && e.enriquecer, "el mock deja redactar");
+        }
+    }
+
+    /// **Los comandos se niegan ANTES de tocar la clave** (M-1): encender el API y guardar su clave piden permiso a la
+    /// plataforma antes de `hay_clave` y de `guardar_clave`; y «redactar» y «enriquecer» no se encienden donde nadie redacta.
+    #[test]
+    fn los_comandos_se_niegan_antes_de_tocar_la_clave() {
+        let a = cuerpo_de("\nfn api_externa(");
+        assert!(
+            antes(a, concat!("sintesis::pedir_el_", "api(sintesis::Plataforma::ESTA, encendida)?"), concat!("sintesis::api::hay_", "clave(")),
+            "api_externa mira la clave antes de pedir permiso"
+        );
+        let g = cuerpo_de("\nfn guardar_clave_del_api(");
+        assert!(
+            antes(g, concat!("sintesis::pedir_el_", "api(sintesis::Plataforma::ESTA, true)"), concat!("sintesis::api::guardar_", "clave(")),
+            "guardar_clave_del_api escribe antes de pedir permiso"
+        );
+        assert!(g.contains(concat!("return Err(", "e.into())")), "guardar_clave_del_api no se niega");
+        for f in ["\nfn redactar_sugerencias(", "\nfn enriquecer_el_banco("] {
+            let c = cuerpo_de(f);
+            assert!(antes(c, concat!("promete_", "redactar(sintesis_mock())"), concat!(".", "store(")), "{f} guarda antes de preguntar si alguien redacta");
+        }
+    }
+
+    /// El ensayo no promete el acento donde nadie redacta (A-2), y la sugerencia no copia el turno del cliente antes de
+    /// saber quién lo leería (M-7).
+    #[test]
+    fn el_ensayo_y_la_sugerencia_no_se_adelantan() {
+        let fuente = include_str!("lib.rs");
+        assert_eq!(fuente.matches(concat!("let enriquecer = ", "enriquecer_ahora(")).count(), 2, "el ensayo lee enriquecer crudo");
+        let s = cuerpo_de("\nfn sintetizar<");
+        assert!(
+            antes(s, concat!("let Some(proveedor) = ", "proveedor_de_ahora("), concat!("stt::el_turno_de_la_", "ficha(")),
+            "la sugerencia copia el turno antes de saber si alguien redacta"
+        );
+    }
+
+    /// Y al arrancar, lo que Windows ya no tiene se apaga **antes** de aplicar las preferencias.
+    #[test]
+    fn al_arrancar_se_apaga_lo_que_windows_no_tiene_antes_de_aplicar() {
+        let fuente = include_str!("lib.rs");
+        let desde = fuente.find(concat!("let ruta = ruta_de_las_", "preferencias(app.handle());")).expect("el arranque");
+        let c = &fuente[desde..desde + 1200];
+        assert!(antes(c, concat!("prefs::para_esta_", "plataforma("), concat!("aplicar_las_", "preferencias(app.handle(), &p)")));
     }
 }
 

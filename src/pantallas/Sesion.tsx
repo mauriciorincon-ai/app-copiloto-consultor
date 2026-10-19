@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useIdioma, useT, useTeclas } from "../i18n";
 import { Ic } from "../componentes/Iconos";
 import { Fila, Funciona, PILA } from "../componentes/Ventana";
@@ -101,7 +101,7 @@ export function Sesion({
   // **Antes de empezar otra sesión** (sprint 013, decisión 2a): en Windows, si la reunión anterior sigue abierta con algo
   // tuyo, se pregunta «Guardar · Descartar · Cancelar» antes de tocar la llave de notas ni la tarea de borrado. En el Mac
   // y fuera de Tauri `antes` empieza directo y el cuadro no existe.
-  const { antes, cuadro } = useAntesDeEmpezar();
+  const { antes, cuadro, cancelar } = useAntesDeEmpezar();
   // El modo transparente (sprint 012, ADR 024): solo Windows, y solo con un cliente elegido. En el Mac, ni una fila.
   const [plataforma] = usePlataforma();
   const transparente =
@@ -154,6 +154,11 @@ export function Sesion({
     .map((p) => p.nombre)
     .join("|");
   const vigilado = clave !== "" && clave !== visto;
+  // Con el cuadro de la reunión anterior abierto, cambiar de modo o que el radar vea otros programas lo cierra sin empezar
+  // nada: «Guardar» no puede arrancar la sesión del primer clic cuando ya miras otra cosa (auditoría del S13, M-3).
+  useEffect(() => {
+    cancelar();
+  }, [modo, clave, cancelar]);
   // Un MDM solo es «sábelo»: no toma la pantalla. Sin esta fila, un Mac inscrito y sin ningún
   // invasivo no lo veía en ningún sitio, y el manual decía que Sesión lo lista (auditoría del S2, B15).
   const mdm = radar.programas.find((p) => p.categoria === "mdm");

@@ -298,6 +298,25 @@ impl Plataforma {
     pub const fn admite_api(self) -> bool {
         matches!(self, Self::Mac)
     }
+
+    /// ¿Se le puede prometer al usuario una sugerencia redactada, o un banco de ensayo enriquecido? **En Windows no**
+    /// (sprint 013): nadie redacta allí, salvo el `mock` de la CI y del kit. Si la promesa no se puede cumplir, ni la
+    /// pantalla ni el ensayo la hacen.
+    pub const fn promete_redactar(self, mock: bool) -> bool {
+        mock || matches!(self, Self::Mac)
+    }
+}
+
+/// Lo que contestan los comandos del API en Windows, donde el API ya no está (sprint 013, ADR 023 enmienda 1).
+pub const SIN_API_EN_WINDOWS: &str = "sin-api-en-windows";
+
+/// **¿Se puede encender el API en esta plataforma?** Apagarlo siempre se puede (no cambia nada); encenderlo, solo donde
+/// hay API. Pura, para probar las dos plataformas en cualquier equipo; los comandos la llaman antes de tocar la clave.
+pub fn pedir_el_api(plataforma: Plataforma, encendida: bool) -> Result<(), &'static str> {
+    if encendida && !plataforma.admite_api() {
+        return Err(SIN_API_EN_WINDOWS);
+    }
+    Ok(())
 }
 
 /// **Quién redacta ahora**, sin efectos: `mock` si se forzó (`AG_SINTESIS=mock`, el de la CI y el del kit); el API si
@@ -517,6 +536,19 @@ pub(crate) mod pruebas {
         assert_eq!(quien_redacta(Plataforma::Mac, false, false, true), Some(Quien::Sistema));
         assert_eq!(quien_redacta(Plataforma::Mac, false, false, false), None);
         assert_eq!(Plataforma::ESTA.admite_api(), !cfg!(windows));
+    }
+
+    /// **Lo que Windows promete** (auditoría del S13, A-2): ni sugerencia ni banco enriquecido, salvo el `mock`; el Mac,
+    /// como siempre. Y los comandos del API se niegan a encender en Windows y dejan apagar.
+    #[test]
+    fn windows_no_promete_redactar_ni_deja_encender_el_api() {
+        assert!(Plataforma::Mac.promete_redactar(false) && Plataforma::Mac.promete_redactar(true));
+        assert!(!Plataforma::Windows.promete_redactar(false));
+        assert!(Plataforma::Windows.promete_redactar(true), "el mock de la CI sigue redactando");
+        assert_eq!(pedir_el_api(Plataforma::Windows, true), Err(SIN_API_EN_WINDOWS));
+        assert_eq!(pedir_el_api(Plataforma::Windows, false), Ok(()));
+        assert_eq!(pedir_el_api(Plataforma::Mac, true), Ok(()));
+        assert_eq!(pedir_el_api(Plataforma::Mac, false), Ok(()));
     }
 
     /// El modelo solo ve el turno y las tres fichas, con sus ids.

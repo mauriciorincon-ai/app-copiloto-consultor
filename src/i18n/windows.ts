@@ -138,6 +138,8 @@ export type TextosDeWindows = {
     cancelar: string;
     /** El guardado falló: la reunión sigue abierta y no se empezó nada. */
     noGuardo: string;
+    /** El descarte falló: la reunión sigue abierta y no se empezó nada. */
+    noDescarto: string;
   };
   permisos: {
     microfonoPara: string;
@@ -332,12 +334,14 @@ const ES: TextosDeWindows = {
   reunionAnterior: {
     titulo: "La reunión anterior sigue abierta",
     detalle:
-      "Tiene notas o propuestas tuyas sin decidir. Si la guardas, queda cifrada en tu PC (la primera vez, Windows guarda la llave de tus notas en el Administrador de credenciales). Si la descartas, se tira. Cancelar no cambia nada y no empieza otra.",
+      "Tiene notas o propuestas tuyas sin decidir. Si la guardas, queda cifrada en tu PC; la primera vez, Windows guarda la llave de tus notas en el Administrador de credenciales y la tarea de borrado en el Programador de tareas. Si la descartas, se tira. Cancelar no cambia nada y no empieza otra.",
     guardar: "Guardar",
     descartar: "Descartar",
     cancelar: "Cancelar",
     noGuardo:
       "No se pudo guardar la reunión anterior. Sigue abierta y no se empezó nada: vuelve a intentarlo o descártala.",
+    noDescarto:
+      "No se pudo descartar la reunión anterior. Sigue abierta y no se empezó nada: vuelve a intentarlo o cancela.",
   },
   permisos: {
     microfonoPara: "Escuchar la sala o tu voz, con el micrófono de este PC",
@@ -530,12 +534,14 @@ const EN: TextosDeWindows = {
   reunionAnterior: {
     titulo: "The previous meeting is still open",
     detalle:
-      "It has notes or proposals of yours you haven't decided on. If you save it, it stays encrypted on your PC (the first time, Windows stores your notes key in Credential Manager). If you discard it, it is thrown away. Cancel changes nothing and starts nothing.",
+      "It has notes or proposals of yours you haven't decided on. If you save it, it stays encrypted on your PC; the first time, Windows stores your notes key in Credential Manager and the deletion task in Task Scheduler. If you discard it, it is thrown away. Cancel changes nothing and starts nothing.",
     guardar: "Save",
     descartar: "Discard",
     cancelar: "Cancel",
     noGuardo:
       "The previous meeting could not be saved. It is still open and nothing was started: try again or discard it.",
+    noDescarto:
+      "The previous meeting could not be discarded. It is still open and nothing was started: try again or cancel.",
   },
   permisos: {
     microfonoPara:

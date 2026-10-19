@@ -493,11 +493,11 @@ export const ESTADO_DE_LA_IA_EN_WINDOWS: EstadoDeLaIa = {
       "externo": "groq",
       "hayClave": false
     },
-    "enriquecer": true,
+    "enriquecer": false,
     "latenciaMs": null,
     "mesUsd": 0.0,
     "quien": null,
-    "redactar": true,
+    "redactar": false,
     "reunionUsd": 0.0,
     "sistema": "sin-puente",
     "topeUsd": 10.0

@@ -214,7 +214,7 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
               </tbody>
             </table>
             {porQue && (
-              <p style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "6px" }}>
+              <p id="ia-motivo" style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "6px" }}>
                 {t.porQueNoRedacta[porQue]}
               </p>
             )}
@@ -243,6 +243,8 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
             alCambiar={() => aplicar(redactarSugerencias(!ia.redactar))}
             relleno="2px"
             bloqueado={windows}
+            avisoBloqueado={t.noDisponible}
+            descritoPor={windows && porQue ? "ia-motivo" : undefined}
           />
           {/* El segundo interruptor (sprint 004, `ia.html` · sprint 4): el acento del ensayo. */}
           <Interruptor
@@ -251,6 +253,8 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
             alCambiar={() => aplicar(enriquecerElBanco(!ia.enriquecer))}
             relleno="2px"
             bloqueado={windows}
+            avisoBloqueado={t.noDisponible}
+            descritoPor={windows && porQue ? "ia-motivo" : undefined}
           />
           <span className="crece" />
           {/* La puerta local, también en Windows desde el sprint 012 (ADR 022 enmienda 4): un named pipe solo de tu usuario. */}
@@ -411,6 +415,8 @@ function Interruptor({
   icono,
   nombre,
   bloqueado,
+  avisoBloqueado,
+  descritoPor,
 }: {
   encendido: boolean;
   etiqueta: string;
@@ -423,13 +429,18 @@ function Interruptor({
   nombre?: string;
   /** No se puede conmutar (en Windows, sin proveedor): se ve apagado y el clic no hace nada. */
   bloqueado?: boolean;
+  /** Bloqueado, el interruptor lo dice con texto, no solo con menos color («no por ahora»). */
+  avisoBloqueado?: string;
+  /** Bloqueado, el `id` del párrafo que explica por qué. */
+  descritoPor?: string;
 }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={encendido}
-      aria-label={nombre}
+      aria-label={nombre ?? (bloqueado ? etiqueta : undefined)}
+      aria-describedby={bloqueado ? descritoPor : undefined}
       aria-disabled={bloqueado ? true : undefined}
       className={encendido ? "conm on" : "conm off"}
       style={{
@@ -446,7 +457,9 @@ function Interruptor({
       <span className="track"></span>
       <span className="etq">
         {icono && <Ic id={icono} s />}
+        {bloqueado && <Ic id="i-candado" s />}
         {etiqueta}
+        {bloqueado && avisoBloqueado && <small> · {avisoBloqueado}</small>}
       </span>
     </button>
   );
