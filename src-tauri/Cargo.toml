@@ -108,10 +108,21 @@ cpal = "0.18"
 whisper-rs = "0.16"
 ureq = { version = "3.4", default-features = false, features = ["rustls"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+# Sprint 012: la puerta local en Windows es un named pipe (`puerta/windows.rs`): crearlo con la DACL del usuario
+# (Security, Authorization), esperarlo y leerlo sin bloquear (Pipes, IO, Threading) y abrirlo desde `ghost`
+# (Storage_FileSystem) y, para `ghost --help`, el idioma del usuario (Globalization). Son features del mismo crate: ninguno nuevo
+# en el árbol.
 windows-sys = { version = "0.61", features = [
   "Win32_Foundation",
+  "Win32_Globalization",
+  "Win32_Security",
+  "Win32_Security_Authorization",
   "Win32_Security_Credentials",
+  "Win32_Storage_FileSystem",
+  "Win32_System_IO",
+  "Win32_System_Pipes",
   "Win32_System_Registry",
+  "Win32_System_Threading",
 ] }
 # `windows-future` (sprint 008): la que ya trae `windows`, nombrada para pedir Windows Hello con la ventana de la app
 # (`IAsyncOperation` del resultado). No es un crate nuevo en el árbol.

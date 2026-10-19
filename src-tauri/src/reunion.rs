@@ -181,6 +181,12 @@ impl ElCuaderno {
         self.abierta.load(Ordering::Relaxed)
     }
 
+    /// **«El cliente consintió»** (sprint 012, ADR 024): la constancia entra solo si hay una reunión abierta. Un cuaderno
+    /// cerrado no se llena: la constancia se arrastraría a la reunión siguiente (auditoría del S12, M2).
+    fn consentir(&self, c: notas::Consentimiento) -> bool {
+        self.abierta() && self.con(|cuaderno| cuaderno.consentir(c)).unwrap_or(false)
+    }
+
     fn vacio(&self) -> bool {
         self.con(|c| c.vacio()).unwrap_or(true)
     }
@@ -662,6 +668,24 @@ pub fn guardar_propuesta<R: Runtime>(app: &AppHandle<R>, id: u32) -> bool {
     decidir_una(app, |c| c.guardar_propuesta(id))
 }
 
+/// **«El cliente consintió»** (sprint 012, ADR 024): la constancia entra en las notas cifradas de esta reunión. Sin
+/// reunión abierta, no: no hay notas donde dejarla.
+pub fn consentir<R: Runtime>(app: &AppHandle<R>, c: notas::Consentimiento) -> bool {
+    let Some(el) = app.try_state::<ElCuaderno>() else { return false };
+    let hecha = el.consentir(c);
+    if hecha {
+        a_la_banda(app, &el);
+        avisar(app);
+    }
+    hecha
+}
+
+/// ¿La sesión de ahora es presencial? En la sala nadie tiene dueño: el idioma que se oye es el de la sala, no el del
+/// cliente (ADR 020 §6).
+pub fn es_presencial<R: Runtime>(app: &AppHandle<R>) -> bool {
+    app.try_state::<ElCuaderno>().is_some_and(|el| el.presencial.load(Ordering::Relaxed))
+}
+
 /// «No» en Notas: muere en ese momento.
 pub fn descartar_propuesta<R: Runtime>(app: &AppHandle<R>, id: u32) -> bool {
     decidir_una(app, |c| c.descartar_propuesta(id))
@@ -1127,6 +1151,54 @@ mod pruebas {
             seccion: None,
             hora: "14:16".into(),
         }
+    }
+
+    /// **Una reunión con solo la constancia del consentimiento no se descarta al parar y se guarda con ella** (auditoría
+    /// del S12, A1). ¿Puede fallar? Sí: sin la constancia en `vacio()`, `terminar` cierra la reunión y no nace archivo.
+    #[test]
+    fn una_reunion_con_solo_la_constancia_no_se_descarta_y_se_guarda() {
+        let el = ElCuaderno::default();
+        el.abrir(false, HOY);
+        let constancia = notas::Consentimiento {
+            cliente: "Páramo Azul".into(),
+            jurisdiccion: "Colombia".into(),
+            hora: "14:02".into(),
+            idioma: "es".into(),
+            texto: "Antes de empezar…".into(),
+        };
+        assert!(el.consentir(constancia.clone()));
+        assert!(!el.terminar(), "parar con solo la constancia cerró la reunión y se llevó la evidencia");
+        assert!(el.abierta());
+        let (c, b, llaves) = (carpeta("constancia"), bandeja("constancia"), EnMemoria::default());
+        let g = el.guardar_en(&c, &b, &llaves, prefs::Retencion::Dias90, None, CIERRE).unwrap().guardada.unwrap().0;
+        assert_eq!(c.abrir(&llaves, &g.archivo).unwrap().consentimientos, vec![constancia]);
+        let _ = std::fs::remove_dir_all(c.raiz());
+    }
+
+    /// **Sin reunión abierta, la constancia no entra** (ADR 024 §4; auditoría del S12, M2). ¿Puede fallar? Sí: sin mirar
+    /// `abierta`, un cuaderno cerrado la recibe y la arrastra a la reunión siguiente.
+    #[test]
+    fn sin_reunion_abierta_la_constancia_no_entra() {
+        let el = ElCuaderno::default();
+        let constancia = notas::Consentimiento {
+            cliente: "Páramo Azul".into(),
+            jurisdiccion: "Colombia".into(),
+            hora: "14:02".into(),
+            idioma: "es".into(),
+            texto: "Antes de empezar…".into(),
+        };
+        assert!(!el.consentir(constancia.clone()), "un cuaderno cerrado recibió la constancia");
+        assert_eq!(el.con(|c| c.resumen().consentimientos), Some(0));
+        el.abrir(false, HOY);
+        assert!(el.consentir(constancia));
+        assert!(el.cerrar());
+        assert!(!el.consentir(notas::Consentimiento {
+            cliente: "Otro".into(),
+            jurisdiccion: String::new(),
+            hora: "15:00".into(),
+            idioma: "en".into(),
+            texto: "x".into(),
+        }));
     }
 
     /// **«Conservar mis turnos» solo vale si el modo lo deja** (ADR 020 §5): en presencial, apagado aunque tu

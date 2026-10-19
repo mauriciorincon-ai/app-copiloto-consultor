@@ -112,6 +112,9 @@ const DEUDA: Record<string, string> = {
   //
   // Sprint 011, fase 1: `LaFranja.desplazamiento` y `LaFranja.bandaAbierta` cruzaron antes que su pantalla; pagados en la
   // fase 2 (`LaAlturaDeLaBanda` en Sesión, y el asa de altura de la banda parte de `desplazamiento`): ya no hay DEUDA.
+
+  // Sprint 012, fase 1: el modo transparente (`VistaDelCliente.transparente` y `.aviso`, `ResumenDelCuaderno.consentimientos`)
+  // cruzó antes que su pantalla; pagado en la fase 2 (`ElModoTransparente` en Sesión, «Se va a guardar» en Notas): ya no hay DEUDA.
 };
 
 /** Cada `export type X = … { … }`, con las variantes de una unión incluidas. */

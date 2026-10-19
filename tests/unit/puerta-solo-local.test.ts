@@ -25,6 +25,10 @@ const { join } = posix;
  *   3. **El socket nace en un solo sitio, dentro de la carpeta de la app**: un `bind` y solo uno, sobre
  *      la ruta que da `ruta_en`.
  *
+ *   4. **En Windows (sprint 012), el named pipe es la puerta y solo de este equipo**: el API de pipes solo vive en la
+ *      puerta, el nombre es siempre el de un pipe local (el punto: este PC, nunca otro servidor) y el pipe nace con
+ *      `PIPE_REJECT_REMOTE_CLIENTS`, que deja fuera a cualquier cliente de otra máquina.
+ *
  * ¿Puede fallar? Sí, y nació en rojo con un `TcpStream` plantado en `puerta/socket.rs` y con un
  * `UnixStream` plantado en `lib.rs` (bitácora del sprint 003, fase 4). Las agujas se arman por partes
  * para que este archivo no se cuente a sí mismo.
@@ -78,6 +82,14 @@ const FUERA_DEL_MAC: [RegExp, string][] = [
   [new RegExp("https?:" + "//[\\w.-]"), "una URL"],
 ];
 
+/** El API de named pipes de Win32 y el prefijo de un pipe en el código: solo la puerta puede usarlos. */
+const PIPES: RegExp[] = [
+  new RegExp(
+    "\\b(CreateNamed" + "PipeW?|ConnectNamed" + "Pipe|WaitNamed" + "PipeW?)\\b",
+  ),
+  new RegExp(String.raw`\\\\[.?]\\` + "pi" + "pe" + String.raw`\\`),
+];
+
 function archivos(ruta: string): string[] {
   if (!existsSync(ruta)) return [];
   if (statSync(ruta).isFile()) return ruta.endsWith(".rs") ? [ruta] : [];
@@ -113,9 +125,7 @@ describe("puerta-solo-local: la puerta de tu agente no sale de este Mac", () => 
       .flatMap((f) =>
         codigo(f)
           .filter(([, l]) => UNIX.some((re) => re.test(l)))
-          .map(
-            ([n, l]) => `${f}:${n}  ${l.trim().slice(0, 90)}`,
-          ),
+          .map(([n, l]) => `${f}:${n}  ${l.trim().slice(0, 90)}`),
       );
     expect(
       fuera,
@@ -127,8 +137,7 @@ describe("puerta-solo-local: la puerta de tu agente no sale de este Mac", () => 
     const hallazgos = [...archivos(PUERTA), GHOST].flatMap((f) =>
       codigo(f).flatMap(([n, l]) =>
         FUERA_DEL_MAC.filter(([re]) => re.test(l)).map(
-          ([, que]) =>
-            `${f}:${n}  ${que}  ${l.trim().slice(0, 90)}`,
+          ([, que]) => `${f}:${n}  ${que}  ${l.trim().slice(0, 90)}`,
         ),
       ),
     );
@@ -138,18 +147,66 @@ describe("puerta-solo-local: la puerta de tu agente no sale de este Mac", () => 
     ).toEqual([]);
   });
 
+  it("en Windows, el API de named pipes solo vive en la puerta", () => {
+    const enLaPuerta = archivos(PUERTA)
+      .flatMap(codigo)
+      .filter(([, l]) => PIPES.some((re) => re.test(l)));
+    expect(
+      enLaPuerta.length,
+      "la puerta de Windows ya no es un named pipe: este gate mira un sitio vacío",
+    ).toBeGreaterThan(0);
+    const fuera = archivos(RUST)
+      .filter((f) => !dePuerta(f))
+      .flatMap((f) =>
+        codigo(f)
+          .filter(([, l]) => PIPES.some((re) => re.test(l)))
+          .map(([n, l]) => `${f}:${n}  ${l.trim().slice(0, 90)}`),
+      );
+    expect(
+      fuera,
+      `named pipes fuera de la puerta:\n${fuera.join("\n")}`,
+    ).toEqual([]);
+  });
+
+  it("en Windows, el pipe es de este equipo: nombre local y sin clientes de otra máquina", () => {
+    const tubo = readFileSync(join(PUERTA, "windows.rs"), "utf8");
+    const socket = readFileSync(join(PUERTA, "socket.rs"), "utf8");
+    // El nombre: `\\.\pipe\…`, con el punto de este PC; nunca `\\servidor\pipe\…`.
+    expect(socket).toContain(
+      String.raw`PathBuf::from(format!(r"\\.\pipe\{tubo}"))`,
+    );
+    // El modo con el que nace, y que la creación lo usa.
+    expect(tubo).toMatch(
+      /pub const MODO: u32 = [^;]*PIPE_REJECT_REMOTE_CLIENTS;/,
+    );
+    expect(tubo).toContain(
+      "CreateNamedPipeW(nombre.as_ptr(), APERTURA, MODO, 1,",
+    );
+    expect(tubo).toMatch(
+      /pub const APERTURA: u32 = [^;]*FILE_FLAG_FIRST_PIPE_INSTANCE;/,
+    );
+  });
+
   it("el socket nace en un solo sitio, en la carpeta de la app", () => {
     const bind = new RegExp("Unix" + "Listener::bind\\(");
-    const binds = archivos(RUST).flatMap((f) =>
-      codigo(f)
-        .filter(([, l]) => bind.test(l))
-        .map(([n, l]) => ({ f, n, l })),
-    );
-    expect(binds.map((b) => `${b.f}:${b.n}`)).toEqual([
+    // `puerta/windows.rs` ES el pipe (su `bind` es el de la interfaz) y su única llamada a `UnixListener::bind(` es la de su
+    // propia prueba de la instancia ocupada: no cuenta como un sitio donde nace la puerta.
+    const binds = archivos(RUST)
+      .filter((f) => !f.endsWith("puerta/windows.rs"))
+      .flatMap((f) =>
+        codigo(f)
+          .filter(([, l]) => bind.test(l))
+          .map(([n, l]) => ({ f, n, l })),
+      );
+    // Un solo archivo y una sola función, `enlazar`, en sus dos versiones (el socket de Unix y el pipe de Windows, que
+    // reintenta unos instantes: auditoría del S12, B2); y la puerta solo la llama con la ruta que ella misma calculó.
+    expect(binds.map((b) => b.f)).toEqual([
+      expect.stringContaining("src-tauri/src/puerta/socket.rs"),
       expect.stringContaining("src-tauri/src/puerta/socket.rs"),
     ]);
-    expect(binds[0].l).toMatch(/bind\(&ruta\)/);
+    for (const b of binds) expect(b.l).toMatch(/bind\(ruta\)/);
     const socket = readFileSync(join(PUERTA, "socket.rs"), "utf8");
+    expect(socket.match(/enlazar\(&ruta\)/g)).toHaveLength(1);
     expect(socket).toMatch(/let ruta = ruta_en\(carpeta\);/);
   });
 });

@@ -136,6 +136,10 @@ const PROHIBIDO = [
   // NO se prohíbe a secas: se obliga a que la línea lleve su marca y su ADR. Una puerta a la red
   // en un módulo efímero puede existir; lo que no puede es existir sin que se vea.
   /\bdownloadAndInstall\b/, /\bassetInstallationRequest\b/,
+  // WINDOWS (sprint 012): la puerta local es un named pipe, y su API de Win32 no se parece en nada a la de `std`. Sin
+  // estas líneas, crear el pipe, abrirlo, leerlo o escribir en él desde un módulo protegido pasaba en verde sin que
+  // nadie lo viera. Las únicas líneas que lo hacen (`puerta/windows.rs`) llevan su marca y el ADR 018 en la misma línea.
+  /\bCreateNamedPipeW?\b/, /\bCreateFileW?\b/, /\bWriteFile\b/, /\bReadFile\b/,
 ];
 // Línea explícitamente autorizada: **con su ADR en la misma línea** («ADR 016»). Antes bastaba la
 // marca, y el comentario prometía un ADR que nadie exigía (auditoría del S3, B7).

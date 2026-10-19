@@ -114,7 +114,7 @@ pequeño ya no es un escalón sino el defecto, porque el grande no cabe en 4 s.)
 
 **Y lo que impedía compilar** (no estaba en el inventario porque no llevaba `cfg`): `relleno.rs` (`base64` pasa a todas
 las plataformas) · `puerta/socket.rs` y `bin/ghost.rs` (la puerta local es un socket Unix: **no en Windows** en el S6,
-dicho por la propia puerta) · la hora local en `lib.rs`, `reunion.rs`, `escucha/mod.rs` y `vencimiento/` (un solo
+dicho por la propia puerta; **llegó en el S12**, enmienda 4) · la hora local en `lib.rs`, `reunion.rs`, `escucha/mod.rs` y `vencimiento/` (un solo
 `reloj.rs`, `libc` en Unix y `chrono` en Windows) · `vencimiento/` (la tarea que borra con la app cerrada es de launchd;
 en Windows, el Programador de tareas desde el S8, ADR 016 enmienda 4) · ocho tests con permisos Unix (llevan
 `cfg(unix)`) · `tests/puerta.rs` y `tests/ghost.rs` (Unix) · `build.rs` (el `check-cfg` del puente, para todas).
@@ -139,7 +139,7 @@ La misma lista vive en `src-tauri/src/plataforma.rs`, en Honestidad y en el manu
 | `atajos` | sí: Alt+Mayús y una tecla (tabla de la enmienda 1); ninguno con Ctrl+Alt, que en muchos teclados es AltGr |
 | `borrado-con-la-app-cerrada` | sí: el Programador de tareas, al minuto de cada vencimiento |
 | `desbloqueo` | sí: Windows Hello (PIN, huella o cara), una vez por sesión de la app |
-| `puerta-local`               | no en Windows por ahora                                           |
+| `puerta-local`               | sí: named pipe solo del usuario, llave en Credential Manager (S12)|
 
 ## Consecuencias
 
@@ -311,7 +311,32 @@ supported for ARM, use clang`, en `ggml/src/ggml-cpu/CMakeLists.txt` del whisper
    una corrida real de `calibrar()` salieron 8334 ms (grande) y 1928 ms (pequeño), algo más que las medianas de arriba; la
    decisión no cambia. La pista del cliente (sprint 010) sí se mide en caliente, detrás de la tuya, como en una reunión.
 
+## Enmienda 4 · la puerta local en Windows (sprint 012, 2026-10-18)
+
+**La puerta para Claude Code (C16, ADR 018) existe en Windows.** Era la única función «no en Windows por ahora»; el H-2
+«Producto completo» exige el inventario entero, y la puerta se construye con lo que Windows ya trae, sin dependencias
+nuevas (solo features de `windows-sys`).
+
+- **Misma política, otro transporte.** `puerta/mod.rs` no cambia: ni la lista cerrada de órdenes, ni la llave por apertura
+  comparada en tiempo constante, ni el cierre en reunión o ensayo, ni el registro sin contenido. `socket.rs` tampoco
+  cambia en el Mac: en Windows usa `puerta/windows.rs`, que da la MISMA forma que los sockets de Unix sobre un **named
+  pipe** (`\\.\pipe\com.aiapps.copiloto-consultor.puerta.<SID del usuario>`: el nombre de un pipe es de todo el equipo, y el
+  SID lo hace tuyo si hay otra sesión de Windows con la app abierta).
+- **Lo que en el Mac hacen la carpeta en 700 y el socket en 600, aquí lo hace el pipe al nacer:** DACL solo del SID del
+  usuario (`D:P(A;;GA;;;<SID>)`), `PIPE_REJECT_REMOTE_CLIENTS` (regla dura 9: solo este equipo) y
+  `FILE_FLAG_FIRST_PIPE_INSTANCE` con **una sola instancia que se reutiliza** (nadie se adelanta con el mismo nombre ni
+  se cuela con otra instancia mientras está abierta). `ghost` abre el pipe con `SECURITY_IDENTIFICATION`: quien lo
+  atienda no puede actuar en su nombre. Una prueba lee la DACL del pipe de verdad (`tests/puerta-en-windows.rs`).
+- **La llave, en el Administrador de credenciales** («Angel Ghost · puerta / token», la pieza del S8). El pipe muere con
+  el proceso y no deja rastro en el disco, así que tras una caída lo único que puede quedar es la llave: el arranque la
+  borra (borrar una que no está no es un error y Windows no pregunta nada), **salvo que el pipe exista**: un pipe vivo es
+  otra copia de la app con su puerta abierta, y su llave no es una sobra.
+- **`verify:ephemeral` ve la API de Win32** (`CreateNamedPipeW`, `CreateFileW`, `ReadFile`, `WriteFile`): las cuatro
+  líneas que la usan llevan su marca y el ADR 018; una sin marca es rojo.
+- **`ghost.exe`** busca la puerta sin conectarse (`WaitNamedPipeW`: conectarse gastaría la única instancia) y lee la
+  llave después, como en el Mac. No viaja todavía en el instalador: se construye con `cargo build --bin ghost`.
+
 ## Lo que este ADR NO decide
 
-La firma del instalador (G-Release), una DACL propia para la carpeta (todavía no), ni
-si la puerta local llega a Windows (otro ADR, si llega).
+La firma del instalador (G-Release) ni una DACL propia, más estricta, para la carpeta de la app (todavía no). La
+puerta local ya no es una pregunta abierta: llegó a Windows en el sprint 012 (enmienda 4).

@@ -141,6 +141,11 @@ pub struct Preferencias {
     /// no se mira. **Con 0 no se escribe**: el archivo de quien nunca la baja —el del Mac, entero— no cambia ni un byte.
     #[serde(skip_serializing_if = "es_cero")]
     pub desplazamiento_de_la_banda: u32,
+    /// **Los clientes con el modo transparente encendido** (sprint 012, ADR 024), por su nombre. Como la NDA: es del
+    /// cliente y no cambia de una reunión a otra. **Vacío no se escribe**: el archivo de quien no lo usa —el del Mac,
+    /// entero— no cambia ni un byte.
+    #[serde(skip_serializing_if = "std::collections::BTreeSet::is_empty")]
+    pub transparentes: std::collections::BTreeSet<String>,
 }
 
 /// Lo que no se escribe en el archivo si es el valor de fábrica (el desplazamiento de la banda, sprint 011).
@@ -178,6 +183,7 @@ impl Default for Preferencias {
             enriquecer_el_banco: false,
             latencias_de_whisper: LatenciasDeWhisper::default(),
             desplazamiento_de_la_banda: 0,
+            transparentes: std::collections::BTreeSet::new(),
         }
     }
 }
@@ -300,6 +306,8 @@ mod tests {
             latencias_de_whisper: LatenciasDeWhisper { grande_ms: Some(5_200), pequeno_ms: Some(1_900), ..Default::default() },
             // La altura de la banda se recuerda (sprint 011): lo contrario de fábrica.
             desplazamiento_de_la_banda: 132,
+            // El modo transparente se recuerda por cliente (sprint 012).
+            transparentes: ["Páramo Azul".to_string()].into(),
         };
         guardar(&ruta, &elegidas).unwrap();
         assert_eq!(leer(&ruta), elegidas);
@@ -454,5 +462,19 @@ mod tests {
         let bajada = a_texto(&Preferencias { desplazamiento_de_la_banda: 132, ..p });
         assert!(bajada.contains(r#""desplazamientoDeLaBanda": 132"#), "{bajada}");
         assert_eq!(de_texto(&bajada).unwrap().desplazamiento_de_la_banda, 132);
+    }
+
+    /// **El modo transparente se recuerda por cliente, y vacío no se escribe** (sprint 012, ADR 024): el archivo de quien no
+    /// lo usa —el del Mac, entero— no cambia ni un byte, y uno de antes se lee con la lista vacía. ¿Puede fallar? Sí: sin el
+    /// `skip_serializing_if`, el siguiente guardado añadiría `"transparentes": []` a todos los archivos.
+    #[test]
+    fn los_clientes_transparentes_se_recuerdan_y_vacio_no_se_escribe() {
+        let p = de_texto(r#"{"version":1}"#).unwrap();
+        assert!(p.transparentes.is_empty());
+        let texto = a_texto(&p);
+        assert!(!texto.contains("transparentes"), "la lista vacía se escribió: {texto}");
+        let con = a_texto(&Preferencias { transparentes: ["Páramo Azul".to_string()].into(), ..p });
+        assert!(con.contains("transparentes"), "{con}");
+        assert!(de_texto(&con).unwrap().transparentes.contains("Páramo Azul"));
     }
 }

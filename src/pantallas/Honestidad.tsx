@@ -269,10 +269,12 @@ export function Honestidad({ bytes, escucha: laEscucha, busqueda = "" }: { bytes
               <span className="crece">
                 <b>{tn.tuyo}</b> {tp.tuyo} <b>{tp.tusTurnosNo}</b>
                 {tp.tuyoDespues}
+                {enWindows && ` ${tw.transparente.tuyoMas}`}
               </span>
             ) : (
               <span className="crece">
                 <b>{tn.tuyo}</b> {tn.tuyoDetalle}
+                {enWindows && ` ${tw.transparente.tuyoMas}`}
               </span>
             )}
           </div>

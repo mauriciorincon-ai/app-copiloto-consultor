@@ -51,6 +51,7 @@ import {
   type LaFranja,
 } from "../franja";
 import { useTextosDeWindows } from "../i18n/windows";
+import { ElModoTransparente } from "../componentes/ModoTransparente";
 
 /**
  * SESIÓN — «Antes de empezar».
@@ -96,6 +97,16 @@ export function Sesion({
   const pedido = estadoDeSesion(busqueda);
   const muestra = useMemo(() => muestraDelCliente(pedido), [pedido]);
   const [vista, setVista] = useEsteCliente(muestra);
+  // El modo transparente (sprint 012, ADR 024): solo Windows, y solo con un cliente elegido. En el Mac, ni una fila.
+  const [plataforma] = usePlataforma();
+  const transparente =
+    esWindows(plataforma) && vista.elegido ? (
+      <ElModoTransparente
+        vista={vista}
+        setVista={setVista}
+        abierta={escucha.escuchando}
+      />
+    ) : null;
   const [preguntando, setPreguntando] = useState(fuera && pedido === "pregunta");
   const [viendoClausula, setViendoClausula] = useState(fuera && pedido === "clausula");
   /**
@@ -240,6 +251,7 @@ export function Sesion({
               revisar={revisar}
               preguntando={preguntando}
               verLaClausula={() => setViendoClausula(true)}
+              transparente={transparente}
             />
           }
         />
@@ -311,6 +323,7 @@ export function Sesion({
             revisar={revisar}
             preguntando={preguntando}
             verLaClausula={() => setViendoClausula(true)}
+            transparente={transparente}
           />
         </div>
 
@@ -807,12 +820,15 @@ function EsteCliente({
   revisar,
   preguntando,
   verLaClausula,
+  transparente = null,
 }: {
   vista: VistaDelCliente;
   elegir: (nombre: string | null) => void;
   revisar: () => void;
   preguntando: boolean;
   verLaClausula: () => void;
+  /** El modo transparente de este cliente (sprint 012, ADR 024): solo en Windows; en el Mac llega `null` y no pinta nada. */
+  transparente?: React.ReactNode;
 }) {
   const t = useT().cuaderno;
   const tc = useT().cliente;
@@ -852,6 +868,7 @@ function EsteCliente({
           </button>
         </div>
       )}
+      {transparente}
       <div className="fila">
         <span className="crece aviso-legal">{tc.noEsAsesoria}</span>
         <button className="btn mini" type="button" onClick={verLaClausula}>

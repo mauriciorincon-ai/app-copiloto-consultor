@@ -58,11 +58,12 @@ test.describe("el cuaderno, en inglés", () => {
 });
 
 test.describe("Windows, en inglés", () => {
-  test("«Hoy en Windows» tiene sus dos grupos y las quince funciones con el nombre del diccionario", async ({ page }) => {
+  test("«Hoy en Windows» tiene «Ya funciona», sin grupo de «No por ahora», y las quince funciones con el nombre del diccionario", async ({ page }) => {
     await abrir(page, "ventana=principal&pantalla=honestidad&plataforma=windows");
     await expect(page.getByRole("heading", { name: W.titulo })).toBeVisible();
     await expect(page.getByText(W.ya, { exact: true })).toBeVisible();
-    await expect(page.getByText(W.noPorAhora, { exact: true })).toBeVisible();
+    // Sprint 012: con la puerta local en Windows no queda ninguna función «no por ahora»; el grupo no se pinta.
+    await expect(page.getByText(W.noPorAhora, { exact: true })).toHaveCount(0);
     for (const clave of CLAVES_DE_WINDOWS) {
       await expect(page.getByText(W.funciones[clave].nombre, { exact: true }).first(), clave).toBeVisible();
     }

@@ -205,11 +205,46 @@ pub struct VistaDelCliente {
     pub bandera: Option<LaBandera>,
     pub nda: Nda,
     pub clausula: Bilingue,
+    /// **El modo transparente de este cliente** (sprint 012, ADR 024): encendido, Sesión enseña el aviso y «El cliente
+    /// consintió», y la banda lleva su marca. Se guarda por cliente, como la NDA; sin cliente elegido, apagado.
+    pub transparente: bool,
+    /// El aviso que le dices al cliente, en los dos idiomas. Fijo: sin modelo (regla dura 3).
+    pub aviso: Bilingue,
+}
+
+/// **El aviso del modo transparente** (sprint 012, ADR 024): lo que el consultor le dice al cliente antes de empezar.
+/// Texto fijo y en los dos idiomas (reglas duras 3 y 7). Dice lo que la regla dura 1 garantiza —el audio no se graba, la
+/// transcripción no se guarda— y lo único que sí puede quedar, si el consultor lo acepta: una frase corta de un acuerdo
+/// (auditoría del S12, M3: decir que «nada de lo que dices se guarda» era más de lo que la app cumple). Ni «invisible» ni
+/// promesas que la app no cumple (regla dura 6).
+pub fn aviso_transparente() -> Bilingue {
+    Bilingue {
+        es: "Antes de empezar, te cuento: uso una herramienta en mi propio equipo que escucha esta reunión para traerme mi propia documentación. No graba el audio ni guarda la transcripción: todo vive en memoria y se borra al terminar; lo único que podría guardar, si yo lo decido, es una frase corta de un acuerdo. ¿Te parece bien?".into(),
+        en: "Before we start, a quick note: I use a tool on my own computer that listens to this meeting to bring up my own documents. It does not record the audio or keep a transcript: everything lives in memory and is deleted when we finish; the only thing I might keep, if I decide to, is a short line about an agreement. Is that all right with you?".into(),
+    }
 }
 
 #[cfg(test)]
 mod pruebas {
     use super::*;
+
+    /// **El aviso dice lo mismo en los dos idiomas y solo lo que la app cumple** (sprint 012). ¿Puede fallar? Sí: un aviso
+    /// vacío en un idioma, una promesa de «invisible» o un aviso que no diga que nada se guarda es rojo.
+    #[test]
+    fn el_aviso_transparente_es_bilingue_y_no_promete_de_mas() {
+        let a = aviso_transparente();
+        for (idioma, texto) in [("es", &a.es), ("en", &a.en)] {
+            assert!(texto.len() > 120, "el aviso en {idioma} es corto o está vacío");
+            assert!(!texto.to_lowercase().contains("invisib"), "el aviso en {idioma} promete invisibilidad");
+            assert!(!texto.to_lowercase().contains("indetect") && !texto.to_lowercase().contains("undetect"));
+        }
+        assert!(a.es.contains("memoria") && a.es.contains("se borra"), "el aviso no dice que nada se guarda");
+        assert!(a.en.contains("memory") && a.en.contains("deleted"), "the notice does not say nothing is kept");
+        // Y no promete más de lo que se cumple: una frase aceptada de un acuerdo SÍ puede quedar (regla dura 1).
+        assert!(a.es.contains("acuerdo") && a.en.contains("agreement"), "el aviso no dice lo único que puede quedar");
+        assert!(!a.es.contains("ni guarda lo que dices") && !a.en.contains("keep what you say"), "el aviso promete que nada se guarda");
+        assert!(a.es.ends_with('?') && a.en.ends_with('?'), "el aviso no le pregunta al cliente");
+    }
 
     /// **El catálogo se lee entero y cada fila trae lo suyo.** ¿Puede fallar? Sí: una fila sin
     /// inglés, sin fuente, con una URL que no es `https://`, o «sin verificar» sin decir qué falta,

@@ -51,6 +51,22 @@ pub struct FichaFijada {
     pub linea: String,
 }
 
+/// **La constancia del modo transparente** (sprint 012, ADR 024): que el cliente consintió, con lo que se le dijo. Vive en
+/// el archivo cifrado de la reunión, junto a tus notas; no hay archivo nuevo.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Consentimiento {
+    pub cliente: String,
+    /// La jurisdicción tal como la escribe tu corpus para ese cliente; vacía si no la escribe.
+    pub jurisdiccion: String,
+    /// «14:02», la hora del equipo.
+    pub hora: String,
+    /// «es» o «en»: el idioma en que se dijo el aviso.
+    pub idioma: String,
+    /// El aviso, palabra por palabra.
+    pub texto: String,
+}
+
 /// Un turno tuyo, en texto. La hora es la del reloj, «14:02», como en el transcript.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -85,6 +101,10 @@ pub struct Contenido {
     /// lee como una lista vacía.
     #[serde(default)]
     pub propuestas: Vec<Propuesta>,
+    /// Las constancias del modo transparente (sprint 012, ADR 024). **Vacía no se escribe**: el archivo de una reunión
+    /// sin modo transparente es el de siempre, y uno de antes se lee igual.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub consentimientos: Vec<Consentimiento>,
 }
 
 impl Contenido {
@@ -127,6 +147,8 @@ pub struct Resumen {
     pub bytes_acuerdos: usize,
     pub bytes_fijadas: usize,
     pub bytes_turnos: usize,
+    /// Las constancias del modo transparente de esta reunión (sprint 012).
+    pub consentimientos: usize,
 }
 
 /// Una propuesta que espera tu decisión, con el número con que la pantalla la nombra.
@@ -160,6 +182,8 @@ pub struct Cuaderno {
     siguiente: u32,
     /// Se llegó al tope de propuestas y alguna no entró. La pantalla lo dice.
     lleno: bool,
+    /// Las constancias del modo transparente (sprint 012): entran al archivo con lo demás.
+    consentimientos: Vec<Consentimiento>,
 }
 
 impl Cuaderno {
@@ -177,7 +201,18 @@ impl Cuaderno {
             vistas_con: std::hash::RandomState::new(),
             siguiente: 1,
             lleno: false,
+            consentimientos: Vec::new(),
         }
+    }
+
+    /// **«El cliente consintió»** (sprint 012, ADR 024): la constancia entra al archivo de esta reunión. La misma dos veces
+    /// seguidas no se repite, pero tampoco es un fallo: la constancia ya está dentro, y decir «no se pudo» de una segunda
+    /// pulsación en el mismo minuto sería falso (auditoría del S12).
+    pub fn consentir(&mut self, c: Consentimiento) -> bool {
+        if self.consentimientos.last() != Some(&c) {
+            self.consentimientos.push(c);
+        }
+        true
     }
 
     /// Tu nota entera, tal como está en el campo. Se reemplaza, no se añade: el campo es la verdad.
@@ -303,6 +338,9 @@ impl Cuaderno {
             && self.fijadas.is_empty()
             && self.mis_turnos.is_empty()
             && self.guardadas.is_empty()
+            // La constancia de que el cliente consintió es tuya (sprint 012, ADR 024): sin esto, una reunión con solo
+            // ella se descartaba en silencio al parar y la evidencia desaparecía (auditoría del S12, A1).
+            && self.consentimientos.is_empty()
     }
 
     /// ¿Queda algo que decidir al cerrar? Lo tuyo, o propuestas esperando (ADR 016 §4): una reunión
@@ -408,6 +446,7 @@ impl Cuaderno {
             bytes_acuerdos: self.acuerdos.iter().map(String::len).sum(),
             bytes_fijadas: fijadas_bytes,
             bytes_turnos: self.mis_turnos.iter().map(|t| t.texto.len()).sum(),
+            consentimientos: self.consentimientos.len(),
         }
     }
 
@@ -422,6 +461,7 @@ impl Cuaderno {
             fijadas: self.fijadas.clone(),
             mis_turnos: if self.conservar_mis_turnos { self.mis_turnos.clone() } else { Vec::new() },
             propuestas: self.guardadas.clone(),
+            consentimientos: self.consentimientos.clone(),
         }
     }
 
@@ -665,6 +705,18 @@ mod pruebas {
         assert!(!c.vacio());
         c.olvidar();
         assert!(c.vacio());
+        // La constancia del consentimiento es tuya: una reunión con solo ella no se descarta al parar (A1 del S12).
+        c.consentir(Consentimiento {
+            cliente: "Páramo Azul".into(),
+            jurisdiccion: "Colombia".into(),
+            hora: "14:02".into(),
+            idioma: "es".into(),
+            texto: "Antes de empezar…".into(),
+        });
+        assert!(!c.vacio(), "una reunión con solo la constancia se habría descartado al parar");
+        assert!(c.hay_que_decidir(), "con solo la constancia, parar tiene que dejar «al cerrar»");
+        c.olvidar();
+        assert!(c.vacio());
     }
 
     #[test]
@@ -799,5 +851,34 @@ mod pruebas {
         assert_eq!(c.para_las_reglas()[0].linea, "una cuarta fuente es adicional");
         let json = String::from_utf8(c.contenido(encabezado()).a_bytes()).unwrap();
         assert!(!json.contains("cuarta"), "la línea del documento acabó en el archivo: {json}");
+    }
+
+    /// **La constancia del consentimiento entra al archivo de la reunión** (sprint 012, ADR 024), una vez, con lo que se le
+    /// dijo al cliente; «Se va a guardar» la cuenta; una reunión sin modo transparente no escribe la lista, y un archivo de
+    /// antes se lee igual. ¿Puede fallar? Sí: sin el `skip_serializing_if` todos los archivos cambiarían, y sin
+    /// `#[serde(default)]` uno viejo dejaría de abrir.
+    #[test]
+    fn la_constancia_del_consentimiento_entra_al_archivo_y_vacia_no_se_escribe() {
+        let mut c = Cuaderno::nuevo(false);
+        let sin = String::from_utf8(c.contenido(encabezado()).a_bytes()).unwrap();
+        assert!(!sin.contains("consentimientos"), "una reunión sin modo transparente escribió la lista: {sin}");
+        let constancia = Consentimiento {
+            cliente: "Páramo Azul".into(),
+            jurisdiccion: "Colombia".into(),
+            hora: "14:02".into(),
+            idioma: "es".into(),
+            texto: "Antes de empezar, te cuento…".into(),
+        };
+        assert!(c.consentir(constancia.clone()));
+        assert!(c.consentir(constancia.clone()), "la segunda pulsación se contó como un fallo: la constancia ya estaba");
+        assert_eq!(c.resumen().consentimientos, 1, "la misma constancia se repitió");
+        let dentro = c.contenido(encabezado());
+        let vuelta = Contenido::de_bytes(&dentro.a_bytes()).unwrap();
+        assert_eq!(vuelta.consentimientos, vec![constancia]);
+        let mut viejo = serde_json::to_value(&dentro).unwrap();
+        viejo.as_object_mut().unwrap().remove("consentimientos");
+        assert!(Contenido::de_bytes(&serde_json::to_vec(&viejo).unwrap()).unwrap().consentimientos.is_empty());
+        c.olvidar();
+        assert_eq!(c.resumen().consentimientos, 0, "la constancia sobrevivió a guardar o descartar");
     }
 }

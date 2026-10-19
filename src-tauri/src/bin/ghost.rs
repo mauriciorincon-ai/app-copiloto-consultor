@@ -24,7 +24,7 @@ const ESPERA: Duration = Duration::from_secs(300);
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    let idioma = cli::idioma(std::env::var("LANG").ok().as_deref());
+    let idioma = cli::idioma_del_entorno();
     ExitCode::from(correr(&args, idioma) as u8)
 }
 
@@ -53,31 +53,24 @@ fn correr(args: &[String], idioma: &str) -> i32 {
         }
     };
 
-    // La puerta local es un socket Unix: en Windows no existe (ADR 022), y `ghost` lo dice en vez de buscar un HOME.
-    if cfg!(not(unix)) {
-        eprintln!(
-            "{}",
-            if en { "The local door does not exist on Windows yet (ADR 022)." } else { "La puerta local no existe en Windows todavía (ADR 022)." }
-        );
-        return salida::FALLO;
-    }
-    let Some(casa) = std::env::var_os("HOME") else {
+    // En el Mac, el socket en la carpeta de la app; en Windows, el named pipe (sprint 012, ADR 022 enmienda 4).
+    let Some(ruta) = socket::ruta_de_la_puerta() else {
         eprintln!("{}", if en { "HOME is not set" } else { "falta HOME" });
         return salida::FALLO;
     };
-    let ruta = socket::ruta_en(&socket::carpeta_de_la_app(Path::new(&casa)));
 
     // Primero la puerta, después el Llavero.
-    if !ruta.exists() {
+    if !socket::hay_puerta(&ruta) {
         return cerrada(en);
     }
     let Some(mut token) = llavero::leer(Servicio::Puerta, CUENTA) else {
         eprintln!(
             "{}",
-            if en {
-                "The door is open but ghost could not read its key from the Keychain (did you deny it?)."
-            } else {
-                "La puerta está abierta, pero ghost no pudo leer su llave del Llavero (¿la denegaste?)."
+            match (en, cfg!(windows)) {
+                (true, false) => "The door is open but ghost could not read its key from the Keychain (did you deny it?).",
+                (false, false) => "La puerta está abierta, pero ghost no pudo leer su llave del Llavero (¿la denegaste?).",
+                (true, true) => "The door is open but ghost could not read its key from Credential Manager.",
+                (false, true) => "La puerta está abierta, pero ghost no pudo leer su llave del Administrador de credenciales.",
             }
         );
         return salida::FALLO;

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-el-cliente-consintio"
+description = "Enables the el_cliente_consintio command without any pre-configured scope."
+commands.allow = ["el_cliente_consintio"]
+
+[[permission]]
+identifier = "deny-el-cliente-consintio"
+description = "Denies the el_cliente_consintio command without any pre-configured scope."
+commands.deny = ["el_cliente_consintio"]

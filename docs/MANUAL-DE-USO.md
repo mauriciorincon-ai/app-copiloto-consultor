@@ -419,7 +419,7 @@ solo trae macOS 26; en un Mac con una versión anterior no arranca.
     el catálogo v1») y no adivina.
   - Si la línea nombra varias («Colombia y California»), la bandera es la de **la más estricta**.
   - El catálogo se actualiza con una versión nueva de la app, nunca por la red.
-  - La plantilla del aviso de una línea al cliente y el registro de que le informaste quedan para un hito posterior, sin fecha.
+  - El aviso al cliente y el registro de que le informaste existen en Windows desde el sprint 012 (el modo transparente); en el Mac quedan para un hito posterior, sin fecha.
 
 ### El ensayo: practica antes de la reunión · Nuevo · Sprint 004
 
@@ -943,7 +943,7 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
 | `atajos` | sí: Alt+Mayús y una tecla; ninguno con Ctrl+Alt, que en muchos teclados es AltGr |
 | `borrado-con-la-app-cerrada` | sí: el Programador de tareas, al minuto de cada vencimiento |
 | `desbloqueo` | sí: Windows Hello, una vez por sesión de la app |
-| `puerta-local` | no en Windows por ahora: la puerta para Claude Code |
+| `puerta-local` | sí: la puerta para Claude Code, un named pipe solo de tu usuario, con la llave en el Administrador de credenciales (sprint 012) |
 
 ### Instalar en una Surface o un equipo ARM · Sprint 009
 
@@ -963,6 +963,12 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
 - **Lo que no cambia.** En macOS y en Windows x64 no cambia nada. La protección de la banda sigue «sin verificar» en
   Teams, Zoom y Meet hasta que la pruebes en tu PC, y el `.msi` ARM64 se instaló y abrió en vivo en una Surface en el sprint 010 (reutilizó la carpeta de la instalación
   anterior con el `.exe`).
+
+### La puerta local y el modo transparente, en Windows · Nuevo · Sprint 012
+
+- **La puerta local ya está en Windows.** *IA* → **Puerta local** la abre: un *named pipe* que solo tu usuario puede abrir, con la llave en el Administrador de credenciales («Angel Ghost · puerta / token»). Misma política que en el Mac: nace cerrada, se cierra sola en una reunión o un ensayo, lista cerrada de órdenes y registro sin contenido. `ghost.exe` no viaja en el instalador: `cargo build --bin ghost`.
+- **El modo transparente es solo de Windows.** En *Sesión*, «Este cliente» tiene un interruptor por cliente: enciende el aviso fijo en español e inglés (que la voz te lee con el modo solo audio), **«El cliente consintió»** deja una constancia en tus notas cifradas (cliente, jurisdicción, hora, idioma y texto) y la banda lleva una marca mientras está encendido. Nada sale de la app y, sin el modo, tus archivos no cambian. El manual de Windows lo cuenta entero.
+- **«Terminar sesión» devuelve la reunión.** En Windows, terminar la sesión suelta la ventana acoplada, como el × de la banda. En el Mac no cambia.
 
 ## Atajos de teclado en el Mac
 

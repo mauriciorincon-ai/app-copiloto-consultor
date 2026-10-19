@@ -1168,6 +1168,16 @@ fn dejar_de_escuchar(app: tauri::AppHandle, estado: tauri::State<'_, LaEscucha>)
     avisar_a_la_ia(&app);
     // La reunión sigue abierta —«al cerrar»— hasta que la guardes o la descartes.
     reunion::al_terminar(&app);
+    // **En Windows, terminar la sesión devuelve la reunión acoplada** (decisión 1a del G-Plan del sprint 012, ADR 004
+    // enmienda 4), como el «×». En otro hilo y con el turno de los cambios de borde: soltar son idas y vueltas a otra
+    // ventana. En el Mac no cambia nada: ahí la devuelven el corte, el borde, salir y una caída.
+    if cfg!(windows) {
+        let mango = app.clone();
+        std::thread::spawn(move || {
+            let _turno = CAMBIO_DE_BORDE.lock().unwrap_or_else(|e| e.into_inner());
+            registrar_acople(&mango, "terminar sesión", &acople::soltar(&huella(&mango)));
+        });
+    }
     let _ = app.emit(EVENTO_MODO, ());
 }
 
@@ -2043,6 +2053,10 @@ pub fn run() {
             elegir_cliente,
             responder_nda,
             revisar_nda,
+            modo_transparente,
+            fijar_modo_transparente,
+            el_cliente_consintio,
+            decir_el_aviso,
             empezar_solo_notas,
             empezar_presencial,
             fijar_la_voz,
@@ -3748,12 +3762,133 @@ fn vista_del_cliente(app: &tauri::AppHandle, el_corpus: &ElCorpus) -> jurisdicci
         .as_ref()
         .and_then(|e| app.state::<LasPreferencias>().actuales.lock().ok().and_then(|p| p.ndas.get(e).copied()))
         .unwrap_or(jurisdiccion::Nda::SinRevisar);
+    let transparente = elegido.as_ref().is_some_and(|e| es_transparente(app, e));
     jurisdiccion::VistaDelCliente {
         clientes,
         bandera: elegido.as_ref().map(|_| jurisdiccion::bandera(escrita.as_deref())),
         elegido,
         nda,
         clausula: jurisdiccion::clausula().clone(),
+        transparente,
+        aviso: jurisdiccion::aviso_transparente(),
+    }
+}
+
+/// ¿Tiene este cliente el modo transparente encendido? (sprint 012, ADR 024).
+fn es_transparente<R: tauri::Runtime>(app: &tauri::AppHandle<R>, cliente: &str) -> bool {
+    app.try_state::<LasPreferencias>()
+        .and_then(|lp| lp.actuales.lock().ok().map(|p| p.transparentes.contains(cliente)))
+        .unwrap_or(false)
+}
+
+/// El evento con el que la banda se entera de que el modo transparente se encendió o se apagó (sprint 012). Una
+/// **señal** sin dato: la banda vuelve a preguntar con [`modo_transparente`].
+const EVENTO_TRANSPARENTE: &str = "transparente";
+
+/// **La marca de la banda** (sprint 012, ADR 024): ¿el cliente de esta reunión tiene el modo transparente encendido? La
+/// banda solo sabe esto, ni el nombre del cliente ni el aviso.
+#[tauri::command]
+fn modo_transparente(app: tauri::AppHandle) -> bool {
+    reunion::cliente(&app).is_some_and(|c| es_transparente(&app, &c))
+}
+
+/// **El interruptor del modo transparente**, en Sesión, para el cliente elegido. Se guarda, como la NDA.
+#[tauri::command]
+fn fijar_modo_transparente(
+    app: tauri::AppHandle,
+    el_corpus: tauri::State<'_, ElCorpus>,
+    encendido: bool,
+) -> Result<jurisdiccion::VistaDelCliente, String> {
+    let elegido = reunion::cliente(&app).ok_or("elige primero el cliente")?;
+    recordar(&app, |p| {
+        if encendido {
+            p.transparentes.insert(elegido);
+        } else {
+            p.transparentes.remove(&elegido);
+        }
+    });
+    // Al log, el hecho; el nombre del cliente, no.
+    println!("[transparente] {}", if encendido { "encendido para el cliente elegido" } else { "apagado" });
+    let _ = app.emit(EVENTO_TRANSPARENTE, ());
+    Ok(vista_del_cliente(&app, &el_corpus))
+}
+
+/// El aviso en el idioma de la pista que se oye del otro lado —la del cliente, o la sala en presencial, donde nadie
+/// tiene dueño (ADR 020 §6)—: su código de idioma (con el que se busca la voz), «es» o «en», y el texto.
+fn aviso_en_el_idioma_del_cliente<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> (String, &'static str, String) {
+    let idiomas = idiomas_guardados(&app.state::<LasPreferencias>());
+    let oido = if reunion::es_presencial(app) { idiomas.de_la_sala().to_string() } else { idiomas.cliente };
+    let aviso = jurisdiccion::aviso_transparente();
+    if oido.starts_with("en") {
+        (oido, "en", aviso.en)
+    } else {
+        (oido, "es", aviso.es)
+    }
+}
+
+/// **«El cliente consintió»** (sprint 012, ADR 024): la constancia —cliente, jurisdicción, hora, idioma y el aviso
+/// palabra por palabra— entra en las notas cifradas de esta reunión. Solo con el modo encendido y una reunión abierta.
+/// Nada sale de la app.
+#[tauri::command]
+fn el_cliente_consintio(app: tauri::AppHandle, el_corpus: tauri::State<'_, ElCorpus>) -> Result<bool, String> {
+    let cliente = reunion::cliente(&app).ok_or("elige primero el cliente")?;
+    if !es_transparente(&app, &cliente) {
+        return Err("el modo transparente está apagado para este cliente".into());
+    }
+    let jurisdiccion = el_corpus
+        .0
+        .lock()
+        .ok()
+        .and_then(|g| g.as_ref().and_then(|c| c.jurisdiccion_de(&cliente).map(str::to_string)))
+        .unwrap_or_default();
+    let (_, idioma, texto) = aviso_en_el_idioma_del_cliente(&app);
+    let l = reloj::local(reloj::ahora());
+    let anotada = reunion::consentir(
+        &app,
+        notas::Consentimiento {
+            cliente,
+            jurisdiccion,
+            hora: format!("{:02}:{:02}", l.hora, l.minuto),
+            idioma: idioma.into(),
+            texto,
+        },
+    );
+    if !anotada {
+        return Err("no hay una reunión abierta donde dejar la constancia".into());
+    }
+    println!("[transparente] constancia del consentimiento anotada en las notas · {idioma}");
+    Ok(true)
+}
+
+/// **El aviso, al oído** (sprint 012, ADR 024): con el modo solo audio encendido, la voz te lo lee en el idioma del
+/// cliente para que se lo digas. Por el mismo camino que las fichas: si no cabe decirlo —altavoces, sin voz, alguien
+/// hablando—, se calla y lo dice el log.
+#[tauri::command]
+fn decir_el_aviso(app: tauri::AppHandle) -> bool {
+    // La voz es la del idioma del aviso, no la del consultor: un aviso en inglés con voz española sería ininteligible.
+    let (voz, idioma, texto) = aviso_en_el_idioma_del_cliente(&app);
+    let estado = app.state::<LaVozQueSale>();
+    let salida = capture::nativo::salida_de_audio();
+    let momento = habla::Momento {
+        modo_encendido: estado.encendida.load(Ordering::Relaxed),
+        salida: &salida,
+        hay_voz: estado.voz.hay_para(&voz),
+        alguien_hablando: alguien_hablando_en(&app),
+        ya_diciendo: estado.voz.hablando(),
+    };
+    if let Err(impedimento) = habla::cabe_decirla(&momento) {
+        println!("[transparente] el aviso no se dice: {}", impedimento.como_frase());
+        return false;
+    }
+    match estado.voz.decir(&voz, &texto) {
+        Ok(()) => {
+            println!("[transparente] diciendo el aviso · {idioma} · {} letras", texto.chars().count());
+            true
+        }
+        Err(e) => {
+            println!("[habla] el sintetizador no pudo: {e}");
+            false
+        }
     }
 }
 
@@ -3776,6 +3911,8 @@ fn elegir_cliente(
         }
     }
     reunion::elegir_cliente(&app, nombre);
+    // Otro cliente puede tener otro modo transparente: la banda vuelve a preguntar (sprint 012).
+    let _ = app.emit(EVENTO_TRANSPARENTE, ());
     Ok(vista_del_cliente(&app, &el_corpus))
 }
 
@@ -4021,7 +4158,7 @@ fn cambiar_por_la_puerta(app: &tauri::AppHandle, clave: &str, valor: &str) -> Re
 
 /// La ruta de `ghost`, si está compilado junto a la app (`pnpm ghost`). En H1 no se instala en el PATH.
 fn ruta_de_ghost() -> Option<String> {
-    let g = std::env::current_exe().ok()?.with_file_name("ghost");
+    let g = std::env::current_exe().ok()?.with_file_name(format!("ghost{}", std::env::consts::EXE_SUFFIX));
     g.is_file().then(|| g.to_string_lossy().into_owned())
 }
 
@@ -5346,5 +5483,78 @@ mod pruebas_de_la_auditoria_del_s4 {
         assert_eq!(super::locale_del_ensayo(Idioma::En, &pistas("es-CO", "es-CO"), &listos(&["fr-FR", "en-AU"])), "en-AU");
         assert_eq!(super::locale_del_ensayo(Idioma::En, &pistas("es-CO", "es-CO"), &[]), "en-US");
         assert_eq!(super::locale_del_ensayo(Idioma::Es, &pistas("en-US", "en-US"), &[]), "es-ES");
+    }
+}
+
+/// **El producto completo en Windows, 1 de 2** (sprint 012): «Terminar sesión» devuelve la reunión (decisión 1a) y el modo
+/// transparente (ADR 024). Las agujas se buscan en el código de producción, sin los módulos de pruebas.
+#[cfg(test)]
+mod pruebas_del_producto_completo {
+    fn produccion() -> &'static str {
+        let todo = include_str!("lib.rs");
+        &todo[..todo.find("mod pruebas_del_cierre_de_la_ventana").expect("falta el módulo de pruebas")]
+    }
+
+    fn cuerpo(firma: &str) -> &'static str {
+        let fuente = produccion();
+        let desde = fuente.find(firma).unwrap_or_else(|| panic!("no está {firma}"));
+        let resto = &fuente[desde + firma.len()..];
+        let hasta = resto.find("\nfn ").into_iter().chain(resto.find("\n#[tauri::command]")).min().unwrap_or(resto.len());
+        &resto[..hasta]
+    }
+
+    fn en(texto: &str, que: &str) -> usize {
+        texto.find(que).unwrap_or_else(|| panic!("falta «{que}»"))
+    }
+
+    /// **En Windows, «Terminar sesión» devuelve la reunión acoplada** (decisión 1a), después de cortar la escucha, con el
+    /// turno de los cambios de borde y en otro hilo. ¿Puede fallar? Sí: sin el `soltar` la reunión se queda encogida hasta
+    /// salir de la app, que es lo que el S11 dejó escrito; sin el `cfg!(windows)` cambiaría el Mac.
+    #[test]
+    fn terminar_sesion_devuelve_la_reunion_en_windows() {
+        let c = cuerpo("fn dejar_de_escuchar(");
+        let terminar = en(c, "reunion::al_terminar(&app)");
+        let solo_windows = en(c, "if cfg!(windows) {");
+        let soltar = en(c, "acople::soltar(&huella(&mango))");
+        assert!(terminar < solo_windows && solo_windows < soltar, "la reunión se devuelve antes de terminar, o también en el Mac");
+        assert!(c[solo_windows..soltar].contains("CAMBIO_DE_BORDE.lock()"), "se devuelve sin el turno de los cambios de borde");
+        assert!(c[solo_windows..soltar].contains("std::thread::spawn(move || {"), "se devuelve en el hilo de la orden");
+    }
+
+    /// **La constancia solo con el modo encendido y una reunión abierta**, y lo que se anota es el aviso del idioma del
+    /// cliente. ¿Puede fallar? Sí: anotar sin mirar el modo dejaría constancias de un aviso que nadie dijo.
+    #[test]
+    fn la_constancia_solo_con_el_modo_encendido() {
+        let c = cuerpo("fn el_cliente_consintio(");
+        assert!(en(c, "if !es_transparente(&app, &cliente)") < en(c, "reunion::consentir("), "se anota sin mirar el modo");
+        assert!(c.contains("aviso_en_el_idioma_del_cliente(&app)"), "la constancia no lleva el aviso que se dijo");
+        assert!(c.contains("if !anotada"), "sin reunión abierta la orden dice que se anotó");
+    }
+
+    /// **El aviso se oye con la voz de SU idioma, y en presencial es el de la sala** (auditoría del S12, M1 y B12).
+    /// ¿Puede fallar? Sí: volver a `estado.idioma()` (la voz del consultor) o a `.cliente` a secas es rojo.
+    #[test]
+    fn el_aviso_se_oye_con_la_voz_de_su_idioma_y_en_presencial_con_la_de_la_sala() {
+        let d = cuerpo("fn decir_el_aviso(");
+        assert!(d.contains("let (voz, idioma, texto) = aviso_en_el_idioma_del_cliente(&app)"), "la voz no sale del aviso");
+        assert!(!d.contains("estado.idioma()"), "el aviso se lee con la voz del idioma del consultor");
+        assert!(d.contains("hay_para(&voz)") && d.contains("decir(&voz, &texto)"));
+        let a = cuerpo("fn aviso_en_el_idioma_del_cliente");
+        assert!(a.contains("reunion::es_presencial(app)") && a.contains("de_la_sala()"), "en presencial no usa el idioma de la sala");
+    }
+
+    /// **La banda solo sabe si el modo está encendido**: ni el nombre del cliente, ni el aviso, ni puede encenderlo o anotar.
+    /// ¿Puede fallar? Sí: darle a la banda `este_cliente` o `el_cliente_consintio` es rojo.
+    #[test]
+    fn la_banda_solo_sabe_si_hay_modo_transparente() {
+        let banda = include_str!("../capabilities/banda.json");
+        assert!(banda.contains("\"allow-modo-transparente\""), "la banda no puede preguntar por el modo");
+        for ajena in ["allow-fijar-modo-transparente", "allow-el-cliente-consintio", "allow-este-cliente", "allow-decir-el-aviso"] {
+            assert!(!banda.contains(ajena), "la banda tiene {ajena}");
+        }
+        let principal = include_str!("../capabilities/default.json");
+        for suya in ["allow-fijar-modo-transparente", "allow-el-cliente-consintio", "allow-decir-el-aviso"] {
+            assert!(principal.contains(suya), "la ventana principal no tiene {suya}");
+        }
     }
 }

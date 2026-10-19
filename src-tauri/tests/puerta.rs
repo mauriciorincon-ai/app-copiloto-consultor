@@ -5,7 +5,7 @@
 //! **Ninguna prueba toca el Llavero de verdad** (regla 22): la llave es un doble. Ni la app: las
 //! operaciones son otro doble, con la reunión a voluntad.
 
-// La puerta local es un socket Unix: en Windows no existe (ADR 022), y estas pruebas tampoco.
+// La puerta local es un socket Unix en el Mac; en Windows es un named pipe (ADR 022 enmienda 4) y su hermana es `puerta-en-windows.rs`.
 #![cfg(unix)]
 
 use std::io::Write;
