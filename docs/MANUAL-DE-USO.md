@@ -930,8 +930,7 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
   tamaño y su huella comprobados, retoma si se corta y no se instala con una reunión, una sesión o un ensayo abiertos).
   Con el modelo, **«Redactar sugerencias»** se puede encender: el modelo se carga al empezar la sesión (≈ 1,1 GB) y se
   suelta al terminarla, al apagar el interruptor o con `Alt+Mayús+Q`. Redacta **dentro de tu PC, sin abrir ninguna
-  conexión** (Honestidad sigue en 0 B): en una Surface ARM64, mediana 2,1 s y 12 de 17 sugerencias del kit fundadas. La
-  ficha sale primero; si la sugerencia tarda más de 6 s o no cita bien su ficha, no se enseña. Sin el modelo no hay
+  conexión** (Honestidad sigue en 0 B): en una Surface ARM64, mediana 2,1 s y 12 de 17 sugerencias del kit fundadas. La ficha sale primero; si la sugerencia tarda más de 6 s o no cita bien su ficha, no se enseña. Con el PC muy cargado (por ejemplo, durante una compilación o con dos pistas transcribiéndose a la vez) puede pasar de 6 s: entonces se descarta y la ficha es la respuesta. Sin el modelo no hay
   sugerencia, dicho, y la ficha es la respuesta. Windows no ofrece el API externo ni «Enriquecer el banco». Si guardaste una clave de Groq o de Claude antes, sigue en el Administrador de credenciales sin que la app la lea: bórrala tú en **Panel de control → Administrador de credenciales → Credenciales de Windows → «Angel Ghost · API / claude» o «Angel Ghost · API / groq»**.
 - **Empezar otra sesión.** Si la reunión anterior sigue abierta con algo tuyo, Windows pregunta antes —Guardar,
   Descartar o Cancelar— porque guardar por primera vez crea la llave de tus notas y la tarea de borrado. Cerrar la

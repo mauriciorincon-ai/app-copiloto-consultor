@@ -71,3 +71,46 @@ transcribe la reunión a la vez y necesita la otra mitad; con 5, el máximo es m
   4. `quien_redacta` sin `admite_api()` → `cargo test`: «Windows eligió el API (api true, local false)».
 - **Sin red por construcción.** El binario con solo llama no importa `ws2_32.dll`: el código de descarga que trae
   llama.cpp (`common`, `cpp-httplib`) no se enlaza.
+
+## La corrida en vivo en la app (F3, 2026-10-19)
+
+La app real en la Surface (`pnpm tauri dev`, manejada por CDP), con «Draft suggestions» encendido, **Start session**
+(micrófono y audio del sistema) y `pregunta-es.wav` del kit sonando por los altavoces (6,5 s). No había auriculares:
+el micrófono pudo oír los altavoces (eco). Tres corridas:
+
+| Corrida | Contexto | Generación | Avisos de buffer de la captura |
+| --- | --- | --- | --- |
+| 1 | app recién compilada | pasó del techo: 6 023 ms → `Tarde`, sin sugerencia | 77 |
+| 2 | la misma app, otra sesión | 6 025 ms → `Tarde`, sin sugerencia | 48 |
+| 3 | tras recompilar con la línea de log nueva | **2 311 ms** (49 piezas sobre 288 de entrada); en la banda 5,3 s después de acabar la pregunta | 2 |
+
+La corrida 3, fase por fase (proceso de la app; `netstat -ano`): RAM 70 → 70 → **1 178** (modelo cargado al empezar) →
+1 940 (con la sugerencia; incluye whisper pequeño, que se carga con el primer turno) → **76** (End session lo suelta);
+TCP del proceso **0** y UDP **0** en las cinco fases; contador de la reunión **0 B**; el corte (`cortar_todo`) suelta el
+modelo (1 182 → 76 MB); credencial, tarea y preferencias idénticas al terminar. Latencia leída de la app: 2 312 ms.
+La banda mostró la ficha «Alcance» y debajo «suggestion · on your PC · high confidence» (leída como imagen).
+
+Lo que enseñó, y lo que se pagó:
+
+- **El «6 023 ms» del log era el corte, no la medida.** `sugerir` espera con `recv_timeout`; la generación seguía detrás,
+  sin que nadie la mirara. `Local::redactar` ahora anota `[modelo-local] generó N piezas sobre M de entrada en X ms`
+  (solo cifras, ADR 003), también cuando el techo ya la descartó.
+- **Con el PC muy cargado la sugerencia puede no salir, y la ficha ya está.** En el arnés, aislado, la mediana es 2,1 s;
+  en la app, con la captura desbordándose, la generación pasó de los 6 s en dos de tres corridas. Es la degradación
+  prevista (ADR 010: sin sugerencia, la ficha), no un fallo, pero hay que decirlo: los manuales, la guía y el BLUEPRINT
+  lo dicen. **La causa de las dos lentas no se pudo atribuir con certeza**: coinciden con muchos avisos de buffer (77 y 48
+  contra 2 en la buena), señal de un PC cargado; en la 1 se transcribía a la vez un turno de eco del micrófono (4,0 s,
+  «marcado como eco»); en la 2 el registro no muestra ningún turno concurrente. No se subió el techo (es de la orden).
+  Queda para w26, con auriculares, y para el gate del hito.
+- **La generación descartada seguía quemando CPU** que whisper necesita para la ficha del turno siguiente. Ahora el bucle
+  de `escribir` mira el plazo antes de pedir cada pieza (`paso_el_plazo`, el mismo techo) y se para; lo prueban una
+  función pura, una comprobación de fuente y, en rojo, la mutación que quita el bloque.
+- **IA y la banda pintaban el logotipo de Apple en Windows** junto a «en tu PC» y «en uso» (el icono `i-mac`, que el Mac
+  usa para el modelo del sistema): ningún test miraba iconos. Con el modelo local pintan un candado; un test del IA de
+  Windows exige que no salga `#i-mac` (rojo antes, verde después).
+- **Una versión anterior del guion** (con Playwright, que se rompe con los *shared workers* de la sesión) contó 2 a 5
+  conexiones del árbol de WebView2 fuera del bucle local ya con la app recién abierta y el modelo sin cargar; no son del
+  proceso de Rust ni del modelo, y no se pudo atribuir porque el guion cambió. El definitivo (CDP directo) midió **0** en el
+  árbol entero, en las cinco fases.
+
+No cubre: una videollamada real con auriculares (w26 de la guía) ni la voz de una persona; viaja al gate del hito.
