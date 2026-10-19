@@ -269,16 +269,24 @@ pub fn guardar(ruta: &std::path::Path, p: &Preferencias) -> Result<(), String> {
 
 /// **Apaga lo que esta plataforma ya no tiene** (sprint 013, auditoría B-4): el archivo de quien encendió el API o la
 /// sugerencia redactada en Windows con el sprint 012 sigue diciéndolo, y lo que se recuerda no puede prometer lo que la
-/// app ya no hace. El API, «redactar» y «enriquecer el banco» pasan a apagados; `mock` (la CI y el kit) no se toca.
-/// Devuelve si cambió algo, para guardar el archivo una vez. Un derivado jamás nace menos privado que su fuente: apagar
-/// un envío a un tercero es más privado, no menos. El Mac vuelve sin cambiar un byte.
-pub fn para_esta_plataforma(p: &mut Preferencias, plataforma: crate::sintesis::Plataforma, mock: bool) -> bool {
+/// app ya no hace. En Windows el API pasa a apagado siempre; «redactar», solo si el modelo local no está instalado en
+/// este PC (sprint 014); «enriquecer el banco», siempre, porque no se midió con el modelo local. `mock` (la CI y el kit)
+/// no se toca. Devuelve si cambió algo, para guardar el archivo una vez. Un derivado jamás nace menos privado que su
+/// fuente: apagar un envío a un tercero es más privado, no menos. El Mac vuelve sin cambiar un byte.
+pub fn para_esta_plataforma(
+    p: &mut Preferencias,
+    plataforma: crate::sintesis::Plataforma,
+    mock: bool,
+    local_instalado: bool,
+) -> bool {
     let antes = (p.api_encendida, p.redactar, p.enriquecer_el_banco);
     if !plataforma.admite_api() {
         p.api_encendida = false;
     }
-    if !plataforma.promete_redactar(mock) {
+    if !plataforma.promete_redactar(mock, local_instalado) {
         p.redactar = false;
+    }
+    if !plataforma.promete_enriquecer(mock) {
         p.enriquecer_el_banco = false;
     }
     antes != (p.api_encendida, p.redactar, p.enriquecer_el_banco)
@@ -294,21 +302,27 @@ mod tests {
         d
     }
 
-    /// **Lo que Windows ya no tiene se apaga y se recuerda apagado**; el Mac no cambia ni un byte, y el `mock` sigue.
+    /// **Lo que Windows ya no tiene se apaga y se recuerda apagado**; el Mac no cambia ni un byte, y el `mock` sigue. Con
+    /// el modelo local instalado (sprint 014), «redactar» se queda; el API y el banco enriquecido, no.
     #[test]
     fn windows_apaga_lo_que_ya_no_tiene_y_el_mac_no_toca_nada() {
         use crate::sintesis::Plataforma::{Mac, Windows};
         let viejo = Preferencias { api_encendida: true, redactar: true, enriquecer_el_banco: true, ..Preferencias::default() };
         let mut w = viejo.clone();
-        assert!(para_esta_plataforma(&mut w, Windows, false), "debía decir que cambió");
+        assert!(para_esta_plataforma(&mut w, Windows, false, false), "debía decir que cambió");
         assert!(!w.api_encendida && !w.redactar && !w.enriquecer_el_banco, "{w:?}");
         assert_eq!(Preferencias { api_encendida: false, redactar: false, enriquecer_el_banco: false, ..viejo.clone() }, w);
-        assert!(!para_esta_plataforma(&mut w, Windows, false), "la segunda vez ya no hay nada que apagar");
-        let mut m = viejo.clone();
-        assert!(!para_esta_plataforma(&mut m, Mac, false));
-        assert_eq!(m, viejo, "el Mac no cambia");
+        assert!(!para_esta_plataforma(&mut w, Windows, false, false), "la segunda vez ya no hay nada que apagar");
+        let mut con_local = viejo.clone();
+        assert!(para_esta_plataforma(&mut con_local, Windows, false, true));
+        assert!(con_local.redactar && !con_local.api_encendida && !con_local.enriquecer_el_banco, "{con_local:?}");
+        for local in [false, true] {
+            let mut m = viejo.clone();
+            assert!(!para_esta_plataforma(&mut m, Mac, false, local));
+            assert_eq!(m, viejo, "el Mac no cambia");
+        }
         let mut con_mock = viejo.clone();
-        assert!(para_esta_plataforma(&mut con_mock, Windows, true), "el API sí se apaga aunque haya mock");
+        assert!(para_esta_plataforma(&mut con_mock, Windows, true, false), "el API sí se apaga aunque haya mock");
         assert!(con_mock.redactar && con_mock.enriquecer_el_banco && !con_mock.api_encendida);
     }
 

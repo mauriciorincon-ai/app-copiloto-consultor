@@ -20,7 +20,8 @@ pub enum Sistema {
 
 /// Si una función está en Windows. Desde el sprint 008 («Windows completo») no queda ninguna «todavía no»: o está,
 /// con lo que diga su frase, o no está planeada. Desde el sprint 012 estaban las 15; en el sprint 013 la sugerencia
-/// redactada pasó a `NoPorAhora` (ADR 023, enmienda 1) y Honestidad la pinta con su motivo.
+/// redactada pasó a `NoPorAhora` (ADR 023, enmienda 1) y en el sprint 014 volvió, con el modelo local (enmienda 2).
+/// `NoPorAhora` se queda para la próxima que no pueda cumplirse: Honestidad la sabe pintar con su motivo.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Cuando {
@@ -49,9 +50,9 @@ pub const EN_WINDOWS: [Funcion; 15] = [
     Funcion { clave: "voz-al-oido", cuando: Cuando::Si },
     Funcion { clave: "acople", cuando: Cuando::Si },
     Funcion { clave: "ensayo", cuando: Cuando::Si },
-    // Sprint 013 (ADR 023, enmienda 1): el API salió de Windows y el modelo local que se midió abre una conexión de
-    // telemetría a Microsoft. Sin modelo que no salga a la red, la sugerencia redactada queda «no por ahora».
-    Funcion { clave: "sugerencia", cuando: Cuando::NoPorAhora },
+    // Sprint 014 (ADR 023, enmienda 2): el modelo local que instalas en IA redacta dentro de tu PC, sin ninguna conexión.
+    // El API sigue fuera de Windows (enmienda 1); sin el modelo, la ficha es la respuesta.
+    Funcion { clave: "sugerencia", cuando: Cuando::Si },
     Funcion { clave: "radar", cuando: Cuando::Si },
     Funcion { clave: "atajos", cuando: Cuando::Si },
     Funcion { clave: "borrado-con-la-app-cerrada", cuando: Cuando::Si },
@@ -189,17 +190,16 @@ mod pruebas {
         }
     }
 
-    /// En macOS no cruza ninguna lista de Windows ni nada de whisper; en Windows, las 15 (14 «sí» y 1 «no por ahora») y la transcripción. Desde
-    /// el sprint 013 la única «no por ahora» es la sugerencia redactada: las otras 14 están.
+    /// En macOS no cruza ninguna lista de Windows ni nada de whisper; en Windows, las 15 y la transcripción. Desde el
+    /// sprint 014 están las 15: la sugerencia redactada volvió con el modelo local (ADR 023, enmienda 2).
     #[test]
     fn cada_sistema_cruza_lo_suyo() {
         let mac = Plataforma::de(Sistema::Macos, None);
         assert!(mac.funciones.is_empty());
         let win = Plataforma::de(Sistema::Windows, Some(la_transcripcion()));
         assert_eq!(win.funciones.len(), 15);
-        assert_eq!(win.funciones.iter().filter(|f| f.cuando == Cuando::Si).count(), 14);
-        let no_por_ahora: Vec<&str> = win.funciones.iter().filter(|f| f.cuando == Cuando::NoPorAhora).map(|f| f.clave).collect();
-        assert_eq!(no_por_ahora, ["sugerencia"], "la única «no en Windows por ahora» es la sugerencia redactada");
+        assert_eq!(win.funciones.iter().filter(|f| f.cuando == Cuando::Si).count(), 15);
+        assert!(win.funciones.iter().any(|f| f.clave == "sugerencia" && f.cuando == Cuando::Si), "la sugerencia no está");
         assert_eq!(win.transcripcion.unwrap().techo_ms, 4_000);
         let aqui = de_este_equipo();
         assert_eq!(aqui.sistema == Sistema::Windows, cfg!(windows));

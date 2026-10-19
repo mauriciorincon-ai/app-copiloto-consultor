@@ -19,6 +19,7 @@ import {
   ESTADO_DE_LA_ESCUCHA,
   ESTADO_DE_LA_IA_CON_API,
   ESTADO_DE_LA_IA_EN_WINDOWS,
+  ESTADO_DE_LA_IA_EN_WINDOWS_CON_MODELO,
   LA_FRANJA_ARRIBA,
   PLATAFORMA_MACOS,
   PREPARACION_DEL_ENSAYO,
@@ -138,8 +139,11 @@ beforeEach(() => {
   respuestas.set("la_franja", LA_FRANJA_ARRIBA);
 });
 
-describe("IA en Windows: sin API, la sugerencia redactada es «no por ahora»", () => {
-  it("no ofrece proveedor, clave ni costo, y dice por qué (en español)", async () => {
+describe("IA en Windows: sin API; la sugerencia la redacta el modelo local, si está instalado (sprint 014)", () => {
+  const twIa = TEXTOS_DE_WINDOWS.es.ia;
+  const twIaEn = TEXTOS_DE_WINDOWS.en.ia;
+
+  it("sin el modelo: ni proveedor, ni clave, ni costo; la fila dice «sin instalar», ofrece instalarlo con su tamaño y dice cómo (en español)", async () => {
     respuestas.set("plataforma_de_este_equipo", PLATAFORMA_WINDOWS);
     respuestas.set("estado_de_la_ia", ESTADO_DE_LA_IA_EN_WINDOWS);
     const { container } = await pinta(<Ia />);
@@ -153,12 +157,12 @@ describe("IA en Windows: sin API, la sugerencia redactada es «no por ahora»", 
       expect(container.textContent, ausente).not.toContain(ausente);
     }
     expect(container.querySelector("input[type=password]")).toBeNull();
-    expect(container.textContent).toContain(
-      "La sugerencia redactada no está en Windows por ahora",
-    );
-    expect(container.textContent).toContain("El API de pago salió de Windows");
     expect(container.textContent).toContain("Modelo local");
-    expect(container.textContent).toContain("no por ahora");
+    expect(container.textContent).toContain(twIa.sinInstalar);
+    expect(container.textContent).toContain(twIa.sinModelo);
+    expect(
+      screen.getByRole("button", { name: "Instalar el modelo (1,1 GB)" }),
+    ).toBeInTheDocument();
     expect(container.textContent).not.toMatch(/Apple|macOS|\bMac\b/);
   });
 
@@ -174,18 +178,18 @@ describe("IA en Windows: sin API, la sugerencia redactada es «no por ahora»", 
     ]) {
       expect(container.textContent, ausente).not.toContain(ausente);
     }
-    expect(container.textContent).toContain(
-      "The written suggestion is not on Windows for now",
-    );
-    expect(container.textContent).toContain(
-      "The paid API is gone from Windows",
-    );
+    expect(container.textContent).toContain("Local model");
+    expect(container.textContent).toContain(twIaEn.sinInstalar);
+    expect(container.textContent).toContain(twIaEn.sinModelo);
+    expect(
+      screen.getByRole("button", { name: "Install the model (1.1 GB)" }),
+    ).toBeInTheDocument();
     expect(container.textContent).not.toMatch(/Apple|macOS|\bMac\b/);
   });
 
-  it("«Redactar sugerencias» y «Enriquecer el banco» se ven apagados y bloqueados aunque Rust los recuerde encendidos", async () => {
+  it("sin el modelo, «Redactar sugerencias» y «Enriquecer el banco» se ven apagados y bloqueados aunque Rust los recuerde encendidos, cada uno con su motivo", async () => {
     respuestas.set("plataforma_de_este_equipo", PLATAFORMA_WINDOWS);
-    // Rust ya no lo manda encendido en Windows (`estado_de`); la pantalla se defiende aun así de un estado viejo.
+    // Rust ya no lo manda encendido en Windows sin el modelo (`estado_de`); la pantalla se defiende aun así de un estado viejo.
     expect(
       ESTADO_DE_LA_IA_EN_WINDOWS.redactar ||
         ESTADO_DE_LA_IA_EN_WINDOWS.enriquecer,
@@ -196,21 +200,76 @@ describe("IA en Windows: sin API, la sugerencia redactada es «no por ahora»", 
       enriquecer: true,
     });
     await pinta(<Ia />);
-    for (const nombre of [/Redactar sugerencias/, /Enriquecer el banco/]) {
+    // Bloqueado se dice con texto y con motivo, no solo con menos color (regla 8; auditoría del S13, B-2).
+    for (const [nombre, aviso] of [
+      [/Redactar sugerencias/, twIa.instalaPrimero],
+      [/Enriquecer el banco/, "no por ahora"],
+    ] as const) {
       const interruptor = screen.getByRole("switch", { name: nombre });
       expect(interruptor).toHaveAttribute("aria-checked", "false");
       expect(interruptor).toHaveAttribute("aria-disabled", "true");
-      // Bloqueado se dice con texto y con motivo, no solo con menos color (regla 8; auditoría del S13, B-2).
-      expect(interruptor).toHaveTextContent("no por ahora");
-      expect(interruptor).toHaveAccessibleDescription(
-        /La sugerencia redactada no está en Windows por ahora|no hay modelo|conexión|Microsoft/i,
-      );
+      expect(interruptor).toHaveTextContent(aviso);
       await act(async () => {
         fireEvent.click(interruptor);
       });
     }
+    expect(
+      screen.getByRole("switch", { name: /Redactar sugerencias/ }),
+    ).toHaveAccessibleDescription(twIa.sinModelo);
     expect(pedidos("redactar_sugerencias")).toEqual([]);
     expect(pedidos("enriquecer_el_banco")).toEqual([]);
+  });
+
+  it("con el modelo: redacta él, «en tu PC», sin red; «Redactar sugerencias» se conmuta y «Enriquecer el banco» sigue «no por ahora»", async () => {
+    respuestas.set("plataforma_de_este_equipo", PLATAFORMA_WINDOWS);
+    respuestas.set("estado_de_la_ia", ESTADO_DE_LA_IA_EN_WINDOWS_CON_MODELO);
+    respuestas.set(
+      "redactar_sugerencias",
+      ESTADO_DE_LA_IA_EN_WINDOWS_CON_MODELO,
+    );
+    expect(ESTADO_DE_LA_IA_EN_WINDOWS_CON_MODELO.quien).toBe("local");
+    const { container } = await pinta(<Ia />);
+    expect(container.textContent).toContain("en tu PC");
+    expect(container.textContent).toContain(twIa.instalado);
+    expect(container.textContent).not.toContain(twIa.sinInstalar);
+    expect(
+      screen.queryByRole("button", { name: /Instalar el modelo/ }),
+    ).toBeNull();
+    const redactar = screen.getByRole("switch", {
+      name: /Redactar sugerencias/,
+    });
+    expect(redactar).not.toHaveAttribute("aria-disabled");
+    expect(redactar).toHaveAttribute("aria-checked", "true");
+    await act(async () => {
+      fireEvent.click(redactar);
+    });
+    expect(pedidos("redactar_sugerencias")).toEqual([
+      ["redactar_sugerencias", { si: false }],
+    ]);
+    const banco = screen.getByRole("switch", { name: /Enriquecer el banco/ });
+    expect(banco).toHaveAttribute("aria-disabled", "true");
+    expect(banco).toHaveTextContent("no por ahora");
+    expect(container.textContent).not.toMatch(/Apple|macOS|\bMac\b/);
+  });
+
+  it("«Instalar el modelo» se lo pide a Rust, y mientras baja lo dice sin ofrecer el botón otra vez", async () => {
+    respuestas.set("plataforma_de_este_equipo", PLATAFORMA_WINDOWS);
+    respuestas.set("estado_de_la_ia", ESTADO_DE_LA_IA_EN_WINDOWS);
+    const bajando = {
+      ...ESTADO_DE_LA_IA_EN_WINDOWS,
+      local: { ...ESTADO_DE_LA_IA_EN_WINDOWS.local, bajando: true },
+    };
+    respuestas.set("instalar_el_modelo_local", bajando);
+    await pinta(<Ia />);
+    await clic("Instalar el modelo (1,1 GB)");
+    expect(pedidos("instalar_el_modelo_local")).toHaveLength(1);
+    expect(
+      screen.getAllByRole("status").some((s) => s.textContent === twIa.bajando),
+      "el «bajando» no se anuncia",
+    ).toBe(true);
+    expect(
+      screen.queryByRole("button", { name: /Instalar el modelo/ }),
+    ).toBeNull();
   });
 
   it("la puerta local sigue en Windows", async () => {

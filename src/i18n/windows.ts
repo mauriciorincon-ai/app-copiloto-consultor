@@ -127,6 +127,24 @@ export type TextosDeWindows = {
     modoDetalle: string;
   };
   /**
+   * Sprint 014 (ADR 023 enmienda 2): el modelo local de la sugerencia, en IA. Solo Windows y sin maqueta (diccionario
+   * aparte, ADR 022). Maquetados, no vistos: van al gate del hito.
+   */
+  ia: {
+    /** La fila del modelo en «Quién redacta», sin él. */
+    sinInstalar: string;
+    bajando: string;
+    fallo: string;
+    /** El botón, con el tamaño real ya formateado con el separador del idioma. */
+    instalar: (gb: string) => string;
+    /** Debajo de la tabla, sin el modelo: qué hace, cómo se instala y cuándo no se puede. */
+    sinModelo: string;
+    /** Debajo de la tabla, con el modelo. */
+    instalado: string;
+    /** El aviso del interruptor «Redactar sugerencias» sin el modelo. */
+    instalaPrimero: string;
+  };
+  /**
    * **La reunión anterior sigue abierta** (sprint 013, decisión 2a): el cuadro que Windows enseña antes de empezar otra
    * sesión. Guardar crea la llave de notas y la tarea de borrado la primera vez, y eso no se hace sin que lo digas.
    */
@@ -209,7 +227,7 @@ const ES: TextosDeWindows = {
     sugerencia: {
       nombre: "La sugerencia redactada por IA",
       detalle:
-        "no en Windows por ahora: el modelo local que se midió abre una conexión de telemetría a Microsoft y el API de pago salió de Windows; la ficha sigue siendo la respuesta",
+        "sí, con el modelo local que instalas en IA (1,1 GB, una vez): redacta dentro de tu PC, sin abrir ninguna conexión; sin el modelo, la ficha sigue siendo la respuesta",
     },
     radar: {
       nombre: "El radar de tu equipo",
@@ -329,7 +347,18 @@ const ES: TextosDeWindows = {
   },
   honestidad: {
     modoDetalle:
-      "La única conexión la abre la propia app, una vez, cuando pides instalar el modelo de voz: 1,6 GB (0,5 GB en un PC ARM64), comprobados antes de usarse. En Windows no hay API: todo lo demás se queda en tu PC.",
+      "La app abre una conexión solo cuando tú lo pides, una vez por modelo: al instalar el modelo de voz, 1,6 GB (0,5 GB en un PC ARM64), y al instalar el modelo local de la sugerencia, 1,1 GB; los dos se comprueban antes de usarse. En Windows no hay API: todo lo demás se queda en tu PC.",
+  },
+  ia: {
+    sinInstalar: "sin instalar",
+    bajando: "bajando, con su comprobación…",
+    fallo: "la descarga falló",
+    instalar: (gb) => `Instalar el modelo (${gb} GB)`,
+    sinModelo:
+      "Para redactar en Windows, instala el modelo local: Angel Ghost lo baja una vez desde su origen y comprueba su huella antes de usarlo. Después redacta dentro de tu PC, sin abrir ninguna conexión. No se instala con una reunión, una sesión o un ensayo abiertos; si la descarga se corta, vuelve a pedirla.",
+    instalado:
+      "El modelo local redacta dentro de tu PC, sin abrir ninguna conexión: el contador sigue en 0 B. «Enriquecer el banco» no lo usa por ahora.",
+    instalaPrimero: "instala el modelo",
   },
   reunionAnterior: {
     titulo: "La reunión anterior sigue abierta",
@@ -404,7 +433,7 @@ const EN: TextosDeWindows = {
     sugerencia: {
       nombre: "The suggestion written by AI",
       detalle:
-        "not on Windows for now: the local model we measured opens a telemetry connection to Microsoft and the paid API is gone from Windows; the card is still the answer",
+        "yes, with the local model you install in AI (1.1 GB, once): it writes inside your PC without opening any connection; without the model, the card is still the answer",
     },
     radar: {
       nombre: "Your machine's radar",
@@ -529,7 +558,18 @@ const EN: TextosDeWindows = {
   },
   honestidad: {
     modoDetalle:
-      "The only connection is the one the app opens itself, once, when you ask to install the speech model: 1.6 GB (0.5 GB on an ARM64 PC), checked before use. There is no API on Windows: everything else stays on your PC.",
+      "The app opens a connection only when you ask, once per model: to install the speech model, 1.6 GB (0.5 GB on an ARM64 PC), and to install the suggestion’s local model, 1.1 GB; both are checked before use. There is no API on Windows: everything else stays on your PC.",
+  },
+  ia: {
+    sinInstalar: "not installed",
+    bajando: "downloading, with its checksum…",
+    fallo: "the download failed",
+    instalar: (gb) => `Install the model (${gb} GB)`,
+    sinModelo:
+      "To write suggestions on Windows, install the local model: Angel Ghost downloads it once from its origin and checks its checksum before using it. Then it writes inside your PC, without opening any connection. It isn’t installed while a meeting, a session or a rehearsal is open; if the download is cut, ask for it again.",
+    instalado:
+      "The local model writes inside your PC, without opening any connection: the counter stays at 0 B. «Enrich the bank» doesn’t use it for now.",
+    instalaPrimero: "install the model",
   },
   reunionAnterior: {
     titulo: "The previous meeting is still open",

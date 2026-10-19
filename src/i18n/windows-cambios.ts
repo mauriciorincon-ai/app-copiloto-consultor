@@ -22,13 +22,13 @@ type Parcial<T> = {
 export type Cambios = Parcial<Diccionario>;
 
 /**
- * La sugerencia redactada en Windows (ADR 023, enmienda 1; sprint 013): sin API y sin modelo local que no salga a la red,
- * es «no por ahora», dicho con su motivo. La ficha sigue siendo la respuesta.
+ * La sugerencia redactada en Windows (ADR 023, enmiendas 1 y 2): sin API, y con el modelo local que se instala en IA
+ * (sprint 014). Los motivos del modelo del sistema del Mac no se dan en Windows; si alguno llegara, dice la verdad de aquí.
  */
 const SIN_SUGERENCIA_ES =
-  "La sugerencia redactada no está en Windows por ahora: el modelo local que se midió en este PC cabe en el tiempo, pero abre una conexión con Microsoft aunque se apague su telemetría, y eso rompería el «0 B». El API de pago salió de Windows. La ficha sigue siendo la respuesta.";
+  "En Windows la sugerencia la redacta el modelo local, dentro de tu PC: instálalo en esta pantalla. El API de pago salió de Windows. Sin el modelo, la ficha sigue siendo la respuesta.";
 const SIN_SUGERENCIA_EN =
-  "The written suggestion is not on Windows for now: the local model measured on this PC is fast enough, but it keeps a connection to Microsoft open even with its telemetry off, which would break the “0 B”. The paid API is gone from Windows. The card is still the answer.";
+  "On Windows the suggestion is written by the local model, inside your PC: install it on this screen. The paid API is gone from Windows. Without the model, the card is still the answer.";
 
 const ES: Cambios = {
   // La puerta local en Windows (sprint 012, ADR 022 enmienda 4): un named pipe y la llave en el Administrador de
@@ -61,10 +61,11 @@ const ES: Cambios = {
     proteccionDetalle:
       "Tu panel le pide a Windows que no salga en las capturas, pero en Teams, Zoom y Meet está sin verificar: se verifica con una videollamada real en tu PC. Mientras tanto, comparte una ventana, no la pantalla.",
     modeloDelSistema: "Modelo local",
-    // Sprint 013: sin API y sin modelo local, la pantalla IA dice «no por ahora», no «no disponible».
+    // Sprint 013: lo que Windows no tiene se dice «no por ahora», no «no disponible». Desde el sprint 014 solo le toca a
+    // «Enriquecer el banco»: la sugerencia la redacta el modelo local.
     noDisponible: "no por ahora",
     iaSub:
-      "En Windows todo corre en tu PC y la ficha es la respuesta. La sugerencia redactada queda «no por ahora».",
+      "En Windows todo corre en tu PC. Con el modelo local instalado, la sugerencia se redacta aquí mismo, sin red; sin él, la ficha es la respuesta.",
     siFallaQuedan: "La ficha es la respuesta",
     permisosTitulo: "Permisos de Windows",
     // La tarea de borrado es del Programador de tareas, no de «Ítems de inicio» de macOS (auditoría del S10, A1).
@@ -109,7 +110,7 @@ const ES: Cambios = {
     // `windows-honestidad-y-manual` ate las copias a su fuente.
     concederEnMacos: "Conceder en Windows",
     modoDetalle:
-      "La única conexión la abre la propia app, una vez, cuando pides instalar el modelo de voz: 1,6 GB (0,5 GB en un PC ARM64), comprobados antes de usarse. En Windows no hay API: todo lo demás se queda en tu PC.",
+      "La app abre una conexión solo cuando tú lo pides, una vez por modelo: al instalar el modelo de voz, 1,6 GB (0,5 GB en un PC ARM64), y al instalar el modelo local de la sugerencia, 1,1 GB; los dos se comprueban antes de usarse. En Windows no hay API: todo lo demás se queda en tu PC.",
     cincoIdiomas:
       "Dos idiomas listos a la vez, como mucho: los que la app ofrece.",
     idiomasListos:
@@ -179,11 +180,12 @@ const ES: Cambios = {
       "La app no pudo ver si tu navegador está en una llamada. Ponte auriculares o cierra la llamada para ensayar.",
     vozSinReunion:
       "Sin reunión, la voz sale por donde suene tu PC; con una videollamada abierta, el ensayo no empieza por los altavoces del PC. Mientras habla, el micrófono no escucha.",
-    // Sprint 013 (auditoría, A-2): en Windows nadie redacta, así que el ensayo no manda a encenderlo en IA.
+    // Sprint 013 (auditoría, A-2): en Windows nadie enriquece el banco, así que el ensayo no manda a encenderlo en IA. El
+    // modelo local del sprint 014 redacta la sugerencia de la reunión, no el banco.
     enriquecerApagadoQue:
       "En Windows el banco de preguntas es el de las reglas; el acento de un modelo está «no por ahora».",
     porQueNoSumo: {
-      "sin-proveedor": "en Windows nadie redacta por ahora.",
+      "sin-proveedor": "en Windows el banco no se enriquece por ahora.",
     },
   },
   cliente: {
@@ -220,7 +222,7 @@ const EN: Cambios = {
     modeloDelSistema: "Local model",
     noDisponible: "not for now",
     iaSub:
-      "On Windows everything runs on your PC and the card is the answer. The written suggestion is “not for now”.",
+      "On Windows everything runs on your PC. With the local model installed, the suggestion is written right here, offline; without it, the card is the answer.",
     siFallaQuedan: "The card is the answer",
     permisosTitulo: "Windows permissions",
     noCorrio:
@@ -258,7 +260,7 @@ const EN: Cambios = {
     // `windows-honestidad-y-manual` ate las copias a su fuente.
     concederEnMacos: "Grant in Windows",
     modoDetalle:
-      "The only connection is the one the app opens itself, once, when you ask to install the speech model: 1.6 GB (0.5 GB on an ARM64 PC), checked before use. There is no API on Windows: everything else stays on your PC.",
+      "The app opens a connection only when you ask, once per model: to install the speech model, 1.6 GB (0.5 GB on an ARM64 PC), and to install the suggestion’s local model, 1.1 GB; both are checked before use. There is no API on Windows: everything else stays on your PC.",
     cincoIdiomas:
       "Two languages ready at a time, at most: the ones the app offers.",
     idiomasListos: "languages ready at once, at most: the ones the app offers.",
@@ -323,11 +325,12 @@ const EN: Cambios = {
       "The app could not see whether your browser is in a call. Put on headphones or close the call to rehearse.",
     vozSinReunion:
       "With no meeting, the voice plays wherever your PC plays sound; with a video call open, the rehearsal won’t start on the PC’s speakers. While it speaks, the microphone does not listen.",
-    // Sprint 013 (audit, A-2): on Windows nobody drafts, so the rehearsal does not send you to turn it on in AI.
+    // Sprint 013 (audit, A-2): on Windows nobody enriches the bank, so the rehearsal does not send you to turn it on in AI.
+    // The sprint 014 local model writes the meeting’s suggestion, not the bank.
     enriquecerApagadoQue:
       "On Windows the question bank is the rules-based one; a model’s extra touch is “not for now”.",
     porQueNoSumo: {
-      "sin-proveedor": "on Windows nobody drafts for now.",
+      "sin-proveedor": "on Windows the bank isn’t enriched for now.",
     },
   },
   cliente: {

@@ -141,6 +141,10 @@ const PROHIBIDO = [
   // estas líneas, crear el pipe, abrirlo, leerlo o escribir en él desde un módulo protegido pasaba en verde sin que
   // nadie lo viera. Las únicas líneas que lo hacen (`puerta/windows.rs`) llevan su marca y el ADR 018 en la misma línea.
   /\bCreateNamedPipeW?\b/, /\bCreateFileW?\b/, /\bWriteFile\b/, /\bReadFile\b/,
+  // EL MODELO LOCAL DE WINDOWS (sprint 014, ADR 023 enmienda 2): llama.cpp corre dentro de `sintesis/local.rs`, y su
+  // contexto guarda el turno del cliente en la caché. Sus funciones de sesión y de estado lo escriben a un archivo, con el
+  // turno dentro: ninguna puede aparecer en un módulo protegido.
+  /\b(llama_)?(save_session_file|state_save_file|state_seq_save_file)\b/,
 ];
 // Línea explícitamente autorizada: **con su ADR en la misma línea** («ADR 016»). Antes bastaba la
 // marca, y el comentario prometía un ADR que nadie exigía (auditoría del S3, B7).

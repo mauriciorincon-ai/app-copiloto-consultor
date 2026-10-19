@@ -16,8 +16,11 @@ import AxeBuilder from "@axe-core/playwright";
  * teclas de Windows en vez de `⌃⌥`.
  *
  * Sprint 008: Windows completo. «Todavía no» desaparece: el acople, la sugerencia, el radar, el borrado con la app
- * cerrada y el desbloqueo pasan a «Ya funciona» (la sugerencia, hasta el sprint 013, que la dejó en «no por ahora»); la IA dice, desde el 013, «Modelo local:
- * no por ahora» y no ofrece API; el radar pinta su tecla de Windows.
+ * cerrada y el desbloqueo pasan a «Ya funciona» (la sugerencia, hasta el sprint 013, que la dejó en «no por ahora»); el radar
+ * pinta su tecla de Windows.
+ *
+ * Sprint 014 (ADR 023, enmienda 2): la sugerencia vuelve a «Ya funciona» con el modelo local, y las quince están ahí. IA no
+ * ofrece API; ofrece instalar el modelo local con su tamaño real, y «Redactar sugerencias» espera a que esté.
  */
 
 // La app elige el idioma por el del navegador (src/App.tsx): estos textos se leen en español.
@@ -35,20 +38,16 @@ test("en Windows, Honestidad enseña «Hoy en Windows» con sus dos grupos y la 
   await expect(page.getByRole("heading", { name: "Todavía no" })).toHaveCount(
     0,
   );
-  // Sprint 013 (ADR 023, enmienda 1): vuelve el grupo «No en Windows por ahora», con una sola función: la sugerencia
-  // redactada. Las otras catorce siguen en «Ya funciona».
+  // Sprint 014 (ADR 023, enmienda 2): la sugerencia redactada vuelve con el modelo local; el grupo «No en Windows por
+  // ahora» no se pinta y las quince están en «Ya funciona».
   await expect(
     page.getByRole("heading", { name: "No en Windows por ahora" }),
-  ).toBeVisible();
+  ).toHaveCount(0);
   const lista = (grupo: string) =>
     page
       .getByRole("heading", { name: grupo })
       .locator("xpath=following-sibling::ul[1]/li");
-  await expect(lista("No en Windows por ahora")).toHaveCount(1);
-  await expect(lista("No en Windows por ahora")).toContainText(
-    "La sugerencia redactada por IA",
-  );
-  await expect(lista("Ya funciona")).toHaveCount(14);
+  await expect(lista("Ya funciona")).toHaveCount(15);
   // La banda sin verificar se dice con su frase, no solo con un color. Desde el sprint 007 lo dicen dos filas: la
   // banda protegida y la videollamada, porque las dos dependen de lo que el usuario compruebe en su PC.
   await expect(
@@ -96,15 +95,14 @@ test("en Windows, «Ya funciona» lleva la videollamada (S7) y las cinco del S8"
   ]) {
     await expect(ya.getByText(nombre)).toBeVisible();
   }
-  // La sugerencia redactada ya no está entre las que funcionan: es «no por ahora», con su motivo (sprint 013).
+  // La sugerencia redactada vuelve a estar entre las que funcionan, con el modelo local (sprint 014).
   const funcionan = page
     .getByRole("heading", { name: "Ya funciona" })
     .locator("xpath=following-sibling::ul[1]");
-  await expect(funcionan.getByText("La sugerencia redactada por IA")).toHaveCount(0);
-  const aplazadas = page
-    .getByRole("heading", { name: "No en Windows por ahora" })
-    .locator("xpath=following-sibling::ul[1]");
-  await expect(aplazadas.getByText("La sugerencia redactada por IA")).toBeVisible();
+  await expect(
+    funcionan.getByText("La sugerencia redactada por IA"),
+  ).toBeVisible();
+  await expect(funcionan.getByText(/sin abrir ninguna conexión/)).toBeVisible();
   // Y nada promete una versión próxima.
   await expect(page.getByText(/versión próxima/i)).toHaveCount(0);
 });
@@ -219,16 +217,23 @@ for (const plataforma of ["", "&plataforma=windows"]) {
 }
 
 /**
- * La IA en Windows (sprint 013, ADR 023 enmienda 1): sin API y con la sugerencia redactada en «no por ahora», dicho con su
- * motivo. No hay proveedor, ni clave, ni costo, y los dos interruptores que lo necesitaban quedan apagados y bloqueados.
+ * La IA en Windows (sprint 013, ADR 023 enmienda 1; sprint 014, enmienda 2): sin API, y con el modelo local por instalar
+ * —la muestra fuera de Tauri lo trae sin instalar—: la fila dice «sin instalar», el botón da su tamaño real y la frase
+ * dice cómo. No hay proveedor, ni clave, ni costo; «Redactar sugerencias» espera al modelo y «Enriquecer el banco» sigue
+ * «no por ahora».
  */
-test("en Windows, IA dice que la sugerencia redactada es «no por ahora» y no ofrece ningún API", async ({
+test("en Windows, IA ofrece instalar el modelo local y no ofrece ningún API", async ({
   page,
 }) => {
   await page.goto("/?ventana=principal&pantalla=ia&plataforma=windows");
   await expect(page.locator("h1").first()).toBeVisible();
+  await expect(page.getByText("Modelo local", { exact: true })).toBeVisible();
+  await expect(page.getByText("sin instalar", { exact: true })).toBeVisible();
   await expect(
-    page.getByText(/La sugerencia redactada no está en Windows por ahora/).first(),
+    page.getByRole("button", { name: "Instalar el modelo (1,1 GB)" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/Para redactar en Windows, instala el modelo local/),
   ).toBeVisible();
   await expect(page.getByText(/Apple|macOS|\bMac\b/)).toHaveCount(0);
   // Sin API: ni proveedor, ni clave, ni costo.
@@ -241,25 +246,34 @@ test("en Windows, IA dice que la sugerencia redactada es «no por ahora» y no o
   ]) {
     await expect(page.getByText(ausente, { exact: true })).toHaveCount(0);
   }
-  // Los dos interruptores que necesitaban un proveedor quedan apagados y bloqueados.
-  for (const nombre of [/Redactar sugerencias/, /Enriquecer el banco/]) {
+  // Sin el modelo, los dos interruptores quedan apagados y bloqueados, cada uno diciendo por qué.
+  for (const [nombre, aviso] of [
+    [/Redactar sugerencias/, "instala el modelo"],
+    [/Enriquecer el banco/, "no por ahora"],
+  ] as const) {
     const conmutador = page.getByRole("switch", { name: nombre });
     await expect(conmutador).toHaveAttribute("aria-checked", "false");
     await expect(conmutador).toHaveAttribute("aria-disabled", "true");
+    await expect(conmutador).toContainText(aviso);
   }
   // La puerta local sigue (S12).
-  await expect(page.getByRole("button", { name: /Puerta local/ })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Puerta local/ }),
+  ).toBeVisible();
 });
 
 /** El control: en macOS, IA sigue con su proveedor, su clave y su costo. */
-test("en macOS, IA sigue ofreciendo el API con su clave y su costo", async ({ page }) => {
+test("en macOS, IA sigue ofreciendo el API con su clave y su costo", async ({
+  page,
+}) => {
   await page.goto("/?ventana=principal&pantalla=ia");
-  await expect(page.getByText("Proveedor externo", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Proveedor externo", { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText("Costo", { exact: true })).toBeVisible();
-  await expect(page.getByRole("switch", { name: /Redactar sugerencias/ })).not.toHaveAttribute(
-    "aria-disabled",
-    "true",
-  );
+  await expect(
+    page.getByRole("switch", { name: /Redactar sugerencias/ }),
+  ).not.toHaveAttribute("aria-disabled", "true");
 });
 
 /** El radar en la banda de Windows (sprint 008): dice que te mira un programa de tu PC, con las teclas de Windows y sin
@@ -633,16 +647,16 @@ test("en Windows, el modo transparente enseña el aviso en los dos idiomas; en m
     page.getByRole("button", { name: /El cliente consintió/ }),
   ).toHaveAttribute("aria-disabled", "true");
   await expect(
-    page.getByText("Se anota con la reunión abierta: inicia la sesión primero."),
+    page.getByText(
+      "Se anota con la reunión abierta: inicia la sesión primero.",
+    ),
   ).toBeVisible();
 
   // CONTROL: en macOS, el mismo estado no pinta ni una línea del modo transparente.
-  await page.goto(
-    "/?ventana=principal&pantalla=sesion&estado=transparente",
-  );
+  await page.goto("/?ventana=principal&pantalla=sesion&estado=transparente");
   await expect(page.getByText("Este cliente").first()).toBeVisible();
-  await expect(page.getByRole("switch", { name: /Modo transparente/ })).toHaveCount(
-    0,
-  );
+  await expect(
+    page.getByRole("switch", { name: /Modo transparente/ }),
+  ).toHaveCount(0);
   await expect(page.getByText("Lo que le dices")).toHaveCount(0);
 });

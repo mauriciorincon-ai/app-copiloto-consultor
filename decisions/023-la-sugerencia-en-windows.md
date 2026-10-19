@@ -4,11 +4,11 @@
 - **Sprint:** 008 «Listo para el gate» (fase 1)
 - **Estado:** aceptada. La pide el ADR 022 («`sintesis/api.rs` necesita su propia puerta Rust y su ADR») y enmienda su
   §4, que contaba una sola. **Enmendada por la enmienda 1 (sprint 013): en Windows el API se retiró y esta puerta con
-  él.**
+  él.** **Y por la enmienda 2 (sprint 014): en Windows redacta un modelo local, dentro del proceso y sin red.**
 
 > **Cómo leer este ADR (sprint 013).** Todo lo que sigue hasta la **enmienda 1** describe lo que rigió del sprint 008 al 012, en
 > pasado: el API y su puerta `ureq` en Windows. Desde el sprint 013 **no existen**; la enmienda 1 dice qué los reemplaza (nada,
-> por ahora) y con qué cifras.
+> por ahora) y con qué cifras; la **enmienda 2**, cómo volvió la sugerencia sin abrir ninguna conexión.
 
 ## Contexto (hasta el sprint 012)
 
@@ -102,3 +102,61 @@ propósito** para medir en el S14 (decisión del usuario); borrar esa carpeta lo
 modelo—, con su telemetría apagada por API (`OgaSetTelemetryEnabled`), el modelo bajado por una puerta Rust como la de
 whisper, con su huella SHA-256, y medido con el mismo vigía y la misma canaria. Solo entra con **cero conexiones del proceso** en toda la
 sesión.
+
+## Enmienda 2 · La sugerencia vuelve a Windows: llama.cpp dentro del proceso, sin red (sprint 014, 2026-10-19)
+
+**Lo que redacta en Windows: Qwen2.5-1.5B-Instruct (GGUF, Q4_K_M, apache-2.0) por llama.cpp, dentro del proceso de la
+app, en la CPU.** Ni API, ni runtime de terceros con telemetría, ni una conexión: el proceso no abre ninguna en ninguna
+fase (vigía `netstat` del proceso, como en la enmienda 1). Honestidad dice «0 B» y es verdad: nada pasa por `red.rs`
+porque nada sale.
+
+| Medido en la Surface (Snapdragon X Plus, 10 núcleos, 15,6 GB; CPU) | Resultado | Criterio de entrada |
+|---|---|---|
+| Archivo | `qwen2.5-1.5b-instruct-q4_k_m.gguf`, 1 117 320 736 B, SHA-256 `6a1a2eb6…407e`, revisión `91cad51…` | — |
+| Compila en ARM64 (clang-cl, Ninja, `-j 4`) | llama.cpp en ≈ 2 min; enlaza junto a whisper con **un solo ggml 0.9.5** | — |
+| Carga · RAM | ≈ 1,5 s · +1,1 GB (pico 1,23 GB); al soltarlo, vuelve | — |
+| Latencia, 17 turnos del kit (la app usa 5 hilos) | mediana **2,1 s**, p95 2,3 s, máx 2,4 s (con 10 hilos: 1,8 · 2,1 · 5,3 s) | < 6 s ✅ |
+| `fundar` | **12 de 17** (Foundry Local, mismo modelo en ONNX: 6 de 17) | ≥ 9 ✅ |
+| Conexiones del proceso (arrancar · cargar · redactar · reposar 60 s · soltar) | **TCP 0 · UDP 0 en las cinco** | 0 ✅ |
+| Canaria del turno | **0 archivos** de los escritos durante la prueba | 0 ✅ |
+
+La tabla completa, el arnés y cómo repetirla: [anexo](anexos/023-medida-llama-cpp.md). El arnés vive en el repo esta vez
+(`src-tauri/tests/modelo-local-en-windows.rs`) y desde la fase 2 mide **el camino de la app**, no una copia.
+
+**Decisión.**
+
+1. **`llama-cpp-2` y `llama-cpp-sys-2` fijados con `=0.1.136`, sin features** (ni OpenMP, ni GPU; `LLAMA_CURL=OFF` lo
+   pone el crate). Es la última versión cuyo ggml vendorizado es el de `whisper-rs-sys` 0.15: cabeceras públicas
+   idénticas y 85 de 86 fuentes de CPU iguales (difiere solo el escritor de GGUF, que la app no usa). Los dos crates
+   enlazan estáticas `ggml`, `ggml-base` y `ggml-cpu` con el mismo nombre y el binario se queda con una sola copia;
+   subir uno exige subir el otro a la par (lo vigila `llama_y_whisper_enlazan_con_un_solo_ggml`, en la CI).
+2. **El perfil `dev` apaga `debug-assertions` para `llama-cpp-sys-2`**: su `build.rs` añade `msvcrtd` cuando él mismo
+   se compiló con ellas, y mezclar la CRT de depuración con la de release colgaba antes de `main` todo binario de
+   prueba (visto en la Surface: `ucrtbased.dll` en las importaciones, LNK4098). En `--release` ya están apagadas.
+3. **Sin una puerta nueva** (desviación del archivo del sprint, que pedía una segunda): el GGUF baja por la línea de
+   whisper, `modelo_whisper::bajar`, con su origen y revisión fijos, tamaño, SHA-256, espacio y guarda de reunión.
+   `contador-de-red` sigue contando **una** puerta Rust. Desde este sprint **retoma un corte** con `Range` desde el
+   último byte (hasta 5 tramos por petición): el servidor cortó dos de dos descargas a los 15 y 19 minutos, y sin retomar
+   cada corte empezaba de cero. La huella se calcula igual, sobre el archivo entero.
+4. **El proveedor** es `sintesis/local.rs` (módulo protegido): `Quien::Local`, una generación por sugerencia con el
+   prompt de la app en ChatML (el formato del modelo, escrito en Rust para no dejar copias del turno sin pisar; idéntico
+   a la plantilla del GGUF, comprobado en vivo), temperatura 0, como mucho 160 piezas, con la mitad de los núcleos (la
+   otra mitad le queda a whisper). Un contexto por sugerencia, con su caché vaciada antes de soltarlo; el prompt, las
+   piezas y la salida se pisan con ceros; los registros de llama.cpp, apagados. `verify-ephemeral` prohíbe en los
+   protegidos las funciones de llama.cpp que guardan su estado en un archivo. `fundar` y el techo de 6 s, como siempre.
+5. **El modelo vive lo que la sesión**: se carga al empezar con «Redactar sugerencias» encendido (o la primera vez que
+   hace falta) y se suelta al terminar, al apagar «Redactar» y con el corte —dentro de la pieza `Sugerencia`, que el
+   `match` sin comodín obliga a resolver; desviación del plan, que pedía una pieza nueva—.
+6. **Lo que se promete en Windows**: «Redactar sugerencias», solo con el modelo instalado; **«Enriquecer el banco» sigue
+   «no por ahora»** (no se midió para el banco); el API, jamás (`quien_redacta` no lo elige en Windows, con prueba).
+   «Hoy en Windows» vuelve a las 15 en «sí».
+
+**Lo que la app hace sola al cambiar de estado** (matriz de la regla 24): al arrancar borra los `.parcial` de
+`modelos\` y apaga lo recordado que Windows no tiene (el API siempre; «redactar», si el modelo no está); al empezar una
+sesión con «Redactar» encendido carga el modelo en RAM, sin red; al terminar, al apagar «Redactar» o con el corte, lo
+suelta. Solo «Install the model», en IA y nunca con una reunión, una sesión o un ensayo abiertos, abre la conexión de la
+descarga.
+
+**Descartados.** Foundry Local (enmienda 1: telemetría a Microsoft con sus interruptores apagados). Qwen2.5-3B (su
+licencia, `qwen-research`, no es comercial). ONNX Runtime GenAI directo y Phi-3-mini (MIT) eran los planes B: no
+hicieron falta. La NPU no se probó: la CPU cabe en el techo.

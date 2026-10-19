@@ -5,12 +5,14 @@ import { PILA, EnElRoadmap } from "../componentes/Ventana";
 import { useBytesALaRed } from "../cuaderno";
 import { hayTauri } from "../puente";
 import { esWindows, usePlataforma } from "../plataforma";
+import { cifraEnIdioma, useTextosDeWindows } from "../i18n/windows";
 import {
   EXTERNOS,
   apiExterna,
   borrarClave,
   dolares,
   guardarClave,
+  instalarElModeloLocal,
   redactarSugerencias,
   enriquecerElBanco,
   useIa,
@@ -46,8 +48,9 @@ import {
  * en el Llavero, y la pantalla dice por qué no se puede cuando no se puede.
  *
  * **En Windows no hay API** (sprint 013, decisión 1a; ADR 023 enmienda 1): ni la fila del proveedor, ni su clave, ni el
- * costo, ni «Redactar sugerencias» ni «Enriquecer el banco», que sin proveedor no hacen nada. La pantalla dice, con su
- * motivo, que la sugerencia redactada es «no por ahora» y que la ficha es la respuesta. La puerta local sigue.
+ * costo. **Redacta el modelo local** (sprint 014, enmienda 2): su fila dice si está instalado y, si no, lo instala con su
+ * tamaño real; «Redactar sugerencias» se desbloquea con él. «Enriquecer el banco» sigue «no por ahora»: el modelo no se
+ * midió para el banco. La puerta local sigue.
  */
 /**
  * Lo que cada proveedor hace con lo que le mandas (ADR 011, decisión del usuario 2026-09-29). Un
@@ -77,6 +80,7 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
   const [sinClave, setSinClave] = useState(false);
   const [plataforma] = usePlataforma();
   const windows = esWindows(plataforma);
+  const tw = useTextosDeWindows();
 
   const aplicar = (p: Promise<EstadoDeLaIa | null>) =>
     void p
@@ -86,9 +90,12 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
       })
       .catch(() => setSinClave(true));
 
-  // En Windows el API no existe: ni su clave ni su tope pueden ser el motivo.
+  // En Windows el API no existe: ni su clave ni su tope pueden ser el motivo. El de la sugerencia es el modelo local
+  // (sprint 014): sin instalar, se dice cómo instalarlo.
   const porQue: PorQueNoRedacta | null = windows
-    ? ia.sistema
+    ? ia.local.instalado
+      ? null
+      : "sin-modelo-local"
     : sinClave || (ia.api.encendida && !ia.api.hayClave)
       ? "sin-clave"
       : ia.mesUsd >= ia.topeUsd
@@ -161,11 +168,13 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
                 <tr>
                   <td>{t.modeloDelSistema}</td>
                   <td>
-                    {ia.quien === "sistema" ? (
+                    {ia.quien === "sistema" || ia.quien === "local" ? (
                       <span className="estado ok">
                         <Ic id="i-mac" s relleno />
                         <span>{t.enUso}</span>
                       </span>
+                    ) : windows ? (
+                      <ModeloLocal ia={ia} alInstalar={() => aplicar(instalarElModeloLocal())} />
                     ) : ia.sistema === null ? (
                       t.respaldo
                     ) : (
@@ -176,7 +185,9 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
                     )}
                   </td>
                   <td className="num">
-                    {ia.quien === "sistema" && ia.latenciaMs !== null ? segundos(ia.latenciaMs) : "—"}
+                    {(ia.quien === "sistema" || ia.quien === "local") && ia.latenciaMs !== null
+                      ? segundos(ia.latenciaMs)
+                      : "—"}
                   </td>
                 </tr>
                 {!windows && (
@@ -215,8 +226,11 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
             </table>
             {porQue && (
               <p id="ia-motivo" style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "6px" }}>
-                {t.porQueNoRedacta[porQue]}
+                {porQue === "sin-modelo-local" ? tw.ia.sinModelo : t.porQueNoRedacta[porQue]}
               </p>
+            )}
+            {windows && ia.local.instalado && (
+              <p style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "6px" }}>{tw.ia.instalado}</p>
             )}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -237,13 +251,14 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
         </div>
 
         <div className="fila" style={{ gap: "8px" }}>
+          {/* En Windows, con el modelo local instalado (sprint 014); sin él, bloqueado y diciendo que hay que instalarlo. */}
           <Interruptor
-            encendido={ia.redactar && !windows}
+            encendido={ia.redactar && (!windows || ia.local.instalado)}
             etiqueta={t.redactarSugerencias}
             alCambiar={() => aplicar(redactarSugerencias(!ia.redactar))}
             relleno="2px"
-            bloqueado={windows}
-            avisoBloqueado={t.noDisponible}
+            bloqueado={windows && !ia.local.instalado}
+            avisoBloqueado={tw.ia.instalaPrimero}
             descritoPor={windows && porQue ? "ia-motivo" : undefined}
           />
           {/* El segundo interruptor (sprint 004, `ia.html` · sprint 4): el acento del ensayo. */}
@@ -254,7 +269,6 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
             relleno="2px"
             bloqueado={windows}
             avisoBloqueado={t.noDisponible}
-            descritoPor={windows && porQue ? "ia-motivo" : undefined}
           />
           <span className="crece" />
           {/* La puerta local, también en Windows desde el sprint 012 (ADR 022 enmienda 4): un named pipe solo de tu usuario. */}
@@ -378,7 +392,7 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
 /** El chip de la cabecera: quién redacta ahora, con símbolo y palabra. */
 function QuienRedacta({ ia }: { ia: EstadoDeLaIa }) {
   const t = useT().cuaderno;
-  if (ia.quien === "sistema")
+  if (ia.quien === "sistema" || ia.quien === "local")
     return (
       <span className="estado ok">
         <Ic id="i-mac" s relleno />
@@ -402,6 +416,34 @@ function QuienRedacta({ ia }: { ia: EstadoDeLaIa }) {
     <span className="estado warn">
       <Ic id="i-alert" s relleno />
       <span>{t.nadie}</span>
+    </span>
+  );
+}
+
+/**
+ * **El modelo local de Windows, sin instalar** (sprint 014, ADR 023 enmienda 2): su estado —sin instalar, bajando, o la
+ * descarga que falló— y el botón con su tamaño real. Instalado, la fila dice «en uso», como la del Mac. Rust no lo baja
+ * con una reunión, una sesión o un ensayo abiertos; la frase de debajo lo dice siempre, como Honestidad con el de voz.
+ */
+function ModeloLocal({ ia, alInstalar }: { ia: EstadoDeLaIa; alInstalar: () => void }) {
+  const tw = useTextosDeWindows();
+  const idioma = useIdioma();
+  if (ia.local.bajando)
+    return (
+      <span className="estado mute" role="status">
+        <span>{tw.ia.bajando}</span>
+      </span>
+    );
+  const gb = cifraEnIdioma(Math.round(ia.local.bytes / 1e8) / 10, idioma);
+  return (
+    <span style={{ display: "inline-flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+      <span className="estado warn">
+        <Ic id="i-alert" s relleno />
+        <span>{ia.local.fallo ? tw.ia.fallo : tw.ia.sinInstalar}</span>
+      </span>
+      <button type="button" className="btn mini" onClick={alInstalar}>
+        <span>{tw.ia.instalar(gb)}</span>
+      </button>
     </span>
   );
 }

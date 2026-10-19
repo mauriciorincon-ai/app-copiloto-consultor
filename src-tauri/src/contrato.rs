@@ -102,6 +102,11 @@ fn denegado(motivo: crate::puerta::Motivo) -> crate::puerta::Resultado {
 
 /// La sugerencia de la maqueta (mirada 18), fundada en la ficha de «Páramo Azul · §3.2 Alcance».
 fn sugerencia() -> crate::sintesis::Sugerencia {
+    sugerencia_de(crate::sintesis::Quien::Sistema, "Modelo del sistema")
+}
+
+/// La misma, firmada por otro proveedor (sprint 014: el modelo local de Windows).
+fn sugerencia_de(quien: crate::sintesis::Quien, nombre: &str) -> crate::sintesis::Sugerencia {
     use crate::ficha::{Fuente, Respaldo};
     let respaldo = vec![Respaldo {
         titular: "Limpieza de datos: incluida, hasta tres fuentes".into(),
@@ -121,8 +126,37 @@ fn sugerencia() -> crate::sintesis::Sugerencia {
         fuente: "F1".into(),
         confianza: "media".into(),
     };
-    crate::sintesis::fundar(&crudo, &peticion, crate::sintesis::Quien::Sistema, "Modelo del sistema", 1_400)
-        .expect("la muestra cita su ficha")
+    crate::sintesis::fundar(&crudo, &peticion, quien, nombre, 1_400).expect("la muestra cita su ficha")
+}
+
+/// El modelo local de Windows tal como lo enseña IA (sprint 014): existe, y está instalado o no.
+fn modelo_local(existe: bool, instalado: bool) -> crate::modelo_local::EstadoDelModeloLocal {
+    crate::modelo_local::EstadoDelModeloLocal {
+        existe,
+        instalado,
+        bajando: false,
+        fallo: false,
+        bytes: crate::modelo_local::QWEN.bytes,
+    }
+}
+
+/// IA en Windows, por la función de la app, con todo recordado encendido de antes y el modelo local instalado o no.
+fn ia_en_windows(instalado: bool) -> crate::EstadoDeLaIa {
+    crate::estado_de(
+        crate::sintesis::Plataforma::Windows,
+        false,
+        crate::Leido {
+            redactar: true,
+            enriquecer: true,
+            api: crate::ConfigDelApi { encendida: true, externo: crate::sintesis::api::Externo::Groq },
+            sistema: Some(crate::sintesis::PorQueNoRedacta::SinPuente),
+            local: modelo_local(true, instalado),
+            mes_usd: 0.0,
+            reunion_usd: 0.0,
+            latencia_ms: None,
+        },
+        |_| unreachable!("Windows no pregunta por la clave del API"),
+    )
 }
 
 /// «Preparar» de la maqueta: Páramo Azul, su propuesta, ocho preguntas (5 · 1 · 2).
@@ -593,6 +627,13 @@ pub fn muestras() -> Vec<Muestra> {
         // La sugerencia cruza por «escucha», detrás de su ficha. Se construye con `fundar` porque
         // es la ÚNICA manera: sus campos son privados (ADR 010, la regla dura que no compila).
         m("NOVEDAD_SUGERENCIA", "Novedad", "./ficha", &Novedad::Sugerencia(Box::new(sugerencia()))),
+        // Sprint 014 (ADR 023, enmienda 2): la sugerencia del modelo local de Windows, con su `quien` kebab.
+        m(
+            "NOVEDAD_SUGERENCIA_LOCAL",
+            "Novedad",
+            "./ficha",
+            &Novedad::Sugerencia(Box::new(sugerencia_de(crate::sintesis::Quien::Local, crate::sintesis::local::NOMBRE))),
+        ),
         m("ESTADO_DE_LA_IA_NADIE", "EstadoDeLaIa", "./ia", &crate::EstadoDeLaIa {
             redactar: false,
             enriquecer: false,
@@ -603,6 +644,7 @@ pub fn muestras() -> Vec<Muestra> {
                 externo: crate::sintesis::api::Externo::Claude,
                 hay_clave: false,
             },
+            local: modelo_local(false, false),
             latencia_ms: None,
             reunion_usd: 0.0,
             mes_usd: 0.0,
@@ -618,6 +660,7 @@ pub fn muestras() -> Vec<Muestra> {
                 externo: crate::sintesis::api::Externo::Groq,
                 hay_clave: true,
             },
+            local: modelo_local(false, false),
             latencia_ms: Some(1_400),
             reunion_usd: 0.031,
             mes_usd: 0.84,
@@ -625,21 +668,10 @@ pub fn muestras() -> Vec<Muestra> {
         }),
         // Sprint 013 (ADR 023, enmienda 1): IA en Windows, **por la función de la app** (`estado_de`, auditoría M-2) y no escrita a
         // mano: con todo recordado encendido de antes —el API, «redactar», «enriquecer»— el estado sale sin API (`encendida` y
-        // `hay_clave` falsos; la clave ni se pregunta) y sin nadie que redacte, con el motivo de siempre.
-        m("ESTADO_DE_LA_IA_EN_WINDOWS", "EstadoDeLaIa", "./ia", &crate::estado_de(
-            crate::sintesis::Plataforma::Windows,
-            false,
-            crate::Leido {
-                redactar: true,
-                enriquecer: true,
-                api: crate::ConfigDelApi { encendida: true, externo: crate::sintesis::api::Externo::Groq },
-                sistema: Some(crate::sintesis::PorQueNoRedacta::SinPuente),
-                mes_usd: 0.0,
-                reunion_usd: 0.0,
-                latencia_ms: None,
-            },
-            |_| unreachable!("Windows no pregunta por la clave del API"),
-        )),
+        // `hay_clave` falsos; la clave ni se pregunta). Sin el modelo local, nadie redacta; con él (sprint 014), redacta el
+        // local y «enriquecer» sigue apagado.
+        m("ESTADO_DE_LA_IA_EN_WINDOWS", "EstadoDeLaIa", "./ia", &ia_en_windows(false)),
+        m("ESTADO_DE_LA_IA_EN_WINDOWS_CON_MODELO", "EstadoDeLaIa", "./ia", &ia_en_windows(true)),
         // ---- el acople, que la banda dibuja en su cabecera --------------------------------
         // Cada motivo de «nadie redacta», uno por uno: son grafías kebab de varias palabras, y un
         // cambio de `rename_all` solo lo vería una muestra de CADA variante (auditoría del S2, B2).
@@ -650,6 +682,7 @@ pub fn muestras() -> Vec<Muestra> {
         m("POR_QUE_NO_REDACTA_SIN_PUENTE", "PorQueNoRedacta", "./ia", &crate::sintesis::PorQueNoRedacta::SinPuente),
         m("POR_QUE_NO_REDACTA_SIN_CLAVE", "PorQueNoRedacta", "./ia", &crate::sintesis::PorQueNoRedacta::SinClave),
         m("POR_QUE_NO_REDACTA_TOPE", "PorQueNoRedacta", "./ia", &crate::sintesis::PorQueNoRedacta::TopeDelMes),
+        m("POR_QUE_NO_REDACTA_SIN_MODELO_LOCAL", "PorQueNoRedacta", "./ia", &crate::sintesis::PorQueNoRedacta::SinModeloLocal),
         m("ESTADO_DEL_ACOPLE", "EstadoDelAcople", "./acople", &crate::EstadoDelAcople { acoplada: true }),
         // ---- la banda, arriba o abajo (sprint 004, ADR 004 enmienda 1) --------------------------
         m("LA_FRANJA_ARRIBA", "LaFranja", "./franja", &crate::LaFranja {

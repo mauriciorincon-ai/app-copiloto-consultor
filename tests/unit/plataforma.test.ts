@@ -19,18 +19,19 @@ import {
  * de Rust (`contrato.rs` → `contrato.generado.ts`) y aquí las leen los lectores que Honestidad usa.
  */
 describe("lo que la app hace en este equipo", () => {
-  it("en Windows cruzan las 15 funciones del ADR 022, en su orden: 14 «sí» y la sugerencia «no por ahora»", () => {
+  it("en Windows cruzan las 15 funciones del ADR 022, en su orden, las 15 en «sí»", () => {
     expect(esWindows(PLATAFORMA_WINDOWS)).toBe(true);
     expect(PLATAFORMA_WINDOWS.funciones.map((f) => f.clave)).toEqual([
       ...CLAVES_DE_WINDOWS,
     ]);
     const g = porCuando(PLATAFORMA_WINDOWS);
     // Sprint 008, «Windows completo»: el acople, la sugerencia, el radar, el borrado con la app cerrada y el desbloqueo
-    // pasan a «sí». Sprint 012: también la puerta local; están las 15. Sprint 013: la sugerencia redactada vuelve a
-    // «no por ahora» (ADR 023, enmienda 1): sin API y sin un modelo local que no salga a la red, no hay quien redacte.
-    expect(g.si).toEqual(CLAVES_DE_WINDOWS.filter((c) => c !== "sugerencia"));
-    expect(g.si).toHaveLength(14);
-    expect(g["no-por-ahora"]).toEqual(["sugerencia"]);
+    // pasan a «sí». Sprint 012: también la puerta local; están las 15. Sprint 013: la sugerencia redactada volvió a
+    // «no por ahora» (ADR 023, enmienda 1). Sprint 014: vuelve a «sí» con el modelo local, dentro del PC y sin red
+    // (enmienda 2).
+    expect(g.si).toEqual([...CLAVES_DE_WINDOWS]);
+    expect(g.si).toHaveLength(15);
+    expect(g["no-por-ahora"]).toEqual([]);
     expect(Object.keys(g)).toEqual(["si", "no-por-ahora"]);
   });
 

@@ -23,6 +23,7 @@
 pub mod anonimo;
 pub mod api;
 pub mod fiel;
+pub mod local;
 pub mod mock;
 pub mod sistema;
 
@@ -129,13 +130,15 @@ impl Confianza {
     }
 }
 
-/// Quién redactó. La banda lo dice («en tu Mac» o el nombre del proveedor externo).
+/// Quién redactó. La banda lo dice («en tu Mac», «en tu PC» o el nombre del proveedor externo).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Quien {
     Sistema,
     Api,
     Mock,
+    /// **El modelo local de Windows** (sprint 014, ADR 023 enmienda 2): llama.cpp dentro del proceso de la app, sin red.
+    Local,
 }
 
 /// La ficha que respalda la sugerencia: su titular y su fuente, para que se vea a la vez.
@@ -270,6 +273,8 @@ pub enum PorQueNoRedacta {
     SinClave,
     /// Se llegó al tope del mes.
     TopeDelMes,
+    /// En Windows, el modelo local no está instalado en este PC (sprint 014): se instala en IA.
+    SinModeloLocal,
 }
 
 /// **Un proveedor**, local o externo. El mismo contrato para todos (ADR 011): `mock` incluido.
@@ -293,16 +298,22 @@ impl Plataforma {
     /// La de esta compilación.
     pub const ESTA: Self = if cfg!(windows) { Self::Windows } else { Self::Mac };
 
-    /// ¿Hay API externo? Solo en el Mac. **En Windows se retiró** (decisión 1a del S13): sin modelo local que no salga
-    /// a la red, la sugerencia allí queda «no por ahora», jamás con un API de pago.
+    /// ¿Hay API externo? Solo en el Mac. **En Windows se retiró** (decisión 1a del S13) y no vuelve: allí redacta el
+    /// modelo local, dentro del proceso y sin red (sprint 014), jamás un API de pago.
     pub const fn admite_api(self) -> bool {
         matches!(self, Self::Mac)
     }
 
-    /// ¿Se le puede prometer al usuario una sugerencia redactada, o un banco de ensayo enriquecido? **En Windows no**
-    /// (sprint 013): nadie redacta allí, salvo el `mock` de la CI y del kit. Si la promesa no se puede cumplir, ni la
-    /// pantalla ni el ensayo la hacen.
-    pub const fn promete_redactar(self, mock: bool) -> bool {
+    /// ¿Se le puede prometer al usuario una sugerencia redactada? En el Mac, sí, como siempre. **En Windows, desde el
+    /// sprint 014, si el modelo local está instalado en este PC** (ADR 023, enmienda 2); sin él, no, y la pantalla dice
+    /// cómo instalarlo. El `mock` de la CI y del kit, siempre. Si la promesa no se puede cumplir, la pantalla no la hace.
+    pub const fn promete_redactar(self, mock: bool, local_instalado: bool) -> bool {
+        mock || matches!(self, Self::Mac) || local_instalado
+    }
+
+    /// ¿Y un banco de ensayo enriquecido? **En Windows no** (sprint 013): el modelo local se midió para la sugerencia y
+    /// no para el banco, así que «Enriquecer el banco» sigue «no por ahora» allí. El Mac y el `mock`, como siempre.
+    pub const fn promete_enriquecer(self, mock: bool) -> bool {
         mock || matches!(self, Self::Mac)
     }
 }
@@ -321,15 +332,25 @@ pub fn pedir_el_api(plataforma: Plataforma, encendida: bool) -> Result<(), &'sta
 
 /// **Quién redacta ahora**, sin efectos: `mock` si se forzó (`AG_SINTESIS=mock`, el de la CI y el del kit); el API si
 /// esta plataforma lo admite y está listo (encendido, con clave y bajo el tope); si no, el modelo del sistema si
-/// está; si no, nadie, y la ficha sigue sola.
-pub fn quien_redacta(plataforma: Plataforma, mock: bool, api_lista: bool, sistema_listo: bool) -> Option<Quien> {
+/// está; si no, el modelo local si está (en Windows, sprint 014); si no, nadie, y la ficha sigue sola. **En Windows el
+/// API no sale jamás**, aunque llegue listo: `admite_api` lo cierra antes de mirar nada más.
+pub fn quien_redacta(
+    plataforma: Plataforma,
+    mock: bool,
+    api_lista: bool,
+    sistema_listo: bool,
+    local_listo: bool,
+) -> Option<Quien> {
     if mock {
         return Some(Quien::Mock);
     }
     if plataforma.admite_api() && api_lista {
         return Some(Quien::Api);
     }
-    sistema_listo.then_some(Quien::Sistema)
+    if sistema_listo {
+        return Some(Quien::Sistema);
+    }
+    local_listo.then_some(Quien::Local)
 }
 
 /// El JSON del modelo, aunque venga envuelto en «```json … ```» o con una frase delante: se toma
@@ -518,33 +539,45 @@ pub(crate) mod pruebas {
         assert_eq!(r.sugerencia.unwrap().ficha.titular, "Etapa 2 Preparación");
     }
 
-    /// **Windows nunca elige el API** (sprint 013, decisión 1a), lo pida quien lo pida; el Mac sigue como estaba: el API
-    /// listo manda, después el modelo del sistema, y `mock` por encima de todo.
+    /// **Windows nunca elige el API** (sprint 013, decisión 1a), lo pida quien lo pida y con el modelo local o sin él
+    /// (sprint 014); el Mac sigue como estaba: el API listo manda, después el modelo del sistema, y `mock` por encima de
+    /// todo. En Windows, con el modelo local listo, redacta el local.
     #[test]
     fn windows_nunca_elige_el_api_y_el_mac_sigue_igual() {
         for api_lista in [false, true] {
             for sistema_listo in [false, true] {
-                let w = quien_redacta(Plataforma::Windows, false, api_lista, sistema_listo);
-                assert_ne!(w, Some(Quien::Api), "Windows eligió el API (api {api_lista}, sistema {sistema_listo})");
-                assert_eq!(w, sistema_listo.then_some(Quien::Sistema));
-                for p in [Plataforma::Mac, Plataforma::Windows] {
-                    assert_eq!(quien_redacta(p, true, api_lista, sistema_listo), Some(Quien::Mock));
+                for local_listo in [false, true] {
+                    let w = quien_redacta(Plataforma::Windows, false, api_lista, sistema_listo, local_listo);
+                    assert_ne!(w, Some(Quien::Api), "Windows eligió el API (api {api_lista}, local {local_listo})");
+                    let esperado = if sistema_listo { Some(Quien::Sistema) } else { local_listo.then_some(Quien::Local) };
+                    assert_eq!(w, esperado);
+                    for p in [Plataforma::Mac, Plataforma::Windows] {
+                        assert_eq!(quien_redacta(p, true, api_lista, sistema_listo, local_listo), Some(Quien::Mock));
+                    }
                 }
             }
         }
-        assert_eq!(quien_redacta(Plataforma::Mac, false, true, true), Some(Quien::Api));
-        assert_eq!(quien_redacta(Plataforma::Mac, false, false, true), Some(Quien::Sistema));
-        assert_eq!(quien_redacta(Plataforma::Mac, false, false, false), None);
+        assert_eq!(quien_redacta(Plataforma::Windows, false, false, false, true), Some(Quien::Local));
+        assert_eq!(quien_redacta(Plataforma::Windows, false, true, false, false), None, "sin local, nadie: el API no");
+        assert_eq!(quien_redacta(Plataforma::Mac, false, true, true, false), Some(Quien::Api));
+        assert_eq!(quien_redacta(Plataforma::Mac, false, false, true, false), Some(Quien::Sistema));
+        assert_eq!(quien_redacta(Plataforma::Mac, false, false, false, false), None);
         assert_eq!(Plataforma::ESTA.admite_api(), !cfg!(windows));
     }
 
-    /// **Lo que Windows promete** (auditoría del S13, A-2): ni sugerencia ni banco enriquecido, salvo el `mock`; el Mac,
-    /// como siempre. Y los comandos del API se niegan a encender en Windows y dejan apagar.
+    /// **Lo que Windows promete** (auditoría del S13, A-2; sprint 014): la sugerencia, solo con el modelo local
+    /// instalado; el banco enriquecido, no (no se midió); el `mock`, todo. El Mac, como siempre. Y los comandos del API
+    /// se niegan a encender en Windows y dejan apagar.
     #[test]
     fn windows_no_promete_redactar_ni_deja_encender_el_api() {
-        assert!(Plataforma::Mac.promete_redactar(false) && Plataforma::Mac.promete_redactar(true));
-        assert!(!Plataforma::Windows.promete_redactar(false));
-        assert!(Plataforma::Windows.promete_redactar(true), "el mock de la CI sigue redactando");
+        for local in [false, true] {
+            assert!(Plataforma::Mac.promete_redactar(false, local) && Plataforma::Mac.promete_redactar(true, local));
+            assert!(Plataforma::Windows.promete_redactar(true, local), "el mock de la CI sigue redactando");
+            assert!(Plataforma::Mac.promete_enriquecer(false) && Plataforma::Windows.promete_enriquecer(true));
+        }
+        assert!(!Plataforma::Windows.promete_redactar(false, false), "sin el modelo local, Windows no promete");
+        assert!(Plataforma::Windows.promete_redactar(false, true), "con el modelo local instalado, sí");
+        assert!(!Plataforma::Windows.promete_enriquecer(false), "el banco enriquecido sigue «no por ahora» en Windows");
         assert_eq!(pedir_el_api(Plataforma::Windows, true), Err(SIN_API_EN_WINDOWS));
         assert_eq!(pedir_el_api(Plataforma::Windows, false), Ok(()));
         assert_eq!(pedir_el_api(Plataforma::Mac, true), Ok(()));

@@ -8,7 +8,8 @@ import type { Fuente } from "./ficha";
  * quién redacta (ADR 010 y 011). Las formas cruzan la costura por `src/contrato.generado.ts`.
  */
 
-export type Quien = "sistema" | "api" | "mock";
+/** `local`: el modelo local de Windows, dentro del proceso y sin red (sprint 014, ADR 023 enmienda 2). */
+export type Quien = "sistema" | "api" | "mock" | "local";
 export type Confianza = "alta" | "media" | "baja";
 export type Externo = "claude" | "groq";
 
@@ -19,7 +20,18 @@ export type PorQueNoRedacta =
   | "modelo-descargandose"
   | "sin-puente"
   | "sin-clave"
-  | "tope-del-mes";
+  | "tope-del-mes"
+  | "sin-modelo-local";
+
+/** El modelo local de Windows tal como lo enseña IA (sprint 014). Solo se pinta en Windows (`usePlataforma`). */
+export type EstadoDelModeloLocal = {
+  instalado: boolean;
+  bajando: boolean;
+  /** La última descarga falló: IA lo dice y deja volver a pedirla. */
+  fallo: boolean;
+  /** Lo que mide, en bytes: lo que dice «Instalar el modelo». */
+  bytes: number;
+};
 
 /** La ficha que respalda una sugerencia: su titular y su fuente, siempre a la vista. */
 export type FichaCitada = { titular: string; fuente: Fuente };
@@ -46,6 +58,7 @@ export type EstadoDeLaIa = {
   /** Por qué el modelo del sistema no puede. `null`: puede. */
   sistema: PorQueNoRedacta | null;
   api: EstadoDelApi;
+  local: EstadoDelModeloLocal;
   latenciaMs: number | null;
   reunionUsd: number;
   mesUsd: number;
@@ -59,6 +72,7 @@ const DE_MUESTRA: EstadoDeLaIa = {
   quien: null,
   sistema: "apple-intelligence-apagado",
   api: { encendida: false, externo: "claude", hayClave: false },
+  local: { instalado: false, bajando: false, fallo: false, bytes: 1_117_320_736 },
   latenciaMs: null,
   reunionUsd: 0,
   mesUsd: 0,
@@ -187,6 +201,14 @@ export function enriquecerElBanco(si: boolean) {
 
 export function redactarSugerencias(si: boolean) {
   return preguntar<EstadoDeLaIa>("redactar_sugerencias", { si });
+}
+
+/**
+ * «Instalar el modelo» (sprint 014, solo Windows): baja el modelo local por la puerta de la app. Rust se niega con una
+ * reunión, una sesión o un ensayo abiertos, y avisa por `ia` al empezar y al terminar.
+ */
+export function instalarElModeloLocal() {
+  return preguntar<EstadoDeLaIa>("instalar_el_modelo_local");
 }
 
 /** Encender el API exige su clave: sin ella, Rust contesta `sin-clave` y la promesa se rechaza. */
