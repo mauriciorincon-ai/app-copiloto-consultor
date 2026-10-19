@@ -17,9 +17,3 @@ CXXFLAGS_aarch64_pc_windows_msvc = "-EHsc"
 # solo reenvía las `GGML_*` tal cual; macOS no compila whisper (la dependencia es de Windows) y ARM64 ya la fija igual en
 # `cmake/windows-arm64-clang-cl.cmake`, junto con su base `armv8.2-a+dotprod+fp16`.
 GGML_NATIVE = "OFF"
-
-# **El runtime del modelo local** (sprint 013, ADR 023 enmienda 1). El `build.rs` de `foundry-local-sdk` solo baja las
-# DLL nativas (Foundry Local Core, ONNX Runtime y GenAI, con el WinML 2.x empaquetado sin registrar nada en el sistema)
-# si esta versión está fijada; sin ella, las buscaría en el sistema al arrancar. Es la misma versión que el crate. El
-# crate solo existe en Windows: en macOS esta variable no la lee nadie.
-FOUNDRY_LOCAL_RUNTIME_VERSION = "2.1.0"

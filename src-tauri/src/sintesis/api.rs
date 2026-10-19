@@ -5,8 +5,9 @@
 //!    las parejas de nombres propios ([`super::anonimo::Boveda`]).
 //! 2. **Cuenta** los bytes que van a salir, por el único camino de entrada del contador de red, en
 //!    el instante antes de enviarlos.
-//! 3. **Envía** por la puerta de este sistema: el puente de Swift en el Mac (efímero y https, ADR 011) o, en
-//!    Windows, `ureq` con rustls (sprint 008, ADR 023). Las dos detrás de [`Api::redactar_con`], que hace lo demás.
+//! 3. **Envía** por la puerta del Mac: el puente de Swift (efímero y https, ADR 011), detrás de
+//!    [`Api::redactar_con`], que hace lo demás. **En Windows no hay API desde el sprint 013** (ADR 023, enmienda 1):
+//!    la puerta `ureq` del sprint 008 se retiró y `sintesis::quien_redacta` nunca lo elige allí.
 //! 4. **Destapa** la respuesta en el Mac y se la da a `fundar`, que la valida como a cualquier otra.
 //!
 //! Dos proveedores intercambiables, cada uno en su formato: el de Anthropic y el compatible con
@@ -154,7 +155,7 @@ pub fn guardar_clave(externo: Externo, clave: &str) -> Result<(), String> {
 }
 
 /// Lee la clave, si hay. Vive lo que dura una petición.
-#[cfg_attr(not(any(target_os = "macos", windows)), allow(dead_code))]
+#[cfg_attr(not(all(target_os = "macos", puente_de_swift)), allow(dead_code))]
 fn leer_clave(externo: Externo) -> Option<String> {
     llavero::leer(Servicio::Api, externo.cuenta())
 }
@@ -406,7 +407,7 @@ impl Proveedor for Api {
         if hay_clave(self.externo) { Ok(()) } else { Err(PorQueNoRedacta::SinClave) }
     }
 
-    #[cfg(any(all(target_os = "macos", puente_de_swift), windows))]
+    #[cfg(all(target_os = "macos", puente_de_swift))]
     fn redactar(&self, instrucciones: &str, texto: &str) -> Result<Respuesta, String> {
         if !self.vigencia.sigue() {
             return Err(CORTADA.into());
@@ -415,7 +416,8 @@ impl Proveedor for Api {
         self.redactar_con(clave, instrucciones, texto, por_la_puerta)
     }
 
-    #[cfg(not(any(all(target_os = "macos", puente_de_swift), windows)))]
+    /// Sin el puente de Swift no hay puerta. **En Windows, a propósito** (ADR 023, enmienda 1): ni se lee la clave.
+    #[cfg(not(all(target_os = "macos", puente_de_swift)))]
     fn redactar(&self, _i: &str, _t: &str) -> Result<Respuesta, String> {
         if !self.vigencia.sigue() {
             return Err(CORTADA.into());
@@ -425,13 +427,15 @@ impl Proveedor for Api {
 }
 
 /// Lo que devuelve una puerta a la red: el estado HTTP y el cuerpo de la respuesta.
+#[cfg_attr(not(all(target_os = "macos", puente_de_swift)), allow(dead_code))]
 pub type Contestacion = Result<(u16, Vec<u8>), String>;
 
 impl Api {
-    /// **El envío, en orden y en un solo sitio** (sprint 008): tapar, armar, contar, anotar, enviar por la puerta de
-    /// este sistema (`enviar`: la URL, las cabeceras «nombre: valor» por línea y el cuerpo), pisar y destapar. Es lo que
-    /// el Mac hacía dentro de `redactar`; ahora el Mac y Windows lo comparten y cambia solo la puerta: el puente de
-    /// Swift (`nativo/Red.swift`, ADR 011) o `ureq` (ADR 023). Con una puerta falsa se prueba sin red.
+    /// **El envío, en orden y en un solo sitio** (sprint 008): tapar, armar, contar, anotar, enviar por la puerta
+    /// (`enviar`: la URL, las cabeceras «nombre: valor» por línea y el cuerpo), pisar y destapar. La puerta es un
+    /// parámetro: el puente de Swift (`nativo/Red.swift`, ADR 011) en el Mac y una puerta falsa en las pruebas. Windows
+    /// tuvo la suya, `ureq`, del sprint 008 al 012 (ADR 023); el sprint 013 la retiró (enmienda 1).
+    #[cfg_attr(not(all(target_os = "macos", puente_de_swift)), allow(dead_code))]
     pub(crate) fn redactar_con(
         &self,
         mut clave: String,
@@ -481,6 +485,7 @@ impl Api {
 }
 
 /// Lo que más se lee de una respuesta: 64 KB, como el búfer del puente de Swift.
+#[cfg_attr(not(all(target_os = "macos", puente_de_swift)), allow(dead_code))]
 const TOPE_DE_LA_RESPUESTA: usize = 64 * 1024;
 
 /// **La puerta del Mac**: el puente de Swift (`nativo/Red.swift`, ADR 011), efímera y https.
@@ -515,35 +520,6 @@ fn por_la_puerta(url: &str, cabeceras: &str, cuerpo: &[u8]) -> Contestacion {
     Ok((estado.clamp(0, i32::from(u16::MAX)) as u16, salida))
 }
 
-/// **La puerta de Windows** (sprint 008, ADR 023): `ureq` con rustls, la segunda puerta Rust a la red y la única que
-/// lleva texto. Mismo techo que el puente de Swift; sin caché, sin cookies y sin redirecciones que la lleven a otro
-/// sitio; lee como mucho 64 KB. Los errores HTTP se leen como respuesta, para decir cuál fue.
-#[cfg(windows)]
-fn por_la_puerta(url: &str, cabeceras: &str, cuerpo: &[u8]) -> Contestacion {
-    let techo = super::TECHO + std::time::Duration::from_secs(1);
-    let agente: ureq::Agent = ureq::Agent::config_builder().timeout_global(Some(techo)).http_status_as_error(false).max_redirects(0).build().into(); // verify-ephemeral:allow — ADR 023 «la sugerencia en Windows»: la segunda puerta Rust, opt-in, con texto anonimizado
-    let mut peticion = agente.post(url);
-    for (nombre, valor) in cabeceras_en_pares(cabeceras) {
-        peticion = peticion.header(nombre, valor);
-    }
-    let mut respuesta = peticion.send(cuerpo).map_err(|e| format!("el proveedor no contestó ({e})"))?;
-    let estado = respuesta.status().as_u16();
-    let salida = respuesta
-        .body_mut()
-        .with_config()
-        .limit(TOPE_DE_LA_RESPUESTA as u64)
-        .read_to_vec()
-        .map_err(|_| format!("respuesta ilegible (HTTP {estado})"))?;
-    Ok((estado, salida))
-}
-
-/// Las cabeceras «nombre: valor» por línea, como las arma `Externo::peticion` para el puente de Swift, en parejas.
-/// Una línea sin «:» no es una cabecera y se salta. Pura.
-#[cfg_attr(not(windows), allow(dead_code))]
-pub(crate) fn cabeceras_en_pares(cabeceras: &str) -> Vec<(&str, &str)> {
-    cabeceras.lines().filter_map(|l| l.split_once(':')).map(|(n, v)| (n.trim(), v.trim())).collect()
-}
-
 #[cfg(test)]
 mod pruebas {
     use super::super::{pruebas::respaldo, Peticion};
@@ -560,7 +536,7 @@ mod pruebas {
         }
     }
 
-    /// **El envío es el mismo en el Mac y en Windows** (sprint 008, ADR 023): por la puerta solo sale texto tapado,
+    /// **El envío, con cualquier puerta** (sprint 008): por la puerta solo sale texto tapado,
     /// la clave va en las cabeceras y no en el cuerpo, los bytes se cuentan antes de salir, lo que salió queda
     /// anotado aunque el proveedor falle, y la respuesta vuelve destapada. Con una puerta falsa, sin red.
     #[test]
@@ -614,18 +590,6 @@ mod pruebas {
         assert_eq!(e, CORTADA);
         assert!(!abierta, "la puerta se abrió después del corte");
         assert_eq!(a.registro.cuantas(), 0);
-    }
-
-    /// Las cabeceras que arma `peticion` (una por línea, para Swift) llegan a `ureq` en parejas, sin espacios de más.
-    #[test]
-    fn las_cabeceras_se_parten_en_parejas() {
-        let (cab, _) = Externo::Claude.peticion("sk-ant-x", "i", "t");
-        let pares = cabeceras_en_pares(&cab);
-        assert_eq!(
-            pares,
-            vec![("content-type", "application/json"), ("x-api-key", "sk-ant-x"), ("anthropic-version", "2023-06-01")]
-        );
-        assert!(cabeceras_en_pares("sin dos puntos\n").is_empty());
     }
 
     /// **Solo texto anonimizado al API** (acceptance del sprint): lo que se enviaría no lleva los

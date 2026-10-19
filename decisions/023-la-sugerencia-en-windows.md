@@ -3,7 +3,8 @@
 - **Fecha:** 2026-10-12
 - **Sprint:** 008 «Listo para el gate» (fase 1)
 - **Estado:** aceptada. La pide el ADR 022 («`sintesis/api.rs` necesita su propia puerta Rust y su ADR») y enmienda su
-  §4, que contaba una sola.
+  §4, que contaba una sola. **Enmendada por la enmienda 1 (sprint 013): en Windows el API se retiró y esta puerta con
+  él.**
 
 ## Contexto
 
@@ -52,3 +53,41 @@ en el equipo, con la retención publicada por el proveedor enseñada donde se el
   `contador-de-red` en el webview, que hoy no tiene ninguna salida.
 - **Dejar la sugerencia en «no en Windows».** Posible, pero el H-1 promete Windows completo y la pieza es pequeña y
   probable sin red.
+
+## Enmienda 1 · El API sale de Windows; el modelo local, medido y aplazado (sprint 013, 2026-10-18)
+
+**El API se retira de Windows** (decisión 1a del usuario en el G-Plan del S13: ningún API de pago por uso en Windows).
+
+- La puerta `ureq` de `sintesis/api.rs` (§1 y §3) ya no existe; `contador-de-red` vuelve a **una** puerta Rust, la del
+  modelo de whisper. Demostrado en rojo: un `ureq::get` plantado en `api.rs`, con su marca y este ADR, es rojo.
+- `sintesis::quien_redacta` recibe la plataforma como parámetro y en Windows **nunca** elige `Api` (probado con las dos
+  plataformas en cualquier equipo). En el Mac, igual que antes.
+- En Windows, `api_externa` (encender) y `guardar_clave_del_api` contestan `sin-api-en-windows`; las preferencias no
+  encienden el API, y la app **ni pregunta** al Administrador de credenciales por la clave. La que hubiera de antes no
+  se toca: borrarla sigue en tu mano (el manual dice cómo).
+
+**El reemplazo que se midió y no entra: Foundry Local** (`foundry-local-sdk` 2.1.0, MIT), en proceso, en la CPU de la
+Surface (Snapdragon X, ARM64). Modelo `qwen2.5-1.5b-instruct-generic-cpu:4` (1 842 MB): carga en 3,2 s, ocupa 1,1 GB de
+RAM y redacta con mediana de 2,1 s y p95 de 2,3 s (techo 6 s); 6 de 17 sugerencias del kit pasan `fundar`. La canaria
+del turno no apareció en ningún archivo. Cabe en el tiempo, **pero no en la regla dura 2**:
+
+1. Su runtime (Foundry Local Core y ONNX Runtime GenAI) abre una conexión HTTPS al recolector de telemetría de
+   Microsoft (1DS, `mobile.events.data.microsoft.com`) al crearse, y la conexión sigue abierta mientras el modelo carga,
+   redacta, espera y se cierra (vigía `netstat` del proceso, fase por fase).
+2. Con sus interruptores (`DisableNonessentialTelemetry`, `ORT_TELEMETRY_DISABLED`, `ORT_DISABLE_TELEMETRY`) dejan de
+   encolarse los eventos de uso, pero la conexión sigue y el evento «ProcessInfo» sube igual (modelo del equipo,
+   identificador del dispositivo con hash, versión del sistema, nombre del proceso): lo dice el propio binario
+   («ProcessInfo still uploads»).
+3. Consulta el catálogo por la red cada vez que se crea (`ai.azure.com`, `api.catalog.azureml.ms`).
+4. Escribe fuera de la carpeta que se le da: colas SQLite en `%LOCALAPPDATA%\Microsoft\DeveloperTools\.onnxruntime\`.
+
+Nada de eso pasa por `red.rs` —es código nativo—, así que Honestidad diría «0 B» sin serlo. **En Windows la sugerencia
+redactada queda «no por ahora»**, con estas cifras; la ficha sigue siendo la respuesta (regla dura 3). La NPU no se
+probó: pedía instalar execution providers para todo el sistema desde la Microsoft Store, y la CPU ya cabía en el tiempo.
+El arnés de la medida quedó en la historia del PR del S13 (commit `e1e0de2`); el modelo bajado, en
+`%LOCALAPPDATA%\com.aiapps.copiloto-consultor\modelos\foundry\` (borrar esa carpeta lo quita).
+
+**Lo que queda por medir:** ONNX Runtime GenAI directo, sin Foundry Local Core —el mismo motor y el mismo formato de
+modelo—, con su telemetría apagada por API (`OgaSetTelemetryEnabled`), el modelo bajado por una puerta Rust como la de
+whisper, con su huella SHA-256, y medido con el mismo vigía y la misma canaria. Solo entra con **cero conexiones del proceso** en toda la
+sesión.

@@ -3083,13 +3083,18 @@ fn ruta_de_las_preferencias<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Pat
 }
 
 /// Pone el estado de la app como lo dejó el usuario. **El API no se enciende solo si su clave ya no
-/// está**: borrarla en «Acceso a Llaveros» también es una elección, y la de más peso.
+/// está**: borrarla en «Acceso a Llaveros» también es una elección, y la de más peso. **En Windows no se
+/// enciende nunca** (sprint 013, ADR 023 enmienda 1), y ni se pregunta por la clave: la que hubiera sigue
+/// en el Administrador de credenciales, sin tocar.
 fn aplicar_las_preferencias<R: tauri::Runtime>(app: &tauri::AppHandle<R>, p: &prefs::Preferencias) {
     let s = app.state::<LaSintesis>();
     s.redactar.store(p.redactar, Ordering::Relaxed);
     s.enriquecer.store(p.enriquecer_el_banco, Ordering::Relaxed);
-    let encendida = p.api_encendida && sintesis::api::hay_clave(p.externo);
-    if p.api_encendida && !encendida {
+    let admite = sintesis::Plataforma::ESTA.admite_api();
+    let encendida = admite && p.api_encendida && sintesis::api::hay_clave(p.externo);
+    if p.api_encendida && !admite {
+        println!("[prefs] el API estaba encendido, pero en Windows ya no hay API: se queda apagado");
+    } else if p.api_encendida && !encendida {
         println!("[prefs] el API estaba encendido pero ya no hay clave de {}: se queda apagado", p.externo.nombre());
     }
     if let Ok(mut a) = s.api.lock() {
@@ -3294,9 +3299,10 @@ fn clientes_del_corpus(el_corpus: &ElCorpus) -> Vec<String> {
         .unwrap_or_default()
 }
 
-/// **Quién redacta ahora.** El que el usuario encendió manda: el API si lo encendió, tiene clave y
-/// no llegó al tope; si no, el modelo del sistema si está. `AG_SINTESIS=mock` fuerza el `mock`
-/// —el de la CI y el del kit—, dentro del adapter y no interceptando nada (ADR 011).
+/// **Quién redacta ahora**, por [`sintesis::quien_redacta`]: el API si lo encendiste, tiene clave y
+/// no llegó al tope —**solo en el Mac**: en Windows se retiró en el sprint 013 y ni se pregunta por su
+/// clave (ADR 023, enmienda 1)—; si no, el modelo del sistema si está. `AG_SINTESIS=mock` fuerza el
+/// `mock` —el de la CI y el del kit—, dentro del adapter y no interceptando nada (ADR 011).
 fn proveedor_de_ahora(
     s: &LaSintesis,
     conocidos: Vec<String>,
@@ -3304,37 +3310,43 @@ fn proveedor_de_ahora(
     para: sintesis::api::Para,
 ) -> Option<std::sync::Arc<dyn sintesis::Proveedor>> {
     use sintesis::Proveedor;
-    if std::env::var("AG_SINTESIS").as_deref() == Ok("mock") {
-        return Some(std::sync::Arc::new(sintesis::mock::Mock));
-    }
+    let plataforma = sintesis::Plataforma::ESTA;
+    let mock = std::env::var("AG_SINTESIS").as_deref() == Ok("mock");
     let api = *s.api.lock().ok()?;
-    let bajo_el_tope = s
-        .mes
-        .lock()
-        .map(|mut g| {
-            gasto_vigente(&mut g, &mes_de_hoy());
-            g.usd < TOPE_DEL_MES_USD
-        })
-        .unwrap_or(false);
-    if api.encendida && bajo_el_tope && sintesis::api::hay_clave(api.externo) {
-        return Some(std::sync::Arc::new(sintesis::api::Api {
+    let api_lista = !mock
+        && plataforma.admite_api()
+        && api.encendida
+        && s.mes
+            .lock()
+            .map(|mut g| {
+                gasto_vigente(&mut g, &mes_de_hoy());
+                g.usd < TOPE_DEL_MES_USD
+            })
+            .unwrap_or(false)
+        && sintesis::api::hay_clave(api.externo);
+    let sistema = sintesis::sistema::DelSistema;
+    let sistema_listo = !mock && !api_lista && sistema.disponible().is_ok();
+    Some(match sintesis::quien_redacta(plataforma, mock, api_lista, sistema_listo)? {
+        sintesis::Quien::Mock => std::sync::Arc::new(sintesis::mock::Mock),
+        sintesis::Quien::Api => std::sync::Arc::new(sintesis::api::Api {
             externo: api.externo,
             conocidos,
             registro: s.registro.clone(),
             sobre,
             para,
             vigencia: sintesis::api::Vigencia::desde_ahora(&s.epoca),
-        }));
-    }
-    let sistema = sintesis::sistema::DelSistema;
-    sistema.disponible().is_ok().then(|| std::sync::Arc::new(sistema) as std::sync::Arc<dyn sintesis::Proveedor>)
+        }),
+        sintesis::Quien::Sistema => std::sync::Arc::new(sistema),
+    })
 }
 
 fn estado_de_la_ia_de<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> EstadoDeLaIa {
     use sintesis::Proveedor;
     let s = app.state::<LaSintesis>();
+    let plataforma = sintesis::Plataforma::ESTA;
     let api = s.api.lock().map(|a| *a).unwrap_or_default();
-    let hay_clave = sintesis::api::hay_clave(api.externo);
+    // En Windows no hay API (ADR 023, enmienda 1): ni se pregunta al Administrador de credenciales.
+    let hay_clave = plataforma.admite_api() && sintesis::api::hay_clave(api.externo);
     let sistema = sintesis::sistema::DelSistema.disponible().err();
     let mes_usd = s
         .mes
@@ -3344,15 +3356,12 @@ fn estado_de_la_ia_de<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> EstadoDeL
             g.usd
         })
         .unwrap_or(0.0);
-    let quien = if std::env::var("AG_SINTESIS").as_deref() == Ok("mock") {
-        Some(sintesis::Quien::Mock)
-    } else if api.encendida && hay_clave && mes_usd < TOPE_DEL_MES_USD {
-        Some(sintesis::Quien::Api)
-    } else if sistema.is_none() {
-        Some(sintesis::Quien::Sistema)
-    } else {
-        None
-    };
+    let quien = sintesis::quien_redacta(
+        plataforma,
+        std::env::var("AG_SINTESIS").as_deref() == Ok("mock"),
+        api.encendida && hay_clave && mes_usd < TOPE_DEL_MES_USD,
+        sistema.is_none(),
+    );
     let latencia_ms = s.latencias.lock().ok().and_then(|l| {
         let mut l = l.clone();
         l.sort_unstable();
@@ -3363,7 +3372,7 @@ fn estado_de_la_ia_de<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> EstadoDeL
         enriquecer: s.enriquecer.load(Ordering::Relaxed),
         quien,
         sistema,
-        api: EstadoDelApi { encendida: api.encendida, externo: api.externo, hay_clave },
+        api: EstadoDelApi { encendida: api.encendida && plataforma.admite_api(), externo: api.externo, hay_clave },
         latencia_ms,
         reunion_usd: s.reunion_usd.lock().map(|u| *u).unwrap_or(0.0),
         mes_usd,
@@ -3519,13 +3528,20 @@ fn enriquecer_el_banco(app: tauri::AppHandle, si: bool) -> EstadoDeLaIa {
     avisar_a_la_ia(&app)
 }
 
-/// El proveedor externo: encenderlo exige su clave en el Llavero.
+/// Lo que contestan los comandos del API en Windows, donde el API ya no está (sprint 013, ADR 023 enmienda 1).
+const SIN_API_EN_WINDOWS: &str = "sin-api-en-windows";
+
+/// El proveedor externo: encenderlo exige su clave en el Llavero. **En Windows no se enciende**: apagarlo sí,
+/// que no cambia nada.
 #[tauri::command]
 fn api_externa(
     app: tauri::AppHandle,
     encendida: bool,
     externo: sintesis::api::Externo,
 ) -> Result<EstadoDeLaIa, String> {
+    if encendida && !sintesis::Plataforma::ESTA.admite_api() {
+        return Err(SIN_API_EN_WINDOWS.into());
+    }
     if encendida && !sintesis::api::hay_clave(externo) {
         return Err("sin-clave".into());
     }
@@ -3547,6 +3563,13 @@ fn guardar_clave_del_api(
     clave: String,
 ) -> Result<EstadoDeLaIa, String> {
     let mut clave = clave;
+    // En Windows no hay API: la clave no se escribe en el Administrador de credenciales (ADR 023, enmienda 1).
+    // Borrar la que hubiera sigue funcionando: es tuya.
+    if !sintesis::Plataforma::ESTA.admite_api() {
+        // SEGURIDAD: ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
+        unsafe { clave.as_mut_vec() }.fill(0);
+        return Err(SIN_API_EN_WINDOWS.into());
+    }
     let r = sintesis::api::guardar_clave(externo, &clave);
     // SEGURIDAD: ceros sobre UTF-8 válido siguen siendo UTF-8 válido.
     unsafe { clave.as_mut_vec() }.fill(0);

@@ -83,7 +83,8 @@ const PROTEGIDOS = [
   // `sintesis` (sprint 002, fase 5, C7): recibe el último turno del CLIENTE para redactar la
   // sugerencia. Texto de un tercero: ni disco ni red desde Rust. La única salida es la del proveedor
   // externo, opt-in, y va por el puente de Swift (`nativo/Red.swift`), declarada en su línea con el
-  // ADR 011; en Windows, por `ureq` en `sintesis/api.rs` (sprint 008), en una línea con el ADR 023.
+  // ADR 011. En Windows salía por `ureq` en `sintesis/api.rs` (sprint 008, ADR 023); el sprint 013 retiró
+  // el API de Windows (enmienda 1) y esa línea con él.
   "src-tauri/src/sintesis",
   "src-tauri/src/sesion",
   // `notas` (sprint 003, fase 1, ADR 015): tus notas SÍ persisten, y el módulo está aquí igual. Recibe
@@ -112,8 +113,8 @@ const PROTEGIDOS = [
 const PROHIBIDO = [
   /std::fs\b/, /tokio::fs\b/, /File::create\b/, /OpenOptions\b/, /\bfs::write\b/, /\bwrite_all\b/,
   /std::net\b/, /TcpStream\b/, /UdpSocket\b/, /\breqwest\b/, /\bhyper\b/, /tauri_plugin_fs\b/,
-  // `ureq` (sprint 008): el cliente de la puerta Rust. En un módulo protegido solo puede aparecer en la línea de la
-  // sugerencia de Windows, con su marca y el ADR 023; cualquier otra es rojo.
+  // `ureq` (sprint 008): el cliente de la puerta Rust. Desde el sprint 013 ningún módulo protegido lo usa (la línea
+  // de la sugerencia de Windows se fue con el API, ADR 023 enmienda 1): cualquier aparición es rojo.
   /\bureq\s*::/,
   /tauri_plugin_store\b/, /tauri_plugin_http\b/, /rusqlite\b/, /sqlx\b/,
   /\bfetch\(/, /XMLHttpRequest\b/, /WebSocket\b/, /localStorage\b/, /indexedDB\b/, /writeFile\b/,
