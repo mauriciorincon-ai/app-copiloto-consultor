@@ -623,6 +623,23 @@ pub fn muestras() -> Vec<Muestra> {
             mes_usd: 0.84,
             tope_usd: 10.0,
         }),
+        // Sprint 013 (ADR 023, enmienda 1): IA en Windows, **por la función de la app** (`estado_de`, auditoría M-2) y no escrita a
+        // mano: con todo recordado encendido de antes —el API, «redactar», «enriquecer»— el estado sale sin API (`encendida` y
+        // `hay_clave` falsos; la clave ni se pregunta) y sin nadie que redacte, con el motivo de siempre.
+        m("ESTADO_DE_LA_IA_EN_WINDOWS", "EstadoDeLaIa", "./ia", &crate::estado_de(
+            crate::sintesis::Plataforma::Windows,
+            false,
+            crate::Leido {
+                redactar: true,
+                enriquecer: true,
+                api: crate::ConfigDelApi { encendida: true, externo: crate::sintesis::api::Externo::Groq },
+                sistema: Some(crate::sintesis::PorQueNoRedacta::SinPuente),
+                mes_usd: 0.0,
+                reunion_usd: 0.0,
+                latencia_ms: None,
+            },
+            |_| unreachable!("Windows no pregunta por la clave del API"),
+        )),
         // ---- el acople, que la banda dibuja en su cabecera --------------------------------
         // Cada motivo de «nadie redacta», uno por uno: son grafías kebab de varias palabras, y un
         // cambio de `rename_all` solo lo vería una muestra de CADA variante (auditoría del S2, B2).
@@ -1043,7 +1060,7 @@ pub fn muestras() -> Vec<Muestra> {
             idiomas: vec![],
             motivo: Some(crate::stt::PorQueNoHayMotor::NoContesta),
         }),
-        // Sprint 006 (ADR 022): lo que la app hace en este equipo. En Windows, las 15 funciones y whisper medido.
+        // Sprint 006 (ADR 022): lo que la app hace en este equipo. En Windows, las 15 funciones (14 «sí» y la sugerencia redactada en «no por ahora») y whisper medido.
         m("PLATAFORMA_WINDOWS", "Plataforma", "./plataforma", &Plataforma::de(
             Sistema::Windows,
             Some(Transcripcion {

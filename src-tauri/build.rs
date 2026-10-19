@@ -55,6 +55,7 @@ const COMANDOS: &[&str] = &[
         "fijar_idioma_de_pista",
         "lo_que_salio_al_api",
         "cuaderno_de_la_reunion",
+        "reunion_por_decidir",
         "escribir_nota",
         "anotar_acuerdo",
         "conservar_mis_turnos",

@@ -13,7 +13,7 @@ import { PLATAFORMA_WINDOWS } from "../../src/contrato.generado";
  *  3. **Los atajos son los del contrato** que genera Rust: la tabla del manual no puede decir una tecla que la app no
  *     registra, ni callar una que sí.
  *  4. **La tabla de las 30 funcionalidades de la visión** tiene sus 30 filas, cada una con la clave de «Hoy en Windows» que
- *     la cubre (o «sin clave») y un estado —hecho · hecho sin verificar · descartada para Windows—, **atada a
+ *     la cubre (o «sin clave») y un estado —hecho · hecho sin verificar · no por ahora · descartada para Windows—, **atada a
  *     `EN_WINDOWS`** (las 15 claves de `plataforma.rs`): una clave que no existe, una clave sin fila o una función «no por
  *     ahora» que se declara hecha, es rojo. Si la planeadora (solo lectura) está en este equipo, también se comprueba que la
  *     visión tiene esas mismas 30.
@@ -21,6 +21,11 @@ import { PLATAFORMA_WINDOWS } from "../../src/contrato.generado";
  * **Desde el sprint 012 el inventario está completo** (H-2 «Producto completo»): ninguna fila queda «fuera». Lo que no se
  * construye está «descartada para Windows», con su nombre, la fecha de la decisión del usuario y su motivo; y una clave de
  * «Hoy en Windows» jamás cubre una fila descartada.
+ *
+ * **Desde el sprint 013 hay un estado más, «no por ahora»** (aplazada): la sugerencia redactada (fila 20). No es una
+ * decisión de descartar —no se tiró, falta un modelo que no salga a la red— y por eso SÍ lleva su clave, que en
+ * `plataforma.rs` es «no por ahora»; y dice la cifra que la dejó ahí. Una clave «no por ahora» solo la cubre una fila
+ * aplazada, y una aplazada solo puede llevar claves «no por ahora».
  *
  * ¿Puede fallar? Sí: nombrar el Mac en una sola línea, quitar la fila 17, declarar «hecho» la puerta local, inventar una
  * clave, dejar una fila «fuera» o descartar sin fecha son rojo (demos de los sprints 010 y 012).
@@ -32,12 +37,14 @@ const EN = readFileSync("docs/MANUAL-WINDOWS-EN.md", "utf8");
 const OTRO_SISTEMA =
   /macOS|\bMac\b|\bMacs\b|Llavero|Keychain|Touch ID|Finder|launchd|Time Machine|Spotlight|AirPlay|iCloud|\bApple\b|iPhone|⌃|⌥|⎋|⌘/;
 
-type Estado = "hecho" | "sin-verificar" | "descartada" | "fuera";
+type Estado = "hecho" | "sin-verificar" | "aplazada" | "descartada" | "fuera";
 const ESTADOS: Record<string, Estado> = {
   hecho: "hecho",
   done: "hecho",
   "hecho sin verificar": "sin-verificar",
   "done, unverified": "sin-verificar",
+  "no por ahora": "aplazada",
+  "not for now": "aplazada",
   "descartada para Windows": "descartada",
   "discarded for Windows": "descartada",
   // «fuera» ya no se escribe (sprint 012), pero se reconoce: si alguien lo vuelve a poner, el test dice cuál fila.
@@ -206,16 +213,29 @@ describe("las 30 funcionalidades de la visión, en Windows", () => {
     ).toBe(15);
   });
 
-  it("el estado es coherente con lo que `plataforma.rs` dice: lo «no por ahora» está fuera, y solo eso lo cubre una clave", () => {
-    for (const f of es) {
-      const sonNoPorAhora =
-        f.claves.length > 0 && f.claves.every((c) => NO_POR_AHORA.includes(c));
-      if (f.claves.length > 0) {
-        expect(
-          f.estado === "descartada",
-          `fila ${f.n} («${f.funcionalidad}»): una clave «sí» no puede estar descartada, y una «no por ahora» no puede estar hecha`,
-        ).toBe(sonNoPorAhora);
+  it("el estado es coherente con lo que `plataforma.rs` dice: una clave «no por ahora» solo la cubre una fila aplazada, y una «sí» no puede estar aplazada ni descartada", () => {
+    for (const filas of [es, en]) {
+      for (const f of filas) {
+        const sonNoPorAhora =
+          f.claves.length > 0 && f.claves.every((c) => NO_POR_AHORA.includes(c));
+        if (f.claves.length > 0) {
+          expect(
+            f.estado === "aplazada",
+            `fila ${f.n} («${f.funcionalidad}»): una clave «sí» no puede estar aplazada, y una «no por ahora» no puede estar hecha`,
+          ).toBe(sonNoPorAhora);
+          expect(f.estado, `fila ${f.n}: una fila con clave no se descarta`).not.toBe("descartada");
+        }
       }
+    }
+  });
+
+  it("lo aplazado es la sugerencia redactada, y dice la cifra que la dejó ahí", () => {
+    for (const texto of [ES, EN]) {
+      const filas = filasDe30(texto);
+      expect(filas.filter((f) => f.estado === "aplazada").map((f) => f.n)).toEqual([20]);
+      const motivo = texto.split("\n").find((l) => /^\| 20 +\|/.test(l))?.split("|")[5] ?? "";
+      expect(motivo, "la fila 20 no dice la cifra (el techo y lo medido)").toMatch(/\d[,.]\d s/);
+      expect(motivo, "la fila 20 no dice por qué").toContain("Microsoft");
     }
   });
 

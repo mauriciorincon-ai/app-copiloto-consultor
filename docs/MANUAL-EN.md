@@ -829,7 +829,8 @@ It is not a new feature but the same app on another system, which is why it sits
   transcription with whisper, your encrypted notes and your corpus with its cards. **Since sprint 007 it also
   handles the video call on that same PC** (Teams, Zoom or Meet in the browser): both tracks, the card in your ear, reading
   the meeting screen, rehearsal with voice and the shortcuts. **Since sprint 008, everything else:** docking,
-  the suggestion with the API, the radar, opening your notes with Windows Hello and deletion with the app closed. Honesty
+  the radar, opening your notes with Windows Hello and deletion with the app closed. **Since sprint 013, no API:** the drafted
+  suggestion is “not for now” and, before starting another session with the previous one open, the app asks. Honesty
   has the block **“On Windows today”**, which says what it does and what it does not, each thing with its reason.
 - **How it installs:** it arrives as a file (`.msi` or `.exe`) from the repository's continuous integration. **The
   installer is not signed yet:** Windows SmartScreen will show “Windows protected your PC”. Click **More
@@ -919,9 +920,14 @@ It is not a new feature but the same app on another system, which is why it sits
   monitoring, remote access such as TeamViewer, AnyDesk or Quick Assist— and whether the PC is managed by your company
   (MDM). Each row carries the public page the program's name comes from and the date it was read. It looks at nothing
   outside your PC, blocks nothing and closes nothing: it warns. `Alt+Shift+U` shows what it sees.
-- **The suggestion.** On Windows there is no system model: the suggestion is written by the **API** you choose in AI (Groq
-  or Claude), with your key stored in the Credential Manager, and only anonymized text leaves your PC, just
-  as on the Mac. Without the API, the card is still the answer. Each send is counted in Honesty.
+- **The suggestion.** **It is not on Windows for now.** There is no system model, the paid API left Windows in sprint 013,
+  and the local model that was measured (Foundry Local, on the CPU of an ARM64 Surface) fits the time —median 2.1 s,
+  p95 2.3 s, ceiling 6 s— but opens a telemetry connection to Microsoft even when switched off, and that would break
+  Honesty’s “0 B”. The card is still the answer. AI offers no provider, key or cost on Windows; a key stored earlier is still
+  in Credential Manager and the app does not read it (delete it yourself).
+- **Starting another session.** If the previous meeting is still open with something of yours, Windows asks first —Save,
+  Discard or Cancel— because saving for the first time creates your notes key and the deletion task. Closing the main
+  window with a meeting open saves it on its own, as always.
 
 | Key                          | On Windows today                                                                                                        |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
@@ -934,7 +940,7 @@ It is not a new feature but the same app on another system, which is why it sits
 | `voz-al-oido`                | yes, with headphones; it does not speak through speakers                                                                |
 | `acople`                     | yes: the meeting window moves down and shrinks, and returns on close; no permission to grant                            |
 | `ensayo`                     | yes: the system voice reads the questions                                                                               |
-| `sugerencia`                 | yes, with the API and your key: Windows has no system model                                                             |
+| `sugerencia`                 | not on Windows for now: the local model we measured opens a telemetry connection to Microsoft and the paid API is gone from Windows; the card is still the answer |
 | `radar`                      | yes: the programs on this PC that watch you, and whether it is managed (MDM)                                            |
 | `atajos`                     | yes: Alt+Shift and a key; none with Ctrl+Alt, which on many keyboards is AltGr                                          |
 | `borrado-con-la-app-cerrada` | yes: the Task Scheduler, at the minute of each expiry                                                                   |

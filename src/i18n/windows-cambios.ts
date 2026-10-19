@@ -21,11 +21,14 @@ type Parcial<T> = {
 /** Una parte del diccionario: una clave que no existe en `es.ts` no compila. */
 export type Cambios = Parcial<Diccionario>;
 
-/** En Windows no hay modelo del sistema (ADR 023): la sugerencia, con el API; sin él, la ficha. */
-const SIN_MODELO_ES =
-  "En Windows no hay modelo del sistema: la sugerencia la redacta el API, si lo enciendes con tu clave.";
-const SIN_MODELO_EN =
-  "Windows has no system model: the API writes the suggestion, if you turn it on with your key.";
+/**
+ * La sugerencia redactada en Windows (ADR 023, enmienda 1; sprint 013): sin API y sin modelo local que no salga a la red,
+ * es «no por ahora», dicho con su motivo. La ficha sigue siendo la respuesta.
+ */
+const SIN_SUGERENCIA_ES =
+  "La sugerencia redactada no está en Windows por ahora: el modelo local que se midió en este PC cabe en el tiempo, pero abre una conexión con Microsoft aunque se apague su telemetría, y eso rompería el «0 B». El API de pago salió de Windows. La ficha sigue siendo la respuesta.";
+const SIN_SUGERENCIA_EN =
+  "The written suggestion is not on Windows for now: the local model measured on this PC is fast enough, but it keeps a connection to Microsoft open even with its telemetry off, which would break the “0 B”. The paid API is gone from Windows. The card is still the answer.";
 
 const ES: Cambios = {
   // La puerta local en Windows (sprint 012, ADR 022 enmienda 4): un named pipe y la llave en el Administrador de
@@ -37,7 +40,8 @@ const ES: Cambios = {
       "Dáselo a Claude Code. Cada vez que abres la puerta, la app deja una llave nueva en el Administrador de credenciales y ghost la lee de ahí; al cerrarla, la borra. Mientras está abierta, cualquier programa de tu usuario podría leerla.",
     noAbre: {
       llavero: "El Administrador de credenciales no guardó la llave.",
-      socket: "Windows no dejó crear la puerta: otro programa ya usa ese nombre.",
+      socket:
+        "Windows no dejó crear la puerta: otro programa ya usa ese nombre.",
     },
     redPor: "solo escucha a este PC; el contador sigue igual",
   },
@@ -56,7 +60,12 @@ const ES: Cambios = {
     panelProtegido: "Panel con la protección pedida a Windows",
     proteccionDetalle:
       "Tu panel le pide a Windows que no salga en las capturas, pero en Teams, Zoom y Meet está sin verificar: se verifica con una videollamada real en tu PC. Mientras tanto, comparte una ventana, no la pantalla.",
-    modeloDelSistema: "Modelo del sistema",
+    modeloDelSistema: "Modelo local",
+    // Sprint 013: sin API y sin modelo local, la pantalla IA dice «no por ahora», no «no disponible».
+    noDisponible: "no por ahora",
+    iaSub:
+      "En Windows todo corre en tu PC y la ficha es la respuesta. La sugerencia redactada queda «no por ahora».",
+    siFallaQuedan: "La ficha es la respuesta",
     permisosTitulo: "Permisos de Windows",
     // La tarea de borrado es del Programador de tareas, no de «Ítems de inicio» de macOS (auditoría del S10, A1).
     noCorrio:
@@ -92,7 +101,7 @@ const ES: Cambios = {
     // En Windows, Teams y Zoom cuentan cuando están en una llamada, no por estar abiertos (sprint 008, S7 M1).
     sinReunionVoz:
       "Entra en tu llamada de Zoom, Teams o Meet y aparecerá aquí. Mientras tanto, prepara la reunión.",
-    // IA en Windows (sprint 008, ADR 023): no hay modelo del sistema; cualquier motivo de macOS dice esa verdad.
+    // IA en Windows (sprint 013, ADR 023 enmienda 1): sin API ni modelo local; cualquier motivo de macOS dice esa verdad.
     enTuMac: "en tu PC",
     // Sprint 010: el resto del diccionario del Mac que nombraba macOS, el Mac o un permiso de Apple, dicho para Windows.
     // Varios los pinta el componente con el texto de `windows.ts` (`modoDetalle`, `transcribeTuPc…`, `idiomasListos`); aquí
@@ -100,7 +109,7 @@ const ES: Cambios = {
     // `windows-honestidad-y-manual` ate las copias a su fuente.
     concederEnMacos: "Conceder en Windows",
     modoDetalle:
-      "La app abre una conexión solo si enciendes el API en IA, con tu clave, y solo con texto anonimizado. La otra la abre la propia app, una vez, cuando pides instalar el modelo de voz: 1,6 GB (0,5 GB en un PC ARM64), comprobados antes de usarse.",
+      "La única conexión la abre la propia app, una vez, cuando pides instalar el modelo de voz: 1,6 GB (0,5 GB en un PC ARM64), comprobados antes de usarse. En Windows no hay API: todo lo demás se queda en tu PC.",
     cincoIdiomas:
       "Dos idiomas listos a la vez, como mucho: los que la app ofrece.",
     idiomasListos:
@@ -126,11 +135,11 @@ const ES: Cambios = {
         "El modelo de voz no contestó. Vuelve a abrir la app; si se repite, reinicia el PC.",
     },
     porQueNoRedacta: {
-      "apple-intelligence-apagado": SIN_MODELO_ES,
-      "mac-no-compatible": SIN_MODELO_ES,
-      "no-disponible": SIN_MODELO_ES,
-      "modelo-descargandose": SIN_MODELO_ES,
-      "sin-puente": SIN_MODELO_ES,
+      "apple-intelligence-apagado": SIN_SUGERENCIA_ES,
+      "mac-no-compatible": SIN_SUGERENCIA_ES,
+      "no-disponible": SIN_SUGERENCIA_ES,
+      "modelo-descargandose": SIN_SUGERENCIA_ES,
+      "sin-puente": SIN_SUGERENCIA_ES,
     },
     caracteresTachado:
       "caracteres. Tachado, lo que se reemplazó en tu PC antes de enviarlo.",
@@ -170,6 +179,12 @@ const ES: Cambios = {
       "La app no pudo ver si tu navegador está en una llamada. Ponte auriculares o cierra la llamada para ensayar.",
     vozSinReunion:
       "Sin reunión, la voz sale por donde suene tu PC; con una videollamada abierta, el ensayo no empieza por los altavoces del PC. Mientras habla, el micrófono no escucha.",
+    // Sprint 013 (auditoría, A-2): en Windows nadie redacta, así que el ensayo no manda a encenderlo en IA.
+    enriquecerApagadoQue:
+      "En Windows el banco de preguntas es el de las reglas; el acento de un modelo está «no por ahora».",
+    porQueNoSumo: {
+      "sin-proveedor": "en Windows nadie redacta por ahora.",
+    },
   },
   cliente: {
     panelProtegido: "El panel sigue con la protección pedida a Windows",
@@ -178,12 +193,14 @@ const ES: Cambios = {
 
 const EN: Cambios = {
   puerta: {
-    subResto: "so Claude Code can operate the app from this same PC, with a key in Credential Manager.",
+    subResto:
+      "so Claude Code can operate the app from this same PC, with a key in Credential Manager.",
     daselo:
       "Give it to Claude Code. Each time you open the door, the app leaves a new key in Credential Manager and ghost reads it from there; closing the door deletes it. While it is open, any program of your user could read it.",
     noAbre: {
       llavero: "Credential Manager did not store the key.",
-      socket: "Windows did not let the door be created: another program already uses that name.",
+      socket:
+        "Windows did not let the door be created: another program already uses that name.",
     },
     redPor: "it listens only to this PC; the counter stays",
   },
@@ -200,7 +217,11 @@ const EN: Cambios = {
       "Nothing turns on until you say so. This is what the app sees of your own PC.",
     proteccionDetalle:
       "Your panel asks Windows to stay out of screen captures, but in Teams, Zoom and Meet it is unverified: you verify it with a real video call on your PC. Until then, share a window, not the screen.",
-    modeloDelSistema: "System model",
+    modeloDelSistema: "Local model",
+    noDisponible: "not for now",
+    iaSub:
+      "On Windows everything runs on your PC and the card is the answer. The written suggestion is “not for now”.",
+    siFallaQuedan: "The card is the answer",
     permisosTitulo: "Windows permissions",
     noCorrio:
       "The deletion task did not run while the app was closed: check Task Scheduler",
@@ -237,7 +258,7 @@ const EN: Cambios = {
     // `windows-honestidad-y-manual` ate las copias a su fuente.
     concederEnMacos: "Grant in Windows",
     modoDetalle:
-      "The app opens a connection only if you turn on the API in AI, with your key, and only with anonymized text. The other one the app opens itself, once, when you ask to install the speech model: 1.6 GB (0.5 GB on an ARM64 PC), checked before use.",
+      "The only connection is the one the app opens itself, once, when you ask to install the speech model: 1.6 GB (0.5 GB on an ARM64 PC), checked before use. There is no API on Windows: everything else stays on your PC.",
     cincoIdiomas:
       "Two languages ready at a time, at most: the ones the app offers.",
     idiomasListos: "languages ready at once, at most: the ones the app offers.",
@@ -262,11 +283,11 @@ const EN: Cambios = {
         "The speech model did not answer. Reopen the app; if it repeats, restart the PC.",
     },
     porQueNoRedacta: {
-      "apple-intelligence-apagado": SIN_MODELO_EN,
-      "mac-no-compatible": SIN_MODELO_EN,
-      "no-disponible": SIN_MODELO_EN,
-      "modelo-descargandose": SIN_MODELO_EN,
-      "sin-puente": SIN_MODELO_EN,
+      "apple-intelligence-apagado": SIN_SUGERENCIA_EN,
+      "mac-no-compatible": SIN_SUGERENCIA_EN,
+      "no-disponible": SIN_SUGERENCIA_EN,
+      "modelo-descargandose": SIN_SUGERENCIA_EN,
+      "sin-puente": SIN_SUGERENCIA_EN,
     },
     caracteresTachado:
       "characters. Struck through, what was replaced on your PC before sending.",
@@ -302,6 +323,12 @@ const EN: Cambios = {
       "The app could not see whether your browser is in a call. Put on headphones or close the call to rehearse.",
     vozSinReunion:
       "With no meeting, the voice plays wherever your PC plays sound; with a video call open, the rehearsal won’t start on the PC’s speakers. While it speaks, the microphone does not listen.",
+    // Sprint 013 (audit, A-2): on Windows nobody drafts, so the rehearsal does not send you to turn it on in AI.
+    enriquecerApagadoQue:
+      "On Windows the question bank is the rules-based one; a model’s extra touch is “not for now”.",
+    porQueNoSumo: {
+      "sin-proveedor": "on Windows nobody drafts for now.",
+    },
   },
   cliente: {
     panelProtegido: "The panel keeps the protection requested from Windows",

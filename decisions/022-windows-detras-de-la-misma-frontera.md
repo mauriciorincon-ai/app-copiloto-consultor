@@ -81,7 +81,8 @@ pequeño ya no es un escalón sino el defecto, porque el grande no cabe en 4 s.)
 
 ### 6. Secretos en el Administrador de credenciales
 
-`llavero/windows.rs` guarda las tres llaves (API, notas, puerta) en el **Administrador de credenciales** de Windows
+`llavero/windows.rs` guarda las llaves de las notas y de la puerta (la del API, que fue la tercera, ya no se escribe en Windows desde
+el sprint 013, ADR 023 enmienda 1) en el **Administrador de credenciales** de Windows
 (`CredWriteW`/`CredReadW`/`CredDeleteW`), con los mismos nombres de servicio que en el Llavero.
 
 ## Inventario: los 15 archivos Rust con `cfg(target_os = "macos")` y los 8 del puente Swift
@@ -93,7 +94,7 @@ pequeño ya no es un escalón sino el defecto, porque el grande no cabe en 4 s.)
 | `bandeja.rs`                | la bandeja fuera de las copias                       | **no en Windows** (como `almacen.rs`)                                                                   |
 | `desbloqueo.rs`             | Touch ID o contraseña para abrir notas               | **S8 (hecho)**: Windows Hello (`desbloqueo/windows.rs`)                                                  |
 | `llavero.rs`                | el Llavero                                           | **S6**: Administrador de credenciales (§6)                                                              |
-| `sintesis/api.rs`           | el POST al proveedor externo por `Red.swift`         | **S8 (hecho)**: la segunda puerta Rust, `ureq` (ADR 023)                                                 |
+| `sintesis/api.rs`           | el POST al proveedor externo por `Red.swift`         | **S8 (hecho)**, **retirada en el S13**: la segunda puerta Rust, `ureq` (ADR 023, enmienda 1); en Windows ya no hay API                                                 |
 | `sintesis/sistema.rs`       | Apple Foundation Models                              | **no en Windows** por ahora: sin modelo del sistema; la ficha sigue siendo la respuesta                 |
 | `capture/mod.rs`            | micrófono y audio del sistema (CoreAudio)            | **S6** el micrófono (`capture/windows.rs`, cpal/WASAPI) · **S7 (hecho)** el audio del sistema (loopback) |
 | `sesion/mod.rs`             | qué reunión hay y su ventana                         | **S7 (hecho)**: `sesion/windows.rs` y `data/clientes-windows.json`                                      |
@@ -108,7 +109,7 @@ pequeño ya no es un escalón sino el defecto, porque el grande no cabe en 4 s.)
 | `nativo/Pantalla.swift`     | la pantalla                                          | sustituido por `pantalla/windows.rs` (S7)                                                               |
 | `nativo/Sintesis.swift`     | el modelo del sistema                                | no en Windows                                                                                           |
 | `nativo/Llavero.swift`      | el Llavero                                           | sustituido por el Administrador de credenciales (S6)                                                    |
-| `nativo/Red.swift`          | la puerta del API externo                            | sustituido por `ureq` en `sintesis/api.rs` (S8, ADR 023)                                                |
+| `nativo/Red.swift`          | la puerta del API externo                            | sustituido por `ureq` en `sintesis/api.rs` (S8, ADR 023); **retirado en el S13**: en Windows no hay API                                                |
 | `nativo/Desbloqueo.swift`   | Touch ID                                             | sustituido por Windows Hello (S8)                                                                       |
 | `nativo/Copias.swift`       | Time Machine                                         | no en Windows                                                                                           |
 
@@ -134,7 +135,7 @@ La misma lista vive en `src-tauri/src/plataforma.rs`, en Honestidad y en el manu
 | `voz-al-oido` | sí, con auriculares: la voz del sistema; por altavoces no habla |
 | `acople` | sí: la ventana de la reunión baja y se encoge, y vuelve al cerrar; sin permiso que conceder |
 | `ensayo` | sí: la voz del sistema lee las preguntas |
-| `sugerencia` | sí, con el API y tu clave: en Windows no hay modelo del sistema |
+| `sugerencia` | no en Windows por ahora: el modelo local que se midió abre una conexión de telemetría a Microsoft y el API de pago salió de Windows; la ficha sigue siendo la respuesta |
 | `radar` | sí: los programas de este PC que te miran, con su catálogo de Windows, y si está gestionado (MDM) |
 | `atajos` | sí: Alt+Mayús y una tecla (tabla de la enmienda 1); ninguno con Ctrl+Alt, que en muchos teclados es AltGr |
 | `borrado-con-la-app-cerrada` | sí: el Programador de tareas, al minuto de cada vencimiento |
@@ -242,8 +243,10 @@ desaparece de `plataforma.rs`: no queda ninguna.
    Fuentes: el fabricante cuando nombra el ejecutable; si no, la lista de Safe Exam Browser para Windows o LOLRMM,
    fijadas a un commit, con su nota cuando la fuente es débil. Fuera, sin fuente pública: Inspera, Hubstaff y DeskTime.
    `radar-solo-este-mac` deja pasar esas dos lecturas y ninguna otra de Windows.
-6. **La sugerencia** sale por la segunda puerta Rust (ADR 023). El modelo del sistema sigue sin existir en Windows: la
-   sugerencia es «sí, con el API y tu clave», y sin API la ficha sigue siendo la respuesta.
+6. **La sugerencia** salió por la segunda puerta Rust del sprint 8 al 12 (ADR 023). El modelo del sistema no existe en Windows:
+   la sugerencia era «sí, con el API y tu clave», y sin API la ficha seguía siendo la respuesta. **Desde el sprint 013 es «no en
+   Windows por ahora»** (ADR 023, enmienda 1): el API salió de Windows y el modelo local que se midió abre una conexión de
+   telemetría a Microsoft.
 7. **El mínimo de Windows es 10 versión 2004** (compilación 19041), la primera que sabe sacar una ventana de la captura
    (`WDA_EXCLUDEFROMCAPTURE`). `ventana::abrir_banda` lo pregunta antes que nada (`RtlGetVersion`, que no miente aunque
    el programa no declare versión) y, en una anterior, la app no abre la banda y lo dice con un cuadro: una banda que se

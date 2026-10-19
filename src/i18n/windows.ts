@@ -126,6 +126,21 @@ export type TextosDeWindows = {
   honestidad: {
     modoDetalle: string;
   };
+  /**
+   * **La reunión anterior sigue abierta** (sprint 013, decisión 2a): el cuadro que Windows enseña antes de empezar otra
+   * sesión. Guardar crea la llave de notas y la tarea de borrado la primera vez, y eso no se hace sin que lo digas.
+   */
+  reunionAnterior: {
+    titulo: string;
+    detalle: string;
+    guardar: string;
+    descartar: string;
+    cancelar: string;
+    /** El guardado falló: la reunión sigue abierta y no se empezó nada. */
+    noGuardo: string;
+    /** El descarte falló: la reunión sigue abierta y no se empezó nada. */
+    noDescarto: string;
+  };
   permisos: {
     microfonoPara: string;
     abrirAjustes: string;
@@ -194,7 +209,7 @@ const ES: TextosDeWindows = {
     sugerencia: {
       nombre: "La sugerencia redactada por IA",
       detalle:
-        "sí, con el API y tu clave: en Windows no hay modelo del sistema; sin API, la ficha sigue siendo la respuesta",
+        "no en Windows por ahora: el modelo local que se midió abre una conexión de telemetría a Microsoft y el API de pago salió de Windows; la ficha sigue siendo la respuesta",
     },
     radar: {
       nombre: "El radar de tu equipo",
@@ -314,7 +329,19 @@ const ES: TextosDeWindows = {
   },
   honestidad: {
     modoDetalle:
-      "La app abre una conexión solo si enciendes el API en IA, con tu clave, y solo con texto anonimizado. La otra la abre la propia app, una vez, cuando pides instalar el modelo de voz: 1,6 GB (0,5 GB en un PC ARM64), comprobados antes de usarse.",
+      "La única conexión la abre la propia app, una vez, cuando pides instalar el modelo de voz: 1,6 GB (0,5 GB en un PC ARM64), comprobados antes de usarse. En Windows no hay API: todo lo demás se queda en tu PC.",
+  },
+  reunionAnterior: {
+    titulo: "La reunión anterior sigue abierta",
+    detalle:
+      "Tiene notas o propuestas tuyas sin decidir. Si la guardas, queda cifrada en tu PC; la primera vez, Windows guarda la llave de tus notas en el Administrador de credenciales y la tarea de borrado en el Programador de tareas. Si la descartas, se tira. Cancelar no cambia nada y no empieza otra.",
+    guardar: "Guardar",
+    descartar: "Descartar",
+    cancelar: "Cancelar",
+    noGuardo:
+      "No se pudo guardar la reunión anterior. Sigue abierta y no se empezó nada: vuelve a intentarlo o descártala.",
+    noDescarto:
+      "No se pudo descartar la reunión anterior. Sigue abierta y no se empezó nada: vuelve a intentarlo o cancela.",
   },
   permisos: {
     microfonoPara: "Escuchar la sala o tu voz, con el micrófono de este PC",
@@ -377,7 +404,7 @@ const EN: TextosDeWindows = {
     sugerencia: {
       nombre: "The suggestion written by AI",
       detalle:
-        "yes, with the API and your key: Windows has no system model; without the API, the card is still the answer",
+        "not on Windows for now: the local model we measured opens a telemetry connection to Microsoft and the paid API is gone from Windows; the card is still the answer",
     },
     radar: {
       nombre: "Your machine's radar",
@@ -502,7 +529,19 @@ const EN: TextosDeWindows = {
   },
   honestidad: {
     modoDetalle:
-      "The app opens a connection only if you turn on the API in AI, with your key, and only with anonymized text. The other one the app opens itself, once, when you ask to install the speech model: 1.6 GB (0.5 GB on an ARM64 PC), checked before use.",
+      "The only connection is the one the app opens itself, once, when you ask to install the speech model: 1.6 GB (0.5 GB on an ARM64 PC), checked before use. There is no API on Windows: everything else stays on your PC.",
+  },
+  reunionAnterior: {
+    titulo: "The previous meeting is still open",
+    detalle:
+      "It has notes or proposals of yours you haven't decided on. If you save it, it stays encrypted on your PC; the first time, Windows stores your notes key in Credential Manager and the deletion task in Task Scheduler. If you discard it, it is thrown away. Cancel changes nothing and starts nothing.",
+    guardar: "Save",
+    descartar: "Discard",
+    cancelar: "Cancel",
+    noGuardo:
+      "The previous meeting could not be saved. It is still open and nothing was started: try again or discard it.",
+    noDescarto:
+      "The previous meeting could not be discarded. It is still open and nothing was started: try again or cancel.",
   },
   permisos: {
     microfonoPara:

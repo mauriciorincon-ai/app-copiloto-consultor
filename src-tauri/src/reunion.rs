@@ -582,6 +582,14 @@ fn ventana_de_prueba(vence: Option<i64>, ahora: i64) -> Option<i64> {
     vence
 }
 
+/// **¿La reunión anterior pide que decidas?** Abierta y con algo tuyo o propuestas sin decidir: lo mismo que haría
+/// que [`al_empezar`] la guardara sola. Solo pregunta (sin efectos), para que Windows enseñe «Guardar · Descartar ·
+/// Cancelar» ANTES de empezar otra (sprint 013, decisión 2a): guardar crea la llave de notas y la tarea de borrado la
+/// primera vez, y esa protección del sistema no se toca sin que lo hayas dicho.
+pub fn pide_decidir<R: Runtime>(app: &AppHandle<R>) -> bool {
+    app.try_state::<ElCuaderno>().is_some_and(|el| el.hay_que_guardar_la_anterior())
+}
+
 /// «Cerrar sin guardar»: lo tuyo de esta reunión se tira, con las letras pisadas.
 pub fn descartar<R: Runtime>(app: &AppHandle<R>) {
     let Some(el) = app.try_state::<ElCuaderno>() else { return };
@@ -1495,5 +1503,19 @@ mod pruebas {
         el.abrir(false, HOY);
         el.con(|c| c.proponer(vec![propuesta("12 semanas")]));
         assert!(el.hay_que_guardar_la_anterior(), "empezar otra reunión tiraría las propuestas sin decidir");
+    }
+
+    /// **La pregunta de Windows no tiene efectos** (sprint 013, decisión 2a): `pide_decidir` solo mira si hay que decidir.
+    /// Si guardara, descartara o tocara el vencimiento, preguntar crearía la llave de notas y la tarea de borrado —las
+    /// dos protecciones que la pregunta existe para no tocar sin tu «sí»—. Es un test de fuente, como los de `lib.rs`.
+    #[test]
+    fn preguntar_si_la_anterior_pide_decidir_no_toca_nada() {
+        let fuente = include_str!("reunion.rs");
+        let desde = fuente.find("pub fn pide_decidir").expect("no encuentro la pregunta");
+        let cuerpo = &fuente[desde..desde + fuente[desde..].find("\n}\n").expect("no cierra")];
+        assert!(cuerpo.contains("hay_que_guardar_la_anterior"), "ya no usa la misma regla que `al_empezar`");
+        for efecto in ["guardar(", "descartar(", "cerrar(", "poner_al_dia", "llavero", "DelLlavero", "carpeta(", "escribir", "avisar("] {
+            assert!(!cuerpo.contains(efecto), "la pregunta tiene un efecto: {efecto}");
+        }
     }
 }

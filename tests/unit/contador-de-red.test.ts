@@ -113,16 +113,14 @@ const DECLARADA = /verify-ephemeral:allow\b.*ADR/;
 const PUERTAS_DECLARADAS = 3;
 
 /**
- * **Y las puertas escritas en Rust: una desde el sprint 006 (ADR 022 §4), dos desde el sprint 008 (ADR 023).** Windows
- * no tiene puente de Swift: whisper necesita su modelo (`modelo_whisper.rs`) y la sugerencia por API necesita salir
- * (`sintesis/api.rs`, la misma que en el Mac va por `nativo/Red.swift`). Cada una vive en SU archivo, en UNA línea
- * marcada con su ADR, y su cliente (`ureq`) solo puede declararse para Windows. No se afloja nada: el resto de Rust
- * sigue sin poder abrir un socket, y una línea de red más —en esos archivos o en otro— es rojo.
+ * **Y las puertas escritas en Rust: una desde el sprint 006 (ADR 022 §4), dos del sprint 008 al 012 (ADR 023), y otra
+ * vez una desde el sprint 013 (ADR 023, enmienda 1).** Windows no tiene puente de Swift: whisper necesita su modelo
+ * (`modelo_whisper.rs`). La sugerencia por API salía por `sintesis/api.rs` y se retiró de Windows con el API entero.
+ * La puerta vive en SU archivo, en UNA línea marcada con su ADR, y su cliente (`ureq`) solo puede declararse para
+ * Windows. No se afloja nada: el resto de Rust sigue sin poder abrir un socket, y una línea de red más —en ese
+ * archivo o en otro, `sintesis/api.rs` incluido— es rojo.
  */
-const PUERTAS_RUST: [string, number][] = [
-  ["src-tauri/src/modelo_whisper.rs", 1],
-  ["src-tauri/src/sintesis/api.rs", 1],
-];
+const PUERTAS_RUST: [string, number][] = [["src-tauri/src/modelo_whisper.rs", 1]];
 /** El único cliente de red que puede declararse, y solo en esta sección de `Cargo.toml`. */
 const CLIENTE_PERMITIDO = { nombre: "ureq", seccion: "[target.'cfg(windows)'.dependencies]" };
 

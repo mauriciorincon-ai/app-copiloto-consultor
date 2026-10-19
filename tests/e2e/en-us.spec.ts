@@ -58,15 +58,26 @@ test.describe("el cuaderno, en inglés", () => {
 });
 
 test.describe("Windows, en inglés", () => {
-  test("«Hoy en Windows» tiene «Ya funciona», sin grupo de «No por ahora», y las quince funciones con el nombre del diccionario", async ({ page }) => {
+  test("«Hoy en Windows» tiene «Ya funciona», el grupo «No por ahora» con la sugerencia, y las quince funciones con el nombre del diccionario", async ({ page }) => {
     await abrir(page, "ventana=principal&pantalla=honestidad&plataforma=windows");
     await expect(page.getByRole("heading", { name: W.titulo })).toBeVisible();
     await expect(page.getByText(W.ya, { exact: true })).toBeVisible();
-    // Sprint 012: con la puerta local en Windows no queda ninguna función «no por ahora»; el grupo no se pinta.
-    await expect(page.getByText(W.noPorAhora, { exact: true })).toHaveCount(0);
+    // Sprint 013 (ADR 023, enmienda 1): la sugerencia redactada es la única «no por ahora»; el grupo se pinta.
+    await expect(page.getByText(W.noPorAhora, { exact: true })).toBeVisible();
     for (const clave of CLAVES_DE_WINDOWS) {
       await expect(page.getByText(W.funciones[clave].nombre, { exact: true }).first(), clave).toBeVisible();
     }
+    await expect(page.getByText(W.funciones.sugerencia.detalle, { exact: false })).toBeVisible();
+  });
+
+  test("IA dice «not for now» con su motivo del diccionario y no ofrece ningún API", async ({ page }) => {
+    await abrir(page, "ventana=principal&pantalla=ia&plataforma=windows");
+    const motivo = CAMBIOS_DE_WINDOWS.en.cuaderno?.porQueNoRedacta?.["sin-puente"] ?? "no está en el diccionario";
+    await expect(page.getByText(motivo).first()).toBeVisible();
+    for (const ausente of [en.cuaderno.proveedorExterno, en.cuaderno.tuClave, en.cuaderno.costo]) {
+      await expect(page.getByText(ausente, { exact: true }), ausente).toHaveCount(0);
+    }
+    await expect(page.getByRole("switch", { name: en.cuaderno.redactarSugerencias })).toHaveAttribute("aria-disabled", "true");
   });
 
   test("ninguna pantalla de Windows nombra el Mac, ni en inglés", async ({ page }) => {

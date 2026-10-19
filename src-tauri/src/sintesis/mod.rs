@@ -281,6 +281,57 @@ pub trait Proveedor: Send + Sync {
     fn redactar(&self, instrucciones: &str, texto: &str) -> Result<Respuesta, String>;
 }
 
+/// **En qué sistema se elige quién redacta** (sprint 013, ADR 023 enmienda 1). Va como parámetro de
+/// [`quien_redacta`] para probar las dos ramas en cualquier equipo; la app pasa [`Plataforma::ESTA`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Plataforma {
+    Mac,
+    Windows,
+}
+
+impl Plataforma {
+    /// La de esta compilación.
+    pub const ESTA: Self = if cfg!(windows) { Self::Windows } else { Self::Mac };
+
+    /// ¿Hay API externo? Solo en el Mac. **En Windows se retiró** (decisión 1a del S13): sin modelo local que no salga
+    /// a la red, la sugerencia allí queda «no por ahora», jamás con un API de pago.
+    pub const fn admite_api(self) -> bool {
+        matches!(self, Self::Mac)
+    }
+
+    /// ¿Se le puede prometer al usuario una sugerencia redactada, o un banco de ensayo enriquecido? **En Windows no**
+    /// (sprint 013): nadie redacta allí, salvo el `mock` de la CI y del kit. Si la promesa no se puede cumplir, ni la
+    /// pantalla ni el ensayo la hacen.
+    pub const fn promete_redactar(self, mock: bool) -> bool {
+        mock || matches!(self, Self::Mac)
+    }
+}
+
+/// Lo que contestan los comandos del API en Windows, donde el API ya no está (sprint 013, ADR 023 enmienda 1).
+pub const SIN_API_EN_WINDOWS: &str = "sin-api-en-windows";
+
+/// **¿Se puede encender el API en esta plataforma?** Apagarlo siempre se puede (no cambia nada); encenderlo, solo donde
+/// hay API. Pura, para probar las dos plataformas en cualquier equipo; los comandos la llaman antes de tocar la clave.
+pub fn pedir_el_api(plataforma: Plataforma, encendida: bool) -> Result<(), &'static str> {
+    if encendida && !plataforma.admite_api() {
+        return Err(SIN_API_EN_WINDOWS);
+    }
+    Ok(())
+}
+
+/// **Quién redacta ahora**, sin efectos: `mock` si se forzó (`AG_SINTESIS=mock`, el de la CI y el del kit); el API si
+/// esta plataforma lo admite y está listo (encendido, con clave y bajo el tope); si no, el modelo del sistema si
+/// está; si no, nadie, y la ficha sigue sola.
+pub fn quien_redacta(plataforma: Plataforma, mock: bool, api_lista: bool, sistema_listo: bool) -> Option<Quien> {
+    if mock {
+        return Some(Quien::Mock);
+    }
+    if plataforma.admite_api() && api_lista {
+        return Some(Quien::Api);
+    }
+    sistema_listo.then_some(Quien::Sistema)
+}
+
 /// El JSON del modelo, aunque venga envuelto en «```json … ```» o con una frase delante: se toma
 /// el primer objeto `{…}` completo. Lo demás se tira.
 pub(crate) fn objeto(texto: &str) -> Option<&str> {
@@ -465,6 +516,39 @@ pub(crate) mod pruebas {
         let json = "Claro:\n```json\n{\"titular\":\"a\",\"linea\":\"b\",\"fuente\":\"F2\",\"confianza\":\"baja\"}\n```".to_string();
         let r = sugerir(Arc::new(Lento(Duration::ZERO, json)), &peticion(), Duration::from_secs(1));
         assert_eq!(r.sugerencia.unwrap().ficha.titular, "Etapa 2 Preparación");
+    }
+
+    /// **Windows nunca elige el API** (sprint 013, decisión 1a), lo pida quien lo pida; el Mac sigue como estaba: el API
+    /// listo manda, después el modelo del sistema, y `mock` por encima de todo.
+    #[test]
+    fn windows_nunca_elige_el_api_y_el_mac_sigue_igual() {
+        for api_lista in [false, true] {
+            for sistema_listo in [false, true] {
+                let w = quien_redacta(Plataforma::Windows, false, api_lista, sistema_listo);
+                assert_ne!(w, Some(Quien::Api), "Windows eligió el API (api {api_lista}, sistema {sistema_listo})");
+                assert_eq!(w, sistema_listo.then_some(Quien::Sistema));
+                for p in [Plataforma::Mac, Plataforma::Windows] {
+                    assert_eq!(quien_redacta(p, true, api_lista, sistema_listo), Some(Quien::Mock));
+                }
+            }
+        }
+        assert_eq!(quien_redacta(Plataforma::Mac, false, true, true), Some(Quien::Api));
+        assert_eq!(quien_redacta(Plataforma::Mac, false, false, true), Some(Quien::Sistema));
+        assert_eq!(quien_redacta(Plataforma::Mac, false, false, false), None);
+        assert_eq!(Plataforma::ESTA.admite_api(), !cfg!(windows));
+    }
+
+    /// **Lo que Windows promete** (auditoría del S13, A-2): ni sugerencia ni banco enriquecido, salvo el `mock`; el Mac,
+    /// como siempre. Y los comandos del API se niegan a encender en Windows y dejan apagar.
+    #[test]
+    fn windows_no_promete_redactar_ni_deja_encender_el_api() {
+        assert!(Plataforma::Mac.promete_redactar(false) && Plataforma::Mac.promete_redactar(true));
+        assert!(!Plataforma::Windows.promete_redactar(false));
+        assert!(Plataforma::Windows.promete_redactar(true), "el mock de la CI sigue redactando");
+        assert_eq!(pedir_el_api(Plataforma::Windows, true), Err(SIN_API_EN_WINDOWS));
+        assert_eq!(pedir_el_api(Plataforma::Windows, false), Ok(()));
+        assert_eq!(pedir_el_api(Plataforma::Mac, true), Ok(()));
+        assert_eq!(pedir_el_api(Plataforma::Mac, false), Ok(()));
     }
 
     /// El modelo solo ve el turno y las tres fichas, con sus ids.

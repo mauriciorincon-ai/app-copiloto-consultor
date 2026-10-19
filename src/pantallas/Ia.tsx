@@ -4,6 +4,7 @@ import { Ic } from "../componentes/Iconos";
 import { PILA, EnElRoadmap } from "../componentes/Ventana";
 import { useBytesALaRed } from "../cuaderno";
 import { hayTauri } from "../puente";
+import { esWindows, usePlataforma } from "../plataforma";
 import {
   EXTERNOS,
   apiExterna,
@@ -43,6 +44,10 @@ import {
  *
  * Todo nace apagado: redactar sugerencias y el proveedor externo. Encender el externo exige su clave
  * en el Llavero, y la pantalla dice por qué no se puede cuando no se puede.
+ *
+ * **En Windows no hay API** (sprint 013, decisión 1a; ADR 023 enmienda 1): ni la fila del proveedor, ni su clave, ni el
+ * costo, ni «Redactar sugerencias» ni «Enriquecer el banco», que sin proveedor no hacen nada. La pantalla dice, con su
+ * motivo, que la sugerencia redactada es «no por ahora» y que la ficha es la respuesta. La puerta local sigue.
  */
 /**
  * Lo que cada proveedor hace con lo que le mandas (ADR 011, decisión del usuario 2026-09-29). Un
@@ -70,6 +75,8 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
   const [cifra, unidad = "B"] = bytes.split(" ");
   const [clave, setClave] = useState("");
   const [sinClave, setSinClave] = useState(false);
+  const [plataforma] = usePlataforma();
+  const windows = esWindows(plataforma);
 
   const aplicar = (p: Promise<EstadoDeLaIa | null>) =>
     void p
@@ -79,8 +86,10 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
       })
       .catch(() => setSinClave(true));
 
-  const porQue: PorQueNoRedacta | null =
-    sinClave || (ia.api.encendida && !ia.api.hayClave)
+  // En Windows el API no existe: ni su clave ni su tope pueden ser el motivo.
+  const porQue: PorQueNoRedacta | null = windows
+    ? ia.sistema
+    : sinClave || (ia.api.encendida && !ia.api.hayClave)
       ? "sin-clave"
       : ia.mesUsd >= ia.topeUsd
         ? "tope-del-mes"
@@ -170,38 +179,42 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
                     {ia.quien === "sistema" && ia.latenciaMs !== null ? segundos(ia.latenciaMs) : "—"}
                   </td>
                 </tr>
-                <tr className="apagada">
-                  <td>MLX · Qwen 3 4B</td>
-                  <td>
-                    <EnElRoadmap />
-                  </td>
-                  <td className="num">—</td>
-                </tr>
-                <tr className={ia.api.encendida ? undefined : "apagada"}>
-                  <td>{t.apiExterno}</td>
-                  <td>
-                    {ia.quien === "api" ? (
-                      <span className="estado ok">
-                        <Ic id="i-nube" s />
-                        <span>{t.enUso}</span>
-                      </span>
-                    ) : ia.api.encendida ? (
-                      <span className="estado warn">
-                        <Ic id="i-alert" s relleno />
-                        <span>{t.noDisponible}</span>
-                      </span>
-                    ) : (
-                      t.apagado
-                    )}
-                  </td>
-                  <td className="num">
-                    {ia.quien === "api" && ia.latenciaMs !== null ? segundos(ia.latenciaMs) : "—"}
-                  </td>
-                </tr>
+                {!windows && (
+                  <>
+                    <tr className="apagada">
+                      <td>MLX · Qwen 3 4B</td>
+                      <td>
+                        <EnElRoadmap />
+                      </td>
+                      <td className="num">—</td>
+                    </tr>
+                    <tr className={ia.api.encendida ? undefined : "apagada"}>
+                      <td>{t.apiExterno}</td>
+                      <td>
+                        {ia.quien === "api" ? (
+                          <span className="estado ok">
+                            <Ic id="i-nube" s />
+                            <span>{t.enUso}</span>
+                          </span>
+                        ) : ia.api.encendida ? (
+                          <span className="estado warn">
+                            <Ic id="i-alert" s relleno />
+                            <span>{t.noDisponible}</span>
+                          </span>
+                        ) : (
+                          t.apagado
+                        )}
+                      </td>
+                      <td className="num">
+                        {ia.quien === "api" && ia.latenciaMs !== null ? segundos(ia.latenciaMs) : "—"}
+                      </td>
+                    </tr>
+                  </>
+                )}
               </tbody>
             </table>
             {porQue && (
-              <p style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "6px" }}>
+              <p id="ia-motivo" style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "6px" }}>
                 {t.porQueNoRedacta[porQue]}
               </p>
             )}
@@ -225,17 +238,23 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
 
         <div className="fila" style={{ gap: "8px" }}>
           <Interruptor
-            encendido={ia.redactar}
+            encendido={ia.redactar && !windows}
             etiqueta={t.redactarSugerencias}
             alCambiar={() => aplicar(redactarSugerencias(!ia.redactar))}
             relleno="2px"
+            bloqueado={windows}
+            avisoBloqueado={t.noDisponible}
+            descritoPor={windows && porQue ? "ia-motivo" : undefined}
           />
           {/* El segundo interruptor (sprint 004, `ia.html` · sprint 4): el acento del ensayo. */}
           <Interruptor
-            encendido={ia.enriquecer}
+            encendido={ia.enriquecer && !windows}
             etiqueta={t.enriquecerElBanco}
             alCambiar={() => aplicar(enriquecerElBanco(!ia.enriquecer))}
             relleno="2px"
+            bloqueado={windows}
+            avisoBloqueado={t.noDisponible}
+            descritoPor={windows && porQue ? "ia-motivo" : undefined}
           />
           <span className="crece" />
           {/* La puerta local, también en Windows desde el sprint 012 (ADR 022 enmienda 4): un named pipe solo de tu usuario. */}
@@ -247,108 +266,110 @@ export function Ia({ busqueda = "" }: { busqueda?: string }) {
           </button>
         </div>
 
-        <div className="grid-2" style={{ gridTemplateColumns: "1.25fr 1fr", gap: "12px", alignItems: "start" }}>
-          <div className="tarjeta">
-            <div className="fila">
-              <h2 className="seccion crece" style={{ margin: 0 }}>
-                {t.proveedorExterno}
-              </h2>
-              <Interruptor
-                encendido={ia.api.encendida}
-                etiqueta={ia.api.encendida ? t.encendido : t.apagado}
-                alCambiar={() => aplicar(apiExterna(!ia.api.encendida, ia.api.externo))}
-              />
-            </div>
-            <div className="fila" style={{ gap: "6px", marginTop: "8px" }}>
-              {EXTERNOS.map((e) => (
-                <button
-                  key={e.id}
-                  type="button"
-                  className="btn mini"
-                  aria-pressed={ia.api.externo === e.id}
-                  onClick={() => elegir(e.id)}
-                >
-                  {ia.api.externo === e.id && <Ic id="i-check-circle" s relleno color="var(--halo)" />}
-                  {e.nombre}
-                </button>
-              ))}
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
-              <label className="campo">
-                <span>{t.tuClave}</span>
-                <input
-                  className="mono"
-                  type="password"
-                  placeholder="sk-…"
-                  autoComplete="off"
-                  spellCheck={false}
-                  value={clave}
-                  onChange={(e) => setClave(e.target.value)}
+        {!windows && (
+          <div className="grid-2" style={{ gridTemplateColumns: "1.25fr 1fr", gap: "12px", alignItems: "start" }}>
+            <div className="tarjeta">
+              <div className="fila">
+                <h2 className="seccion crece" style={{ margin: 0 }}>
+                  {t.proveedorExterno}
+                </h2>
+                <Interruptor
+                  encendido={ia.api.encendida}
+                  etiqueta={ia.api.encendida ? t.encendido : t.apagado}
+                  alCambiar={() => aplicar(apiExterna(!ia.api.encendida, ia.api.externo))}
                 />
-                <span className="ayuda">{t.enTuLlavero}</span>
-              </label>
-              <div className="fila" style={{ gap: "8px" }}>
-                <button
-                  type="button"
-                  className="btn mini"
-                  disabled={clave.trim() === ""}
-                  onClick={() => {
-                    const k = clave;
-                    setClave("");
-                    aplicar(guardarClave(ia.api.externo, k));
-                  }}
-                >
-                  <Ic id="i-candado" s />
-                  <span>{t.guardarEnLlavero}</span>
-                </button>
-                <button type="button" className="btn mini" onClick={() => aplicar(borrarClave(ia.api.externo))}>
-                  <span>{t.borrarLaClave}</span>
-                </button>
-                {/* Solo cuando algo salió en esta reunión (B37, mirada 19). */}
-                {salio.length > 0 && (
-                  <>
-                    <span className="crece" />
-                    <button type="button" className="btn mini" onClick={() => setViendo("salio")}>
-                      <Ic id="i-nube" s />
-                      <span>
-                        {t.verLoQueSalio} · {salio.length}
-                      </span>
-                    </button>
-                  </>
-                )}
+              </div>
+              <div className="fila" style={{ gap: "6px", marginTop: "8px" }}>
+                {EXTERNOS.map((e) => (
+                  <button
+                    key={e.id}
+                    type="button"
+                    className="btn mini"
+                    aria-pressed={ia.api.externo === e.id}
+                    onClick={() => elegir(e.id)}
+                  >
+                    {ia.api.externo === e.id && <Ic id="i-check-circle" s relleno color="var(--halo)" />}
+                    {e.nombre}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
+                <label className="campo">
+                  <span>{t.tuClave}</span>
+                  <input
+                    className="mono"
+                    type="password"
+                    placeholder="sk-…"
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={clave}
+                    onChange={(e) => setClave(e.target.value)}
+                  />
+                  <span className="ayuda">{t.enTuLlavero}</span>
+                </label>
+                <div className="fila" style={{ gap: "8px" }}>
+                  <button
+                    type="button"
+                    className="btn mini"
+                    disabled={clave.trim() === ""}
+                    onClick={() => {
+                      const k = clave;
+                      setClave("");
+                      aplicar(guardarClave(ia.api.externo, k));
+                    }}
+                  >
+                    <Ic id="i-candado" s />
+                    <span>{t.guardarEnLlavero}</span>
+                  </button>
+                  <button type="button" className="btn mini" onClick={() => aplicar(borrarClave(ia.api.externo))}>
+                    <span>{t.borrarLaClave}</span>
+                  </button>
+                  {/* Solo cuando algo salió en esta reunión (B37, mirada 19). */}
+                  {salio.length > 0 && (
+                    <>
+                      <span className="crece" />
+                      <button type="button" className="btn mini" onClick={() => setViendo("salio")}>
+                        <Ic id="i-nube" s />
+                        <span>
+                          {t.verLoQueSalio} · {salio.length}
+                        </span>
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-          {/* Lo que guarda el proveedor va bajo el costo: esta columna tiene sitio y la otra llena los
-              640 px de la ventana (auditoría del S3, M3). */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <div className="tarjeta" style={{ paddingBottom: "6px" }}>
-              <h2 className="seccion" style={{ margin: "0 0 4px" }}>
-                {t.costo}
-              </h2>
-              <table className="tabla">
-                <tbody>
-                  <tr>
-                    <td>{t.estaReunion}</td>
-                    <td className="num">{dolares(ia.reunionUsd, idioma)}</td>
-                  </tr>
-                  <tr>
-                    <td>{t.esteMes}</td>
-                    <td className="num">{dolares(ia.mesUsd, idioma)}</td>
-                  </tr>
-                  <tr>
-                    <td>{t.topeDelMes}</td>
-                    <td className="num">{dolares(ia.topeUsd, idioma)}</td>
-                  </tr>
-                </tbody>
-              </table>
-              <p style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "6px" }}>{t.alLlegarAlTope}</p>
+            {/* Lo que guarda el proveedor va bajo el costo: esta columna tiene sitio y la otra llena los
+                640 px de la ventana (auditoría del S3, M3). */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <div className="tarjeta" style={{ paddingBottom: "6px" }}>
+                <h2 className="seccion" style={{ margin: "0 0 4px" }}>
+                  {t.costo}
+                </h2>
+                <table className="tabla">
+                  <tbody>
+                    <tr>
+                      <td>{t.estaReunion}</td>
+                      <td className="num">{dolares(ia.reunionUsd, idioma)}</td>
+                    </tr>
+                    <tr>
+                      <td>{t.esteMes}</td>
+                      <td className="num">{dolares(ia.mesUsd, idioma)}</td>
+                    </tr>
+                    <tr>
+                      <td>{t.topeDelMes}</td>
+                      <td className="num">{dolares(ia.topeUsd, idioma)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p style={{ fontSize: "11.5px", color: "var(--ink-2)", marginTop: "6px" }}>{t.alLlegarAlTope}</p>
+              </div>
+              <p className="retencion" style={{ fontSize: "11.5px", color: "var(--ink-2)", margin: "0 4px" }}>
+                {RETENCION[ia.api.externo](t)}
+              </p>
             </div>
-            <p className="retencion" style={{ fontSize: "11.5px", color: "var(--ink-2)", margin: "0 4px" }}>
-              {RETENCION[ia.api.externo](t)}
-            </p>
           </div>
-        </div>
+        )}
       </div>
     </>
   );
@@ -393,6 +414,9 @@ function Interruptor({
   relleno = "0",
   icono,
   nombre,
+  bloqueado,
+  avisoBloqueado,
+  descritoPor,
 }: {
   encendido: boolean;
   etiqueta: string;
@@ -403,21 +427,39 @@ function Interruptor({
   icono?: string;
   /** Cuando la etiqueta es solo el estado («cerrada»), el nombre dice QUÉ se conmuta. */
   nombre?: string;
+  /** No se puede conmutar (en Windows, sin proveedor): se ve apagado y el clic no hace nada. */
+  bloqueado?: boolean;
+  /** Bloqueado, el interruptor lo dice con texto, no solo con menos color («no por ahora»). */
+  avisoBloqueado?: string;
+  /** Bloqueado, el `id` del párrafo que explica por qué. */
+  descritoPor?: string;
 }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={encendido}
-      aria-label={nombre}
+      aria-label={nombre ?? (bloqueado ? etiqueta : undefined)}
+      aria-describedby={bloqueado ? descritoPor : undefined}
+      aria-disabled={bloqueado ? true : undefined}
       className={encendido ? "conm on" : "conm off"}
-      style={{ background: "none", border: 0, padding: relleno, fontFamily: "inherit", alignSelf: "flex-start" }}
-      onClick={alCambiar}
+      style={{
+        background: "none",
+        border: 0,
+        padding: relleno,
+        fontFamily: "inherit",
+        alignSelf: "flex-start",
+        opacity: bloqueado ? 0.55 : undefined,
+        cursor: bloqueado ? "not-allowed" : undefined,
+      }}
+      onClick={bloqueado ? undefined : alCambiar}
     >
       <span className="track"></span>
       <span className="etq">
         {icono && <Ic id={icono} s />}
+        {bloqueado && <Ic id="i-candado" s />}
         {etiqueta}
+        {bloqueado && avisoBloqueado && <small> · {avisoBloqueado}</small>}
       </span>
     </button>
   );
