@@ -431,6 +431,7 @@ function ModeloLocal({ ia, alInstalar }: { ia: EstadoDeLaIa; alInstalar: () => v
   if (ia.local.bajando)
     return (
       <span className="estado mute" role="status">
+        <Ic id="i-reloj" s />
         <span>{tw.ia.bajando}</span>
       </span>
     );

@@ -17,7 +17,8 @@ import { describe, expect, it } from "vitest";
  * (bitácora del sprint 002, fase 5).
  */
 const RAIZ = "src-tauri/src";
-const CONTENIDO = /\b(turno|linea|titular|texto|clave|tapado|cuerpo|json|peticion|respaldo|crudo)\b/;
+// `salida`, `prompt` y `pieza` desde el sprint 014: el modelo local escribe en el proceso y su salida es la sugerencia.
+const CONTENIDO = /\b(turno|linea|titular|texto|clave|tapado|cuerpo|json|peticion|respaldo|crudo|salida|prompt|pieza)\b/;
 
 function archivos(dir: string): string[] {
   return readdirSync(dir).flatMap((n) => {
@@ -48,10 +49,12 @@ function impresiones(): { donde: string; texto: string }[] {
 }
 
 describe("el log de la síntesis", () => {
-  const de_la_sintesis = impresiones().filter((p) => p.texto.includes("[sintesis]"));
+  // `[modelo-local]` desde el sprint 014 (auditoría M-4): la carga, el soltar y lo que tardó cada generación.
+  const de_la_sintesis = impresiones().filter((p) => p.texto.includes("[sintesis]") || p.texto.includes("[modelo-local]"));
 
   it("hay líneas que leer (un gate que no lee nada no es un gate)", () => {
     expect(de_la_sintesis.length).toBeGreaterThanOrEqual(5);
+    expect(de_la_sintesis.filter((p) => p.texto.includes("[modelo-local]")).length, "el gate no lee [modelo-local]").toBeGreaterThanOrEqual(3);
   });
 
   it("ninguna lleva el turno, las fichas, la sugerencia, la clave ni lo que salió", () => {

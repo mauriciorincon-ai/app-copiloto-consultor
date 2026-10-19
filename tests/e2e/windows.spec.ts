@@ -257,23 +257,18 @@ test("en Windows, IA ofrece instalar el modelo local y no ofrece ningún API", a
     await expect(conmutador).toContainText(aviso);
   }
   // La puerta local sigue (S12).
-  await expect(
-    page.getByRole("button", { name: /Puerta local/ }),
-  ).toBeVisible();
+  await expect(page.getByRole("button", { name: /Puerta local/ })).toBeVisible();
 });
 
 /** El control: en macOS, IA sigue con su proveedor, su clave y su costo. */
-test("en macOS, IA sigue ofreciendo el API con su clave y su costo", async ({
-  page,
-}) => {
+test("en macOS, IA sigue ofreciendo el API con su clave y su costo", async ({ page }) => {
   await page.goto("/?ventana=principal&pantalla=ia");
-  await expect(
-    page.getByText("Proveedor externo", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText("Proveedor externo", { exact: true })).toBeVisible();
   await expect(page.getByText("Costo", { exact: true })).toBeVisible();
-  await expect(
-    page.getByRole("switch", { name: /Redactar sugerencias/ }),
-  ).not.toHaveAttribute("aria-disabled", "true");
+  await expect(page.getByRole("switch", { name: /Redactar sugerencias/ })).not.toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
 });
 
 /** El radar en la banda de Windows (sprint 008): dice que te mira un programa de tu PC, con las teclas de Windows y sin
@@ -647,16 +642,16 @@ test("en Windows, el modo transparente enseña el aviso en los dos idiomas; en m
     page.getByRole("button", { name: /El cliente consintió/ }),
   ).toHaveAttribute("aria-disabled", "true");
   await expect(
-    page.getByText(
-      "Se anota con la reunión abierta: inicia la sesión primero.",
-    ),
+    page.getByText("Se anota con la reunión abierta: inicia la sesión primero."),
   ).toBeVisible();
 
   // CONTROL: en macOS, el mismo estado no pinta ni una línea del modo transparente.
-  await page.goto("/?ventana=principal&pantalla=sesion&estado=transparente");
+  await page.goto(
+    "/?ventana=principal&pantalla=sesion&estado=transparente",
+  );
   await expect(page.getByText("Este cliente").first()).toBeVisible();
-  await expect(
-    page.getByRole("switch", { name: /Modo transparente/ }),
-  ).toHaveCount(0);
+  await expect(page.getByRole("switch", { name: /Modo transparente/ })).toHaveCount(
+    0,
+  );
   await expect(page.getByText("Lo que le dices")).toHaveCount(0);
 });

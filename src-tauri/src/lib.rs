@@ -3495,6 +3495,12 @@ fn sintetizar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Aparicion
     let mango = app.clone();
     std::thread::spawn(move || {
         let s = mango.state::<LaSintesis>();
+        // Un corte o el final de la sesión llegó entre que se lanzó este hilo y ahora: no se redacta, y sobre todo no se vuelve
+        // a cargar el modelo local, que el corte ya soltó (auditoría del S14, M-1).
+        if s.epoca.load(Ordering::Relaxed) != epoca {
+            s.en_marcha.store(false, Ordering::Relaxed);
+            return;
+        }
         // Primero quién redacta: sin proveedor (en Windows, siempre) el turno de un tercero ni se copia (auditoría del S13, M-7).
         let conocidos = clientes_del_corpus(&mango.state::<ElCorpus>());
         let sobre = respaldo.first().map(|r| r.titular.clone()).unwrap_or_default();
@@ -5300,6 +5306,10 @@ mod pruebas_de_la_ia_en_windows {
             cuerpo_de("\nfn proveedor_de_ahora(").contains(concat!("para == sintesis::api::Para::", "Sugerencia")),
             "el banco del ensayo podría usar el modelo local"
         );
+        // M-1 de la auditoría del S14: el hilo mira la época ANTES de pedir al proveedor, para no recargar el modelo tras un corte.
+        let hilo = cuerpo_de("\nfn sintetizar<");
+        let (epoca, proveedor) = (hilo.find("s.epoca.load(Ordering::Relaxed) != epoca"), hilo.find("proveedor_de_ahora(&s"));
+        assert!(epoca.is_some() && epoca < proveedor, "el hilo de la sugerencia no mira la época antes de cargar el modelo");
     }
 
     /// Y al arrancar, lo que Windows ya no tiene se apaga **antes** de aplicar las preferencias.

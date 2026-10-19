@@ -194,16 +194,10 @@ pub fn bajar(m: &Modelo) -> Result<PathBuf, String> {
             let pedido = agente.get(m.origen);
             let pedido = if desde > 0 { pedido.header("Range", format!("bytes={desde}-")) } else { pedido };
             let respuesta = pedido.call().map_err(|e| format!("la descarga no empezó: {e}"))?;
-            let desde = if respuesta.status().as_u16() == 206 {
-                respuesta
-                    .headers()
-                    .get("content-range")
-                    .and_then(|v| v.to_str().ok())
-                    .and_then(inicio_del_rango)
-                    .ok_or_else(|| "el servidor mandó un tramo sin decir cuál".to_string())?
-            } else {
-                0
-            };
+            let desde = inicio_del_tramo(
+                respuesta.status().as_u16(),
+                respuesta.headers().get("content-range").and_then(|v| v.to_str().ok()),
+            )?;
             Ok(Tramo { lector: Box::new(respuesta.into_body().into_reader()), desde })
         };
         descargar_reanudando(&mut abrir, m, &destino, &hay_que_parar, INTENTOS)
@@ -225,6 +219,18 @@ pub const INTENTOS: usize = 5;
 pub struct Tramo<'a> {
     pub lector: Box<dyn std::io::Read + 'a>,
     pub desde: u64,
+}
+
+/// **El primer byte de un tramo según su respuesta** (auditoría del S14, B-5). Un 206 dice desde dónde con su
+/// `Content-Range`; sin esa cabecera, o ilegible, no se sabe qué se recibe y se aborta. Cualquier otro éxito (un 200) es el
+/// archivo entero, desde el byte 0: el servidor ignoró el rango. Un 416 («rango no satisfactorio») no llega aquí: `ureq`
+/// lo vuelve un error de la petición, y es un corte más. Pura.
+pub fn inicio_del_tramo(estado: u16, content_range: Option<&str>) -> Result<u64, String> {
+    if estado == 206 {
+        content_range.and_then(inicio_del_rango).ok_or_else(|| "el servidor mandó un tramo sin decir cuál".to_string())
+    } else {
+        Ok(0)
+    }
 }
 
 /// Desde qué byte empieza un tramo, leído de su `Content-Range` («bytes 1000-1999/2000» → 1000). Pura.
@@ -301,7 +307,14 @@ pub fn descargar_reanudando<'a>(
                         }
                         let n = match lector.read(&mut trozo) {
                             Ok(n) => n,
-                            Err(e) => break format!("la descarga se cortó: {e}"),
+                            Err(e) => {
+                                // Un error de lectura DESPUÉS del último byte no es un corte: no hay nada más que pedir
+                                // (pedir `bytes=<tamaño>-` daría 416 y se borraría un archivo entero; auditoría del S14, B-2).
+                                if total == m.bytes {
+                                    break 'tramos;
+                                }
+                                break format!("la descarga se cortó: {e}");
+                            }
                         };
                         if n == 0 {
                             if total == m.bytes {
@@ -543,6 +556,36 @@ mod pruebas {
             }
         }
         Tramo { lector: Box::new(Falso(bytes, corta)), desde }
+    }
+
+    /// **Lo que decide cada respuesta del servidor** (auditoría del S14, B-5): un 206 dice desde dónde, un 200 es el
+    /// archivo entero, y un 206 sin cabecera legible aborta en vez de adivinar.
+    #[test]
+    fn cada_respuesta_del_servidor_dice_desde_donde_llega_el_tramo() {
+        assert_eq!(inicio_del_tramo(206, Some("bytes 1000-1999/2000")), Ok(1000));
+        assert_eq!(inicio_del_tramo(200, None), Ok(0), "un 200 es el archivo entero");
+        assert_eq!(inicio_del_tramo(200, Some("bytes 5-9/10")), Ok(0), "un 200 ignoró el rango, aunque traiga cabecera");
+        assert!(inicio_del_tramo(206, None).is_err(), "un 206 sin Content-Range no se adivina");
+        assert!(inicio_del_tramo(206, Some("basura")).is_err());
+        assert!(inicio_del_tramo(206, Some("bytes */2000")).is_err(), "un rango sin inicio no se adivina");
+    }
+
+    /// **Un error de lectura justo después del último byte no es un corte**: el archivo está entero y se comprueba, sin
+    /// pedir un rango que ya no existe (auditoría del S14, B-2).
+    #[test]
+    fn un_error_tras_el_ultimo_byte_no_pide_otro_tramo() {
+        let base = carpeta_de_prueba("error-tras-el-final");
+        let m = modelo_de_prueba(4, b"hola");
+        let destino = base.join("modelos").join("prueba.bin");
+        let mut pedidos = Vec::new();
+        let mut abrir = |desde: u64| {
+            pedidos.push(desde);
+            Ok(tramo(b"hola", desde, true))
+        };
+        let r = descargar_reanudando(&mut abrir, &m, &destino, &|| false, INTENTOS).expect("el archivo estaba entero");
+        assert_eq!(pedidos, vec![0], "no debía pedir un segundo tramo");
+        assert_eq!(std::fs::read(&r).unwrap(), b"hola");
+        let _ = std::fs::remove_dir_all(&base);
     }
 
     /// **Una descarga que se corta se retoma desde el último byte escrito** (sprint 014): «ho», corte, y el segundo

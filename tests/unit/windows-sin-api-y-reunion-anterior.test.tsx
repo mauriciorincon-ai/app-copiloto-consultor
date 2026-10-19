@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import {
   act,
   cleanup,
@@ -275,9 +276,28 @@ describe("IA en Windows: sin API; la sugerencia la redacta el modelo local, si e
       screen.getAllByRole("status").some((s) => s.textContent === twIa.bajando),
       "el «bajando» no se anuncia",
     ).toBe(true);
+    // Regla dura 8: todo estado = símbolo + texto + color (auditoría del S14, B-4).
+    const estado = screen
+      .getAllByRole("status")
+      .find((s) => s.textContent === twIa.bajando);
+    expect(
+      estado?.querySelector('use[href="#i-reloj"]'),
+      "el «bajando» no lleva símbolo",
+    ).not.toBeNull();
     expect(
       screen.queryByRole("button", { name: /Instalar el modelo/ }),
     ).toBeNull();
+  });
+
+  // Auditoría del S14, B-6: `DE_MUESTRA` (lo que IA pinta fuera de Tauri) trae el tamaño del modelo escrito a mano; si Rust
+  // lo cambia y la muestra no, la maqueta dice otro número que la app. Se compara con el contrato generado desde Rust.
+  it("la muestra de IA trae el mismo tamaño del modelo que Rust", () => {
+    const fuente = readFileSync("src/ia.ts", "utf8");
+    const m = /local: \{[^}]*bytes: ([\d_]+)/.exec(fuente);
+    expect(m, "no encontré el tamaño en DE_MUESTRA").not.toBeNull();
+    expect(Number(m![1].replace(/_/g, ""))).toBe(
+      ESTADO_DE_LA_IA_EN_WINDOWS.local.bytes,
+    );
   });
 
   it("la puerta local sigue en Windows", async () => {

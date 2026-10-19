@@ -78,6 +78,10 @@ pub fn ruta() -> Option<PathBuf> {
 /// **Lo baja**, lo comprueba y lo deja listo, por la puerta de whisper. Bloquea: se llama en otro hilo. `al_empezar` se
 /// llama ya marcado «bajando», para que IA lo diga.
 pub fn bajar(al_empezar: impl FnOnce()) -> Result<PathBuf, String> {
+    // Si se baja otro modelo por la misma puerta, se dice sin marcar «la descarga falló» de este (auditoría del S14, B-3).
+    if modelo_whisper::bajando() {
+        return Err("ya se está bajando un modelo".into());
+    }
     if BAJANDO.swap(true, Ordering::SeqCst) {
         return Err("ya se está bajando el modelo local".into());
     }
@@ -86,6 +90,67 @@ pub fn bajar(al_empezar: impl FnOnce()) -> Result<PathBuf, String> {
     FALLO.store(r.is_err(), Ordering::SeqCst);
     BAJANDO.store(false, Ordering::SeqCst);
     r
+}
+
+/// **Quién guarda el modelo y cuándo se va** (auditoría del S14, M-1). Antes `soltar()` esperaba el cerrojo mientras otro
+/// hilo cargaba 1,1 GB: el corte, que suelta el modelo en su segunda pieza, hacía esperar a todo lo demás lo que durase la
+/// carga; y un hilo de sugerencia ya lanzado podía recargar el modelo DESPUÉS del corte y dejarlo residente. Ahora un
+/// `soltar()` que llega con una carga en curso **no espera**: avisa, y la carga entrega el modelo a quien lo pidió y no lo
+/// guarda.
+#[cfg_attr(not(windows), allow(dead_code))]
+pub struct Guarda<T> {
+    dentro: std::sync::Mutex<Option<std::sync::Arc<T>>>,
+    /// Hay un `obtener` en curso (cargando o a punto).
+    ocupada: AtomicBool,
+    /// Un `soltar` llegó mientras estaba ocupada: al terminar, no se queda.
+    soltar_al_terminar: AtomicBool,
+}
+
+#[cfg_attr(not(windows), allow(dead_code))]
+impl<T> Guarda<T> {
+    pub const fn nueva() -> Self {
+        Self { dentro: std::sync::Mutex::new(None), ocupada: AtomicBool::new(false), soltar_al_terminar: AtomicBool::new(false) }
+    }
+
+    /// Lo que hay, o lo carga con `cargar`. Si un `soltar()` llegó mientras tanto, quien lo pidió lo usa y no queda guardado.
+    pub fn obtener<E>(&self, cargar: impl FnOnce() -> Result<T, E>) -> Result<std::sync::Arc<T>, E> {
+        self.soltar_al_terminar.store(false, Ordering::SeqCst);
+        self.ocupada.store(true, Ordering::SeqCst);
+        let mut g = self.dentro.lock().unwrap_or_else(|e| e.into_inner());
+        let (m, recien_cargado) = match g.as_ref() {
+            Some(m) => (m.clone(), false),
+            None => match cargar() {
+                Ok(v) => (std::sync::Arc::new(v), true),
+                Err(e) => {
+                    self.ocupada.store(false, Ordering::SeqCst);
+                    return Err(e);
+                }
+            },
+        };
+        if recien_cargado {
+            *g = Some(m.clone());
+        }
+        self.ocupada.store(false, Ordering::SeqCst);
+        if self.soltar_al_terminar.swap(false, Ordering::SeqCst) {
+            g.take();
+        }
+        Ok(m)
+    }
+
+    /// ¿Había algo guardado? Con un `obtener` en curso no espera: deja el aviso y devuelve `false`.
+    pub fn soltar(&self) -> bool {
+        if self.ocupada.load(Ordering::SeqCst) {
+            self.soltar_al_terminar.store(true, Ordering::SeqCst);
+            if self.ocupada.load(Ordering::SeqCst) {
+                return false;
+            }
+            // Terminó justo ahora sin ver el aviso: se retira y se suelta aquí.
+            if !self.soltar_al_terminar.swap(false, Ordering::SeqCst) {
+                return false;
+            }
+        }
+        self.dentro.lock().unwrap_or_else(|e| e.into_inner()).take().is_some()
+    }
 }
 
 #[cfg(windows)]
@@ -98,10 +163,10 @@ mod cargado {
     use llama_cpp_2::llama_backend::LlamaBackend;
     use llama_cpp_2::model::params::LlamaModelParams;
     use llama_cpp_2::model::LlamaModel;
-    use std::sync::{Arc, Mutex, OnceLock};
+    use std::sync::{Arc, OnceLock};
 
     /// El modelo en memoria, si se cargó en esta sesión.
-    static CARGADO: Mutex<Option<Arc<LlamaModel>>> = Mutex::new(None);
+    static CARGADO: Guarda<LlamaModel> = Guarda::nueva();
 
     /// El backend de llama.cpp: una vez por proceso, **con sus registros apagados** (lo que imprime puede llevar trozos
     /// del prompt, y el prompt lleva el turno del cliente; ADR 003). Solo pregunta por la CPU: no abre ningún dispositivo,
@@ -117,27 +182,23 @@ mod cargado {
 
     /// **El modelo, cargado**: el de esta sesión, o se carga ahora (≈ 1 s en la Surface). Sin el archivo entero, el motivo.
     pub fn cargado() -> Result<Arc<LlamaModel>, PorQueNoRedacta> {
-        let mut g = CARGADO.lock().unwrap_or_else(|e| e.into_inner());
-        if let Some(m) = g.as_ref() {
-            return Ok(m.clone());
-        }
-        let ruta = ruta().ok_or(PorQueNoRedacta::SinModeloLocal)?;
-        crate::hardware::vigilar("el modelo local");
-        let reloj = std::time::Instant::now();
-        let m = LlamaModel::load_from_file(backend(), &ruta, &LlamaModelParams::default()).map_err(|e| {
-            println!("[modelo-local] no cargó: {e}");
-            PorQueNoRedacta::NoDisponible
-        })?;
-        println!("[modelo-local] cargado en {} ms", reloj.elapsed().as_millis());
-        let m = Arc::new(m);
-        *g = Some(m.clone());
-        Ok(m)
+        CARGADO.obtener(|| {
+            let ruta = ruta().ok_or(PorQueNoRedacta::SinModeloLocal)?;
+            crate::hardware::vigilar("el modelo local");
+            let reloj = std::time::Instant::now();
+            let m = LlamaModel::load_from_file(backend(), &ruta, &LlamaModelParams::default()).map_err(|e| {
+                println!("[modelo-local] no cargó: {e}");
+                PorQueNoRedacta::NoDisponible
+            })?;
+            println!("[modelo-local] cargado en {} ms", reloj.elapsed().as_millis());
+            Ok(m)
+        })
     }
 
     /// **Lo suelta de la memoria** (el corte, el final de la sesión, «Redactar» apagado). Una sugerencia en camino tiene
     /// su propia copia del `Arc` y lo suelta al terminar; lo que traiga se tira por la época. Devuelve si había algo.
     pub fn soltar() -> bool {
-        let suelto = CARGADO.lock().unwrap_or_else(|e| e.into_inner()).take().is_some();
+        let suelto = CARGADO.soltar();
         if suelto {
             println!("[modelo-local] soltado de la memoria");
         }
@@ -180,6 +241,62 @@ pub fn precargar() {
 #[cfg(test)]
 mod pruebas {
     use super::*;
+    use std::sync::Arc;
+    use std::time::{Duration, Instant};
+
+    /// **Un corte durante la carga no espera a la carga y el modelo no queda residente** (auditoría del S14, M-1).
+    #[test]
+    fn un_soltar_durante_la_carga_no_espera_y_el_modelo_no_queda() {
+        let g = Arc::new(Guarda::<u32>::nueva());
+        let g2 = g.clone();
+        let carga = std::thread::spawn(move || {
+            g2.obtener::<()>(|| {
+                std::thread::sleep(Duration::from_millis(500));
+                Ok(7)
+            })
+        });
+        std::thread::sleep(Duration::from_millis(120)); // la carga ya empezó
+        let t = Instant::now();
+        let solto = g.soltar();
+        assert!(t.elapsed() < Duration::from_millis(120), "soltar esperó a la carga: {:?}", t.elapsed());
+        assert!(!solto, "no había nada guardado todavía");
+        assert_eq!(*carga.join().unwrap().unwrap(), 7, "quien lo pidió lo usa");
+        assert!(!g.soltar(), "el modelo quedó residente después del corte");
+    }
+
+    /// Sin corte, el modelo se guarda y se reutiliza; y soltar lo suelta.
+    #[test]
+    fn sin_corte_el_modelo_se_guarda_se_reutiliza_y_se_suelta() {
+        let g = Guarda::<u32>::nueva();
+        assert_eq!(*g.obtener::<()>(|| Ok(1)).unwrap(), 1);
+        assert_eq!(*g.obtener::<()>(|| Ok(2)).unwrap(), 1, "no se vuelve a cargar lo que ya está");
+        assert!(g.soltar());
+        assert!(!g.soltar());
+        assert_eq!(*g.obtener::<()>(|| Ok(3)).unwrap(), 3, "tras soltarlo, se carga otra vez");
+        assert!(g.obtener::<&str>(|| Err("no cargó")).is_ok(), "con el modelo ya guardado no vuelve a cargar");
+        assert!(g.soltar());
+        assert_eq!(g.obtener::<&str>(|| Err("no cargó")).unwrap_err(), "no cargó");
+        assert!(!g.soltar(), "una carga fallida no deja nada");
+    }
+
+    /// El aviso de un corte no se queda pegado a la carga siguiente.
+    #[test]
+    fn el_aviso_de_un_corte_no_afecta_a_la_carga_siguiente() {
+        let g = Guarda::<u32>::nueva();
+        g.soltar_al_terminar.store(true, Ordering::SeqCst); // un aviso viejo
+        assert_eq!(*g.obtener::<()>(|| Ok(5)).unwrap(), 5);
+        assert!(g.soltar(), "el aviso viejo hizo que no se guardara");
+    }
+
+    /// IA no dice «la descarga falló» de este modelo porque se esté bajando otro por la misma puerta (auditoría, B-3): se
+    /// consulta ANTES de marcar nada. (La bandera de la puerta es de `modelo_whisper`: se comprueba en la fuente.)
+    #[test]
+    fn bajar_mira_si_la_puerta_esta_ocupada_antes_de_marcar_nada() {
+        let fuente = include_str!("modelo_local.rs");
+        let bajar = &fuente[fuente.find("pub fn bajar(").expect("bajar")..];
+        let (mira, marca) = (bajar.find("modelo_whisper::bajando()"), bajar.find("BAJANDO.swap(true"));
+        assert!(mira.is_some() && mira < marca, "bajar marca antes de mirar si la puerta está ocupada");
+    }
 
     /// La huella, el tamaño y el origen son los publicados, con la revisión fija y no `main`.
     #[test]
