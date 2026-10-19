@@ -833,7 +833,8 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
   local con whisper, tus notas cifradas y tu corpus con sus fichas. **Desde el sprint 007 también la
   videollamada en ese mismo PC** (Teams, Zoom o Meet en el navegador): las dos pistas, la ficha al oído, la lectura
   de la pantalla de la reunión, el ensayo con voz y los atajos. **Desde el sprint 008, todo lo demás:** el acople,
-  la sugerencia con el API, el radar, abrir tus notas con Windows Hello y el borrado con la app cerrada. Honestidad
+  el radar, abrir tus notas con Windows Hello y el borrado con la app cerrada. **Desde el sprint 013, sin API:** la sugerencia
+  redactada queda «no por ahora» y, antes de empezar otra sesión con la anterior abierta, la app pregunta. Honestidad
   tiene el bloque **«Hoy en Windows»**, que dice qué hace y qué no, cada cosa con su motivo.
 - **Cómo se instala:** llega como archivo (`.msi` o `.exe`) desde la integración continua del repositorio. **El
   instalador no está firmado todavía:** Windows SmartScreen mostrará «Windows protegió tu PC». Pulsa **Más
@@ -923,9 +924,14 @@ No es una funcionalidad nueva, sino la misma app en otro sistema: por eso va fue
   de empleados, acceso remoto como TeamViewer, AnyDesk o Asistencia rápida— y si el PC está gestionado por tu empresa
   (MDM). Cada fila trae la página pública de donde sale el nombre del programa y la fecha en que se leyó. No mira nada
   fuera de tu PC, no bloquea ni cierra nada: avisa. `Alt+Mayús+U` enseña lo que ve.
-- **La sugerencia.** En Windows no hay modelo del sistema: la sugerencia la redacta el **API** que eliges en IA (Groq
-  o Claude), con tu clave guardada en el Administrador de credenciales, y solo sale texto anonimizado en tu PC, igual
-  que en el Mac. Sin API, la ficha sigue siendo la respuesta. Cada envío se cuenta en Honestidad.
+- **La sugerencia.** **No está en Windows por ahora.** No hay modelo del sistema, el API de pago salió de Windows en el
+  sprint 013 y el modelo local que se midió (Foundry Local, en la CPU de una Surface ARM64) cabe en el tiempo —mediana
+  2,1 s, p95 2,3 s, techo 6 s— pero abre una conexión de telemetría con Microsoft aunque se apague, y eso rompería el
+  «0 B» de Honestidad. La ficha sigue siendo la respuesta. IA no ofrece proveedor, clave ni costo en Windows; una clave
+  guardada antes sigue en el Administrador de credenciales sin que la app la lea (bórrala tú).
+- **Empezar otra sesión.** Si la reunión anterior sigue abierta con algo tuyo, Windows pregunta antes —Guardar,
+  Descartar o Cancelar— porque guardar por primera vez crea la llave de tus notas y la tarea de borrado. Cerrar la
+  ventana principal con una reunión abierta la guarda sola, como siempre.
 
 | Clave | Hoy en Windows |
 |---|---|

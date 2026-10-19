@@ -13,7 +13,7 @@ import { TEXTOS_DE_WINDOWS } from "../../src/i18n/windows";
  * Lo que exige:
  *  1. **Cero menciones a otro sistema**, en ninguna prueba, matriz ni nota.
  *  2. **Autocontenida**: ni una URL, ni un `<link>`, ni un `<script src>`, ni `fetch`.
- *  3. **Prefijo propio de `localStorage`** (`ag-w12-`), distinto del de la guía general.
+ *  3. **Prefijo propio de `localStorage`** (`ag-w13-`), distinto del de la guía general.
  *  4. **9 paradas del gate, ~20 min**, numeradas «parada N de 9» en el orden del documento.
  *  5. **Cada mirada de texto en matriz**: abre · qué mirar · qué respuesta espero.
  *  6. **La guía general la enlaza**, y las dos se encuentran.
@@ -72,7 +72,7 @@ describe("la guía de Windows es autocontenida", () => {
 
   it("su prefijo de localStorage es propio y no el de la guía general", () => {
     const ns = (html: string) => /var NS = "([^"]+)"/.exec(html)?.[1];
-    expect(ns(WIN)).toBe("ag-w12-");
+    expect(ns(WIN)).toBe("ag-w13-");
     expect(ns(GENERAL)).not.toBe(ns(WIN));
   });
 
@@ -334,12 +334,16 @@ describe("la puerta local y el modo transparente (sprint 012): sus paradas dicen
     expect(texto12).toMatch(/fila 10 de la matriz de arriba y da tu «sí»/);
   });
 
-  it("t11 y t12 existen en la matriz de textos, y t1 y t8 ya no esperan el grupo «Not on Windows for now»", () => {
+  it("t11 y t12 existen en la matriz de textos, y t1 espera el grupo «Not on Windows for now» con una sola fila (S13); t8 sigue sin él", () => {
     for (const id of ["t11", "t12"]) expect(WIN).toContain(`id="${id}" aria-label=`);
     const t1 = WIN.slice(WIN.indexOf('id="t1"'), WIN.indexOf('id="t2"'));
+    expect(texto(t1)).toMatch(/catorce filas/);
+    expect(texto(t1)).toMatch(/«Not on Windows for now» con una sola fila/);
     const t8 = WIN.slice(WIN.indexOf('id="t8"'), WIN.indexOf('id="t9"'));
     expect(texto(t1)).not.toMatch(/Los dos grupos/);
     expect(texto(t8)).not.toMatch(/no está en Windows por ahora|no hay botón de puerta local/);
-    expect(texto12).not.toMatch(/catorce funciones/);
+    // Sprint 013: son catorce «sí» y una «no por ahora»; las «quince en Works now» del sprint 012 ya no son ciertas.
+    expect(texto12).not.toMatch(/quince funciones|quince filas|ninguna en «Not on Windows for now»/);
+    expect(texto12).toMatch(/catorce funciones/);
   });
 });

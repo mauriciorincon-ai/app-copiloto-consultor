@@ -6,7 +6,7 @@
 
 ## Qué es
 
-Una ventana pequeña en tu PC que el cliente no ve aunque compartas la pantalla. Escucha las dos partes de la videollamada (tu micrófono y lo que suena en el PC), lee la pantalla de la reunión solo cuando cambia, y te pone delante **fichas de evidencia de tu propio corpus**: un titular, una línea y la fuente exacta. Si lo enciendes, un modelo redacta una sugerencia breve. Antes de la reunión puedes ensayar con las preguntas que ese cliente probablemente hará.
+Una ventana pequeña en tu PC que el cliente no ve aunque compartas la pantalla. Escucha las dos partes de la videollamada (tu micrófono y lo que suena en el PC), lee la pantalla de la reunión solo cuando cambia, y te pone delante **fichas de evidencia de tu propio corpus**: un titular, una línea y la fuente exacta. La sugerencia redactada por un modelo queda «no por ahora» en Windows (más abajo). Antes de la reunión puedes ensayar con las preguntas que ese cliente probablemente hará.
 
 Lo que la distingue: **no persiste lo que no debe, y se puede comprobar.** El audio, el transcript del cliente y lo leído de la pantalla viven solo en memoria y mueren al cerrar. Lo que queda es lo tuyo, cifrado. La app no esconde nada de ti ni evade nada: le pide a Windows que su banda no salga en las capturas, y dice con todas sus letras dónde eso no está verificado.
 
@@ -16,7 +16,7 @@ Lo que la distingue: **no persiste lo que no debe, y se puede comprobar.** El au
 - Un **micrófono** y **auriculares** (para la ficha al oído y el ensayo, la voz no sale por altavoces).
 - **Teams, Zoom o Meet** (en Chrome, Edge, Firefox o Brave) para las videollamadas.
 - Unos **1,6 GB libres** para el modelo de voz (0,5 GB en un PC ARM64), más unos 6 a 9 MB del instalador.
-- Opcional: **Windows Hello** configurado (PIN, huella o cara) para abrir lo cifrado, y una **clave de Groq o de Claude** solo si quieres la sugerencia redactada.
+- Opcional: **Windows Hello** configurado (PIN, huella o cara) para abrir lo cifrado.
 
 ## Instalar
 
@@ -39,7 +39,7 @@ La app transcribe con **whisper**, dentro de tu PC; ningún audio sale. El model
 ## Una reunión, de punta a punta
 
 1. **Antes.** En **Corpus** señalas la carpeta con tus propuestas, marcos y casos (PDF, Word o Markdown); se indexa en tu PC. En **Sesión (Session)** eliges «Este cliente»: su jurisdicción, la cláusula del encargo y el chequeo de la NDA; si la NDA prohíbe transcribir, pasas a «solo notas». Eliges si la banda va arriba (por defecto, junto a la cámara) o abajo. Si ese cliente debe saber que usas esta herramienta, enciendes su **modo transparente** (más abajo).
-2. **Entras en la llamada** (Teams o Zoom cuando estás en una llamada; Meet por el título de la pestaña). Pulsa **Iniciar sesión (Start session)**: se abren tu micrófono y el audio del sistema —dos pistas, sin bot en la reunión—, y la ventana de la reunión baja y se encoge lo justo para que la banda no la tape.
+2. **Entras en la llamada** (Teams o Zoom cuando estás en una llamada; Meet por el título de la pestaña). Pulsa **Iniciar sesión (Start session)**: se abren tu micrófono y el audio del sistema —dos pistas, sin bot en la reunión—, y la ventana de la reunión baja y se encoge lo justo para que la banda no la tape. Si la reunión anterior sigue abierta con algo tuyo, la app **te pregunta antes** —**Guardar (Save)**, **Descartar (Discard)** o **Cancelar (Cancel)**— y no empieza nada hasta que contestes.
 3. **Durante.** Cuando el cliente termina una pregunta, la banda trae su ficha en menos de 4 s. La ficha es pasiva: no suena ni te roba el foco. Si el corpus no tiene nada, la banda te da una **maniobra** (aplazar con fecha, pedir el dato, reformular…) en vez de un «sin resultado» mudo. Con auriculares, **«Al oído»** (`Alt+Mayús+W`) te lee la ficha. `Alt+Mayús+H` es «ayúdame con esto».
 4. **Al cerrar.** Guardas tus notas y acuerdos cifrados, con la retención que elijas. Lo del cliente muere. Las propuestas que no decidiste te esperan en una **bandeja con cuenta atrás** (defecto 3 h, techo 24 h).
 
@@ -88,6 +88,7 @@ Arrastras o señalas propuestas, marcos, casos, fichas de cliente y tu perfil. L
 - **Se guardan cifradas.** La llave está en el **Administrador de credenciales (Credential Manager)** de tu usuario de Windows, nunca en un archivo.
 - **Abrir lo cifrado pide Windows Hello** (tu PIN, tu huella o tu cara), una vez por sesión de la app: exportar una reunión, abrir tus ensayos y abrir la bandeja de una sesión anterior. Si tu PC no lo tiene configurado, la app dice dónde hacerlo (**Settings → Accounts → Sign-in options**) y tus notas siguen cifradas.
 - **La app propone qué guardar**, con reglas publicadas y sin modelo: cifras, plazos, tus compromisos («te lo mando», «quedamos en»), lo que choca con una ficha que fijaste. Proponer no es guardar: nada entra sin tu sí, y del cliente nunca se guarda su turno, solo un hecho en una línea.
+- **Empezar otra sesión pregunta; cerrar la ventana guarda.** Si la reunión anterior sigue abierta con algo tuyo y empiezas otra (**Iniciar sesión (Start session)**, **Solo notas (Notes only)** o **Empezar en presencial (Start in person)**), aparece **«La reunión anterior sigue abierta»** con **Guardar**, **Descartar** y **Cancelar**: guardar por primera vez crea la llave de tus notas en el Administrador de credenciales y la tarea del Programador de tareas, y eso no se hace sin que lo digas. **Cancelar** no cambia nada y no empieza nada. **Cerrar la ventana principal** con una reunión abierta, en cambio, la guarda sola, cifrada, sin preguntar.
 - **Lo que vence se borra con la app cerrada.** La app deja una tarea en el **Programador de tareas (Task Scheduler)** llamada `com.aiapps.copiloto-consultor.vencimiento`, en la biblioteca raíz, que corre al minuto de cada vencimiento aunque no abras la app (si el PC estaba apagado, corre al volver). Lo que corre es PowerShell sobre una lista de la app: solo borra archivos `.ghost` vencidos, no escribe nada y no lanza la app. Cuando ya no vence nada, la tarea se quita sola. Si una directiva de tu empresa bloquea PowerShell, Honestidad dice que no corrió.
 - **Las copias de seguridad.** Si haces copias de seguridad de tu PC, esas copias conservan lo borrado hasta que caduquen: la app no controla dónde van.
 
@@ -99,9 +100,9 @@ En la mesa con el cliente, o al lado del PC donde corre una videollamada, la app
 
 Antes de la reunión, la app te hace las preguntas que ese cliente probablemente hará, derivadas de tu propuesta por reglas publicadas y un catálogo de objeciones. **La voz de Windows las lee** (con auriculares; necesita una voz del idioma: **Settings → Time & language → Speech**); tú contestas en voz alta y, al terminar, ves qué evidencia de tu corpus citaste y cuál te faltó, cuánto tardaste y qué muletillas repetiste. Lo guardado es tuyo (tu texto y tus cifras, jamás tu audio) y va cifrado.
 
-## La sugerencia (opcional)
+## La sugerencia redactada: no por ahora
 
-En Windows no hay modelo del sistema: la sugerencia la redacta el **API** que eliges en **IA (AI)**, Groq o Claude, **con tu propia clave**, guardada en el Administrador de credenciales. Nace apagada; encendida, solo sale texto minimizado y anonimizado, bajo la retención que cada proveedor publica y que la app te enseña donde eliges. Cada envío se cuenta en Honestidad. Sin API, la ficha sigue siendo la respuesta.
+La sugerencia redactada **no está en Windows por ahora**. No hay modelo del sistema, el API de pago salió de esta versión, y el modelo local que se midió en una Surface ARM64 (Foundry Local, en la CPU) cabe en el tiempo —mediana 2,1 s, p95 2,3 s, techo 6 s— pero abre una conexión de telemetría con Microsoft aunque se apague, y eso rompería el «0 B» de Honestidad. **La ficha sigue siendo la respuesta**, con su fuente exacta. En **IA (AI)** la fila «Modelo local» dice «no por ahora», no hay proveedor, clave ni costo, y «Redactar sugerencias» queda apagado. Si guardaste una clave de Groq o de Claude antes, sigue en el Administrador de credenciales sin que la app la lea: bórrala tú en **Panel de control → Administrador de credenciales → Credenciales de Windows → «Angel Ghost · API»**.
 
 ## El radar
 
@@ -142,6 +143,7 @@ Hay clientes y jurisdicciones que piden saber que usas una herramienta que escuc
 - **`ghost.exe` no viaja en el instalador.** La puerta para Claude Code ya está en Windows (IA → Puerta local), pero el comando `ghost` se construye desde el código: `cargo build --bin ghost`.
 - **La invisibilidad en Teams, Zoom y Meet está sin verificar**: la promesa es graduada por plataforma, y solo vale lo que tu corrida en vivo verificó.
 - **Windows anterior a la 2004** no puede ocultar la banda: la app no abre.
+- **La sugerencia redactada por IA** (fila 20): ni con un API —salió de Windows— ni con un modelo local, que abre una conexión con Microsoft. Vuelve cuando haya un modelo que corra sin salir de tu PC y se mida con cero conexiones.
 - **Cinco funcionalidades de la visión se descartaron para Windows, con nombre** (decisión del 2026-10-18): la app en el celular, en modo presencial (4), varias voces en el mismo canal (10), sin auriculares con cancelación de eco (11), transcripción en streaming nativo (12) y leer el dashboard del cliente como consultor (13). No se construyen para el producto completo de Windows.
 
 ## Las 30 funcionalidades de la visión, en Windows
@@ -186,6 +188,7 @@ Cada fila dice qué estado tiene en Windows y qué clave de «Hoy en Windows» l
 - **La banda se quedó en pantalla y no sé cómo cerrarla.** Pulsa su **×**: se cierra y la app sigue; **Mostrar la banda (Show the band)**, en Sesión, la devuelve. Para salir del todo, cierra la ventana principal: la app sale entera. Si no la ves, ábrela desde la barra de tareas, o termina **Angel Ghost** en el Administrador de tareas (**Task Manager → Processes → End task**).
 - **La banda me tapa las pestañas de mi navegador.** Arrastra hacia abajo la rayita de su borde de arriba hasta que se vean; queda guardada. En Sesión, **Bajar (Lower)** hace lo mismo sin arrastrar y **Volver arriba (Back to the top)** la pega al borde otra vez.
 - **«Instalar» no baja nada.** Hay una reunión, una sesión o un ensayo abiertos, o falla la conexión: la pantalla lo dice («No se pudo bajar el modelo»).
+- **Pulsé «Iniciar sesión» y apareció un cuadro.** La reunión anterior sigue abierta con algo tuyo: **Guardar** la cifra y empieza la nueva, **Descartar** la tira y empieza la nueva, **Cancelar** no cambia nada. Si prefieres que no pregunte, termina cada reunión con **Guardar cifrado y cerrar** o **Cerrar sin guardar** en Notas.
 - **Honestidad dice «sin medir».** El modelo está bajado pero no se ha medido en esta sesión: pulsa **Medir otra vez**.
 - **Un atajo no responde.** Otra app de tu PC ya tiene esa combinación; Honestidad la nombra. La acción se hace igual desde la app.
 - **La ficha al oído no habla.** Con altavoces, o con una salida por HDMI o S/PDIF, no habla: el cliente la oiría. Con auriculares, sí; y necesita una voz del idioma instalada.

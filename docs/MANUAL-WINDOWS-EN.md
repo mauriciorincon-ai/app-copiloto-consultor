@@ -6,7 +6,7 @@
 
 ## What it is
 
-A small window on your PC that the client cannot see even if you share your screen. It listens to both sides of the video call (your microphone and what plays on the PC), reads the meeting screen only when it changes, and puts **evidence cards from your own corpus** in front of you: a headline, a line and the exact source. If you turn it on, a model drafts a short suggestion. Before the meeting you can rehearse with the questions that client will probably ask.
+A small window on your PC that the client cannot see even if you share your screen. It listens to both sides of the video call (your microphone and what plays on the PC), reads the meeting screen only when it changes, and puts **evidence cards from your own corpus** in front of you: a headline, a line and the exact source. The suggestion drafted by a model is “not for now” on Windows (see below). Before the meeting you can rehearse with the questions that client will probably ask.
 
 What sets it apart: **it does not persist what it should not, and you can check that.** Audio, the client’s transcript and what is read from the screen live in memory only and die on close. What stays is yours, encrypted. The app hides nothing from you and evades nothing: it asks Windows to keep its band out of screen captures, and says in plain words where that is not verified.
 
@@ -16,7 +16,7 @@ What sets it apart: **it does not persist what it should not, and you can check 
 - A **microphone** and **headphones** (for the spoken card and the rehearsal, the voice never plays through speakers).
 - **Teams, Zoom or Meet** (in Chrome, Edge, Firefox or Brave) for video calls.
 - About **1.6 GB free** for the speech model (0.5 GB on an ARM64 PC), plus 6 to 9 MB for the installer.
-- Optional: **Windows Hello** set up (PIN, fingerprint or face) to open what is encrypted, and a **Groq or Claude key** only if you want the drafted suggestion.
+- Optional: **Windows Hello** set up (PIN, fingerprint or face) to open what is encrypted.
 
 ## Installing
 
@@ -39,7 +39,7 @@ The app transcribes with **whisper**, inside your PC; no audio leaves. The model
 ## A meeting, end to end
 
 1. **Before.** In **Corpus** you point to the folder with your proposals, frameworks and cases (PDF, Word or Markdown); it is indexed on your PC. In **Session** you choose “This client”: their jurisdiction, the engagement clause and the NDA check; if the NDA forbids transcribing, you switch to “notes only”. You choose whether the band sits on top (the default, next to the camera) or at the bottom. If that client must know you use this tool, you turn on their **transparent mode** (below).
-2. **You join the call** (Teams or Zoom when you are in a call; Meet by the tab title). Click **Start session**: your microphone and the system audio open —two tracks, no bot in the meeting— and the meeting window moves down and shrinks just enough for the band not to cover it.
+2. **You join the call** (Teams or Zoom when you are in a call; Meet by the tab title). Click **Start session**: your microphone and the system audio open —two tracks, no bot in the meeting— and the meeting window moves down and shrinks just enough for the band not to cover it. If the previous meeting is still open with something of yours in it, the app **asks you first** —**Save**, **Discard** or **Cancel**— and starts nothing until you answer.
 3. **During.** When the client finishes a question, the band brings its card in under 4 s. The card is passive: it makes no sound and does not steal focus. If the corpus has nothing, the band gives you a **manoeuvre** (postpone with a date, ask for the data, rephrase…) instead of a mute “no result”. With headphones, **audio-only mode** (`Alt+Shift+W`) reads you the card. `Alt+Shift+H` is “help me with this”.
 4. **On close.** You save your notes and agreements encrypted, with the retention you choose. What is the client’s dies. Proposals you did not decide wait for you in a **tray with a countdown** (default 3 h, ceiling 24 h).
 
@@ -88,6 +88,7 @@ You drag or point to proposals, frameworks, cases, client files and your profile
 - **They are saved encrypted.** The key is in your Windows user’s **Credential Manager**, never in a file.
 - **Opening what is encrypted asks for Windows Hello** (your PIN, fingerprint or face), once per app session: exporting a meeting, opening your rehearsals and opening a previous session’s tray. If your PC does not have it set up, the app says where to do it (**Settings → Accounts → Sign-in options**) and your notes stay encrypted.
 - **The app proposes what to save**, with published rules and no model: figures, deadlines, your commitments (“I’ll send it”, “we agreed”), what clashes with a card you pinned. Proposing is not saving: nothing goes in without your yes, and the client’s turn is never saved, only a one-line fact.
+- **Starting another session asks; closing the window saves.** If the previous meeting is still open with something of yours in it and you start another (**Start session**, **Notes only** or **Start in person**), **“The previous meeting is still open”** appears with **Save**, **Discard** and **Cancel**: saving for the first time creates your notes key in Credential Manager and the Task Scheduler task, and that is not done without your say-so. **Cancel** changes nothing and starts nothing. **Closing the main window** with a meeting open, on the other hand, saves it on its own, encrypted, without asking.
 - **What expires is deleted with the app closed.** The app leaves a task in **Task Scheduler** called `com.aiapps.copiloto-consultor.vencimiento`, in the root library, that runs at the minute of each expiry even if you do not open the app (if the PC was off, it runs when it comes back). What runs is PowerShell over a list from the app: it only deletes expired `.ghost` files, writes nothing and does not launch the app. When nothing expires any more, the task removes itself. If a company policy blocks PowerShell, Honesty says it did not run.
 - **Backups.** If you back up your PC, those backups keep what was deleted until they expire: the app does not control where they go.
 
@@ -99,9 +100,9 @@ At the table with the client, or next to the PC where a video call runs, the app
 
 Before the meeting, the app asks you the questions that client will probably ask, derived from your proposal by published rules and a catalogue of objections. **Windows’ voice reads them** (with headphones; it needs a voice for the language: **Settings → Time & language → Speech**); you answer aloud and, at the end, you see which evidence from your corpus you cited and which you missed, how long you took and which filler words you repeated. What is saved is yours (your text and figures, never your audio) and is encrypted.
 
-## The suggestion (optional)
+## The drafted suggestion: not for now
 
-On Windows there is no system model: the suggestion is drafted by the **API** you choose in **AI**, Groq or Claude, **with your own key**, stored in Credential Manager. It starts off; when on, only minimized, anonymized text leaves, under the retention each provider publishes and the app shows where you choose. Every request is counted in Honesty. Without the API, the card is still the answer.
+The drafted suggestion is **not on Windows for now**. There is no system model, the paid API is gone from this version, and the local model measured on an ARM64 Surface (Foundry Local, on the CPU) fits the time —median 2.1 s, p95 2.3 s, ceiling 6 s— but opens a telemetry connection to Microsoft even when switched off, and that would break Honesty’s “0 B”. **The card is still the answer**, with its exact source. In **AI** the “Local model” row says “not for now”, there is no provider, key or cost, and “Draft suggestions” stays off. If you stored a Groq or Claude key before, it is still in Credential Manager and the app does not read it: delete it yourself in **Control Panel → Credential Manager → Windows Credentials → “Angel Ghost · API”**.
 
 ## The radar
 
@@ -142,6 +143,7 @@ Some clients and jurisdictions ask to know that you use a tool that listens to t
 - **`ghost.exe` does not ship in the installer.** The door for Claude Code is on Windows now (AI → Local door), but the `ghost` command is built from the code: `cargo build --bin ghost`.
 - **Invisibility in Teams, Zoom and Meet is unverified**: the promise is graded by platform, and only what your live run verified counts.
 - **Windows older than 2004** cannot hide the band: the app does not open.
+- **The drafted suggestion by AI** (row 20): neither with an API —it left Windows— nor with a local model, which opens a connection to Microsoft. It comes back when there is a model that runs without leaving your PC and is measured with zero connections.
 - **Five features of the vision were discarded for Windows, by name** (decision of 2026-10-18): the app on the phone, in in-person mode (4), several voices on the same channel (10), no headphones with echo cancellation (11), native streaming transcription (12) and reading the client’s dashboard as a consultant (13). They are not built for the complete Windows product.
 
 ## The 30 features of the vision, on Windows
@@ -186,6 +188,7 @@ Each row says what state it has on Windows and which “On Windows today” key 
 - **The band stayed on screen and I do not know how to close it.** Press its **×**: it closes and the app keeps running; **Show the band**, in Session, brings it back. To quit altogether, close the main window: the app quits entirely. If you cannot see it, open it from the taskbar, or end **Angel Ghost** in Task Manager (**Task Manager → Processes → End task**).
 - **The band covers my browser tabs.** Drag the small bar on its top edge down until you can see them; it stays saved. In Session, **Lower** does the same without dragging and **Back to the top** sticks it to the edge again.
 - **“Install” downloads nothing.** A meeting, a session or a rehearsal is open, or the connection fails: the screen says so (“The model couldn't be downloaded”).
+- **I clicked “Start session” and a box appeared.** The previous meeting is still open with something of yours: **Save** encrypts it and starts the new one, **Discard** throws it away and starts the new one, **Cancel** changes nothing. If you would rather it did not ask, end each meeting with **Save encrypted and close** or **Close without saving** in Notes.
 - **Honesty says “not measured”.** The model is downloaded but has not been measured this session: click **Measure again**.
 - **A shortcut does not respond.** Another app on your PC already has that combination; Honesty names it. The action works anyway from the app.
 - **The spoken card does not speak.** Through speakers, or through an HDMI or S/PDIF output, it does not speak: the client would hear it. With headphones it does; and it needs a voice for the language installed.

@@ -32,8 +32,9 @@ en Windows. Hoy se compila desde este repo; la versión firmada para instalar ll
 La app también se compila para **Windows** (ADR 022): desde el sprint 006 la banda protegida, el micrófono, la
 transcripción con whisper y tus notas cifradas; desde el 007, la **videollamada** en ese mismo PC (el audio del cliente
 por el audio del sistema, la ficha al oído, la pantalla de la reunión y los atajos `Alt+Mayús`); y desde el 008,
-el acople, la sugerencia con el API, el radar, Windows Hello y el borrado con la app cerrada. Honestidad dice qué hace
-hoy y qué no (las quince funciones están en «sí», la puerta local y el modo transparente incluidos desde el sprint 012), y la protección sigue «sin verificar» en
+el acople, el radar, Windows Hello y el borrado con la app cerrada. Honestidad dice qué hace
+hoy y qué no (catorce funciones en «sí», la puerta local y el modo transparente incluidos desde el sprint 012, y la sugerencia
+redactada en «no por ahora» desde el 013: el API salió de Windows), y la protección sigue «sin verificar» en
 Teams, Zoom y Meet hasta que la pruebes en tu PC. El instalador sale sin firmar de la integración continua hasta
 G-Release. Desde el sprint 009 la app es además **nativa en ARM64** (una Surface con Snapdragon, por ejemplo): se
 compila y se instala sin emulación, y «Instalar» baja el modelo de voz que cupo en 4 s en un equipo así (ver
