@@ -128,7 +128,7 @@ Some clients and jurisdictions ask to know that you use a tool that listens to t
 - **In your ear.** With audio-only mode on and headphones, **Say it out loud** has Windows’ voice read it to you in the client’s language so you can tell them. It does not speak through speakers, and the screen says so.
 - **“The client consented”.** When the client says yes, press the button: the app writes into **that meeting’s encrypted notes** a record with the client, their jurisdiction, the time, the language and the text that was read. It only works with a session running; without one the button looks off and says why, and if the meeting closed just before, the screen says so instead of pretending it was recorded.
 - **A mark on the band.** While the mode is on, the band carries **Transparent mode** with an eye. The band only knows that: it does not see the client’s name or the notice.
-- **What is saved.** The record goes into the meeting’s encrypted file: **Will be saved** counts it when you close and **Honesty** names it under “Yours”. The client’s audio and transcript still die on close, and the network counter stays at 0 B.
+- **What is saved.** The record goes into the meeting’s encrypted file: **Will be saved** counts it when you close and **Honesty** names it under “Yours”. The client’s audio and transcript still die on close, and the network counter stays at 0 B. If you start another session or quit the app while that meeting is still open, it is saved as it is, record included; if you don’t want it, press **Close without saving** first.
 - **Unverified, and not legal advice:** using it with a real client. The app does not know whether your client or your jurisdiction requires the notice: you turn it on.
 
 ## Honesty, Permissions and Language

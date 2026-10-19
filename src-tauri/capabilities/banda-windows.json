@@ -1,0 +1,8 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "banda-windows",
+  "description": "Lo que la banda llama solo en Windows: qué hace la app en este equipo (`plataforma_de_este_equipo`), para avisar de una tecla que no se pudo registrar. Va en su archivo, con `platforms: [windows]`, para que el Mac no cambie (sprint 12, hallazgo de la corrida en vivo); lo lee, no cambia nada.",
+  "windows": ["banda"],
+  "platforms": ["windows"],
+  "permissions": ["allow-plataforma-de-este-equipo"]
+}

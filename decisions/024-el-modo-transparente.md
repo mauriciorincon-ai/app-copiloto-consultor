@@ -39,7 +39,7 @@ idioma, texto }` entra en `Contenido.consentimientos`, **dentro del archivo cifr
    apagado para él o si no hay una reunión abierta donde dejarla (el cuaderno cerrado no recibe constancias: auditoría
    del S12, M2); la pantalla lo dice. «Se va a guardar» cuenta las
    constancias (sin descifrar nada) y Honestidad las nombra en «Tuyo». **Una reunión con solo la constancia no se descarta
-   al parar** (cuenta como algo tuyo: auditoría del S12, A1).
+   al parar** (cuenta como algo tuyo: auditoría del S12, A1). **Y se guarda como todo lo tuyo:** al empezar otra sesión o al salir de la app con esa reunión todavía abierta (ADR 015 §7), con la llave de las notas y la tarea de vencimiento que eso trae. La corrida en vivo del S12 lo vio sin esperarlo, y la matriz de protecciones de quien use este modo en vivo tiene que anunciarlo.
 5. **La banda solo sabe si el modo está encendido.** Su capability tiene `modo_transparente` (un booleano) y nada más
    de esto: no puede pedir el cliente, ni el aviso, ni encender el modo, ni anotar. Un test lee las dos capabilities.
 6. **Al oído, con el freno de siempre.** Con el modo solo audio encendido, `decir_el_aviso` pasa por `habla::cabe_decirla`,

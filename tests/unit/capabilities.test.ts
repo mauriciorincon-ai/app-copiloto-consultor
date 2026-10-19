@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -37,11 +37,31 @@ function delManifiesto(): string[] {
   return [...BUILD.slice(i, j).matchAll(/"([a-z_]+)"/g)].map((m) => m[1]);
 }
 
+type Capacidad = {
+  windows: string[];
+  platforms?: string[];
+  permissions: string[];
+};
+
+/** La capacidad `default` es la de la ventana `principal`; las otras llevan el nombre de su ventana. */
+const ETIQUETA: Record<string, string> = { default: "principal" };
+
+/** Los archivos de capacidades que hablan de esta ventana (en el S12 la banda tiene dos: el de siempre y el de Windows). */
+function capacidadesDe(ventana: string): { archivo: string; cap: Capacidad }[] {
+  return readdirSync("src-tauri/capabilities")
+    .filter((n) => n.endsWith(".json"))
+    .map((n) => ({
+      archivo: n,
+      cap: JSON.parse(
+        readFileSync(`src-tauri/capabilities/${n}`, "utf8"),
+      ) as Capacidad,
+    }))
+    .filter(({ cap }) => cap.windows.includes(ETIQUETA[ventana] ?? ventana));
+}
+
 function permite(ventana: "default" | "banda" | "relleno"): string[] {
-  const cap = JSON.parse(
-    readFileSync(`src-tauri/capabilities/${ventana}.json`, "utf8"),
-  );
-  return (cap.permissions as string[])
+  return capacidadesDe(ventana)
+    .flatMap(({ cap }) => cap.permissions)
     .filter((p) => p.startsWith("allow-"))
     .map((p) => p.slice("allow-".length).replace(/-/g, "_"));
 }
@@ -61,11 +81,12 @@ function loQueLlamaLaBanda(): string[] {
   const banda = readFileSync("src/componentes/Banda.tsx", "utf8");
   const app = readFileSync("src/App.tsx", "utf8");
   const salida = new Set<string>();
+  // Todo módulo con archivo propio en `src/` (S12: la lista fija dejaba fuera `plataforma`, y la banda lo llamaba sin permiso).
   const imports = [
     ...(banda + app).matchAll(
-      /import\s*\{([^}]*)\}\s*from\s*"\.\.?\/(cuaderno|ficha|turnos|asa|radar|acople|ia|notas|franja|jurisdiccion)"/g,
+      /import\s*\{([^}]*)\}\s*from\s*"\.\.?\/([a-z]+)"/g,
     ),
-  ];
+  ].filter(([, , modulo]) => existsSync(`src/${modulo}.ts`));
   for (const [, nombres, modulo] of imports) {
     for (const n of nombres
       .split(",")
@@ -181,6 +202,20 @@ describe("cada ventana puede solo lo suyo", () => {
     expect(permite("banda").filter((c) => SENSIBLES.includes(c))).toEqual([]);
   });
 
+  // Hallazgo de la corrida en vivo del S12: la banda pedía `plataforma_de_este_equipo` y se le negaba (`usePlataforma`). Lo que alcanza
+  // solo en Windows va en su propio archivo, con `platforms: [windows]`: el Mac queda exactamente como estaba.
+  it("lo que la banda alcanza solo en Windows va en su archivo, y la capacidad de siempre no cambia", () => {
+    const deWindows = capacidadesDe("banda").filter(({ cap }) => cap.platforms);
+    expect(deWindows.map((c) => c.archivo)).toEqual(["banda-windows.json"]);
+    expect(deWindows[0].cap.platforms).toEqual(["windows"]);
+    expect(deWindows[0].cap.permissions).toEqual([
+      "allow-plataforma-de-este-equipo",
+    ]);
+    const detodos = capacidadesDe("banda")
+      .filter(({ cap }) => !cap.platforms)
+      .flatMap(({ cap }) => cap.permissions);
+    expect(detodos).not.toContain("allow-plataforma-de-este-equipo");
+  });
   it("la banda puede todo lo que de verdad llama", () => {
     const llama = loQueLlamaLaBanda();
     expect(llama).toContain("pedir_ficha");
