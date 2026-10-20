@@ -4,7 +4,7 @@ sprint: 014 · app: copiloto-consultor · hito: H-2 · opened: 2026-10-19 · clo
 
 # Sprint 014 · La sugerencia sin salir — cierre
 
-**Resultado:** cumplido. En Windows la sugerencia la redacta un modelo local dentro del proceso (llama.cpp, Qwen2.5-1.5B Q4_K_M). Estado: listo para PR; tres decisiones tuyas pendientes (abajo).
+**Resultado:** cumplido. En Windows la sugerencia la redacta un modelo local dentro del proceso (llama.cpp, Qwen2.5-1.5B Q4_K_M). Estado: mergeado (#31, `8309769`); los pagos de la auditoría que quedaban entraron después, en `3f449c6`.
 
 | Medida                                 | Perfil dev (ADR 023 enm. 2)    | Perfil release (hoy)           | Criterio |
 | -------------------------------------- | ------------------------------ | ------------------------------ | -------- |
@@ -18,15 +18,15 @@ Corrida en vivo en la app (3 corridas): 6 023 ms `Tarde` · 6 025 ms `Tarde` · 
 
 **Entregables:** `modelo_local.rs` (estado, descarga por la puerta de whisper, carga y suelta) · `sintesis/local.rs` (cuarto proveedor) · Windows nunca elige el API · el corte suelta el modelo · IA y Honestidad en Windows · arnés `modelo-local-en-windows.rs` · ADR 023 enm. 2 y anexo · manuales ES/EN, guía `ag-w14-`, BLUEPRINT, README.
 
-**Pendientes (decisiones tuyas; ninguna bloquea el PR):**
+**Deuda (al lote del H-2):**
 
-1. M6 · `CLAUDE.md` líneas 15, 17 y 130 (tres frases falsas). Lo edito con tu «sí».
-2. M8 · brochure (`BROCHURE.html:381, :516, :599`; `brochure-export.json:90`): ¿lo pago ya o va al lote del hito (regla 13)?
-3. B5 · cuatro pruebas siguen leyendo el fuente (`sintesis/local.rs:398, :425`; `modelo_local.rs:295, :329`): ¿las cambio ya o quedan en deuda?
-4. M5 · WebView2 mantiene 2–3 conexiones a Microsoft en reposo (anterior al sprint): ¿Honestidad lo declara y aplicamos los flags?
-5. S13: «sí deshacer» (credencial, tarea y nota de prueba) y «sí borrar ramas» (sprint-011, 012, 013).
+1. B5 · cuatro pruebas siguen leyendo el fuente (`sintesis/local.rs:398, :425`; `modelo_local.rs:295, :329`); el usuario decidió dejarlas.
+2. Gate de sesión completa en macOS: ¿separa los rastros del sistema (el archivo del demonio de Apple que lo hizo fallar una vez)? No se aflojó.
+3. Las dos corridas en vivo que pasaron del techo, sin causa atribuida, y la fila 20 del manual, que sigue «hecho sin verificar».
 
-**Auditoría** (una pasada, `sprints/SPRINT_014-auditoria.md`): 0 críticos, 0 altos. Medios: 5 pagados, 1 parcial (M5), 2 pendientes (M6, M8). Bajos: 11 pagados, 1 parcial (B5).
+**Hecho tras el merge, con tu «sí» por acción (2026-10-19):** M5, M6 y M8 en `3f449c6`; borradas la credencial «Angel Ghost · notas / llave-v1», la tarea `com.aiapps.copiloto-consultor.vencimiento`, la nota de prueba y las ramas sprint-011, 012 y 013. La app limpia sola, la próxima vez que arranque, su lista de vencimientos y la copia del XML de la tarea.
+
+**Auditoría** (una pasada, `sprints/SPRINT_014-auditoria.md`): 0 críticos, 0 altos. Medios: 8 pagados (M5, M6 y M8 en `3f449c6`, tras el merge). Bajos: 11 pagados y 1 en deuda (B5).
 
 **Desviaciones:** una sola puerta de red (la de whisper), no dos · el corte suelta el modelo dentro de la pieza `Sugerencia` · un solo comando `instalar_el_modelo_local` · `demo-rojo.sh` no corre sin Python: pruebas Vitest permanentes para M3 · hook de secretos arreglado fuera de alcance (`d515266`, B8) · corrida en vivo: 1 de 3 dentro del techo · CI: `build-escritorio` falló una vez por un archivo de 0 bytes del demonio de Apple en la carpeta temporal (`una_sesion_completa…`); la repetición pasó; la causa no está confirmada (deuda: decidir si el gate separa los rastros del sistema).
 
