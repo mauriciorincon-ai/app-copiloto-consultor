@@ -110,7 +110,7 @@ const ES: Cambios = {
     // `windows-honestidad-y-manual` ate las copias a su fuente.
     concederEnMacos: "Conceder en Windows",
     modoDetalle:
-      "La app abre una conexión solo cuando tú lo pides, una vez por modelo: al instalar el modelo de voz, 1,6 GB (0,5 GB en un PC ARM64), y al instalar el modelo local de la sugerencia, 1,1 GB; los dos se comprueban antes de usarse. En Windows no hay API: todo lo demás se queda en tu PC.",
+      "La app abre una conexión solo cuando tú lo pides, una vez por modelo: al instalar el modelo de voz, 1,6 GB (0,5 GB en un PC ARM64), y al instalar el modelo local de la sugerencia, 1,1 GB; los dos se comprueban antes de usarse. En Windows no hay API: todo lo demás se queda en tu PC. Una salvedad: la ventana de la app es un WebView2, el motor de Microsoft Edge, y por su cuenta mantiene 2 o 3 conexiones con servidores de Microsoft, también en reposo. Este contador cuenta lo que sale por la app, no lo que hace Edge, y qué llevan esas conexiones no se ha mirado.",
     cincoIdiomas:
       "Dos idiomas listos a la vez, como mucho: los que la app ofrece.",
     idiomasListos:
@@ -260,7 +260,7 @@ const EN: Cambios = {
     // `windows-honestidad-y-manual` ate las copias a su fuente.
     concederEnMacos: "Grant in Windows",
     modoDetalle:
-      "The app opens a connection only when you ask, once per model: to install the speech model, 1.6 GB (0.5 GB on an ARM64 PC), and to install the suggestion’s local model, 1.1 GB; both are checked before use. There is no API on Windows: everything else stays on your PC.",
+      "The app opens a connection only when you ask, once per model: to install the speech model, 1.6 GB (0.5 GB on an ARM64 PC), and to install the suggestion’s local model, 1.1 GB; both are checked before use. There is no API on Windows: everything else stays on your PC. One caveat: the app’s window is a WebView2, Microsoft Edge’s engine, and on its own it keeps 2 or 3 connections to Microsoft servers, even when idle. This counter counts what leaves through the app, not what Edge does, and what those connections carry has not been looked at.",
     cincoIdiomas:
       "Two languages ready at a time, at most: the ones the app offers.",
     idiomasListos: "languages ready at once, at most: the ones the app offers.",

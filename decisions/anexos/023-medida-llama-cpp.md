@@ -117,6 +117,6 @@ Lo que enseñó, y lo que se pagó:
   sesión había dicho 0 porque miró cinco instantes y esas conexiones son intermitentes: queda corregida. Una prueba con
   flags de WebView2 (`--disable-background-networking --disable-component-update --disable-sync …`) bajó de 2 a 1; no se
   aplicó, porque cambiar el motor de la ventana es una decisión del usuario sobre el producto. Honestidad cuenta lo que
-  sale por la app (0 B), no lo que hace Edge, y hoy ningún documento lo dice; qué llevan esas conexiones no se ha mirado.
+  sale por la app (0 B), no lo que hace Edge, y desde el sprint 014 Honestidad lo dice (bloque de la red, ES y EN); qué llevan esas conexiones no se ha mirado.
 
 No cubre: una videollamada real con auriculares (w26 de la guía) ni la voz de una persona; viaja al gate del hito.

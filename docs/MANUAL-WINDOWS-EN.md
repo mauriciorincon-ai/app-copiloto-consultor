@@ -134,7 +134,7 @@ Some clients and jurisdictions ask to know that you use a tool that listens to t
 
 ## Honesty, Permissions and Language
 
-- **Honesty** is the screen that does not lie: how many bytes left your machine in this meeting (zero in local mode), what lives in memory right now, what persists and for how long, the **“On Windows today”** block (what the app does here and what it does not, each with its reason) and your PC’s transcription.
+- **Honesty** is the screen that does not lie: how many bytes left your machine in this meeting (zero in local mode), what lives in memory right now, what persists and for how long, the **“On Windows today”** block (what the app does here and what it does not, each with its reason) and your PC’s transcription. One caveat Honesty also states: the app’s window is a WebView2, Microsoft Edge’s engine, and on its own it keeps 2 or 3 connections to Microsoft servers, even when idle; the counter counts what leaves through the app, not what Edge does, and what those connections carry has not been looked at.
 - **Permissions.** Only the **microphone** has a permission on Windows, and you grant it in **Settings → Privacy & security → Microphone**; the **Open Windows Settings** button takes you there. System audio, the meeting screen and docking ask for none.
 - **Language.** Two tracks, one language for each (Spanish and English), the speech model and your **technical dictionary**: terms that correct the transcript (Power BI, DAX, client names) in `diccionario.yaml`, which the app never completes or guesses.
 
