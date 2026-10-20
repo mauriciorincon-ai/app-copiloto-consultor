@@ -134,7 +134,7 @@ Hay clientes y jurisdicciones que piden saber que usas una herramienta que escuc
 
 ## Honestidad, Permisos e Idioma
 
-- **Honestidad (Honesty)** es la pantalla que no miente: cuántos bytes salieron de tu equipo en esta reunión (cero en modo local), qué vive en memoria ahora mismo, qué persiste y por cuánto, el bloque **«Hoy en Windows»** (qué hace la app aquí y qué no, cada cosa con su motivo) y la transcripción de tu PC.
+- **Honestidad (Honesty)** es la pantalla que no miente: cuántos bytes salieron de tu equipo en esta reunión (cero en modo local), qué vive en memoria ahora mismo, qué persiste y por cuánto, el bloque **«Hoy en Windows»** (qué hace la app aquí y qué no, cada cosa con su motivo) y la transcripción de tu PC. Una salvedad que Honestidad también dice: la ventana de la app es un WebView2, el motor de Microsoft Edge, y por su cuenta mantiene 2 o 3 conexiones con servidores de Microsoft, también en reposo; el contador cuenta lo que sale por la app, no lo que hace Edge, y qué llevan esas conexiones no se ha mirado.
 - **Permisos (Permissions).** Solo el **micrófono** tiene permiso en Windows, y lo concedes tú en **Settings → Privacy & security → Microphone**; el botón **Abrir Ajustes de Windows** te lleva. El audio del sistema, la pantalla de la reunión y el acople no piden ninguno.
 - **Idioma (Language).** Dos pistas, un idioma para cada una (español e inglés), el modelo de voz y tu **diccionario técnico**: términos que corrigen la transcripción (Power BI, DAX, nombres de clientes) en `diccionario.yaml`, que la app nunca completa ni adivina.
 
