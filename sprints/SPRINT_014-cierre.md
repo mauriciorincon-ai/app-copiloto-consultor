@@ -1,5 +1,5 @@
 ---
-sprint: 014 · app: copiloto-consultor · hito: H-2 · opened: 2026-10-19 · closed: 2026-10-19 · branch: sprint-014/la-sugerencia-sin-salir · pr: (el único abierto de la app)
+sprint: 014 · app: copiloto-consultor · hito: H-2 · opened: 2026-10-19 · closed: 2026-10-19 · branch: sprint-014/la-sugerencia-sin-salir · pr: #31
 ---
 
 # Sprint 014 · La sugerencia sin salir — cierre
