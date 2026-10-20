@@ -28,7 +28,7 @@ Corrida en vivo en la app (3 corridas): 6 023 ms `Tarde` · 6 025 ms `Tarde` · 
 
 **Auditoría** (una pasada, `sprints/SPRINT_014-auditoria.md`): 0 críticos, 0 altos. Medios: 5 pagados, 1 parcial (M5), 2 pendientes (M6, M8). Bajos: 11 pagados, 1 parcial (B5).
 
-**Desviaciones:** una sola puerta de red (la de whisper), no dos · el corte suelta el modelo dentro de la pieza `Sugerencia` · un solo comando `instalar_el_modelo_local` · `demo-rojo.sh` no corre sin Python: pruebas Vitest permanentes para M3 · hook de secretos arreglado fuera de alcance (`d515266`, B8) · corrida en vivo: 1 de 3 dentro del techo.
+**Desviaciones:** una sola puerta de red (la de whisper), no dos · el corte suelta el modelo dentro de la pieza `Sugerencia` · un solo comando `instalar_el_modelo_local` · `demo-rojo.sh` no corre sin Python: pruebas Vitest permanentes para M3 · hook de secretos arreglado fuera de alcance (`d515266`, B8) · corrida en vivo: 1 de 3 dentro del techo · CI: `build-escritorio` falló una vez por un archivo de 0 bytes del demonio de Apple en la carpeta temporal (`una_sesion_completa…`); la repetición pasó; la causa no está confirmada (deuda: decidir si el gate separa los rastros del sistema).
 
 **Relevos:** 1. F1, descarga cortada dos veces (a 874 s y 1 154 s, sin reanudar). Decidió el usuario: reanudar por `Range` en la puerta, camino distinto (`fd9c3c7`). La tercera descarga retomó y terminó. **Modelo por fase:** F1 y F2 Opus 5.5 (high) · F3 y auditoría Sonnet 5.5 · cierre Haiku 5.5. Haiku bastó para redactar el cierre; si se queda lo decides tú tras tres sprints.
 
