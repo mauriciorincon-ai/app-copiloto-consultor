@@ -43,6 +43,7 @@
     "allow-radar-de-tu-mac",
     "allow-estado-de-la-ia",
     "allow-redactar-sugerencias",
+    "allow-instalar-el-modelo-local",
     "allow-api-externa",
     "allow-guardar-clave-del-api",
     "allow-borrar-clave-del-api",

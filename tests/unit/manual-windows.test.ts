@@ -22,10 +22,10 @@ import { PLATAFORMA_WINDOWS } from "../../src/contrato.generado";
  * construye está «descartada para Windows», con su nombre, la fecha de la decisión del usuario y su motivo; y una clave de
  * «Hoy en Windows» jamás cubre una fila descartada.
  *
- * **Desde el sprint 013 hay un estado más, «no por ahora»** (aplazada): la sugerencia redactada (fila 20). No es una
- * decisión de descartar —no se tiró, falta un modelo que no salga a la red— y por eso SÍ lleva su clave, que en
- * `plataforma.rs` es «no por ahora»; y dice la cifra que la dejó ahí. Una clave «no por ahora» solo la cubre una fila
- * aplazada, y una aplazada solo puede llevar claves «no por ahora».
+ * **Desde el sprint 013 hay un estado más, «no por ahora»** (aplazada): la sugerencia redactada (fila 20) lo tuvo hasta el
+ * sprint 014, que la trajo con el modelo local (ADR 023, enmienda 2). No es una decisión de descartar —no se tira: falta
+ * algo— y por eso SÍ lleva su clave, que en `plataforma.rs` es «no por ahora». Una clave «no por ahora» solo la cubre una
+ * fila aplazada, y una aplazada solo puede llevar claves «no por ahora». Hoy no queda ninguna.
  *
  * ¿Puede fallar? Sí: nombrar el Mac en una sola línea, quitar la fila 17, declarar «hecho» la puerta local, inventar una
  * clave, dejar una fila «fuera» o descartar sin fecha son rojo (demos de los sprints 010 y 012).
@@ -229,13 +229,20 @@ describe("las 30 funcionalidades de la visión, en Windows", () => {
     }
   });
 
-  it("lo aplazado es la sugerencia redactada, y dice la cifra que la dejó ahí", () => {
-    for (const texto of [ES, EN]) {
+  // Sprint 014 (ADR 023, enmienda 2): la sugerencia volvió con el modelo local, y ya no queda nada aplazado. La fila 20
+  // dice lo que se midió —la mediana, cuántas se fundaron y las conexiones del proceso—, no solo que está.
+  it("ya no queda nada aplazado, y la fila 20 dice lo que se midió del modelo local", () => {
+    for (const [texto, conexiones] of [
+      [ES, "0 conexiones"],
+      [EN, "0 connections"],
+    ] as const) {
       const filas = filasDe30(texto);
-      expect(filas.filter((f) => f.estado === "aplazada").map((f) => f.n)).toEqual([20]);
+      expect(filas.filter((f) => f.estado === "aplazada").map((f) => f.n)).toEqual([]);
+      expect(filas.find((f) => f.n === 20)?.estado, "la fila 20 no está hecha").toBe("sin-verificar");
       const motivo = texto.split("\n").find((l) => /^\| 20 +\|/.test(l))?.split("|")[5] ?? "";
       expect(motivo, "la fila 20 no dice la cifra (el techo y lo medido)").toMatch(/\d[,.]\d s/);
-      expect(motivo, "la fila 20 no dice por qué").toContain("Microsoft");
+      expect(motivo, "la fila 20 no dice que no abre conexiones").toContain(conexiones);
+      expect(motivo, "la fila 20 no dice cuántas se fundaron").toMatch(/12 \w+ 17/);
     }
   });
 

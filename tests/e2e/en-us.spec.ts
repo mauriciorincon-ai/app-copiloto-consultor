@@ -58,22 +58,22 @@ test.describe("el cuaderno, en inglés", () => {
 });
 
 test.describe("Windows, en inglés", () => {
-  test("«Hoy en Windows» tiene «Ya funciona», el grupo «No por ahora» con la sugerencia, y las quince funciones con el nombre del diccionario", async ({ page }) => {
+  test("«Hoy en Windows» tiene «Ya funciona» con las quince funciones, con el nombre del diccionario, y ninguna «no por ahora»", async ({ page }) => {
     await abrir(page, "ventana=principal&pantalla=honestidad&plataforma=windows");
     await expect(page.getByRole("heading", { name: W.titulo })).toBeVisible();
     await expect(page.getByText(W.ya, { exact: true })).toBeVisible();
-    // Sprint 013 (ADR 023, enmienda 1): la sugerencia redactada es la única «no por ahora»; el grupo se pinta.
-    await expect(page.getByText(W.noPorAhora, { exact: true })).toBeVisible();
+    // Sprint 014 (ADR 023, enmienda 2): la sugerencia vuelve con el modelo local; el grupo «no por ahora» no se pinta.
+    await expect(page.getByText(W.noPorAhora, { exact: true })).toHaveCount(0);
     for (const clave of CLAVES_DE_WINDOWS) {
       await expect(page.getByText(W.funciones[clave].nombre, { exact: true }).first(), clave).toBeVisible();
     }
     await expect(page.getByText(W.funciones.sugerencia.detalle, { exact: false })).toBeVisible();
   });
 
-  test("IA dice «not for now» con su motivo del diccionario y no ofrece ningún API", async ({ page }) => {
+  test("IA ofrece instalar el modelo local con su tamaño, dice cómo con el diccionario y no ofrece ningún API", async ({ page }) => {
     await abrir(page, "ventana=principal&pantalla=ia&plataforma=windows");
-    const motivo = CAMBIOS_DE_WINDOWS.en.cuaderno?.porQueNoRedacta?.["sin-puente"] ?? "no está en el diccionario";
-    await expect(page.getByText(motivo).first()).toBeVisible();
+    await expect(page.getByText(W.ia.sinModelo).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: W.ia.instalar("1.1") })).toBeVisible();
     for (const ausente of [en.cuaderno.proveedorExterno, en.cuaderno.tuClave, en.cuaderno.costo]) {
       await expect(page.getByText(ausente, { exact: true }), ausente).toHaveCount(0);
     }

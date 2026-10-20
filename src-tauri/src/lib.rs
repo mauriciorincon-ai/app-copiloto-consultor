@@ -34,6 +34,7 @@ pub mod habla;
 pub mod hardware;
 pub mod jurisdiccion;
 pub mod llavero;
+pub mod modelo_local;
 pub mod modelo_whisper;
 pub mod modo;
 pub mod notas;
@@ -1046,6 +1047,11 @@ fn empezar(
         let _ = app.emit(EVENTO_MODO, ());
         return Ok(escucha::EstadoDeEscucha::solo_notas());
     };
+    // Con «Redactar sugerencias» encendido, el modelo local se carga ya en otro hilo (sprint 014): la primera sugerencia
+    // no espera su carga. Sin el modelo instalado, o fuera de Windows, no hace nada.
+    if app.state::<LaSintesis>().redactar.load(Ordering::Relaxed) {
+        modelo_local::precargar();
+    }
     let mango = app.clone();
     // **El modo solo audio lee en el idioma del CONSULTOR**, no del cliente: la ficha sale de los
     // documentos del usuario, así que está escrita en su idioma. Se fija aquí, que es el único sitio
@@ -1154,6 +1160,8 @@ fn dejar_de_escuchar(app: tauri::AppHandle, estado: tauri::State<'_, LaEscucha>)
         fijar_la_voz_en(&app, false);
     }
     stt::whisper::soltar();
+    // El modelo local vive lo que la sesión (sprint 014): ≈ 1,1 GB que vuelven al sistema.
+    modelo_local::soltar();
     if let Ok(mut g) = estado.0.lock() {
         if let Some(e) = g.take() {
             e.cortar();
@@ -1421,8 +1429,14 @@ fn ejecutar_el_corte<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> corte::Inf
                 }
                 // La sugerencia en camino: la época sube. Lo que vuelva de antes del corte se tira
                 // sin enseñarlo, y una petición al API que aún no haya salido ya no sale. La
-                // reunión, además, deja de sumar costo.
-                corte::Pieza::Sugerencia => cortar_la_sugerencia(&app.state::<LaSintesis>()),
+                // reunión, además, deja de sumar costo. Y el modelo local se suelta de la memoria
+                // (sprint 014): la que esté redactando suelta el suyo al terminar.
+                corte::Pieza::Sugerencia => {
+                    cortar_la_sugerencia(&app.state::<LaSintesis>());
+                    if modelo_local::soltar() {
+                        println!("[corte] el modelo local estaba cargado: soltado");
+                    }
+                }
                 corte::Pieza::ContadorDeRed => red::reiniciar(),
                 // Y Sesión se entera de que ya no está, para ofrecer «Mostrar la banda» (sprint 011).
                 corte::Pieza::Banda => {
@@ -2032,6 +2046,7 @@ pub fn run() {
             abrir_lo_que_ve,
             estado_de_la_ia,
             redactar_sugerencias,
+            instalar_el_modelo_local,
             api_externa,
             guardar_clave_del_api,
             borrar_clave_del_api,
@@ -2109,10 +2124,11 @@ pub fn run() {
             {
                 let ruta = ruta_de_las_preferencias(app.handle());
                 let mut p = prefs::leer(&ruta);
-                // Sprint 013 (auditoría, B-4): lo que Windows ya no tiene (el API, la sugerencia redactada) no se recuerda
-                // encendido. Solo en Windows, solo si el archivo lo traía de antes, y solo apaga.
-                if prefs::para_esta_plataforma(&mut p, sintesis::Plataforma::ESTA, sintesis_mock()) {
-                    println!("[prefs] lo que esta plataforma ya no tiene (API, sugerencia redactada) se apaga y se recuerda apagado");
+                // Sprint 013 (auditoría, B-4): lo que Windows no tiene (el API, el banco enriquecido y, sin el modelo local
+                // instalado, la sugerencia redactada; sprint 014) no se recuerda encendido. Solo en Windows, solo si el
+                // archivo lo traía de antes, y solo apaga.
+                if prefs::para_esta_plataforma(&mut p, sintesis::Plataforma::ESTA, sintesis_mock(), modelo_local::instalado()) {
+                    println!("[prefs] lo que esta plataforma no tiene (API, banco enriquecido, sugerencia sin modelo) se apaga y se recuerda apagado");
                     if let Err(e) = prefs::guardar(&ruta, &p) {
                         println!("[prefs] no se pudieron guardar: {e}");
                     }
@@ -3241,6 +3257,8 @@ pub struct EstadoDeLaIa {
     /// Por qué el modelo del sistema no puede. `None`: puede.
     sistema: Option<sintesis::PorQueNoRedacta>,
     api: EstadoDelApi,
+    /// El modelo local de Windows (sprint 014): si existe aquí, si está instalado, si se baja y cuánto mide.
+    local: modelo_local::EstadoDelModeloLocal,
     /// La mediana de las sugerencias de esta sesión, en milisegundos.
     latencia_ms: Option<u64>,
     reunion_usd: f64,
@@ -3313,16 +3331,18 @@ fn sintesis_mock() -> bool {
     std::env::var("AG_SINTESIS").as_deref() == Ok("mock")
 }
 
-/// «Enriquecer el banco» **tal como se promete ahora**: lo recordado, y solo donde alguien puede redactar (en Windows,
-/// nadie desde el sprint 013). Así el ensayo no promete un acento que luego falla en silencio.
+/// «Enriquecer el banco» **tal como se promete ahora**: lo recordado, y solo donde se promete (en Windows, no: el modelo
+/// local se midió para la sugerencia y no para el banco). Así el ensayo no promete un acento que luego falla en silencio.
 fn enriquecer_ahora(s: &LaSintesis) -> bool {
-    s.enriquecer.load(Ordering::Relaxed) && sintesis::Plataforma::ESTA.promete_redactar(sintesis_mock())
+    s.enriquecer.load(Ordering::Relaxed) && sintesis::Plataforma::ESTA.promete_enriquecer(sintesis_mock())
 }
 
 /// **Quién redacta ahora**, por [`sintesis::quien_redacta`]: el API si lo encendiste, tiene clave y
 /// no llegó al tope —**solo en el Mac**: en Windows se retiró en el sprint 013 y ni se pregunta por su
-/// clave (ADR 023, enmienda 1)—; si no, el modelo del sistema si está. `AG_SINTESIS=mock` fuerza el
-/// `mock` —el de la CI y el del kit—, dentro del adapter y no interceptando nada (ADR 011).
+/// clave (ADR 023, enmienda 1)—; si no, el modelo del sistema si está; si no, **en Windows, el modelo
+/// local si está instalado** (sprint 014, ADR 023 enmienda 2), y solo para la sugerencia: el banco del
+/// ensayo no lo usa. Se carga aquí si no lo estaba. `AG_SINTESIS=mock` fuerza el `mock` —el de la CI y
+/// el del kit—, dentro del adapter y no interceptando nada (ADR 011).
 fn proveedor_de_ahora(
     s: &LaSintesis,
     conocidos: Vec<String>,
@@ -3346,8 +3366,10 @@ fn proveedor_de_ahora(
         && sintesis::api::hay_clave(api.externo);
     let sistema = sintesis::sistema::DelSistema;
     let sistema_listo = !mock && !api_lista && sistema.disponible().is_ok();
-    Some(match sintesis::quien_redacta(plataforma, mock, api_lista, sistema_listo)? {
+    let local_listo = !mock && !sistema_listo && para == sintesis::api::Para::Sugerencia && modelo_local::instalado();
+    Some(match sintesis::quien_redacta(plataforma, mock, api_lista, sistema_listo, local_listo)? {
         sintesis::Quien::Mock => std::sync::Arc::new(sintesis::mock::Mock),
+        sintesis::Quien::Local => std::sync::Arc::new(sintesis::local::Local::con(modelo_local::generador())),
         sintesis::Quien::Api => std::sync::Arc::new(sintesis::api::Api {
             externo: api.externo,
             conocidos,
@@ -3367,34 +3389,38 @@ struct Leido {
     enriquecer: bool,
     api: ConfigDelApi,
     sistema: Option<sintesis::PorQueNoRedacta>,
+    local: modelo_local::EstadoDelModeloLocal,
     mes_usd: f64,
     reunion_usd: f64,
     latencia_ms: Option<u64>,
 }
 
 /// **El estado de IA para esta plataforma**, sin efectos. En Windows (sprint 013, ADR 023 enmienda 1) no hay API ni se
-/// pregunta por su clave —`hay_clave` ni se llama—, y ni «redactar» ni «enriquecer» se prometen aunque vengan recordados
-/// de antes: nadie redacta, salvo el `mock`.
+/// pregunta por su clave —`hay_clave` ni se llama—. Desde el sprint 014 (enmienda 2) allí redacta el modelo local si
+/// está instalado: entonces «redactar» se promete; si no, no, aunque venga recordado. «Enriquecer» sigue sin prometerse
+/// en Windows (salvo el `mock`).
 fn estado_de(
     plataforma: sintesis::Plataforma,
     mock: bool,
     leido: Leido,
     hay_clave: impl FnOnce(sintesis::api::Externo) -> bool,
 ) -> EstadoDeLaIa {
-    let Leido { redactar, enriquecer, api, sistema, mes_usd, reunion_usd, latencia_ms } = leido;
+    let Leido { redactar, enriquecer, api, sistema, local, mes_usd, reunion_usd, latencia_ms } = leido;
     let hay_clave = plataforma.admite_api() && hay_clave(api.externo);
     let quien = sintesis::quien_redacta(
         plataforma,
         mock,
         api.encendida && hay_clave && mes_usd < TOPE_DEL_MES_USD,
         sistema.is_none(),
+        local.existe && local.instalado,
     );
     EstadoDeLaIa {
-        redactar: redactar && plataforma.promete_redactar(mock),
-        enriquecer: enriquecer && plataforma.promete_redactar(mock),
+        redactar: redactar && plataforma.promete_redactar(mock, local.existe && local.instalado),
+        enriquecer: enriquecer && plataforma.promete_enriquecer(mock),
         quien,
         sistema,
         api: EstadoDelApi { encendida: api.encendida && plataforma.admite_api(), externo: api.externo, hay_clave },
+        local,
         latencia_ms,
         reunion_usd,
         mes_usd,
@@ -3428,6 +3454,7 @@ fn estado_de_la_ia_de<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> EstadoDeL
             enriquecer: s.enriquecer.load(Ordering::Relaxed),
             api,
             sistema,
+            local: modelo_local::estado(),
             mes_usd,
             reunion_usd: s.reunion_usd.lock().map(|u| *u).unwrap_or(0.0),
             latencia_ms,
@@ -3468,6 +3495,12 @@ fn sintetizar<R: tauri::Runtime>(app: &tauri::AppHandle<R>, a: &ficha::Aparicion
     let mango = app.clone();
     std::thread::spawn(move || {
         let s = mango.state::<LaSintesis>();
+        // Un corte o el final de la sesión llegó entre que se lanzó este hilo y ahora: no se redacta, y sobre todo no se vuelve
+        // a cargar el modelo local, que el corte ya soltó (auditoría del S14, M-1).
+        if s.epoca.load(Ordering::Relaxed) != epoca {
+            s.en_marcha.store(false, Ordering::Relaxed);
+            return;
+        }
         // Primero quién redacta: sin proveedor (en Windows, siempre) el turno de un tercero ni se copia (auditoría del S13, M-7).
         let conocidos = clientes_del_corpus(&mango.state::<ElCorpus>());
         let sobre = respaldo.first().map(|r| r.titular.clone()).unwrap_or_default();
@@ -3574,18 +3607,50 @@ fn lo_que_salio_al_api(app: tauri::AppHandle) -> Vec<sintesis::api::LoQueSalio> 
 /// «Redactar sugerencias (además de mostrar la ficha)».
 #[tauri::command]
 fn redactar_sugerencias(app: tauri::AppHandle, si: bool) -> EstadoDeLaIa {
-    // En Windows nadie redacta (sprint 013): el interruptor se ve apagado y, si alguien lo pide por otra vía, se queda así.
-    let si = si && sintesis::Plataforma::ESTA.promete_redactar(sintesis_mock());
+    // En Windows solo redacta el modelo local (sprint 014): sin él instalado el interruptor se ve apagado y, si alguien
+    // lo pide por otra vía, se queda así.
+    let si = si && sintesis::Plataforma::ESTA.promete_redactar(sintesis_mock(), modelo_local::instalado());
     app.state::<LaSintesis>().redactar.store(si, Ordering::Relaxed);
     println!("[sintesis] redactar sugerencias: {}", if si { "encendido" } else { "apagado" });
     recordar(&app, |p| p.redactar = si);
+    // Encendido con una reunión en marcha, se carga ya para la primera sugerencia; apagado, se suelta (≈ 1,1 GB).
+    if si && app.state::<LaEscucha>().0.lock().map(|g| g.is_some()).unwrap_or(false) {
+        modelo_local::precargar();
+    } else if !si {
+        modelo_local::soltar();
+    }
+    avisar_a_la_ia(&app)
+}
+
+/// **«Install the model»** (sprint 014, ADR 023 enmienda 2): baja el modelo local de la sugerencia —1,1 GB, con su huella—
+/// por la única puerta Rust a la red, la de whisper. Solo desde IA, **nunca con una reunión, una sesión o un ensayo
+/// abiertos**, y la guarda de la puerta la corta si uno empieza a medias. IA se entera al empezar y al terminar.
+#[tauri::command]
+async fn instalar_el_modelo_local(app: tauri::AppHandle) -> EstadoDeLaIa {
+    if !cfg!(windows) || hay_una_reunion(&app) {
+        println!("[modelo-local] no se baja: {}", if cfg!(windows) { "hay algo en marcha" } else { "solo existe en Windows" });
+        return estado_de_la_ia_de(&app);
+    }
+    let mango = app.clone();
+    let hecho = tauri::async_runtime::spawn_blocking(move || {
+        println!("[modelo-local] el usuario pidió instalar el modelo local");
+        modelo_local::bajar(|| {
+            avisar_a_la_ia(&mango);
+        })
+    })
+    .await;
+    match hecho {
+        Ok(Ok(_)) => println!("[modelo-local] instalado"),
+        Ok(Err(e)) => println!("[modelo-local] no se instaló: {e}"),
+        Err(e) => println!("[modelo-local] la descarga no terminó: {e}"),
+    }
     avisar_a_la_ia(&app)
 }
 
 /// «Enriquecer el banco» (ADR 019 §3): el segundo interruptor de IA, junto a «Redactar sugerencias».
 #[tauri::command]
 fn enriquecer_el_banco(app: tauri::AppHandle, si: bool) -> EstadoDeLaIa {
-    let si = si && sintesis::Plataforma::ESTA.promete_redactar(sintesis_mock());
+    let si = si && sintesis::Plataforma::ESTA.promete_enriquecer(sintesis_mock());
     app.state::<LaSintesis>().enriquecer.store(si, Ordering::Relaxed);
     println!("[ensayo] enriquecer el banco: {}", if si { "encendido" } else { "apagado" });
     recordar(&app, |p| p.enriquecer_el_banco = si);
@@ -4746,15 +4811,21 @@ mod pruebas_de_whisper_en_windows {
     }
 
     /// **Bajar o medir whisper nunca con una reunión abierta** (sprint 006, ADR 022 §4): bajar ocupa la red y medir el
-    /// procesador. Los tres comandos preguntan `hay_una_reunion` antes de hacer nada.
+    /// procesador. Los cuatro comandos —el modelo local de la sugerencia incluido, sprint 014— preguntan
+    /// `hay_una_reunion` antes de hacer nada.
     #[test]
     fn bajar_o_medir_whisper_nunca_en_reunion() {
         let fuente = include_str!("lib.rs");
-        for comando in ["async fn instalar_idioma(", "async fn calibrar_transcripcion(", "async fn bajar_modelo_pequeno("] {
+        for comando in [
+            "async fn instalar_idioma(",
+            "async fn calibrar_transcripcion(",
+            "async fn bajar_modelo_pequeno(",
+            "async fn instalar_el_modelo_local(",
+        ] {
             let cuerpo = &fuente[fuente.find(comando).unwrap_or_else(|| panic!("{comando}"))..];
             let cuerpo = &cuerpo[..cuerpo.find("\n}\n").expect("su cierre")];
             let candado = cuerpo.find("hay_una_reunion(&app)").unwrap_or_else(|| panic!("{comando} sin candado de reunión"));
-            for trabajo in ["spawn_blocking", ".instalar(", "modelo_whisper::bajar", "stt::whisper::calibrar"] {
+            for trabajo in ["spawn_blocking", ".instalar(", "modelo_whisper::bajar", "modelo_local::bajar", "stt::whisper::calibrar"] {
                 if let Some(i) = cuerpo.find(trabajo) {
                     assert!(candado < i, "{comando}: «{trabajo}» antes de mirar si hay reunión");
                 }
@@ -5128,19 +5199,44 @@ mod pruebas_de_la_ia_en_windows {
             enriquecer: true,
             api: ConfigDelApi { encendida: true, externo: sintesis::api::Externo::Groq },
             sistema: Some(sintesis::PorQueNoRedacta::SinPuente),
+            local: modelo_local::EstadoDelModeloLocal {
+                existe: true,
+                instalado: false,
+                bajando: false,
+                fallo: false,
+                bytes: modelo_local::QWEN.bytes,
+            },
             mes_usd: 0.0,
             reunion_usd: 0.0,
             latencia_ms: None,
         }
     }
 
-    /// En Windows, con todo recordado encendido de antes: nadie redacta, no hay API ni clave, y la clave **ni se pregunta**.
+    fn con_el_modelo_local() -> Leido {
+        let mut l = recordado();
+        l.local.instalado = true;
+        l
+    }
+
+    /// En Windows, con todo recordado encendido de antes y **sin el modelo local**: nadie redacta, no hay API ni clave, y
+    /// la clave **ni se pregunta**.
     #[test]
     fn en_windows_el_estado_no_pregunta_por_la_clave_ni_promete() {
         let e = estado_de(Windows, false, recordado(), |_| panic!("Windows preguntó por la clave del API"));
         assert!(!e.api.encendida && !e.api.hay_clave, "el API se ve encendido en Windows");
         assert!(!e.redactar && !e.enriquecer, "Windows promete una sugerencia o un banco enriquecido");
         assert_eq!(e.quien, None);
+    }
+
+    /// **Con el modelo local instalado** (sprint 014, ADR 023 enmienda 2): redacta él, «redactar» se promete, el banco
+    /// enriquecido no, y el API sigue sin existir ni preguntar por su clave aunque viniera encendido.
+    #[test]
+    fn en_windows_con_el_modelo_local_redacta_el_local_y_nunca_el_api() {
+        let e = estado_de(Windows, false, con_el_modelo_local(), |_| panic!("Windows preguntó por la clave del API"));
+        assert_eq!(e.quien, Some(sintesis::Quien::Local));
+        assert!(e.redactar && !e.enriquecer, "redactar sí, el banco enriquecido no");
+        assert!(!e.api.encendida && !e.api.hay_clave);
+        assert!(e.local.existe && e.local.instalado);
     }
 
     /// El Mac sigue como estaba (el API listo manda) y el `mock` redacta en las dos plataformas.
@@ -5171,9 +5267,12 @@ mod pruebas_de_la_ia_en_windows {
             "guardar_clave_del_api escribe antes de pedir permiso"
         );
         assert!(g.contains(concat!("return Err(", "e.into())")), "guardar_clave_del_api no se niega");
-        for f in ["\nfn redactar_sugerencias(", "\nfn enriquecer_el_banco("] {
+        for (f, pregunta) in [
+            ("\nfn redactar_sugerencias(", concat!("promete_", "redactar(sintesis_mock(), modelo_local::instalado())")),
+            ("\nfn enriquecer_el_banco(", concat!("promete_", "enriquecer(sintesis_mock())")),
+        ] {
             let c = cuerpo_de(f);
-            assert!(antes(c, concat!("promete_", "redactar(sintesis_mock())"), concat!(".", "store(")), "{f} guarda antes de preguntar si alguien redacta");
+            assert!(antes(c, pregunta, concat!(".", "store(")), "{f} guarda antes de preguntar si alguien redacta");
         }
     }
 
@@ -5188,6 +5287,29 @@ mod pruebas_de_la_ia_en_windows {
             antes(s, concat!("let Some(proveedor) = ", "proveedor_de_ahora("), concat!("stt::el_turno_de_la_", "ficha(")),
             "la sugerencia copia el turno antes de saber si alguien redacta"
         );
+    }
+
+    /// **El modelo local vive lo que la sesión** (sprint 014): lo sueltan el corte —en la pieza de la sugerencia, que el
+    /// `match` sin comodín obliga a resolver—, «Terminar» y apagar «Redactar»; al empezar con «Redactar» encendido, se
+    /// precarga. Y el banco del ensayo no lo usa: solo la sugerencia.
+    #[test]
+    fn el_modelo_local_lo_sueltan_el_corte_terminar_y_apagar() {
+        let soltar = concat!("modelo_local::", "soltar()");
+        let c = cuerpo_de("\nfn ejecutar_el_corte<");
+        let pieza = &c[c.find("corte::Pieza::Sugerencia =>").expect("la pieza de la sugerencia")..];
+        let pieza = &pieza[..pieza.find("corte::Pieza::ContadorDeRed").expect("la pieza siguiente")];
+        assert!(pieza.contains(soltar), "el corte no suelta el modelo local");
+        assert!(cuerpo_de("\nfn dejar_de_escuchar(").contains(soltar), "terminar no lo suelta");
+        assert!(cuerpo_de("\nfn redactar_sugerencias(").contains(soltar), "apagar «Redactar» no lo suelta");
+        assert!(cuerpo_de("\nfn empezar(").contains(concat!("modelo_local::", "precargar()")), "empezar no lo precarga");
+        assert!(
+            cuerpo_de("\nfn proveedor_de_ahora(").contains(concat!("para == sintesis::api::Para::", "Sugerencia")),
+            "el banco del ensayo podría usar el modelo local"
+        );
+        // M-1 de la auditoría del S14: el hilo mira la época ANTES de pedir al proveedor, para no recargar el modelo tras un corte.
+        let hilo = cuerpo_de("\nfn sintetizar<");
+        let (epoca, proveedor) = (hilo.find("s.epoca.load(Ordering::Relaxed) != epoca"), hilo.find("proveedor_de_ahora(&s"));
+        assert!(epoca.is_some() && epoca < proveedor, "el hilo de la sugerencia no mira la época antes de cargar el modelo");
     }
 
     /// Y al arrancar, lo que Windows ya no tiene se apaga **antes** de aplicar las preferencias.

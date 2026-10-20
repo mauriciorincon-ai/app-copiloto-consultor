@@ -96,3 +96,20 @@ describe("verify:ephemeral ve la API de Win32 de los named pipes", () => {
     expect(sin.codigo, "una marca sin ADR dejó pasar la línea").toBe(1);
   });
 });
+
+describe("verify:ephemeral ve cómo llama.cpp guarda el estado de un contexto (sprint 014, auditoría M-3)", () => {
+  // El modelo local vive dentro del proceso y su caché guarda el turno del cliente: guardar el estado de un contexto sería
+  // escribir la reunión en disco. El barrido lo prohíbe en los módulos protegidos; este test lo demuestra en cada corrida,
+  // sobre una copia vacía y no sobre el repo.
+  it.each([
+    ["state_save_file", 'ctx.state_save_file("x", &[]).ok();'],
+    ["save_session_file", 'ctx.save_session_file("x", &[]).ok();'],
+    ["state_seq_save_file", 'ctx.state_seq_save_file("x", 0, &[]).ok();'],
+    ["llama_state_save_file", "unsafe { llama_state_save_file(c, p, t, 0) };"],
+  ])("%s en un módulo protegido es rojo, y lo nombra", (api, linea) => {
+    const r = plantar(linea);
+    expect(r.codigo, `${api} pasó en verde:\n${r.fuera}`).toBe(1);
+    expect(r.fuera).toContain("planta.rs");
+    expect(r.fuera).toContain(api);
+  });
+});

@@ -48,6 +48,8 @@ const COMANDOS: &[&str] = &[
         "abrir_lo_que_ve",
         "estado_de_la_ia",
         "redactar_sugerencias",
+        // Sprint 014 (ADR 023 enmienda 2): «Install the model» en IA, en Windows. Solo la ventana principal.
+        "instalar_el_modelo_local",
         "api_externa",
         "guardar_clave_del_api",
         "borrar_clave_del_api",

@@ -455,6 +455,24 @@ export const NOVEDAD_SUGERENCIA: Novedad = {
     "titular": "Tres fuentes incluidas, la cuarta aparte"
   };
 
+export const NOVEDAD_SUGERENCIA_LOCAL: Novedad = {
+    "confianza": "media",
+    "ficha": {
+      "fuente": {
+        "conjeturada": false,
+        "documento": "Páramo Azul",
+        "seccion": "§3.2 Alcance",
+        "unidad": "propuesta"
+      },
+      "titular": "Limpieza de datos: incluida, hasta tres fuentes"
+    },
+    "linea": "Confirma que la limpieza incluye hasta tres fuentes; una cuarta es adicional y se cotiza aparte.",
+    "nombre": "Modelo local",
+    "que": "sugerencia",
+    "quien": "local",
+    "titular": "Tres fuentes incluidas, la cuarta aparte"
+  };
+
 export const ESTADO_DE_LA_IA_NADIE: EstadoDeLaIa = {
     "api": {
       "encendida": false,
@@ -463,6 +481,12 @@ export const ESTADO_DE_LA_IA_NADIE: EstadoDeLaIa = {
     },
     "enriquecer": false,
     "latenciaMs": null,
+    "local": {
+      "bajando": false,
+      "bytes": 1117320736,
+      "fallo": false,
+      "instalado": false
+    },
     "mesUsd": 0.0,
     "quien": null,
     "redactar": false,
@@ -479,6 +503,12 @@ export const ESTADO_DE_LA_IA_CON_API: EstadoDeLaIa = {
     },
     "enriquecer": true,
     "latenciaMs": 1400,
+    "local": {
+      "bajando": false,
+      "bytes": 1117320736,
+      "fallo": false,
+      "instalado": false
+    },
     "mesUsd": 0.84,
     "quien": "api",
     "redactar": true,
@@ -495,9 +525,37 @@ export const ESTADO_DE_LA_IA_EN_WINDOWS: EstadoDeLaIa = {
     },
     "enriquecer": false,
     "latenciaMs": null,
+    "local": {
+      "bajando": false,
+      "bytes": 1117320736,
+      "fallo": false,
+      "instalado": false
+    },
     "mesUsd": 0.0,
     "quien": null,
     "redactar": false,
+    "reunionUsd": 0.0,
+    "sistema": "sin-puente",
+    "topeUsd": 10.0
+  };
+
+export const ESTADO_DE_LA_IA_EN_WINDOWS_CON_MODELO: EstadoDeLaIa = {
+    "api": {
+      "encendida": false,
+      "externo": "groq",
+      "hayClave": false
+    },
+    "enriquecer": false,
+    "latenciaMs": null,
+    "local": {
+      "bajando": false,
+      "bytes": 1117320736,
+      "fallo": false,
+      "instalado": true
+    },
+    "mesUsd": 0.0,
+    "quien": "local",
+    "redactar": true,
     "reunionUsd": 0.0,
     "sistema": "sin-puente",
     "topeUsd": 10.0
@@ -516,6 +574,8 @@ export const POR_QUE_NO_REDACTA_SIN_PUENTE: PorQueNoRedacta = "sin-puente";
 export const POR_QUE_NO_REDACTA_SIN_CLAVE: PorQueNoRedacta = "sin-clave";
 
 export const POR_QUE_NO_REDACTA_TOPE: PorQueNoRedacta = "tope-del-mes";
+
+export const POR_QUE_NO_REDACTA_SIN_MODELO_LOCAL: PorQueNoRedacta = "sin-modelo-local";
 
 export const ESTADO_DEL_ACOPLE: EstadoDelAcople = {
     "acoplada": true
@@ -1803,7 +1863,7 @@ export const PLATAFORMA_WINDOWS: Plataforma = {
       },
       {
         "clave": "sugerencia",
-        "cuando": "no-por-ahora"
+        "cuando": "si"
       },
       {
         "clave": "radar",
@@ -1951,7 +2011,7 @@ export const PLATAFORMA_WINDOWS_SIN_MODELO: Plataforma = {
       },
       {
         "clave": "sugerencia",
-        "cuando": "no-por-ahora"
+        "cuando": "si"
       },
       {
         "clave": "radar",
