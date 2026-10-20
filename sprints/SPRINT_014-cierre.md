@@ -20,19 +20,19 @@ Corrida en vivo en la app (3 corridas): 6 023 ms `Tarde` · 6 025 ms `Tarde` · 
 
 **Pendientes (decisiones tuyas; ninguna bloquea el PR):**
 
-1. M-6 · `CLAUDE.md` líneas 15, 17 y 130 (tres frases falsas). Lo edito con tu «sí».
-2. M-8 · brochure (`BROCHURE.html:381, :516, :599`; `brochure-export.json:90`): ¿lo pago ya o va al lote del hito (regla 13)?
-3. B-5 · cuatro pruebas siguen leyendo el fuente (`sintesis/local.rs:398, :425`; `modelo_local.rs:295, :329`): ¿las cambio ya o quedan en deuda?
-4. M-5 · WebView2 mantiene 2–3 conexiones a Microsoft en reposo (anterior al sprint): ¿Honestidad lo declara y aplicamos los flags?
+1. M6 · `CLAUDE.md` líneas 15, 17 y 130 (tres frases falsas). Lo edito con tu «sí».
+2. M8 · brochure (`BROCHURE.html:381, :516, :599`; `brochure-export.json:90`): ¿lo pago ya o va al lote del hito (regla 13)?
+3. B5 · cuatro pruebas siguen leyendo el fuente (`sintesis/local.rs:398, :425`; `modelo_local.rs:295, :329`): ¿las cambio ya o quedan en deuda?
+4. M5 · WebView2 mantiene 2–3 conexiones a Microsoft en reposo (anterior al sprint): ¿Honestidad lo declara y aplicamos los flags?
 5. S13: «sí deshacer» (credencial, tarea y nota de prueba) y «sí borrar ramas» (sprint-011, 012, 013).
 
-**Auditoría** (una pasada, `sprints/SPRINT_014-auditoria.md`): 0 críticos, 0 altos. Medios: 5 pagados, 1 parcial (M-5), 2 pendientes (M-6, M-8). Bajos: 11 pagados, 1 parcial (B-5).
+**Auditoría** (una pasada, `sprints/SPRINT_014-auditoria.md`): 0 críticos, 0 altos. Medios: 5 pagados, 1 parcial (M5), 2 pendientes (M6, M8). Bajos: 11 pagados, 1 parcial (B5).
 
-**Desviaciones:** una sola puerta de red (la de whisper), no dos · el corte suelta el modelo dentro de la pieza `Sugerencia` · un solo comando `instalar_el_modelo_local` · `demo-rojo.sh` no corre sin Python: pruebas Vitest permanentes para M-3 · hook de secretos arreglado fuera de alcance (`d515266`, B-8) · corrida en vivo: 1 de 3 dentro del techo.
+**Desviaciones:** una sola puerta de red (la de whisper), no dos · el corte suelta el modelo dentro de la pieza `Sugerencia` · un solo comando `instalar_el_modelo_local` · `demo-rojo.sh` no corre sin Python: pruebas Vitest permanentes para M3 · hook de secretos arreglado fuera de alcance (`d515266`, B8) · corrida en vivo: 1 de 3 dentro del techo.
 
 **Relevos:** 1. F1, descarga cortada dos veces (a 874 s y 1 154 s, sin reanudar). Decidió el usuario: reanudar por `Range` en la puerta, camino distinto (`fd9c3c7`). La tercera descarga retomó y terminó. **Modelo por fase:** F1 y F2 Opus 5.5 (high) · F3 y auditoría Sonnet 5.5 · cierre Haiku 5.5. Haiku bastó para redactar el cierre; si se queda lo decides tú tras tres sprints.
 
-**/release-check:** 1 arranque sin permisos ✅ · 2 capturas leídas ✅ · 3 binario ✅ · 4 TCC n/a (Windows) · 5 ventana protegida ✅ · 6 red y canaria ✅ · 7 `cargo audit` lo corre la CI · 8 manual y cierre ✅ · 9 checks al final · 10 protecciones: solo la descarga (M1) y la corrida en vivo, ambas con «sí»; credencial y tarea sin cambios.
+**/release-check:** 1 arranque sin permisos ✅ · 2 capturas leídas ✅ · 3 binario ✅ · 4 TCC n/a (Windows) · 5 ventana protegida ✅ · 6 red y canaria ✅ · 7 `cargo audit` lo corre la CI · 8 manual y cierre ✅ · 9 checks al final · 10 protecciones: solo la descarga (fila M1 de la matriz) y la corrida en vivo, ambas con «sí»; credencial y tarea sin cambios.
 
 **Aprendizaje y recomendación:** WebView2 abre conexiones propias a servidores de Microsoft; hay que medir el árbol entero del proceso, no solo el de Rust. El cierre del hito H-2 trae brochure, lote de medios y bajos, `design-sync` y el ensayo general.
 
