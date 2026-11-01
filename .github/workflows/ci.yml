@@ -202,7 +202,7 @@ jobs:
       # SPRINT 007 (decisión 3 del plan): whisper con dos pistas, medido en el runner con el modelo pequeño. La cifra es
       # del runner y se declara `manual`: la del PC del usuario manda, en el gate del hito. El modelo se baja con la
       # huella SHA-256 de `modelo_whisper.rs` y se guarda en la caché de Actions para no bajarlo en cada corrida.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/ag-modelos
           key: whisper-ggml-small-1be3a9b2
